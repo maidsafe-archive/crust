@@ -1,0 +1,29 @@
+os:
+- linux
+- osx
+language: rust
+script:
+- cargo build --verbose
+- cargo test --verbose
+after_success: |
+  [ $TRAVIS_BRANCH = master ] &&
+  [ $TRAVIS_PULL_REQUEST = false ] &&
+  [ $(uname -s) = Linux ] &&
+  cargo doc &&
+  echo "<meta http-equiv=refresh content=0;url=`echo $TRAVIS_REPO_SLUG | cut -d '/' -f 2`/index.html>" > target/doc/index.html &&
+  sudo pip install ghp-import &&
+  ghp-import -n target/doc &&
+  git push -f https://${TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git gh-pages;
+  sudo apt-get install libcurl4-openssl-dev libelf-dev libdw-dev &&
+  wget https://github.com/SimonKagstrom/kcov/archive/master.tar.gz &&
+  tar xzf master.tar.gz &&
+  mkdir kcov-master/build &&
+  cd kcov-master/build &&
+  cmake .. &&
+  make &&
+  sudo make install &&
+  cd ../.. &&
+  kcov --coveralls-id=$TRAVIS_JOB_ID --exclude-pattern=/.cargo target/kcov target/debug/routing-*;
+env:
+  global:
+    secure: DzS6hBiuUQybrHDvXWDPNsyuUwCPVrfayRDR4tQwN90Uykr+X2ILpNjA/wxEJuGOsPQc1qsk1VStSIHbYJjHl1ahS9tQo+PU1oukuT0b2r9EKkIJOLoc9W53DbHzmLef5Qr4GxqoI5IGOcU9G9V7Lovefsm3gebSwL6xosbg8AY=
