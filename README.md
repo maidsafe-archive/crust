@@ -9,5 +9,6 @@ Appveyor
 
 [![Build status](https://ci.appveyor.com/api/projects/status/7bl67hscnfljxxt3?svg=true)](https://ci.appveyor.com/project/dirvine/crust)
 
+
 [Documentation](http://dirvine.github.io/crux/crux/)
 
