@@ -48,7 +48,6 @@ pub enum Event {
     NewMessage(Address, Bytes),
     NewConnection(Address),
     LostConnection(Address),
-    AcceptingOn(u16)
 }
 
 struct Connection {
@@ -68,12 +67,32 @@ impl ConnectionManager {
         let state = Arc::new(Mutex::new(State{ our_id: our_id,
                                                event_pipe: event_pipe,
                                                connections : connections }));
-        let weak_state = state.downgrade();
+        ConnectionManager { state: state }
+    }
+
+    pub fn start_accepting(&self) -> IoResult<u16> {
+        let weak_state = self.state.downgrade();
+        let (event_receiver, listener) = try!(listen());
+        let local_port = try!(listener.local_addr()).port();  // Consider backlog
+
         spawn(move || {
-            let _ = start_accepting_connections(weak_state);
+            loop {
+                match event_receiver.iter().next() {
+                    Some(x) => {
+                        let (connection, _) = x;
+                        let s = weak_state.clone();
+                        spawn(move|| {
+                            let _ =
+                                upgrade_tcp(connection)
+                                .and_then(|(i, o)| { handle_new_connection(s, i, o) });
+                        });
+                    },
+                    None => {break;}
+                }
+            }
         });
 
-        ConnectionManager { state: state }
+        Ok(local_port)
     }
 
     pub fn connect(&self, endpoint: SocketAddr) -> IoResult<()> {
@@ -113,6 +132,10 @@ impl ConnectionManager {
             Ok(())
         })
     }
+
+    pub fn id(&self) -> IoResult<Address> {
+        lock_state(&self.state.downgrade(), |s| Ok(s.our_id.clone()))
+    }
 }
 
 fn lock_state<T, F: Fn(&State) -> IoResult<T>>(state: &WeakState, f: F) -> IoResult<T> {
@@ -139,32 +162,6 @@ fn lock_mut_state<T, F: FnOnce(&mut State) -> IoResult<T>>(state: &WeakState, f:
             Err(e) => Err(io::Error::new(io::ErrorKind::Interrupted, "?", None))
         }
     })
-}
-
-fn start_accepting_connections(state: WeakState) -> IoResult<()> {
-    println!("start_accepting_connections");
-    let (event_receiver, listener) = try!(listen());
-
-    let local_port = try!(listener.local_addr()).port();  // Consider backlog
-
-    try!(lock_state(&state, |s| {
-        s.event_pipe.send(Event::AcceptingOn(local_port)).or(Ok(()))
-    }));
-    loop {
-        match event_receiver.iter().next() {
-            Some(x) => {
-                let (connection, _) = x;
-                let s = state.clone();
-                spawn(move|| {
-                    let _ =
-                        upgrade_tcp(connection)
-                        .and_then(|(i, o)| { handle_new_connection(s, i, o) });
-                });
-            },
-            None => {break;}
-        }
-    }
-    Ok(())
 }
 
 fn handle_new_connection(mut state: WeakState, i: SocketReader, o: SocketWriter) -> IoResult<()> {
@@ -284,54 +281,55 @@ fn decode<T>(bytes: Bytes) -> T where T: Decodable {
 mod test {
     use super::*;
     use std::thread::spawn;
-    use std::sync::mpsc::channel;
+    use std::sync::mpsc::{Receiver, channel};
     use std::net::{SocketAddr};
     use std::str::FromStr;
 
 #[test]
     fn connection_manager() {
-        let spawn_node = |id: Vec<u8>| {
-            spawn(||{
-                let id_copy = id.clone();
-                let (i, o) = channel();
-                let cm = ConnectionManager::new(id, i);
-                loop {
-                //for i in o.into_blocking_iter() {
-                    match o.iter().next() {
-                        Some(i) => {
-                            println!("Received event {:?}", i);
-                            match i {
-                                Event::AcceptingOn(port) => {
-                                    if port != 5483 {
-                                        let addr = SocketAddr::from_str("127.0.0.1:5483").unwrap();
-                                        assert!(cm.connect(addr).is_ok());
-                                    }
-                                },
-                                Event::NewConnection(_) => {
-                                    println!("Connected");
-                                    if id_copy == vec![1] {
-                                        assert!(cm.send(vec![2], vec![2]).is_ok());
-                                    } else {
-                                        assert!(cm.send(vec![1], vec![1]).is_ok());
-                                    }
-                                },
-                                Event::NewMessage(x, y) => {
-                                    println!("new message !");
-                                    break;
-                                }
-                                _ => println!("unhandled"),
+        let run_cm = |cm: ConnectionManager, o: Receiver<Event>, my_port, his_port| {
+            spawn(move ||{
+                if my_port < his_port {
+                    let addr = SocketAddr::from_str(&format!("127.0.0.1:{}", his_port)).unwrap();
+                    assert!(cm.connect(addr).is_ok());
+                }
+
+                for i in o.iter() {
+                    println!("Received event {:?}", i);
+                    match i {
+                        Event::NewConnection(_) => {
+                            println!("Connected");
+                            if cm.id().unwrap() == vec![1] {
+                                assert!(cm.send(vec![2], vec![2]).is_ok());
+                            } else {
+                                assert!(cm.send(vec![1], vec![1]).is_ok());
                             }
                         },
-                        None => { break; }
+                        Event::NewMessage(x, y) => {
+                            println!("new message !");
+                            break;
+                        }
+                        _ => println!("unhandled"),
                     }
                 }
             })
         };
 
-        let t1 = spawn_node(vec![1]);
-        let t2 = spawn_node(vec![2]);
+        let (cm1_i, cm1_o) = channel();
+        let cm1 = ConnectionManager::new(vec![1], cm1_i);
+        let cm1_port = cm1.start_accepting().unwrap();
 
-        assert!(t1.join().is_ok());
-        assert!(t2.join().is_ok());
+        let (cm2_i, cm2_o) = channel();
+        let cm2 = ConnectionManager::new(vec![2], cm2_i);
+        let cm2_port = cm2.start_accepting().unwrap();
+
+        let runner1 = run_cm(cm1, cm1_o, cm1_port, cm2_port);
+        let runner2 = run_cm(cm2, cm2_o, cm2_port, cm1_port);
+
+        assert!(runner1.join().is_ok());
+        assert!(runner2.join().is_ok());
+
+        // TODO: Check that the listening ports are closed by trying to
+        // bind to them again.
     }
 }
