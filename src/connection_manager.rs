@@ -76,19 +76,14 @@ impl ConnectionManager {
         let local_port = try!(listener.local_addr()).port();  // Consider backlog
 
         spawn(move || {
-            loop {
-                match event_receiver.iter().next() {
-                    Some(x) => {
-                        let (connection, _) = x;
-                        let s = weak_state.clone();
-                        spawn(move|| {
-                            let _ =
-                                upgrade_tcp(connection)
-                                .and_then(|(i, o)| { handle_new_connection(s, i, o) });
-                        });
-                    },
-                    None => {break;}
-                }
+            for x in event_receiver.iter() {
+                let (connection, _) = x;
+                let s = weak_state.clone();
+                spawn(move|| {
+                    let _ =
+                        upgrade_tcp(connection)
+                        .and_then(|(i, o)| { handle_new_connection(s, i, o) });
+                });
             }
         });
 
