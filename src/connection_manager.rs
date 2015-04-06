@@ -133,8 +133,8 @@ impl ConnectionManager {
         })
     }
 
-    pub fn id(&self) -> IoResult<Address> {
-        lock_state(&self.state.downgrade(), |s| Ok(s.our_id.clone()))
+    pub fn id(&self) -> Address {
+        lock_state(&self.state.downgrade(), |s| Ok(s.our_id.clone())).unwrap()
     }
 }
 
@@ -299,7 +299,7 @@ mod test {
                     match i {
                         Event::NewConnection(_) => {
                             println!("Connected");
-                            if cm.id().unwrap() == vec![1] {
+                            if cm.id() == vec![1] {
                                 assert!(cm.send(vec![2], vec![2]).is_ok());
                             } else {
                                 assert!(cm.send(vec![1], vec![1]).is_ok());
