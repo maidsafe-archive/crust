@@ -328,8 +328,5 @@ mod test {
 
         assert!(runner1.join().is_ok());
         assert!(runner2.join().is_ok());
-
-        // TODO: Check that the listening ports are closed by trying to
-        // bind to them again.
     }
 }

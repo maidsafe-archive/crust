@@ -102,7 +102,6 @@ pub fn listen() ->  IoResult<(Receiver<(TcpStream, SocketAddr)>, TcpListener)> {
     Ok((rx, tcp_listener))
 }
 
-
 // Almost a straight copy of https://github.com/TyOverby/wire/blob/master/src/tcp.rs
 /// Upgrades a TcpStream to a Sender-Receiver pair that you can use to send and
 /// receive objects automatically.  If there is an error decoding or encoding
@@ -263,6 +262,21 @@ mod test {
         assert_eq!((CLIENT_COUNT * MSG_COUNT), responses.len());
     }
 
+
+ #[test]
+    fn graceful_port_close() {
+        let first_binding;
+
+        {
+            let (event_receiver, listener) = listen().unwrap();
+            first_binding = listener.local_addr().unwrap();
+        }
+        {
+            let (event_receiver, listener) = listen().unwrap();
+            let second_binding = listener.local_addr().unwrap();
+            assert_eq!(first_binding.port(), second_binding.port());
+        }
+    }
 
 // #[test]
 // fn test_stream_large_data() {
