@@ -2,3 +2,21 @@
 name = "crust"
 version = "0.0.1"
 authors = ["David Irvine <david.irvine@maidsafe.net>"]
+
+
+
+[dependencies]
+rustc-serialize = "*"
+cbor = "*"
+
+[[example]]
+name = "simple_client"
+path = "examples/simple_client.rs"
+test = false
+bench = false
+
+[[example]]
+name = "simple_server"
+path = "examples/simple_server.rs"
+test = false
+bench = false
