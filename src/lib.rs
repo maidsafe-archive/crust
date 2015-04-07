@@ -4,7 +4,7 @@
 
 #![allow(unused_variables)]
 
-#![feature(io, alloc)]
+#![feature(alloc)]
 
 extern crate rustc_serialize;
 extern crate cbor;
