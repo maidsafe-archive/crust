@@ -111,12 +111,12 @@ impl ConnectionManager {
         let writer_channel = try!(lock_state(&ws, |s| {
                 match s.connections.get(&address) {
                     Some(c) =>  Ok(c.writer_channel.clone()),
-                    None => Err(io::Error::new(io::ErrorKind::NotConnected, "?", None))
+                    None => Err(io::Error::new(io::ErrorKind::NotConnected, "?"))
                 }
         }));
 
         let send_result = writer_channel.send(message);
-        let cant_send = io::Error::new(io::ErrorKind::BrokenPipe, "?", None);
+        let cant_send = io::Error::new(io::ErrorKind::BrokenPipe, "?");
         send_result.map_err(|_|cant_send)
     }
 
@@ -135,26 +135,24 @@ impl ConnectionManager {
 
 fn lock_state<T, F: Fn(&State) -> IoResult<T>>(state: &WeakState, f: F) -> IoResult<T> {
     state.upgrade().ok_or(io::Error::new(io::ErrorKind::Interrupted,
-                                         "Can't dereference weak",
-                                         None))
+                                         "Can't dereference weak"))
     .and_then(|arc_state| {
         let opt_state = arc_state.lock();
         match opt_state {
             Ok(s)  => f(&s),
-            Err(e) => Err(io::Error::new(io::ErrorKind::Interrupted, "?", None))
+            Err(e) => Err(io::Error::new(io::ErrorKind::Interrupted, "?"))
         }
     })
 }
 
 fn lock_mut_state<T, F: FnOnce(&mut State) -> IoResult<T>>(state: &WeakState, f: F) -> IoResult<T> {
     state.upgrade().ok_or(io::Error::new(io::ErrorKind::Interrupted,
-                                         "Can't dereference weak",
-                                         None))
+                                         "Can't dereference weak"))
     .and_then(move |arc_state| {
         let opt_state = arc_state.lock();
         match opt_state {
             Ok(mut s)  => f(&mut s),
-            Err(e) => Err(io::Error::new(io::ErrorKind::Interrupted, "?", None))
+            Err(e) => Err(io::Error::new(io::ErrorKind::Interrupted, "?"))
         }
     })
 }
@@ -249,9 +247,9 @@ fn exchange(socket_input:  SocketReader, socket_output: SocketWriter, data: Byte
     let opt_send_result = input.recv();
 
     let cant_send = io::Error::new(io::ErrorKind::Other,
-                                   "Can't exchage (send error)", None);
+                                   "Can't exchage (send error)");
     let cant_recv = io::Error::new(io::ErrorKind::Other,
-                                   "Can't exchage (send error)", None);
+                                   "Can't exchage (send error)");
 
     let socket_output = try!(opt_send_result.map_err(|_|cant_send));
     let result = try!(opt_result.map_err(|_|cant_recv));
