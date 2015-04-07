@@ -27,7 +27,6 @@ use std::sync::mpsc;
 use cbor::{Encoder, Decoder};
 use rustc_serialize::{Decodable, Encodable};
 
-//pub type Address = Vec<u8>;
 pub type Bytes   = Vec<u8>;
 
 pub type IoResult<T> = Result<T, IoError>;
