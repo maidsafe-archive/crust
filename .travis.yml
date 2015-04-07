@@ -2,6 +2,10 @@ os:
 - linux
 - osx
 language: rust
+rust: 
+    - 1.0.0-beta
+    - nightly
+sudo: true
 script:
 - cargo build --verbose
 - cargo test --verbose
