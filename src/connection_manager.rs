@@ -199,14 +199,9 @@ fn unregister_connection(state: WeakState, his_id: Address) {
 // pushing events out to event_pipe
 fn start_reading_thread(state: WeakState, i: SocketReader, his_id: Address, sink: IoSender<Event>) {
     spawn(move || {
-        loop {
-            match i.iter().next() {
-                Some(msg) => {
-                    if sink.send(Event::NewMessage(his_id.clone(), msg)).is_err() {
-                        break;
-                    }
-                },
-                None => { break; }
+        for msg in i.iter() {
+            if sink.send(Event::NewMessage(his_id.clone(), msg)).is_err() {
+                break;
             }
         }
         unregister_connection(state, his_id);
@@ -216,16 +211,10 @@ fn start_reading_thread(state: WeakState, i: SocketReader, his_id: Address, sink
 // pushing messges out to socket
 fn start_writing_thread(state: WeakState, mut o: SocketWriter, his_id: Address, writer_channel: mpsc::Receiver<Bytes>) {
     spawn(move || {
-         loop {
-            let mut writer_iter = writer_channel.iter();
-            let msg = match writer_iter.next() {
-                None => { break; }
-                Some(msg) => {
-                    if o.send(&msg).is_err() {
-                        break;
-                    }
-                }
-            };
+        for msg in writer_channel.iter() {
+            if o.send(&msg).is_err() {
+                break;
+            }
         }
         unregister_connection(state, his_id);
         });
