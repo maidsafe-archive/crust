@@ -40,18 +40,23 @@ use crust::tcp_connections::{listen, connect_tcp};
 // }
 
 #[bench]
-fn bench_number_of_packets(b: &mut Bencher) {
-  b.iter(|| {
-    let (event_receiver, listener) = listen().unwrap();
-    let port = listener.local_addr().unwrap().port();
-    let (i, mut o) = connect_tcp(std::net::SocketAddr::from_str(&format!("127.0.0.1:{}", port)).unwrap()).unwrap();
-    for x in 0..10 {
-      o.send(&x).ok();
-    }
-    o.close();
-    for a in i.iter() {
-        let (x, fx): (u64, u64) = a;
-        println!("{} -> {}", x, fx);
-    }
-  });
+fn bench_connection_setup_and_teardown(b: &mut Bencher) {
+  let (listener, _) = crust::tcp_connections::listen().unwrap();
 }
+//
+// #[bench]
+// fn bench_number_of_packets(b: &mut Bencher) {
+//   b.iter(|| {
+//     let (event_receiver, listener) = listen().unwrap();
+//     let port = listener.local_addr().unwrap().port();
+//     let (i, mut o) = connect_tcp(std::net::SocketAddr::from_str(&format!("127.0.0.1:{}", port)).unwrap()).unwrap();
+//     for x in 0..10 {
+//       o.send(&x).ok();
+//     }
+//     o.close();
+//     for a in i.iter() {
+//         let (x, fx): (u64, u64) = a;
+//         println!("{} -> {}", x, fx);
+//     }
+//   });
+// }
