@@ -1,4 +1,4 @@
-// Copyright 2014-2015 MaidSafe.net limited
+// Copyright 2015 MaidSafe.net limited
 //
 // This MaidSafe Software is licensed to you under (1) the MaidSafe.net Commercial License,
 // version 1.0 or later, or (2) The General Public License (GPL), version 3, depending on which
@@ -27,12 +27,24 @@ use std::io::Result as IoResult;
 use std::str::FromStr;
 use test::Bencher;
 
-use crust::tcp_connections::{OutTcpStream};
+use crust::tcp_connections::{listen, connect_tcp};
+// use crust::tcp_connections::{OutTcpStream};
+
+// #[bench]
+// fn bench_number2(b: &mut Bencher) {
+//   b.iter(|| {
+//     let (event_receiver, listener) = listen().unwrap();
+//     let port = listener.local_addr().unwrap().port();
+//     let (i, mut o) = connect_tcp(std::net::SocketAddr::from_str(&format!("127.0.0.1:{}", port)).unwrap()).unwrap();
+//   });
+// }
 
 #[bench]
 fn bench_number_of_packets(b: &mut Bencher) {
   b.iter(|| {
-    let (i, mut o) : IoResult<(Receiver<I>, OutTcpStream<O>)> = crust::tcp_connections::connect_tcp(std::net::SocketAddr::from_str("127.0.0.1:5483").unwrap());
+    let (event_receiver, listener) = listen().unwrap();
+    let port = listener.local_addr().unwrap().port();
+    let (i, mut o) = connect_tcp(std::net::SocketAddr::from_str(&format!("127.0.0.1:{}", port)).unwrap()).unwrap();
     for x in 0..10 {
       o.send(&x).ok();
     }
