@@ -15,8 +15,7 @@ extern crate cbor;
 pub mod tcp_connections;
 pub mod connection_manager;
 
-pub type ConnectionManager<ID> = connection_manager::ConnectionManager<ID>;
-pub type Event<ID>             = connection_manager::Event<ID>;
+pub use connection_manager::{Event, ConnectionManager};
 
 #[test]
 fn it_works() {
