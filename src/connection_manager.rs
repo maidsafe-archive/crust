@@ -26,6 +26,7 @@ use std::sync::{Arc, Mutex, Weak};
 use std::sync::mpsc;
 use cbor::{Encoder, Decoder};
 use rustc_serialize::{Decodable, Encodable};
+use std::fmt::Debug;
 
 pub type Bytes   = Vec<u8>;
 
@@ -46,12 +47,14 @@ pub struct ConnectionManager<Id: Hash + Eq> {
 #[derive(Debug)]
 pub enum Event<Id> {
     NewMessage(Id, Bytes),
-    NewConnection(Id),
+    Connect(Id),
+    Accept(Id, Bytes),
     LostConnection(Id),
 }
 
 struct Connection {
-    writer_channel: mpsc::Sender<Bytes>
+    writer_channel: mpsc::Sender<Bytes>,
+    //socket_reader: 
 }
 
 struct State<Id: Hash + Eq> {
@@ -61,7 +64,7 @@ struct State<Id: Hash + Eq> {
 }
 
 impl<Id> ConnectionManager<Id>
-where Id : Hash + Eq + Send + 'static + Clone + Encodable + Decodable {
+where Id : Hash + Eq + Send + 'static + Clone + Encodable + Decodable + Debug {
 
     pub fn new(our_id: Id, event_pipe: IoSender<Event<Id>>) -> ConnectionManager<Id> {
         let connections: HashMap<Id, Connection> = HashMap::new();
@@ -83,7 +86,7 @@ where Id : Hash + Eq + Send + 'static + Clone + Encodable + Decodable {
                 spawn(move || {
                     let _ =
                         upgrade_tcp(connection)
-                        .and_then(|(i, o)| { handle_new_connection(s, i, o) });
+                        .and_then(|(i, o)| { handle_accept(s, i, o) });
                 });
             }
         });
@@ -91,12 +94,12 @@ where Id : Hash + Eq + Send + 'static + Clone + Encodable + Decodable {
         Ok(local_port)
     }
 
-    pub fn connect(&self, endpoint: SocketAddr) -> IoResult<()> {
+    pub fn connect(&self, endpoint: SocketAddr, msg: Bytes) -> IoResult<()> {
         let ws = self.state.downgrade();
 
         spawn(move || {
             let _ = connect_tcp(endpoint)
-                    .and_then(|(i, o)| { handle_new_connection(ws, i, o) });
+                    .and_then(|(i, o)| { handle_connect(ws, i, o, msg) });
         });
 
         Ok(())
@@ -132,6 +135,13 @@ where Id : Hash + Eq + Send + 'static + Clone + Encodable + Decodable {
     pub fn id(&self) -> Id {
         lock_state(&self.state.downgrade(), |s| Ok(s.our_id.clone())).unwrap()
     }
+
+    pub fn stop(&self) {
+        lock_mut_state(&self.state.downgrade(), |s| {
+            s.connections.clear();
+            Ok(())
+        });
+    }
 }
 
 fn lock_state<T, Id, F: Fn(&State<Id>) -> IoResult<T>>(state: &WeakState<Id>, f: F) -> IoResult<T>
@@ -160,21 +170,34 @@ where Id: Hash + Eq {
     })
 }
 
-fn handle_new_connection<Id>(mut state: WeakState<Id>, i: SocketReader, o: SocketWriter) -> IoResult<()>
-where Id: Hash + Eq + Clone + Encodable + Decodable + Send + 'static {
+fn handle_accept<Id>(mut state: WeakState<Id>,
+                     i: SocketReader,
+                     o: SocketWriter) -> IoResult<()>
+where Id: Hash + Eq + Clone + Encodable + Decodable + Send + 'static + Debug {
     let our_id = try!(lock_state(&state, |s| Ok(s.our_id.clone())));
-    let (i, o, his_data) = try!(exchange(i, o, encode(&our_id)));
-    let his_id: Id = decode(his_data);
-    //println!("handle_new_connection our_id:{:?} his_id:{:?}", our_id, his_id);
-    register_connection(&mut state, his_id, i, o)
+    let (i, o, his_data) = try!(exchange(i, o, encode(&(our_id, Bytes::new()))));
+    let (his_id, his_msg): (Id, Bytes) = decode(his_data);
+    register_connection(&mut state, his_id.clone(), i, o, Event::Accept(his_id, his_msg))
+}
+
+fn handle_connect<Id>(mut state: WeakState<Id>,
+                      i: SocketReader,
+                      o: SocketWriter,
+                      msg: Bytes) -> IoResult<()>
+where Id: Hash + Eq + Clone + Encodable + Decodable + Send + 'static + Debug {
+    let our_id = try!(lock_state(&state, |s| Ok(s.our_id.clone())));
+    let (i, o, his_data) = try!(exchange(i, o, encode(&(our_id, msg))));
+    let (his_id, _): (Id, Bytes) = decode(his_data);
+    register_connection(&mut state, his_id.clone(), i, o, Event::Connect(his_id))
 }
 
 fn register_connection<Id>( state: &mut WeakState<Id>
                           , his_id: Id
                           , i: SocketReader
                           , o: SocketWriter
+                          , event_to_user: Event<Id>
                           ) -> IoResult<()>
-where Id: Hash + Eq + Clone + Send + 'static {
+where Id: Hash + Eq + Clone + Send + 'static + Debug {
 
     let state2 = state.clone();
 
@@ -182,8 +205,8 @@ where Id: Hash + Eq + Clone + Send + 'static {
         let (tx, rx) = mpsc::channel();
         start_writing_thread(state2.clone(), o, his_id.clone(), rx);
         start_reading_thread(state2, i, his_id.clone(), s.event_pipe.clone());
-        s.connections.insert(his_id.clone(), Connection{writer_channel: tx});
-        let _ = s.event_pipe.send(Event::NewConnection(his_id));
+        s.connections.insert(his_id, Connection{writer_channel: tx});
+        let _ = s.event_pipe.send(event_to_user);
         Ok(())
     })
 }
@@ -202,26 +225,28 @@ where Id: Hash + Eq {
 
 // pushing events out to event_pipe
 fn start_reading_thread<Id>(state: WeakState<Id>, i: SocketReader, his_id: Id, sink: IoSender<Event<Id>>)
-where Id: Hash + Eq + Clone + Send + 'static {
+where Id: Hash + Eq + Clone + Send + 'static + Debug {
     spawn(move || {
         for msg in i.iter() {
             if sink.send(Event::NewMessage(his_id.clone(), msg)).is_err() {
                 break;
             }
         }
+        println!(">>>>>>>> end reading his_id {:?}", his_id.clone());
         unregister_connection(state, his_id);
     });
 }
 
 // pushing messges out to socket
 fn start_writing_thread<Id>(state: WeakState<Id>, mut o: SocketWriter, his_id: Id, writer_channel: mpsc::Receiver<Bytes>)
-where Id: Hash + Eq + Send + 'static {
+where Id: Hash + Eq + Send + 'static + Debug + Clone {
     spawn(move || {
         for msg in writer_channel.iter() {
             if o.send(&msg).is_err() {
                 break;
             }
         }
+        println!(">>>>>>>> end writing his_id {:?}", his_id.clone());
         unregister_connection(state, his_id);
         });
 }
@@ -298,7 +323,8 @@ mod test {
                         },
                         Event::NewMessage(x, y) => {
                             println!("new message !");
-                            break;
+                            cm.stop();
+                            //break;
                         }
                         _ => println!("unhandled"),
                     }
