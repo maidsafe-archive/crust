@@ -232,7 +232,7 @@ where Id: Hash + Eq + Clone + Send + 'static + Debug {
                 break;
             }
         }
-        println!(">>>>>>>> end reading his_id {:?}", his_id.clone());
+        //println!(">>>>>>>> end reading his_id {:?}", his_id.clone());
         unregister_connection(state, his_id);
     });
 }
@@ -246,7 +246,7 @@ where Id: Hash + Eq + Send + 'static + Debug + Clone {
                 break;
             }
         }
-        println!(">>>>>>>> end writing his_id {:?}", his_id.clone());
+        //println!(">>>>>>>> end writing his_id {:?}", his_id.clone());
         unregister_connection(state, his_id);
         });
 }
