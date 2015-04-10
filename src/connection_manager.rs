@@ -48,7 +48,7 @@ pub struct ConnectionManager<Id: Hash + Eq> {
 pub enum Event<Id> {
     NewMessage(Id, Bytes),
     Connect(Id),
-    Accept(Id),
+    Accept(Id, Bytes),
     LostConnection(Id),
 }
 
@@ -94,12 +94,12 @@ where Id : Hash + Eq + Send + 'static + Clone + Encodable + Decodable + Debug {
         Ok(local_port)
     }
 
-    pub fn connect(&self, endpoint: SocketAddr) -> IoResult<()> {
+    pub fn connect(&self, endpoint: SocketAddr, bytes: Bytes) -> IoResult<()> {
         let ws = self.state.downgrade();
 
         spawn(move || {
             let _ = connect_tcp(endpoint)
-                    .and_then(|(i, o)| { handle_connect(ws, i, o) });
+                    .and_then(|(i, o)| { handle_connect(ws, i, o, bytes) });
         });
 
         Ok(())
@@ -175,18 +175,19 @@ fn handle_accept<Id>(mut state: WeakState<Id>,
                      o: SocketWriter) -> IoResult<()>
 where Id: Hash + Eq + Clone + Encodable + Decodable + Send + 'static + Debug {
     let our_id = try!(lock_state(&state, |s| Ok(s.our_id.clone())));
-    let (i, o, his_data) = try!(exchange(i, o, encode(&our_id)));
-    let his_id: Id = decode(his_data);
-    register_connection(&mut state, his_id.clone(), i, o, Event::Accept(his_id))
+    let (i, o, his_data) = try!(exchange(i, o, encode(&(our_id, Bytes::new()))));
+    let (his_id, his_message): (Id, Bytes) = decode(his_data);
+    register_connection(&mut state, his_id.clone(), i, o, Event::Accept(his_id, his_message))
 }
 
 fn handle_connect<Id>(mut state: WeakState<Id>,
                       i: SocketReader,
-                      o: SocketWriter) -> IoResult<()>
+                      o: SocketWriter,
+                      bytes: Bytes) -> IoResult<()>
 where Id: Hash + Eq + Clone + Encodable + Decodable + Send + 'static + Debug {
     let our_id = try!(lock_state(&state, |s| Ok(s.our_id.clone())));
-    let (i, o, his_data) = try!(exchange(i, o, encode(&our_id)));
-    let his_id: Id = decode(his_data);
+    let (i, o, his_data) = try!(exchange(i, o, encode(&(our_id, bytes))));
+    let (his_id, _): (Id, Bytes) = decode(his_data);
     register_connection(&mut state, his_id.clone(), i, o, Event::Connect(his_id))
 }
 
