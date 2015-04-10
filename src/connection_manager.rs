@@ -137,7 +137,7 @@ where Id : Hash + Eq + Send + 'static + Clone + Encodable + Decodable + Debug {
     }
 
     pub fn stop(&self) {
-        lock_mut_state(&self.state.downgrade(), |s| {
+        let _ = lock_mut_state(&self.state.downgrade(), |s| {
             s.connections.clear();
             Ok(())
         });
@@ -307,14 +307,22 @@ mod test {
             spawn(move ||{
                 if my_port < his_port {
                     let addr = SocketAddr::from_str(&format!("127.0.0.1:{}", his_port)).unwrap();
-                    assert!(cm.connect(addr).is_ok());
+                    assert!(cm.connect(addr, Vec::<u8>::new()).is_ok());
                 }
 
                 for i in o.iter() {
                     println!("Received event {:?}", i);
                     match i {
-                        Event::NewConnection(_) => {
+                        Event::Connect(_) => {
                             println!("Connected");
+                            if cm.id() == vec![1] {
+                                assert!(cm.send(vec![2], vec![2]).is_ok());
+                            } else {
+                                assert!(cm.send(vec![1], vec![1]).is_ok());
+                            }
+                        },
+                        Event::Accept(_, _) => {
+                            println!("Accepted");
                             if cm.id() == vec![1] {
                                 assert!(cm.send(vec![2], vec![2]).is_ok());
                             } else {
@@ -323,8 +331,8 @@ mod test {
                         },
                         Event::NewMessage(x, y) => {
                             println!("new message !");
-                            cm.stop();
-                            //break;
+                            //cm.stop();
+                            break;
                         }
                         _ => println!("unhandled"),
                     }
