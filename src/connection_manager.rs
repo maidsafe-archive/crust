@@ -47,14 +47,14 @@ pub struct ConnectionManager<Id: Hash + Eq> {
 #[derive(Debug)]
 pub enum Event<Id> {
     NewMessage(Id, Bytes),
-    Connect(Id),
+    Connect(Id, Bytes),
     Accept(Id, Bytes),
     LostConnection(Id),
 }
 
 struct Connection {
     writer_channel: mpsc::Sender<Bytes>,
-    //socket_reader: 
+    //socket_reader:
 }
 
 struct State<Id: Hash + Eq> {
@@ -187,8 +187,8 @@ fn handle_connect<Id>(mut state: WeakState<Id>,
 where Id: Hash + Eq + Clone + Encodable + Decodable + Send + 'static + Debug {
     let our_id = try!(lock_state(&state, |s| Ok(s.our_id.clone())));
     let (i, o, his_data) = try!(exchange(i, o, encode(&(our_id, bytes))));
-    let (his_id, _): (Id, Bytes) = decode(his_data);
-    register_connection(&mut state, his_id.clone(), i, o, Event::Connect(his_id))
+    let (his_id, his_message): (Id, Bytes) = decode(his_data);
+    register_connection(&mut state, his_id.clone(), i, o, Event::Connect(his_id, his_message))
 }
 
 fn register_connection<Id>( state: &mut WeakState<Id>
@@ -313,7 +313,7 @@ mod test {
                 for i in o.iter() {
                     println!("Received event {:?}", i);
                     match i {
-                        Event::Connect(_) => {
+                        Event::Connect(_, _) => {
                             println!("Connected");
                             if cm.id() == vec![1] {
                                 assert!(cm.send(vec![2], vec![2]).is_ok());
