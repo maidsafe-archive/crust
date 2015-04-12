@@ -16,7 +16,7 @@ Tcp conections are always favoured as these wll be by default direct connected (
 
 The library contains a beackon system for finding nodes on a local network, this will be extended using a gossip type protocol for multi hop discovery. 
 
-Encryptoin of all streams will also allow for better masking of such networks and add to security, this is done also considering the possibility of attack where adversaries can send data continually we must decrypt prior to handling (meaning we do the work). There are several methods to mitigate this, including alerting upper layers of such activity. The user of the library has the option to provide a blacklisting capapbility per session to disconnect such nodes 'en masse'.
+Encryption of all streams will also allow for better masking of such networks and add to security, this is done also considering the possibility of attack where adversaries can send data continually we must decrypt prior to handling (meaning we do the work). There are several methods to mitigate this, including alerting upper layers of such activity. The user of the library has the option to provide a blacklisting capapbility per session to disconnect such nodes 'en masse'.
 
 _direct connected == Nodes we were previously connected to. tcp nodes or reliable udp nodes that allow incoming connections (i.e. direct or full cone nat that has been hole punched). This library also supports fallback endpoints being passed at construction that will allow a fallback should none of the nodes form any previous session are available._  
 
