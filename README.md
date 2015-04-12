@@ -10,7 +10,7 @@ Reliable p2p network connections in Rust with NAT traversal. One of the most nee
 
 #Overview
 
-This library will allow p2p networks to establish and maintain a number of connections in a group when informed by users of the library. As connections are made these are passed up and the user can selsect which connections to maintain or drop. The library has a bootstrap handler which will attempt to reconnect to any previous "**direct connected**" nodes.
+This library will allow p2p networks to establish and maintain a number of connections in a group when informed by users of the library. As connections are made these are passed up and the user can select which connections to maintain or drop. The library has a bootstrap handler which will attempt to reconnect to any previous "**direct connected**" nodes.
 
 Tcp conections are always favoured as these wll be by default direct connected (until we can test and confirm tcp hole punching). Tcp is also a known reliable protocol. Reliable udp is the fallback protocol and very effective.
 
