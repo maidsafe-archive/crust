@@ -54,7 +54,7 @@ pub enum Event<Id> {
 
 struct Connection {
     writer_channel: mpsc::Sender<Bytes>,
-    //socket_reader: 
+    //socket_reader:
 }
 
 struct State<Id: Hash + Eq> {
@@ -94,12 +94,12 @@ where Id : Hash + Eq + Send + 'static + Clone + Encodable + Decodable + Debug {
         Ok(local_port)
     }
 
-    pub fn connect(&self, endpoint: SocketAddr, msg: Bytes) -> IoResult<()> {
+    pub fn connect(&self, endpoint: SocketAddr, bytes: Bytes) -> IoResult<()> {
         let ws = self.state.downgrade();
 
         spawn(move || {
             let _ = connect_tcp(endpoint)
-                    .and_then(|(i, o)| { handle_connect(ws, i, o, msg) });
+                    .and_then(|(i, o)| { handle_connect(ws, i, o, bytes) });
         });
 
         Ok(())
@@ -176,17 +176,17 @@ fn handle_accept<Id>(mut state: WeakState<Id>,
 where Id: Hash + Eq + Clone + Encodable + Decodable + Send + 'static + Debug {
     let our_id = try!(lock_state(&state, |s| Ok(s.our_id.clone())));
     let (i, o, his_data) = try!(exchange(i, o, encode(&(our_id, Bytes::new()))));
-    let (his_id, his_msg): (Id, Bytes) = decode(his_data);
-    register_connection(&mut state, his_id.clone(), i, o, Event::Accept(his_id, his_msg))
+    let (his_id, his_message): (Id, Bytes) = decode(his_data);
+    register_connection(&mut state, his_id.clone(), i, o, Event::Accept(his_id, his_message))
 }
 
 fn handle_connect<Id>(mut state: WeakState<Id>,
                       i: SocketReader,
                       o: SocketWriter,
-                      msg: Bytes) -> IoResult<()>
+                      bytes: Bytes) -> IoResult<()>
 where Id: Hash + Eq + Clone + Encodable + Decodable + Send + 'static + Debug {
     let our_id = try!(lock_state(&state, |s| Ok(s.our_id.clone())));
-    let (i, o, his_data) = try!(exchange(i, o, encode(&(our_id, msg))));
+    let (i, o, his_data) = try!(exchange(i, o, encode(&(our_id, bytes))));
     let (his_id, _): (Id, Bytes) = decode(his_data);
     register_connection(&mut state, his_id.clone(), i, o, Event::Connect(his_id))
 }
