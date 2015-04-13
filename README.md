@@ -12,9 +12,9 @@ Reliable p2p network connections in Rust with NAT traversal. One of the most nee
 
 This library will allow p2p networks to establish and maintain a number of connections in a group when informed by users of the library. As connections are made these are passed up and the user can select which connections to maintain or drop. The library has a bootstrap handler which will attempt to reconnect to any previous "**direct connected**" nodes.
 
-Tcp conections are always favoured as these wll be by default direct connected (until we can test and confirm tcp hole punching). Tcp is also a known reliable protocol. Reliable udp is the fallback protocol and very effective.
+Tcp conections are always favoured as these will be by default direct connected (until we can test and confirm tcp hole punching). Tcp is also a known reliable protocol. Reliable udp is the fallback protocol and very effective.
 
-The library contains a beackon system for finding nodes on a local network, this will be extended using a gossip type protocol for multi hop discovery. 
+The library contains a beacon system for finding nodes on a local network, this will be extended using a gossip type protocol for multi hop discovery. 
 
 Encryption of all streams will also allow for better masking of such networks and add to security, this is done also considering the possibility of attack where adversaries can send data continually we must decrypt prior to handling (meaning we do the work). There are several methods to mitigate this, including alerting upper layers of such activity. The user of the library has the option to provide a blacklisting capapbility per session to disconnect such nodes 'en masse'.
 
@@ -22,7 +22,7 @@ _direct connected == Nodes we were previously connected to. tcp nodes or reliabl
 
 ##Nat traversal/Handling 
 
-Several methods are used for NAT traversal, UpNP, hole punching [See here for tcp NAT traversal] (http://www.cmlab.csie.ntu.edu.tw/~franklai/NATBT.pdf) [and here for ucp/dht NAT traversal
+Several methods are used for NAT traversal, UpNP, hole punching [See here for tcp NAT traversal] (http://www.cmlab.csie.ntu.edu.tw/~franklai/NATBT.pdf) and [here for ucp/dht NAT traversal
   ](http://maidsafe.net/Whitepapers/pdf/DHTbasedNATTraversal.pdf) etc. These methods will be added to by the community to allow a p2p network that cannto be easily blocked. By default this library spawns sockets randomly, meaning ndoes appear on several ports over time and very difficult to trace.  
 
 
