@@ -7,16 +7,16 @@
        html_root_url = "http:///dirvine.github.io/crust/crust/")]
 #![allow(unused_variables)]
 
-#![feature(alloc)]
+#![feature(alloc, udp)]
 
 extern crate rustc_serialize;
 extern crate cbor;
 
 pub mod tcp_connections;
 pub mod connection_manager;
+pub mod beacon;
 
-pub type ConnectionManager<ID> = connection_manager::ConnectionManager<ID>;
-pub type Event<ID>             = connection_manager::Event<ID>;
+pub use connection_manager::{Event, ConnectionManager};
 
 #[test]
 fn it_works() {
