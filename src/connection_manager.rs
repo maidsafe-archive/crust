@@ -40,16 +40,43 @@ pub type SocketWriter = TcpWriter<Bytes>;
 
 type WeakState<Id> = Weak<Mutex<State<Id>>>;
 
-pub struct ConnectionManager<Id: Hash + Eq> {
-    state: Arc<Mutex<State<Id>>>,
+pub struct ConnectionManager {
+    state: Arc<Mutex<State>>,
 }
 
+
+pub enum Protocol {
+  Tcp,
+  Utp,
+}
+
+// pub struct Endpoint {
+//   protocol : Protocol;
+//   socket_addr: SocketAddr;
+//  }
+
+ pub enum Endpoint {
+    Tcp(SocketAddress),
+    Utp(utp::SocketAddress),
+}
+
+pub struct PortAndProtocol {
+    Tcp(u16),
+    Utp(u16),
+ }
+
+// pub struct PortAndProtocol {
+//   protocol : Protocol;
+//   port: u16;
+//  }
+
+
 #[derive(Debug)]
-pub enum Event<Id> {
-    NewMessage(Id, Bytes),
-    Connect(Id),
-    Accept(Id, Bytes),
-    LostConnection(Id),
+pub enum Event {
+    NewMessage(Endpoint, Bytes),
+    NewConnection(Endpoint),
+    LostConnection(Endpoint),
+    FailedToConnect(Vec<Endpoint>)
 }
 
 struct Connection {
@@ -57,16 +84,14 @@ struct Connection {
     //socket_reader:
 }
 
-struct State<Id: Hash + Eq> {
-    our_id: Id,
-    event_pipe: IoSender<Event<Id>>,
-    connections: HashMap<Id, Connection>,
+struct State {
+    event_pipe: IoSender<Event>,
+    connections: HashMap<Endpoint, Connection>,
 }
 
-impl<Id> ConnectionManager<Id>
-where Id : Hash + Eq + Send + 'static + Clone + Encodable + Decodable + Debug {
+impl ConnectionManager {
 
-    pub fn new(our_id: Id, event_pipe: IoSender<Event<Id>>) -> ConnectionManager<Id> {
+    pub fn new(event_pipe: IoSender<Event>) -> ConnectionManager {
         let connections: HashMap<Id, Connection> = HashMap::new();
         let state = Arc::new(Mutex::new(State{ our_id: our_id,
                                                event_pipe: event_pipe,
@@ -74,7 +99,9 @@ where Id : Hash + Eq + Send + 'static + Clone + Encodable + Decodable + Debug {
         ConnectionManager { state: state }
     }
 
-    pub fn start_accepting(&self) -> IoResult<u16> {
+    // bootstrap_list will over
+    pub fn start(&self, bootstrap_list: Option<Vec<Endpoint>>,
+                 hint: Vec<PortAndProtocol>) -> IoResult<Vec<Endpoint>> {
         let weak_state = self.state.downgrade();
         let (event_receiver, listener) = try!(listen());
         let local_port = try!(listener.local_addr()).port();  // Consider backlog
@@ -94,7 +121,7 @@ where Id : Hash + Eq + Send + 'static + Clone + Encodable + Decodable + Debug {
         Ok(local_port)
     }
 
-    pub fn connect(&self, endpoint: SocketAddr, bytes: Bytes) -> IoResult<()> {
+    pub fn connect(&self, endpoint: Vec<Endpoint>) {
         let ws = self.state.downgrade();
 
         spawn(move || {
@@ -102,14 +129,13 @@ where Id : Hash + Eq + Send + 'static + Clone + Encodable + Decodable + Debug {
                     .and_then(|(i, o)| { handle_connect(ws, i, o, bytes) });
         });
 
-        Ok(())
     }
 
     /// Sends a message to address. Returns Ok(()) if the sending might succeed, and returns an
     /// Err if the address is not connected. Return value of Ok does not mean that the data will be
     /// received. It is possible for the corresponding connection to hang up immediately after this
     /// function returns Ok.
-    pub fn send(&self, message: Bytes, id : Id)-> IoResult<()> {
+    pub fn send(&self, endpoint: Endpoint, message: Bytes)-> IoResult<()> {
         let ws = self.state.downgrade();
 
         let writer_channel = try!(lock_state(&ws, |s| {
@@ -124,7 +150,7 @@ where Id : Hash + Eq + Send + 'static + Clone + Encodable + Decodable + Debug {
         send_result.map_err(|_|cant_send)
     }
 
-    pub fn drop_node(&self, id: Id) -> IoResult<()>{  // FIXME
+    pub fn drop_node(&self, endpoint: Endpoint) {
         let mut ws = self.state.downgrade();
         lock_mut_state(&mut ws, |s: &mut State<Id>| {
             s.connections.remove(&id);
@@ -132,16 +158,6 @@ where Id : Hash + Eq + Send + 'static + Clone + Encodable + Decodable + Debug {
         })
     }
 
-    pub fn id(&self) -> Id {
-        lock_state(&self.state.downgrade(), |s| Ok(s.our_id.clone())).unwrap()
-    }
-
-    pub fn stop(&self) {
-        let _ = lock_mut_state(&self.state.downgrade(), |s| {
-            s.connections.clear();
-            Ok(())
-        });
-    }
 }
 
 fn lock_state<T, Id, F: Fn(&State<Id>) -> IoResult<T>>(state: &WeakState<Id>, f: F) -> IoResult<T>

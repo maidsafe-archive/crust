@@ -12,9 +12,9 @@
 extern crate rustc_serialize;
 extern crate cbor;
 
-pub mod tcp_connections;
+mod tcp_connections;
 pub mod connection_manager;
-pub mod beacon;
+mod beacon;
 
 pub use connection_manager::{Event, ConnectionManager};
 
