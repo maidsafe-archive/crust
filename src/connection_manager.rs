@@ -282,19 +282,6 @@ fn exchange(socket_input:  SocketReader, socket_output: SocketWriter, data: Byte
     Ok((socket_input, socket_output, result))
 }
 
-fn encode<T>(value: &T) -> Bytes where T: Encodable
-{
-    let mut enc = Encoder::from_memory();
-    let _ = enc.encode(&[value]);
-    enc.into_bytes()
-}
-
-// TODO(Peter): This should return Option<T>
-fn decode<T>(bytes: Bytes) -> T where T: Decodable {
-    let mut dec = Decoder::from_bytes(&bytes[..]);
-    dec.decode().next().unwrap().unwrap()
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
@@ -302,22 +289,39 @@ mod test {
     use std::sync::mpsc::{Receiver, channel};
     use std::net::{SocketAddr};
     use std::str::FromStr;
+    use rustc_serialize::{Decodable, Encodable};
+    use cbor::{Encoder, Decoder};
+
+    fn encode<T>(value: &T) -> Bytes where T: Encodable
+    {
+        let mut enc = Encoder::from_memory();
+        let _ = enc.encode(&[value]);
+        enc.into_bytes()
+    }
+    
+    fn decode<T>(bytes: Bytes) -> T where T: Decodable {
+        let mut dec = Decoder::from_bytes(&bytes[..]);
+        dec.decode().next().unwrap().unwrap()
+    }
 
 #[test]
     fn connection_manager() {
         let run_cm = |cm: ConnectionManager, o: Receiver<Event>| {
-            spawn(move ||{
+            spawn(move || {
                 for i in o.iter() {
-                    println!("Received event {:?}", i);
                     match i {
-                        Event::NewConnection(_) => {
-                            println!("Connected");
+                        Event::NewConnection(other_ep) => {
+                            println!("Connected {:?}", other_ep);
+                            cm.send(other_ep.clone(), encode(&"hello world".to_string()));
                         },
-                        Event::NewMessage(x, y) => {
-                            println!("new message !");
-                            //cm.stop();
+                        Event::NewMessage(from_ep, data) => {
+                            println!("New message from {:?} data:{:?}",
+                                     from_ep, decode::<String>(data));
                             break;
-                        }
+                        },
+                        Event::LostConnection(other_ep) => {
+                            println!("Lost connection to {:?}", other_ep);
+                        },
                         _ => println!("unhandled"),
                     }
                 }
@@ -332,7 +336,7 @@ mod test {
         let (cm2_i, cm2_o) = channel();
         let cm2 = ConnectionManager::new(cm2_i);
         let cm2_eps = cm2.start(None, Vec::new()).unwrap();
-        cm2.connect(cm1_eps);
+        cm2.connect(cm1_eps.clone());
 
         let runner1 = run_cm(cm1, cm1_o);
         let runner2 = run_cm(cm2, cm2_o);
