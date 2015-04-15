@@ -24,8 +24,6 @@ use std::sync::mpsc::{Receiver, Sender};
 use tcp_connections::{listen, connect_tcp, TcpReader, TcpWriter, upgrade_tcp};
 use std::sync::{Arc, Mutex, Weak};
 use std::sync::mpsc;
-use cbor::{Encoder, Decoder};
-use rustc_serialize::{Decodable, Encodable};
 use std::fmt::Debug;
 
 pub type Bytes   = Vec<u8>;
@@ -298,7 +296,7 @@ mod test {
         let _ = enc.encode(&[value]);
         enc.into_bytes()
     }
-    
+
     fn decode<T>(bytes: Bytes) -> T where T: Decodable {
         let mut dec = Decoder::from_bytes(&bytes[..]);
         dec.decode().next().unwrap().unwrap()
