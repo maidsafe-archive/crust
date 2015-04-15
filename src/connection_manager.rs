@@ -24,8 +24,6 @@ use std::sync::mpsc::{Receiver, Sender};
 use tcp_connections::{listen, connect_tcp, TcpReader, TcpWriter, upgrade_tcp};
 use std::sync::{Arc, Mutex, Weak};
 use std::sync::mpsc;
-use cbor::{Encoder, Decoder};
-use rustc_serialize::{Decodable, Encodable};
 use std::fmt::Debug;
 
 pub type Bytes   = Vec<u8>;
@@ -38,85 +36,106 @@ pub type IoSender<T>   = Sender<T>;
 pub type SocketReader = TcpReader<Bytes>;
 pub type SocketWriter = TcpWriter<Bytes>;
 
-type WeakState<Id> = Weak<Mutex<State<Id>>>;
+type WeakState = Weak<Mutex<State>>;
 
-pub struct ConnectionManager<Id: Hash + Eq> {
-    state: Arc<Mutex<State<Id>>>,
+pub struct ConnectionManager {
+    state: Arc<Mutex<State>>,
 }
 
-#[derive(Debug)]
-pub enum Event<Id> {
-    NewMessage(Id, Bytes),
-    Connect(Id),
-    Accept(Id, Bytes),
-    LostConnection(Id),
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+pub enum Endpoint {
+    Tcp(SocketAddr),
+}
+
+#[derive(Debug, Clone)]
+pub enum PortAndProtocol {
+    Tcp(u16),
+}
+
+#[derive(Debug, PartialEq, Eq, Hash)]
+pub enum Event {
+    NewMessage(Endpoint, Bytes),
+    NewConnection(Endpoint),
+    LostConnection(Endpoint),
+    FailedToConnect(Vec<Endpoint>)
 }
 
 struct Connection {
     writer_channel: mpsc::Sender<Bytes>,
-    //socket_reader:
 }
 
-struct State<Id: Hash + Eq> {
-    our_id: Id,
-    event_pipe: IoSender<Event<Id>>,
-    connections: HashMap<Id, Connection>,
+struct State {
+    event_pipe: IoSender<Event>,
+    connections: HashMap<Endpoint, Connection>,
 }
 
-impl<Id> ConnectionManager<Id>
-where Id : Hash + Eq + Send + 'static + Clone + Encodable + Decodable + Debug {
+impl ConnectionManager {
 
-    pub fn new(our_id: Id, event_pipe: IoSender<Event<Id>>) -> ConnectionManager<Id> {
-        let connections: HashMap<Id, Connection> = HashMap::new();
-        let state = Arc::new(Mutex::new(State{ our_id: our_id,
-                                               event_pipe: event_pipe,
-                                               connections : connections }));
+    pub fn new(event_pipe: IoSender<Event>) -> ConnectionManager {
+        let connections: HashMap<Endpoint, Connection> = HashMap::new();
+        let state = Arc::new(Mutex::new(State{ event_pipe: event_pipe,
+                                               connections: connections }));
         ConnectionManager { state: state }
     }
 
-    pub fn start_accepting(&self) -> IoResult<u16> {
+    pub fn start_listening(&self, hint: Vec<PortAndProtocol>) -> IoResult<Vec<Endpoint>> {
         let weak_state = self.state.downgrade();
         let (event_receiver, listener) = try!(listen());
-        let local_port = try!(listener.local_addr()).port();  // Consider backlog
+
+        // FIXME: Try listen on ports given by the `hint` parameter.
+        let local_addr = try!(listener.local_addr());
 
         spawn(move || {
             for x in event_receiver.iter() {
                 let (connection, _) = x;
                 let s = weak_state.clone();
+                let his_ep = Endpoint::Tcp(connection.peer_addr().unwrap());
                 spawn(move || {
                     let _ =
                         upgrade_tcp(connection)
-                        .and_then(|(i, o)| { handle_accept(s, i, o) });
+                        .and_then(|(i, o)| { handle_accept(s, his_ep, i, o) });
                 });
             }
         });
 
-        Ok(local_port)
+        Ok(vec![Endpoint::Tcp(local_addr)])
     }
 
-    pub fn connect(&self, endpoint: SocketAddr, bytes: Bytes) -> IoResult<()> {
+    pub fn bootstrap(&self, bootstrap_list: Option<Vec<Endpoint>>) -> IoResult<Endpoint> {
+        unimplemented!()
+    }
+
+    pub fn connect(&self, endpoints: Vec<Endpoint>) {
         let ws = self.state.downgrade();
 
-        spawn(move || {
-            let _ = connect_tcp(endpoint)
-                    .and_then(|(i, o)| { handle_connect(ws, i, o, bytes) });
-        });
+        // FIXME: Handle situations where endpoints.len() < or > then 1
+        assert!(endpoints.len() == 1, "TODO");
 
-        Ok(())
+        let endpoint = endpoints[0].clone();
+
+        match endpoint.clone() {
+            Endpoint::Tcp(addr) => {
+                spawn(move || {
+                    println!("Connecting");
+                    let _ = connect_tcp(addr.clone())
+                            .and_then(|(i, o)| { handle_connect(ws, endpoint, i, o) });
+                });
+            },
+        }
     }
 
     /// Sends a message to address. Returns Ok(()) if the sending might succeed, and returns an
     /// Err if the address is not connected. Return value of Ok does not mean that the data will be
     /// received. It is possible for the corresponding connection to hang up immediately after this
     /// function returns Ok.
-    pub fn send(&self, message: Bytes, id : Id)-> IoResult<()> {
+    pub fn send(&self, endpoint: Endpoint, message: Bytes)-> IoResult<()> {
         let ws = self.state.downgrade();
 
         let writer_channel = try!(lock_state(&ws, |s| {
-                match s.connections.get(&id) {
-                    Some(c) =>  Ok(c.writer_channel.clone()),
-                    None => Err(io::Error::new(io::ErrorKind::NotConnected, "?"))
-                }
+            match s.connections.get(&endpoint) {
+                Some(c) =>  Ok(c.writer_channel.clone()),
+                None => Err(io::Error::new(io::ErrorKind::NotConnected, "?"))
+            }
         }));
 
         let send_result = writer_channel.send(message);
@@ -124,28 +143,17 @@ where Id : Hash + Eq + Send + 'static + Clone + Encodable + Decodable + Debug {
         send_result.map_err(|_|cant_send)
     }
 
-    pub fn drop_node(&self, id: Id) -> IoResult<()>{  // FIXME
+    pub fn drop_node(&self, endpoint: Endpoint) {
         let mut ws = self.state.downgrade();
-        lock_mut_state(&mut ws, |s: &mut State<Id>| {
-            s.connections.remove(&id);
-            Ok(())
-        })
-    }
-
-    pub fn id(&self) -> Id {
-        lock_state(&self.state.downgrade(), |s| Ok(s.our_id.clone())).unwrap()
-    }
-
-    pub fn stop(&self) {
-        let _ = lock_mut_state(&self.state.downgrade(), |s| {
-            s.connections.clear();
+        let _ = lock_mut_state(&mut ws, |s: &mut State| {
+            s.connections.remove(&endpoint);
             Ok(())
         });
     }
+
 }
 
-fn lock_state<T, Id, F: Fn(&State<Id>) -> IoResult<T>>(state: &WeakState<Id>, f: F) -> IoResult<T>
-where Id: Hash + Eq {
+fn lock_state<T, F: Fn(&State) -> IoResult<T>>(state: &WeakState, f: F) -> IoResult<T> {
     state.upgrade().ok_or(io::Error::new(io::ErrorKind::Interrupted,
                                          "Can't dereference weak"))
     .and_then(|arc_state| {
@@ -157,8 +165,7 @@ where Id: Hash + Eq {
     })
 }
 
-fn lock_mut_state<T, Id, F: FnOnce(&mut State<Id>) -> IoResult<T>>(state: &WeakState<Id>, f: F) -> IoResult<T>
-where Id: Hash + Eq {
+fn lock_mut_state<T, F: FnOnce(&mut State) -> IoResult<T>>(state: &WeakState, f: F) -> IoResult<T> {
     state.upgrade().ok_or(io::Error::new(io::ErrorKind::Interrupted,
                                          "Can't dereference weak"))
     .and_then(move |arc_state| {
@@ -170,186 +177,167 @@ where Id: Hash + Eq {
     })
 }
 
-fn handle_accept<Id>(mut state: WeakState<Id>,
-                     i: SocketReader,
-                     o: SocketWriter) -> IoResult<()>
-where Id: Hash + Eq + Clone + Encodable + Decodable + Send + 'static + Debug {
-    let our_id = try!(lock_state(&state, |s| Ok(s.our_id.clone())));
-    let (i, o, his_data) = try!(exchange(i, o, encode(&(our_id, Bytes::new()))));
-    let (his_id, his_message): (Id, Bytes) = decode(his_data);
-    register_connection(&mut state, his_id.clone(), i, o, Event::Accept(his_id, his_message))
+fn handle_accept(mut state: WeakState,
+                 his_ep: Endpoint,
+                 i: SocketReader,
+                 o: SocketWriter) -> IoResult<()> {
+    register_connection(&mut state, his_ep.clone(), i, o, Event::NewConnection(his_ep))
 }
 
-fn handle_connect<Id>(mut state: WeakState<Id>,
-                      i: SocketReader,
-                      o: SocketWriter,
-                      bytes: Bytes) -> IoResult<()>
-where Id: Hash + Eq + Clone + Encodable + Decodable + Send + 'static + Debug {
-    let our_id = try!(lock_state(&state, |s| Ok(s.our_id.clone())));
-    let (i, o, his_data) = try!(exchange(i, o, encode(&(our_id, bytes))));
-    let (his_id, _): (Id, Bytes) = decode(his_data);
-    register_connection(&mut state, his_id.clone(), i, o, Event::Connect(his_id))
+fn handle_connect(mut state: WeakState,
+                  his_ep: Endpoint,
+                  i: SocketReader,
+                  o: SocketWriter) -> IoResult<()> {
+    println!("handle_connect");
+    register_connection(&mut state, his_ep.clone(), i, o, Event::NewConnection(his_ep))
 }
 
-fn register_connection<Id>( state: &mut WeakState<Id>
-                          , his_id: Id
-                          , i: SocketReader
-                          , o: SocketWriter
-                          , event_to_user: Event<Id>
-                          ) -> IoResult<()>
-where Id: Hash + Eq + Clone + Send + 'static + Debug {
+fn register_connection( state: &mut WeakState
+                      , his_ep: Endpoint
+                      , i: SocketReader
+                      , o: SocketWriter
+                      , event_to_user: Event
+                      ) -> IoResult<()> {
 
     let state2 = state.clone();
 
-    lock_mut_state(state, move |s: &mut State<Id>| {
+    lock_mut_state(state, move |s: &mut State| {
+        println!("register_connection");
         let (tx, rx) = mpsc::channel();
-        start_writing_thread(state2.clone(), o, his_id.clone(), rx);
-        start_reading_thread(state2, i, his_id.clone(), s.event_pipe.clone());
-        s.connections.insert(his_id, Connection{writer_channel: tx});
+        start_writing_thread(state2.clone(), o, his_ep.clone(), rx);
+        start_reading_thread(state2, i, his_ep.clone(), s.event_pipe.clone());
+        s.connections.insert(his_ep, Connection{writer_channel: tx});
         let _ = s.event_pipe.send(event_to_user);
         Ok(())
     })
 }
 
-fn unregister_connection<Id>(state: WeakState<Id>, his_id: Id)
-where Id: Hash + Eq {
+fn unregister_connection(state: WeakState, his_ep: Endpoint) {
+    println!("unregister_connection");
     let _ = lock_mut_state(&state, |s| {
-        if s.connections.remove(&his_id).is_some() {
+        if s.connections.remove(&his_ep).is_some() {
             // Only send the event if the connection was there
             // to avoid duplicate events.
-            let _ = s.event_pipe.send(Event::LostConnection(his_id));
+            let _ = s.event_pipe.send(Event::LostConnection(his_ep));
         }
         Ok(())
     });
 }
 
 // pushing events out to event_pipe
-fn start_reading_thread<Id>(state: WeakState<Id>, i: SocketReader, his_id: Id, sink: IoSender<Event<Id>>)
-where Id: Hash + Eq + Clone + Send + 'static + Debug {
+fn start_reading_thread(state: WeakState,
+                        i: SocketReader,
+                        his_ep: Endpoint,
+                        sink: IoSender<Event>) {
     spawn(move || {
         for msg in i.iter() {
-            if sink.send(Event::NewMessage(his_id.clone(), msg)).is_err() {
+            if sink.send(Event::NewMessage(his_ep.clone(), msg)).is_err() {
                 break;
             }
         }
-        //println!(">>>>>>>> end reading his_id {:?}", his_id.clone());
-        unregister_connection(state, his_id);
+        unregister_connection(state, his_ep);
     });
 }
 
 // pushing messges out to socket
-fn start_writing_thread<Id>(state: WeakState<Id>, mut o: SocketWriter, his_id: Id, writer_channel: mpsc::Receiver<Bytes>)
-where Id: Hash + Eq + Send + 'static + Debug + Clone {
+fn start_writing_thread(state: WeakState,
+                        mut o: SocketWriter,
+                        his_ep: Endpoint,
+                        writer_channel: mpsc::Receiver<Bytes>) {
     spawn(move || {
         for msg in writer_channel.iter() {
             if o.send(&msg).is_err() {
                 break;
             }
         }
-        //println!(">>>>>>>> end writing his_id {:?}", his_id.clone());
-        unregister_connection(state, his_id);
+        unregister_connection(state, his_ep);
         });
 }
 
 // FIXME need timer
-fn exchange(socket_input:  SocketReader, socket_output: SocketWriter, data: Bytes)
-            -> IoResult<(SocketReader, SocketWriter, Bytes)>
-{
-    let (output, input) = mpsc::channel();
-
-    spawn(move || {
-        let mut s = socket_output;
-        if s.send(&data).is_err() {
-            return;
-        }
-        let _ = output.send(s);
-    });
-
-    let opt_result = socket_input.recv();
-    let opt_send_result = input.recv();
-
-    let cant_send = io::Error::new(io::ErrorKind::Other,
-                                   "Can't exchage (send error)");
-    let cant_recv = io::Error::new(io::ErrorKind::Other,
-                                   "Can't exchage (send error)");
-
-    let socket_output = try!(opt_send_result.map_err(|_|cant_send));
-    let result = try!(opt_result.map_err(|_|cant_recv));
-
-    Ok((socket_input, socket_output, result))
-}
-
-fn encode<T>(value: &T) -> Bytes where T: Encodable
-{
-    let mut enc = Encoder::from_memory();
-    let _ = enc.encode(&[value]);
-    enc.into_bytes()
-}
-
-// TODO(Peter): This should return Option<T>
-fn decode<T>(bytes: Bytes) -> T where T: Decodable {
-    let mut dec = Decoder::from_bytes(&bytes[..]);
-    dec.decode().next().unwrap().unwrap()
-}
+//fn exchange(socket_input:  SocketReader, socket_output: SocketWriter, data: Bytes)
+//            -> IoResult<(SocketReader, SocketWriter, Bytes)>
+//{
+//    let (output, input) = mpsc::channel();
+//
+//    spawn(move || {
+//        let mut s = socket_output;
+//        if s.send(&data).is_err() {
+//            return;
+//        }
+//        let _ = output.send(s);
+//    });
+//
+//    let opt_result = socket_input.recv();
+//    let opt_send_result = input.recv();
+//
+//    let cant_send = io::Error::new(io::ErrorKind::Other,
+//                                   "Can't exchage (send error)");
+//    let cant_recv = io::Error::new(io::ErrorKind::Other,
+//                                   "Can't exchage (send error)");
+//
+//    let socket_output = try!(opt_send_result.map_err(|_|cant_send));
+//    let result = try!(opt_result.map_err(|_|cant_recv));
+//
+//    Ok((socket_input, socket_output, result))
+//}
 
 #[cfg(test)]
 mod test {
     use super::*;
     use std::thread::spawn;
     use std::sync::mpsc::{Receiver, channel};
-    use std::net::{SocketAddr};
-    use std::str::FromStr;
+    use rustc_serialize::{Decodable, Encodable};
+    use cbor::{Encoder, Decoder};
+
+    fn encode<T>(value: &T) -> Bytes where T: Encodable
+    {
+        let mut enc = Encoder::from_memory();
+        let _ = enc.encode(&[value]);
+        enc.into_bytes()
+    }
+
+    fn decode<T>(bytes: Bytes) -> T where T: Decodable {
+        let mut dec = Decoder::from_bytes(&bytes[..]);
+        dec.decode().next().unwrap().unwrap()
+    }
 
 #[test]
     fn connection_manager() {
-        type Id = Vec<u8>;
-        let run_cm = |cm: ConnectionManager<Id>, o: Receiver<Event<Id>>, my_port, his_port| {
-            spawn(move ||{
-                if my_port < his_port {
-                    let addr = SocketAddr::from_str(&format!("127.0.0.1:{}", his_port)).unwrap();
-                    assert!(cm.connect(addr, Vec::<u8>::new()).is_ok());
-                }
-
+        let run_cm = |cm: ConnectionManager, o: Receiver<Event>| {
+            spawn(move || {
                 for i in o.iter() {
-                    println!("Received event {:?}", i);
                     match i {
-                        Event::Connect(_) => {
-                            println!("Connected");
-                            if cm.id() == vec![1] {
-                                assert!(cm.send(vec![2], vec![2]).is_ok());
-                            } else {
-                                assert!(cm.send(vec![1], vec![1]).is_ok());
-                            }
+                        Event::NewConnection(other_ep) => {
+                            println!("Connected {:?}", other_ep);
+                            cm.send(other_ep.clone(), encode(&"hello world".to_string()));
                         },
-                        Event::Accept(_, _) => {
-                            println!("Accepted");
-                            if cm.id() == vec![1] {
-                                assert!(cm.send(vec![2], vec![2]).is_ok());
-                            } else {
-                                assert!(cm.send(vec![1], vec![1]).is_ok());
-                            }
-                        },
-                        Event::NewMessage(x, y) => {
-                            println!("new message !");
-                            //cm.stop();
+                        Event::NewMessage(from_ep, data) => {
+                            println!("New message from {:?} data:{:?}",
+                                     from_ep, decode::<String>(data));
                             break;
-                        }
+                        },
+                        Event::LostConnection(other_ep) => {
+                            println!("Lost connection to {:?}", other_ep);
+                        },
                         _ => println!("unhandled"),
                     }
                 }
+                println!("done");
             })
         };
 
         let (cm1_i, cm1_o) = channel();
-        let cm1 = ConnectionManager::new(vec![1], cm1_i);
-        let cm1_port = cm1.start_accepting().unwrap();
+        let cm1 = ConnectionManager::new(cm1_i);
+        let cm1_eps = cm1.start_listening(Vec::new()).unwrap();
 
         let (cm2_i, cm2_o) = channel();
-        let cm2 = ConnectionManager::new(vec![2], cm2_i);
-        let cm2_port = cm2.start_accepting().unwrap();
+        let cm2 = ConnectionManager::new(cm2_i);
+        let cm2_eps = cm2.start_listening(Vec::new()).unwrap();
+        cm2.connect(cm1_eps.clone());
 
-        let runner1 = run_cm(cm1, cm1_o, cm1_port, cm2_port);
-        let runner2 = run_cm(cm2, cm2_o, cm2_port, cm1_port);
+        let runner1 = run_cm(cm1, cm1_o);
+        let runner2 = run_cm(cm2, cm2_o);
 
         assert!(runner1.join().is_ok());
         assert!(runner2.join().is_ok());

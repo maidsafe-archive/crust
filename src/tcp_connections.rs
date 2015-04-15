@@ -102,42 +102,6 @@ pub fn listen() ->  IoResult<(Receiver<(TcpStream, SocketAddr)>, TcpListener)> {
     Ok((rx, tcp_listener))
 }
 
-pub fn listen2() ->  IoResult<(Receiver<(TcpStream, SocketAddr)>, TcpListener)> {
-    let live_address = (("0.0.0.0"), 5483);
-    let any_address = (("0.0.0.0"), 0);
-    let tcp_listener = match TcpListener::bind(live_address) {
-        Ok(x) => x,
-        Err(_) => TcpListener::bind(&any_address).unwrap()
-    };
-    //println!("Listening on {:?}", tcp_listener.local_addr().unwrap());
-    let (tx, rx) = mpsc::channel();
-
-    let tcp_listener2 = try!(tcp_listener.try_clone());
-    spawn(move || {
-        loop {
-            // if tx.is_closed() {       // FIXME (Prakash)
-            //     break;
-            // }
-            match tcp_listener2.accept() {
-                Ok(stream) => {
-                    if tx.send(stream).is_err() {
-                        break;
-                    }
-                }
-                Err(ref e) if e.kind() == ErrorKind::TimedOut => {
-                    continue;
-                }
-                Err(e) => {
-                    //let _  = tx.error(e);
-                    break;
-                }
-            }
-            println!(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-        }
-    });
-    Ok((rx, tcp_listener))
-}
-
 // Almost a straight copy of https://github.com/TyOverby/wire/blob/master/src/tcp.rs
 /// Upgrades a TcpStream to a Sender-Receiver pair that you can use to send and
 /// receive objects automatically.  If there is an error decoding or encoding
