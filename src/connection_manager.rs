@@ -78,9 +78,7 @@ impl ConnectionManager {
         ConnectionManager { state: state }
     }
 
-    // bootstrap_list will over
-    pub fn start(&self, bootstrap_list: Option<Vec<Endpoint>>,
-                 hint: Vec<PortAndProtocol>) -> IoResult<Vec<Endpoint>> {
+    pub fn start(&self, hint: Vec<PortAndProtocol>) -> IoResult<Vec<Endpoint>> {
         let weak_state = self.state.downgrade();
         let (event_receiver, listener) = try!(listen());
 
@@ -101,6 +99,10 @@ impl ConnectionManager {
         });
 
         Ok(vec![Endpoint::Tcp(local_addr)])
+    }
+
+    pub fn bootstrap(&self, bootstrap_list: Option<Vec<Endpoint>>) -> IoResult<Endpoint> {
+        unimplemented!()
     }
 
     pub fn connect(&self, endpoints: Vec<Endpoint>) {
@@ -329,11 +331,11 @@ mod test {
 
         let (cm1_i, cm1_o) = channel();
         let cm1 = ConnectionManager::new(cm1_i);
-        let cm1_eps = cm1.start(None, Vec::new()).unwrap();
+        let cm1_eps = cm1.start(Vec::new()).unwrap();
 
         let (cm2_i, cm2_o) = channel();
         let cm2 = ConnectionManager::new(cm2_i);
-        let cm2_eps = cm2.start(None, Vec::new()).unwrap();
+        let cm2_eps = cm2.start(Vec::new()).unwrap();
         cm2.connect(cm1_eps.clone());
 
         let runner1 = run_cm(cm1, cm1_o);
