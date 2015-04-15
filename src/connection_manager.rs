@@ -47,13 +47,11 @@ pub struct ConnectionManager {
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub enum Endpoint {
     Tcp(SocketAddr),
-    //Utp(utp::SocketAddress),
 }
 
 #[derive(Debug, Clone)]
 pub enum PortAndProtocol {
     Tcp(u16),
-    //Utp(u16),
 }
 
 #[derive(Debug, PartialEq, Eq, Hash)]
@@ -78,7 +76,7 @@ impl ConnectionManager {
     pub fn new(event_pipe: IoSender<Event>) -> ConnectionManager {
         let connections: HashMap<Endpoint, Connection> = HashMap::new();
         let state = Arc::new(Mutex::new(State{ event_pipe: event_pipe,
-                                               connections : connections }));
+                                               connections: connections }));
         ConnectionManager { state: state }
     }
 
@@ -87,7 +85,9 @@ impl ConnectionManager {
                  hint: Vec<PortAndProtocol>) -> IoResult<Vec<Endpoint>> {
         let weak_state = self.state.downgrade();
         let (event_receiver, listener) = try!(listen());
-        let local_port = try!(listener.local_addr()).port();  // Consider backlog
+
+        // FIXME: Try listen on ports given by the `hint` parameter.
+        let local_addr = try!(listener.local_addr());
 
         spawn(move || {
             for x in event_receiver.iter() {
@@ -102,14 +102,13 @@ impl ConnectionManager {
             }
         });
 
-        // FIXME:
-        Ok(Vec::new())
+        Ok(vec![Endpoint::Tcp(local_addr)])
     }
 
-    // FIXME: Desired api is commented out
     pub fn connect(&self, endpoints: Vec<Endpoint>) {
         let ws = self.state.downgrade();
 
+        // FIXME: Handle situations where endpoints.len() < or > then 1
         assert!(endpoints.len() == 1, "TODO");
 
         let endpoint = endpoints[0].clone();
@@ -117,6 +116,7 @@ impl ConnectionManager {
         match endpoint.clone() {
             Endpoint::Tcp(addr) => {
                 spawn(move || {
+                    println!("Connecting");
                     let _ = connect_tcp(addr.clone())
                             .and_then(|(i, o)| { handle_connect(ws, endpoint, i, o) });
                 });
@@ -188,6 +188,7 @@ fn handle_connect(mut state: WeakState,
                   his_ep: Endpoint,
                   i: SocketReader,
                   o: SocketWriter) -> IoResult<()> {
+    println!("handle_connect");
     register_connection(&mut state, his_ep.clone(), i, o, Event::NewConnection(his_ep))
 }
 
@@ -201,6 +202,7 @@ fn register_connection( state: &mut WeakState
     let state2 = state.clone();
 
     lock_mut_state(state, move |s: &mut State| {
+        println!("register_connection");
         let (tx, rx) = mpsc::channel();
         start_writing_thread(state2.clone(), o, his_ep.clone(), rx);
         start_reading_thread(state2, i, his_ep.clone(), s.event_pipe.clone());
@@ -211,6 +213,7 @@ fn register_connection( state: &mut WeakState
 }
 
 fn unregister_connection(state: WeakState, his_ep: Endpoint) {
+    println!("unregister_connection");
     let _ = lock_mut_state(&state, |s| {
         if s.connections.remove(&his_ep).is_some() {
             // Only send the event if the connection was there
@@ -302,42 +305,39 @@ mod test {
 
 #[test]
     fn connection_manager() {
-        //let run_cm = |cm: ConnectionManager, o: Receiver<Event>, my_port, his_port| {
-        //    spawn(move ||{
-        //        if my_port < his_port {
-        //            let addr = SocketAddr::from_str(&format!("127.0.0.1:{}", his_port)).unwrap();
-        //            cm.connect(vec![Endpoint::Tcp(addr)]);
-        //        }
+        let run_cm = |cm: ConnectionManager, o: Receiver<Event>| {
+            spawn(move ||{
+                for i in o.iter() {
+                    println!("Received event {:?}", i);
+                    match i {
+                        Event::NewConnection(_) => {
+                            println!("Connected");
+                        },
+                        Event::NewMessage(x, y) => {
+                            println!("new message !");
+                            //cm.stop();
+                            break;
+                        }
+                        _ => println!("unhandled"),
+                    }
+                }
+                println!("done");
+            })
+        };
 
-        //        for i in o.iter() {
-        //            println!("Received event {:?}", i);
-        //            match i {
-        //                Event::NewConnection(_) => {
-        //                    println!("Connected");
-        //                },
-        //                Event::NewMessage(x, y) => {
-        //                    println!("new message !");
-        //                    //cm.stop();
-        //                    break;
-        //                }
-        //                _ => println!("unhandled"),
-        //            }
-        //        }
-        //    })
-        //};
+        let (cm1_i, cm1_o) = channel();
+        let cm1 = ConnectionManager::new(cm1_i);
+        let cm1_eps = cm1.start(None, Vec::new()).unwrap();
 
-        //let (cm1_i, cm1_o) = channel();
-        //let cm1 = ConnectionManager::new(cm1_i);
-        //let cm1_port = cm1.start().unwrap();
+        let (cm2_i, cm2_o) = channel();
+        let cm2 = ConnectionManager::new(cm2_i);
+        let cm2_eps = cm2.start(None, Vec::new()).unwrap();
+        cm2.connect(cm1_eps);
 
-        //let (cm2_i, cm2_o) = channel();
-        //let cm2 = ConnectionManager::new(cm2_i);
-        //let cm2_port = cm2.start_accepting().unwrap();
+        let runner1 = run_cm(cm1, cm1_o);
+        let runner2 = run_cm(cm2, cm2_o);
 
-        //let runner1 = run_cm(cm1, cm1_o, cm1_port, cm2_port);
-        //let runner2 = run_cm(cm2, cm2_o, cm2_port, cm1_port);
-
-        //assert!(runner1.join().is_ok());
-        //assert!(runner2.join().is_ok());
+        assert!(runner1.join().is_ok());
+        assert!(runner2.join().is_ok());
     }
 }
