@@ -203,8 +203,14 @@ where Id: Hash + Eq + Clone + Send + 'static + Debug {
 
     lock_mut_state(state, move |s: &mut State<Id>| {
         let (tx, rx) = mpsc::channel();
-        start_writing_thread(state2.clone(), o, his_id.clone(), rx);
-        start_reading_thread(state2, i, his_id.clone(), s.event_pipe.clone());
+
+        if s.connections.get(&his_id).is_some() {
+            let _ = s.event_pipe.send(event_to_user);
+            return Ok(())
+        }
+
+        start_writing_thread(state2.clone(), o, s.our_id.clone(), his_id.clone(), rx);
+        start_reading_thread(state2, i, s.our_id.clone(), his_id.clone(), s.event_pipe.clone());
         s.connections.insert(his_id, Connection{writer_channel: tx});
         let _ = s.event_pipe.send(event_to_user);
         Ok(())
@@ -224,7 +230,7 @@ where Id: Hash + Eq {
 }
 
 // pushing events out to event_pipe
-fn start_reading_thread<Id>(state: WeakState<Id>, i: SocketReader, his_id: Id, sink: IoSender<Event<Id>>)
+fn start_reading_thread<Id>(state: WeakState<Id>, i: SocketReader, our_id: Id, his_id: Id, sink: IoSender<Event<Id>>)
 where Id: Hash + Eq + Clone + Send + 'static + Debug {
     spawn(move || {
         for msg in i.iter() {
@@ -232,21 +238,23 @@ where Id: Hash + Eq + Clone + Send + 'static + Debug {
                 break;
             }
         }
-        //println!(">>>>>>>> end reading his_id {:?}", his_id.clone());
+        println!("{:?} >>>>>>>> end reading his_id:{:?}", our_id, his_id.clone());
         unregister_connection(state, his_id);
     });
 }
 
 // pushing messges out to socket
-fn start_writing_thread<Id>(state: WeakState<Id>, mut o: SocketWriter, his_id: Id, writer_channel: mpsc::Receiver<Bytes>)
+fn start_writing_thread<Id>(state: WeakState<Id>, mut o: SocketWriter, our_id: Id, his_id: Id, writer_channel: mpsc::Receiver<Bytes>)
 where Id: Hash + Eq + Send + 'static + Debug + Clone {
+    println!("{:?} >>>>>>>> spawn writing thread to his_id:{:?}", our_id, his_id.clone());
     spawn(move || {
         for msg in writer_channel.iter() {
             if o.send(&msg).is_err() {
+                println!("{:?} >>>>>>>> error sending to his_id:{:?}", our_id, his_id.clone());
                 break;
             }
         }
-        //println!(">>>>>>>> end writing his_id {:?}", his_id.clone());
+        println!("{:?} >>>>>>>> end writing his_id:{:?}", our_id, his_id.clone());
         unregister_connection(state, his_id);
         });
 }
