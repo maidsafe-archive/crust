@@ -78,7 +78,7 @@ impl ConnectionManager {
         ConnectionManager { state: state }
     }
 
-    pub fn start(&self, hint: Vec<PortAndProtocol>) -> IoResult<Vec<Endpoint>> {
+    pub fn start_listening(&self, hint: Vec<PortAndProtocol>) -> IoResult<Vec<Endpoint>> {
         let weak_state = self.state.downgrade();
         let (event_receiver, listener) = try!(listen());
 
@@ -145,7 +145,7 @@ impl ConnectionManager {
 
     pub fn drop_node(&self, endpoint: Endpoint) {
         let mut ws = self.state.downgrade();
-        lock_mut_state(&mut ws, |s: &mut State| {
+        let _ = lock_mut_state(&mut ws, |s: &mut State| {
             s.connections.remove(&endpoint);
             Ok(())
         });
@@ -255,40 +255,38 @@ fn start_writing_thread(state: WeakState,
 }
 
 // FIXME need timer
-fn exchange(socket_input:  SocketReader, socket_output: SocketWriter, data: Bytes)
-            -> IoResult<(SocketReader, SocketWriter, Bytes)>
-{
-    let (output, input) = mpsc::channel();
-
-    spawn(move || {
-        let mut s = socket_output;
-        if s.send(&data).is_err() {
-            return;
-        }
-        let _ = output.send(s);
-    });
-
-    let opt_result = socket_input.recv();
-    let opt_send_result = input.recv();
-
-    let cant_send = io::Error::new(io::ErrorKind::Other,
-                                   "Can't exchage (send error)");
-    let cant_recv = io::Error::new(io::ErrorKind::Other,
-                                   "Can't exchage (send error)");
-
-    let socket_output = try!(opt_send_result.map_err(|_|cant_send));
-    let result = try!(opt_result.map_err(|_|cant_recv));
-
-    Ok((socket_input, socket_output, result))
-}
+//fn exchange(socket_input:  SocketReader, socket_output: SocketWriter, data: Bytes)
+//            -> IoResult<(SocketReader, SocketWriter, Bytes)>
+//{
+//    let (output, input) = mpsc::channel();
+//
+//    spawn(move || {
+//        let mut s = socket_output;
+//        if s.send(&data).is_err() {
+//            return;
+//        }
+//        let _ = output.send(s);
+//    });
+//
+//    let opt_result = socket_input.recv();
+//    let opt_send_result = input.recv();
+//
+//    let cant_send = io::Error::new(io::ErrorKind::Other,
+//                                   "Can't exchage (send error)");
+//    let cant_recv = io::Error::new(io::ErrorKind::Other,
+//                                   "Can't exchage (send error)");
+//
+//    let socket_output = try!(opt_send_result.map_err(|_|cant_send));
+//    let result = try!(opt_result.map_err(|_|cant_recv));
+//
+//    Ok((socket_input, socket_output, result))
+//}
 
 #[cfg(test)]
 mod test {
     use super::*;
     use std::thread::spawn;
     use std::sync::mpsc::{Receiver, channel};
-    use std::net::{SocketAddr};
-    use std::str::FromStr;
     use rustc_serialize::{Decodable, Encodable};
     use cbor::{Encoder, Decoder};
 
@@ -331,11 +329,11 @@ mod test {
 
         let (cm1_i, cm1_o) = channel();
         let cm1 = ConnectionManager::new(cm1_i);
-        let cm1_eps = cm1.start(Vec::new()).unwrap();
+        let cm1_eps = cm1.start_listening(Vec::new()).unwrap();
 
         let (cm2_i, cm2_o) = channel();
         let cm2 = ConnectionManager::new(cm2_i);
-        let cm2_eps = cm2.start(Vec::new()).unwrap();
+        let cm2_eps = cm2.start_listening(Vec::new()).unwrap();
         cm2.connect(cm1_eps.clone());
 
         let runner1 = run_cm(cm1, cm1_o);
