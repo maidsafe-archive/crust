@@ -75,27 +75,8 @@ impl ConnectionManager {
     /// supported protocol. The actual endpoints used will be returned on which it started listening
     /// for each protocol.
     pub fn start_listening(&self, hint: Vec<Port>) -> IoResult<Vec<Endpoint>> {
-        let mut weak_state = self.state.downgrade();
-
-        // FIXME: Try to listen on ports given by the `hint` parameter.
-        let acceptor   = try!(transport::new_acceptor(Port::Tcp(0)));
-        let local_addr = try!(transport::local_endpoint(&acceptor));
-
-        try!(lock_mut_state(&mut weak_state, |s| Ok(s.listening_eps.insert(local_addr.clone()))));
-
-        spawn(move || {
-            loop {
-                match transport::accept(&acceptor) {
-                    Ok(trans) => {
-                        let ws = weak_state.clone();
-                        spawn(move || { let _ = handle_accept(ws, trans); });
-                    },
-                    Err(_)    => {break},
-                }
-            }
-        });
-
-        Ok(vec![local_addr])
+        // FIXME: IoResult seems pointless since we always return Ok.
+        Ok(hint.iter().filter_map(|port| self.listen(port).ok()).collect::<Vec<_>>())
     }
 
     /// This method tries to connect (bootstrap to exisiting network) to the default or provided
@@ -166,7 +147,7 @@ impl ConnectionManager {
         unimplemented!()
     }
 
-    pub fn bootstrap_off_list(&self, bootstrap_list: Vec<Endpoint>) -> IoResult<Endpoint> {
+    fn bootstrap_off_list(&self, bootstrap_list: Vec<Endpoint>) -> IoResult<Endpoint> {
         for endpoint in bootstrap_list {
             match transport::connect(endpoint) {
                 Ok(trans) => return Ok(trans.remote_endpoint.clone()),
@@ -176,6 +157,31 @@ impl ConnectionManager {
         // FIXME: The result should probably be Option<Endpoint>
         Err(io::Error::new(io::ErrorKind::Other, "No bootstrap node got connected"))
     }
+
+    fn listen(&self, port: &Port) -> IoResult<Endpoint> {
+        let acceptor = try!(transport::new_acceptor(port));
+        let local_ep = try!(transport::local_endpoint(&acceptor));
+
+        let mut weak_state = self.state.downgrade();
+
+        let ep = local_ep.clone();
+        try!(lock_mut_state(&mut weak_state, |s| Ok(s.listening_eps.insert(ep))));
+
+        spawn(move || {
+            loop {
+                match transport::accept(&acceptor) {
+                    Ok(trans) => {
+                        let ws = weak_state.clone();
+                        spawn(move || { let _ = handle_accept(ws, trans); });
+                    },
+                    Err(_) => {break},
+                }
+            }
+        });
+
+        Ok(local_ep)
+    }
+
 }
 
 fn lock_state<T, F: Fn(&State) -> IoResult<T>>(state: &WeakState, f: F) -> IoResult<T> {
@@ -281,6 +287,7 @@ mod test {
     use std::sync::mpsc::{Receiver, channel};
     use rustc_serialize::{Decodable, Encodable};
     use cbor::{Encoder, Decoder};
+    use transport::{Port};
 
     fn encode<T>(value: &T) -> Bytes where T: Encodable
     {
@@ -321,11 +328,11 @@ mod test {
 
         let (cm1_i, cm1_o) = channel();
         let cm1 = ConnectionManager::new(cm1_i);
-        let cm1_eps = cm1.start_listening(Vec::new()).unwrap();
+        let cm1_eps = cm1.start_listening(vec![Port::Tcp(0)]).unwrap();
 
         let (cm2_i, cm2_o) = channel();
         let cm2 = ConnectionManager::new(cm2_i);
-        let cm2_eps = cm2.start_listening(Vec::new()).unwrap();
+        let cm2_eps = cm2.start_listening(vec![Port::Tcp(0)]).unwrap();
         cm2.connect(cm1_eps.clone());
 
         let runner1 = run_cm(cm1, cm1_o);

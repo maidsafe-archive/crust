@@ -66,8 +66,8 @@ where I: Send + Decodable + 'static, O: Encodable {
 /// Returns:
 /// * A receiver of Tcp stream objects.  It is recommended that you `upgrade` these.
 /// * A TcpAcceptor.  This can be used to close the listener from outside of the listening thread.
-pub fn listen() -> IoResult<(Receiver<(TcpStream, SocketAddr)>, TcpListener)> {
-    let live_address = (("0.0.0.0"), 5483);
+pub fn listen(port: u16) -> IoResult<(Receiver<(TcpStream, SocketAddr)>, TcpListener)> {
+    let live_address = (("0.0.0.0"), port);
     let any_address = (("0.0.0.0"), 0);
     let tcp_listener = match TcpListener::bind(live_address) {
         Ok(x) => x,
@@ -165,7 +165,7 @@ mod test {
 
  #[test]
     fn test_small_stream() {
-        let (event_receiver, listener) = listen().unwrap();
+        let (event_receiver, listener) = listen(5483).unwrap();
         let port = listener.local_addr().unwrap().port();
         let (i, mut o) = connect_tcp(SocketAddr::from_str(&format!("127.0.0.1:{}", port)).unwrap()).unwrap();
 
@@ -200,7 +200,7 @@ mod test {
         const MSG_COUNT: usize = 5;
         const CLIENT_COUNT: usize = 101;
 
-        let (event_receiver, listener) = listen().unwrap();
+        let (event_receiver, listener) = listen(5483).unwrap();
         let port = listener.local_addr().unwrap().port();
         let mut vector_senders = Vec::new();
         let mut vector_receiver = Vec::new();

@@ -66,10 +66,10 @@ pub fn connect(remote_ep: Endpoint) -> IoResult<Transport> {
     }
 }
 
-pub fn new_acceptor(port_and_proto: Port) -> IoResult<Acceptor> {
-    match port_and_proto {
-        Port::Tcp(_ /* TODO */) => {
-            let (receiver, listener) = try!(tcp_connections::listen());
+pub fn new_acceptor(port: &Port) -> IoResult<Acceptor> {
+    match *port {
+        Port::Tcp(ref port) => {
+            let (receiver, listener) = try!(tcp_connections::listen(*port));
             Ok(Acceptor::Tcp(receiver, listener))
         }
     }
