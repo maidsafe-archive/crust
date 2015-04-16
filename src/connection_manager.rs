@@ -114,7 +114,8 @@ impl ConnectionManager {
     /// This method tries to connect (bootstrap to exisiting network) to the default or provided
     /// list of bootstrap nodes. If the bootstrap list is `Some`, the method will try to connect to
     /// all of the endpoints specified in `bootstrap_list`. It will return once connection with any of the
-    /// endpoint is established with Ok(Endpoint). Returns Err if if fails to connect to any of the
+    /// endpoint is established with Ok(Endpoint) and it will drop all other ongoing attempts.
+    /// Returns Err if if fails to connect to any of the
     /// endpoints specified.
     /// If `bootstrap_list` is `None`, it will use default methods to bootstrap to the existing network.
     /// Default methods includes beacon system for finding nodes on a local network
