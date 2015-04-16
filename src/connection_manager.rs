@@ -15,7 +15,7 @@
 
 use std::io::Error as IoError;
 use std::io;
-use std::collections::{HashMap};
+use std::collections::{HashMap, HashSet};
 use std::thread::spawn;
 use std::sync::mpsc::channel;
 use std::sync::mpsc::{Receiver, Sender};
@@ -53,8 +53,9 @@ struct Connection {
 }
 
 struct State {
-    event_pipe: IoSender<Event>,
-    connections: HashMap<Endpoint, Connection>,
+    event_pipe:    IoSender<Event>,
+    connections:   HashMap<Endpoint, Connection>,
+    listening_eps: HashSet<Endpoint>,
 }
 
 impl ConnectionManager {
@@ -62,9 +63,10 @@ impl ConnectionManager {
     /// User needs to create an asynchronous channel, and provide the sender half to this method.
     /// Receiver half will recieve all the events `Event` from this library.
     pub fn new(event_pipe: IoSender<Event>) -> ConnectionManager {
-        let connections: HashMap<Endpoint, Connection> = HashMap::new();
-        let state = Arc::new(Mutex::new(State{ event_pipe: event_pipe,
-                                               connections: connections }));
+        let state = Arc::new(Mutex::new(State{ event_pipe:    event_pipe,
+                                               connections:   HashMap::new(),
+                                               listening_eps: HashSet::new()
+                                             }));
         ConnectionManager { state: state }
     }
 
@@ -73,11 +75,13 @@ impl ConnectionManager {
     /// supported protocol. The actual endpoints used will be returned on which it started listening
     /// for each protocol.
     pub fn start_listening(&self, hint: Vec<Port>) -> IoResult<Vec<Endpoint>> {
-        let weak_state = self.state.downgrade();
+        let mut weak_state = self.state.downgrade();
 
         // FIXME: Try to listen on ports given by the `hint` parameter.
         let acceptor   = try!(transport::new_acceptor(Port::Tcp(0)));
         let local_addr = try!(transport::local_endpoint(&acceptor));
+
+        try!(lock_mut_state(&mut weak_state, |s| Ok(s.listening_eps.insert(local_addr.clone()))));
 
         spawn(move || {
             loop {
