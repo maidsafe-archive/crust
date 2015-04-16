@@ -19,7 +19,6 @@
 use std::net::{TcpListener, TcpStream, SocketAddr, Shutdown};
 use std::io::{BufReader, ErrorKind};
 use std::io::Result as IoResult;
-//use std::io::Error as IoError;
 use cbor::{Encoder, CborError, Decoder};
 use std::thread::spawn;
 use std::marker::PhantomData;
@@ -67,7 +66,7 @@ where I: Send + Decodable + 'static, O: Encodable {
 /// Returns:
 /// * A receiver of Tcp stream objects.  It is recommended that you `upgrade` these.
 /// * A TcpAcceptor.  This can be used to close the listener from outside of the listening thread.
-pub fn listen() ->  IoResult<(Receiver<(TcpStream, SocketAddr)>, TcpListener)> {
+pub fn listen() -> IoResult<(Receiver<(TcpStream, SocketAddr)>, TcpListener)> {
     let live_address = (("0.0.0.0"), 5483);
     let any_address = (("0.0.0.0"), 0);
     let tcp_listener = match TcpListener::bind(live_address) {

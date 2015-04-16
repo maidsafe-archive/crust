@@ -13,28 +13,23 @@
 // use of the MaidSafe
 // Software.
 
-use std::net::{SocketAddr};
 use std::io::Error as IoError;
 use std::io;
 use std::collections::{HashMap};
-use std::hash::{Hash};
 use std::thread::spawn;
 use std::sync::mpsc::channel;
 use std::sync::mpsc::{Receiver, Sender};
-use tcp_connections::{listen, connect_tcp, TcpReader, TcpWriter, upgrade_tcp};
 use std::sync::{Arc, Mutex, Weak};
 use std::sync::mpsc;
-use std::fmt::Debug;
+use transport::{Endpoint, Port};
+use transport;
 
-pub type Bytes   = Vec<u8>;
+pub type Bytes = Vec<u8>;
 
 pub type IoResult<T> = Result<T, IoError>;
 
 pub type IoReceiver<T> = Receiver<T>;
 pub type IoSender<T>   = Sender<T>;
-
-type SocketReader = TcpReader<Bytes>;
-type SocketWriter = TcpWriter<Bytes>;
 
 type WeakState = Weak<Mutex<State>>;
 
@@ -43,20 +38,9 @@ pub struct ConnectionManager {
     state: Arc<Mutex<State>>,
 }
 
-/// Enum representing endpoint of supported protocols
-#[derive(Debug, PartialEq, Eq, Hash, Clone)]
-pub enum Endpoint {
-    Tcp(SocketAddr),
-}
-
-#[derive(Debug, Clone)]
-pub enum PortAndProtocol {
-    Tcp(u16),
-}
-
 /// Enum representing different events that will be sent over the asynchronous channel to the user
 /// of this module.
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Event {
     NewMessage(Endpoint, Bytes),
     NewConnection(Endpoint),
@@ -88,27 +72,26 @@ impl ConnectionManager {
     /// if it fails to start on these, it defaults to random / OS provided endpoints for each
     /// supported protocol. The actual endpoints used will be returned on which it started listening
     /// for each protocol.
-    pub fn start_listening(&self, hint: Vec<PortAndProtocol>) -> IoResult<Vec<Endpoint>> {
+    pub fn start_listening(&self, hint: Vec<Port>) -> IoResult<Vec<Endpoint>> {
         let weak_state = self.state.downgrade();
-        let (event_receiver, listener) = try!(listen());
 
-        // FIXME: Try listen on ports given by the `hint` parameter.
-        let local_addr = try!(listener.local_addr());
+        // FIXME: Try to listen on ports given by the `hint` parameter.
+        let acceptor   = try!(transport::new_acceptor(Port::Tcp(0)));
+        let local_addr = try!(transport::local_endpoint(&acceptor));
 
         spawn(move || {
-            for x in event_receiver.iter() {
-                let (connection, _) = x;
-                let s = weak_state.clone();
-                let his_ep = Endpoint::Tcp(connection.peer_addr().unwrap());
-                spawn(move || {
-                    let _ =
-                        upgrade_tcp(connection)
-                        .and_then(|(i, o)| { handle_accept(s, his_ep, i, o) });
-                });
+            loop {
+                match transport::accept(&acceptor) {
+                    Ok(trans) => {
+                        let ws = weak_state.clone();
+                        spawn(move || { let _ = handle_accept(ws, trans); });
+                    },
+                    Err(_)    => {break},
+                }
             }
         });
 
-        Ok(vec![Endpoint::Tcp(local_addr)])
+        Ok(vec![local_addr])
     }
 
     /// This method tries to connect (bootstrap to exisiting network) to the default or provided
@@ -123,7 +106,10 @@ impl ConnectionManager {
     /// In both cases, this method blocks until it gets one successful connection or all the endpoints
     /// are tried and failed.
     pub fn bootstrap(&self, bootstrap_list: Option<Vec<Endpoint>>) -> IoResult<Endpoint> {
-        unimplemented!()
+        match bootstrap_list {
+            Some(list) => self.bootstrap_off_list(list),
+            None       => self.bootstrap_off_list(self.get_stored_bootstrap_endpoints()),
+        }
     }
 
 
@@ -138,17 +124,10 @@ impl ConnectionManager {
         // FIXME: Handle situations where endpoints.len() < or > then 1
         assert!(endpoints.len() == 1, "TODO");
 
-        let endpoint = endpoints[0].clone();
-
-        match endpoint.clone() {
-            Endpoint::Tcp(addr) => {
-                spawn(move || {
-                    println!("Connecting");
-                    let _ = connect_tcp(addr.clone())
-                            .and_then(|(i, o)| { handle_connect(ws, endpoint, i, o) });
-                });
-            },
-        }
+        spawn(move || {
+            let _ = transport::connect(endpoints[0].clone())
+                    .and_then(|trans| handle_connect(ws, trans));
+        });
     }
 
     /// Sends a message to specified address (endpoint). Returns Ok(()) if the sending might succeed, and returns an
@@ -179,6 +158,13 @@ impl ConnectionManager {
         });
     }
 
+    pub fn get_stored_bootstrap_endpoints(&self) -> Vec<Endpoint> {
+        unimplemented!()
+    }
+
+    pub fn bootstrap_off_list(&self, bootstrap_list: Vec<Endpoint>) -> IoResult<Endpoint> {
+        unimplemented!()
+    }
 }
 
 fn lock_state<T, F: Fn(&State) -> IoResult<T>>(state: &WeakState, f: F) -> IoResult<T> {
@@ -205,36 +191,28 @@ fn lock_mut_state<T, F: FnOnce(&mut State) -> IoResult<T>>(state: &WeakState, f:
     })
 }
 
-fn handle_accept(mut state: WeakState,
-                 his_ep: Endpoint,
-                 i: SocketReader,
-                 o: SocketWriter) -> IoResult<()> {
-    register_connection(&mut state, his_ep.clone(), i, o, Event::NewConnection(his_ep))
+fn handle_accept(mut state: WeakState, trans: transport::Transport) -> IoResult<()> {
+    let remote_ep = trans.remote_endpoint.clone();
+    register_connection(&mut state, trans, Event::NewConnection(remote_ep))
 }
 
-fn handle_connect(mut state: WeakState,
-                  his_ep: Endpoint,
-                  i: SocketReader,
-                  o: SocketWriter) -> IoResult<()> {
-    println!("handle_connect");
-    register_connection(&mut state, his_ep.clone(), i, o, Event::NewConnection(his_ep))
+fn handle_connect(mut state: WeakState, trans: transport::Transport) -> IoResult<()> {
+    let remote_ep = trans.remote_endpoint.clone();
+    register_connection(&mut state, trans, Event::NewConnection(remote_ep))
 }
 
-fn register_connection( state: &mut WeakState
-                      , his_ep: Endpoint
-                      , i: SocketReader
-                      , o: SocketWriter
-                      , event_to_user: Event
+fn register_connection( state: &mut WeakState,
+                        trans: transport::Transport,
+                        event_to_user: Event
                       ) -> IoResult<()> {
 
     let state2 = state.clone();
 
     lock_mut_state(state, move |s: &mut State| {
-        println!("register_connection");
         let (tx, rx) = mpsc::channel();
-        start_writing_thread(state2.clone(), o, his_ep.clone(), rx);
-        start_reading_thread(state2, i, his_ep.clone(), s.event_pipe.clone());
-        s.connections.insert(his_ep, Connection{writer_channel: tx});
+        start_writing_thread(state2.clone(), trans.sender, trans.remote_endpoint.clone(), rx);
+        start_reading_thread(state2, trans.receiver, trans.remote_endpoint.clone(), s.event_pipe.clone());
+        s.connections.insert(trans.remote_endpoint.clone(), Connection{writer_channel: tx});
         let _ = s.event_pipe.send(event_to_user);
         Ok(())
     })
@@ -254,13 +232,16 @@ fn unregister_connection(state: WeakState, his_ep: Endpoint) {
 
 // pushing events out to event_pipe
 fn start_reading_thread(state: WeakState,
-                        i: SocketReader,
+                        receiver: transport::Receiver,
                         his_ep: Endpoint,
                         sink: IoSender<Event>) {
     spawn(move || {
-        for msg in i.iter() {
-            if sink.send(Event::NewMessage(his_ep.clone(), msg)).is_err() {
-                break;
+        loop {
+            match transport::receive(&receiver) {
+                Ok(msg) => if sink.send(Event::NewMessage(his_ep.clone(), msg)).is_err() {
+                    break
+                },
+                Err(_) => break
             }
         }
         unregister_connection(state, his_ep);
@@ -269,46 +250,18 @@ fn start_reading_thread(state: WeakState,
 
 // pushing messges out to socket
 fn start_writing_thread(state: WeakState,
-                        mut o: SocketWriter,
+                        mut o: transport::Sender,
                         his_ep: Endpoint,
                         writer_channel: mpsc::Receiver<Bytes>) {
     spawn(move || {
         for msg in writer_channel.iter() {
-            if o.send(&msg).is_err() {
+            if transport::send(&mut o, &msg).is_err() {
                 break;
             }
         }
         unregister_connection(state, his_ep);
         });
 }
-
-// FIXME need timer
-//fn exchange(socket_input:  SocketReader, socket_output: SocketWriter, data: Bytes)
-//            -> IoResult<(SocketReader, SocketWriter, Bytes)>
-//{
-//    let (output, input) = mpsc::channel();
-//
-//    spawn(move || {
-//        let mut s = socket_output;
-//        if s.send(&data).is_err() {
-//            return;
-//        }
-//        let _ = output.send(s);
-//    });
-//
-//    let opt_result = socket_input.recv();
-//    let opt_send_result = input.recv();
-//
-//    let cant_send = io::Error::new(io::ErrorKind::Other,
-//                                   "Can't exchage (send error)");
-//    let cant_recv = io::Error::new(io::ErrorKind::Other,
-//                                   "Can't exchage (send error)");
-//
-//    let socket_output = try!(opt_send_result.map_err(|_|cant_send));
-//    let result = try!(opt_result.map_err(|_|cant_recv));
-//
-//    Ok((socket_input, socket_output, result))
-//}
 
 #[cfg(test)]
 mod test {
@@ -338,7 +291,7 @@ mod test {
                     match i {
                         Event::NewConnection(other_ep) => {
                             println!("Connected {:?}", other_ep);
-                            cm.send(other_ep.clone(), encode(&"hello world".to_string()));
+                            let _ = cm.send(other_ep.clone(), encode(&"hello world".to_string()));
                         },
                         Event::NewMessage(from_ep, data) => {
                             println!("New message from {:?} data:{:?}",
