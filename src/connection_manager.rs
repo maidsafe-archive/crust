@@ -163,7 +163,14 @@ impl ConnectionManager {
     }
 
     pub fn bootstrap_off_list(&self, bootstrap_list: Vec<Endpoint>) -> IoResult<Endpoint> {
-        unimplemented!()
+        for endpoint in bootstrap_list {
+            match transport::connect(endpoint) {
+                Ok(trans) => return Ok(trans.remote_endpoint.clone()),
+                Err(_)    => continue,
+            }
+        }
+        // FIXME: The result should probably be Option<Endpoint>
+        Err(io::Error::new(io::ErrorKind::Other, "No bootstrap node got connected"))
     }
 }
 
