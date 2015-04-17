@@ -13,10 +13,12 @@ extern crate rustc_serialize;
 extern crate cbor;
 
 mod tcp_connections;
+mod transport;
 pub mod connection_manager;
 mod beacon;
 
 pub use connection_manager::{Event, ConnectionManager};
+pub use transport::{Endpoint, Port};
 
 #[test]
 fn it_works() {
