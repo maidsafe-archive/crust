@@ -25,9 +25,9 @@ use transport::{Endpoint, Port};
 use transport;
 
 pub type Bytes = Vec<u8>;
-
 pub type IoResult<T> = Result<T, IoError>;
 
+// FIXME: Do we need these? If yes, do they need to be public?
 pub type IoReceiver<T> = Receiver<T>;
 pub type IoSender<T>   = Sender<T>;
 
