@@ -18,6 +18,7 @@ pub mod connection_manager;
 mod beacon;
 
 pub use connection_manager::{Event, ConnectionManager};
+pub use transport::{Endpoint, Port};
 
 #[test]
 fn it_works() {
