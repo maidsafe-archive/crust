@@ -75,7 +75,7 @@ impl ConnectionManager {
     /// supported protocol. The actual endpoints used will be returned on which it started listening
     /// for each protocol.
     pub fn start_listening(&self, hint: Vec<Port>) -> IoResult<Vec<Endpoint>> {
-        // FIXME: IoResult seems pointless since we always return Ok.
+        // FIXME: Returning IoResult seems pointless since we always return Ok.
         Ok(hint.iter().filter_map(|port| self.listen(port).ok()).collect::<Vec<_>>())
     }
 
@@ -102,15 +102,19 @@ impl ConnectionManager {
     /// it will drop all other ongoing attempt. On success `Event::NewConnection` with connected `Endpoint`
     /// will be sent to the event channel. On failure to connect to any of the provided endpoints,
     /// `Event::FailedToConnect` will be sent to the event channel.
+    /// FIXME: Doc: Should FailedToConnect be sent if `endpoints` is empty?
     pub fn connect(&self, endpoints: Vec<Endpoint>) {
         let ws = self.state.downgrade();
 
-        // FIXME: Handle situations where endpoints.len() < or > then 1
-        assert!(endpoints.len() == 1, "TODO");
-
         spawn(move || {
-            let _ = transport::connect(endpoints[0].clone())
-                    .and_then(|trans| handle_connect(ws, trans));
+            for endpoint in &endpoints {
+                let ws = ws.clone();
+                // FIXME: When TCP, only one of the peers should try to connect.
+                let result = transport::connect(endpoint.clone())
+                             .and_then(|trans| handle_connect(ws, trans));
+                if result.is_ok() { return; }
+            }
+            let _ = notify_user(&ws, Event::FailedToConnect(endpoints));
         });
     }
 
@@ -118,7 +122,7 @@ impl ConnectionManager {
     /// Err if the address is not connected. Return value of Ok does not mean that the data will be
     /// received. It is possible for the corresponding connection to hang up immediately after this
     /// function returns Ok.
-    pub fn send(&self, endpoint: Endpoint, message: Bytes)-> IoResult<()> {
+    pub fn send(&self, endpoint: Endpoint, message: Bytes) -> IoResult<()> {
         let ws = self.state.downgrade();
 
         let writer_channel = try!(lock_state(&ws, |s| {
@@ -180,10 +184,16 @@ impl ConnectionManager {
 
         Ok(local_ep)
     }
-
 }
 
-fn lock_state<T, F: Fn(&State) -> IoResult<T>>(state: &WeakState, f: F) -> IoResult<T> {
+fn notify_user(state: &WeakState, event: Event) -> IoResult<()> {
+    lock_state(state, |s| {
+        s.event_pipe.send(event)
+        .map_err(|_|io::Error::new(io::ErrorKind::BrokenPipe, "failed to notify_user"))
+    })
+}
+
+fn lock_state<T, F: FnOnce(&State) -> IoResult<T>>(state: &WeakState, f: F) -> IoResult<T> {
     state.upgrade().ok_or(io::Error::new(io::ErrorKind::Interrupted,
                                          "Can't dereference weak"))
     .and_then(|arc_state| {
@@ -207,12 +217,12 @@ fn lock_mut_state<T, F: FnOnce(&mut State) -> IoResult<T>>(state: &WeakState, f:
     })
 }
 
-fn handle_accept(mut state: WeakState, trans: transport::Transport) -> IoResult<()> {
+fn handle_accept(mut state: WeakState, trans: transport::Transport) -> IoResult<Endpoint> {
     let remote_ep = trans.remote_endpoint.clone();
     register_connection(&mut state, trans, Event::NewConnection(remote_ep))
 }
 
-fn handle_connect(mut state: WeakState, trans: transport::Transport) -> IoResult<()> {
+fn handle_connect(mut state: WeakState, trans: transport::Transport) -> IoResult<Endpoint> {
     let remote_ep = trans.remote_endpoint.clone();
     register_connection(&mut state, trans, Event::NewConnection(remote_ep))
 }
@@ -220,7 +230,7 @@ fn handle_connect(mut state: WeakState, trans: transport::Transport) -> IoResult
 fn register_connection( state: &mut WeakState,
                         trans: transport::Transport,
                         event_to_user: Event
-                      ) -> IoResult<()> {
+                      ) -> IoResult<Endpoint> {
 
     let state2 = state.clone();
 
@@ -230,7 +240,7 @@ fn register_connection( state: &mut WeakState,
         start_reading_thread(state2, trans.receiver, trans.remote_endpoint.clone(), s.event_pipe.clone());
         s.connections.insert(trans.remote_endpoint.clone(), Connection{writer_channel: tx});
         let _ = s.event_pipe.send(event_to_user);
-        Ok(())
+        Ok(trans.remote_endpoint)
     })
 }
 
