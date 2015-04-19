@@ -35,12 +35,25 @@ Several methods are used for NAT traversal, UpNP, hole punching [See here for tc
   - [ ] Have connection manger start, broadcast on udp broadcast for port 5483 (later multicast for ipv6)
   - [ ] Link ability to read and write bootstrap file as well as send to any node requesting it. 
   - [ ] Add connection established/lost messages to be passed to routing (via channel)
-  - [ ] Add maintain_connection() to connecton manager for lib.rs to be able to confirm a routing table contact we must keep. 
+  - [ ] Add maintain_connection() to connection manager for lib.rs to be able to confirm a routing table contact we must keep. 
   - [ ] Benchmark tx/rv number of packets 
   - [ ] Benchmark tx/rc Bytes per second
 - [ ] Allow tcp and then utp connections and wrap in connection object. [See here for tcp NAT traversal] (http://www.cmlab.csie.ntu.edu.tw/~franklai/NATBT.pdf) [and here for ucp/dht NAT traversal
   ](http://maidsafe.net/Whitepapers/pdf/DHTbasedNATTraversal.pdf)
 - [ ] Version 0.0.8
+- [ ] Integrate bootstrap
+- [ ] Integrate beacon
+- [ ] Send serialised bootstrap info as part of beacon reply
+- [ ] Examples:
+  - [ ] Beacon Client
+  - [ ] Beacon Server
+  - [ ] CLI Example - options:
+    - [ ] Join / Start a client(optionally provide bootstrap info)
+    - [ ] Allow sending messages at various rates per second
+    - [ ] Print Incomming message rate per second
+  - [ ] Local Network Test. 12 Linux, 2 OSX, 2 WIN
+  - [ ] 101 Droplet test
+- [ ] Version 0.0.9
 - [ ] Utp Networking
   - [ ] Utp live port and backup random port selection 
   - [ ] Create send/rcv channel from routing to connections object
