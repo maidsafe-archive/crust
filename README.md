@@ -36,11 +36,11 @@ Several methods are used for NAT traversal, UpNP, hole punching [See here for tc
   - [x] Implement connect() in connection manager
   - [ ] Benchmark tx/rv number of packets
   - [ ] Benchmark tx/rc Bytes per second
-  - [x] Allow tcp and then utp connections option and wrap in connection object. [See here for tcp NAT traversal] (http://www.cmlab.csie.ntu.edu.tw/~franklai/NATBT.pdf) [and here for ucp/dht NAT traversal
+  - [x] Allow tcp and then utp connections option and wrap in connection object.
   ](http://maidsafe.net/Whitepapers/pdf/DHTbasedNATTraversal.pdf)
 - [ ] Version 0.0.8
-  [ ] Update handle connect for TCP
-  [ ] Remove FailedToConnect event
+- [ ] Update handle connect for TCP
+- [ ] Remove FailedToConnect event
 - [ ] Integrate bootstrap (Link ability to read and write bootstrap file)
 - [ ] Integrate beacon (Have connection manger start, broadcast on udp broadcast for port 5483 (later multicast for ipv6)
 - [ ] Send serialised bootstrap info as part of beacon reply (Link ability to send bootstrap file to any node requesting it)
@@ -61,4 +61,5 @@ Several methods are used for NAT traversal, UpNP, hole punching [See here for tc
   - [ ] Add connection established/lost messages to be passed to routing (via channel)
   - [ ] Benchmark tx/rv number of packets
   - [ ] Benchmark tx/rc Bytes per second
+  - [ ] NAT traversal  [See here for tcp NAT traversal] (http://www.cmlab.csie.ntu.edu.tw/~franklai/NATBT.pdf) [and here for ucp/dht NAT traversal
 - [ ] Version 0.1 (crates.io)
