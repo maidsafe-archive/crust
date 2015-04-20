@@ -22,9 +22,11 @@ use cbor::CborTagEncode;
 use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
 use sodiumoxide::crypto;
 use std::net;
+use std::net::SocketAddr;
 use transport::Endpoint;
 use std::fs::File;
 use std::env;
+use beacon;
 
 type BootStrapContacts = Vec<Contact>;
 
@@ -63,11 +65,9 @@ impl Contact {
 
 impl Encodable for Contact {
     fn encode<E: Encoder>(&self, e: &mut E)->Result<(), E::Error> {
-    	let ep = std::to_string::<SocketAddr>(self.endpoint).unwrap();
-        // let addr_ip = array_to_vec(&self.endpoint.ip().octets());
-        // let addr_port = &self.endpoint.port();
+        let address = array_to_vec(&beacon::serialise_address(self.endpoint.get_address()));
         let public_key = array_to_vec(&self.public_key.0);
-        CborTagEncode::new(5483_000, &(ep, public_key)).encode(e)
+        CborTagEncode::new(5483_000, &(address, public_key)).encode(e)
     }
 }
 
@@ -75,13 +75,10 @@ impl Decodable for Contact {
     fn decode<D: Decoder>(d: &mut D)->Result<Contact, D::Error> {
         try!(d.read_u64());
 
-        let (endpoint, public_key) = try!(Decodable::decode(d));
-        
-        // let addr_ip: [u8;4] = vector_as_u8_4_array(addr_ip_);
-        // let addr = net::SocketAddrV4::new(net::Ipv4Addr::new(addr_ip, addr_port));
-        let pub_key = crypto::asymmetricbox::PublicKey(array_to_vec(public_key));
+        let (address, public_key) = try!(Decodable::decode(d));
+        let pub_key = crypto::asymmetricbox::PublicKey(public_key);
 
-        Ok(Contact::new(endpoint, pub_key))
+        Ok(Contact::new(address, pub_key))
     }
 }
 
