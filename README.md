@@ -36,7 +36,7 @@ Several methods are used for NAT traversal, UpNP, hole punching [See here for tc
   - [x] Implement connect() in connection manager
   - [ ] Benchmark tx/rv number of packets
   - [ ] Benchmark tx/rc Bytes per second
-  - [ ] Allow tcp and then utp connections and wrap in connection object. [See here for tcp NAT traversal] (http://www.cmlab.csie.ntu.edu.tw/~franklai/NATBT.pdf) [and here for ucp/dht NAT traversal
+  - [x] Allow tcp and then utp connections option and wrap in connection object. [See here for tcp NAT traversal] (http://www.cmlab.csie.ntu.edu.tw/~franklai/NATBT.pdf) [and here for ucp/dht NAT traversal
   ](http://maidsafe.net/Whitepapers/pdf/DHTbasedNATTraversal.pdf)
 - [ ] Version 0.0.8
   [ ] Update handle connect for TCP
@@ -47,10 +47,10 @@ Several methods are used for NAT traversal, UpNP, hole punching [See here for tc
 - [ ] Examples:
   - [ ] Beacon Client
   - [ ] Beacon Server
-  - [ ] CLI Example - options:
-    - [ ] Join / Start a client(optionally provide bootstrap info)
-    - [ ] Allow sending messages at various rates per second
-    - [ ] Print Incomming message rate per second
+  - [ ] CLI Example - options: 
+    - [ ] Join / Start a client(optionally provide bootstrap info) 
+    - [ ] Allow sending messages at various rates per second 
+    - [ ] Print Incomming message rate per second 
   - [ ] Local Network Test. 12 Linux, 2 OSX, 2 WIN
   - [ ] 101 Droplet test
 - [ ] Version 0.0.9
