@@ -144,7 +144,10 @@ pub fn seek_peers() -> Vec<SocketAddr> {
     thread::spawn(move || {
         loop {
             match handle_receive(&socket) {
-                Some(peer_address) => tx.send(peer_address).unwrap(),
+                Some(peer_address) => match tx.send(peer_address) {
+                  Ok(sent) => {;}  //
+                  Err(e) => break  // receiver already deallocated
+                },
                 _ => (),
             }
         }
