@@ -18,17 +18,7 @@
 
 extern crate crust;
 
-use std::net::UdpSocket;
-
 fn main() {
-  let normal_socket = match UdpSocket::bind("::0:0") {
-    Ok(socket) => socket,
-    Err(e) => panic!("Couldn't bind socket: {}", e)
-  };
-
-  // blocking call on listen_for_broadcast
-  match normal_socket.local_addr() {
-    Ok(local_addr) => crust::beacon::listen_for_broadcast(local_addr),
-    Err(e) => panic!("No local address to start listening on: {}", e)
-  };
+  let peers = crust::beacon::seek_peers();
+  println!("Found {} peers.", peers.len());
 }
