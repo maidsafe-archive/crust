@@ -32,7 +32,7 @@ Several methods are used for NAT traversal, UpNP, hole punching [See here for tc
   - [x] Create send/rcv channel from routing to connections object
   - [x] Implement test for basic "hello world" two way communication
   - [x] Set up Udp broadcast and respond when we have a port (we listen on any random port above 1024 [user space port])  available (broadcast port is 5483)
-  - [ ] Add connection established/lost/ new messages to be passed to routing (via channel)
+  - [x] Add connection established/lost/ new messages to be passed to routing (via channel)
   - [x] Implement connect() in connection manager
   - [ ] Benchmark tx/rv number of packets
   - [ ] Benchmark tx/rc Bytes per second
