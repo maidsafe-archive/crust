@@ -22,17 +22,14 @@ use std::thread::spawn;
 use std::net::UdpSocket;
 
 fn main() {
-  spawn(move || {
-    let normal_socket = match UdpSocket::bind("::0:0") {
-      Ok(socket) => socket,
-      Err(e) => panic!("Couldn't bind socket: {}", e)
-    };
+  let normal_socket = match UdpSocket::bind("::0:0") {
+    Ok(socket) => socket,
+    Err(e) => panic!("Couldn't bind socket: {}", e)
+  };
 
-    match normal_socket.local_addr() {
-      Ok(local_addr) => crust::beacon::listen_for_broadcast(local_addr),
-      Err(e) => panic!("No local address to start listening on: {}", e)
-    }
-    println!("Closing beacon listening thread.");
-  });
-  println!("Closing beacon server.");
+  // blocking call on listen_for_broadcast
+  match normal_socket.local_addr() {
+    Ok(local_addr) => crust::beacon::listen_for_broadcast(local_addr),
+    Err(e) => panic!("No local address to start listening on: {}", e)
+  };
 }
