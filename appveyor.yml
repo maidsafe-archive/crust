@@ -7,7 +7,6 @@ platform:
 environment:
   RUST_INSTALL_DIR: C:\Rust
   matrix:
-    - RUST_INSTALL_TRIPLE: i686-pc-windows-gnu
     - RUST_INSTALL_TRIPLE: x86_64-pc-windows-gnu
 
 install:
@@ -15,8 +14,6 @@ install:
   - cmd: rust-nightly-%RUST_INSTALL_TRIPLE%.exe /VERYSILENT /NORESTART /COMPONENTS="rust,gcc,cargo" /DIR="%RUST_INSTALL_DIR%"
   - cmd: SET PATH=%PATH%;%RUST_INSTALL_DIR%\bin;
   - rustc --version
-  - cargo --version
-  - cinst 7zip.commandline -x86
   - ps: if($env:RUST_INSTALL_TRIPLE -eq 'x86_64-pc-windows-gnu') {
          Start-FileDownload "http://libgd.blob.core.windows.net/mingw/mingw-w64-dgn-x86_64-20141001.7z";
           7z x -oC:\ mingw-w64-dgn-x86_64-20141001.7z;
