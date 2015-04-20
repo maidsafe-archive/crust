@@ -32,8 +32,6 @@ Several methods are used for NAT traversal, UpNP, hole punching [See here for tc
   - [x] Create send/rcv channel from routing to connections object
   - [x] Implement test for basic "hello world" two way communication
   - [x] Set up Udp broadcast and respond when we have a port (we listen on any random port above 1024 [user space port])  available (broadcast port is 5483)
-  - [ ] Have connection manger start, broadcast on udp broadcast for port 5483 (later multicast for ipv6)
-  - [ ] Link ability to read and write bootstrap file as well as send to any node requesting it. 
   - [ ] Add connection established/lost messages to be passed to routing (via channel)
   - [ ] Add maintain_connection() to connection manager for lib.rs to be able to confirm a routing table contact we must keep. 
   - [ ] Benchmark tx/rv number of packets 
