@@ -17,7 +17,7 @@ mod transport;
 pub mod connection_manager;
 /// Broadcast and listen for nodes trying to bootstrap on local network.
 /// Listen for beacons from peers on port 5483.
-mod beacon;
+pub mod beacon;
 
 pub use connection_manager::{Event, ConnectionManager};
 pub use transport::{Endpoint, Port};
