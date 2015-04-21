@@ -35,7 +35,7 @@ fn array_to_vec(arr: &[u8]) -> Vec<u8> {
 }
 
 /// Enum representing endpoint of supported protocols
-#[derive(Debug, PartialEq, Eq, Hash, Clone, RustcEncodable, RustcDecodable)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub enum Endpoint {
     Tcp(SocketAddr),
 }
@@ -52,7 +52,7 @@ impl Endpoint {
 
 impl Encodable for Endpoint {
     fn encode<E: Encoder>(&self, e: &mut E)->Result<(), E::Error> {
-        let address = array_to_vec(&beacon::serialise_address(self.endpoint.get_address()));
+        let address = array_to_vec(&beacon::serialise_address(self.get_address()));
         CborTagEncode::new(5483_000, &address).encode(e)
     }
 }
@@ -60,11 +60,10 @@ impl Encodable for Endpoint {
 impl Decodable for Endpoint {
     fn decode<D: Decoder>(d: &mut D)->Result<Endpoint, D::Error> {
         try!(d.read_u64());
+        let decoded: Vec<u8> = try!(Decodable::decode(d));
+        let address: SocketAddr = beacon::parse_address(&decoded).unwrap();
 
-        let decoded = try!(Decodable::decode(d));
-        let address = beacon::parse_address(&decoded);
-
-        Ok(address)
+        Ok(Endpoint::Tcp(address))
     }
 }
 

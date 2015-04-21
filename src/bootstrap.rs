@@ -25,12 +25,31 @@ use std::net;
 use std::net::SocketAddr;
 use transport::Endpoint;
 use std::fs::File;
+use std::io;
+use std::io::prelude::*;
+use std::path;
 use std::env;
 use beacon;
 
 type BootStrapContacts = Vec<Contact>;
 
 static MAX_LIST_SIZE: usize = 1500;
+
+macro_rules! convert_to_array {
+    ($container:ident, $size:expr) => {{
+        if $container.len() != $size {
+            None
+        } else {
+            use std::mem;
+            let mut arr : [_; $size] = unsafe { mem::uninitialized() };
+            for element in $container.into_iter().enumerate() {
+                let old_val = mem::replace(&mut arr[element.0], element.1);
+                unsafe { mem::forget(old_val) };
+            }
+            Some(arr)
+        }
+    }};
+}
 
 fn array_to_vec(arr: &[u8]) -> Vec<u8> {
     let mut vector = Vec::new();
@@ -65,20 +84,23 @@ impl Contact {
 
 impl Encodable for Contact {
     fn encode<E: Encoder>(&self, e: &mut E)->Result<(), E::Error> {
-        let address = array_to_vec(&beacon::serialise_address(self.endpoint.get_address()));
-        let public_key = array_to_vec(&self.public_key.0);
-        CborTagEncode::new(5483_000, &(address, public_key)).encode(e)
+        let crypto::asymmetricbox::PublicKey(ref public_key) = self.public_key;
+        CborTagEncode::new(5483_000, &(self.endpoint, public_key.as_ref())).encode(e)
     }
 }
 
 impl Decodable for Contact {
     fn decode<D: Decoder>(d: &mut D)->Result<Contact, D::Error> {
         try!(d.read_u64());
+        let (endpoint, public_key) : (Endpoint, Vec<u8>) = try!(Decodable::decode(d));
+        let public_key = convert_to_array!(public_key, crypto::asymmetricbox::PUBLICKEYBYTES);
 
-        let (address, public_key) = try!(Decodable::decode(d));
-        let pub_key = crypto::asymmetricbox::PublicKey(public_key);
+        if public_key.is_none() {
+            return Err(d.error("PublicKey size"));
+        }
 
-        Ok(Contact::new(address, pub_key))
+        let public_key = crypto::asymmetricbox::PublicKey(public_key.unwrap());
+        Ok(Contact::new(endpoint, public_key))
     }
 }
 
@@ -98,9 +120,19 @@ pub struct BootStrapHandler {
 
 impl BootStrapHandler {
     pub fn new() -> BootStrapHandler {
-    	let mut app_name = try!(env::current_exe().file_name().file_stem());
+        let mut app_path = match env::current_exe() {
+                                Ok(exe_path) => exe_path,
+                                Err(e) => panic!("Failed to get current exe path: {}", e),
+                           };
+        let mut app_with_extension = app_path.file_name().unwrap();
+        let mut app_name = path::Path::new(app_with_extension).file_stem().unwrap();
+
+        let filename = String::from_str("./");
+        filename.push_str(app_name.to_str().unwrap());
+        filename.push_str(".bootstrap.cache");
+
         let mut bootstrap = BootStrapHandler {
-            file_name: String::new("./" + app_name + ".bootstrap.cache"),
+            file_name: filename,
             last_updated: time::now(),
         };
         bootstrap
@@ -128,7 +160,7 @@ impl BootStrapHandler {
 
 		try!(file.read_to_string(&mut content));
 
-		let mut decoder = cbor::Decoder::from_bytes(content.unwrap());
+		let mut decoder = cbor::Decoder::from_bytes(content.as_str().unwrap());
 		contacts = try!(decoder.decode().next().unwrap().unwrap());
         contacts
     }
