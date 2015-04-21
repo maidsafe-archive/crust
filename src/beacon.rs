@@ -16,6 +16,8 @@
 // See the Licences for the specific language governing permissions and limitations relating to
 // use of the MaidSafe Software.
 
+#![deny(missing_docs)]
+
 use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6, UdpSocket};
 use std::sync::mpsc::{Sender, Receiver};
 use std::sync::mpsc;
@@ -145,7 +147,7 @@ pub fn seek_peers() -> Vec<SocketAddr> {
         loop {
             match handle_receive(&socket) {
                 Some(peer_address) => match tx.send(peer_address) {
-                  Ok(sent) => {;}  //
+                  Ok(sent) => {;}
                   Err(e) => break  // receiver already deallocated
                 },
                 _ => (),
