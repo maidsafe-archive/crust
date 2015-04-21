@@ -328,8 +328,7 @@ mod test {
                         },
                         Event::LostConnection(other_ep) => {
                             println!("Lost connection to {:?}", other_ep);
-                        },
-                        _ => println!("unhandled"),
+                        }
                     }
                 }
                 println!("done");
