@@ -99,7 +99,7 @@ impl ConnectionManager {
     /// Opens a connection to a remote peer. `endpoints` is a vector of addresses of the remote peer.
     /// All the endpoints will be tried. As soon as one of the connection is established,
     /// it will drop all other ongoing attempt. On success `Event::NewConnection` with connected `Endpoint`
-    /// will be sent to the event channel. 
+    /// will be sent to the event channel.
     /// Failed attempts are not notified back up to the caller. If the caller wants to know of a
     /// failed attempt, it must maintain a record of the attempt itself which times out if a
     /// corresponding Event::NewConnection isn't received
@@ -339,8 +339,7 @@ mod test {
                         },
                         Event::LostConnection(other_ep) => {
                             println!("Lost connection to {:?}", other_ep);
-                        },
-                        _ => println!("unhandled"),
+                        }
                     }
                 }
                 println!("done");
@@ -355,6 +354,7 @@ mod test {
         let cm2 = ConnectionManager::new(cm2_i);
         let cm2_eps = cm2.start_listening(vec![Port::Tcp(0)]).unwrap();
         cm2.connect(cm1_eps.clone());
+        cm1.connect(cm2_eps.clone());
 
         let runner1 = run_cm(cm1, cm1_o);
         let runner2 = run_cm(cm2, cm2_o);
