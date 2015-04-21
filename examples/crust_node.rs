@@ -20,12 +20,14 @@ extern crate crust;
 extern crate rustc_serialize;
 extern crate docopt;
 
-use std::sync::mpsc::channel;
 use crust::{Endpoint, Port};
 use crust::ConnectionManager;
 use docopt::Docopt;
+use std::sync::mpsc::channel;
 use std::env;
 use std::io;
+use std::net::SocketAddr;
+use std::str::FromStr;
 
 // TODO: switching order of CL params, eg --speed x --bootstrap node
 //       gives an error parsing node as usize... so order is strict for now
@@ -110,6 +112,17 @@ impl FlatWorld {
 }
 
 fn main() {
+
+  let args : Args = Docopt::new(USAGE)
+                      .and_then(|d| d.decode())
+                      .unwrap_or_else(|e| e.exit());
+  // TODO: remove; here for debug
+  if !args.flag_help { println!("{:?}", args); };
+  if args.flag_help {
+    println!("{:?}", args);     // print help message
+    return;
+  };
+
   let (cm_tx, cm_rx) = channel();
   let cm = ConnectionManager::new(cm_tx);
   let cm_eps = match cm.start_listening(vec![Port::Tcp(0)]) {
@@ -117,10 +130,26 @@ fn main() {
     Err(e) => panic!("Connection manager failed to start on arbitrary TCP port: {}", e)
   };
 
-  let args : Args = Docopt::new(USAGE)
-                      .and_then(|d| d.decode())
-                      .unwrap_or_else(|e| e.exit());
-  println!("{:?}", args);
+  if args.flag_bootstrap {
+    // String.as_str() is unstable; waiting RFC revision
+    // http://doc.rust-lang.org/nightly/std/string/struct.String.html#method.as_str
+    match args.arg_peer {
+      Some(peer) => {
+
+      },
+      None => { println!("No peer address provided, result to default");
+                
+
+    }
+    let bootstrap_address = match SocketAddr::from_str(
+        args.arg_peer.as_str()) {
+      Ok(addr) => addr,
+      Err(e) => panic!("Failed to parse bootstrap peer as valid IPv4 or IPv6 address: {}", e)
+    };
+
+    // cm.boo
+  }
+
   // first rely on beacons to bootstrap
   // cm.bootstrap(None);
 }
