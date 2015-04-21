@@ -32,20 +32,17 @@ use std::env;
 // basic_encryptor -h | --help
 static USAGE: &'static str = "
 Usage: simple_client -h
-       simple_client -s
-       simple_client -b <bootstrap>
+       simple_client -c <peer>
 
 Options:
     -h, --help          This message.
-    -s, --start         startup a client.
-    -b, --bootstrap     startup a client and bootstrap to the target.
+    -c, --connect       startup a client and connect to the peer.
 ";
 
 #[derive(RustcDecodable, Debug)]
 struct Args {
-    arg_bootstrap: Option<String>,
-    flag_start: bool,
-    flag_bootstrap: bool,
+    arg_peer: Option<String>,
+    flag_connect: bool,
     flag_help: bool,
 }
 
@@ -57,25 +54,22 @@ fn main() {
         let args: Args = parsed.unwrap();
         if args.flag_help {
             println!("{:?}", args);
-        } else if args.flag_start {
-            command = "start".to_string();
-        } else if args.flag_bootstrap {
-            command = "bootstrap".to_string();
-            target = args.arg_bootstrap.unwrap();
+        } else if args.flag_connect {
+            command = "connect".to_string();
+            target = args.arg_peer.unwrap();
         }
     }
+
+    let (i, mut o) = crust::tcp_connections::connect_tcp(std::net::SocketAddr::from_str(target.trim()).unwrap()).unwrap();
+
     let mut keeps_going = true;
     while keeps_going {
         match command.trim() {
-            "start" => {
-                println!("start");
-            }
-            "bootstrap" => {
-                println!("bootstraping");
-            }
-            "terminate" => {
-                println!("terminating the client");
-                keeps_going = false;
+            "send" => {
+                println!("reading the msg to be sent : ");
+                let mut msg = String::new();
+                let _ = io::stdin().read_line(&mut msg);
+                o.send(&msg).ok();
             }
             _ => println!("reading command :"),
         }
@@ -84,26 +78,6 @@ fn main() {
             let _ = io::stdin().read_line(&mut command);
         }
     }
+    o.close();
 
-
-
-    // // incoming: (u64, u64)
-    // // outgoing: u64
-    // let (i, mut o) = crust::tcp_connections::connect_tcp(std::net::SocketAddr::from_str("127.0.0.1:5483").unwrap()).unwrap();
-
-    // // Send all the numbers from 0 to 10.
-    // for x in (0u64..10u64) {
-    //     o.send(&x).ok();
-    // }
-
-    // // Close our outgoing pipe. This is necessary because otherwise,
-    // // the server will keep waiting for the client to send it data and
-    // // we will deadlock.
-    // o.close();
-
-    // // Print everything that we get back.
-    // for a in i.iter() {
-    //     let (x, fx): (u64, u64) = a;
-    //     println!("{} -> {}", x, fx);
-    // }
 }
