@@ -39,8 +39,8 @@ Several methods are used for NAT traversal, UpNP, hole punching [See here for tc
   - [x] Allow tcp and then utp connections option and wrap in connection object.
   ](http://maidsafe.net/Whitepapers/pdf/DHTbasedNATTraversal.pdf)
 - [ ] Version 0.0.8
-- [ ] Update handle connect for TCP
-- [ ] Remove FailedToConnect event
+- [x] Update handle connect for TCP
+- [x] Remove FailedToConnect event
 - [ ] Integrate bootstrap (Link ability to read and write bootstrap file)
 - [ ] Integrate beacon (Have connection manger start, broadcast on udp broadcast for port 5483 (later multicast for ipv6)
 - [ ] Send serialised bootstrap info as part of beacon reply (Link ability to send bootstrap file to any node requesting it)
