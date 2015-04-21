@@ -23,6 +23,7 @@ use beacon;
 use cbor;
 use cbor::CborTagEncode;
 use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
+use std::cmp::Ordering;
 
 pub type Bytes = Vec<u8>;
 
@@ -70,6 +71,42 @@ impl Decodable for Endpoint {
 #[derive(Debug, Clone)]
 pub enum Port {
     Tcp(u16),
+}
+
+impl Endpoint {
+    pub fn is_master(&self, other: &Endpoint) -> bool {
+        match *self {
+            Endpoint::Tcp(my_address) => {
+                match *other {
+                    Endpoint::Tcp(other_address) => {
+                        if my_address.port() == other_address.port() {
+                            return my_address.ip() < other_address.ip();
+                        } else {
+                            return my_address.port() < other_address.port();
+                        }
+                    }
+                }
+            }
+        }
+        return true;
+    }
+}
+
+impl PartialOrd for Endpoint {
+    fn partial_cmp(&self, other: &Endpoint) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Endpoint {
+    fn cmp(&self, other: &Endpoint) -> Ordering {
+        use Endpoint::Tcp;
+        match *self {
+            Tcp(ref a1) => match *other {
+                Tcp(ref a2) => compare_ip_addrs(a1, a2)
+            }
+        }
+    }
 }
 
 pub enum Sender {
@@ -154,3 +191,74 @@ pub fn local_endpoint(acceptor: &Acceptor) -> IoResult<Endpoint> {
     }
 }
 
+fn compare_ip_addrs(a1: &SocketAddr, a2: &SocketAddr) -> Ordering {
+    use std::net::SocketAddr::{V4,V6};
+    match *a1 {
+        V4(ref a1) => match *a2 {
+            V4(ref a2) => (a1.ip(), a1.port()).cmp(&(a2.ip(), a2.port())),
+            V6(ref a2) => Ordering::Less,
+        },
+        V6(ref a1) => match *a2 {
+            V4(ref a2) => Ordering::Greater,
+            V6(ref a2) => (a1.ip(), a1.port(), a1.flowinfo(), a1.scope_id())
+                          .cmp(&(a2.ip(), a2.port(), a2.flowinfo(), a2.scope_id())),
+        }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use std::net::{SocketAddr, SocketAddrV4, SocketAddrV6, Ipv4Addr, Ipv6Addr};
+
+    fn v4(a: u8, b: u8, c: u8, d: u8, e: u16) -> Endpoint {
+        Endpoint::Tcp(SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(a,b,c,d),e)))
+    }
+
+    fn v6(a: u16, b: u16, c: u16, d: u16, e: u16, f: u16, g: u16, h: u16, i: u16, j: u32, k: u32) -> Endpoint {
+        Endpoint::Tcp(SocketAddr::V6(SocketAddrV6::new(Ipv6Addr::new(a,b,c,d,e,f,g,h),i, j, k)))
+    }
+
+    fn test(smaller: Endpoint, bigger: Endpoint) {
+        assert!(smaller <  bigger);
+        assert!(bigger  >  smaller);
+        assert!(smaller != bigger);
+    }
+
+#[test]
+    fn test_ord() {
+        test(v4(1,2,3,4,5), v4(2,2,3,4,5));
+        test(v4(1,2,3,4,5), v4(1,3,3,4,5));
+        test(v4(1,2,3,4,5), v4(1,2,4,4,5));
+        test(v4(1,2,3,4,5), v4(1,2,3,5,5));
+        test(v4(1,2,3,4,5), v4(1,2,3,4,6));
+
+        test(v4(1,2,3,4,5), v6(0,0,0,0,0,0,0,0,0,0,0));
+        test(v4(1,2,3,4,5), v6(1,2,3,4,5,6,7,8,9,10,11));
+        test(v4(1,2,3,4,5), v6(2,3,4,5,6,7,8,9,10,11,12));
+
+        test(v6(0,0,0,0,0,0,0,0,0,0,0), v6(1,0,0,0,0,0,0,0,0,0,0));
+        test(v6(0,0,0,0,0,0,0,0,0,0,0), v6(0,1,0,0,0,0,0,0,0,0,0));
+        test(v6(0,0,0,0,0,0,0,0,0,0,0), v6(0,0,1,0,0,0,0,0,0,0,0));
+        test(v6(0,0,0,0,0,0,0,0,0,0,0), v6(0,0,0,1,0,0,0,0,0,0,0));
+        test(v6(0,0,0,0,0,0,0,0,0,0,0), v6(0,0,0,0,1,0,0,0,0,0,0));
+        test(v6(0,0,0,0,0,0,0,0,0,0,0), v6(0,0,0,0,0,1,0,0,0,0,0));
+        test(v6(0,0,0,0,0,0,0,0,0,0,0), v6(0,0,0,0,0,0,1,0,0,0,0));
+        test(v6(0,0,0,0,0,0,0,0,0,0,0), v6(0,0,0,0,0,0,0,1,0,0,0));
+        test(v6(0,0,0,0,0,0,0,0,0,0,0), v6(0,0,0,0,0,0,0,0,1,0,0));
+        test(v6(0,0,0,0,0,0,0,0,0,0,0), v6(0,0,0,0,0,0,0,0,0,1,0));
+        test(v6(0,0,0,0,0,0,0,0,0,0,0), v6(0,0,0,0,0,0,0,0,0,0,1));
+
+        test(v6(1,2,3,4,5,6,7,8,9,10,11), v6(2,2,3,4,5,6,7,8,9,10,11));
+        test(v6(1,2,3,4,5,6,7,8,9,10,11), v6(1,3,3,4,5,6,7,8,9,10,11));
+        test(v6(1,2,3,4,5,6,7,8,9,10,11), v6(1,2,4,4,5,6,7,8,9,10,11));
+        test(v6(1,2,3,4,5,6,7,8,9,10,11), v6(1,2,3,5,5,6,7,8,9,10,11));
+        test(v6(1,2,3,4,5,6,7,8,9,10,11), v6(1,2,3,4,6,6,7,8,9,10,11));
+        test(v6(1,2,3,4,5,6,7,8,9,10,11), v6(1,2,3,4,5,7,7,8,9,10,11));
+        test(v6(1,2,3,4,5,6,7,8,9,10,11), v6(1,2,3,4,5,6,8,8,9,10,11));
+        test(v6(1,2,3,4,5,6,7,8,9,10,11), v6(1,2,3,4,5,6,7,9,9,10,11));
+        test(v6(1,2,3,4,5,6,7,8,9,10,11), v6(1,2,3,4,5,6,7,8,10,10,11));
+        test(v6(1,2,3,4,5,6,7,8,9,10,11), v6(1,2,3,4,5,6,7,8,9,11,11));
+        test(v6(1,2,3,4,5,6,7,8,9,10,11), v6(1,2,3,4,5,6,7,8,9,10,12));
+    }
+}

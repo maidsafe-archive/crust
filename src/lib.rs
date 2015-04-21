@@ -7,7 +7,7 @@
        html_root_url = "http:///dirvine.github.io/crust/crust/")]
 #![allow(unused_variables)]
 
-#![feature(alloc, udp)]
+#![feature(ip_addr, alloc, udp)]
 
 extern crate rustc_serialize;
 extern crate cbor;
