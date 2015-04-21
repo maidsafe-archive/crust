@@ -1,6 +1,6 @@
 [package]
 name = "crust"
-version = "0.0.2"
+version = "0.0.3"
 authors = ["MaidSafe Dev team <dev@maidsafe.net>"]
 description = "This is Pre alpha, and not useful, no code worth looking at."
 documentation = "http://dirvine.github.io/crust/crust"
