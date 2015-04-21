@@ -12,6 +12,7 @@ homepage = "http://www.maidsafe.net"
 [dependencies]
 rustc-serialize = "*"
 cbor = "*"
+docopt = "*"
 
 [[example]]
 name = "simple_client"

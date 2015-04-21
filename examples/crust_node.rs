@@ -17,10 +17,40 @@
 // use of the MaidSafe Software.
 
 extern crate crust;
+extern crate rustc_serialize;
+extern crate docopt;
 
 use std::sync::mpsc::channel;
 use crust::{Endpoint, Port};
-use crust::connection_manager::ConnectionManager;
+use crust::ConnectionManager;
+use docopt::Docopt;
+use std::env;
+use std::io;
+
+// TODO: switching order of CL params, eg --speed x --bootstrap node
+//       gives an error parsing node as usize... so order is strict for now
+static USAGE: &'static str = "
+Usage: crust_node
+       crust_node -h
+       crust_node -b <peer>
+       crust_node -s <speed>
+       crust_node -b <peer> -s <speed>
+
+Options:
+    -h, --help        Display this help message.
+    -b, --bootstrap   Start a crust node and bootstrap off the peer.
+                      If no bootstrap node is provided beacon will be used.
+    -s, --speed       Optional send data at maximum speed (bytes/second)
+";
+
+#[derive(RustcDecodable, Debug)]
+struct Args {
+  arg_peer : Option<String>,
+  arg_speed : Option<usize>,
+  flag_help : bool,
+  flag_bootstrap : bool,
+  flag_speed : bool
+}
 
 // simple "NodeInfo", without PKI
 #[derive(Clone)]
@@ -87,7 +117,10 @@ fn main() {
     Err(e) => panic!("Connection manager failed to start on arbitrary TCP port: {}", e)
   };
 
-  // if false { // beacon nor stored_bootstrap_endpoints
-  //   cm.
-  // }
+  let args : Args = Docopt::new(USAGE)
+                      .and_then(|d| d.decode())
+                      .unwrap_or_else(|e| e.exit());
+  println!("{:?}", args);
+  // first rely on beacons to bootstrap
+  // cm.bootstrap(None);
 }
