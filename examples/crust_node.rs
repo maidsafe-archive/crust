@@ -16,6 +16,10 @@
 // See the Licences for the specific language governing permissions and limitations relating to
 // use of the MaidSafe Software.
 
+// String.as_str() is unstable; waiting RFC revision
+// http://doc.rust-lang.org/nightly/std/string/struct.String.html#method.as_str
+#![feature(convert)]
+
 extern crate crust;
 extern crate rustc_serialize;
 extern crate docopt;
@@ -114,8 +118,8 @@ impl FlatWorld {
 fn main() {
 
   let args : Args = Docopt::new(USAGE)
-                      .and_then(|d| d.decode())
-                      .unwrap_or_else(|e| e.exit());
+                     .and_then(|d| d.decode())
+                     .unwrap_or_else(|e| e.exit());
   // TODO: remove; here for debug
   if !args.flag_help { println!("{:?}", args); };
   if args.flag_help {
@@ -130,24 +134,26 @@ fn main() {
     Err(e) => panic!("Connection manager failed to start on arbitrary TCP port: {}", e)
   };
 
-  if args.flag_bootstrap {
-    // String.as_str() is unstable; waiting RFC revision
-    // http://doc.rust-lang.org/nightly/std/string/struct.String.html#method.as_str
+  let mut default_bootstrap = !args.flag_bootstrap;
+  if !default_bootstrap {
     match args.arg_peer {
       Some(peer) => {
-
+        // String.as_str() is unstable; waiting RFC revision
+        // http://doc.rust-lang.org/nightly/std/string/struct.String.html#method.as_str
+        let bootstrap_address = match SocketAddr::from_str(peer.as_str()) {
+          Ok(addr) => addr,
+          Err(e) => panic!("Failed to parse bootstrap peer as valid IPv4 or IPv6 address: {}", peer)
+        };
+        cm.bootstrap(Some(vec![Endpoint::Tcp(bootstrap_address)]));
       },
       None => { println!("No peer address provided, result to default");
-                
-
+                default_bootstrap = true; }
     }
-    let bootstrap_address = match SocketAddr::from_str(
-        args.arg_peer.as_str()) {
-      Ok(addr) => addr,
-      Err(e) => panic!("Failed to parse bootstrap peer as valid IPv4 or IPv6 address: {}", e)
-    };
+  }
 
-    // cm.boo
+  //
+  if default_bootstrap {
+
   }
 
   // first rely on beacons to bootstrap
