@@ -131,13 +131,15 @@ fn main() {
 
   let (cm_tx, cm_rx) = channel();
   let cm = ConnectionManager::new(cm_tx);
-  let cm_eps = match cm.start_listening(vec![Port::Tcp(0)]) {
+  let cm_eps = match cm.start_listening(vec![Port::Tcp(0u16)]) {
     Ok(eps) => eps,
     Err(e) => panic!("Connection manager failed to start on arbitrary TCP port: {}", e)
   };
   assert!(cm_eps.len() > 0);
   for ep in &cm_eps {
-    // println!("Connection manager now listening on {}", ep);
+    match *ep {
+      Endpoint::Tcp(socket) => println!("Connection manager now listening on TCP socket {}", socket)
+    };
   };
   let mut my_flat_world : FlatWorld = FlatWorld::new(cm_eps);
 
@@ -152,8 +154,8 @@ fn main() {
           Err(e) => panic!("Failed to parse bootstrap peer as valid IPv4 or IPv6 address: {}", peer)
         };
         match cm.bootstrap(Some(vec![Endpoint::Tcp(bootstrap_address)])){
-          Ok(endpoint) => my_flat_world.add(CrustNode{endpoint : endpoint,
-                                                      connected : true}),
+          Ok(endpoint) =>  my_flat_world.add(CrustNode{endpoint : endpoint,
+                                                       connected : true}),
           Err(e) => { println!("Failed to bootstrap from provided peer: {}", e);
                       panic!("Not resulting to default discovery of bootstrap nodes. Exiting"); }
         };
@@ -163,11 +165,19 @@ fn main() {
     }
   }
 
-  //
+  // resort to default bootstrapping methods
   if default_bootstrap {
+    match cm.bootstrap(None) {
+      Ok(endpoint) => my_flat_world.add(CrustNode{endpoint : endpoint,
+                                                  connected : true }),
+      Err(e) => { println!("Failed to bootstrap from default methods: {}", e);
+                  panic!("Improve by keeping beacon alive. For now exiting"); }
+    };
+  };
 
-  }
+  // HANDOVER to Qi: At this point a thin messaging similar to the connection
+  //                 manager unit test needs to implement basic messages to exchange other peers
+  //                 known on the network.  From there, sending measurement messages can be
+  //                 implemented as well.
 
-  // first rely on beacons to bootstrap
-  // cm.bootstrap(None);
 }
