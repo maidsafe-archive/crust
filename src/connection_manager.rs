@@ -340,19 +340,24 @@ mod test {
         }
     }
 
+    fn get_endpoint(node: &Arc<Mutex<Node>>) -> Endpoint {
+        let node = node.clone();
+        let node = node.lock().unwrap();
+        node.listenig_end_point.clone()
+    }
+
     struct Network {
-        nodes: Vec<Node>
+        nodes: Vec<Arc<Mutex<Node>>>
     }
 
     impl Network {
         pub fn add(&mut self) -> Receiver<Event> {
             let (cm_i, cm_o) = channel();
             let cm = ConnectionManager::new(cm_i);
-            self.nodes.push(Node::new(cm));
+            self.nodes.push(Arc::new(Mutex::new(Node::new(cm))));
             cm_o
         }
     }
-
 
 #[test]
     fn connection_manager() {
@@ -440,40 +445,54 @@ mod test {
         }
 
         let mut listening_end_points = Vec::new();
+
         for node in network.nodes.iter() {
-            listening_end_points.push(node.listenig_end_point.clone());
+            listening_end_points.push(get_endpoint(node));
         }
 
         for node in network.nodes.iter() {
-            for end_point in listening_end_points.iter().filter(|&ep| node.listenig_end_point.ne(ep)) {
-                node.conn_mgr.connect(vec![end_point.clone()]);
+            for end_point in listening_end_points.iter().filter(|&ep| get_endpoint(node).ne(ep)) {
+                let node = node.clone();
+                let ep = end_point.clone();
+                spawn(move || {
+                    let node = node.lock().unwrap();
+                    node.conn_mgr.connect(vec![ep]);
+                });
             }
         }
 
         for node in network.nodes.iter() {
-            for end_point in listening_end_points.iter().filter(|&ep| node.listenig_end_point.ne(ep)) {
+            for end_point in listening_end_points.iter().filter(|&ep| get_endpoint(node).ne(ep)) {
                 for _ in 0..MESSAGE_PER_NODE {
-                    let _ = node.conn_mgr.send(end_point.clone(), encode(&"message".to_string()));
+                    let node = node.clone();
+                    let ep = end_point.clone();
+                    spawn(move || {
+                        let node = node.lock().unwrap();
+                        let _ = node.conn_mgr.send(ep.clone(), encode(&"message".to_string()));
+                    });
+
                 }
             }
         }
+
+        thread::sleep_ms(100 * NETWORK_SIZE + 10 * MESSAGE_PER_NODE);
 
         for _ in 0..NETWORK_SIZE {
             network.nodes.remove(0);
         }
 
-        thread::sleep_ms(100 * NETWORK_SIZE);
-        for stat in stats {
-            let stat = stat.clone();
-            let stat = stat.lock().unwrap();
-            assert_eq!(stat.new_connections_count, NETWORK_SIZE - 1);
-            assert_eq!(stat.messages_count,  MESSAGE_PER_NODE * (NETWORK_SIZE - 1));
-            assert_eq!(stat.lost_connection_count, 0);
-        }
+        thread::sleep_ms(100 * NETWORK_SIZE + 10 * MESSAGE_PER_NODE);
 
         for runner in runners {
             assert!(runner.join().is_ok());
         }
-    }
 
+        for stat in stats {
+            let stat = stat.clone();
+            let stat = stat.lock().unwrap();
+            assert_eq!(stat.new_connections_count, (NETWORK_SIZE - 1) * 2);
+            assert_eq!(stat.messages_count,  MESSAGE_PER_NODE * (NETWORK_SIZE - 1));
+            assert_eq!(stat.lost_connection_count, 0);
+        }
+    }
 }
