@@ -1,17 +1,20 @@
 // Copyright 2015 MaidSafe.net limited
-// This MaidSafe Software is licensed to you under (1) the MaidSafe.net Commercial License,
-// version 1.0 or later, or (2) The General Public License (GPL), version 3, depending on which
-// licence you accepted on initial access to the Software (the "Licences").
+//
+// This MaidSafe Software is licensed to you under (1) the MaidSafe.net Commercial License, version
+// 1.0 or later, or (2) The General Public License (GPL), version 3, depending on which licence you
+// accepted on initial access to the Software (the "Licences").
+//
 // By contributing code to the MaidSafe Software, or to this project generally, you agree to be
-// bound by the terms of the MaidSafe Contributor Agreement, versicant_sendon 1.0, found in the root
-// directory of this project at LICENSE, COPYING and CONTRIBUTOR respectively and also
-// available at: http://www.maidsafe.net/licenses
+// bound by the terms of the MaidSafe Contributor Agreement, version 1.0, found in the root
+// directory of this project at LICENSE, COPYING and CONTRIBUTOR respectively and also available at
+// http://maidsafe.net/licenses
+//
 // Unless required by applicable law or agreed to in writing, the MaidSafe Software distributed
-// under the GPL Licence is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS
-// OF ANY KIND, either express or implied.
-// See the Licences for the specific language governing permissions and limitations relating to
-// use of the MaidSafe
-// Software.
+// under the GPL Licence is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.
+//
+// See the Licences for the specific language governing permissions and limitations relating to use
+// of the MaidSafe Software.
 
 use std::io::Error as IoError;
 use std::io;
@@ -44,7 +47,7 @@ pub struct ConnectionManager {
 pub enum Event {
     NewMessage(Endpoint, Bytes),
     NewConnection(Endpoint),
-    LostConnection(Endpoint)
+    LostConnection(Endpoint),
 }
 
 struct Connection {
@@ -58,9 +61,8 @@ struct State {
 }
 
 impl ConnectionManager {
-    /// Constructs a connection manager.
-    /// User needs to create an asynchronous channel, and provide the sender half to this method.
-    /// Receiver half will recieve all the events `Event` from this library.
+    /// Constructs a connection manager. User needs to create an asynchronous channel, and provide
+    /// the sender half to this method. Receiver will receive all `Event`s from this library.
     pub fn new(event_pipe: IoSender<Event>) -> ConnectionManager {
         let state = Arc::new(Mutex::new(State{ event_pipe:    event_pipe,
                                                connections:   HashMap::new(),
@@ -69,26 +71,28 @@ impl ConnectionManager {
         ConnectionManager { state: state }
     }
 
-    /// Starts listening on all supported protocols. Specified hint will be tried first,
-    /// if it fails to start on these, it defaults to random / OS provided endpoints for each
-    /// supported protocol. The actual endpoints used will be returned on which it started listening
-    /// for each protocol.
+    /// Starts listening on all supported protocols. Specified hint will be tried first. If it fails
+    /// to start on these, it defaults to random / OS provided endpoints for each supported
+    /// protocol. The actual endpoints used will be returned on which it started listening for each
+    /// protocol.
     pub fn start_listening(&self, hint: Vec<Port>) -> IoResult<Vec<Endpoint>> {
         // FIXME: Returning IoResult seems pointless since we always return Ok.
         Ok(hint.iter().filter_map(|port| self.listen(port).ok()).collect::<Vec<_>>())
     }
 
     /// This method tries to connect (bootstrap to exisiting network) to the default or provided
-    /// list of bootstrap nodes. If the bootstrap list is `Some`, the method will try to connect to
-    /// all of the endpoints specified in `bootstrap_list`. It will return once connection with any of the
-    /// endpoint is established with Ok(Endpoint) and it will drop all other ongoing attempts.
-    /// Returns Err if if fails to connect to any of the
-    /// endpoints specified.
-    /// If `bootstrap_list` is `None`, it will use default methods to bootstrap to the existing network.
-    /// Default methods includes beacon system for finding nodes on a local network
-    /// and bootstrap handler which will attempt to reconnect to any previous "direct connected" nodes.
-    /// In both cases, this method blocks until it gets one successful connection or all the endpoints
-    /// are tried and failed.
+    /// list of bootstrap nodes.
+    ///
+    /// If `bootstrap_list` is `Some`, the method will try to connect to all of the endpoints
+    /// specified in `bootstrap_list`. It will return once connection with any of the endpoints is
+    /// established with Ok(Endpoint) and it will drop all other ongoing attempts. Returns Err if it
+    /// fails to connect to any of the endpoints specified.
+    ///
+    /// If `bootstrap_list` is `None`, it will use default methods to bootstrap to the existing
+    /// network. Default methods includes beacon system for finding nodes on a local network and
+    /// bootstrap handler which will attempt to reconnect to any previous "direct connected" nodes.
+    /// In both cases, this method blocks until it gets one successful connection or all the
+    /// endpoints are tried and have failed.
     pub fn bootstrap(&self, bootstrap_list: Option<Vec<Endpoint>>) -> IoResult<Endpoint> {
         match bootstrap_list {
             Some(list) => self.bootstrap_off_list(list),
@@ -96,10 +100,10 @@ impl ConnectionManager {
         }
     }
 
-    /// Opens a connection to a remote peer. `endpoints` is a vector of addresses of the remote peer.
-    /// All the endpoints will be tried. As soon as one of the connection is established,
-    /// it will drop all other ongoing attempt. On success `Event::NewConnection` with connected `Endpoint`
-    /// will be sent to the event channel. 
+    /// Opens a connection to a remote peer. `endpoints` is a vector of addresses of the remote
+    /// peer. All the endpoints will be tried. As soon as a connection is established, it will drop
+    /// all other ongoing attempts. On success `Event::NewConnection` with connected `Endpoint` will
+    /// be sent to the event channel. On failure, nothing is reported.
     /// Failed attempts are not notified back up to the caller. If the caller wants to know of a
     /// failed attempt, it must maintain a record of the attempt itself which times out if a
     /// corresponding Event::NewConnection isn't received
@@ -130,10 +134,10 @@ impl ConnectionManager {
         });
     }
 
-    /// Sends a message to specified address (endpoint). Returns Ok(()) if the sending might succeed, and returns an
-    /// Err if the address is not connected. Return value of Ok does not mean that the data will be
-    /// received. It is possible for the corresponding connection to hang up immediately after this
-    /// function returns Ok.
+    /// Sends a message to specified address (endpoint). Returns Ok(()) if the sending might
+    /// succeed, and returns an Err if the address is not connected. Return value of Ok does not
+    /// mean that the data will be received. It is possible for the corresponding connection to hang
+    /// up immediately after this function returns Ok.
     pub fn send(&self, endpoint: Endpoint, message: Bytes) -> IoResult<()> {
         let ws = self.state.downgrade();
 
@@ -149,7 +153,7 @@ impl ConnectionManager {
         send_result.map_err(|_|cant_send)
     }
 
-    /// Closes connection with the specified endpoint
+    /// Closes connection with the specified endpoint.
     pub fn drop_node(&self, endpoint: Endpoint) {
         let mut ws = self.state.downgrade();
         let _ = lock_mut_state(&mut ws, |s: &mut State| {
@@ -339,8 +343,7 @@ mod test {
                         },
                         Event::LostConnection(other_ep) => {
                             println!("Lost connection to {:?}", other_ep);
-                        },
-                        _ => println!("unhandled"),
+                        }
                     }
                 }
                 println!("done");
@@ -355,6 +358,7 @@ mod test {
         let cm2 = ConnectionManager::new(cm2_i);
         let cm2_eps = cm2.start_listening(vec![Port::Tcp(0)]).unwrap();
         cm2.connect(cm1_eps.clone());
+        cm1.connect(cm2_eps.clone());
 
         let runner1 = run_cm(cm1, cm1_o);
         let runner2 = run_cm(cm2, cm2_o);
