@@ -26,9 +26,3 @@ name = "simple_server"
 path = "examples/simple_server.rs"
 test = false
 bench = false
-
-[[example]]
-name = "network"
-path = "examples/network.rs"
-test = false
-bench = false
