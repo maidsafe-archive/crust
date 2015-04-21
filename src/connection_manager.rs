@@ -44,8 +44,7 @@ pub struct ConnectionManager {
 pub enum Event {
     NewMessage(Endpoint, Bytes),
     NewConnection(Endpoint),
-    LostConnection(Endpoint),
-    FailedToConnect(Vec<Endpoint>)
+    LostConnection(Endpoint)
 }
 
 struct Connection {
@@ -100,8 +99,7 @@ impl ConnectionManager {
     /// Opens a connection to a remote peer. `endpoints` is a vector of addresses of the remote peer.
     /// All the endpoints will be tried. As soon as one of the connection is established,
     /// it will drop all other ongoing attempt. On success `Event::NewConnection` with connected `Endpoint`
-    /// will be sent to the event channel. On failure to connect to any of the provided endpoints,
-    /// `Event::FailedToConnect` will be sent to the event channel.
+    /// will be sent to the event channel. 
     /// Failed attempts are not notified back up to the caller. If the caller wants to know of a
     /// failed attempt, it must maintain a record of the attempt itself which times out if a
     /// corresponding Event::NewConnection isn't received
@@ -118,7 +116,6 @@ impl ConnectionManager {
                              .and_then(|trans| handle_connect(ws, trans));
                 if result.is_ok() { return; }
             }
-            let _ = notify_user(&ws, Event::FailedToConnect(endpoints));
         });
     }
 
@@ -331,8 +328,7 @@ mod test {
                         },
                         Event::LostConnection(other_ep) => {
                             println!("Lost connection to {:?}", other_ep);
-                        },
-                        _ => println!("unhandled"),
+                        }
                     }
                 }
                 println!("done");
