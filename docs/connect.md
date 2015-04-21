@@ -2,7 +2,7 @@
 The `ConnectionManager` will be the class which establishes and maintains connections between peers.  This document describes the internal processes which happen when `ConnectionManager::connect` is called.
 
 ### TCP
-The intention is that the process for two peers to connect is asymmetric.  In other words, both peers can call `connect` to eachother concurrently, but only one of the two `ConnectionManager`s actually initiates the connection attempt.  This avoids the issue of having to support the case where two peers establish duplicated connections between themselves.
+The intention is that the process for two peers to connect is asymmetric.  In other words, both peers can call `connect` to each other concurrently, but only one of the two `ConnectionManager`s actually initiates the connection attempt.  This avoids the issue of having to support the case where two peers establish duplicated connections between themselves.
 
 So, if the `ConnectionManager` has no known endpoints of its own (i.e. it has just started up) then the connection attempt is always made, since the peer will be unaware of us and won't be trying to connect concurrently.
 

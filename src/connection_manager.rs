@@ -1,17 +1,20 @@
 // Copyright 2015 MaidSafe.net limited
-// This MaidSafe Software is licensed to you under (1) the MaidSafe.net Commercial License,
-// version 1.0 or later, or (2) The General Public License (GPL), version 3, depending on which
-// licence you accepted on initial access to the Software (the "Licences").
+//
+// This MaidSafe Software is licensed to you under (1) the MaidSafe.net Commercial License, version
+// 1.0 or later, or (2) The General Public License (GPL), version 3, depending on which licence you
+// accepted on initial access to the Software (the "Licences").
+//
 // By contributing code to the MaidSafe Software, or to this project generally, you agree to be
-// bound by the terms of the MaidSafe Contributor Agreement, versicant_sendon 1.0, found in the root
-// directory of this project at LICENSE, COPYING and CONTRIBUTOR respectively and also
-// available at: http://www.maidsafe.net/licenses
+// bound by the terms of the MaidSafe Contributor Agreement, version 1.0, found in the root
+// directory of this project at LICENSE, COPYING and CONTRIBUTOR respectively and also available at
+// http://maidsafe.net/licenses
+//
 // Unless required by applicable law or agreed to in writing, the MaidSafe Software distributed
-// under the GPL Licence is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS
-// OF ANY KIND, either express or implied.
-// See the Licences for the specific language governing permissions and limitations relating to
-// use of the MaidSafe
-// Software.
+// under the GPL Licence is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.
+//
+// See the Licences for the specific language governing permissions and limitations relating to use
+// of the MaidSafe Software.
 
 use std::io::Error as IoError;
 use std::io;
@@ -23,7 +26,6 @@ use std::sync::{Arc, Mutex, Weak};
 use std::sync::mpsc;
 use transport::{Endpoint, Port};
 use transport;
-use beacon;
 
 pub type Bytes = Vec<u8>;
 pub type IoResult<T> = Result<T, IoError>;
@@ -46,7 +48,6 @@ pub enum Event {
     NewMessage(Endpoint, Bytes),
     NewConnection(Endpoint),
     LostConnection(Endpoint),
-    FailedToConnect(Vec<Endpoint>)
 }
 
 struct Connection {
@@ -60,9 +61,8 @@ struct State {
 }
 
 impl ConnectionManager {
-    /// Constructs a connection manager.
-    /// User needs to create an asynchronous channel, and provide the sender half to this method.
-    /// Receiver half will recieve all the events `Event` from this library.
+    /// Constructs a connection manager. User needs to create an asynchronous channel, and provide
+    /// the sender half to this method. Receiver will receive all `Event`s from this library.
     pub fn new(event_pipe: IoSender<Event>) -> ConnectionManager {
         let state = Arc::new(Mutex::new(State{ event_pipe:    event_pipe,
                                                connections:   HashMap::new(),
@@ -71,26 +71,28 @@ impl ConnectionManager {
         ConnectionManager { state: state }
     }
 
-    /// Starts listening on all supported protocols. Specified hint will be tried first,
-    /// if it fails to start on these, it defaults to random / OS provided endpoints for each
-    /// supported protocol. The actual endpoints used will be returned on which it started listening
-    /// for each protocol.
+    /// Starts listening on all supported protocols. Specified hint will be tried first. If it fails
+    /// to start on these, it defaults to random / OS provided endpoints for each supported
+    /// protocol. The actual endpoints used will be returned on which it started listening for each
+    /// protocol.
     pub fn start_listening(&self, hint: Vec<Port>) -> IoResult<Vec<Endpoint>> {
         // FIXME: Returning IoResult seems pointless since we always return Ok.
         Ok(hint.iter().filter_map(|port| self.listen(port).ok()).collect::<Vec<_>>())
     }
 
     /// This method tries to connect (bootstrap to exisiting network) to the default or provided
-    /// list of bootstrap nodes. If the bootstrap list is `Some`, the method will try to connect to
-    /// all of the endpoints specified in `bootstrap_list`. It will return once connection with any of the
-    /// endpoint is established with Ok(Endpoint) and it will drop all other ongoing attempts.
-    /// Returns Err if if fails to connect to any of the
-    /// endpoints specified.
-    /// If `bootstrap_list` is `None`, it will use default methods to bootstrap to the existing network.
-    /// Default methods includes beacon system for finding nodes on a local network
-    /// and bootstrap handler which will attempt to reconnect to any previous "direct connected" nodes.
-    /// In both cases, this method blocks until it gets one successful connection or all the endpoints
-    /// are tried and failed.
+    /// list of bootstrap nodes.
+    ///
+    /// If `bootstrap_list` is `Some`, the method will try to connect to all of the endpoints
+    /// specified in `bootstrap_list`. It will return once connection with any of the endpoints is
+    /// established with Ok(Endpoint) and it will drop all other ongoing attempts. Returns Err if it
+    /// fails to connect to any of the endpoints specified.
+    ///
+    /// If `bootstrap_list` is `None`, it will use default methods to bootstrap to the existing
+    /// network. Default methods includes beacon system for finding nodes on a local network and
+    /// bootstrap handler which will attempt to reconnect to any previous "direct connected" nodes.
+    /// In both cases, this method blocks until it gets one successful connection or all the
+    /// endpoints are tried and have failed.
     pub fn bootstrap(&self, bootstrap_list: Option<Vec<Endpoint>>) -> IoResult<Endpoint> {
         match bootstrap_list {
             Some(list) => self.bootstrap_off_list(list),
@@ -98,11 +100,10 @@ impl ConnectionManager {
         }
     }
 
-    /// Opens a connection to a remote peer. `endpoints` is a vector of addresses of the remote peer.
-    /// All the endpoints will be tried. As soon as one of the connection is established,
-    /// it will drop all other ongoing attempt. On success `Event::NewConnection` with connected `Endpoint`
-    /// will be sent to the event channel. On failure to connect to any of the provided endpoints,
-    /// `Event::FailedToConnect` will be sent to the event channel.
+    /// Opens a connection to a remote peer. `endpoints` is a vector of addresses of the remote
+    /// peer. All the endpoints will be tried. As soon as a connection is established, it will drop
+    /// all other ongoing attempts. On success `Event::NewConnection` with connected `Endpoint` will
+    /// be sent to the event channel. On failure, nothing is reported.
     /// Failed attempts are not notified back up to the caller. If the caller wants to know of a
     /// failed attempt, it must maintain a record of the attempt itself which times out if a
     /// corresponding Event::NewConnection isn't received
@@ -110,23 +111,33 @@ impl ConnectionManager {
     /// https://github.com/dirvine/crust/blob/master/docs/connect.md
     pub fn connect(&self, endpoints: Vec<Endpoint>) {
         let ws = self.state.downgrade();
-
+        let mut listening = HashSet::<Endpoint>::new();
+        {
+            let _ = lock_mut_state(& ws, |s: &mut State| {
+                for itr in s.listening_eps.iter() {
+                    listening.insert(itr.clone());
+                }
+                Ok(())
+            });
+        }
         spawn(move || {
             for endpoint in &endpoints {
-                let ws = ws.clone();
-                // FIXME: When TCP, only one of the peers should try to connect.
-                let result = transport::connect(endpoint.clone())
-                             .and_then(|trans| handle_connect(ws, trans));
-                if result.is_ok() { return; }
+                for itr in listening.iter() {
+                    if itr.is_master(endpoint) {
+                        let ws = ws.clone();
+                        let result = transport::connect(endpoint.clone())
+                                     .and_then(|trans| handle_connect(ws, trans));
+                        if result.is_ok() { return; }
+                    }
+                }
             }
-            let _ = notify_user(&ws, Event::FailedToConnect(endpoints));
         });
     }
 
-    /// Sends a message to specified address (endpoint). Returns Ok(()) if the sending might succeed, and returns an
-    /// Err if the address is not connected. Return value of Ok does not mean that the data will be
-    /// received. It is possible for the corresponding connection to hang up immediately after this
-    /// function returns Ok.
+    /// Sends a message to specified address (endpoint). Returns Ok(()) if the sending might
+    /// succeed, and returns an Err if the address is not connected. Return value of Ok does not
+    /// mean that the data will be received. It is possible for the corresponding connection to hang
+    /// up immediately after this function returns Ok.
     pub fn send(&self, endpoint: Endpoint, message: Bytes) -> IoResult<()> {
         let ws = self.state.downgrade();
 
@@ -142,7 +153,7 @@ impl ConnectionManager {
         send_result.map_err(|_|cant_send)
     }
 
-    /// Closes connection with the specified endpoint
+    /// Closes connection with the specified endpoint.
     pub fn drop_node(&self, endpoint: Endpoint) {
         let mut ws = self.state.downgrade();
         let _ = lock_mut_state(&mut ws, |s: &mut State| {
@@ -297,13 +308,11 @@ fn start_writing_thread(state: WeakState,
 #[cfg(test)]
 mod test {
     use super::*;
-    use std::thread;
     use std::thread::spawn;
     use std::sync::mpsc::{Receiver, channel};
     use rustc_serialize::{Decodable, Encodable};
     use cbor::{Encoder, Decoder};
-    use transport::{Port, Endpoint};
-    use std::sync::{Mutex, Arc};
+    use transport::{Port};
 
     fn encode<T>(value: &T) -> Bytes where T: Encodable
     {
@@ -315,49 +324,6 @@ mod test {
     fn decode<T>(bytes: Bytes) -> T where T: Decodable {
         let mut dec = Decoder::from_bytes(&bytes[..]);
         dec.decode().next().unwrap().unwrap()
-    }
-
-    const  NETWORK_SIZE: u32 = 10;
-    const  MESSAGE_PER_NODE: u32 = 100;
-
-    struct Node {
-        conn_mgr: ConnectionManager,
-        listenig_end_point: Endpoint
-    }
-
-    #[derive(Debug)]
-    struct Stats {
-        new_connections_count: u32,
-        messages_count: u32,
-        lost_connection_count: u32
-    }
-
-    impl Node {
-        pub fn new(cm: ConnectionManager) -> Node {
-            match cm.start_listening(vec![Port::Tcp(0)]) {
-                Ok(end_points) => Node { conn_mgr: cm, listenig_end_point: end_points[0].clone() },
-                Err(_) => panic!("not listening")
-            }
-        }
-    }
-
-    fn get_endpoint(node: &Arc<Mutex<Node>>) -> Endpoint {
-        let node = node.clone();
-        let node = node.lock().unwrap();
-        node.listenig_end_point.clone()
-    }
-
-    struct Network {
-        nodes: Vec<Arc<Mutex<Node>>>
-    }
-
-    impl Network {
-        pub fn add(&mut self) -> Receiver<Event> {
-            let (cm_i, cm_o) = channel();
-            let cm = ConnectionManager::new(cm_i);
-            self.nodes.push(Arc::new(Mutex::new(Node::new(cm))));
-            cm_o
-        }
     }
 
 #[test]
@@ -377,8 +343,7 @@ mod test {
                         },
                         Event::LostConnection(other_ep) => {
                             println!("Lost connection to {:?}", other_ep);
-                        },
-                        _ => println!("unhandled"),
+                        }
                     }
                 }
                 println!("done");
@@ -393,106 +358,12 @@ mod test {
         let cm2 = ConnectionManager::new(cm2_i);
         let cm2_eps = cm2.start_listening(vec![Port::Tcp(0)]).unwrap();
         cm2.connect(cm1_eps.clone());
+        cm1.connect(cm2_eps.clone());
 
         let runner1 = run_cm(cm1, cm1_o);
         let runner2 = run_cm(cm2, cm2_o);
 
         assert!(runner1.join().is_ok());
         assert!(runner2.join().is_ok());
-    }
-
-#[test]
-    fn network() {
-        let run_cm = |stats: Arc<Mutex<Stats>>, o: Receiver<Event>| {
-            spawn(move || {
-                for i in o.iter() {
-                    let mut stats = stats.lock().unwrap();
-                    match i {
-                        Event::NewConnection(other_ep) => {
-                            println!("Connected to --> {:?}", other_ep);
-                            stats.new_connections_count += 1;
-                        },
-                        Event::NewMessage(from_ep, data) => {
-                            println!("New message from {:?} data:{:?}",
-                                     from_ep, decode::<String>(data));
-                            stats.messages_count += 1;
-                            if stats.messages_count == MESSAGE_PER_NODE * (NETWORK_SIZE - 1) {
-                                break;
-                            }
-                        },
-                        Event::LostConnection(other_ep) => {
-                            println!("Lost connection to {:?}", other_ep);
-                            stats.lost_connection_count += 1;
-                        },
-                        _ => println!("unhandled"),
-                    }
-                }
-                println!("done");
-            })
-        };
-
-        let mut network = Network { nodes: Vec::new() };
-        let mut stats = Vec::new();
-        let mut runners = Vec::new();
-
-        for _ in 0..NETWORK_SIZE {
-            let receiver = network.add();
-            let stat = Arc::new(Mutex::new(Stats {new_connections_count: 0, messages_count: 0,
-                 lost_connection_count: 0} ));
-            let stat_copy = stat.clone();
-            let runner = run_cm(stat_copy, receiver);
-            stats.push(stat);
-            runners.push(runner);
-        }
-
-        let mut listening_end_points = Vec::new();
-
-        for node in network.nodes.iter() {
-            listening_end_points.push(get_endpoint(node));
-        }
-
-        for node in network.nodes.iter() {
-            for end_point in listening_end_points.iter().filter(|&ep| get_endpoint(node).ne(ep)) {
-                let node = node.clone();
-                let ep = end_point.clone();
-                spawn(move || {
-                    let node = node.lock().unwrap();
-                    node.conn_mgr.connect(vec![ep]);
-                });
-            }
-        }
-
-        for node in network.nodes.iter() {
-            for end_point in listening_end_points.iter().filter(|&ep| get_endpoint(node).ne(ep)) {
-                for _ in 0..MESSAGE_PER_NODE {
-                    let node = node.clone();
-                    let ep = end_point.clone();
-                    spawn(move || {
-                        let node = node.lock().unwrap();
-                        let _ = node.conn_mgr.send(ep.clone(), encode(&"message".to_string()));
-                    });
-                }
-            }
-        }
-
-        thread::sleep_ms(100 * NETWORK_SIZE + 10 * MESSAGE_PER_NODE);
-
-        for _ in 0..NETWORK_SIZE {
-            network.nodes.remove(0);
-        }
-
-        thread::sleep_ms(100 * NETWORK_SIZE + 10 * MESSAGE_PER_NODE);
-
-        for runner in runners {
-            assert!(runner.join().is_ok());
-        }
-
-        for stat in stats {
-            let stat = stat.clone();
-            let stat = stat.lock().unwrap();
-            assert_eq!(stat.new_connections_count, (NETWORK_SIZE - 1) * 2);
-            assert_eq!(stat.messages_count,  MESSAGE_PER_NODE * (NETWORK_SIZE - 1));
-            assert_eq!(stat.lost_connection_count, 0);
-        }
     }
 }

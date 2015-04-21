@@ -34,6 +34,25 @@ pub enum Port {
     Tcp(u16),
 }
 
+impl Endpoint {
+    pub fn is_master(&self, other: &Endpoint) -> bool {
+        match *self {
+            Endpoint::Tcp(my_address) => {
+                match *other {
+                    Endpoint::Tcp(other_address) => {
+                        if my_address.port() == other_address.port() {
+                            return my_address.ip() < other_address.ip();
+                        } else {
+                            return my_address.port() < other_address.port();
+                        }
+                    }
+                }
+            }
+        }
+        return true;
+    }
+}
+
 impl PartialOrd for Endpoint {
     fn partial_cmp(&self, other: &Endpoint) -> Option<Ordering> {
         Some(self.cmp(other))
