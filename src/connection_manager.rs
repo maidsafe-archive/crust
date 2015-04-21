@@ -107,14 +107,25 @@ impl ConnectionManager {
     /// https://github.com/dirvine/crust/blob/master/docs/connect.md
     pub fn connect(&self, endpoints: Vec<Endpoint>) {
         let ws = self.state.downgrade();
-
+        let mut listening = HashSet::<Endpoint>::new();
+        {
+            let _ = lock_mut_state(& ws, |s: &mut State| {
+                for itr in s.listening_eps.iter() {
+                    listening.insert(itr.clone());
+                }
+                Ok(())
+            });
+        }
         spawn(move || {
             for endpoint in &endpoints {
-                let ws = ws.clone();
-                // FIXME: When TCP, only one of the peers should try to connect.
-                let result = transport::connect(endpoint.clone())
-                             .and_then(|trans| handle_connect(ws, trans));
-                if result.is_ok() { return; }
+                for itr in listening.iter() {
+                    if itr.is_master(endpoint) {
+                        let ws = ws.clone();
+                        let result = transport::connect(endpoint.clone())
+                                     .and_then(|trans| handle_connect(ws, trans));
+                        if result.is_ok() { return; }
+                    }
+                }
             }
         });
     }
@@ -328,7 +339,8 @@ mod test {
                         },
                         Event::LostConnection(other_ep) => {
                             println!("Lost connection to {:?}", other_ep);
-                        }
+                        },
+                        _ => println!("unhandled"),
                     }
                 }
                 println!("done");
