@@ -9,8 +9,6 @@ readme = "README.md"
 license = "GPL-3.0"
 homepage = "http://www.maidsafe.net"
 
-
-
 [dependencies]
 rustc-serialize = "*"
 cbor = "*"
@@ -24,5 +22,11 @@ bench = false
 [[example]]
 name = "simple_server"
 path = "examples/simple_server.rs"
+test = false
+bench = false
+
+[[example]]
+name = "crust_node"
+path = "examples/crust_node.rs"
 test = false
 bench = false
