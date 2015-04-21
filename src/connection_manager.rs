@@ -23,6 +23,7 @@ use std::sync::{Arc, Mutex, Weak};
 use std::sync::mpsc;
 use transport::{Endpoint, Port};
 use transport;
+use beacon;
 
 pub type Bytes = Vec<u8>;
 pub type IoResult<T> = Result<T, IoError>;
@@ -76,7 +77,11 @@ impl ConnectionManager {
     /// for each protocol.
     pub fn start_listening(&self, hint: Vec<Port>) -> IoResult<Vec<Endpoint>> {
         // FIXME: Returning IoResult seems pointless since we always return Ok.
-        Ok(hint.iter().filter_map(|port| self.listen(port).ok()).collect::<Vec<_>>())
+        let end_points = hint.iter().filter_map(|port| self.listen(port).ok()).collect::<Vec<_>>();
+        match end_points[0].clone() {
+            Endpoint::Tcp(socket_addr) => { spawn(move || { beacon::listen_for_broadcast(socket_addr); }); }
+        }
+        Ok(end_points)
     }
 
     /// This method tries to connect (bootstrap to exisiting network) to the default or provided
@@ -470,7 +475,6 @@ mod test {
                         let node = node.lock().unwrap();
                         let _ = node.conn_mgr.send(ep.clone(), encode(&"message".to_string()));
                     });
-
                 }
             }
         }
