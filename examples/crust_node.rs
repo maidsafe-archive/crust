@@ -19,16 +19,54 @@
 extern crate crust;
 extern crate rand;
 
-const ADDR_SIZE: u32 = 32;
+use transport::{Endpoint, Port};
 
-fn generate_random_id() -> [u8; ADDR_SIZE] {
-  let id = [u8; ADDR_SIZE];
-  for i in 0..ADDR_SIZE {
-    id[i] = rand::random::<u8>();
+// simple "NodeInfo", without PKI
+struct CrustNode {
+  pub endpoint : Endpoint,
+  pub connected : bool
+}
+
+impl CrustNode {
+  pub fn new(endpoint : Endpoint) -> CrustNode {
+    CrustNode{
+      endpoint : endpoint,
+      connected : false
+    }
   }
-  id
+  pub fn set_connected(&mut self) {self.connected = true;}
+  pub fn set_disconnected(&mut self) {self.connected = false;}
+}
+
+struct FlatWorld {
+  our_ep : Endpoint,
+  crust_nodes : Vec<CrustNode>
+}
+
+// simple "routing table" without any structure
+impl FlatWorld {
+  pub fn new(our_endpoint : Endpoint) -> FlatWorld {
+    FlatWorld {
+      our_ep : our_endpoint,
+      crust_nodes : Vec::with_capacity(40)
+    }
+  }
+
+  // Will add node if not duplicated.  Returns true when added.
+  pub fn add(new_endpoint : Endpoint) -> bool {
+    
+  }
 }
 
 fn main() {
+  let (cm_tx, cm_rx = channel();
+  let cm = ConnectionManager::new(cm_tx);
+  let cm_eps = match cm.start_listening(vec![Port::Tcp(0)]) {
+    Ok(eps) => eps,
+    Err(e) => panic!("Connection manager failed to start on arbitrary TCP port: {}", e)
+  };
 
+  if false { // beacon nor stored_bootstrap_endpoints
+    cm.
+  }
 }
