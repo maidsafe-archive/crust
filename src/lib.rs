@@ -13,7 +13,7 @@ extern crate rustc_serialize;
 extern crate cbor;
 
 mod tcp_connections;
-pub mod transport;
+mod transport;
 pub mod connection_manager;
 mod beacon;
 
