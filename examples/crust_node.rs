@@ -17,11 +17,13 @@
 // use of the MaidSafe Software.
 
 extern crate crust;
-extern crate rand;
 
-use transport::{Endpoint, Port};
+use std::sync::mpsc::channel;
+use crust::{Endpoint, Port};
+use crust::connection_manager::ConnectionManager;
 
 // simple "NodeInfo", without PKI
+#[derive(Clone)]
 struct CrustNode {
   pub endpoint : Endpoint,
   pub connected : bool
@@ -53,20 +55,39 @@ impl FlatWorld {
   }
 
   // Will add node if not duplicated.  Returns true when added.
-  pub fn add(new_endpoint : Endpoint) -> bool {
-    
+  pub fn add(&mut self, new_node : CrustNode) -> bool {
+    if (self.crust_nodes.iter()
+                        .filter(|node| node.endpoint == new_node.endpoint)
+                        .count() == 0 &&
+        self.our_ep != new_node.endpoint) {
+      self.crust_nodes.push(new_node);
+      return true;
+    }
+    return false;
+  }
+
+  pub fn get_connected_nodes(&self) -> Vec<CrustNode> {
+    self.crust_nodes.iter()
+                    .filter_map(|node| if node.connected == true {
+                      Some(node.clone())
+                      } else {None})
+                    .collect::<Vec<_>>()
+  }
+
+  pub fn get_all_nodes(&self) -> Vec<CrustNode> {
+    self.crust_nodes.clone()
   }
 }
 
 fn main() {
-  let (cm_tx, cm_rx = channel();
+  let (cm_tx, cm_rx) = channel();
   let cm = ConnectionManager::new(cm_tx);
   let cm_eps = match cm.start_listening(vec![Port::Tcp(0)]) {
     Ok(eps) => eps,
     Err(e) => panic!("Connection manager failed to start on arbitrary TCP port: {}", e)
   };
 
-  if false { // beacon nor stored_bootstrap_endpoints
-    cm.
-  }
+  // if false { // beacon nor stored_bootstrap_endpoints
+  //   cm.
+  // }
 }
