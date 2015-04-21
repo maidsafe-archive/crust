@@ -66,10 +66,10 @@ struct CrustNode {
 }
 
 impl CrustNode {
-  pub fn new(endpoint : Endpoint) -> CrustNode {
+  pub fn new(endpoint : Endpoint, connected : bool) -> CrustNode {
     CrustNode{
       endpoint : endpoint,
-      connected : false
+      connected : connected
     }
   }
   pub fn set_connected(&mut self) {self.connected = true;}
@@ -77,15 +77,15 @@ impl CrustNode {
 }
 
 struct FlatWorld {
-  our_ep : Endpoint,
+  our_eps : Vec<Endpoint>,
   crust_nodes : Vec<CrustNode>
 }
 
 // simple "routing table" without any structure
 impl FlatWorld {
-  pub fn new(our_endpoint : Endpoint) -> FlatWorld {
+  pub fn new(our_endpoints : Vec<Endpoint>) -> FlatWorld {
     FlatWorld {
-      our_ep : our_endpoint,
+      our_eps : our_endpoints,
       crust_nodes : Vec::with_capacity(40)
     }
   }
@@ -95,7 +95,9 @@ impl FlatWorld {
     if (self.crust_nodes.iter()
                         .filter(|node| node.endpoint == new_node.endpoint)
                         .count() == 0 &&
-        self.our_ep != new_node.endpoint) {
+        self.our_eps.iter()
+                    .filter(|& our_ep| our_ep == &new_node.endpoint)
+                    .count() == 0) {
       self.crust_nodes.push(new_node);
       return true;
     }
@@ -120,8 +122,8 @@ fn main() {
   let args : Args = Docopt::new(USAGE)
                      .and_then(|d| d.decode())
                      .unwrap_or_else(|e| e.exit());
-  // TODO: remove; here for debug
-  if !args.flag_help { println!("{:?}", args); };
+
+  if !args.flag_help { println!("{:?}", args); };  // TODO: remove; here for debug
   if args.flag_help {
     println!("{:?}", args);     // print help message
     return;
@@ -133,6 +135,11 @@ fn main() {
     Ok(eps) => eps,
     Err(e) => panic!("Connection manager failed to start on arbitrary TCP port: {}", e)
   };
+  assert!(cm_eps.len() > 0);
+  for ep in &cm_eps {
+    // println!("Connection manager now listening on {}", ep);
+  };
+  let mut my_flat_world : FlatWorld = FlatWorld::new(cm_eps);
 
   let mut default_bootstrap = !args.flag_bootstrap;
   if !default_bootstrap {
@@ -144,7 +151,12 @@ fn main() {
           Ok(addr) => addr,
           Err(e) => panic!("Failed to parse bootstrap peer as valid IPv4 or IPv6 address: {}", peer)
         };
-        cm.bootstrap(Some(vec![Endpoint::Tcp(bootstrap_address)]));
+        match cm.bootstrap(Some(vec![Endpoint::Tcp(bootstrap_address)])){
+          Ok(endpoint) => my_flat_world.add(CrustNode{endpoint : endpoint,
+                                                      connected : true}),
+          Err(e) => { println!("Failed to bootstrap from provided peer: {}", e);
+                      panic!("Not resulting to default discovery of bootstrap nodes. Exiting"); }
+        };
       },
       None => { println!("No peer address provided, result to default");
                 default_bootstrap = true; }
