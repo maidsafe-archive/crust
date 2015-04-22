@@ -87,7 +87,6 @@ impl fmt::Debug for PublicKey {
     }
 }
 
-// TODO Move Contact to maidsafe_types
 #[derive(PartialEq, Debug)]
 pub struct Contact {
     endpoint: Endpoint,
