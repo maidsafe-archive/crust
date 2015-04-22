@@ -22,6 +22,7 @@ use std::sync::mpsc;
 use std::thread;
 use std::thread::spawn;
 use std::io::Result;
+use transport::{Port};
 
 fn serialise_address(our_listening_address: SocketAddr) -> [u8; 27] {
     let mut our_details = [0u8; 27];
@@ -103,8 +104,16 @@ fn handle_receive(socket: &UdpSocket) -> Option<SocketAddr> {
     }
 }
 
-pub fn listen_for_broadcast(our_listening_address: SocketAddr) -> Result<()> {
-    let socket = try!( UdpSocket::bind("0.0.0.0:5483"));
+/// Listen for beacon broadcasts on port 5483 and reply with our_listening_address.
+pub fn listen_for_broadcast(our_listening_address: SocketAddr, port: Option<Port>) -> Result<()> {
+    let bootstrap_port: u16 = match port {
+        Some(port) =>  { match port { Port::Tcp(num) => num }},
+        None => 5483
+    };
+
+    println!("port is {:?}", bootstrap_port);
+
+    let socket = try!( UdpSocket::bind(("0.0.0.0", bootstrap_port.clone())));
     let our_serialised_details = serialise_address(our_listening_address);
 
     spawn(move || {
@@ -120,7 +129,8 @@ pub fn listen_for_broadcast(our_listening_address: SocketAddr) -> Result<()> {
         Ok(())
 }
 
-pub fn seek_peers() -> Vec<SocketAddr> {
+/// Seek for peers, send out beacon to local network on port 5483.
+pub fn seek_peers(port: Option<Port>) -> Vec<SocketAddr> {
     let socket = match UdpSocket::bind("0.0.0.0:0") {
         Ok(s) => s,
         Err(e) => panic!("Couldn't bind socket: {}", e),
@@ -131,8 +141,15 @@ pub fn seek_peers() -> Vec<SocketAddr> {
         Err(e) => panic!("Can't broadcast from this socket: {}", e),
     }
 
+    let bootstrap_port: u16 = match port {
+        Some(port) =>  { match port { Port::Tcp(num) => num }},
+        None => 5483
+    };
+
+    println!("seek_peers port is {:?}", bootstrap_port);
+
     let buffer = [0; 4];
-    match socket.send_to(&buffer, ("255.255.255.255:5483")) {
+    match socket.send_to(&buffer, ("255.255.255.255", bootstrap_port)) {
         Ok(s) => assert_eq!(4, s),
         Err(e) => panic!("Failed broadcasting on {}: {}", socket.local_addr().unwrap(), e),
     }
@@ -142,7 +159,10 @@ pub fn seek_peers() -> Vec<SocketAddr> {
     thread::spawn(move || {
         loop {
             match handle_receive(&socket) {
-                Some(peer_address) => tx.send(peer_address).unwrap(),
+                Some(peer_address) => match tx.send(peer_address) {
+                  Ok(sent) => {;}
+                  Err(e) => break  // receiver already deallocated
+                },
                 _ => (),
             }
         }
@@ -166,24 +186,27 @@ mod test {
     use super::*;
     use std::net::{UdpSocket/*, lookup_addr, lookup_host*/};
     use std::thread;
+    use transport::{Port};
 
 #[test]
     fn test_broadcast() {
+        let port = Port::Tcp(5493);
         // Start a normal socket and start listening for a broadcast
+        let port2 = port.clone();
         thread::spawn(move || {
             let normal_socket = match UdpSocket::bind("::0:0") {
                 Ok(s) => s,
                 Err(e) => panic!("Couldn't bind socket: {}", e),
             };
             println!("Normal socket on {:?}\n", normal_socket.local_addr().unwrap());
-            let _ = listen_for_broadcast(normal_socket.local_addr().unwrap());
+            let _ = listen_for_broadcast(normal_socket.local_addr().unwrap(), Some(port2));
         });
 
         // Allow listener time to start
         thread::sleep_ms(300);
 
         for i in 0..3 {
-            let peers = seek_peers();
+            let peers = seek_peers(Some(port.clone()));
             assert!(peers.len() > 0);
         }
     }
