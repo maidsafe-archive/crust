@@ -18,7 +18,6 @@
 
 extern crate crust;
 
-use std::net::UdpSocket;
 use std::net::TcpListener;
 
 fn main() {
