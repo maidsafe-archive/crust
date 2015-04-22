@@ -16,8 +16,6 @@
 // See the Licences for the specific language governing permissions and limitations relating to
 // use of the MaidSafe Software.
 
-#![deny(missing_docs)]
-
 use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6, UdpSocket};
 use std::sync::mpsc::{Sender, Receiver};
 use std::sync::mpsc;
