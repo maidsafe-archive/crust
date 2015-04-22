@@ -20,6 +20,8 @@ use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6, UdpSo
 use std::sync::mpsc::{Sender, Receiver};
 use std::sync::mpsc;
 use std::thread;
+use std::thread::spawn;
+use std::io::Result;
 
 fn serialise_address(our_listening_address: SocketAddr) -> [u8; 27] {
     let mut our_details = [0u8; 27];
@@ -101,23 +103,21 @@ fn handle_receive(socket: &UdpSocket) -> Option<SocketAddr> {
     }
 }
 
-pub fn listen_for_broadcast(our_listening_address: SocketAddr) {
-    let socket = match UdpSocket::bind("0.0.0.0:5483") {
-        Ok(bound_socket) => bound_socket,
-        Err(error) => panic!("Couldn't bind socket: {}", error),
-    };
-
+pub fn listen_for_broadcast(our_listening_address: SocketAddr) -> Result<()> {
+    let socket = try!( UdpSocket::bind("0.0.0.0:5483"));
     let our_serialised_details = serialise_address(our_listening_address);
 
-    loop {
-        let mut buffer = [0; 4];
-        match socket.recv_from(&mut buffer) {
-            Ok((received_length, source)) => {
-                let _ = socket.send_to(&our_serialised_details, source);
+    spawn(move || {
+        loop {
+            let mut buffer = [0; 4];
+            match socket.recv_from(&mut buffer) {
+                Ok((received_length, source)) => {
+                    let _ = socket.send_to(&our_serialised_details, source);
+                }
+                Err(error) => println!("Failed receiving a message: {}", error)
             }
-            Err(error) => println!("Failed receiving a message: {}", error)
-        }
-    }
+        }});
+        Ok(())
 }
 
 pub fn seek_peers() -> Vec<SocketAddr> {
@@ -161,8 +161,6 @@ pub fn seek_peers() -> Vec<SocketAddr> {
     peers
 }
 
-
-
 #[cfg(test)]
 mod test {
     use super::*;
@@ -178,7 +176,7 @@ mod test {
                 Err(e) => panic!("Couldn't bind socket: {}", e),
             };
             println!("Normal socket on {:?}\n", normal_socket.local_addr().unwrap());
-            listen_for_broadcast(normal_socket.local_addr().unwrap());
+            let _ = listen_for_broadcast(normal_socket.local_addr().unwrap());
         });
 
         // Allow listener time to start
