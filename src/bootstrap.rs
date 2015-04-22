@@ -21,15 +21,11 @@ use cbor;
 use cbor::CborTagEncode;
 use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
 use sodiumoxide::crypto;
-use std::net;
-use std::net::SocketAddr;
 use transport::Endpoint;
 use std::fs::File;
-use std::io;
 use std::io::prelude::*;
 use std::path;
 use std::env;
-use beacon;
 
 type BootStrapContacts = Vec<Contact>;
 
@@ -49,22 +45,6 @@ macro_rules! convert_to_array {
             Some(arr)
         }
     }};
-}
-
-fn array_to_vec(arr: &[u8]) -> Vec<u8> {
-    let mut vector = Vec::new();
-    for i in arr.iter() {
-        vector.push(*i);
-    }
-    vector
-}
-
-fn vector_as_u8_4_array(vector: Vec<u8>) -> [u8;4] {
-    let mut arr = [0u8;4];
-    for i in (0..4) {
-        arr[i] = vector[i];
-    }
-    arr
 }
 
 // TODO Move Contact to maidsafe_types
