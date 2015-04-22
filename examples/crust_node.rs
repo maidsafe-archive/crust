@@ -28,7 +28,6 @@ use crust::{Endpoint, Port};
 use crust::ConnectionManager;
 use docopt::Docopt;
 use std::sync::mpsc::channel;
-use std::env;
 use std::io;
 use std::net::SocketAddr;
 use std::str::FromStr;
@@ -36,14 +35,14 @@ use std::str::FromStr;
 // TODO: switching order of CL params, eg --speed x --bootstrap node
 //       gives an error parsing node as usize... so order is strict for now
 static USAGE: &'static str = "
-Usage: crust_node
-       crust_node -h
+Usage: crust_node -h
+       crust_node -o <port>
        crust_node -b <peer>
-       crust_node -s <speed>
        crust_node -b <peer> -s <speed>
 
 Options:
     -h, --help        Display this help message.
+    -o, --origin      Start a crust node as server, i.e. only listening on specified port.
     -b, --bootstrap   Start a crust node and bootstrap off the peer.
                       If no bootstrap node is provided beacon will be used.
     -s, --speed       Optional send data at maximum speed (bytes/second)
@@ -53,9 +52,11 @@ Options:
 struct Args {
   arg_peer : Option<String>,
   arg_speed : Option<usize>,
+  arg_port : Option<String>,
   flag_help : bool,
   flag_bootstrap : bool,
-  flag_speed : bool
+  flag_speed : bool,
+  flag_origin : bool
 }
 
 // simple "NodeInfo", without PKI
@@ -91,15 +92,25 @@ impl FlatWorld {
   }
 
   // Will add node if not duplicated.  Returns true when added.
-  pub fn add(&mut self, new_node : CrustNode) -> bool {
-    if (self.crust_nodes.iter()
-                        .filter(|node| node.endpoint == new_node.endpoint)
-                        .count() == 0 &&
-        self.our_eps.iter()
-                    .filter(|& our_ep| our_ep == &new_node.endpoint)
-                    .count() == 0) {
+  pub fn add_node(&mut self, new_node : CrustNode) -> bool {
+    if self.crust_nodes.iter()
+                       .filter(|node| node.endpoint == new_node.endpoint)
+                       .count() == 0 &&
+       self.our_eps.iter()
+                   .filter(|& our_ep| our_ep == &new_node.endpoint)
+                   .count() == 0 {
       self.crust_nodes.push(new_node);
       return true;
+    }
+    return false;
+  }
+
+  pub fn drop_node(&mut self, lost_node : CrustNode) -> bool {
+    for node in self.crust_nodes.iter_mut() {
+      if node.endpoint == lost_node.endpoint {
+        node.set_disconnected();
+        return true;
+      }
     }
     return false;
   }
@@ -131,7 +142,7 @@ fn main() {
 
   let (cm_tx, cm_rx) = channel();
   let cm = ConnectionManager::new(cm_tx);
-  let cm_eps = match cm.start_listening(vec![Port::Tcp(0u16)]) {
+  let cm_eps = match cm.start_listening(vec![Port::Tcp(5483u16)]) {
     Ok(eps) => eps,
     Err(e) => panic!("Connection manager failed to start on arbitrary TCP port: {}", e)
   };
@@ -144,40 +155,60 @@ fn main() {
   let mut my_flat_world : FlatWorld = FlatWorld::new(cm_eps);
 
   let mut default_bootstrap = !args.flag_bootstrap;
-  if !default_bootstrap {
+  if args.flag_bootstrap {
     match args.arg_peer {
       Some(peer) => {
         // String.as_str() is unstable; waiting RFC revision
         // http://doc.rust-lang.org/nightly/std/string/struct.String.html#method.as_str
         let bootstrap_address = match SocketAddr::from_str(peer.as_str()) {
           Ok(addr) => addr,
-          Err(e) => panic!("Failed to parse bootstrap peer as valid IPv4 or IPv6 address: {}", peer)
+          Err(_) => panic!("Failed to parse bootstrap peer as valid IPv4 or IPv6 address: {}", peer)
         };
-        match cm.bootstrap(Some(vec![Endpoint::Tcp(bootstrap_address)])){
-          Ok(endpoint) =>  my_flat_world.add(CrustNode{endpoint : endpoint,
-                                                       connected : true}),
-          Err(e) => { println!("Failed to bootstrap from provided peer: {}", e);
+        match cm.bootstrap(Some(vec![Endpoint::Tcp(bootstrap_address)])) {
+          Ok(endpoint) =>  my_flat_world.add_node(CrustNode::new(endpoint, true)),
+          Err(e) => { println!("Failed to bootstrap from provided peer: {}, with error : {}", peer, e);
                       panic!("Not resulting to default discovery of bootstrap nodes. Exiting"); }
+                      // default_bootstrap = true; }
         };
       },
-      None => { println!("No peer address provided, result to default");
+      None => { println!("No peer address provided, resort to default");
                 default_bootstrap = true; }
     }
   }
 
   // resort to default bootstrapping methods
-  if default_bootstrap {
+  if default_bootstrap && !args.flag_origin {
     match cm.bootstrap(None) {
-      Ok(endpoint) => my_flat_world.add(CrustNode{endpoint : endpoint,
-                                                  connected : true }),
+      Ok(endpoint) => my_flat_world.add_node(CrustNode::new(endpoint, true)),
       Err(e) => { println!("Failed to bootstrap from default methods: {}", e);
                   panic!("Improve by keeping beacon alive. For now exiting"); }
     };
   };
 
-  // HANDOVER to Qi: At this point a thin messaging similar to the connection
-  //                 manager unit test needs to implement basic messages to exchange other peers
-  //                 known on the network.  From there, sending measurement messages can be
-  //                 implemented as well.
+  // processing interaction till receiving termination command
+  loop {
+      println!("waiting for an input event");
+      let event = cm_rx.recv();
+      println!("got an input event");
+      if event.is_err() {
+        println!("terminating the node");
+        break;
+      }
+
+      match event.unwrap() {
+          crust::Event::NewMessage(endpoint, bytes) => {
+              println!("received a new message and now replying");
+              let _ = cm.send(endpoint, bytes);
+          },
+          crust::Event::NewConnection(endpoint) => {
+              println!("adding new node");
+              my_flat_world.add_node(CrustNode::new(endpoint, true));
+          },
+          crust::Event::LostConnection(endpoint) => {
+              println!("dropping new node");
+              my_flat_world.drop_node(CrustNode::new(endpoint, false));
+          }
+      }
+  }
 
 }
