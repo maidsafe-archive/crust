@@ -45,8 +45,8 @@ Several methods are used for NAT traversal, UpNP, hole punching [See here for tc
 - [ ] Integrate beacon (Have connection manger start, broadcast on udp broadcast for port 5483 (later multicast for ipv6)
 - [ ] Send serialised bootstrap info as part of beacon reply (Link ability to send bootstrap file to any node requesting it)
 - [ ] Examples:
-  - [ ] Beacon Client
-  - [ ] Beacon Server
+  - [x] Beacon Client
+  - [x] Beacon Server
   - [ ] CLI Example - options: 
     - [ ] Join / Start a client(optionally provide bootstrap info) 
     - [ ] Allow sending messages at various rates per second 
