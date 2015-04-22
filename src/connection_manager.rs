@@ -316,6 +316,7 @@ fn start_writing_thread(state: WeakState,
 
 #[cfg(test)]
 mod test {
+    extern crate rand;
     use super::*;
     use std::thread::spawn;
     use std::thread;
@@ -323,6 +324,7 @@ mod test {
     use rustc_serialize::{Decodable, Encodable};
     use cbor::{Encoder, Decoder};
     use transport::{Port};
+    use rand::*;
 
     fn encode<T>(value: &T) -> Bytes where T: Encodable
     {
@@ -336,11 +338,17 @@ mod test {
         dec.decode().next().unwrap().unwrap()
     }
 
+    fn next_port() -> u16 {
+            let mut port:u16 = rand::random();
+            port = 1025 + port % 50000;
+            port
+    }
+
 #[test]
     fn bootstrap() {
         let (cm1_i, _) = channel();
         let cm1 = ConnectionManager::new(cm1_i);
-        let port = Port::Tcp(5484);
+        let port = Port::Tcp(next_port());
         let cm1_eps = cm1.start_listening(vec![Port::Tcp(0)], Some(port.clone())).unwrap();
 
         thread::sleep_ms(1000);
@@ -377,7 +385,7 @@ mod test {
             })
         };
 
-        let port = Port::Tcp(5485);
+        let port = Port::Tcp(next_port());
         let (cm1_i, cm1_o) = channel();
         let cm1 = ConnectionManager::new(cm1_i);
         let cm1_eps = cm1.start_listening(vec![Port::Tcp(0)], Some(port.clone())).unwrap();
