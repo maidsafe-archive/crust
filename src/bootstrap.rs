@@ -27,7 +27,7 @@ use std::io::prelude::*;
 use std::path;
 use std::env;
 
-type BootStrapContacts = Vec<Contact>;
+pub type BootStrapContacts = Vec<Contact>;
 
 static MAX_LIST_SIZE: usize = 1500;
 

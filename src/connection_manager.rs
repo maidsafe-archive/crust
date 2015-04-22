@@ -26,6 +26,9 @@ use std::sync::{Arc, Mutex, Weak};
 use std::sync::mpsc;
 use transport::{Endpoint, Port};
 use transport;
+use beacon;
+use bootstrap::{BootStrapHandler, BootStrapContacts, Contact};
+use sodiumoxide::crypto;
 
 pub type Bytes = Vec<u8>;
 pub type IoResult<T> = Result<T, IoError>;
@@ -77,7 +80,11 @@ impl ConnectionManager {
     /// protocol.
     pub fn start_listening(&self, hint: Vec<Port>) -> IoResult<Vec<Endpoint>> {
         // FIXME: Returning IoResult seems pointless since we always return Ok.
-        Ok(hint.iter().filter_map(|port| self.listen(port).ok()).collect::<Vec<_>>())
+        let end_points = hint.iter().filter_map(|port| self.listen(port).ok()).collect::<Vec<_>>();
+         match end_points[0].clone() {
+             Endpoint::Tcp(socket_addr) => { spawn(move || { beacon::listen_for_broadcast(socket_addr); }); }
+         }
+         Ok(end_points)
     }
 
     /// This method tries to connect (bootstrap to exisiting network) to the default or provided
@@ -163,7 +170,7 @@ impl ConnectionManager {
     }
 
     pub fn get_stored_bootstrap_endpoints(&self) -> Vec<Endpoint> {
-        unimplemented!()
+        beacon::seek_peers().iter().map(|&socket_address| Endpoint::Tcp(socket_address)).collect::<Vec<_>>()
     }
 
     fn bootstrap_off_list(&self, bootstrap_list: Vec<Endpoint>) -> IoResult<Endpoint> {
@@ -240,7 +247,19 @@ fn handle_accept(mut state: WeakState, trans: transport::Transport) -> IoResult<
 
 fn handle_connect(mut state: WeakState, trans: transport::Transport) -> IoResult<Endpoint> {
     let remote_ep = trans.remote_endpoint.clone();
-    register_connection(&mut state, trans, Event::NewConnection(remote_ep))
+    let endpoint = register_connection(&mut state, trans, Event::NewConnection(remote_ep));
+    match endpoint {
+        Ok(ref endpoint) => {
+            let mut contacts = BootStrapContacts::new();
+            // TODO PublicKey for contact required...
+            let public_key = crypto::asymmetricbox::PublicKey([0u8; crypto::asymmetricbox::PUBLICKEYBYTES]);
+            contacts.push(Contact::new(endpoint.clone(), public_key));
+            let mut bootstrap_handler = BootStrapHandler::new();
+            bootstrap_handler.add_bootstrap_contacts(contacts);
+        }
+        Err(ref e) => ()
+    }
+    endpoint
 }
 
 fn register_connection( state: &mut WeakState,
@@ -309,6 +328,7 @@ fn start_writing_thread(state: WeakState,
 mod test {
     use super::*;
     use std::thread::spawn;
+    use std::thread;
     use std::sync::mpsc::{Receiver, channel};
     use rustc_serialize::{Decodable, Encodable};
     use cbor::{Encoder, Decoder};
@@ -326,8 +346,22 @@ mod test {
         dec.decode().next().unwrap().unwrap()
     }
 
+#[test]
+    fn bootstrap() {
+        let (cm1_i, _) = channel();
+        let cm1 = ConnectionManager::new(cm1_i);
+        let cm1_eps = cm1.start_listening(vec![Port::Tcp(0)]).unwrap();
 
-    #[test]
+        thread::sleep_ms(1000);
+        let (cm2_i, _) = channel();
+        let cm2 = ConnectionManager::new(cm2_i);
+        match cm2.bootstrap(None) {
+            Ok(ep) => { assert_eq!(ep.clone(), cm1_eps[0].clone()); },
+            Err(_) => { panic!("Failed to bootstrap"); }
+        }
+    }
+
+#[test]
     fn connection_manager() {
         let run_cm = |cm: ConnectionManager, o: Receiver<Event>| {
             spawn(move || {
