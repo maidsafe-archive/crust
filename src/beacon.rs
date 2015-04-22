@@ -101,6 +101,7 @@ fn handle_receive(socket: &UdpSocket) -> Option<SocketAddr> {
     }
 }
 
+/// Listen for beacon broadcasts on port 5483 and reply with our_listening_address.
 pub fn listen_for_broadcast(our_listening_address: SocketAddr) {
     let socket = match UdpSocket::bind("0.0.0.0:5483") {
         Ok(bound_socket) => bound_socket,
@@ -120,6 +121,7 @@ pub fn listen_for_broadcast(our_listening_address: SocketAddr) {
     }
 }
 
+/// Seek for peers, send out beacon to local network on port 5483.
 pub fn seek_peers() -> Vec<SocketAddr> {
     let socket = match UdpSocket::bind("0.0.0.0:0") {
         Ok(s) => s,
@@ -142,7 +144,10 @@ pub fn seek_peers() -> Vec<SocketAddr> {
     thread::spawn(move || {
         loop {
             match handle_receive(&socket) {
-                Some(peer_address) => tx.send(peer_address).unwrap(),
+                Some(peer_address) => match tx.send(peer_address) {
+                  Ok(sent) => {;}
+                  Err(e) => break  // receiver already deallocated
+                },
                 _ => (),
             }
         }
