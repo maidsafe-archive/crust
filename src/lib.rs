@@ -11,11 +11,15 @@
 
 extern crate rustc_serialize;
 extern crate cbor;
+extern crate time;
+extern crate sodiumoxide;
+extern crate rand;
 
 mod tcp_connections;
 mod transport;
 pub mod connection_manager;
 mod beacon;
+mod bootstrap;
 
 pub use connection_manager::{Event, ConnectionManager};
 pub use transport::{Endpoint, Port};

@@ -326,7 +326,8 @@ mod test {
         dec.decode().next().unwrap().unwrap()
     }
 
-#[test]
+
+    #[test]
     fn connection_manager() {
         let run_cm = |cm: ConnectionManager, o: Receiver<Event>| {
             spawn(move || {

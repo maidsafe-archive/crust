@@ -14,6 +14,9 @@ homepage = "http://www.maidsafe.net"
 [dependencies]
 rustc-serialize = "*"
 cbor = "*"
+time = "*"
+sodiumoxide = "*"
+rand = "*"
 
 [[example]]
 name = "simple_client"

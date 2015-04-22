@@ -19,14 +19,52 @@ use std::io;
 use std::io::Result as IoResult;
 use std::error::Error;
 use std::sync::mpsc;
+use beacon;
+use cbor;
+use cbor::CborTagEncode;
+use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
 use std::cmp::Ordering;
 
 pub type Bytes = Vec<u8>;
+
+fn array_to_vec(arr: &[u8]) -> Vec<u8> {
+    let mut vector = Vec::new();
+    for i in arr.iter() {
+        vector.push(*i);
+    }
+    vector
+}
 
 /// Enum representing endpoint of supported protocols
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub enum Endpoint {
     Tcp(SocketAddr),
+}
+
+impl Endpoint {
+    /// Returns SocketAddr.
+    pub fn get_address(&self) -> SocketAddr {
+        match *self {
+            Endpoint::Tcp(address) => address,
+        }
+    }
+}
+
+impl Encodable for Endpoint {
+    fn encode<E: Encoder>(&self, e: &mut E)->Result<(), E::Error> {
+        let address = array_to_vec(&beacon::serialise_address(self.get_address()));
+        CborTagEncode::new(5483_000, &address).encode(e)
+    }
+}
+
+impl Decodable for Endpoint {
+    fn decode<D: Decoder>(d: &mut D)->Result<Endpoint, D::Error> {
+        try!(d.read_u64());
+        let decoded: Vec<u8> = try!(Decodable::decode(d));
+        let address: SocketAddr = beacon::parse_address(&decoded).unwrap();
+
+        Ok(Endpoint::Tcp(address))
+    }
 }
 
 #[derive(Debug, Clone)]
