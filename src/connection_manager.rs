@@ -80,7 +80,7 @@ impl ConnectionManager {
         // FIXME: Returning IoResult seems pointless since we always return Ok.
         let end_points = hint.iter().filter_map(|port| self.listen(port).ok()).collect::<Vec<_>>();
          match end_points[0].clone() {
-             Endpoint::Tcp(socket_addr) => { spawn(move || { beacon::listen_for_broadcast(socket_addr); }); }
+             Endpoint::Tcp(socket_addr) => { let _ = beacon::listen_for_broadcast(socket_addr); }
          }
          Ok(end_points)
     }
@@ -341,6 +341,7 @@ mod test {
         thread::sleep_ms(1000);
         let (cm2_i, _) = channel();
         let cm2 = ConnectionManager::new(cm2_i);
+        let cm2_eps = cm2.start_listening(vec![Port::Tcp(0)]).unwrap();
         match cm2.bootstrap(None) {
             Ok(ep) => { assert_eq!(ep.clone(), cm1_eps[0].clone()); },
             Err(_) => { panic!("Failed to bootstrap"); }
