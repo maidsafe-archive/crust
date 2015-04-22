@@ -100,19 +100,19 @@ pub struct BootStrapHandler {
 
 impl BootStrapHandler {
     pub fn new() -> BootStrapHandler {
-        let mut app_path = match env::current_exe() {
-                                Ok(exe_path) => exe_path,
-                                Err(e) => panic!("Failed to get current exe path: {}", e),
-                           };
-        let mut app_with_extension = app_path.file_name().unwrap();
-        let mut app_name = path::Path::new(app_with_extension).file_stem().unwrap();
+        let app_path = match env::current_exe() {
+                            Ok(exe_path) => exe_path,
+                            Err(e) => panic!("Failed to get current exe path: {}", e),
+                       };
+        let app_with_extension = app_path.file_name().unwrap();
+        let app_name = path::Path::new(app_with_extension).file_stem().unwrap();
 
         let mut filename = String::new();
         filename.push_str("./");
         filename.push_str(app_name.to_str().unwrap());
         filename.push_str(".bootstrap.cache");
 
-        let mut bootstrap = BootStrapHandler {
+        let bootstrap = BootStrapHandler {
             file_name: filename,
             last_updated: time::now(),
         };
@@ -135,14 +135,13 @@ impl BootStrapHandler {
     }
 
     pub fn read_bootstrap_contacts(&self) -> BootStrapContacts {
-        let mut contacts = BootStrapContacts::new();
         let mut file = File::open(&self.file_name).unwrap();
         let mut content = String::new();
 
 		file.read_to_string(&mut content);
 
 		let mut decoder = cbor::Decoder::from_bytes(content.as_bytes());
-		contacts = decoder.decode().next().unwrap().unwrap();
+		let contacts: BootStrapContacts = decoder.decode().next().unwrap().unwrap();
         contacts
     }
 
@@ -161,14 +160,13 @@ impl BootStrapHandler {
 
     fn insert_bootstrap_contacts(&mut self, contacts: BootStrapContacts) {
     	if !contacts.is_empty() {
-        	let mut current_contacts = BootStrapContacts::new();
 	        let mut open_file = File::open(&self.file_name).unwrap();
 	        let mut content = String::new();
 
 			open_file.read_to_string(&mut content);
 
 			let mut decoder = cbor::Decoder::from_bytes(content.as_bytes());
-			current_contacts = decoder.decode().next().unwrap().unwrap();
+            let mut current_contacts: BootStrapContacts = decoder.decode().next().unwrap().unwrap();
 
             for i in 0..contacts.len() {
 	           current_contacts.push(contacts[i].clone());
