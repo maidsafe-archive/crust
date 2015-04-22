@@ -142,8 +142,8 @@ pub struct BootStrapHandler {
 }
 
 impl BootStrapHandler {
-    pub fn new() -> BootStrapHandler {
-        let mut app_path = match env::current_exe() {
+    pub fn get_file_name() -> String {
+       let mut app_path = match env::current_exe() {
                                 Ok(exe_path) => exe_path,
                                 Err(e) => panic!("Failed to get current exe path: {}", e),
                            };
@@ -154,9 +154,12 @@ impl BootStrapHandler {
         filename.push_str("./");
         filename.push_str(app_name.to_str().unwrap());
         filename.push_str(".bootstrap.cache");
+        filename
+    }
 
+    pub fn new() -> BootStrapHandler {
         let mut bootstrap = BootStrapHandler {
-            file_name: filename,
+            file_name: BootStrapHandler::get_file_name(),
             last_updated: time::now(),
         };
         bootstrap
@@ -179,14 +182,20 @@ impl BootStrapHandler {
 
     pub fn read_bootstrap_contacts(&self) -> BootStrapContacts {
         let mut contacts = BootStrapContacts::new();
-        let mut file = File::open(&self.file_name).unwrap();
-        let mut content = String::new();
+        match File::open(&self.file_name) {
+            Ok(mut file) =>  {
+                let mut content = Vec::<u8>::new();
 
-		file.read_to_string(&mut content);
+                file.read_to_end(&mut content);
 
-		let mut decoder = cbor::Decoder::from_bytes(content.as_bytes());
-		contacts = decoder.decode().next().unwrap().unwrap();
-        contacts
+                if (content.len() != 0) {
+                    let mut decoder = cbor::Decoder::from_bytes(&content[..]);
+                    contacts = decoder.decode().next().unwrap().unwrap();
+                }
+                contacts
+            },
+            _ => panic!("Could not open file"),
+        }
     }
 
     pub fn replace_bootstrap_contacts(&mut self, contacts: BootStrapContacts) {
@@ -205,21 +214,33 @@ impl BootStrapHandler {
     fn insert_bootstrap_contacts(&mut self, contacts: BootStrapContacts) {
     	if !contacts.is_empty() {
         	let mut current_contacts = BootStrapContacts::new();
-	        let mut open_file = File::open(&self.file_name).unwrap();
-	        let mut content = String::new();
+            match File::open(&self.file_name) {
+                Ok(mut open_file) => {
+                    let mut content = Vec::<u8>::new();
 
-			open_file.read_to_string(&mut content);
+                    open_file.read_to_end(&mut content);
 
-			let mut decoder = cbor::Decoder::from_bytes(content.as_bytes());
-			current_contacts = decoder.decode().next().unwrap().unwrap();
+                    if (content.len() != 0) {
+                        let mut decoder = cbor::Decoder::from_bytes(&content[..]);
+                        current_contacts = decoder.decode().next().unwrap().unwrap();
+                    }
 
-            for i in 0..contacts.len() {
-	           current_contacts.push(contacts[i].clone());
+                    for i in 0..contacts.len() {
+                       current_contacts.push(contacts[i].clone());
+                    }
+                    let mut e = cbor::Encoder::from_memory();
+                    e.encode(&[current_contacts]).unwrap();
+                    match File::create(&self.file_name) {
+                        Ok(mut create_file) => {
+                            create_file.write_all(&e.into_bytes());
+                            let result = create_file.sync_all();
+                            assert!(result.is_ok());
+                        },
+                        _ => panic!("Could not create file"),
+                    }
+                },
+                _ => panic!("Could not open file"),
             }
-	        let mut e = cbor::Encoder::from_memory();
-			e.encode(&[current_contacts]).unwrap();
-			let mut create_file = File::create(&self.file_name).unwrap();
-			create_file.write_all(&e.into_bytes());
         }
     }
 
@@ -269,7 +290,6 @@ mod test {
             random_addr_0.push(rand::random::<u8>());
             random_addr_0.push(rand::random::<u8>());
 
-            println!("Same : {:?} {:?}", random_addr_0[0], random_addr_0[1]);
             let port_0: u8 = rand::random::<u8>();
             let addr_0 = net::SocketAddrV4::new(net::Ipv4Addr::new(random_addr_0[0], random_addr_0[1], random_addr_0[2], random_addr_0[3]), port_0 as u16);
             let (public_key, _) = sodiumoxide::crypto::asymmetricbox::gen_keypair();
@@ -278,22 +298,23 @@ mod test {
         }
 
         let contacts_clone = contacts.clone();
-        let path = Path::new("./bootstrap.cache");
+        let file_name = super::BootStrapHandler::get_file_name();
+        let path = Path::new(&file_name);
 
         let mut bootstrap_handler = BootStrapHandler::new();
         let file = File::create(&path);
         assert!(file.is_ok()); // Check whether the database file is created
         // Add Contacts
-        //bootstrap_handler.add_bootstrap_contacts(contacts);
+        bootstrap_handler.add_bootstrap_contacts(contacts);
         // Read Contacts
-        //let mut read_contact = bootstrap_handler.read_bootstrap_contacts();
-        //assert!(read_contact.len() == 10);
-        //let empty_contact: Vec<Contact> = Vec::new();
-        //// Replace Contacts
-        //bootstrap_handler.replace_bootstrap_contacts(empty_contact);
-        //assert_eq!(contacts_clone.len(), read_contact.len());
-        //// Assert Replace
-        //read_contact = bootstrap_handler.read_bootstrap_contacts();
-        //assert!(read_contact.len() == 0);
+        let mut read_contact = bootstrap_handler.read_bootstrap_contacts();
+        assert_eq!(read_contact.len(), 10);
+        let empty_contact: Vec<Contact> = Vec::new();
+        // Replace Contacts
+        bootstrap_handler.replace_bootstrap_contacts(empty_contact);
+        assert_eq!(contacts_clone.len(), read_contact.len());
+        // Assert Replace
+        read_contact = bootstrap_handler.read_bootstrap_contacts();
+        assert!(read_contact.len() == 0);
     }
 }
