@@ -26,6 +26,8 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::path;
 use std::env;
+use std::cmp;
+use std::fmt;
 
 type BootStrapContacts = Vec<Contact>;
 
@@ -47,14 +49,53 @@ macro_rules! convert_to_array {
     }};
 }
 
+#[derive(Clone)]
+pub enum PublicKey {
+    Asym(crypto::asymmetricbox::PublicKey),
+    Sign(crypto::sign::PublicKey),
+}
+
+impl cmp::PartialEq for PublicKey {
+    fn eq(&self, other: &PublicKey) -> bool {
+        match *self {
+            PublicKey::Asym(key0) => {
+                match *other {
+                    PublicKey::Asym(key1) => key0.0.iter().zip(key1.0.iter()).all(|a| a.0 == a.1),
+                    _ => false,
+                }
+            },
+            PublicKey::Sign(key0) => {
+                match *other {
+                    PublicKey::Sign(key1) => key0.0.iter().zip(key1.0.iter()).all(|a| a.0 == a.1),
+                    _ => false
+                }
+            },
+        }
+    }
+}
+
+impl fmt::Debug for PublicKey {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            PublicKey::Asym(key) => {
+                write!(f, "crypto::asymmetricbox::PublicKey {:?}", key.0.to_vec())
+            },
+            PublicKey::Sign(key) => {
+                write!(f, "crypto::sign::PublicKey {:?}", key.0.to_vec())
+            },
+        }
+    }
+}
+
 // TODO Move Contact to maidsafe_types
+#[derive(PartialEq, Debug)]
 pub struct Contact {
     endpoint: Endpoint,
-    public_key: crypto::asymmetricbox::PublicKey,
+    public_key: PublicKey,
 }
 
 impl Contact {
-    pub fn new(endpoint: Endpoint, public_key: crypto::asymmetricbox::PublicKey) -> Contact {
+    pub fn new(endpoint: Endpoint, public_key: PublicKey) -> Contact {
         Contact {
             endpoint: endpoint,
             public_key: public_key
@@ -64,8 +105,10 @@ impl Contact {
 
 impl Encodable for Contact {
     fn encode<E: Encoder>(&self, e: &mut E)->Result<(), E::Error> {
-        let crypto::asymmetricbox::PublicKey(ref public_key) = self.public_key;
-        CborTagEncode::new(5483_000, &(&self.endpoint, public_key.as_ref())).encode(e)
+        match self.public_key {
+           PublicKey::Asym(crypto::asymmetricbox::PublicKey(ref public_key)) => CborTagEncode::new(5483_000, &(&self.endpoint, public_key.as_ref())).encode(e),
+           PublicKey::Sign(crypto::sign::PublicKey(ref public_key)) => CborTagEncode::new(5483_000, &(&self.endpoint, public_key.as_ref())).encode(e),
+        }
     }
 }
 
@@ -80,7 +123,7 @@ impl Decodable for Contact {
         }
 
         let public_key = crypto::asymmetricbox::PublicKey(public_key.unwrap());
-        Ok(Contact::new(endpoint, public_key))
+        Ok(Contact::new(endpoint, PublicKey::Asym(public_key)))
     }
 }
 
@@ -193,25 +236,24 @@ impl BootStrapHandler {
 mod test {
     use bootstrap::{Contact, BootStrapHandler};
     use std::net;
+    use std::net::SocketAddr;
     use sodiumoxide;
     use cbor;
-    use maidsafe_types;
     use rand;
+    use transport;
 
     #[test]
-    fn serialisation_contact() {
-        let name_type = maidsafe_types::NameType([3u8; 64]);
-        let addr_1 = net::SocketAddrV4::new(net::Ipv4Addr::new(1,2,3,4), 8080);
-        let addr_2 = net::SocketAddrV4::new(net::Ipv4Addr::new(1,2,3,4), 9080);
-        let pub_key = sodiumoxide::crypto::asymmetricbox::PublicKey([20u8;32]);
-        let contact_before = Contact::new(name_type, (addr_1, addr_2), pub_key);
+    fn serialisation() {
+        let addr = net::SocketAddrV4::new(net::Ipv4Addr::new(1,2,3,4), 8080);
+        let pub_key = super::PublicKey::Asym(sodiumoxide::crypto::asymmetricbox::PublicKey([20u8;32]));
+        let contact_before = Contact::new(transport::Endpoint::Tcp(SocketAddr::V4(addr)), pub_key);
 
         let mut e = cbor::Encoder::from_memory();
         e.encode(&[&contact_before]).unwrap();
 
         let mut d = cbor::Decoder::from_bytes(e.as_bytes());
         let contact_after: Contact = d.decode().next().unwrap().unwrap();
-        assert!(contact_before.id == contact_after.id);
+        assert_eq!(contact_before, contact_after);
     }
 
     #[test]
@@ -221,15 +263,12 @@ mod test {
 
         let mut contacts = Vec::new();
         for i in 0..10 {
-            let random_id = [rand::random::<u8>(); 64];
             let random_addr_0 = [rand::random::<u8>(); 4];
-            let random_addr_1 = [rand::random::<u8>(); 4];
+            println!("Same : {:?} {:?}", random_addr_0[0], random_addr_0[1]);
             let port_0: u8 = rand::random::<u8>();
-            let port_1: u8 = rand::random::<u8>();
             let addr_0 = net::SocketAddrV4::new(net::Ipv4Addr::new(random_addr_0[0], random_addr_0[1], random_addr_0[2], random_addr_0[3]), port_0 as u16);
-            let addr_1 = net::SocketAddrV4::new(net::Ipv4Addr::new(random_addr_1[0], random_addr_1[1], random_addr_1[2], random_addr_1[3]), port_1 as u16);
             let (public_key, _) = sodiumoxide::crypto::asymmetricbox::gen_keypair();
-            let new_contact = Contact::new(maidsafe_types::NameType::new(random_id), (addr_0, addr_1), public_key);
+            let new_contact = Contact::new(transport::Endpoint::Tcp(SocketAddr::V4(addr_0)), super::PublicKey::Asym(public_key));
             contacts.push(new_contact);
         }
 
@@ -252,5 +291,4 @@ mod test {
         read_contact = bootstrap_handler.read_bootstrap_contacts();
         assert!(read_contact.len() == 0);
     }
-
 }
