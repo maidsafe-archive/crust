@@ -316,7 +316,6 @@ fn start_writing_thread(state: WeakState,
 
 #[cfg(test)]
 mod test {
-    extern crate rand;
     use super::*;
     use std::thread::spawn;
     use std::thread;
@@ -339,7 +338,7 @@ mod test {
     }
 
     fn next_port() -> u16 {
-            let mut port:u16 = rand::random();
+            let mut port:u16 = random();
             port = 1025 + port % 50000;
             port
     }

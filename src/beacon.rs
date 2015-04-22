@@ -183,7 +183,6 @@ pub fn seek_peers(port: Option<Port>) -> Vec<SocketAddr> {
 
 #[cfg(test)]
 mod test {
-    extern crate rand;
     use super::*;
     use std::net::{UdpSocket/*, lookup_addr, lookup_host*/};
     use std::thread;
@@ -191,7 +190,7 @@ mod test {
     use rand::*;
 
     fn next_port() -> u16 {
-            let mut port:u16 = rand::random();
+            let mut port:u16 = random();
             port = 1025 + port % 50000;
             port
     }
