@@ -187,10 +187,17 @@ mod test {
     use std::net::{UdpSocket/*, lookup_addr, lookup_host*/};
     use std::thread;
     use transport::{Port};
+    use rand::*;
+
+    fn next_port() -> u16 {
+            let mut port:u16 = random();
+            port = 1025 + port % 50000;
+            port
+    }
 
 #[test]
     fn test_broadcast() {
-        let port = Port::Tcp(5493);
+        let port = Port::Tcp(next_port());
         // Start a normal socket and start listening for a broadcast
         let port2 = port.clone();
         thread::spawn(move || {
