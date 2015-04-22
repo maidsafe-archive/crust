@@ -31,6 +31,7 @@ use std::sync::mpsc::channel;
 use std::io;
 use std::net::SocketAddr;
 use std::str::FromStr;
+use std::thread::spawn;
 
 // TODO: switching order of CL params, eg --speed x --bootstrap node
 //       gives an error parsing node as usize... so order is strict for now
@@ -185,30 +186,68 @@ fn main() {
     };
   };
 
-  // processing interaction till receiving termination command
-  loop {
-      println!("waiting for an input event");
-      let event = cm_rx.recv();
-      println!("got an input event");
-      if event.is_err() {
-        println!("terminating the node");
-        break;
-      }
+  spawn(move || {
+    loop {
+        println!("waiting for an input event");
+        let event = cm_rx.recv();
+        println!("got an input event");
+        if event.is_err() {
+          println!("stop listening");
+          break;
+        }
+        match event.unwrap() {
+            crust::Event::NewMessage(endpoint, bytes) => {
+                println!("received from {} with a new message : {}",
+                         match endpoint { Endpoint::Tcp(socket_addr) => socket_addr },
+                         match String::from_utf8(bytes) { Ok(msg) => msg,
+                                                          Err(_) => "unknown msg".to_string() });
+            },
+            crust::Event::NewConnection(endpoint) => {
+                println!("adding new node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
+                my_flat_world.add_node(CrustNode::new(endpoint, true));
+            },
+            crust::Event::LostConnection(endpoint) => {
+                println!("dropping node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
+                my_flat_world.drop_node(CrustNode::new(endpoint, false));
+            }
+        }
+    }
+  });
 
-      match event.unwrap() {
-          crust::Event::NewMessage(endpoint, bytes) => {
-              println!("received a new message and now replying");
-              let _ = cm.send(endpoint, bytes);
+  // processing interaction till receiving termination command
+  let mut command = String::new();
+  loop {
+      command.clear();
+      println!("input command >");
+      let _ = io::stdin().read_line(&mut command);
+      match command.trim() {
+          "stop" => break,
+          "send" => {
+              println!("input endpoint to send msg >");
+              let mut endpoint_str = String::new();
+              let _ = io::stdin().read_line(&mut endpoint_str);
+              let endpoint_address = match SocketAddr::from_str(endpoint_str.trim()) {
+                Ok(addr) => addr,
+                Err(_) => continue
+              };
+              println!("input msg to send >");
+              let mut msg = String::new();
+              let _ = io::stdin().read_line(&mut msg);
+              println!("sending to {} with message : {}", endpoint_address, msg);
+              let _ = cm.send(Endpoint::Tcp(endpoint_address), msg.into_bytes());
           },
-          crust::Event::NewConnection(endpoint) => {
-              println!("adding new node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
-              my_flat_world.add_node(CrustNode::new(endpoint, true));
-          },
-          crust::Event::LostConnection(endpoint) => {
-              println!("dropping node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
-              my_flat_world.drop_node(CrustNode::new(endpoint, false));
+          "connect" => {
+              println!("input endpoint to connect >");
+              let mut endpoint_str = String::new();
+              let _ = io::stdin().read_line(&mut endpoint_str);
+              let endpoint_address = match SocketAddr::from_str(endpoint_str.trim()) {
+                Ok(addr) => addr,
+                Err(_) => continue
+              };
+              println!("connecting to {} ", endpoint_address);
+              let _ = cm.connect(vec![Endpoint::Tcp(endpoint_address)]);
           }
+          _ => {},
       }
   }
-
 }
