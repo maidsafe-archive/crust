@@ -26,6 +26,7 @@ use std::sync::{Arc, Mutex, Weak};
 use std::sync::mpsc;
 use transport::{Endpoint, Port};
 use transport;
+use beacon;
 
 pub type Bytes = Vec<u8>;
 pub type IoResult<T> = Result<T, IoError>;
@@ -75,9 +76,13 @@ impl ConnectionManager {
     /// to start on these, it defaults to random / OS provided endpoints for each supported
     /// protocol. The actual endpoints used will be returned on which it started listening for each
     /// protocol.
-    pub fn start_listening(&self, hint: Vec<Port>) -> IoResult<Vec<Endpoint>> {
+    pub fn start_listening(&self, hint: Vec<Port>,bootstrap_port: Option<Port>) -> IoResult<Vec<Endpoint>> {
         // FIXME: Returning IoResult seems pointless since we always return Ok.
-        Ok(hint.iter().filter_map(|port| self.listen(port).ok()).collect::<Vec<_>>())
+        let end_points = hint.iter().filter_map(|port| self.listen(port).ok()).collect::<Vec<_>>();
+         match end_points[0].clone() {
+             Endpoint::Tcp(socket_addr) => { let _ = beacon::listen_for_broadcast(socket_addr, bootstrap_port); }
+         }
+         Ok(end_points)
     }
 
     /// This method tries to connect (bootstrap to exisiting network) to the default or provided
@@ -93,10 +98,10 @@ impl ConnectionManager {
     /// bootstrap handler which will attempt to reconnect to any previous "direct connected" nodes.
     /// In both cases, this method blocks until it gets one successful connection or all the
     /// endpoints are tried and have failed.
-    pub fn bootstrap(&self, bootstrap_list: Option<Vec<Endpoint>>) -> IoResult<Endpoint> {
+    pub fn bootstrap(&self, bootstrap_list: Option<Vec<Endpoint>>, bootstrap_port: Option<Port>) -> IoResult<Endpoint> {
         match bootstrap_list {
             Some(list) => self.bootstrap_off_list(list),
-            None       => self.bootstrap_off_list(self.get_stored_bootstrap_endpoints()),
+            None       => self.bootstrap_off_list(self.get_stored_bootstrap_endpoints(bootstrap_port)),
         }
     }
 
@@ -162,8 +167,8 @@ impl ConnectionManager {
         });
     }
 
-    pub fn get_stored_bootstrap_endpoints(&self) -> Vec<Endpoint> {
-        unimplemented!()
+    pub fn get_stored_bootstrap_endpoints(&self, bootstrap_port: Option<Port>) -> Vec<Endpoint> {
+        beacon::seek_peers(bootstrap_port).iter().map(|&socket_address| Endpoint::Tcp(socket_address)).collect::<Vec<_>>()
     }
 
     fn bootstrap_off_list(&self, bootstrap_list: Vec<Endpoint>) -> IoResult<Endpoint> {
@@ -313,6 +318,7 @@ fn start_writing_thread(state: WeakState,
 mod test {
     use super::*;
     use std::thread::spawn;
+    use std::thread;
     use std::sync::mpsc::{Receiver, channel};
     use rustc_serialize::{Decodable, Encodable};
     use cbor::{Encoder, Decoder};
@@ -328,6 +334,23 @@ mod test {
     fn decode<T>(bytes: Bytes) -> T where T: Decodable {
         let mut dec = Decoder::from_bytes(&bytes[..]);
         dec.decode().next().unwrap().unwrap()
+    }
+
+#[test]
+    fn bootstrap() {
+        let (cm1_i, _) = channel();
+        let cm1 = ConnectionManager::new(cm1_i);
+        let port = Port::Tcp(5484);
+        let cm1_eps = cm1.start_listening(vec![Port::Tcp(0)], Some(port.clone())).unwrap();
+
+        thread::sleep_ms(1000);
+        let (cm2_i, _) = channel();
+        let cm2 = ConnectionManager::new(cm2_i);
+        let cm2_eps = cm2.start_listening(vec![Port::Tcp(0)], Some(port.clone())).unwrap();
+        match cm2.bootstrap(None, Some(port)) {
+            Ok(ep) => { assert_eq!(ep.clone(), cm1_eps[0].clone()); },
+            Err(_) => { panic!("Failed to bootstrap"); }
+        }
     }
 
 #[test]
@@ -354,13 +377,14 @@ mod test {
             })
         };
 
+        let port = Port::Tcp(5485);
         let (cm1_i, cm1_o) = channel();
         let cm1 = ConnectionManager::new(cm1_i);
-        let cm1_eps = cm1.start_listening(vec![Port::Tcp(0)]).unwrap();
+        let cm1_eps = cm1.start_listening(vec![Port::Tcp(0)], Some(port.clone())).unwrap();
 
         let (cm2_i, cm2_o) = channel();
         let cm2 = ConnectionManager::new(cm2_i);
-        let cm2_eps = cm2.start_listening(vec![Port::Tcp(0)]).unwrap();
+        let cm2_eps = cm2.start_listening(vec![Port::Tcp(0)], Some(port.clone())).unwrap();
         cm2.connect(cm1_eps.clone());
         cm1.connect(cm2_eps.clone());
 

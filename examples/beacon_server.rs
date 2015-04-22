@@ -31,4 +31,8 @@ fn main() {
     Ok(local_addr) => crust::beacon::listen_for_broadcast(local_addr),
     Err(e) => panic!("No local address to start listening on: {}", e)
   };
+
+  // the code below keeps the server running
+  for _ in tcp_listener.incoming() {
+  }
 }
