@@ -201,11 +201,11 @@ fn main() {
               let _ = cm.send(endpoint, bytes);
           },
           crust::Event::NewConnection(endpoint) => {
-              println!("adding new node");
+              println!("adding new node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
               my_flat_world.add_node(CrustNode::new(endpoint, true));
           },
           crust::Event::LostConnection(endpoint) => {
-              println!("dropping new node");
+              println!("dropping node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
               my_flat_world.drop_node(CrustNode::new(endpoint, false));
           }
       }
