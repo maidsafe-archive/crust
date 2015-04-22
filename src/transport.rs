@@ -46,7 +46,6 @@ impl Endpoint {
     pub fn get_address(&self) -> SocketAddr {
         match *self {
             Endpoint::Tcp(address) => address,
-            _ => panic!("No address.")
         }
     }
 }

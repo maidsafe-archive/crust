@@ -85,7 +85,7 @@ impl Contact {
 impl Encodable for Contact {
     fn encode<E: Encoder>(&self, e: &mut E)->Result<(), E::Error> {
         let crypto::asymmetricbox::PublicKey(ref public_key) = self.public_key;
-        CborTagEncode::new(5483_000, &(self.endpoint, public_key.as_ref())).encode(e)
+        CborTagEncode::new(5483_000, &(&self.endpoint, public_key.as_ref())).encode(e)
     }
 }
 
@@ -127,7 +127,8 @@ impl BootStrapHandler {
         let mut app_with_extension = app_path.file_name().unwrap();
         let mut app_name = path::Path::new(app_with_extension).file_stem().unwrap();
 
-        let filename = String::from_str("./");
+        let mut filename = String::new();
+        filename.push_str("./");
         filename.push_str(app_name.to_str().unwrap());
         filename.push_str(".bootstrap.cache");
 
@@ -155,13 +156,13 @@ impl BootStrapHandler {
 
     pub fn read_bootstrap_contacts(&self) -> BootStrapContacts {
         let mut contacts = BootStrapContacts::new();
-        let mut file = try!(File::open(self.file_name));
+        let mut file = File::open(&self.file_name).unwrap();
         let mut content = String::new();
 
-		try!(file.read_to_string(&mut content));
+		file.read_to_string(&mut content);
 
-		let mut decoder = cbor::Decoder::from_bytes(content.as_str().unwrap());
-		contacts = try!(decoder.decode().next().unwrap().unwrap());
+		let mut decoder = cbor::Decoder::from_bytes(content.as_bytes());
+		contacts = decoder.decode().next().unwrap().unwrap();
         contacts
     }
 
@@ -181,24 +182,26 @@ impl BootStrapHandler {
     fn insert_bootstrap_contacts(&mut self, contacts: BootStrapContacts) {
     	if !contacts.is_empty() {
         	let mut current_contacts = BootStrapContacts::new();
-	        let mut open_file = try!(File::open(self.file_name));
+	        let mut open_file = File::open(&self.file_name).unwrap();
 	        let mut content = String::new();
 
-			try!(open_file.read_to_string(&mut content));
+			open_file.read_to_string(&mut content);
 
-			let mut decoder = cbor::Decoder::from_bytes(content.unwrap());
-			current_contacts = try!(decoder.decode().next().unwrap().unwrap());
-	        current_contacts.push_all(contacts);
+			let mut decoder = cbor::Decoder::from_bytes(content.as_bytes());
+			current_contacts = decoder.decode().next().unwrap().unwrap();
 
+            for i in 0..contacts.len() {
+	           current_contacts.push(contacts[i].clone());
+            }
 	        let mut e = cbor::Encoder::from_memory();
 			e.encode(&[current_contacts]).unwrap();
-			let mut create_file = try!(File::create(self.file_name));
-			try!(create_file.write_all(e.into_bytes()));
+			let mut create_file = File::create(&self.file_name).unwrap();
+			create_file.write_all(&e.into_bytes());
         }
     }
 
     fn remove_bootstrap_contacts(&mut self) {
- 		try!(File::create(self.file_name));
+ 		File::create(&self.file_name);
     }
 
     fn check_bootstrap_contacts(&self) {
