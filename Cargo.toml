@@ -19,6 +19,18 @@ sodiumoxide = "*"
 rand = "*"
 
 [[example]]
+name = "beacon_client"
+path = "examples/beacon_client.rs"
+test = false
+bench = false
+
+[[example]]
+name = "beacon_server"
+path = "examples/beacon_server.rs"
+test = false
+bench = false
+
+[[example]]
 name = "simple_client"
 path = "examples/simple_client.rs"
 test = false

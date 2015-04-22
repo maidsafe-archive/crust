@@ -169,7 +169,11 @@ impl ConnectionManager {
     fn bootstrap_off_list(&self, bootstrap_list: Vec<Endpoint>) -> IoResult<Endpoint> {
         for endpoint in bootstrap_list {
             match transport::connect(endpoint) {
-                Ok(trans) => return Ok(trans.remote_endpoint.clone()),
+                Ok(trans) => {
+                    let ep = trans.remote_endpoint.clone();
+                    handle_connect(self.state.downgrade(), trans);
+                    return Ok(ep)
+                },
                 Err(_)    => continue,
             }
         }

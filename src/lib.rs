@@ -18,8 +18,10 @@ extern crate rand;
 mod tcp_connections;
 mod transport;
 pub mod connection_manager;
-mod beacon;
 mod bootstrap;
+/// Broadcast and listen for nodes trying to bootstrap on local network.
+/// Listen for beacons from peers on port 5483.
+pub mod beacon;
 
 pub use connection_manager::{Event, ConnectionManager};
 pub use transport::{Endpoint, Port};
