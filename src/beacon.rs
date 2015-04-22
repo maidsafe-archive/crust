@@ -161,8 +161,6 @@ pub fn seek_peers() -> Vec<SocketAddr> {
     peers
 }
 
-
-
 #[cfg(test)]
 mod test {
     use super::*;
