@@ -105,8 +105,8 @@ impl Contact {
 impl Encodable for Contact {
     fn encode<E: Encoder>(&self, e: &mut E)->Result<(), E::Error> {
         match self.public_key {
-           PublicKey::Asym(crypto::asymmetricbox::PublicKey(ref public_key)) => CborTagEncode::new(5483_000, &(&self.endpoint, public_key.as_ref())).encode(e),
-           PublicKey::Sign(crypto::sign::PublicKey(ref public_key)) => CborTagEncode::new(5483_000, &(&self.endpoint, public_key.as_ref())).encode(e),
+           PublicKey::Asym(crypto::asymmetricbox::PublicKey(ref public_key)) => CborTagEncode::new(5483_400, &(&self.endpoint, public_key.as_ref())).encode(e),
+           PublicKey::Sign(crypto::sign::PublicKey(ref public_key)) => CborTagEncode::new(5483_400, &(&self.endpoint, public_key.as_ref())).encode(e),
         }
     }
 }
