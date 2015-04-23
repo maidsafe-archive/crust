@@ -1,7 +1,7 @@
 [package]
 name = "crust"
-version = "0.0.3"
-authors = ["MaidSafe Dev team <dev@maidsafe.net>"]
+version = "0.0.4"
+authors = ["MaidSafe Developers <dev@maidsafe.net>"]
 description = "This is Pre alpha, and not useful, no code worth looking at."
 documentation = "http://dirvine.github.io/crust/crust"
 repository = "https://github.com/dirvine/crust"
@@ -9,11 +9,25 @@ readme = "README.md"
 license = "GPL-3.0"
 homepage = "http://www.maidsafe.net"
 
-
-
 [dependencies]
 rustc-serialize = "*"
 cbor = "*"
+docopt = "*"
+time = "*"
+sodiumoxide = "*"
+rand = "*"
+
+[[example]]
+name = "beacon_client"
+path = "examples/beacon_client.rs"
+test = false
+bench = false
+
+[[example]]
+name = "beacon_server"
+path = "examples/beacon_server.rs"
+test = false
+bench = false
 
 [[example]]
 name = "simple_client"
@@ -24,5 +38,11 @@ bench = false
 [[example]]
 name = "simple_server"
 path = "examples/simple_server.rs"
+test = false
+bench = false
+
+[[example]]
+name = "crust_node"
+path = "examples/crust_node.rs"
 test = false
 bench = false

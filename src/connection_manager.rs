@@ -1,17 +1,20 @@
 // Copyright 2015 MaidSafe.net limited
-// This MaidSafe Software is licensed to you under (1) the MaidSafe.net Commercial License,
+//
+// This SAFE Network Software is licensed to you under (1) the MaidSafe.net Commercial License,
 // version 1.0 or later, or (2) The General Public License (GPL), version 3, depending on which
 // licence you accepted on initial access to the Software (the "Licences").
-// By contributing code to the MaidSafe Software, or to this project generally, you agree to be
-// bound by the terms of the MaidSafe Contributor Agreement, versicant_sendon 1.0, found in the root
+//
+// By contributing code to the SAFE Network Software, or to this project generally, you agree to be
+// bound by the terms of the MaidSafe Contributor Agreement, version 1.0, found in the root
 // directory of this project at LICENSE, COPYING and CONTRIBUTOR respectively and also
-// available at: http://www.maidsafe.net/licenses
-// Unless required by applicable law or agreed to in writing, the MaidSafe Software distributed
+// available at: http://maidsafe.net/network-platform-licensing
+//
+// Unless required by applicable law or agreed to in writing, the SAFE Network Software distributed
 // under the GPL Licence is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS
 // OF ANY KIND, either express or implied.
-// See the Licences for the specific language governing permissions and limitations relating to
-// use of the MaidSafe
-// Software.
+//
+// Please review the Licences for the specific language governing permissions and limitations relating to
+// use of the SAFE Network Software.
 
 use std::io::Error as IoError;
 use std::io;
@@ -23,6 +26,7 @@ use std::sync::{Arc, Mutex, Weak};
 use std::sync::mpsc;
 use transport::{Endpoint, Port};
 use transport;
+use beacon;
 
 pub type Bytes = Vec<u8>;
 pub type IoResult<T> = Result<T, IoError>;
@@ -45,7 +49,6 @@ pub enum Event {
     NewMessage(Endpoint, Bytes),
     NewConnection(Endpoint),
     LostConnection(Endpoint),
-    FailedToConnect(Vec<Endpoint>)
 }
 
 struct Connection {
@@ -59,9 +62,8 @@ struct State {
 }
 
 impl ConnectionManager {
-    /// Constructs a connection manager.
-    /// User needs to create an asynchronous channel, and provide the sender half to this method.
-    /// Receiver half will recieve all the events `Event` from this library.
+    /// Constructs a connection manager. User needs to create an asynchronous channel, and provide
+    /// the sender half to this method. Receiver will receive all `Event`s from this library.
     pub fn new(event_pipe: IoSender<Event>) -> ConnectionManager {
         let state = Arc::new(Mutex::new(State{ event_pipe:    event_pipe,
                                                connections:   HashMap::new(),
@@ -70,38 +72,50 @@ impl ConnectionManager {
         ConnectionManager { state: state }
     }
 
-    /// Starts listening on all supported protocols. Specified hint will be tried first,
-    /// if it fails to start on these, it defaults to random / OS provided endpoints for each
-    /// supported protocol. The actual endpoints used will be returned on which it started listening
-    /// for each protocol.
-    pub fn start_listening(&self, hint: Vec<Port>) -> IoResult<Vec<Endpoint>> {
+    /// Starts listening on all supported protocols. Specified hint will be tried first. If it fails
+    /// to start on these, it defaults to random / OS provided endpoints for each supported
+    /// protocol. The actual endpoints used will be returned on which it started listening for each
+    /// protocol.
+    /// if beacon port == 0 => a random port is taken and returned by beacon
+    /// if beacon port != 0 => an attempt to get the port is made by beacon and the callee will be informed of the attempt
+    /// if beacon port == None => 5483 is tried
+    /// if beacon succeeds in starting the udp listener, the coresponding port is returned
+    pub fn start_listening(&self, hint: Vec<Port>, beacon_port: Option<u16>) -> IoResult<(Vec<Endpoint>, Option<u16>)> {
         // FIXME: Returning IoResult seems pointless since we always return Ok.
-        Ok(hint.iter().filter_map(|port| self.listen(port).ok()).collect::<Vec<_>>())
+        let end_points = hint.iter().filter_map(|port| self.listen(port).ok()).collect::<Vec<_>>();
+        let port = match end_points[0].clone() {
+            Endpoint::Tcp(socket_addr) => { match beacon::listen_for_broadcast(socket_addr, beacon_port.clone()) {
+                                                    Ok(used_port) => Some(used_port),
+                                                    Err(_) => None
+                                               }}
+        };
+        Ok((end_points, port))
     }
 
     /// This method tries to connect (bootstrap to exisiting network) to the default or provided
-    /// list of bootstrap nodes. If the bootstrap list is `Some`, the method will try to connect to
-    /// all of the endpoints specified in `bootstrap_list`. It will return once connection with any of the
-    /// endpoint is established with Ok(Endpoint) and it will drop all other ongoing attempts.
-    /// Returns Err if if fails to connect to any of the
-    /// endpoints specified.
-    /// If `bootstrap_list` is `None`, it will use default methods to bootstrap to the existing network.
-    /// Default methods includes beacon system for finding nodes on a local network
-    /// and bootstrap handler which will attempt to reconnect to any previous "direct connected" nodes.
-    /// In both cases, this method blocks until it gets one successful connection or all the endpoints
-    /// are tried and failed.
-    pub fn bootstrap(&self, bootstrap_list: Option<Vec<Endpoint>>) -> IoResult<Endpoint> {
+    /// list of bootstrap nodes.
+    ///
+    /// If `bootstrap_list` is `Some`, the method will try to connect to all of the endpoints
+    /// specified in `bootstrap_list`. It will return once connection with any of the endpoints is
+    /// established with Ok(Endpoint) and it will drop all other ongoing attempts. Returns Err if it
+    /// fails to connect to any of the endpoints specified.
+    ///
+    /// If `bootstrap_list` is `None`, it will use default methods to bootstrap to the existing
+    /// network. Default methods includes beacon system for finding nodes on a local network and
+    /// bootstrap handler which will attempt to reconnect to any previous "direct connected" nodes.
+    /// In both cases, this method blocks until it gets one successful connection or all the
+    /// endpoints are tried and have failed.
+    pub fn bootstrap(&self, bootstrap_list: Option<Vec<Endpoint>>, beacon_port: Option<u16>) -> IoResult<Endpoint> {
         match bootstrap_list {
             Some(list) => self.bootstrap_off_list(list),
-            None       => self.bootstrap_off_list(self.get_stored_bootstrap_endpoints()),
+            None       => self.bootstrap_off_list(self.get_stored_bootstrap_endpoints(beacon_port)),
         }
     }
 
-    /// Opens a connection to a remote peer. `endpoints` is a vector of addresses of the remote peer.
-    /// All the endpoints will be tried. As soon as one of the connection is established,
-    /// it will drop all other ongoing attempt. On success `Event::NewConnection` with connected `Endpoint`
-    /// will be sent to the event channel. On failure to connect to any of the provided endpoints,
-    /// `Event::FailedToConnect` will be sent to the event channel.
+    /// Opens a connection to a remote peer. `endpoints` is a vector of addresses of the remote
+    /// peer. All the endpoints will be tried. As soon as a connection is established, it will drop
+    /// all other ongoing attempts. On success `Event::NewConnection` with connected `Endpoint` will
+    /// be sent to the event channel. On failure, nothing is reported.
     /// Failed attempts are not notified back up to the caller. If the caller wants to know of a
     /// failed attempt, it must maintain a record of the attempt itself which times out if a
     /// corresponding Event::NewConnection isn't received
@@ -109,23 +123,33 @@ impl ConnectionManager {
     /// https://github.com/dirvine/crust/blob/master/docs/connect.md
     pub fn connect(&self, endpoints: Vec<Endpoint>) {
         let ws = self.state.downgrade();
-
+        let mut listening = HashSet::<Endpoint>::new();
+        {
+            let _ = lock_mut_state(& ws, |s: &mut State| {
+                for itr in s.listening_eps.iter() {
+                    listening.insert(itr.clone());
+                }
+                Ok(())
+            });
+        }
         spawn(move || {
             for endpoint in &endpoints {
-                let ws = ws.clone();
-                // FIXME: When TCP, only one of the peers should try to connect.
-                let result = transport::connect(endpoint.clone())
-                             .and_then(|trans| handle_connect(ws, trans));
-                if result.is_ok() { return; }
+                for itr in listening.iter() {
+                    if itr.is_master(endpoint) {
+                        let ws = ws.clone();
+                        let result = transport::connect(endpoint.clone())
+                                     .and_then(|trans| handle_connect(ws, trans));
+                        if result.is_ok() { return; }
+                    }
+                }
             }
-            let _ = notify_user(&ws, Event::FailedToConnect(endpoints));
         });
     }
 
-    /// Sends a message to specified address (endpoint). Returns Ok(()) if the sending might succeed, and returns an
-    /// Err if the address is not connected. Return value of Ok does not mean that the data will be
-    /// received. It is possible for the corresponding connection to hang up immediately after this
-    /// function returns Ok.
+    /// Sends a message to specified address (endpoint). Returns Ok(()) if the sending might
+    /// succeed, and returns an Err if the address is not connected. Return value of Ok does not
+    /// mean that the data will be received. It is possible for the corresponding connection to hang
+    /// up immediately after this function returns Ok.
     pub fn send(&self, endpoint: Endpoint, message: Bytes) -> IoResult<()> {
         let ws = self.state.downgrade();
 
@@ -141,7 +165,7 @@ impl ConnectionManager {
         send_result.map_err(|_|cant_send)
     }
 
-    /// Closes connection with the specified endpoint
+    /// Closes connection with the specified endpoint.
     pub fn drop_node(&self, endpoint: Endpoint) {
         let mut ws = self.state.downgrade();
         let _ = lock_mut_state(&mut ws, |s: &mut State| {
@@ -150,14 +174,18 @@ impl ConnectionManager {
         });
     }
 
-    pub fn get_stored_bootstrap_endpoints(&self) -> Vec<Endpoint> {
-        unimplemented!()
+    pub fn get_stored_bootstrap_endpoints(&self, beacon_port: Option<u16>) -> Vec<Endpoint> {
+        beacon::seek_peers(beacon_port).iter().map(|&socket_address| Endpoint::Tcp(socket_address)).collect::<Vec<_>>()
     }
 
     fn bootstrap_off_list(&self, bootstrap_list: Vec<Endpoint>) -> IoResult<Endpoint> {
         for endpoint in bootstrap_list {
             match transport::connect(endpoint) {
-                Ok(trans) => return Ok(trans.remote_endpoint.clone()),
+                Ok(trans) => {
+                    let ep = trans.remote_endpoint.clone();
+                    handle_connect(self.state.downgrade(), trans);
+                    return Ok(ep)
+                },
                 Err(_)    => continue,
             }
         }
@@ -278,7 +306,7 @@ fn start_reading_thread(state: WeakState,
     });
 }
 
-// pushing messges out to socket
+// pushing messages out to socket
 fn start_writing_thread(state: WeakState,
                         mut o: transport::Sender,
                         his_ep: Endpoint,
@@ -297,6 +325,7 @@ fn start_writing_thread(state: WeakState,
 mod test {
     use super::*;
     use std::thread::spawn;
+    use std::thread;
     use std::sync::mpsc::{Receiver, channel};
     use rustc_serialize::{Decodable, Encodable};
     use cbor::{Encoder, Decoder};
@@ -312,6 +341,26 @@ mod test {
     fn decode<T>(bytes: Bytes) -> T where T: Decodable {
         let mut dec = Decoder::from_bytes(&bytes[..]);
         dec.decode().next().unwrap().unwrap()
+    }
+
+#[test]
+    fn bootstrap() {
+        let (cm1_i, _) = channel();
+        let cm1 = ConnectionManager::new(cm1_i);
+        let (cm1_eps, beacon_port) = cm1.start_listening(vec![Port::Tcp(0)], Some(0u16)).unwrap();
+
+        thread::sleep_ms(1000);
+        let (cm2_i, _) = channel();
+        let cm2 = ConnectionManager::new(cm2_i);
+        let (cm2_eps, beacon_port2) = cm2.start_listening(vec![Port::Tcp(0)], beacon_port.clone()).unwrap();
+        match beacon_port2 {
+            Some(_) => assert!(false, "should have been none"),
+            None => assert!(true)
+        };
+        match cm2.bootstrap(None, beacon_port) {
+            Ok(ep) => { assert_eq!(ep.clone(), cm1_eps[0].clone()); },
+            Err(_) => { panic!("Failed to bootstrap"); }
+        }
     }
 
 #[test]
@@ -331,8 +380,7 @@ mod test {
                         },
                         Event::LostConnection(other_ep) => {
                             println!("Lost connection to {:?}", other_ep);
-                        },
-                        _ => println!("unhandled"),
+                        }
                     }
                 }
                 println!("done");
@@ -341,12 +389,13 @@ mod test {
 
         let (cm1_i, cm1_o) = channel();
         let cm1 = ConnectionManager::new(cm1_i);
-        let cm1_eps = cm1.start_listening(vec![Port::Tcp(0)]).unwrap();
+        let (cm1_eps, beacon_port) = cm1.start_listening(vec![Port::Tcp(0)], Some(0u16)).unwrap();
 
         let (cm2_i, cm2_o) = channel();
         let cm2 = ConnectionManager::new(cm2_i);
-        let cm2_eps = cm2.start_listening(vec![Port::Tcp(0)]).unwrap();
+        let (cm2_eps, _) = cm2.start_listening(vec![Port::Tcp(0)], beacon_port).unwrap();
         cm2.connect(cm1_eps.clone());
+        cm1.connect(cm2_eps.clone());
 
         let runner1 = run_cm(cm1, cm1_o);
         let runner2 = run_cm(cm2, cm2_o);
