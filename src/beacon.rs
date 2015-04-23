@@ -23,6 +23,7 @@ use std::thread;
 use std::thread::spawn;
 use std::io::Result;
 use transport::{Port};
+use bootstrap::{BootStrapHandler};
 
 pub fn serialise_address(our_listening_address: SocketAddr) -> [u8; 27] {
     let mut our_details = [0u8; 27];
@@ -105,8 +106,7 @@ fn handle_receive(socket: &UdpSocket) -> Option<SocketAddr> {
 }
 
 /// Listen for beacon broadcasts on port 5483 and reply with our_listening_address.
-pub fn listen_for_broadcast<F>(get_bootstrap_contacts: F, port: Option<Port>) -> Result<()>
-        where F: FnOnce() -> Vec<u8> {
+pub fn listen_for_broadcast(port: Option<Port>) -> Result<()> {
     let bootstrap_port: u16 = match port {
         Some(port) =>  { match port { Port::Tcp(num) => num }},
         None => 5483
@@ -121,7 +121,12 @@ pub fn listen_for_broadcast<F>(get_bootstrap_contacts: F, port: Option<Port>) ->
             let mut buffer = [0; 4];
             match socket.recv_from(&mut buffer) {
                 Ok((received_length, source)) => {
-                    let _ = socket.send_to(&get_bootstrap_contacts(), source);
+                    let bootstrap_contacts = || {
+                        let handler = BootStrapHandler::new();
+                        let contacts = handler.get_serialised_bootstrap_contacts();
+                        contacts
+                    };
+                    let _ = socket.send_to(&bootstrap_contacts(), source);
                 }
                 Err(error) => println!("Failed receiving a message: {}", error)
             }
@@ -186,9 +191,11 @@ mod test {
     use super::*;
     use std::net::{UdpSocket/*, lookup_addr, lookup_host*/};
     use std::thread;
-    use transport::{Port};
+    use transport::{Port, Endpoint};
+    use bootstrap::{BootStrapHandler, BootStrapContacts, Contact, PublicKey};
+    use sodiumoxide::crypto::asymmetricbox;
 
-#[test]
+    #[test]
     fn test_broadcast() {
         let port = Port::Tcp(5493);
         // Start a normal socket and start listening for a broadcast
@@ -199,7 +206,17 @@ mod test {
                 Err(e) => panic!("Couldn't bind socket: {}", e),
             };
             println!("Normal socket on {:?}\n", normal_socket.local_addr().unwrap());
-            let _ = listen_for_broadcast(normal_socket.local_addr().unwrap(), Some(port2));
+
+            let endpoint = Endpoint::Tcp(normal_socket.local_addr().unwrap());
+            let public_key = PublicKey::Asym(asymmetricbox::PublicKey([0u8; asymmetricbox::PUBLICKEYBYTES]));
+
+            let mut contacts = BootStrapContacts::new();
+            contacts.push(Contact::new(endpoint, public_key));
+
+            let mut bootstrap_handler = BootStrapHandler::new();
+            bootstrap_handler.add_bootstrap_contacts(contacts);
+
+            let _ = listen_for_broadcast(Some(port2));
         });
 
         // Allow listener time to start
