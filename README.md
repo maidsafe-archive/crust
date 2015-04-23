@@ -47,10 +47,10 @@ Several methods are used for NAT traversal, UpNP, hole punching [See here for TC
 - [ ] Examples:
   - [x] Beacon Client
   - [x] Beacon Server
-  - [ ] CLI Example - options: 
-    - [ ] Join / Start a client(optionally provide bootstrap info) 
-    - [ ] Allow sending messages at various rates per second 
-    - [ ] Print Incomming message rate per second 
+  - [ ] CLI Example - options:
+    - [ ] Join / Start a client(optionally provide bootstrap info)
+    - [ ] Allow sending messages at various rates per second
+    - [ ] Print Incomming message rate per second
   - [ ] Local Network Test. 12 Linux, 2 OSX, 2 WIN
   - [ ] 101 Droplet test
 - [ ] Version 0.0.9
