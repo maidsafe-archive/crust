@@ -38,8 +38,8 @@ use std::thread::spawn;
 static USAGE: &'static str = "
 Usage: crust_node -h
        crust_node -o <port>
-       crust_node -b <peer>
-       crust_node -b <peer> -s <speed>
+       crust_node <port> -b <peer>
+       crust_node <port> -b <peer> -s <speed>
 
 Options:
     -h, --help        Display this help message.
@@ -143,7 +143,12 @@ fn main() {
 
   let (cm_tx, cm_rx) = channel();
   let cm = ConnectionManager::new(cm_tx);
-  let cm_eps = match cm.start_listening(vec![Port::Tcp(5483u16)]) {
+  let mut listening_port : u16 = 5483;
+  if args.arg_port.is_some() {
+    let parsed_port: Option<u16> = args.arg_port.unwrap().trim().parse().ok();
+    listening_port = match parsed_port { Some(port) => port, _ => 5483 };
+  }
+  let cm_eps = match cm.start_listening(vec![Port::Tcp(listening_port)]) {
     Ok(eps) => eps,
     Err(e) => panic!("Connection manager failed to start on arbitrary TCP port: {}", e)
   };
