@@ -19,6 +19,6 @@
 extern crate crust;
 
 fn main() {
-  let peers = crust::beacon::seek_peers();
+  let peers = crust::beacon::seek_peers(None);
   println!("Found {} peers.", peers.len());
 }
