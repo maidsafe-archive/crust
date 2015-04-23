@@ -1,20 +1,20 @@
 // Copyright 2015 MaidSafe.net limited
 //
-// This MaidSafe Software is licensed to you under (1) the MaidSafe.net Commercial License, version
-// 1.0 or later, or (2) The General Public License (GPL), version 3, depending on which licence you
-// accepted on initial access to the Software (the "Licences").
+// This SAFE Network Software is licensed to you under (1) the MaidSafe.net Commercial License,
+// version 1.0 or later, or (2) The General Public License (GPL), version 3, depending on which
+// licence you accepted on initial access to the Software (the "Licences").
 //
-// By contributing code to the MaidSafe Software, or to this project generally, you agree to be
+// By contributing code to the SAFE Network Software, or to this project generally, you agree to be
 // bound by the terms of the MaidSafe Contributor Agreement, version 1.0, found in the root
-// directory of this project at LICENSE, COPYING and CONTRIBUTOR respectively and also available at
-// http://maidsafe.net/licenses
+// directory of this project at LICENSE, COPYING and CONTRIBUTOR respectively and also
+// available at: http://maidsafe.net/network-platform-licensing
 //
-// Unless required by applicable law or agreed to in writing, the MaidSafe Software distributed
-// under the GPL Licence is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-// KIND, either express or implied.
+// Unless required by applicable law or agreed to in writing, the SAFE Network Software distributed
+// under the GPL Licence is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS
+// OF ANY KIND, either express or implied.
 //
-// See the Licences for the specific language governing permissions and limitations relating to use
-// of the MaidSafe Software.
+// Please review the Licences for the specific language governing permissions and limitations relating to
+// use of the SAFE Network Software.
 
 use std::io::Error as IoError;
 use std::io;
@@ -78,11 +78,11 @@ impl ConnectionManager {
     /// to start on these, it defaults to random / OS provided endpoints for each supported
     /// protocol. The actual endpoints used will be returned on which it started listening for each
     /// protocol.
-    pub fn start_listening(&self, hint: Vec<Port>) -> IoResult<Vec<Endpoint>> {
+    pub fn start_listening(&self, hint: Vec<Port>,bootstrap_port: Option<Port>) -> IoResult<Vec<Endpoint>> {
         // FIXME: Returning IoResult seems pointless since we always return Ok.
         let end_points = hint.iter().filter_map(|port| self.listen(port).ok()).collect::<Vec<_>>();
          match end_points[0].clone() {
-             Endpoint::Tcp(socket_addr) => { spawn(move || { beacon::listen_for_broadcast(socket_addr); }); }
+             Endpoint::Tcp(socket_addr) => { let _ = beacon::listen_for_broadcast(socket_addr, bootstrap_port); }
          }
          Ok(end_points)
     }
@@ -100,10 +100,10 @@ impl ConnectionManager {
     /// bootstrap handler which will attempt to reconnect to any previous "direct connected" nodes.
     /// In both cases, this method blocks until it gets one successful connection or all the
     /// endpoints are tried and have failed.
-    pub fn bootstrap(&self, bootstrap_list: Option<Vec<Endpoint>>) -> IoResult<Endpoint> {
+    pub fn bootstrap(&self, bootstrap_list: Option<Vec<Endpoint>>, bootstrap_port: Option<Port>) -> IoResult<Endpoint> {
         match bootstrap_list {
             Some(list) => self.bootstrap_off_list(list),
-            None       => self.bootstrap_off_list(self.get_stored_bootstrap_endpoints()),
+            None       => self.bootstrap_off_list(self.get_stored_bootstrap_endpoints(bootstrap_port)),
         }
     }
 
@@ -169,14 +169,18 @@ impl ConnectionManager {
         });
     }
 
-    pub fn get_stored_bootstrap_endpoints(&self) -> Vec<Endpoint> {
-        beacon::seek_peers().iter().map(|&socket_address| Endpoint::Tcp(socket_address)).collect::<Vec<_>>()
+    pub fn get_stored_bootstrap_endpoints(&self, bootstrap_port: Option<Port>) -> Vec<Endpoint> {
+        beacon::seek_peers(bootstrap_port).iter().map(|&socket_address| Endpoint::Tcp(socket_address)).collect::<Vec<_>>()
     }
 
     fn bootstrap_off_list(&self, bootstrap_list: Vec<Endpoint>) -> IoResult<Endpoint> {
         for endpoint in bootstrap_list {
             match transport::connect(endpoint) {
-                Ok(trans) => return Ok(trans.remote_endpoint.clone()),
+                Ok(trans) => {
+                    let ep = trans.remote_endpoint.clone();
+                    handle_connect(self.state.downgrade(), trans);
+                    return Ok(ep)
+                },
                 Err(_)    => continue,
             }
         }
@@ -309,7 +313,7 @@ fn start_reading_thread(state: WeakState,
     });
 }
 
-// pushing messges out to socket
+// pushing messages out to socket
 fn start_writing_thread(state: WeakState,
                         mut o: transport::Sender,
                         his_ep: Endpoint,
@@ -350,12 +354,14 @@ mod test {
     fn bootstrap() {
         let (cm1_i, _) = channel();
         let cm1 = ConnectionManager::new(cm1_i);
-        let cm1_eps = cm1.start_listening(vec![Port::Tcp(0)]).unwrap();
+        let port = Port::Tcp(5484);
+        let cm1_eps = cm1.start_listening(vec![Port::Tcp(0)], Some(port.clone())).unwrap();
 
         thread::sleep_ms(1000);
         let (cm2_i, _) = channel();
         let cm2 = ConnectionManager::new(cm2_i);
-        match cm2.bootstrap(None) {
+        let cm2_eps = cm2.start_listening(vec![Port::Tcp(0)], Some(port.clone())).unwrap();
+        match cm2.bootstrap(None, Some(port)) {
             Ok(ep) => { assert_eq!(ep.clone(), cm1_eps[0].clone()); },
             Err(_) => { panic!("Failed to bootstrap"); }
         }
@@ -385,13 +391,14 @@ mod test {
             })
         };
 
+        let port = Port::Tcp(5485);
         let (cm1_i, cm1_o) = channel();
         let cm1 = ConnectionManager::new(cm1_i);
-        let cm1_eps = cm1.start_listening(vec![Port::Tcp(0)]).unwrap();
+        let cm1_eps = cm1.start_listening(vec![Port::Tcp(0)], Some(port.clone())).unwrap();
 
         let (cm2_i, cm2_o) = channel();
         let cm2 = ConnectionManager::new(cm2_i);
-        let cm2_eps = cm2.start_listening(vec![Port::Tcp(0)]).unwrap();
+        let cm2_eps = cm2.start_listening(vec![Port::Tcp(0)], Some(port.clone())).unwrap();
         cm2.connect(cm1_eps.clone());
         cm1.connect(cm2_eps.clone());
 
