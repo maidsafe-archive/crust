@@ -129,6 +129,7 @@ pub struct Transport {
     pub remote_endpoint: Endpoint,
 }
 
+// FIXME: There needs to be a way to break from this blockin command.
 pub fn connect(remote_ep: Endpoint) -> IoResult<Transport> {
     match remote_ep {
         Endpoint::Tcp(ep) => {
@@ -153,6 +154,8 @@ pub fn new_acceptor(port: &Port) -> IoResult<Acceptor> {
     }
 }
 
+// FIXME: There needs to be a way to break from this blockin command.
+// (Though this seems to be impossible with the current rust tcp API).
 pub fn accept(acceptor: &Acceptor) -> IoResult<Transport> {
     match *acceptor {
         Acceptor::Tcp(ref rx_channel, _) => {

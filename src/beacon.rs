@@ -22,6 +22,7 @@ use std::sync::mpsc;
 use std::thread;
 use std::thread::spawn;
 use std::io::Result;
+use transport;
 use transport::{Port};
 
 pub fn serialise_address(our_listening_address: SocketAddr) -> [u8; 27] {
@@ -113,7 +114,7 @@ pub fn listen_for_broadcast(our_listening_address: SocketAddr, port: Option<Port
 
     println!("port is {:?}", bootstrap_port);
 
-    let socket = try!( UdpSocket::bind(("0.0.0.0", bootstrap_port.clone())));
+    let socket = try!(UdpSocket::bind(("0.0.0.0", bootstrap_port.clone())));
     let our_serialised_details = serialise_address(our_listening_address);
 
     spawn(move || {
@@ -126,7 +127,34 @@ pub fn listen_for_broadcast(our_listening_address: SocketAddr, port: Option<Port
                 Err(error) => println!("Failed receiving a message: {}", error)
             }
         }});
-        Ok(())
+
+    Ok(())
+}
+
+fn listen_for_broadcast_connection(port: u16) -> Result<transport::Transport> {
+    let socket = try!(UdpSocket::bind(("0.0.0.0", port)));
+
+    loop {
+        let mut buffer : [u8; 2] = [0; 2];
+        let (size, source) = try!(socket.recv_from(&mut buffer));
+        if size != 2 {
+            // Some is being silly, ignore him.
+            continue;
+        }
+        let his_port : u16 = buffer[0] as u16 + ((buffer[1] as u16) << 8);
+        let his_tcp_ep = SocketAddr::new(source.ip(), his_port);
+        match transport::connect(transport::Endpoint::Tcp(his_tcp_ep)) {
+            Ok(transport) => return Ok(transport),
+            Err(_) => continue
+        }
+    };
+}
+
+fn connect_using_broadcast() -> Result<transport::Transport> {
+    use transport::{new_acceptor, Port};
+
+    let acceptor = try!(new_acceptor(Port::Tcp(0)));
+    // Work in progress...
 }
 
 /// Seek for peers, send out beacon to local network on port 5483.
