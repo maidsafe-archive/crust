@@ -14,7 +14,6 @@ homepage = "http://www.maidsafe.net"
 [dependencies]
 rustc-serialize = "*"
 cbor = "*"
-rand = "*"
 
 [[example]]
 name = "beacon_client"

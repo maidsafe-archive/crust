@@ -11,8 +11,6 @@
 
 extern crate rustc_serialize;
 extern crate cbor;
-extern crate rand;
-
 
 mod tcp_connections;
 mod transport;
