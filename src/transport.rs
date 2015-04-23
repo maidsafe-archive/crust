@@ -1,17 +1,20 @@
 // Copyright 2015 MaidSafe.net limited
-// This MaidSafe Software is licensed to you under (1) the MaidSafe.net Commercial License,
+//
+// This SAFE Network Software is licensed to you under (1) the MaidSafe.net Commercial License,
 // version 1.0 or later, or (2) The General Public License (GPL), version 3, depending on which
 // licence you accepted on initial access to the Software (the "Licences").
-// By contributing code to the MaidSafe Software, or to this project generally, you agree to be
-// bound by the terms of the MaidSafe Contributor Agreement, versicant_sendon 1.0, found in the root
+//
+// By contributing code to the SAFE Network Software, or to this project generally, you agree to be
+// bound by the terms of the MaidSafe Contributor Agreement, version 1.0, found in the root
 // directory of this project at LICENSE, COPYING and CONTRIBUTOR respectively and also
-// available at: http://www.maidsafe.net/licenses
-// Unless required by applicable law or agreed to in writing, the MaidSafe Software distributed
+// available at: http://maidsafe.net/network-platform-licensing
+//
+// Unless required by applicable law or agreed to in writing, the SAFE Network Software distributed
 // under the GPL Licence is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS
 // OF ANY KIND, either express or implied.
-// See the Licences for the specific language governing permissions and limitations relating to
-// use of the MaidSafe
-// Software.
+//
+// Please review the Licences for the specific language governing permissions and limitations relating to
+// use of the SAFE Network Software.
 
 use std::net::{SocketAddr, TcpStream, TcpListener};
 use tcp_connections;
@@ -19,14 +22,52 @@ use std::io;
 use std::io::Result as IoResult;
 use std::error::Error;
 use std::sync::mpsc;
+use beacon;
+use cbor;
+use cbor::CborTagEncode;
+use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
 use std::cmp::Ordering;
 
 pub type Bytes = Vec<u8>;
+
+fn array_to_vec(arr: &[u8]) -> Vec<u8> {
+    let mut vector = Vec::new();
+    for i in arr.iter() {
+        vector.push(*i);
+    }
+    vector
+}
 
 /// Enum representing endpoint of supported protocols
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub enum Endpoint {
     Tcp(SocketAddr),
+}
+
+impl Endpoint {
+    /// Returns SocketAddr.
+    pub fn get_address(&self) -> SocketAddr {
+        match *self {
+            Endpoint::Tcp(address) => address,
+        }
+    }
+}
+
+impl Encodable for Endpoint {
+    fn encode<E: Encoder>(&self, e: &mut E)->Result<(), E::Error> {
+        let address = array_to_vec(&beacon::serialise_address(self.get_address()));
+        CborTagEncode::new(5483_000, &address).encode(e)
+    }
+}
+
+impl Decodable for Endpoint {
+    fn decode<D: Decoder>(d: &mut D)->Result<Endpoint, D::Error> {
+        try!(d.read_u64());
+        let decoded: Vec<u8> = try!(Decodable::decode(d));
+        let address: SocketAddr = beacon::parse_address(&decoded).unwrap();
+
+        Ok(Endpoint::Tcp(address))
+    }
 }
 
 #[derive(Debug, Clone)]
