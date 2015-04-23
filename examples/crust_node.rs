@@ -123,25 +123,34 @@ impl FlatWorld {
       self.crust_nodes.push(new_node);
       return true;
     }
-    return false;
-  }
-
-  pub fn drop_node(&mut self, lost_node : CrustNode) -> bool {
-    for node in self.crust_nodes.iter_mut() {
-      if node.endpoint == lost_node.endpoint {
-        node.set_disconnected();
-        return true;
-      }
+    for node in self.crust_nodes.iter_mut().filter(|node| node.endpoint == new_node.endpoint) {
+      node.set_connected();
     }
     return false;
   }
 
-  pub fn get_connected_nodes(&self) -> Vec<CrustNode> {
-    self.crust_nodes.iter()
-                    .filter_map(|node| if node.connected == true {
-                      Some(node.clone())
-                      } else {None})
-                    .collect::<Vec<_>>()
+  pub fn drop_node(&mut self, lost_node : CrustNode) {
+    for node in self.crust_nodes.iter_mut().filter(|node| node.endpoint == lost_node.endpoint) {
+      node.set_disconnected();
+    }
+  }
+
+  pub fn print_connected_nodes(&self) {
+    let connected_nodes = self.crust_nodes.iter()
+                              .filter_map(|node| if node.connected == true {
+                                  Some(match node.endpoint { Endpoint::Tcp(socket_addr) => socket_addr })
+                                } else {None})
+                              .collect::<Vec<_>>();
+    // println!("connected nodes : {}", connected_nodes);
+    if connected_nodes.len() == 1 {
+      println!("connected nodes : {}", connected_nodes[0]);
+    } else if connected_nodes.len() > 1 {
+      print!("connected nodes : {}", connected_nodes[0]);
+      for i in 1..connected_nodes.len() {
+        print!(",{}", connected_nodes[i]);
+      }
+      println!("");
+    }
   }
 
   pub fn get_all_nodes(&self) -> Vec<CrustNode> {
@@ -169,7 +178,7 @@ fn main() {
                      .and_then(|d| d.decode())
                      .unwrap_or_else(|e| e.exit());
 
-  if !args.flag_help { println!("{:?}", args); };  // TODO: remove; here for debug
+  // if !args.flag_help { println!("{:?}", args); };  // TODO: remove; here for debug
   if args.flag_help {
     println!("{:?}", args);     // print help message
     return;
@@ -241,8 +250,9 @@ fn main() {
                 my_flat_world.record_received(bytes.len() as u32);
             },
             crust::Event::NewConnection(endpoint) => {
-                println!("adding new node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
+                // println!("adding new node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
                 my_flat_world.add_node(CrustNode::new(endpoint, true));
+                my_flat_world.print_connected_nodes();
             },
             crust::Event::LostConnection(endpoint) => {
                 println!("dropping node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
@@ -288,7 +298,7 @@ fn main() {
     let mut command = String::new();
     loop {
       command.clear();
-      println!("input command ( stop | connect <Endpoint> | send <Endpoint> <Msg> )>");
+      println!("input command ( stop | connect <Endpoint> | send <Endpoint> <Msg> )  >>>");
       // stop
       // connect <Endpoint>
       // send <Endpoint> <Msg>
