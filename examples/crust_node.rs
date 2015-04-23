@@ -223,29 +223,25 @@ fn main() {
   let mut command = String::new();
   loop {
       command.clear();
-      println!("input command >");
+      println!("input command ( stop | connect <Endpoint> | send <Endpoint> <Msg> )>");
+      // stop
+      // connect <Endpoint>
+      // send <Endpoint> <Msg>
       let _ = io::stdin().read_line(&mut command);
-      match command.trim() {
+      let v: Vec<&str> = command.split(' ').collect();
+      println!("main command is : {}", v[0]);
+      match v[0].trim() {
           "stop" => break,
           "send" => {
-              println!("input endpoint to send msg >");
-              let mut endpoint_str = String::new();
-              let _ = io::stdin().read_line(&mut endpoint_str);
-              let endpoint_address = match SocketAddr::from_str(endpoint_str.trim()) {
+              let endpoint_address = match SocketAddr::from_str(v[1]) {
                 Ok(addr) => addr,
                 Err(_) => continue
               };
-              println!("input msg to send >");
-              let mut msg = String::new();
-              let _ = io::stdin().read_line(&mut msg);
-              println!("sending to {} with message : {}", endpoint_address, msg);
-              let _ = cm.send(Endpoint::Tcp(endpoint_address), msg.into_bytes());
+              println!("sending to {} with message : {}", endpoint_address, v[2]);
+              let _ = cm.send(Endpoint::Tcp(endpoint_address), v[2].to_string().into_bytes());
           },
           "connect" => {
-              println!("input endpoint to connect >");
-              let mut endpoint_str = String::new();
-              let _ = io::stdin().read_line(&mut endpoint_str);
-              let endpoint_address = match SocketAddr::from_str(endpoint_str.trim()) {
+              let endpoint_address = match SocketAddr::from_str(v[1].trim()) {
                 Ok(addr) => addr,
                 Err(_) => continue
               };
