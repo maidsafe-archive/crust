@@ -31,6 +31,7 @@ extern crate rustc_serialize;
 extern crate cbor;
 extern crate time;
 extern crate sodiumoxide;
+extern crate rand;
 
 mod tcp_connections;
 mod transport;

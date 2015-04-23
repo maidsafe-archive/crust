@@ -16,6 +16,7 @@ rustc-serialize = "*"
 cbor = "*"
 time = "*"
 sodiumoxide = "*"
+rand = "*"
 
 [[example]]
 name = "beacon_client"
