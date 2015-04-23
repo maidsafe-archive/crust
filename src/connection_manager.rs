@@ -81,10 +81,10 @@ impl ConnectionManager {
     pub fn start_listening(&self, hint: Vec<Port>,bootstrap_port: Option<Port>) -> IoResult<Vec<Endpoint>> {
         // FIXME: Returning IoResult seems pointless since we always return Ok.
         let end_points = hint.iter().filter_map(|port| self.listen(port).ok()).collect::<Vec<_>>();
-         match end_points[0].clone() {
-             Endpoint::Tcp(socket_addr) => { let _ = beacon::listen_for_broadcast(socket_addr, bootstrap_port); }
-         }
-         Ok(end_points)
+        match end_points[0].clone() {
+            Endpoint::Tcp(socket_addr) => { let _ = beacon::listen_for_broadcast(socket_addr, bootstrap_port); }
+        }
+        Ok(end_points)
     }
 
     /// This method tries to connect (bootstrap to exisiting network) to the default or provided
