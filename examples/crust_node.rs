@@ -55,6 +55,12 @@ Options:
     -s, --speed       Optional send data at maximum speed (bytes/second)
 ";
 
+// starting first node : cargo run --example crust_node -- -o 5483
+// starting second node : cargo run --example crust_node -- 5783 -b 0.0.0.0:5483
+// starting third node : cargo run --example crust_node -- 5784 -b 0.0.0.0:5483,0.0.0.0:5783
+// starting forth node and sending message randomly to the above three nodes :
+//    cargo run --example crust_node -- 5785 -b 0.0.0.0:5483,0.0.0.0:5783,0.0.0.0:5784 -s 1024
+
 #[derive(RustcDecodable, Debug)]
 struct Args {
   arg_peers : Option<String>,
@@ -294,11 +300,11 @@ fn main() {
           let speed : u16 = match args.arg_speed { Some(speed) => speed, _ => 100 };
           spawn(move || {
                   loop {
-                    let length = cmp::max(50, cmp::min(random::<u8>() as u16, speed));
-                    let times : usize = cmp::max(1, speed as usize / length as usize);
+                    let mut rng = rand::thread_rng();
+                    let length = rng.gen_range(50, speed);
+                    let times = cmp::max(1, speed / length);
                     let sleep_time = cmp::max(1, 1000 / times);
-                    for _ in 0..times {
-                      let mut rng = rand::thread_rng();
+                    for _ in 0..times {                      
                       let picked_peer = rng.gen_range(0, endpoints.len());
                       println!("sending a message with length of {} to {}", length, endpoints[picked_peer]);
                       let _ = cm.send(Endpoint::Tcp(endpoints[picked_peer]), generate_random_vec_u8(length as usize));
