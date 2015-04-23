@@ -13,6 +13,8 @@ homepage = "http://www.maidsafe.net"
 rustc-serialize = "*"
 cbor = "*"
 docopt = "*"
+time = "*"
+rand = "*"
 
 [[example]]
 name = "simple_client"

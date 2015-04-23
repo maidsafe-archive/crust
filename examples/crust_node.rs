@@ -23,10 +23,14 @@
 extern crate crust;
 extern crate rustc_serialize;
 extern crate docopt;
+extern crate rand;
+extern crate time;
 
 use crust::{Endpoint, Port};
 use crust::ConnectionManager;
 use docopt::Docopt;
+use rand::random;
+use std::cmp;
 use std::sync::mpsc::channel;
 use std::io;
 use std::net::SocketAddr;
@@ -52,12 +56,20 @@ Options:
 #[derive(RustcDecodable, Debug)]
 struct Args {
   arg_peer : Option<String>,
-  arg_speed : Option<usize>,
+  arg_speed : Option<u16>,
   arg_port : Option<String>,
   flag_help : bool,
   flag_bootstrap : bool,
   flag_speed : bool,
   flag_origin : bool
+}
+
+pub fn generate_random_vec_u8(size: usize) -> Vec<u8> {
+    let mut vec: Vec<u8> = Vec::with_capacity(size);
+    for _ in 0..size {
+        vec.push(random::<u8>());
+    }
+    vec
 }
 
 // simple "NodeInfo", without PKI
@@ -162,7 +174,7 @@ fn main() {
 
   let mut default_bootstrap = !args.flag_bootstrap;
   if args.flag_bootstrap {
-    match args.arg_peer {
+    match args.arg_peer.clone() {
       Some(peer) => {
         // String.as_str() is unstable; waiting RFC revision
         // http://doc.rust-lang.org/nightly/std/string/struct.String.html#method.as_str
@@ -202,10 +214,13 @@ fn main() {
         }
         match event.unwrap() {
             crust::Event::NewMessage(endpoint, bytes) => {
-                println!("received from {} with a new message : {}",
+                // println!("received from {} with a new message : {}",
+                //          match endpoint { Endpoint::Tcp(socket_addr) => socket_addr },
+                //          match String::from_utf8(bytes) { Ok(msg) => msg,
+                //                                           Err(_) => "unknown msg".to_string() });
+                println!("received from {} with a new message of len: {}",
                          match endpoint { Endpoint::Tcp(socket_addr) => socket_addr },
-                         match String::from_utf8(bytes) { Ok(msg) => msg,
-                                                          Err(_) => "unknown msg".to_string() });
+                         bytes.len());
             },
             crust::Event::NewConnection(endpoint) => {
                 println!("adding new node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
@@ -220,8 +235,40 @@ fn main() {
   });
 
   // processing interaction till receiving termination command
-  let mut command = String::new();
-  loop {
+  if args.flag_speed {
+      match args.arg_peer {
+        Some(peer) => {
+          let peer_address = match SocketAddr::from_str(peer.as_str()) {
+            Ok(addr) => addr,
+            Err(_) => panic!("Failed to parse peer as valid IPv4 or IPv6 address: {}", peer)
+          };
+          let speed : u16 = match args.arg_speed { Some(speed) => speed, _ => 100 };
+          spawn(move || {
+                  loop {
+                    let length = cmp::max(50, cmp::min(random::<u8>() as u16, speed));
+                    let times : usize = cmp::max(1, speed as usize / length as usize);
+                    let sleep_time = cmp::max(1, 1000 / times);
+                    for _ in 0..times {
+                      println!("sending a message with length of {} to {}", length, peer_address);
+                      let _ = cm.send(Endpoint::Tcp(peer_address), generate_random_vec_u8(length as usize));
+                      std::thread::sleep_ms(sleep_time as u32);
+                    }
+                  }
+              });
+        },
+        None => { println!("No peer address provided, no sending") }
+    }
+    let mut command = String::new();
+    loop {
+      let _ = io::stdin().read_line(&mut command);
+      if command.trim() == "stop" {
+        break;
+      }
+      command.clear();
+    }
+  } else {
+    let mut command = String::new();
+    loop {
       command.clear();
       println!("input command ( stop | connect <Endpoint> | send <Endpoint> <Msg> )>");
       // stop
@@ -229,7 +276,6 @@ fn main() {
       // send <Endpoint> <Msg>
       let _ = io::stdin().read_line(&mut command);
       let v: Vec<&str> = command.split(' ').collect();
-      println!("main command is : {}", v[0]);
       match v[0].trim() {
           "stop" => break,
           "send" => {
@@ -250,5 +296,6 @@ fn main() {
           }
           _ => {},
       }
+    }
   }
 }
