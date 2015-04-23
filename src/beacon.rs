@@ -105,7 +105,8 @@ fn handle_receive(socket: &UdpSocket) -> Option<SocketAddr> {
 }
 
 /// Listen for beacon broadcasts on port 5483 and reply with our_listening_address.
-pub fn listen_for_broadcast(our_listening_address: SocketAddr, port: Option<Port>) -> Result<()> {
+pub fn listen_for_broadcast<F>(get_bootstrap_contacts: F, port: Option<Port>) -> Result<()>
+        where F: FnOnce() -> Vec<u8> {
     let bootstrap_port: u16 = match port {
         Some(port) =>  { match port { Port::Tcp(num) => num }},
         None => 5483
@@ -114,14 +115,13 @@ pub fn listen_for_broadcast(our_listening_address: SocketAddr, port: Option<Port
     println!("port is {:?}", bootstrap_port);
 
     let socket = try!( UdpSocket::bind(("0.0.0.0", bootstrap_port.clone())));
-    let our_serialised_details = serialise_address(our_listening_address);
 
     spawn(move || {
         loop {
             let mut buffer = [0; 4];
             match socket.recv_from(&mut buffer) {
                 Ok((received_length, source)) => {
-                    let _ = socket.send_to(&our_serialised_details, source);
+                    let _ = socket.send_to(&get_bootstrap_contacts(), source);
                 }
                 Err(error) => println!("Failed receiving a message: {}", error)
             }
