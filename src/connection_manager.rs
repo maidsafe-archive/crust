@@ -80,7 +80,7 @@ impl ConnectionManager {
     /// if beacon port != 0 => an attempt to get the port is made by beacon and the callee will be informed of the attempt
     /// if beacon port == None => 5483 is tried
     /// if beacon succeeds in starting the udp listener, the coresponding port is returned
-    pub fn start_listening(&self, hint: Vec<Port>, beacon_port: Option<Port>) -> IoResult<(Vec<Endpoint>, Option<Port>)> {
+    pub fn start_listening(&self, hint: Vec<Port>, beacon_port: Option<u16>) -> IoResult<(Vec<Endpoint>, Option<u16>)> {
         // FIXME: Returning IoResult seems pointless since we always return Ok.
         let end_points = hint.iter().filter_map(|port| self.listen(port).ok()).collect::<Vec<_>>();
         let port = match end_points[0].clone() {
@@ -105,10 +105,10 @@ impl ConnectionManager {
     /// bootstrap handler which will attempt to reconnect to any previous "direct connected" nodes.
     /// In both cases, this method blocks until it gets one successful connection or all the
     /// endpoints are tried and have failed.
-    pub fn bootstrap(&self, bootstrap_list: Option<Vec<Endpoint>>, bootstrap_port: Option<Port>) -> IoResult<Endpoint> {
+    pub fn bootstrap(&self, bootstrap_list: Option<Vec<Endpoint>>, beacon_port: Option<u16>) -> IoResult<Endpoint> {
         match bootstrap_list {
             Some(list) => self.bootstrap_off_list(list),
-            None       => self.bootstrap_off_list(self.get_stored_bootstrap_endpoints(bootstrap_port)),
+            None       => self.bootstrap_off_list(self.get_stored_bootstrap_endpoints(beacon_port)),
         }
     }
 
@@ -174,7 +174,7 @@ impl ConnectionManager {
         });
     }
 
-    pub fn get_stored_bootstrap_endpoints(&self, beacon_port: Option<Port>) -> Vec<Endpoint> {
+    pub fn get_stored_bootstrap_endpoints(&self, beacon_port: Option<u16>) -> Vec<Endpoint> {
         beacon::seek_peers(beacon_port).iter().map(|&socket_address| Endpoint::Tcp(socket_address)).collect::<Vec<_>>()
     }
 
@@ -347,7 +347,7 @@ mod test {
     fn bootstrap() {
         let (cm1_i, _) = channel();
         let cm1 = ConnectionManager::new(cm1_i);
-        let (cm1_eps, beacon_port) = cm1.start_listening(vec![Port::Tcp(0)], Some(Port::Tcp(0))).unwrap();
+        let (cm1_eps, beacon_port) = cm1.start_listening(vec![Port::Tcp(0)], Some(0u16)).unwrap();
 
         thread::sleep_ms(1000);
         let (cm2_i, _) = channel();
@@ -389,7 +389,7 @@ mod test {
 
         let (cm1_i, cm1_o) = channel();
         let cm1 = ConnectionManager::new(cm1_i);
-        let (cm1_eps, beacon_port) = cm1.start_listening(vec![Port::Tcp(0)], Some(Port::Tcp(0))).unwrap();
+        let (cm1_eps, beacon_port) = cm1.start_listening(vec![Port::Tcp(0)], Some(0u16)).unwrap();
 
         let (cm2_i, cm2_o) = channel();
         let cm2 = ConnectionManager::new(cm2_i);

@@ -22,7 +22,6 @@ use std::sync::mpsc;
 use std::thread;
 use std::thread::spawn;
 use std::io::Result;
-use transport::{Port};
 
 fn serialise_address(our_listening_address: SocketAddr) -> [u8; 27] {
     let mut our_details = [0u8; 27];
@@ -105,9 +104,9 @@ fn handle_receive(socket: &UdpSocket) -> Option<SocketAddr> {
 }
 
 /// Listen for beacon broadcasts on given/random port and replies the port on bind success
-pub fn listen_for_broadcast(our_listening_address: SocketAddr, beacon_port: Option<Port>) -> Result<Port> {
+pub fn listen_for_broadcast(our_listening_address: SocketAddr, beacon_port: Option<u16>) -> Result<u16> {
     let port: u16 = match beacon_port {
-        Some(port) =>  match port { Port::Tcp(port_no) => port_no },
+        Some(udp_port) =>  udp_port,
         None => 5483
     };
 
@@ -129,11 +128,11 @@ pub fn listen_for_broadcast(our_listening_address: SocketAddr, beacon_port: Opti
                 Err(error) => println!("Failed receiving a message: {}", error)
             }
         }});
-        Ok(Port::Tcp(used_port))
+        Ok(used_port)
 }
 
-/// Seek for peers, send out beacon to local network on port 5483.
-pub fn seek_peers(port: Option<Port>) -> Vec<SocketAddr> {
+/// Seek for peers, send out beacon to local network on port 5483 or given port.
+pub fn seek_peers(port: Option<u16>) -> Vec<SocketAddr> {
     let socket = match UdpSocket::bind("0.0.0.0:0") {
         Ok(s) => s,
         Err(e) => panic!("Couldn't bind socket: {}", e),
@@ -145,7 +144,7 @@ pub fn seek_peers(port: Option<Port>) -> Vec<SocketAddr> {
     }
 
     let beacon_port: u16 = match port {
-        Some(port) =>  { match port { Port::Tcp(num) => num }},
+        Some(udp_port) => udp_port,
         None => 5483
     };
 
@@ -187,20 +186,19 @@ mod test {
     use super::*;
     use std::net::{UdpSocket/*, lookup_addr, lookup_host*/};
     use std::thread;
-    use transport::{Port};
     use std::sync::mpsc::{Sender, Receiver, channel};
 
 #[test]
     fn test_broadcast() {
         // Start a normal socket and start listening for a broadcast
-        let (tx, rx): (Sender<Port>, Receiver<Port>) = channel();
+        let (tx, rx): (Sender<u16>, Receiver<u16>) = channel();
         thread::spawn(move || {
             let normal_socket = match UdpSocket::bind("::0:0") {
                 Ok(s) => s,
                 Err(e) => panic!("Couldn't bind socket: {}", e),
             };
             println!("Normal socket on {:?}\n", normal_socket.local_addr().unwrap());
-            match listen_for_broadcast(normal_socket.local_addr().unwrap(), Some(Port::Tcp(0))) {
+            match listen_for_broadcast(normal_socket.local_addr().unwrap(), Some(0u16)) {
                 Ok(used_port) => { let _ = tx.send(used_port); },
                 Err(_) => { panic!("Failed to bind") }
             }
