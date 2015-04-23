@@ -92,7 +92,11 @@ impl CrustNode {
 
 struct FlatWorld {
   our_eps : Vec<Endpoint>,
-  crust_nodes : Vec<CrustNode>
+  crust_nodes : Vec<CrustNode>,
+  performance_start: time::SteadyTime,
+  performance_interval: time::Duration,
+  received_msgs: u32,
+  received_bytes: u32
 }
 
 // simple "routing table" without any structure
@@ -100,7 +104,11 @@ impl FlatWorld {
   pub fn new(our_endpoints : Vec<Endpoint>) -> FlatWorld {
     FlatWorld {
       our_eps : our_endpoints,
-      crust_nodes : Vec::with_capacity(40)
+      crust_nodes : Vec::with_capacity(40),
+      performance_start: time::SteadyTime::now(),
+      performance_interval: time::Duration::seconds(10),
+      received_msgs: 0,
+      received_bytes: 0
     }
   }
 
@@ -138,6 +146,20 @@ impl FlatWorld {
 
   pub fn get_all_nodes(&self) -> Vec<CrustNode> {
     self.crust_nodes.clone()
+  }
+
+  pub fn record_received(&mut self, msg_size : u32) {
+    self.received_msgs += 1;
+    self.received_bytes += msg_size;
+    if self.received_msgs == 1 {
+      self.performance_start = time::SteadyTime::now();
+    }
+    if self.performance_start + self.performance_interval < time::SteadyTime::now() {
+      println!("received {} msgs with total size of {} Bytes in last 10 seconds",
+               self.received_msgs, self.received_bytes);
+      self.received_msgs = 0;
+      self.received_bytes = 0;
+    }
   }
 }
 
@@ -205,9 +227,7 @@ fn main() {
 
   spawn(move || {
     loop {
-        println!("waiting for an input event");
         let event = cm_rx.recv();
-        println!("got an input event");
         if event.is_err() {
           println!("stop listening");
           break;
@@ -218,9 +238,7 @@ fn main() {
                 //          match endpoint { Endpoint::Tcp(socket_addr) => socket_addr },
                 //          match String::from_utf8(bytes) { Ok(msg) => msg,
                 //                                           Err(_) => "unknown msg".to_string() });
-                println!("received from {} with a new message of len: {}",
-                         match endpoint { Endpoint::Tcp(socket_addr) => socket_addr },
-                         bytes.len());
+                my_flat_world.record_received(bytes.len() as u32);
             },
             crust::Event::NewConnection(endpoint) => {
                 println!("adding new node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
