@@ -28,7 +28,7 @@ fn main() {
 
   // blocking call on listen_for_broadcast
   let _ = match tcp_listener.local_addr() {
-    Ok(local_addr) => crust::beacon::listen_for_broadcast(local_addr, Some(10240u16)),
+    Ok(local_addr) => crust::beacon::listen_for_broadcast(local_addr, None),
     Err(e) => panic!("No local address to start listening on: {}", e)
   };
 
