@@ -61,6 +61,12 @@ Options:
 // starting forth node and sending message randomly to the above three nodes :
 //    cargo run --example crust_node -- 5785 -b 0.0.0.0:5483,0.0.0.0:5783,0.0.0.0:5784 -s 1024
 
+
+// starting first node : cargo run --example crust_node -- -o 5983
+// starting second node : cargo run --example crust_node -- 5883 -b 0.0.0.0:5983
+// starting third node : cargo run --example crust_node -- 5784 -b 0.0.0.0:5983,0.0.0.0:5883
+
+
 #[derive(RustcDecodable, Debug)]
 struct Args {
   arg_peers : Option<String>,
