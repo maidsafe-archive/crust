@@ -22,7 +22,6 @@ use std::sync::mpsc;
 use std::thread;
 use std::thread::spawn;
 use std::io::Result;
-use transport::{Port};
 
 pub fn serialise_address(our_listening_address: SocketAddr) -> [u8; 27] {
     let mut our_details = [0u8; 27];
@@ -104,17 +103,20 @@ fn handle_receive(socket: &UdpSocket) -> Option<SocketAddr> {
     }
 }
 
-/// Listen for beacon broadcasts on port 5483 and reply with our_listening_address.
-pub fn listen_for_broadcast(our_listening_address: SocketAddr, port: Option<Port>) -> Result<()> {
-    let bootstrap_port: u16 = match port {
-        Some(port) =>  { match port { Port::Tcp(num) => num }},
+/// Listen for beacon broadcasts on given/random port and replies the port on bind success
+pub fn listen_for_broadcast(our_listening_address: SocketAddr, beacon_port: Option<u16>) -> Result<u16> {
+    let port: u16 = match beacon_port {
+        Some(udp_port) =>  udp_port,
         None => 5483
     };
 
-    println!("port is {:?}", bootstrap_port);
-
-    let socket = try!( UdpSocket::bind(("0.0.0.0", bootstrap_port.clone())));
+    let socket = try!( UdpSocket::bind(("0.0.0.0", port.clone())));
     let our_serialised_details = serialise_address(our_listening_address);
+
+    let used_port:u16 = match socket.local_addr() {
+                   Ok(sock_addr) => { sock_addr.port() },
+                   Err(_) => panic!("should have port")
+               };
 
     spawn(move || {
         loop {
@@ -126,11 +128,11 @@ pub fn listen_for_broadcast(our_listening_address: SocketAddr, port: Option<Port
                 Err(error) => println!("Failed receiving a message: {}", error)
             }
         }});
-        Ok(())
+        Ok(used_port)
 }
 
-/// Seek for peers, send out beacon to local network on port 5483.
-pub fn seek_peers(port: Option<Port>) -> Vec<SocketAddr> {
+/// Seek for peers, send out beacon to local network on port 5483 or given port.
+pub fn seek_peers(port: Option<u16>) -> Vec<SocketAddr> {
     let socket = match UdpSocket::bind("0.0.0.0:0") {
         Ok(s) => s,
         Err(e) => panic!("Couldn't bind socket: {}", e),
@@ -141,15 +143,13 @@ pub fn seek_peers(port: Option<Port>) -> Vec<SocketAddr> {
         Err(e) => panic!("Can't broadcast from this socket: {}", e),
     }
 
-    let bootstrap_port: u16 = match port {
-        Some(port) =>  { match port { Port::Tcp(num) => num }},
+    let beacon_port: u16 = match port {
+        Some(udp_port) => udp_port,
         None => 5483
     };
 
-    println!("seek_peers port is {:?}", bootstrap_port);
-
     let buffer = [0; 4];
-    match socket.send_to(&buffer, ("255.255.255.255", bootstrap_port)) {
+    match socket.send_to(&buffer, ("255.255.255.255", beacon_port)) {
         Ok(s) => assert_eq!(4, s),
         Err(e) => panic!("Failed broadcasting on {}: {}", socket.local_addr().unwrap(), e),
     }
@@ -186,27 +186,31 @@ mod test {
     use super::*;
     use std::net::{UdpSocket/*, lookup_addr, lookup_host*/};
     use std::thread;
-    use transport::{Port};
+    use std::sync::mpsc::{Sender, Receiver, channel};
 
 #[test]
     fn test_broadcast() {
-        let port = Port::Tcp(5493);
         // Start a normal socket and start listening for a broadcast
-        let port2 = port.clone();
+        let (tx, rx): (Sender<u16>, Receiver<u16>) = channel();
         thread::spawn(move || {
             let normal_socket = match UdpSocket::bind("::0:0") {
                 Ok(s) => s,
                 Err(e) => panic!("Couldn't bind socket: {}", e),
             };
             println!("Normal socket on {:?}\n", normal_socket.local_addr().unwrap());
-            let _ = listen_for_broadcast(normal_socket.local_addr().unwrap(), Some(port2));
+            match listen_for_broadcast(normal_socket.local_addr().unwrap(), Some(0u16)) {
+                Ok(used_port) => { let _ = tx.send(used_port); },
+                Err(_) => { panic!("Failed to bind") }
+            }
         });
 
         // Allow listener time to start
         thread::sleep_ms(300);
 
+        let beacon_port = rx.recv().ok().expect("could not receive port");
+
         for i in 0..3 {
-            let peers = seek_peers(Some(port.clone()));
+            let peers = seek_peers(Some(beacon_port.clone()));
             assert!(peers.len() > 0);
         }
     }
