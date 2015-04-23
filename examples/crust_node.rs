@@ -229,7 +229,7 @@ fn main() {
     let parsed_port: Option<u16> = args.arg_port.unwrap().trim().parse().ok();
     listening_port = match parsed_port { Some(port) => port, _ => 5483 };
   }
-  let cm_eps = match cm.start_listening(vec![Port::Tcp(listening_port)]) {
+  let cm_eps = match cm.start_listening(vec![Port::Tcp(listening_port)], None) {
     Ok(eps) => eps,
     Err(e) => panic!("Connection manager failed to start on arbitrary TCP port: {}", e)
   };
@@ -258,7 +258,7 @@ fn main() {
           };
           endpoints.push(Endpoint::Tcp(bootstrap_address));
         }
-        match cm.bootstrap(Some(endpoints.clone())) {
+        match cm.bootstrap(Some(endpoints.clone()), None) {
           Ok(endpoint) =>  println!("bootstrapped to {} ",
                                     match endpoint { Endpoint::Tcp(socket_addr) => socket_addr }),
           Err(e) => { println!("Failed to bootstrap from provided peers with error : {}", e);
@@ -279,7 +279,7 @@ fn main() {
 
   // resort to default bootstrapping methods
   if default_bootstrap && !args.flag_origin {
-    match cm.bootstrap(None) {
+    match cm.bootstrap(None, None) {
       Ok(endpoint) =>  println!("bootstrapped to {} ",
                                 match endpoint { Endpoint::Tcp(socket_addr) => socket_addr }),
       Err(e) => { println!("Failed to bootstrap from default methods: {}", e);
@@ -310,7 +310,7 @@ fn main() {
                     let length = rng.gen_range(50, speed);
                     let times = cmp::max(1, speed / length);
                     let sleep_time = cmp::max(1, 1000 / times);
-                    for _ in 0..times {                      
+                    for _ in 0..times {
                       let picked_peer = rng.gen_range(0, endpoints.len());
                       println!("sending a message with length of {} to {}", length, endpoints[picked_peer]);
                       let _ = cm.send(Endpoint::Tcp(endpoints[picked_peer]), generate_random_vec_u8(length as usize));
