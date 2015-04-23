@@ -30,6 +30,7 @@ use crust::{Endpoint, Port};
 use crust::ConnectionManager;
 use docopt::Docopt;
 use rand::random;
+use rand::Rng;
 use std::cmp;
 use std::sync::mpsc::channel;
 use std::io;
@@ -37,25 +38,26 @@ use std::net::SocketAddr;
 use std::str::FromStr;
 use std::thread::spawn;
 
+
 // TODO: switching order of CL params, eg --speed x --bootstrap node
 //       gives an error parsing node as usize... so order is strict for now
 static USAGE: &'static str = "
 Usage: crust_node -h
        crust_node -o <port>
-       crust_node <port> -b <peer>
-       crust_node <port> -b <peer> -s <speed>
+       crust_node <port> -b <peers>
+       crust_node <port> -b <peers> -s <speed>
 
 Options:
     -h, --help        Display this help message.
     -o, --origin      Start a crust node as server, i.e. only listening on specified port.
-    -b, --bootstrap   Start a crust node and bootstrap off the peer.
+    -b, --bootstrap   Start a crust node and bootstrap off the peers.
                       If no bootstrap node is provided beacon will be used.
     -s, --speed       Optional send data at maximum speed (bytes/second)
 ";
 
 #[derive(RustcDecodable, Debug)]
 struct Args {
-  arg_peer : Option<String>,
+  arg_peers : Option<String>,
   arg_speed : Option<u16>,
   arg_port : Option<String>,
   flag_help : bool,
@@ -91,7 +93,6 @@ impl CrustNode {
 }
 
 struct FlatWorld {
-  our_eps : Vec<Endpoint>,
   crust_nodes : Vec<CrustNode>,
   performance_start: time::SteadyTime,
   performance_interval: time::Duration,
@@ -101,9 +102,8 @@ struct FlatWorld {
 
 // simple "routing table" without any structure
 impl FlatWorld {
-  pub fn new(our_endpoints : Vec<Endpoint>) -> FlatWorld {
+  pub fn new() -> FlatWorld {
     FlatWorld {
-      our_eps : our_endpoints,
       crust_nodes : Vec::with_capacity(40),
       performance_start: time::SteadyTime::now(),
       performance_interval: time::Duration::seconds(10),
@@ -116,10 +116,7 @@ impl FlatWorld {
   pub fn add_node(&mut self, new_node : CrustNode) -> bool {
     if self.crust_nodes.iter()
                        .filter(|node| node.endpoint == new_node.endpoint)
-                       .count() == 0 &&
-       self.our_eps.iter()
-                   .filter(|& our_ep| our_ep == &new_node.endpoint)
-                   .count() == 0 {
+                       .count() == 0 {
       self.crust_nodes.push(new_node);
       return true;
     }
@@ -153,9 +150,9 @@ impl FlatWorld {
     }
   }
 
-  pub fn get_all_nodes(&self) -> Vec<CrustNode> {
-    self.crust_nodes.clone()
-  }
+  // pub fn get_all_nodes(&self) -> Vec<CrustNode> {
+  //   self.crust_nodes.clone()
+  // }
 
   pub fn record_received(&mut self, msg_size : u32) {
     self.received_msgs += 1;
@@ -185,6 +182,35 @@ fn main() {
   };
 
   let (cm_tx, cm_rx) = channel();
+  let mut my_flat_world : FlatWorld = FlatWorld::new();
+  spawn(move || {
+    loop {
+        let event = cm_rx.recv();
+        if event.is_err() {
+          println!("stop listening");
+          break;
+        }
+        match event.unwrap() {
+            crust::Event::NewMessage(_, bytes) => {
+                my_flat_world.record_received(bytes.len() as u32);
+                // println!("received from {} with a new message : {}",
+                //          match endpoint { Endpoint::Tcp(socket_addr) => socket_addr },
+                //          match String::from_utf8(bytes) { Ok(msg) => msg,
+                //                                           Err(_) => "unknown msg".to_string() });
+            },
+            crust::Event::NewConnection(endpoint) => {
+                // println!("adding new node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
+                my_flat_world.add_node(CrustNode::new(endpoint, true));
+                my_flat_world.print_connected_nodes();
+            },
+            crust::Event::LostConnection(endpoint) => {
+                println!("dropping node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
+                my_flat_world.drop_node(CrustNode::new(endpoint, false));
+            }
+        }
+    }
+  });
+
   let cm = ConnectionManager::new(cm_tx);
   let mut listening_port : u16 = 5483;
   if args.arg_port.is_some() {
@@ -201,24 +227,38 @@ fn main() {
       Endpoint::Tcp(socket) => println!("Connection manager now listening on TCP socket {}", socket)
     };
   };
-  let mut my_flat_world : FlatWorld = FlatWorld::new(cm_eps);
 
   let mut default_bootstrap = !args.flag_bootstrap;
   if args.flag_bootstrap {
-    match args.arg_peer.clone() {
-      Some(peer) => {
+    match args.arg_peers.clone() {
+      Some(peers_string) => {
         // String.as_str() is unstable; waiting RFC revision
         // http://doc.rust-lang.org/nightly/std/string/struct.String.html#method.as_str
-        let bootstrap_address = match SocketAddr::from_str(peer.as_str()) {
-          Ok(addr) => addr,
-          Err(_) => panic!("Failed to parse bootstrap peer as valid IPv4 or IPv6 address: {}", peer)
-        };
-        match cm.bootstrap(Some(vec![Endpoint::Tcp(bootstrap_address)])) {
-          Ok(endpoint) =>  my_flat_world.add_node(CrustNode::new(endpoint, true)),
-          Err(e) => { println!("Failed to bootstrap from provided peer: {}, with error : {}", peer, e);
-                      panic!("Not resulting to default discovery of bootstrap nodes. Exiting"); }
+        let v: Vec<&str> = peers_string.as_str().trim().split(',').collect();
+        let mut endpoints = Vec::new();
+        for iter in v.iter() {
+          let bootstrap_address = match SocketAddr::from_str(iter) {
+            Ok(addr) => addr,
+            Err(_) => {
+              println!("Failed to parse bootstrap peer as valid IPv4 or IPv6 address: {}", iter);
+              continue
+            }
+          };
+          endpoints.push(Endpoint::Tcp(bootstrap_address));
+        }
+        match cm.bootstrap(Some(endpoints.clone())) {
+          Ok(endpoint) =>  println!("bootstrapped to {} ",
+                                    match endpoint { Endpoint::Tcp(socket_addr) => socket_addr }),
+          Err(e) => { println!("Failed to bootstrap from provided peers with error : {}", e);
+                      panic!("Not resorting to default discovery of bootstrap nodes. Exiting"); }
                       // default_bootstrap = true; }
         };
+        for endpoint in endpoints.iter() {
+          std::thread::sleep_ms(5000);
+                println!("connecting to {} ",
+                         match endpoint.clone() { Endpoint::Tcp(socket_addr) => socket_addr });
+          let _ = cm.connect(vec![endpoint.clone()]);
+        }
       },
       None => { println!("No peer address provided, resort to default");
                 default_bootstrap = true; }
@@ -228,48 +268,29 @@ fn main() {
   // resort to default bootstrapping methods
   if default_bootstrap && !args.flag_origin {
     match cm.bootstrap(None) {
-      Ok(endpoint) => my_flat_world.add_node(CrustNode::new(endpoint, true)),
+      Ok(endpoint) =>  println!("bootstrapped to {} ",
+                                match endpoint { Endpoint::Tcp(socket_addr) => socket_addr }),
       Err(e) => { println!("Failed to bootstrap from default methods: {}", e);
                   panic!("Improve by keeping beacon alive. For now exiting"); }
     };
   };
 
-  spawn(move || {
-    loop {
-        let event = cm_rx.recv();
-        if event.is_err() {
-          println!("stop listening");
-          break;
-        }
-        match event.unwrap() {
-            crust::Event::NewMessage(endpoint, bytes) => {
-                // println!("received from {} with a new message : {}",
-                //          match endpoint { Endpoint::Tcp(socket_addr) => socket_addr },
-                //          match String::from_utf8(bytes) { Ok(msg) => msg,
-                //                                           Err(_) => "unknown msg".to_string() });
-                my_flat_world.record_received(bytes.len() as u32);
-            },
-            crust::Event::NewConnection(endpoint) => {
-                // println!("adding new node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
-                my_flat_world.add_node(CrustNode::new(endpoint, true));
-                my_flat_world.print_connected_nodes();
-            },
-            crust::Event::LostConnection(endpoint) => {
-                println!("dropping node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
-                my_flat_world.drop_node(CrustNode::new(endpoint, false));
-            }
-        }
-    }
-  });
-
   // processing interaction till receiving termination command
   if args.flag_speed {
-      match args.arg_peer {
-        Some(peer) => {
-          let peer_address = match SocketAddr::from_str(peer.as_str()) {
-            Ok(addr) => addr,
-            Err(_) => panic!("Failed to parse peer as valid IPv4 or IPv6 address: {}", peer)
-          };
+      match args.arg_peers {
+        Some(peers_string) => {
+          let v: Vec<&str> = peers_string.as_str().split(',').collect();
+          let mut endpoints = Vec::new();
+          for iter in v.iter() {
+            let bootstrap_address = match SocketAddr::from_str(iter) {
+              Ok(addr) => addr,
+              Err(_) => {
+                println!("Failed to parse bootstrap peer as valid IPv4 or IPv6 address: {}", iter);
+                continue
+              }
+            };
+            endpoints.push(bootstrap_address);
+          }
           let speed : u16 = match args.arg_speed { Some(speed) => speed, _ => 100 };
           spawn(move || {
                   loop {
@@ -277,8 +298,10 @@ fn main() {
                     let times : usize = cmp::max(1, speed as usize / length as usize);
                     let sleep_time = cmp::max(1, 1000 / times);
                     for _ in 0..times {
-                      println!("sending a message with length of {} to {}", length, peer_address);
-                      let _ = cm.send(Endpoint::Tcp(peer_address), generate_random_vec_u8(length as usize));
+                      let mut rng = rand::thread_rng();
+                      let picked_peer = rng.gen_range(0, endpoints.len());
+                      println!("sending a message with length of {} to {}", length, endpoints[picked_peer]);
+                      let _ = cm.send(Endpoint::Tcp(endpoints[picked_peer]), generate_random_vec_u8(length as usize));
                       std::thread::sleep_ms(sleep_time as u32);
                     }
                   }
