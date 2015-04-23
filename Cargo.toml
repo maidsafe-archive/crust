@@ -1,7 +1,7 @@
 [package]
 name = "crust"
 version = "0.0.4"
-authors = ["MaidSafe Dev team <dev@maidsafe.net>"]
+authors = ["MaidSafe Developers <dev@maidsafe.net>"]
 description = "This is Pre alpha, and not useful, no code worth looking at."
 documentation = "http://dirvine.github.io/crust/crust"
 repository = "https://github.com/dirvine/crust"
@@ -14,6 +14,9 @@ homepage = "http://www.maidsafe.net"
 [dependencies]
 rustc-serialize = "*"
 cbor = "*"
+time = "*"
+sodiumoxide = "*"
+rand = "*"
 
 [[example]]
 name = "beacon_client"
