@@ -24,7 +24,7 @@ use std::thread::spawn;
 use std::io::Result;
 use transport::{Port};
 
-fn serialise_address(our_listening_address: SocketAddr) -> [u8; 27] {
+pub fn serialise_address(our_listening_address: SocketAddr) -> [u8; 27] {
     let mut our_details = [0u8; 27];
     match our_listening_address {
         SocketAddr::V4(ref v4_address) => {
@@ -57,7 +57,7 @@ fn serialise_address(our_listening_address: SocketAddr) -> [u8; 27] {
     our_details
 }
 
-fn parse_address(buffer: &[u8]) -> Option<SocketAddr> {
+pub fn parse_address(buffer: &[u8]) -> Option<SocketAddr> {
     match buffer[0] {
         0 => {
             let port: u16 = ((buffer[5] as u16) * 256) + (buffer[6] as u16);

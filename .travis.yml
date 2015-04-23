@@ -10,6 +10,9 @@ before_install:
     - sudo apt-get update -qq
     - sudo apt-get install -qq libcurl4-openssl-dev libelf-dev libdw-dev binutils-dev
 install:
+- wget https://github.com/jedisct1/libsodium/releases/download/1.0.0/libsodium-1.0.0.tar.gz
+- tar xvfz libsodium-1.0.0.tar.gz
+- cd libsodium-1.0.0 && ./configure --prefix=/usr && make && sudo make install && cd ..
 - wget https://github.com/SimonKagstrom/kcov/archive/master.tar.gz
 - tar xzf master.tar.gz
 - mkdir kcov-master/build
