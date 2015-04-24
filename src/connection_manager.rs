@@ -514,7 +514,7 @@ mod test {
         let (stats_tx, stats_rx): (Sender<Event>, Receiver<Event>) = channel();
         let mut runners = Vec::new();
         let mut beacon_port: u16 = 0;
-        for index in 0..NETWORK_SIZE {
+        for _ in 0..NETWORK_SIZE {
             let (receiver, end_point, port) = network.add(beacon_port);
             beacon_port = match port {
                 Some(port_no) => port_no,
