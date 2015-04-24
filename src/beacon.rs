@@ -291,22 +291,15 @@ mod test {
 #[test]
     fn test_broadcast_second_version() {
         let t1 = thread::spawn(|| {
-            println!("aaa 1");
             let acceptor = BroadcastAcceptor::bind(5493).unwrap();
-            println!("aaa 2");
             let mut transport = acceptor.accept().unwrap();
-            println!("aaa 3");
-            transport.sender.send(&"hello world".to_string().into_bytes()).unwrap();
+            transport.sender.send(&"hello beacon".to_string().into_bytes()).unwrap();
         });
 
         let t2 = thread::spawn(|| {
-            thread::sleep_ms(500);
-            println!("bbb 1");
             let mut transport = connect_using_broadcast(5493).unwrap();
-            println!("bbb 2");
             let msg = String::from_utf8(transport.receiver.receive().unwrap()).unwrap();
-            println!("bbb {:?}", msg);
-            assert!(msg == "hello world".to_string());
+            assert!(msg == "hello beacon".to_string());
         });
 
         assert!(t1.join().is_ok());
