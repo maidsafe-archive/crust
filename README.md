@@ -63,5 +63,9 @@ Several methods are used for NAT traversal, UpNP, hole punching [See here for TC
   - [ ] Add connection established/lost messages to be passed to routing (via channel)
   - [ ] Benchmark tx/rv number of packets
   - [ ] Benchmark tx/rc Bytes per second
-  - [ ] NAT traversal  [See here for tcp NAT traversal] (http://www.cmlab.csie.ntu.edu.tw/~franklai/NATBT.pdf) [and here for ucp/dht NAT traversal
+  - [ ] NAT traversal  [See here for tcp NAT traversal] (http://www.cmlab.csie.ntu.edu.tw/~franklai/NATBT.pdf) 
+- [ ] Implement `get_endoints() -> Vec<EndPointPair>` where `EndpointPair` is struct with `Option<ExternalEndpoint>` and has a Proto identifier field 
+  - [ ] Implement UpNp 
+  - [ ] Implement NAT hole punch (udp) for reliable udp
 - [ ] Version 0.1 (crates.io)
+- [ ] Tcp hole punching as per paper 
