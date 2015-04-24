@@ -43,7 +43,7 @@ pub struct ConnectionManager {
 
 /// Enum representing different events that will be sent over the asynchronous channel to the user
 /// of this module.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Event {
     NewMessage(Endpoint, Bytes),
     NewConnection(Endpoint),
@@ -315,7 +315,6 @@ mod test {
     use cbor::{Encoder, Decoder};
     use transport::{Port, Endpoint};
     use std::sync::{Mutex, Arc};
-    use std::collections::HashMap;
 
     fn encode<T>(value: &T) -> Bytes where T: Encodable
     {
@@ -420,8 +419,7 @@ mod test {
             spawn(move || {
                 let count: u32 = 0;
                 for i in o.iter() {
-                    let copy = i;
-                    tx.send(copy);
+                    let _ = tx.send(i.clone());
                     match i {
                         Event::NewConnection(other_ep) => {
                             println!("Connected to --> {:?}", other_ep);
@@ -442,8 +440,43 @@ mod test {
             })
         };
 
+        let stats_accumulator = |stats: Arc<Mutex<Stats>>, stats_rx: Receiver<Event>|
+            spawn(move || {
+                for event in stats_rx.iter() {
+                    let mut stat = stats.lock().unwrap();
+                    match event {
+                            Event::NewConnection(other_ep) => {
+                            println!("Stats Connected to --> {:?}", other_ep);
+                            stat.new_connections_count += 1;
+                        },
+                        Event::NewMessage(from_ep, data) => {
+                            let data_str = decode::<String>(data);
+                            println!("Stats New message from {:?} data:{:?}", from_ep, data_str);
+                            if data_str == "EXIT" {
+                                break;
+                            }
+                            stat.messages_count += 1;
+                            if stat.messages_count == NETWORK_SIZE * MESSAGE_PER_NODE * (NETWORK_SIZE - 1) {
+                                break;
+                            }
+                        },
+                        Event::LostConnection(other_ep) => {
+                            println!("Stats Lost connection to {:?}", other_ep);
+                            stat.lost_connection_count += 1;
+                        }
+                    }
+                }
+            });
+
+        let run_terminate = |ep: Endpoint, tx: Sender<Event>|
+            spawn(move || {
+                thread::sleep_ms(10000);
+                let _ = tx.send(Event::NewMessage(ep, encode(&"EXIT".to_string())));
+                });
+
+
         let mut network = Network { nodes: Vec::new() };
-        let mut stats = HashMap::new();
+        let stats = Arc::new(Mutex::new(Stats {new_connections_count: 0, messages_count: 0, lost_connection_count: 0}));
         let (stats_tx, stats_rx): (Sender<Event>, Receiver<Event>) = channel();
         let mut runners = Vec::new();
         for _ in 0..NETWORK_SIZE {
@@ -452,9 +485,11 @@ mod test {
                  lost_connection_count: 0} ));
             let stat_copy = stat.clone();
             let runner = run_cm(stats_tx.clone(), receiver);
-            stats.insert(end_point, stat);
             runners.push(runner);
         }
+
+        let run_stats = stats_accumulator(stats.clone(), stats_rx);
+
 
         let mut listening_end_points = Vec::new();
             for node in network.nodes.iter() {
@@ -485,23 +520,18 @@ mod test {
             }
         }
 
-        thread::sleep_ms(10000);
+        let terminate_runner = run_terminate(listening_end_points[0].clone(), stats_tx.clone());
+
+        let _ = run_stats.join();
 
         for _ in 0..NETWORK_SIZE {
             network.nodes.remove(0);
         }
 
-        thread::sleep_ms(100 * NETWORK_SIZE + 10 * MESSAGE_PER_NODE);
-
-        for runner in runners {
-            assert!(runner.join().is_ok());
-        }
-
-        // for stat in stats {
-        //     let stat = stat.clone();
-        //     assert_eq!(stat.new_connections_count, NETWORK_SIZE - 1);
-        //     assert_eq!(stat.messages_count,  MESSAGE_PER_NODE * (NETWORK_SIZE - 1));
-        //     assert_eq!(stat.lost_connection_count, 0);
-        // }
+        let stats_copy = stats.clone();
+        let stat = stats_copy.lock().unwrap();
+        assert_eq!(stat.new_connections_count, NETWORK_SIZE * (NETWORK_SIZE - 1));
+        assert_eq!(stat.messages_count,  NETWORK_SIZE * MESSAGE_PER_NODE * (NETWORK_SIZE - 1));
+        assert_eq!(stat.lost_connection_count, 0);
     }
 }
