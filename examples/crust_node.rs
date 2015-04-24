@@ -229,12 +229,12 @@ fn main() {
     let parsed_port: Option<u16> = args.arg_port.unwrap().trim().parse().ok();
     listening_port = match parsed_port { Some(port) => port, _ => 5483 };
   }
-  let cm_eps = match cm.start_listening(vec![Port::Tcp(listening_port)], None) {
+  let cm_eps = match cm.start_listening(vec![Port::Tcp(listening_port)], Some(5583)) {
     Ok(eps) => eps,
     Err(e) => panic!("Connection manager failed to start on arbitrary TCP port: {}", e)
   };
-  assert!(cm_eps.len() > 0);
-  for ep in &cm_eps {
+  assert!(cm_eps.0.len() > 0);
+  for ep in &cm_eps.0 {
     match *ep {
       Endpoint::Tcp(socket) => println!("Connection manager now listening on TCP socket {}", socket)
     };
@@ -258,7 +258,7 @@ fn main() {
           };
           endpoints.push(Endpoint::Tcp(bootstrap_address));
         }
-        match cm.bootstrap(Some(endpoints.clone()), None) {
+        match cm.bootstrap(Some(endpoints.clone()), Some(5583)) {
           Ok(endpoint) =>  println!("bootstrapped to {} ",
                                     match endpoint { Endpoint::Tcp(socket_addr) => socket_addr }),
           Err(e) => { println!("Failed to bootstrap from provided peers with error : {}", e);
@@ -279,7 +279,7 @@ fn main() {
 
   // resort to default bootstrapping methods
   if default_bootstrap && !args.flag_origin {
-    match cm.bootstrap(None, None) {
+    match cm.bootstrap(None, Some(5583)) {
       Ok(endpoint) =>  println!("bootstrapped to {} ",
                                 match endpoint { Endpoint::Tcp(socket_addr) => socket_addr }),
       Err(e) => { println!("Failed to bootstrap from default methods: {}", e);
