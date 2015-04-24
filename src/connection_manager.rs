@@ -349,7 +349,8 @@ mod test {
 
      struct Node {
          conn_mgr: ConnectionManager,
-         listenig_end_point: Endpoint
+         listenig_end_point: Endpoint,
+         connected_eps: Arc<Mutex<Vec<Endpoint>>>
      }
 
      #[derive(Debug)]
@@ -362,7 +363,7 @@ mod test {
      impl Node {
          pub fn new(cm: ConnectionManager, port: u16) -> (Node, Option<u16>) {
              let (end_points, beacon_port) =  cm.start_listening(vec![Port::Tcp(0)], Some(port)).unwrap();
-             (Node { conn_mgr: cm, listenig_end_point: end_points[0].clone() }, beacon_port)
+             (Node { conn_mgr: cm, listenig_end_point: end_points[0].clone(), connected_eps: Arc::new(Mutex::new(Vec::new())) }, beacon_port)
          }
      }
 
@@ -372,17 +373,26 @@ mod test {
          node.listenig_end_point.clone()
      }
 
+     fn get_connected_eps(node: &Arc<Mutex<Node>>) -> Vec<Endpoint> {
+         let node = node.clone();
+         let mut node = node.lock().unwrap();
+         let eps = node.connected_eps.clone();
+         let mut connected_eps = eps.lock().unwrap();
+         connected_eps.clone()
+     }
+
      struct Network {
          nodes: Vec<Arc<Mutex<Node>>>
      }
 
      impl Network {
-         pub fn add(&mut self, beacon_port: u16) -> (Receiver<Event>, Endpoint, Option<u16>) {
+         pub fn add(&mut self, beacon_port: u16) -> (Receiver<Event>, Endpoint, Option<u16>, Arc<Mutex<Vec<Endpoint>>>) {
              let (cm_i, cm_o) = channel();
              let (node, port) = Node::new(ConnectionManager::new(cm_i), beacon_port);
              let end_point = node.listenig_end_point.clone();
+             let connected_eps = node.connected_eps.clone();
              self.nodes.push(Arc::new(Mutex::new(node)));
-             (cm_o, end_point, port)
+             (cm_o, end_point, port, connected_eps)
          }
      }
 
@@ -449,7 +459,7 @@ mod test {
 
 #[test]
     fn network() {
-        let run_cm = |tx: Sender<Event>, o: Receiver<Event>| {
+        let run_cm = |tx: Sender<Event>, o: Receiver<Event>, conn_eps: Arc<Mutex<Vec<Endpoint>>>| {
             spawn(move || {
                 let count: u32 = 0;
                 for i in o.iter() {
@@ -457,6 +467,8 @@ mod test {
                     match i {
                         Event::NewConnection(other_ep) => {
                             println!("Connected to --> {:?}", other_ep);
+                            let mut connected_eps = conn_eps.lock().unwrap();
+                            connected_eps.push(other_ep);
                         },
                         Event::NewMessage(from_ep, data) => {
                             println!("New message from {:?} data:{:?}",
@@ -504,7 +516,7 @@ mod test {
 
         let run_terminate = |ep: Endpoint, tx: Sender<Event>|
             spawn(move || {
-                thread::sleep_ms(10000);
+                thread::sleep_ms(5000);
                 let _ = tx.send(Event::NewMessage(ep, encode(&"EXIT".to_string())));
                 });
 
@@ -514,8 +526,8 @@ mod test {
         let (stats_tx, stats_rx): (Sender<Event>, Receiver<Event>) = channel();
         let mut runners = Vec::new();
         let mut beacon_port: u16 = 0;
-        for _ in 0..NETWORK_SIZE {
-            let (receiver, end_point, port) = network.add(beacon_port);
+        for index in 0..NETWORK_SIZE {
+            let (receiver, end_point, port, connected_eps) = network.add(beacon_port);
             beacon_port = match port {
                 Some(port_no) => port_no,
                 None => beacon_port
@@ -523,12 +535,11 @@ mod test {
             let stat = Arc::new(Mutex::new(Stats {new_connections_count: 0, messages_count: 0,
                  lost_connection_count: 0} ));
             let stat_copy = stat.clone();
-            let runner = run_cm(stats_tx.clone(), receiver);
+            let runner = run_cm(stats_tx.clone(), receiver, connected_eps);
             runners.push(runner);
         }
 
         let run_stats = stats_accumulator(stats.clone(), stats_rx);
-
 
         let mut listening_end_points = Vec::new();
             for node in network.nodes.iter() {
@@ -547,7 +558,8 @@ mod test {
         }
 
         for node in network.nodes.iter() {
-            for end_point in listening_end_points.iter().filter(|&ep| get_endpoint(node).ne(ep)) {
+            let connected_eps = get_connected_eps(node);
+            for end_point in connected_eps.iter() {
                 for _ in 0..MESSAGE_PER_NODE {
                     let node = node.clone();
                     let ep = end_point.clone();
