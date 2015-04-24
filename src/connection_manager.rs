@@ -44,7 +44,7 @@ pub struct ConnectionManager {
 
 /// Enum representing different events that will be sent over the asynchronous channel to the user
 /// of this module.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Event {
     NewMessage(Endpoint, Bytes),
     NewConnection(Endpoint),
@@ -326,10 +326,11 @@ mod test {
     use super::*;
     use std::thread::spawn;
     use std::thread;
-    use std::sync::mpsc::{Receiver, channel};
+    use std::sync::mpsc::{Receiver, Sender, channel};
     use rustc_serialize::{Decodable, Encodable};
     use cbor::{Encoder, Decoder};
-    use transport::{Port};
+    use transport::{Port, Endpoint};
+    use std::sync::{Mutex, Arc};
 
     fn encode<T>(value: &T) -> Bytes where T: Encodable
     {
@@ -342,6 +343,48 @@ mod test {
         let mut dec = Decoder::from_bytes(&bytes[..]);
         dec.decode().next().unwrap().unwrap()
     }
+
+    const  NETWORK_SIZE: u32 = 5;
+    const  MESSAGE_PER_NODE: u32 = 5;
+
+     struct Node {
+         conn_mgr: ConnectionManager,
+         listenig_end_point: Endpoint
+     }
+
+     #[derive(Debug)]
+     struct Stats {
+         new_connections_count: u32,
+         messages_count: u32,
+         lost_connection_count: u32
+     }
+
+     impl Node {
+         pub fn new(cm: ConnectionManager, port: u16) -> (Node, Option<u16>) {
+             let (end_points, beacon_port) =  cm.start_listening(vec![Port::Tcp(0)], Some(port)).unwrap();
+             (Node { conn_mgr: cm, listenig_end_point: end_points[0].clone() }, beacon_port)
+         }
+     }
+
+     fn get_endpoint(node: &Arc<Mutex<Node>>) -> Endpoint {
+         let node = node.clone();
+         let node = node.lock().unwrap();
+         node.listenig_end_point.clone()
+     }
+
+     struct Network {
+         nodes: Vec<Arc<Mutex<Node>>>
+     }
+
+     impl Network {
+         pub fn add(&mut self, beacon_port: u16) -> (Receiver<Event>, Endpoint, Option<u16>) {
+             let (cm_i, cm_o) = channel();
+             let (node, port) = Node::new(ConnectionManager::new(cm_i), beacon_port);
+             let end_point = node.listenig_end_point.clone();
+             self.nodes.push(Arc::new(Mutex::new(node)));
+             (cm_o, end_point, port)
+         }
+     }
 
 #[test]
     fn bootstrap() {
@@ -402,5 +445,132 @@ mod test {
 
         assert!(runner1.join().is_ok());
         assert!(runner2.join().is_ok());
+    }
+
+#[test]
+    fn network() {
+        let run_cm = |tx: Sender<Event>, o: Receiver<Event>| {
+            spawn(move || {
+                let count: u32 = 0;
+                for i in o.iter() {
+                    let _ = tx.send(i.clone());
+                    match i {
+                        Event::NewConnection(other_ep) => {
+                            println!("Connected to --> {:?}", other_ep);
+                        },
+                        Event::NewMessage(from_ep, data) => {
+                            println!("New message from {:?} data:{:?}",
+                                     from_ep, decode::<String>(data));
+                            if count == MESSAGE_PER_NODE * (NETWORK_SIZE - 1) {
+                                break;
+                            }
+                        },
+                        Event::LostConnection(other_ep) => {
+                            println!("Lost connection to {:?}", other_ep);
+                        }
+                    }
+                }
+                println!("done");
+            })
+        };
+
+        let stats_accumulator = |stats: Arc<Mutex<Stats>>, stats_rx: Receiver<Event>|
+            spawn(move || {
+                for event in stats_rx.iter() {
+                    let mut stat = stats.lock().unwrap();
+                    match event {
+                            Event::NewConnection(other_ep) => {
+                            println!("Stats Connected to --> {:?}", other_ep);
+                            stat.new_connections_count += 1;
+                        },
+                        Event::NewMessage(from_ep, data) => {
+                            let data_str = decode::<String>(data);
+                            println!("Stats New message from {:?} data:{:?}", from_ep, data_str);
+                            if data_str == "EXIT" {
+                                break;
+                            }
+                            stat.messages_count += 1;
+                            if stat.messages_count == NETWORK_SIZE * MESSAGE_PER_NODE * (NETWORK_SIZE - 1) {
+                                break;
+                            }
+                        },
+                        Event::LostConnection(other_ep) => {
+                            println!("Stats Lost connection to {:?}", other_ep);
+                            stat.lost_connection_count += 1;
+                        }
+                    }
+                }
+            });
+
+        let run_terminate = |ep: Endpoint, tx: Sender<Event>|
+            spawn(move || {
+                thread::sleep_ms(10000);
+                let _ = tx.send(Event::NewMessage(ep, encode(&"EXIT".to_string())));
+                });
+
+
+        let mut network = Network { nodes: Vec::new() };
+        let stats = Arc::new(Mutex::new(Stats {new_connections_count: 0, messages_count: 0, lost_connection_count: 0}));
+        let (stats_tx, stats_rx): (Sender<Event>, Receiver<Event>) = channel();
+        let mut runners = Vec::new();
+        let mut beacon_port: u16 = 0;
+        for index in 0..NETWORK_SIZE {
+            let (receiver, end_point, port) = network.add(beacon_port);
+            beacon_port = match port {
+                Some(port_no) => port_no,
+                None => beacon_port
+            };
+            let stat = Arc::new(Mutex::new(Stats {new_connections_count: 0, messages_count: 0,
+                 lost_connection_count: 0} ));
+            let stat_copy = stat.clone();
+            let runner = run_cm(stats_tx.clone(), receiver);
+            runners.push(runner);
+        }
+
+        let run_stats = stats_accumulator(stats.clone(), stats_rx);
+
+
+        let mut listening_end_points = Vec::new();
+            for node in network.nodes.iter() {
+            listening_end_points.push(get_endpoint(node));
+        }
+
+        for node in network.nodes.iter() {
+            for end_point in listening_end_points.iter().filter(|&ep| get_endpoint(node).ne(ep)) {
+                let node = node.clone();
+                let ep = end_point.clone();
+                spawn(move || {
+                    let node = node.lock().unwrap();
+                    node.conn_mgr.connect(vec![ep]);
+                });
+            }
+        }
+
+        for node in network.nodes.iter() {
+            for end_point in listening_end_points.iter().filter(|&ep| get_endpoint(node).ne(ep)) {
+                for _ in 0..MESSAGE_PER_NODE {
+                    let node = node.clone();
+                    let ep = end_point.clone();
+                    spawn(move || {
+                        let node = node.lock().unwrap();
+                        let _ = node.conn_mgr.send(ep.clone(), encode(&"MESSAGE".to_string()));
+                    });
+                }
+            }
+        }
+
+        let terminate_runner = run_terminate(listening_end_points[0].clone(), stats_tx.clone());
+
+        let _ = run_stats.join();
+
+        for _ in 0..NETWORK_SIZE {
+            network.nodes.remove(0);
+        }
+
+        let stats_copy = stats.clone();
+        let stat = stats_copy.lock().unwrap();
+        assert_eq!(stat.new_connections_count, NETWORK_SIZE * (NETWORK_SIZE - 1));
+        assert_eq!(stat.messages_count,  NETWORK_SIZE * MESSAGE_PER_NODE * (NETWORK_SIZE - 1));
+        assert_eq!(stat.lost_connection_count, 0);
     }
 }
