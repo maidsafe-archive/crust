@@ -114,40 +114,13 @@ fn handle_receive(socket: &UdpSocket) -> Option<SocketAddr> {
     }
 }
 
-/// Listen for beacon broadcasts on port 5483 and reply with our_listening_address.
-pub fn listen_for_broadcast(our_listening_address: SocketAddr, port: Option<Port>) -> Result<()> {
-    unimplemented!()
-    //let bootstrap_port: u16 = match port {
-    //    Some(port) =>  { match port { Port::Tcp(num) => num }},
-    //    None => 5483
-    //};
-
-    //println!("port is {:?}", bootstrap_port);
-
-    //let socket = try!(UdpSocket::bind(("0.0.0.0", bootstrap_port.clone())));
-    //let our_serialised_details = serialise_address(our_listening_address);
-
-    //spawn(move || {
-    //    loop {
-    //        let mut buffer = [0; 4];
-    //        match socket.recv_from(&mut buffer) {
-    //            Ok((received_length, source)) => {
-    //                let _ = socket.send_to(&our_serialised_details, source);
-    //            }
-    //            Err(error) => println!("Failed receiving a message: {}", error)
-    //        }
-    //    }});
-
-    //Ok(())
-}
-
 struct BroadcastAcceptor {
     socket: UdpSocket,
 }
 
 impl BroadcastAcceptor {
     pub fn bind(port: u16) -> Result<BroadcastAcceptor> {
-        let socket   = try!(UdpSocket::bind(("0.0.0.0", port)));
+        let socket = try!(UdpSocket::bind(("0.0.0.0", port)));
         Ok(BroadcastAcceptor{ socket: socket })
     }
 
@@ -193,29 +166,43 @@ impl BroadcastAcceptor {
     }
 }
 
-fn connect_using_broadcast(port: u16) -> mpsc::Receiver<transport::Transport> {
+fn seek_peers_2(port: u16) -> Result<Vec<transport::Endpoint>> {
     use transport::{Endpoint, Transport};
 
-    let (tx, rx) = mpsc::channel::<Transport>();
+    // Send broadcast ping
+    let socket = try!(UdpSocket::bind("0.0.0.0:0"));
+    try!(socket.set_broadcast(true));
+    try!(socket.send_to(&MAGIC, ("255.255.255.255", port)));
 
+    let (tx,rx) = mpsc::channel::<Endpoint>();
+
+    // FIXME: This thread will never finish, eating one udp port
+    // and few resources till the end of the program. I haven't
+    // found a way to fix this in rust yet.
     let runner = move || -> Result<()> {
-        let socket = try!(UdpSocket::bind("0.0.0.0:0"));
-        try!(socket.set_broadcast(true));
-        try!(socket.send_to(&MAGIC, ("255.255.255.255", port)));
-
         let mut buffer = [0u8; 2];
         let (size, source) = try!(socket.recv_from(&mut buffer));
-        assert!(size == 2);
-
-        let his_port  = parse_port(buffer);
-        let transport = try!(transport::connect(Endpoint::Tcp(SocketAddr::new(source.ip(), his_port))));
-        tx.send(transport);
+        let his_port = parse_port(buffer);
+        let his_ep   = SocketAddr::new(source.ip(), his_port);
+        tx.send(Endpoint::Tcp(his_ep));
         Ok(())
     };
 
     thread::spawn(move || { let _ = runner(); });
 
-    rx
+    // Allow peers to respond.
+    thread::sleep_ms(500);
+
+    let mut result = Vec::<Endpoint>::new();
+
+    loop {
+        match rx.try_recv() {
+            Ok(endpoint) => result.push(endpoint),
+            Err(_) => break,
+        }
+    }
+
+    Ok(result)
 }
 
 /// Seek for peers, send out beacon to local network on port 5483.
@@ -271,6 +258,32 @@ pub fn seek_peers(port: Option<Port>) -> Vec<SocketAddr> {
     peers
 }
 
+/// Listen for beacon broadcasts on port 5483 and reply with our_listening_address.
+pub fn listen_for_broadcast(our_listening_address: SocketAddr, port: Option<Port>) -> Result<()> {
+    let bootstrap_port: u16 = match port {
+        Some(port) =>  { match port { Port::Tcp(num) => num }},
+        None => 5483
+    };
+
+    println!("port is {:?}", bootstrap_port);
+
+    let socket = try!(UdpSocket::bind(("0.0.0.0", bootstrap_port.clone())));
+    let our_serialised_details = serialise_address(our_listening_address);
+
+    spawn(move || {
+        loop {
+            let mut buffer = [0; 4];
+            match socket.recv_from(&mut buffer) {
+                Ok((received_length, source)) => {
+                    let _ = socket.send_to(&our_serialised_details, source);
+                }
+                Err(error) => println!("Failed receiving a message: {}", error)
+            }
+        }});
+
+    Ok(())
+}
+
 #[test]
 fn test_broadcast_second_version() {
     let acceptor = BroadcastAcceptor::bind(0).unwrap();
@@ -282,7 +295,8 @@ fn test_broadcast_second_version() {
     });
 
     let t2 = thread::spawn(move || {
-        let mut transport = connect_using_broadcast(acceptor_port).recv().unwrap();
+        let endpoint = seek_peers_2(acceptor_port).unwrap()[0];
+        let mut transport = transport::connect(endpoint).unwrap();
         let msg = String::from_utf8(transport.receiver.receive().unwrap()).unwrap();
         assert!(msg == "hello beacon".to_string());
     });
