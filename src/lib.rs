@@ -24,7 +24,7 @@
        html_favicon_url = "http://maidsafe.net/img/favicon.ico",
        html_root_url = "http:///dirvine.github.io/crust/crust/")]
 
-#![feature(ip_addr, alloc, udp)]
+#![feature(ip_addr, alloc, udp, scoped)]
 
 extern crate rustc_serialize;
 extern crate cbor;

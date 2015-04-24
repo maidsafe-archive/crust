@@ -108,7 +108,7 @@ impl ConnectionManager {
     /// bootstrap handler which will attempt to reconnect to any previous "direct connected" nodes.
     /// In both cases, this method blocks until it gets one successful connection or all the
     /// endpoints are tried and have failed.
-    pub fn bootstrap(&self, bootstrap_list: Option<Vec<Endpoint>>, beacon_port: Option<u16>) -> IoResult<Endpoint> {
+    pub fn bootstrap(&self, bootstrap_list: Option<Vec<Endpoint>>, beacon_port: Option<Port>) -> IoResult<Endpoint> {
         match bootstrap_list {
             Some(list) => self.bootstrap_off_list(list),
             None       => self.bootstrap_off_list(self.get_stored_bootstrap_endpoints(beacon_port)),
@@ -178,7 +178,7 @@ impl ConnectionManager {
         });
     }
 
-    pub fn get_stored_bootstrap_endpoints(&self, beacon_port: Option<u16>) -> Vec<Endpoint> {
+    pub fn get_stored_bootstrap_endpoints(&self, beacon_port: Option<Port>) -> Vec<Endpoint> {
         beacon::seek_peers(beacon_port).iter().map(|&socket_address| Endpoint::Tcp(socket_address)).collect::<Vec<_>>()
     }
 

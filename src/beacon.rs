@@ -240,29 +240,29 @@ pub fn listen_for_broadcast(port: Option<Port>) -> Result<()> {
     Ok(())
 }
 
-#[test]
-fn test_broadcast_second_version() {
-    let acceptor = BroadcastAcceptor::bind(0).unwrap();
-    let acceptor_port = acceptor.local_addr().unwrap().port();
-
-    let t1 = thread::spawn(move || {
-        let mut transport = acceptor.accept().unwrap();
-        transport.sender.send(&"hello beacon".to_string().into_bytes()).unwrap();
-    });
-
-    // Allow peers time to respond
-    thread::sleep_ms(500);
-
-    let mut peers: Vec<SocketAddr> = Vec::new();
-    let mut result = rx.try_recv();
-    while let Ok(res) = result {
-        peers.push(res);
-        result = rx.try_recv();
-    }
-
-    peers
-}
-
+// #[test]
+// fn test_broadcast_second_version() {
+//     let acceptor = BroadcastAcceptor::bind(0).unwrap();
+//     let acceptor_port = acceptor.local_addr().unwrap().port();
+//
+//     let t1 = thread::spawn(move || {
+//         let mut transport = acceptor.accept().unwrap();
+//         transport.sender.send(&"hello beacon".to_string().into_bytes()).unwrap();
+//     });
+//
+//     // Allow peers time to respond
+//     thread::sleep_ms(500);
+//
+//     let mut peers: Vec<SocketAddr> = Vec::new();
+//     let mut result = rx.try_recv();
+//     while let Ok(res) = result {
+//         peers.push(res);
+//         result = rx.try_recv();
+//     }
+//
+//     peers
+// }
+//
 #[cfg(test)]
 mod test {
     use super::*;
