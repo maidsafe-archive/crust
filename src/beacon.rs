@@ -17,7 +17,6 @@
 // use of the SAFE Network Software.
 
 use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6, UdpSocket};
-use std::sync::mpsc::{Sender, Receiver};
 use std::sync::mpsc;
 use std::thread;
 use std::thread::spawn;
@@ -156,8 +155,8 @@ impl BroadcastAcceptor {
     pub fn accept(&self) -> Result<transport::Transport> {
         use transport::{Transport};
 
-        let (port_sender, port_receiver):           (Sender<u16>, Receiver<u16>) = mpsc::channel();
-        let (transport_sender, transport_receiver): (Sender<Transport>, Receiver<Transport>) = mpsc::channel();
+        let (port_sender, port_receiver) = mpsc::channel::<u16>();
+        let (transport_sender, transport_receiver) = mpsc::channel::<Transport>();
 
         let run_acceptor = move || -> Result<()> {
             let acceptor = try!(transport::new_acceptor(&Port::Tcp(0)));
@@ -194,20 +193,29 @@ impl BroadcastAcceptor {
     }
 }
 
-fn connect_using_broadcast(port: u16) -> Result<transport::Transport> {
-    use transport::Endpoint;
+fn connect_using_broadcast(port: u16) -> mpsc::Receiver<transport::Transport> {
+    use transport::{Endpoint, Transport};
 
-    let socket = try!(UdpSocket::bind("0.0.0.0:0"));
-    try!(socket.set_broadcast(true));
-    try!(socket.send_to(&MAGIC, ("255.255.255.255", port)));
+    let (tx, rx) = mpsc::channel::<Transport>();
 
-    let mut buffer = [0u8; 2];
-    let (size, source) = try!(socket.recv_from(&mut buffer));
-    assert!(size == 2);
+    let runner = move || -> Result<()> {
+        let socket = try!(UdpSocket::bind("0.0.0.0:0"));
+        try!(socket.set_broadcast(true));
+        try!(socket.send_to(&MAGIC, ("255.255.255.255", port)));
 
-    let his_port  = parse_port(buffer);
-    let transport = try!(transport::connect(Endpoint::Tcp(SocketAddr::new(source.ip(), his_port))));
-    Ok(transport)
+        let mut buffer = [0u8; 2];
+        let (size, source) = try!(socket.recv_from(&mut buffer));
+        assert!(size == 2);
+
+        let his_port  = parse_port(buffer);
+        let transport = try!(transport::connect(Endpoint::Tcp(SocketAddr::new(source.ip(), his_port))));
+        tx.send(transport);
+        Ok(())
+    };
+
+    thread::spawn(move || { let _ = runner(); });
+
+    rx
 }
 
 /// Seek for peers, send out beacon to local network on port 5483.
@@ -236,7 +244,8 @@ pub fn seek_peers(port: Option<Port>) -> Vec<SocketAddr> {
     }
     println!("Broadcasted on {:?}", socket.local_addr().unwrap());
 
-    let (tx, rx): (Sender<SocketAddr>, Receiver<SocketAddr>) = mpsc::channel();
+    let (tx, rx) = mpsc::channel::<SocketAddr>();
+
     thread::spawn(move || {
         loop {
             match handle_receive(&socket) {
@@ -273,7 +282,7 @@ fn test_broadcast_second_version() {
     });
 
     let t2 = thread::spawn(move || {
-        let mut transport = connect_using_broadcast(acceptor_port).unwrap();
+        let mut transport = connect_using_broadcast(acceptor_port).recv().unwrap();
         let msg = String::from_utf8(transport.receiver.receive().unwrap()).unwrap();
         assert!(msg == "hello beacon".to_string());
     });
