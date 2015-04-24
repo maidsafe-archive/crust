@@ -43,16 +43,16 @@ Several methods are used for NAT traversal, UpNP, hole punching [See here for TC
 - [ ] Version 0.0.8
 - [x] Update handle connect for TCP
 - [x] Remove FailedToConnect event
-- [ ] Integrate bootstrap (Link ability to read and write bootstrap file)
+- [x] Integrate bootstrap (Link ability to read and write bootstrap file)
 - [x] Integrate beacon (Have connection manger start, broadcast on udp broadcast for port 5483 (later multicast for ipv6)
-- [ ] Send serialised bootstrap info as part of beacon reply (Link ability to send bootstrap file to any node requesting it)
+- [x] Send serialised bootstrap info as part of beacon reply (Link ability to send bootstrap file to any node requesting it)
 - [ ] Examples:
   - [x] Beacon Client
   - [x] Beacon Server
   - [ ] CLI Example - options:
-    - [ ] Join / Start a client(optionally provide bootstrap info)
-    - [ ] Allow sending messages at various rates per second
-    - [ ] Print Incomming message rate per second
+   - [x] Join / Start a client(optionally provide bootstrap info)
+   - [x] Allow sending messages at various rates per second
+   - [x] Print Incomming message rate per second
   - [ ] Local Network Test. 12 Linux, 2 OSX, 2 WIN
   - [ ] 101 Droplet test
 - [ ] Version 0.0.9
