@@ -22,7 +22,6 @@ use std::sync::mpsc;
 use std::thread;
 use std::thread::spawn;
 use std::io::Result;
-use std::io;
 use transport;
 use transport::{Port};
 
@@ -116,31 +115,32 @@ fn handle_receive(socket: &UdpSocket) -> Option<SocketAddr> {
 
 /// Listen for beacon broadcasts on port 5483 and reply with our_listening_address.
 pub fn listen_for_broadcast(our_listening_address: SocketAddr, port: Option<Port>) -> Result<()> {
-    let bootstrap_port: u16 = match port {
-        Some(port) =>  { match port { Port::Tcp(num) => num }},
-        None => 5483
-    };
+    unimplemented!()
+    //let bootstrap_port: u16 = match port {
+    //    Some(port) =>  { match port { Port::Tcp(num) => num }},
+    //    None => 5483
+    //};
 
-    println!("port is {:?}", bootstrap_port);
+    //println!("port is {:?}", bootstrap_port);
 
-    let socket = try!(UdpSocket::bind(("0.0.0.0", bootstrap_port.clone())));
-    let our_serialised_details = serialise_address(our_listening_address);
+    //let socket = try!(UdpSocket::bind(("0.0.0.0", bootstrap_port.clone())));
+    //let our_serialised_details = serialise_address(our_listening_address);
 
-    spawn(move || {
-        loop {
-            let mut buffer = [0; 4];
-            match socket.recv_from(&mut buffer) {
-                Ok((received_length, source)) => {
-                    let _ = socket.send_to(&our_serialised_details, source);
-                }
-                Err(error) => println!("Failed receiving a message: {}", error)
-            }
-        }});
+    //spawn(move || {
+    //    loop {
+    //        let mut buffer = [0; 4];
+    //        match socket.recv_from(&mut buffer) {
+    //            Ok((received_length, source)) => {
+    //                let _ = socket.send_to(&our_serialised_details, source);
+    //            }
+    //            Err(error) => println!("Failed receiving a message: {}", error)
+    //        }
+    //    }});
 
-    Ok(())
+    //Ok(())
 }
 
-pub struct BroadcastAcceptor {
+struct BroadcastAcceptor {
     socket: UdpSocket,
 }
 
@@ -170,37 +170,35 @@ impl BroadcastAcceptor {
 
         let run_listener = move || -> Result<()> {
             let mut buffer = [0u8; 0];
-            println!("accept receiving ping {:?}", self.socket.local_addr());
             let (_, source) = try!(self.socket.recv_from(&mut buffer));
-            println!("accept received ping");
             let reply_socket = try!(UdpSocket::bind("0.0.0.0:0"));
             try!(reply_socket.send_to(&serialise_port(tcp_port), source));
             Ok(())
         };
         let t2 = thread::scoped(move || { let _ = run_listener(); });
 
-        t1.join();
-        t2.join();
+        let _ = t1.join();
+        let _ = t2.join();
 
-        println!("accept threads joined");
         Ok(transport_receiver.recv().unwrap())
+    }
+
+    fn local_addr(&self) -> Result<SocketAddr> {
+        self.socket.local_addr()
     }
 }
 
-pub fn connect_using_broadcast(port: u16) -> Result<transport::Transport> {
-    use transport::{new_acceptor, accept, Port, Transport, Endpoint};
+fn connect_using_broadcast(port: u16) -> Result<transport::Transport> {
+    use transport::Endpoint;
 
-    println!("connect_using_broadcast 0 sending ping");
     let socket = try!(UdpSocket::bind("0.0.0.0:0"));
     try!(socket.set_broadcast(true));
     try!(socket.send_to(&[1,2,3,4], ("255.255.255.255", port)));
 
-    println!("connect_using_broadcast 1 ping sent");
     let mut buffer = [0u8; 2];
     let (size, source) = try!(socket.recv_from(&mut buffer));
     assert!(size == 2);
 
-    println!("connect_using_broadcast 2");
     let his_port  = parse_port(buffer);
     let transport = try!(transport::connect(Endpoint::Tcp(SocketAddr::new(source.ip(), his_port))));
     Ok(transport)
@@ -258,51 +256,22 @@ pub fn seek_peers(port: Option<Port>) -> Vec<SocketAddr> {
     peers
 }
 
-#[cfg(test)]
-mod test {
-    use super::*;
-    use std::net::{UdpSocket/*, lookup_addr, lookup_host*/};
-    use std::thread;
-    use transport::{Port};
-
 #[test]
-    fn test_broadcast() {
-        let port = Port::Tcp(5493);
-        // Start a normal socket and start listening for a broadcast
-        let port2 = port.clone();
-        thread::spawn(move || {
-            let normal_socket = match UdpSocket::bind("::0:0") {
-                Ok(s) => s,
-                Err(e) => panic!("Couldn't bind socket: {}", e),
-            };
-            println!("Normal socket on {:?}\n", normal_socket.local_addr().unwrap());
-            let _ = listen_for_broadcast(normal_socket.local_addr().unwrap(), Some(port2));
-        });
+fn test_broadcast_second_version() {
+    let acceptor = BroadcastAcceptor::bind(0).unwrap();
+    let acceptor_port = acceptor.local_addr().unwrap().port();
 
-        // Allow listener time to start
-        thread::sleep_ms(300);
+    let t1 = thread::spawn(move || {
+        let mut transport = acceptor.accept().unwrap();
+        transport.sender.send(&"hello beacon".to_string().into_bytes()).unwrap();
+    });
 
-        for i in 0..3 {
-            let peers = seek_peers(Some(port.clone()));
-            assert!(peers.len() > 0);
-        }
-    }
+    let t2 = thread::spawn(move || {
+        let mut transport = connect_using_broadcast(acceptor_port).unwrap();
+        let msg = String::from_utf8(transport.receiver.receive().unwrap()).unwrap();
+        assert!(msg == "hello beacon".to_string());
+    });
 
-#[test]
-    fn test_broadcast_second_version() {
-        let t1 = thread::spawn(|| {
-            let acceptor = BroadcastAcceptor::bind(5493).unwrap();
-            let mut transport = acceptor.accept().unwrap();
-            transport.sender.send(&"hello beacon".to_string().into_bytes()).unwrap();
-        });
-
-        let t2 = thread::spawn(|| {
-            let mut transport = connect_using_broadcast(5493).unwrap();
-            let msg = String::from_utf8(transport.receiver.receive().unwrap()).unwrap();
-            assert!(msg == "hello beacon".to_string());
-        });
-
-        assert!(t1.join().is_ok());
-        assert!(t2.join().is_ok());
-    }
+    assert!(t1.join().is_ok());
+    assert!(t2.join().is_ok());
 }
