@@ -23,6 +23,7 @@ use std::thread::spawn;
 use std::io::Result;
 use transport;
 use transport::{Port};
+use bootstrap::{BootStrapHandler};
 
 const MAGIC: [u8; 4] = ['m' as u8, 'a' as u8, 'i' as u8, 'd' as u8];
 
@@ -205,7 +206,7 @@ pub fn seek_peers(port: Option<Port>) -> Vec<SocketAddr> {
 // NOTE For Fraser: This one is deprecated too, its funcitonality is now replaced by the
 // BroadcastAcceptor
 /// Listen for beacon broadcasts on port 5483 and reply with our_listening_address.
-pub fn listen_for_broadcast(our_listening_address: SocketAddr, port: Option<Port>) -> Result<()> {
+pub fn listen_for_broadcast(port: Option<Port>) -> Result<()> {
     let bootstrap_port: u16 = match port {
         Some(port) =>  { match port { Port::Tcp(num) => num }},
         None => 5483
@@ -213,8 +214,7 @@ pub fn listen_for_broadcast(our_listening_address: SocketAddr, port: Option<Port
 
     println!("port is {:?}", bootstrap_port);
 
-    let socket = try!(UdpSocket::bind(("0.0.0.0", bootstrap_port.clone())));
-    let our_serialised_details = serialise_address(our_listening_address);
+    let socket = try!( UdpSocket::bind(("0.0.0.0", bootstrap_port.clone())));
 
     let used_port:u16 = match socket.local_addr() {
                    Ok(sock_addr) => { sock_addr.port() },
@@ -226,7 +226,12 @@ pub fn listen_for_broadcast(our_listening_address: SocketAddr, port: Option<Port
             let mut buffer = [0; 4];
             match socket.recv_from(&mut buffer) {
                 Ok((received_length, source)) => {
-                    let _ = socket.send_to(&our_serialised_details, source);
+                    let bootstrap_contacts = || {
+                        let handler = BootStrapHandler::new();
+                        let contacts = handler.get_serialised_bootstrap_contacts();
+                        contacts
+                    };
+                    let _ = socket.send_to(&bootstrap_contacts(), source);
                 }
                 Err(error) => println!("Failed receiving a message: {}", error)
             }
@@ -245,13 +250,58 @@ fn test_broadcast_second_version() {
         transport.sender.send(&"hello beacon".to_string().into_bytes()).unwrap();
     });
 
-    let t2 = thread::spawn(move || {
-        let endpoint = seek_peers_2(acceptor_port).unwrap()[0];
-        let mut transport = transport::connect(transport::Endpoint::Tcp(endpoint)).unwrap();
-        let msg = String::from_utf8(transport.receiver.receive().unwrap()).unwrap();
-        assert!(msg == "hello beacon".to_string());
-    });
+    // Allow peers time to respond
+    thread::sleep_ms(500);
 
-    assert!(t1.join().is_ok());
-    assert!(t2.join().is_ok());
+    let mut peers: Vec<SocketAddr> = Vec::new();
+    let mut result = rx.try_recv();
+    while let Ok(res) = result {
+        peers.push(res);
+        result = rx.try_recv();
+    }
+
+    peers
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use std::net::{UdpSocket/*, lookup_addr, lookup_host*/};
+    use std::thread;
+    use transport::{Port, Endpoint};
+    use bootstrap::{BootStrapHandler, BootStrapContacts, Contact, PublicKey};
+    use sodiumoxide::crypto::asymmetricbox;
+
+    #[test]
+    fn test_broadcast() {
+        let port = Port::Tcp(5493);
+        // Start a normal socket and start listening for a broadcast
+        let port2 = port.clone();
+        thread::spawn(move || {
+            let normal_socket = match UdpSocket::bind("::0:0") {
+                Ok(s) => s,
+                Err(e) => panic!("Couldn't bind socket: {}", e),
+            };
+            println!("Normal socket on {:?}\n", normal_socket.local_addr().unwrap());
+
+            let endpoint = Endpoint::Tcp(normal_socket.local_addr().unwrap());
+            let public_key = PublicKey::Asym(asymmetricbox::PublicKey([0u8; asymmetricbox::PUBLICKEYBYTES]));
+
+            let mut contacts = BootStrapContacts::new();
+            contacts.push(Contact::new(endpoint, public_key));
+
+            let mut bootstrap_handler = BootStrapHandler::new();
+            bootstrap_handler.add_bootstrap_contacts(contacts);
+
+            let _ = listen_for_broadcast(Some(port2));
+        });
+
+        // Allow listener time to start
+        thread::sleep_ms(300);
+
+        for i in 0..3 {
+            let peers = seek_peers(Some(port.clone()));
+            assert!(peers.len() > 0);
+        }
+    }
 }

@@ -29,7 +29,7 @@ use std::env;
 use std::cmp;
 use std::fmt;
 
-type BootStrapContacts = Vec<Contact>;
+pub type BootStrapContacts = Vec<Contact>;
 
 static MAX_LIST_SIZE: usize = 1500;
 
@@ -142,22 +142,31 @@ pub struct BootStrapHandler {
 
 impl BootStrapHandler {
     pub fn get_file_name() -> String {
-       let mut app_path = match env::current_exe() {
-                                Ok(exe_path) => exe_path,
-                                Err(e) => panic!("Failed to get current exe path: {}", e),
-                           };
-        let mut app_with_extension = app_path.file_name().unwrap();
-        let mut app_name = path::Path::new(app_with_extension).file_stem().unwrap();
+       let path =
+            match env::current_exe() {
+                Ok(exe_path) => exe_path,
+                Err(e) => panic!("Failed to get current exe path: {}", e),
+            };
+        let name_with_extension =
+            match path.file_name() {
+                Some(exe_with_extension) => exe_with_extension,
+                None => panic!("Unknown filename: {}"),
+            };
+        let name =
+            match path::Path::new(name_with_extension).file_stem() {
+                Some(exe_name) => exe_name,
+                None => panic!("Unknown extension: {}"),
+            };
 
         let mut filename = String::new();
         filename.push_str("./");
-        filename.push_str(app_name.to_str().unwrap());
+        filename.push_str(name.to_str().unwrap());
         filename.push_str(".bootstrap.cache");
         filename
     }
 
     pub fn new() -> BootStrapHandler {
-        let mut bootstrap = BootStrapHandler {
+        let bootstrap = BootStrapHandler {
             file_name: BootStrapHandler::get_file_name(),
             last_updated: time::now(),
         };
@@ -185,13 +194,36 @@ impl BootStrapHandler {
             Ok(mut file) =>  {
                 let mut content = Vec::<u8>::new();
 
-                file.read_to_end(&mut content);
+                let size = file.read_to_end(&mut content);
 
-                if (content.len() != 0) {
-                    let mut decoder = cbor::Decoder::from_bytes(&content[..]);
-                    contacts = decoder.decode().next().unwrap().unwrap();
+                match size {
+                    Ok(s) => {
+                        if s != 0 {
+                            let mut decoder = cbor::Decoder::from_bytes(&content[..]);
+                            contacts = decoder.decode().next().unwrap().unwrap();
+                        }
+                    },
+                    _ => panic!("Failed to read file")
                 }
                 contacts
+            },
+            _ => panic!("Could not open file"),
+        }
+    }
+
+    pub fn get_serialised_bootstrap_contacts(&self) -> Vec<u8> {
+        match File::open(&self.file_name) {
+            Ok(mut file) =>  {
+                let mut content = Vec::<u8>::new();
+                let size = file.read_to_end(&mut content);
+
+                match size {
+                    Ok(_) => {
+                        content
+                    },
+                    _ => panic!("Failed to read file")
+
+                }
             },
             _ => panic!("Could not open file"),
         }
@@ -217,9 +249,9 @@ impl BootStrapHandler {
                 Ok(mut open_file) => {
                     let mut content = Vec::<u8>::new();
 
-                    open_file.read_to_end(&mut content);
+                    let size = open_file.read_to_end(&mut content);
 
-                    if (content.len() != 0) {
+                    if size.is_ok() && size.unwrap() != 0 {
                         let mut decoder = cbor::Decoder::from_bytes(&content[..]);
                         current_contacts = decoder.decode().next().unwrap().unwrap();
                     }
@@ -227,18 +259,20 @@ impl BootStrapHandler {
                     for i in 0..contacts.len() {
                        current_contacts.push(contacts[i].clone());
                     }
-                    let mut e = cbor::Encoder::from_memory();
-                    e.encode(&[current_contacts]).unwrap();
-                    match File::create(&self.file_name) {
-                        Ok(mut create_file) => {
-                            create_file.write_all(&e.into_bytes());
-                            let result = create_file.sync_all();
-                            assert!(result.is_ok());
-                        },
-                        _ => panic!("Could not create file"),
-                    }
                 },
-                _ => panic!("Could not open file"),
+                _ => current_contacts = contacts,
+            }
+
+            let mut e = cbor::Encoder::from_memory();
+            e.encode(&[current_contacts]).unwrap();
+            match File::create(&self.file_name) {
+                Ok(mut create_file) => {
+                    let result = create_file.write_all(&e.into_bytes());
+                    assert!(result.is_ok());
+                    let result = create_file.sync_all();
+                    assert!(result.is_ok());
+                },
+                _ => panic!("Could not create file"),
             }
         }
     }
