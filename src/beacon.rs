@@ -25,6 +25,8 @@ use std::io::Result;
 use transport;
 use transport::{Port};
 
+const MAGIC: [u8; 4] = ['m' as u8, 'a' as u8, 'i' as u8, 'd' as u8];
+
 pub fn serialise_address(our_listening_address: SocketAddr) -> [u8; 27] {
     let mut our_details = [0u8; 27];
     match our_listening_address {
@@ -169,10 +171,14 @@ impl BroadcastAcceptor {
         let tcp_port = port_receiver.recv().unwrap(); // We don't expect this to fail.
 
         let run_listener = move || -> Result<()> {
-            let mut buffer = [0u8; 0];
-            let (_, source) = try!(self.socket.recv_from(&mut buffer));
-            let reply_socket = try!(UdpSocket::bind("0.0.0.0:0"));
-            try!(reply_socket.send_to(&serialise_port(tcp_port), source));
+            let mut buffer = [0u8; 4];
+            loop {
+                let (_, source) = try!(self.socket.recv_from(&mut buffer));
+                if buffer != MAGIC { continue; }
+                let reply_socket = try!(UdpSocket::bind("0.0.0.0:0"));
+                try!(reply_socket.send_to(&serialise_port(tcp_port), source));
+                break;
+            }
             Ok(())
         };
         let t2 = thread::scoped(move || { let _ = run_listener(); });
@@ -193,7 +199,7 @@ fn connect_using_broadcast(port: u16) -> Result<transport::Transport> {
 
     let socket = try!(UdpSocket::bind("0.0.0.0:0"));
     try!(socket.set_broadcast(true));
-    try!(socket.send_to(&[1,2,3,4], ("255.255.255.255", port)));
+    try!(socket.send_to(&MAGIC, ("255.255.255.255", port)));
 
     let mut buffer = [0u8; 2];
     let (size, source) = try!(socket.recv_from(&mut buffer));
