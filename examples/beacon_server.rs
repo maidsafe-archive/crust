@@ -17,28 +17,22 @@
 // use of the SAFE Network Software.
 
 extern crate crust;
-use std::str::FromStr;
 
-
+use std::net::TcpListener;
 
 fn main() {
-    // incoming: (u64, u64)
-    // outgoing: u64
-    let (i, mut o) = crust::tcp_connections::connect_tcp(std::net::SocketAddr::from_str("127.0.0.1:5483").unwrap()).unwrap();
+  let tcp_listener = match TcpListener::bind("0.0.0.0:0") {
+    Ok(listener) => listener,
+    Err(e) => panic!("Couldn't bind to TCP socket: {}", e)
+  };
 
-    // Send all the numbers from 0 to 10.
-    for x in (0u64..10u64) {
-        o.send(&x).ok();
-    }
+  // blocking call on listen_for_broadcast
+  let _ = match tcp_listener.local_addr() {
+    Ok(local_addr) => crust::beacon::listen_for_broadcast(local_addr, None),
+    Err(e) => panic!("No local address to start listening on: {}", e)
+  };
 
-    // Close our outgoing pipe. This is necessary because otherwise,
-    // the server will keep waiting for the client to send it data and
-    // we will deadlock.
-    o.close();
-
-    // Print everything that we get back.
-    for a in i.iter() {
-        let (x, fx): (u64, u64) = a;
-        println!("{} -> {}", x, fx);
-    }
+  // the code below keeps the server running
+  for _ in tcp_listener.incoming() {
+  }
 }

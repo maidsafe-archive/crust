@@ -1,20 +1,20 @@
 // Copyright 2015 MaidSafe.net limited
 //
-// This MaidSafe Software is licensed to you under (1) the MaidSafe.net Commercial License, version
-// 1.0 or later, or (2) The General Public License (GPL), version 3, depending on which licence you
-// accepted on initial access to the Software (the "Licences").
+// This SAFE Network Software is licensed to you under (1) the MaidSafe.net Commercial License,
+// version 1.0 or later, or (2) The General Public License (GPL), version 3, depending on which
+// licence you accepted on initial access to the Software (the "Licences").
 //
-// By contributing code to the MaidSafe Software, or to this project generally, you agree to be
+// By contributing code to the SAFE Network Software, or to this project generally, you agree to be
 // bound by the terms of the MaidSafe Contributor Agreement, version 1.0, found in the root
-// directory of this project at LICENSE, COPYING and CONTRIBUTOR respectively and also available at
-// http://maidsafe.net/licenses
+// directory of this project at LICENSE, COPYING and CONTRIBUTOR respectively and also
+// available at: http://maidsafe.net/network-platform-licensing
 //
-// Unless required by applicable law or agreed to in writing, the MaidSafe Software distributed
-// under the GPL Licence is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-// KIND, either express or implied.
+// Unless required by applicable law or agreed to in writing, the SAFE Network Software distributed
+// under the GPL Licence is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS
+// OF ANY KIND, either express or implied.
 //
-// See the Licences for the specific language governing permissions and limitations relating to use
-// of the MaidSafe Software.
+// Please review the Licences for the specific language governing permissions and limitations relating to
+// use of the SAFE Network Software.
 
 use std::io::Error as IoError;
 use std::io;
@@ -26,6 +26,7 @@ use std::sync::{Arc, Mutex, Weak};
 use std::sync::mpsc;
 use transport::{Endpoint, Port};
 use transport;
+use beacon;
 
 pub type Bytes = Vec<u8>;
 pub type IoResult<T> = Result<T, IoError>;
@@ -75,9 +76,20 @@ impl ConnectionManager {
     /// to start on these, it defaults to random / OS provided endpoints for each supported
     /// protocol. The actual endpoints used will be returned on which it started listening for each
     /// protocol.
-    pub fn start_listening(&self, hint: Vec<Port>) -> IoResult<Vec<Endpoint>> {
+    /// if beacon port == 0 => a random port is taken and returned by beacon
+    /// if beacon port != 0 => an attempt to get the port is made by beacon and the callee will be informed of the attempt
+    /// if beacon port == None => 5483 is tried
+    /// if beacon succeeds in starting the udp listener, the coresponding port is returned
+    pub fn start_listening(&self, hint: Vec<Port>, beacon_port: Option<u16>) -> IoResult<(Vec<Endpoint>, Option<u16>)> {
         // FIXME: Returning IoResult seems pointless since we always return Ok.
-        Ok(hint.iter().filter_map(|port| self.listen(port).ok()).collect::<Vec<_>>())
+        let end_points = hint.iter().filter_map(|port| self.listen(port).ok()).collect::<Vec<_>>();
+        let port = match end_points[0].clone() {
+            Endpoint::Tcp(socket_addr) => { match beacon::listen_for_broadcast(socket_addr, beacon_port.clone()) {
+                                                    Ok(used_port) => Some(used_port),
+                                                    Err(_) => None
+                                               }}
+        };
+        Ok((end_points, port))
     }
 
     /// This method tries to connect (bootstrap to exisiting network) to the default or provided
@@ -93,10 +105,10 @@ impl ConnectionManager {
     /// bootstrap handler which will attempt to reconnect to any previous "direct connected" nodes.
     /// In both cases, this method blocks until it gets one successful connection or all the
     /// endpoints are tried and have failed.
-    pub fn bootstrap(&self, bootstrap_list: Option<Vec<Endpoint>>) -> IoResult<Endpoint> {
+    pub fn bootstrap(&self, bootstrap_list: Option<Vec<Endpoint>>, beacon_port: Option<u16>) -> IoResult<Endpoint> {
         match bootstrap_list {
             Some(list) => self.bootstrap_off_list(list),
-            None       => self.bootstrap_off_list(self.get_stored_bootstrap_endpoints()),
+            None       => self.bootstrap_off_list(self.get_stored_bootstrap_endpoints(beacon_port)),
         }
     }
 
@@ -162,14 +174,18 @@ impl ConnectionManager {
         });
     }
 
-    pub fn get_stored_bootstrap_endpoints(&self) -> Vec<Endpoint> {
-        unimplemented!()
+    pub fn get_stored_bootstrap_endpoints(&self, beacon_port: Option<u16>) -> Vec<Endpoint> {
+        beacon::seek_peers(beacon_port).iter().map(|&socket_address| Endpoint::Tcp(socket_address)).collect::<Vec<_>>()
     }
 
     fn bootstrap_off_list(&self, bootstrap_list: Vec<Endpoint>) -> IoResult<Endpoint> {
         for endpoint in bootstrap_list {
             match transport::connect(endpoint) {
-                Ok(trans) => return Ok(trans.remote_endpoint.clone()),
+                Ok(trans) => {
+                    let ep = trans.remote_endpoint.clone();
+                    handle_connect(self.state.downgrade(), trans);
+                    return Ok(ep)
+                },
                 Err(_)    => continue,
             }
         }
@@ -290,7 +306,7 @@ fn start_reading_thread(state: WeakState,
     });
 }
 
-// pushing messges out to socket
+// pushing messages out to socket
 fn start_writing_thread(state: WeakState,
                         mut o: transport::Sender,
                         his_ep: Endpoint,
@@ -344,11 +360,9 @@ mod test {
      }
 
      impl Node {
-         pub fn new(cm: ConnectionManager) -> Node {
-             match cm.start_listening(vec![Port::Tcp(0)]) {
-                 Ok(end_points) => Node { conn_mgr: cm, listenig_end_point: end_points[0].clone() },
-                 Err(_) => panic!("not listening")
-             }
+         pub fn new(cm: ConnectionManager, port: u16) -> (Node, Option<u16>) {
+             let (end_points, beacon_port) =  cm.start_listening(vec![Port::Tcp(0)], Some(port)).unwrap();
+             (Node { conn_mgr: cm, listenig_end_point: end_points[0].clone() }, beacon_port)
          }
      }
 
@@ -363,14 +377,34 @@ mod test {
      }
 
      impl Network {
-         pub fn add(&mut self) -> (Receiver<Event>, Endpoint) {
+         pub fn add(&mut self, beacon_port: u16) -> (Receiver<Event>, Endpoint, Option<u16>) {
              let (cm_i, cm_o) = channel();
-             let node = Node::new(ConnectionManager::new(cm_i));
+             let (node, port) = Node::new(ConnectionManager::new(cm_i), beacon_port);
              let end_point = node.listenig_end_point.clone();
              self.nodes.push(Arc::new(Mutex::new(node)));
-             (cm_o, end_point)
+             (cm_o, end_point, port)
          }
      }
+
+#[test]
+    fn bootstrap() {
+        let (cm1_i, _) = channel();
+        let cm1 = ConnectionManager::new(cm1_i);
+        let (cm1_eps, beacon_port) = cm1.start_listening(vec![Port::Tcp(0)], Some(0u16)).unwrap();
+
+        thread::sleep_ms(1000);
+        let (cm2_i, _) = channel();
+        let cm2 = ConnectionManager::new(cm2_i);
+        let (cm2_eps, beacon_port2) = cm2.start_listening(vec![Port::Tcp(0)], beacon_port.clone()).unwrap();
+        match beacon_port2 {
+            Some(_) => assert!(false, "should have been none"),
+            None => assert!(true)
+        };
+        match cm2.bootstrap(None, beacon_port) {
+            Ok(ep) => { assert_eq!(ep.clone(), cm1_eps[0].clone()); },
+            Err(_) => { panic!("Failed to bootstrap"); }
+        }
+    }
 
 #[test]
     fn connection_manager() {
@@ -398,11 +432,11 @@ mod test {
 
         let (cm1_i, cm1_o) = channel();
         let cm1 = ConnectionManager::new(cm1_i);
-        let cm1_eps = cm1.start_listening(vec![Port::Tcp(0)]).unwrap();
+        let (cm1_eps, beacon_port) = cm1.start_listening(vec![Port::Tcp(0)], Some(0u16)).unwrap();
 
         let (cm2_i, cm2_o) = channel();
         let cm2 = ConnectionManager::new(cm2_i);
-        let cm2_eps = cm2.start_listening(vec![Port::Tcp(0)]).unwrap();
+        let (cm2_eps, _) = cm2.start_listening(vec![Port::Tcp(0)], beacon_port).unwrap();
         cm2.connect(cm1_eps.clone());
         cm1.connect(cm2_eps.clone());
 
@@ -479,8 +513,13 @@ mod test {
         let stats = Arc::new(Mutex::new(Stats {new_connections_count: 0, messages_count: 0, lost_connection_count: 0}));
         let (stats_tx, stats_rx): (Sender<Event>, Receiver<Event>) = channel();
         let mut runners = Vec::new();
-        for _ in 0..NETWORK_SIZE {
-            let (receiver, end_point) = network.add();
+        let mut beacon_port: u16 = 0;
+        for index in 0..NETWORK_SIZE {
+            let (receiver, end_point, port) = network.add(beacon_port);
+            beacon_port = match port {
+                Some(port_no) => port_no,
+                None => beacon_port
+            };
             let stat = Arc::new(Mutex::new(Stats {new_connections_count: 0, messages_count: 0,
                  lost_connection_count: 0} ));
             let stat_copy = stat.clone();

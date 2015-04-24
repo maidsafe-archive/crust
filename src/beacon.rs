@@ -1,27 +1,29 @@
 // Copyright 2015 MaidSafe.net limited
 //
-// This MaidSafe Software is licensed to you under (1) the MaidSafe.net Commercial License,
+// This SAFE Network Software is licensed to you under (1) the MaidSafe.net Commercial License,
 // version 1.0 or later, or (2) The General Public License (GPL), version 3, depending on which
 // licence you accepted on initial access to the Software (the "Licences").
 //
-// By contributing code to the MaidSafe Software, or to this project generally, you agree to be
+// By contributing code to the SAFE Network Software, or to this project generally, you agree to be
 // bound by the terms of the MaidSafe Contributor Agreement, version 1.0, found in the root
 // directory of this project at LICENSE, COPYING and CONTRIBUTOR respectively and also
-// available at: http://www.maidsafe.net/licenses
+// available at: http://maidsafe.net/network-platform-licensing
 //
-// Unless required by applicable law or agreed to in writing, the MaidSafe Software distributed
+// Unless required by applicable law or agreed to in writing, the SAFE Network Software distributed
 // under the GPL Licence is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS
 // OF ANY KIND, either express or implied.
 //
 // See the Licences for the specific language governing permissions and limitations relating to
-// use of the MaidSafe Software.
+// use of the SAFE Network Software.
 
 use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6, UdpSocket};
 use std::sync::mpsc::{Sender, Receiver};
 use std::sync::mpsc;
 use std::thread;
+use std::thread::spawn;
+use std::io::Result;
 
-fn serialise_address(our_listening_address: SocketAddr) -> [u8; 27] {
+pub fn serialise_address(our_listening_address: SocketAddr) -> [u8; 27] {
     let mut our_details = [0u8; 27];
     match our_listening_address {
         SocketAddr::V4(ref v4_address) => {
@@ -54,7 +56,7 @@ fn serialise_address(our_listening_address: SocketAddr) -> [u8; 27] {
     our_details
 }
 
-fn parse_address(buffer: &[u8]) -> Option<SocketAddr> {
+pub fn parse_address(buffer: &[u8]) -> Option<SocketAddr> {
     match buffer[0] {
         0 => {
             let port: u16 = ((buffer[5] as u16) * 256) + (buffer[6] as u16);
@@ -101,26 +103,36 @@ fn handle_receive(socket: &UdpSocket) -> Option<SocketAddr> {
     }
 }
 
-pub fn listen_for_broadcast(our_listening_address: SocketAddr) {
-    let socket = match UdpSocket::bind("0.0.0.0:5483") {
-        Ok(bound_socket) => bound_socket,
-        Err(error) => panic!("Couldn't bind socket: {}", error),
+/// Listen for beacon broadcasts on given/random port and replies the port on bind success
+pub fn listen_for_broadcast(our_listening_address: SocketAddr, beacon_port: Option<u16>) -> Result<u16> {
+    let port: u16 = match beacon_port {
+        Some(udp_port) =>  udp_port,
+        None => 5483
     };
 
+    let socket = try!( UdpSocket::bind(("0.0.0.0", port.clone())));
     let our_serialised_details = serialise_address(our_listening_address);
 
-    loop {
-        let mut buffer = [0; 4];
-        match socket.recv_from(&mut buffer) {
-            Ok((received_length, source)) => {
-                let _ = socket.send_to(&our_serialised_details, source);
+    let used_port:u16 = match socket.local_addr() {
+                   Ok(sock_addr) => { sock_addr.port() },
+                   Err(_) => panic!("should have port")
+               };
+
+    spawn(move || {
+        loop {
+            let mut buffer = [0; 4];
+            match socket.recv_from(&mut buffer) {
+                Ok((received_length, source)) => {
+                    let _ = socket.send_to(&our_serialised_details, source);
+                }
+                Err(error) => println!("Failed receiving a message: {}", error)
             }
-            Err(error) => println!("Failed receiving a message: {}", error)
-        }
-    }
+        }});
+        Ok(used_port)
 }
 
-pub fn seek_peers() -> Vec<SocketAddr> {
+/// Seek for peers, send out beacon to local network on port 5483 or given port.
+pub fn seek_peers(port: Option<u16>) -> Vec<SocketAddr> {
     let socket = match UdpSocket::bind("0.0.0.0:0") {
         Ok(s) => s,
         Err(e) => panic!("Couldn't bind socket: {}", e),
@@ -131,8 +143,13 @@ pub fn seek_peers() -> Vec<SocketAddr> {
         Err(e) => panic!("Can't broadcast from this socket: {}", e),
     }
 
+    let beacon_port: u16 = match port {
+        Some(udp_port) => udp_port,
+        None => 5483
+    };
+
     let buffer = [0; 4];
-    match socket.send_to(&buffer, ("255.255.255.255:5483")) {
+    match socket.send_to(&buffer, ("255.255.255.255", beacon_port)) {
         Ok(s) => assert_eq!(4, s),
         Err(e) => panic!("Failed broadcasting on {}: {}", socket.local_addr().unwrap(), e),
     }
@@ -142,7 +159,10 @@ pub fn seek_peers() -> Vec<SocketAddr> {
     thread::spawn(move || {
         loop {
             match handle_receive(&socket) {
-                Some(peer_address) => tx.send(peer_address).unwrap(),
+                Some(peer_address) => match tx.send(peer_address) {
+                  Ok(sent) => {;}
+                  Err(e) => break  // receiver already deallocated
+                },
                 _ => (),
             }
         }
@@ -166,24 +186,31 @@ mod test {
     use super::*;
     use std::net::{UdpSocket/*, lookup_addr, lookup_host*/};
     use std::thread;
+    use std::sync::mpsc::{Sender, Receiver, channel};
 
 #[test]
     fn test_broadcast() {
         // Start a normal socket and start listening for a broadcast
+        let (tx, rx): (Sender<u16>, Receiver<u16>) = channel();
         thread::spawn(move || {
             let normal_socket = match UdpSocket::bind("::0:0") {
                 Ok(s) => s,
                 Err(e) => panic!("Couldn't bind socket: {}", e),
             };
             println!("Normal socket on {:?}\n", normal_socket.local_addr().unwrap());
-            listen_for_broadcast(normal_socket.local_addr().unwrap());
+            match listen_for_broadcast(normal_socket.local_addr().unwrap(), Some(0u16)) {
+                Ok(used_port) => { let _ = tx.send(used_port); },
+                Err(_) => { panic!("Failed to bind") }
+            }
         });
 
         // Allow listener time to start
         thread::sleep_ms(300);
 
+        let beacon_port = rx.recv().ok().expect("could not receive port");
+
         for i in 0..3 {
-            let peers = seek_peers();
+            let peers = seek_peers(Some(beacon_port.clone()));
             assert!(peers.len() > 0);
         }
     }
