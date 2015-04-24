@@ -111,14 +111,38 @@ impl Ord for Endpoint {
     }
 }
 
+//--------------------------------------------------------------------
 pub enum Sender {
     Tcp(tcp_connections::TcpWriter<Bytes>),
 }
 
+impl Sender {
+    pub fn send(&mut self, bytes: &Bytes) -> IoResult<()> {
+        match *self {
+            Sender::Tcp(ref mut s) => s.send(&bytes).map_err(|e| {
+                // FIXME: This can be done better.
+                io::Error::new(io::ErrorKind::NotConnected, "can't send")
+            })
+        }
+    }
+}
+
+//--------------------------------------------------------------------
 pub enum Receiver {
     Tcp(tcp_connections::TcpReader<Bytes>),
 }
 
+impl Receiver {
+    pub fn receive(&mut self) -> IoResult<Bytes> {
+        match *self {
+            Receiver::Tcp(ref r) => r.recv().map_err(|e| {
+                io::Error::new(io::ErrorKind::NotConnected, e.description())
+            })
+        }
+    }
+}
+
+//--------------------------------------------------------------------
 pub enum Acceptor {
     Tcp(mpsc::Receiver<(TcpStream, SocketAddr)>, TcpListener),
 }
@@ -171,6 +195,7 @@ pub fn accept(acceptor: &Acceptor) -> IoResult<Transport> {
     }
 }
 
+// FIXME: This function is deprecated in favor of Sender::receive
 pub fn receive(receiver: &Receiver) -> IoResult<Bytes> {
     match *receiver {
         Receiver::Tcp(ref r) => r.recv().map_err(|e| {
@@ -179,6 +204,7 @@ pub fn receive(receiver: &Receiver) -> IoResult<Bytes> {
     }
 }
 
+// FIXME: This function is deprecated in favor of Sender::send
 pub fn send(sender: &mut Sender, bytes: &Bytes) -> IoResult<()> {
     match *sender {
         Sender::Tcp(ref mut s) => s.send(&bytes).map_err(|e| {

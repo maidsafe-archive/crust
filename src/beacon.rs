@@ -22,6 +22,7 @@ use std::sync::mpsc;
 use std::thread;
 use std::thread::spawn;
 use std::io::Result;
+use std::io;
 use transport;
 use transport::{Port};
 
@@ -91,6 +92,14 @@ pub fn parse_address(buffer: &[u8]) -> Option<SocketAddr> {
     }
 }
 
+fn serialise_port(port: u16) -> [u8;2] {
+    [(port & 0xff) as u8, (port >> 8) as u8]
+}
+
+fn parse_port(data: [u8;2]) -> u16 {
+    (data[0] as u16) + ((data[1] as u16) << 8)
+}
+
 fn handle_receive(socket: &UdpSocket) -> Option<SocketAddr> {
     let mut buffer = [0; 27];
     match socket.recv_from(&mut buffer) {
@@ -131,30 +140,70 @@ pub fn listen_for_broadcast(our_listening_address: SocketAddr, port: Option<Port
     Ok(())
 }
 
-fn listen_for_broadcast_connection(port: u16) -> Result<transport::Transport> {
-    let socket = try!(UdpSocket::bind(("0.0.0.0", port)));
-
-    loop {
-        let mut buffer : [u8; 2] = [0; 2];
-        let (size, source) = try!(socket.recv_from(&mut buffer));
-        if size != 2 {
-            // Some is being silly, ignore him.
-            continue;
-        }
-        let his_port : u16 = buffer[0] as u16 + ((buffer[1] as u16) << 8);
-        let his_tcp_ep = SocketAddr::new(source.ip(), his_port);
-        match transport::connect(transport::Endpoint::Tcp(his_tcp_ep)) {
-            Ok(transport) => return Ok(transport),
-            Err(_) => continue
-        }
-    };
+pub struct BroadcastAcceptor {
+    socket: UdpSocket,
 }
 
-fn connect_using_broadcast() -> Result<transport::Transport> {
-    use transport::{new_acceptor, Port};
+impl BroadcastAcceptor {
+    pub fn bind(port: u16) -> Result<BroadcastAcceptor> {
+        let socket   = try!(UdpSocket::bind(("0.0.0.0", port)));
+        Ok(BroadcastAcceptor{ socket: socket })
+    }
 
-    let acceptor = try!(new_acceptor(Port::Tcp(0)));
-    // Work in progress...
+    // FIXME: Proper error handling and cancelation.
+    pub fn accept(&self) -> Result<transport::Transport> {
+        use transport::{Transport};
+
+        let (port_sender, port_receiver):           (Sender<u16>, Receiver<u16>) = mpsc::channel();
+        let (transport_sender, transport_receiver): (Sender<Transport>, Receiver<Transport>) = mpsc::channel();
+
+        let run_acceptor = move || -> Result<()> {
+            let acceptor = try!(transport::new_acceptor(&Port::Tcp(0)));
+            let _ = port_sender.send(try!(transport::local_endpoint(&acceptor)).get_address().port());
+            let transport = try!(transport::accept(&acceptor));
+            let _ = transport_sender.send(transport);
+            Ok(())
+        };
+        let t1 = thread::spawn(move || { let _ = run_acceptor(); });
+
+        let tcp_port = port_receiver.recv().unwrap(); // We don't expect this to fail.
+
+        let run_listener = move || -> Result<()> {
+            let mut buffer = [0u8; 0];
+            println!("accept receiving ping {:?}", self.socket.local_addr());
+            let (_, source) = try!(self.socket.recv_from(&mut buffer));
+            println!("accept received ping");
+            let reply_socket = try!(UdpSocket::bind("0.0.0.0:0"));
+            try!(reply_socket.send_to(&serialise_port(tcp_port), source));
+            Ok(())
+        };
+        let t2 = thread::scoped(move || { let _ = run_listener(); });
+
+        t1.join();
+        t2.join();
+
+        println!("accept threads joined");
+        Ok(transport_receiver.recv().unwrap())
+    }
+}
+
+pub fn connect_using_broadcast(port: u16) -> Result<transport::Transport> {
+    use transport::{new_acceptor, accept, Port, Transport, Endpoint};
+
+    println!("connect_using_broadcast 0 sending ping");
+    let socket = try!(UdpSocket::bind("0.0.0.0:0"));
+    try!(socket.set_broadcast(true));
+    try!(socket.send_to(&[1,2,3,4], ("255.255.255.255", port)));
+
+    println!("connect_using_broadcast 1 ping sent");
+    let mut buffer = [0u8; 2];
+    let (size, source) = try!(socket.recv_from(&mut buffer));
+    assert!(size == 2);
+
+    println!("connect_using_broadcast 2");
+    let his_port  = parse_port(buffer);
+    let transport = try!(transport::connect(Endpoint::Tcp(SocketAddr::new(source.ip(), his_port))));
+    Ok(transport)
 }
 
 /// Seek for peers, send out beacon to local network on port 5483.
@@ -237,5 +286,30 @@ mod test {
             let peers = seek_peers(Some(port.clone()));
             assert!(peers.len() > 0);
         }
+    }
+
+#[test]
+    fn test_broadcast_second_version() {
+        let t1 = thread::spawn(|| {
+            println!("aaa 1");
+            let acceptor = BroadcastAcceptor::bind(5493).unwrap();
+            println!("aaa 2");
+            let mut transport = acceptor.accept().unwrap();
+            println!("aaa 3");
+            transport.sender.send(&"hello world".to_string().into_bytes()).unwrap();
+        });
+
+        let t2 = thread::spawn(|| {
+            thread::sleep_ms(500);
+            println!("bbb 1");
+            let mut transport = connect_using_broadcast(5493).unwrap();
+            println!("bbb 2");
+            let msg = String::from_utf8(transport.receiver.receive().unwrap()).unwrap();
+            println!("bbb {:?}", msg);
+            assert!(msg == "hello world".to_string());
+        });
+
+        assert!(t1.join().is_ok());
+        assert!(t2.join().is_ok());
     }
 }
