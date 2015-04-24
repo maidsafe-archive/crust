@@ -100,20 +100,6 @@ fn parse_port(data: [u8;2]) -> u16 {
     (data[0] as u16) + ((data[1] as u16) << 8)
 }
 
-fn handle_receive(socket: &UdpSocket) -> Option<SocketAddr> {
-    let mut buffer = [0; 27];
-    match socket.recv_from(&mut buffer) {
-        Ok((received_length, source)) => {
-            assert_eq!(27, received_length);
-            parse_address(&buffer)
-        }
-        Err(e) => {
-            println!("Failed receiving a message: {}", e);
-            None
-        }
-    }
-}
-
 struct BroadcastAcceptor {
     socket: UdpSocket,
 }
@@ -166,15 +152,15 @@ impl BroadcastAcceptor {
     }
 }
 
-fn seek_peers_2(port: u16) -> Result<Vec<transport::Endpoint>> {
-    use transport::{Endpoint, Transport};
-
+// NOTE For Fraser: This is the new function, I implemented the old one
+// (seek_peers below) using this one.
+fn seek_peers_2(port: u16) -> Result<Vec<SocketAddr>> {
     // Send broadcast ping
     let socket = try!(UdpSocket::bind("0.0.0.0:0"));
     try!(socket.set_broadcast(true));
     try!(socket.send_to(&MAGIC, ("255.255.255.255", port)));
 
-    let (tx,rx) = mpsc::channel::<Endpoint>();
+    let (tx,rx) = mpsc::channel::<SocketAddr>();
 
     // FIXME: This thread will never finish, eating one udp port
     // and few resources till the end of the program. I haven't
@@ -184,7 +170,7 @@ fn seek_peers_2(port: u16) -> Result<Vec<transport::Endpoint>> {
         let (size, source) = try!(socket.recv_from(&mut buffer));
         let his_port = parse_port(buffer);
         let his_ep   = SocketAddr::new(source.ip(), his_port);
-        tx.send(Endpoint::Tcp(his_ep));
+        tx.send(his_ep);
         Ok(())
     };
 
@@ -193,11 +179,11 @@ fn seek_peers_2(port: u16) -> Result<Vec<transport::Endpoint>> {
     // Allow peers to respond.
     thread::sleep_ms(500);
 
-    let mut result = Vec::<Endpoint>::new();
+    let mut result = Vec::<SocketAddr>::new();
 
     loop {
         match rx.try_recv() {
-            Ok(endpoint) => result.push(endpoint),
+            Ok(socket_addr) => result.push(socket_addr),
             Err(_) => break,
         }
     }
@@ -205,59 +191,19 @@ fn seek_peers_2(port: u16) -> Result<Vec<transport::Endpoint>> {
     Ok(result)
 }
 
+// NOTE For Fraser: This one is deprecated now (but this signature is used outside of this module).
 /// Seek for peers, send out beacon to local network on port 5483.
 pub fn seek_peers(port: Option<Port>) -> Vec<SocketAddr> {
-    let socket = match UdpSocket::bind("0.0.0.0:0") {
-        Ok(s) => s,
-        Err(e) => panic!("Couldn't bind socket: {}", e),
-    };
-
-    match socket.set_broadcast(true) {
-        Ok(s) => s,
-        Err(e) => panic!("Can't broadcast from this socket: {}", e),
-    }
-
     let bootstrap_port: u16 = match port {
         Some(port) =>  { match port { Port::Tcp(num) => num }},
         None => 5483
     };
 
-    println!("seek_peers port is {:?}", bootstrap_port);
-
-    let buffer = [0; 4];
-    match socket.send_to(&buffer, ("255.255.255.255", bootstrap_port)) {
-        Ok(s) => assert_eq!(4, s),
-        Err(e) => panic!("Failed broadcasting on {}: {}", socket.local_addr().unwrap(), e),
-    }
-    println!("Broadcasted on {:?}", socket.local_addr().unwrap());
-
-    let (tx, rx) = mpsc::channel::<SocketAddr>();
-
-    thread::spawn(move || {
-        loop {
-            match handle_receive(&socket) {
-                Some(peer_address) => match tx.send(peer_address) {
-                  Ok(sent) => {;}
-                  Err(e) => break  // receiver already deallocated
-                },
-                _ => (),
-            }
-        }
-    });
-
-    // Allow peers time to respond
-    thread::sleep_ms(500);
-
-    let mut peers: Vec<SocketAddr> = Vec::new();
-    let mut result = rx.try_recv();
-    while let Ok(res) = result {
-        peers.push(res);
-        result = rx.try_recv();
-    }
-
-    peers
+    seek_peers_2(bootstrap_port).unwrap()
 }
 
+// NOTE For Fraser: This one is deprecated too, its funcitonality is now replaced by the
+// BroadcastAcceptor
 /// Listen for beacon broadcasts on port 5483 and reply with our_listening_address.
 pub fn listen_for_broadcast(our_listening_address: SocketAddr, port: Option<Port>) -> Result<()> {
     let bootstrap_port: u16 = match port {
@@ -296,7 +242,7 @@ fn test_broadcast_second_version() {
 
     let t2 = thread::spawn(move || {
         let endpoint = seek_peers_2(acceptor_port).unwrap()[0];
-        let mut transport = transport::connect(endpoint).unwrap();
+        let mut transport = transport::connect(transport::Endpoint::Tcp(endpoint)).unwrap();
         let msg = String::from_utf8(transport.receiver.receive().unwrap()).unwrap();
         assert!(msg == "hello beacon".to_string());
     });
