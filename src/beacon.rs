@@ -193,6 +193,8 @@ fn seek_peers_2(port: u16) -> Result<Vec<SocketAddr>> {
 }
 
 // NOTE For Fraser: This one is deprecated now (but this signature is used outside of this module).
+// Also note that this new seek_peers function is no longer compatible with the below
+// listen_for_broadcast call.
 /// Seek for peers, send out beacon to local network on port 5483.
 pub fn seek_peers(port: Option<Port>) -> Vec<SocketAddr> {
     let bootstrap_port: u16 = match port {
@@ -240,29 +242,33 @@ pub fn listen_for_broadcast(port: Option<Port>) -> Result<()> {
     Ok(())
 }
 
-// #[test]
-// fn test_broadcast_second_version() {
-//     let acceptor = BroadcastAcceptor::bind(0).unwrap();
-//     let acceptor_port = acceptor.local_addr().unwrap().port();
-//
-//     let t1 = thread::spawn(move || {
-//         let mut transport = acceptor.accept().unwrap();
-//         transport.sender.send(&"hello beacon".to_string().into_bytes()).unwrap();
-//     });
-//
-//     // Allow peers time to respond
-//     thread::sleep_ms(500);
-//
-//     let mut peers: Vec<SocketAddr> = Vec::new();
-//     let mut result = rx.try_recv();
-//     while let Ok(res) = result {
-//         peers.push(res);
-//         result = rx.try_recv();
-//     }
-//
-//     peers
-// }
-//
+// NOTE For Fraser: This is the test for the new API, I think the other one
+// should be removed because:
+// * It tests the old API (which I'm surprised passes givent that seek_peers
+//   and listen_for_broadcast are no longer compatible)
+// * It also tests the bootstrap.rs functionality but that doesn't seem to
+//   be appropriate for this file.
+#[test]
+fn test_broadcast_second_version() {
+    let acceptor = BroadcastAcceptor::bind(0).unwrap();
+    let acceptor_port = acceptor.local_addr().unwrap().port();
+
+    let t1 = thread::spawn(move || {
+        let mut transport = acceptor.accept().unwrap();
+        transport.sender.send(&"hello beacon".to_string().into_bytes()).unwrap();
+    });
+
+    let t2 = thread::spawn(move || {
+        let endpoint = seek_peers_2(acceptor_port).unwrap()[0];
+        let mut transport = transport::connect(transport::Endpoint::Tcp(endpoint)).unwrap();
+        let msg = String::from_utf8(transport.receiver.receive().unwrap()).unwrap();
+        assert!(msg == "hello beacon".to_string());
+    });
+
+    assert!(t1.join().is_ok());
+    assert!(t2.join().is_ok());
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
