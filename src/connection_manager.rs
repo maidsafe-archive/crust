@@ -344,8 +344,8 @@ mod test {
         dec.decode().next().unwrap().unwrap()
     }
 
-    const  NETWORK_SIZE: u32 = 5;
-    const  MESSAGE_PER_NODE: u32 = 5;
+    const  NETWORK_SIZE: u32 = 10;
+    const  MESSAGE_PER_NODE: u32 = 10;
 
      struct Node {
          conn_mgr: ConnectionManager,
@@ -466,19 +466,15 @@ mod test {
                     let _ = tx.send(i.clone());
                     match i {
                         Event::NewConnection(other_ep) => {
-                            println!("Connected to --> {:?}", other_ep);
                             let mut connected_eps = conn_eps.lock().unwrap();
                             connected_eps.push(other_ep);
                         },
                         Event::NewMessage(from_ep, data) => {
-                            println!("New message from {:?} data:{:?}",
-                                     from_ep, decode::<String>(data));
                             if count == MESSAGE_PER_NODE * (NETWORK_SIZE - 1) {
                                 break;
                             }
                         },
                         Event::LostConnection(other_ep) => {
-                            println!("Lost connection to {:?}", other_ep);
                         }
                     }
                 }
@@ -492,12 +488,10 @@ mod test {
                     let mut stat = stats.lock().unwrap();
                     match event {
                             Event::NewConnection(other_ep) => {
-                            println!("Stats Connected to --> {:?}", other_ep);
                             stat.new_connections_count += 1;
                         },
                         Event::NewMessage(from_ep, data) => {
                             let data_str = decode::<String>(data);
-                            println!("Stats New message from {:?} data:{:?}", from_ep, data_str);
                             if data_str == "EXIT" {
                                 break;
                             }
@@ -507,7 +501,6 @@ mod test {
                             }
                         },
                         Event::LostConnection(other_ep) => {
-                            println!("Stats Lost connection to {:?}", other_ep);
                             stat.lost_connection_count += 1;
                         }
                     }
@@ -554,6 +547,7 @@ mod test {
                     let node = node.lock().unwrap();
                     node.conn_mgr.connect(vec![ep]);
                 });
+                thread::sleep_ms(5);
             }
         }
 
