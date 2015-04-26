@@ -547,7 +547,13 @@ mod test {
                     let node = node.lock().unwrap();
                     node.conn_mgr.connect(vec![ep]);
                 });
-                thread::sleep_ms(5);
+            }
+        }
+
+        for node in network.nodes.iter() {
+            let mut eps_size = get_connected_eps(node).len();
+            while eps_size < (NETWORK_SIZE - 1) as usize {
+                eps_size = get_connected_eps(node).len();
             }
         }
 
