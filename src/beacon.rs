@@ -196,27 +196,27 @@ fn seek_peers_2(port: u16) -> Result<Vec<SocketAddr>> {
 // Also note that this new seek_peers function is no longer compatible with the below
 // listen_for_broadcast call.
 /// Seek for peers, send out beacon to local network on port 5483.
-pub fn seek_peers(port: Option<Port>) -> Vec<SocketAddr> {
-    let bootstrap_port: u16 = match port {
-        Some(port) =>  { match port { Port::Tcp(num) => num }},
+pub fn seek_peers(beacon_port: Option<u16>) -> Vec<SocketAddr> {
+    let port: u16 = match beacon_port {
+        Some(udp_port) =>  {assert!(udp_port != 0); udp_port },
         None => 5483
     };
 
-    seek_peers_2(bootstrap_port).unwrap()
+    seek_peers_2(port).unwrap()
 }
 
 // NOTE For Fraser: This one is deprecated too, its funcitonality is now replaced by the
 // BroadcastAcceptor
-/// Listen for beacon broadcasts on port 5483 and reply with our_listening_address.
-pub fn listen_for_broadcast(port: Option<Port>) -> Result<()> {
-    let bootstrap_port: u16 = match port {
-        Some(port) =>  { match port { Port::Tcp(num) => num }},
+/// Listen for beacon broadcasts on port 5483 or given port and reply with our_listening_address.
+pub fn listen_for_broadcast(beacon_port: Option<u16>) -> Result<(u16)> {
+    let port: u16 = match beacon_port {
+        Some(udp_port) => udp_port,
         None => 5483
     };
 
-    println!("port is {:?}", bootstrap_port);
+    println!("port is {:?}", beacon_port);
 
-    let socket = try!( UdpSocket::bind(("0.0.0.0", bootstrap_port.clone())));
+    let socket = try!( UdpSocket::bind(("0.0.0.0", port.clone())));
 
     let used_port:u16 = match socket.local_addr() {
                    Ok(sock_addr) => { sock_addr.port() },
@@ -239,7 +239,7 @@ pub fn listen_for_broadcast(port: Option<Port>) -> Result<()> {
             }
         }});
 
-    Ok(())
+    Ok(used_port)
 }
 
 // NOTE For Fraser: This is the test for the new API, I think the other one
@@ -277,12 +277,12 @@ mod test {
     use transport::{Port, Endpoint};
     use bootstrap::{BootStrapHandler, BootStrapContacts, Contact, PublicKey};
     use sodiumoxide::crypto::asymmetricbox;
+    use std::sync::mpsc::{Sender, Receiver, channel};
 
     #[test]
     fn test_broadcast() {
-        let port = Port::Tcp(5493);
         // Start a normal socket and start listening for a broadcast
-        let port2 = port.clone();
+        let (tx, rx): (Sender<u16>, Receiver<u16>) = channel();
         thread::spawn(move || {
             let normal_socket = match UdpSocket::bind("::0:0") {
                 Ok(s) => s,
@@ -299,14 +299,16 @@ mod test {
             let mut bootstrap_handler = BootStrapHandler::new();
             bootstrap_handler.add_bootstrap_contacts(contacts);
 
-            let _ = listen_for_broadcast(Some(port2));
+            match listen_for_broadcast(Some(0u16)) {
+                Ok(used_port) => { let _ = tx.send(used_port); },
+                Err(_) => { panic!("Failed to bind") }
+            }
         });
 
-        // Allow listener time to start
-        thread::sleep_ms(300);
+        let beacon_port = rx.recv().ok().expect("could not receive port");
 
         for i in 0..3 {
-            let peers = seek_peers(Some(port.clone()));
+            let peers = seek_peers(Some(beacon_port.clone()));
             assert!(peers.len() > 0);
         }
     }
