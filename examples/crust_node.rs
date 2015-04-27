@@ -223,7 +223,7 @@ fn main() {
     }
   });
 
-  let cm = ConnectionManager::new(cm_tx);
+  let mut cm = ConnectionManager::new(cm_tx);
   let mut listening_port : u16 = 5483;
   if args.arg_port.is_some() {
     let parsed_port: Option<u16> = args.arg_port.unwrap().trim().parse().ok();
