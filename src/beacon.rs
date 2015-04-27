@@ -192,56 +192,6 @@ pub fn seek_peers_2(port: u16) -> Result<Vec<SocketAddr>> {
     Ok(result)
 }
 
-// NOTE For Fraser: This one is deprecated now (but this signature is used outside of this module).
-// Also note that this new seek_peers function is no longer compatible with the below
-// listen_for_broadcast call.
-/// Seek for peers, send out beacon to local network on port 5483.
-pub fn seek_peers(port: Option<Port>) -> Vec<SocketAddr> {
-    let bootstrap_port: u16 = match port {
-        Some(port) =>  { match port { Port::Tcp(num) => num }},
-        None => 5483
-    };
-
-    seek_peers_2(bootstrap_port).unwrap()
-}
-
-// NOTE For Fraser: This one is deprecated too, its funcitonality is now replaced by the
-// BroadcastAcceptor
-/// Listen for beacon broadcasts on port 5483 and reply with our_listening_address.
-pub fn listen_for_broadcast(port: Option<Port>) -> Result<()> {
-    let bootstrap_port: u16 = match port {
-        Some(port) =>  { match port { Port::Tcp(num) => num }},
-        None => 5483
-    };
-
-    println!("port is {:?}", bootstrap_port);
-
-    let socket = try!( UdpSocket::bind(("0.0.0.0", bootstrap_port.clone())));
-
-    let used_port:u16 = match socket.local_addr() {
-                   Ok(sock_addr) => { sock_addr.port() },
-                   Err(_) => panic!("should have port")
-               };
-
-    spawn(move || {
-        loop {
-            let mut buffer = [0; 4];
-            match socket.recv_from(&mut buffer) {
-                Ok((received_length, source)) => {
-                    let bootstrap_contacts = || {
-                        let handler = BootStrapHandler::new();
-                        let contacts = handler.get_serialised_bootstrap_contacts();
-                        contacts
-                    };
-                    let _ = socket.send_to(&bootstrap_contacts(), source);
-                }
-                Err(error) => println!("Failed receiving a message: {}", error)
-            }
-        }});
-
-    Ok(())
-}
-
 // NOTE For Fraser: This is the test for the new API, I think the other one
 // should be removed because:
 // * It tests the old API (which I'm surprised passes givent that seek_peers
@@ -267,47 +217,4 @@ fn test_broadcast_second_version() {
 
     assert!(t1.join().is_ok());
     assert!(t2.join().is_ok());
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-    use std::net::{UdpSocket/*, lookup_addr, lookup_host*/};
-    use std::thread;
-    use transport::{Port, Endpoint};
-    use bootstrap::{BootStrapHandler, BootStrapContacts, Contact, PublicKey};
-    use sodiumoxide::crypto::asymmetricbox;
-
-    #[test]
-    fn test_broadcast() {
-        let port = Port::Tcp(5493);
-        // Start a normal socket and start listening for a broadcast
-        let port2 = port.clone();
-        thread::spawn(move || {
-            let normal_socket = match UdpSocket::bind("::0:0") {
-                Ok(s) => s,
-                Err(e) => panic!("Couldn't bind socket: {}", e),
-            };
-            println!("Normal socket on {:?}\n", normal_socket.local_addr().unwrap());
-
-            let endpoint = Endpoint::Tcp(normal_socket.local_addr().unwrap());
-            let public_key = PublicKey::Asym(asymmetricbox::PublicKey([0u8; asymmetricbox::PUBLICKEYBYTES]));
-
-            let mut contacts = BootStrapContacts::new();
-            contacts.push(Contact::new(endpoint, public_key));
-
-            let mut bootstrap_handler = BootStrapHandler::new();
-            bootstrap_handler.add_bootstrap_contacts(contacts);
-
-            let _ = listen_for_broadcast(Some(port2));
-        });
-
-        // Allow listener time to start
-        thread::sleep_ms(300);
-
-        for i in 0..3 {
-            let peers = seek_peers(Some(port.clone()));
-            assert!(peers.len() > 0);
-        }
-    }
 }
