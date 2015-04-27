@@ -348,6 +348,8 @@ mod test {
     use rustc_serialize::{Decodable, Encodable};
     use cbor::{Encoder, Decoder};
     use transport::{Port};
+    use std::net::{SocketAddr};
+    use std::str::FromStr;
 
     fn encode<T>(value: &T) -> Bytes where T: Encodable
     {
@@ -360,6 +362,21 @@ mod test {
         let mut dec = Decoder::from_bytes(&bytes[..]);
         dec.decode().next().unwrap().unwrap()
     }
+
+    // #[test]
+    // fn connection_manager_start() {
+    //     let (cm_tx, cm_rx) = channel();
+    //     let cm = ConnectionManager::<Vec<u8>>::new(vec![1], cm_tx);
+    //     let cm_port = cm.start_accepting().unwrap();
+
+    //     let (cm_aux_tx, cm_aux_rx) = channel();
+    //     let cm_aux = ConnectionManager::new(vec![2], cm_aux_tx);
+    //     let cm_aux_port = cm_aux.start_accepting().unwrap();
+    //     spawn(move ||{
+    //       let addr = SocketAddr::from_str(&format!("127.0.0.1:{}", cm_port)).unwrap();
+    //       assert!(cm_aux.connect(addr, Vec::<u8>::new()).is_ok());
+    //     });
+    // }
 
     // #[test]
     // fn bootstrap() {
