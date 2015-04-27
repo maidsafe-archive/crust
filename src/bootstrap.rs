@@ -100,6 +100,10 @@ impl Contact {
             public_key: public_key
         }
     }
+
+    pub fn end_point(&self) -> Endpoint {
+        self.endpoint.clone()
+    }
 }
 
 impl Encodable for Contact {
