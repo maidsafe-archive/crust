@@ -25,7 +25,7 @@ use transport;
 use transport::{Port};
 use bootstrap::{BootStrapHandler};
 
-const MAGIC: [u8; 4] = ['s' as u8, 'a' as u8, 'f' as u8, 'e' as u8];
+const MAGIC: [u8; 4] = ['m' as u8, 'a' as u8, 'i' as u8, 'd' as u8];
 
 pub fn serialise_address(our_listening_address: SocketAddr) -> [u8; 27] {
     let mut our_details = [0u8; 27];
