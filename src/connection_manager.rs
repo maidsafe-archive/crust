@@ -80,6 +80,10 @@ impl ConnectionManager {
     /// to start on these, it defaults to random / OS provided endpoints for each supported
     /// protocol. The actual endpoints used will be returned on which it started listening for each
     /// protocol.
+    /// if beacon port == 0 => a random port is taken and returned by beacon
+    /// if beacon port != 0 => an attempt to get the port is made by beacon and the callee will be informed of the attempt
+    /// if beacon port == None => 5483 is tried
+    /// if beacon succeeds in starting the udp listener, the coresponding port is returned
     pub fn start_listening(&mut self, hint: Vec<Port>, beacon_port: Option<u16>) -> IoResult<(Vec<Endpoint>, Option<u16>)> {
         // FIXME: Returning IoResult seems pointless since we always return Ok.
         let end_points = hint.iter().filter_map(|port| self.listen(port).ok()).collect::<Vec<_>>();
