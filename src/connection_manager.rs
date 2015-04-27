@@ -236,7 +236,7 @@ fn lock_state<T, F: FnOnce(&State) -> IoResult<T>>(state: &WeakState, f: F) -> I
         let opt_state = arc_state.lock();
         match opt_state {
             Ok(s)  => f(&s),
-            Err(e) => Err(io::Error::new(io::ErrorKind::Interrupted, "?"))
+            Err(_) => Err(io::Error::new(io::ErrorKind::Interrupted, "?"))
         }
     })
 }
@@ -248,7 +248,7 @@ fn lock_mut_state<T, F: FnOnce(&mut State) -> IoResult<T>>(state: &WeakState, f:
         let opt_state = arc_state.lock();
         match opt_state {
             Ok(mut s)  => f(&mut s),
-            Err(e) => Err(io::Error::new(io::ErrorKind::Interrupted, "?"))
+            Err(_) => Err(io::Error::new(io::ErrorKind::Interrupted, "?"))
         }
     })
 }
@@ -271,7 +271,7 @@ fn handle_connect(mut state: WeakState, trans: transport::Transport, is_beacon_s
                 let mut bootstrap_handler = BootStrapHandler::new();
                 bootstrap_handler.add_bootstrap_contacts(contacts);
             }
-            Err(ref e) => ()
+            Err(_) => ()
         }
     }
     endpoint
@@ -344,12 +344,10 @@ mod test {
     use super::*;
     use std::thread::spawn;
     use std::thread;
-    use std::sync::mpsc::{Receiver, channel};
+    use std::sync::mpsc::{channel};
     use rustc_serialize::{Decodable, Encodable};
     use cbor::{Encoder, Decoder};
-    use transport::{Port};
-    use std::net::{SocketAddr};
-    use std::str::FromStr;
+    use transport::{Endpoint, Port};
 
     fn encode<T>(value: &T) -> Bytes where T: Encodable
     {
@@ -362,6 +360,63 @@ mod test {
         let mut dec = Decoder::from_bytes(&bytes[..]);
         dec.decode().next().unwrap().unwrap()
     }
+
+#[test]
+fn connection_manager_start() {
+    let (cm_tx, cm_rx) = channel();
+    let mut cm = ConnectionManager::new(cm_tx);
+    // changing the listening port to a smaller one such as 5483 will makes the test hanging in most of time
+    let cm_addr =  match cm.start_listening(vec![Port::Tcp(54830)], None) {
+      Ok(eps) => {
+            println!("main listening on {} ",
+                     match eps[0].clone() { Endpoint::Tcp(socket_addr) => { socket_addr } });
+            eps[0].clone()
+          },
+      Err(_) => panic!("main connection manager start_listening failure")
+    };
+
+    let thread = spawn(move || {
+       loop {
+            let event = cm_rx.recv();
+            if event.is_err() {
+              println!("stop listening");
+              break;
+            }
+            match event.unwrap() {
+                Event::NewMessage(endpoint, bytes) => {
+                    println!("received from {} with a new message : {}",
+                             match endpoint { Endpoint::Tcp(socket_addr) => socket_addr },
+                             match String::from_utf8(bytes) { Ok(msg) => msg, Err(_) => "unknown msg".to_string() });
+                },
+                Event::NewConnection(endpoint) => {
+                    println!("adding new node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
+                },
+                Event::LostConnection(endpoint) => {
+                    println!("dropping node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
+                    break;
+                }
+            }
+        }
+      });
+    thread::sleep_ms(100);
+
+    let _ = spawn(move || {
+        let (cm_aux_tx, _) = channel();
+        let mut cm_aux = ConnectionManager::new(cm_aux_tx);
+        let _ = match cm_aux.start_listening(vec![Port::Tcp(5483)], None) {
+        Ok(eps) => {
+              println!("aux listening on {} ",
+                       match eps[0].clone() { Endpoint::Tcp(socket_addr) => { socket_addr } });
+              eps[0].clone()
+            },
+        Err(_) => panic!("aux connection manager start_listening failure")
+        };
+        cm_aux.connect(vec![cm_addr.clone()]);
+        thread::sleep_ms(500);
+    }).join();
+
+    let _ = thread.join();
+}
 
     // #[test]
     // fn connection_manager_start() {
