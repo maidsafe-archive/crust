@@ -281,7 +281,7 @@ impl BootStrapHandler {
         }
     }
 
-    fn remove_bootstrap_contacts(&mut self) {
+    pub fn remove_bootstrap_contacts(&mut self) {
  		File::create(&self.file_name);
     }
 

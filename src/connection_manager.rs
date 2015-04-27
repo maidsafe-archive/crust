@@ -99,6 +99,7 @@ impl ConnectionManager {
                     contacts.push(Contact::new(end_point.clone(), public_key.clone()));
                 }
                 let mut bootstrap_handler = BootStrapHandler::new();
+                bootstrap_handler.remove_bootstrap_contacts();
                 bootstrap_handler.add_bootstrap_contacts(contacts);
                 spawn(move || {
                     loop {
@@ -206,17 +207,16 @@ impl ConnectionManager {
     }
 
     pub fn get_stored_bootstrap_endpoints(&self, beacon_port: u16) -> Vec<Endpoint> {
-        println!("get_stored_bootstrap_endpoints port {:?}", beacon_port);
-        let endpoint = beacon::seek_peers_2(beacon_port).unwrap()[0]; // FIXME
-        println!("get_stored_bootstrap_endpoints ep {:?}", endpoint);
-        let mut transport = transport::connect(transport::Endpoint::Tcp(endpoint)).unwrap();
-        let contacts_str = transport.receiver.receive().unwrap();
-        let mut contacts = cbor::Decoder::from_bytes(contacts_str);
         let mut end_points: Vec<Endpoint> = Vec::new();
-        let decoder = contacts.decode().next().unwrap().unwrap();
+        let tcp_endpoint = beacon::seek_peers_2(beacon_port).unwrap()[0]; // FIXME
+        let mut transport = transport::connect(transport::Endpoint::Tcp(tcp_endpoint)).unwrap();
+        let contacts_str = transport.receiver.receive().unwrap();
+        let mut decoder = cbor::Decoder::from_bytes(&contacts_str[..]);
         let mut contacts = BootStrapContacts::new();
         contacts = decoder.decode().next().unwrap().unwrap();
-//        end_points.push(contact.end_point());
+        for contact in contacts {
+            end_points.push(contact.end_point());
+        }
         println!("get_stored_bootstrap_endpoints {:?}", end_points);
         end_points
     }
@@ -416,45 +416,44 @@ mod test {
         }
     }
 
-// #[test]
-//     fn connection_manager() {
-//         let run_cm = |cm: ConnectionManager, o: Receiver<Event>| {
-//             spawn(move || {
-//                 for i in o.iter() {
-//                     match i {
-//                         Event::NewConnection(other_ep) => {
-//                             println!("Connected {:?}", other_ep);
-//                             let _ = cm.send(other_ep.clone(), encode(&"hello world".to_string()));
-//                         },
-//                         Event::NewMessage(from_ep, data) => {
-//                             println!("New message from {:?} data:{:?}",
-//                                      from_ep, decode::<String>(data));
-//                             break;
-//                         },
-//                         Event::LostConnection(other_ep) => {
-//                             println!("Lost connection to {:?}", other_ep);
-//                         }
-//                     }
-//                 }
-//                 println!("done");
-//             })
-//         };
-//
-//         let port = Port::Tcp(5485);
-//         let (cm1_i, cm1_o) = channel();
-//         let cm1 = ConnectionManager::new(cm1_i);
-//         let cm1_eps = cm1.start_listening(vec![Port::Tcp(0)], Some(port.clone())).unwrap();
-//
-//         let (cm2_i, cm2_o) = channel();
-//         let cm2 = ConnectionManager::new(cm2_i);
-//         let cm2_eps = cm2.start_listening(vec![Port::Tcp(0)], Some(port.clone())).unwrap();
-//         cm2.connect(cm1_eps.clone());
-//         cm1.connect(cm2_eps.clone());
-//
-//         let runner1 = run_cm(cm1, cm1_o);
-//         let runner2 = run_cm(cm2, cm2_o);
-//
-//         assert!(runner1.join().is_ok());
-//         assert!(runner2.join().is_ok());
-//     }
+#[test]
+    fn connection_manager() {
+        let run_cm = |cm: ConnectionManager, o: Receiver<Event>| {
+            spawn(move || {
+                for i in o.iter() {
+                    match i {
+                        Event::NewConnection(other_ep) => {
+                            println!("Connected {:?}", other_ep);
+                            let _ = cm.send(other_ep.clone(), encode(&"hello world".to_string()));
+                        },
+                        Event::NewMessage(from_ep, data) => {
+                            println!("New message from {:?} data:{:?}",
+                                     from_ep, decode::<String>(data));
+                            break;
+                        },
+                        Event::LostConnection(other_ep) => {
+                            println!("Lost connection to {:?}", other_ep);
+                        }
+                    }
+                }
+                println!("done");
+            })
+        };
+
+        let (cm1_i, cm1_o) = channel();
+        let mut cm1 = ConnectionManager::new(cm1_i);
+        let (cm1_eps, beacon_port) = cm1.start_listening(vec![Port::Tcp(0)], Some(0u16)).unwrap();
+
+        let (cm2_i, cm2_o) = channel();
+        let mut cm2 = ConnectionManager::new(cm2_i);
+        let (cm2_eps, _) = cm2.start_listening(vec![Port::Tcp(0)], beacon_port.clone()).unwrap();
+        cm2.connect(cm1_eps.clone());
+        cm1.connect(cm2_eps.clone());
+
+        let runner1 = run_cm(cm1, cm1_o);
+        let runner2 = run_cm(cm2, cm2_o);
+
+        assert!(runner1.join().is_ok());
+        assert!(runner2.join().is_ok());
+    }
 }
