@@ -367,18 +367,19 @@ mod test {
 fn connection_manager_start() {
     let (cm_tx, cm_rx) = channel();
     let mut cm = ConnectionManager::new(cm_tx);
-    let mut cm_addr = Endpoint::Tcp(SocketAddr::from_str(&"127.0.0.1:0").unwrap());
+    let mut cm_listen_addr = Endpoint::Tcp(SocketAddr::from_str(&"127.0.0.1:0").unwrap());
+    let mut cm_beacon_addr = Endpoint::Tcp(SocketAddr::from_str(&"127.0.0.1:0").unwrap());
     match cm.start_listening(vec![Port::Tcp(4455)], Some(5483)) {
       Ok(result) => {
             if result.1.is_some() {
                 let beacon_addr = SocketAddr::from_str(&format!("127.0.0.1:{}", result.1.unwrap())).unwrap();
                 println!("main beacon on {} ", beacon_addr);
-                cm_addr = Endpoint::Tcp(beacon_addr);
+                cm_beacon_addr = Endpoint::Tcp(beacon_addr);
             }
             if result.0.len() > 0 {
                 println!("main listening on {} ",
                          match result.0[0].clone() { Endpoint::Tcp(socket_addr) => { socket_addr } });
-                cm_addr = result.0[0].clone();
+                cm_listen_addr = result.0[0].clone();
             } else {
                 panic!("main connection manager start_listening none listening port returned");
             }
@@ -414,7 +415,7 @@ fn connection_manager_start() {
     let _ = spawn(move || {
         let (cm_aux_tx, _) = channel();
         let mut cm_aux = ConnectionManager::new(cm_aux_tx);
-        // setting the listening port to be less than 4455 will make the test hanging
+        // setting the listening port to be greater than 4455 will make the test hanging
         let _ = match cm_aux.start_listening(vec![Port::Tcp(4454)], None) {
             Ok(result) => {
                   println!("aux listening on {} ",
@@ -423,7 +424,8 @@ fn connection_manager_start() {
                 },
             Err(_) => panic!("aux connection manager start_listening failure")
         };
-        cm_aux.connect(vec![cm_addr.clone()]);
+        // changing this to cm_beacon_addr will make the test hanging
+        cm_aux.connect(vec![cm_listen_addr.clone()]);
         thread::sleep_ms(500);
     }).join();
 
