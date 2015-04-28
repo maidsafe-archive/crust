@@ -348,6 +348,8 @@ mod test {
     use rustc_serialize::{Decodable, Encodable};
     use cbor::{Encoder, Decoder};
     use transport::{Endpoint, Port};
+    use std::net::SocketAddr;
+    use std::str::FromStr;
 
     fn encode<T>(value: &T) -> Bytes where T: Encodable
     {
@@ -365,13 +367,23 @@ mod test {
 fn connection_manager_start() {
     let (cm_tx, cm_rx) = channel();
     let mut cm = ConnectionManager::new(cm_tx);
+    let mut cm_addr = Endpoint::Tcp(SocketAddr::from_str(&"127.0.0.1:0").unwrap());
     // changing the listening port to a smaller one such as 5483 will makes the test hanging in most of time
-    let cm_addr =  match cm.start_listening(vec![Port::Tcp(54830)], None) {
-      Ok(eps) => {
-            println!("main listening on {} ",
-                     match eps[0].clone() { Endpoint::Tcp(socket_addr) => { socket_addr } });
-            eps[0].clone()
-          },
+    match cm.start_listening(vec![Port::Tcp(54830)], Some(5483)) {
+      Ok(result) => {
+            if result.1.is_some() {
+                let beacon_addr = SocketAddr::from_str(&format!("127.0.0.1:{}", result.1.unwrap())).unwrap();
+                println!("main beacon on {} ", beacon_addr);
+                cm_addr = Endpoint::Tcp(beacon_addr);
+            }
+            if result.0.len() > 0 {
+                println!("main listening on {} ",
+                         match result.0[0].clone() { Endpoint::Tcp(socket_addr) => { socket_addr } });
+                cm_addr = result.0[0].clone();
+            } else {
+                panic!("main connection manager start_listening none listening port returned");
+            }
+          }
       Err(_) => panic!("main connection manager start_listening failure")
     };
 
@@ -403,13 +415,13 @@ fn connection_manager_start() {
     let _ = spawn(move || {
         let (cm_aux_tx, _) = channel();
         let mut cm_aux = ConnectionManager::new(cm_aux_tx);
-        let _ = match cm_aux.start_listening(vec![Port::Tcp(5483)], None) {
-        Ok(eps) => {
-              println!("aux listening on {} ",
-                       match eps[0].clone() { Endpoint::Tcp(socket_addr) => { socket_addr } });
-              eps[0].clone()
-            },
-        Err(_) => panic!("aux connection manager start_listening failure")
+        let _ = match cm_aux.start_listening(vec![Port::Tcp(4483)], None) {
+            Ok(result) => {
+                  println!("aux listening on {} ",
+                           match result.0[0].clone() { Endpoint::Tcp(socket_addr) => { socket_addr } });
+                  result.0[0].clone()
+                },
+            Err(_) => panic!("aux connection manager start_listening failure")
         };
         cm_aux.connect(vec![cm_addr.clone()]);
         thread::sleep_ms(500);
