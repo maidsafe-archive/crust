@@ -14,7 +14,7 @@ rustc-serialize = "*"
 cbor = "*"
 docopt = "*"
 time = "*"
-sodiumoxide = "*"
+sodiumoxide = "0.0.4"
 rand = "*"
 
 [[example]]
