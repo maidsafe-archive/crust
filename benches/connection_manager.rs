@@ -26,42 +26,81 @@ use crust::*;
 
 use std::thread::spawn;
 use std::sync::mpsc::{channel};
+use std::net::SocketAddr;
+use std::str::FromStr;
 
 #[bench]
 fn connection_manager_start(b: &mut Bencher) {
-  b.iter(|| {
-    println!("-----------------");
-    let (cm_tx, _) = channel();
+  println!("------------------------------------------");
+    let (cm_tx, cm_rx) = channel();
     let mut cm = ConnectionManager::new(cm_tx);
-    let cm_addr =  match cm.start_listening(vec![Port::Tcp(5483)], None) {
-      Ok(eps) => {
-            println!("main listening on {} ",
-                     match eps[0].clone() { Endpoint::Tcp(socket_addr) => { socket_addr } });
-            eps[0].clone()
-          },
+    let mut cm_listen_port : u16 = 5483;
+    let mut cm_addr = Endpoint::Tcp(SocketAddr::from_str(&"127.0.0.1:0").unwrap());
+    match cm.start_listening(vec![Port::Tcp(cm_listen_port)], None) {
+      Ok(result) => {
+            if result.0.len() > 0 {                
+                match result.0[0].clone() {
+                  Endpoint::Tcp(socket_addr) => {
+                    cm_listen_port = socket_addr.port();
+                    println!("main listening on {} ", socket_addr);
+                  }
+                }
+                cm_addr = result.0[0].clone();
+            } else {
+                panic!("main connection manager start_listening none listening port returned");
+            }
+          }
       Err(_) => panic!("main connection manager start_listening failure")
     };
 
-    {
-      let (cm_aux_tx, _) = channel();
-      let mut cm_aux = ConnectionManager::new(cm_aux_tx);
-      let cm_aux_addr = match cm_aux.start_listening(vec![Port::Tcp(5483)], None) {
-        Ok(eps) => {
-              println!("aux listening on {} ",
-                       match eps[0].clone() { Endpoint::Tcp(socket_addr) => { socket_addr } });
-              eps[0].clone()
+  let thread = spawn(move || {
+    loop {
+        let event = cm_rx.recv();
+        // println!("received an event");
+        if event.is_err() {
+          println!("stop listening");
+          break;
+        }
+        match event.unwrap() {
+            crust::Event::NewMessage(endpoint, bytes) => {
+                // println!("received from {} with a new message : {}",
+                //          match endpoint { Endpoint::Tcp(socket_addr) => socket_addr },
+                //          match String::from_utf8(bytes) { Ok(msg) => msg,
+                //                                           Err(_) => "unknown msg".to_string() });
             },
-        Err(_) => panic!("main connection manager start_listening failure")
-      };
-
-      cm.connect(vec![cm_aux_addr.clone()]);
-      println!("main: connected main to aux");
-      spawn(move ||{
-        cm_aux.connect(vec![cm_addr]);
-        println!("aux: connected aux to main");
-      }).join();
-    }
-
+            crust::Event::NewConnection(endpoint) => {
+                // println!("adding new node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
+            },
+            crust::Event::LostConnection(endpoint) => {
+                // println!("dropping node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
+                break;
+            }
+        }
+      }
   });
+  std::thread::sleep_ms(100);
+
+  let (cm_aux_tx, _) = channel();
+  let mut cm_aux = ConnectionManager::new(cm_aux_tx);
+  match cm_aux.start_listening(vec![Port::Tcp(cm_listen_port - 10)], None) {
+    Ok(result) => {
+        if result.0.len() > 0 {
+            // println!("aux listening on {} ",
+            //          match result.0[0].clone() { Endpoint::Tcp(socket_addr) => { socket_addr } });
+        } else {
+            // panic!("aux connection manager start_listening none listening port returned");
+        }
+      },
+    Err(_) => { println!("aux connection manager start_listening failure -- print");
+                panic!("aux connection manager start_listening failure");
+              }
+  };
+
+  b.iter(move || {
+      cm_aux.connect(vec![cm_addr.clone()]);
+      std::thread::sleep_ms(1);
+  });
+
+  let _ = thread.join();
 }
 
