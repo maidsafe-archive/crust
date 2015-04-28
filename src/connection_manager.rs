@@ -103,7 +103,6 @@ impl ConnectionManager {
                     contacts.push(Contact::new(end_point.clone(), public_key.clone()));
                 }
                 let mut bootstrap_handler = BootStrapHandler::new();
-                bootstrap_handler.remove_bootstrap_contacts();
                 bootstrap_handler.add_bootstrap_contacts(contacts);
                 spawn(move || {
                     loop {
