@@ -368,8 +368,7 @@ fn connection_manager_start() {
     let (cm_tx, cm_rx) = channel();
     let mut cm = ConnectionManager::new(cm_tx);
     let mut cm_addr = Endpoint::Tcp(SocketAddr::from_str(&"127.0.0.1:0").unwrap());
-    // changing the listening port to a smaller one such as 5483 will makes the test hanging in most of time
-    match cm.start_listening(vec![Port::Tcp(54830)], Some(5483)) {
+    match cm.start_listening(vec![Port::Tcp(4455)], Some(5483)) {
       Ok(result) => {
             if result.1.is_some() {
                 let beacon_addr = SocketAddr::from_str(&format!("127.0.0.1:{}", result.1.unwrap())).unwrap();
@@ -415,7 +414,8 @@ fn connection_manager_start() {
     let _ = spawn(move || {
         let (cm_aux_tx, _) = channel();
         let mut cm_aux = ConnectionManager::new(cm_aux_tx);
-        let _ = match cm_aux.start_listening(vec![Port::Tcp(4483)], None) {
+        // setting the listening port to be less than 4455 will make the test hanging
+        let _ = match cm_aux.start_listening(vec![Port::Tcp(4454)], None) {
             Ok(result) => {
                   println!("aux listening on {} ",
                            match result.0[0].clone() { Endpoint::Tcp(socket_addr) => { socket_addr } });
