@@ -23,9 +23,8 @@
 #![doc(html_logo_url = "http://maidsafe.net/img/Resources/branding/maidsafe_logo.fab2.png",
        html_favicon_url = "http://maidsafe.net/img/favicon.ico",
        html_root_url = "http:///dirvine.github.io/crust/crust/")]
-#![allow(unused_variables)]
 
-#![feature(ip_addr, alloc, udp)]
+#![feature(ip_addr, alloc, udp, scoped)]
 
 extern crate rustc_serialize;
 extern crate cbor;
@@ -36,10 +35,10 @@ extern crate rand;
 mod tcp_connections;
 mod transport;
 pub mod connection_manager;
-mod bootstrap;
 /// Broadcast and listen for nodes trying to bootstrap on local network.
 /// Listen for beacons from peers on port 5483.
 pub mod beacon;
+mod bootstrap;
 
 pub use connection_manager::{Event, ConnectionManager};
 pub use transport::{Endpoint, Port};

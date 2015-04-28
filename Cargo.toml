@@ -1,6 +1,6 @@
 [package]
 name = "crust"
-version = "0.0.4"
+version = "0.0.51"
 authors = ["MaidSafe Developers <dev@maidsafe.net>"]
 description = "This is Pre alpha, and not useful, no code worth looking at."
 documentation = "http://dirvine.github.io/crust/crust"
@@ -14,7 +14,7 @@ rustc-serialize = "*"
 cbor = "*"
 docopt = "*"
 time = "*"
-sodiumoxide = "*"
+sodiumoxide = "0.0.4"
 rand = "*"
 
 [[example]]

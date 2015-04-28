@@ -17,11 +17,15 @@
 // use of the SAFE Network Software.
 
 use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6, UdpSocket};
-use std::sync::mpsc::{Sender, Receiver};
 use std::sync::mpsc;
 use std::thread;
 use std::thread::spawn;
 use std::io::Result;
+use transport;
+use transport::{Port};
+use bootstrap::{BootStrapHandler};
+
+const MAGIC: [u8; 4] = ['m' as u8, 'a' as u8, 'i' as u8, 'd' as u8];
 
 pub fn serialise_address(our_listening_address: SocketAddr) -> [u8; 27] {
     let mut our_details = [0u8; 27];
@@ -89,129 +93,128 @@ pub fn parse_address(buffer: &[u8]) -> Option<SocketAddr> {
     }
 }
 
-fn handle_receive(socket: &UdpSocket) -> Option<SocketAddr> {
-    let mut buffer = [0; 27];
-    match socket.recv_from(&mut buffer) {
-        Ok((received_length, source)) => {
-            assert_eq!(27, received_length);
-            parse_address(&buffer)
-        }
-        Err(e) => {
-            println!("Failed receiving a message: {}", e);
-            None
-        }
+fn serialise_port(port: u16) -> [u8;2] {
+    [(port & 0xff) as u8, (port >> 8) as u8]
+}
+
+fn parse_port(data: [u8;2]) -> u16 {
+    (data[0] as u16) + ((data[1] as u16) << 8)
+}
+
+pub struct BroadcastAcceptor {
+    socket: UdpSocket,
+}
+
+impl BroadcastAcceptor {
+    pub fn bind(port: u16) -> Result<BroadcastAcceptor> {
+        let socket = try!(UdpSocket::bind(("0.0.0.0", port)));
+        Ok(BroadcastAcceptor{ socket: socket })
+    }
+
+    // FIXME: Proper error handling and cancelation.
+    pub fn accept(&self) -> Result<transport::Transport> {
+        use transport::{Transport};
+
+        let (port_sender, port_receiver) = mpsc::channel::<u16>();
+        let (transport_sender, transport_receiver) = mpsc::channel::<Transport>();
+
+        let run_acceptor = move || -> Result<()> {
+            let acceptor = try!(transport::new_acceptor(&Port::Tcp(0)));
+            let _ = port_sender.send(try!(transport::local_endpoint(&acceptor)).get_address().port());
+            let transport = try!(transport::accept(&acceptor));
+            let _ = transport_sender.send(transport);
+            Ok(())
+        };
+        let t1 = thread::spawn(move || { let _ = run_acceptor(); });
+
+        let tcp_port = port_receiver.recv().unwrap(); // We don't expect this to fail.
+
+        let run_listener = move || -> Result<()> {
+            let mut buffer = [0u8; 4];
+            loop {
+                let (_, source) = try!(self.socket.recv_from(&mut buffer));
+                if buffer != MAGIC { continue; }
+                let reply_socket = try!(UdpSocket::bind("0.0.0.0:0"));
+                try!(reply_socket.send_to(&serialise_port(tcp_port), source));
+                break;
+            }
+            Ok(())
+        };
+        let t2 = thread::scoped(move || { let _ = run_listener(); });
+
+        let _ = t1.join();
+        let _ = t2.join();
+
+        Ok(transport_receiver.recv().unwrap())
+    }
+
+    pub fn local_addr(&self) -> Result<SocketAddr> {
+        self.socket.local_addr()
     }
 }
 
-/// Listen for beacon broadcasts on given/random port and replies the port on bind success
-pub fn listen_for_broadcast(our_listening_address: SocketAddr, beacon_port: Option<u16>) -> Result<u16> {
-    let port: u16 = match beacon_port {
-        Some(udp_port) =>  udp_port,
-        None => 5483
+// NOTE For Fraser: This is the new function, I implemented the old one
+// (seek_peers below) using this one.
+pub fn seek_peers_2(port: u16) -> Result<Vec<SocketAddr>> {
+    // Send broadcast ping
+    let socket = try!(UdpSocket::bind("0.0.0.0:0"));
+    try!(socket.set_broadcast(true));
+    try!(socket.send_to(&MAGIC, ("255.255.255.255", port)));
+
+    let (tx,rx) = mpsc::channel::<SocketAddr>();
+
+    // FIXME: This thread will never finish, eating one udp port
+    // and few resources till the end of the program. I haven't
+    // found a way to fix this in rust yet.
+    let runner = move || -> Result<()> {
+        let mut buffer = [0u8; 2];
+        let (size, source) = try!(socket.recv_from(&mut buffer));
+        let his_port = parse_port(buffer);
+        let his_ep   = SocketAddr::new(source.ip(), his_port);
+        tx.send(his_ep);
+        Ok(())
     };
 
-    let socket = try!( UdpSocket::bind(("0.0.0.0", port.clone())));
-    let our_serialised_details = serialise_address(our_listening_address);
+    thread::spawn(move || { let _ = runner(); });
 
-    let used_port:u16 = match socket.local_addr() {
-                   Ok(sock_addr) => { sock_addr.port() },
-                   Err(_) => panic!("should have port")
-               };
-
-    spawn(move || {
-        loop {
-            let mut buffer = [0; 4];
-            match socket.recv_from(&mut buffer) {
-                Ok((received_length, source)) => {
-                    let _ = socket.send_to(&our_serialised_details, source);
-                }
-                Err(error) => println!("Failed receiving a message: {}", error)
-            }
-        }});
-        Ok(used_port)
-}
-
-/// Seek for peers, send out beacon to local network on port 5483 or given port.
-pub fn seek_peers(port: Option<u16>) -> Vec<SocketAddr> {
-    let socket = match UdpSocket::bind("0.0.0.0:0") {
-        Ok(s) => s,
-        Err(e) => panic!("Couldn't bind socket: {}", e),
-    };
-
-    match socket.set_broadcast(true) {
-        Ok(s) => s,
-        Err(e) => panic!("Can't broadcast from this socket: {}", e),
-    }
-
-    let beacon_port: u16 = match port {
-        Some(udp_port) => udp_port,
-        None => 5483
-    };
-
-    let buffer = [0; 4];
-    match socket.send_to(&buffer, ("255.255.255.255", beacon_port)) {
-        Ok(s) => assert_eq!(4, s),
-        Err(e) => panic!("Failed broadcasting on {}: {}", socket.local_addr().unwrap(), e),
-    }
-    println!("Broadcasted on {:?}", socket.local_addr().unwrap());
-
-    let (tx, rx): (Sender<SocketAddr>, Receiver<SocketAddr>) = mpsc::channel();
-    thread::spawn(move || {
-        loop {
-            match handle_receive(&socket) {
-                Some(peer_address) => match tx.send(peer_address) {
-                  Ok(sent) => {;}
-                  Err(e) => break  // receiver already deallocated
-                },
-                _ => (),
-            }
-        }
-    });
-
-    // Allow peers time to respond
+    // Allow peers to respond.
     thread::sleep_ms(500);
 
-    let mut peers: Vec<SocketAddr> = Vec::new();
-    let mut result = rx.try_recv();
-    while let Ok(res) = result {
-        peers.push(res);
-        result = rx.try_recv();
-    }
+    let mut result = Vec::<SocketAddr>::new();
 
-    peers
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-    use std::net::{UdpSocket/*, lookup_addr, lookup_host*/};
-    use std::thread;
-    use std::sync::mpsc::{Sender, Receiver, channel};
-
-#[test]
-    fn test_broadcast() {
-        // Start a normal socket and start listening for a broadcast
-        let (tx, rx): (Sender<u16>, Receiver<u16>) = channel();
-        thread::spawn(move || {
-            let normal_socket = match UdpSocket::bind("::0:0") {
-                Ok(s) => s,
-                Err(e) => panic!("Couldn't bind socket: {}", e),
-            };
-            println!("Normal socket on {:?}\n", normal_socket.local_addr().unwrap());
-            match listen_for_broadcast(normal_socket.local_addr().unwrap(), Some(0u16)) {
-                Ok(used_port) => { let _ = tx.send(used_port); },
-                Err(_) => { panic!("Failed to bind") }
-            }
-        });
-
-        // Allow listener time to start
-        thread::sleep_ms(300);
-
-        let beacon_port = rx.recv().ok().expect("could not receive port");
-
-        for i in 0..3 {
-            let peers = seek_peers(Some(beacon_port.clone()));
-            assert!(peers.len() > 0);
+    loop {
+        match rx.try_recv() {
+            Ok(socket_addr) => result.push(socket_addr),
+            Err(_) => break,
         }
     }
+
+    Ok(result)
+}
+
+// NOTE For Fraser: This is the test for the new API, I think the other one
+// should be removed because:
+// * It tests the old API (which I'm surprised passes givent that seek_peers
+//   and listen_for_broadcast are no longer compatible)
+// * It also tests the bootstrap.rs functionality but that doesn't seem to
+//   be appropriate for this file.
+#[test]
+fn test_broadcast_second_version() {
+    let acceptor = BroadcastAcceptor::bind(0).unwrap();
+    let acceptor_port = acceptor.local_addr().unwrap().port();
+
+    let t1 = thread::spawn(move || {
+        let mut transport = acceptor.accept().unwrap();
+        transport.sender.send(&"hello beacon".to_string().into_bytes()).unwrap();
+    });
+
+    let t2 = thread::spawn(move || {
+        let endpoint = seek_peers_2(acceptor_port).unwrap()[0];
+        let mut transport = transport::connect(transport::Endpoint::Tcp(endpoint)).unwrap();
+        let msg = String::from_utf8(transport.receiver.receive().unwrap()).unwrap();
+        assert!(msg == "hello beacon".to_string());
+    });
+
+    assert!(t1.join().is_ok());
+    assert!(t2.join().is_ok());
 }
