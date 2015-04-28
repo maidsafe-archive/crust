@@ -295,7 +295,7 @@ fn register_connection( state: &mut WeakState,
 }
 
 fn unregister_connection(state: WeakState, his_ep: Endpoint) {
-    println!("unregister_connection");
+    // println!("unregister_connection");
     let _ = lock_mut_state(&state, |s| {
         if s.connections.remove(&his_ep).is_some() {
             // Only send the event if the connection was there
