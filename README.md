@@ -36,8 +36,6 @@ Several methods are used for NAT traversal, UpNP, hole punching [See here for TC
   - [x] Set up Udp broadcast and respond when we have a port (we listen on any random port above 1024 [user space port])  available (broadcast port is 5483)
   - [x] Add connection established/lost/ new messages to be passed to routing (via channel)
   - [x] Implement connect() in connection manager
-  - [ ] Benchmark tx/rv number of packets
-  - [ ] Benchmark tx/rc Bytes per second
   - [x] Allow tcp and then utp connections option and wrap in connection object.
   ](http://maidsafe.net/Whitepapers/pdf/DHTbasedNATTraversal.pdf)
 - [ ] Version 0.0.8
@@ -64,6 +62,8 @@ Several methods are used for NAT traversal, UpNP, hole punching [See here for TC
   - [ ] Benchmark tx/rv number of packets
   - [ ] Benchmark tx/rc Bytes per second
   - [ ] NAT traversal  [See here for tcp NAT traversal] (http://www.cmlab.csie.ntu.edu.tw/~franklai/NATBT.pdf) 
+- [ ] Benchmark tx/rv number of packets
+- [ ] Benchmark tx/rc Bytes per second
 - [ ] Implement `get_endoints() -> Vec<EndPointPair>` where `EndpointPair` is struct with `Option<ExternalEndpoint>` and has a Proto identifier field 
   - [ ] Implement UpNp 
   - [ ] Implement NAT hole punch (udp) for reliable udp
