@@ -118,7 +118,6 @@ impl ConnectionManager {
             Err(_) => false
         };
 
-        println!("Is beacon {}", self.is_beacon_server);
         Ok((end_points, used_port))
     }
 

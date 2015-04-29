@@ -19,19 +19,28 @@
 
 #![feature(test)]
 extern crate crust;
+extern crate rand;
 extern crate test;
 
+use rand::random;
 use test::Bencher;
 use crust::*;
 
-use std::thread::spawn;
 use std::sync::mpsc::{channel};
 use std::net::SocketAddr;
 use std::str::FromStr;
 
+pub fn generate_random_vec_u8(size: usize) -> Vec<u8> {
+    let mut vec: Vec<u8> = Vec::with_capacity(size);
+    for _ in 0..size {
+        vec.push(random::<u8>());
+    }
+    vec
+}
+
 #[bench]
 fn connection_manager_start(b: &mut Bencher) {
-  println!("------------------------------------------");
+  // println!("------------------------------------------");
     let (cm_tx, cm_rx) = channel();
     let mut cm = ConnectionManager::new(cm_tx);
     let mut cm_listen_port : u16 = 5483;
@@ -42,7 +51,7 @@ fn connection_manager_start(b: &mut Bencher) {
                 match result.0[0].clone() {
                   Endpoint::Tcp(socket_addr) => {
                     cm_listen_port = socket_addr.port();
-                    println!("main listening on {} ", socket_addr);
+                    // println!("main listening on {} ", socket_addr);
                   }
                 }
                 cm_addr = result.0[0].clone();
@@ -53,31 +62,6 @@ fn connection_manager_start(b: &mut Bencher) {
       Err(_) => panic!("main connection manager start_listening failure")
     };
 
-  let thread = spawn(move || {
-    loop {
-        let event = cm_rx.recv();
-        // println!("received an event");
-        if event.is_err() {
-          println!("stop listening");
-          break;
-        }
-        match event.unwrap() {
-            crust::Event::NewMessage(endpoint, bytes) => {
-                // println!("received from {} with a new message : {}",
-                //          match endpoint { Endpoint::Tcp(socket_addr) => socket_addr },
-                //          match String::from_utf8(bytes) { Ok(msg) => msg,
-                //                                           Err(_) => "unknown msg".to_string() });
-            },
-            crust::Event::NewConnection(endpoint) => {
-                // println!("adding new node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
-            },
-            crust::Event::LostConnection(endpoint) => {
-                // println!("dropping node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
-                break;
-            }
-        }
-      }
-  });
   std::thread::sleep_ms(100);
 
   let (cm_aux_tx, _) = channel();
@@ -96,11 +80,35 @@ fn connection_manager_start(b: &mut Bencher) {
               }
   };
 
+  cm_aux.connect(vec![cm_addr.clone()]);
+  let data = generate_random_vec_u8(1024 * 1024);
   b.iter(move || {
-      cm_aux.connect(vec![cm_addr.clone()]);
-      std::thread::sleep_ms(1);
+      let _ = cm_aux.send(cm_addr.clone(), data.clone());
+      loop {
+          let event = cm_rx.recv();
+          // println!("received an event");
+          if event.is_err() {
+            println!("stop listening");
+            break;
+          }
+          match event.unwrap() {
+              crust::Event::NewMessage(endpoint, bytes) => {
+                  // println!("received from {} with a new message of length : {}",
+                  //          match endpoint { Endpoint::Tcp(socket_addr) => socket_addr }, bytes.len());
+                           // match String::from_utf8(bytes) { Ok(msg) => msg,
+                           //                                  Err(_) => "unknown msg".to_string() });
+                  break;
+              },
+              crust::Event::NewConnection(endpoint) => {
+                  // println!("adding new node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
+              },
+              crust::Event::LostConnection(endpoint) => {
+                  // println!("dropping node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
+                  break;
+              }
+          }
+      }
   });
-
-  let _ = thread.join();
+  b.bytes = 1024 * 1024;
 }
 
