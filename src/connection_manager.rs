@@ -436,9 +436,9 @@ mod test {
 
      fn get_connected_eps(node: &Arc<Mutex<Node>>) -> Vec<Endpoint> {
          let node = node.clone();
-         let mut node = node.lock().unwrap();
+         let node = node.lock().unwrap();
          let eps = node.connected_eps.clone();
-         let mut connected_eps = eps.lock().unwrap();
+         let connected_eps = eps.lock().unwrap();
          connected_eps.clone()
      }
 
@@ -466,7 +466,7 @@ mod test {
         thread::sleep_ms(1000);
         let (cm2_i, _) = channel();
         let mut cm2 = ConnectionManager::new(cm2_i);
-        let cm2_eps = cm2.start_listening(vec![Port::Tcp(0)], beacon_port.clone()).unwrap();
+        let _ = cm2.start_listening(vec![Port::Tcp(0)], beacon_port.clone()).unwrap();
         match cm2.bootstrap(None, beacon_port) {
             Ok(ep) => { assert_eq!(ep.clone(), cm1_eps[0].clone()); },
             Err(_) => { panic!("Failed to bootstrap"); }
@@ -526,12 +526,12 @@ mod test {
                             let mut connected_eps = conn_eps.lock().unwrap();
                             connected_eps.push(other_ep);
                         },
-                        Event::NewMessage(from_ep, data) => {
+                        Event::NewMessage(_, _) => {
                             if count == MESSAGE_PER_NODE * (NETWORK_SIZE - 1) {
                                 break;
                             }
                         },
-                        Event::LostConnection(other_ep) => {
+                        Event::LostConnection(_) => {
                         }
                     }
                 }
@@ -544,10 +544,10 @@ mod test {
                 for event in stats_rx.iter() {
                     let mut stat = stats.lock().unwrap();
                     match event {
-                            Event::NewConnection(other_ep) => {
+                            Event::NewConnection(_) => {
                             stat.new_connections_count += 1;
                         },
-                        Event::NewMessage(from_ep, data) => {
+                        Event::NewMessage(_, data) => {
                             let data_str = decode::<String>(data);
                             if data_str == "EXIT" {
                                 break;
@@ -557,7 +557,7 @@ mod test {
                                 break;
                             }
                         },
-                        Event::LostConnection(other_ep) => {
+                        Event::LostConnection(_) => {
                             stat.lost_connection_count += 1;
                         }
                     }
@@ -576,15 +576,12 @@ mod test {
         let (stats_tx, stats_rx): (Sender<Event>, Receiver<Event>) = channel();
         let mut runners = Vec::new();
         let mut beacon_port: u16 = 0;
-        for index in 0..NETWORK_SIZE {
-            let (receiver, end_point, port, connected_eps) = network.add(beacon_port);
+        for _ in 0..NETWORK_SIZE {
+            let (receiver, _, port, connected_eps) = network.add(beacon_port);
             beacon_port = match port {
                 Some(port_no) => port_no,
                 None => beacon_port
             };
-            let stat = Arc::new(Mutex::new(Stats {new_connections_count: 0, messages_count: 0,
-                 lost_connection_count: 0} ));
-            let stat_copy = stat.clone();
             let runner = run_cm(stats_tx.clone(), receiver, connected_eps);
             runners.push(runner);
         }
@@ -628,7 +625,7 @@ mod test {
             }
         }
 
-        let terminate_runner = run_terminate(listening_end_points[0].clone(), stats_tx.clone());
+        let _ = run_terminate(listening_end_points[0].clone(), stats_tx.clone());
 
         let _ = run_stats.join();
 
@@ -643,7 +640,7 @@ mod test {
         assert_eq!(stat.lost_connection_count, 0);
     }
 
-    #[test]
+#[test]
     fn connection_manager_start() {
         let (cm_tx, cm_rx) = channel();
         let mut cm = ConnectionManager::new(cm_tx);
