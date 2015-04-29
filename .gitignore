@@ -11,3 +11,5 @@ tests/tmp*
 src/tmp*
 /.project
 *.sublime-*
+*.bootstrap.cache
+/bin/
