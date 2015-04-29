@@ -17,7 +17,7 @@
 
 // String.as_str() is unstable; waiting RFC revision
 // http://doc.rust-lang.org/nightly/std/string/struct.String.html#method.as_str
-#![feature(convert)]
+#![feature(convert, exit_status)]
 
 extern crate crust;
 extern crate rustc_serialize;
@@ -188,8 +188,8 @@ fn main() {
                        .unwrap_or_else(|e| e.exit());
 
     if args.flag_help {
-      println!("{:?}", args);  // print help message
-      return;
+        println!("{:?}", args);  // print help message
+        return;
     };
 
     let (cm_tx, cm_rx) = channel();
@@ -236,7 +236,11 @@ fn main() {
     }
     let cm_eps = match cm.start_listening(vec![Port::Tcp(listening_port)], Some(5583)) {
         Ok(eps) => eps,
-        Err(e) => panic!("Connection manager failed to start on arbitrary TCP port: {}", e)
+        Err(e) => {
+            println!("Connection manager failed to start on arbitrary TCP port: {}", e);
+            std::env::set_exit_status(1);
+            return;
+        }
     };
     assert!(cm_eps.0.len() > 0);
     for ep in &cm_eps.0 {
@@ -272,7 +276,9 @@ fn main() {
                     }),
                     Err(e) => {
                         println!("Failed to bootstrap from provided peers with error: {}", e);
-                        panic!("Not resorting to default discovery of bootstrap nodes. Exiting");
+                        println!("Not resorting to default discovery of bootstrap nodes. Exiting");
+                        std::env::set_exit_status(2);
+                        return;
                     }
                                 // default_bootstrap = true; }
                 };
@@ -293,8 +299,12 @@ fn main() {
         match cm.bootstrap(None, Some(5583)) {
             Ok(endpoint) =>  println!("bootstrapped to {} ",
                                       match endpoint { Endpoint::Tcp(socket_addr) => socket_addr }),
-            Err(e) => { println!("Failed to bootstrap from default methods: {}", e);
-                        panic!("Improve by keeping beacon alive. For now exiting"); }
+            Err(e) => {
+                println!("Failed to bootstrap from default methods: {}", e);
+                println!("Improve by keeping beacon alive. For now exiting.");
+                std::env::set_exit_status(3);
+                return;
+            }
         };
     };
 
