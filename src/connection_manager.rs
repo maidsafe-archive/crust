@@ -405,75 +405,6 @@ mod test {
         dec.decode().next().unwrap().unwrap()
     }
 
-#[test]
-fn connection_manager_start() {
-    let (cm_tx, cm_rx) = channel();
-    let mut cm = ConnectionManager::new(cm_tx);
-    let mut cm_listen_addr = Endpoint::Tcp(SocketAddr::from_str(&"127.0.0.1:0").unwrap());
-    let mut cm_beacon_addr = Endpoint::Tcp(SocketAddr::from_str(&"127.0.0.1:0").unwrap());
-    match cm.start_listening(vec![Port::Tcp(4455)], Some(5483)) {
-      Ok(result) => {
-            if result.1.is_some() {
-                let beacon_addr = SocketAddr::from_str(&format!("127.0.0.1:{}", result.1.unwrap())).unwrap();
-                println!("main beacon on {} ", beacon_addr);
-                cm_beacon_addr = Endpoint::Tcp(beacon_addr);
-            }
-            if result.0.len() > 0 {
-                println!("main listening on {} ",
-                         match result.0[0].clone() { Endpoint::Tcp(socket_addr) => { socket_addr } });
-                cm_listen_addr = result.0[0].clone();
-            } else {
-                panic!("main connection manager start_listening none listening port returned");
-            }
-          }
-      Err(_) => panic!("main connection manager start_listening failure")
-    };
-
-    let thread = spawn(move || {
-       loop {
-            let event = cm_rx.recv();
-            if event.is_err() {
-              println!("stop listening");
-              break;
-            }
-            match event.unwrap() {
-                Event::NewMessage(endpoint, bytes) => {
-                    println!("received from {} with a new message : {}",
-                             match endpoint { Endpoint::Tcp(socket_addr) => socket_addr },
-                             match String::from_utf8(bytes) { Ok(msg) => msg, Err(_) => "unknown msg".to_string() });
-                },
-                Event::NewConnection(endpoint) => {
-                    println!("adding new node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
-                },
-                Event::LostConnection(endpoint) => {
-                    println!("dropping node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
-                    break;
-                }
-            }
-        }
-      });
-    thread::sleep_ms(100);
-
-    let _ = spawn(move || {
-        let (cm_aux_tx, _) = channel();
-        let mut cm_aux = ConnectionManager::new(cm_aux_tx);
-        // setting the listening port to be greater than 4455 will make the test hanging
-        let _ = match cm_aux.start_listening(vec![Port::Tcp(4454)], None) {
-            Ok(result) => {
-                  println!("aux listening on {} ",
-                           match result.0[0].clone() { Endpoint::Tcp(socket_addr) => { socket_addr } });
-                  result.0[0].clone()
-                },
-            Err(_) => panic!("aux connection manager start_listening failure")
-        };
-        // changing this to cm_beacon_addr will make the test hanging
-        cm_aux.connect(vec![cm_listen_addr.clone()]);
-        thread::sleep_ms(500);
-    }).join();
-
-    let _ = thread.join();
-}
-
     #[test]
     fn bootstrap() {
         let (cm1_i, _) = channel();
@@ -490,7 +421,7 @@ fn connection_manager_start() {
         }
     }
 
-#[test]
+    #[test]
     fn connection_manager() {
         let run_cm = |cm: ConnectionManager, o: Receiver<Event>| {
             spawn(move || {
@@ -529,6 +460,75 @@ fn connection_manager_start() {
 
         assert!(runner1.join().is_ok());
         assert!(runner2.join().is_ok());
+    }
+
+    #[test]
+    fn connection_manager_start() {
+        let (cm_tx, cm_rx) = channel();
+        let mut cm = ConnectionManager::new(cm_tx);
+        let mut cm_listen_addr = Endpoint::Tcp(SocketAddr::from_str(&"127.0.0.1:0").unwrap());
+        let mut cm_beacon_addr = Endpoint::Tcp(SocketAddr::from_str(&"127.0.0.1:0").unwrap());
+        match cm.start_listening(vec![Port::Tcp(4455)], Some(5483)) {
+          Ok(result) => {
+                if result.1.is_some() {
+                    let beacon_addr = SocketAddr::from_str(&format!("127.0.0.1:{}", result.1.unwrap())).unwrap();
+                    println!("main beacon on {} ", beacon_addr);
+                    cm_beacon_addr = Endpoint::Tcp(beacon_addr);
+                }
+                if result.0.len() > 0 {
+                    println!("main listening on {} ",
+                             match result.0[0].clone() { Endpoint::Tcp(socket_addr) => { socket_addr } });
+                    cm_listen_addr = result.0[0].clone();
+                } else {
+                    panic!("main connection manager start_listening none listening port returned");
+                }
+              }
+          Err(_) => panic!("main connection manager start_listening failure")
+        };
+
+        let thread = spawn(move || {
+           loop {
+                let event = cm_rx.recv();
+                if event.is_err() {
+                  println!("stop listening");
+                  break;
+                }
+                match event.unwrap() {
+                    Event::NewMessage(endpoint, bytes) => {
+                        println!("received from {} with a new message : {}",
+                                 match endpoint { Endpoint::Tcp(socket_addr) => socket_addr },
+                                 match String::from_utf8(bytes) { Ok(msg) => msg, Err(_) => "unknown msg".to_string() });
+                    },
+                    Event::NewConnection(endpoint) => {
+                        println!("adding new node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
+                    },
+                    Event::LostConnection(endpoint) => {
+                        println!("dropping node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
+                        break;
+                    }
+                }
+            }
+          });
+        thread::sleep_ms(100);
+
+        spawn(move || {
+            let (cm_aux_tx, _) = channel();
+            let mut cm_aux = ConnectionManager::new(cm_aux_tx);
+            // setting the listening port to be greater than 4455 will make the test hanging
+            let _ = match cm_aux.start_listening(vec![Port::Tcp(4454)], None) {
+                Ok(result) => {
+                      println!("aux listening on {} ",
+                               match result.0[0].clone() { Endpoint::Tcp(socket_addr) => { socket_addr } });
+                      result.0[0].clone()
+                    },
+                Err(_) => panic!("aux connection manager start_listening failure")
+            };
+            // changing this to cm_beacon_addr will make the test hanging
+            cm_aux.connect(vec![cm_listen_addr.clone()]);
+        }).join();
+        thread::sleep_ms(100);
+
+        let _ = thread.join();
     }
 
 }
