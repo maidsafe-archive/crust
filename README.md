@@ -38,7 +38,6 @@ Several methods are used for NAT traversal, UpNP, hole punching [See here for TC
   - [x] Implement connect() in connection manager
   - [x] Allow tcp and then utp connections option and wrap in connection object.
   ](http://maidsafe.net/Whitepapers/pdf/DHTbasedNATTraversal.pdf)
-- [ ] Version 0.0.8
 - [x] Update handle connect for TCP
 - [x] Remove FailedToConnect event
 - [x] Integrate bootstrap (Link ability to read and write bootstrap file)
@@ -53,7 +52,7 @@ Several methods are used for NAT traversal, UpNP, hole punching [See here for TC
     - [x] Print Incomming message rate per second
   - [ ] Local Network Test. 12 Linux, 2 OSX, 2 WIN
   - [ ] 101 Droplet test
-- [ ] Version 0.0.9
+- [ ] Version 0.0.8
 - [ ] Utp Networking
   - [ ] Utp live port and backup random port selection
   - [ ] Create send/rcv channel from routing to connections object
