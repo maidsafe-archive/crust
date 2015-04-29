@@ -23,7 +23,7 @@ install:
 - cd ../..
 script:
 - cargo build --verbose
-- cargo test --verbose
+- RUST_TEST_THREADS=1 cargo test
 after_success: |
   [ $TRAVIS_BRANCH = master ] &&
   [ $TRAVIS_PULL_REQUEST = false ] &&

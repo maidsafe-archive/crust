@@ -100,6 +100,10 @@ impl Contact {
             public_key: public_key
         }
     }
+
+    pub fn end_point(&self) -> Endpoint {
+        self.endpoint.clone()
+    }
 }
 
 impl Encodable for Contact {
@@ -277,7 +281,7 @@ impl BootStrapHandler {
         }
     }
 
-    fn remove_bootstrap_contacts(&mut self) {
+    pub fn remove_bootstrap_contacts(&mut self) {
  		File::create(&self.file_name);
     }
 
