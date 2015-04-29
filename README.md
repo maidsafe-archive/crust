@@ -67,4 +67,6 @@ Several methods are used for NAT traversal, UpNP, hole punching [See here for TC
   - [ ] Implement UpNp 
   - [ ] Implement NAT hole punch (udp) for reliable udp
 - [ ] Version 0.1 (crates.io)
-- [ ] Tcp hole punching as per paper 
+- [ ] Tcp hole punching as per paper
+- [ ] Tracer tcp (TCP with magic in clear [unencrypted])
+- [ ] Wireshark module for tracer TCP
