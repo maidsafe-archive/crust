@@ -25,23 +25,18 @@
 
 #![feature(ip_addr, alloc, udp, scoped)]
 
-extern crate rustc_serialize;
 extern crate cbor;
-extern crate time;
-extern crate sodiumoxide;
 extern crate rand;
+extern crate rustc_serialize;
+extern crate sodiumoxide;
+extern crate time;
 
+mod beacon;
+mod bootstrap;
 mod tcp_connections;
 mod transport;
+
 pub mod connection_manager;
-/// Broadcast and listen for nodes trying to bootstrap on local network.
-/// Listen for beacons from peers on port 5483.
-pub mod beacon;
-mod bootstrap;
 
 pub use connection_manager::{Event, ConnectionManager};
 pub use transport::{Endpoint, Port};
-
-#[test]
-fn it_works() {
-}
