@@ -48,7 +48,8 @@ Usage: crust_node -h
 
 Options:
     -h, --help        Display this help message.
-    -o, --origin      Start a crust node as server, i.e. only listening on specified port.
+    -o, --origin      Start the first crust node of a new network, i.e. only listening on the
+                      specified port.
     -b, --bootstrap   Start a crust node and bootstrap off the peers.
                       If no bootstrap node is provided beacon will be used.
     -s, --speed       Optional send data at maximum speed (bytes/second)

@@ -54,7 +54,7 @@ impl <T> Drop for OutTcpStream<T> {
     }
 }
 
-/// Connect to a server and open a send-receive pair.  See `upgrade` for more details.
+/// Connect to a peer and open a send-receive pair.  See `upgrade` for more details.
 pub fn connect_tcp<'a, 'b, I, O>(addr: SocketAddr) ->
 IoResult<(Receiver<I>, OutTcpStream<O>)>
 where I: Send + Decodable + 'static, O: Encodable {
@@ -195,15 +195,15 @@ mod test {
     }
 
 #[test]
-    fn test_multiple_client_small_stream() {
+    fn test_multiple_nodes_small_stream() {
         const MSG_COUNT: usize = 5;
-        const CLIENT_COUNT: usize = 101;
+        const NODE_COUNT: usize = 101;
 
         let (event_receiver, listener) = listen(5483).unwrap();
         let port = listener.local_addr().unwrap().port();
         let mut vector_senders = Vec::new();
         let mut vector_receiver = Vec::new();
-        for _ in 0..CLIENT_COUNT {
+        for _ in 0..NODE_COUNT {
             let (i, o) = connect_tcp(SocketAddr::from_str(&format!("127.0.0.1:{}", port)).unwrap()).unwrap();
             let boxed_output: Box<OutTcpStream<u64>> = Box::new(o);
             vector_senders.push(boxed_output);
@@ -257,7 +257,7 @@ mod test {
         }
 
         println!("Responses: {:?}", responses);
-        assert_eq!((CLIENT_COUNT * MSG_COUNT), responses.len());
+        assert_eq!((NODE_COUNT * MSG_COUNT), responses.len());
     }
 
 
@@ -302,16 +302,16 @@ mod test {
 //     assert_eq!(LEN, data.len());
 //
 //     let d = data.clone(\;
-//     let server_addr = next_test_ip4();
-//     let mut server = UtpStream::bind(server_addr);
+//     let receiver_addr = next_test_ip4();
+//     let mut receiver = UtpStream::bind(receiver_addr);
 //
 //     thread::spawn(move || {
-//         let mut client = iotry!(UtpStream::connect(server_addr));
-//         iotry!(client.write(&d[..]));
-//         iotry!(client.close());
+//         let mut sender = iotry!(UtpStream::connect(receiver_addr));
+//         iotry!(sender.write(&d[..]));
+//         iotry!(sender.close());
 //     });
 //
-//     let read = iotry!(server.read_to_end());
+//     let read = iotry!(receiver.read_to_end());
 //     assert!(!read.is_empty());
 //     assert_eq!(read.len(), data.len());
 //     assert_eq!(read, data);

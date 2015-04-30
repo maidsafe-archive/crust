@@ -42,7 +42,7 @@ type WeakState = Weak<Mutex<State>>;
 /// A structure representing a connection manager
 pub struct ConnectionManager {
     state: Arc<Mutex<State>>,
-    is_beacon_server: bool,
+    is_broadcast_acceptor: bool,
 }
 
 /// Enum representing different events that will be sent over the asynchronous channel to the user
@@ -72,7 +72,7 @@ impl ConnectionManager {
                                                connections:   HashMap::new(),
                                                listening_eps: HashSet::new(),
                                              }));
-        ConnectionManager { state: state, is_beacon_server: false }
+        ConnectionManager { state: state, is_broadcast_acceptor: false }
     }
 
     /// Starts listening on all supported protocols. Specified hint will be tried first. If it fails
@@ -93,7 +93,7 @@ impl ConnectionManager {
         };
 
         let mut used_port: Option<u16> = None;
-        self.is_beacon_server = match beacon::BroadcastAcceptor::bind(beacon_port) {
+        self.is_broadcast_acceptor = match beacon::BroadcastAcceptor::bind(beacon_port) {
             Ok(acceptor) => {
                 used_port = Some(acceptor.local_addr().unwrap().port());
                 let public_key = PublicKey::Asym(asymmetricbox::PublicKey([0u8; asymmetricbox::PUBLICKEYBYTES]));
@@ -164,14 +164,14 @@ impl ConnectionManager {
                 Ok(())
             });
         }
-        let is_beacon_server = self.is_beacon_server;
+        let is_broadcast_acceptor = self.is_broadcast_acceptor;
         spawn(move || {
             for endpoint in &endpoints {
                 for itr in listening.iter() {
                     if itr.is_master(endpoint) {
                         let ws = ws.clone();
                         let result = transport::connect(endpoint.clone())
-                                     .and_then(|trans| handle_connect(ws, trans, is_beacon_server));
+                                     .and_then(|trans| handle_connect(ws, trans, is_broadcast_acceptor));
                         if result.is_ok() { return; }
                     }
                 }
@@ -227,7 +227,7 @@ impl ConnectionManager {
             match transport::connect(endpoint) {
                 Ok(trans) => {
                     let ep = trans.remote_endpoint.clone();
-                    handle_connect(self.state.downgrade(), trans, self.is_beacon_server);
+                    handle_connect(self.state.downgrade(), trans, self.is_broadcast_acceptor);
                     return Ok(ep)
                 },
                 Err(_)    => continue,
@@ -298,10 +298,10 @@ fn handle_accept(mut state: WeakState, trans: transport::Transport) -> IoResult<
     register_connection(&mut state, trans, Event::NewConnection(remote_ep))
 }
 
-fn handle_connect(mut state: WeakState, trans: transport::Transport, is_beacon_server: bool) -> IoResult<Endpoint> {
+fn handle_connect(mut state: WeakState, trans: transport::Transport, is_broadcast_acceptor: bool) -> IoResult<Endpoint> {
     let remote_ep = trans.remote_endpoint.clone();
     let endpoint = register_connection(&mut state, trans, Event::NewConnection(remote_ep));
-    if is_beacon_server {
+    if is_broadcast_acceptor {
         match endpoint {
             Ok(ref endpoint) => {
                 let mut contacts = BootStrapContacts::new();

@@ -20,18 +20,18 @@ extern crate crust;
 use std::net::TcpListener;
 
 fn main() {
-  let tcp_listener = match TcpListener::bind("0.0.0.0:0") {
-    Ok(listener) => listener,
-    Err(e) => panic!("Couldn't bind to TCP socket: {}", e)
-  };
+    let tcp_listener = match TcpListener::bind("0.0.0.0:0") {
+        Ok(listener) => listener,
+        Err(e) => panic!("Couldn't bind to TCP socket: {}", e)
+    };
 
-  // blocking call on listen_for_broadcast
-  let _ = match tcp_listener.local_addr() {
-    Ok(local_addr) => crust::beacon::listen_for_broadcast(local_addr, None),
-    Err(e) => panic!("No local address to start listening on: {}", e)
-  };
+    // blocking call on listen_for_broadcast
+    let _ = match tcp_listener.local_addr() {
+        Ok(local_addr) => crust::beacon::listen_for_broadcast(local_addr, None),
+        Err(e) => panic!("No local address to start listening on: {}", e)
+    };
 
-  // the code below keeps the server running
-  for _ in tcp_listener.incoming() {
-  }
+    // keep the listener running
+    for _ in tcp_listener.incoming() {
+    }
 }

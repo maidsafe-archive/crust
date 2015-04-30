@@ -16,28 +16,33 @@
 // relating to use of the SAFE Network Software.
 
 extern crate crust;
-use std::str::FromStr;
+use std::thread::spawn;
 
-
+fn fibonacci_number(n: u64) -> u64 {
+    match n {
+        0 => 0,
+        1 => 1,
+        n => fibonacci_number(n - 1) + fibonacci_number(n - 2)
+    }
+}
 
 fn main() {
-    // incoming: (u64, u64)
-    // outgoing: u64
-    let (i, mut o) = crust::tcp_connections::connect_tcp(std::net::SocketAddr::from_str("127.0.0.1:5483").unwrap()).unwrap();
+    // Make a listener on 0.0.0.0:9999
+    let (listener, _) = crust::tcp_connections::listen(9999).unwrap();
 
-    // Send all the numbers from 0 to 10.
-    for x in (0u64..10u64) {
-        o.send(&x).ok();
-    }
-
-    // Close our outgoing pipe. This is necessary because otherwise,
-    // the server will keep waiting for the client to send it data and
-    // we will deadlock.
-    o.close();
-
-    // Print everything that we get back.
-    for a in i.iter() {
-        let (x, fx): (u64, u64) = a;
-        println!("{} -> {}", x, fx);
+    // Turn the listener into an iterator of connections.
+    for x in listener.iter() {
+        let (connection, _) = x;
+        // Spawn a new thread for each connection that we get.
+        spawn(move || {
+            // Upgrade the connection to read `u64` and write `(u64, u64)`.
+            let (incoming_channel, mut outgoing_channel) =
+                crust::tcp_connections::upgrade_tcp(connection).unwrap();
+            // For each `u64` that we read from the network...
+            for received_value in incoming_channel.iter() {
+                // Send that number back with the computed value.
+                outgoing_channel.send(&(received_value, fibonacci_number(received_value))).ok();
+            }
+        });
     }
 }
