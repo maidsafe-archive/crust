@@ -36,4 +36,4 @@ install:
 build: false
 
 test_script:
-  - RUST_TEST_THREADS=1 cargo test
+  - cargo test RUST_TEST_THREADS=1
