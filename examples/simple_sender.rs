@@ -15,27 +15,78 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+#![feature(exit_status)]
+
 extern crate crust;
+
+use std::net::SocketAddr;
 use std::str::FromStr;
+use std::sync::mpsc::channel;
+use std::thread::{sleep_ms, spawn};
+
+use crust::{ConnectionManager, Endpoint};
 
 fn main() {
-    // incoming: (u64, u64)
-    // outgoing: u64
-    let (incoming_channel, mut outgoing_channel) = crust::tcp_connections::connect_tcp(
-        std::net::SocketAddr::from_str("127.0.0.1:9999").unwrap()).unwrap();
+    // We receive events (e.g. new connection, message received) from the ConnectionManager via an
+    // asynchronous channel.
+    let (channel_sender, channel_receiver) = channel();
+    let connection_manager = ConnectionManager::new(channel_sender);
 
-    // Send all the numbers from 0 to 10.
-    for value in (0u64..10u64) {
-        outgoing_channel.send(&value).ok();
+    // Start a thread running a loop which will receive and display responses from the peer.
+    spawn(move || {
+        loop {
+            // Receive the next event
+            let event = channel_receiver.recv();
+            if event.is_err() {
+                println!("Stopped receiving.");
+                break;
+            }
+
+            // Handle the event
+            match event.unwrap() {
+                crust::Event::NewMessage(endpoint, bytes) => {
+                    match String::from_utf8(bytes) {
+                        Ok(reply) => println!("Peer on {:?} replied with \"{}\"", endpoint, reply),
+                        Err(why) => {
+                            println!("Error receiving message: {}", why);
+                            continue
+                        },
+                    }
+                },
+                crust::Event::NewConnection(endpoint) => {
+                    println!("New connection made to {:?}", endpoint);
+                },
+                _ => (),
+            }
+        }
+    });
+
+    // Try to connect to "simple_receiver" example node which should be listening on TCP port 8888
+    // and for UDP broadcasts (beacon) on 9999.
+    let receiver_listening_endpoint =
+        Endpoint::Tcp(SocketAddr::from_str(&"127.0.0.1:8888").unwrap());
+    let peer_endpoint = match connection_manager.bootstrap(Some(vec![receiver_listening_endpoint]),
+                                                           Some(9999)) {
+        Ok(endpoint) => endpoint,
+        Err(why) => {
+            println!("ConnectionManager failed to bootstrap off node listening on TCP port 8888 \
+                     and UDP broadcast port 9999: {}.", why);
+            println!("This example needs the \"simple_receiver\" example to be running first on \
+                     this same machine.");
+            std::env::set_exit_status(1);
+            return;
+        }
+    };
+
+    // Send all the numbers from 0 to 12 inclusive.  Expect to receive replies containing the
+    // Fibonacci number for each value.
+    for value in (0u8..13u8) {
+        match connection_manager.send(peer_endpoint.clone(), value.to_string().into_bytes()) {
+            Ok(_) => (),
+            Err(why) => println!("Failed to send {} to {:?}: {}", value, peer_endpoint, why),
+        }
     }
 
-    // Close our outgoing channel. This is necessary because otherwise, the receiver will keep
-    // waiting for this sender to send it data and we will deadlock.
-    outgoing_channel.close();
-
-    // Print everything that we get back.
-    for response in incoming_channel.iter() {
-        let (original_value, fibonacci_result): (u64, u64) = response;
-        println!("{} -> {}", original_value, fibonacci_result);
-    }
+    // Allow the peer time to process the requests and reply.
+    sleep_ms(2000);
 }

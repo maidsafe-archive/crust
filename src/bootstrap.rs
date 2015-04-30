@@ -314,7 +314,7 @@ mod test {
     }
 
     #[test]
-    fn bootstrap_crud_test() {
+    fn bootstrap_crude_test() {
         use std::fs::File;
         use std::path::Path;
 

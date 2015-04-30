@@ -15,8 +15,14 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+#![feature(convert, exit_status)]
+
 extern crate crust;
-use std::thread::spawn;
+
+use std::str::FromStr;
+use std::sync::mpsc::channel;
+
+use crust::{ConnectionManager, Port};
 
 fn fibonacci_number(n: u64) -> u64 {
     match n {
@@ -27,22 +33,77 @@ fn fibonacci_number(n: u64) -> u64 {
 }
 
 fn main() {
-    // Make a listener on 0.0.0.0:9999
-    let (listener, _) = crust::tcp_connections::listen(9999).unwrap();
+    // We receive events (e.g. new connection, message received) from the ConnectionManager via an
+    // asynchronous channel.
+    let (channel_sender, channel_receiver) = channel();
+    let mut connection_manager = ConnectionManager::new(channel_sender);
 
-    // Turn the listener into an iterator of connections.
-    for x in listener.iter() {
-        let (connection, _) = x;
-        // Spawn a new thread for each connection that we get.
-        spawn(move || {
-            // Upgrade the connection to read `u64` and write `(u64, u64)`.
-            let (incoming_channel, mut outgoing_channel) =
-                crust::tcp_connections::upgrade_tcp(connection).unwrap();
-            // For each `u64` that we read from the network...
-            for received_value in incoming_channel.iter() {
-                // Send that number back with the computed value.
-                outgoing_channel.send(&(received_value, fibonacci_number(received_value))).ok();
+    // Start listening.  Try to listen on port 8888 for TCP and for UDP broadcasts (beacon) on 9999.
+    let listening_endpoints = match connection_manager.start_listening(vec![Port::Tcp(8888)],
+                                                                        Some(9999)) {
+        Ok(endpoints) => endpoints,
+        Err(why) => {
+            println!("ConnectionManager failed to start listening on TCP port 8888: {}", why);
+            std::env::set_exit_status(1);
+            return;
+        }
+    };
+
+    print!("Listening for new connections on ");
+    for endpoint in &listening_endpoints.0 {
+        print!("{:?}, ", *endpoint);
+    };
+    match listening_endpoints.1 {
+        Some(beacon_port) => println!("and listening for UDP broadcast on port {}.", beacon_port),
+        None => println!("and not listening for UDP broadcasts."),
+    };
+    println!("Run the simple_sender example in another terminal to send messages to this node.");
+
+    loop {
+        // Receive the next event
+        let event = channel_receiver.recv();
+        if event.is_err() {
+            println!("Stopped receiving.");
+            break;
+        }
+
+        // Handle the event
+        match event.unwrap() {
+            crust::Event::NewMessage(endpoint, bytes) => {
+                // For this example, we only expect to receive encoded `u8`s
+                let requested_value = match String::from_utf8(bytes) {
+                    Ok(message) => {
+                        match u8::from_str(message.as_str()) {
+                            Ok(value) => value,
+                            Err(why) => {
+                                println!("Error parsing message: {}", why);
+                                continue;
+                            },
+                        }
+                    },
+                    Err(why) => {
+                        println!("Error receiving message: {}", why);
+                        continue;
+                    },
+                };
+
+                // Calculate the Fibonacci number for the requested value and respond with that
+                let fibonacci_result = fibonacci_number(requested_value as u64);
+                println!("Received \"{}\" from {:?} - replying with \"{}\"", requested_value,
+                         endpoint, fibonacci_result);
+                let response =
+                    format!("The Fibonacci number for {} is {}", requested_value, fibonacci_result);
+                match connection_manager.send(endpoint.clone(), response.into_bytes()) {
+                    Ok(_) => (),
+                    Err(why) => println!("Failed to send reply to {:?}: {}", endpoint, why),
+                }
+            },
+            crust::Event::NewConnection(endpoint) => {
+                println!("New connection made to {:?}", endpoint);
+            },
+            crust::Event::LostConnection(endpoint) => {
+                println!("Lost connection to {:?}", endpoint);
             }
-        });
+        }
     }
 }

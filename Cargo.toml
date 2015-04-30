@@ -18,18 +18,6 @@ sodiumoxide = "0.0.4"
 rand = "*"
 
 [[example]]
-name = "broadcaster"
-path = "examples/broadcaster.rs"
-test = false
-bench = false
-
-[[example]]
-name = "broadcast_acceptor"
-path = "examples/broadcast_acceptor.rs"
-test = false
-bench = false
-
-[[example]]
 name = "simple_sender"
 path = "examples/simple_sender.rs"
 test = false
