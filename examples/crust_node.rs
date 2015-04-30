@@ -25,8 +25,7 @@ extern crate docopt;
 extern crate rand;
 extern crate time;
 
-use crust::{Endpoint, Port};
-use crust::ConnectionManager;
+use crust::{ConnectionManager, Endpoint, Port};
 use docopt::Docopt;
 use rand::random;
 use rand::Rng;
@@ -48,7 +47,8 @@ Usage: crust_node -h
 
 Options:
     -h, --help        Display this help message.
-    -o, --origin      Start a crust node as server, i.e. only listening on specified port.
+    -o, --origin      Start the first crust node of a new network, i.e. only listening on the
+                      specified port.
     -b, --bootstrap   Start a crust node and bootstrap off the peers.
                       If no bootstrap node is provided beacon will be used.
     -s, --speed       Optional send data at maximum speed (bytes/second)
@@ -174,7 +174,7 @@ impl FlatWorld {
             self.performance_start = time::SteadyTime::now();
         }
         if self.performance_start + self.performance_interval < time::SteadyTime::now() {
-            println!("received {} msgs with total size of {} Bytes in last 10 seconds",
+            println!("received {} msgs with total size of {} bytes in last 10 seconds",
                      self.received_msgs, self.received_bytes);
             self.received_msgs = 0;
             self.received_bytes = 0;

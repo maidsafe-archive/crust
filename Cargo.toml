@@ -7,7 +7,7 @@ documentation = "http://dirvine.github.io/crust/crust"
 repository = "https://github.com/dirvine/crust"
 readme = "README.md"
 license = "GPL-3.0"
-homepage = "http://www.maidsafe.net"
+homepage = "http://maidsafe.net"
 
 [dependencies]
 rustc-serialize = "*"
@@ -18,26 +18,14 @@ sodiumoxide = "0.0.4"
 rand = "*"
 
 [[example]]
-name = "beacon_client"
-path = "examples/beacon_client.rs"
+name = "simple_sender"
+path = "examples/simple_sender.rs"
 test = false
 bench = false
 
 [[example]]
-name = "beacon_server"
-path = "examples/beacon_server.rs"
-test = false
-bench = false
-
-[[example]]
-name = "simple_client"
-path = "examples/simple_client.rs"
-test = false
-bench = false
-
-[[example]]
-name = "simple_server"
-path = "examples/simple_server.rs"
+name = "simple_receiver"
+path = "examples/simple_receiver.rs"
 test = false
 bench = false
 

@@ -65,7 +65,7 @@ pub fn parse_address(buffer: &[u8]) -> Option<SocketAddr> {
             let port: u16 = ((buffer[5] as u16) * 256) + (buffer[6] as u16);
             let peer_socket = SocketAddrV4::new(Ipv4Addr::new(
                 buffer[1], buffer[2], buffer[3], buffer[4]), port);
-            println!("Received IPv4 address {:?}\n", peer_socket);
+            // println!("Received IPv4 address {:?}\n", peer_socket);
             Some(SocketAddr::V4(peer_socket))
         },
         1 => {
@@ -84,8 +84,8 @@ pub fn parse_address(buffer: &[u8]) -> Option<SocketAddr> {
             let peer_socket = SocketAddrV6::new(Ipv6Addr::new(
                 segments[0], segments[1], segments[2], segments[3], segments[4],
                 segments[5], segments[6], segments[7]), port, flowinfo, scope_id);
-            println!("Received IPv6 address {:?} with flowinfo {} and scope_id {}\n",
-                      peer_socket, flowinfo, scope_id);
+            // println!("Received IPv6 address {:?} with flowinfo {} and scope_id {}\n",
+            //           peer_socket, flowinfo, scope_id);
             Some(SocketAddr::V6(peer_socket))
         },
         _ => None,

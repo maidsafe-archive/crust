@@ -44,10 +44,10 @@ Several methods are used for NAT traversal, UpNP, hole punching [See here for TC
 - [x] Integrate beacon (Have connection manger start, broadcast on udp broadcast for port 5483 (later multicast for ipv6)
 - [x] Send serialised bootstrap info as part of beacon reply (Link ability to send bootstrap file to any node requesting it)
 - [ ] Examples:
-  - [x] Beacon Client
-  - [x] Beacon Server
-  - [x] CLI Example - options: 
-    - [x] Join / Start a client(optionally provide bootstrap info)
+  - [x] Broadcaster
+  - [x] Broadcast receiver
+  - [x] CLI Example - options:
+    - [x] Join / Start a node(optionally provide bootstrap info)
     - [x] Allow sending messages at various rates per second
     - [x] Print Incomming message rate per second
   - [ ] Local Network Test. 12 Linux, 2 OSX, 2 WIN
@@ -60,11 +60,11 @@ Several methods are used for NAT traversal, UpNP, hole punching [See here for TC
   - [ ] Add connection established/lost messages to be passed to routing (via channel)
   - [ ] Benchmark tx/rv number of packets
   - [ ] Benchmark tx/rc Bytes per second
-  - [ ] NAT traversal  [See here for tcp NAT traversal] (http://www.cmlab.csie.ntu.edu.tw/~franklai/NATBT.pdf) 
+  - [ ] NAT traversal  [See here for tcp NAT traversal] (http://www.cmlab.csie.ntu.edu.tw/~franklai/NATBT.pdf)
 - [ ] Benchmark tx/rv number of packets
 - [ ] Benchmark tx/rc Bytes per second
-- [ ] Implement `get_endoints() -> Vec<EndPointPair>` where `EndpointPair` is struct with `Option<ExternalEndpoint>` and has a Proto identifier field 
-  - [ ] Implement UpNp 
+- [ ] Implement `get_endoints() -> Vec<EndPointPair>` where `EndpointPair` is struct with `Option<ExternalEndpoint>` and has a Proto identifier field
+  - [ ] Implement UpNp
   - [ ] Implement NAT hole punch (udp) for reliable udp
 - [ ] Version 0.1 (crates.io)
 - [ ] Tcp hole punching as per paper
