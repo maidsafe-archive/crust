@@ -20,17 +20,17 @@ rand = "*"
 [[example]]
 name = "simple_sender"
 path = "examples/simple_sender.rs"
-test = false
+test = true
 bench = false
 
 [[example]]
 name = "simple_receiver"
 path = "examples/simple_receiver.rs"
-test = false
+test = true
 bench = false
 
 [[example]]
 name = "crust_node"
 path = "examples/crust_node.rs"
-test = false
+test = true
 bench = false
