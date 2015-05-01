@@ -30,12 +30,8 @@ use bootstrap::{BootStrapHandler, BootStrapContacts, Contact, PublicKey};
 use sodiumoxide::crypto::asymmetricbox;
 use cbor;
 
+/// Type used to represent serialised data in a message.
 pub type Bytes = Vec<u8>;
-pub type IoResult<T> = Result<T, IoError>;
-
-// FIXME: Do we need these? If yes, do they need to be public?
-pub type IoReceiver<T> = Receiver<T>;
-pub type IoSender<T>   = Sender<T>;
 
 type WeakState = Weak<Mutex<State>>;
 
@@ -49,8 +45,11 @@ pub struct ConnectionManager {
 /// of this module.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Event {
+    /// Invoked when a new message is received.  Passes the peer's endpoint and the message.
     NewMessage(Endpoint, Bytes),
+    /// Invoked when a new connection to a peer is established.  Passes the peer's endpoint.
     NewConnection(Endpoint),
+    /// Invoked when a connection to a peer is lost.  Passes the peer's endpoint.
     LostConnection(Endpoint),
 }
 
@@ -59,17 +58,17 @@ struct Connection {
 }
 
 struct State {
-    event_pipe:    IoSender<Event>,
-    connections:   HashMap<Endpoint, Connection>,
+    event_pipe: mpsc::Sender<Event>,
+    connections: HashMap<Endpoint, Connection>,
     listening_eps: HashSet<Endpoint>,
 }
 
 impl ConnectionManager {
     /// Constructs a connection manager. User needs to create an asynchronous channel, and provide
     /// the sender half to this method. Receiver will receive all `Event`s from this library.
-    pub fn new(event_pipe: IoSender<Event>) -> ConnectionManager {
-        let state = Arc::new(Mutex::new(State{ event_pipe:    event_pipe,
-                                               connections:   HashMap::new(),
+    pub fn new(event_pipe: mpsc::Sender<Event>) -> ConnectionManager {
+        let state = Arc::new(Mutex::new(State{ event_pipe: event_pipe,
+                                               connections: HashMap::new(),
                                                listening_eps: HashSet::new(),
                                              }));
         ConnectionManager { state: state, is_broadcast_acceptor: false }
@@ -83,8 +82,8 @@ impl ConnectionManager {
     /// if beacon port != 0 => an attempt to get the port is made by beacon and the callee will be informed of the attempt
     /// if beacon port == None => 5483 is tried
     /// if beacon succeeds in starting the udp listener, the coresponding port is returned
-    pub fn start_listening(&mut self, hint: Vec<Port>, beacon_port: Option<u16>) -> IoResult<(Vec<Endpoint>, Option<u16>)> {
-        // FIXME: Returning IoResult seems pointless since we always return Ok.
+    pub fn start_listening(&mut self, hint: Vec<Port>, beacon_port: Option<u16>) -> io::Result<(Vec<Endpoint>, Option<u16>)> {
+        // FIXME: Returning io::Result seems pointless since we always return Ok.
         let end_points = hint.iter().filter_map(|port| self.listen(port).ok()).collect::<Vec<_>>();
 
         let beacon_port: u16 = match beacon_port {
@@ -133,7 +132,7 @@ impl ConnectionManager {
     /// bootstrap handler which will attempt to reconnect to any previous "direct connected" nodes.
     /// In both cases, this method blocks until it gets one successful connection or all the
     /// endpoints are tried and have failed.
-    pub fn bootstrap(&self, bootstrap_list: Option<Vec<Endpoint>>, beacon_port: Option<u16>) -> IoResult<Endpoint> {
+    pub fn bootstrap(&self, bootstrap_list: Option<Vec<Endpoint>>, beacon_port: Option<u16>) -> io::Result<Endpoint> {
             let port: u16 = match beacon_port {
                 Some(udp_port) => udp_port,
                 None => 5483
@@ -183,7 +182,7 @@ impl ConnectionManager {
     /// succeed, and returns an Err if the address is not connected. Return value of Ok does not
     /// mean that the data will be received. It is possible for the corresponding connection to hang
     /// up immediately after this function returns Ok.
-    pub fn send(&self, endpoint: Endpoint, message: Bytes) -> IoResult<()> {
+    pub fn send(&self, endpoint: Endpoint, message: Bytes) -> io::Result<()> {
         let ws = self.state.downgrade();
 
         let writer_channel = try!(lock_state(&ws, |s| {
@@ -207,6 +206,7 @@ impl ConnectionManager {
         });
     }
 
+    /// Reurns the stored bootstrap endpoints.
     pub fn get_stored_bootstrap_endpoints(&self, beacon_port: u16) -> Vec<Endpoint> {
         let mut end_points: Vec<Endpoint> = Vec::new();
         let tcp_endpoint = beacon::seek_peers_2(beacon_port).unwrap()[0]; // FIXME
@@ -222,7 +222,7 @@ impl ConnectionManager {
         end_points
     }
 
-    fn bootstrap_off_list(&self, bootstrap_list: Vec<Endpoint>) -> IoResult<Endpoint> {
+    fn bootstrap_off_list(&self, bootstrap_list: Vec<Endpoint>) -> io::Result<Endpoint> {
         for endpoint in bootstrap_list {
             match transport::connect(endpoint) {
                 Ok(trans) => {
@@ -237,7 +237,7 @@ impl ConnectionManager {
         Err(io::Error::new(io::ErrorKind::Other, "No bootstrap node got connected"))
     }
 
-    fn listen(&self, port: &Port) -> IoResult<Endpoint> {
+    fn listen(&self, port: &Port) -> io::Result<Endpoint> {
         let acceptor = try!(transport::new_acceptor(port));
         let local_ep = try!(transport::local_endpoint(&acceptor));
 
@@ -262,14 +262,14 @@ impl ConnectionManager {
     }
 }
 
-fn notify_user(state: &WeakState, event: Event) -> IoResult<()> {
+fn notify_user(state: &WeakState, event: Event) -> io::Result<()> {
     lock_state(state, |s| {
         s.event_pipe.send(event)
         .map_err(|_|io::Error::new(io::ErrorKind::BrokenPipe, "failed to notify_user"))
     })
 }
 
-fn lock_state<T, F: FnOnce(&State) -> IoResult<T>>(state: &WeakState, f: F) -> IoResult<T> {
+fn lock_state<T, F: FnOnce(&State) -> io::Result<T>>(state: &WeakState, f: F) -> io::Result<T> {
     state.upgrade().ok_or(io::Error::new(io::ErrorKind::Interrupted,
                                          "Can't dereference weak"))
     .and_then(|arc_state| {
@@ -281,7 +281,7 @@ fn lock_state<T, F: FnOnce(&State) -> IoResult<T>>(state: &WeakState, f: F) -> I
     })
 }
 
-fn lock_mut_state<T, F: FnOnce(&mut State) -> IoResult<T>>(state: &WeakState, f: F) -> IoResult<T> {
+fn lock_mut_state<T, F: FnOnce(&mut State) -> io::Result<T>>(state: &WeakState, f: F) -> io::Result<T> {
     state.upgrade().ok_or(io::Error::new(io::ErrorKind::Interrupted,
                                          "Can't dereference weak"))
     .and_then(move |arc_state| {
@@ -293,12 +293,12 @@ fn lock_mut_state<T, F: FnOnce(&mut State) -> IoResult<T>>(state: &WeakState, f:
     })
 }
 
-fn handle_accept(mut state: WeakState, trans: transport::Transport) -> IoResult<Endpoint> {
+fn handle_accept(mut state: WeakState, trans: transport::Transport) -> io::Result<Endpoint> {
     let remote_ep = trans.remote_endpoint.clone();
     register_connection(&mut state, trans, Event::NewConnection(remote_ep))
 }
 
-fn handle_connect(mut state: WeakState, trans: transport::Transport, is_broadcast_acceptor: bool) -> IoResult<Endpoint> {
+fn handle_connect(mut state: WeakState, trans: transport::Transport, is_broadcast_acceptor: bool) -> io::Result<Endpoint> {
     let remote_ep = trans.remote_endpoint.clone();
     let endpoint = register_connection(&mut state, trans, Event::NewConnection(remote_ep));
     if is_broadcast_acceptor {
@@ -320,7 +320,7 @@ fn handle_connect(mut state: WeakState, trans: transport::Transport, is_broadcas
 fn register_connection( state: &mut WeakState,
                         trans: transport::Transport,
                         event_to_user: Event
-                      ) -> IoResult<Endpoint> {
+                      ) -> io::Result<Endpoint> {
 
     let state2 = state.clone();
 
@@ -350,7 +350,7 @@ fn unregister_connection(state: WeakState, his_ep: Endpoint) {
 fn start_reading_thread(state: WeakState,
                         receiver: transport::Receiver,
                         his_ep: Endpoint,
-                        sink: IoSender<Event>) {
+                        sink: mpsc::Sender<Event>) {
     spawn(move || {
         loop {
             match transport::receive(&receiver) {

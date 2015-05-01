@@ -19,10 +19,10 @@
 //! Reliable p2p network connections in Rust with NAT traversal.
 //! One of the most needed libraries for any server-less / decentralised projects
 
+#![deny(missing_docs)]
 #![doc(html_logo_url = "http://maidsafe.net/img/Resources/branding/maidsafe_logo.fab2.png",
        html_favicon_url = "http://maidsafe.net/img/favicon.ico",
        html_root_url = "http:///dirvine.github.io/crust/crust/")]
-
 #![feature(ip_addr, alloc, udp, scoped)]
 
 extern crate cbor;
@@ -36,6 +36,8 @@ mod bootstrap;
 mod tcp_connections;
 mod transport;
 
+/// Module implementing the `ConnectionManager` which provides an interface to manage peer-to-peer
+/// connections.
 pub mod connection_manager;
 
 pub use connection_manager::{Event, ConnectionManager};

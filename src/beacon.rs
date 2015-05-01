@@ -22,7 +22,6 @@ use std::thread::spawn;
 use std::io::Result;
 use transport;
 use transport::{Port};
-use bootstrap::{BootStrapHandler};
 
 const MAGIC: [u8; 4] = ['m' as u8, 'a' as u8, 'i' as u8, 'd' as u8];
 
@@ -167,10 +166,10 @@ pub fn seek_peers_2(port: u16) -> Result<Vec<SocketAddr>> {
     // found a way to fix this in rust yet.
     let runner = move || -> Result<()> {
         let mut buffer = [0u8; 2];
-        let (size, source) = try!(socket.recv_from(&mut buffer));
+        let (_, source) = try!(socket.recv_from(&mut buffer));
         let his_port = parse_port(buffer);
         let his_ep   = SocketAddr::new(source.ip(), his_port);
-        tx.send(his_ep);
+        let _ = tx.send(his_ep);
         Ok(())
     };
 

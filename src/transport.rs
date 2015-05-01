@@ -40,6 +40,7 @@ fn array_to_vec(arr: &[u8]) -> Vec<u8> {
 /// Enum representing endpoint of supported protocols
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub enum Endpoint {
+    /// TCP endpoint
     Tcp(SocketAddr),
 }
 
@@ -49,6 +50,24 @@ impl Endpoint {
         match *self {
             Endpoint::Tcp(address) => address,
         }
+    }
+
+    /// Returns whether this endpoint should be chosen over `other` when deciding to connect.
+    pub fn is_master(&self, other: &Endpoint) -> bool {
+        match *self {
+            Endpoint::Tcp(my_address) => {
+                match *other {
+                    Endpoint::Tcp(other_address) => {
+                        if my_address.port() == other_address.port() {
+                            return my_address.ip() < other_address.ip();
+                        } else {
+                            return my_address.port() < other_address.port();
+                        }
+                    }
+                }
+            }
+        }
+        return true;
     }
 }
 
@@ -69,28 +88,11 @@ impl Decodable for Endpoint {
     }
 }
 
+/// Enum representing port of supported protocols
 #[derive(Debug, Clone)]
 pub enum Port {
+    /// TCP port
     Tcp(u16),
-}
-
-impl Endpoint {
-    pub fn is_master(&self, other: &Endpoint) -> bool {
-        match *self {
-            Endpoint::Tcp(my_address) => {
-                match *other {
-                    Endpoint::Tcp(other_address) => {
-                        if my_address.port() == other_address.port() {
-                            return my_address.ip() < other_address.ip();
-                        } else {
-                            return my_address.port() < other_address.port();
-                        }
-                    }
-                }
-            }
-        }
-        return true;
-    }
 }
 
 impl PartialOrd for Endpoint {
