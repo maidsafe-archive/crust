@@ -82,8 +82,15 @@ impl ConnectionManager {
     /// if beacon port != 0 => an attempt to get the port is made by beacon and the callee will be informed of the attempt
     /// if beacon port == None => 5483 is tried
     /// if beacon succeeds in starting the udp listener, the coresponding port is returned
-    pub fn start_listening(&mut self, hint: Vec<Port>, beacon_port: Option<u16>) -> io::Result<(Vec<Endpoint>, Option<u16>)> {
-        // FIXME: Returning io::Result seems pointless since we always return Ok.
+    // FIXME: Returning io::Result seems pointless since we always return Ok.
+    pub fn start_listening(&mut self, mut hint: Vec<Port>, beacon_port: Option<u16>) ->
+            io::Result<(Vec<Endpoint>, Option<u16>)> {
+        // We need to check for an instance of each supported protocol in the hint vector.  For any
+        // protocol that doesn't have an entry, we should inject one (either random or 0).  For now
+        // we're only supporting TCP, so...
+        if hint.is_empty() {
+            hint.push(Port::Tcp(0));
+        }
         let end_points = hint.iter().filter_map(|port| self.listen(port).ok()).collect::<Vec<_>>();
 
         let beacon_port: u16 = match beacon_port {
@@ -122,24 +129,24 @@ impl ConnectionManager {
     /// This method tries to connect (bootstrap to exisiting network) to the default or provided
     /// list of bootstrap nodes.
     ///
-    /// If `bootstrap_list` is `Some`, the method will try to connect to all of the endpoints
-    /// specified in `bootstrap_list`. It will return once connection with any of the endpoints is
-    /// established with Ok(Endpoint) and it will drop all other ongoing attempts. Returns Err if it
-    /// fails to connect to any of the endpoints specified.
+    /// If `bootstrap_list` is `None`, it will attempt to read a local cached file to populate the
+    /// list.  It will then try to connect to all of the endpoints in  the list.  It will return
+    /// once a connection with any of the endpoints is established with Ok(Endpoint) and it will
+    /// drop all other ongoing attempts.
     ///
-    /// If `bootstrap_list` is `None`, it will use default methods to bootstrap to the existing
-    /// network. Default methods includes beacon system for finding nodes on a local network and
-    /// bootstrap handler which will attempt to reconnect to any previous "direct connected" nodes.
-    /// In both cases, this method blocks until it gets one successful connection or all the
-    /// endpoints are tried and have failed.
-    pub fn bootstrap(&self, bootstrap_list: Option<Vec<Endpoint>>, beacon_port: Option<u16>) -> io::Result<Endpoint> {
-            let port: u16 = match beacon_port {
-                Some(udp_port) => udp_port,
-                None => 5483
-            };
+    /// If this fails and `beacon_port` is `Some`, it will try to use the beacon port to connect to
+    /// a peer on the same LAN.
+    ///
+    /// It will return Err if it fails to connect to any peer.
+    pub fn bootstrap(&self, bootstrap_list: Option<Vec<Endpoint>>, beacon_port: Option<u16>) ->
+            io::Result<Endpoint> {
+        let port: u16 = match beacon_port {
+            Some(udp_port) => udp_port,
+            None => 5483
+        };
         match bootstrap_list {
             Some(list) => self.bootstrap_off_list(list),
-            None       => self.bootstrap_off_list(self.get_stored_bootstrap_endpoints(port)),
+            None => self.bootstrap_off_list(self.get_stored_bootstrap_endpoints(port)),
         }
     }
 
@@ -206,7 +213,7 @@ impl ConnectionManager {
         });
     }
 
-    /// Reurns the stored bootstrap endpoints.
+    /// Returns the stored bootstrap endpoints.
     pub fn get_stored_bootstrap_endpoints(&self, beacon_port: u16) -> Vec<Endpoint> {
         let mut end_points: Vec<Endpoint> = Vec::new();
         let tcp_endpoint = beacon::seek_peers_2(beacon_port).unwrap()[0]; // FIXME
@@ -218,7 +225,7 @@ impl ConnectionManager {
         for contact in contacts {
             end_points.push(contact.end_point());
         }
-        println!("get_stored_bootstrap_endpoints {:?}", end_points);
+//        println!("get_stored_bootstrap_endpoints {:?}", end_points);
         end_points
     }
 
@@ -230,7 +237,7 @@ impl ConnectionManager {
                     handle_connect(self.state.downgrade(), trans, self.is_broadcast_acceptor);
                     return Ok(ep)
                 },
-                Err(_)    => continue,
+                Err(_) => continue,
             }
         }
         // FIXME: The result should probably be Option<Endpoint>
