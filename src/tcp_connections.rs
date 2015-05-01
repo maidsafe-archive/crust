@@ -30,6 +30,9 @@ pub type InTcpStream<T> = Receiver<T>;
 pub type TcpReader<T> = Receiver<T>;
 pub type TcpWriter<T> = OutTcpStream<T>;
 
+/// Magic used to identify a crust packet
+pub const CRUST_PACKET_HEADER : [u8; 4] = [0x63, 0x72, 0x75, 0x31];  // "cru1"
+
 pub struct OutTcpStream<T> {
     tcp_stream: TcpStream,
     _phantom: PhantomData<T>
