@@ -19,8 +19,7 @@ use cbor;
 use sodiumoxide::crypto::asymmetricbox;
 use std::collections::{HashMap, HashSet};
 use std::io;
-use std::io::Read;
-use std::net::TcpStream;
+use std::net::{IpAddr, SocketAddr};
 use std::sync::mpsc::channel;
 use std::sync::mpsc::{Receiver, Sender};
 use std::sync::{Arc, Mutex, Weak};
@@ -119,7 +118,7 @@ impl ConnectionManager {
                             let contacts = handler.get_serialised_bootstrap_contacts();
                             contacts
                         };
-                        transport.sender.send(&bootstrap_contacts());
+                        let _ = transport.sender.send(&bootstrap_contacts());
                     }
                 });
                 true
@@ -229,22 +228,45 @@ impl ConnectionManager {
         };
 
         // For each contact, connect and receive their list of bootstrap contacts
-        let mut contacts = BootStrapContacts::new();
+        let mut endpoints: Vec<Endpoint> = vec![];
         for peer in peer_addresses {
-            let mut transport = transport::connect(transport::Endpoint::Tcp(peer)).unwrap();
+            let transport = transport::connect(transport::Endpoint::Tcp(peer)).unwrap();
             let contacts_str = match transport::receive(&transport.receiver) {
                 Ok(message) => message,
                 Err(_) => continue,
             };
             let mut decoder = cbor::Decoder::from_bytes(&contacts_str[..]);
-            contacts = decoder.decode().next().unwrap().unwrap();  // FIXME
+            let contact_list: BootStrapContacts = match decoder.decode().next() {
+                Some(message) => {
+                    match message {
+                        Ok(contacts) => contacts,
+                        Err(_) => continue,
+                    }
+                },
+                None => continue,
+            };
+            for contact in contact_list {
+                endpoints.push(self.replace_loopback(contact.end_point(),
+                                                     &transport.remote_endpoint));
+            }
         }
 
-        let mut endpoints: Vec<Endpoint> = vec![];
-        for contact in contacts {
-            endpoints.push(contact.end_point());
-        }
         endpoints
+    }
+
+    // Replace the IP in `original` with `replacement`'s IP if `original`'s is the loopback.
+    fn replace_loopback(&self, original: Endpoint, replacement: &Endpoint) -> Endpoint {
+        let is_loopback = match original.get_address().ip() {
+            IpAddr::V4(ip) => ip.is_loopback(),
+            IpAddr::V6(ip) => ip.is_loopback(),
+        };
+        if !is_loopback {
+            return original;
+        }
+        let port = original.get_address().port();
+        match *replacement {
+            Endpoint::Tcp(tcp_endpoint) => Endpoint::Tcp(SocketAddr::new(tcp_endpoint.ip(), port)),
+        }
     }
 
     fn bootstrap_off_list(&self, bootstrap_list: Vec<Endpoint>) -> io::Result<Endpoint> {
