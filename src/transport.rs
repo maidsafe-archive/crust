@@ -26,7 +26,6 @@ use beacon;
 use cbor::CborTagEncode;
 use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
 use std::cmp::Ordering;
-                                                                                                    use std::str::FromStr;
 pub type Bytes = Vec<u8>;
 
 fn array_to_vec(arr: &[u8]) -> Vec<u8> {
@@ -121,7 +120,6 @@ impl Sender {
     pub fn send(&mut self, bytes: &Bytes) -> IoResult<()> {
         match *self {
             Sender::Tcp(ref mut s) => {
-                                            println!("{:?} Sending {} bytes to {:?}", s.local_addr(), bytes.len(), s.peer_addr());
                 s.send(&bytes).map_err(|_| {
                 // FIXME: This can be done better.
                 io::Error::new(io::ErrorKind::NotConnected, "can't send")
@@ -169,7 +167,6 @@ pub struct Transport {
     pub receiver: Receiver,
     pub sender: Sender,
     pub remote_endpoint: Endpoint,
-                                                                                        pub local_endpoint: SocketAddr,
 }
 
 // FIXME: There needs to be a way to break from this blocking command.
@@ -178,13 +175,10 @@ pub fn connect(remote_ep: Endpoint) -> IoResult<Transport> {
         Endpoint::Tcp(ep) => {
             tcp_connections::connect_tcp(ep)
                 .map(|(i, o)| {
-                    let local_endpoint: SocketAddr = o.local_addr().unwrap();
-                                                                println!("WHEN CONNECTING calculated local endpoint as {:?}", local_endpoint);
                     Transport{ receiver: Receiver::Tcp(i),
                                          sender: Sender::Tcp(o),
                                          remote_endpoint: remote_ep,
-                                                                                 local_endpoint: local_endpoint,
-                                       }})
+                             }})
                 .map_err(|e| {
                     io::Error::new(io::ErrorKind::NotConnected, e.description())
                 })
@@ -203,6 +197,9 @@ pub fn new_acceptor(port: &Port) -> IoResult<Acceptor> {
                 } else {
                     try!(listener.local_addr())
                 };
+            // Discard the first connection since this is caused by calling
+            // `get_tcp_listener_local_address` above.
+            let _ = receiver.recv();
             Ok(Acceptor::Tcp(receiver, listener, local_address))
         }
     }
@@ -217,12 +214,11 @@ pub fn accept(acceptor: &Acceptor) -> IoResult<Transport> {
                 .map_err(|e| io::Error::new(io::ErrorKind::NotConnected, e.description())));
 
             let (i, o) = try!(tcp_connections::upgrade_tcp(stream));
-                                                                    println!("Accepted connection from {:?}", remote_endpoint);
 
             Ok(Transport{ receiver: Receiver::Tcp(i),
                           sender: Sender::Tcp(o),
                           remote_endpoint: Endpoint::Tcp(remote_endpoint),
-                                                                                                    local_endpoint: SocketAddr::from_str(&format!("127.0.0.1:{}", 7899)).unwrap()})
+                        })
         }
     }
 }
@@ -254,7 +250,6 @@ pub fn send(sender: &mut Sender, bytes: &Bytes) -> IoResult<()> {
 // actually the one we just created - we should maybe send a magic request and response
 // to confirm this.
 fn get_tcp_listener_local_address(listener: &TcpListener) -> IoResult<SocketAddr> {
-                                                                                        println!("CALCULATING LOCAL ENDPOINT");
     let listener_local_address = try!(listener.local_addr());
     let listener_port = listener_local_address.port();
     let host = try!(net::lookup_addr(&listener_local_address.ip()));
@@ -282,7 +277,6 @@ fn get_tcp_listener_local_address(listener: &TcpListener) -> IoResult<SocketAddr
         };
         match TcpStream::connect(attempt_address) {
             Ok(stream) => {
-                println!("Used {:?} to connect to {:?} when calculating local endpoint", stream.local_addr(), stream.peer_addr());
                 match stream.peer_addr() {
                     Ok(peer_address) => return Ok(peer_address),
                     Err(_) => (),

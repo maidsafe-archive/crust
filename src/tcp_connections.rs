@@ -45,14 +45,6 @@ where T: Encodable {
     pub fn close(self) {
         self.tcp_stream.shutdown(Shutdown::Write).ok();
     }
-
-    pub fn local_addr(&self) -> IoResult<SocketAddr> {
-        self.tcp_stream.local_addr()
-    }
-
-    pub fn peer_addr(&self) -> IoResult<SocketAddr> {
-        self.tcp_stream.peer_addr()
-    }
 }
 
 //#[unsafe_destructor]
@@ -147,13 +139,11 @@ where T: Send + Decodable + 'static {
                     Ok(a) => {
                         // Try to send, and if we can't, then the channel is closed.
                         if in_snd.send(a).is_err() {
-                                                                                        println!("READER ERROR ))))))))))))))) CLOSED");
                             break;
                         }
                     },
                     // if we can't decode, close the stream with an error.
                     Err(e) => {
-                                                                                        println!("READER ERROR ))))))))))))))) {:?}", e);
                         // let _ = in_snd.error(e);
                         break;
                     }

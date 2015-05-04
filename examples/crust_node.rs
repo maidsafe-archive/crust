@@ -38,7 +38,7 @@ use std::io;
 use std::io::Write;
 use std::net::SocketAddr;
 use std::str::FromStr;
-use std::thread::spawn;
+use std::thread;
 
 use crust::{ConnectionManager, Endpoint, Port};
 
@@ -340,7 +340,7 @@ fn main() {
     };
 
     // Start event-handling thread
-    spawn(move || {
+    thread::spawn(move || {
         let mut my_flat_world: FlatWorld = FlatWorld::new();
         loop {
             let event = channel_receiver.recv();
@@ -384,6 +384,8 @@ fn main() {
         }
     });
 
+    thread::sleep_ms(100);
+    println!("");
 
 
 

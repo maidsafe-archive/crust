@@ -16,7 +16,7 @@
 // relating to use of the SAFE Network Software.
 
 use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6, UdpSocket};
-use std::sync::mpsc;
+use std::sync::{Arc, mpsc, Mutex};
 use std::thread;
 use std::io::Result;
 use transport;
@@ -100,14 +100,14 @@ fn parse_port(data: [u8;2]) -> u16 {
 
 pub struct BroadcastAcceptor {
     socket: UdpSocket,
-//    acceptor: Acceptor,
+    acceptor: Arc<Mutex<Acceptor>>,
 }
 
 impl BroadcastAcceptor {
     pub fn new(port: u16) -> Result<BroadcastAcceptor> {
         let socket = try!(UdpSocket::bind(("0.0.0.0", port)));
-//        let acceptor = try!(transport::new_acceptor(&Port::Tcp(0)));
-        Ok(BroadcastAcceptor{ socket: socket, /*acceptor: acceptor*/ })
+        let acceptor = try!(transport::new_acceptor(&Port::Tcp(0)));
+        Ok(BroadcastAcceptor{ socket: socket, acceptor: Arc::new(Mutex::new(acceptor)) })
     }
 
     // FIXME: Proper error handling and cancelation.
@@ -115,8 +115,9 @@ impl BroadcastAcceptor {
         let (port_sender, port_receiver) = mpsc::channel::<u16>();
         let (transport_sender, transport_receiver) = mpsc::channel::<Transport>();
 
+        let protected_acceptor = self.acceptor.clone();
         let run_acceptor = move || -> Result<()> {
-            let acceptor = try!(transport::new_acceptor(&Port::Tcp(0)));
+            let acceptor = protected_acceptor.lock().unwrap();
             let _ = port_sender.send(acceptor.local_endpoint().get_address().port());
             let transport = try!(transport::accept(&acceptor));
             let _ = transport_sender.send(transport);
@@ -125,7 +126,6 @@ impl BroadcastAcceptor {
         let t1 = thread::scoped(move || { let _ = run_acceptor(); });
 
         let tcp_port = port_receiver.recv().unwrap(); // We don't expect this to fail.
-                                                                    println!("Currently waiting for beacon connect on port {}", tcp_port);
 
         let run_listener = move || -> Result<()> {
             let mut buffer = [0u8; 4];
@@ -154,8 +154,6 @@ impl BroadcastAcceptor {
     }
 }
 
-// NOTE For Fraser: This is the new function, I implemented the old one
-// (seek_peers below) using this one.
 pub fn seek_peers(port: u16) -> Result<Vec<SocketAddr>> {
     // Send broadcast ping
     let socket = try!(UdpSocket::bind("0.0.0.0:0"));
@@ -179,7 +177,7 @@ pub fn seek_peers(port: u16) -> Result<Vec<SocketAddr>> {
     thread::spawn(move || { let _ = runner(); });
 
     // Allow peers to respond.
-                                                                                                    thread::sleep_ms(50);
+    thread::sleep_ms(500);
 
     let mut result = Vec::<SocketAddr>::new();
 
@@ -193,12 +191,6 @@ pub fn seek_peers(port: u16) -> Result<Vec<SocketAddr>> {
     Ok(result)
 }
 
-// NOTE For Fraser: This is the test for the new API, I think the other one
-// should be removed because:
-// * It tests the old API (which I'm surprised passes givent that seek_peers
-//   and listen_for_broadcast are no longer compatible)
-// * It also tests the bootstrap.rs functionality but that doesn't seem to
-//   be appropriate for this file.
 #[test]
 fn test_broadcast_second_version() {
     let acceptor = BroadcastAcceptor::bind(0).unwrap();

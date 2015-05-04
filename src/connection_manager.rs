@@ -117,11 +117,9 @@ impl ConnectionManager {
                         let bootstrap_contacts = || {
                             let handler = BootStrapHandler::new();
                             let contacts = handler.get_serialised_bootstrap_contacts();
-                                                                                            println!("Sending CONTACTS: {:?}", contacts);
                             contacts
                         };
                         transport.sender.send(&bootstrap_contacts());
-                                                                                                thread::sleep_ms(5000);
                     }
                 });
                 true
@@ -152,7 +150,7 @@ impl ConnectionManager {
         };
         match bootstrap_list {
             Some(list) => self.bootstrap_off_list(list),
-            None => self.bootstrap_off_list(self.get_stored_bootstrap_endpoints(port)),
+            None => self.bootstrap_off_list(self.seek_peers(port)),
         }
     }
 
@@ -222,35 +220,36 @@ impl ConnectionManager {
         });
     }
 
-    /// Returns the stored bootstrap endpoints.
-    pub fn get_stored_bootstrap_endpoints(&self, beacon_port: u16) -> Vec<Endpoint> {
-        let mut end_points: Vec<Endpoint> = Vec::new();
-        let tcp_endpoint = beacon::seek_peers(beacon_port).unwrap()[0]; // FIXME
-                                                                                println!("REceived peer: {:?}", tcp_endpoint);
-        let mut transport = transport::connect(transport::Endpoint::Tcp(tcp_endpoint)).unwrap();
-        let contacts_str = match transport::receive(&transport.receiver) {
-            Ok(message) => {
-                                                                                println!("NOT error ********** {:?}", message);
-                message
-            },
-            Err(what) => {
-                                                                                    println!("ERROR!!!!!!!!! {}", what);
-                return Vec::<Endpoint>::new()
-            },
+    /// Uses beacon to try and collect potential bootstrap endpoints from peers on the same subnet.
+    pub fn seek_peers(&self, beacon_port: u16) -> Vec<Endpoint> {
+        // Retrieve list of peers' TCP listeners who are on same subnet as us
+        let peer_addresses = match beacon::seek_peers(beacon_port) {
+            Ok(peers) => peers,
+            Err(_) => return Vec::<Endpoint>::new(),
         };
-        let mut decoder = cbor::Decoder::from_bytes(&contacts_str[..]);
+
+        // For each contact, connect and receive their list of bootstrap contacts
         let mut contacts = BootStrapContacts::new();
-        contacts = decoder.decode().next().unwrap().unwrap();
-        for contact in contacts {
-            end_points.push(contact.end_point());
+        for peer in peer_addresses {
+            let mut transport = transport::connect(transport::Endpoint::Tcp(peer)).unwrap();
+            let contacts_str = match transport::receive(&transport.receiver) {
+                Ok(message) => message,
+                Err(_) => continue,
+            };
+            let mut decoder = cbor::Decoder::from_bytes(&contacts_str[..]);
+            contacts = decoder.decode().next().unwrap().unwrap();  // FIXME
         }
-                                                                                println!("get_stored_bootstrap_endpoints {:?}", end_points);
-        end_points
+
+        let mut endpoints: Vec<Endpoint> = vec![];
+        for contact in contacts {
+            endpoints.push(contact.end_point());
+        }
+        endpoints
     }
 
     fn bootstrap_off_list(&self, bootstrap_list: Vec<Endpoint>) -> io::Result<Endpoint> {
         for endpoint in bootstrap_list {
-            match transport::connect(endpoint) {
+            match transport::connect(endpoint.clone()) {
                 Ok(trans) => {
                     let ep = trans.remote_endpoint.clone();
                     handle_connect(self.state.downgrade(), trans, self.is_broadcast_acceptor);
@@ -326,7 +325,6 @@ fn handle_accept(mut state: WeakState, trans: transport::Transport) -> io::Resul
 
 fn handle_connect(mut state: WeakState, trans: transport::Transport, is_broadcast_acceptor: bool) -> io::Result<Endpoint> {
     let remote_ep = trans.remote_endpoint.clone();
-                                                                                    println!("HANDLING CONNECT from {:?}", remote_ep);
     let endpoint = register_connection(&mut state, trans, Event::NewConnection(remote_ep));
     if is_broadcast_acceptor {
         match endpoint {
