@@ -10,12 +10,13 @@ license = "GPL-3.0"
 homepage = "http://maidsafe.net"
 
 [dependencies]
-rustc-serialize = "*"
 cbor = "*"
 docopt = "*"
-time = "*"
-sodiumoxide = "0.0.4"
 rand = "*"
+rustc-serialize = "*"
+sodiumoxide = "0.0.4"
+term = "*"
+time = "*"
 
 [[example]]
 name = "simple_sender"
