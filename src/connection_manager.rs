@@ -15,20 +15,22 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::io::Error as IoError;
-use std::io;
+use cbor;
+use sodiumoxide::crypto::asymmetricbox;
 use std::collections::{HashMap, HashSet};
-use std::thread::spawn;
+use std::io;
+use std::io::Read;
+use std::net::TcpStream;
 use std::sync::mpsc::channel;
 use std::sync::mpsc::{Receiver, Sender};
 use std::sync::{Arc, Mutex, Weak};
 use std::sync::mpsc;
-use transport::{Endpoint, Port};
-use transport;
+use std::thread;
+
 use beacon;
 use bootstrap::{BootStrapHandler, BootStrapContacts, Contact, PublicKey};
-use sodiumoxide::crypto::asymmetricbox;
-use cbor;
+use transport;
+use transport::{Endpoint, Port};
 
 /// Type used to represent serialised data in a message.
 pub type Bytes = Vec<u8>;
@@ -99,9 +101,9 @@ impl ConnectionManager {
         };
 
         let mut used_port: Option<u16> = None;
-        self.is_broadcast_acceptor = match beacon::BroadcastAcceptor::bind(beacon_port) {
+        self.is_broadcast_acceptor = match beacon::BroadcastAcceptor::new(beacon_port) {
             Ok(acceptor) => {
-                used_port = Some(acceptor.local_addr().unwrap().port());
+                used_port = Some(acceptor.beacon_port());
                 let public_key = PublicKey::Asym(asymmetricbox::PublicKey([0u8; asymmetricbox::PUBLICKEYBYTES]));
                 let mut contacts = BootStrapContacts::new();
                 for end_point in &end_points {
@@ -109,17 +111,21 @@ impl ConnectionManager {
                 }
                 let mut bootstrap_handler = BootStrapHandler::new();
                 bootstrap_handler.add_bootstrap_contacts(contacts);
-                spawn(move || {
+                let _ = thread::spawn(move || {
                     loop {
                         let mut transport = acceptor.accept().unwrap();
                         let bootstrap_contacts = || {
                             let handler = BootStrapHandler::new();
                             let contacts = handler.get_serialised_bootstrap_contacts();
+                                                                                            println!("Sending CONTACTS: {:?}", contacts);
                             contacts
                         };
-                        transport.sender.send(&bootstrap_contacts());                    }
+                        transport.sender.send(&bootstrap_contacts());
+                                                                                                thread::sleep_ms(5000);
+                    }
                 });
-                true },
+                true
+            },
             Err(_) => false
         };
 
@@ -130,7 +136,7 @@ impl ConnectionManager {
     /// list of bootstrap nodes.
     ///
     /// If `bootstrap_list` is `None`, it will attempt to read a local cached file to populate the
-    /// list.  It will then try to connect to all of the endpoints in  the list.  It will return
+    /// list.  It will then try to connect to all of the endpoints in the list.  It will return
     /// once a connection with any of the endpoints is established with Ok(Endpoint) and it will
     /// drop all other ongoing attempts.
     ///
@@ -163,7 +169,7 @@ impl ConnectionManager {
         let ws = self.state.downgrade();
         let mut listening = HashSet::<Endpoint>::new();
         {
-            let _ = lock_mut_state(& ws, |s: &mut State| {
+            let _ = lock_mut_state(&ws, |s: &mut State| {
                 for itr in s.listening_eps.iter() {
                     listening.insert(itr.clone());
                 }
@@ -171,13 +177,16 @@ impl ConnectionManager {
             });
         }
         let is_broadcast_acceptor = self.is_broadcast_acceptor;
-        spawn(move || {
+        thread::spawn(move || {
             for endpoint in &endpoints {
                 for itr in listening.iter() {
-                    if itr.is_master(endpoint) {
+                    let unconnected: bool =
+                        lock_state(&ws, |state| Ok(state.connections.is_empty())).unwrap_or(false);
+                    if unconnected || itr.is_master(endpoint) {
                         let ws = ws.clone();
                         let result = transport::connect(endpoint.clone())
-                                     .and_then(|trans| handle_connect(ws, trans, is_broadcast_acceptor));
+                                     .and_then(|trans| handle_connect(ws, trans,
+                                               is_broadcast_acceptor));
                         if result.is_ok() { return; }
                     }
                 }
@@ -216,16 +225,26 @@ impl ConnectionManager {
     /// Returns the stored bootstrap endpoints.
     pub fn get_stored_bootstrap_endpoints(&self, beacon_port: u16) -> Vec<Endpoint> {
         let mut end_points: Vec<Endpoint> = Vec::new();
-        let tcp_endpoint = beacon::seek_peers_2(beacon_port).unwrap()[0]; // FIXME
+        let tcp_endpoint = beacon::seek_peers(beacon_port).unwrap()[0]; // FIXME
+                                                                                println!("REceived peer: {:?}", tcp_endpoint);
         let mut transport = transport::connect(transport::Endpoint::Tcp(tcp_endpoint)).unwrap();
-        let contacts_str = transport.receiver.receive().unwrap();
+        let contacts_str = match transport::receive(&transport.receiver) {
+            Ok(message) => {
+                                                                                println!("NOT error ********** {:?}", message);
+                message
+            },
+            Err(what) => {
+                                                                                    println!("ERROR!!!!!!!!! {}", what);
+                return Vec::<Endpoint>::new()
+            },
+        };
         let mut decoder = cbor::Decoder::from_bytes(&contacts_str[..]);
         let mut contacts = BootStrapContacts::new();
         contacts = decoder.decode().next().unwrap().unwrap();
         for contact in contacts {
             end_points.push(contact.end_point());
         }
-//        println!("get_stored_bootstrap_endpoints {:?}", end_points);
+                                                                                println!("get_stored_bootstrap_endpoints {:?}", end_points);
         end_points
     }
 
@@ -246,19 +265,19 @@ impl ConnectionManager {
 
     fn listen(&self, port: &Port) -> io::Result<Endpoint> {
         let acceptor = try!(transport::new_acceptor(port));
-        let local_ep = try!(transport::local_endpoint(&acceptor));
+        let local_ep = acceptor.local_endpoint();
 
         let mut weak_state = self.state.downgrade();
 
         let ep = local_ep.clone();
         try!(lock_mut_state(&mut weak_state, |s| Ok(s.listening_eps.insert(ep))));
 
-        spawn(move || {
+        thread::spawn(move || {
             loop {
                 match transport::accept(&acceptor) {
                     Ok(trans) => {
                         let ws = weak_state.clone();
-                        spawn(move || { let _ = handle_accept(ws, trans); });
+                        thread::spawn(move || { let _ = handle_accept(ws, trans); });
                     },
                     Err(_) => {break},
                 }
@@ -269,12 +288,12 @@ impl ConnectionManager {
     }
 }
 
-fn notify_user(state: &WeakState, event: Event) -> io::Result<()> {
-    lock_state(state, |s| {
-        s.event_pipe.send(event)
-        .map_err(|_|io::Error::new(io::ErrorKind::BrokenPipe, "failed to notify_user"))
-    })
-}
+// fn notify_user(state: &WeakState, event: Event) -> io::Result<()> {
+//     lock_state(state, |s| {
+//         s.event_pipe.send(event)
+//         .map_err(|_|io::Error::new(io::ErrorKind::BrokenPipe, "failed to notify_user"))
+//     })
+// }
 
 fn lock_state<T, F: FnOnce(&State) -> io::Result<T>>(state: &WeakState, f: F) -> io::Result<T> {
     state.upgrade().ok_or(io::Error::new(io::ErrorKind::Interrupted,
@@ -307,6 +326,7 @@ fn handle_accept(mut state: WeakState, trans: transport::Transport) -> io::Resul
 
 fn handle_connect(mut state: WeakState, trans: transport::Transport, is_broadcast_acceptor: bool) -> io::Result<Endpoint> {
     let remote_ep = trans.remote_endpoint.clone();
+                                                                                    println!("HANDLING CONNECT from {:?}", remote_ep);
     let endpoint = register_connection(&mut state, trans, Event::NewConnection(remote_ep));
     if is_broadcast_acceptor {
         match endpoint {
@@ -358,7 +378,7 @@ fn start_reading_thread(state: WeakState,
                         receiver: transport::Receiver,
                         his_ep: Endpoint,
                         sink: mpsc::Sender<Event>) {
-    spawn(move || {
+    thread::spawn(move || {
         loop {
             match transport::receive(&receiver) {
                 Ok(msg) => if sink.send(Event::NewMessage(his_ep.clone(), msg)).is_err() {
@@ -376,7 +396,7 @@ fn start_writing_thread(state: WeakState,
                         mut o: transport::Sender,
                         his_ep: Endpoint,
                         writer_channel: mpsc::Receiver<Bytes>) {
-    spawn(move || {
+    thread::spawn(move || {
         for msg in writer_channel.iter() {
             if transport::send(&mut o, &msg).is_err() {
                 break;
