@@ -17,13 +17,14 @@
 
 // String.as_str() is unstable; waiting RFC revision
 // http://doc.rust-lang.org/nightly/std/string/struct.String.html#method.as_str
-#![feature(core, exit_status)]
+#![feature(convert, core, exit_status)]
 
 extern crate core;
 extern crate crust;
 extern crate rustc_serialize;
 extern crate docopt;
 extern crate rand;
+extern crate term;
 extern crate time;
 
 use core::iter::FromIterator;
@@ -72,19 +73,36 @@ struct Args {
     flag_help: bool,
 }
 
+// We'll use docopt to help parse the ongoing CLI commands entered by the user.
+static CLI_USAGE: &'static str = "
+Usage:
+  cli connect <peer>
+  cli send <peer> <message>...
+  cli stop
+";
+
+#[derive(RustcDecodable, Debug)]
+struct CliArgs {
+    cmd_connect: bool,
+    cmd_send: bool,
+    cmd_stop: bool,
+    arg_peer: Option<PeerEndpoint>,
+    arg_message: Vec<String>,
+}
+
 #[derive(Debug)]
 enum PeerEndpoint {
     Tcp(SocketAddr),
 }
 
 impl Decodable for PeerEndpoint {
-    fn decode<D: Decoder>(d: &mut D)->Result<PeerEndpoint, D::Error> {
-        let str = try!(d.read_str());
+    fn decode<D: Decoder>(decoder: &mut D)->Result<PeerEndpoint, D::Error> {
+        let str = try!(decoder.read_str());
         let address = match SocketAddr::from_str(&str) {
             Ok(addr) => addr,
-            Err(what) => {
-                println!("Could not decode {} as valid IPv4 or IPv6 address.", str);
-                return Err(d.error("Failed to decode address."))
+            Err(_) => {
+                return Err(decoder.error(format!(
+                    "Could not decode {} as valid IPv4 or IPv6 address.", str).as_str()));
             },
         };
         Ok(PeerEndpoint::Tcp(address))
@@ -118,12 +136,6 @@ impl CrustNode {
             connected: connected
         }
     }
-    pub fn set_connected(&mut self) {
-        self.connected = true;
-    }
-    pub fn set_disconnected(&mut self) {
-        self.connected = false;
-    }
 }
 
 struct FlatWorld {
@@ -155,31 +167,30 @@ impl FlatWorld {
             return true;
         }
         for node in self.crust_nodes.iter_mut().filter(|node| node.endpoint == new_node.endpoint) {
-            node.set_connected();
+            node.connected = true;
         }
         return false;
     }
 
     pub fn drop_node(&mut self, lost_node: CrustNode) {
         for node in self.crust_nodes.iter_mut().filter(|node| node.endpoint == lost_node.endpoint) {
-            node.set_disconnected();
+            node.connected = false;
         }
     }
 
     pub fn print_connected_nodes(&self) {
         let connected_nodes =
             self.crust_nodes.iter().filter_map(|node|
-                if node.connected {
-                    Some(match node.endpoint { Endpoint::Tcp(socket_addr) => socket_addr })
-                } else {
-                    None
+                match node.connected {
+                    true => Some(node.endpoint.clone()),
+                    false => None,
                 }).collect::<Vec<_>>();
-        if connected_nodes.len() == 1 {
-            println!("Connected nodes: {}", connected_nodes[0]);
-        } else if connected_nodes.len() > 1 {
-            print!("Connected nodes: {}", connected_nodes[0]);
-            for i in 1..connected_nodes.len() {
-                print!(",{}", connected_nodes[i]);
+        if connected_nodes.is_empty() {
+            println!("Connected nodes: None");
+        } else {
+            print!("Connected nodes:");
+            for i in 0..connected_nodes.len() {
+                print!(" {:?}", connected_nodes[i]);
             }
             println!("");
         }
@@ -204,8 +215,52 @@ impl FlatWorld {
     }
 }
 
+fn foreground(stdout: Option<Box<term::StdoutTerminal>>, colour: u16) ->
+        Option<Box<term::StdoutTerminal>> {
+    match stdout {
+        Some(mut term) => {
+            let _ = term.fg(colour);
+            Some(term)
+        },
+        None => stdout,
+    }
+}
+
+fn green_foreground(stdout: Option<Box<term::StdoutTerminal>>) ->
+        Option<Box<term::StdoutTerminal>> {
+    foreground(stdout, term::color::BRIGHT_GREEN)
+}
+
+fn yellow_foreground(stdout: Option<Box<term::StdoutTerminal>>) ->
+        Option<Box<term::StdoutTerminal>> {
+    foreground(stdout, term::color::BRIGHT_YELLOW)
+}
+
+fn red_foreground(stdout: Option<Box<term::StdoutTerminal>>) ->
+        Option<Box<term::StdoutTerminal>> {
+    foreground(stdout, term::color::BRIGHT_RED)
+}
+
+fn cyan_foreground(stdout: Option<Box<term::StdoutTerminal>>) ->
+        Option<Box<term::StdoutTerminal>> {
+    foreground(stdout, term::color::BRIGHT_CYAN)
+}
+
+fn reset_foreground(stdout: Option<Box<term::StdoutTerminal>>) ->
+        Option<Box<term::StdoutTerminal>> {
+    match stdout {
+        Some(mut term) => {
+            let _ = term.reset();
+            Some(term)
+        },
+        None => stdout,
+    }
+}
+
 fn main() {
-    let args: Args = Docopt::new(USAGE).and_then(|d| d.decode()).unwrap_or_else(|e| e.exit());
+    let args: Args = Docopt::new(USAGE)
+                            .and_then(|docopt| docopt.decode())
+                            .unwrap_or_else(|error| error.exit());
 
     // Convert peer endpoints to usable bootstrap list.
     let bootstrap_peers = if args.arg_peer.is_empty() {
@@ -228,49 +283,14 @@ fn main() {
         Some(port) => Some(port),
         None => Some(9999u16),
     };
-                                                                                        println!("     bootstrap_peers: {:?}", bootstrap_peers);
-                                                                                        println!("     listening_hints: {:?}", listening_hints);
-                                                                                        println!("     beacon_port: {:?}", beacon_port);
-                                                                                        println!("     flag_speed: {:?}", args.flag_speed);
 
-    // Start event-handling thread
-    let (channel_sender, channel_receiver) = channel();
-    let mut my_flat_world: FlatWorld = FlatWorld::new();
-    spawn(move || {
-        loop {
-            let event = channel_receiver.recv();
-            if event.is_err() {
-                println!("Channel error - stopped listening.");
-                break;
-            }
-
-            match event.unwrap() {
-                crust::Event::NewMessage(endpoint, bytes) => {
-                    my_flat_world.record_received(bytes.len() as u32);
-                    println!("\n\nReceived from {:?} message: {}", endpoint,
-                             match String::from_utf8(bytes) {
-                                 Ok(msg) => msg,
-                                 Err(_) => "unknown msg".to_string()
-                             });
-                    print_input_line();
-                },
-                crust::Event::NewConnection(endpoint) => {
-                    println!("\n\nConnected to peer at {:?}", endpoint);
-                    my_flat_world.add_node(CrustNode::new(endpoint, true));
-                    my_flat_world.print_connected_nodes();
-                    print_input_line();
-                },
-                crust::Event::LostConnection(endpoint) => {
-                    println!("\n\nLost connection to peer at {:?}", endpoint);
-                    print_input_line();
-                    my_flat_world.drop_node(CrustNode::new(endpoint, false));
-                }
-            }
-        }
-    });
+    let mut stdout = term::stdout();
+    let mut stdout_copy = term::stdout();
 
     // Construct ConnectionManager and start listening
+    let (channel_sender, channel_receiver) = channel();
     let mut connection_manager = ConnectionManager::new(channel_sender);
+    stdout = green_foreground(stdout);
     let listening_endpoints = match connection_manager.start_listening(listening_hints,
                                                                        beacon_port) {
         Ok(endpoints) => endpoints,
@@ -288,28 +308,82 @@ fn main() {
         Some(beacon_port) => println!("and listening for UDP broadcast on port {}.", beacon_port),
         None => println!("and not listening for UDP broadcasts."),
     };
+    stdout = reset_foreground(stdout);
 
     // Try to bootstrap.  If no peer endpoints were provided and bootstrapping fails, assume this is
     // OK, i.e. this is the first node of a new network.
     match connection_manager.bootstrap(bootstrap_peers.clone(), beacon_port) {
-        Ok(endpoint) => println!("Bootstrapped to {:?}", endpoint),
+        Ok(endpoint) => {
+            stdout = green_foreground(stdout);
+            println!("Bootstrapped to {:?}", endpoint);
+            stdout = reset_foreground(stdout);
+        },
         Err(e) => {
             match bootstrap_peers {
                 Some(_) => {
+                    stdout = red_foreground(stdout);
                     println!("Failed to bootstrap from provided peers with error: {}\nSince peers \
                              were provided, this is assumed to NOT be the first node of a new \
                              network.\nExiting.", e);
+                    reset_foreground(stdout);
                     std::env::set_exit_status(2);
                     return;
                 },
-                None => println!("Didn't bootstrap to an existing network - this is the first node \
-                                 of a new network."),
+                None => {
+                    stdout = yellow_foreground(stdout);
+                    println!("Didn't bootstrap to an existing network - this is the first node \
+                                 of a new network.");
+                    stdout = reset_foreground(stdout);
+                }
             };
         }
     };
 
+    // Start event-handling thread
+    spawn(move || {
+        let mut my_flat_world: FlatWorld = FlatWorld::new();
+        loop {
+            let event = channel_receiver.recv();
+            if event.is_err() {
+                stdout_copy = red_foreground(stdout_copy);
+                println!("Channel error - stopped listening.");
+                stdout_copy = reset_foreground(stdout_copy);
+                break;
+            }
 
-//    sleep_ms(200000);
+            match event.unwrap() {
+                crust::Event::NewMessage(endpoint, bytes) => {
+                    my_flat_world.record_received(bytes.len() as u32);
+                    stdout_copy = cyan_foreground(stdout_copy);
+                    println!("\nReceived from {:?} message: {}", endpoint,
+                             match String::from_utf8(bytes) {
+                                 Ok(msg) => msg,
+                                 Err(_) => "unknown msg".to_string()
+                             });
+                    stdout_copy = reset_foreground(stdout_copy);
+                    print_input_line();
+                },
+                crust::Event::NewConnection(endpoint) => {
+                    stdout_copy = cyan_foreground(stdout_copy);
+                    println!("\nConnected to peer at {:?}", endpoint);
+                    my_flat_world.add_node(CrustNode::new(endpoint, true));
+                    my_flat_world.print_connected_nodes();
+                    stdout_copy = reset_foreground(stdout_copy);
+                    print_input_line();
+                },
+                crust::Event::LostConnection(endpoint) => {
+                    stdout_copy = yellow_foreground(stdout_copy);
+                    println!("\nLost connection to peer at {:?}", endpoint);
+                    stdout_copy = cyan_foreground(stdout_copy);
+                    my_flat_world.drop_node(CrustNode::new(endpoint, false));
+                    my_flat_world.print_connected_nodes();
+                    stdout_copy = reset_foreground(stdout_copy);
+                    print_input_line();
+                }
+            }
+        }
+    });
+
 
 
 
@@ -360,29 +434,52 @@ fn main() {
     //         command.clear();
     //     }
     // } else {
-    let mut command = String::new();
+    let ref mut command = String::new();
+    let docopt: Docopt = Docopt::new(CLI_USAGE).unwrap_or_else(|error| error.exit());
+    let mut stdin = io::stdin();
     loop {
         command.clear();
         print_input_line();
-        let _ = io::stdin().read_line(&mut command);
-        let v: Vec<&str> = command.split(' ').collect();
-        match v[0].trim() {
-            "stop" => break,
-            "send" => {
-                let endpoint_address = match SocketAddr::from_str(v[1]) {
-                    Ok(addr) => addr,
-                    Err(_) => continue
+        let _ = stdin.read_line(command);
+        let x: &[_] = &['\r', '\n'];
+        let mut raw_args: Vec<&str> = command.trim_right_matches(x).split(' ').collect();
+        raw_args.insert(0, "cli");
+        let args: CliArgs = match docopt.clone().argv(raw_args.into_iter()).decode() {
+            Ok(args) => args,
+            Err(error) => {
+                match error {
+                    docopt::Error::Decode(what) => println!("{}", what),
+                    _ => println!("Invalid command."),
                 };
-                let _ = connection_manager.send(Endpoint::Tcp(endpoint_address), v[2].to_string().into_bytes());
+                continue
             },
-            "connect" => {
-                let endpoint_address = match SocketAddr::from_str(v[1].trim()) {
-                    Ok(addr) => addr,
-                    Err(_) => continue
-                };
-                connection_manager.connect(vec![Endpoint::Tcp(endpoint_address)]);
-            }
-            _ => {},
+        };
+
+        if args.cmd_connect {
+            // docopt should ensure arg_peer is valid
+            assert!(args.arg_peer.is_some());
+            let peer = vec![Endpoint::Tcp(match args.arg_peer.unwrap() {
+                PeerEndpoint::Tcp(address) => address,
+            })];
+            connection_manager.connect(peer);
+        } else if args.cmd_send {
+            // docopt should ensure arg_peer and arg_message are valid
+            assert!(args.arg_peer.is_some());
+            assert!(!args.arg_message.is_empty());
+            let peer = Endpoint::Tcp(match args.arg_peer.unwrap() {
+                PeerEndpoint::Tcp(address) => address,
+            });
+            let mut message: String = args.arg_message[0].clone();
+            for i in 1..args.arg_message.len() {
+                message.push_str(" ");
+                message.push_str(args.arg_message[i].as_str());
+            };
+            let _ = connection_manager.send(peer, message.into_bytes());
+        } else if args.cmd_stop {
+            stdout = green_foreground(stdout);
+            println!("Stopping.");
+            reset_foreground(stdout);
+            break;
         }
     }
     // }
