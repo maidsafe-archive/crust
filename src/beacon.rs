@@ -165,6 +165,10 @@ impl BroadcastAcceptor {
             Err(_) => 0u16,
         }
     }
+
+    pub fn beacon_guid(&self) -> GUID {
+        self.guid
+    }
 }
 
 pub fn seek_peers(port: u16, guid_to_avoid: Option<GUID>) -> Result<Vec<SocketAddr>> {

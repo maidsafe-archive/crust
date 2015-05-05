@@ -39,7 +39,7 @@ type WeakState = Weak<Mutex<State>>;
 /// A structure representing a connection manager
 pub struct ConnectionManager {
     state: Arc<Mutex<State>>,
-    is_broadcast_acceptor: bool,
+    beacon_guid: Option<beacon::GUID>,
 }
 
 /// Enum representing different events that will be sent over the asynchronous channel to the user
@@ -72,7 +72,7 @@ impl ConnectionManager {
                                                connections: HashMap::new(),
                                                listening_eps: HashSet::new(),
                                              }));
-        ConnectionManager { state: state, is_broadcast_acceptor: false }
+        ConnectionManager { state: state, beacon_guid: None, }
     }
 
     /// Starts listening on all supported protocols. Specified hint will be tried first. If it fails
@@ -100,7 +100,7 @@ impl ConnectionManager {
         };
 
         let mut used_port: Option<u16> = None;
-        self.is_broadcast_acceptor = match beacon::BroadcastAcceptor::new(beacon_port) {
+        self.beacon_guid = match beacon::BroadcastAcceptor::new(beacon_port) {
             Ok(acceptor) => {
                 used_port = Some(acceptor.beacon_port());
                 let public_key = PublicKey::Asym(asymmetricbox::PublicKey([0u8; asymmetricbox::PUBLICKEYBYTES]));
@@ -110,6 +110,7 @@ impl ConnectionManager {
                 }
                 let mut bootstrap_handler = BootStrapHandler::new();
                 bootstrap_handler.add_bootstrap_contacts(contacts);
+                let beacon_guid = Some(acceptor.beacon_guid());
                 let _ = thread::spawn(move || {
                     loop {
                         let mut transport = acceptor.accept().unwrap();
@@ -121,9 +122,9 @@ impl ConnectionManager {
                         let _ = transport.sender.send(&bootstrap_contacts());
                     }
                 });
-                true
+                beacon_guid
             },
-            Err(_) => false
+            Err(_) => None
         };
 
         Ok((end_points, used_port))
@@ -173,7 +174,7 @@ impl ConnectionManager {
                 Ok(())
             });
         }
-        let is_broadcast_acceptor = self.is_broadcast_acceptor;
+        let is_broadcast_acceptor = self.beacon_guid.is_some();
         thread::spawn(move || {
             for endpoint in &endpoints {
                 for itr in listening.iter() {
@@ -222,7 +223,7 @@ impl ConnectionManager {
     /// Uses beacon to try and collect potential bootstrap endpoints from peers on the same subnet.
     pub fn seek_peers(&self, beacon_port: u16) -> Vec<Endpoint> {
         // Retrieve list of peers' TCP listeners who are on same subnet as us
-        let peer_addresses = match beacon::seek_peers(beacon_port, None) {
+        let peer_addresses = match beacon::seek_peers(beacon_port, self.beacon_guid) {
             Ok(peers) => peers,
             Err(_) => return Vec::<Endpoint>::new(),
         };
@@ -274,7 +275,7 @@ impl ConnectionManager {
             match transport::connect(endpoint.clone()) {
                 Ok(trans) => {
                     let ep = trans.remote_endpoint.clone();
-                    handle_connect(self.state.downgrade(), trans, self.is_broadcast_acceptor);
+                    handle_connect(self.state.downgrade(), trans, self.beacon_guid.is_some());
                     return Ok(ep)
                 },
                 Err(_) => continue,
