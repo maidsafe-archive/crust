@@ -15,20 +15,21 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::io::Error as IoError;
-use std::io;
+use cbor;
+use sodiumoxide::crypto::asymmetricbox;
 use std::collections::{HashMap, HashSet};
-use std::thread::spawn;
+use std::io;
+use std::net::{IpAddr, SocketAddr};
 use std::sync::mpsc::channel;
 use std::sync::mpsc::{Receiver, Sender};
 use std::sync::{Arc, Mutex, Weak};
 use std::sync::mpsc;
-use transport::{Endpoint, Port};
-use transport;
+use std::thread;
+
 use beacon;
 use bootstrap::{BootStrapHandler, BootStrapContacts, Contact, PublicKey};
-use sodiumoxide::crypto::asymmetricbox;
-use cbor;
+use transport;
+use transport::{Endpoint, Port};
 
 /// Type used to represent serialised data in a message.
 pub type Bytes = Vec<u8>;
@@ -99,9 +100,9 @@ impl ConnectionManager {
         };
 
         let mut used_port: Option<u16> = None;
-        self.is_broadcast_acceptor = match beacon::BroadcastAcceptor::bind(beacon_port) {
+        self.is_broadcast_acceptor = match beacon::BroadcastAcceptor::new(beacon_port) {
             Ok(acceptor) => {
-                used_port = Some(acceptor.local_addr().unwrap().port());
+                used_port = Some(acceptor.beacon_port());
                 let public_key = PublicKey::Asym(asymmetricbox::PublicKey([0u8; asymmetricbox::PUBLICKEYBYTES]));
                 let mut contacts = BootStrapContacts::new();
                 for end_point in &end_points {
@@ -109,7 +110,7 @@ impl ConnectionManager {
                 }
                 let mut bootstrap_handler = BootStrapHandler::new();
                 bootstrap_handler.add_bootstrap_contacts(contacts);
-                spawn(move || {
+                let _ = thread::spawn(move || {
                     loop {
                         let mut transport = acceptor.accept().unwrap();
                         let bootstrap_contacts = || {
@@ -117,9 +118,11 @@ impl ConnectionManager {
                             let contacts = handler.get_serialised_bootstrap_contacts();
                             contacts
                         };
-                        transport.sender.send(&bootstrap_contacts());                    }
+                        let _ = transport.sender.send(&bootstrap_contacts());
+                    }
                 });
-                true },
+                true
+            },
             Err(_) => false
         };
 
@@ -130,7 +133,7 @@ impl ConnectionManager {
     /// list of bootstrap nodes.
     ///
     /// If `bootstrap_list` is `None`, it will attempt to read a local cached file to populate the
-    /// list.  It will then try to connect to all of the endpoints in  the list.  It will return
+    /// list.  It will then try to connect to all of the endpoints in the list.  It will return
     /// once a connection with any of the endpoints is established with Ok(Endpoint) and it will
     /// drop all other ongoing attempts.
     ///
@@ -146,7 +149,7 @@ impl ConnectionManager {
         };
         match bootstrap_list {
             Some(list) => self.bootstrap_off_list(list),
-            None => self.bootstrap_off_list(self.get_stored_bootstrap_endpoints(port)),
+            None => self.bootstrap_off_list(self.seek_peers(port)),
         }
     }
 
@@ -163,7 +166,7 @@ impl ConnectionManager {
         let ws = self.state.downgrade();
         let mut listening = HashSet::<Endpoint>::new();
         {
-            let _ = lock_mut_state(& ws, |s: &mut State| {
+            let _ = lock_mut_state(&ws, |s: &mut State| {
                 for itr in s.listening_eps.iter() {
                     listening.insert(itr.clone());
                 }
@@ -171,13 +174,16 @@ impl ConnectionManager {
             });
         }
         let is_broadcast_acceptor = self.is_broadcast_acceptor;
-        spawn(move || {
+        thread::spawn(move || {
             for endpoint in &endpoints {
                 for itr in listening.iter() {
-                    if itr.is_master(endpoint) {
+                    let unconnected: bool =
+                        lock_state(&ws, |state| Ok(state.connections.is_empty())).unwrap_or(false);
+                    if unconnected || itr.is_master(endpoint) {
                         let ws = ws.clone();
                         let result = transport::connect(endpoint.clone())
-                                     .and_then(|trans| handle_connect(ws, trans, is_broadcast_acceptor));
+                                     .and_then(|trans| handle_connect(ws, trans,
+                                               is_broadcast_acceptor));
                         if result.is_ok() { return; }
                     }
                 }
@@ -213,25 +219,59 @@ impl ConnectionManager {
         });
     }
 
-    /// Returns the stored bootstrap endpoints.
-    pub fn get_stored_bootstrap_endpoints(&self, beacon_port: u16) -> Vec<Endpoint> {
-        let mut end_points: Vec<Endpoint> = Vec::new();
-        let tcp_endpoint = beacon::seek_peers_2(beacon_port).unwrap()[0]; // FIXME
-        let mut transport = transport::connect(transport::Endpoint::Tcp(tcp_endpoint)).unwrap();
-        let contacts_str = transport.receiver.receive().unwrap();
-        let mut decoder = cbor::Decoder::from_bytes(&contacts_str[..]);
-        let mut contacts = BootStrapContacts::new();
-        contacts = decoder.decode().next().unwrap().unwrap();
-        for contact in contacts {
-            end_points.push(contact.end_point());
+    /// Uses beacon to try and collect potential bootstrap endpoints from peers on the same subnet.
+    pub fn seek_peers(&self, beacon_port: u16) -> Vec<Endpoint> {
+        // Retrieve list of peers' TCP listeners who are on same subnet as us
+        let peer_addresses = match beacon::seek_peers(beacon_port) {
+            Ok(peers) => peers,
+            Err(_) => return Vec::<Endpoint>::new(),
+        };
+
+        // For each contact, connect and receive their list of bootstrap contacts
+        let mut endpoints: Vec<Endpoint> = vec![];
+        for peer in peer_addresses {
+            let transport = transport::connect(transport::Endpoint::Tcp(peer)).unwrap();
+            let contacts_str = match transport::receive(&transport.receiver) {
+                Ok(message) => message,
+                Err(_) => continue,
+            };
+            let mut decoder = cbor::Decoder::from_bytes(&contacts_str[..]);
+            let contact_list: BootStrapContacts = match decoder.decode().next() {
+                Some(message) => {
+                    match message {
+                        Ok(contacts) => contacts,
+                        Err(_) => continue,
+                    }
+                },
+                None => continue,
+            };
+            for contact in contact_list {
+                endpoints.push(self.replace_loopback(contact.end_point(),
+                                                     &transport.remote_endpoint));
+            }
         }
-//        println!("get_stored_bootstrap_endpoints {:?}", end_points);
-        end_points
+
+        endpoints
+    }
+
+    // Replace the IP in `original` with `replacement`'s IP if `original`'s is the loopback.
+    fn replace_loopback(&self, original: Endpoint, replacement: &Endpoint) -> Endpoint {
+        let is_loopback = match original.get_address().ip() {
+            IpAddr::V4(ip) => ip.is_loopback(),
+            IpAddr::V6(ip) => ip.is_loopback(),
+        };
+        if !is_loopback {
+            return original;
+        }
+        let port = original.get_address().port();
+        match *replacement {
+            Endpoint::Tcp(tcp_endpoint) => Endpoint::Tcp(SocketAddr::new(tcp_endpoint.ip(), port)),
+        }
     }
 
     fn bootstrap_off_list(&self, bootstrap_list: Vec<Endpoint>) -> io::Result<Endpoint> {
         for endpoint in bootstrap_list {
-            match transport::connect(endpoint) {
+            match transport::connect(endpoint.clone()) {
                 Ok(trans) => {
                     let ep = trans.remote_endpoint.clone();
                     handle_connect(self.state.downgrade(), trans, self.is_broadcast_acceptor);
@@ -246,19 +286,19 @@ impl ConnectionManager {
 
     fn listen(&self, port: &Port) -> io::Result<Endpoint> {
         let acceptor = try!(transport::new_acceptor(port));
-        let local_ep = try!(transport::local_endpoint(&acceptor));
+        let local_ep = acceptor.local_endpoint();
 
         let mut weak_state = self.state.downgrade();
 
         let ep = local_ep.clone();
         try!(lock_mut_state(&mut weak_state, |s| Ok(s.listening_eps.insert(ep))));
 
-        spawn(move || {
+        thread::spawn(move || {
             loop {
                 match transport::accept(&acceptor) {
                     Ok(trans) => {
                         let ws = weak_state.clone();
-                        spawn(move || { let _ = handle_accept(ws, trans); });
+                        thread::spawn(move || { let _ = handle_accept(ws, trans); });
                     },
                     Err(_) => {break},
                 }
@@ -269,12 +309,12 @@ impl ConnectionManager {
     }
 }
 
-fn notify_user(state: &WeakState, event: Event) -> io::Result<()> {
-    lock_state(state, |s| {
-        s.event_pipe.send(event)
-        .map_err(|_|io::Error::new(io::ErrorKind::BrokenPipe, "failed to notify_user"))
-    })
-}
+// fn notify_user(state: &WeakState, event: Event) -> io::Result<()> {
+//     lock_state(state, |s| {
+//         s.event_pipe.send(event)
+//         .map_err(|_|io::Error::new(io::ErrorKind::BrokenPipe, "failed to notify_user"))
+//     })
+// }
 
 fn lock_state<T, F: FnOnce(&State) -> io::Result<T>>(state: &WeakState, f: F) -> io::Result<T> {
     state.upgrade().ok_or(io::Error::new(io::ErrorKind::Interrupted,
@@ -358,7 +398,7 @@ fn start_reading_thread(state: WeakState,
                         receiver: transport::Receiver,
                         his_ep: Endpoint,
                         sink: mpsc::Sender<Event>) {
-    spawn(move || {
+    thread::spawn(move || {
         loop {
             match transport::receive(&receiver) {
                 Ok(msg) => if sink.send(Event::NewMessage(his_ep.clone(), msg)).is_err() {
@@ -376,7 +416,7 @@ fn start_writing_thread(state: WeakState,
                         mut o: transport::Sender,
                         his_ep: Endpoint,
                         writer_channel: mpsc::Receiver<Bytes>) {
-    spawn(move || {
+    thread::spawn(move || {
         for msg in writer_channel.iter() {
             if transport::send(&mut o, &msg).is_err() {
                 break;

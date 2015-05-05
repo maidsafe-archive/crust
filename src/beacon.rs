@@ -16,12 +16,11 @@
 // relating to use of the SAFE Network Software.
 
 use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6, UdpSocket};
-use std::sync::mpsc;
+use std::sync::{Arc, mpsc, Mutex};
 use std::thread;
-use std::thread::spawn;
 use std::io::Result;
 use transport;
-use transport::{Port};
+use transport::{Acceptor, Port, Transport};
 
 const MAGIC: [u8; 4] = ['m' as u8, 'a' as u8, 'i' as u8, 'd' as u8];
 
@@ -101,29 +100,30 @@ fn parse_port(data: [u8;2]) -> u16 {
 
 pub struct BroadcastAcceptor {
     socket: UdpSocket,
+    acceptor: Arc<Mutex<Acceptor>>,
 }
 
 impl BroadcastAcceptor {
-    pub fn bind(port: u16) -> Result<BroadcastAcceptor> {
+    pub fn new(port: u16) -> Result<BroadcastAcceptor> {
         let socket = try!(UdpSocket::bind(("0.0.0.0", port)));
-        Ok(BroadcastAcceptor{ socket: socket })
+        let acceptor = try!(transport::new_acceptor(&Port::Tcp(0)));
+        Ok(BroadcastAcceptor{ socket: socket, acceptor: Arc::new(Mutex::new(acceptor)) })
     }
 
     // FIXME: Proper error handling and cancelation.
     pub fn accept(&self) -> Result<transport::Transport> {
-        use transport::{Transport};
-
         let (port_sender, port_receiver) = mpsc::channel::<u16>();
         let (transport_sender, transport_receiver) = mpsc::channel::<Transport>();
 
+        let protected_acceptor = self.acceptor.clone();
         let run_acceptor = move || -> Result<()> {
-            let acceptor = try!(transport::new_acceptor(&Port::Tcp(0)));
-            let _ = port_sender.send(try!(transport::local_endpoint(&acceptor)).get_address().port());
+            let acceptor = protected_acceptor.lock().unwrap();
+            let _ = port_sender.send(acceptor.local_endpoint().get_address().port());
             let transport = try!(transport::accept(&acceptor));
             let _ = transport_sender.send(transport);
             Ok(())
         };
-        let t1 = thread::spawn(move || { let _ = run_acceptor(); });
+        let t1 = thread::scoped(move || { let _ = run_acceptor(); });
 
         let tcp_port = port_receiver.recv().unwrap(); // We don't expect this to fail.
 
@@ -146,20 +146,21 @@ impl BroadcastAcceptor {
         Ok(transport_receiver.recv().unwrap())
     }
 
-    pub fn local_addr(&self) -> Result<SocketAddr> {
-        self.socket.local_addr()
+    pub fn beacon_port(&self) -> u16 {
+        match self.socket.local_addr() {
+            Ok(address) => address.port(),
+            Err(_) => 0u16,
+        }
     }
 }
 
-// NOTE For Fraser: This is the new function, I implemented the old one
-// (seek_peers below) using this one.
-pub fn seek_peers_2(port: u16) -> Result<Vec<SocketAddr>> {
+pub fn seek_peers(port: u16) -> Result<Vec<SocketAddr>> {
     // Send broadcast ping
     let socket = try!(UdpSocket::bind("0.0.0.0:0"));
     try!(socket.set_broadcast(true));
     try!(socket.send_to(&MAGIC, ("255.255.255.255", port)));
 
-    let (tx,rx) = mpsc::channel::<SocketAddr>();
+    let (tx, rx) = mpsc::channel::<SocketAddr>();
 
     // FIXME: This thread will never finish, eating one udp port
     // and few resources till the end of the program. I haven't
@@ -168,7 +169,7 @@ pub fn seek_peers_2(port: u16) -> Result<Vec<SocketAddr>> {
         let mut buffer = [0u8; 2];
         let (_, source) = try!(socket.recv_from(&mut buffer));
         let his_port = parse_port(buffer);
-        let his_ep   = SocketAddr::new(source.ip(), his_port);
+        let his_ep = SocketAddr::new(source.ip(), his_port);
         let _ = tx.send(his_ep);
         Ok(())
     };
@@ -190,12 +191,6 @@ pub fn seek_peers_2(port: u16) -> Result<Vec<SocketAddr>> {
     Ok(result)
 }
 
-// NOTE For Fraser: This is the test for the new API, I think the other one
-// should be removed because:
-// * It tests the old API (which I'm surprised passes givent that seek_peers
-//   and listen_for_broadcast are no longer compatible)
-// * It also tests the bootstrap.rs functionality but that doesn't seem to
-//   be appropriate for this file.
 #[test]
 fn test_broadcast_second_version() {
     let acceptor = BroadcastAcceptor::bind(0).unwrap();
@@ -207,7 +202,7 @@ fn test_broadcast_second_version() {
     });
 
     let t2 = thread::spawn(move || {
-        let endpoint = seek_peers_2(acceptor_port).unwrap()[0];
+        let endpoint = seek_peers(acceptor_port).unwrap()[0];
         let mut transport = transport::connect(transport::Endpoint::Tcp(endpoint)).unwrap();
         let msg = String::from_utf8(transport.receiver.receive().unwrap()).unwrap();
         assert!(msg == "hello beacon".to_string());

@@ -55,9 +55,8 @@ impl <T> Drop for OutTcpStream<T> {
 }
 
 /// Connect to a peer and open a send-receive pair.  See `upgrade` for more details.
-pub fn connect_tcp<'a, 'b, I, O>(addr: SocketAddr) ->
-IoResult<(Receiver<I>, OutTcpStream<O>)>
-where I: Send + Decodable + 'static, O: Encodable {
+pub fn connect_tcp<'a, 'b, I, O>(addr: SocketAddr) -> IoResult<(Receiver<I>, OutTcpStream<O>)>
+        where I: Send + Decodable + 'static, O: Encodable {
     Ok(try!(upgrade_tcp(try!(TcpStream::connect(&addr)))))
 }
 
@@ -66,13 +65,17 @@ where I: Send + Decodable + 'static, O: Encodable {
 /// * A receiver of Tcp stream objects.  It is recommended that you `upgrade` these.
 /// * A TcpAcceptor.  This can be used to close the listener from outside of the listening thread.
 pub fn listen(port: u16) -> IoResult<(Receiver<(TcpStream, SocketAddr)>, TcpListener)> {
-    let live_address = (("0.0.0.0"), port);
-    let any_address = (("0.0.0.0"), 0);
-    let tcp_listener = match TcpListener::bind(live_address) {
-        Ok(x) => x,
-        Err(_) => TcpListener::bind(&any_address).unwrap()
+    let tcp_listener = {
+        /*if let Ok(listener) = TcpListener::bind(("::", port)) {
+            listener
+        } else if let Ok(listener) = TcpListener::bind(("::", 0)) {
+            listener
+        } else*/ if let Ok(listener) = TcpListener::bind(("0.0.0.0", port)) {
+            listener
+        } else {
+            try!(TcpListener::bind(("0.0.0.0", 0)))
+        }
     };
-    //println!("Listening on {:?}", tcp_listener.local_addr().unwrap());
     let (tx, rx) = mpsc::channel();
 
     let tcp_listener2 = try!(tcp_listener.try_clone());
