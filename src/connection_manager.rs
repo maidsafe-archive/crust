@@ -621,7 +621,7 @@ mod test {
 
         let mut network = Network { nodes: Vec::new() };
         let stats = Arc::new(Mutex::new(Stats {new_connections_count: 0, messages_count: 0, lost_connection_count: 0}));
-        let (stats_tx, stats_rx): (Sender<Event>, Receiver<Event>) = channel();
+        let (stats_tx, stats_rx) = channel::<Event>();
         let mut runners = Vec::new();
         let mut beacon_port: u16 = 0;
         for _ in 0..NETWORK_SIZE {
@@ -637,7 +637,8 @@ mod test {
         let run_stats = stats_accumulator(stats.clone(), stats_rx);
 
         let mut listening_end_points = Vec::new();
-            for node in network.nodes.iter() {
+
+        for node in network.nodes.iter() {
             listening_end_points.push(get_endpoint(node));
         }
 
@@ -683,7 +684,12 @@ mod test {
 
         let stats_copy = stats.clone();
         let stat = stats_copy.lock().unwrap();
-        assert_eq!(stat.new_connections_count, NETWORK_SIZE * (NETWORK_SIZE - 1));
+        // It is currently not the case that ConnectionManager guarantees at
+        // most one connection between any two peers (although it does make
+        // some effort in the `connect` function to do so). It is currently
+        // in the TODO. When/if this will be the case, replace the >= operator
+        // with ==.
+        assert!(stat.new_connections_count >= NETWORK_SIZE * (NETWORK_SIZE - 1));
         assert_eq!(stat.messages_count,  NETWORK_SIZE * MESSAGE_PER_NODE * (NETWORK_SIZE - 1));
         assert_eq!(stat.lost_connection_count, 0);
     }
