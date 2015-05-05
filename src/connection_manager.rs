@@ -222,7 +222,7 @@ impl ConnectionManager {
     /// Uses beacon to try and collect potential bootstrap endpoints from peers on the same subnet.
     pub fn seek_peers(&self, beacon_port: u16) -> Vec<Endpoint> {
         // Retrieve list of peers' TCP listeners who are on same subnet as us
-        let peer_addresses = match beacon::seek_peers(beacon_port) {
+        let peer_addresses = match beacon::seek_peers(beacon_port, None) {
             Ok(peers) => peers,
             Err(_) => return Vec::<Endpoint>::new(),
         };
