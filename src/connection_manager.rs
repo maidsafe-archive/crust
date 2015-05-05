@@ -515,7 +515,8 @@ mod test {
         let mut cm2 = ConnectionManager::new(cm2_i);
         let _ = cm2.start_listening(vec![Port::Tcp(0)], beacon_port.clone()).unwrap();
         match cm2.bootstrap(None, beacon_port) {
-            Ok(ep) => { assert_eq!(ep.clone(), cm1_eps[0].clone()); },
+            Ok(ep) => { assert_eq!(ep.clone().get_address().port(),
+                                   cm1_eps[0].clone().get_address().port()); },
             Err(_) => { panic!("Failed to bootstrap"); }
         }
     }
@@ -527,20 +528,20 @@ mod test {
                 for i in o.iter() {
                     match i {
                         Event::NewConnection(other_ep) => {
-                            println!("Connected {:?}", other_ep);
+                            // println!("Connected {:?}", other_ep);
                             let _ = cm.send(other_ep.clone(), encode(&"hello world".to_string()));
                         },
                         Event::NewMessage(from_ep, data) => {
-                            println!("New message from {:?} data:{:?}",
-                                     from_ep, decode::<String>(data));
+                            // println!("New message from {:?} data:{:?}",
+                            //          from_ep, decode::<String>(data));
                             break;
                         },
                         Event::LostConnection(other_ep) => {
-                            println!("Lost connection to {:?}", other_ep);
+                            // println!("Lost connection to {:?}", other_ep);
                         }
                     }
                 }
-                println!("done");
+                // println!("done");
             })
         };
 
@@ -582,7 +583,7 @@ mod test {
                         }
                     }
                 }
-                println!("done");
+                // println!("done");
             })
         };
 
@@ -697,15 +698,15 @@ mod test {
           Ok(result) => {
                 if result.1.is_some() {
                     let beacon_addr = SocketAddr::from_str(&format!("127.0.0.1:{}", result.1.unwrap())).unwrap();
-                    println!("main beacon on {} ", beacon_addr);
+                    // println!("main beacon on {} ", beacon_addr);
                     cm_beacon_addr = Endpoint::Tcp(beacon_addr);
                 }
                 if result.0.len() > 0 {
-                    println!("main listening on {} ",
-                             match result.0[0].clone() { Endpoint::Tcp(socket_addr) => { socket_addr } });
+                    // println!("main listening on {} ",
+                    //          match result.0[0].clone() { Endpoint::Tcp(socket_addr) => { socket_addr } });
                     cm_listen_addr = result.0[0].clone();
                 } else {
-                    panic!("main connection manager start_listening none listening port returned");
+                    // panic!("main connection manager start_listening none listening port returned");
                 }
               }
           Err(_) => panic!("main connection manager start_listening failure")
@@ -715,20 +716,20 @@ mod test {
            loop {
                 let event = cm_rx.recv();
                 if event.is_err() {
-                  println!("stop listening");
+                  // println!("stop listening");
                   break;
                 }
                 match event.unwrap() {
                     Event::NewMessage(endpoint, bytes) => {
-                        println!("received from {} with a new message : {}",
-                                 match endpoint { Endpoint::Tcp(socket_addr) => socket_addr },
-                                 match String::from_utf8(bytes) { Ok(msg) => msg, Err(_) => "unknown msg".to_string() });
+                        // println!("received from {} with a new message : {}",
+                        //          match endpoint { Endpoint::Tcp(socket_addr) => socket_addr },
+                        //          match String::from_utf8(bytes) { Ok(msg) => msg, Err(_) => "unknown msg".to_string() });
                     },
                     Event::NewConnection(endpoint) => {
-                        println!("adding new node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
+                        // println!("adding new node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
                     },
                     Event::LostConnection(endpoint) => {
-                        println!("dropping node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
+                        // println!("dropping node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
                         break;
                     }
                 }
@@ -742,8 +743,8 @@ mod test {
             // setting the listening port to be greater than 4455 will make the test hanging
             let _ = match cm_aux.start_listening(vec![Port::Tcp(4454)], None) {
                 Ok(result) => {
-                      println!("aux listening on {} ",
-                               match result.0[0].clone() { Endpoint::Tcp(socket_addr) => { socket_addr } });
+                      // println!("aux listening on {} ",
+                      //          match result.0[0].clone() { Endpoint::Tcp(socket_addr) => { socket_addr } });
                       result.0[0].clone()
                     },
                 Err(_) => panic!("aux connection manager start_listening failure")

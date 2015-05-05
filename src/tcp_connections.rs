@@ -193,7 +193,7 @@ mod test {
         for a in i.iter() {
             responses.push(a);
         }
-        println!("Responses: {:?}", responses);
+        // println!("Responses: {:?}", responses);
         assert_eq!(10, responses.len());
     }
 
@@ -259,13 +259,13 @@ mod test {
             };
         }
 
-        println!("Responses: {:?}", responses);
+        // println!("Responses: {:?}", responses);
         assert_eq!((NODE_COUNT * MSG_COUNT), responses.len());
     }
 
 
- #[test]
-    fn graceful_port_close() {
+ // #[test]
+    // fn graceful_port_close() {
         //use std::net::{TcpListener};
         //use std::sync::mpsc;
         //use std::thread::spawn;
@@ -295,7 +295,7 @@ mod test {
         ////    let second_binding = listener.local_addr().unwrap();
         ////    assert_eq!(first_binding.port(), second_binding.port());
         ////}
-    }
+    // }
 
 // #[test]
 // fn test_stream_large_data() {
