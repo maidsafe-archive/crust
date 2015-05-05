@@ -15,13 +15,14 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use rand::random;
+use std::io::Result;
 use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6, UdpSocket};
 use std::sync::{Arc, mpsc, Mutex};
 use std::thread;
-use std::io::Result;
+
 use transport;
 use transport::{Acceptor, Port, Transport};
-use rand::random;
 
 const GUID_SIZE: usize = 16;
 const MAGIC_SIZE: usize = 4;
@@ -113,7 +114,11 @@ impl BroadcastAcceptor {
     pub fn new(port: u16) -> Result<BroadcastAcceptor> {
         let socket = try!(UdpSocket::bind(("0.0.0.0", port)));
         let acceptor = try!(transport::new_acceptor(&Port::Tcp(0)));
-        Ok(BroadcastAcceptor{ guid: [random::<u8>(); GUID_SIZE],
+        let mut guid = [0; GUID_SIZE];
+        for i in 0..GUID_SIZE {
+            guid[i] = random::<u8>();
+        }
+        Ok(BroadcastAcceptor{ guid: guid,
                               socket: socket,
                               acceptor: Arc::new(Mutex::new(acceptor)) })
     }
@@ -164,6 +169,10 @@ impl BroadcastAcceptor {
             Ok(address) => address.port(),
             Err(_) => 0u16,
         }
+    }
+
+    pub fn beacon_guid(&self) -> GUID {
+        self.guid
     }
 }
 
