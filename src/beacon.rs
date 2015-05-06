@@ -250,49 +250,58 @@ pub fn seek_peers(port: u16, guid_to_avoid: Option<GUID>) -> Result<Vec<SocketAd
     Ok(result)
 }
 
-#[test]
-fn test_beacon() {
-    let acceptor = BroadcastAcceptor::new(0).unwrap();
-    let acceptor_port = acceptor.beacon_port();
 
-    let t1 = thread::spawn(move || {
-        let mut transport = acceptor.accept().unwrap();
-        transport.sender.send(&"hello beacon".to_string().into_bytes()).unwrap();
-    });
 
-    let t2 = thread::spawn(move || {
-        let endpoint = seek_peers(acceptor_port, None).unwrap()[0];
-        let transport = transport::connect(transport::Endpoint::Tcp(endpoint)).unwrap();
-        let msg = String::from_utf8(transport.receiver.receive().unwrap()).unwrap();
-        assert!(msg == "hello beacon".to_string());
-    });
+#[cfg(test)]
+mod test {
+    use super::*;
+    use std::thread;
+    use transport;
 
-    assert!(t1.join().is_ok());
-    assert!(t2.join().is_ok());
-}
+    #[test]
+    fn test_beacon() {
+        let acceptor = BroadcastAcceptor::new(0).unwrap();
+        let acceptor_port = acceptor.beacon_port();
 
-#[test]
-fn test_avoid_beacon() {
-    let acceptor = BroadcastAcceptor::new(0).unwrap();
-    let acceptor_port = acceptor.beacon_port();
-    let my_guid = acceptor.guid.clone();
+        let t1 = thread::spawn(move || {
+            let mut transport = acceptor.accept().unwrap();
+            transport.sender.send(&"hello beacon".to_string().into_bytes()).unwrap();
+        });
 
-    let t1 = thread::spawn(move || {
-        let _ = acceptor.accept().unwrap();
-    });
+        let t2 = thread::spawn(move || {
+            let endpoint = seek_peers(acceptor_port, None).unwrap()[0];
+            let transport = transport::connect(transport::Endpoint::Tcp(endpoint)).unwrap();
+            let msg = String::from_utf8(transport.receiver.receive().unwrap()).unwrap();
+            assert!(msg == "hello beacon".to_string());
+        });
 
-    let t2 = thread::spawn(move || {
-        assert!(seek_peers(acceptor_port, Some(my_guid)).unwrap().len() == 0);
-    });
+        assert!(t1.join().is_ok());
+        assert!(t2.join().is_ok());
+    }
 
-    // This one is just so that the first thread breaks.
-    let t3 = thread::spawn(move || {
-        thread::sleep_ms(700);
-        let endpoint = seek_peers(acceptor_port, None).unwrap()[0];
-        let _ = transport::connect(transport::Endpoint::Tcp(endpoint)).unwrap();
-    });
+    #[test]
+    fn test_avoid_beacon() {
+        let acceptor = BroadcastAcceptor::new(0).unwrap();
+        let acceptor_port = acceptor.beacon_port();
+        let my_guid = acceptor.guid.clone();
 
-    assert!(t1.join().is_ok());
-    assert!(t2.join().is_ok());
-    assert!(t3.join().is_ok());
+        let t1 = thread::spawn(move || {
+            let _ = acceptor.accept().unwrap();
+        });
+
+        let t2 = thread::spawn(move || {
+            assert!(seek_peers(acceptor_port, Some(my_guid)).unwrap().len() == 0);
+        });
+
+        // This one is just so that the first thread breaks.
+        let t3 = thread::spawn(move || {
+            thread::sleep_ms(700);
+            let endpoint = seek_peers(acceptor_port, None).unwrap()[0];
+            let _ = transport::connect(transport::Endpoint::Tcp(endpoint)).unwrap();
+        });
+
+        assert!(t1.join().is_ok());
+        assert!(t2.join().is_ok());
+        assert!(t3.join().is_ok());
+    }
 }
