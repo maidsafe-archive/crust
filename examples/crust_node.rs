@@ -29,10 +29,10 @@ extern crate time;
 
 use core::iter::FromIterator;
 use docopt::Docopt;
-use rand::random;
-use rand::Rng;
+// use rand::random;
+// use rand::Rng;
 use rustc_serialize::{Decodable, Decoder};
-use std::cmp;
+// use std::cmp;
 use std::sync::mpsc::channel;
 use std::io;
 use std::io::Write;
@@ -109,13 +109,13 @@ impl Decodable for PeerEndpoint {
     }
 }
 
-fn generate_random_vec_u8(size: usize) -> Vec<u8> {
-    let mut vec: Vec<u8> = Vec::with_capacity(size);
-    for _ in 0..size {
-        vec.push(random::<u8>());
-    }
-    vec
-}
+// fn generate_random_vec_u8(size: usize) -> Vec<u8> {
+//     let mut vec: Vec<u8> = Vec::with_capacity(size);
+//     for _ in 0..size {
+//         vec.push(random::<u8>());
+//     }
+//     vec
+// }
 
 fn print_input_line() {
     print!("Enter command (stop | connect <endpoint> | send <endpoint> <message>)>");

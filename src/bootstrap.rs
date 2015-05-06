@@ -25,23 +25,20 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::path;
 use std::env;
-use std::cmp;
 use std::fmt;
 
 pub type BootStrapContacts = Vec<Contact>;
 
-static MAX_LIST_SIZE: usize = 1500;
+// static MAX_LIST_SIZE: usize = 1500;
 
 macro_rules! convert_to_array {
     ($container:ident, $size:expr) => {{
         if $container.len() != $size {
             None
         } else {
-            use std::mem;
-            let mut arr : [_; $size] = unsafe { mem::uninitialized() };
+            let mut arr = [0u8; $size];
             for element in $container.into_iter().enumerate() {
-                let old_val = mem::replace(&mut arr[element.0], element.1);
-                unsafe { mem::forget(old_val) };
+                arr[element.0] = element.1;
             }
             Some(arr)
         }
@@ -54,7 +51,7 @@ pub enum PublicKey {
     Sign(crypto::sign::PublicKey),
 }
 
-impl cmp::PartialEq for PublicKey {
+impl PartialEq for PublicKey {
     fn eq(&self, other: &PublicKey) -> bool {
         match *self {
             PublicKey::Asym(key0) => {
@@ -116,7 +113,7 @@ impl Encodable for Contact {
 
 impl Decodable for Contact {
     fn decode<D: Decoder>(d: &mut D)->Result<Contact, D::Error> {
-        try!(d.read_u64());
+        let _ = try!(d.read_u64());
         let (endpoint, public_key) : (Endpoint, Vec<u8>) = try!(Decodable::decode(d));
         let public_key = convert_to_array!(public_key, crypto::asymmetricbox::PUBLICKEYBYTES);
 
@@ -176,9 +173,9 @@ impl BootStrapHandler {
         bootstrap
     }
 
-    pub fn get_max_list_size() -> usize {
-        MAX_LIST_SIZE
-    }
+    // pub fn get_max_list_size() -> usize {
+    //     MAX_LIST_SIZE
+    // }
 
     pub fn get_update_duration() -> time::Duration {
         time::Duration::hours(4)
@@ -191,28 +188,28 @@ impl BootStrapHandler {
         }
     }
 
-    pub fn read_bootstrap_contacts(&self) -> BootStrapContacts {
-        let mut contacts = BootStrapContacts::new();
-        match File::open(&self.file_name) {
-            Ok(mut file) =>  {
-                let mut content = Vec::<u8>::new();
+    // pub fn read_bootstrap_contacts(&self) -> BootStrapContacts {
+    //     let mut contacts = BootStrapContacts::new();
+    //     match File::open(&self.file_name) {
+    //         Ok(mut file) =>  {
+    //             let mut content = Vec::<u8>::new();
 
-                let size = file.read_to_end(&mut content);
+    //             let size = file.read_to_end(&mut content);
 
-                match size {
-                    Ok(s) => {
-                        if s != 0 {
-                            let mut decoder = cbor::Decoder::from_bytes(&content[..]);
-                            contacts = decoder.decode().next().unwrap().unwrap();
-                        }
-                    },
-                    _ => panic!("Failed to read file")
-                }
-                contacts
-            },
-            _ => panic!("Could not open file"),
-        }
-    }
+    //             match size {
+    //                 Ok(s) => {
+    //                     if s != 0 {
+    //                         let mut decoder = cbor::Decoder::from_bytes(&content[..]);
+    //                         contacts = decoder.decode().next().unwrap().unwrap();
+    //                     }
+    //                 },
+    //                 _ => panic!("Failed to read file")
+    //             }
+    //             contacts
+    //         },
+    //         _ => panic!("Could not open file"),
+    //     }
+    // }
 
     pub fn get_serialised_bootstrap_contacts(&self) -> Vec<u8> {
         match File::open(&self.file_name) {
@@ -232,18 +229,18 @@ impl BootStrapHandler {
         }
     }
 
-    pub fn replace_bootstrap_contacts(&mut self, contacts: BootStrapContacts) {
-        self.remove_bootstrap_contacts();
-        self.insert_bootstrap_contacts(contacts);
-    }
+    // pub fn replace_bootstrap_contacts(&mut self, contacts: BootStrapContacts) {
+    //     self.remove_bootstrap_contacts();
+    //     self.insert_bootstrap_contacts(contacts);
+    // }
 
-    pub fn out_of_date(&self) -> bool {
-        time::now() > self.last_updated + BootStrapHandler::get_update_duration()
-    }
+    // pub fn out_of_date(&self) -> bool {
+    //     time::now() > self.last_updated + BootStrapHandler::get_update_duration()
+    // }
 
-    pub fn reset_timer(&mut self) {
-        self.last_updated = time::now();
-    }
+    // pub fn reset_timer(&mut self) {
+    //     self.last_updated = time::now();
+    // }
 
     fn insert_bootstrap_contacts(&mut self, contacts: BootStrapContacts) {
     	if !contacts.is_empty() {
@@ -280,12 +277,12 @@ impl BootStrapHandler {
         }
     }
 
-    pub fn remove_bootstrap_contacts(&mut self) {
- 		File::create(&self.file_name);
-    }
+    // pub fn remove_bootstrap_contacts(&mut self) {
+    //     File::create(&self.file_name);
+    // }
 
     fn check_bootstrap_contacts(&self) {
-        ;
+        unimplemented!();
     }
 }
 
@@ -319,7 +316,7 @@ mod test {
         use std::path::Path;
 
         let mut contacts = Vec::new();
-        for i in 0..10 {
+        for _ in 0..10 {
             let mut random_addr_0 = Vec::with_capacity(4);
             random_addr_0.push(rand::random::<u8>());
             random_addr_0.push(rand::random::<u8>());
@@ -333,8 +330,8 @@ mod test {
             contacts.push(new_contact);
         }
 
-        let contacts_clone = contacts.clone();
-        let file_name = super::BootStrapHandler::get_file_name();
+        // let contacts_clone = contacts.clone();
+        let file_name = BootStrapHandler::get_file_name();
         let path = Path::new(&file_name);
 
         let mut bootstrap_handler = BootStrapHandler::new();
@@ -342,15 +339,16 @@ mod test {
         assert!(file.is_ok()); // Check whether the database file is created
         // Add Contacts
         bootstrap_handler.add_bootstrap_contacts(contacts);
+        // TODO - uncomment once the function is uncomemnted
         // Read Contacts
-        let mut read_contact = bootstrap_handler.read_bootstrap_contacts();
-        assert_eq!(read_contact.len(), 10);
-        let empty_contact: Vec<Contact> = Vec::new();
+        // let mut read_contact = bootstrap_handler.read_bootstrap_contacts();
+        // assert_eq!(read_contact.len(), 10);
+        // let empty_contact: Vec<Contact> = Vec::new();
         // Replace Contacts
-        bootstrap_handler.replace_bootstrap_contacts(empty_contact);
-        assert_eq!(contacts_clone.len(), read_contact.len());
+        // bootstrap_handler.replace_bootstrap_contacts(empty_contact);
+        // assert_eq!(contacts_clone.len(), read_contact.len());
         // Assert Replace
-        read_contact = bootstrap_handler.read_bootstrap_contacts();
-        assert!(read_contact.len() == 0);
+        // read_contact = bootstrap_handler.read_bootstrap_contacts();
+        // assert!(read_contact.len() == 0);
     }
 }

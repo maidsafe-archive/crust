@@ -23,7 +23,7 @@ use std::thread::spawn;
 use std::marker::PhantomData;
 use rustc_serialize::{Decodable, Encodable};
 use std::sync::mpsc;
-use std::sync::mpsc::{Receiver};
+use std::sync::mpsc::Receiver;
 
 pub type InTcpStream<T> = Receiver<T>;
 
@@ -42,15 +42,16 @@ where T: Encodable {
         e.encode(&[&m])
     }
 
+    #[allow(dead_code)]
     pub fn close(self) {
-        self.tcp_stream.shutdown(Shutdown::Write).ok();
+        let _ = self.tcp_stream.shutdown(Shutdown::Write);
     }
 }
 
 //#[unsafe_destructor]
 impl <T> Drop for OutTcpStream<T> {
     fn drop(&mut self) {
-        self.tcp_stream.shutdown(Shutdown::Write).ok();
+        let _ = self.tcp_stream.shutdown(Shutdown::Write);
     }
 }
 
@@ -79,7 +80,7 @@ pub fn listen(port: u16) -> IoResult<(Receiver<(TcpStream, SocketAddr)>, TcpList
     let (tx, rx) = mpsc::channel();
 
     let tcp_listener2 = try!(tcp_listener.try_clone());
-    spawn(move || {
+    let _ = spawn(move || {
         loop {
             // if tx.is_closed() {       // FIXME (Prakash)
             //     break;
@@ -93,7 +94,7 @@ pub fn listen(port: u16) -> IoResult<(Receiver<(TcpStream, SocketAddr)>, TcpList
                 Err(ref e) if e.kind() == ErrorKind::TimedOut => {
                     continue;
                 }
-                Err(e) => {
+                Err(_) => {
                     //let _  = tx.error(e);
                     break;
                 }
@@ -126,7 +127,7 @@ fn upgrade_reader<'a, T>(stream: TcpStream) -> InTcpStream<T>
 where T: Send + Decodable + 'static {
     let (in_snd, in_rec) = mpsc::channel();
 
-    spawn(move || {
+    let _ = spawn(move || {
         let mut buffer = BufReader::new(stream);
         {
             let mut decoder = Decoder::from_reader(&mut buffer);
@@ -143,7 +144,7 @@ where T: Send + Decodable + 'static {
                         }
                     },
                     // if we can't decode, close the stream with an error.
-                    Err(e) => {
+                    Err(_) => {
                         // let _ = in_snd.error(e);
                         break;
                     }
@@ -162,7 +163,7 @@ where T: Send + Decodable + 'static {
 mod test {
     use super::*;
     use std::thread;
-    use std::net::{SocketAddr};
+    use std::net::SocketAddr;
     use std::str::FromStr;
 
  #[test]
@@ -175,11 +176,11 @@ mod test {
             if o.send(&x).is_err() { break; }
         }
         o.close();
-        thread::spawn(move || {
+        let _ = thread::spawn(move || {
             for x in event_receiver.iter() {
                 let (connection, _) = x;
                 // Spawn a new thread for each connection that we get.
-                thread::spawn(move || {
+                let _ = thread::spawn(move || {
                     let (i, mut o) = upgrade_tcp(connection).unwrap();
                     for x in i.iter() {
                         let x:u32 = x;
@@ -223,7 +224,7 @@ mod test {
 
         //  close sender
         loop {
-           let sender = match vector_senders.pop() {
+           let _ = match vector_senders.pop() {
                 None => break, // empty
                 Some(sender) => sender.close(),
             };
@@ -231,11 +232,11 @@ mod test {
 
 
         // event_receiver
-        thread::spawn(move || {
+        let _ = thread::spawn(move || {
             for x in event_receiver.iter() {
                 let (connection, _) = x;
                 // Spawn a new thread for each connection that we get.
-                thread::spawn(move || {
+                let _ = thread::spawn(move || {
                     let (i, mut o) = upgrade_tcp(connection).unwrap();
                     for x in i.iter() {
                         let x:u32 = x;
@@ -249,7 +250,7 @@ mod test {
         let mut responses: Vec<(u64, u64)> = Vec::new();
 
         loop {
-           let receiver = match vector_receiver.pop() {
+           let _ = match vector_receiver.pop() {
                 None => break, // empty
                 Some(receiver) => {
                     for a in receiver.iter() {
