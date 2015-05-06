@@ -355,6 +355,7 @@ fn main() {
     };
 
     // Start event-handling thread
+    let running_speed_test = args.flag_speed.is_some();
     thread::spawn(move || {
         let mut my_flat_world: FlatWorld = FlatWorld::new();
         loop {
@@ -376,16 +377,12 @@ fn main() {
                                  Ok(message) => message,
                                  Err(_) => format!("non-UTF-8 message of {} bytes", message_length)
                              });
-                    stdout_copy = reset_foreground(stdout_copy);
-                    print_input_line();
                 },
                 crust::Event::NewConnection(endpoint) => {
                     stdout_copy = cyan_foreground(stdout_copy);
                     println!("\nConnected to peer at {:?}", endpoint);
                     my_flat_world.add_node(CrustNode::new(endpoint, true));
                     my_flat_world.print_connected_nodes();
-                    stdout_copy = reset_foreground(stdout_copy);
-                    print_input_line();
                 },
                 crust::Event::LostConnection(endpoint) => {
                     stdout_copy = yellow_foreground(stdout_copy);
@@ -393,9 +390,11 @@ fn main() {
                     stdout_copy = cyan_foreground(stdout_copy);
                     my_flat_world.drop_node(CrustNode::new(endpoint, false));
                     my_flat_world.print_connected_nodes();
-                    stdout_copy = reset_foreground(stdout_copy);
-                    print_input_line();
                 }
+            }
+            stdout_copy = reset_foreground(stdout_copy);
+            if !running_speed_test {
+                print_input_line();
             }
         }
     });
@@ -403,18 +402,26 @@ fn main() {
     thread::sleep_ms(100);
     println!("");
 
-    if args.flag_speed.is_some() {  // Processing interaction till receiving ctrl+C
-        let speed = args.flag_speed.unwrap();
-        let mut rng = rand::thread_rng();
+    if running_speed_test {  // Processing interaction till receiving ctrl+C
+        let speed = args.flag_speed.unwrap();  // Safe due to `running_speed_test` == true
         let peer = connected_peer.unwrap();  // Safe due to checks above
+        let mut rng = rand::thread_rng();
         loop {
             let length = rng.gen_range(50, speed);
             let times = cmp::max(1, speed / length);
             let sleep_time = cmp::max(1, 1000 / times);
             for _ in 0..times {
-                println!("Sending a message with length of {} bytes to {:?}", length, peer);
-                let _ = connection_manager.send(peer.clone(),
-                                                generate_random_vec_u8(length as usize));
+                match connection_manager.send(peer.clone(),
+                                              generate_random_vec_u8(length as usize)) {
+                    Ok(()) => println!("Sent a message with length of {} bytes to {:?}", length,
+                                       peer),
+                    Err(_) => {
+                        stdout = red_foreground(stdout);
+                        println!("Lost connection to peer.  Exiting.");
+                        reset_foreground(stdout);
+                        return;
+                    },
+                };
                 std::thread::sleep_ms(sleep_time as u32);
             }
         }
