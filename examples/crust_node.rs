@@ -186,9 +186,13 @@ impl FlatWorld {
                     false => None,
                 }).collect::<Vec<_>>();
         if connected_nodes.is_empty() {
-            println!("Connected nodes: None");
+            println!("No connected nodes.");
         } else {
-            print!("Connected nodes:");
+            if connected_nodes.len() == 1 {
+                print!("1 connected node:");
+            } else {
+                print!("{} connected nodes:", connected_nodes.len());
+            }
             for i in 0..connected_nodes.len() {
                 print!(" {:?}", connected_nodes[i]);
             }
@@ -476,7 +480,32 @@ fn main() {
                 message.push_str(" ");
                 message.push_str(args.arg_message[i].as_str());
             };
-            let _ = connection_manager.send(peer, message.into_bytes());
+            match connection_manager.send(peer.clone(), message.clone().into_bytes()) {
+                Ok(()) => {
+                    stdout = green_foreground(stdout);
+                    println!("Successfully sent \"{}\" to {:?}", message, peer);
+                    stdout = reset_foreground(stdout)
+                },
+                Err(error) => {
+                    match error.kind() {
+                        io::ErrorKind::NotConnected => {
+                            stdout = yellow_foreground(stdout);
+                            println!("Failed to send: we have no connection to {:?}", peer);
+                            stdout = reset_foreground(stdout)
+                        },
+                        io::ErrorKind::BrokenPipe => {
+                            stdout = yellow_foreground(stdout);
+                            println!("Failed to send to {:?}: internal channel error.", peer);
+                            stdout = reset_foreground(stdout)
+                        },
+                        _ => {
+                            stdout = yellow_foreground(stdout);
+                            println!("Failed to send to {:?}: unexpected error.", peer);
+                            stdout = reset_foreground(stdout)
+                        },
+                    }
+                },
+            }
         } else if args.cmd_stop {
             stdout = green_foreground(stdout);
             println!("Stopping.");
