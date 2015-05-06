@@ -79,7 +79,7 @@ impl Encodable for Endpoint {
 
 impl Decodable for Endpoint {
     fn decode<D: Decoder>(d: &mut D)->Result<Endpoint, D::Error> {
-        try!(d.read_u64());
+        let _ = try!(d.read_u64());
         let decoded: Vec<u8> = try!(Decodable::decode(d));
         let address: SocketAddr = beacon::parse_address(&decoded).unwrap();
 
@@ -135,7 +135,7 @@ pub enum Receiver {
 }
 
 impl Receiver {
-    pub fn receive(&mut self) -> IoResult<Bytes> {
+    pub fn receive(&self) -> IoResult<Bytes> {
         match *self {
             Receiver::Tcp(ref r) => {
                 match r.recv() {
@@ -220,25 +220,6 @@ pub fn accept(acceptor: &Acceptor) -> IoResult<Transport> {
                           remote_endpoint: Endpoint::Tcp(remote_endpoint),
                         })
         }
-    }
-}
-
-// FIXME: This function is deprecated in favor of Receiver::receive
-pub fn receive(receiver: &Receiver) -> IoResult<Bytes> {
-    match *receiver {
-        Receiver::Tcp(ref r) => r.recv().map_err(|e| {
-            io::Error::new(io::ErrorKind::NotConnected, e.description())
-        })
-    }
-}
-
-// FIXME: This function is deprecated in favor of Sender::send
-pub fn send(sender: &mut Sender, bytes: &Bytes) -> IoResult<()> {
-    match *sender {
-        Sender::Tcp(ref mut s) => s.send(&bytes).map_err(|_| {
-            // FIXME: This can be done better.
-            io::Error::new(io::ErrorKind::NotConnected, "can't send")
-        })
     }
 }
 

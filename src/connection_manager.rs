@@ -20,10 +20,7 @@ use sodiumoxide::crypto::asymmetricbox;
 use std::collections::{HashMap, HashSet};
 use std::io;
 use std::net::{IpAddr, SocketAddr};
-use std::sync::mpsc::channel;
-use std::sync::mpsc::{Receiver, Sender};
-use std::sync::{Arc, Mutex, Weak};
-use std::sync::mpsc;
+use std::sync::{Arc, mpsc, Mutex, Weak};
 use std::thread;
 
 use beacon;
@@ -175,7 +172,7 @@ impl ConnectionManager {
             });
         }
         let is_broadcast_acceptor = self.beacon_guid.is_some();
-        thread::spawn(move || {
+        let _ = thread::spawn(move || {
             for endpoint in &endpoints {
                 for itr in listening.iter() {
                     let unconnected: bool =
@@ -215,7 +212,7 @@ impl ConnectionManager {
     pub fn drop_node(&self, endpoint: Endpoint) {
         let mut ws = self.state.downgrade();
         let _ = lock_mut_state(&mut ws, |s: &mut State| {
-            s.connections.remove(&endpoint);
+            let _ = s.connections.remove(&endpoint);
             Ok(())
         });
     }
@@ -232,7 +229,7 @@ impl ConnectionManager {
         let mut endpoints: Vec<Endpoint> = vec![];
         for peer in peer_addresses {
             let transport = transport::connect(transport::Endpoint::Tcp(peer)).unwrap();
-            let contacts_str = match transport::receive(&transport.receiver) {
+            let contacts_str = match transport.receiver.receive() {
                 Ok(message) => message,
                 Err(_) => continue,
             };
@@ -275,7 +272,8 @@ impl ConnectionManager {
             match transport::connect(endpoint.clone()) {
                 Ok(trans) => {
                     let ep = trans.remote_endpoint.clone();
-                    handle_connect(self.state.downgrade(), trans, self.beacon_guid.is_some());
+                    let _ = try!(handle_connect(self.state.downgrade(), trans,
+                                                self.beacon_guid.is_some()));
                     return Ok(ep)
                 },
                 Err(_) => continue,
@@ -294,12 +292,12 @@ impl ConnectionManager {
         let ep = local_ep.clone();
         try!(lock_mut_state(&mut weak_state, |s| Ok(s.listening_eps.insert(ep))));
 
-        thread::spawn(move || {
+        let _ = thread::spawn(move || {
             loop {
                 match transport::accept(&acceptor) {
                     Ok(trans) => {
                         let ws = weak_state.clone();
-                        thread::spawn(move || { let _ = handle_accept(ws, trans); });
+                        let _ = thread::spawn(move || { let _ = handle_accept(ws, trans); });
                     },
                     Err(_) => {break},
                 }
@@ -375,8 +373,9 @@ fn register_connection( state: &mut WeakState,
     lock_mut_state(state, move |s: &mut State| {
         let (tx, rx) = mpsc::channel();
         start_writing_thread(state2.clone(), trans.sender, trans.remote_endpoint.clone(), rx);
-        start_reading_thread(state2, trans.receiver, trans.remote_endpoint.clone(), s.event_pipe.clone());
-        s.connections.insert(trans.remote_endpoint.clone(), Connection{writer_channel: tx});
+        start_reading_thread(state2, trans.receiver, trans.remote_endpoint.clone(),
+                             s.event_pipe.clone());
+        let _ = s.connections.insert(trans.remote_endpoint.clone(), Connection{writer_channel: tx});
         let _ = s.event_pipe.send(event_to_user);
         Ok(trans.remote_endpoint)
     })
@@ -399,9 +398,9 @@ fn start_reading_thread(state: WeakState,
                         receiver: transport::Receiver,
                         his_ep: Endpoint,
                         sink: mpsc::Sender<Event>) {
-    thread::spawn(move || {
+    let _ = thread::spawn(move || {
         loop {
-            match transport::receive(&receiver) {
+            match receiver.receive() {
                 Ok(msg) => if sink.send(Event::NewMessage(his_ep.clone(), msg)).is_err() {
                     break
                 },
@@ -414,17 +413,17 @@ fn start_reading_thread(state: WeakState,
 
 // pushing messages out to socket
 fn start_writing_thread(state: WeakState,
-                        mut o: transport::Sender,
+                        mut sender: transport::Sender,
                         his_ep: Endpoint,
                         writer_channel: mpsc::Receiver<Bytes>) {
-    thread::spawn(move || {
+    let _ = thread::spawn(move || {
         for msg in writer_channel.iter() {
-            if transport::send(&mut o, &msg).is_err() {
+            if sender.send(&msg).is_err() {
                 break;
             }
         }
         unregister_connection(state, his_ep);
-        });
+    });
 }
 
 #[cfg(test)]
@@ -531,12 +530,12 @@ mod test {
                             // println!("Connected {:?}", other_ep);
                             let _ = cm.send(other_ep.clone(), encode(&"hello world".to_string()));
                         },
-                        Event::NewMessage(from_ep, data) => {
+                        Event::NewMessage(_, _) => {
                             // println!("New message from {:?} data:{:?}",
                             //          from_ep, decode::<String>(data));
                             break;
                         },
-                        Event::LostConnection(other_ep) => {
+                        Event::LostConnection(_) => {
                             // println!("Lost connection to {:?}", other_ep);
                         }
                     }
@@ -646,7 +645,7 @@ mod test {
             for end_point in listening_end_points.iter().filter(|&ep| get_endpoint(node).ne(ep)) {
                 let node = node.clone();
                 let ep = end_point.clone();
-                spawn(move || {
+                let _ = spawn(move || {
                     let node = node.lock().unwrap();
                     node.conn_mgr.connect(vec![ep]);
                 });
@@ -666,7 +665,7 @@ mod test {
                 for _ in 0..MESSAGE_PER_NODE {
                     let node = node.clone();
                     let ep = end_point.clone();
-                    spawn(move || {
+                    let _ = spawn(move || {
                         let node = node.lock().unwrap();
                         let _ = node.conn_mgr.send(ep.clone(), encode(&"MESSAGE".to_string()));
                     });
@@ -679,7 +678,7 @@ mod test {
         let _ = run_stats.join();
 
         for _ in 0..NETWORK_SIZE {
-            network.nodes.remove(0);
+            let _ = network.nodes.remove(0);
         }
 
         let stats_copy = stats.clone();
@@ -699,13 +698,11 @@ mod test {
         let (cm_tx, cm_rx) = channel();
         let mut cm = ConnectionManager::new(cm_tx);
         let mut cm_listen_addr = Endpoint::Tcp(SocketAddr::from_str(&"127.0.0.1:0").unwrap());
-        let mut cm_beacon_addr = Endpoint::Tcp(SocketAddr::from_str(&"127.0.0.1:0").unwrap());
         match cm.start_listening(vec![Port::Tcp(4455)], Some(5483)) {
           Ok(result) => {
                 if result.1.is_some() {
-                    let beacon_addr = SocketAddr::from_str(&format!("127.0.0.1:{}", result.1.unwrap())).unwrap();
+                    let _ = SocketAddr::from_str(&format!("127.0.0.1:{}", result.1.unwrap())).unwrap();
                     // println!("main beacon on {} ", beacon_addr);
-                    cm_beacon_addr = Endpoint::Tcp(beacon_addr);
                 }
                 if result.0.len() > 0 {
                     // println!("main listening on {} ",
@@ -726,15 +723,15 @@ mod test {
                   break;
                 }
                 match event.unwrap() {
-                    Event::NewMessage(endpoint, bytes) => {
+                    Event::NewMessage(_, _) => {
                         // println!("received from {} with a new message : {}",
                         //          match endpoint { Endpoint::Tcp(socket_addr) => socket_addr },
                         //          match String::from_utf8(bytes) { Ok(msg) => msg, Err(_) => "unknown msg".to_string() });
                     },
-                    Event::NewConnection(endpoint) => {
+                    Event::NewConnection(_) => {
                         // println!("adding new node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
                     },
-                    Event::LostConnection(endpoint) => {
+                    Event::LostConnection(_) => {
                         // println!("dropping node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
                         break;
                     }
@@ -743,7 +740,7 @@ mod test {
           });
         thread::sleep_ms(100);
 
-        spawn(move || {
+        let _ = spawn(move || {
             let (cm_aux_tx, _) = channel();
             let mut cm_aux = ConnectionManager::new(cm_aux_tx);
             // setting the listening port to be greater than 4455 will make the test hanging

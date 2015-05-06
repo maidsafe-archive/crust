@@ -124,7 +124,7 @@ impl BroadcastAcceptor {
     }
 
     // FIXME: Proper error handling and cancelation.
-    pub fn accept(&self) -> Result<transport::Transport> {
+    pub fn accept(&self) -> Result<Transport> {
         let (port_sender, port_receiver) = mpsc::channel::<u16>();
         let (transport_sender, transport_receiver) = mpsc::channel::<Transport>();
 
@@ -141,17 +141,14 @@ impl BroadcastAcceptor {
         let tcp_port = port_receiver.recv().unwrap(); // We don't expect this to fail.
 
         let run_listener = move || -> Result<()> {
-            //let mut buffer = [0u8; 4];
-            let buffer_size = MAGIC_SIZE + GUID_SIZE;
-            let mut buffer = Vec::with_capacity(buffer_size);
-            for i in 0..buffer_size { buffer.push(0); }
-
+            let mut buffer = vec![0u8; MAGIC_SIZE + GUID_SIZE];
             loop {
                 let (_, source) = try!(self.socket.recv_from(&mut buffer[..]));
                 if buffer[0..MAGIC_SIZE] != MAGIC { continue; }
                 if buffer[MAGIC_SIZE..(MAGIC_SIZE+GUID_SIZE)] == self.guid { continue; }
                 let reply_socket = try!(UdpSocket::bind("0.0.0.0:0"));
-                try!(reply_socket.send_to(&serialise_port(tcp_port), source));
+                let sent_size = try!(reply_socket.send_to(&serialise_port(tcp_port), source));
+                debug_assert!(sent_size == 2);
                 break;
             }
             Ok(())
@@ -186,7 +183,8 @@ pub fn seek_peers(port: u16, guid_to_avoid: Option<GUID>) -> Result<Vec<SocketAd
     let guid = guid_to_avoid.unwrap_or([0; GUID_SIZE]);
     for c in guid.iter() { send_buff.push(c.clone()); }
 
-    try!(socket.send_to(&send_buff[..], ("255.255.255.255", port)));
+    let sent_size = try!(socket.send_to(&send_buff[..], ("255.255.255.255", port)));
+    debug_assert!(sent_size == send_buff.len());
 
     let (tx, rx) = mpsc::channel::<SocketAddr>();
 
@@ -202,7 +200,7 @@ pub fn seek_peers(port: u16, guid_to_avoid: Option<GUID>) -> Result<Vec<SocketAd
         Ok(())
     };
 
-    thread::spawn(move || { let _ = runner(); });
+    let _ = thread::spawn(move || { let _ = runner(); });
 
     // Allow peers to respond.
     thread::sleep_ms(500);
@@ -231,7 +229,7 @@ fn test_beacon() {
 
     let t2 = thread::spawn(move || {
         let endpoint = seek_peers(acceptor_port, None).unwrap()[0];
-        let mut transport = transport::connect(transport::Endpoint::Tcp(endpoint)).unwrap();
+        let transport = transport::connect(transport::Endpoint::Tcp(endpoint)).unwrap();
         let msg = String::from_utf8(transport.receiver.receive().unwrap()).unwrap();
         assert!(msg == "hello beacon".to_string());
     });
@@ -247,7 +245,7 @@ fn test_avoid_beacon() {
     let my_guid = acceptor.guid.clone();
 
     let t1 = thread::spawn(move || {
-        let mut transport = acceptor.accept().unwrap();
+        let _ = acceptor.accept().unwrap();
     });
 
     let t2 = thread::spawn(move || {
