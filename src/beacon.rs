@@ -96,12 +96,25 @@ pub fn parse_address(buffer: &[u8]) -> Option<SocketAddr> {
     }
 }
 
-fn serialise_port(port: u16) -> [u8;2] {
+fn serialise_port(port: u16) -> [u8; 2] {
     [(port & 0xff) as u8, (port >> 8) as u8]
 }
 
-fn parse_port(data: [u8;2]) -> u16 {
+fn parse_port(data: &[u8]) -> u16 {
     (data[0] as u16) + ((data[1] as u16) << 8)
+}
+
+fn serialise_shutdown_value(shutdown_value: u64) -> [u8; 8] {
+    [(shutdown_value & 0xff) as u8, (shutdown_value >> 8) as u8,
+     (shutdown_value >> 16) as u8, (shutdown_value >> 24) as u8,
+     (shutdown_value >> 32) as u8, (shutdown_value >> 40) as u8,
+     (shutdown_value >> 48) as u8, (shutdown_value >> 56) as u8]
+}
+
+fn parse_shutdown_value(data: &[u8]) -> u64 {
+    (data[0] as u64) + ((data[1] as u64) << 8) + ((data[2] as u64) << 16) +
+    ((data[3] as u64) << 24) + ((data[4] as u64) << 32) + ((data[5] as u64) << 40) +
+    ((data[6] as u64) << 48) + ((data[7] as u64) << 56)
 }
 
 pub struct BroadcastAcceptor {
@@ -174,46 +187,66 @@ impl BroadcastAcceptor {
 }
 
 pub fn seek_peers(port: u16, guid_to_avoid: Option<GUID>) -> Result<Vec<SocketAddr>> {
-    // Send broadcast ping
+    // Bind to a UDP socket
     let socket = try!(UdpSocket::bind("0.0.0.0:0"));
     try!(socket.set_broadcast(true));
-
-    let mut send_buff = Vec::<u8>::with_capacity(MAGIC_SIZE + GUID_SIZE);
-    for c in MAGIC.iter() { send_buff.push(c.clone()); }
-    let guid = guid_to_avoid.unwrap_or([0; GUID_SIZE]);
-    for c in guid.iter() { send_buff.push(c.clone()); }
-
-    let sent_size = try!(socket.send_to(&send_buff[..], ("255.255.255.255", port)));
-    debug_assert!(sent_size == send_buff.len());
-
-    let (tx, rx) = mpsc::channel::<SocketAddr>();
-
-    // FIXME: This thread will never finish, eating one udp port
-    // and few resources till the end of the program. I haven't
-    // found a way to fix this in rust yet.
-    let runner = move || -> Result<()> {
-        let mut buffer = [0u8; 2];
-        let (_, source) = try!(socket.recv_from(&mut buffer));
-        let his_port = parse_port(buffer);
-        let his_ep = SocketAddr::new(source.ip(), his_port);
-        let _ = tx.send(his_ep);
-        Ok(())
+    let my_udp_port = match try!(socket.local_addr()) {
+        SocketAddr::V4(local_address) => local_address.port(),
+        SocketAddr::V6(local_address) => local_address.port(),
     };
 
-    let _ = thread::spawn(move || { let _ = runner(); });
+    // Send a broadcast consisting of our GUID with 'maid' as a prefix.
+    let mut send_buffer: Vec<_> = From::from(&MAGIC[..]);
+    let guid: Vec<_> = From::from(&guid_to_avoid.unwrap_or([0; GUID_SIZE])[..]);
+    send_buffer.extend(guid.into_iter());
+    let sent_size = try!(socket.send_to(&send_buffer[..], ("255.255.255.255", port)));
+    debug_assert!(sent_size == send_buffer.len());
 
-    // Allow peers to respond.
-    thread::sleep_ms(500);
+    // Since Rust doesn't allow the UDP receiver to be stopped gracefully, prepare a random number
+    // to send to the UDP receiver as a shutdown signal.
+    let shutdown_value = random::<u64>();
 
+    // Start receiving responses to the broadcast
+    let (tx, rx) = mpsc::channel::<SocketAddr>();
+    let _udp_response_thread = thread::scoped(move || -> Result<()> {
+        loop {
+            let mut buffer = [0u8; 8];
+            let (size, source) = try!(socket.recv_from(&mut buffer));
+            match size {
+                2usize => {  // The response is a serialised port
+                    let _ = tx.send(SocketAddr::new(source.ip(), parse_port(&buffer)));
+                },
+                8usize => {  // The response is a shutdown signal
+                    if parse_shutdown_value(&buffer) == shutdown_value {
+                        break
+                    } else {
+                        continue
+                    }
+                },
+                _ => {  // The response is invalid
+                    continue
+                },
+            };
+        };
+        Ok(())
+    });
+
+    // Send the shutdown signal, giving the peers some time to respond first.
+    let _shutdown_thread = thread::scoped(move || {
+        thread::sleep_ms(500);
+        let killer_socket = UdpSocket::bind("0.0.0.0:0").unwrap();
+        let _ = killer_socket.send_to(&serialise_shutdown_value(shutdown_value),
+                                      ("127.0.0.1", my_udp_port));
+    });
+
+    // Gather the results.
     let mut result = Vec::<SocketAddr>::new();
-
     loop {
-        match rx.try_recv() {
+        match rx.recv() {
             Ok(socket_addr) => result.push(socket_addr),
             Err(_) => break,
         }
     }
-
     Ok(result)
 }
 
