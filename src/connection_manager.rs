@@ -133,10 +133,14 @@ impl ConnectionManager {
     /// If `bootstrap_list` is `None`, it will attempt to read a local cached file to populate the
     /// list.  It will then try to connect to all of the endpoints in the list.  It will return
     /// once a connection with any of the endpoints is established with Ok(Endpoint) and it will
-    /// drop all other ongoing attempts.
+    /// drop all other ongoing attempts.  If this fails and `beacon_port` is `Some`, it will try to
+    /// use the beacon port to connect to a peer on the same LAN.
     ///
-    /// If this fails and `beacon_port` is `Some`, it will try to use the beacon port to connect to
-    /// a peer on the same LAN.
+    /// If `bootstrap_list` is `Some`, it will try to connect to all of the endpoints in the list.
+    /// It will return once a connection with any of the endpoints is established with Ok(Endpoint)
+    /// and it will drop all other ongoing attempts.  Note that `beacon_port` has no effect if
+    /// `bootstrap_list` is `Some`; i.e. passing an explicit list ensures we only get connected to
+    /// one of the nodes on the list - we don't fall back to use the beacon protocol.
     ///
     /// It will return Err if it fails to connect to any peer.
     pub fn bootstrap(&self, bootstrap_list: Option<Vec<Endpoint>>, beacon_port: Option<u16>) ->
