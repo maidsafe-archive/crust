@@ -52,8 +52,8 @@ Several methods are used for NAT traversal, UpNP, hole punching [See here for TC
     - [x] Print Incomming message rate per second
   - [x] Local Network Test. 12 Linux, 2 OSX, 2 WIN
   - [ ] 101 Droplet test
-- [ ] Have ConnectionManager guarantee at most one connection between any two nodes
 - [ ] Version 0.0.8
+- [ ] Have ConnectionManager guarantee at most one connection between any two nodes
 - [ ] Utp Networking
   - [ ] Utp live port and backup random port selection
   - [ ] Create send/rcv channel from routing to connections object
