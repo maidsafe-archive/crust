@@ -16,6 +16,8 @@
 // relating to use of the SAFE Network Software.
 
 use rand::random;
+use std::error::Error;
+use std::io;
 use std::io::Result;
 use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6, UdpSocket};
 use std::sync::{Arc, mpsc, Mutex};
@@ -136,24 +138,24 @@ impl BroadcastAcceptor {
                               acceptor: Arc::new(Mutex::new(acceptor)) })
     }
 
-    // FIXME: Proper error handling and cancelation.
     pub fn accept(&self) -> Result<Transport> {
         let (port_sender, port_receiver) = mpsc::channel::<u16>();
         let (transport_sender, transport_receiver) = mpsc::channel::<Transport>();
 
         let protected_acceptor = self.acceptor.clone();
-        let run_acceptor = move || -> Result<()> {
+        let acceptor_thread = thread::scoped(move || -> Result<()> {
             let acceptor = protected_acceptor.lock().unwrap();
             let _ = port_sender.send(acceptor.local_endpoint().get_address().port());
             let transport = try!(transport::accept(&acceptor));
             let _ = transport_sender.send(transport);
             Ok(())
+        });
+
+        let tcp_port = match port_receiver.recv() {
+            Ok(port) => port,
+            Err(e) => return Err(io::Error::new(io::ErrorKind::BrokenPipe, e.description())),
         };
-        let t1 = thread::scoped(move || { let _ = run_acceptor(); });
-
-        let tcp_port = port_receiver.recv().unwrap(); // We don't expect this to fail.
-
-        let run_listener = move || -> Result<()> {
+        let listener_thread = thread::scoped(move || -> Result<()> {
             let mut buffer = vec![0u8; MAGIC_SIZE + GUID_SIZE];
             loop {
                 let (_, source) = try!(self.socket.recv_from(&mut buffer[..]));
@@ -165,13 +167,15 @@ impl BroadcastAcceptor {
                 break;
             }
             Ok(())
-        };
-        let t2 = thread::scoped(move || { let _ = run_listener(); });
+        });
 
-        let _ = t1.join();
-        let _ = t2.join();
+        let _ = acceptor_thread.join();
+        let _ = listener_thread.join();
 
-        Ok(transport_receiver.recv().unwrap())
+        match transport_receiver.recv() {
+            Ok(transport) => Ok(transport),
+            Err(e) => return Err(io::Error::new(io::ErrorKind::BrokenPipe, e.description())),
+        }
     }
 
     pub fn beacon_port(&self) -> u16 {
