@@ -680,12 +680,16 @@ mod test {
             }
         }
 
-        let _ = run_terminate(listening_end_points[0].clone(), stats_tx.clone());
+        let _ = run_terminate(listening_end_points[0].clone(), stats_tx.clone()).join();
 
         let _ = run_stats.join();
 
         for _ in 0..NETWORK_SIZE {
             let _ = network.nodes.remove(0);
+        }
+
+        for runner in runners.pop() {
+            let _ = runner.join();
         }
 
         let stats_copy = stats.clone();
