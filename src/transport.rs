@@ -18,6 +18,7 @@
 use std::net;
 use std::net::{SocketAddr, SocketAddrV4, SocketAddrV6, TcpStream, TcpListener};
 use tcp_connections;
+use utp_connections;
 use std::io;
 use std::io::Result as IoResult;
 use std::error::Error;
@@ -26,6 +27,7 @@ use beacon;
 use cbor::CborTagEncode;
 use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
 use std::cmp::Ordering;
+use utp::UtpSocket;
 pub type Bytes = Vec<u8>;
 
 fn array_to_vec(arr: &[u8]) -> Vec<u8> {
@@ -41,6 +43,8 @@ fn array_to_vec(arr: &[u8]) -> Vec<u8> {
 pub enum Endpoint {
     /// TCP endpoint
     Tcp(SocketAddr),
+    /// UTP endpoint
+    Utp(SocketAddr),
 }
 
 impl Endpoint {
@@ -48,6 +52,7 @@ impl Endpoint {
     pub fn get_address(&self) -> SocketAddr {
         match *self {
             Endpoint::Tcp(address) => address,
+            Endpoint::Utp(address) => address,
         }
     }
 
@@ -64,7 +69,18 @@ impl Endpoint {
                         }
                     }
                 }
-            }
+            },
+            Endpoint::Utp(my_address) => {
+                match *other {
+                    Endpoint::Utp(other_address) => {
+                        if my_address.port() == other_address.port() {
+                            return my_address.ip() < other_address.ip();
+                        } else {
+                            return my_address.port() < other_address.port();
+                        }
+                    }
+                }
+            },
         }
         return true;
     }
@@ -83,7 +99,7 @@ impl Decodable for Endpoint {
         let decoded: Vec<u8> = try!(Decodable::decode(d));
         let address: SocketAddr = beacon::parse_address(&decoded).unwrap();
 
-        Ok(Endpoint::Tcp(address))
+        Ok(Endpoint::Tcp(address))  // TODO FIXME: Make Beacon aware of UTP
     }
 }
 
@@ -92,6 +108,8 @@ impl Decodable for Endpoint {
 pub enum Port {
     /// TCP port
     Tcp(u16),
+    /// UTP port
+    Utp(u16),
 }
 
 impl PartialOrd for Endpoint {
@@ -102,11 +120,14 @@ impl PartialOrd for Endpoint {
 
 impl Ord for Endpoint {
     fn cmp(&self, other: &Endpoint) -> Ordering {
-        use Endpoint::Tcp;
+        use Endpoint::{Tcp, Utp};
         match *self {
             Tcp(ref a1) => match *other {
                 Tcp(ref a2) => compare_ip_addrs(a1, a2)
-            }
+            },
+            Utp(ref a1) => match *other {
+                Utp(ref a2) => compare_ip_addrs(a1, a2)
+            },
         }
     }
 }

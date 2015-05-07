@@ -37,6 +37,7 @@ extern crate rand;
 extern crate rustc_serialize;
 extern crate sodiumoxide;
 extern crate time;
+extern crate utp;
 
 mod beacon;
 mod bootstrap;
