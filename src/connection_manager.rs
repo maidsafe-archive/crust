@@ -110,7 +110,10 @@ impl ConnectionManager {
                 let beacon_guid = Some(acceptor.beacon_guid());
                 let _ = thread::spawn(move || {
                     loop {
-                        let mut transport = acceptor.accept().unwrap();
+                        let mut transport = match acceptor.accept() {
+                            Ok(transport) => transport,
+                            Err(_) => break,
+                        };
                         let bootstrap_contacts = || {
                             let handler = BootStrapHandler::new();
                             let contacts = handler.get_serialised_bootstrap_contacts();
