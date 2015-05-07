@@ -50,7 +50,7 @@ Several methods are used for NAT traversal, UpNP, hole punching [See here for TC
     - [x] Join / Start a node(optionally provide bootstrap info)
     - [x] Allow sending messages at various rates per second
     - [x] Print Incomming message rate per second
-  - [ ] Local Network Test. 12 Linux, 2 OSX, 2 WIN
+  - [x] Local Network Test. 12 Linux, 2 OSX, 2 WIN
   - [ ] 101 Droplet test
 - [ ] Have ConnectionManager guarantee at most one connection between any two nodes
 - [ ] Version 0.0.8
