@@ -201,10 +201,6 @@ impl FlatWorld {
         }
     }
 
-    // pub fn get_all_nodes(&self) -> Vec<CrustNode> {
-    //     self.crust_nodes.clone()
-    // }
-
     pub fn record_received(&mut self, msg_size: u32) {
         self.received_msgs += 1;
         self.received_bytes += msg_size;

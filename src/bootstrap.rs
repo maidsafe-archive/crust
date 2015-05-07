@@ -312,7 +312,7 @@ mod test {
 
     #[test]
     fn bootstrap_crude_test() {
-        use std::fs::File;
+        use std::fs;
         use std::path::Path;
 
         let mut contacts = Vec::new();
@@ -323,8 +323,8 @@ mod test {
             random_addr_0.push(rand::random::<u8>());
             random_addr_0.push(rand::random::<u8>());
 
-            let port_0: u8 = rand::random::<u8>();
-            let addr_0 = net::SocketAddrV4::new(net::Ipv4Addr::new(random_addr_0[0], random_addr_0[1], random_addr_0[2], random_addr_0[3]), port_0 as u16);
+            let port_0: u16 = rand::random::<u16>();
+            let addr_0 = net::SocketAddrV4::new(net::Ipv4Addr::new(random_addr_0[0], random_addr_0[1], random_addr_0[2], random_addr_0[3]), port_0);
             let (public_key, _) = sodiumoxide::crypto::asymmetricbox::gen_keypair();
             let new_contact = Contact::new(transport::Endpoint::Tcp(SocketAddr::V4(addr_0)), super::PublicKey::Asym(public_key));
             contacts.push(new_contact);
@@ -335,7 +335,7 @@ mod test {
         let path = Path::new(&file_name);
 
         let mut bootstrap_handler = BootStrapHandler::new();
-        let file = File::create(&path);
+        let file = fs::File::create(&path);
         assert!(file.is_ok()); // Check whether the database file is created
         // Add Contacts
         bootstrap_handler.add_bootstrap_contacts(contacts);
@@ -350,5 +350,10 @@ mod test {
         // Assert Replace
         // read_contact = bootstrap_handler.read_bootstrap_contacts();
         // assert!(read_contact.len() == 0);
+
+        match fs::remove_file(file_name.clone()) {
+            Ok(_) => (),
+            Err(e) => println!("Failed to remove {}: {}", file_name, e),
+        };
     }
 }
