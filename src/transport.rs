@@ -50,24 +50,6 @@ impl Endpoint {
             Endpoint::Tcp(address) => address,
         }
     }
-
-    /// Returns whether this endpoint should be chosen over `other` when deciding to connect.
-    pub fn is_master(&self, other: &Endpoint) -> bool {
-        match *self {
-            Endpoint::Tcp(my_address) => {
-                match *other {
-                    Endpoint::Tcp(other_address) => {
-                        if my_address.port() == other_address.port() {
-                            return my_address.ip() < other_address.ip();
-                        } else {
-                            return my_address.port() < other_address.port();
-                        }
-                    }
-                }
-            }
-        }
-        return true;
-    }
 }
 
 impl Encodable for Endpoint {
