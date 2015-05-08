@@ -271,6 +271,7 @@ impl ConnectionManager {
         let port = original.get_address().port();
         match *replacement {
             Endpoint::Tcp(tcp_endpoint) => Endpoint::Tcp(SocketAddr::new(tcp_endpoint.ip(), port)),
+            Endpoint::Utp(utp_endpoint) => Endpoint::Utp(SocketAddr::new(utp_endpoint.ip(), port)),
         }
     }
 

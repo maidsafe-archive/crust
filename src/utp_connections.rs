@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use utp::UtpSocket;
+use utp::{UtpSocket, UtpStream};
 use std::net::{SocketAddr};
 use std::io::{BufReader, ErrorKind};
 use std::io::Result as IoResult;
@@ -44,7 +44,7 @@ where T: Encodable {
     }
 
     #[allow(dead_code)]
-    pub fn close(self) {
+    pub fn close(&mut self) {
         let _ = self.utp_stream.close();
     }
 }
@@ -59,34 +59,34 @@ impl <T> Drop for OutUtpStream<T> {
 /// Connect to a peer and open a send-receive pair.  See `upgrade` for more details.
 pub fn connect_utp<'a, 'b, I, O>(addr: SocketAddr) -> IoResult<(Receiver<I>, OutUtpStream<O>)>
         where I: Send + Decodable + 'static, O: Encodable {
-    Ok(try!(upgrade_tcp(try!(UtpStream::connect(&addr)))))
+    Ok(try!(upgrade_utp(try!(UtpStream::connect(&addr)))))
 }
 
 /// Starts listening for connections on this ip and port.
 /// Returns:
 /// * A receiver of Tcp stream objects.  It is recommended that you `upgrade` these.
 /// * A TcpAcceptor.  This can be used to close the listener from outside of the listening thread.
-pub fn listen(port: u16) -> IoResult<(Receiver<(UtpStream, SocketAddr)>, TcpListener)> {
-    let tcp_listener = {
-        /*if let Ok(listener) = TcpListener::bind(("::", port)) {
+pub fn listen(port: u16) -> IoResult<(Receiver<(UtpStream, SocketAddr)>, UtpSocket)> {
+    let utp_listener = {
+        /*if let Ok(listener) = UtpSocket::bind(("::", port)) {
             listener
-        } else if let Ok(listener) = TcpListener::bind(("::", 0)) {
+        } else if let Ok(listener) = UtpSocket::bind(("::", 0)) {
             listener
-        } else*/ if let Ok(listener) = TcpListener::bind(("0.0.0.0", port)) {
+        } else*/ if let Ok(listener) = UtpSocket::bind(("0.0.0.0", port)) {
             listener
         } else {
-            try!(TcpListener::bind(("0.0.0.0", 0)))
+            try!(UtpSocket::bind(("0.0.0.0", 0)))
         }
     };
     let (tx, rx) = mpsc::channel();
 
-    let tcp_listener2 = try!(tcp_listener.try_clone());
+/*    let utp_listener2 = try!(utp_listener.try_clone());
     let _ = spawn(move || {
         loop {
             // if tx.is_closed() {       // FIXME (Prakash)
             //     break;
             // }
-            match tcp_listener2.accept() {
+            match utp_listener2.accept() {
                 Ok(stream) => {
                     if tx.send(stream).is_err() {
                         break;
@@ -101,19 +101,19 @@ pub fn listen(port: u16) -> IoResult<(Receiver<(UtpStream, SocketAddr)>, TcpList
                 }
             }
         }
-    });
-    Ok((rx, tcp_listener))
+    }); */
+    Ok((rx, utp_listener))
 }
 
 // Almost a straight copy of https://github.com/TyOverby/wire/blob/master/src/tcp.rs
 /// Upgrades a UtpStream to a Sender-Receiver pair that you can use to send and
 /// receive objects automatically.  If there is an error decoding or encoding
 /// values, that respective part is shut down.
-pub fn upgrade_tcp<'a, 'b, I, O>(stream: UtpStream) -> IoResult<(InUtpStream<I>, OutUtpStream<O>)>
+pub fn upgrade_utp<'a, 'b, I, O>(stream: UtpStream) -> IoResult<(InUtpStream<I>, OutUtpStream<O>)>
 where I: Send + Decodable + 'static, O: Encodable {
     let s1 = stream;
-    let s2 = try!(s1.try_clone());
-    Ok((upgrade_reader(s1), upgrade_writer(s2)))
+//    let s2 = try!(s1.try_clone());
+    Ok((upgrade_reader(s1), upgrade_writer(s1)))
 }
 
 fn upgrade_writer<'a, T>(stream: UtpStream) -> OutUtpStream<T>
@@ -152,8 +152,8 @@ where T: Send + Decodable + 'static {
                 }
             }
         }
-        let s1 = buffer.into_inner();
-        let _ = s1.shutdown(Shutdown::Read);
+        let mut s1 = buffer.into_inner();
+        let _ = s1.close();
     });
     in_rec
 }
@@ -182,7 +182,7 @@ mod test {
                 let (connection, _) = x;
                 // Spawn a new thread for each connection that we get.
                 let _ = thread::spawn(move || {
-                    let (i, mut o) = upgrade_tcp(connection).unwrap();
+                    let (i, mut o) = upgrade_utp(connection).unwrap();
                     for x in i.iter() {
                         let x:u32 = x;
                         if o.send(&(x, x + 1)).is_err() { break; }
@@ -238,7 +238,7 @@ mod test {
                 let (connection, _) = x;
                 // Spawn a new thread for each connection that we get.
                 let _ = thread::spawn(move || {
-                    let (i, mut o) = upgrade_tcp(connection).unwrap();
+                    let (i, mut o) = upgrade_utp(connection).unwrap();
                     for x in i.iter() {
                         let x:u32 = x;
                         if o.send(&(x, x + 1)).is_err() { break; }

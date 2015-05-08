@@ -27,7 +27,7 @@ use beacon;
 use cbor::CborTagEncode;
 use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
 use std::cmp::Ordering;
-use utp::UtpSocket;
+use utp::{UtpSocket, UtpStream};
 pub type Bytes = Vec<u8>;
 
 fn array_to_vec(arr: &[u8]) -> Vec<u8> {
@@ -67,11 +67,13 @@ impl Endpoint {
                         } else {
                             return my_address.port() < other_address.port();
                         }
-                    }
+                    },
+                    Endpoint::Utp(other_address) => panic!("Should never happen"),
                 }
             },
             Endpoint::Utp(my_address) => {
                 match *other {
+                    Endpoint::Tcp(other_address) => panic!("Should never happen"),
                     Endpoint::Utp(other_address) => {
                         if my_address.port() == other_address.port() {
                             return my_address.ip() < other_address.ip();
@@ -123,9 +125,11 @@ impl Ord for Endpoint {
         use Endpoint::{Tcp, Utp};
         match *self {
             Tcp(ref a1) => match *other {
-                Tcp(ref a2) => compare_ip_addrs(a1, a2)
+                Tcp(ref a2) => compare_ip_addrs(a1, a2),
+                Utp(ref a2) => panic!("Should never happen"),
             },
             Utp(ref a1) => match *other {
+                Tcp(ref a2) => panic!("Should never happen"),
                 Utp(ref a2) => compare_ip_addrs(a1, a2)
             },
         }
@@ -135,12 +139,19 @@ impl Ord for Endpoint {
 //--------------------------------------------------------------------
 pub enum Sender {
     Tcp(tcp_connections::TcpWriter<Bytes>),
+    Utp(utp_connections::UtpWriter<Bytes>),
 }
 
 impl Sender {
     pub fn send(&mut self, bytes: &Bytes) -> IoResult<()> {
         match *self {
             Sender::Tcp(ref mut s) => {
+                s.send(&bytes).map_err(|_| {
+                // FIXME: This can be done better.
+                io::Error::new(io::ErrorKind::NotConnected, "can't send")
+            })
+            },
+            Sender::Utp(ref mut s) => {
                 s.send(&bytes).map_err(|_| {
                 // FIXME: This can be done better.
                 io::Error::new(io::ErrorKind::NotConnected, "can't send")
@@ -153,6 +164,7 @@ impl Sender {
 //--------------------------------------------------------------------
 pub enum Receiver {
     Tcp(tcp_connections::TcpReader<Bytes>),
+    Utp(utp_connections::UtpReader<Bytes>),
 }
 
 impl Receiver {
@@ -165,7 +177,15 @@ impl Receiver {
                         return Err(io::Error::new(io::ErrorKind::NotConnected, what.description()));
                     },
                 }
-            }
+            },
+            Receiver::Utp(ref r) => {
+                match r.recv() {
+                    Ok(data) => Ok(data),
+                    Err(what) => {
+                        return Err(io::Error::new(io::ErrorKind::NotConnected, what.description()));
+                    },
+                }
+            },
         }
     }
 }
@@ -174,12 +194,15 @@ impl Receiver {
 pub enum Acceptor {
     // Channel receiver, TCP listener and calculated local TCP endpoint
     Tcp(mpsc::Receiver<(TcpStream, SocketAddr)>, TcpListener, SocketAddr),
+    // Channel receiver, UTP listener and calculated local UTP endpoint
+    Utp(mpsc::Receiver<(UtpStream, SocketAddr)>, UtpSocket, SocketAddr),
 }
 
 impl Acceptor {
     pub fn local_endpoint(&self) -> Endpoint {
         match *self {
             Acceptor::Tcp(_, _, local_address) => Endpoint::Tcp(local_address),
+            Acceptor::Utp(_, _, local_address) => Endpoint::Utp(local_address),
         }
     }
 }
@@ -198,6 +221,17 @@ pub fn connect(remote_ep: Endpoint) -> IoResult<Transport> {
                 .map(|(i, o)| {
                     Transport{ receiver: Receiver::Tcp(i),
                                          sender: Sender::Tcp(o),
+                                         remote_endpoint: remote_ep,
+                             }})
+                .map_err(|e| {
+                    io::Error::new(io::ErrorKind::NotConnected, e.description())
+                })
+        },
+        Endpoint::Utp(ep) => {
+            utp_connections::connect_utp(ep)
+                .map(|(i, o)| {
+                    Transport{ receiver: Receiver::Utp(i),
+                                         sender: Sender::Utp(o),
                                          remote_endpoint: remote_ep,
                              }})
                 .map_err(|e| {
@@ -222,7 +256,22 @@ pub fn new_acceptor(port: &Port) -> IoResult<Acceptor> {
             // `get_tcp_listener_local_address` above.
             let _ = receiver.recv();
             Ok(Acceptor::Tcp(receiver, listener, local_address))
-        }
+        },
+        Port::Utp(ref port) => {
+            let (receiver, listener) = try!(utp_connections::listen(*port));
+            // If we fail to calculate local address, fall back to listener.local_addr().
+            let local_address =
+                if let Ok(address) = get_utp_listener_local_address(&listener) {
+                    address
+                } else {
+                    // TODO FIXME
+                    panic!("UtpSocket does not support fetching local address. Perhaps submit a patch to it upstream, it's like four lines of new code to query the internal UdpSocket?")
+                };
+            // Discard the first connection since this is caused by calling
+            // `get_utp_listener_local_address` above.
+            let _ = receiver.recv();
+            Ok(Acceptor::Utp(receiver, listener, local_address))
+        },
     }
 }
 
@@ -240,7 +289,18 @@ pub fn accept(acceptor: &Acceptor) -> IoResult<Transport> {
                           sender: Sender::Tcp(o),
                           remote_endpoint: Endpoint::Tcp(remote_endpoint),
                         })
-        }
+        },
+        Acceptor::Utp(ref rx_channel, _, _) => {
+            let (stream, remote_endpoint) = try!(rx_channel.recv()
+                .map_err(|e| io::Error::new(io::ErrorKind::NotConnected, e.description())));
+
+            let (i, o) = try!(utp_connections::upgrade_utp(stream));
+
+            Ok(Transport{ receiver: Receiver::Utp(i),
+                          sender: Sender::Utp(o),
+                          remote_endpoint: Endpoint::Utp(remote_endpoint),
+                        })
+        },
     }
 }
 
@@ -288,6 +348,11 @@ fn get_tcp_listener_local_address(listener: &TcpListener) -> IoResult<SocketAddr
         };
     }
     Err(io::Error::new(io::ErrorKind::AddrNotAvailable, "Failed to get local address"))
+}
+
+fn get_utp_listener_local_address(stream: &UtpSocket) -> IoResult<SocketAddr> {
+    // TODO FIXME
+    Err(io::Error::new(io::ErrorKind::AddrNotAvailable, "UtpSocket does not support fetching local address. Perhaps submit a patch to it upstream, it's like four lines of new code to query the internal UdpSocket?"))
 }
 
 fn compare_ip_addrs(a1: &SocketAddr, a2: &SocketAddr) -> Ordering {

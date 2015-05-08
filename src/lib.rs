@@ -42,6 +42,7 @@ extern crate utp;
 mod beacon;
 mod bootstrap;
 mod tcp_connections;
+mod utp_connections;
 mod transport;
 
 /// Module implementing the `ConnectionManager` which provides an interface to manage peer-to-peer
