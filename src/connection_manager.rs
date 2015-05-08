@@ -181,16 +181,12 @@ impl ConnectionManager {
         let is_broadcast_acceptor = self.beacon_guid.is_some();
         let _ = thread::spawn(move || {
             for endpoint in &endpoints {
-                for itr in listening.iter() {
-                    let unconnected: bool =
-                        lock_state(&ws, |state| Ok(state.connections.is_empty())).unwrap_or(false);
-                    if unconnected || itr.is_master(endpoint) {
-                        let ws = ws.clone();
-                        let result = transport::connect(endpoint.clone())
-                                     .and_then(|trans| handle_connect(ws, trans,
-                                               is_broadcast_acceptor));
-                        if result.is_ok() { return; }
-                    }
+                for _ in listening.iter() {
+                    let ws = ws.clone();
+                    let result = transport::connect(endpoint.clone())
+                                 .and_then(|trans| handle_connect(ws, trans,
+                                           is_broadcast_acceptor));
+                    if result.is_ok() { return; }
                 }
             }
         });
