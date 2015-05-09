@@ -1,12 +1,12 @@
 # Crust
 Reliable p2p network connections in Rust with NAT traversal. One of the most needed libraries for any server-less, decentralised project.
 
-|Crate|Travis| Drone.io|Appveyor|Coverage|
-|:------:|:-------:|:-------:|:------:|:------:|
-|[![](http://meritbadge.herokuapp.com/crust)](https://crates.io/crates/crust)|[![Build Status](https://travis-ci.org/dirvine/crust.svg?branch=master)](https://travis-ci.org/dirvine/crust)|[![Build Status](https://drone.io/github.com/dirvine/crust/status.png)](https://drone.io/github.com/dirvine/crust/latest)|[![Build status](https://ci.appveyor.com/api/projects/status/7bl67hscnfljxxt3?svg=true)](https://ci.appveyor.com/project/dirvine/crust)|[![Coverage Status](https://coveralls.io/repos/dirvine/crust/badge.svg)](https://coveralls.io/r/dirvine/crust)|
+|Crate|Travis|Appveyor|Coverage|
+|:------:|:-------:|:------:|:------:|
+|[![](http://meritbadge.herokuapp.com/crust)](https://crates.io/crates/crust)|[![Build Status](https://travis-ci.org/maidsafe/crust.svg?branch=master)](https://travis-ci.org/maidsafe/crust)|[![Build status](https://ci.appveyor.com/api/projects/status/swp1agg70lk9xiss?svg=true)](https://ci.appveyor.com/project/dirvine/crust-kp6a6)|[![Coverage Status](https://coveralls.io/repos/dirvine/crust/badge.svg)](https://coveralls.io/r/dirvine/crust)|
 
 
-| [API Documentation](http://dirvine.github.io/crust/crust/) | [MaidSafe System Documention](http://systemdocs.maidsafe.net/) | [MaidSafe web site](http://www.maidsafe.net) | [Safe Community site](https://forum.safenetwork.io) |
+| [API Documentation](http://maidsafe.github.io/crust/crust/) | [MaidSafe System Documention](http://systemdocs.maidsafe.net/) | [MaidSafe web site](http://www.maidsafe.net) | [Safe Community site](https://forum.safenetwork.io) |
 
 #Overview
 
