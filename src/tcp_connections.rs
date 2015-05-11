@@ -19,7 +19,7 @@ use std::net::{TcpListener, TcpStream, SocketAddr, Shutdown};
 use std::io::{BufReader, ErrorKind};
 use std::io::Result as IoResult;
 use cbor::{Encoder, CborError, Decoder};
-use std::thread::spawn;
+use std::thread;
 use std::marker::PhantomData;
 use rustc_serialize::{Decodable, Encodable};
 use std::sync::mpsc;
@@ -40,11 +40,6 @@ where T: Encodable {
     pub fn send(&mut self, m: &T) -> Result<(), CborError> {
         let mut e = Encoder::from_writer(&mut self.tcp_stream);
         e.encode(&[&m])
-    }
-
-    #[allow(dead_code)]
-    pub fn close(self) {
-        let _ = self.tcp_stream.shutdown(Shutdown::Write);
     }
 }
 
@@ -80,7 +75,7 @@ pub fn listen(port: u16) -> IoResult<(Receiver<(TcpStream, SocketAddr)>, TcpList
     let (tx, rx) = mpsc::channel();
 
     let tcp_listener2 = try!(tcp_listener.try_clone());
-    let _ = spawn(move || {
+    let _ = thread::Builder::new().name("TCP listener".to_string()).spawn(move || {
         loop {
             // if tx.is_closed() {       // FIXME (Prakash)
             //     break;
@@ -127,7 +122,7 @@ fn upgrade_reader<'a, T>(stream: TcpStream) -> InTcpStream<T>
 where T: Send + Decodable + 'static {
     let (in_snd, in_rec) = mpsc::channel();
 
-    let _ = spawn(move || {
+    let _ = thread::Builder::new().name("TCP reader".to_string()).spawn(move || {
         let mut buffer = BufReader::new(stream);
         {
             let mut decoder = Decoder::from_reader(&mut buffer);
@@ -175,7 +170,7 @@ mod test {
         for x in 0u64 .. 10u64 {
             if o.send(&x).is_err() { break; }
         }
-        o.close();
+        drop(o);
         let _ = thread::spawn(move || {
             for x in event_receiver.iter() {
                 let (connection, _) = x;
@@ -226,7 +221,7 @@ mod test {
         loop {
            let _ = match vector_senders.pop() {
                 None => break, // empty
-                Some(sender) => sender.close(),
+                Some(_) => (),
             };
         }
 

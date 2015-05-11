@@ -22,7 +22,7 @@ extern crate crust;
 use std::net::SocketAddr;
 use std::str::FromStr;
 use std::sync::mpsc::channel;
-use std::thread::{sleep_ms, spawn};
+use std::thread;
 
 use crust::{ConnectionManager, Endpoint};
 
@@ -33,7 +33,7 @@ fn main() {
     let connection_manager = ConnectionManager::new(channel_sender);
 
     // Start a thread running a loop which will receive and display responses from the peer.
-    spawn(move || {
+    let _ = thread::Builder::new().name("SimpleSender event handler".to_string()).spawn(move || {
         loop {
             // Receive the next event
             let event = channel_receiver.recv();
@@ -88,5 +88,5 @@ fn main() {
     }
 
     // Allow the peer time to process the requests and reply.
-    sleep_ms(2000);
+    thread::sleep_ms(2000);
 }
