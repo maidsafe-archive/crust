@@ -19,7 +19,6 @@ use cbor;
 use sodiumoxide::crypto::asymmetricbox;
 use std::collections::{HashMap, HashSet};
 use std::io;
-use std::net::{IpAddr, SocketAddr};
 use std::sync::{Arc, mpsc, Mutex, Weak};
 use std::thread;
 
@@ -256,27 +255,11 @@ impl ConnectionManager {
                 None => continue,
             };
             for contact in contact_list {
-                endpoints.push(self.replace_loopback(contact.end_point(),
-                                                     &transport.remote_endpoint));
+                endpoints.push(contact.end_point());
             }
         }
 
         endpoints
-    }
-
-    // Replace the IP in `original` with `replacement`'s IP if `original`'s is the loopback.
-    fn replace_loopback(&self, original: Endpoint, replacement: &Endpoint) -> Endpoint {
-        let is_loopback = match original.get_address().ip() {
-            IpAddr::V4(ip) => ip.is_loopback(),
-            IpAddr::V6(ip) => ip.is_loopback(),
-        };
-        if !is_loopback {
-            return original;
-        }
-        let port = original.get_address().port();
-        match *replacement {
-            Endpoint::Tcp(tcp_endpoint) => Endpoint::Tcp(SocketAddr::new(tcp_endpoint.ip(), port)),
-        }
     }
 
     fn bootstrap_off_list(&self, bootstrap_list: Vec<Endpoint>) -> io::Result<Endpoint> {
