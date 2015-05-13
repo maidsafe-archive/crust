@@ -15,6 +15,8 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+extern crate libc;
+
 use std::net;
 use std::net::{SocketAddr, SocketAddrV4, SocketAddrV6, TcpStream, TcpListener};
 use tcp_connections;
@@ -205,9 +207,35 @@ pub fn accept(acceptor: &Acceptor) -> IoResult<Transport> {
     }
 }
 
-// It would be easiest to just return listener.local_addr() here, but this yields an IP
-// of 0.0.0.0, which is not useful for passing to peers on a different machine.  Hence
-// we try and connect to the listener to establish its actual IP address.
+extern {
+    pub fn gethostname(name: *mut libc::c_char, size: libc::size_t) -> libc::c_int;
+}
+
+#[allow(unsafe_code)]
+fn get_hostname() -> IoResult<String> {
+    let length = 1000usize;
+    let mut buffer = vec![0u8; length];
+    let result = unsafe {
+        gethostname(buffer.as_mut_ptr() as *mut libc::c_char, length as libc::size_t)
+    };
+    if result != 0 {
+        return Err(io::Error::new(io::ErrorKind::Other,
+            format!("Failed to get hostname: returned {}", result)));
+    }
+
+    // Find the first 0 byte (i.e. just after the data that gethostname wrote).
+    let actual_length = buffer.iter().position(|byte| *byte == 0).unwrap_or(length);
+
+    // Trim the hostname to the actual data written and return the resultant String.
+    buffer.truncate(actual_length);
+    String::from_utf8(buffer).map_err(|error| io::Error::new(io::ErrorKind::Other,
+                                                             format!("{}", error)))
+}
+
+// It would be easiest to just return listener.local_addr() here, but this yields an IP of 0.0.0.0,
+// which is not useful for passing to peers on a different machine.  Hence we try and connect to the
+// listener via each of the local host interfaces to establish its actual IP address.  Once one is
+// connected, the stream's local_addr() or peer_addr() yields the actual local address.
 //
 // TODO - This isn't robust: we're not checking that the listener we connect to is
 // actually the one we just created - we should maybe send a magic request and response
@@ -215,12 +243,16 @@ pub fn accept(acceptor: &Acceptor) -> IoResult<Transport> {
 fn get_tcp_listener_local_address(listener: &TcpListener) -> IoResult<SocketAddr> {
     let listener_local_address = try!(listener.local_addr());
     let listener_port = listener_local_address.port();
-    let host = try!(net::lookup_addr(&listener_local_address.ip()));
-    let host_interface_itr = try!(net::lookup_host(&host));
     let listener_is_v4 = match listener_local_address {
         SocketAddr::V4(_) => true,
         SocketAddr::V6(_) => false,
     };
+
+    let host = try!(get_hostname());
+    let host_interface_itr = try!(net::lookup_host(&host));
+
+    // Iterate each interface and try to connect.  Once/if connected, the peer_addr yields the
+    // local address.
     for host_interface in host_interface_itr {
         let attempt_address = match host_interface {
             Ok(SocketAddr::V4(address)) => {
