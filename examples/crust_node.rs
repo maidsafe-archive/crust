@@ -17,7 +17,7 @@
 
 // String.as_str() is unstable; waiting RFC revision
 // http://doc.rust-lang.org/nightly/std/string/struct.String.html#method.as_str
-#![feature(convert, core, exit_status)]
+#![feature(convert, core, exit_status, scoped)]
 
 extern crate core;
 extern crate crust;
@@ -352,14 +352,12 @@ fn main() {
 
     // Start event-handling thread
     let running_speed_test = args.flag_speed.is_some();
-    thread::spawn(move || {
+    let handler = match thread::Builder::new().name("CrustNode event handler".to_string())
+                                              .scoped(move || {
         let mut my_flat_world: FlatWorld = FlatWorld::new();
         loop {
             let event = channel_receiver.recv();
             if event.is_err() {
-                stdout_copy = red_foreground(stdout_copy);
-                println!("Channel error - stopped listening.");
-                stdout_copy = reset_foreground(stdout_copy);
                 break;
             }
 
@@ -393,7 +391,16 @@ fn main() {
                 print_input_line();
             }
         }
-    });
+    }) {
+        Ok(join_handle) => join_handle,
+        Err(e) => {
+            stdout = red_foreground(stdout);
+            println!("Failed to start event-handling thread: {}", e);
+            reset_foreground(stdout);
+            std::env::set_exit_status(4);
+            return;
+        },
+    };
 
     thread::sleep_ms(100);
     println!("");
@@ -490,10 +497,13 @@ fn main() {
                 }
             } else if args.cmd_stop {
                 stdout = green_foreground(stdout);
-                println!("Stopping.");
+                println!("Stopped.");
                 reset_foreground(stdout);
                 break;
             }
         }
     }
+    connection_manager.stop();
+    drop(connection_manager);
+    let _ = handler.join();
 }
