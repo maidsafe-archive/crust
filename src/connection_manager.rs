@@ -171,12 +171,21 @@ impl ConnectionManager {
         let ws = self.state.downgrade();
         let mut listening = HashSet::<Endpoint>::new();
         {
-            let _ = lock_mut_state(&ws, |s: &mut State| {
+            let result = lock_mut_state(&ws, |s: &mut State| {
+                for endpoint in &endpoints {
+                    if s.connections.contains_key(&endpoint) {
+                        return Err(io::Error::new(io::ErrorKind::AlreadyExists,
+                                                  "Already connected"))
+                    }
+                }
                 for itr in s.listening_eps.iter() {
                     listening.insert(itr.clone());
                 }
                 Ok(())
             });
+            if result.is_err() {
+                return
+            }
         }
         let is_broadcast_acceptor = self.beacon_guid.is_some();
         let _ = thread::spawn(move || {
@@ -347,7 +356,8 @@ fn handle_accept(mut state: WeakState, trans: transport::Transport) -> io::Resul
     register_connection(&mut state, trans, Event::NewConnection(remote_ep))
 }
 
-fn handle_connect(mut state: WeakState, trans: transport::Transport, is_broadcast_acceptor: bool) -> io::Result<Endpoint> {
+fn handle_connect(mut state: WeakState, trans: transport::Transport,
+                  is_broadcast_acceptor: bool) -> io::Result<Endpoint> {
     let remote_ep = trans.remote_endpoint.clone();
     let endpoint = register_connection(&mut state, trans, Event::NewConnection(remote_ep));
     if is_broadcast_acceptor {
@@ -366,14 +376,14 @@ fn handle_connect(mut state: WeakState, trans: transport::Transport, is_broadcas
     endpoint
 }
 
-fn register_connection( state: &mut WeakState,
-                        trans: transport::Transport,
-                        event_to_user: Event
-                      ) -> io::Result<Endpoint> {
-
+fn register_connection(state: &mut WeakState, trans: transport::Transport,
+                       event_to_user: Event) -> io::Result<Endpoint> {
     let state2 = state.clone();
 
     lock_mut_state(state, move |s: &mut State| {
+        if s.connections.contains_key(&trans.remote_endpoint) {
+            return Err(io::Error::new(io::ErrorKind::AlreadyExists, "Already connected"))
+        }
         let (tx, rx) = mpsc::channel();
         start_writing_thread(state2.clone(), trans.sender, trans.remote_endpoint.clone(), rx);
         start_reading_thread(state2, trans.receiver, trans.remote_endpoint.clone(),
@@ -407,7 +417,7 @@ fn start_reading_thread(state: WeakState,
                 Ok(msg) => if sink.send(Event::NewMessage(his_ep.clone(), msg)).is_err() {
                     break
                 },
-                Err(_) => break
+                Err(_) => break,
             }
         }
         unregister_connection(state, his_ep);
@@ -459,7 +469,7 @@ mod test {
 
      struct Node {
          conn_mgr: ConnectionManager,
-         listenig_end_point: Endpoint,
+         listening_end_point: Endpoint,
          connected_eps: Arc<Mutex<Vec<Endpoint>>>
      }
 
@@ -473,14 +483,14 @@ mod test {
      impl Node {
          pub fn new(mut cm: ConnectionManager, port: u16) -> (Node, Option<u16>) {
              let (end_points, beacon_port) =  cm.start_listening(vec![Port::Tcp(0)], Some(port)).unwrap();
-             (Node { conn_mgr: cm, listenig_end_point: end_points[0].clone(), connected_eps: Arc::new(Mutex::new(Vec::new())) }, beacon_port)
+             (Node { conn_mgr: cm, listening_end_point: end_points[0].clone(), connected_eps: Arc::new(Mutex::new(Vec::new())) }, beacon_port)
          }
      }
 
      fn get_endpoint(node: &Arc<Mutex<Node>>) -> Endpoint {
          let node = node.clone();
          let node = node.lock().unwrap();
-         node.listenig_end_point.clone()
+         node.listening_end_point.clone()
      }
 
      fn get_connected_eps(node: &Arc<Mutex<Node>>) -> Vec<Endpoint> {
@@ -499,7 +509,7 @@ mod test {
          pub fn add(&mut self, beacon_port: u16) -> (Receiver<Event>, Endpoint, Option<u16>, Arc<Mutex<Vec<Endpoint>>>) {
              let (cm_i, cm_o) = channel();
              let (node, port) = Node::new(ConnectionManager::new(cm_i), beacon_port);
-             let end_point = node.listenig_end_point.clone();
+             let end_point = node.listening_end_point.clone();
              let connected_eps = node.connected_eps.clone();
              self.nodes.push(Arc::new(Mutex::new(node)));
              (cm_o, end_point, port, connected_eps)
