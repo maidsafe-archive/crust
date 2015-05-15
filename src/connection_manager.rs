@@ -315,10 +315,11 @@ impl ConnectionManager {
         }
         let res = Deferred::first_to_promise(1,false,vec_deferred, ControlFlow::ParallelLimit(15)).sync();
         match res {
-            Ok(v) => Ok(v[0].clone()),            
-            Err(_) => Err(io::Error::new(io::ErrorKind::Other, "No bootstrap node got connected"))
+            Ok(v) => if v.len() > 0 { return Ok(v[0].clone()) },            
+            Err(_) => ()
         }
         // FIXME: The result should probably be Option<Endpoint> 
+        Err(io::Error::new(io::ErrorKind::Other, "No bootstrap node got connected"))
     }
 
     fn listen(&self, port: &Port) -> io::Result<Endpoint> {
