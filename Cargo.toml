@@ -17,6 +17,7 @@ rustc-serialize = "*"
 sodiumoxide = "0.0.4"
 term = "*"
 time = "*"
+asynchronous = "*"
 
 [[example]]
 name = "simple_sender"

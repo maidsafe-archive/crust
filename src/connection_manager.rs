@@ -27,6 +27,8 @@ use bootstrap::{BootStrapHandler, BootStrapContacts, Contact, PublicKey};
 use transport;
 use transport::{Endpoint, Port};
 
+use asynchronous::{Deferred,ControlFlow};
+
 /// Type used to represent serialised data in a message.
 pub type Bytes = Vec<u8>;
 
@@ -295,19 +297,28 @@ impl ConnectionManager {
     }
 
     fn bootstrap_off_list(&self, bootstrap_list: Vec<Endpoint>) -> io::Result<Endpoint> {
+        let mut vec_deferred = vec![];
         for endpoint in bootstrap_list {
-            match transport::connect(endpoint.clone()) {
-                Ok(trans) => {
-                    let ep = trans.remote_endpoint.clone();
-                    let _ = try!(handle_connect(self.state.downgrade(), trans,
-                                                self.beacon_guid_and_port.is_some()));
-                    return Ok(ep)
-                },
-                Err(_) => continue,
-            }
+            let state_cloned = self.state.clone();
+            let beacon_guid_and_port_is_some = self.beacon_guid_and_port.is_some();
+            vec_deferred.push(Deferred::new(move || {
+                match transport::connect(endpoint.clone()) {
+                    Ok(trans) => {
+                        let ep = trans.remote_endpoint.clone();
+                        let _ = try!(handle_connect(state_cloned.downgrade(), trans,
+                                                    beacon_guid_and_port_is_some ));
+                        return Ok(ep)
+                    },
+                    Err(e) => Err(e),
+                }
+            }));
         }
-        // FIXME: The result should probably be Option<Endpoint>
-        Err(io::Error::new(io::ErrorKind::Other, "No bootstrap node got connected"))
+        let res = Deferred::first_to_promise(1,false,vec_deferred, ControlFlow::ParallelLimit(15)).sync();
+        match res {
+            Ok(v) => Ok(v[0].clone()),            
+            Err(_) => Err(io::Error::new(io::ErrorKind::Other, "No bootstrap node got connected"))
+        }
+        // FIXME: The result should probably be Option<Endpoint> 
     }
 
     fn listen(&self, port: &Port) -> io::Result<Endpoint> {
@@ -562,6 +573,8 @@ mod test {
 
 #[test]
     fn connection_manager() {
+        // Wait 2 seconds until previous bootstrap test ends. If not, that test connects to these endpoints.
+        thread::sleep_ms(2000);
         let run_cm = |cm: ConnectionManager, o: Receiver<Event>| {
             spawn(move || {
                 for i in o.iter() {
@@ -740,6 +753,8 @@ mod test {
 
 #[test]
     fn connection_manager_start() {
+        // Wait 2 seconds until previous bootstrap test ends. If not, that test connects to these endpoints.
+        thread::sleep_ms(2000);        
         let (cm_tx, cm_rx) = channel();
         let mut cm = ConnectionManager::new(cm_tx);
         let mut cm_listen_addr = Endpoint::Tcp(SocketAddr::from_str(&"127.0.0.1:0").unwrap());
