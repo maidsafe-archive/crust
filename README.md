@@ -1,9 +1,14 @@
 # Crust
+
+**Primary Maintainer:**     Chandra Prakash (prakash@maidsafe.net)
+
+**Secondary Maintainer:**   Niall Douglas (niall.douglas@maidsafe.net)
+
 Reliable p2p network connections in Rust with NAT traversal. One of the most needed libraries for any server-less, decentralised project.
 
-|Crate|Travis|Appveyor|Coverage|
-|:------:|:-------:|:------:|:------:|
-|[![](http://meritbadge.herokuapp.com/crust)](https://crates.io/crates/crust)|[![Build Status](https://travis-ci.org/maidsafe/crust.svg?branch=master)](https://travis-ci.org/maidsafe/crust)|[![Build status](https://ci.appveyor.com/api/projects/status/fn6u6g06tp267jom/branch/master?svg=true)](https://ci.appveyor.com/project/dirvine/crust-y32hj/branch/master)|[![Coverage Status](https://coveralls.io/repos/maidsafe/crust/badge.svg)](https://coveralls.io/r/maidsafe/crust)|
+|Crate|Travis|Windows|OSX|Coverage|
+|:------:|:-------:|:------:|:------:|:------:|
+|[![](http://meritbadge.herokuapp.com/crust)](https://crates.io/crates/crust)|[![Build Status](https://travis-ci.org/maidsafe/crust.svg?branch=master)](https://travis-ci.org/maidsafe/crust)|[![Build Status](http://ci.maidsafe.net:8080/buildStatus/icon?job=crust_win64_status_badge)](http://ci.maidsafe.net:8080/job/crust_win64_status_badge/)|[![Build Status](http://ci.maidsafe.net:8080/buildStatus/icon?job=crust_osx_status_badge)](http://ci.maidsafe.net:8080/job/crust_osx_status_badge/)|[![Coverage Status](https://coveralls.io/repos/maidsafe/crust/badge.svg)](https://coveralls.io/r/maidsafe/crust)|
 
 
 | [API Documentation](http://maidsafe.github.io/crust/crust/) | [MaidSafe System Documention](http://systemdocs.maidsafe.net/) | [MaidSafe web site](http://www.maidsafe.net) | [Safe Community site](https://forum.safenetwork.io) |
