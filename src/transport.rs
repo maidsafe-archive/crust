@@ -15,8 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-extern crate libc;
-
+use libc;
 use std::net;
 use std::net::{SocketAddr, SocketAddrV4, SocketAddrV6, TcpStream, TcpListener};
 use tcp_connections;

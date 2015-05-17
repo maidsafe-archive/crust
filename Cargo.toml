@@ -2,14 +2,15 @@
 name = "crust"
 version = "0.0.8"
 authors = ["MaidSafe Developers <dev@maidsafe.net>"]
-description = "This is Pre alpha, and not useful, no code worth looking at."
-documentation = "http://dirvine.github.io/crust/crust"
+description = "p2p networking library. Automatically reconnect and manage connections."
+documentation = "http://maidsafe.github.io/crust/crust"
 repository = "https://github.com/dirvine/crust"
 readme = "README.md"
 license = "GPL-3.0"
 homepage = "http://maidsafe.net"
 
 [dependencies]
+libc = "*"
 cbor = "*"
 docopt = "*"
 rand = "*"
