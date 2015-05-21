@@ -34,30 +34,9 @@ Several methods are used for NAT traversal, UpNP, hole punching [See here for TC
 
 
 ##Todo Items
-- [ ] Tcp Networking
-  - [x] Tcp live port and backup random port selection
-  - [x] Create send/rcv channel from routing to connections object
-  - [x] Implement test for basic "hello world" two way communication
-  - [x] Set up Udp broadcast and respond when we have a port (we listen on any random port above 1024 [user space port])  available (broadcast port is 5483)
-  - [x] Add connection established/lost/ new messages to be passed to routing (via channel)
-  - [x] Implement connect() in connection manager
-  - [x] Allow tcp and then utp connections option and wrap in connection object.
-  ](http://maidsafe.net/Whitepapers/pdf/DHTbasedNATTraversal.pdf)
-- [x] Update handle connect for TCP
-- [x] Remove FailedToConnect event
-- [x] Integrate bootstrap (Link ability to read and write bootstrap file)
-- [x] Integrate beacon (Have connection manger start, broadcast on udp broadcast for port 5483 (later multicast for ipv6)
-- [x] Send serialised bootstrap info as part of beacon reply (Link ability to send bootstrap file to any node requesting it)
-- [ ] Examples:
-  - [x] Broadcaster
-  - [x] Broadcast receiver
-  - [x] CLI Example - options:
-    - [x] Join / Start a node(optionally provide bootstrap info)
-    - [x] Allow sending messages at various rates per second
-    - [x] Print Incomming message rate per second
-  - [x] Local Network Test. 12 Linux, 2 OSX, 2 WIN
-  - [ ] 101 Droplet test
-- [ ] Version 0.0.8
+
+## [0.0.9]
+- [ ] [MAID-1075](https://maidsafe.atlassian.net/browse/MAID-1075) Correct bug; listening on local port (127.0.0.1)
 - [ ] Have ConnectionManager guarantee at most one connection between any two nodes
 - [ ] Utp Networking
   - [ ] Utp live port and backup random port selection
@@ -72,7 +51,8 @@ Several methods are used for NAT traversal, UpNP, hole punching [See here for TC
 - [ ] Implement `get_endoints() -> Vec<EndPointPair>` where `EndpointPair` is struct with `Option<ExternalEndpoint>` and has a Proto identifier field
   - [ ] Implement UpNp
   - [ ] Implement NAT hole punch (udp) for reliable udp
-- [ ] Version 0.1 (crates.io)
+
+## [0.1.0]
 - [ ] Tcp hole punching as per paper
 - [ ] Tracer tcp (TCP with magic in clear [unencrypted])
 - [ ] Wireshark module for tracer TCP
