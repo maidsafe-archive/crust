@@ -141,7 +141,9 @@ impl BroadcastAcceptor {
         for i in 0..GUID_SIZE {
             guid[i] = random::<u8>();
         }
-        let tcp_listener_port = acceptor.local_endpoint().get_address().port();
+        let tcp_listener_port = match acceptor.local_port() {
+            Port::Tcp(p) => p
+        };
         Ok(BroadcastAcceptor{ guid: guid,
                               socket: socket,
                               acceptor: Arc::new(Mutex::new(acceptor)),
