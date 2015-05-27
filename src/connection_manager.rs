@@ -15,13 +15,18 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::net::IpAddr;
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use cbor;
 use sodiumoxide::crypto::asymmetricbox;
 use std::collections::{HashMap, HashSet};
 use std::io;
 use std::sync::{Arc, mpsc, Mutex, Weak};
 use std::thread;
+use std::mem;
+use libc::consts::os::bsd44::{AF_INET, AF_INET6};
+use libc::funcs::bsd43::getifaddrs as posix_getifaddrs;
+use libc::funcs::bsd43::freeifaddrs as posix_freeifaddrs;
+use libc::types::os::common::bsd44::ifaddrs as posix_ifaddrs;
 
 use beacon;
 use bootstrap::{BootStrapHandler, BootStrapContacts, Contact, PublicKey};
@@ -117,7 +122,7 @@ impl ConnectionManager {
                 let listening_ips = getifaddrs();
                 for port in &listening_ports {
                     for ip in &listening_ips {
-                        contacts.push(Contact::new(Endpoint::tcp((ip.clone(), port.get_port())), public_key.clone()));
+                        contacts.push(Contact::new(Endpoint::tcp((ip.addr.clone(), port.get_port())), public_key.clone()));
                     }
                 }
                 let mut bootstrap_handler = BootStrapHandler::new();
@@ -482,8 +487,76 @@ fn start_writing_thread(state: WeakState,
     });
 }
 
-fn getifaddrs() -> Vec<IpAddr> {
-    Vec::<IpAddr>::new()
+/// Details about an interface on this host
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+pub struct IfAddr {
+    /// The name of the interface
+    pub name: String,
+    /// The IP address of the interface
+    pub addr: IpAddr,
+    /// The netmask of the interface
+    pub netmask: IpAddr,
+    /// How to send a broadcast on the interface
+    pub broadcast: IpAddr,
+}
+
+impl IfAddr {
+    /// Create a new IfAddr
+    pub fn new() -> IfAddr {
+        IfAddr {
+            name: String::new(),
+            addr: IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)),
+            netmask: IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)),
+            broadcast: IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0))
+        }
+    }
+}
+
+/// Return a vector of IP details for all the valid interfaces on this host
+#[allow(unsafe_code)]
+pub fn getifaddrs() -> Vec<IfAddr> {
+    let mut ret = Vec::<IfAddr>::new();
+    unsafe {
+      let mut ifaddrs : *mut posix_ifaddrs = mem::uninitialized();
+      if -1 == posix_getifaddrs(&mut ifaddrs) {
+        panic!("failed to retrieve interface details from getifaddrs()");
+      }
+      let mut ifaddr = ifaddrs;
+      while !ifaddr.is_null() {
+          if (*ifaddr).ifa_addr.is_null() {
+              continue;
+          }
+          let mut item = IfAddr::new();
+          // TODO name
+          let sockaddr = *(*ifaddr).ifa_addr;
+          if sockaddr.sa_family == AF_INET as u16 {
+              item.addr=IpAddr::V4(Ipv4Addr::new(
+                  sockaddr.sa_data[0],
+                  sockaddr.sa_data[1],
+                  sockaddr.sa_data[2],
+                  sockaddr.sa_data[3],
+              ));
+          } else if sockaddr.sa_family == AF_INET6 as u16 {
+              item.addr=IpAddr::V6(Ipv6Addr::new(
+                  sockaddr.sa_data[0] as u16  | ((sockaddr.sa_data[1] as u16) << 8),
+                  sockaddr.sa_data[2] as u16  | ((sockaddr.sa_data[3] as u16) << 8),
+                  sockaddr.sa_data[4] as u16  | ((sockaddr.sa_data[5] as u16) << 8),
+                  sockaddr.sa_data[6] as u16  | ((sockaddr.sa_data[7] as u16) << 8),
+                  sockaddr.sa_data[8] as u16  | ((sockaddr.sa_data[9] as u16) << 8),
+                  sockaddr.sa_data[10] as u16 | ((sockaddr.sa_data[11] as u16) << 8),
+                  sockaddr.sa_data[12] as u16 | ((sockaddr.sa_data[13] as u16) << 8),
+                  sockaddr.sa_data[14] as u16 | ((sockaddr.sa_data[15] as u16) << 8),
+              ));
+          }
+          // TODO netmask
+          // TODO broadcast
+          // TODO FIXME UNIT TEST
+          ret.push(item);
+          ifaddr = (*ifaddr).ifa_next;
+      }
+      posix_freeifaddrs(ifaddrs);
+    }
+    ret
 }
 
 #[cfg(test)]

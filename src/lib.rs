@@ -38,6 +38,7 @@ extern crate rustc_serialize;
 extern crate sodiumoxide;
 extern crate time;
 extern crate asynchronous;
+extern crate libc;
 
 mod beacon;
 mod bootstrap;
