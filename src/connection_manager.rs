@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::net::{SocketAddr, IpAddr};
+use std::net::IpAddr;
 use cbor;
 use sodiumoxide::crypto::asymmetricbox;
 use std::collections::{HashMap, HashSet};
@@ -104,7 +104,7 @@ impl ConnectionManager {
         let mut used_beacon_port: Option<u16> = None;
         let ws = self.state.downgrade();
         let listening_ports = try!(lock_state(&ws, |s| {
-            let buf: Vec<_> = s.listening_ports.iter().map(|s| *s).collect();
+            let buf: Vec<Port> = s.listening_ports.iter().map(|s| s.clone()).collect();
             Ok(buf)
         }));
         self.beacon_guid_and_port = match beacon::BroadcastAcceptor::new(beacon_port) {
@@ -115,12 +115,9 @@ impl ConnectionManager {
                     PublicKey::Asym(asymmetricbox::PublicKey([0u8; asymmetricbox::PUBLICKEYBYTES]));
                 let mut contacts = BootStrapContacts::new();
                 let listening_ips = getifaddrs();
-                for port in listening_ports {
-                    for ip in listening_ips {
-                        let endpoint = match port {
-                            Port::Tcp(p) => Endpoint::tcp((ip, p))
-                        };
-                        contacts.push(Contact::new(endpoint, public_key.clone()));
+                for port in &listening_ports {
+                    for ip in &listening_ips {
+                        contacts.push(Contact::new(Endpoint::tcp((ip.clone(), port.get_port())), public_key.clone()));
                     }
                 }
                 let mut bootstrap_handler = BootStrapHandler::new();
@@ -196,9 +193,9 @@ impl ConnectionManager {
             });
         }
         for port in listening_ports {
-            match port {
-                Port::Tcp(p) =>
-                    transport::connect(transport::Endpoint::tcp(("127.0.0.1", p)))
+            match transport::connect(Endpoint::tcp(("127.0.0.1", port.get_port()))) {
+                Ok(_) => (),
+                Err(e) => panic!(e),
             };
         }
     }
@@ -333,12 +330,12 @@ impl ConnectionManager {
     }
 
     fn listen(&self, port: &Port) {
-        let acceptor = try!(transport::new_acceptor(port));
+        let acceptor = transport::new_acceptor(port).unwrap();
         let local_port = acceptor.local_port();
 
         let mut weak_state = self.state.downgrade();
 
-        try!(lock_mut_state(&mut weak_state, |s| Ok(s.listening_ports.insert(local_port))));
+        let _ = lock_mut_state(&mut weak_state, |s| Ok(s.listening_ports.insert(local_port)));
 
         let _ = thread::Builder::new().name("ConnectionManager listen".to_string()).spawn(move || {
             loop {
@@ -498,8 +495,6 @@ mod test {
     use rustc_serialize::{Decodable, Encodable};
     use cbor::{Encoder, Decoder};
     use transport::{Endpoint, Port};
-    use std::net::SocketAddr;
-    use std::str::FromStr;
     use std::sync::{Mutex, Arc};
 
     fn encode<T>(value: &T) -> Bytes where T: Encodable
@@ -577,7 +572,7 @@ mod test {
         let mut cm2 = ConnectionManager::new(cm2_i);
         let _ = cm2.start_listening(vec![Port::Tcp(0)], beacon_port.clone()).unwrap();
         match cm2.bootstrap(None, beacon_port) {
-            Ok(ep) => { assert_eq!(ep.get_port(), cm1_eps[0].get_port()); },
+            Ok(ep) => { assert_eq!(ep.get_address().port(), cm1_eps[0].get_port()); },
             Err(_) => { panic!("Failed to bootstrap"); }
         }
     }
@@ -610,13 +605,15 @@ mod test {
 
         let (cm1_i, cm1_o) = channel();
         let mut cm1 = ConnectionManager::new(cm1_i);
-        let (cm1_eps, beacon_port) = cm1.start_listening(vec![Port::Tcp(0)], Some(0u16)).unwrap();
+        let (cm1_ports, beacon_port) = cm1.start_listening(vec![Port::Tcp(0)], Some(0u16)).unwrap();
+        let cm1_eps = cm1_ports.iter().map(|p| Endpoint::tcp(("127.0.0.1", p.get_port())));
 
         let (cm2_i, cm2_o) = channel();
         let mut cm2 = ConnectionManager::new(cm2_i);
-        let (cm2_eps, _) = cm2.start_listening(vec![Port::Tcp(0)], beacon_port.clone()).unwrap();
-        cm2.connect(cm1_eps.clone());
-        cm1.connect(cm2_eps.clone());
+        let (cm2_ports, _) = cm2.start_listening(vec![Port::Tcp(0)], beacon_port.clone()).unwrap();
+        let cm2_eps = cm2_ports.iter().map(|p| Endpoint::tcp(("127.0.0.1", p.get_port())));
+        cm2.connect(cm1_eps.collect());
+        cm1.connect(cm2_eps.collect());
 
         let runner1 = run_cm(cm1, cm1_o);
         let runner2 = run_cm(cm2, cm2_o);
@@ -707,9 +704,9 @@ mod test {
         }
 
         for node in network.nodes.iter() {
-            for end_point in listening_ports.iter().filter(|&ep| get_port(node).ne(ep)) {
+            for port in listening_ports.iter().filter(|&ep| get_port(node).ne(ep)) {
                 let node = node.clone();
-                let ep = end_point.clone();
+                let ep = Endpoint::tcp(("127.0.0.1", port.get_port()));
                 let _ = spawn(move || {
                     let node = node.lock().unwrap();
                     node.conn_mgr.connect(vec![ep]);
@@ -738,7 +735,7 @@ mod test {
             }
         }
 
-        let _ = run_terminate(listening_ports[0].clone(), stats_tx.clone()).join();
+        let _ = run_terminate(Endpoint::tcp(("127.0.0.1", listening_ports[0].get_port())), stats_tx.clone()).join();
 
         let _ = run_stats.join();
 
@@ -768,23 +765,11 @@ mod test {
         thread::sleep_ms(2000);        
         let (cm_tx, cm_rx) = channel();
         let mut cm = ConnectionManager::new(cm_tx);
-        let mut cm_listen_addr = Endpoint::Tcp(SocketAddr::from_str(&"127.0.0.1:0").unwrap());
-        match cm.start_listening(vec![Port::Tcp(4455)], Some(5483)) {
-          Ok(result) => {
-                if result.1.is_some() {
-                    let _ = SocketAddr::from_str(&format!("127.0.0.1:{}", result.1.unwrap())).unwrap();
-                    // println!("main beacon on {} ", beacon_addr);
-                }
-                if result.0.len() > 0 {
-                    // println!("main listening on {} ",
-                    //          match result.0[0].clone() { Endpoint::Tcp(socket_addr) => { socket_addr } });
-                    cm_listen_addr = result.0[0].clone();
-                } else {
-                    // panic!("main connection manager start_listening none listening port returned");
-                }
-              }
-          Err(_) => panic!("main connection manager start_listening failure")
+        let cm_listen_ports = match cm.start_listening(vec![Port::Tcp(4455)], Some(5483)) {
+            Ok(result) => result.0,
+            Err(_) => panic!("main connection manager start_listening failure")
         };
+        let cm_listen_addrs = cm_listen_ports.iter().map(|p| Endpoint::tcp(("127.0.0.1", p.get_port()))).collect();
 
         let thread = spawn(move || {
            loop {
@@ -824,7 +809,7 @@ mod test {
                 Err(_) => panic!("aux connection manager start_listening failure")
             };
             // changing this to cm_beacon_addr will make the test hanging
-            cm_aux.connect(vec![cm_listen_addr.clone()]);
+            cm_aux.connect(cm_listen_addrs);
         }).join();
         thread::sleep_ms(100);
 

@@ -46,8 +46,9 @@ impl Endpoint {
     /// Creates a Tcp(SocketAddr)
     pub fn tcp<A: ToSocketAddrs>(addr: A) -> Endpoint {
         match addr.to_socket_addrs().unwrap().next() {
-            Some(a) => Endpoint::Tcp(a)
-        };
+            Some(a) => Endpoint::Tcp(a),
+            None => panic!("Failed to parse valid IP address"),
+        }
     }
     /// Returns SocketAddr.
     pub fn get_address(&self) -> SocketAddr {
@@ -154,7 +155,7 @@ pub enum Acceptor {
 impl Acceptor {
     pub fn local_port(&self) -> Port {
         match *self {
-            Acceptor::Tcp(_, listener) => Port::Tcp(listener.local_addr().unwrap().port()),
+            Acceptor::Tcp(_, ref listener) => Port::Tcp(listener.local_addr().unwrap().port()),
         }
     }
 }
