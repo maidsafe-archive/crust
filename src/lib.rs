@@ -42,6 +42,7 @@ extern crate libc;
 
 mod beacon;
 mod bootstrap;
+mod getifaddrs;
 mod tcp_connections;
 mod transport;
 
