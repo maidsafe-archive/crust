@@ -23,6 +23,8 @@ use libc::funcs::bsd43::getifaddrs as posix_getifaddrs;
 use libc::funcs::bsd43::freeifaddrs as posix_freeifaddrs;
 use libc::types::os::common::bsd44::ifaddrs as posix_ifaddrs;
 use libc::types::os::common::bsd44::sockaddr as posix_sockaddr;
+use libc::types::os::common::bsd44::sockaddr_in as posix_sockaddr_in;
+use libc::types::os::common::bsd44::sockaddr_in6 as posix_sockaddr_in6;
 
 /// Details about an interface on this host
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
@@ -53,61 +55,70 @@ impl IfAddr {
 #[allow(unsafe_code)]
 pub fn getifaddrs() -> Vec<IfAddr> {
     let mut ret = Vec::<IfAddr>::new();
+    let mut ifaddrs : *mut posix_ifaddrs;
     unsafe {
-      let mut ifaddrs : *mut posix_ifaddrs = mem::uninitialized();
+      ifaddrs = mem::uninitialized();
       if -1 == posix_getifaddrs(&mut ifaddrs) {
         panic!("failed to retrieve interface details from getifaddrs()");
       }
-      let sockaddr_to_ipaddr = |sockaddr : posix_sockaddr| -> Option<IpAddr> {
-          if sockaddr.sa_family == AF_INET as u16 {
-              Some(IpAddr::V4(Ipv4Addr::new(
-                  sockaddr.sa_data[0],
-                  sockaddr.sa_data[1],
-                  sockaddr.sa_data[2],
-                  sockaddr.sa_data[3],
-              )))
-          } else if sockaddr.sa_family == AF_INET6 as u16 {
-              Some(IpAddr::V6(Ipv6Addr::new(
-                  sockaddr.sa_data[0] as u16  | ((sockaddr.sa_data[1] as u16) << 8),
-                  sockaddr.sa_data[2] as u16  | ((sockaddr.sa_data[3] as u16) << 8),
-                  sockaddr.sa_data[4] as u16  | ((sockaddr.sa_data[5] as u16) << 8),
-                  sockaddr.sa_data[6] as u16  | ((sockaddr.sa_data[7] as u16) << 8),
-                  sockaddr.sa_data[8] as u16  | ((sockaddr.sa_data[9] as u16) << 8),
-                  sockaddr.sa_data[10] as u16 | ((sockaddr.sa_data[11] as u16) << 8),
-                  sockaddr.sa_data[12] as u16 | ((sockaddr.sa_data[13] as u16) << 8),
-                  sockaddr.sa_data[14] as u16 | ((sockaddr.sa_data[15] as u16) << 8),
-              )))
-          }
-          else { None }
-      };
-          
-      let mut ifaddr = ifaddrs;
-      while !ifaddr.is_null() {
-          if (*ifaddr).ifa_addr.is_null() {
-              continue;
-          }
-          let mut item = IfAddr::new();
-          let name = CStr::from_ptr((*ifaddr).ifa_name).to_bytes();
-          item.name = str::from_utf8(name).unwrap().to_owned();
-          match sockaddr_to_ipaddr(*(*ifaddr).ifa_addr) {
-              Some(a) => item.addr = a,
-              None => continue,
-          };
-          match sockaddr_to_ipaddr(*(*ifaddr).ifa_netmask) {
-              Some(a) => item.netmask = a,
-              None => continue,
-          };
-          if ((*ifaddr).ifa_flags & 2 /*IFF_BROADCAST*/) != 0 {
-              match sockaddr_to_ipaddr(*(*ifaddr).ifa_ifu) {
-                  Some(a) => item.broadcast = a,
-                  None => continue,
-              };
-          }
-          ret.push(item);
-          ifaddr = (*ifaddr).ifa_next;
-      }
-      posix_freeifaddrs(ifaddrs);
     }
+    let sockaddr_to_ipaddr = |sockaddr : *const posix_sockaddr| -> Option<IpAddr> {
+        if sockaddr.is_null() { return None }
+        if unsafe{*sockaddr}.sa_family == AF_INET as u16 {
+            let ref sa = unsafe{*(sockaddr as *const posix_sockaddr_in)};
+            Some(IpAddr::V4(Ipv4Addr::new(
+                ((sa.sin_addr.s_addr>>0) & 255) as u8,
+                ((sa.sin_addr.s_addr>>8) & 255) as u8,
+                ((sa.sin_addr.s_addr>>16) & 255) as u8,
+                ((sa.sin_addr.s_addr>>24) & 255) as u8,
+            )))
+        } else if unsafe{*sockaddr}.sa_family == AF_INET6 as u16 {
+            let ref sa = unsafe{*(sockaddr as *const posix_sockaddr_in6)};
+            Some(IpAddr::V6(Ipv6Addr::new(
+                sa.sin6_addr.s6_addr[0],
+                sa.sin6_addr.s6_addr[1],
+                sa.sin6_addr.s6_addr[2],
+                sa.sin6_addr.s6_addr[3],
+                sa.sin6_addr.s6_addr[4],
+                sa.sin6_addr.s6_addr[5],
+                sa.sin6_addr.s6_addr[6],
+                sa.sin6_addr.s6_addr[7],
+            )))
+        }
+        else { None }
+    };
+        
+    let mut _ifaddr = ifaddrs;
+    let mut first = true;
+    while !_ifaddr.is_null() {
+        if first { first=false; }
+        else { _ifaddr = unsafe { (*_ifaddr).ifa_next }; }
+        if _ifaddr.is_null() { break; }
+        let ref ifaddr = unsafe { *_ifaddr };
+        // println!("ifaddr1={}, next={}", _ifaddr as u64, ifaddr.ifa_next as u64);
+        if ifaddr.ifa_addr.is_null() {
+            continue;
+        }
+        let mut item = IfAddr::new();
+        let name = unsafe { CStr::from_ptr(ifaddr.ifa_name) }.to_bytes();
+        item.name = item.name + str::from_utf8(name).unwrap();
+        match sockaddr_to_ipaddr(ifaddr.ifa_addr) {
+            Some(a) => item.addr = a,
+            None => continue,
+        };
+        match sockaddr_to_ipaddr(ifaddr.ifa_netmask) {
+            Some(a) => item.netmask = a,
+            None => (),
+        };
+        if (ifaddr.ifa_flags & 2 /*IFF_BROADCAST*/) != 0 {
+            match sockaddr_to_ipaddr(ifaddr.ifa_ifu) {
+                Some(a) => item.broadcast = a,
+                None => (),
+            };
+        }
+        ret.push(item);
+    }
+    unsafe { posix_freeifaddrs(ifaddrs); }
     ret
 }
 
