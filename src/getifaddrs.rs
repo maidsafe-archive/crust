@@ -75,14 +75,14 @@ pub fn getifaddrs() -> Vec<IfAddr> {
         } else if unsafe{*sockaddr}.sa_family == AF_INET6 as u16 {
             let ref sa = unsafe{*(sockaddr as *const posix_sockaddr_in6)};
             Some(IpAddr::V6(Ipv6Addr::new(
-                sa.sin6_addr.s6_addr[0],
-                sa.sin6_addr.s6_addr[1],
-                sa.sin6_addr.s6_addr[2],
-                sa.sin6_addr.s6_addr[3],
-                sa.sin6_addr.s6_addr[4],
-                sa.sin6_addr.s6_addr[5],
-                sa.sin6_addr.s6_addr[6],
-                sa.sin6_addr.s6_addr[7],
+                ((sa.sin6_addr.s6_addr[0] & 255)<<8) | ((sa.sin6_addr.s6_addr[0]>>8) & 255),
+                ((sa.sin6_addr.s6_addr[1] & 255)<<8) | ((sa.sin6_addr.s6_addr[1]>>8) & 255),
+                ((sa.sin6_addr.s6_addr[2] & 255)<<8) | ((sa.sin6_addr.s6_addr[2]>>8) & 255),
+                ((sa.sin6_addr.s6_addr[3] & 255)<<8) | ((sa.sin6_addr.s6_addr[3]>>8) & 255),
+                ((sa.sin6_addr.s6_addr[4] & 255)<<8) | ((sa.sin6_addr.s6_addr[4]>>8) & 255),
+                ((sa.sin6_addr.s6_addr[5] & 255)<<8) | ((sa.sin6_addr.s6_addr[5]>>8) & 255),
+                ((sa.sin6_addr.s6_addr[6] & 255)<<8) | ((sa.sin6_addr.s6_addr[6]>>8) & 255),
+                ((sa.sin6_addr.s6_addr[7] & 255)<<8) | ((sa.sin6_addr.s6_addr[7]>>8) & 255),
             )))
         }
         else { None }
@@ -132,7 +132,7 @@ mod test {
         let mut has_loopback4 = false;
         let mut has_loopback6 = false;
         for ifaddr in getifaddrs() {
-            println!("Interface {} has IP {} netmask {} broadcast {}", ifaddr.name,
+            println!("   Interface {} has IP {} netmask {} broadcast {}", ifaddr.name,
                      ifaddr.addr, ifaddr.netmask, ifaddr.broadcast);
             match ifaddr.addr {
                 IpAddr::V4(v4) => if v4.is_loopback() { has_loopback4=true; },

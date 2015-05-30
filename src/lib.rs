@@ -40,6 +40,22 @@ extern crate time;
 extern crate asynchronous;
 extern crate libc;
 
+#[cfg(test)]
+mod test {
+    use std::env;
+    
+    #[test]
+    pub fn check_rust_unit_testing_is_not_parallel() {
+        match env::var_os("RUST_TEST_THREADS") {
+            Some(val) => assert!(val.into_string().unwrap() == "1"),
+            None => panic!("RUST_TEST_THREADS and RUST_TEST_TASKS needs to be 1 for the crust unit tests to work"),
+        }
+        match env::var_os("RUST_TEST_TASKS") {
+            Some(val) => assert!(val.into_string().unwrap() == "1"),
+            None => panic!("RUST_TEST_THREADS and RUST_TEST_TASKS needs to be 1 for the crust unit tests to work"),
+        }
+    }
+}
 mod beacon;
 mod bootstrap;
 mod getifaddrs;

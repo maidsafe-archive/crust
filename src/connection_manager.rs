@@ -128,7 +128,9 @@ impl ConnectionManager {
                     loop {
                         let mut transport = match acceptor.accept() {
                             Ok(transport) => transport,
-                            Err(_) => break,
+                            Err(_) => {
+                                break
+                            },
                         };
                         let bootstrap_contacts = || {
                             let handler = BootStrapHandler::new();
@@ -185,13 +187,15 @@ impl ConnectionManager {
         let weak_state = self.state.downgrade();
         {
             let _ = lock_mut_state(&weak_state, |state: &mut State| {
-                for itr in state.listening_ports.iter() {
+                for itr in &state.listening_ports {
                     listening_ports.push(itr.clone());
                 }
+                state.listening_ports.clear();
                 state.stop_called = true;
                 Ok(())
             });
         }
+        // println!("connection_manager::stop There are {} TCP ports being listened on", listening_ports.len());
         for port in listening_ports {
             match transport::connect(Endpoint::tcp(("127.0.0.1", port.get_port()))) {
                 Ok(_) => (),
@@ -283,7 +287,9 @@ impl ConnectionManager {
             let transport = transport::connect(transport::Endpoint::Tcp(peer)).unwrap();
             let contacts_str = match transport.receiver.receive() {
                 Ok(message) => message,
-                Err(_) => continue,
+                Err(_) => {
+                    continue
+                },
             };
             let mut decoder = cbor::Decoder::from_bytes(&contacts_str[..]);
             let contact_list: BootStrapContacts = match decoder.decode().next() {
@@ -304,6 +310,9 @@ impl ConnectionManager {
     }
 
     fn bootstrap_off_list(&self, bootstrap_list: Vec<Endpoint>) -> io::Result<Endpoint> {
+        if bootstrap_list.is_empty() {
+            panic!("The bootstrap list is empty, therefore cannot bootstrap");
+        }
         let mut vec_deferred = vec![];
         for endpoint in bootstrap_list {
             let state_cloned = self.state.clone();
@@ -323,7 +332,7 @@ impl ConnectionManager {
         let res = Deferred::first_to_promise(1,false,vec_deferred, ControlFlow::ParallelLimit(15)).sync();
         match res {
             Ok(v) => if v.len() > 0 { return Ok(v[0].clone()) },            
-            Err(_) => ()
+            Err(_) => (),
         }
         // FIXME: The result should probably be Option<Endpoint> 
         Err(io::Error::new(io::ErrorKind::Other, "No bootstrap node got connected"))
@@ -361,6 +370,12 @@ impl ConnectionManager {
                 }
             }
         });
+    }
+}
+
+impl Drop for ConnectionManager {
+    fn drop(&mut self) {
+        self.stop();
     }
 }
 
@@ -563,11 +578,13 @@ mod test {
         let (cm1_i, _) = channel();
         let mut cm1 = ConnectionManager::new(cm1_i);
         let (cm1_eps, beacon_port) = cm1.start_listening(vec![Port::Tcp(0)], Some(0u16)).unwrap();
+        println!("   cm1 listening port {} beaconing port {}", cm1_eps[0].get_port(), beacon_port.unwrap());
 
         thread::sleep_ms(1000);
         let (cm2_i, _) = channel();
         let mut cm2 = ConnectionManager::new(cm2_i);
-        let _ = cm2.start_listening(vec![Port::Tcp(0)], beacon_port.clone()).unwrap();
+        let (cm2_eps, _) = cm2.start_listening(vec![Port::Tcp(0)], beacon_port.clone()).unwrap();
+        println!("   cm2 listening port {}", cm2_eps[0].get_port());
         match cm2.bootstrap(None, beacon_port) {
             Ok(ep) => { assert_eq!(ep.get_address().port(), cm1_eps[0].get_port()); },
             Err(_) => { panic!("Failed to bootstrap"); }
