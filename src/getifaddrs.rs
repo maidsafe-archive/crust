@@ -15,16 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
-use std::{mem, str};
-use std::ffi::CStr;
-use libc::consts::os::bsd44::{AF_INET, AF_INET6};
-use libc::funcs::bsd43::getifaddrs as posix_getifaddrs;
-use libc::funcs::bsd43::freeifaddrs as posix_freeifaddrs;
-use libc::types::os::common::bsd44::ifaddrs as posix_ifaddrs;
-use libc::types::os::common::bsd44::sockaddr as posix_sockaddr;
-use libc::types::os::common::bsd44::sockaddr_in as posix_sockaddr_in;
-use libc::types::os::common::bsd44::sockaddr_in6 as posix_sockaddr_in6;
+use std::net::{IpAddr, Ipv4Addr};
 
 /// Details about an interface on this host
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
@@ -51,20 +42,24 @@ impl IfAddr {
     }
 }
 
-/// Return a vector of IP details for all the valid interfaces on this host
-#[allow(unsafe_code)]
-pub fn getifaddrs() -> Vec<IfAddr> {
-    let mut ret = Vec::<IfAddr>::new();
-    let mut ifaddrs : *mut posix_ifaddrs;
-    unsafe {
-      ifaddrs = mem::uninitialized();
-      if -1 == posix_getifaddrs(&mut ifaddrs) {
-        panic!("failed to retrieve interface details from getifaddrs()");
-      }
-    }
-    let sockaddr_to_ipaddr = |sockaddr : *const posix_sockaddr| -> Option<IpAddr> {
+#[cfg(not(windows))]
+mod getifaddrs_posix {
+    use super::IfAddr;
+    use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
+    use std::{mem, str};
+    use std::ffi::CStr;
+    use libc::consts::os::bsd44::{AF_INET, AF_INET6};
+    use libc::funcs::bsd43::getifaddrs as posix_getifaddrs;
+    use libc::funcs::bsd43::freeifaddrs as posix_freeifaddrs;
+    use libc::types::os::common::bsd44::ifaddrs as posix_ifaddrs;
+    use libc::types::os::common::bsd44::sockaddr as posix_sockaddr;
+    use libc::types::os::common::bsd44::sockaddr_in as posix_sockaddr_in;
+    use libc::types::os::common::bsd44::sockaddr_in6 as posix_sockaddr_in6;
+
+    #[allow(unsafe_code)]
+    fn sockaddr_to_ipaddr(sockaddr : *const posix_sockaddr) -> Option<IpAddr> {
         if sockaddr.is_null() { return None }
-        if unsafe{*sockaddr}.sa_family == AF_INET as u16 {
+        if unsafe{*sockaddr}.sa_family as u32 == AF_INET as u32 {
             let ref sa = unsafe{*(sockaddr as *const posix_sockaddr_in)};
             Some(IpAddr::V4(Ipv4Addr::new(
                 ((sa.sin_addr.s_addr>>0) & 255) as u8,
@@ -72,7 +67,7 @@ pub fn getifaddrs() -> Vec<IfAddr> {
                 ((sa.sin_addr.s_addr>>16) & 255) as u8,
                 ((sa.sin_addr.s_addr>>24) & 255) as u8,
             )))
-        } else if unsafe{*sockaddr}.sa_family == AF_INET6 as u16 {
+        } else if unsafe{*sockaddr}.sa_family as u32 == AF_INET6 as u32 {
             let ref sa = unsafe{*(sockaddr as *const posix_sockaddr_in6)};
             Some(IpAddr::V6(Ipv6Addr::new(
                 ((sa.sin6_addr.s6_addr[0] & 255)<<8) | ((sa.sin6_addr.s6_addr[0]>>8) & 255),
@@ -86,40 +81,70 @@ pub fn getifaddrs() -> Vec<IfAddr> {
             )))
         }
         else { None }
-    };
-        
-    let mut _ifaddr = ifaddrs;
-    let mut first = true;
-    while !_ifaddr.is_null() {
-        if first { first=false; }
-        else { _ifaddr = unsafe { (*_ifaddr).ifa_next }; }
-        if _ifaddr.is_null() { break; }
-        let ref ifaddr = unsafe { *_ifaddr };
-        // println!("ifaddr1={}, next={}", _ifaddr as u64, ifaddr.ifa_next as u64);
-        if ifaddr.ifa_addr.is_null() {
-            continue;
+    }
+
+    #[cfg(any(target_os = "linux", target_os = "android", target_os = "nacl"))]
+    fn do_broadcast(ifaddr : &posix_ifaddrs) -> IpAddr {
+        match sockaddr_to_ipaddr(ifaddr.ifa_ifu) {
+            Some(a) => a,
+            None => IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)),
         }
-        let mut item = IfAddr::new();
-        let name = unsafe { CStr::from_ptr(ifaddr.ifa_name) }.to_bytes();
-        item.name = item.name + str::from_utf8(name).unwrap();
-        match sockaddr_to_ipaddr(ifaddr.ifa_addr) {
-            Some(a) => item.addr = a,
-            None => continue,
-        };
-        match sockaddr_to_ipaddr(ifaddr.ifa_netmask) {
-            Some(a) => item.netmask = a,
-            None => (),
-        };
-        if (ifaddr.ifa_flags & 2 /*IFF_BROADCAST*/) != 0 {
-            match sockaddr_to_ipaddr(ifaddr.ifa_ifu) {
-                Some(a) => item.broadcast = a,
+    }
+    
+    #[cfg(any(target_os = "freebsd", target_os = "macos", target_os = "ios"))]
+    fn do_broadcast(ifaddr : &posix_ifaddrs) -> IpAddr {
+        match sockaddr_to_ipaddr(ifaddr.ifa_dstaddr) {
+            Some(a) => a,
+            None => IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)),
+        }
+    }
+    
+    /// Return a vector of IP details for all the valid interfaces on this host
+    #[allow(unsafe_code)]
+    pub fn getifaddrs() -> Vec<IfAddr> {
+        let mut ret = Vec::<IfAddr>::new();
+        let mut ifaddrs : *mut posix_ifaddrs;
+        unsafe {
+          ifaddrs = mem::uninitialized();
+          if -1 == posix_getifaddrs(&mut ifaddrs) {
+            panic!("failed to retrieve interface details from getifaddrs()");
+          }
+        }
+            
+        let mut _ifaddr = ifaddrs;
+        let mut first = true;
+        while !_ifaddr.is_null() {
+            if first { first=false; }
+            else { _ifaddr = unsafe { (*_ifaddr).ifa_next }; }
+            if _ifaddr.is_null() { break; }
+            let ref ifaddr = unsafe { *_ifaddr };
+            // println!("ifaddr1={}, next={}", _ifaddr as u64, ifaddr.ifa_next as u64);
+            if ifaddr.ifa_addr.is_null() {
+                continue;
+            }
+            let mut item = IfAddr::new();
+            let name = unsafe { CStr::from_ptr(ifaddr.ifa_name) }.to_bytes();
+            item.name = item.name + str::from_utf8(name).unwrap();
+            match sockaddr_to_ipaddr(ifaddr.ifa_addr) {
+                Some(a) => item.addr = a,
+                None => continue,
+            };
+            match sockaddr_to_ipaddr(ifaddr.ifa_netmask) {
+                Some(a) => item.netmask = a,
                 None => (),
             };
+            if (ifaddr.ifa_flags & 2 /*IFF_BROADCAST*/) != 0 {
+                item.broadcast = do_broadcast(ifaddr);
+            }
+            ret.push(item);
         }
-        ret.push(item);
+        unsafe { posix_freeifaddrs(ifaddrs); }
+        ret
     }
-    unsafe { posix_freeifaddrs(ifaddrs); }
-    ret
+}
+#[cfg(not(windows))]
+pub fn getifaddrs() -> Vec<IfAddr> {
+    getifaddrs_posix::getifaddrs()
 }
 
 #[cfg(test)]
