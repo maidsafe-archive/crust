@@ -58,7 +58,10 @@ mod test {
 }
 mod beacon;
 mod bootstrap;
-mod getifaddrs;
+#[cfg(any(target_os="linux", target_os="macos"))]
+mod getifaddrs_posix;
+#[cfg(target_os="windows")]
+mod getifaddrs_win;
 mod tcp_connections;
 mod transport;
 

@@ -24,7 +24,10 @@ use std::thread;
 
 use beacon;
 use bootstrap::{BootStrapHandler, BootStrapContacts, Contact, PublicKey};
-use getifaddrs::getifaddrs;
+#[cfg(any(target_os="linux", target_os="macos"))]
+use getifaddrs_posix::getifaddrs;
+#[cfg(target_os="windows")]
+use getifaddrs_win::getifaddrs;
 use transport;
 use transport::{Endpoint, Port};
 

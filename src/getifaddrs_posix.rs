@@ -110,11 +110,13 @@ pub fn getifaddrs() -> Vec<IfAddr> {
             Some(a) => item.netmask = a,
             None => (),
         };
-        if (ifaddr.ifa_flags & 2 /*IFF_BROADCAST*/) != 0 {
-            match sockaddr_to_ipaddr(ifaddr.ifa_ifu) {
-                Some(a) => item.broadcast = a,
-                None => (),
-            };
+        if cfg!(target_os = "linux") {
+            if (ifaddr.ifa_flags & 2 /*IFF_BROADCAST*/) != 0 {
+                match sockaddr_to_ipaddr(ifaddr.ifa_ifu) {
+                    Some(a) => item.broadcast = a,
+                    None => (),
+                };
+            }
         }
         ret.push(item);
     }
