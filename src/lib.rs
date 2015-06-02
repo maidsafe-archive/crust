@@ -19,8 +19,8 @@
 //! Reliable p2p network connections in Rust with NAT traversal.
 //! One of the most needed libraries for any server-less / decentralised projects
 
-#![forbid(bad_style, missing_docs, warnings)]
-#![deny(deprecated, drop_with_repr_extern, improper_ctypes, non_shorthand_field_patterns,
+#![forbid(missing_docs, warnings)]
+#![deny(bad_style, deprecated, drop_with_repr_extern, improper_ctypes, non_shorthand_field_patterns,
         overflowing_literals, plugin_as_library, private_no_mangle_fns, private_no_mangle_statics,
         raw_pointer_derive, stable_features, unconditional_recursion, unknown_lints,
         unsafe_code, unsigned_negation, unused, unused_allocation, unused_attributes,

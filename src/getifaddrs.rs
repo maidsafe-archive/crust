@@ -69,6 +69,8 @@ mod getifaddrs_posix {
             )))
         } else if unsafe{*sockaddr}.sa_family as u32 == AF_INET6 as u32 {
             let ref sa = unsafe{*(sockaddr as *const posix_sockaddr_in6)};
+            // Ignore all fe80:: addresses as these are link locals
+            if sa.sin6_addr.s6_addr[0]==0x80fe { None }
             Some(IpAddr::V6(Ipv6Addr::new(
                 ((sa.sin6_addr.s6_addr[0] & 255)<<8) | ((sa.sin6_addr.s6_addr[0]>>8) & 255),
                 ((sa.sin6_addr.s6_addr[1] & 255)<<8) | ((sa.sin6_addr.s6_addr[1]>>8) & 255),
@@ -145,6 +147,140 @@ mod getifaddrs_posix {
 #[cfg(not(windows))]
 pub fn getifaddrs() -> Vec<IfAddr> {
     getifaddrs_posix::getifaddrs()
+}
+
+#[cfg(windows)]
+mod getifaddrs_windows {
+    use super::IfAddr;
+    use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
+    use std::{str, ptr};
+    use std::ffi::CStr;
+    use libc::types::common::c95::c_void;
+    use libc::types::os::arch::c95::{c_char, c_ulong, size_t, c_int };
+    use libc::types::os::arch::extra::*;          // libc source code says this is all the Windows integral types
+    use libc::consts::os::extra::*;               // win32 status code, constants etc
+    use libc::consts::os::bsd44::*;               // the winsock constants
+    use libc::types::os::common::bsd44::*;        // the winsock types
+    use libc;
+    
+    #[repr(C)]
+    #[allow(bad_style)]
+    struct SOCKET_ADDRESS {
+        pub lpSockaddr : *const sockaddr,
+        pub iSockaddrLength : c_int,
+    }
+    #[repr(C)]
+    #[allow(bad_style)]
+    struct IP_ADAPTER_UNICAST_ADDRESS {
+        pub Length : c_ulong,
+        pub Flags : DWORD,
+        pub Next : *const IP_ADAPTER_UNICAST_ADDRESS,
+        pub Address : SOCKET_ADDRESS,
+        // Loads more follows, but I'm not bothering to map these for now
+    }
+    #[repr(C)]
+    #[allow(bad_style)]
+    struct IP_ADAPTER_ADDRESSES {
+        pub Length : c_ulong,
+        pub IfIndex : DWORD,
+        pub Next : *const IP_ADAPTER_ADDRESSES,
+        pub AdapterName : *const c_char,
+        pub FirstUnicastAddress : *const IP_ADAPTER_UNICAST_ADDRESS,
+        // Loads more follows, but I'm not bothering to map these for now
+    }
+    #[link(name="Iphlpapi")]
+    extern "system" {
+        pub fn GetAdaptersAddresses(family : c_ulong, flags : c_ulong, reserved : *const c_void, addresses : *const IP_ADAPTER_ADDRESSES, size : *mut c_ulong) -> c_ulong;
+    }
+
+    /// Return a vector of IP details for all the valid interfaces on this host
+    #[allow(unsafe_code)]
+    pub fn getifaddrs() -> Vec<IfAddr> {
+        let mut ret = Vec::<IfAddr>::new();
+        let mut ifaddrs : *const IP_ADAPTER_ADDRESSES;
+        let mut buffersize : c_ulong = 15000;
+        loop {
+            unsafe {
+                ifaddrs = libc::malloc(buffersize as size_t) as *mut IP_ADAPTER_ADDRESSES;
+                if ifaddrs.is_null() {
+                    panic!("Failed to allocate buffer in getifaddrs()");
+                }
+                let retcode = GetAdaptersAddresses(0,
+                                                   0x3e /* GAA_FLAG_SKIP_ANYCAST|GAA_FLAG_SKIP_MULTICAST|GAA_FLAG_SKIP_DNS_SERVER|GAA_FLAG_INCLUDE_PREFIX|GAA_FLAG_SKIP_FRIENDLY_NAME */,
+                                                   ptr::null(),
+                                                   ifaddrs,
+                                                   &mut buffersize) as c_int;
+                match retcode {
+                    ERROR_SUCCESS => break,
+                    111 /*ERROR_BUFFER_OVERFLOW*/ => {
+                        libc::free(ifaddrs as *mut c_void);
+                        buffersize = buffersize * 2;
+                        continue
+                    },
+                    _ => panic!("GetAdaptersAddresses() failed with error code {}", retcode)
+                }
+            }
+        }
+            
+        let mut _ifaddr = ifaddrs;
+        let mut first = true;
+        while !_ifaddr.is_null() {
+            if first { first=false; }
+            else { _ifaddr = unsafe { (*_ifaddr).Next }; }
+            if _ifaddr.is_null() { break; }
+            let ref ifaddr = unsafe { &*_ifaddr };
+            // println!("ifaddr1={}, next={}", _ifaddr as u64, ifaddr.ifa_next as u64);
+            
+            let mut addr = ifaddr.FirstUnicastAddress;
+            if addr.is_null() { continue; }
+            let mut firstaddr = true;
+            while !addr.is_null() {
+                if firstaddr { firstaddr=false; }
+                else { addr = unsafe { (*addr).Next }; }
+                if addr.is_null() { break; }
+
+                let mut item = IfAddr::new();
+                let name = unsafe { CStr::from_ptr(ifaddr.AdapterName) }.to_bytes();
+                item.name = item.name + str::from_utf8(name).unwrap();
+
+                let sockaddr = unsafe { (*addr).Address.lpSockaddr };
+                if sockaddr.is_null() { continue; }
+                if unsafe{*sockaddr}.sa_family as u32 == AF_INET as u32 {
+                    let ref sa = unsafe{*(sockaddr as *const sockaddr_in)};
+                    // Ignore all 169.254.x.x addresses as these are not active interfaces
+                    if sa.sin_addr.s_addr & 65535 == 0xfea9 { continue; }
+                    item.addr = IpAddr::V4(Ipv4Addr::new(
+                        ((sa.sin_addr.s_addr>>0) & 255) as u8,
+                        ((sa.sin_addr.s_addr>>8) & 255) as u8,
+                        ((sa.sin_addr.s_addr>>16) & 255) as u8,
+                        ((sa.sin_addr.s_addr>>24) & 255) as u8,
+                    ));
+                } else if unsafe{*sockaddr}.sa_family as u32 == AF_INET6 as u32 {
+                    let ref sa = unsafe{*(sockaddr as *const sockaddr_in6)};
+                    // Ignore all fe80:: addresses as these are link locals
+                    if sa.sin6_addr.s6_addr[0]==0x80fe { continue; }
+                    item.addr = IpAddr::V6(Ipv6Addr::new(
+                        ((sa.sin6_addr.s6_addr[0] & 255)<<8) | ((sa.sin6_addr.s6_addr[0]>>8) & 255),
+                        ((sa.sin6_addr.s6_addr[1] & 255)<<8) | ((sa.sin6_addr.s6_addr[1]>>8) & 255),
+                        ((sa.sin6_addr.s6_addr[2] & 255)<<8) | ((sa.sin6_addr.s6_addr[2]>>8) & 255),
+                        ((sa.sin6_addr.s6_addr[3] & 255)<<8) | ((sa.sin6_addr.s6_addr[3]>>8) & 255),
+                        ((sa.sin6_addr.s6_addr[4] & 255)<<8) | ((sa.sin6_addr.s6_addr[4]>>8) & 255),
+                        ((sa.sin6_addr.s6_addr[5] & 255)<<8) | ((sa.sin6_addr.s6_addr[5]>>8) & 255),
+                        ((sa.sin6_addr.s6_addr[6] & 255)<<8) | ((sa.sin6_addr.s6_addr[6]>>8) & 255),
+                        ((sa.sin6_addr.s6_addr[7] & 255)<<8) | ((sa.sin6_addr.s6_addr[7]>>8) & 255),
+                    ));
+                }
+                else { continue; }
+                ret.push(item);
+            }
+        }
+        unsafe { libc::free(ifaddrs as *mut c_void); }
+        ret
+    }
+}
+#[cfg(windows)]
+pub fn getifaddrs() -> Vec<IfAddr> {
+    getifaddrs_windows::getifaddrs()
 }
 
 #[cfg(test)]
