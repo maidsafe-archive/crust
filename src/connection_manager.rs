@@ -24,6 +24,7 @@ use std::thread;
 
 use beacon;
 use bootstrap::{BootStrapHandler, BootStrapContacts, Contact, PublicKey};
+use getifaddrs::getifaddrs;
 use transport;
 use transport::{Endpoint, Port};
 
@@ -59,7 +60,7 @@ struct Connection {
 struct State {
     event_pipe: mpsc::Sender<Event>,
     connections: HashMap<Endpoint, Connection>,
-    listening_endpoints: HashSet<Endpoint>,
+    listening_ports: HashSet<Port>,
     stop_called: bool,
 }
 
@@ -69,7 +70,7 @@ impl ConnectionManager {
     pub fn new(event_pipe: mpsc::Sender<Event>) -> ConnectionManager {
         let state = Arc::new(Mutex::new(State{ event_pipe: event_pipe,
                                                connections: HashMap::new(),
-                                               listening_endpoints: HashSet::new(),
+                                               listening_ports: HashSet::new(),
                                                stop_called: false,
                                              }));
         ConnectionManager { state: state, beacon_guid_and_port: None, }
@@ -85,30 +86,39 @@ impl ConnectionManager {
     /// if beacon succeeds in starting the udp listener, the coresponding port is returned
     // FIXME: Returning io::Result seems pointless since we always return Ok.
     pub fn start_listening(&mut self, mut hint: Vec<Port>, beacon_port: Option<u16>) ->
-            io::Result<(Vec<Endpoint>, Option<u16>)> {
+            io::Result<(Vec<Port>, Option<u16>)> {
         // We need to check for an instance of each supported protocol in the hint vector.  For any
         // protocol that doesn't have an entry, we should inject one (either random or 0).  For now
         // we're only supporting TCP, so...
         if hint.is_empty() {
             hint.push(Port::Tcp(0));
         }
-        let end_points = hint.iter().filter_map(|port| self.listen(port).ok()).collect::<Vec<_>>();
-
+        for h in &hint {
+            self.listen(h);
+        }
         let beacon_port: u16 = match beacon_port {
             Some(port) =>  port,
             None => 5483
         };
 
-        let mut used_port: Option<u16> = None;
+        let mut used_beacon_port: Option<u16> = None;
+        let ws = self.state.downgrade();
+        let listening_ports = try!(lock_state(&ws, |s| {
+            let buf: Vec<Port> = s.listening_ports.iter().map(|s| s.clone()).collect();
+            Ok(buf)
+        }));
         self.beacon_guid_and_port = match beacon::BroadcastAcceptor::new(beacon_port) {
             Ok(acceptor) => {
                 let beacon_guid_and_port = (acceptor.beacon_guid(), acceptor.beacon_port());
-                used_port = Some(beacon_guid_and_port.1);
+                used_beacon_port = Some(beacon_guid_and_port.1);
                 let public_key =
                     PublicKey::Asym(asymmetricbox::PublicKey([0u8; asymmetricbox::PUBLICKEYBYTES]));
                 let mut contacts = BootStrapContacts::new();
-                for end_point in &end_points {
-                    contacts.push(Contact::new(end_point.clone(), public_key.clone()));
+                let listening_ips = getifaddrs();
+                for port in &listening_ports {
+                    for ip in &listening_ips {
+                        contacts.push(Contact::new(Endpoint::tcp((ip.addr.clone(), port.get_port())), public_key.clone()));
+                    }
                 }
                 let mut bootstrap_handler = BootStrapHandler::new();
                 bootstrap_handler.add_bootstrap_contacts(contacts);
@@ -118,7 +128,9 @@ impl ConnectionManager {
                     loop {
                         let mut transport = match acceptor.accept() {
                             Ok(transport) => transport,
-                            Err(_) => break,
+                            Err(_) => {
+                                break
+                            },
                         };
                         let bootstrap_contacts = || {
                             let handler = BootStrapHandler::new();
@@ -133,7 +145,7 @@ impl ConnectionManager {
             Err(_) => None
         };
 
-        Ok((end_points, used_port))
+        Ok((listening_ports, used_beacon_port))
     }
 
     /// This method tries to connect (bootstrap to exisiting network) to the default or provided
@@ -171,19 +183,24 @@ impl ConnectionManager {
             Some(beacon_guid_and_port) => beacon::BroadcastAcceptor::stop(&beacon_guid_and_port),
             None => (),
         }
-        let mut listeners = HashSet::<Endpoint>::new();
+        let mut listening_ports = Vec::<Port>::new();
         let weak_state = self.state.downgrade();
         {
             let _ = lock_mut_state(&weak_state, |state: &mut State| {
-                for itr in state.listening_endpoints.iter() {
-                    listeners.insert(itr.clone());
+                for itr in &state.listening_ports {
+                    listening_ports.push(itr.clone());
                 }
+                state.listening_ports.clear();
                 state.stop_called = true;
                 Ok(())
             });
         }
-        for listener in listeners.iter() {
-            let _ = transport::connect(listener.clone());
+        // println!("connection_manager::stop There are {} TCP ports being listened on", listening_ports.len());
+        for port in listening_ports {
+            match transport::connect(Endpoint::tcp(("127.0.0.1", port.get_port()))) {
+                Ok(_) => (),
+                Err(e) => panic!(e),
+            };
         }
     }
 
@@ -198,7 +215,6 @@ impl ConnectionManager {
     /// https://github.com/dirvine/crust/blob/master/docs/connect.md
     pub fn connect(&self, endpoints: Vec<Endpoint>) {
         let ws = self.state.downgrade();
-        let mut listening = HashSet::<Endpoint>::new();
         {
             let result = lock_mut_state(&ws, |s: &mut State| {
                 for endpoint in &endpoints {
@@ -206,9 +222,6 @@ impl ConnectionManager {
                         return Err(io::Error::new(io::ErrorKind::AlreadyExists,
                                                   "Already connected"))
                     }
-                }
-                for itr in s.listening_endpoints.iter() {
-                    listening.insert(itr.clone());
                 }
                 Ok(())
             });
@@ -219,13 +232,11 @@ impl ConnectionManager {
         let is_broadcast_acceptor = self.beacon_guid_and_port.is_some();
         let _ = thread::Builder::new().name("ConnectionManager connect".to_string()).spawn(move || {
             for endpoint in &endpoints {
-                for _ in listening.iter() {
-                    let ws = ws.clone();
-                    let result = transport::connect(endpoint.clone())
-                                 .and_then(|trans| handle_connect(ws, trans,
-                                           is_broadcast_acceptor));
-                    if result.is_ok() { return; }
-                }
+                let ws = ws.clone();
+                let result = transport::connect(endpoint.clone())
+                              .and_then(|trans| handle_connect(ws, trans,
+                                        is_broadcast_acceptor));
+                if result.is_ok() { return; }
             }
         });
     }
@@ -276,7 +287,9 @@ impl ConnectionManager {
             let transport = transport::connect(transport::Endpoint::Tcp(peer)).unwrap();
             let contacts_str = match transport.receiver.receive() {
                 Ok(message) => message,
-                Err(_) => continue,
+                Err(_) => {
+                    continue
+                },
             };
             let mut decoder = cbor::Decoder::from_bytes(&contacts_str[..]);
             let contact_list: BootStrapContacts = match decoder.decode().next() {
@@ -297,6 +310,9 @@ impl ConnectionManager {
     }
 
     fn bootstrap_off_list(&self, bootstrap_list: Vec<Endpoint>) -> io::Result<Endpoint> {
+        if bootstrap_list.is_empty() {
+            panic!("The bootstrap list is empty, therefore cannot bootstrap");
+        }
         let mut vec_deferred = vec![];
         for endpoint in bootstrap_list {
             let state_cloned = self.state.clone();
@@ -316,20 +332,19 @@ impl ConnectionManager {
         let res = Deferred::first_to_promise(1,false,vec_deferred, ControlFlow::ParallelLimit(15)).sync();
         match res {
             Ok(v) => if v.len() > 0 { return Ok(v[0].clone()) },            
-            Err(_) => ()
+            Err(_) => (),
         }
         // FIXME: The result should probably be Option<Endpoint> 
         Err(io::Error::new(io::ErrorKind::Other, "No bootstrap node got connected"))
     }
 
-    fn listen(&self, port: &Port) -> io::Result<Endpoint> {
-        let acceptor = try!(transport::new_acceptor(port));
-        let local_ep = acceptor.local_endpoint();
+    fn listen(&self, port: &Port) {
+        let acceptor = transport::new_acceptor(port).unwrap();
+        let local_port = acceptor.local_port();
 
         let mut weak_state = self.state.downgrade();
 
-        let ep = local_ep.clone();
-        try!(lock_mut_state(&mut weak_state, |s| Ok(s.listening_endpoints.insert(ep))));
+        let _ = lock_mut_state(&mut weak_state, |s| Ok(s.listening_ports.insert(local_port)));
 
         let _ = thread::Builder::new().name("ConnectionManager listen".to_string()).spawn(move || {
             loop {
@@ -355,8 +370,12 @@ impl ConnectionManager {
                 }
             }
         });
+    }
+}
 
-        Ok(local_ep)
+impl Drop for ConnectionManager {
+    fn drop(&mut self) {
+        self.stop();
     }
 }
 
@@ -478,6 +497,7 @@ fn start_writing_thread(state: WeakState,
     });
 }
 
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -487,8 +507,6 @@ mod test {
     use rustc_serialize::{Decodable, Encodable};
     use cbor::{Encoder, Decoder};
     use transport::{Endpoint, Port};
-    use std::net::SocketAddr;
-    use std::str::FromStr;
     use std::sync::{Mutex, Arc};
 
     fn encode<T>(value: &T) -> Bytes where T: Encodable
@@ -508,7 +526,7 @@ mod test {
 
      struct Node {
          conn_mgr: ConnectionManager,
-         listening_end_point: Endpoint,
+         listening_port: Port,
          connected_eps: Arc<Mutex<Vec<Endpoint>>>
      }
 
@@ -521,15 +539,15 @@ mod test {
 
      impl Node {
          pub fn new(mut cm: ConnectionManager, port: u16) -> (Node, Option<u16>) {
-             let (end_points, beacon_port) =  cm.start_listening(vec![Port::Tcp(0)], Some(port)).unwrap();
-             (Node { conn_mgr: cm, listening_end_point: end_points[0].clone(), connected_eps: Arc::new(Mutex::new(Vec::new())) }, beacon_port)
+             let (ports, beacon_port) =  cm.start_listening(vec![Port::Tcp(0)], Some(port)).unwrap();
+             (Node { conn_mgr: cm, listening_port: ports[0].clone(), connected_eps: Arc::new(Mutex::new(Vec::new())) }, beacon_port)
          }
      }
 
-     fn get_endpoint(node: &Arc<Mutex<Node>>) -> Endpoint {
+     fn get_port(node: &Arc<Mutex<Node>>) -> Port {
          let node = node.clone();
          let node = node.lock().unwrap();
-         node.listening_end_point.clone()
+         node.listening_port.clone()
      }
 
      fn get_connected_eps(node: &Arc<Mutex<Node>>) -> Vec<Endpoint> {
@@ -545,13 +563,13 @@ mod test {
      }
 
      impl Network {
-         pub fn add(&mut self, beacon_port: u16) -> (Receiver<Event>, Endpoint, Option<u16>, Arc<Mutex<Vec<Endpoint>>>) {
+         pub fn add(&mut self, beacon_port: u16) -> (Receiver<Event>, Port, Option<u16>, Arc<Mutex<Vec<Endpoint>>>) {
              let (cm_i, cm_o) = channel();
-             let (node, port) = Node::new(ConnectionManager::new(cm_i), beacon_port);
-             let end_point = node.listening_end_point.clone();
+             let (node, beacon_port) = Node::new(ConnectionManager::new(cm_i), beacon_port);
+             let port = node.listening_port.clone();
              let connected_eps = node.connected_eps.clone();
              self.nodes.push(Arc::new(Mutex::new(node)));
-             (cm_o, end_point, port, connected_eps)
+             (cm_o, port, beacon_port, connected_eps)
          }
      }
 
@@ -560,14 +578,15 @@ mod test {
         let (cm1_i, _) = channel();
         let mut cm1 = ConnectionManager::new(cm1_i);
         let (cm1_eps, beacon_port) = cm1.start_listening(vec![Port::Tcp(0)], Some(0u16)).unwrap();
+        println!("   cm1 listening port {} beaconing port {}", cm1_eps[0].get_port(), beacon_port.unwrap());
 
         thread::sleep_ms(1000);
         let (cm2_i, _) = channel();
         let mut cm2 = ConnectionManager::new(cm2_i);
-        let _ = cm2.start_listening(vec![Port::Tcp(0)], beacon_port.clone()).unwrap();
+        let (cm2_eps, _) = cm2.start_listening(vec![Port::Tcp(0)], beacon_port.clone()).unwrap();
+        println!("   cm2 listening port {}", cm2_eps[0].get_port());
         match cm2.bootstrap(None, beacon_port) {
-            Ok(ep) => { assert_eq!(ep.clone().get_address().port(),
-                                   cm1_eps[0].clone().get_address().port()); },
+            Ok(ep) => { assert_eq!(ep.get_address().port(), cm1_eps[0].get_port()); },
             Err(_) => { panic!("Failed to bootstrap"); }
         }
     }
@@ -600,13 +619,15 @@ mod test {
 
         let (cm1_i, cm1_o) = channel();
         let mut cm1 = ConnectionManager::new(cm1_i);
-        let (cm1_eps, beacon_port) = cm1.start_listening(vec![Port::Tcp(0)], Some(0u16)).unwrap();
+        let (cm1_ports, beacon_port) = cm1.start_listening(vec![Port::Tcp(0)], Some(0u16)).unwrap();
+        let cm1_eps = cm1_ports.iter().map(|p| Endpoint::tcp(("127.0.0.1", p.get_port())));
 
         let (cm2_i, cm2_o) = channel();
         let mut cm2 = ConnectionManager::new(cm2_i);
-        let (cm2_eps, _) = cm2.start_listening(vec![Port::Tcp(0)], beacon_port.clone()).unwrap();
-        cm2.connect(cm1_eps.clone());
-        cm1.connect(cm2_eps.clone());
+        let (cm2_ports, _) = cm2.start_listening(vec![Port::Tcp(0)], beacon_port.clone()).unwrap();
+        let cm2_eps = cm2_ports.iter().map(|p| Endpoint::tcp(("127.0.0.1", p.get_port())));
+        cm2.connect(cm1_eps.collect());
+        cm1.connect(cm2_eps.collect());
 
         let runner1 = run_cm(cm1, cm1_o);
         let runner2 = run_cm(cm2, cm2_o);
@@ -690,16 +711,16 @@ mod test {
 
         let run_stats = stats_accumulator(stats.clone(), stats_rx);
 
-        let mut listening_end_points = Vec::new();
+        let mut listening_ports = Vec::new();
 
         for node in network.nodes.iter() {
-            listening_end_points.push(get_endpoint(node));
+            listening_ports.push(get_port(node));
         }
 
         for node in network.nodes.iter() {
-            for end_point in listening_end_points.iter().filter(|&ep| get_endpoint(node).ne(ep)) {
+            for port in listening_ports.iter().filter(|&ep| get_port(node).ne(ep)) {
                 let node = node.clone();
-                let ep = end_point.clone();
+                let ep = Endpoint::tcp(("127.0.0.1", port.get_port()));
                 let _ = spawn(move || {
                     let node = node.lock().unwrap();
                     node.conn_mgr.connect(vec![ep]);
@@ -728,7 +749,7 @@ mod test {
             }
         }
 
-        let _ = run_terminate(listening_end_points[0].clone(), stats_tx.clone()).join();
+        let _ = run_terminate(Endpoint::tcp(("127.0.0.1", listening_ports[0].get_port())), stats_tx.clone()).join();
 
         let _ = run_stats.join();
 
@@ -758,23 +779,11 @@ mod test {
         thread::sleep_ms(2000);        
         let (cm_tx, cm_rx) = channel();
         let mut cm = ConnectionManager::new(cm_tx);
-        let mut cm_listen_addr = Endpoint::Tcp(SocketAddr::from_str(&"127.0.0.1:0").unwrap());
-        match cm.start_listening(vec![Port::Tcp(4455)], Some(5483)) {
-          Ok(result) => {
-                if result.1.is_some() {
-                    let _ = SocketAddr::from_str(&format!("127.0.0.1:{}", result.1.unwrap())).unwrap();
-                    // println!("main beacon on {} ", beacon_addr);
-                }
-                if result.0.len() > 0 {
-                    // println!("main listening on {} ",
-                    //          match result.0[0].clone() { Endpoint::Tcp(socket_addr) => { socket_addr } });
-                    cm_listen_addr = result.0[0].clone();
-                } else {
-                    // panic!("main connection manager start_listening none listening port returned");
-                }
-              }
-          Err(_) => panic!("main connection manager start_listening failure")
+        let cm_listen_ports = match cm.start_listening(vec![Port::Tcp(4455)], Some(5483)) {
+            Ok(result) => result.0,
+            Err(_) => panic!("main connection manager start_listening failure")
         };
+        let cm_listen_addrs = cm_listen_ports.iter().map(|p| Endpoint::tcp(("127.0.0.1", p.get_port()))).collect();
 
         let thread = spawn(move || {
            loop {
@@ -814,7 +823,7 @@ mod test {
                 Err(_) => panic!("aux connection manager start_listening failure")
             };
             // changing this to cm_beacon_addr will make the test hanging
-            cm_aux.connect(vec![cm_listen_addr.clone()]);
+            cm_aux.connect(cm_listen_addrs);
         }).join();
         thread::sleep_ms(100);
 

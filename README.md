@@ -36,7 +36,7 @@ Several methods are used for NAT traversal, UpNP, hole punching [See here for TC
 ##Todo Items
 
 ## [0.0.9]
-- [ ] [MAID-1075](https://maidsafe.atlassian.net/browse/MAID-1075) Correct bug; listening on local port (127.0.0.1)
+- [x] [MAID-1075](https://maidsafe.atlassian.net/browse/MAID-1075) Correct bug; listening on local port (127.0.0.1)
 - [ ] Have ConnectionManager guarantee at most one connection between any two nodes
 - [ ] Utp Networking
   - [ ] Utp live port and backup random port selection

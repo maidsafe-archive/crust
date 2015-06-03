@@ -19,8 +19,8 @@
 //! Reliable p2p network connections in Rust with NAT traversal.
 //! One of the most needed libraries for any server-less / decentralised projects
 
-#![forbid(bad_style, missing_docs, warnings)]
-#![deny(deprecated, drop_with_repr_extern, improper_ctypes, non_shorthand_field_patterns,
+#![forbid(missing_docs, warnings)]
+#![deny(bad_style, deprecated, drop_with_repr_extern, improper_ctypes, non_shorthand_field_patterns,
         overflowing_literals, plugin_as_library, private_no_mangle_fns, private_no_mangle_statics,
         raw_pointer_derive, stable_features, unconditional_recursion, unknown_lints,
         unsafe_code, unsigned_negation, unused, unused_allocation, unused_attributes,
@@ -30,18 +30,35 @@
 #![doc(html_logo_url = "http://maidsafe.net/img/Resources/branding/maidsafe_logo.fab2.png",
        html_favicon_url = "http://maidsafe.net/img/favicon.ico",
        html_root_url = "http:///dirvine.github.io/crust/crust/")]
-#![feature(ip_addr, ip, lookup_host, alloc, udp, scoped)]
+#![feature(ip_addr, ip, alloc, udp, scoped)]
 
-extern crate libc;
 extern crate cbor;
 extern crate rand;
 extern crate rustc_serialize;
 extern crate sodiumoxide;
 extern crate time;
 extern crate asynchronous;
+extern crate libc;
 
+#[cfg(test)]
+mod test {
+    use std::env;
+    
+    #[test]
+    pub fn check_rust_unit_testing_is_not_parallel() {
+        match env::var_os("RUST_TEST_THREADS") {
+            Some(val) => assert!(val.into_string().unwrap() == "1"),
+            None => panic!("RUST_TEST_THREADS and RUST_TEST_TASKS needs to be 1 for the crust unit tests to work"),
+        }
+        match env::var_os("RUST_TEST_TASKS") {
+            Some(val) => assert!(val.into_string().unwrap() == "1"),
+            None => panic!("RUST_TEST_THREADS and RUST_TEST_TASKS needs to be 1 for the crust unit tests to work"),
+        }
+    }
+}
 mod beacon;
 mod bootstrap;
+mod getifaddrs;
 mod tcp_connections;
 mod transport;
 
