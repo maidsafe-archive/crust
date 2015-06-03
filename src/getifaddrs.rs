@@ -180,17 +180,72 @@ mod getifaddrs_windows {
     }
     #[repr(C)]
     #[allow(bad_style)]
+    struct IP_ADAPTER_PREFIX {
+        pub Length : c_ulong,
+        pub Flags : DWORD,
+        pub Next : *const IP_ADAPTER_PREFIX,
+        pub Address : SOCKET_ADDRESS,
+        pub PrefixLength : c_ulong,
+    }
+    #[repr(C)]
+    #[allow(bad_style)]
     struct IP_ADAPTER_ADDRESSES {
         pub Length : c_ulong,
         pub IfIndex : DWORD,
         pub Next : *const IP_ADAPTER_ADDRESSES,
         pub AdapterName : *const c_char,
         pub FirstUnicastAddress : *const IP_ADAPTER_UNICAST_ADDRESS,
+        FirstAnycastAddress : *const c_void,
+        FirstMulticastAddress : *const c_void,
+        FirstDnsServerAddress : *const c_void,
+        DnsSuffix : *const c_void,
+        Description : *const c_void,
+        FriendlyName : *const c_void,
+        PhysicalAddress : [c_char; 8],
+        PhysicalAddressLength : DWORD,
+        Flags : DWORD,
+        Mtu : DWORD,
+        IfType : DWORD,
+        OperStatus : c_int,
+        Ipv6IfIndex : DWORD,
+        ZoneIndices : [DWORD; 16],
+        pub FirstPrefix : *const IP_ADAPTER_PREFIX,
         // Loads more follows, but I'm not bothering to map these for now
     }
     #[link(name="Iphlpapi")]
     extern "system" {
         pub fn GetAdaptersAddresses(family : c_ulong, flags : c_ulong, reserved : *const c_void, addresses : *const IP_ADAPTER_ADDRESSES, size : *mut c_ulong) -> c_ulong;
+    }
+    
+    #[allow(unsafe_code)]
+    fn sockaddr_to_ipaddr(sockaddr : *const sockaddr) -> Option<IpAddr> {
+        if sockaddr.is_null() { return None }
+        if unsafe{*sockaddr}.sa_family as u32 == AF_INET as u32 {
+            let ref sa = unsafe{*(sockaddr as *const sockaddr_in)};
+            // Ignore all 169.254.x.x addresses as these are not active interfaces
+            if sa.sin_addr.s_addr & 65535 == 0xfea9 { return None }
+            Some(IpAddr::V4(Ipv4Addr::new(
+                ((sa.sin_addr.s_addr>>0) & 255) as u8,
+                ((sa.sin_addr.s_addr>>8) & 255) as u8,
+                ((sa.sin_addr.s_addr>>16) & 255) as u8,
+                ((sa.sin_addr.s_addr>>24) & 255) as u8,
+            )))
+        } else if unsafe{*sockaddr}.sa_family as u32 == AF_INET6 as u32 {
+            let ref sa = unsafe{*(sockaddr as *const sockaddr_in6)};
+            // Ignore all fe80:: addresses as these are link locals
+            if sa.sin6_addr.s6_addr[0]==0x80fe { return None }
+            Some(IpAddr::V6(Ipv6Addr::new(
+                ((sa.sin6_addr.s6_addr[0] & 255)<<8) | ((sa.sin6_addr.s6_addr[0]>>8) & 255),
+                ((sa.sin6_addr.s6_addr[1] & 255)<<8) | ((sa.sin6_addr.s6_addr[1]>>8) & 255),
+                ((sa.sin6_addr.s6_addr[2] & 255)<<8) | ((sa.sin6_addr.s6_addr[2]>>8) & 255),
+                ((sa.sin6_addr.s6_addr[3] & 255)<<8) | ((sa.sin6_addr.s6_addr[3]>>8) & 255),
+                ((sa.sin6_addr.s6_addr[4] & 255)<<8) | ((sa.sin6_addr.s6_addr[4]>>8) & 255),
+                ((sa.sin6_addr.s6_addr[5] & 255)<<8) | ((sa.sin6_addr.s6_addr[5]>>8) & 255),
+                ((sa.sin6_addr.s6_addr[6] & 255)<<8) | ((sa.sin6_addr.s6_addr[6]>>8) & 255),
+                ((sa.sin6_addr.s6_addr[7] & 255)<<8) | ((sa.sin6_addr.s6_addr[7]>>8) & 255),
+            )))
+        }
+        else { None }
     }
 
     /// Return a vector of IP details for all the valid interfaces on this host
@@ -243,34 +298,93 @@ mod getifaddrs_windows {
                 let name = unsafe { CStr::from_ptr(ifaddr.AdapterName) }.to_bytes();
                 item.name = item.name + str::from_utf8(name).unwrap();
 
-                let sockaddr = unsafe { (*addr).Address.lpSockaddr };
-                if sockaddr.is_null() { continue; }
-                if unsafe{*sockaddr}.sa_family as u32 == AF_INET as u32 {
-                    let ref sa = unsafe{*(sockaddr as *const sockaddr_in)};
-                    // Ignore all 169.254.x.x addresses as these are not active interfaces
-                    if sa.sin_addr.s_addr & 65535 == 0xfea9 { continue; }
-                    item.addr = IpAddr::V4(Ipv4Addr::new(
-                        ((sa.sin_addr.s_addr>>0) & 255) as u8,
-                        ((sa.sin_addr.s_addr>>8) & 255) as u8,
-                        ((sa.sin_addr.s_addr>>16) & 255) as u8,
-                        ((sa.sin_addr.s_addr>>24) & 255) as u8,
-                    ));
-                } else if unsafe{*sockaddr}.sa_family as u32 == AF_INET6 as u32 {
-                    let ref sa = unsafe{*(sockaddr as *const sockaddr_in6)};
-                    // Ignore all fe80:: addresses as these are link locals
-                    if sa.sin6_addr.s6_addr[0]==0x80fe { continue; }
-                    item.addr = IpAddr::V6(Ipv6Addr::new(
-                        ((sa.sin6_addr.s6_addr[0] & 255)<<8) | ((sa.sin6_addr.s6_addr[0]>>8) & 255),
-                        ((sa.sin6_addr.s6_addr[1] & 255)<<8) | ((sa.sin6_addr.s6_addr[1]>>8) & 255),
-                        ((sa.sin6_addr.s6_addr[2] & 255)<<8) | ((sa.sin6_addr.s6_addr[2]>>8) & 255),
-                        ((sa.sin6_addr.s6_addr[3] & 255)<<8) | ((sa.sin6_addr.s6_addr[3]>>8) & 255),
-                        ((sa.sin6_addr.s6_addr[4] & 255)<<8) | ((sa.sin6_addr.s6_addr[4]>>8) & 255),
-                        ((sa.sin6_addr.s6_addr[5] & 255)<<8) | ((sa.sin6_addr.s6_addr[5]>>8) & 255),
-                        ((sa.sin6_addr.s6_addr[6] & 255)<<8) | ((sa.sin6_addr.s6_addr[6]>>8) & 255),
-                        ((sa.sin6_addr.s6_addr[7] & 255)<<8) | ((sa.sin6_addr.s6_addr[7]>>8) & 255),
-                    ));
+                let ipaddr = sockaddr_to_ipaddr(unsafe { (*addr).Address.lpSockaddr });
+                if !ipaddr.is_some() { continue; }
+                item.addr = ipaddr.unwrap();
+                
+                // Search prefixes for a prefix matching addr
+                let mut prefix = ifaddr.FirstPrefix;
+                if !prefix.is_null() {
+                    let mut firstprefix = true;
+                    'prefixloop: while !prefix.is_null() {
+                        if firstprefix { firstprefix=false; }
+                        else { prefix = unsafe { (*prefix).Next }; }
+                        if prefix.is_null() { break; }
+                        
+                        let ipprefix = sockaddr_to_ipaddr(unsafe { (*prefix).Address.lpSockaddr });
+                        if !ipprefix.is_some() { continue; }
+                        match ipprefix.unwrap() {
+                            IpAddr::V4(ref a) => match item.addr {
+                                IpAddr::V4(b) => {
+                                    let mut netmask : [u8; 4] = [0; 4];
+                                    for n in 0..unsafe{ (*prefix).PrefixLength as usize + 7 }/8 {
+                                        let x_byte = b.octets()[n];
+                                        let y_byte = a.octets()[n];
+                                        for m in 0..8 {
+                                            if (n * 8) + m > unsafe{ (*prefix).PrefixLength as usize } { break; }
+                                            let bit = 1 << m;
+                                            if (x_byte & bit) == (y_byte & bit) {
+                                                netmask[n] = netmask[n] | bit;
+                                            } else {
+                                                continue 'prefixloop;
+                                            }
+                                        }
+                                    }
+                                    item.netmask = IpAddr::V4(Ipv4Addr::new(
+                                        netmask[0],
+                                        netmask[1],
+                                        netmask[2],
+                                        netmask[3],
+                                    ));
+                                    let mut broadcast : [u8; 4] = b.octets();
+                                    for n in 0..4 {
+                                        broadcast[n] = broadcast[n] | !netmask[n];
+                                    }
+                                    item.broadcast = IpAddr::V4(Ipv4Addr::new(
+                                        broadcast[0],
+                                        broadcast[1],
+                                        broadcast[2],
+                                        broadcast[3],
+                                    ));
+                                    break 'prefixloop;
+                                },
+                                _ => (),
+                            },
+                            IpAddr::V6(ref a) => match item.addr {
+                                IpAddr::V6(b) => {
+                                    // Iterate the bits in the prefix, if they all match this prefix is the
+                                    // right one, else try the next prefix
+                                    let mut netmask : [u16; 8] = [0; 8];
+                                    for n in 0..unsafe{ (*prefix).PrefixLength as usize + 15 }/16 {
+                                        let x_word = b.segments()[n];
+                                        let y_word = a.segments()[n];
+                                        for m in 0..16 {
+                                            if (n * 16) + m > unsafe{ (*prefix).PrefixLength as usize } { break; }
+                                            let bit = 1 << m;
+                                            if (x_word & bit) == (y_word & bit) {
+                                                netmask[n] = netmask[n] | bit;
+                                            } else {
+                                                continue 'prefixloop;
+                                            }
+                                        }
+                                    }
+                                    item.netmask = IpAddr::V6(Ipv6Addr::new(
+                                        netmask[0],
+                                        netmask[1],
+                                        netmask[2],
+                                        netmask[3],
+                                        netmask[4],
+                                        netmask[5],
+                                        netmask[6],
+                                        netmask[7],
+                                    ));
+                                    break 'prefixloop;
+                                },
+                                _ => (),
+                            },
+                        };
+                    }
                 }
-                else { continue; }
                 ret.push(item);
             }
         }
