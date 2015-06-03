@@ -70,7 +70,7 @@ mod getifaddrs_posix {
         } else if unsafe{*sockaddr}.sa_family as u32 == AF_INET6 as u32 {
             let ref sa = unsafe{*(sockaddr as *const posix_sockaddr_in6)};
             // Ignore all fe80:: addresses as these are link locals
-            if sa.sin6_addr.s6_addr[0]==0x80fe { None }
+            if sa.sin6_addr.s6_addr[0]==0x80fe { return None }
             Some(IpAddr::V6(Ipv6Addr::new(
                 ((sa.sin6_addr.s6_addr[0] & 255)<<8) | ((sa.sin6_addr.s6_addr[0]>>8) & 255),
                 ((sa.sin6_addr.s6_addr[1] & 255)<<8) | ((sa.sin6_addr.s6_addr[1]>>8) & 255),
