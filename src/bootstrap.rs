@@ -278,7 +278,7 @@ impl BootStrapHandler {
                     let result = create_file.sync_all();
                     assert!(result.is_ok());
                 },
-                _ => panic!("Could not create bootstrap file"),
+                _ => panic!("Could not create bootstrap file at {}", self.file_name),
             }
         }
     }
