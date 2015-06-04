@@ -44,13 +44,13 @@ use crust::{ConnectionManager, Endpoint, Port};
 
 static USAGE: &'static str = "
 Usage:
-  crust_node [options] [<peer>...]
+  crust_peer [options] [<peer>...]
 
-The node will try and bootstrap off one of the peers if any are provided.  If
-none are provided, or if connecting to any of the peers fails, the UDP beacon
-will be used.  If no beacon port is specified in the options, then port 9999
-will be chosen.  If no listening port is supplied, a random port for each
-supported protocol will be chosen.
+The crust peer will try and bootstrap off one of the peers if any are provided.
+If none are provided, or if connecting to any of the peers fails, the UDP beacon
+will be used. If no beacon port is specified in the options, then port 9999 will
+be chosen. If no listening port is supplied, a random port for each supported
+protocol will be chosen.
 
 Options:
   -t PORT, --tcp-port=PORT  Start listening on the specified TCP port.

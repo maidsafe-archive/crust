@@ -33,7 +33,7 @@ test = true
 bench = false
 
 [[example]]
-name = "crust_node"
-path = "examples/crust_node.rs"
+name = "crust_peer"
+path = "examples/crust_peer.rs"
 test = true
 bench = false

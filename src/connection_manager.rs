@@ -310,9 +310,9 @@ impl ConnectionManager {
     }
 
     fn bootstrap_off_list(&self, bootstrap_list: Vec<Endpoint>) -> io::Result<Endpoint> {
-        if bootstrap_list.is_empty() {
-            panic!("The bootstrap list is empty, therefore cannot bootstrap");
-        }
+        // if bootstrap_list.is_empty() {
+        //     panic!("The bootstrap list is empty, therefore cannot bootstrap");
+        // }
         let mut vec_deferred = vec![];
         for endpoint in bootstrap_list {
             let state_cloned = self.state.clone();
@@ -331,10 +331,10 @@ impl ConnectionManager {
         }
         let res = Deferred::first_to_promise(1,false,vec_deferred, ControlFlow::ParallelLimit(15)).sync();
         match res {
-            Ok(v) => if v.len() > 0 { return Ok(v[0].clone()) },            
+            Ok(v) => if v.len() > 0 { return Ok(v[0].clone()) },
             Err(_) => (),
         }
-        // FIXME: The result should probably be Option<Endpoint> 
+        // FIXME: The result should probably be Option<Endpoint>
         Err(io::Error::new(io::ErrorKind::Other, "No bootstrap node got connected"))
     }
 
@@ -776,7 +776,7 @@ mod test {
 #[test]
     fn connection_manager_start() {
         // Wait 2 seconds until previous bootstrap test ends. If not, that test connects to these endpoints.
-        thread::sleep_ms(2000);        
+        thread::sleep_ms(2000);
         let (cm_tx, cm_rx) = channel();
         let mut cm = ConnectionManager::new(cm_tx);
         let cm_listen_ports = match cm.start_listening(vec![Port::Tcp(4455)], Some(5483)) {
