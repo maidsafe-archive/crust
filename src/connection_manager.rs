@@ -21,6 +21,7 @@ use std::collections::{HashMap, HashSet};
 use std::io;
 use std::sync::{Arc, mpsc, Mutex, Weak};
 use std::thread;
+use std::net::IpAddr;
 
 use beacon;
 use bootstrap::{BootStrapHandler, BootStrapContacts, Contact, PublicKey};
@@ -146,6 +147,28 @@ impl ConnectionManager {
         };
 
         Ok((listening_ports, used_beacon_port))
+    }
+
+    /// For API compatibilty, return a vector of listening endpoints
+    pub fn start_listening2(&mut self, hint: Vec<Port>, beacon_port: Option<u16>) ->
+            io::Result<(Vec<Endpoint>, Option<u16>)> {
+        let ports_and_beacon = self.start_listening(hint, beacon_port);
+        if ports_and_beacon.is_err() { return Err(ports_and_beacon.err().unwrap()); }
+        let ports_and_beacon = ports_and_beacon.unwrap();
+        let mut endpoints = Vec::<Endpoint>::new();
+        for port in ports_and_beacon.0 {
+            match port {
+                Port::Tcp(p) => {
+                    for ifaddr in getifaddrs() {
+                        endpoints.push(match ifaddr.addr {
+                            IpAddr::V4(a) => Endpoint::tcp((a, p)),
+                            IpAddr::V6(a) => Endpoint::tcp((a, p)),
+                        });
+                    }
+                },
+            }
+        }
+        Ok((endpoints, ports_and_beacon.1))
     }
 
     /// This method tries to connect (bootstrap to exisiting network) to the default or provided
