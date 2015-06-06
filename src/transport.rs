@@ -15,11 +15,11 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::net;
-use std::net::{SocketAddr, SocketAddrV4, SocketAddrV6, TcpStream, TcpListener};
+use std::net::{SocketAddr, TcpStream, TcpListener, ToSocketAddrs};
 use tcp_connections;
 use utp_connections;
 use std::io;
+use std::io::Write;
 use std::io::Result as IoResult;
 use std::error::Error;
 use std::sync::mpsc;
@@ -48,43 +48,19 @@ pub enum Endpoint {
 }
 
 impl Endpoint {
+    /// Creates a Tcp(SocketAddr)
+    pub fn tcp<A: ToSocketAddrs>(addr: A) -> Endpoint {
+        match addr.to_socket_addrs().unwrap().next() {
+            Some(a) => Endpoint::Tcp(a),
+            None => panic!("Failed to parse valid IP address"),
+        }
+    }
     /// Returns SocketAddr.
     pub fn get_address(&self) -> SocketAddr {
         match *self {
             Endpoint::Tcp(address) => address,
             Endpoint::Utp(address) => address,
         }
-    }
-
-    /// Returns whether this endpoint should be chosen over `other` when deciding to connect.
-    pub fn is_master(&self, other: &Endpoint) -> bool {
-        match *self {
-            Endpoint::Tcp(my_address) => {
-                match *other {
-                    Endpoint::Tcp(other_address) => {
-                        if my_address.port() == other_address.port() {
-                            return my_address.ip() < other_address.ip();
-                        } else {
-                            return my_address.port() < other_address.port();
-                        }
-                    },
-                    Endpoint::Utp(other_address) => panic!("Should never happen"),
-                }
-            },
-            Endpoint::Utp(my_address) => {
-                match *other {
-                    Endpoint::Tcp(other_address) => panic!("Should never happen"),
-                    Endpoint::Utp(other_address) => {
-                        if my_address.port() == other_address.port() {
-                            return my_address.ip() < other_address.ip();
-                        } else {
-                            return my_address.port() < other_address.port();
-                        }
-                    }
-                }
-            },
-        }
-        return true;
     }
 }
 
@@ -106,12 +82,21 @@ impl Decodable for Endpoint {
 }
 
 /// Enum representing port of supported protocols
-#[derive(Debug, Clone)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub enum Port {
     /// TCP port
     Tcp(u16),
     /// UTP port
     Utp(u16),
+}
+
+impl Port {
+    /// Return the port
+    pub fn get_port(&self) -> u16 {
+        match *self {
+            Port::Tcp(p) => p,
+        }
+    }
 }
 
 impl PartialOrd for Endpoint {
@@ -192,16 +177,16 @@ impl Receiver {
 
 //--------------------------------------------------------------------
 pub enum Acceptor {
-    // Channel receiver, TCP listener and calculated local TCP endpoint
-    Tcp(mpsc::Receiver<(TcpStream, SocketAddr)>, TcpListener, SocketAddr),
+    // Channel receiver, TCP listener
+    Tcp(mpsc::Receiver<(TcpStream, SocketAddr)>, TcpListener),
     // Channel receiver, UTP listener and calculated local UTP endpoint
     Utp(mpsc::Receiver<(UtpStream, SocketAddr)>, UtpSocket, SocketAddr),
 }
 
 impl Acceptor {
-    pub fn local_endpoint(&self) -> Endpoint {
+    pub fn local_port(&self) -> Port {
         match *self {
-            Acceptor::Tcp(_, _, local_address) => Endpoint::Tcp(local_address),
+            Acceptor::Tcp(_, ref listener) => Port::Tcp(listener.local_addr().unwrap().port()),
             Acceptor::Utp(_, _, local_address) => Endpoint::Utp(local_address),
         }
     }
@@ -224,6 +209,7 @@ pub fn connect(remote_ep: Endpoint) -> IoResult<Transport> {
                                          remote_endpoint: remote_ep,
                              }})
                 .map_err(|e| {
+                    let _ = writeln!(&mut io::stderr(), "NOTE: Transport connect {} failure due to {}", ep, e);
                     io::Error::new(io::ErrorKind::NotConnected, e.description())
                 })
         },
@@ -245,17 +231,7 @@ pub fn new_acceptor(port: &Port) -> IoResult<Acceptor> {
     match *port {
         Port::Tcp(ref port) => {
             let (receiver, listener) = try!(tcp_connections::listen(*port));
-            // If we fail to calculate local address, fall back to listener.local_addr().
-            let local_address =
-                if let Ok(address) = get_tcp_listener_local_address(&listener) {
-                    address
-                } else {
-                    try!(listener.local_addr())
-                };
-            // Discard the first connection since this is caused by calling
-            // `get_tcp_listener_local_address` above.
-            let _ = receiver.recv();
-            Ok(Acceptor::Tcp(receiver, listener, local_address))
+            Ok(Acceptor::Tcp(receiver, listener))
         },
         Port::Utp(ref port) => {
             let (receiver, listener) = try!(utp_connections::listen(*port));
@@ -279,8 +255,9 @@ pub fn new_acceptor(port: &Port) -> IoResult<Acceptor> {
 // (Though this seems to be impossible with the current Rust TCP API).
 pub fn accept(acceptor: &Acceptor) -> IoResult<Transport> {
     match *acceptor {
-        Acceptor::Tcp(ref rx_channel, _, _) => {
-            let (stream, remote_endpoint) = try!(rx_channel.recv()
+        Acceptor::Tcp(ref rx_channel, _) => {
+            let rx = rx_channel.recv();
+            let (stream, remote_endpoint) = try!(rx
                 .map_err(|e| io::Error::new(io::ErrorKind::NotConnected, e.description())));
 
             let (i, o) = try!(tcp_connections::upgrade_tcp(stream));
@@ -302,52 +279,6 @@ pub fn accept(acceptor: &Acceptor) -> IoResult<Transport> {
                         })
         },
     }
-}
-
-// It would be easiest to just return listener.local_addr() here, but this yields an IP
-// of 0.0.0.0, which is not useful for passing to peers on a different machine.  Hence
-// we try and connect to the listener to establish its actual IP address.
-//
-// TODO - This isn't robust: we're not checking that the listener we connect to is
-// actually the one we just created - we should maybe send a magic request and response
-// to confirm this.
-fn get_tcp_listener_local_address(listener: &TcpListener) -> IoResult<SocketAddr> {
-    let listener_local_address = try!(listener.local_addr());
-    let listener_port = listener_local_address.port();
-    let host = try!(net::lookup_addr(&listener_local_address.ip()));
-    let host_interface_itr = try!(net::lookup_host(&host));
-    let listener_is_v4 = match listener_local_address {
-        SocketAddr::V4(_) => true,
-        SocketAddr::V6(_) => false,
-    };
-    for host_interface in host_interface_itr {
-        let attempt_address = match host_interface {
-            Ok(SocketAddr::V4(address)) => {
-                if !listener_is_v4 {
-                    continue;
-                }
-                SocketAddr::V4(SocketAddrV4::new(*address.ip(), listener_port))
-            },
-            Ok(SocketAddr::V6(address)) => {
-                if listener_is_v4 {
-                    continue;
-                }
-                SocketAddr::V6(SocketAddrV6::new(*address.ip(), listener_port,
-                                                 address.flowinfo(), address.scope_id()))
-            },
-            _ => continue,
-        };
-        match TcpStream::connect(attempt_address) {
-            Ok(stream) => {
-                match stream.peer_addr() {
-                    Ok(peer_address) => return Ok(peer_address),
-                    Err(_) => (),
-                }
-            },
-            _ => (),
-        };
-    }
-    Err(io::Error::new(io::ErrorKind::AddrNotAvailable, "Failed to get local address"))
 }
 
 fn get_utp_listener_local_address(stream: &UtpSocket) -> IoResult<SocketAddr> {

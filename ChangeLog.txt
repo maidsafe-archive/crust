@@ -1,3 +1,0 @@
-Version 0.0.3
-Remove FailedToConnect Event
-Update process for Connecting in TCP

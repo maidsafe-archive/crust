@@ -1,15 +1,16 @@
 [package]
 name = "crust"
-version = "0.0.7"
+version = "0.0.61"
 authors = ["MaidSafe Developers <dev@maidsafe.net>"]
-description = "This is Pre alpha, and not useful, no code worth looking at."
-documentation = "http://dirvine.github.io/crust/crust"
+description = "p2p networking library. Automatically reconnect and manage connections."
+documentation = "http://maidsafe.github.io/crust/crust"
 repository = "https://github.com/dirvine/crust"
 readme = "README.md"
 license = "GPL-3.0"
 homepage = "http://maidsafe.net"
 
 [dependencies]
+libc = "*"
 cbor = "*"
 docopt = "*"
 rand = "*"
@@ -17,6 +18,7 @@ rustc-serialize = "*"
 sodiumoxide = "0.0.4"
 term = "*"
 time = "*"
+asynchronous = "*"
 utp = "*"
 
 [[example]]
@@ -32,7 +34,7 @@ test = true
 bench = false
 
 [[example]]
-name = "crust_node"
-path = "examples/crust_node.rs"
+name = "crust_peer"
+path = "examples/crust_peer.rs"
 test = true
 bench = false

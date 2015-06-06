@@ -1,12 +1,17 @@
 # Crust
+
+**Primary Maintainer:**     Chandra Prakash (prakash@maidsafe.net)
+
+**Secondary Maintainer:**   Niall Douglas (niall.douglas@maidsafe.net)
+
 Reliable p2p network connections in Rust with NAT traversal. One of the most needed libraries for any server-less, decentralised project.
 
-|Crate|Travis| Drone.io|Appveyor|Coverage|
-|:------:|:-------:|:-------:|:------:|:------:|
-|[![](http://meritbadge.herokuapp.com/crust)](https://crates.io/crates/crust)|[![Build Status](https://travis-ci.org/dirvine/crust.svg?branch=master)](https://travis-ci.org/dirvine/crust)|[![Build Status](https://drone.io/github.com/dirvine/crust/status.png)](https://drone.io/github.com/dirvine/crust/latest)|[![Build status](https://ci.appveyor.com/api/projects/status/7bl67hscnfljxxt3?svg=true)](https://ci.appveyor.com/project/dirvine/crust)|[![Coverage Status](https://coveralls.io/repos/dirvine/crust/badge.svg)](https://coveralls.io/r/dirvine/crust)|
+|Crate|Linux|Windows|OSX|Coverage|
+|:------:|:-------:|:------:|:------:|:------:|
+|[![](http://meritbadge.herokuapp.com/crust)](https://crates.io/crates/crust)|[![Build Status](https://travis-ci.org/maidsafe/crust.svg?branch=master)](https://travis-ci.org/maidsafe/crust)|[![Build Status](http://ci.maidsafe.net:8080/buildStatus/icon?job=crust_win64_status_badge)](http://ci.maidsafe.net:8080/job/crust_win64_status_badge/)|[![Build Status](http://ci.maidsafe.net:8080/buildStatus/icon?job=crust_osx_status_badge)](http://ci.maidsafe.net:8080/job/crust_osx_status_badge/)|[![Coverage Status](https://coveralls.io/repos/maidsafe/crust/badge.svg)](https://coveralls.io/r/maidsafe/crust)|
 
 
-| [API Documentation](http://dirvine.github.io/crust/crust/) | [MaidSafe System Documention](http://systemdocs.maidsafe.net/) | [MaidSafe web site](http://www.maidsafe.net) | [Safe Community site](https://forum.safenetwork.io) |
+| [API Documentation](http://maidsafe.github.io/crust/crust/) | [SAFENetwork System Documention](http://systemdocs.maidsafe.net/) | [MaidSafe website](http://www.maidsafe.net) | [Safe Community site](https://forum.safenetwork.io) |
 
 #Overview
 
@@ -27,32 +32,22 @@ _direct connected == Nodes we were previously connected to. TCP nodes or reliabl
 Several methods are used for NAT traversal, UpNP, hole punching [See here for TCP NAT traversal] (http://www.cmlab.csie.ntu.edu.tw/~franklai/NATBT.pdf) and [here for UCP/DHT NAT traversal
   ](http://maidsafe.net/Whitepapers/pdf/DHTbasedNATTraversal.pdf) etc. These methods will be added to by the community to allow a p2p network that cannot be easily blocked. By default this library spawns sockets randomly, enabling nodes to appear on several ports over time. This makes them very difficult to trace.
 
+###Pre-requisite:
+libsodium is a native dependency for [sodiumxoide](https://github.com/dnaq/sodiumoxide). Thus, install sodium by following the instructions [here](http://doc.libsodium.org/installation/index.html).
+
+For windows, download and use the [prebuilt mingw library](https://download.libsodium.org/libsodium/releases/libsodium-1.0.2-mingw.tar.gz).
+Extract and place the libsodium.a file in "bin\x86_64-pc-windows-gnu" for 64bit System, or "bin\i686-pc-windows-gnu" for a 32bit system.
 
 ##Todo Items
-- [ ] Tcp Networking
-  - [x] Tcp live port and backup random port selection
-  - [x] Create send/rcv channel from routing to connections object
-  - [x] Implement test for basic "hello world" two way communication
-  - [x] Set up Udp broadcast and respond when we have a port (we listen on any random port above 1024 [user space port])  available (broadcast port is 5483)
-  - [x] Add connection established/lost/ new messages to be passed to routing (via channel)
-  - [x] Implement connect() in connection manager
-  - [x] Allow tcp and then utp connections option and wrap in connection object.
-  ](http://maidsafe.net/Whitepapers/pdf/DHTbasedNATTraversal.pdf)
-- [x] Update handle connect for TCP
-- [x] Remove FailedToConnect event
-- [x] Integrate bootstrap (Link ability to read and write bootstrap file)
-- [x] Integrate beacon (Have connection manger start, broadcast on udp broadcast for port 5483 (later multicast for ipv6)
-- [x] Send serialised bootstrap info as part of beacon reply (Link ability to send bootstrap file to any node requesting it)
-- [ ] Examples:
-  - [x] Broadcaster
-  - [x] Broadcast receiver
-  - [x] CLI Example - options:
-    - [x] Join / Start a node(optionally provide bootstrap info)
-    - [x] Allow sending messages at various rates per second
-    - [x] Print Incomming message rate per second
-  - [x] Local Network Test. 12 Linux, 2 OSX, 2 WIN
-  - [ ] 101 Droplet test
-- [ ] Version 0.0.8
+
+## [0.0.60]
+- [x] [MAID-1075] (https://maidsafe.atlassian.net/browse/MAID-1075) Correct bug; listening on local port (127.0.0.1)
+- [x] [MAID-1122] (https://maidsafe.atlassian.net/browse/MAID-1122) Windows ifaddr resolution
+
+## [0.0.61]
+- [x] [MAID-1124] (https://maidsafe.atlassian.net/browse/MAID-1124) Get a list of public IPs for others to connect to
+
+## [0.0.70]
 - [ ] Have ConnectionManager guarantee at most one connection between any two nodes
 - [ ] Utp Networking
   - [ ] Utp live port and backup random port selection
@@ -67,7 +62,8 @@ Several methods are used for NAT traversal, UpNP, hole punching [See here for TC
 - [ ] Implement `get_endoints() -> Vec<EndPointPair>` where `EndpointPair` is struct with `Option<ExternalEndpoint>` and has a Proto identifier field
   - [ ] Implement UpNp
   - [ ] Implement NAT hole punch (udp) for reliable udp
-- [ ] Version 0.1 (crates.io)
+
+## [0.1.0]
 - [ ] Tcp hole punching as per paper
 - [ ] Tracer tcp (TCP with magic in clear [unencrypted])
 - [ ] Wireshark module for tracer TCP

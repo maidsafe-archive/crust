@@ -26,6 +26,7 @@ use std::io::prelude::*;
 use std::path;
 use std::env;
 use std::fmt;
+use std::io;
 
 pub type BootStrapContacts = Vec<Contact>;
 
@@ -221,11 +222,11 @@ impl BootStrapHandler {
                     Ok(_) => {
                         content
                     },
-                    _ => panic!("Failed to read file")
+                    Err(e) => panic!("Failed to read bootstrap file due to {}", e)
 
                 }
             },
-            _ => panic!("Could not open file"),
+            Err(e) => panic!("Could not open bootstrap file due to {}", e),
         }
     }
 
@@ -243,8 +244,8 @@ impl BootStrapHandler {
     // }
 
     fn insert_bootstrap_contacts(&mut self, contacts: BootStrapContacts) {
-    	if !contacts.is_empty() {
-        	let mut current_contacts = BootStrapContacts::new();
+        if !contacts.is_empty() {
+            let mut current_contacts = BootStrapContacts::new();
             match File::open(&self.file_name) {
                 Ok(mut open_file) => {
                     let mut content = Vec::<u8>::new();
@@ -253,7 +254,12 @@ impl BootStrapHandler {
 
                     if size.is_ok() && size.unwrap() != 0 {
                         let mut decoder = cbor::Decoder::from_bytes(&content[..]);
-                        current_contacts = decoder.decode().next().unwrap().unwrap();
+                        let c = decoder.decode().next();
+                        if !c.is_some() {
+                            let _ = writeln!(&mut io::stderr(), "WARNING: bootstrap file is corrupt! Ignoring.");
+                            ()
+                        }
+                        current_contacts = c.unwrap().unwrap();
                     }
 
                     for i in 0..contacts.len() {
@@ -272,7 +278,7 @@ impl BootStrapHandler {
                     let result = create_file.sync_all();
                     assert!(result.is_ok());
                 },
-                _ => panic!("Could not create file"),
+                _ => panic!("Could not create bootstrap file at {}", self.file_name),
             }
         }
     }

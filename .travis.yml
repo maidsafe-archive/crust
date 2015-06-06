@@ -23,7 +23,7 @@ install:
 - cd ../..
 script:
 - cargo build --verbose
-- RUST_TEST_THREADS=1 cargo test
+- RUST_TEST_TASKS=1 RUST_TEST_THREADS=1 cargo test
 after_success: |
   [ $TRAVIS_BRANCH = master ] &&
   [ $TRAVIS_PULL_REQUEST = false ] &&
@@ -35,7 +35,7 @@ after_success: |
   git push -fq https://${GH_TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git gh-pages;
   cargo clean;
   cargo test --no-run;
-  kcov --coveralls-id=$TRAVIS_JOB_ID --exclude-pattern=/.cargo target/kcov target/debug/crust-*;
+  RUST_TEST_TASKS=1 RUST_TEST_THREADS=1 kcov --coveralls-id=$TRAVIS_JOB_ID --exclude-pattern=/.cargo target/kcov target/debug/crust-*;
 env:
   global:
     secure: DzS6hBiuUQybrHDvXWDPNsyuUwCPVrfayRDR4tQwN90Uykr+X2ILpNjA/wxEJuGOsPQc1qsk1VStSIHbYJjHl1ahS9tQo+PU1oukuT0b2r9EKkIJOLoc9W53DbHzmLef5Qr4GxqoI5IGOcU9G9V7Lovefsm3gebSwL6xosbg8AY=
