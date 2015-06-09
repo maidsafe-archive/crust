@@ -74,15 +74,22 @@ impl BootStrapHandler {
     fn insert_contacts(&mut self, contacts: Vec<Contact>) {
         if !contacts.is_empty() {
             let mut current_bootstrap = BootStrap{ preferred_port: 0u16, hard_coded_contacts: Vec::new(), contacts: Vec::new() };
-            let mut f = File::open(&self.file_name).unwrap();
-            let mut s = String::new();
-            f.read_to_string(&mut s);
-            let mut bootstrap: BootStrap = json::decode(&s).unwrap();
-            for i in 0..contacts.len() {
-                bootstrap.contacts.push(contacts[i].clone());
+            match File::open(&self.file_name) {
+                Ok(mut open_file) => {
+                    let mut s = String::new();
+                    open_file.read_to_string(&mut s);
+                    match json::decode(&s) {
+                        Ok(mut bootstrap) => {
+                            current_bootstrap = bootstrap;
+                            for i in 0..contacts.len() {
+                                current_bootstrap.contacts.push(contacts[i].clone());
+                            }
+                        },
+                        _ => current_bootstrap.contacts = contacts,
+                    }
+                },
+                _ => current_bootstrap.contacts = contacts,
             }
-
-            current_bootstrap = bootstrap;
 
             let encoded = json::encode(&current_bootstrap).unwrap();
             match File::create(&self.file_name) {
@@ -127,10 +134,8 @@ fn serialisation() {
 
 }
 
-
+#[test]
 fn bootstrap_handler_test() {
-
-
     let mut contacts = Vec::new();
     for _ in 0..10 {
         let mut random_addr_0 = Vec::with_capacity(4);
