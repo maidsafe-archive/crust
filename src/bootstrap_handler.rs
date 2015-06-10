@@ -26,7 +26,7 @@ use rustc_serialize::json;
 
 #[derive(PartialEq, Debug, Clone, RustcDecodable, RustcEncodable)]
 pub struct Contact {
-    endpoint: Endpoint,
+    pub endpoint: Endpoint,
 }
 
 
@@ -86,7 +86,7 @@ impl BootStrapHandler {
     }
 
     // TODO consider using Result as a return type
-    fn read_bootstrap_file(&mut self) -> Option<BootStrap> {
+    fn read_bootstrap_file(&self) -> Option<BootStrap> {
         match File::open(&self.file_name) {
             Ok(mut open_file) => {
                 let mut s = String::new();
@@ -131,7 +131,7 @@ impl BootStrapHandler {
         }
     }
     // FIXME return type
-    pub fn get_serialised_contacts(&mut self) -> Vec<u8> {
+    pub fn get_serialised_contacts(&self) -> Vec<u8> {
         match self.read_bootstrap_file() {
             Some(mut bootstrap) => {
                 let encoded = json::encode(&bootstrap.contacts).unwrap();

@@ -21,13 +21,15 @@ use std::collections::{HashMap, HashSet};
 use std::io;
 use std::sync::{Arc, mpsc, Mutex, Weak};
 use std::thread;
+use std::string;
 use std::net::IpAddr;
 
 use beacon;
-use bootstrap::{BootStrapHandler, BootStrapContacts, Contact, PublicKey};
+use bootstrap_handler::{BootStrapHandler, Contacts, Contact};
 use getifaddrs::getifaddrs;
 use transport;
 use transport::{Endpoint, Port};
+use rustc_serialize::json;
 
 use asynchronous::{Deferred,ControlFlow};
 
@@ -112,17 +114,17 @@ impl ConnectionManager {
             Ok(acceptor) => {
                 let beacon_guid_and_port = (acceptor.beacon_guid(), acceptor.beacon_port());
                 used_beacon_port = Some(beacon_guid_and_port.1);
-                let public_key =
-                    PublicKey::Asym(asymmetricbox::PublicKey([0u8; asymmetricbox::PUBLICKEYBYTES]));
-                let mut contacts = BootStrapContacts::new();
+                // let public_key =
+                //     PublicKey::Asym(asymmetricbox::PublicKey([0u8; asymmetricbox::PUBLICKEYBYTES]));
+                let mut contacts = Contacts::new();
                 let listening_ips = getifaddrs();
                 for port in &listening_ports {
                     for ip in &listening_ips {
-                        contacts.push(Contact::new(Endpoint::tcp((ip.addr.clone(), port.get_port())), public_key.clone()));
+                        contacts.push(Contact { endpoint: Endpoint::tcp((ip.addr.clone(), port.get_port())) });
                     }
                 }
                 let mut bootstrap_handler = BootStrapHandler::new();
-                bootstrap_handler.add_bootstrap_contacts(contacts);
+                bootstrap_handler.add_contacts(contacts);
 
                 let _ = thread::Builder::new().name("ConnectionManager beacon acceptor".to_string())
                                               .spawn(move || {
@@ -135,7 +137,7 @@ impl ConnectionManager {
                         };
                         let bootstrap_contacts = || {
                             let handler = BootStrapHandler::new();
-                            let contacts = handler.get_serialised_bootstrap_contacts();
+                            let contacts = handler.get_serialised_contacts();
                             contacts
                         };
                         let _ = transport.sender.send(&bootstrap_contacts());
@@ -314,18 +316,15 @@ impl ConnectionManager {
                     continue
                 },
             };
-            let mut decoder = cbor::Decoder::from_bytes(&contacts_str[..]);
-            let contact_list: BootStrapContacts = match decoder.decode().next() {
-                Some(message) => {
-                    match message {
-                        Ok(contacts) => contacts,
-                        Err(_) => continue,
-                    }
-                },
-                None => continue,
-            };
-            for contact in contact_list {
-                endpoints.push(contact.end_point());
+
+            let mut contacts_string = String::from_utf8(contacts_str).unwrap(); // FIXME
+
+            let contacts: Contacts = match json::decode(&contacts_string) {
+                    Ok(contacts) => contacts,
+                    Err(e) => continue,
+                };
+            for contact in contacts {
+                endpoints.push(contact.endpoint);
             }
         }
 
@@ -445,12 +444,12 @@ fn handle_connect(mut state: WeakState, trans: transport::Transport,
     if is_broadcast_acceptor {
         match endpoint {
             Ok(ref endpoint) => {
-                let mut contacts = BootStrapContacts::new();
+                let mut contacts = Contacts::new();
                 // TODO PublicKey for contact required...
-                let public_key = PublicKey::Asym(asymmetricbox::PublicKey([0u8; asymmetricbox::PUBLICKEYBYTES]));
-                contacts.push(Contact::new(endpoint.clone(), public_key));
+                // let public_key = PublicKey::Asym(asymmetricbox::PublicKey([0u8; asymmetricbox::PUBLICKEYBYTES]));
+                contacts.push(Contact {  endpoint: endpoint.clone()});
                 let mut bootstrap_handler = BootStrapHandler::new();
-                bootstrap_handler.add_bootstrap_contacts(contacts);
+                bootstrap_handler.add_contacts(contacts);
             }
             Err(_) => ()
         }
