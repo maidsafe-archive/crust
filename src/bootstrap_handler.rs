@@ -95,10 +95,10 @@ impl BootStrapHandler {
                     Ok(mut bootstrap) => {
                         return Some(bootstrap);
                     },
-                    Err(e) => { return None },
+                    Err(_) => { return None },
                 };
             },
-            Err(e) => { return None },
+            Err(_) => { return None },
         }
     }
 
@@ -116,7 +116,7 @@ impl BootStrapHandler {
             }
     }
 
-    fn insert_contacts(&mut self, contacts: Vec<Contact>) {
+    fn insert_contacts(&mut self, contacts: Contacts) {
         if !contacts.is_empty() {
             let mut current_bootstrap = match self.read_bootstrap_file() {
                 Some(bootstrap) => bootstrap,
@@ -138,6 +138,20 @@ impl BootStrapHandler {
                     return encoded.into_bytes();
                 },
             None => panic!("Failed to read bootstrap file !"),
+        };
+    }
+
+    pub fn get_preferred_port(&self) -> Option<u16> {
+        match self.read_bootstrap_file() {
+            Some(bootstrap) => return Some(bootstrap.preferred_port),
+            None => return None,
+        };
+    }
+
+    pub fn get_hard_coded_contacts(&self) -> Contacts {
+        match self.read_bootstrap_file() {
+            Some(bootstrap) => return bootstrap.hard_coded_contacts,
+            None => return Contacts::new(),
         };
     }
 }

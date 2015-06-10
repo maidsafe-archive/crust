@@ -93,12 +93,12 @@ impl ConnectionManager {
         // We need to check for an instance of each supported protocol in the hint vector.  For any
         // protocol that doesn't have an entry, we should inject one (either random or 0).  For now
         // we're only supporting TCP, so...
-        if hint.is_empty() {
-            hint.push(Port::Tcp(0));
-        }
-        for h in &hint {
-            self.listen(h);
-        }
+        // if hint.is_empty() {
+        //     hint.push(Port::Tcp(0));
+        // }
+        // for h in &hint {
+        //     self.listen(h);
+        // }
         let beacon_port: u16 = match beacon_port {
             Some(port) =>  port,
             None => 5483
@@ -106,16 +106,40 @@ impl ConnectionManager {
 
         let mut used_beacon_port: Option<u16> = None;
         let ws = self.state.downgrade();
-        let listening_ports = try!(lock_state(&ws, |s| {
-            let buf: Vec<Port> = s.listening_ports.iter().map(|s| s.clone()).collect();
-            Ok(buf)
-        }));
+
+        let mut listening_ports = Vec::new();
+        // let listening_ports = try!(lock_state(&ws, |s| {
+        //     let buf: Vec<Port> = s.listening_ports.iter().map(|s| s.clone()).collect();
+        //     Ok(buf)
+        // }));
         self.beacon_guid_and_port = match beacon::BroadcastAcceptor::new(beacon_port) {
             Ok(acceptor) => {
                 let beacon_guid_and_port = (acceptor.beacon_guid(), acceptor.beacon_port());
                 used_beacon_port = Some(beacon_guid_and_port.1);
                 // let public_key =
                 //     PublicKey::Asym(asymmetricbox::PublicKey([0u8; asymmetricbox::PUBLICKEYBYTES]));
+
+                ///// CP
+                let mut bootstrap_handler = BootStrapHandler::new();
+
+                if hint.is_empty() {
+                    let preferred_port = bootstrap_handler.get_preferred_port();
+                    if preferred_port.is_some() {
+                        hint.push(Port::Tcp(preferred_port.unwrap()));
+                    } else {
+                        hint.push(Port::Tcp(0));
+                    }
+                }
+
+                for h in &hint {
+                   self.listen(h);
+                }
+                listening_ports = try!(lock_state(&ws, |s| {
+                    let buf: Vec<Port> = s.listening_ports.iter().map(|s| s.clone()).collect();
+                    Ok(buf)
+                }));
+                /////
+
                 let mut contacts = Contacts::new();
                 let listening_ips = getifaddrs();
                 for port in &listening_ports {
@@ -123,7 +147,7 @@ impl ConnectionManager {
                         contacts.push(Contact { endpoint: Endpoint::tcp((ip.addr.clone(), port.get_port())) });
                     }
                 }
-                let mut bootstrap_handler = BootStrapHandler::new();
+
                 bootstrap_handler.add_contacts(contacts);
 
                 let _ = thread::Builder::new().name("ConnectionManager beacon acceptor".to_string())
@@ -148,6 +172,20 @@ impl ConnectionManager {
             Err(_) => None
         };
 
+        if self.beacon_guid_and_port.is_none() {
+            if hint.is_empty() {
+                hint.push(Port::Tcp(0));
+            }
+
+            for h in &hint {
+                self.listen(h);
+            }
+
+            listening_ports = try!(lock_state(&ws, |s| {
+                let buf: Vec<Port> = s.listening_ports.iter().map(|s| s.clone()).collect();
+                Ok(buf)
+            }));
+        }
         Ok((listening_ports, used_beacon_port))
     }
 
