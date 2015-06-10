@@ -24,11 +24,10 @@ use std::thread;
 use std::net::IpAddr;
 
 use beacon;
-use bootstrap_handler::{BootStrapHandler, Contacts, Contact};
+use bootstrap_handler::{BootStrapHandler, Contacts, Contact, parse_contacts};
 use getifaddrs::getifaddrs;
 use transport;
 use transport::{Endpoint, Port};
-use rustc_serialize::json;
 
 use asynchronous::{Deferred,ControlFlow};
 
@@ -341,14 +340,13 @@ impl ConnectionManager {
                 },
             };
 
-            let contacts_string = String::from_utf8(contacts_str).unwrap(); // FIXME
-
-            let contacts: Contacts = match json::decode(&contacts_string) {
-                    Ok(contacts) => contacts,
-                    Err(_) => continue,
-                };
-            for contact in contacts {
-                endpoints.push(contact.endpoint);
+            match parse_contacts(contacts_str) {
+                Some(contacts) => {
+                    for contact in contacts {
+                        endpoints.push(contact.endpoint);
+                    }
+                },
+                None => continue
             }
         }
 

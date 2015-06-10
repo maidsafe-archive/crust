@@ -45,6 +45,26 @@ pub struct BootStrapHandler {
     last_updated: time::Tm,
 }
 
+
+pub fn serialise_contacts(contacts: Contacts) -> Vec<u8> {
+    let encoded = json::encode(&contacts).unwrap();
+    return encoded.into_bytes();
+}
+
+pub fn parse_contacts(buffer: Vec<u8>) -> Option<Contacts> {
+    match String::from_utf8(buffer) {
+        Ok(contacts_str) => {
+            match json::decode(&contacts_str) {
+                Ok(contacts) => return Some(contacts),
+                Err(_) => { return None },
+            };
+        },
+        Err(_) => return None
+    }
+}
+
+
+
 impl BootStrapHandler {
     pub fn get_file_name() -> String {
         let path = match env::current_exe() {
@@ -132,13 +152,13 @@ impl BootStrapHandler {
     // FIXME return type
     pub fn get_serialised_contacts(&self) -> Vec<u8> {
         match self.read_bootstrap_file() {
-            Some(mut bootstrap) => {  // appending hard_coded_contacts
+            Some(bootstrap) => {  // appending hard_coded_contacts
+                let mut combined_contacts = bootstrap.contacts.clone();
                 for contact in bootstrap.hard_coded_contacts {
-                    bootstrap.contacts.push(contact.clone());
+                    combined_contacts.push(contact.clone());
                 }
-                let encoded = json::encode(&bootstrap.contacts).unwrap();
-                    return encoded.into_bytes();
-                },
+                return serialise_contacts(combined_contacts);
+            },
             None => panic!("Failed to read bootstrap file !"),
         };
     }
@@ -179,12 +199,8 @@ fn serialisation() {
     let bootstrap = BootStrap { preferred_port: 5483u16, hard_coded_contacts: contacts.clone(),
                                 contacts: contacts.clone() };
     let encoded = json::encode(&bootstrap).unwrap();
-
-    println!(" encoded {:?}", encoded);
-
     let decoded: BootStrap = json::decode(&encoded).unwrap();
-    println!("{:?}", decoded);
-
+    assert_eq!(bootstrap, decoded);
 }
 
 #[test]
