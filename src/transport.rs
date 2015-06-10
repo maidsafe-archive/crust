@@ -72,8 +72,10 @@ impl Encodable for Endpoint {
 impl Decodable for Endpoint {
     fn decode<D: Decoder>(d: &mut D)->Result<Endpoint, D::Error> {
         let decoded: String = try!(Decodable::decode(d));
-        let address: SocketAddr = SocketAddr::from_str(&decoded).unwrap();
-        Ok(Endpoint::Tcp(address))
+        match SocketAddr::from_str(&decoded) {
+            Ok(address) => Ok(Endpoint::Tcp(address)),
+            _ => Err(d.error(&(format!("Expecting SocketAddr string, but found : {:?}", decoded)))),
+        }
     }
 }
 

@@ -126,14 +126,16 @@ impl BootStrapHandler {
             for i in 0..contacts.len() {
                 current_bootstrap.contacts.push(contacts[i].clone());
             }
-
             self.write_bootstrap_file(&current_bootstrap);
         }
     }
     // FIXME return type
     pub fn get_serialised_contacts(&self) -> Vec<u8> {
         match self.read_bootstrap_file() {
-            Some(bootstrap) => {
+            Some(mut bootstrap) => {  // appending hard_coded_contacts
+                for contact in bootstrap.hard_coded_contacts {
+                    bootstrap.contacts.push(contact.clone());
+                }
                 let encoded = json::encode(&bootstrap.contacts).unwrap();
                     return encoded.into_bytes();
                 },

@@ -92,12 +92,6 @@ impl ConnectionManager {
         // We need to check for an instance of each supported protocol in the hint vector.  For any
         // protocol that doesn't have an entry, we should inject one (either random or 0).  For now
         // we're only supporting TCP, so...
-        // if hint.is_empty() {
-        //     hint.push(Port::Tcp(0));
-        // }
-        // for h in &hint {
-        //     self.listen(h);
-        // }
         let beacon_port: u16 = match beacon_port {
             Some(port) =>  port,
             None => 5483
