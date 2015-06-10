@@ -90,9 +90,9 @@ impl BootStrapHandler {
         match File::open(&self.file_name) {
             Ok(mut open_file) => {
                 let mut s = String::new();
-                open_file.read_to_string(&mut s);
+                let _ = open_file.read_to_string(&mut s);
                 match json::decode(&s) {
-                    Ok(mut bootstrap) => {
+                    Ok(bootstrap) => {
                         return Some(bootstrap);
                     },
                     Err(_) => { return None },
@@ -133,7 +133,7 @@ impl BootStrapHandler {
     // FIXME return type
     pub fn get_serialised_contacts(&self) -> Vec<u8> {
         match self.read_bootstrap_file() {
-            Some(mut bootstrap) => {
+            Some(bootstrap) => {
                 let encoded = json::encode(&bootstrap.contacts).unwrap();
                     return encoded.into_bytes();
                 },
@@ -148,12 +148,12 @@ impl BootStrapHandler {
         };
     }
 
-    pub fn get_hard_coded_contacts(&self) -> Contacts {
-        match self.read_bootstrap_file() {
-            Some(bootstrap) => return bootstrap.hard_coded_contacts,
-            None => return Contacts::new(),
-        };
-    }
+    // pub fn get_hard_coded_contacts(&self) -> Contacts {
+    //     match self.read_bootstrap_file() {
+    //         Some(bootstrap) => return bootstrap.hard_coded_contacts,
+    //         None => return Contacts::new(),
+    //     };
+    // }
 }
 
 #[cfg(test)]

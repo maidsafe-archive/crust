@@ -15,13 +15,12 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use cbor;
-use sodiumoxide::crypto::asymmetricbox;
+//use cbor;
+//use sodiumoxide::crypto::asymmetricbox;
 use std::collections::{HashMap, HashSet};
 use std::io;
 use std::sync::{Arc, mpsc, Mutex, Weak};
 use std::thread;
-use std::string;
 use std::net::IpAddr;
 
 use beacon;
@@ -108,10 +107,6 @@ impl ConnectionManager {
         let ws = self.state.downgrade();
 
         let mut listening_ports = Vec::new();
-        // let listening_ports = try!(lock_state(&ws, |s| {
-        //     let buf: Vec<Port> = s.listening_ports.iter().map(|s| s.clone()).collect();
-        //     Ok(buf)
-        // }));
         self.beacon_guid_and_port = match beacon::BroadcastAcceptor::new(beacon_port) {
             Ok(acceptor) => {
                 let beacon_guid_and_port = (acceptor.beacon_guid(), acceptor.beacon_port());
@@ -119,26 +114,23 @@ impl ConnectionManager {
                 // let public_key =
                 //     PublicKey::Asym(asymmetricbox::PublicKey([0u8; asymmetricbox::PUBLICKEYBYTES]));
 
-                ///// CP
                 let mut bootstrap_handler = BootStrapHandler::new();
 
-                if hint.is_empty() {
-                    let preferred_port = bootstrap_handler.get_preferred_port();
-                    if preferred_port.is_some() {
-                        hint.push(Port::Tcp(preferred_port.unwrap()));
-                    } else {
-                        hint.push(Port::Tcp(0));
+                if hint.is_empty() {  // overriding botstrap file if hint provided in api, remove once api is changed
+                    match bootstrap_handler.get_preferred_port() {
+                        Some(preferred_port) => hint.push(Port::Tcp(preferred_port)),
+                        None => hint.push(Port::Tcp(0)),
                     }
                 }
 
                 for h in &hint {
                    self.listen(h);
                 }
+
                 listening_ports = try!(lock_state(&ws, |s| {
                     let buf: Vec<Port> = s.listening_ports.iter().map(|s| s.clone()).collect();
                     Ok(buf)
                 }));
-                /////
 
                 let mut contacts = Contacts::new();
                 let listening_ips = getifaddrs();
@@ -355,11 +347,11 @@ impl ConnectionManager {
                 },
             };
 
-            let mut contacts_string = String::from_utf8(contacts_str).unwrap(); // FIXME
+            let contacts_string = String::from_utf8(contacts_str).unwrap(); // FIXME
 
             let contacts: Contacts = match json::decode(&contacts_string) {
                     Ok(contacts) => contacts,
-                    Err(e) => continue,
+                    Err(_) => continue,
                 };
             for contact in contacts {
                 endpoints.push(contact.endpoint);
