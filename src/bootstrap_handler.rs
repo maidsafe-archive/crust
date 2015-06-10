@@ -29,11 +29,15 @@ pub struct Contact {
     endpoint: Endpoint,
 }
 
+
+pub type Contacts = Vec<Contact>;
+
+
 #[derive(PartialEq, Debug, RustcDecodable, RustcEncodable)]
 pub struct BootStrap {
     preferred_port: u16,
-    hard_coded_contacts: Vec<Contact>,
-    contacts: Vec<Contact>,
+    hard_coded_contacts: Contacts,
+    contacts: Contacts,
 }
 
 pub struct BootStrapHandler {
@@ -70,38 +74,71 @@ impl BootStrapHandler {
         }
     }
 
+    pub fn get_update_duration() -> time::Duration {
+        time::Duration::hours(4)
+    }
+
+    pub fn add_contacts(&mut self, contacts: Vec<Contact>) {
+        self.insert_contacts(contacts);
+        if time::now() > self.last_updated + BootStrapHandler::get_update_duration() {
+            // self.check_bootstrap_contacts();
+        }
+    }
+
+    // TODO consider using Result as a return type
+    fn read_bootstrap_file(&mut self) -> Option<BootStrap> {
+        match File::open(&self.file_name) {
+            Ok(mut open_file) => {
+                let mut s = String::new();
+                open_file.read_to_string(&mut s);
+                match json::decode(&s) {
+                    Ok(mut bootstrap) => {
+                        return Some(bootstrap);
+                    },
+                    Err(e) => { return None },
+                };
+            },
+            Err(e) => { return None },
+        }
+    }
+
+    // TODO consider using Result as a return type
+    fn write_bootstrap_file(&mut self, bootstrap: &BootStrap) {
+        let encoded = json::encode(&bootstrap).unwrap();
+        match File::create(&self.file_name) {
+            Ok(mut create_file) => {
+                let result = create_file.write_all(&encoded.into_bytes());
+                assert!(result.is_ok());
+                let result = create_file.sync_all();
+                assert!(result.is_ok());
+            },
+                _ => panic!("Could not create bootstrap file at {}", self.file_name),
+            }
+    }
 
     fn insert_contacts(&mut self, contacts: Vec<Contact>) {
         if !contacts.is_empty() {
-            let mut current_bootstrap = BootStrap{ preferred_port: 0u16, hard_coded_contacts: Vec::new(), contacts: Vec::new() };
-            match File::open(&self.file_name) {
-                Ok(mut open_file) => {
-                    let mut s = String::new();
-                    open_file.read_to_string(&mut s);
-                    match json::decode(&s) {
-                        Ok(mut bootstrap) => {
-                            current_bootstrap = bootstrap;
-                            for i in 0..contacts.len() {
-                                current_bootstrap.contacts.push(contacts[i].clone());
-                            }
-                        },
-                        _ => current_bootstrap.contacts = contacts,
-                    }
-                },
-                _ => current_bootstrap.contacts = contacts,
+            let mut current_bootstrap = match self.read_bootstrap_file() {
+                Some(bootstrap) => bootstrap,
+                None => BootStrap{ preferred_port: 0u16, hard_coded_contacts: Vec::new(), contacts: Vec::new() }
+            };
+
+            for i in 0..contacts.len() {
+                current_bootstrap.contacts.push(contacts[i].clone());
             }
 
-            let encoded = json::encode(&current_bootstrap).unwrap();
-            match File::create(&self.file_name) {
-                Ok(mut create_file) => {
-                    let result = create_file.write_all(&encoded.into_bytes());
-                    assert!(result.is_ok());
-                    let result = create_file.sync_all();
-                    assert!(result.is_ok());
-                },
-                _ => panic!("Could not create bootstrap file at {}", self.file_name),
-            }
+            self.write_bootstrap_file(&current_bootstrap);
         }
+    }
+    // FIXME return type
+    pub fn get_serialised_contacts(&mut self) -> Vec<u8> {
+        match self.read_bootstrap_file() {
+            Some(mut bootstrap) => {
+                let encoded = json::encode(&bootstrap.contacts).unwrap();
+                    return encoded.into_bytes();
+                },
+            None => panic!("Failed to read bootstrap file !"),
+        };
     }
 }
 
@@ -120,7 +157,7 @@ use std::path::Path;
 fn serialisation() {
     let addr = net::SocketAddrV4::new(net::Ipv4Addr::new(1,2,3,4), 8080);
     let contact  = Contact { endpoint: transport::Endpoint::Tcp(SocketAddr::V4(addr)) };
-    let mut contacts = Vec::new();
+    let mut contacts = Contacts::new();
     contacts.push(contact.clone());
     contacts.push(contact.clone());
     let bootstrap = BootStrap { preferred_port: 5483u16, hard_coded_contacts: contacts.clone(),
@@ -158,9 +195,9 @@ fn bootstrap_handler_test() {
         assert!(file.is_ok()); // Check whether the database file is created
         // Add Contacts
         bootstrap_handler.insert_contacts(contacts);
-        // match fs::remove_file(file_name.clone()) {
-        //     Ok(_) => (),
-        //     Err(e) => println!("Failed to remove {}: {}", file_name, e),
-        // };
+        match fs::remove_file(file_name.clone()) {
+            Ok(_) => (),
+            Err(e) => println!("Failed to remove {}: {}", file_name, e),
+        };
     }
 }
