@@ -35,7 +35,7 @@
 extern crate cbor;
 extern crate rand;
 extern crate rustc_serialize;
-extern crate sodiumoxide;
+//extern crate sodiumoxide;
 extern crate time;
 extern crate asynchronous;
 extern crate libc;
@@ -53,7 +53,7 @@ mod test {
     }
 }
 mod beacon;
-mod bootstrap;
+mod bootstrap_handler;
 mod getifaddrs;
 mod tcp_connections;
 mod transport;

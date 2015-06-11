@@ -15,8 +15,8 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use cbor;
-use sodiumoxide::crypto::asymmetricbox;
+//use cbor;
+//use sodiumoxide::crypto::asymmetricbox;
 use std::collections::{HashMap, HashSet};
 use std::io;
 use std::sync::{Arc, mpsc, Mutex, Weak};
@@ -24,7 +24,7 @@ use std::thread;
 use std::net::IpAddr;
 
 use beacon;
-use bootstrap::{BootStrapHandler, BootStrapContacts, Contact, PublicKey};
+use bootstrap_handler::{BootStrapHandler, Contacts, Contact, parse_contacts};
 use getifaddrs::getifaddrs;
 use transport;
 use transport::{Endpoint, Port};
@@ -91,12 +91,6 @@ impl ConnectionManager {
         // We need to check for an instance of each supported protocol in the hint vector.  For any
         // protocol that doesn't have an entry, we should inject one (either random or 0).  For now
         // we're only supporting TCP, so...
-        if hint.is_empty() {
-            hint.push(Port::Tcp(0));
-        }
-        for h in &hint {
-            self.listen(h);
-        }
         let beacon_port: u16 = match beacon_port {
             Some(port) =>  port,
             None => 5483
@@ -104,25 +98,42 @@ impl ConnectionManager {
 
         let mut used_beacon_port: Option<u16> = None;
         let ws = self.state.downgrade();
-        let listening_ports = try!(lock_state(&ws, |s| {
-            let buf: Vec<Port> = s.listening_ports.iter().map(|s| s.clone()).collect();
-            Ok(buf)
-        }));
+
+        let mut listening_ports = Vec::new();
         self.beacon_guid_and_port = match beacon::BroadcastAcceptor::new(beacon_port) {
             Ok(acceptor) => {
                 let beacon_guid_and_port = (acceptor.beacon_guid(), acceptor.beacon_port());
                 used_beacon_port = Some(beacon_guid_and_port.1);
-                let public_key =
-                    PublicKey::Asym(asymmetricbox::PublicKey([0u8; asymmetricbox::PUBLICKEYBYTES]));
-                let mut contacts = BootStrapContacts::new();
+                // let public_key =
+                //     PublicKey::Asym(asymmetricbox::PublicKey([0u8; asymmetricbox::PUBLICKEYBYTES]));
+
+                let mut bootstrap_handler = BootStrapHandler::new();
+
+                if hint.is_empty() {  // overriding botstrap file if hint provided in api, remove once api is changed
+                    match bootstrap_handler.read_preferred_port() {
+                        Ok(preferred_port) => hint.push(preferred_port),
+                        _ => hint.push(Port::Tcp(0)),
+                    }
+                }
+
+                for h in &hint {
+                   self.listen(h);
+                }
+
+                listening_ports = try!(lock_state(&ws, |s| {
+                    let buf: Vec<Port> = s.listening_ports.iter().map(|s| s.clone()).collect();
+                    Ok(buf)
+                }));
+
+                let mut contacts = Contacts::new();
                 let listening_ips = getifaddrs();
                 for port in &listening_ports {
                     for ip in &listening_ips {
-                        contacts.push(Contact::new(Endpoint::tcp((ip.addr.clone(), port.get_port())), public_key.clone()));
+                        contacts.push(Contact { endpoint: Endpoint::tcp((ip.addr.clone(), port.get_port())) });
                     }
                 }
-                let mut bootstrap_handler = BootStrapHandler::new();
-                bootstrap_handler.add_bootstrap_contacts(contacts);
+
+                let _ = bootstrap_handler.add_contacts(contacts);
 
                 let _ = thread::Builder::new().name("ConnectionManager beacon acceptor".to_string())
                                               .spawn(move || {
@@ -133,12 +144,12 @@ impl ConnectionManager {
                                 break
                             },
                         };
-                        let bootstrap_contacts = || {
-                            let handler = BootStrapHandler::new();
-                            let contacts = handler.get_serialised_bootstrap_contacts();
-                            contacts
-                        };
-                        let _ = transport.sender.send(&bootstrap_contacts());
+
+                        let handler = BootStrapHandler::new();
+                        let read_contacts = handler.get_serialised_contacts();
+                        if read_contacts.is_ok() {
+                            let _ = transport.sender.send(&read_contacts.unwrap());
+                        }
                     }
                 });
                 Some(beacon_guid_and_port)
@@ -146,6 +157,20 @@ impl ConnectionManager {
             Err(_) => None
         };
 
+        if self.beacon_guid_and_port.is_none() {
+            if hint.is_empty() {
+                hint.push(Port::Tcp(0));
+            }
+
+            for h in &hint {
+                self.listen(h);
+            }
+
+            listening_ports = try!(lock_state(&ws, |s| {
+                let buf: Vec<Port> = s.listening_ports.iter().map(|s| s.clone()).collect();
+                Ok(buf)
+            }));
+        }
         Ok((listening_ports, used_beacon_port))
     }
 
@@ -314,18 +339,14 @@ impl ConnectionManager {
                     continue
                 },
             };
-            let mut decoder = cbor::Decoder::from_bytes(&contacts_str[..]);
-            let contact_list: BootStrapContacts = match decoder.decode().next() {
-                Some(message) => {
-                    match message {
-                        Ok(contacts) => contacts,
-                        Err(_) => continue,
+
+            match parse_contacts(contacts_str) {
+                Some(contacts) => {
+                    for contact in contacts {
+                        endpoints.push(contact.endpoint);
                     }
                 },
-                None => continue,
-            };
-            for contact in contact_list {
-                endpoints.push(contact.end_point());
+                None => continue
             }
         }
 
@@ -445,12 +466,12 @@ fn handle_connect(mut state: WeakState, trans: transport::Transport,
     if is_broadcast_acceptor {
         match endpoint {
             Ok(ref endpoint) => {
-                let mut contacts = BootStrapContacts::new();
+                let mut contacts = Contacts::new();
                 // TODO PublicKey for contact required...
-                let public_key = PublicKey::Asym(asymmetricbox::PublicKey([0u8; asymmetricbox::PUBLICKEYBYTES]));
-                contacts.push(Contact::new(endpoint.clone(), public_key));
+                // let public_key = PublicKey::Asym(asymmetricbox::PublicKey([0u8; asymmetricbox::PUBLICKEYBYTES]));
+                contacts.push(Contact {  endpoint: endpoint.clone()});
                 let mut bootstrap_handler = BootStrapHandler::new();
-                bootstrap_handler.add_bootstrap_contacts(contacts);
+                let _ = bootstrap_handler.add_contacts(contacts);
             }
             Err(_) => ()
         }
