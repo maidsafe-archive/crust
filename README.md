@@ -47,6 +47,9 @@ Extract and place the libsodium.a file in "bin\x86_64-pc-windows-gnu" for 64bit 
 ## [0.0.61]
 - [x] [MAID-1124] (https://maidsafe.atlassian.net/browse/MAID-1124) Get a list of public IPs for others to connect to
 
+## [0.0.62]
+- [x] [MAID-1125] (https://maidsafe.atlassian.net/browse/MAID-1125) Update Bootstrap Handler to use Json format.
+
 ## [0.0.70]
 - [ ] Have ConnectionManager guarantee at most one connection between any two nodes
 - [ ] Utp Networking
