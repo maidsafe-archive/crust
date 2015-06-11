@@ -27,14 +27,6 @@ use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
 use std::cmp::Ordering;
 pub type Bytes = Vec<u8>;
 
-// fn array_to_vec(arr: &[u8]) -> Vec<u8> {
-//     let mut vector = Vec::new();
-//     for i in arr.iter() {
-//         vector.push(*i);
-//     }
-//     vector
-// }
-
 /// Enum representing endpoint of supported protocols
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub enum Endpoint {

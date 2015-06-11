@@ -57,7 +57,6 @@ mod test {
     }
 }
 mod beacon;
-//mod bootstrap;
 mod bootstrap_handler;
 mod getifaddrs;
 mod tcp_connections;
