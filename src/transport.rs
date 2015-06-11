@@ -81,7 +81,7 @@ impl Decodable for Endpoint {
 
 
 /// Enum representing port of supported protocols
-#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, RustcDecodable, RustcEncodable)]
 pub enum Port {
     /// TCP port
     Tcp(u16),
