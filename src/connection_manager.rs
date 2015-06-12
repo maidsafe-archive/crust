@@ -332,22 +332,6 @@ impl ConnectionManager {
         endpoints
     }
 
-    // Replace the IP in `original` with `replacement`'s IP if `original`'s is the loopback.
-    fn replace_loopback(&self, original: Endpoint, replacement: &Endpoint) -> Endpoint {
-        let is_loopback = match original.get_address().ip() {
-            IpAddr::V4(ip) => ip.is_loopback(),
-            IpAddr::V6(ip) => ip.is_loopback(),
-        };
-        if !is_loopback {
-            return original;
-        }
-        let port = original.get_address().port();
-        match *replacement {
-            Endpoint::Tcp(tcp_endpoint) => Endpoint::Tcp(SocketAddr::new(tcp_endpoint.ip(), port)),
-            Endpoint::Utp(utp_endpoint) => Endpoint::Utp(SocketAddr::new(utp_endpoint.ip(), port)),
-        }
-    }
-
     fn bootstrap_off_list(&self, bootstrap_list: Vec<Endpoint>) -> io::Result<Endpoint> {
         // if bootstrap_list.is_empty() {
         //     panic!("The bootstrap list is empty, therefore cannot bootstrap");

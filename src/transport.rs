@@ -179,15 +179,15 @@ impl Receiver {
 pub enum Acceptor {
     // Channel receiver, TCP listener
     Tcp(mpsc::Receiver<(TcpStream, SocketAddr)>, TcpListener),
-    // Channel receiver, UTP listener and calculated local UTP endpoint
-    Utp(mpsc::Receiver<(UtpStream, SocketAddr)>, UtpSocket, SocketAddr),
+    // Channel receiver, UTP listener and port
+    Utp(mpsc::Receiver<(UtpStream, SocketAddr)>, UtpSocket, u16),
 }
 
 impl Acceptor {
     pub fn local_port(&self) -> Port {
         match *self {
             Acceptor::Tcp(_, ref listener) => Port::Tcp(listener.local_addr().unwrap().port()),
-            Acceptor::Utp(_, _, local_address) => Endpoint::Utp(local_address),
+            Acceptor::Utp(_, _, port) => Port::Utp(port),
         }
     }
 }
@@ -235,18 +235,7 @@ pub fn new_acceptor(port: &Port) -> IoResult<Acceptor> {
         },
         Port::Utp(ref port) => {
             let (receiver, listener) = try!(utp_connections::listen(*port));
-            // If we fail to calculate local address, fall back to listener.local_addr().
-            let local_address =
-                if let Ok(address) = get_utp_listener_local_address(&listener) {
-                    address
-                } else {
-                    // TODO FIXME
-                    panic!("UtpSocket does not support fetching local address. Perhaps submit a patch to it upstream, it's like four lines of new code to query the internal UdpSocket?")
-                };
-            // Discard the first connection since this is caused by calling
-            // `get_utp_listener_local_address` above.
-            let _ = receiver.recv();
-            Ok(Acceptor::Utp(receiver, listener, local_address))
+            Ok(Acceptor::Utp(receiver, listener, port.get_port()))
         },
     }
 }
@@ -279,11 +268,6 @@ pub fn accept(acceptor: &Acceptor) -> IoResult<Transport> {
                         })
         },
     }
-}
-
-fn get_utp_listener_local_address(stream: &UtpSocket) -> IoResult<SocketAddr> {
-    // TODO FIXME
-    Err(io::Error::new(io::ErrorKind::AddrNotAvailable, "UtpSocket does not support fetching local address. Perhaps submit a patch to it upstream, it's like four lines of new code to query the internal UdpSocket?"))
 }
 
 fn compare_ip_addrs(a1: &SocketAddr, a2: &SocketAddr) -> Ordering {
