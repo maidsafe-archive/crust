@@ -1,7 +1,7 @@
 ### Bootstrap Cache
 Bootstrap cache file (JSON file) can be used to pass a few configuration information along with cache of previous connections and fall back endpoints information to Crust node.
 
-It needs to be present in the current executable directory. It name needs to be of the format :
+It needs to be present in the directory the exe is run from (work dir). It name needs to be of the format :
 `<current executable>.bootstrap.cache `
 For crust_peer example, the bootstrap_file will be `crust_peer.bootstrap.cache`
 
