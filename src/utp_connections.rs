@@ -30,7 +30,7 @@ pub type UtpReader<T> = Receiver<T>;
 pub type UtpWriter<T> = Receiver<T>;
 
 /// Connect to a peer and open a send-receive pair.  See `upgrade` for more details.
-pub fn connect_utp<'a, 'b, I, O>(addr: SocketAddr) -> IoResult<(Receiver<I>, OutUtpStream<O>)>
+pub fn connect_utp<'a, 'b, I, O>(addr: SocketAddr) -> IoResult<(Receiver<I>, Receiver<O>)>
         where I: Send + Decodable + 'static, O: Encodable {
     Ok(try!(upgrade_utp(try!(UtpSocket::connect(&addr)))))
 }
@@ -75,38 +75,25 @@ pub fn listen(port: u16) -> IoResult<(Receiver<(UtpSocket, SocketAddr)>, UtpList
                 }
             }
         }
-    }); */
+    });
     Ok((rx, utp_listener))
 }
 
 /// Upgrades an outbound UtpSocket to a Sender-Receiver pair that you can use to send and
 /// receive objects automatically.  If there is an error decoding or encoding
 /// values, that respective part is shut down.
-pub fn upgrade_utp<'a, 'b, I, O>(outbound: UtpSocket) -> IoResult<(InUtpStream<I>, OutUtpStream<O>)>
+pub fn upgrade_utp<'a, 'b, I, O>(outbound: UtpSocket) -> IoResult<(Receiver<I>, Receiver<O>)>
 where I: Send + Decodable + 'static, O: Encodable {
     // You can't clone UtpSockets, nor read and write concurrently from them, nor use
     // select() on them so we're going to need two of them per connection
     // Create an inbound socket this side, and tell the remote about it.
+    let inbound = UtpSocket::bind("0.0.0.0:0");
+    let local_port = inbound.local_addr().get_port();
     
-    
-//    let s2 = try!(s1.try_clone());
-    Ok((upgrade_reader(s1), upgrade_writer(s1)))
-}
-
-fn upgrade_writer<'a, T>(stream: UtpStream) -> OutUtpStream<T>
-where T: Encodable {
-    OutUtpStream {
-        utp_stream: stream,
-        _phantom: PhantomData
-    }
-}
-
-fn upgrade_reader<'a, T>(stream: UtpStream) -> InUtpStream<T>
-where T: Send + Decodable + 'static {
+    // Configure a reading thread
     let (in_snd, in_rec) = mpsc::channel();
-
     let _ = spawn(move || {
-        let mut buffer = BufReader::new(stream);
+        let mut buffer = BufReader::new(inbound.into());
         {
             let mut decoder = Decoder::from_reader(&mut buffer);
             loop {
@@ -132,9 +119,39 @@ where T: Send + Decodable + 'static {
         let mut s1 = buffer.into_inner();
         let _ = s1.close();
     });
-    in_rec
-}
 
+    // Configure a sending thread    
+    let (out_snd, out_rec) = mpsc::channel();
+    let _ = spawn(move || {
+        let mut buffer = BufWriter::new(outbound.into());
+        {
+            let mut encoder = Encoder::to_writer(&mut buffer);
+            loop {
+                let data = match encoder.encode().next() {
+                  Some(a) => a,
+                  None => { break; }
+                  };
+                match data {
+                    Ok(a) => {
+                        // Try to send, and if we can't, then the channel is closed.
+                        if out_rec.receive(a).is_err() {
+                            break;
+                        }
+                    },
+                    // if we can't decode, close the stream with an error.
+                    Err(_) => {
+                        // let _ = in_snd.error(e);
+                        break;
+                    }
+                }
+            }
+        }
+        let mut s1 = buffer.into_inner();
+        let _ = s1.close();
+    });
+    
+    Ok((in_rec, out_snd))
+}
 
 
 #[cfg(test)]

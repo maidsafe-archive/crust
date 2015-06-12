@@ -19,7 +19,7 @@ sodiumoxide = "0.0.4"
 term = "*"
 time = "*"
 asynchronous = "*"
-utp = "*"
+utp = "0.5.0"
 
 [[example]]
 name = "simple_sender"
