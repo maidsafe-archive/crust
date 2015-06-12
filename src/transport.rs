@@ -132,12 +132,7 @@ impl Receiver {
     pub fn receive(&self) -> IoResult<Bytes> {
         match *self {
             Receiver::Tcp(ref r) => {
-                match r.recv() {
-                    Ok(data) => Ok(data),
-                    Err(what) => {
-                        return Err(io::Error::new(io::ErrorKind::NotConnected, what.description()));
-                    },
-                }
+                r.recv().map_err(|what| io::Error::new(io::ErrorKind::NotConnected, what.description()))
             }
         }
     }
