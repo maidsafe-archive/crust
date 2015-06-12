@@ -51,7 +51,7 @@ Extract and place the libsodium.a file in "bin\x86_64-pc-windows-gnu" for 64bit 
 - [x] [MAID-1125] (https://maidsafe.atlassian.net/browse/MAID-1125) Update Bootstrap Handler to use Json format.
 
 ## [0.0.63]
-- [x] #134 First node doesn't read its own bootstrap list
+- [x] [#134] (https://github.com/maidsafe/crust/issues/134) First node doesn't read its own bootstrap list
 
 ## [0.0.70]
 - [ ] Have ConnectionManager guarantee at most one connection between any two nodes
