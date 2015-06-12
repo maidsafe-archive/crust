@@ -228,8 +228,7 @@ mod test {
 
         // event_receiver
         let _ = thread::spawn(move || {
-            for x in event_receiver.iter() {
-                let (connection, _) = x;
+            for (connection, _) in event_receiver.iter() {
                 // Spawn a new thread for each connection that we get.
                 let _ = thread::spawn(move || {
                     let (i, mut o) = upgrade_tcp(connection).unwrap();

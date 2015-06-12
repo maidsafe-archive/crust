@@ -87,18 +87,14 @@ mod getifaddrs_posix {
 
     #[cfg(any(target_os = "linux", target_os = "android", target_os = "nacl"))]
     fn do_broadcast(ifaddr : &posix_ifaddrs) -> IpAddr {
-        match sockaddr_to_ipaddr(ifaddr.ifa_ifu) {
-            Some(a) => a,
-            None => IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)),
-        }
+        sockaddr_to_ipaddr(ifaddr.ifa_ifu)
+            .unwrap_or(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)))
     }
     
     #[cfg(any(target_os = "freebsd", target_os = "macos", target_os = "ios"))]
     fn do_broadcast(ifaddr : &posix_ifaddrs) -> IpAddr {
-        match sockaddr_to_ipaddr(ifaddr.ifa_dstaddr) {
-            Some(a) => a,
-            None => IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)),
-        }
+        sockaddr_to_ipaddr(ifaddr.ifa_dstaddr)
+            .unwrap_or(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)))
     }
     
     /// Return a vector of IP details for all the valid interfaces on this host
@@ -131,9 +127,8 @@ mod getifaddrs_posix {
                 Some(a) => item.addr = a,
                 None => continue,
             };
-            match sockaddr_to_ipaddr(ifaddr.ifa_netmask) {
-                Some(a) => item.netmask = a,
-                None => (),
+            if let Some(a) = sockaddr_to_ipaddr(ifaddr.ifa_netmask) {
+                item.netmask = a
             };
             if (ifaddr.ifa_flags & 2 /*IFF_BROADCAST*/) != 0 {
                 item.broadcast = do_broadcast(ifaddr);
@@ -314,8 +309,8 @@ mod getifaddrs_windows {
                         let ipprefix = sockaddr_to_ipaddr(unsafe { (*prefix).Address.lpSockaddr });
                         if !ipprefix.is_some() { continue; }
                         match ipprefix.unwrap() {
-                            IpAddr::V4(ref a) => match item.addr {
-                                IpAddr::V4(b) => {
+                            IpAddr::V4(ref a) => {
+                                if let IpAddr::V4(b) = item.addr {
                                     let mut netmask : [u8; 4] = [0; 4];
                                     for n in 0..unsafe{ (*prefix).PrefixLength as usize + 7 }/8 {
                                         let x_byte = b.octets()[n];
@@ -347,11 +342,10 @@ mod getifaddrs_windows {
                                         broadcast[3],
                                     ));
                                     break 'prefixloop;
-                                },
-                                _ => (),
+                                }
                             },
-                            IpAddr::V6(ref a) => match item.addr {
-                                IpAddr::V6(b) => {
+                            IpAddr::V6(ref a) => {
+                                if let IpAddr::V6(b) = item.addr {
                                     // Iterate the bits in the prefix, if they all match this prefix is the
                                     // right one, else try the next prefix
                                     let mut netmask : [u16; 8] = [0; 8];
@@ -379,8 +373,7 @@ mod getifaddrs_windows {
                                         netmask[7],
                                     ));
                                     break 'prefixloop;
-                                },
-                                _ => (),
+                                }
                             },
                         };
                     }

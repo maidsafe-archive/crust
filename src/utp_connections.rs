@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use utp::{UtpSocket, UtpStream};
+use utp::{UtpSocket, UtpStream, UtpListener};
 use std::net::{SocketAddr};
 use std::io::{BufReader, ErrorKind};
 use std::io::Result as IoResult;
@@ -26,69 +26,43 @@ use rustc_serialize::{Decodable, Encodable};
 use std::sync::mpsc;
 use std::sync::mpsc::Receiver;
 
-pub type InUtpStream<T> = Receiver<T>;
-
 pub type UtpReader<T> = Receiver<T>;
-pub type UtpWriter<T> = OutUtpStream<T>;
-
-pub struct OutUtpStream<T> {
-    utp_stream: UtpStream,
-    _phantom: PhantomData<T>
-}
-
-impl <'a, T> OutUtpStream<T>
-where T: Encodable {
-    pub fn send(&mut self, m: &T) -> Result<(), CborError> {
-        let mut e = Encoder::from_writer(&mut self.utp_stream);
-        e.encode(&[&m])
-    }
-
-    #[allow(dead_code)]
-    pub fn close(&mut self) {
-        let _ = self.utp_stream.close();
-    }
-}
-
-//#[unsafe_destructor]
-impl <T> Drop for OutUtpStream<T> {
-    fn drop(&mut self) {
-        let _ = self.utp_stream.close();
-    }
-}
+pub type UtpWriter<T> = Receiver<T>;
 
 /// Connect to a peer and open a send-receive pair.  See `upgrade` for more details.
 pub fn connect_utp<'a, 'b, I, O>(addr: SocketAddr) -> IoResult<(Receiver<I>, OutUtpStream<O>)>
         where I: Send + Decodable + 'static, O: Encodable {
-    Ok(try!(upgrade_utp(try!(UtpStream::connect(&addr)))))
+    Ok(try!(upgrade_utp(try!(UtpSocket::connect(&addr)))))
 }
 
 /// Starts listening for connections on this ip and port.
 /// Returns:
-/// * A receiver of Tcp stream objects.  It is recommended that you `upgrade` these.
-/// * A TcpAcceptor.  This can be used to close the listener from outside of the listening thread.
-pub fn listen(port: u16) -> IoResult<(Receiver<(UtpStream, SocketAddr)>, UtpSocket)> {
+/// * A receiver of Utp socket objects.  It is recommended that you `upgrade` these.
+/// * A UtpListener.  This can be used to close the listener from outside of the listening thread.
+pub fn listen(port: u16) -> IoResult<(Receiver<(UtpSocket, SocketAddr)>, UtpListener)> {
     let utp_listener = {
         /*if let Ok(listener) = UtpSocket::bind(("::", port)) {
             listener
         } else if let Ok(listener) = UtpSocket::bind(("::", 0)) {
             listener
-        } else*/ if let Ok(listener) = UtpSocket::bind(("0.0.0.0", port)) {
+        } else*/ if let Ok(listener) = UtpListener::bind(("0.0.0.0", port)) {
             listener
         } else {
-            try!(UtpSocket::bind(("0.0.0.0", 0)))
+            //try!(UtpSocket::bind(("0.0.0.0", 0)))
+            panic!("UtpListener is currently incapable of returning which random port it chose");
         }
     };
     let (tx, rx) = mpsc::channel();
 
-/*    let utp_listener2 = try!(utp_listener.try_clone());
+    let utp_listener2 = try!(utp_listener.try_clone());
     let _ = spawn(move || {
         loop {
             // if tx.is_closed() {       // FIXME (Prakash)
             //     break;
             // }
             match utp_listener2.accept() {
-                Ok(stream) => {
-                    if tx.send(stream).is_err() {
+                Ok(socket) => {
+                    if tx.send(socket).is_err() {
                         break;
                     }
                 }
@@ -105,13 +79,16 @@ pub fn listen(port: u16) -> IoResult<(Receiver<(UtpStream, SocketAddr)>, UtpSock
     Ok((rx, utp_listener))
 }
 
-// Almost a straight copy of https://github.com/TyOverby/wire/blob/master/src/tcp.rs
-/// Upgrades a UtpStream to a Sender-Receiver pair that you can use to send and
+/// Upgrades an outbound UtpSocket to a Sender-Receiver pair that you can use to send and
 /// receive objects automatically.  If there is an error decoding or encoding
 /// values, that respective part is shut down.
-pub fn upgrade_utp<'a, 'b, I, O>(stream: UtpStream) -> IoResult<(InUtpStream<I>, OutUtpStream<O>)>
+pub fn upgrade_utp<'a, 'b, I, O>(outbound: UtpSocket) -> IoResult<(InUtpStream<I>, OutUtpStream<O>)>
 where I: Send + Decodable + 'static, O: Encodable {
-    let s1 = stream;
+    // You can't clone UtpSockets, nor read and write concurrently from them, nor use
+    // select() on them so we're going to need two of them per connection
+    // Create an inbound socket this side, and tell the remote about it.
+    
+    
 //    let s2 = try!(s1.try_clone());
     Ok((upgrade_reader(s1), upgrade_writer(s1)))
 }
