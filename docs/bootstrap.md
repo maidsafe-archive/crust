@@ -16,6 +16,8 @@ File has following fields:
 ```
 
 **Starting a node on a specific port** (useful if the machine’s IP is publicly available)
+Also useful and required for users who want to port forward their router (i.e. run tcp node at home). It is less safe though as you will always connect to the network on the same ports, but this is potentially a very small security issue and not of concern to many.
+
 Update preferred_port to desired port and protocol variant (only TCP supported currently).
 Example:  ``` "preferred_port":{"variant":"Tcp","fields":[5555]} ```
 
