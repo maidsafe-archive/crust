@@ -117,8 +117,8 @@ impl BootStrapHandler {
             .unwrap_or(BootStrap{ preferred_port: Port::Tcp(0u16),
                                   hard_coded_contacts: Vec::new(),
                                   contacts: Vec::new() });
-        for i in 0..contacts.len() {
-            current_bootstrap.contacts.push(contacts[i].clone());
+        for contact in contacts {
+            current_bootstrap.contacts.push(contact.clone());
         }
         self.write_bootstrap_file(&current_bootstrap)
     }
