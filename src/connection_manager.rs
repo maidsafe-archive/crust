@@ -91,10 +91,7 @@ impl ConnectionManager {
         // We need to check for an instance of each supported protocol in the hint vector.  For any
         // protocol that doesn't have an entry, we should inject one (either random or 0).  For now
         // we're only supporting TCP, so...
-        let beacon_port: u16 = match beacon_port {
-            Some(port) =>  port,
-            None => 5483
-        };
+        let beacon_port: u16 = beacon_port.unwrap_or(5483);
 
         let mut used_beacon_port: Option<u16> = None;
         let ws = self.state.downgrade();
@@ -110,10 +107,8 @@ impl ConnectionManager {
                 let mut bootstrap_handler = BootStrapHandler::new();
 
                 if hint.is_empty() {  // overriding botstrap file if hint provided in api, remove once api is changed
-                    match bootstrap_handler.read_preferred_port() {
-                        Ok(preferred_port) => hint.push(preferred_port),
-                        _ => hint.push(Port::Tcp(0)),
-                    }
+                    hint.push(bootstrap_handler.read_preferred_port()
+                              .unwrap_or(Port::Tcp(0)));
                 }
 
                 for h in &hint {
@@ -177,9 +172,7 @@ impl ConnectionManager {
     /// For API compatibilty, return a vector of listening endpoints
     pub fn start_listening2(&mut self, hint: Vec<Port>, beacon_port: Option<u16>) ->
             io::Result<(Vec<Endpoint>, Option<u16>)> {
-        let ports_and_beacon = self.start_listening(hint, beacon_port);
-        if ports_and_beacon.is_err() { return Err(ports_and_beacon.err().unwrap()); }
-        let ports_and_beacon = ports_and_beacon.unwrap();
+        let ports_and_beacon = try!(self.start_listening(hint, beacon_port));
         let mut endpoints = Vec::<Endpoint>::new();
         for port in ports_and_beacon.0 {
             match port {
@@ -239,10 +232,7 @@ impl ConnectionManager {
     /// It will return Err if it fails to connect to any peer.
     pub fn bootstrap(&self, bootstrap_list: Option<Vec<Endpoint>>, beacon_port: Option<u16>) ->
             io::Result<Endpoint> {
-        let port: u16 = match beacon_port {
-            Some(udp_port) => udp_port,
-            None => 5483
-        };
+        let port: u16 = beacon_port.unwrap_or(5483);
         match bootstrap_list {
             Some(list) => self.bootstrap_off_list(list),
             None => {
@@ -269,9 +259,8 @@ impl ConnectionManager {
     /// This should be called before destroying an instance of a ConnectionManager to allow the
     /// listener threads to join.  Once called, the ConnectionManager should be destroyed.
     pub fn stop(&self) {
-        match self.beacon_guid_and_port {
-            Some(beacon_guid_and_port) => beacon::BroadcastAcceptor::stop(&beacon_guid_and_port),
-            None => (),
+        if let Some(beacon_guid_and_port) = self.beacon_guid_and_port {
+            beacon::BroadcastAcceptor::stop(&beacon_guid_and_port)
         }
         let mut listening_ports = Vec::<Port>::new();
         let weak_state = self.state.downgrade();
@@ -287,10 +276,7 @@ impl ConnectionManager {
         }
         // println!("connection_manager::stop There are {} TCP ports being listened on", listening_ports.len());
         for port in listening_ports {
-            match transport::connect(Endpoint::tcp(("127.0.0.1", port.get_port()))) {
-                Ok(_) => (),
-                Err(e) => panic!(e),
-            };
+            let _ = transport::connect(Endpoint::tcp(("127.0.0.1", port.get_port()))).unwrap();
         }
     }
 
@@ -362,10 +348,8 @@ impl ConnectionManager {
     /// Uses beacon to try and collect potential bootstrap endpoints from peers on the same subnet.
     pub fn seek_peers(&self, beacon_port: u16) -> Vec<Endpoint> {
         // Retrieve list of peers' TCP listeners who are on same subnet as us
-        let beacon_guid = match self.beacon_guid_and_port {
-            Some(beacon_guid_and_port) => Some(beacon_guid_and_port.0),
-            None => None,
-        };
+        let beacon_guid = self.beacon_guid_and_port
+            .map(|beacon_guid_and_port| beacon_guid_and_port.0);
         let peer_addresses = match beacon::seek_peers(beacon_port, beacon_guid) {
             Ok(peers) => peers,
             Err(_) => return Vec::<Endpoint>::new(),
@@ -417,9 +401,8 @@ impl ConnectionManager {
             }));
         }
         let res = Deferred::first_to_promise(1,false,vec_deferred, ControlFlow::ParallelLimit(15)).sync();
-        match res {
-            Ok(v) => if v.len() > 0 { return Ok(v[0].clone()) },
-            Err(_) => (),
+        if let Ok(v) = res {
+            if v.len() > 0 { return Ok(v[0].clone()) }
         }
         // FIXME: The result should probably be Option<Endpoint>
         Err(io::Error::new(io::ErrorKind::Other, "No bootstrap node got connected"))
@@ -434,27 +417,22 @@ impl ConnectionManager {
         let _ = lock_mut_state(&mut weak_state, |s| Ok(s.listening_ports.insert(local_port)));
 
         let _ = thread::Builder::new().name("ConnectionManager listen".to_string()).spawn(move || {
-            loop {
-                match transport::accept(&acceptor) {
-                    Ok(trans) => {
-                        let weak_state_copy = weak_state.clone();
-                        let mut stop_called = false;
-                        {
-                            let _ = lock_mut_state(&weak_state_copy, |state: &mut State| {
-                                stop_called = state.stop_called;
-                                Ok(())
-                            });
-                        }
-                        if stop_called {
-                            break
-                        }
-                        let _ = thread::Builder::new().name("ConnectionManager accept".to_string())
-                                                      .spawn(move || {
-                            let _ = handle_accept(weak_state_copy, trans);
-                        });
-                    },
-                    Err(_) => break,
+            while let Ok(trans) = transport::accept(&acceptor) {
+                let weak_state_copy = weak_state.clone();
+                let mut stop_called = false;
+                {
+                    let _ = lock_mut_state(&weak_state_copy, |state: &mut State| {
+                        stop_called = state.stop_called;
+                        Ok(())
+                    });
                 }
+                if stop_called {
+                    break
+                }
+                let _ = thread::Builder::new().name("ConnectionManager accept".to_string())
+                                              .spawn(move || {
+                    let _ = handle_accept(weak_state_copy, trans);
+                });
             }
         });
     }
@@ -507,16 +485,13 @@ fn handle_connect(mut state: WeakState, trans: transport::Transport,
     let remote_ep = trans.remote_endpoint.clone();
     let endpoint = register_connection(&mut state, trans, Event::NewConnection(remote_ep));
     if is_broadcast_acceptor {
-        match endpoint {
-            Ok(ref endpoint) => {
-                let mut contacts = Contacts::new();
-                // TODO PublicKey for contact required...
-                // let public_key = PublicKey::Asym(asymmetricbox::PublicKey([0u8; asymmetricbox::PUBLICKEYBYTES]));
-                contacts.push(Contact {  endpoint: endpoint.clone()});
-                let mut bootstrap_handler = BootStrapHandler::new();
-                let _ = bootstrap_handler.add_contacts(contacts);
-            }
-            Err(_) => ()
+        if let Ok(ref endpoint) = endpoint {
+            let mut contacts = Contacts::new();
+            // TODO PublicKey for contact required...
+            // let public_key = PublicKey::Asym(asymmetricbox::PublicKey([0u8; asymmetricbox::PUBLICKEYBYTES]));
+            contacts.push(Contact {  endpoint: endpoint.clone()});
+            let mut bootstrap_handler = BootStrapHandler::new();
+            let _ = bootstrap_handler.add_contacts(contacts);
         }
     }
     endpoint
@@ -557,12 +532,9 @@ fn start_reading_thread(state: WeakState,
                         his_ep: Endpoint,
                         sink: mpsc::Sender<Event>) {
     let _ = thread::Builder::new().name("ConnectionManager reader".to_string()).spawn(move || {
-        loop {
-            match receiver.receive() {
-                Ok(msg) => if sink.send(Event::NewMessage(his_ep.clone(), msg)).is_err() {
-                    break
-                },
-                Err(_) => break,
+        while let Ok(msg) = receiver.receive() {
+            if sink.send(Event::NewMessage(his_ep.clone(), msg)).is_err() {
+                break
             }
         }
         unregister_connection(state, his_ep);
@@ -788,10 +760,9 @@ mod test {
         let mut beacon_port: u16 = 0;
         for _ in 0..NETWORK_SIZE {
             let (receiver, _, port, connected_eps) = network.add(beacon_port);
-            beacon_port = match port {
-                Some(port_no) => port_no,
-                None => beacon_port
-            };
+            if let Some(port_no) = port {
+                beacon_port = port_no
+            }
             let runner = run_cm(stats_tx.clone(), receiver, connected_eps);
             runners.push(runner);
         }
