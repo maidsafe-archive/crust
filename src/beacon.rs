@@ -131,28 +131,22 @@ impl BroadcastAcceptor {
         }));
 
         let result = udp_listener_thread.join();
-        match result {
-            Ok(_) => (),
-            Err(e) => {
-                // Connect to the TCP acceptor to allow its thread to join.
-                let _ = TcpStream::connect(("127.0.0.1", self.tcp_listener_port));
-                let _ = tcp_acceptor_thread.join();
-                // Send a ping back to the UDP socket which sent the stop request.
-                match socket_receiver.recv() {
-                    Ok(requester) => {
-                        let sent_size = try!(self.socket.send_to(&[1u8; 1], requester));
-                        debug_assert!(sent_size == 1);
-                    },
-                    Err(_) => (),
-                }
-                return Err(e);
-            },
+        if let Err(e) = result {
+            // Connect to the TCP acceptor to allow its thread to join.
+            let _ = TcpStream::connect(("127.0.0.1", self.tcp_listener_port));
+            let _ = tcp_acceptor_thread.join();
+            // Send a ping back to the UDP socket which sent the stop request.
+            if let Ok(requester) = socket_receiver.recv() {
+                let sent_size = try!(self.socket.send_to(&[1u8; 1], requester));
+                debug_assert!(sent_size == 1);
+            }
+            return Err(e);
         };
         let _ = tcp_acceptor_thread.join();
 
         match transport_receiver.recv() {
             Ok(transport) => Ok(transport),
-            Err(e) => return Err(io::Error::new(io::ErrorKind::BrokenPipe, e.description())),
+            Err(e) => Err(io::Error::new(io::ErrorKind::BrokenPipe, e.description())),
         }
     }
 
@@ -171,26 +165,18 @@ impl BroadcastAcceptor {
         let _ = udp_listener_killer.send_to(&send_buffer[..], udp_listener_address);
         // Wait for acknowledgement ping.
         let mut buffer = vec![0u8; 1];
-        loop {
-            match udp_listener_killer.recv_from(&mut buffer[..]) {
-                Ok((size, source)) => {
-                    if source == udp_listener_address {
-                        debug_assert!(size == 1 && buffer[0] == 1u8);
-                        break;
-                    } else {
-                        continue;
-                    }
-                },
-                Err(_) => break,
+        while let Ok((size, source)) = udp_listener_killer.recv_from(&mut buffer[..]) {
+            if source == udp_listener_address {
+                debug_assert!(size == 1 && buffer[0] == 1u8);
+                break;
+            } else {
+                continue;
             }
         }
     }
 
     pub fn beacon_port(&self) -> u16 {
-        match self.socket.local_addr() {
-            Ok(address) => address.port(),
-            Err(_) => 0u16,
-        }
+        self.socket.local_addr().map(|address| address.port()).unwrap_or(0u16)
     }
 
     pub fn beacon_guid(&self) -> GUID {
@@ -260,11 +246,8 @@ pub fn seek_peers(port: u16, guid_to_avoid: Option<GUID>) -> Result<Vec<SocketAd
 
     // Gather the results.
     let mut result = Vec::<SocketAddr>::new();
-    loop {
-        match rx.recv() {
-            Ok(socket_addr) => result.push(socket_addr),
-            Err(_) => break,
-        }
+    while let Ok(socket_addr) = rx.recv() {
+        result.push(socket_addr)
     }
     Ok(result)
 }

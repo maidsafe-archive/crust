@@ -53,15 +53,9 @@ pub fn serialise_contacts(contacts: Contacts) -> Vec<u8> {
 }
 
 pub fn parse_contacts(buffer: Vec<u8>) -> Option<Contacts> {
-    match String::from_utf8(buffer) {
-        Ok(contacts_str) => {
-            match json::decode(&contacts_str) {
-                Ok(contacts) => return Some(contacts),
-                Err(_) => { return None },
-            };
-        },
-        Err(_) => return None
-    }
+    String::from_utf8(buffer).ok().and_then(|contacts_str| {
+        json::decode(&contacts_str).ok()
+    })
 }
 
 
@@ -72,14 +66,9 @@ impl BootStrapHandler {
                 Ok(exe_path) => exe_path,
                 Err(e) => panic!("Failed to get current exe path: {}", e),
             };
-        let name_with_extension = match path.file_name() {
-                Some(exe_with_extension) => exe_with_extension,
-                None => panic!("Unknown filename: {}"),
-            };
-        let name = match path::Path::new(name_with_extension).file_stem() {
-                Some(exe_name) => exe_name,
-                None => panic!("Unknown extension: {}"),
-            };
+        let name_with_extension = path.file_name().expect("Unknown filename");
+        let name = path::Path::new(name_with_extension).file_stem()
+            .expect("Unknown extension");
 
         let mut filename = String::new();
         filename.push_str("./");
@@ -112,13 +101,7 @@ impl BootStrapHandler {
         let mut file = try!(File::open(&self.file_name));
         let mut s = String::new();
         let _ = try!(file.read_to_string(&mut s));
-        match json::decode(&s) {
-            Ok(bootstrap) => {
-                return Ok(bootstrap);
-            },
-            Err(_) => {
-               return Err(io::Error::new(io::ErrorKind::Other, "Failed to decode BootStrap file")) },
-        };
+        json::decode(&s).map_err(|_| io::Error::new(io::ErrorKind::Other, "Failed to decode BootStrap file"))
     }
 
     fn write_bootstrap_file(&mut self, bootstrap: &BootStrap) -> io::Result<()> {
@@ -130,12 +113,10 @@ impl BootStrapHandler {
 
     fn insert_contacts(&mut self, contacts: Contacts) -> io::Result<()> {
         assert!(!contacts.is_empty());
-        let mut current_bootstrap = match self.read_bootstrap_file() {
-            Ok(bootstrap) => bootstrap,
-            _ => BootStrap{ preferred_port: Port::Tcp(0u16),
-                            hard_coded_contacts: Vec::new(),
-                            contacts: Vec::new() }
-        };
+        let mut current_bootstrap = self.read_bootstrap_file()
+            .unwrap_or(BootStrap{ preferred_port: Port::Tcp(0u16),
+                                  hard_coded_contacts: Vec::new(),
+                                  contacts: Vec::new() });
         for i in 0..contacts.len() {
             current_bootstrap.contacts.push(contacts[i].clone());
         }
@@ -148,7 +129,7 @@ impl BootStrapHandler {
         for contact in bootstrap.hard_coded_contacts {
             combined_contacts.push(contact.clone());
         }
-        return Ok(serialise_contacts(combined_contacts));
+        Ok(serialise_contacts(combined_contacts))
     }
 
     pub fn read_preferred_port(&self) -> io::Result<(Port)> {
