@@ -196,6 +196,31 @@ impl ConnectionManager {
         Ok((endpoints, ports_and_beacon.1))
     }
 
+
+    // NOTE this can be reused at other places.
+    fn get_listening_endpoint(&self) -> io::Result<(Vec<Endpoint>)> {
+        let ws = self.state.downgrade();
+        let listening_ports = try!(lock_state(&ws, |s| {
+            let buf: Vec<Port> = s.listening_ports.iter().map(|s| s.clone()).collect();
+            Ok(buf)
+        }));
+
+        let mut endpoints = Vec::<Endpoint>::new();
+        for port in listening_ports {
+            match port {
+                Port::Tcp(p) => {
+                    for ifaddr in getifaddrs() {
+                        endpoints.push(match ifaddr.addr {
+                            IpAddr::V4(a) => Endpoint::tcp((a, p)),
+                            IpAddr::V6(a) => Endpoint::tcp((a, p)),
+                        });
+                    }
+                },
+            }
+        }
+        Ok(endpoints)
+    }
+
     /// This method tries to connect (bootstrap to exisiting network) to the default or provided
     /// list of bootstrap nodes.
     ///
@@ -220,7 +245,24 @@ impl ConnectionManager {
         };
         match bootstrap_list {
             Some(list) => self.bootstrap_off_list(list),
-            None => self.bootstrap_off_list(self.seek_peers(port)),
+            None => {
+                let mut combined_endpoint_list = self.seek_peers(port);
+                if self.beacon_guid_and_port.is_some() {  // this node owns bs file
+                    let handler = BootStrapHandler::new();
+                    match handler.read_bootstrap_file() {
+                        Ok(read_contacts) => {
+                            for contacts in read_contacts.contacts {
+                                combined_endpoint_list.push(contacts.endpoint);
+                            }
+                            for contacts in read_contacts.hard_coded_contacts {
+                                combined_endpoint_list.push(contacts.endpoint);
+                            }
+                        },
+                        _ => {},
+                    }
+                }
+                self.bootstrap_off_list(combined_endpoint_list)
+            },
         }
     }
 
@@ -353,10 +395,11 @@ impl ConnectionManager {
         endpoints
     }
 
-    fn bootstrap_off_list(&self, bootstrap_list: Vec<Endpoint>) -> io::Result<Endpoint> {
-        // if bootstrap_list.is_empty() {
-        //     panic!("The bootstrap list is empty, therefore cannot bootstrap");
-        // }
+    fn bootstrap_off_list(&self, mut bootstrap_list: Vec<Endpoint>) -> io::Result<Endpoint> {
+        // remove own endpoints
+        let own_listening_endpoint = try!(self.get_listening_endpoint());
+        bootstrap_list.retain(|x| !own_listening_endpoint.contains(&x));
+
         let mut vec_deferred = vec![];
         for endpoint in bootstrap_list {
             let state_cloned = self.state.clone();

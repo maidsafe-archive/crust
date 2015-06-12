@@ -36,9 +36,9 @@ pub type Contacts = Vec<Contact>;
 
 #[derive(PartialEq, Debug, RustcDecodable, RustcEncodable)]
 pub struct BootStrap {
-    preferred_port: Port,
-    hard_coded_contacts: Contacts,
-    contacts: Contacts,
+    pub preferred_port: Port,
+    pub hard_coded_contacts: Contacts,
+    pub contacts: Contacts,
 }
 
 pub struct BootStrapHandler {
@@ -108,7 +108,7 @@ impl BootStrapHandler {
         Ok(())
     }
 
-    fn read_bootstrap_file(&self) -> io::Result<(BootStrap)> {
+    pub fn read_bootstrap_file(&self) -> io::Result<(BootStrap)> {
         let mut file = try!(File::open(&self.file_name));
         let mut s = String::new();
         let _ = try!(file.read_to_string(&mut s));
