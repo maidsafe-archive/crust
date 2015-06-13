@@ -1,3 +1,4 @@
+[![Stories in Ready](https://badge.waffle.io/maidsafe/crust.png?label=ready&title=Ready)](https://waffle.io/maidsafe/crust)
 # Crust
 
 **Primary Maintainer:**     Chandra Prakash (prakash@maidsafe.net)
