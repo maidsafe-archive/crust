@@ -222,6 +222,8 @@ impl ConnectionManager {
     /// once a connection with any of the endpoints is established with Ok(Endpoint) and it will
     /// drop all other ongoing attempts.  If this fails and `beacon_port` is `Some`, it will try to
     /// use the beacon port to connect to a peer on the same LAN.
+    /// For more details on bootstrap cache file refer
+    /// https://github.com/maidsafe/crust/blob/master/docs/bootstrap.md
     ///
     /// If `bootstrap_list` is `Some`, it will try to connect to all of the endpoints in the list.
     /// It will return once a connection with any of the endpoints is established with Ok(Endpoint)
