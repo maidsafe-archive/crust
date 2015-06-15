@@ -210,6 +210,14 @@ impl ConnectionManager {
                         });
                     }
                 },
+                Port::Utp(p) => {
+                    for ifaddr in getifaddrs() {
+                        endpoints.push(match ifaddr.addr {
+                            IpAddr::V4(a) => Endpoint::utp((a, p)),
+                            IpAddr::V6(a) => Endpoint::utp((a, p)),
+                        });
+                    }
+                },
             }
         }
         Ok(endpoints)

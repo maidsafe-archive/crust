@@ -32,9 +32,7 @@ pub type UtpWriter<T> = Sender<T>;
 /// Connect to a peer and open a send-receive pair.  See `upgrade` for more details.
 pub fn connect_utp<'a, 'b, I, O>(addr: SocketAddr) -> IoResult<(Receiver<I>, Sender<O>)>
         where I: Send + Decodable + 'static, O: Send + Encodable + 'static {
-    // rust-utp requires you to create a local endpoint before connecting
-    let local = try!(UtpSocket::bind("0.0.0.0:0"));
-    Ok(try!(upgrade_utp(try!(local.connect(&addr)))))
+    Ok(try!(upgrade_utp(try!(UtpSocket::connect(&addr)))))
 }
 
 /// Starts listening for connections on this ip and port.
