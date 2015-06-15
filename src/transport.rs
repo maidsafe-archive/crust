@@ -26,7 +26,7 @@ use std::sync::mpsc;
 use std::str::FromStr;
 use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
 use std::cmp::Ordering;
-use utp::{UtpSocket, UtpStream, UtpListener};
+use utp::CloneableSocket as UtpSocket;
 pub type Bytes = Vec<u8>;
 
 /// Enum representing endpoint of supported protocols
@@ -116,10 +116,10 @@ impl Ord for Endpoint {
         match *self {
             Tcp(ref a1) => match *other {
                 Tcp(ref a2) => compare_ip_addrs(a1, a2),
-                Utp(ref a2) => panic!("Should never happen"),
+                Utp(_) => panic!("Should never happen"),
             },
             Utp(ref a1) => match *other {
-                Tcp(ref a2) => panic!("Should never happen"),
+                Tcp(_) => panic!("Should never happen"),
                 Utp(ref a2) => compare_ip_addrs(a1, a2)
             },
         }
@@ -175,14 +175,14 @@ pub enum Acceptor {
     // Channel receiver, TCP listener
     Tcp(mpsc::Receiver<(TcpStream, SocketAddr)>, TcpListener),
     // Channel receiver, UTP listener and port
-    Utp(mpsc::Receiver<(UtpSocket, SocketAddr)>, UtpListener),
+    Utp(mpsc::Receiver<(UtpSocket, SocketAddr)>, u16),
 }
 
 impl Acceptor {
     pub fn local_port(&self) -> Port {
         match *self {
             Acceptor::Tcp(_, ref listener) => Port::Tcp(listener.local_addr().unwrap().port()),
-            Acceptor::Utp(_, ref listener) => Port::Utp(listener.local_addr().unwrap().port()),
+            Acceptor::Utp(_, listener) => Port::Utp(listener),
         }
     }
 }

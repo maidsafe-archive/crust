@@ -15,19 +15,66 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use utp::{UtpSocket, UtpStream, UtpListener};
-use std::net::{SocketAddr};
-use std::io::{BufReader, BufWriter, ErrorKind};
+use utp::UtpListener;
+use utp::CloneableSocket as UtpSocket;
+use std::net::SocketAddr;
+use std::io::{Read, Write, BufReader, BufWriter, ErrorKind, Result};
 use std::io::Result as IoResult;
-use cbor::{Encoder, CborError, Decoder};
+use std::ops::Deref;
+use cbor::{Encoder, Decoder};
 use std::thread;
-use std::marker::PhantomData;
 use rustc_serialize::{Decodable, Encodable};
 use std::sync::mpsc;
 use std::sync::mpsc::{Sender, Receiver};
 
 pub type UtpReader<T> = Receiver<T>;
 pub type UtpWriter<T> = Sender<T>;
+
+pub type InUtpStream<T> = Receiver<T>;
+pub type OutUtpStream<T> = Sender<T>;
+
+pub struct UtpStream {
+    socket: UtpSocket,
+}
+
+//impl UtpStream {
+//
+//    /// Returns the socket address of the local half of this uTP connection.
+//    pub fn local_addr(&self) -> Result<SocketAddr> {
+//        self.socket.local_addr()
+//    }
+//}
+
+impl Read for UtpStream {
+    fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
+        self.socket.recv(buf).map(|(read, _src)| read)
+    }
+}
+
+impl Write for UtpStream {
+    fn write(&mut self, buf: &[u8]) -> Result<usize> {
+        self.socket.send_to(buf)
+    }
+
+    fn flush(&mut self) -> Result<()> {
+        self.socket.flush()
+    }
+}
+
+impl Into<UtpStream> for UtpSocket {
+    fn into(self) -> UtpStream {
+        UtpStream { socket: self }
+    }
+}
+
+impl Deref for UtpStream {
+    type Target = UtpSocket;
+
+    fn deref(&self) -> &UtpSocket {
+        &self.socket
+    }
+}
+
 
 /// Connect to a peer and open a send-receive pair.  See `upgrade` for more details.
 pub fn connect_utp<'a, 'b, I, O>(addr: SocketAddr) -> IoResult<(Receiver<I>, Sender<O>)>
@@ -38,7 +85,7 @@ pub fn connect_utp<'a, 'b, I, O>(addr: SocketAddr) -> IoResult<(Receiver<I>, Sen
 /// Starts listening for connections on this ip and port.
 /// Returns:
 /// * A receiver of Utp socket objects.  It is recommended that you `upgrade` these.
-pub fn listen(port: u16) -> IoResult<(Receiver<(UtpSocket, SocketAddr)>, UtpListener)> {
+pub fn listen(port: u16) -> IoResult<(Receiver<(UtpSocket, SocketAddr)>, u16)> {
     let utp_listener = {
         /*if let Ok(listener) = UtpSocket::bind(("::", port)) {
             listener
@@ -50,6 +97,7 @@ pub fn listen(port: u16) -> IoResult<(Receiver<(UtpSocket, SocketAddr)>, UtpList
             try!(UtpListener::bind(("0.0.0.0", 0)))
         }
     };
+    let port = utp_listener.local_addr().unwrap().port();
     let (tx, rx) = mpsc::channel();
 
     let _ = thread::Builder::new().name("UTP listen".to_string()).spawn(move || {
@@ -58,8 +106,9 @@ pub fn listen(port: u16) -> IoResult<(Receiver<(UtpSocket, SocketAddr)>, UtpList
             //     break;
             // }
             match utp_listener.accept() {  // Blocks until next incoming connection
-                Ok(socket) => {
-                    if tx.send(socket).is_err() {
+                Ok((socket, addr)) => {
+                    let cloned = UtpSocket::new(socket).unwrap();
+                    if tx.send((cloned, addr)).is_err() {
                         break;
                     }
                 }
@@ -73,7 +122,7 @@ pub fn listen(port: u16) -> IoResult<(Receiver<(UtpSocket, SocketAddr)>, UtpList
             }
         }
     });
-    Ok((rx, utp_listener))
+    Ok((rx, port))
 }
 
 /// Upgrades a newly connected UtpSocket to a Sender-Receiver pair that you can use to send and
@@ -81,13 +130,16 @@ pub fn listen(port: u16) -> IoResult<(Receiver<(UtpSocket, SocketAddr)>, UtpList
 /// values, that respective part is shut down.
 pub fn upgrade_utp<'a, 'b, I, O>(newconnection: UtpSocket) -> IoResult<(Receiver<I>, Sender<O>)>
 where I: Send + Decodable + 'static, O: Send + Encodable + 'static {
-    // Convert the new connection socket into a stream
-    let stream : UtpStream = newconnection.into();
+    // Clone the new connection socket
+    let newconnection2 = newconnection.try_clone();
+    // Convert the new connection sockets into streams
+    let stream_read : UtpStream = newconnection.into();
+    let stream_write : UtpStream = newconnection2.into();
     
     // Configure a reading thread
     let (in_snd, in_rec) = mpsc::channel();
     let _ = thread::Builder::new().name("UTP reader".to_string()).spawn(move || {
-        let mut buffer = BufReader::new(stream);
+        let mut buffer = BufReader::new(stream_read);
         {
             let mut decoder = Decoder::from_reader(&mut buffer);
             loop {
@@ -110,24 +162,24 @@ where I: Send + Decodable + 'static, O: Send + Encodable + 'static {
                 }
             }
         }
-        let mut s1 = buffer.into_inner();
-        let _ = s1.close();
+//        let mut s1 = buffer.into_inner();
+//        let _ = s1.close();
     });
 
     // Configure a sending thread    
     let (out_snd, out_rec) = mpsc::channel();
     let _ = thread::Builder::new().name("UTP writer".to_string()).spawn(move || {
-        let mut buffer = BufWriter::new(stream);
+        let mut buffer = BufWriter::new(stream_write);
         {
             let mut encoder = Encoder::from_writer(&mut buffer);
             loop {
                 let data = out_rec.recv();
                 if data.is_err() { break; }
                 let data = data.unwrap();
-                encoder.encode(&[&data]);
+                let _ = encoder.encode(&[&data]);
             }
         }
-        let s1 = buffer.into_inner().map(|mut s| s.close());
+//        let s1 = buffer.into_inner().map(|mut s| s.close());
     });
     
     Ok((in_rec, out_snd))
@@ -143,23 +195,22 @@ mod test {
 
  #[test]
     fn test_small_stream() {
-        let (event_receiver, listener) = listen(5483).unwrap();
-        let port = listener.local_addr().unwrap().port();
-        let (i, mut o) = connect_utp(SocketAddr::from_str(&format!("127.0.0.1:{}", port)).unwrap()).unwrap();
+        let (event_receiver, port) = listen(5483).unwrap();
+        let (i, o) = connect_utp(SocketAddr::from_str(&format!("127.0.0.1:{}", port)).unwrap()).unwrap();
 
         for x in 0u64 .. 10u64 {
-            if o.send(&x).is_err() { break; }
+            if o.send(x).is_err() { break; }
         }
-        o.close();
+//        o.close();
         let _ = thread::spawn(move || {
             for x in event_receiver.iter() {
                 let (connection, _) = x;
                 // Spawn a new thread for each connection that we get.
                 let _ = thread::spawn(move || {
-                    let (i, mut o) = upgrade_utp(connection).unwrap();
+                    let (i, o) = upgrade_utp(connection).unwrap();
                     for x in i.iter() {
                         let x:u32 = x;
-                        if o.send(&(x, x + 1)).is_err() { break; }
+                        if o.send((x, x + 1)).is_err() { break; }
                     }
                 });
             }
@@ -178,8 +229,7 @@ mod test {
         const MSG_COUNT: usize = 5;
         const NODE_COUNT: usize = 101;
 
-        let (event_receiver, listener) = listen(5483).unwrap();
-        let port = listener.local_addr().unwrap().port();
+        let (event_receiver, port) = listen(5483).unwrap();
         let mut vector_senders = Vec::new();
         let mut vector_receiver = Vec::new();
         for _ in 0..NODE_COUNT {
@@ -191,9 +241,9 @@ mod test {
         }
 
         //  send
-        for mut v in &mut vector_senders {
+        for v in &mut vector_senders {
             for x in 0u64 .. MSG_COUNT as u64 {
-                if v.send(&x).is_err() { break; }
+                if v.send(x).is_err() { break; }
             }
         }
 
@@ -201,7 +251,7 @@ mod test {
         loop {
            let _ = match vector_senders.pop() {
                 None => break, // empty
-                Some(sender) => sender.close(),
+                Some(_) => break, //sender.close(),
             };
         }
 
@@ -212,10 +262,10 @@ mod test {
                 let (connection, _) = x;
                 // Spawn a new thread for each connection that we get.
                 let _ = thread::spawn(move || {
-                    let (i, mut o) = upgrade_utp(connection).unwrap();
+                    let (i, o) = upgrade_utp(connection).unwrap();
                     for x in i.iter() {
                         let x:u32 = x;
-                        if o.send(&(x, x + 1)).is_err() { break; }
+                        if o.send((x, x + 1)).is_err() { break; }
                     }
                 });
             }

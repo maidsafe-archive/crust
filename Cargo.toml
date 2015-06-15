@@ -19,7 +19,10 @@ sodiumoxide = "0.0.4"
 term = "*"
 time = "*"
 asynchronous = "*"
-utp = "0.6.0"
+#utp = "0.6.0"
+
+[dependencies.utp]
+path = "../rust-utp"
 
 [[example]]
 name = "simple_sender"
