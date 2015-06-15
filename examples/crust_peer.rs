@@ -355,22 +355,16 @@ fn main() {
     let handler = match thread::Builder::new().name("CrustNode event handler".to_string())
                                               .scoped(move || {
         let mut my_flat_world: FlatWorld = FlatWorld::new();
-        loop {
-            let event = channel_receiver.recv();
-            if event.is_err() {
-                break;
-            }
-
-            match event.unwrap() {
+        while let Ok(event) = channel_receiver.recv() {
+            match event {
                 crust::Event::NewMessage(endpoint, bytes) => {
                     stdout_copy = cyan_foreground(stdout_copy);
                     let message_length = bytes.len();
                     my_flat_world.record_received(message_length as u32);
                     println!("\nReceived from {:?} message: {}", endpoint,
-                             match String::from_utf8(bytes) {
-                                 Ok(message) => message,
-                                 Err(_) => format!("non-UTF-8 message of {} bytes", message_length)
-                             });
+                             String::from_utf8(bytes)
+                             .unwrap_or(format!("non-UTF-8 message of {} bytes",
+                                                message_length)));
                 },
                 crust::Event::NewConnection(endpoint) => {
                     stdout_copy = cyan_foreground(stdout_copy);

@@ -59,16 +59,10 @@ fn main() {
     };
     println!("Run the simple_sender example in another terminal to send messages to this node.");
 
-    loop {
-        // Receive the next event
-        let event = channel_receiver.recv();
-        if event.is_err() {
-            println!("Stopped receiving.");
-            break;
-        }
-
+    // Receive the next event
+    while let Ok(event) = channel_receiver.recv() {
         // Handle the event
-        match event.unwrap() {
+        match event {
             crust::Event::NewMessage(endpoint, bytes) => {
                 // For this example, we only expect to receive encoded `u8`s
                 let requested_value = match String::from_utf8(bytes) {
@@ -93,9 +87,8 @@ fn main() {
                          endpoint, fibonacci_result);
                 let response =
                     format!("The Fibonacci number for {} is {}", requested_value, fibonacci_result);
-                match connection_manager.send(endpoint.clone(), response.into_bytes()) {
-                    Ok(_) => (),
-                    Err(why) => println!("Failed to send reply to {:?}: {}", endpoint, why),
+                if let Err(why) = connection_manager.send(endpoint.clone(), response.into_bytes()) {
+                    println!("Failed to send reply to {:?}: {}", endpoint, why)
                 }
             },
             crust::Event::NewConnection(endpoint) => {
@@ -106,4 +99,5 @@ fn main() {
             }
         }
     }
+    println!("Stopped receiving.");
 }
