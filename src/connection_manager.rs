@@ -132,14 +132,7 @@ impl ConnectionManager {
 
                 let _ = thread::Builder::new().name("ConnectionManager beacon acceptor".to_string())
                                               .spawn(move || {
-                    loop {
-                        let mut transport = match acceptor.accept() {
-                            Ok(transport) => transport,
-                            Err(_) => {
-                                break
-                            },
-                        };
-
+                    while let Ok(mut transport) = acceptor.accept() {
                         let handler = BootStrapHandler::new();
                         let read_contacts = handler.get_serialised_contacts();
                         if read_contacts.is_ok() {

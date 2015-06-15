@@ -34,16 +34,10 @@ fn main() {
 
     // Start a thread running a loop which will receive and display responses from the peer.
     let _ = thread::Builder::new().name("SimpleSender event handler".to_string()).spawn(move || {
-        loop {
-            // Receive the next event
-            let event = channel_receiver.recv();
-            if event.is_err() {
-                println!("Stopped receiving.");
-                break;
-            }
-
+        // Receive the next event
+        while let Ok(event) = channel_receiver.recv() {
             // Handle the event
-            match event.unwrap() {
+            match event {
                 crust::Event::NewMessage(endpoint, bytes) => {
                     match String::from_utf8(bytes) {
                         Ok(reply) => println!("Peer on {:?} replied with \"{}\"", endpoint, reply),
@@ -59,6 +53,7 @@ fn main() {
                 _ => (),
             }
         }
+        println!("Stopped receiving.");
     });
 
     // Try to connect to "simple_receiver" example node which should be listening on TCP port 8888
@@ -81,9 +76,8 @@ fn main() {
     // Send all the numbers from 0 to 12 inclusive.  Expect to receive replies containing the
     // Fibonacci number for each value.
     for value in (0u8..13u8) {
-        match connection_manager.send(peer_endpoint.clone(), value.to_string().into_bytes()) {
-            Ok(_) => (),
-            Err(why) => println!("Failed to send {} to {:?}: {}", value, peer_endpoint, why),
+        if let Err(why) = connection_manager.send(peer_endpoint.clone(), value.to_string().into_bytes()) {
+            println!("Failed to send {} to {:?}: {}", value, peer_endpoint, why)
         }
     }
 
