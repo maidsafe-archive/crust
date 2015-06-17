@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use utp::CloneableSocket as UtpSocket;
+use utp::UtpSocket;
 use std::net::SocketAddr;
 use std::io::Result as IoResult;
 use rustc_serialize::{Decodable, Encodable};
