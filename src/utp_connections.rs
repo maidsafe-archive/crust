@@ -25,13 +25,12 @@ use cbor::{Encoder, Decoder};
 use std::thread;
 use rustc_serialize::{Decodable, Encodable};
 use std::sync::mpsc;
-use std::sync::mpsc::{Sender, Receiver};
+use std::sync::mpsc::{Sender, SendError, Receiver};
 
 pub type UtpReader<T> = Receiver<T>;
-pub type UtpWriter<T> = Sender<T>;
+pub type UtpWriter<T> = OutUtpStream<T>;
 
 pub type InUtpStream<T> = Receiver<T>;
-pub type OutUtpStream<T> = Sender<T>;
 
 pub struct UtpStream {
     socket: UtpSocket,
@@ -76,8 +75,27 @@ impl Deref for UtpStream {
 }
 
 
+pub struct OutUtpStream<T> {
+    stream: Sender<T>,
+}
+
+impl <T> OutUtpStream<T>
+where T: Encodable {
+    pub fn send(&self, m: &T) -> Result<(), ()> {
+        self.stream.send(*m)
+    }
+}
+
+////#[unsafe_destructor]
+//impl <T> Drop for OutTcpStream<T> {
+//    fn drop(&mut self) {
+//        let _ = self.tcp_stream.shutdown(Shutdown::Write);
+//    }
+//}
+
+
 /// Connect to a peer and open a send-receive pair.  See `upgrade` for more details.
-pub fn connect_utp<'a, 'b, I, O>(addr: SocketAddr) -> IoResult<(Receiver<I>, Sender<O>)>
+pub fn connect_utp<'a, 'b, I, O>(addr: SocketAddr) -> IoResult<(InUtpStream<I>, OutUtpStream<O>)>
         where I: Send + Decodable + 'static, O: Send + Encodable + 'static {
     Ok(try!(upgrade_utp(try!(UtpSocket::connect(&addr)))))
 }
@@ -128,7 +146,7 @@ pub fn listen(port: u16) -> IoResult<(Receiver<(UtpSocket, SocketAddr)>, u16)> {
 /// Upgrades a newly connected UtpSocket to a Sender-Receiver pair that you can use to send and
 /// receive objects automatically.  If there is an error decoding or encoding
 /// values, that respective part is shut down.
-pub fn upgrade_utp<'a, 'b, I, O>(newconnection: UtpSocket) -> IoResult<(Receiver<I>, Sender<O>)>
+pub fn upgrade_utp<'a, 'b, I, O>(newconnection: UtpSocket) -> IoResult<(InUtpStream<I>, OutUtpStream<O>)>
 where I: Send + Decodable + 'static, O: Send + Encodable + 'static {
     // Clone the new connection socket
     let newconnection2 = newconnection.try_clone();
@@ -181,8 +199,9 @@ where I: Send + Decodable + 'static, O: Send + Encodable + 'static {
         }
 //        let s1 = buffer.into_inner().map(|mut s| s.close());
     });
+    let out = OutUtpStream { stream: out_snd };
     
-    Ok((in_rec, out_snd))
+    Ok((in_rec, out))
 }
 
 

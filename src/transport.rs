@@ -142,7 +142,7 @@ impl Sender {
             })
             },
             Sender::Utp(ref mut s) => {
-                s.send((*bytes).clone()).map_err(|_| {
+                s.send(&bytes).map_err(|_| {
                 // FIXME: This can be done better.
                 io::Error::new(io::ErrorKind::NotConnected, "can't send")
             })
