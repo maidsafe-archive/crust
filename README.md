@@ -1,6 +1,7 @@
+# Crust
+
 [![](https://img.shields.io/badge/Project%20SAFE-Approved-green.svg)](https://forum.safenetwork.io/) [![](https://img.shields.io/badge/License-GPL3-green.svg)](http://www.gnu.org/licenses/gpl-3.0.en.html)
 
-# Crust
 
 **Primary Maintainer:**     Chandra Prakash (prakash@maidsafe.net)
 
