@@ -1,3 +1,6 @@
+|:------:|:-------:|
+|[![](https://img.shields.io/badge/Project%20SAFE-Approved-green.svg)]()|[![](https://img.shields.io/badge/License-GPL3-green.svg)]()|
+
 [![Stories in Ready](https://badge.waffle.io/maidsafe/crust.png?label=ready&title=Ready)](https://waffle.io/maidsafe/crust)
 # Crust
 
