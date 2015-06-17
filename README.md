@@ -55,7 +55,7 @@ Extract and place the libsodium.a file in "bin\x86_64-pc-windows-gnu" for 64bit 
 - [x] [#134] (https://github.com/maidsafe/crust/issues/134) First node doesn't read its own bootstrap list
 
 ## [0.0.64]
-- [ ] Code clean up
+- [x] Code clean up
 
 ## [0.0.65]
 - [ ] [#1139] (https://maidsafe.atlassian.net/browse/MAID-1139) Remove Crust API’s start_listening2() and expose `get_own_endpoints()`
