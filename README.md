@@ -1,6 +1,6 @@
 # Crust
 
-[![](https://img.shields.io/badge/Project%20SAFE-Approved-green.svg)](https://forum.safenetwork.io/) [![](https://img.shields.io/badge/License-GPL3-green.svg)](https://github.com/maidsafe/crust/blob/master/COPYING)
+[![](https://img.shields.io/badge/Project%20SAFE-Approved-green.svg)] [![](https://img.shields.io/badge/License-GPL3-green.svg)](https://github.com/maidsafe/crust/blob/master/COPYING)
 
 
 **Primary Maintainer:**     Chandra Prakash (prakash@maidsafe.net)
