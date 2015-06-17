@@ -1,5 +1,7 @@
-[![Stories in Ready](https://badge.waffle.io/maidsafe/crust.png?label=ready&title=Ready)](https://waffle.io/maidsafe/crust)
 # Crust
+
+![](https://img.shields.io/badge/Project%20SAFE-Approved-green.svg) [![](https://img.shields.io/badge/License-GPL3-green.svg)](https://github.com/maidsafe/crust/blob/master/COPYING)
+
 
 **Primary Maintainer:**     Chandra Prakash (prakash@maidsafe.net)
 
@@ -7,9 +9,9 @@
 
 Reliable p2p network connections in Rust with NAT traversal. One of the most needed libraries for any server-less, decentralised project.
 
-|Crate|Linux|Windows|OSX|Coverage|
-|:------:|:-------:|:------:|:------:|:------:|
-|[![](http://meritbadge.herokuapp.com/crust)](https://crates.io/crates/crust)|[![Build Status](https://travis-ci.org/maidsafe/crust.svg?branch=master)](https://travis-ci.org/maidsafe/crust)|[![Build Status](http://ci.maidsafe.net:8080/buildStatus/icon?job=crust_win64_status_badge)](http://ci.maidsafe.net:8080/job/crust_win64_status_badge/)|[![Build Status](http://ci.maidsafe.net:8080/buildStatus/icon?job=crust_osx_status_badge)](http://ci.maidsafe.net:8080/job/crust_osx_status_badge/)|[![Coverage Status](https://coveralls.io/repos/maidsafe/crust/badge.svg)](https://coveralls.io/r/maidsafe/crust)|
+|Crate|Linux|Windows|OSX|Coverage|Issues|
+|:------:|:-------:|:------:|:------:|:------:|:------:|
+|[![](http://meritbadge.herokuapp.com/crust)](https://crates.io/crates/crust)|[![Build Status](https://travis-ci.org/maidsafe/crust.svg?branch=master)](https://travis-ci.org/maidsafe/crust)|[![Build Status](http://ci.maidsafe.net:8080/buildStatus/icon?job=crust_win64_status_badge)](http://ci.maidsafe.net:8080/job/crust_win64_status_badge/)|[![Build Status](http://ci.maidsafe.net:8080/buildStatus/icon?job=crust_osx_status_badge)](http://ci.maidsafe.net:8080/job/crust_osx_status_badge/)|[![Coverage Status](https://coveralls.io/repos/maidsafe/crust/badge.svg)](https://coveralls.io/r/maidsafe/crust)|[![Stories in Ready](https://badge.waffle.io/maidsafe/crust.png?label=ready&title=Ready)](https://waffle.io/maidsafe/crust)|
 
 
 | [API Documentation](http://maidsafe.github.io/crust/crust/) | [SAFENetwork System Documention](http://systemdocs.maidsafe.net/) | [MaidSafe website](http://www.maidsafe.net) | [Safe Community site](https://forum.safenetwork.io) |
