@@ -54,6 +54,18 @@ Extract and place the libsodium.a file in "bin\x86_64-pc-windows-gnu" for 64bit 
 ## [0.0.63]
 - [x] [#134] (https://github.com/maidsafe/crust/issues/134) First node doesn't read its own bootstrap list
 
+## [0.0.64]
+- [x] Code clean up
+
+## [0.0.65]
+- [ ] [#1139] (https://maidsafe.atlassian.net/browse/MAID-1139) Remove Crust API’s start_listening2() and expose `get_own_endpoints()`
+- [ ] [#1142] (https://maidsafe.atlassian.net/browse/MAID-1142) Add UTP protocol support to crust
+
+## [0.0.66]
+- [ ] [#1132] (https://maidsafe.atlassian.net/browse/MAID-1132) Integrate UPnP
+- [ ] [#1136] (https://maidsafe.atlassian.net/browse/MAID-1136) Add a new event `NewBootstrapConnection`
+- [ ] [#1140] (https://maidsafe.atlassian.net/browse/MAID-1140) Memory-mapped file I/O for bootstrap file
+
 ## [0.0.70]
 - [ ] Have ConnectionManager guarantee at most one connection between any two nodes
 - [ ] Utp Networking
@@ -66,9 +78,7 @@ Extract and place the libsodium.a file in "bin\x86_64-pc-windows-gnu" for 64bit 
   - [ ] NAT traversal  [See here for tcp NAT traversal] (http://www.cmlab.csie.ntu.edu.tw/~franklai/NATBT.pdf)
 - [ ] Benchmark tx/rv number of packets
 - [ ] Benchmark tx/rc Bytes per second
-- [ ] Implement `get_endoints() -> Vec<EndPointPair>` where `EndpointPair` is struct with `Option<ExternalEndpoint>` and has a Proto identifier field
-  - [ ] Implement UpNp
-  - [ ] Implement NAT hole punch (udp) for reliable udp
+- [ ] Implement NAT hole punch (udp) for reliable udp
 
 ## [0.1.0]
 - [ ] Tcp hole punching as per paper
