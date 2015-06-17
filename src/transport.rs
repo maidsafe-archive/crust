@@ -17,6 +17,7 @@
 
 use std::net::{SocketAddr, TcpStream, TcpListener, ToSocketAddrs};
 use tcp_connections;
+use utp_connections;
 use std::io;
 use std::io::Write;
 use std::io::Result as IoResult;
@@ -25,6 +26,7 @@ use std::sync::mpsc;
 use std::str::FromStr;
 use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
 use std::cmp::Ordering;
+use utp::UtpSocket;
 pub type Bytes = Vec<u8>;
 
 /// Enum representing endpoint of supported protocols
@@ -32,6 +34,8 @@ pub type Bytes = Vec<u8>;
 pub enum Endpoint {
     /// TCP endpoint
     Tcp(SocketAddr),
+    /// UTP endpoint
+    Utp(SocketAddr),
 }
 
 impl Endpoint {
@@ -42,10 +46,18 @@ impl Endpoint {
             None => panic!("Failed to parse valid IP address"),
         }
     }
+    /// Creates a Utp(SocketAddr)
+    pub fn utp<A: ToSocketAddrs>(addr: A) -> Endpoint {
+        match addr.to_socket_addrs().unwrap().next() {
+            Some(a) => Endpoint::Utp(a),
+            None => panic!("Failed to parse valid IP address"),
+        }
+    }
     /// Returns SocketAddr.
     pub fn get_address(&self) -> SocketAddr {
         match *self {
             Endpoint::Tcp(address) => address,
+            Endpoint::Utp(address) => address,
         }
     }
 }
@@ -54,7 +66,8 @@ impl Endpoint {
 impl Encodable for Endpoint {
     fn encode<E: Encoder>(&self, e: &mut E)->Result<(), E::Error> {
         let address = match *self {
-            Endpoint::Tcp(socket_addr) => socket_addr.to_string()
+            Endpoint::Tcp(socket_addr) => socket_addr.to_string(),
+            Endpoint::Utp(socket_addr) => socket_addr.to_string(),
         };
         try!(address.encode(e));
         Ok(())
@@ -77,6 +90,8 @@ impl Decodable for Endpoint {
 pub enum Port {
     /// TCP port
     Tcp(u16),
+    /// UTP port
+    Utp(u16),
 }
 
 impl Port {
@@ -84,6 +99,7 @@ impl Port {
     pub fn get_port(&self) -> u16 {
         match *self {
             Port::Tcp(p) => p,
+            Port::Utp(p) => p,
         }
     }
 }
@@ -96,11 +112,16 @@ impl PartialOrd for Endpoint {
 
 impl Ord for Endpoint {
     fn cmp(&self, other: &Endpoint) -> Ordering {
-        use Endpoint::Tcp;
+        use Endpoint::{Tcp, Utp};
         match *self {
             Tcp(ref a1) => match *other {
-                Tcp(ref a2) => compare_ip_addrs(a1, a2)
-            }
+                Tcp(ref a2) => compare_ip_addrs(a1, a2),
+                Utp(_) => panic!("Should never happen"),
+            },
+            Utp(ref a1) => match *other {
+                Tcp(_) => panic!("Should never happen"),
+                Utp(ref a2) => compare_ip_addrs(a1, a2)
+            },
         }
     }
 }
@@ -108,6 +129,7 @@ impl Ord for Endpoint {
 //--------------------------------------------------------------------
 pub enum Sender {
     Tcp(tcp_connections::TcpWriter<Bytes>),
+    Utp(utp_connections::UtpWriter<Bytes>),
 }
 
 impl Sender {
@@ -119,6 +141,12 @@ impl Sender {
                 io::Error::new(io::ErrorKind::NotConnected, "can't send")
             })
             },
+            Sender::Utp(ref mut s) => {
+                s.send((*bytes).clone()).map_err(|_| {
+                // FIXME: This can be done better.
+                io::Error::new(io::ErrorKind::NotConnected, "can't send")
+            })
+            },
         }
     }
 }
@@ -126,6 +154,7 @@ impl Sender {
 //--------------------------------------------------------------------
 pub enum Receiver {
     Tcp(tcp_connections::TcpReader<Bytes>),
+    Utp(utp_connections::UtpReader<Bytes>),
 }
 
 impl Receiver {
@@ -133,7 +162,10 @@ impl Receiver {
         match *self {
             Receiver::Tcp(ref r) => {
                 r.recv().map_err(|what| io::Error::new(io::ErrorKind::NotConnected, what.description()))
-            }
+            },
+            Receiver::Utp(ref r) => {
+                r.recv().map_err(|what| io::Error::new(io::ErrorKind::NotConnected, what.description()))
+            },
         }
     }
 }
@@ -142,12 +174,15 @@ impl Receiver {
 pub enum Acceptor {
     // Channel receiver, TCP listener
     Tcp(mpsc::Receiver<(TcpStream, SocketAddr)>, TcpListener),
+    // Channel receiver, UTP listener and port
+    Utp(mpsc::Receiver<(UtpSocket, SocketAddr)>, u16),
 }
 
 impl Acceptor {
     pub fn local_port(&self) -> Port {
         match *self {
             Acceptor::Tcp(_, ref listener) => Port::Tcp(listener.local_addr().unwrap().port()),
+            Acceptor::Utp(_, listener) => Port::Utp(listener),
         }
     }
 }
@@ -172,6 +207,18 @@ pub fn connect(remote_ep: Endpoint) -> IoResult<Transport> {
                     let _ = writeln!(&mut io::stderr(), "NOTE: Transport connect {} failure due to {}", ep, e);
                     io::Error::new(io::ErrorKind::NotConnected, e.description())
                 })
+        },
+        Endpoint::Utp(ep) => {
+            utp_connections::connect_utp(ep)
+                .map(|(i, o)| {
+                    Transport{ receiver: Receiver::Utp(i),
+                                         sender: Sender::Utp(o),
+                                         remote_endpoint: remote_ep,
+                             }})
+                .map_err(|e| {
+                    let _ = writeln!(&mut io::stderr(), "NOTE: Transport connect {} failure due to {}", ep, e);
+                    io::Error::new(io::ErrorKind::NotConnected, e.description())
+                })
         }
     }
 }
@@ -181,7 +228,11 @@ pub fn new_acceptor(port: &Port) -> IoResult<Acceptor> {
         Port::Tcp(ref port) => {
             let (receiver, listener) = try!(tcp_connections::listen(*port));
             Ok(Acceptor::Tcp(receiver, listener))
-        }
+        },
+        Port::Utp(ref port) => {
+            let (receiver, listener) = try!(utp_connections::listen(*port));
+            Ok(Acceptor::Utp(receiver, listener))
+        },
     }
 }
 
@@ -200,7 +251,18 @@ pub fn accept(acceptor: &Acceptor) -> IoResult<Transport> {
                           sender: Sender::Tcp(o),
                           remote_endpoint: Endpoint::Tcp(remote_endpoint),
                         })
-        }
+        },
+        Acceptor::Utp(ref rx_channel, _) => {
+            let (stream, remote_endpoint) = try!(rx_channel.recv()
+                .map_err(|e| io::Error::new(io::ErrorKind::NotConnected, e.description())));
+
+            let (i, o) = try!(utp_connections::upgrade_utp(stream));
+
+            Ok(Transport{ receiver: Receiver::Utp(i),
+                          sender: Sender::Utp(o),
+                          remote_endpoint: Endpoint::Utp(remote_endpoint),
+                        })
+        },
     }
 }
 

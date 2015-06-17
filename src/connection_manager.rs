@@ -177,6 +177,14 @@ impl ConnectionManager {
                         });
                     }
                 },
+                Port::Utp(p) => {
+                    for ifaddr in getifaddrs() {
+                        endpoints.push(match ifaddr.addr {
+                            IpAddr::V4(a) => Endpoint::utp((a, p)),
+                            IpAddr::V6(a) => Endpoint::utp((a, p)),
+                        });
+                    }
+                },
             }
         }
         Ok((endpoints, ports_and_beacon.1))
@@ -199,6 +207,14 @@ impl ConnectionManager {
                         endpoints.push(match ifaddr.addr {
                             IpAddr::V4(a) => Endpoint::tcp((a, p)),
                             IpAddr::V6(a) => Endpoint::tcp((a, p)),
+                        });
+                    }
+                },
+                Port::Utp(p) => {
+                    for ifaddr in getifaddrs() {
+                        endpoints.push(match ifaddr.addr {
+                            IpAddr::V4(a) => Endpoint::utp((a, p)),
+                            IpAddr::V6(a) => Endpoint::utp((a, p)),
                         });
                     }
                 },
