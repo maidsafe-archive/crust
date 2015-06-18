@@ -20,6 +20,7 @@ term = "*"
 time = "*"
 asynchronous = "*"
 utp = "0.6.0"
+itertools = "*"
 
 [[example]]
 name = "simple_sender"

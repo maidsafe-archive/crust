@@ -23,9 +23,10 @@ use std::path;
 use std::env;
 use rustc_serialize::json;
 use std::io;
+use itertools::Itertools;
 
 
-#[derive(PartialEq, Debug, Clone, RustcDecodable, RustcEncodable)]
+#[derive(PartialEq, Eq, Hash, Debug, Clone, RustcDecodable, RustcEncodable)]
 pub struct Contact {
     pub endpoint: Endpoint,
 }
@@ -104,7 +105,9 @@ impl BootStrapHandler {
         json::decode(&s).map_err(|_| io::Error::new(io::ErrorKind::Other, "Failed to decode BootStrap file"))
     }
 
-    fn write_bootstrap_file(&mut self, bootstrap: &BootStrap) -> io::Result<()> {
+    fn write_bootstrap_file(&mut self, mut bootstrap: BootStrap) -> io::Result<()> {
+        bootstrap.contacts = bootstrap.contacts.clone().into_iter().unique().collect();
+
         let encoded = json::encode(&bootstrap).unwrap();
         let mut file = try!(File::create(&self.file_name));
         try!(file.write_all(&encoded.into_bytes()));
@@ -120,7 +123,7 @@ impl BootStrapHandler {
         for contact in contacts {
             current_bootstrap.contacts.push(contact.clone());
         }
-        self.write_bootstrap_file(&current_bootstrap)
+        self.write_bootstrap_file(current_bootstrap)
     }
 
     pub fn get_serialised_contacts(&self) -> io::Result<(Vec<u8>)> {
@@ -136,6 +139,7 @@ impl BootStrapHandler {
         let bootstrap = try!(self.read_bootstrap_file());
         Ok(bootstrap.preferred_port)
     }
+
 }
 
 #[cfg(test)]
@@ -187,7 +191,18 @@ impl BootStrapHandler {
         let file = fs::File::create(&path);
         assert!(file.is_ok()); // Check whether the database file is created
         // Add Contacts
-        assert!(bootstrap_handler.insert_contacts(contacts).is_ok());
+        assert!(bootstrap_handler.insert_contacts(contacts.clone()).is_ok());
+
+        // Add duplicate contacts
+        for _ in 1..100 {
+            assert!(bootstrap_handler.insert_contacts(contacts.clone()).is_ok());
+        }
+
+        let read_bootstrap: BootStrap = bootstrap_handler.read_bootstrap_file().unwrap();
+        let read_contacts : Contacts = read_bootstrap.contacts;
+
+        assert_eq!(read_contacts, contacts);
+
         match fs::remove_file(file_name.clone()) {
             Ok(_) => (),
             Err(e) => println!("Failed to remove {}: {}", file_name, e),
