@@ -81,8 +81,8 @@ pub struct OutUtpStream<T> {
 
 impl <T> OutUtpStream<T>
 where T: Encodable {
-    pub fn send(&self, m: &T) -> Result<(), ()> {
-        self.stream.send(*m)
+    pub fn send(&self, m: T) -> Result<(), SendError<T>> {
+        self.stream.send(m)
     }
 }
 
