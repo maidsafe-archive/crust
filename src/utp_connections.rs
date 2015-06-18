@@ -16,8 +16,9 @@
 // relating to use of the SAFE Network Software.
 
 use utp::UtpListener;
-use utp::CloneableSocket as UtpSocket;
+use utp::UtpCloneableSocket as UtpSocket;
 use std::net::SocketAddr;
+use std::io;
 use std::io::{Read, Write, BufReader, BufWriter, ErrorKind, Result};
 use std::io::Result as IoResult;
 use std::ops::Deref;
@@ -25,7 +26,7 @@ use cbor::{Encoder, Decoder};
 use std::thread;
 use rustc_serialize::{Decodable, Encodable};
 use std::sync::mpsc;
-use std::sync::mpsc::{Sender, SendError, Receiver};
+use std::sync::mpsc::{Sender, Receiver};
 
 pub type UtpReader<T> = Receiver<T>;
 pub type UtpWriter<T> = OutUtpStream<T>;
@@ -76,22 +77,35 @@ impl Deref for UtpStream {
 
 
 pub struct OutUtpStream<T> {
-    stream: Sender<T>,
+    stream: Option<Sender<T>>,
 }
 
 impl <T> OutUtpStream<T>
 where T: Encodable {
-    pub fn send(&self, m: T) -> Result<(), SendError<T>> {
-        self.stream.send(m)
+
+    pub fn new(s: Sender<T>) -> OutUtpStream<T> {
+        OutUtpStream { stream: Some(s) }
+    }
+    
+    pub fn send(&self, m: T) -> Result<()> {
+        if let Some(ref s) = self.stream {
+            return s.send(m).map_err(|_| io::Error::new(io::ErrorKind::NotConnected, "can't send"))
+        }
+        Err(io::Error::new(io::ErrorKind::NotConnected, "not connected"))
+    }
+    
+    #[allow(dead_code)]  // This code isn't dead, but without this modifier it won't compile
+    pub fn close(&mut self) -> Result<()> {
+        self.stream = None;
+        Ok(())
     }
 }
 
-////#[unsafe_destructor]
-//impl <T> Drop for OutTcpStream<T> {
-//    fn drop(&mut self) {
-//        let _ = self.tcp_stream.shutdown(Shutdown::Write);
-//    }
-//}
+impl <T> Drop for OutUtpStream<T> {
+    fn drop(&mut self) {
+        println!("OutUtpStream drops");
+    }
+}
 
 
 /// Connect to a peer and open a send-receive pair.  See `upgrade` for more details.
@@ -125,7 +139,7 @@ pub fn listen(port: u16) -> IoResult<(Receiver<(UtpSocket, SocketAddr)>, u16)> {
             // }
             match utp_listener.accept() {  // Blocks until next incoming connection
                 Ok((socket, addr)) => {
-                    let cloned = UtpSocket::new(socket).unwrap();
+                    let cloned = socket.into();
                     if tx.send((cloned, addr)).is_err() {
                         break;
                     }
@@ -139,6 +153,7 @@ pub fn listen(port: u16) -> IoResult<(Receiver<(UtpSocket, SocketAddr)>, u16)> {
                 }
             }
         }
+        println!("UTP listen exits");
     });
     Ok((rx, port))
 }
@@ -150,6 +165,8 @@ pub fn upgrade_utp<'a, 'b, I, O>(newconnection: UtpSocket) -> IoResult<(InUtpStr
 where I: Send + Decodable + 'static, O: Send + Encodable + 'static {
     // Clone the new connection socket
     let newconnection2 = newconnection.try_clone();
+    let newconnection_ = newconnection.try_clone();
+    let newconnection2_ = newconnection.try_clone();
     // Convert the new connection sockets into streams
     let stream_read : UtpStream = newconnection.into();
     let stream_write : UtpStream = newconnection2.into();
@@ -179,9 +196,9 @@ where I: Send + Decodable + 'static, O: Send + Encodable + 'static {
                     }
                 }
             }
+            println!("UTP reader exits");
         }
-//        let mut s1 = buffer.into_inner();
-//        let _ = s1.close();
+        let _ = newconnection_.close();
     });
 
     // Configure a sending thread    
@@ -196,12 +213,12 @@ where I: Send + Decodable + 'static, O: Send + Encodable + 'static {
                 let data = data.unwrap();
                 let _ = encoder.encode(&[&data]);
             }
+            println!("UTP writer exits");
         }
-//        let s1 = buffer.into_inner().map(|mut s| s.close());
+        let _ = newconnection2_.close();
     });
-    let out = OutUtpStream { stream: out_snd };
     
-    Ok((in_rec, out))
+    Ok((in_rec, OutUtpStream::new(out_snd)))
 }
 
 
@@ -215,12 +232,12 @@ mod test {
  #[test]
     fn test_small_stream() {
         let (event_receiver, port) = listen(5483).unwrap();
-        let (i, o) = connect_utp(SocketAddr::from_str(&format!("127.0.0.1:{}", port)).unwrap()).unwrap();
+        let (i, mut o) = connect_utp(SocketAddr::from_str(&format!("127.0.0.1:{}", port)).unwrap()).unwrap();
 
         for x in 0u64 .. 10u64 {
             if o.send(x).is_err() { break; }
         }
-//        o.close();
+        let _ = o.close();
         let _ = thread::spawn(move || {
             for x in event_receiver.iter() {
                 let (connection, _) = x;
@@ -270,7 +287,7 @@ mod test {
         loop {
            let _ = match vector_senders.pop() {
                 None => break, // empty
-                Some(_) => break, //sender.close(),
+                Some(mut sender) => sender.close(),
             };
         }
 

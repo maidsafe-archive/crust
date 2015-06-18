@@ -26,7 +26,7 @@ use std::sync::mpsc;
 use std::str::FromStr;
 use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
 use std::cmp::Ordering;
-use utp::CloneableSocket as UtpSocket;
+use utp::UtpCloneableSocket as UtpSocket;
 pub type Bytes = Vec<u8>;
 
 /// Enum representing endpoint of supported protocols
@@ -142,7 +142,7 @@ impl Sender {
             })
             },
             Sender::Utp(ref mut s) => {
-                s.send(&bytes).map_err(|_| {
+                s.send((*bytes).clone()).map_err(|_| {
                 // FIXME: This can be done better.
                 io::Error::new(io::ErrorKind::NotConnected, "can't send")
             })
