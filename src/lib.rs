@@ -40,6 +40,7 @@ extern crate time;
 extern crate asynchronous;
 extern crate libc;
 extern crate utp;
+extern crate itertools;
 
 #[cfg(test)]
 mod test {
