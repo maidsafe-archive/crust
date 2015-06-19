@@ -35,7 +35,7 @@ after_success: |
     cd docs-stage &&
     git checkout gh-pages;
     rm -rf .git*;
-    # lines 38 - 43 is a patch script for handling old gh-pages structure
+    # lines 39 - 43 is a patch script for handling old gh-pages structure
     OLD_FILE=$(ls | grep "main.js");
     if [[ $OLD_FILE == main* ]]; then
       rm -rf * &&
