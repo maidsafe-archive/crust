@@ -65,7 +65,7 @@ fn is_loopback(address: &SocketAddr) -> bool {
 
 pub struct BroadcastAcceptor {
     guid: GUID,
-    socket: UdpSocket,
+    socket: Arc<Mutex<UdpSocket>>,
     acceptor: Arc<Mutex<Acceptor>>,
     tcp_listener_port: u16,
 }
@@ -80,7 +80,7 @@ impl BroadcastAcceptor {
         }
         let tcp_listener_port = acceptor.local_port().get_port();
         Ok(BroadcastAcceptor{ guid: guid,
-                              socket: socket,
+                              socket: Arc::new(Mutex::new(socket)),
                               acceptor: Arc::new(Mutex::new(acceptor)),
                               tcp_listener_port: tcp_listener_port,
                             })
@@ -91,31 +91,34 @@ impl BroadcastAcceptor {
         let protected_tcp_acceptor = self.acceptor.clone();
         let tcp_acceptor_thread = try!(thread::Builder::new()
                 .name("Beacon accept TCP acceptor".to_string())
-                .scoped(move || -> Result<()> {
+                .spawn(move || -> Result<()> {
             let tcp_acceptor = protected_tcp_acceptor.lock().unwrap();
             let transport = try!(transport::accept(&tcp_acceptor));
             let _ = transport_sender.send(transport);
             Ok(())
         }));
 
+        let protected_socket = self.socket.clone();
+        let guid = self.guid;
         let tcp_port = self.tcp_listener_port;
         let (socket_sender, socket_receiver) = mpsc::channel::<SocketAddr>();
         let udp_listener_thread = try!(thread::Builder::new()
                 .name("Beacon accept UDP listener".to_string())
-                .scoped(move || -> Result<()> {
+                .spawn(move || -> Result<()> {
+            let socket = protected_socket.lock().unwrap();
             let mut buffer = vec![0u8; MAGIC_SIZE + GUID_SIZE];
             loop {
-                let (size, source) = try!(self.socket.recv_from(&mut buffer[..]));
+                let (size, source) = try!(socket.recv_from(&mut buffer[..]));
                 if size != MAGIC_SIZE + GUID_SIZE { continue; }
                 if buffer[0..MAGIC_SIZE] == MAGIC {  // Request for our port
-                    if buffer[MAGIC_SIZE..(MAGIC_SIZE + GUID_SIZE)] == self.guid {
+                    if buffer[MAGIC_SIZE..(MAGIC_SIZE + GUID_SIZE)] == guid {
                         continue;  // The request is from ourself - don't respond.
                     }
-                    let sent_size = try!(self.socket.send_to(&serialise_port(tcp_port), source));
+                    let sent_size = try!(socket.send_to(&serialise_port(tcp_port), source));
                     debug_assert!(sent_size == 2);
                     break;
                 } else if buffer[0..MAGIC_SIZE] == STOP {  // Request to stop
-                    if buffer[MAGIC_SIZE..(MAGIC_SIZE + GUID_SIZE)] == self.guid &&
+                    if buffer[MAGIC_SIZE..(MAGIC_SIZE + GUID_SIZE)] == guid &&
                             is_loopback(&source) {  // The request is from ourself - stop.
                         let _ = socket_sender.send(source);
                         return Err(io::Error::new(io::ErrorKind::ConnectionAborted,
@@ -130,14 +133,15 @@ impl BroadcastAcceptor {
             Ok(())
         }));
 
-        let result = udp_listener_thread.join();
+        let result = udp_listener_thread.join().unwrap();
         if let Err(e) = result {
             // Connect to the TCP acceptor to allow its thread to join.
             let _ = TcpStream::connect(("127.0.0.1", self.tcp_listener_port));
             let _ = tcp_acceptor_thread.join();
             // Send a ping back to the UDP socket which sent the stop request.
             if let Ok(requester) = socket_receiver.recv() {
-                let sent_size = try!(self.socket.send_to(&[1u8; 1], requester));
+                let sent_size = try!(self.socket.lock().unwrap()
+                                     .send_to(&[1u8; 1], requester));
                 debug_assert!(sent_size == 1);
             }
             return Err(e);
@@ -176,7 +180,8 @@ impl BroadcastAcceptor {
     }
 
     pub fn beacon_port(&self) -> u16 {
-        self.socket.local_addr().map(|address| address.port()).unwrap_or(0u16)
+        self.socket.lock().unwrap().local_addr().map(|address| address.port())
+            .unwrap_or(0u16)
     }
 
     pub fn beacon_guid(&self) -> GUID {
@@ -208,7 +213,7 @@ pub fn seek_peers(port: u16, guid_to_avoid: Option<GUID>) -> Result<Vec<SocketAd
     let (tx, rx) = mpsc::channel::<SocketAddr>();
     let _udp_response_thread = thread::Builder::new()
             .name("Beacon seek_peers UDP response".to_string())
-            .scoped(move || -> Result<()> {
+            .spawn(move || -> Result<()> {
         loop {
             let mut buffer = [0u8; 8];
             let (size, source) = try!(socket.recv_from(&mut buffer));
@@ -234,7 +239,7 @@ pub fn seek_peers(port: u16, guid_to_avoid: Option<GUID>) -> Result<Vec<SocketAd
     // Send the shutdown signal, giving the peers some time to respond first.
     let _shutdown_thread = thread::Builder::new()
             .name("Beacon seek_peers UDP shutdown".to_string())
-            .scoped(move || {
+            .spawn(move || {
         thread::sleep_ms(500);
         let killer_socket = match UdpSocket::bind("0.0.0.0:0") {
             Ok(socket) => socket,
