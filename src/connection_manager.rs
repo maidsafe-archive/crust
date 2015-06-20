@@ -24,7 +24,7 @@ use std::thread;
 use std::net::IpAddr;
 
 use beacon;
-use bootstrap_handler::{BootStrapHandler, Contacts, Contact, parse_contacts};
+use bootstrap_handler::{BootstrapHandler, Contacts, Contact, parse_contacts};
 use getifaddrs::getifaddrs;
 use transport;
 use transport::{Endpoint, Port};
@@ -104,7 +104,7 @@ impl ConnectionManager {
                 // let public_key =
                 //     PublicKey::Asym(asymmetricbox::PublicKey([0u8; asymmetricbox::PUBLICKEYBYTES]));
 
-                let mut bootstrap_handler = BootStrapHandler::new();
+                let mut bootstrap_handler = BootstrapHandler::new();
 
                 if hint.is_empty() {  // overriding botstrap file if hint provided in api, remove once api is changed
                     hint.push(bootstrap_handler.read_preferred_port()
@@ -133,7 +133,7 @@ impl ConnectionManager {
                 let _ = thread::Builder::new().name("ConnectionManager beacon acceptor".to_string())
                                               .spawn(move || {
                     while let Ok(mut transport) = acceptor.accept() {
-                        let handler = BootStrapHandler::new();
+                        let handler = BootstrapHandler::new();
                         let read_contacts = handler.get_serialised_contacts();
                         if read_contacts.is_ok() {
                             let _ = transport.sender.send(&read_contacts.unwrap());
@@ -249,7 +249,7 @@ impl ConnectionManager {
             None => {
                 let mut combined_endpoint_list = self.seek_peers(port);
                 if self.beacon_guid_and_port.is_some() {  // this node owns bs file
-                    let handler = BootStrapHandler::new();
+                    let handler = BootstrapHandler::new();
                     match handler.read_bootstrap_file() {
                         Ok(read_contacts) => {
                             for contacts in read_contacts.contacts {
@@ -501,7 +501,7 @@ fn handle_connect(mut state: WeakState, trans: transport::Transport,
             // TODO PublicKey for contact required...
             // let public_key = PublicKey::Asym(asymmetricbox::PublicKey([0u8; asymmetricbox::PUBLICKEYBYTES]));
             contacts.push(Contact {  endpoint: endpoint.clone()});
-            let mut bootstrap_handler = BootStrapHandler::new();
+            let mut bootstrap_handler = BootstrapHandler::new();
             let _ = bootstrap_handler.add_contacts(contacts);
         }
     }

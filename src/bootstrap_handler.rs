@@ -36,13 +36,13 @@ pub type Contacts = Vec<Contact>;
 
 
 #[derive(PartialEq, Debug, RustcDecodable, RustcEncodable)]
-pub struct BootStrap {
+pub struct Bootstrap {
     pub preferred_port: Port,
     pub hard_coded_contacts: Contacts,
     pub contacts: Contacts,
 }
 
-pub struct BootStrapHandler {
+pub struct BootstrapHandler {
     file_name: String,
     last_updated: time::Tm,
 }
@@ -61,7 +61,7 @@ pub fn parse_contacts(buffer: Vec<u8>) -> Option<Contacts> {
 
 
 
-impl BootStrapHandler {
+impl BootstrapHandler {
     pub fn get_file_name() -> String {
         let path = match env::current_exe() {
                 Ok(exe_path) => exe_path,
@@ -78,9 +78,9 @@ impl BootStrapHandler {
         filename
     }
 
-    pub fn new() -> BootStrapHandler {
-        BootStrapHandler {
-            file_name: BootStrapHandler::get_file_name(),
+    pub fn new() -> BootstrapHandler {
+        BootstrapHandler {
+            file_name: BootstrapHandler::get_file_name(),
             last_updated: time::now(),
         }
     }
@@ -92,32 +92,32 @@ impl BootStrapHandler {
     pub fn add_contacts(&mut self, contacts: Vec<Contact>) -> io::Result<()> {
         try!(self.insert_contacts(contacts));
         // TODO(Team) this implementation is missing and should be considered in next planning
-        if time::now() > self.last_updated + BootStrapHandler::get_update_duration() {
+        if time::now() > self.last_updated + BootstrapHandler::get_update_duration() {
             // self.check_bootstrap_contacts();
         }
         Ok(())
     }
 
-    pub fn read_bootstrap_file(&self) -> io::Result<(BootStrap)> {
+    pub fn read_bootstrap_file(&self) -> io::Result<(Bootstrap)> {
         let mut file = try!(File::open(&self.file_name));
-        let mut s = String::new();
-        let _ = try!(file.read_to_string(&mut s));
-        json::decode(&s).map_err(|_| io::Error::new(io::ErrorKind::Other, "Failed to decode BootStrap file"))
+        let mut contents = String::new();
+        let _ = try!(file.read_to_string(&mut contents));
+        json::decode(&contents)
+             .map_err(|error| io::Error::new(io::ErrorKind::Other,
+                                             format!("Failed to decode bootstrap file: {}", error)))
     }
 
-    fn write_bootstrap_file(&mut self, mut bootstrap: BootStrap) -> io::Result<()> {
+    fn write_bootstrap_file(&mut self, mut bootstrap: Bootstrap) -> io::Result<()> {
         bootstrap.contacts = bootstrap.contacts.clone().into_iter().unique().collect();
-
-        let encoded = json::encode(&bootstrap).unwrap();
         let mut file = try!(File::create(&self.file_name));
-        try!(file.write_all(&encoded.into_bytes()));
+        try!(write!(&mut file, "{}", json::as_pretty_json(&bootstrap)));
         file.sync_all()
     }
 
     fn insert_contacts(&mut self, contacts: Contacts) -> io::Result<()> {
         assert!(!contacts.is_empty());
         let mut current_bootstrap = self.read_bootstrap_file()
-            .unwrap_or(BootStrap{ preferred_port: Port::Tcp(0u16),
+            .unwrap_or(Bootstrap{ preferred_port: Port::Tcp(0u16),
                                   hard_coded_contacts: Vec::new(),
                                   contacts: Vec::new() });
         for contact in contacts {
@@ -160,11 +160,11 @@ impl BootStrapHandler {
         let mut contacts = Contacts::new();
         contacts.push(contact.clone());
         contacts.push(contact.clone());
-        let bootstrap = BootStrap { preferred_port: Port::Tcp(5483u16),
+        let bootstrap = Bootstrap { preferred_port: Port::Tcp(5483u16),
                                     hard_coded_contacts: contacts.clone(),
                                     contacts: contacts.clone() };
         let encoded = json::encode(&bootstrap).unwrap();
-        let decoded: BootStrap = json::decode(&encoded).unwrap();
+        let decoded: Bootstrap = json::decode(&encoded).unwrap();
         assert_eq!(bootstrap, decoded);
     }
 
@@ -179,15 +179,16 @@ impl BootStrapHandler {
             random_addr_0.push(rand::random::<u8>());
 
             let port_0: u16 = rand::random::<u16>();
-            let addr_0 = net::SocketAddrV4::new(net::Ipv4Addr::new(random_addr_0[0], random_addr_0[1], random_addr_0[2], random_addr_0[3]), port_0);
+            let addr_0 = net::SocketAddrV4::new(net::Ipv4Addr::new(random_addr_0[0],
+                random_addr_0[1], random_addr_0[2], random_addr_0[3]), port_0);
             let new_contact = Contact{ endpoint: Endpoint::Tcp(SocketAddr::V4(addr_0)) };
                 contacts.push(new_contact);
         }
 
-        let file_name = BootStrapHandler::get_file_name();
+        let file_name = BootstrapHandler::get_file_name();
         let path = Path::new(&file_name);
 
-        let mut bootstrap_handler = BootStrapHandler::new();
+        let mut bootstrap_handler = BootstrapHandler::new();
         let file = fs::File::create(&path);
         assert!(file.is_ok()); // Check whether the database file is created
         // Add Contacts
@@ -198,7 +199,7 @@ impl BootStrapHandler {
             assert!(bootstrap_handler.insert_contacts(contacts.clone()).is_ok());
         }
 
-        let read_bootstrap: BootStrap = bootstrap_handler.read_bootstrap_file().unwrap();
+        let read_bootstrap: Bootstrap = bootstrap_handler.read_bootstrap_file().unwrap();
         let read_contacts : Contacts = read_bootstrap.contacts;
 
         assert_eq!(read_contacts, contacts);
