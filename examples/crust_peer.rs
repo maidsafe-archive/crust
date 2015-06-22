@@ -17,7 +17,15 @@
 
 // String.as_str() is unstable; waiting RFC revision
 // http://doc.rust-lang.org/nightly/std/string/struct.String.html#method.as_str
-#![feature(convert, core, exit_status, scoped)]
+#![feature(convert, core)]
+#![forbid(warnings)]
+#![deny(bad_style, deprecated, drop_with_repr_extern, improper_ctypes, non_shorthand_field_patterns,
+        overflowing_literals, plugin_as_library, private_no_mangle_fns, private_no_mangle_statics,
+        raw_pointer_derive, stable_features, unconditional_recursion, unknown_lints,
+        unsafe_code, unsigned_negation, unused_allocation, unused_attributes,
+        unused_comparisons, unused_features, unused_parens, while_true)]
+#![warn(trivial_casts, trivial_numeric_casts, unused, unused_extern_crates, unused_import_braces,
+        unused_qualifications, unused_results, variant_size_differences)]
 
 extern crate core;
 extern crate crust;
@@ -297,8 +305,7 @@ fn main() {
         Ok(endpoints) => endpoints,
         Err(e) => {
             println!("Connection manager failed to start listening: {}", e);
-            std::env::set_exit_status(1);
-            return;
+            std::process::exit(1);
         }
     };
     print!("Listening for new connections on ");
@@ -325,9 +332,8 @@ fn main() {
             if args.flag_speed.is_some() {
                 stdout = red_foreground(stdout);
                 println!("Failed to connect to a peer.  Exiting.");
-                reset_foreground(stdout);
-                std::env::set_exit_status(2);
-                return;
+                let _ = reset_foreground(stdout);
+                std::process::exit(2);
             };
             match bootstrap_peers {
                 Some(_) => {
@@ -335,9 +341,8 @@ fn main() {
                     println!("Failed to bootstrap from provided peers with error: {}\nSince peers \
                              were provided, this is assumed to NOT be the first node of a new \
                              network.\nExiting.", e);
-                    reset_foreground(stdout);
-                    std::env::set_exit_status(3);
-                    return;
+                    let _ = reset_foreground(stdout);
+                    std::process::exit(3);
                 },
                 None => {
                     stdout = yellow_foreground(stdout);
@@ -353,7 +358,7 @@ fn main() {
     // Start event-handling thread
     let running_speed_test = args.flag_speed.is_some();
     let handler = match thread::Builder::new().name("CrustNode event handler".to_string())
-                                              .scoped(move || {
+                                              .spawn(move || {
         let mut my_flat_world: FlatWorld = FlatWorld::new();
         while let Ok(event) = channel_receiver.recv() {
             match event {
@@ -390,9 +395,8 @@ fn main() {
         Err(e) => {
             stdout = red_foreground(stdout);
             println!("Failed to start event-handling thread: {}", e);
-            reset_foreground(stdout);
-            std::env::set_exit_status(4);
-            return;
+            let _ = reset_foreground(stdout);
+            std::process::exit(4);
         },
     };
 
@@ -415,7 +419,7 @@ fn main() {
                     Err(_) => {
                         stdout = red_foreground(stdout);
                         println!("Lost connection to peer.  Exiting.");
-                        reset_foreground(stdout);
+                        let _ = reset_foreground(stdout);
                         return;
                     },
                 };
@@ -492,7 +496,7 @@ fn main() {
             } else if args.cmd_stop {
                 stdout = green_foreground(stdout);
                 println!("Stopped.");
-                reset_foreground(stdout);
+                let _ = reset_foreground(stdout);
                 break;
             }
         }
