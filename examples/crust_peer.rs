@@ -216,8 +216,8 @@ impl FlatWorld {
             self.performance_start = time::SteadyTime::now();
         }
         if self.performance_start + self.performance_interval < time::SteadyTime::now() {
-            println!("\nReceived {} messages with total size of {} bytes in last 10 seconds.",
-                     self.received_msgs, self.received_bytes);
+            println!("\nReceived {} messages with total size of {} bytes in last {} seconds.",
+                     self.received_msgs, self.received_bytes, self.performance_interval.num_seconds());
             self.received_msgs = 0;
             self.received_bytes = 0;
         }
