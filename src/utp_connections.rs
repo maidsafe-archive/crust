@@ -47,7 +47,7 @@ pub struct UtpStream {
 
 impl Read for UtpStream {
     fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
-        self.socket.recv(buf).map(|(read, _src)| read)
+        self.socket.recv_from(buf).map(|(read, _src)| read)
     }
 }
 
@@ -117,6 +117,7 @@ pub fn connect_utp<'a, 'b, I, O>(addr: SocketAddr) -> IoResult<(InUtpStream<I>, 
 /// Starts listening for connections on this ip and port.
 /// Returns:
 /// * A receiver of Utp socket objects.  It is recommended that you `upgrade` these.
+#[allow(unused)]
 pub fn listen(port: u16) -> IoResult<(Receiver<(UtpSocket, SocketAddr)>, u16)> {
     let utp_listener = {
         /*if let Ok(listener) = UtpSocket::bind(("::", port)) {
@@ -165,8 +166,8 @@ pub fn upgrade_utp<'a, 'b, I, O>(newconnection: UtpSocket) -> IoResult<(InUtpStr
 where I: Send + Decodable + 'static, O: Send + Encodable + 'static {
     // Clone the new connection socket
     let newconnection2 = newconnection.try_clone();
-    let newconnection_ = newconnection.try_clone();
-    let newconnection2_ = newconnection.try_clone();
+    let mut newconnection_ = newconnection.try_clone();
+    let mut newconnection2_ = newconnection.try_clone();
     // Convert the new connection sockets into streams
     let stream_read : UtpStream = newconnection.into();
     let stream_write : UtpStream = newconnection2.into();

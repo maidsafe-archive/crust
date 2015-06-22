@@ -14,6 +14,7 @@ File has following fields:
 ```
 {"preferred_port":{"variant":"Tcp","fields":[0]},"hard_coded_contacts":[{"endpoint":"192.168.0.10:51296"},{"endpoint":"192.168.0.10:5455"}],"contacts":[{"endpoint":"127.0.0.1:51296"},{"endpoint":"192.168.0.10:51296"},{"endpoint":"192.168.0.10:57545"}]}
 ```
+Example of bootstrap cache file with hard coded contacts (for connecting to SAFE network) can be found [here](https://github.com/maidsafe/crust/installer/crust_peer.bootstrap.cache). Application installer need to rename the file appropriately.
 
 **Starting a node on a specific port** (useful if the machine’s IP is publicly available)
 Also useful and required for users who want to port forward their router (i.e. run tcp node at home). It is less safe though as you will always connect to the network on the same ports, but this is potentially a very small security issue and not of concern to many.
