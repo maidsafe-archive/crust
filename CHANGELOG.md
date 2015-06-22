@@ -1,23 +1,30 @@
 # CRUST - Change Log
 
-[0.0.60 - 0.1.0]
-## [0.0.60]
-- [x] [MAID-1075] (https://maidsafe.atlassian.net/browse/MAID-1075) Correct bug; listening on local port (127.0.0.1)
-- [x] [MAID-1122] (https://maidsafe.atlassian.net/browse/MAID-1122) Windows ifaddr resolution
-## [0.0.61]
-- [x] [MAID-1124] (https://maidsafe.atlassian.net/browse/MAID-1124) Get a list of public IPs for others to connect to
-## [0.0.62]
-- [x] [MAID-1125] (https://maidsafe.atlassian.net/browse/MAID-1125) Update Bootstrap Handler to use Json format.
-## [0.0.63]
-- [x] [#134] (https://github.com/maidsafe/crust/issues/134) First node doesn't read its own bootstrap list
-## [0.0.64]
-- [x] Code clean up
-## [0.0.65]
-- [x] [#148] (https://github.com/maidsafe/crust/issues/148) Ensure contents of Bootstrap file are unique Fixes
-- [x] [#151] (https://github.com/maidsafe/crust/issues/151) fix build failures with rust nightly
-## [0.0.66]
-- [x] [#140] (https://github.com/maidsafe/crust/issues/140) Bootstrap file format
+
 ## [0.1.0]
+
+## [0.0.66]
+- [#140] (https://github.com/maidsafe/crust/issues/140) Bootstrap file format
+
+## [0.0.65]
+- [#148] (https://github.com/maidsafe/crust/issues/148) Ensure contents of Bootstrap file are unique Fixes
+- [#151] (https://github.com/maidsafe/crust/issues/151) fix build failures with rust nightly
+
+## [0.0.64]
+- Code clean up
+
+## [0.0.63]
+- [#134] (https://github.com/maidsafe/crust/issues/134) First node doesn't read its own bootstrap list
+
+## [0.0.62]
+- [MAID-1125] (https://maidsafe.atlassian.net/browse/MAID-1125) Update Bootstrap Handler to use Json format.
+
+## [0.0.61]
+- [MAID-1124] (https://maidsafe.atlassian.net/browse/MAID-1124) Get a list of public IPs for others to connect to
+
+## [0.0.60]
+- [MAID-1075] (https://maidsafe.atlassian.net/browse/MAID-1075) Correct bug; listening on local port (127.0.0.1)
+- [MAID-1122] (https://maidsafe.atlassian.net/browse/MAID-1122) Windows ifaddr resolution
 
 
 ## [0.0.1 - 0.0.8]
