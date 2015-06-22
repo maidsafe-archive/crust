@@ -68,7 +68,7 @@ fn main() {
                      and UDP broadcast port 9999: {}.", why);
             println!("This example needs the \"simple_receiver\" example to be running first on \
                      this same machine.");
-            std::env::set_exit_status(1);
+            std::process::exit(1);
             return;
         }
     };
