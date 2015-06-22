@@ -60,10 +60,17 @@ Extract and place the libsodium.a file in "bin\x86_64-pc-windows-gnu" for 64bit 
 - [x] Code clean up
 
 ## [0.0.65]
+- [x] [#148] (https://github.com/maidsafe/crust/issues/148) Ensure contents of Bootstrap file are unique Fixes
+- [x] [#151] (https://github.com/maidsafe/crust/issues/151) fix build failures with rust nightly
+
+## [0.0.66]
+- [x] [#140] (https://github.com/maidsafe/crust/issues/140) Bootstrap file format
+
+## [0.0.67]
 - [ ] [#1139] (https://maidsafe.atlassian.net/browse/MAID-1139) Remove Crust API’s start_listening2() and expose `get_own_endpoints()`
 - [ ] [#1142] (https://maidsafe.atlassian.net/browse/MAID-1142) Add UTP protocol support to crust
 
-## [0.0.66]
+## [0.0.68]
 - [ ] [#1132] (https://maidsafe.atlassian.net/browse/MAID-1132) Integrate UPnP
 - [ ] [#1136] (https://maidsafe.atlassian.net/browse/MAID-1136) Add a new event `NewBootstrapConnection`
 - [ ] [#1140] (https://maidsafe.atlassian.net/browse/MAID-1140) Memory-mapped file I/O for bootstrap file
