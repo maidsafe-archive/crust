@@ -117,7 +117,6 @@ pub fn connect_utp<'a, 'b, I, O>(addr: SocketAddr) -> IoResult<(InUtpStream<I>, 
 /// Starts listening for connections on this ip and port.
 /// Returns:
 /// * A receiver of Utp socket objects.  It is recommended that you `upgrade` these.
-#[allow(unused)]
 pub fn listen(port: u16) -> IoResult<(Receiver<(UtpSocket, SocketAddr)>, u16)> {
     let utp_listener = {
         /*if let Ok(listener) = UtpSocket::bind(("::", port)) {
