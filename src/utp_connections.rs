@@ -78,13 +78,15 @@ impl Deref for UtpStream {
 
 pub struct OutUtpStream<T> {
     stream: Option<Sender<T>>,
+    read_thread: thread::JoinHandle<()>,
+    write_thread: thread::JoinHandle<()>,
 }
 
 impl <T> OutUtpStream<T>
 where T: Encodable {
 
-    pub fn new(s: Sender<T>) -> OutUtpStream<T> {
-        OutUtpStream { stream: Some(s) }
+    pub fn new(s: Sender<T>, tr: thread::JoinHandle<()>, tw: thread::JoinHandle<()>) -> OutUtpStream<T> {
+        OutUtpStream { stream: Some(s), read_thread : tr, write_thread : tw }
     }
     
     pub fn send(&self, m: T) -> Result<()> {
@@ -95,17 +97,26 @@ where T: Encodable {
     }
     
     #[allow(dead_code)]  // This code isn't dead, but without this modifier it won't compile
-    pub fn close(&mut self) -> Result<()> {
-        self.stream = None;
+    pub fn close(mut self) -> Result<()> {
+        if let Some(_) = self.stream {
+            // Tell the writer thread to exit
+            self.stream = None;
+
+            // Wait until the writer thread exits
+            let _ = self.write_thread.join();
+
+            // Wait until the reader thread exits
+            let _ = self.read_thread.join();
+        }
         Ok(())
     }
 }
 
-impl <T> Drop for OutUtpStream<T> {
-    fn drop(&mut self) {
-        println!("OutUtpStream drops");
-    }
-}
+//impl <T> Drop for OutUtpStream<T> {
+//    fn drop(&mut self) {
+//        println!("OutUtpStream drops");
+//    }
+//}
 
 
 /// Connect to a peer and open a send-receive pair.  See `upgrade` for more details.
@@ -173,7 +184,7 @@ where I: Send + Decodable + 'static, O: Send + Encodable + 'static {
     
     // Configure a reading thread
     let (in_snd, in_rec) = mpsc::channel();
-    let _ = thread::Builder::new().name("UTP reader".to_string()).spawn(move || {
+    let read_thread = thread::Builder::new().name("UTP reader".to_string()).spawn(move || {
         let mut buffer = BufReader::new(stream_read);
         {
             let mut decoder = Decoder::from_reader(&mut buffer);
@@ -184,6 +195,7 @@ where I: Send + Decodable + 'static, O: Send + Encodable + 'static {
                   };
                 match data {
                     Ok(a) => {
+                        println!("UTP reader reads packet");
                         // Try to send, and if we can't, then the channel is closed.
                         if in_snd.send(a).is_err() {
                             break;
@@ -196,14 +208,15 @@ where I: Send + Decodable + 'static, O: Send + Encodable + 'static {
                     }
                 }
             }
-            println!("UTP reader exits");
         }
+        println!("UTP reader closes connection");
         let _ = newconnection_.close();
-    });
+        println!("UTP reader exits");
+    }).unwrap();
 
     // Configure a sending thread    
     let (out_snd, out_rec) = mpsc::channel();
-    let _ = thread::Builder::new().name("UTP writer".to_string()).spawn(move || {
+    let write_thread = thread::Builder::new().name("UTP writer".to_string()).spawn(move || {
         let mut buffer = BufWriter::new(stream_write);
         {
             let mut encoder = Encoder::from_writer(&mut buffer);
@@ -211,14 +224,17 @@ where I: Send + Decodable + 'static, O: Send + Encodable + 'static {
                 let data = out_rec.recv();
                 if data.is_err() { break; }
                 let data = data.unwrap();
+                println!("UTP writer writes packet");
                 let _ = encoder.encode(&[&data]);
+                let _ = encoder.flush();
             }
-            println!("UTP writer exits");
         }
+        println!("UTP writer closes connection");
         let _ = newconnection2_.close();
-    });
+        println!("UTP writer exits");
+    }).unwrap();
     
-    Ok((in_rec, OutUtpStream::new(out_snd)))
+    Ok((in_rec, OutUtpStream::new(out_snd, read_thread, write_thread)))
 }
 
 
@@ -232,25 +248,23 @@ mod test {
  #[test]
     fn test_small_stream() {
         let (event_receiver, port) = listen(5483).unwrap();
-        let (i, mut o) = connect_utp(SocketAddr::from_str(&format!("127.0.0.1:{}", port)).unwrap()).unwrap();
+        let (i, o) = connect_utp(SocketAddr::from_str(&format!("127.0.0.1:{}", port)).unwrap()).unwrap();
 
+        let read_thread = thread::spawn(move || {
+            let (connection, _) = event_receiver.recv().unwrap();
+            let (i, o) = upgrade_utp(connection).unwrap();
+            for x in i.iter() {
+                let x:u32 = x;
+                if o.send((x, x + 1)).is_err() { break; }
+            }
+        });
         for x in 0u64 .. 10u64 {
             if o.send(x).is_err() { break; }
         }
+        println!("About to close outbound socket");
         let _ = o.close();
-        let _ = thread::spawn(move || {
-            for x in event_receiver.iter() {
-                let (connection, _) = x;
-                // Spawn a new thread for each connection that we get.
-                let _ = thread::spawn(move || {
-                    let (i, o) = upgrade_utp(connection).unwrap();
-                    for x in i.iter() {
-                        let x:u32 = x;
-                        if o.send((x, x + 1)).is_err() { break; }
-                    }
-                });
-            }
-        });
+        println!("Outbound socket closed. Making sure read_thread now exits");
+        let _ = read_thread.join();
         // Collect everything that we get back.
         let mut responses: Vec<(u64, u64)> = Vec::new();
         for a in i.iter() {
@@ -287,7 +301,7 @@ mod test {
         loop {
            let _ = match vector_senders.pop() {
                 None => break, // empty
-                Some(mut sender) => sender.close(),
+                Some(sender) => sender.close(),
             };
         }
 
