@@ -1,6 +1,13 @@
 # CRUST - Change Log
 
 
+
+## [0.1.2]
+- Fixed documentation links
+
+## [0.1.1]
+- Removed sodiumoxide dependency
+
 ## [0.1.0]
 
 ## [0.0.66]

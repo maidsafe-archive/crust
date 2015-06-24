@@ -44,12 +44,6 @@ Extract and place the libsodium.a file in "bin\x86_64-pc-windows-gnu" for 64bit 
 
 ##Todo Items
 
-## [0.1.1]
-- Removed sodiumoxide dependency
-
-## [0.1.2]
-- Fixed documentation links
-
 ## [0.1.3]
 - [ ] [#1139] (https://maidsafe.atlassian.net/browse/MAID-1139) Remove Crust API’s start_listening2() and expose `get_own_endpoints()`
 - [ ] [#1142] (https://maidsafe.atlassian.net/browse/MAID-1142) Add UTP protocol support to crust
