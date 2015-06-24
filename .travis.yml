@@ -23,15 +23,16 @@ install:
 - cd ../..
 script:
 - cargo build --verbose
-- RUST_TEST_TASKS=1 RUST_TEST_THREADS=1 cargo test
+- RUST_TEST_THREADS=1 cargo test
 after_success: |
   if [[ $TRAVIS_BRANCH = master ]] &&  [[ $TRAVIS_PULL_REQUEST = false ]] &&  [[ $(uname -s) = Linux ]] &&
     cargo doc &&
     echo "<meta http-equiv=refresh content=0;url=`echo $TRAVIS_REPO_SLUG | cut -d '/' -f 2`/index.html>" > target/doc/index.html &&
     sudo pip install ghp-import &&
     mkdir docs-stage &&
-    COMMIT_MSG=$(git log -1 | tr '[:upper:]' '[:lower:]' | grep "version change to " | tr -d ' ') &&
-    git clone https://github.com/${TRAVIS_REPO_SLUG}.git  docs-stage &&
+    OLD_VERSION=$([[ $(git show HEAD~1:Cargo.toml | grep ^version) =~ ([0-9]+\.[0-9]+\.[0-9]+) ]]; echo "${BASH_REMATCH[1]}") &&
+    VERSION=$([[ $(git show HEAD:Cargo.toml | grep ^version) =~ ([0-9]+\.[0-9]+\.[0-9]+) ]]; echo "${BASH_REMATCH[1]}") &&
+    git clone https://github.com/${TRAVIS_REPO_SLUG}.git docs-stage &&
     cd docs-stage &&
     git checkout gh-pages;
     rm -rf .git*;
@@ -41,8 +42,7 @@ after_success: |
       rm -rf * &&
       echo "<meta http-equiv=refresh content=0;url=master/`echo $TRAVIS_REPO_SLUG | cut -d '/' -f 2`/index.html>" > index.html;
     fi
-    if [[ $COMMIT_MSG == versionchangeto* ]];  then
-      VERSION=${COMMIT_MSG##*to} &&
+    if [[ $OLD_VERSION != $VERSION ]]; then
       mkdir -p $VERSION &&
       mkdir -p latest &&
       cp -rf ../target/doc/* $VERSION &&
