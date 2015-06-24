@@ -1,6 +1,7 @@
 # CRUST - Change Log
 
-
+## [0.1.3]
+- Travis document generation build script updated
 
 ## [0.1.2]
 - Fixed documentation links
