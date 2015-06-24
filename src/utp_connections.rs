@@ -99,12 +99,15 @@ where T: Encodable {
     #[allow(dead_code)]  // This code isn't dead, but without this modifier it won't compile
     pub fn close(mut self) -> Result<()> {
         if let Some(_) = self.stream {
+            println!("Dropping Sender");
             // Tell the writer thread to exit
             self.stream = None;
 
+            println!("Waiting on write thread");
             // Wait until the writer thread exits
             let _ = self.write_thread.join();
 
+            println!("Waiting on read thread");
             // Wait until the reader thread exits
             let _ = self.read_thread.join();
         }
@@ -229,6 +232,8 @@ where I: Send + Decodable + 'static, O: Send + Encodable + 'static {
                 let _ = encoder.flush();
             }
         }
+        println!("UTP writer breaks reads on reader thread");
+        let _ = newconnection2_.break_reads();
         println!("UTP writer closes connection");
         let _ = newconnection2_.close();
         println!("UTP writer exits");
@@ -261,15 +266,18 @@ mod test {
         for x in 0u64 .. 10u64 {
             if o.send(x).is_err() { break; }
         }
-        println!("About to close outbound socket");
-        let _ = o.close();
-        println!("Outbound socket closed. Making sure read_thread now exits");
-        let _ = read_thread.join();
         // Collect everything that we get back.
         let mut responses: Vec<(u64, u64)> = Vec::new();
-        for a in i.iter() {
-            responses.push(a);
+        for (a, b) in i.iter() {
+            responses.push((a, b));
+            if a == 9 {
+                break;
+            }
         }
+        println!("About to close");
+        assert!(o.close().is_ok());
+        println!("About to join thread");
+        assert!(read_thread.join().is_ok());
         // println!("Responses: {:?}", responses);
         assert_eq!(10, responses.len());
     }
