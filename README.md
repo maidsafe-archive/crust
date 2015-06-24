@@ -48,15 +48,18 @@ Extract and place the libsodium.a file in "bin\x86_64-pc-windows-gnu" for 64bit 
 - Removed sodiumoxide dependency
 
 ## [0.1.2]
+- Fixed documentation links
+
+## [0.1.3]
 - [ ] [#1139] (https://maidsafe.atlassian.net/browse/MAID-1139) Remove Crust API’s start_listening2() and expose `get_own_endpoints()`
 - [ ] [#1142] (https://maidsafe.atlassian.net/browse/MAID-1142) Add UTP protocol support to crust
 
-## [0.1.3]
+## [0.1.4]
 - [ ] [#1132] (https://maidsafe.atlassian.net/browse/MAID-1132) Integrate UPnP
 - [ ] [#1136] (https://maidsafe.atlassian.net/browse/MAID-1136) Add a new event `NewBootstrapConnection`
 - [ ] [#1140] (https://maidsafe.atlassian.net/browse/MAID-1140) Memory-mapped file I/O for bootstrap file
 
-## [0.1.4]
+## [0.1.5]
 - [ ] Have ConnectionManager guarantee at most one connection between any two nodes
 - [ ] Utp Networking
   - [ ] Utp live port and backup random port selection
