@@ -269,9 +269,10 @@ impl ConnectionManager {
 
     /// This should be called before destroying an instance of a ConnectionManager to allow the
     /// listener threads to join.  Once called, the ConnectionManager should be destroyed.
-    pub fn stop(&self) {
+    pub fn stop(&mut self) {
         if let Some(beacon_guid_and_port) = self.beacon_guid_and_port {
-            beacon::BroadcastAcceptor::stop(&beacon_guid_and_port)
+            beacon::BroadcastAcceptor::stop(&beacon_guid_and_port);
+            self.beacon_guid_and_port = None;
         }
         let mut listening_ports = Vec::<Port>::new();
         let weak_state = self.state.downgrade();
