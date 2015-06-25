@@ -285,7 +285,7 @@ mod test {
 #[test]
     fn test_multiple_nodes_small_stream() {
         const MSG_COUNT: usize = 5;
-        const NODE_COUNT: usize = 101;
+        const NODE_COUNT: usize = 51;
 
         let (event_receiver, port) = listen(5483).unwrap();
         let mut vector_senders = Vec::new();
@@ -297,22 +297,6 @@ mod test {
             let boxed_input: Box<InUtpStream<(u64, u64)>> = Box::new(i);
             vector_receiver.push(boxed_input);
         }
-
-        //  send
-        for v in &mut vector_senders {
-            for x in 0u64 .. MSG_COUNT as u64 {
-                if v.send(x).is_err() { break; }
-            }
-        }
-
-        //  close sender
-        loop {
-           let _ = match vector_senders.pop() {
-                None => break, // empty
-                Some(sender) => sender.close(),
-            };
-        }
-
 
         // event_receiver
         let _ = thread::spawn(move || {
@@ -329,17 +313,37 @@ mod test {
             }
         });
 
+        //  send
+        for v in &mut vector_senders {
+            for x in 0u64 .. MSG_COUNT as u64 {
+                assert!(v.send(x).is_ok());
+            }
+        }
+
         // Collect everything that we get back.
         let mut responses: Vec<(u64, u64)> = Vec::new();
 
+        println!("Collecting responses ...");
         loop {
            let _ = match vector_receiver.pop() {
                 None => break, // empty
                 Some(receiver) => {
-                    for a in receiver.iter() {
-                        responses.push(a);
+                    for (a, b) in receiver.iter() {
+                        responses.push((a, b));
+                        if a == MSG_COUNT as u64 - 1 {
+                            break;
+                        }
                     }
                 }
+            };
+        }
+
+        //  close sender
+        println!("Closing senders ...");
+        loop {
+           let _ = match vector_senders.pop() {
+                None => break, // empty
+                Some(sender) => sender.close(),
             };
         }
 
