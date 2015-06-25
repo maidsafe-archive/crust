@@ -204,7 +204,6 @@ pub fn connect(remote_ep: Endpoint) -> IoResult<Transport> {
                                          remote_endpoint: remote_ep,
                              }})
                 .map_err(|e| {
-                    let _ = writeln!(&mut io::stderr(), "NOTE: Transport connect {} failure due to {}", ep, e);
                     io::Error::new(io::ErrorKind::NotConnected, e.description())
                 })
         },

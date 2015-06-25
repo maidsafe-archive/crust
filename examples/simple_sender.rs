@@ -15,7 +15,14 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-#![feature(exit_status)]
+#![forbid(warnings)]
+#![deny(bad_style, deprecated, drop_with_repr_extern, improper_ctypes, non_shorthand_field_patterns,
+        overflowing_literals, plugin_as_library, private_no_mangle_fns, private_no_mangle_statics,
+        raw_pointer_derive, stable_features, unconditional_recursion, unknown_lints,
+        unsafe_code, unsigned_negation, unused_allocation, unused_attributes,
+        unused_comparisons, unused_features, unused_parens, while_true)]
+#![warn(trivial_casts, trivial_numeric_casts, unused, unused_extern_crates, unused_import_braces,
+        unused_qualifications, unused_results, variant_size_differences)]
 
 extern crate crust;
 
@@ -68,8 +75,7 @@ fn main() {
                      and UDP broadcast port 9999: {}.", why);
             println!("This example needs the \"simple_receiver\" example to be running first on \
                      this same machine.");
-            std::env::set_exit_status(1);
-            return;
+            std::process::exit(1);
         }
     };
 

@@ -25,7 +25,7 @@ script:
 - cargo build --verbose
 - RUST_TEST_TASKS=1 RUST_TEST_THREADS=1 cargo test
 after_success: |
-  if [[ $TRAVIS_BRANCH = master ]] &&  [[ $TRAVIS_PULL_REQUEST = false ]] &&  [[ $(uname -s) = Linux ]] &&
+  if [[ $TRAVIS_BRANCH = master ]] &&  [[ $TRAVIS_PULL_REQUEST = false ]]; then
     cargo doc &&
     echo "<meta http-equiv=refresh content=0;url=`echo $TRAVIS_REPO_SLUG | cut -d '/' -f 2`/index.html>" > target/doc/index.html &&
     sudo pip install ghp-import &&
