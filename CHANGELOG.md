@@ -1,5 +1,8 @@
 # CRUST - Change Log
 
+## [0.1.4]
+- Made ConnectionManager::seek_peers() private
+
 ## [0.1.3]
 - Travis document generation build script updated
 
