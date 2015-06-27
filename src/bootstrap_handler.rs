@@ -116,10 +116,16 @@ impl BootstrapHandler {
 
     fn insert_contacts(&mut self, contacts: Contacts) -> io::Result<()> {
         assert!(!contacts.is_empty());
+
         let mut current_bootstrap = self.read_bootstrap_file()
-            .unwrap_or(Bootstrap{ preferred_port: Port::Tcp(0u16),
+            .unwrap_or_else(|e| {
+                println!("Failed to read Bootstrap file : {:?} ; {:?} ; Creating New file.",
+                self.file_name, e);
+                Bootstrap{ preferred_port: Port::Tcp(0u16),
                                   hard_coded_contacts: Vec::new(),
-                                  contacts: Vec::new() });
+                                  contacts: Vec::new() }
+            });
+
         for contact in contacts {
             current_bootstrap.contacts.push(contact.clone());
         }
