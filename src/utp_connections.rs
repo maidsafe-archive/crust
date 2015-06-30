@@ -37,13 +37,21 @@ pub struct UtpStream {
     socket: UtpSocket,
 }
 
-//impl UtpStream {
-//
+impl UtpStream {
+
 //    /// Returns the socket address of the local half of this uTP connection.
 //    pub fn local_addr(&self) -> Result<SocketAddr> {
 //        self.socket.local_addr()
 //    }
-//}
+
+    pub fn break_reads(&self) -> Result<()> {
+        self.socket.break_reads()
+    }
+    
+    pub fn close(&mut self) -> Result<()> {
+        self.socket.close()
+    }
+}
 
 impl Read for UtpStream {
     fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
@@ -99,15 +107,15 @@ where T: Encodable {
     #[allow(dead_code)]  // This code isn't dead, but without this modifier it won't compile
     pub fn close(mut self) -> Result<()> {
         if let Some(_) = self.stream {
-            println!("Dropping Sender");
+            //println!("Dropping Sender");
             // Tell the writer thread to exit
             self.stream = None;
 
-            println!("Waiting on write thread");
+            //println!("Waiting on write thread");
             // Wait until the writer thread exits
             let _ = self.write_thread.join();
 
-            println!("Waiting on read thread");
+            //println!("Waiting on read thread");
             // Wait until the reader thread exits
             let _ = self.read_thread.join();
         }
@@ -117,7 +125,7 @@ where T: Encodable {
 
 //impl <T> Drop for OutUtpStream<T> {
 //    fn drop(&mut self) {
-//        println!("OutUtpStream drops");
+//        //println!("OutUtpStream drops");
 //    }
 //}
 
@@ -167,7 +175,7 @@ pub fn listen(port: u16) -> IoResult<(Receiver<(UtpSocket, SocketAddr)>, u16)> {
                 }
             }
         }
-        println!("UTP listen exits");
+        //println!("UTP listen exits");
     });
     Ok((rx, port))
 }
@@ -179,8 +187,6 @@ pub fn upgrade_utp<'a, 'b, I, O>(newconnection: UtpSocket) -> IoResult<(InUtpStr
 where I: Send + Decodable + 'static, O: Send + Encodable + 'static {
     // Clone the new connection socket
     let newconnection2 = newconnection.try_clone();
-    let mut newconnection_ = newconnection.try_clone();
-    let mut newconnection2_ = newconnection.try_clone();
     // Convert the new connection sockets into streams
     let stream_read : UtpStream = newconnection.into();
     let stream_write : UtpStream = newconnection2.into();
@@ -198,7 +204,7 @@ where I: Send + Decodable + 'static, O: Send + Encodable + 'static {
                   };
                 match data {
                     Ok(a) => {
-                        println!("UTP reader reads packet");
+                        //println!("UTP reader reads packet");
                         // Try to send, and if we can't, then the channel is closed.
                         if in_snd.send(a).is_err() {
                             break;
@@ -212,9 +218,10 @@ where I: Send + Decodable + 'static, O: Send + Encodable + 'static {
                 }
             }
         }
-        println!("UTP reader closes connection");
-        let _ = newconnection_.close();
-        println!("UTP reader exits");
+        //println!("UTP reader closes connection");
+        let mut s1 = buffer.get_mut();
+        let _ = s1.close();
+        //println!("UTP reader exits");
     }).unwrap();
 
     // Configure a sending thread    
@@ -227,16 +234,18 @@ where I: Send + Decodable + 'static, O: Send + Encodable + 'static {
                 let data = out_rec.recv();
                 if data.is_err() { break; }
                 let data = data.unwrap();
-                println!("UTP writer writes packet");
+                //println!("UTP writer writes packet");
                 let _ = encoder.encode(&[&data]);
                 let _ = encoder.flush();
             }
         }
-        println!("UTP writer breaks reads on reader thread");
-        let _ = newconnection2_.break_reads();
-        println!("UTP writer closes connection");
-        let _ = newconnection2_.close();
-        println!("UTP writer exits");
+        //println!("UTP writer breaks reads on reader thread");
+        let _ = buffer.flush();
+        let mut s1 = buffer.get_mut();
+        let _ = s1.break_reads();
+        //println!("UTP writer closes connection");
+        let _ = s1.close();
+        //println!("UTP writer exits");
     }).unwrap();
     
     Ok((in_rec, OutUtpStream::new(out_snd, read_thread, write_thread)))
@@ -274,37 +283,27 @@ mod test {
                 break;
             }
         }
-        println!("About to close");
+        //println!("About to close");
         assert!(o.close().is_ok());
-        println!("About to join thread");
+        //println!("About to join thread");
         assert!(read_thread.join().is_ok());
-        // println!("Responses: {:?}", responses);
+        // //println!("Responses: {:?}", responses);
         assert_eq!(10, responses.len());
     }
 
 #[test]
     fn test_multiple_nodes_small_stream() {
         const MSG_COUNT: usize = 5;
-        const NODE_COUNT: usize = 51;
+        const NODE_COUNT: usize = 101;
 
-        let (event_receiver, port) = listen(5483).unwrap();
-        let mut vector_senders = Vec::new();
-        let mut vector_receiver = Vec::new();
-        for _ in 0..NODE_COUNT {
-            let (i, o) = connect_utp(SocketAddr::from_str(&format!("127.0.0.1:{}", port)).unwrap()).unwrap();
-            let boxed_output: Box<OutUtpStream<u64>> = Box::new(o);
-            vector_senders.push(boxed_output);
-            let boxed_input: Box<InUtpStream<(u64, u64)>> = Box::new(i);
-            vector_receiver.push(boxed_input);
-        }
-
+        let (event_receiver, port) = listen(5483).unwrap();                // one fd
         // event_receiver
         let _ = thread::spawn(move || {
-            for x in event_receiver.iter() {
+            for x in event_receiver.iter() {                               // +101 fds
                 let (connection, _) = x;
                 // Spawn a new thread for each connection that we get.
                 let _ = thread::spawn(move || {
-                    let (i, o) = upgrade_utp(connection).unwrap();
+                    let (i, o) = upgrade_utp(connection).unwrap();         // +303 fds
                     for x in i.iter() {
                         let x:u32 = x;
                         if o.send((x, x + 1)).is_err() { break; }
@@ -312,6 +311,16 @@ mod test {
                 });
             }
         });
+
+        let mut vector_senders = Vec::new();
+        let mut vector_receiver = Vec::new();
+        for _ in 0..NODE_COUNT {
+            let (i, o) = connect_utp(SocketAddr::from_str(&format!("127.0.0.1:{}", port)).unwrap()).unwrap(); // + 404 fds
+            let boxed_output: Box<OutUtpStream<u64>> = Box::new(o);
+            vector_senders.push(boxed_output);
+            let boxed_input: Box<InUtpStream<(u64, u64)>> = Box::new(i);
+            vector_receiver.push(boxed_input);
+        }
 
         //  send
         for v in &mut vector_senders {
@@ -323,7 +332,7 @@ mod test {
         // Collect everything that we get back.
         let mut responses: Vec<(u64, u64)> = Vec::new();
 
-        println!("Collecting responses ...");
+        //println!("Collecting responses ...");
         loop {
            let _ = match vector_receiver.pop() {
                 None => break, // empty
@@ -339,7 +348,7 @@ mod test {
         }
 
         //  close sender
-        println!("Closing senders ...");
+        //println!("Closing senders ...");
         loop {
            let _ = match vector_senders.pop() {
                 None => break, // empty
@@ -347,7 +356,7 @@ mod test {
             };
         }
 
-        // println!("Responses: {:?}", responses);
+        // //println!("Responses: {:?}", responses);
         assert_eq!((NODE_COUNT * MSG_COUNT), responses.len());
     }
 
