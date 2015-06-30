@@ -50,6 +50,8 @@ pub enum Event {
     NewMessage(Endpoint, Bytes),
     /// Invoked when a new connection to a peer is established.  Passes the peer's endpoint.
     NewConnection(Endpoint),
+    /// Invoked when a new bootstrap connection to a new peer is established.  Passes the bootstrap peer's endpoint.
+    NewBootstrapConnection(Endpoint),
     /// Invoked when a connection to a peer is lost.  Passes the peer's endpoint.
     LostConnection(Endpoint),
 }
@@ -75,6 +77,68 @@ impl ConnectionManager {
                                                stop_called: false,
                                              }));
         ConnectionManager { state: state, beacon_guid_and_port: None, }
+    }
+
+/// Proposed API changes
+    /// Starts listening for connections on all supported protocols. Specified hint port for a
+    /// given protocol (via config file) will be tried first. If it fails to start on these,
+    /// it defaults to random / OS provided endpoints for each supported protocol.
+    /// The actual Port used will be returned on which it started listening for each protocol.
+    pub fn start_listening(&mut self) -> io::Result<(Vec<Port>)> {
+        unimplemented!();
+    }
+
+    /// Only useful for tests to find out listening becaon port
+    #[cfg(test)]
+    pub fn get_beacon_acceptor_port(&self) -> Option<u16> {
+        unimplemented!();
+    }
+    /// OR
+
+
+    pub fn start_beacon_acceptor(&mut self) -> io::Result<u16> {
+        unimplemented!();
+    }
+
+    /// Returns all endpoints this node is accepting on. As it uses getifaddrs() internally to
+    /// get accepting endpoints of all interfaces, some endpoints may not be useful for upper layer.
+    /// An overlay layer can pass the list of endpoints to a peer node which is interested in making
+    /// a connection.
+    /// Note: Future version will include own exteral endpoint as well (UPnP & Hole Punching).
+    pub fn get_own_endpoints(&self) -> io::Result<(Vec<Endpoint>)> {
+        unimplemented!();
+    }
+
+    /// This method tries to connect (bootstrap to exisiting network) to the default or provided
+    /// override list of bootstrap nodes (via config file).
+    ///
+    /// If override is not set in the config file, it will attempt to read a local cached file
+    /// to populate the list to use for bootstrapping. It will then try to connect to all of the
+    /// endpoints in the list.  In addition to cache, it will try to use the beacon port
+    /// (provided via config file) to connect to a peer on the same LAN.
+    /// For more details on bootstrap cache file refer
+    /// https://github.com/maidsafe/crust/blob/master/docs/bootstrap.md
+    ///
+    /// If override is set in config file, it will try to connect to all of the endpoints in
+    /// the override list.
+    /// It will return once a connection with any of the endpoints is established with Ok(Endpoint)
+    /// and it will drop all other ongoing attempts.  Note that `beacon_port` has no effect if
+    /// `bootstrap_list` is `Some`; i.e. passing an explicit list ensures we only get connected to
+    /// one of the nodes on the list - we don't fall back to use the beacon protocol.
+    ///
+    /// It will return Err if it fails to connect to any peer.
+    /// I will drops all connections if called again.
+    pub fn bootstrap(&self) {
+        unimplemented!();
+    }
+
+    pub fn send(&self, endpoints: Vec<Endpoint>, message: Bytes) -> io::Result<()> {
+        unimplemented!();
+    }
+
+    /// Closes connection with the specified endpoint.
+    pub fn drop_node(&self, endpoint: Endpoint) {
+        unimplemented!();
     }
 
     /// Starts listening on all supported protocols. Specified hint will be tried first. If it fails
