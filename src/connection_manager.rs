@@ -88,50 +88,54 @@ impl ConnectionManager {
         unimplemented!();
     }
 
-    /// Only useful for tests to find out listening becaon port
+    /// Returns becaon acceptor port if beacon acceptor is accepting.
+    /// Returs `None` if the beacon acceptor is not accepting (beacon port may be taken by
+    /// another process).
+    /// Only useful for tests.
     #[cfg(test)]
     pub fn get_beacon_acceptor_port(&self) -> Option<u16> {
-        unimplemented!();
-    }
-    /// OR
-
-
-    pub fn start_beacon_acceptor(&mut self) -> io::Result<u16> {
         unimplemented!();
     }
 
     /// Returns all endpoints this node is accepting on. As it uses getifaddrs() internally to
     /// get accepting endpoints of all interfaces, some endpoints may not be useful for upper layer.
-    /// An overlay layer can pass the list of endpoints to a peer node which is interested in making
+    /// An overlay layer can pass this vector of endpoints to a peer node which is interested in making
     /// a connection.
-    /// Note: Future version will include own exteral endpoint as well (UPnP & Hole Punching).
+    /// Note: Future version of crust will include own exteral endpoint in the returned vector
+    /// as well (UPnP & Hole Punching).
     pub fn get_own_endpoints(&self) -> io::Result<(Vec<Endpoint>)> {
         unimplemented!();
     }
 
-    /// This method tries to connect (bootstrap to exisiting network) to the default or provided
-    /// override list of bootstrap nodes (via config file).
+    /// This method tries to connect (bootstrap to existing network) to the default or provided
+    /// override list of bootstrap nodes (via config file named <current executable>.config).
     ///
-    /// If override is not set in the config file, it will attempt to read a local cached file
-    /// to populate the list to use for bootstrapping. It will then try to connect to all of the
-    /// endpoints in the list.  In addition to cache, it will try to use the beacon port
-    /// (provided via config file) to connect to a peer on the same LAN.
+    /// If `override_default_bootstrap_methods` is not set in the config file, it will attempt to read
+    /// a local cached file named <current executable>.bootstrap.cache to populate the list endpoints
+    /// to use for bootstrapping. It will also try `hard_coded_contacts` from config file.
+    /// In addition, it will try to use the beacon port (provided via config file) to connect to a peer
+    /// on the same LAN.
     /// For more details on bootstrap cache file refer
     /// https://github.com/maidsafe/crust/blob/master/docs/bootstrap.md
     ///
-    /// If override is set in config file, it will try to connect to all of the endpoints in
-    /// the override list.
-    /// It will return once a connection with any of the endpoints is established with Ok(Endpoint)
-    /// and it will drop all other ongoing attempts.  Note that `beacon_port` has no effect if
-    /// `bootstrap_list` is `Some`; i.e. passing an explicit list ensures we only get connected to
-    /// one of the nodes on the list - we don't fall back to use the beacon protocol.
-    ///
-    /// It will return Err if it fails to connect to any peer.
-    /// I will drops all connections if called again.
-    pub fn bootstrap(&self) {
+    /// If `override_default_bootstrap_methods` is set in config file, it will only try to connect to
+    /// the endpoints in the override list (`hard_coded_contacts`).
+
+    /// All connections (if any) will be dropped before bootstrap attempt is made.
+    /// This method returns immediately after dropping any active connections.endpoints
+    /// New bootstrap connections will be notified by `NewBootstrapConnection` event.
+    /// Its upper layer's responsibility to maintain or drop these connections.
+    /// Maximum of `max_bootstrap_connection` bootstrap connections will be made and further connection
+    /// attempts will stop.
+    /// It will reiterate the list of all endpoints until it gets at least one connection.
+    pub fn bootstrap(&self, max_bootstrap_connection: u8) {
         unimplemented!();
     }
 
+    /// Sends a message to specified addresses (endpoint). Returns Ok(()) if the sending might
+    /// succeed at least to one endpoint, and returns an Err if all the addresses are not connected.
+    /// Return value of Ok does not mean that the data will be received. It is possible for the
+    /// corresponding connection(s) to hang up immediately after this function returns Ok.
     pub fn send(&self, endpoints: Vec<Endpoint>, message: Bytes) -> io::Result<()> {
         unimplemented!();
     }
