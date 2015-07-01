@@ -125,18 +125,19 @@ impl ConnectionManager {
     /// This method returns immediately after dropping any active connections.endpoints
     /// New bootstrap connections will be notified by `NewBootstrapConnection` event.
     /// Its upper layer's responsibility to maintain or drop these connections.
-    /// Maximum of `max_bootstrap_connection` bootstrap connections will be made and further connection
+    /// Maximum of `max_successful_bootstrap_connection` bootstrap connections will be made and further connection
     /// attempts will stop.
     /// It will reiterate the list of all endpoints until it gets at least one connection.
-    pub fn bootstrap(&self, max_bootstrap_connection: u8) {
+    pub fn bootstrap(&self, max_successful_bootstrap_connection: u8) {
         unimplemented!();
     }
 
     /// Sends a message to specified addresses (endpoint). Returns Ok(()) if the sending might
-    /// succeed at least to one endpoint, and returns an Err if all the addresses are not connected.
+    /// succeed to one endpoint, and returns an Err if all the addresses are not connected.
+    /// Note: The message is sent to only one of the available connections.
     /// Return value of Ok does not mean that the data will be received. It is possible for the
     /// corresponding connection(s) to hang up immediately after this function returns Ok.
-    pub fn send(&self, endpoints: Vec<Endpoint>, message: Bytes) -> io::Result<()> {
+    pub fn send(&self, peer: Vec<Endpoint>, message: Bytes) -> io::Result<()> {
         unimplemented!();
     }
 
