@@ -132,8 +132,9 @@ impl ConnectionManager {
         unimplemented!();
     }
 
-    /// Sends a message to specified addresses (endpoint). Returns Ok(()) if the sending might
-    /// succeed to one endpoint, and returns an Err if all the addresses are not connected.
+    /// Sends a message to specified peer's endpoints. Returns Ok(ep) if the sending might
+    /// succeed to one endpoint (ep), and returns an Err if all the addresses are not connected.
+    /// If connection corresponding to provided endpoint doesn't exist, the next endpoint (provided) will be tried.
     /// Note: The message is sent to only one of the available connections.
     /// Return value of Ok does not mean that the data will be received. It is possible for the
     /// corresponding connection(s) to hang up immediately after this function returns Ok.
