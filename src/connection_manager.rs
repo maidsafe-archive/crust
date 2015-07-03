@@ -141,6 +141,18 @@ impl ConnectionManager {
         unimplemented!();
     }
 
+    /// Opens connection(s) to a remote peer. `peer` is a vector of endpoints (of supported protocols)
+    /// of the remote peer. All the endpoints will be attempted. On every successfull connection
+    /// `Event::NewConnection` with connected `Endpoint` will be sent to the event channel. On failure, nothing
+    /// is reported. Failed attempts are not notified back up to the caller. If the caller wants to know of a
+    /// failed attempt, it must maintain a record of the attempt itself which times out if a
+    /// corresponding Event::NewConnection isn't received
+    /// For details on handling of connect in different protocol refer
+    /// https://github.com/dirvine/crust/blob/master/docs/connect.md
+    pub fn connect(&self, peer: Vec<Endpoint>){
+        unimplemented!();
+    }
+
     /// Closes connection with the specified endpoint.
     pub fn drop_node(&self, endpoint: Endpoint) {
         unimplemented!();
