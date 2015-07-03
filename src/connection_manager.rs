@@ -142,7 +142,7 @@ impl ConnectionManager {
     }
 
     /// Opens connection(s) to a remote peer. `peer` is a vector of endpoints (of supported protocols)
-    /// of the remote peer. All the endpoints will be attempted. On every successfull connection
+    /// of the remote peer. All the endpoints will be attempted. On every successful connection
     /// `Event::NewConnection` with connected `Endpoint` will be sent to the event channel. On failure, nothing
     /// is reported. Failed attempts are not notified back up to the caller. If the caller wants to know of a
     /// failed attempt, it must maintain a record of the attempt itself which times out if a
