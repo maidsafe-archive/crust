@@ -39,16 +39,16 @@ Several methods are used for NAT traversal, UpNP, hole punching [See here for TC
 
 ##Todo Items
 
-## [0.1.4]
+## [0.1.5]
+- [ ] [#1132] (https://maidsafe.atlassian.net/browse/MAID-1132) Integrate UPnP
 - [ ] [#1139] (https://maidsafe.atlassian.net/browse/MAID-1139) Remove Crust API’s start_listening2() and expose `get_own_endpoints()`
 - [ ] [#1142] (https://maidsafe.atlassian.net/browse/MAID-1142) Add UTP protocol support to crust
 
-## [0.1.5]
-- [ ] [#1132] (https://maidsafe.atlassian.net/browse/MAID-1132) Integrate UPnP
+## [0.1.6]
 - [ ] [#1136] (https://maidsafe.atlassian.net/browse/MAID-1136) Add a new event `NewBootstrapConnection`
 - [ ] [#1140] (https://maidsafe.atlassian.net/browse/MAID-1140) Memory-mapped file I/O for bootstrap file
 
-## [0.1.6]
+## [0.1.7]
 - [ ] Have ConnectionManager guarantee at most one connection between any two nodes
 - [ ] Utp Networking
   - [ ] Utp live port and backup random port selection
@@ -57,7 +57,7 @@ Several methods are used for NAT traversal, UpNP, hole punching [See here for TC
   - [ ] Add connection established/lost messages to be passed to routing (via channel)
   - [ ] Benchmark tx/rv number of packets
   - [ ] Benchmark tx/rc Bytes per second
-  - [ ] NAT traversal  [See here for tcp NAT traversal] (http://www.cmlab.csie.ntu.edu.tw/~franklai/NATBT.pdf)
+  - [ ] NAT traversal  [See here for tcp NAT traversal](http://www.cmlab.csie.ntu.edu.tw/~franklai/NATBT.pdf)
 - [ ] Benchmark tx/rv number of packets
 - [ ] Benchmark tx/rc Bytes per second
 - [ ] Implement NAT hole punch (udp) for reliable udp
