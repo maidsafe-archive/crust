@@ -288,7 +288,7 @@ impl ConnectionManager {
         }
         // println!("connection_manager::stop There are {} TCP ports being listened on", listening_ports.len());
         for port in listening_ports {
-            let _ = transport::connect(Endpoint::tcp(("127.0.0.1", port.get_port()))).unwrap();
+            let _ = transport::connect(Endpoint::tcp(("127.0.0.1", port.get_port())));
         }
     }
 
@@ -645,7 +645,7 @@ mod test {
      }
 
 #[test]
-    fn bootstrap() {
+    fn bootstrap_tcp() {
         let (cm1_i, _) = channel();
         let mut cm1 = ConnectionManager::new(cm1_i);
         let (cm1_eps, beacon_port) = cm1.start_listening(vec![Port::Tcp(0)], Some(0u16)).unwrap();
@@ -663,7 +663,24 @@ mod test {
     }
 
 #[test]
-    fn connection_manager() {
+    fn bootstrap_utp() {
+        let (cm1_i, _) = channel();
+        let mut cm1 = ConnectionManager::new(cm1_i);
+        let (cm1_eps, beacon_port) = cm1.start_listening(vec![Port::Utp(0)], Some(0u16)).unwrap();
+        println!("   cm1 listening port {} beaconing port {}", cm1_eps[0].get_port(), beacon_port.unwrap());
+
+        thread::sleep_ms(1000);
+        let (cm2_i, _) = channel();
+        let mut cm2 = ConnectionManager::new(cm2_i);
+        let (cm2_eps, _) = cm2.start_listening(vec![Port::Utp(0)], beacon_port.clone()).unwrap();
+        println!("   cm2 listening port {}", cm2_eps[0].get_port());
+        if cm2.bootstrap(None, beacon_port).is_err() {
+            panic!("Failed to bootstrap");
+        }
+    }
+
+#[test]
+    fn connection_manager_tcp() {
         // Wait 2 seconds until previous bootstrap test ends. If not, that test connects to these endpoints.
         thread::sleep_ms(2000);
         let run_cm = |cm: ConnectionManager, o: Receiver<Event>| {
@@ -697,6 +714,51 @@ mod test {
         let mut cm2 = ConnectionManager::new(cm2_i);
         let (cm2_ports, _) = cm2.start_listening(vec![Port::Tcp(0)], beacon_port.clone()).unwrap();
         let cm2_eps = cm2_ports.iter().map(|p| Endpoint::tcp(("127.0.0.1", p.get_port())));
+        cm2.connect(cm1_eps.collect());
+        cm1.connect(cm2_eps.collect());
+
+        let runner1 = run_cm(cm1, cm1_o);
+        let runner2 = run_cm(cm2, cm2_o);
+
+        assert!(runner1.join().is_ok());
+        assert!(runner2.join().is_ok());
+    }
+
+#[test]
+    fn connection_manager_utp() {
+        // Wait 2 seconds until previous bootstrap test ends. If not, that test connects to these endpoints.
+        thread::sleep_ms(2000);
+        let run_cm = |cm: ConnectionManager, o: Receiver<Event>| {
+            spawn(move || {
+                for i in o.iter() {
+                    match i {
+                        Event::NewConnection(other_ep) => {
+                            // println!("Connected {:?}", other_ep);
+                            let _ = cm.send(other_ep.clone(), encode(&"hello world".to_string()));
+                        },
+                        Event::NewMessage(_, _) => {
+                            // println!("New message from {:?} data:{:?}",
+                            //          from_ep, decode::<String>(data));
+                            break;
+                        },
+                        Event::LostConnection(_) => {
+                            // println!("Lost connection to {:?}", other_ep);
+                        }
+                    }
+                }
+                // println!("done");
+            })
+        };
+
+        let (cm1_i, cm1_o) = channel();
+        let mut cm1 = ConnectionManager::new(cm1_i);
+        let (cm1_ports, beacon_port) = cm1.start_listening(vec![Port::Utp(0)], Some(0u16)).unwrap();
+        let cm1_eps = cm1_ports.iter().map(|p| Endpoint::utp(("127.0.0.1", p.get_port())));
+
+        let (cm2_i, cm2_o) = channel();
+        let mut cm2 = ConnectionManager::new(cm2_i);
+        let (cm2_ports, _) = cm2.start_listening(vec![Port::Utp(0)], beacon_port.clone()).unwrap();
+        let cm2_eps = cm2_ports.iter().map(|p| Endpoint::utp(("127.0.0.1", p.get_port())));
         cm2.connect(cm1_eps.collect());
         cm1.connect(cm2_eps.collect());
 
@@ -844,7 +906,7 @@ mod test {
     }
 
 #[test]
-    fn connection_manager_start() {
+    fn connection_manager_start_tcp() {
         // Wait 2 seconds until previous bootstrap test ends. If not, that test connects to these endpoints.
         thread::sleep_ms(2000);
         let (cm_tx, cm_rx) = channel();
@@ -885,6 +947,63 @@ mod test {
             let mut cm_aux = ConnectionManager::new(cm_aux_tx);
             // setting the listening port to be greater than 4455 will make the test hanging
             let _ = match cm_aux.start_listening(vec![Port::Tcp(4454)], None) {
+                Ok(result) => {
+                      // println!("aux listening on {} ",
+                      //          match result.0[0].clone() { Endpoint::Tcp(socket_addr) => { socket_addr } });
+                      result.0[0].clone()
+                    },
+                Err(_) => panic!("aux connection manager start_listening failure")
+            };
+            // changing this to cm_beacon_addr will make the test hanging
+            cm_aux.connect(cm_listen_addrs);
+        }).join();
+        thread::sleep_ms(100);
+
+        let _ = thread.join();
+    }
+
+#[test]
+    fn connection_manager_start_utp() {
+        // Wait 2 seconds until previous bootstrap test ends. If not, that test connects to these endpoints.
+        thread::sleep_ms(2000);
+        let (cm_tx, cm_rx) = channel();
+        let mut cm = ConnectionManager::new(cm_tx);
+        let cm_listen_ports = match cm.start_listening(vec![Port::Utp(4455)], Some(5483)) {
+            Ok(result) => result.0,
+            Err(_) => panic!("main connection manager start_listening failure")
+        };
+        let cm_listen_addrs = cm_listen_ports.iter().map(|p| Endpoint::utp(("127.0.0.1", p.get_port()))).collect();
+
+        let thread = spawn(move || {
+           loop {
+                let event = cm_rx.recv();
+                if event.is_err() {
+                  // println!("stop listening");
+                  break;
+                }
+                match event.unwrap() {
+                    Event::NewMessage(_, _) => {
+                        // println!("received from {} with a new message : {}",
+                        //          match endpoint { Endpoint::Tcp(socket_addr) => socket_addr },
+                        //          match String::from_utf8(bytes) { Ok(msg) => msg, Err(_) => "unknown msg".to_string() });
+                    },
+                    Event::NewConnection(_) => {
+                        // println!("adding new node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
+                    },
+                    Event::LostConnection(_) => {
+                        // println!("dropping node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
+                        break;
+                    }
+                }
+            }
+          });
+        thread::sleep_ms(100);
+
+        let _ = spawn(move || {
+            let (cm_aux_tx, _) = channel();
+            let mut cm_aux = ConnectionManager::new(cm_aux_tx);
+            // setting the listening port to be greater than 4455 will make the test hanging
+            let _ = match cm_aux.start_listening(vec![Port::Utp(4454)], None) {
                 Ok(result) => {
                       // println!("aux listening on {} ",
                       //          match result.0[0].clone() { Endpoint::Tcp(socket_addr) => { socket_addr } });

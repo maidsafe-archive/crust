@@ -61,7 +61,8 @@ be chosen. If no listening port is supplied, a random port for each supported
 protocol will be chosen.
 
 Options:
-  -t PORT, --tcp-port=PORT  Start listening on the specified TCP port.
+  -p PORT, --port=PORT      Start listening on the specified port.
+  -u, --utp                 Use UTP instead of TCP.
   -b PORT, --beacon=PORT    Set the beacon port.  If the node can, it will
                             listen for UDP broadcasts on this port.  If
                             bootstrapping using provided contacts or the cached
@@ -76,7 +77,8 @@ Options:
 #[derive(RustcDecodable, Debug)]
 struct Args {
     arg_peer: Vec<PeerEndpoint>,
-    flag_tcp_port: Option<u16>,
+    flag_port: Option<u16>,
+    flag_utp: bool,
     flag_beacon: Option<u16>,
     flag_speed: Option<u64>,
     flag_help: bool,
@@ -100,8 +102,8 @@ struct CliArgs {
 }
 
 #[derive(Debug)]
-enum PeerEndpoint {
-    Tcp(SocketAddr),
+struct PeerEndpoint {
+    pub addr: SocketAddr,
 }
 
 impl Decodable for PeerEndpoint {
@@ -114,7 +116,7 @@ impl Decodable for PeerEndpoint {
                     "Could not decode {} as valid IPv4 or IPv6 address.", str).as_str()));
             },
         };
-        Ok(PeerEndpoint::Tcp(address))
+        Ok(PeerEndpoint { addr: address })
     }
 }
 
@@ -270,21 +272,27 @@ fn main() {
     let args: Args = Docopt::new(USAGE)
                             .and_then(|docopt| docopt.decode())
                             .unwrap_or_else(|error| error.exit());
+    let utp_mode = args.flag_utp;
+    if utp_mode {
+        println!("Started in UTP mode");
+    } else {
+        println!("Started in TCP mode");
+    }
 
     // Convert peer endpoints to usable bootstrap list.
     let bootstrap_peers = if args.arg_peer.is_empty() {
         None
     } else {
         Some(Vec::<Endpoint>::from_iter(args.arg_peer.iter().map(|endpoint| {
-            Endpoint::Tcp(match *endpoint { PeerEndpoint::Tcp(address) => address, })
+            if utp_mode { Endpoint::Utp((*endpoint).addr) } else { Endpoint::Tcp((*endpoint).addr) }
         })))
     };
 
     // Convert requested listening port(s) to usable collection.
     let mut listening_hints: Vec<Port> = vec![];
-    match args.flag_tcp_port {
-        Some(port) => listening_hints.push(Port::Tcp(port)),
-        None => (),
+    match args.flag_port {
+        Some(port) => listening_hints.push(if utp_mode { Port::Utp(port) } else { Port::Tcp(port) }),
+        None => listening_hints.push(if utp_mode { Port::Utp(0) } else { Port::Tcp(0) }),
     };
 
     // Set up beacon port
@@ -451,17 +459,13 @@ fn main() {
             if args.cmd_connect {
                 // docopt should ensure arg_peer is valid
                 assert!(args.arg_peer.is_some());
-                let peer = vec![Endpoint::Tcp(match args.arg_peer.unwrap() {
-                    PeerEndpoint::Tcp(address) => address,
-                })];
+                let peer = vec![if utp_mode { Endpoint::Utp(args.arg_peer.unwrap().addr) } else { Endpoint::Tcp(args.arg_peer.unwrap().addr)}];
                 connection_manager.connect(peer);
             } else if args.cmd_send {
                 // docopt should ensure arg_peer and arg_message are valid
                 assert!(args.arg_peer.is_some());
                 assert!(!args.arg_message.is_empty());
-                let peer = Endpoint::Tcp(match args.arg_peer.unwrap() {
-                    PeerEndpoint::Tcp(address) => address,
-                });
+                let peer = if utp_mode { Endpoint::Utp(args.arg_peer.unwrap().addr) } else { Endpoint::Tcp(args.arg_peer.unwrap().addr)};
                 let mut message: String = args.arg_message[0].clone();
                 for i in 1..args.arg_message.len() {
                     message.push_str(" ");
