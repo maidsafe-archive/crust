@@ -42,7 +42,7 @@ Several methods are used for NAT traversal, UpNP, hole punching [See here for TC
 ## [0.1.5]
 - [ ] [#1132] (https://maidsafe.atlassian.net/browse/MAID-1132) Integrate UPnP
 
-## [0.1.6] (RUST-3 Sprint tasks)
+## [0.1.6] RUST-3 Sprint tasks
 - [ ] [MAID-1149](https://maidsafe.atlassian.net/browse/MAID-1149) Split bootstrap cache file in two files (config & cache)
 - [ ] [MAID-1136](https://maidsafe.atlassian.net/browse/MAID-1136) Add a new event NewBootstrapConnection and make bootstrap method non blocking.
 - [ ] [MAID-1146](https://maidsafe.atlassian.net/browse/MAID-1146) Attempt Bootstrap continuously until it succeeds
