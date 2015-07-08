@@ -1,4 +1,6 @@
 # CRUST - Change Log
+## [0.1.5]
+- Updated dependency's version
 
 ## [0.1.4]
 - Made ConnectionManager::seek_peers() private
