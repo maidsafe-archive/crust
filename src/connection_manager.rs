@@ -22,10 +22,11 @@ use std::io;
 use std::sync::{Arc, mpsc, Mutex, Weak};
 use std::thread;
 use std::net::IpAddr;
+use std;
 
 use beacon;
 use bootstrap_handler::{BootstrapHandler, parse_contacts};
-use config_utils::{Config, Contact, Contacts};
+use config_utils::{Config, Contact, Contacts, default_config_path, read_config_file};
 use getifaddrs::getifaddrs;
 use transport;
 use transport::{Endpoint, Port};
@@ -79,7 +80,7 @@ impl ConnectionManager {
                                                stop_called: false,
                                              }));
         // FIXME temp stub
-        let config = Config{ preferred_port: Port::Tcp(0u16),
+        let config = Config{ preferred_ports: vec![Port::Tcp(0u16)],
                              hard_coded_contacts: Contacts::new(),
                              beacon_port: 0u16,
                            };
@@ -88,17 +89,32 @@ impl ConnectionManager {
     }
 
     pub fn new2(event_pipe: mpsc::Sender<Event>, config_path: Option<PathBuf>) -> ConnectionManager {
+        let config_path = match config_path {  // FIXME move to utility fn and cleanup
+            Some(path) => { path },
+            None => {
+                match default_config_path() {
+                    Ok(path) => { path },
+                    Err(e) => {
+                        println!("Crust failed to get default config path: {}", e);
+                        std::process::exit(1);  // FIXME find appropriate number
+                    }
+                }
+            }
+        };
+
+        let config = match read_config_file(&config_path) {
+            Ok(config) => { config },
+            Err(e) => {
+                println!("Crust failed to read_config_file at {:?}; Error: {:?}", config_path, e);
+                std::process::exit(1);  // FIXME find appropriate number
+            }
+        };
+
         let state = Arc::new(Mutex::new(State{ event_pipe: event_pipe,
                                                connections: HashMap::new(),
                                                listening_ports: HashSet::new(),
                                                stop_called: false,
                                              }));
-
-        let config = Config{ preferred_port: Port::Tcp(0u16),
-                             hard_coded_contacts: Contacts::new(),
-                             beacon_port: 0u16,
-                           };
-
 
         ConnectionManager { state: state, beacon_guid_and_port: None, config: config }
     }

@@ -35,7 +35,7 @@ pub type Contacts = Vec<Contact>;
 
 #[derive(PartialEq, Debug, RustcDecodable, RustcEncodable)]
 pub struct Config {
-    pub preferred_port: Port,
+    pub preferred_ports: Vec<Port>,
     pub hard_coded_contacts: Contacts,
     pub beacon_port: u16,
 }
@@ -94,7 +94,7 @@ mod test {
             let new_contact = Contact{ endpoint: Endpoint::Tcp(SocketAddr::V4(addr_0)) };
                 hard_coded_contacts.push(new_contact);
         }
-        let config = Config{ preferred_port: Port::Tcp(rand::random::<u16>()),
+        let config = Config{ preferred_ports: vec![Port::Tcp(rand::random::<u16>())],
                              hard_coded_contacts: hard_coded_contacts,
                              beacon_port: rand::random::<u16>(),
                            };
@@ -102,6 +102,6 @@ mod test {
         let file_name = default_config_path().unwrap(); // FIXME
         assert_eq!(write_config_file(&file_name, &config).ok(), Some(()));
         assert_eq!(read_config_file(&file_name).ok(), Some(config));
-        default_config_path();
+// FIXME delete temp file
     }
 }
