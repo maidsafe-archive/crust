@@ -26,7 +26,7 @@ use std::sync::mpsc;
 use std::str::FromStr;
 use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
 use std::cmp::Ordering;
-use utp::UtpSocket;
+use utp::UtpCloneableSocket as UtpSocket;
 pub type Bytes = Vec<u8>;
 
 /// Enum representing endpoint of supported protocols

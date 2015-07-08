@@ -23,14 +23,15 @@
 #![deny(bad_style, deprecated, drop_with_repr_extern, improper_ctypes, non_shorthand_field_patterns,
         overflowing_literals, plugin_as_library, private_no_mangle_fns, private_no_mangle_statics,
         raw_pointer_derive, stable_features, unconditional_recursion, unknown_lints,
-        unsafe_code, unsigned_negation, unused_allocation, unused_attributes,
-        unused_comparisons, unused_features, unused_parens, while_true)]
-#![warn(trivial_casts, trivial_numeric_casts, unused, unused_extern_crates, unused_import_braces,
+        unsafe_code, unsigned_negation, unused, unused_allocation, unused_attributes,
+        unused_comparisons, unused_parens, while_true)]
+#![warn(trivial_casts, trivial_numeric_casts, unused_extern_crates, unused_import_braces,
         unused_qualifications, unused_results, variant_size_differences)]
 #![doc(html_logo_url = "http://maidsafe.net/img/Resources/branding/maidsafe_logo.fab2.png",
        html_favicon_url = "http://maidsafe.net/img/favicon.ico",
        html_root_url = "http:///dirvine.github.io/crust/crust/")]
-#![feature(ip_addr, ip, udp, arc_weak)]
+#![allow(unused_features)]
+#![feature(arc_weak, core_intrinsics, ip_addr, ip, core, alloc, udp, scoped)]
 
 extern crate cbor;
 extern crate rand;
@@ -45,12 +46,15 @@ extern crate itertools;
 #[cfg(test)]
 mod test {
     use std::env;
+    use std::io::{Write, stderr};
+    use std::intrinsics::abort;
 
     #[test]
+    #[allow(unsafe_code)]
     pub fn check_rust_unit_testing_is_not_parallel() {
         match env::var_os("RUST_TEST_THREADS") {
             Some(val) => assert!(val.into_string().unwrap() == "1"),
-            None => panic!("RUST_TEST_THREADS needs to be 1 for the crust unit tests to work"),
+            None => { let _ = writeln!(&mut stderr(), "\n   *** RUST_TEST_THREADS needs to be 1 for the crust unit tests to work ***"); unsafe { abort() }; },
         }
     }
 }
