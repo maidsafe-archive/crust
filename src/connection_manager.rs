@@ -24,12 +24,15 @@ use std::thread;
 use std::net::IpAddr;
 
 use beacon;
-use bootstrap_handler::{BootstrapHandler, Contacts, Contact, parse_contacts};
+use bootstrap_handler::{BootstrapHandler, parse_contacts};
+use config_utils::{Config, Contact, Contacts};
 use getifaddrs::getifaddrs;
 use transport;
 use transport::{Endpoint, Port};
 
 use asynchronous::{Deferred,ControlFlow};
+
+use std::path::PathBuf;
 
 /// Type used to represent serialised data in a message.
 pub type Bytes = Vec<u8>;
@@ -40,6 +43,7 @@ type WeakState = Weak<Mutex<State>>;
 pub struct ConnectionManager {
     state: Arc<Mutex<State>>,
     beacon_guid_and_port: Option<(beacon::GUID, u16)>,
+    config: Config,
 }
 
 /// Enum representing different events that will be sent over the asynchronous channel to the user
@@ -74,7 +78,29 @@ impl ConnectionManager {
                                                listening_ports: HashSet::new(),
                                                stop_called: false,
                                              }));
-        ConnectionManager { state: state, beacon_guid_and_port: None, }
+        // FIXME temp stub
+        let config = Config{ preferred_port: Port::Tcp(0u16),
+                             hard_coded_contacts: Contacts::new(),
+                             beacon_port: 0u16,
+                           };
+
+        ConnectionManager { state: state, beacon_guid_and_port: None, config: config }
+    }
+
+    pub fn new2(event_pipe: mpsc::Sender<Event>, config_path: Option<PathBuf>) -> ConnectionManager {
+        let state = Arc::new(Mutex::new(State{ event_pipe: event_pipe,
+                                               connections: HashMap::new(),
+                                               listening_ports: HashSet::new(),
+                                               stop_called: false,
+                                             }));
+
+        let config = Config{ preferred_port: Port::Tcp(0u16),
+                             hard_coded_contacts: Contacts::new(),
+                             beacon_port: 0u16,
+                           };
+
+
+        ConnectionManager { state: state, beacon_guid_and_port: None, config: config }
     }
 
     /// Starts listening on all supported protocols. Specified hint will be tried first. If it fails

@@ -24,15 +24,7 @@ use std::env;
 use rustc_serialize::json;
 use std::io;
 use itertools::Itertools;
-
-
-#[derive(PartialEq, Eq, Hash, Debug, Clone, RustcDecodable, RustcEncodable)]
-pub struct Contact {
-    pub endpoint: Endpoint,
-}
-
-
-pub type Contacts = Vec<Contact>;
+use config_utils::{Contact, Contacts};
 
 
 #[derive(PartialEq, Debug, RustcDecodable, RustcEncodable)]
@@ -149,7 +141,7 @@ impl BootstrapHandler {
 }
 
 #[cfg(test)]
-    mod test {
+mod test {
     use super::*;
     use std::net;
     use std::net::SocketAddr;
@@ -158,6 +150,7 @@ impl BootstrapHandler {
     use std::fs;
     use rand;
     use std::path::Path;
+    use config_utils::{Contact, Contacts};
 
     #[test]
     fn serialisation() {
