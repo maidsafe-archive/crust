@@ -109,6 +109,8 @@ impl ConnectionManager {
                 if hint.is_empty() {  // overriding botstrap file if hint provided in api, remove once api is changed
                     hint.push(bootstrap_handler.read_preferred_port()
                               .unwrap_or(Port::Tcp(0)));
+                    hint.push(bootstrap_handler.read_preferred_port()
+                              .unwrap_or(Port::Utp(0)));
                 }
 
                 for h in &hint {
@@ -124,7 +126,10 @@ impl ConnectionManager {
                 let listening_ips = getifaddrs();
                 for port in &listening_ports {
                     for ip in &listening_ips {
-                        contacts.push(Contact { endpoint: Endpoint::tcp((ip.addr.clone(), port.get_port())) });
+                        match port {
+                            &Port::Tcp(p) => contacts.push(Contact { endpoint: Endpoint::tcp((ip.addr.clone(), p)) }),
+                            &Port::Utp(p) => contacts.push(Contact { endpoint: Endpoint::utp((ip.addr.clone(), p)) }),
+                        }
                     }
                 }
 
@@ -421,32 +426,64 @@ impl ConnectionManager {
     }
 
     fn listen(&self, port: &Port) {
-        let acceptor = transport::new_acceptor(port).unwrap();
-        let local_port = acceptor.local_port();
+        match port {
+            &Port::Tcp(port) => {
+                let acceptor = transport::new_acceptor(&Port::Tcp(port)).unwrap();
+                let local_port = acceptor.local_port();
 
-        let mut weak_state = self.state.downgrade();
+                let mut weak_state = self.state.downgrade();
 
-        let _ = lock_mut_state(&mut weak_state, |s| Ok(s.listening_ports.insert(local_port)));
+                let _ = lock_mut_state(&mut weak_state, |s| Ok(s.listening_ports.insert(local_port)));
 
-        let _ = thread::Builder::new().name("ConnectionManager listen".to_string()).spawn(move || {
-            while let Ok(trans) = transport::accept(&acceptor) {
-                let weak_state_copy = weak_state.clone();
-                let mut stop_called = false;
-                {
-                    let _ = lock_mut_state(&weak_state_copy, |state: &mut State| {
-                        stop_called = state.stop_called;
-                        Ok(())
-                    });
-                }
-                if stop_called {
-                    break
-                }
-                let _ = thread::Builder::new().name("ConnectionManager accept".to_string())
-                                              .spawn(move || {
-                    let _ = handle_accept(weak_state_copy, trans);
+                let _ = thread::Builder::new().name("ConnectionManager TCP listen".to_string()).spawn(move || {
+                    while let Ok(trans) = transport::accept(&acceptor) {
+                        let weak_state_copy = weak_state.clone();
+                        let mut stop_called = false;
+                        {
+                            let _ = lock_mut_state(&weak_state_copy, |state: &mut State| {
+                                stop_called = state.stop_called;
+                                Ok(())
+                            });
+                        }
+                        if stop_called {
+                            break
+                        }
+                        let _ = thread::Builder::new().name("ConnectionManager TCP accept".to_string())
+                                                      .spawn(move || {
+                            let _ = handle_accept(weak_state_copy, trans);
+                        });
+                    }
                 });
-            }
-        });
+            },
+            &Port::Utp(port) => {
+                let acceptor = transport::new_acceptor(&Port::Utp(port)).unwrap();
+                let local_port = acceptor.local_port();
+
+                let mut weak_state = self.state.downgrade();
+
+                let _ = lock_mut_state(&mut weak_state, |s| Ok(s.listening_ports.insert(local_port)));
+
+                let _ = thread::Builder::new().name("ConnectionManager UTP listen".to_string()).spawn(move || {
+                    while let Ok(trans) = transport::accept(&acceptor) {
+                        let weak_state_copy = weak_state.clone();
+                        let mut stop_called = false;
+                        {
+                            let _ = lock_mut_state(&weak_state_copy, |state: &mut State| {
+                                stop_called = state.stop_called;
+                                Ok(())
+                            });
+                        }
+                        if stop_called {
+                            break
+                        }
+                        let _ = thread::Builder::new().name("ConnectionManager UTP accept".to_string())
+                                                      .spawn(move || {
+                            let _ = handle_accept(weak_state_copy, trans);
+                        });
+                    }
+                });
+            },
+        }
     }
 }
 

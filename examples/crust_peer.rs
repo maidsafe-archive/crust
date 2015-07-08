@@ -339,7 +339,7 @@ fn main() {
         Err(e) => {
             if args.flag_speed.is_some() {
                 stdout = red_foreground(stdout);
-                println!("Failed to connect to a peer.  Exiting.");
+                println!("Failed to connect to a peer due to {}.  Exiting.", e);
                 let _ = reset_foreground(stdout);
                 std::process::exit(2);
             };
