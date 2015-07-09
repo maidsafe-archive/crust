@@ -109,7 +109,7 @@ impl BootstrapHandler {
 
         let mut current_bootstrap = self.read_bootstrap_file()
             .unwrap_or_else(|e| {
-                println!("Failed to read Bootstrap file : {:?} ; {:?} ; Creating New file.",
+                println!("Failed to read Bootstrap cache file : {:?} ; {:?} ; Creating New file.",
                 self.file_name, e);
                 Bootstrap{ contacts: Vec::new() }
             });

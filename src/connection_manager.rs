@@ -150,12 +150,12 @@ impl ConnectionManager {
 
                 let mut bootstrap_handler = BootstrapHandler::new();
 
-                // if hint.is_empty() {  // overriding botstrap file if hint provided in api, remove once api is changed
-                //     hint.push(bootstrap_handler.read_preferred_port()
-                //               .unwrap_or(Port::Tcp(0)));
-                // }
+                if hint.is_empty() {  // overriding config file if hint provided in api, remove once api is changed
+                    hint.push(self.config.preferred_ports.get(0)
+                              .unwrap_or(&Port::Tcp(0)).clone());
+                }
 
-                for h in &self.config.preferred_ports {
+                for h in &hint {
                    self.listen(h);
                 }
 
@@ -190,8 +190,9 @@ impl ConnectionManager {
         };
 
         if self.beacon_guid_and_port.is_none() {
-            if hint.is_empty() {
-                hint.push(Port::Tcp(0));
+            if hint.is_empty() {  // overriding config file if hint provided in api, remove once api is changed
+                hint.push(self.config.preferred_ports.get(0)
+                    .unwrap_or(&Port::Tcp(0)).clone());
             }
 
             for h in &hint {
