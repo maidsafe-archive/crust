@@ -29,8 +29,6 @@ use config_utils::{Contact, Contacts};
 
 #[derive(PartialEq, Debug, RustcDecodable, RustcEncodable)]
 pub struct Bootstrap {
-    pub preferred_port: Port,
-    pub hard_coded_contacts: Contacts,
     pub contacts: Contacts,
 }
 
@@ -113,9 +111,7 @@ impl BootstrapHandler {
             .unwrap_or_else(|e| {
                 println!("Failed to read Bootstrap file : {:?} ; {:?} ; Creating New file.",
                 self.file_name, e);
-                Bootstrap{ preferred_port: Port::Tcp(0u16),
-                                  hard_coded_contacts: Vec::new(),
-                                  contacts: Vec::new() }
+                Bootstrap{ contacts: Vec::new() }
             });
 
         for contact in contacts {
@@ -126,18 +122,8 @@ impl BootstrapHandler {
 
     pub fn get_serialised_contacts(&self) -> io::Result<(Vec<u8>)> {
         let bootstrap = try!(self.read_bootstrap_file());
-        let mut combined_contacts = bootstrap.contacts.clone();
-        for contact in bootstrap.hard_coded_contacts {
-            combined_contacts.push(contact.clone());
-        }
-        Ok(serialise_contacts(combined_contacts))
+        Ok(serialise_contacts(bootstrap.contacts))
     }
-
-    pub fn read_preferred_port(&self) -> io::Result<(Port)> {
-        let bootstrap = try!(self.read_bootstrap_file());
-        Ok(bootstrap.preferred_port)
-    }
-
 }
 
 #[cfg(test)]
@@ -159,9 +145,7 @@ mod test {
         let mut contacts = Contacts::new();
         contacts.push(contact.clone());
         contacts.push(contact.clone());
-        let bootstrap = Bootstrap { preferred_port: Port::Tcp(5483u16),
-                                    hard_coded_contacts: contacts.clone(),
-                                    contacts: contacts.clone() };
+        let bootstrap = Bootstrap { contacts: contacts };
         let encoded = json::encode(&bootstrap).unwrap();
         let decoded: Bootstrap = json::decode(&encoded).unwrap();
         assert_eq!(bootstrap, decoded);

@@ -88,6 +88,8 @@ impl ConnectionManager {
         ConnectionManager { state: state, beacon_guid_and_port: None, config: config }
     }
 
+    /// Constructs a connection manager. User needs to create an asynchronous channel, and provide
+    /// the sender half to this method. Receiver will receive all `Event`s from this library.
     pub fn new2(event_pipe: mpsc::Sender<Event>, config_path: Option<PathBuf>) -> ConnectionManager {
         let config_path = match config_path {  // FIXME move to utility fn and cleanup
             Some(path) => { path },
@@ -148,12 +150,12 @@ impl ConnectionManager {
 
                 let mut bootstrap_handler = BootstrapHandler::new();
 
-                if hint.is_empty() {  // overriding botstrap file if hint provided in api, remove once api is changed
-                    hint.push(bootstrap_handler.read_preferred_port()
-                              .unwrap_or(Port::Tcp(0)));
-                }
+                // if hint.is_empty() {  // overriding botstrap file if hint provided in api, remove once api is changed
+                //     hint.push(bootstrap_handler.read_preferred_port()
+                //               .unwrap_or(Port::Tcp(0)));
+                // }
 
-                for h in &hint {
+                for h in &self.config.preferred_ports {
                    self.listen(h);
                 }
 
@@ -297,7 +299,7 @@ impl ConnectionManager {
                             for contacts in read_contacts.contacts {
                                 combined_endpoint_list.push(contacts.endpoint);
                             }
-                            for contacts in read_contacts.hard_coded_contacts {
+                            for contacts in self.config.hard_coded_contacts.clone() {
                                 combined_endpoint_list.push(contacts.endpoint);
                             }
                         },
