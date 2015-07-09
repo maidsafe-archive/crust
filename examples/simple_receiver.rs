@@ -44,7 +44,7 @@ fn main() {
     // We receive events (e.g. new connection, message received) from the ConnectionManager via an
     // asynchronous channel.
     let (channel_sender, channel_receiver) = channel();
-    let mut connection_manager = ConnectionManager::new(channel_sender);
+    let mut connection_manager = ConnectionManager::new(channel_sender, None);
 
     // Start listening.  Try to listen on port 8888 for TCP and for UDP broadcasts (beacon) on 9999.
     let listening_endpoints = match connection_manager.start_listening(vec![Port::Tcp(8888)],

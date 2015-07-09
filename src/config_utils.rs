@@ -66,6 +66,14 @@ pub fn write_config_file(file_name : &PathBuf, config: &Config) -> io::Result<()
     file.sync_all()
 }
 
+// pub fn write_default_config_file()-> io::Result<()> {
+//     let config = Config{ preferred_ports: vec![Port::Tcp(0u16)],
+//                          hard_coded_contacts: Contacts::new(),
+//                          beacon_port: 0u16,
+//                        };
+//     try!(write_config_file();
+
+// }
 
 #[cfg(test)]
 mod test {

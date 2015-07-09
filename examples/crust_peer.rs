@@ -298,7 +298,7 @@ fn main() {
 
     // Construct ConnectionManager and start listening
     let (channel_sender, channel_receiver) = channel();
-    let mut connection_manager = ConnectionManager::new(channel_sender);
+    let mut connection_manager = ConnectionManager::new(channel_sender, None);
     stdout = green_foreground(stdout);
     let listening_endpoints = match connection_manager.start_listening2(listening_hints,
                                                                        beacon_port) {
