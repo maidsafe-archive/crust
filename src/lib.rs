@@ -43,6 +43,9 @@ extern crate utp;
 extern crate itertools;
 
 #[cfg(test)]
+extern crate tempfile;
+
+#[cfg(test)]
 mod test {
     use std::env;
 
@@ -68,3 +71,4 @@ pub mod connection_manager;
 
 pub use connection_manager::{Event, ConnectionManager};
 pub use transport::{Endpoint, Port};
+pub use config_utils::write_config_file;

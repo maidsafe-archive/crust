@@ -34,6 +34,7 @@ extern crate docopt;
 extern crate rand;
 extern crate term;
 extern crate time;
+extern crate tempfile;
 
 use core::iter::FromIterator;
 use docopt::Docopt;
@@ -47,8 +48,10 @@ use std::io::Write;
 use std::net::SocketAddr;
 use std::str::FromStr;
 use std::thread;
+use tempfile::NamedTempFile;
 
-use crust::{ConnectionManager, Endpoint, Port};
+use crust::{ConnectionManager, Endpoint, Port, write_config_file};
+//use crust::config_utils::{Config, Contacts, write_file};
 
 static USAGE: &'static str = "
 Usage:
@@ -266,6 +269,17 @@ fn reset_foreground(stdout: Option<Box<term::StdoutTerminal>>) ->
     }
 }
 
+// TODO update to take listening port once api is updated
+fn make_temp_config(beacon_port: Option<u16>) -> NamedTempFile {
+    let temp_config = NamedTempFile::new().unwrap();
+    let _ = write_config_file(Some(temp_config.path().to_path_buf()),
+                      None,
+                      None,
+                      beacon_port,
+                      ).unwrap();
+    temp_config
+}
+
 fn main() {
     let args: Args = Docopt::new(USAGE)
                             .and_then(|docopt| docopt.decode())
@@ -287,21 +301,17 @@ fn main() {
         None => (),
     };
 
-    // Set up beacon port
-    let beacon_port = match args.flag_beacon {
-        Some(port) => Some(port),
-        None => Some(9999u16),
-    };
-
     let mut stdout = term::stdout();
     let mut stdout_copy = term::stdout();
 
+    let temp_config = make_temp_config(args.flag_beacon);
+
     // Construct ConnectionManager and start listening
     let (channel_sender, channel_receiver) = channel();
-    let mut connection_manager = ConnectionManager::new(channel_sender, None);
+    let mut connection_manager = ConnectionManager::new(channel_sender, Some(temp_config.path().to_path_buf()));
     stdout = green_foreground(stdout);
     let listening_endpoints = match connection_manager.start_listening2(listening_hints,
-                                                                       beacon_port) {
+                                                                        None) {
         Ok(endpoints) => endpoints,
         Err(e) => {
             println!("Connection manager failed to start listening: {}", e);
@@ -321,7 +331,7 @@ fn main() {
     // Try to bootstrap.  If this fails and we're trying to run the speed test, then fail overall.
     // Otherwise, if no peer endpoints were provided and bootstrapping fails, assume this is
     // OK, i.e. this is the first node of a new network.
-    let connected_peer = match connection_manager.bootstrap(bootstrap_peers.clone(), beacon_port) {
+    let connected_peer = match connection_manager.bootstrap(bootstrap_peers.clone(), None) {
         Ok(endpoint) => {
             stdout = green_foreground(stdout);
             println!("Bootstrapped to {:?}", endpoint);

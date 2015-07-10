@@ -15,7 +15,6 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use transport::{Endpoint, Port};
 use time;
 use std::fs::File;
 use std::io::prelude::*;
@@ -131,7 +130,7 @@ mod test {
     use super::*;
     use std::net;
     use std::net::SocketAddr;
-    use transport::{Endpoint, Port};
+    use transport::Endpoint;
     use rustc_serialize::json;
     use std::fs;
     use rand;

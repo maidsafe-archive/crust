@@ -26,7 +26,7 @@ use std;
 
 use beacon;
 use bootstrap_handler::{BootstrapHandler, parse_contacts};
-use config_utils::{Config, Contact, Contacts, default_config_path, read_config_file};
+use config_utils::{Config, Contact, Contacts, default_config_path, read_file};
 use getifaddrs::getifaddrs;
 use transport;
 use transport::{Endpoint, Port};
@@ -73,44 +73,16 @@ struct State {
 impl ConnectionManager {
     /// Constructs a connection manager. User needs to create an asynchronous channel, and provide
     /// the sender half to this method. Receiver will receive all `Event`s from this library.
-    pub fn new2(event_pipe: mpsc::Sender<Event>) -> ConnectionManager {
-        let state = Arc::new(Mutex::new(State{ event_pipe: event_pipe,
-                                               connections: HashMap::new(),
-                                               listening_ports: HashSet::new(),
-                                               stop_called: false,
-                                             }));
-        // FIXME temp stub
-        let config = Config{ preferred_ports: vec![Port::Tcp(0u16)],
-                             hard_coded_contacts: Contacts::new(),
-                             beacon_port: 0u16,
-                           };
-
-        ConnectionManager { state: state, beacon_guid_and_port: None, config: config }
-    }
-
-    /// Constructs a connection manager. User needs to create an asynchronous channel, and provide
-    /// the sender half to this method. Receiver will receive all `Event`s from this library.
     pub fn new(event_pipe: mpsc::Sender<Event>, config_path: Option<PathBuf>) -> ConnectionManager {
-        let config_path = match config_path {  // FIXME move to utility fn and cleanup
-            Some(path) => { path },
-            None => {
-                match default_config_path() {
-                    Ok(path) => { path },
-                    Err(e) => {
-                        println!("Crust failed to get default config path: {}", e);
-                        std::process::exit(1);  // FIXME find appropriate number
-                    }
-                }
-            }
-        };
+        let config_path = config_path.unwrap_or(default_config_path().unwrap_or_else(|e| {
+            println!("Crust failed to get default config path: {}", e);
+            std::process::exit(1);  // FIXME find appropriate number
+        }));
 
-        let config = match read_config_file(&config_path) {
-            Ok(config) => { config },
-            Err(e) => {
-                println!("Crust failed to read_config_file at {:?}; Error: {:?}", config_path, e);
-                std::process::exit(1);  // FIXME find appropriate number
-            }
-        };
+        let config = read_file(&config_path).unwrap_or_else(|e| {
+            println!("Crust failed to read_config_file at {:?}; Error: {:?}", config_path, e);
+            std::process::exit(2);  // FIXME find appropriate number
+        });
 
         let state = Arc::new(Mutex::new(State{ event_pipe: event_pipe,
                                                connections: HashMap::new(),
@@ -626,6 +598,8 @@ mod test {
     use cbor::{Encoder, Decoder};
     use transport::{Endpoint, Port};
     use std::sync::{Mutex, Arc};
+    use config_utils::{Config, Contacts, write_file};
+    use tempfile::NamedTempFile;
 
     fn encode<T>(value: &T) -> Bytes where T: Encodable
     {
@@ -691,21 +665,32 @@ mod test {
          }
      }
 
+
+    fn make_temp_config(beacon_port: Option<u16>) -> NamedTempFile {
+        let config = Config{ preferred_ports: vec![Port::Tcp(0)],
+                              hard_coded_contacts: Contacts::new(),
+                              beacon_port: beacon_port.unwrap_or(0u16),
+                           };
+        let temp_config = NamedTempFile::new().unwrap();
+        write_file(&temp_config.path().to_path_buf(), &config).unwrap();
+        temp_config
+    }
+
+
 #[test]
     fn bootstrap() {
         let (cm1_i, _) = channel();
-        let config = Config{ preferred_ports: vec![Port::Tcp(0)],
-                             hard_coded_contacts: Contacts::new(),
-                             beacon_port: 0u16,
-                           };
+        let temp_config1 = make_temp_config(None);
 
-        let mut cm1 = ConnectionManager::new(cm1_i, None);
+        let mut cm1 = ConnectionManager::new(cm1_i, Some(temp_config1.path().to_path_buf()));
         let (cm1_eps, beacon_port) = cm1.start_listening(vec![Port::Tcp(0)], Some(0u16)).unwrap();
         println!("   cm1 listening port {} beaconing port {}", cm1_eps[0].get_port(), beacon_port.unwrap());
 
         thread::sleep_ms(1000);
+        let temp_config2 = make_temp_config(Some(beacon_port.unwrap()));
+
         let (cm2_i, _) = channel();
-        let mut cm2 = ConnectionManager::new(cm2_i, None);
+        let mut cm2 = ConnectionManager::new(cm2_i, Some(temp_config2.path().to_path_buf()));
         let (cm2_eps, _) = cm2.start_listening(vec![Port::Tcp(0)], beacon_port.clone()).unwrap();
         println!("   cm2 listening port {}", cm2_eps[0].get_port());
         match cm2.bootstrap(None, beacon_port) {
@@ -740,13 +725,18 @@ mod test {
             })
         };
 
+        let mut temp_configs = vec![make_temp_config(None)];
+
+
         let (cm1_i, cm1_o) = channel();
-        let mut cm1 = ConnectionManager::new(cm1_i, None);
+        let mut cm1 = ConnectionManager::new(cm1_i, Some(temp_configs.last().unwrap().path().to_path_buf()));
         let (cm1_ports, beacon_port) = cm1.start_listening(vec![Port::Tcp(0)], Some(0u16)).unwrap();
         let cm1_eps = cm1_ports.iter().map(|p| Endpoint::tcp(("127.0.0.1", p.get_port())));
 
+        temp_configs.push(make_temp_config(Some(beacon_port.unwrap())));
+
         let (cm2_i, cm2_o) = channel();
-        let mut cm2 = ConnectionManager::new(cm2_i, None);
+        let mut cm2 = ConnectionManager::new(cm2_i, Some(temp_configs.last().unwrap().path().to_path_buf()));
         let (cm2_ports, _) = cm2.start_listening(vec![Port::Tcp(0)], beacon_port.clone()).unwrap();
         let cm2_eps = cm2_ports.iter().map(|p| Endpoint::tcp(("127.0.0.1", p.get_port())));
         cm2.connect(cm1_eps.collect());
@@ -899,9 +889,11 @@ mod test {
     fn connection_manager_start() {
         // Wait 2 seconds until previous bootstrap test ends. If not, that test connects to these endpoints.
         thread::sleep_ms(2000);
+        let temp_config = make_temp_config(None);
+
         let (cm_tx, cm_rx) = channel();
-        let mut cm = ConnectionManager::new(cm_tx, None);
-        let cm_listen_ports = match cm.start_listening(vec![Port::Tcp(4455)], Some(5483)) {
+        let mut cm = ConnectionManager::new(cm_tx, Some(temp_config.path().to_path_buf()));
+        let cm_listen_ports = match cm.start_listening(vec![Port::Tcp(0)], Some(0)) {
             Ok(result) => result.0,
             Err(_) => panic!("main connection manager start_listening failure")
         };
@@ -933,8 +925,9 @@ mod test {
         thread::sleep_ms(100);
 
         let _ = spawn(move || {
+            let temp_config = make_temp_config(None);
             let (cm_aux_tx, _) = channel();
-            let mut cm_aux = ConnectionManager::new(cm_aux_tx, None);
+            let mut cm_aux = ConnectionManager::new(cm_aux_tx, Some(temp_config.path().to_path_buf()));
             // setting the listening port to be greater than 4455 will make the test hanging
             let _ = match cm_aux.start_listening(vec![Port::Tcp(4454)], None) {
                 Ok(result) => {

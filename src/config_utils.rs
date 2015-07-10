@@ -18,12 +18,10 @@
 use transport::{Endpoint, Port};
 use std::fs::File;
 use std::io::prelude::*;
-use std::path;
 use std::path::PathBuf;
 use std::env;
 use rustc_serialize::json;
 use std::io;
-use std::convert::AsRef;
 
 #[derive(PartialEq, Eq, Hash, Debug, Clone, RustcDecodable, RustcEncodable)]
 pub struct Contact {
@@ -51,7 +49,7 @@ pub fn default_config_path() -> io::Result<(PathBuf)> {
     Ok(current_dir)
 }
 
-pub fn read_config_file(file_name : &PathBuf) -> io::Result<(Config)> {
+pub fn read_file(file_name : &PathBuf) -> io::Result<(Config)> {
     let mut file = try!(File::open(file_name));
     let mut contents = String::new();
     let _ = try!(file.read_to_string(&mut contents));
@@ -60,20 +58,43 @@ pub fn read_config_file(file_name : &PathBuf) -> io::Result<(Config)> {
                                          format!("Failed to decode config file: {}", error)))
 }
 
-pub fn write_config_file(file_name : &PathBuf, config: &Config) -> io::Result<()> {
+pub fn write_file(file_name : &PathBuf, config: &Config) -> io::Result<()> {
     let mut file = try!(File::create(file_name));
     try!(write!(&mut file, "{}", json::as_pretty_json(&config)));
     file.sync_all()
 }
 
-// pub fn write_default_config_file()-> io::Result<()> {
-//     let config = Config{ preferred_ports: vec![Port::Tcp(0u16)],
-//                          hard_coded_contacts: Contacts::new(),
-//                          beacon_port: 0u16,
-//                        };
-//     try!(write_config_file();
+/// Writes config file and parametes to user specified or default location
+pub fn write_config_file(file_path : Option<PathBuf>,
+                         preferred_ports: Option<Vec<Port>>,
+                         hard_coded_endpoints: Option<Vec<Endpoint>>,
+                         beacon_port: Option<u16>) -> io::Result<(PathBuf)> {
+    let mut hard_coded_contacts: Contacts = vec![];
+    match hard_coded_endpoints {
+        Some(endpoints) => {
+            for endpoint in endpoints {
+                hard_coded_contacts.push(Contact{endpoint: endpoint});
+            }
+        },
+        None => {}
+    };
 
-// }
+    let config = Config{ preferred_ports: preferred_ports.unwrap_or(vec![Port::Tcp(0u16)]),
+                         hard_coded_contacts: hard_coded_contacts,
+                         beacon_port: beacon_port.unwrap_or(0u16),
+                       };
+
+    let config_path = match file_path{
+        Some(path)=> { path},
+        None => {
+            try!(default_config_path())
+        }
+    };
+
+    try!(write_file(&config_path, &config));
+    Ok(config_path)
+}
+
 
 #[cfg(test)]
 mod test {
@@ -81,10 +102,8 @@ mod test {
     use std::net;
     use std::net::SocketAddr;
     use transport::{Endpoint, Port};
-    use rustc_serialize::json;
     use std::fs;
     use rand;
-    use std::path::Path;
 
     #[test]
     fn read_config_file_test() {
@@ -108,8 +127,8 @@ mod test {
                            };
 
         let file_name = default_config_path().unwrap(); // FIXME
-        assert_eq!(write_config_file(&file_name, &config).ok(), Some(()));
-        assert_eq!(read_config_file(&file_name).ok(), Some(config));
-// FIXME delete temp file
+        assert_eq!(write_file(&file_name, &config).ok(), Some(()));
+        assert_eq!(read_file(&file_name).ok(), Some(config));
+        let _  = fs::remove_file(&file_name);
     }
 }
