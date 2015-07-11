@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::net::{TcpListener, TcpStream, SocketAddr, Shutdown, IpAddr, SocketAddrV4};
+use std::net::{TcpListener, TcpStream, SocketAddr, Shutdown};
 use std::io::{BufReader, ErrorKind};
 use std::io::Result as IoResult;
 use cbor::{Encoder, CborError, Decoder};
@@ -24,8 +24,6 @@ use std::marker::PhantomData;
 use rustc_serialize::{Decodable, Encodable};
 use std::sync::mpsc;
 use std::sync::mpsc::Receiver;
-use getifaddrs;
-use igd;
 
 pub type InTcpStream<T> = Receiver<T>;
 
@@ -78,36 +76,6 @@ pub fn listen(port: u16) -> IoResult<(Receiver<(TcpStream, SocketAddr)>, TcpList
 
     let tcp_listener2 = try!(tcp_listener.try_clone());
     let _ = thread::Builder::new().name("TCP listener".to_string()).spawn(move || {
-        for ifa in getifaddrs::getifaddrs() {
-            let ifa = match ifa.addr {
-                IpAddr::V4(a) => a,
-                _ => continue,
-            };
-            match tcp_listener2.local_addr() {
-                Ok(addr) => {
-                    match addr {
-                        SocketAddr::V4(addr) => {
-                            let port = addr.port();
-                            let _ = thread::Builder::new()
-                                .name("IGD".to_string()).spawn(move || {
-                                match igd::search_gateway_from(ifa) {
-                                    Ok(gateway) => {
-                                        let _ = gateway
-                                            .add_port(igd::PortMappingProtocol::TCP,
-                                                      port,
-                                                      SocketAddrV4::new(ifa, port),
-                                                      0, "crust");
-                                    },
-                                    Err(_) => (),
-                                }
-                            });
-                        },
-                        _ => (),
-                    }
-                },
-                Err(_) => (),
-            }
-        }
         loop {
             // if tx.is_closed() {       // FIXME (Prakash)
             //     break;
