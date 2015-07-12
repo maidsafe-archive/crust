@@ -76,12 +76,12 @@ impl ConnectionManager {
     pub fn new(event_pipe: mpsc::Sender<Event>, config_path: Option<PathBuf>) -> ConnectionManager {
         let config_path = config_path.unwrap_or(default_config_path().unwrap_or_else(|e| {
             println!("Crust failed to get default config path: {}", e);
-            std::process::exit(1);  // FIXME find appropriate number
+            std::process::exit(1);
         }));
 
         let config = read_file(&config_path).unwrap_or_else(|e| {
             println!("Crust failed to read_config_file at {:?}; Error: {:?}", config_path, e);
-            std::process::exit(2);  // FIXME find appropriate number
+            std::process::exit(1);
         });
 
         let state = Arc::new(Mutex::new(State{ event_pipe: event_pipe,
@@ -683,7 +683,7 @@ mod test {
         let temp_config1 = make_temp_config(None);
 
         let mut cm1 = ConnectionManager::new(cm1_i, Some(temp_config1.path().to_path_buf()));
-        let (cm1_eps, beacon_port) = cm1.start_listening(vec![Port::Tcp(0)], Some(0u16)).unwrap();
+        let (cm1_eps, beacon_port) = cm1.start_listening(vec![Port::Tcp(0)], None).unwrap();
         println!("   cm1 listening port {} beaconing port {}", cm1_eps[0].get_port(), beacon_port.unwrap());
 
         thread::sleep_ms(1000);
@@ -730,14 +730,14 @@ mod test {
 
         let (cm1_i, cm1_o) = channel();
         let mut cm1 = ConnectionManager::new(cm1_i, Some(temp_configs.last().unwrap().path().to_path_buf()));
-        let (cm1_ports, beacon_port) = cm1.start_listening(vec![Port::Tcp(0)], Some(0u16)).unwrap();
+        let (cm1_ports, beacon_port) = cm1.start_listening(vec![Port::Tcp(0)], None).unwrap();
         let cm1_eps = cm1_ports.iter().map(|p| Endpoint::tcp(("127.0.0.1", p.get_port())));
 
         temp_configs.push(make_temp_config(Some(beacon_port.unwrap())));
 
         let (cm2_i, cm2_o) = channel();
         let mut cm2 = ConnectionManager::new(cm2_i, Some(temp_configs.last().unwrap().path().to_path_buf()));
-        let (cm2_ports, _) = cm2.start_listening(vec![Port::Tcp(0)], beacon_port.clone()).unwrap();
+        let (cm2_ports, _) = cm2.start_listening(vec![Port::Tcp(0)], None).unwrap();
         let cm2_eps = cm2_ports.iter().map(|p| Endpoint::tcp(("127.0.0.1", p.get_port())));
         cm2.connect(cm1_eps.collect());
         cm1.connect(cm2_eps.collect());

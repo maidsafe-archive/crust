@@ -110,7 +110,7 @@ mod test {
         let mut hard_coded_contacts = Vec::new();
         for _ in 0..10 {
             let mut random_addr_0 = Vec::with_capacity(4);
-            random_addr_0.push(rand::random::<u8>());  // FIXME (Prakash) move to utility
+            random_addr_0.push(rand::random::<u8>());  // TODO move to utility
             random_addr_0.push(rand::random::<u8>());
             random_addr_0.push(rand::random::<u8>());
             random_addr_0.push(rand::random::<u8>());
@@ -126,7 +126,7 @@ mod test {
                              beacon_port: rand::random::<u16>(),
                            };
 
-        let file_name = default_config_path().unwrap(); // FIXME
+        let file_name = default_config_path().unwrap();
         assert_eq!(write_file(&file_name, &config).ok(), Some(()));
         assert_eq!(read_file(&file_name).ok(), Some(config));
         let _  = fs::remove_file(&file_name);

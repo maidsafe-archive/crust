@@ -19,12 +19,12 @@
 //! Reliable p2p network connections in Rust with NAT traversal.
 //! One of the most needed libraries for any server-less / decentralised projects
 
-// #![forbid(missing_docs, warnings)]
-// #![deny(bad_style, deprecated, drop_with_repr_extern, improper_ctypes, non_shorthand_field_patterns,
-//         overflowing_literals, plugin_as_library, private_no_mangle_fns, private_no_mangle_statics,
-//         raw_pointer_derive, stable_features, unconditional_recursion, unknown_lints,
-//         unsafe_code, unsigned_negation, unused_allocation, unused_attributes,
-//         unused_comparisons, unused_features, unused_parens, while_true)]
+#![forbid(missing_docs, warnings)]
+#![deny(bad_style, deprecated, drop_with_repr_extern, improper_ctypes, non_shorthand_field_patterns,
+        overflowing_literals, plugin_as_library, private_no_mangle_fns, private_no_mangle_statics,
+        raw_pointer_derive, stable_features, unconditional_recursion, unknown_lints,
+        unsafe_code, unsigned_negation, unused_allocation, unused_attributes,
+        unused_comparisons, unused_features, unused_parens, while_true)]
 #![warn(trivial_casts, trivial_numeric_casts, unused, unused_extern_crates, unused_import_braces,
         unused_qualifications, unused_results, variant_size_differences)]
 #![doc(html_logo_url = "http://maidsafe.net/img/Resources/branding/maidsafe_logo.fab2.png",

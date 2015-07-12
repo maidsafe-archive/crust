@@ -25,19 +25,34 @@
         unused_qualifications, unused_results, variant_size_differences)]
 
 extern crate crust;
+extern crate tempfile;
 
 use std::net::SocketAddr;
 use std::str::FromStr;
 use std::sync::mpsc::channel;
 use std::thread;
+use tempfile::NamedTempFile;
 
-use crust::{ConnectionManager, Endpoint};
+use crust::{ConnectionManager, Endpoint, write_config_file};
+
+// TODO update to take listening port once api is updated
+fn make_temp_config(beacon_port: Option<u16>) -> NamedTempFile {
+    let temp_config = NamedTempFile::new().unwrap();
+    let _ = write_config_file(Some(temp_config.path().to_path_buf()),
+                      None,
+                      None,
+                      beacon_port,
+                      ).unwrap();
+    temp_config
+}
 
 fn main() {
+    let temp_config = make_temp_config(Some(9999));
     // We receive events (e.g. new connection, message received) from the ConnectionManager via an
     // asynchronous channel.
     let (channel_sender, channel_receiver) = channel();
-    let connection_manager = ConnectionManager::new(channel_sender, None);
+    let connection_manager = ConnectionManager::new(channel_sender,
+                                                    Some(temp_config.path().to_path_buf()));
 
     // Start a thread running a loop which will receive and display responses from the peer.
     let _ = thread::Builder::new().name("SimpleSender event handler".to_string()).spawn(move || {
