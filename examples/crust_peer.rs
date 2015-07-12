@@ -48,10 +48,10 @@ use std::io::Write;
 use std::net::SocketAddr;
 use std::str::FromStr;
 use std::thread;
+use std::path::PathBuf;
 use tempfile::NamedTempFile;
 
 use crust::{ConnectionManager, Endpoint, Port, write_config_file};
-//use crust::config_utils::{Config, Contacts, write_file};
 
 static USAGE: &'static str = "
 Usage:
@@ -71,6 +71,7 @@ Options:
                             contacts fails, the node will broadcast to the
                             beacon port in an attempt to connect to a peer on
                             the same LAN.
+  -c CONF, --config=CONF    Use the specified config file to set the configuration
   -s RATE, --speed=RATE     Keep sending random data at a maximum speed of RATE
                             bytes/second to the first connected peer.
   -h, --help                Display this help message.
@@ -81,6 +82,7 @@ struct Args {
     arg_peer: Vec<PeerEndpoint>,
     flag_tcp_port: Option<u16>,
     flag_beacon: Option<u16>,
+    flag_config: Option<String>,
     flag_speed: Option<u64>,
     flag_help: bool,
 }
@@ -304,11 +306,18 @@ fn main() {
     let mut stdout = term::stdout();
     let mut stdout_copy = term::stdout();
 
-    let temp_config = make_temp_config(args.flag_beacon);
+    let (config_path, _tempfile) = match args.flag_config {
+        Some(path_str) => {(PathBuf::from(path_str), None)},
+        None => {
+            let temp_config = make_temp_config(args.flag_beacon);
+            (temp_config.path().to_path_buf(), Some(temp_config))
+        }
+    };
 
     // Construct ConnectionManager and start listening
     let (channel_sender, channel_receiver) = channel();
-    let mut connection_manager = ConnectionManager::new(channel_sender, Some(temp_config.path().to_path_buf()));
+    let mut connection_manager = ConnectionManager::new(channel_sender,
+                                                        Some(config_path));
     stdout = green_foreground(stdout);
     let listening_endpoints = match connection_manager.start_listening2(listening_hints,
                                                                         None) {
