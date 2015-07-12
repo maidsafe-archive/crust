@@ -262,11 +262,13 @@ impl ConnectionManager {
     /// It will return Err if it fails to connect to any peer.
     pub fn bootstrap(&self, bootstrap_list: Option<Vec<Endpoint>>, beacon_port: Option<u16>) ->
             io::Result<Endpoint> {
-        let port: u16 = beacon_port.unwrap_or(5483);
+
+        // overriding config file if beacon_port provided in api, remove once api is changed
+        let beacon_port: u16 = beacon_port.unwrap_or(self.config.beacon_port);
         match bootstrap_list {
             Some(list) => self.bootstrap_off_list(list),
             None => {
-                let mut combined_endpoint_list = self.seek_peers(port);
+                let mut combined_endpoint_list = self.seek_peers(beacon_port);
                 if self.beacon_guid_and_port.is_some() {  // this node owns bs file
                     let handler = BootstrapHandler::new();
                     match handler.read_bootstrap_file() {

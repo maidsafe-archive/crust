@@ -39,10 +39,10 @@ use crust::{ConnectionManager, Endpoint, write_config_file};
 fn make_temp_config(beacon_port: Option<u16>) -> NamedTempFile {
     let temp_config = NamedTempFile::new().unwrap();
     let _ = write_config_file(Some(temp_config.path().to_path_buf()),
-                      None,
-                      None,
-                      beacon_port,
-                      ).unwrap();
+                              None,
+                              None,
+                              beacon_port,
+                             ).unwrap();
     temp_config
 }
 
