@@ -99,9 +99,9 @@ impl ConnectionManager {
     /// protocol.
     // FIXME: Returning io::Result seems pointless since we always return Ok.
     pub fn start_accepting(&mut self) -> io::Result<Vec<Port>> {
-        // We need to check for an instance of each supported protocol in the hint vector.  For any
-        // protocol that doesn't have an entry, we should inject one (either random or 0).  For now
-        // we're only supporting TCP, so...
+        // We need to check for an instance of each supported protocol in the preferred_ports vector.
+        //  For any protocol that doesn't have an entry, we should inject one (either random or 0).
+        //  Currently, only TCP is supported.
 
         let ws = self.state.downgrade();
 
@@ -128,7 +128,6 @@ impl ConnectionManager {
                 }
 
                 let _ = bootstrap_handler.add_contacts(contacts);
-
                 let _ = thread::Builder::new().name("ConnectionManager beacon acceptor".to_string())
                                               .spawn(move || {
                     while let Ok(mut transport) = acceptor.accept() {
