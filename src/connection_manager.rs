@@ -799,9 +799,7 @@ mod test {
         let mut beacon_port: Option<u16> = None;
         for index in 0..NETWORK_SIZE {
             if index != 0 {
-                temp_configs.push(make_temp_config(beacon_port));
-            } else {
-                temp_configs.push(make_temp_config(None));
+               temp_configs.push(make_temp_config(beacon_port));
             }
             let (receiver, _, port, connected_eps) = network.add( Some(temp_configs.last().unwrap().0.clone()));
             if index == 0 {
