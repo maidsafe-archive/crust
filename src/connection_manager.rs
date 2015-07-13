@@ -93,14 +93,10 @@ impl ConnectionManager {
         ConnectionManager { state: state, beacon_guid_and_port: None, config: config }
     }
 
-    /// Starts listening on all supported protocols. Specified hint will be tried first. If it fails
-    /// to start on these, it defaults to random / OS provided endpoints for each supported
+    /// Starts listening on all supported protocols. Ports in preferred_ports of config are tried first.
+    /// On failure to listen on none of preferred_ports an OS randomly chosen port will be used for each supported
     /// protocol. The actual endpoints used will be returned on which it started listening for each
     /// protocol.
-    /// if beacon port == 0 => a random port is taken and returned by beacon
-    /// if beacon port != 0 => an attempt to get the port is made by beacon and the callee will be informed of the attempt
-    /// if beacon port == None => 5483 is tried
-    /// if beacon succeeds in starting the udp listener, the coresponding port is returned
     // FIXME: Returning io::Result seems pointless since we always return Ok.
     pub fn start_accepting(&mut self) -> io::Result<Vec<Port>> {
         // We need to check for an instance of each supported protocol in the hint vector.  For any
