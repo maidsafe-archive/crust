@@ -278,7 +278,7 @@ fn make_temp_config(beacon_port: Option<u16>, tcp_port: Option<u16>) -> (PathBuf
     config_file_path.push("crust_peer.config");
 
     let _ = write_config_file(Some(config_file_path.clone()),
-                              Some(vec![Port::Tcp(tcp_port.unwrap_or(8888u16)).clone()]),
+                              Some(vec![Port::Tcp(tcp_port.unwrap_or(0u16)).clone()]),
                               None,
                               beacon_port,
                              ).unwrap();
@@ -332,6 +332,7 @@ fn main() {
     for endpoint in &listening_endpoints {
         print!("{:?}, ", *endpoint);
     };
+
     stdout = reset_foreground(stdout);
 
     // Try to bootstrap.  If this fails and we're trying to run the speed test, then fail overall.
