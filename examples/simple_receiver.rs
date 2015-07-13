@@ -26,11 +26,12 @@
         unused_qualifications, unused_results, variant_size_differences)]
 
 extern crate crust;
-extern crate tempfile;
+extern crate tempdir;
 
 use std::str::FromStr;
 use std::sync::mpsc::channel;
-use tempfile::NamedTempFile;
+use std::path::PathBuf;
+use tempdir::TempDir;
 
 use crust::{ConnectionManager, Port, write_config_file};
 
@@ -43,15 +44,19 @@ fn fibonacci_number(n: u64) -> u64 {
 }
 
 // TODO update to take listening port once api is updated
-fn make_temp_config(beacon_port: Option<u16>) -> NamedTempFile {
-    let temp_config = NamedTempFile::new().unwrap();
-    let _ = write_config_file(Some(temp_config.path().to_path_buf()),
+fn make_temp_config(beacon_port: Option<u16>) -> (PathBuf, TempDir) {
+    let temp_dir = TempDir::new("crust_peer").unwrap();
+    let mut config_file_path = temp_dir.path().to_path_buf();
+    config_file_path.push("simple_receiver.config");
+
+    let _ = write_config_file(Some(config_file_path.clone()),
                               None,
                               None,
                               beacon_port,
                              ).unwrap();
-    temp_config
+    (config_file_path, temp_dir)
 }
+
 
 fn main() {
     let temp_config = make_temp_config(Some(9999));
@@ -59,7 +64,7 @@ fn main() {
     // asynchronous channel.
     let (channel_sender, channel_receiver) = channel();
     let mut connection_manager = ConnectionManager::new(channel_sender,
-                                                        Some(temp_config.path().to_path_buf()));
+                                                        Some(temp_config.0.clone()));
 
     // Start listening.  Try to listen on port 8888 for TCP and for UDP broadcasts (beacon) on 9999.
     let listening_endpoints = match connection_manager.start_listening(vec![Port::Tcp(8888)],

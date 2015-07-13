@@ -43,7 +43,7 @@ extern crate utp;
 extern crate itertools;
 
 #[cfg(test)]
-extern crate tempfile;
+extern crate tempdir;
 
 #[cfg(test)]
 mod test {

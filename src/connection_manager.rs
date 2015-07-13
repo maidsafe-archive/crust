@@ -601,7 +601,8 @@ mod test {
     use transport::{Endpoint, Port};
     use std::sync::{Mutex, Arc};
     use config_utils::{Config, Contacts, write_file};
-    use tempfile::NamedTempFile;
+    use tempdir::TempDir;
+    use std::path::PathBuf;
 
     fn encode<T>(value: &T) -> Bytes where T: Encodable
     {
@@ -667,32 +668,34 @@ mod test {
          }
      }
 
+    fn make_temp_config(beacon_port: Option<u16>) -> (PathBuf, TempDir) {
+        let temp_dir = TempDir::new("crust_peer").unwrap();
+        let mut config_file_path = temp_dir.path().to_path_buf();
+        config_file_path.push("crust_test.config");
 
-    fn make_temp_config(beacon_port: Option<u16>) -> NamedTempFile {
         let config = Config{ preferred_ports: vec![Port::Tcp(0)],
                               hard_coded_contacts: Contacts::new(),
                               beacon_port: beacon_port.unwrap_or(0u16),
                            };
-        let temp_config = NamedTempFile::new().unwrap();
-        write_file(&temp_config.path().to_path_buf(), &config).unwrap();
-        temp_config
+        write_file(&config_file_path, &config).unwrap();
+        (config_file_path, temp_dir)
     }
 
 
 #[test]
     fn bootstrap() {
         let (cm1_i, _) = channel();
-        let temp_config1 = make_temp_config(None);
+        let config_file1 = make_temp_config(None);
 
-        let mut cm1 = ConnectionManager::new(cm1_i, Some(temp_config1.path().to_path_buf()));
+        let mut cm1 = ConnectionManager::new(cm1_i, Some(config_file1.0.clone()));
         let (cm1_eps, beacon_port) = cm1.start_listening(vec![Port::Tcp(0)], None).unwrap();
         println!("   cm1 listening port {} beaconing port {}", cm1_eps[0].get_port(), beacon_port.unwrap());
 
         thread::sleep_ms(1000);
-        let temp_config2 = make_temp_config(Some(beacon_port.unwrap()));
+        let config_file2 = make_temp_config(Some(beacon_port.unwrap()));
 
         let (cm2_i, _) = channel();
-        let mut cm2 = ConnectionManager::new(cm2_i, Some(temp_config2.path().to_path_buf()));
+        let mut cm2 = ConnectionManager::new(cm2_i, Some(config_file2.0.clone()));
         let (cm2_eps, _) = cm2.start_listening(vec![Port::Tcp(0)], beacon_port.clone()).unwrap();
         println!("   cm2 listening port {}", cm2_eps[0].get_port());
         match cm2.bootstrap(None, beacon_port) {
@@ -729,16 +732,15 @@ mod test {
 
         let mut temp_configs = vec![make_temp_config(None)];
 
-
         let (cm1_i, cm1_o) = channel();
-        let mut cm1 = ConnectionManager::new(cm1_i, Some(temp_configs.last().unwrap().path().to_path_buf()));
+        let mut cm1 = ConnectionManager::new(cm1_i, Some(temp_configs.last().unwrap().0.clone()));
         let (cm1_ports, beacon_port) = cm1.start_listening(vec![Port::Tcp(0)], None).unwrap();
         let cm1_eps = cm1_ports.iter().map(|p| Endpoint::tcp(("127.0.0.1", p.get_port())));
 
         temp_configs.push(make_temp_config(Some(beacon_port.unwrap())));
 
         let (cm2_i, cm2_o) = channel();
-        let mut cm2 = ConnectionManager::new(cm2_i, Some(temp_configs.last().unwrap().path().to_path_buf()));
+        let mut cm2 = ConnectionManager::new(cm2_i, Some(temp_configs.last().unwrap().0.clone()));
         let (cm2_ports, _) = cm2.start_listening(vec![Port::Tcp(0)], None).unwrap();
         let cm2_eps = cm2_ports.iter().map(|p| Endpoint::tcp(("127.0.0.1", p.get_port())));
         cm2.connect(cm1_eps.collect());
@@ -894,7 +896,7 @@ mod test {
         let temp_config = make_temp_config(None);
 
         let (cm_tx, cm_rx) = channel();
-        let mut cm = ConnectionManager::new(cm_tx, Some(temp_config.path().to_path_buf()));
+        let mut cm = ConnectionManager::new(cm_tx, Some(temp_config.0.clone()));
         let cm_listen_ports = match cm.start_listening(vec![Port::Tcp(0)], Some(0)) {
             Ok(result) => result.0,
             Err(_) => panic!("main connection manager start_listening failure")
@@ -929,7 +931,7 @@ mod test {
         let _ = spawn(move || {
             let temp_config = make_temp_config(None);
             let (cm_aux_tx, _) = channel();
-            let mut cm_aux = ConnectionManager::new(cm_aux_tx, Some(temp_config.path().to_path_buf()));
+            let mut cm_aux = ConnectionManager::new(cm_aux_tx, Some(temp_config.0));
             // setting the listening port to be greater than 4455 will make the test hanging
             let _ = match cm_aux.start_listening(vec![Port::Tcp(4454)], None) {
                 Ok(result) => {
