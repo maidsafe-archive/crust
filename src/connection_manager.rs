@@ -55,6 +55,8 @@ pub enum Event {
     NewMessage(Endpoint, Bytes),
     /// Invoked when a new connection to a peer is established.  Passes the peer's endpoint.
     NewConnection(Endpoint),
+    /// Invoked when a new bootstrap connection to a new peer is established.  Passes the bootstrap peer's endpoint.
+    NewBootstrapConnection(Endpoint),
     /// Invoked when a connection to a peer is lost.  Passes the peer's endpoint.
     LostConnection(Endpoint),
 }
@@ -91,6 +93,86 @@ impl ConnectionManager {
                                              }));
 
         ConnectionManager { state: state, beacon_guid_and_port: None, config: config }
+    }
+
+/// Proposed API changes
+    /// Starts listening for connections on all supported protocols. Specified hint port for a
+    /// given protocol (via config file) will be tried first. If it fails to start on these,
+    /// it defaults to random / OS provided endpoints for each supported protocol.
+    /// The actual Port used will be returned on which it started listening for each protocol.
+    pub fn start_listening(&mut self) -> io::Result<(Vec<Port>)> {
+        unimplemented!();
+    }
+
+    /// Returns becaon acceptor port if beacon acceptor is accepting.
+    /// Returs `None` if the beacon acceptor is not accepting (beacon port may be taken by
+    /// another process).
+    /// Only useful for tests.
+    #[cfg(test)]
+    pub fn get_beacon_acceptor_port(&self) -> Option<u16> {
+        unimplemented!();
+    }
+
+    /// Returns all endpoints this node is accepting on. As it uses getifaddrs() internally to
+    /// get accepting endpoints of all interfaces, some endpoints may not be useful for upper layer.
+    /// An overlay layer can pass this vector of endpoints to a peer node which is interested in making
+    /// a connection.
+    /// Note: Future version of crust will include own exteral endpoint in the returned vector
+    /// as well (UPnP & Hole Punching).
+    pub fn get_own_endpoints(&self) -> io::Result<(Vec<Endpoint>)> {
+        unimplemented!();
+    }
+
+    /// This method tries to connect (bootstrap to existing network) to the default or provided
+    /// override list of bootstrap nodes (via config file named <current executable>.config).
+    ///
+    /// If `override_default_bootstrap_methods` is not set in the config file, it will attempt to read
+    /// a local cached file named <current executable>.bootstrap.cache to populate the list endpoints
+    /// to use for bootstrapping. It will also try `hard_coded_contacts` from config file.
+    /// In addition, it will try to use the beacon port (provided via config file) to connect to a peer
+    /// on the same LAN.
+    /// For more details on bootstrap cache file refer
+    /// https://github.com/maidsafe/crust/blob/master/docs/bootstrap.md
+    ///
+    /// If `override_default_bootstrap_methods` is set in config file, it will only try to connect to
+    /// the endpoints in the override list (`hard_coded_contacts`).
+
+    /// All connections (if any) will be dropped before bootstrap attempt is made.
+    /// This method returns immediately after dropping any active connections.endpoints
+    /// New bootstrap connections will be notified by `NewBootstrapConnection` event.
+    /// Its upper layer's responsibility to maintain or drop these connections.
+    /// Maximum of `max_successful_bootstrap_connection` bootstrap connections will be made and further connection
+    /// attempts will stop.
+    /// It will reiterate the list of all endpoints until it gets at least one connection.
+    pub fn bootstrap(&self, max_successful_bootstrap_connection: u8) {
+        unimplemented!();
+    }
+
+    /// Sends a message to specified peer's endpoints. Returns Ok(ep) if the sending might
+    /// succeed to one endpoint (ep), and returns an Err if all the addresses are not connected.
+    /// If connection corresponding to provided endpoint doesn't exist, the next endpoint (provided) will be tried.
+    /// Note: The message is sent to only one of the available connections.
+    /// Return value of Ok does not mean that the data will be received. It is possible for the
+    /// corresponding connection(s) to hang up immediately after this function returns Ok.
+    pub fn send(&self, peer: Vec<Endpoint>, message: Bytes) -> io::Result<()> {
+        unimplemented!();
+    }
+
+    /// Opens connection(s) to a remote peer. `peer` is a vector of endpoints (of supported protocols)
+    /// of the remote peer. All the endpoints will be attempted. On every successful connection
+    /// `Event::NewConnection` with connected `Endpoint` will be sent to the event channel. On failure, nothing
+    /// is reported. Failed attempts are not notified back up to the caller. If the caller wants to know of a
+    /// failed attempt, it must maintain a record of the attempt itself which times out if a
+    /// corresponding Event::NewConnection isn't received
+    /// For details on handling of connect in different protocol refer
+    /// https://github.com/dirvine/crust/blob/master/docs/connect.md
+    pub fn connect(&self, peer: Vec<Endpoint>){
+        unimplemented!();
+    }
+
+    /// Closes connection with the specified endpoint.
+    pub fn drop_node(&self, endpoint: Endpoint) {
+        unimplemented!();
     }
 
     /// Starts listening on all supported protocols. Specified hint will be tried first. If it fails
