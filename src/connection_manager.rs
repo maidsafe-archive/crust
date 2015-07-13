@@ -359,6 +359,7 @@ impl ConnectionManager {
 
     /// Returns beacon acceptor port if beacon acceptor is accepting, otherwise returns `None`
     /// (beacon port may be taken by another process). Only useful for tests.
+    #[cfg(test)]
     pub fn get_beacon_acceptor_port(&self) -> Option<u16> {
         match self.beacon_guid_and_port {
             Some(beacon_guid_and_port) => Some(beacon_guid_and_port.1),
