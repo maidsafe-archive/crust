@@ -95,7 +95,7 @@ impl ConnectionManager {
 
     /// Starts listening on all supported protocols. Ports in preferred_ports of config are tried first.
     /// On failure to listen on none of preferred_ports an OS randomly chosen port will be used for each supported
-    /// protocol. The actual endpoints used will be returned on which it started listening for each
+    /// protocol. The actual port used will be returned on which it started listening for each
     /// protocol.
     // FIXME: Returning io::Result seems pointless since we always return Ok.
     pub fn start_accepting(&mut self) -> io::Result<Vec<Port>> {
