@@ -32,7 +32,7 @@ use std::str::FromStr;
 use std::sync::mpsc::channel;
 use tempfile::NamedTempFile;
 
-use crust::{ConnectionManager, Port, write_config_file};
+use crust::{ConnectionManager, write_config_file};
 
 fn fibonacci_number(n: u64) -> u64 {
     match n {
@@ -62,8 +62,7 @@ fn main() {
                                                         Some(temp_config.path().to_path_buf()));
 
     // Start listening.  Try to listen on port 8888 for TCP and for UDP broadcasts (beacon) on 9999.
-    let listening_endpoints = match connection_manager.start_listening(vec![Port::Tcp(8888)],
-                                                                       None) {
+    let listening_endpoints = match connection_manager.start_accepting() {
         Ok(endpoints) => endpoints,
         Err(why) => {
             println!("ConnectionManager failed to start listening on TCP port 8888: {}", why);
@@ -72,12 +71,8 @@ fn main() {
     };
 
     print!("Listening for new connections on ");
-    for endpoint in &listening_endpoints.0 {
+    for endpoint in &listening_endpoints {
         print!("{:?}, ", *endpoint);
-    };
-    match listening_endpoints.1 {
-        Some(beacon_port) => println!("and listening for UDP broadcast on port {}.", beacon_port),
-        None => println!("and not listening for UDP broadcasts."),
     };
     println!("Run the simple_sender example in another terminal to send messages to this node.");
 

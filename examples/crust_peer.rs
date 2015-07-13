@@ -319,8 +319,7 @@ fn main() {
     let mut connection_manager = ConnectionManager::new(channel_sender,
                                                         Some(config_path));
     stdout = green_foreground(stdout);
-    let listening_endpoints = match connection_manager.start_listening2(listening_hints,
-                                                                        None) {
+    let listening_endpoints = match connection_manager.start_listening2() {
         Ok(endpoints) => endpoints,
         Err(e) => {
             println!("Connection manager failed to start listening: {}", e);
@@ -328,12 +327,8 @@ fn main() {
         }
     };
     print!("Listening for new connections on ");
-    for endpoint in &listening_endpoints.0 {
+    for endpoint in &listening_endpoints {
         print!("{:?}, ", *endpoint);
-    };
-    match listening_endpoints.1 {
-        Some(beacon_port) => println!("and listening for UDP broadcast on port {}.", beacon_port),
-        None => println!("and not listening for UDP broadcasts."),
     };
     stdout = reset_foreground(stdout);
 
