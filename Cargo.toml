@@ -20,7 +20,7 @@ time = "*"
 asynchronous = "*"
 utp = "*"
 itertools = "*"
-tempfile = "*"
+tempdir = "*"
 
 [[example]]
 name = "simple_sender"

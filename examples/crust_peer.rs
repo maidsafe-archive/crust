@@ -34,7 +34,7 @@ extern crate docopt;
 extern crate rand;
 extern crate term;
 extern crate time;
-extern crate tempfile;
+extern crate tempdir;
 
 use core::iter::FromIterator;
 use docopt::Docopt;
@@ -49,7 +49,7 @@ use std::net::SocketAddr;
 use std::str::FromStr;
 use std::thread;
 use std::path::PathBuf;
-use tempfile::NamedTempFile;
+use tempdir::TempDir;
 
 use crust::{ConnectionManager, Endpoint, Port, write_config_file};
 
@@ -272,14 +272,17 @@ fn reset_foreground(stdout: Option<Box<term::StdoutTerminal>>) ->
 }
 
 // TODO update to take listening port once api is updated
-fn make_temp_config(beacon_port: Option<u16>) -> NamedTempFile {
-    let temp_config = NamedTempFile::new().unwrap();
-    let _ = write_config_file(Some(temp_config.path().to_path_buf()),
+fn make_temp_config(beacon_port: Option<u16>) -> (PathBuf, TempDir) {
+    let temp_dir = TempDir::new("crust_peer").unwrap();
+    let mut config_file_path = temp_dir.path().to_path_buf();
+    config_file_path.push("crust_peer.config");
+
+    let _ = write_config_file(Some(config_file_path.clone()),
                               None,
                               None,
                               beacon_port,
                              ).unwrap();
-    temp_config
+    (config_file_path, temp_dir)
 }
 
 fn main() {
@@ -306,11 +309,11 @@ fn main() {
     let mut stdout = term::stdout();
     let mut stdout_copy = term::stdout();
 
-    let (config_path, _tempfile) = match args.flag_config {
+    let (config_path, _tempdir) = match args.flag_config {
         Some(path_str) => {(PathBuf::from(path_str), None)},
         None => {
-            let temp_config = make_temp_config(args.flag_beacon);
-            (temp_config.path().to_path_buf(), Some(temp_config))
+            let (path, tempdir) = make_temp_config(args.flag_beacon);
+            (path, Some(tempdir))
         }
     };
 

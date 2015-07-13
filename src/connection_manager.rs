@@ -352,6 +352,7 @@ impl ConnectionManager {
 
     /// Returns beacon acceptor port if beacon acceptor is accepting, otherwise returns `None`
     /// (beacon port may be taken by another process). Only useful for tests.
+    #[cfg(test)]
     pub fn get_beacon_acceptor_port(&self) -> Option<u16> {
         match self.beacon_guid_and_port {
             Some(beacon_guid_and_port) => Some(beacon_guid_and_port.1),
@@ -582,7 +583,7 @@ mod test {
     use transport::{Endpoint, Port};
     use std::sync::{Mutex, Arc};
     use config_utils::{Config, Contacts, write_file};
-    use tempfile::NamedTempFile;
+    use tempdir::TempDir;
     use std::path::PathBuf;
 
     fn encode<T>(value: &T) -> Bytes where T: Encodable
@@ -650,29 +651,32 @@ mod test {
          }
      }
 
-    fn make_temp_config(beacon_port: Option<u16>) -> NamedTempFile {
+    fn make_temp_config(beacon_port: Option<u16>) -> (PathBuf, TempDir) {
+        let temp_dir = TempDir::new("crust_peer").unwrap();
+        let mut config_file_path = temp_dir.path().to_path_buf();
+        config_file_path.push("crust_test.config");
+
         let config = Config{ preferred_ports: vec![Port::Tcp(0)],
                               hard_coded_contacts: Contacts::new(),
                               beacon_port: beacon_port.unwrap_or(0u16),
                            };
-        let temp_config = NamedTempFile::new().unwrap();
-        write_file(&temp_config.path().to_path_buf(), &config).unwrap();
-        temp_config
+        write_file(&config_file_path, &config).unwrap();
+        (config_file_path, temp_dir)
     }
 
 #[test]
     fn bootstrap() {
         let (cm1_i, _) = channel();
-        let temp_config1 = make_temp_config(None);
+        let config_file1 = make_temp_config(None);
 
-        let mut cm1 = ConnectionManager::new(cm1_i, Some(temp_config1.path().to_path_buf()));
+        let mut cm1 = ConnectionManager::new(cm1_i, Some(config_file1.0.clone()));
         let cm1_eps = cm1.start_accepting().unwrap();
 
         thread::sleep_ms(1000);
-        let temp_config2 = make_temp_config(cm1.get_beacon_acceptor_port());
+        let config_file2 = make_temp_config(cm1.get_beacon_acceptor_port());
 
         let (cm2_i, _) = channel();
-        let mut cm2 = ConnectionManager::new(cm2_i, Some(temp_config2.path().to_path_buf()));
+        let mut cm2 = ConnectionManager::new(cm2_i, Some(config_file2.0.clone()));
         let cm2_eps = cm2.start_accepting().unwrap();
         println!("   cm2 listening port {}", cm2_eps[0].get_port());
         match cm2.bootstrap(None, cm1.get_beacon_acceptor_port()) {
@@ -681,7 +685,7 @@ mod test {
         }
     }
 
-#[test]
+    #[test]
     fn connection_manager() {
         // Wait 2 seconds until previous bootstrap test ends. If not, that test connects to these endpoints.
         thread::sleep_ms(2000);
@@ -709,16 +713,15 @@ mod test {
 
         let mut temp_configs = vec![make_temp_config(None)];
 
-
         let (cm1_i, cm1_o) = channel();
-        let mut cm1 = ConnectionManager::new(cm1_i, Some(temp_configs.last().unwrap().path().to_path_buf()));
+        let mut cm1 = ConnectionManager::new(cm1_i, Some(temp_configs.last().unwrap().0.clone()));
         let cm1_ports = cm1.start_accepting().unwrap();
         let cm1_eps = cm1_ports.iter().map(|p| Endpoint::tcp(("127.0.0.1", p.get_port())));
 
         temp_configs.push(make_temp_config(cm1.get_beacon_acceptor_port()));
 
         let (cm2_i, cm2_o) = channel();
-        let mut cm2 = ConnectionManager::new(cm2_i, Some(temp_configs.last().unwrap().path().to_path_buf()));
+        let mut cm2 = ConnectionManager::new(cm2_i, Some(temp_configs.last().unwrap().0.clone()));
         let cm2_ports = cm2.start_accepting().unwrap();
         let cm2_eps = cm2_ports.iter().map(|p| Endpoint::tcp(("127.0.0.1", p.get_port())));
         cm2.connect(cm1_eps.collect());
@@ -731,8 +734,8 @@ mod test {
         assert!(runner2.join().is_ok());
     }
 
-#[test]
-#[ignore]
+    #[test]
+    #[ignore]
     fn network() {
         let run_cm = |tx: Sender<Event>, o: Receiver<Event>, conn_eps: Arc<Mutex<Vec<Endpoint>>>| {
             spawn(move || {
@@ -800,7 +803,7 @@ mod test {
             } else {
                 temp_configs.push(make_temp_config(None));
             }
-            let (receiver, _, port, connected_eps) = network.add(Some(temp_configs.last().unwrap().path().to_path_buf()));
+            let (receiver, _, port, connected_eps) = network.add( Some(temp_configs.last().unwrap().0.clone()));
             if index == 0 {
                 beacon_port = port;
             }
@@ -879,7 +882,7 @@ mod test {
         let temp_config = make_temp_config(None);
 
         let (cm_tx, cm_rx) = channel();
-        let mut cm = ConnectionManager::new(cm_tx, Some(temp_config.path().to_path_buf()));
+        let mut cm = ConnectionManager::new(cm_tx, Some(temp_config.0.clone()));
         let cm_listen_ports = match cm.start_accepting() {
             Ok(result) => result,
             Err(_) => panic!("main connection manager start_listening failure")
@@ -914,7 +917,7 @@ mod test {
         let _ = spawn(move || {
             let temp_config = make_temp_config(None);
             let (cm_aux_tx, _) = channel();
-            let mut cm_aux = ConnectionManager::new(cm_aux_tx, Some(temp_config.path().to_path_buf()));
+            let mut cm_aux = ConnectionManager::new(cm_aux_tx, Some(temp_config.0));
             // setting the listening port to be greater than 4455 will make the test hanging
             let _ = match cm_aux.start_accepting() {
                 Ok(result) => {
