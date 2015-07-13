@@ -378,6 +378,16 @@ impl ConnectionManager {
         });
     }
 
+    /// Returns beacon acceptor port if beacon acceptor is accepting, otherwise returns `None`
+    /// (beacon port may be taken by another process). Only useful for tests.
+    #[cfg(test)]
+    pub fn get_beacon_acceptor_port(&self) -> Option<u16> {
+        match self.beacon_guid_and_port {
+            Some(beacon_guid_and_port) => Some(beacon_guid_and_port.1),
+            None => None,
+        }
+    }
+
     /// Uses beacon to try and collect potential bootstrap endpoints from peers on the same subnet.
     fn seek_peers(&self, beacon_port: u16) -> Vec<Endpoint> {
         // Retrieve list of peers' TCP listeners who are on same subnet as us
@@ -688,9 +698,10 @@ mod test {
         let config_file1 = make_temp_config(None);
 
         let mut cm1 = ConnectionManager::new(cm1_i, Some(config_file1.0.clone()));
-        let (cm1_eps, beacon_port) = cm1.start_listening(vec![Port::Tcp(0)], None).unwrap();
+        let (cm1_eps, _) = cm1.start_listening(vec![Port::Tcp(0)], None).unwrap();
+        let beacon_port = cm1.get_beacon_acceptor_port();
+        assert!(beacon_port.is_some());
         println!("   cm1 listening port {} beaconing port {}", cm1_eps[0].get_port(), beacon_port.unwrap());
-
         thread::sleep_ms(1000);
         let config_file2 = make_temp_config(Some(beacon_port.unwrap()));
 
@@ -698,13 +709,13 @@ mod test {
         let mut cm2 = ConnectionManager::new(cm2_i, Some(config_file2.0.clone()));
         let (cm2_eps, _) = cm2.start_listening(vec![Port::Tcp(0)], beacon_port.clone()).unwrap();
         println!("   cm2 listening port {}", cm2_eps[0].get_port());
-        match cm2.bootstrap(None, beacon_port) {
+        match cm2.bootstrap(None, None) {
             Ok(ep) => { assert_eq!(ep.get_address().port(), cm1_eps[0].get_port()); },
             Err(_) => { panic!("Failed to bootstrap"); }
         }
     }
 
-#[test]
+    #[test]
     fn connection_manager() {
         // Wait 2 seconds until previous bootstrap test ends. If not, that test connects to these endpoints.
         thread::sleep_ms(2000);
@@ -734,7 +745,8 @@ mod test {
 
         let (cm1_i, cm1_o) = channel();
         let mut cm1 = ConnectionManager::new(cm1_i, Some(temp_configs.last().unwrap().0.clone()));
-        let (cm1_ports, beacon_port) = cm1.start_listening(vec![Port::Tcp(0)], None).unwrap();
+        let (cm1_ports, _) = cm1.start_listening(vec![Port::Tcp(0)], None).unwrap();
+        let beacon_port = cm1.get_beacon_acceptor_port();
         let cm1_eps = cm1_ports.iter().map(|p| Endpoint::tcp(("127.0.0.1", p.get_port())));
 
         temp_configs.push(make_temp_config(Some(beacon_port.unwrap())));
@@ -753,8 +765,8 @@ mod test {
         assert!(runner2.join().is_ok());
     }
 
-#[test]
-#[ignore]
+    #[test]
+    #[ignore]
     fn network() {
         let run_cm = |tx: Sender<Event>, o: Receiver<Event>, conn_eps: Arc<Mutex<Vec<Endpoint>>>| {
             spawn(move || {
@@ -889,7 +901,7 @@ mod test {
         assert_eq!(stat.lost_connection_count, 0);
     }
 
-#[test]
+    #[test]
     fn connection_manager_start() {
         // Wait 2 seconds until previous bootstrap test ends. If not, that test connects to these endpoints.
         thread::sleep_ms(2000);
