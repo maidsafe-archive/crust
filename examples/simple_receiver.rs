@@ -26,11 +26,13 @@
         unused_qualifications, unused_results, variant_size_differences)]
 
 extern crate crust;
+extern crate tempfile;
 
 use std::str::FromStr;
 use std::sync::mpsc::channel;
+use tempfile::NamedTempFile;
 
-use crust::{ConnectionManager, Port};
+use crust::{ConnectionManager, Port, write_config_file};
 
 fn fibonacci_number(n: u64) -> u64 {
     match n {
@@ -40,15 +42,28 @@ fn fibonacci_number(n: u64) -> u64 {
     }
 }
 
+// TODO update to take listening port once api is updated
+fn make_temp_config(beacon_port: Option<u16>) -> NamedTempFile {
+    let temp_config = NamedTempFile::new().unwrap();
+    let _ = write_config_file(Some(temp_config.path().to_path_buf()),
+                              None,
+                              None,
+                              beacon_port,
+                             ).unwrap();
+    temp_config
+}
+
 fn main() {
+    let temp_config = make_temp_config(Some(9999));
     // We receive events (e.g. new connection, message received) from the ConnectionManager via an
     // asynchronous channel.
     let (channel_sender, channel_receiver) = channel();
-    let mut connection_manager = ConnectionManager::new(channel_sender);
+    let mut connection_manager = ConnectionManager::new(channel_sender,
+                                                        Some(temp_config.path().to_path_buf()));
 
     // Start listening.  Try to listen on port 8888 for TCP and for UDP broadcasts (beacon) on 9999.
     let listening_endpoints = match connection_manager.start_listening(vec![Port::Tcp(8888)],
-                                                                        Some(9999)) {
+                                                                       None) {
         Ok(endpoints) => endpoints,
         Err(why) => {
             println!("ConnectionManager failed to start listening on TCP port 8888: {}", why);
