@@ -33,7 +33,7 @@ use std::sync::mpsc::channel;
 use std::path::PathBuf;
 use tempdir::TempDir;
 
-use crust::{ConnectionManager, write_config_file};
+use crust::{ConnectionManager, write_config_file, Port};
 
 fn fibonacci_number(n: u64) -> u64 {
     match n {
@@ -44,13 +44,13 @@ fn fibonacci_number(n: u64) -> u64 {
 }
 
 // TODO update to take listening port once api is updated
-fn make_temp_config(beacon_port: Option<u16>) -> (PathBuf, TempDir) {
+fn make_temp_config(beacon_port: Option<u16>, tcp_port: Option<u16>) -> (PathBuf, TempDir) {
     let temp_dir = TempDir::new("crust_peer").unwrap();
     let mut config_file_path = temp_dir.path().to_path_buf();
     config_file_path.push("simple_receiver.config");
 
     let _ = write_config_file(Some(config_file_path.clone()),
-                              None,
+                              Some(vec![Port::Tcp(tcp_port.unwrap_or(8888u16)).clone()]),
                               None,
                               beacon_port,
                              ).unwrap();
@@ -59,7 +59,7 @@ fn make_temp_config(beacon_port: Option<u16>) -> (PathBuf, TempDir) {
 
 
 fn main() {
-    let temp_config = make_temp_config(Some(9999));
+    let temp_config = make_temp_config(Some(9999), None);
     // We receive events (e.g. new connection, message received) from the ConnectionManager via an
     // asynchronous channel.
     let (channel_sender, channel_receiver) = channel();

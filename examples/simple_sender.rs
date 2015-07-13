@@ -55,8 +55,7 @@ fn main() {
     // We receive events (e.g. new connection, message received) from the ConnectionManager via an
     // asynchronous channel.
     let (channel_sender, channel_receiver) = channel();
-    let connection_manager = ConnectionManager::new(channel_sender,
-                                                    Some(temp_config.0.clone()));
+    let connection_manager = ConnectionManager::new(channel_sender, Some(temp_config.0.clone()));
 
     // Start a thread running a loop which will receive and display responses from the peer.
     let _ = thread::Builder::new().name("SimpleSender event handler".to_string()).spawn(move || {
