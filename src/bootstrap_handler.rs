@@ -204,7 +204,7 @@ mod test {
                 random_addr_0[1], random_addr_0[2], random_addr_0[3]), port_0);
             let new_contact = Contact{
                 endpoint: Endpoint::Tcp(SocketAddr::V4(addr_0)),
-                last_updated: Timestamp{ timestamp: time::now_utc() }
+                last_updated: Timestamp { timestamp: time::now_utc() }
             };
             contacts.push(new_contact);
         }
@@ -226,7 +226,14 @@ mod test {
         let read_bootstrap: Bootstrap = bootstrap_handler.read_bootstrap_file().unwrap();
         let read_contacts : Contacts = read_bootstrap.contacts;
 
-        assert_eq!(read_contacts, contacts);
+        let sorted_contacts = contacts
+            .into_iter()
+            .sort_by(|a, b| Ord::cmp(&b.last_updated.timestamp, &a.last_updated.timestamp))
+            .into_iter()
+            .map(|contact| contact)
+            .collect::<Vec<Contact>>();
+
+        assert_eq!(read_contacts, sorted_contacts);
 
         match fs::remove_file(file_name.clone()) {
             Ok(_) => (),
@@ -249,7 +256,7 @@ mod test {
             let ipport = net::SocketAddrV4::new(Ipv4Addr::new(ip[0], ip[1], ip[2], ip[3]), port);
             let contact = Contact{
                 endpoint: Endpoint::Tcp(SocketAddr::V4(ipport)),
-                last_updated: Timestamp{ timestamp: time::now_utc() }
+                last_updated: Timestamp { timestamp: time::now_utc() }
             };
             contacts.push(contact);
         }
