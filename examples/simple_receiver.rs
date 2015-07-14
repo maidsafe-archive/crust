@@ -26,11 +26,14 @@
         unused_qualifications, unused_results, variant_size_differences)]
 
 extern crate crust;
+extern crate tempdir;
 
 use std::str::FromStr;
 use std::sync::mpsc::channel;
+use std::path::PathBuf;
+use tempdir::TempDir;
 
-use crust::{ConnectionManager, Port};
+use crust::{ConnectionManager, write_config_file, Port};
 
 fn fibonacci_number(n: u64) -> u64 {
     match n {
@@ -40,15 +43,31 @@ fn fibonacci_number(n: u64) -> u64 {
     }
 }
 
+// TODO update to take listening port once api is updated
+fn make_temp_config(beacon_port: Option<u16>, tcp_port: Option<u16>) -> (PathBuf, TempDir) {
+    let temp_dir = TempDir::new("crust_peer").unwrap();
+    let mut config_file_path = temp_dir.path().to_path_buf();
+    config_file_path.push("simple_receiver.config");
+
+    let _ = write_config_file(Some(config_file_path.clone()),
+                              Some(vec![Port::Tcp(tcp_port.unwrap_or(8888u16)).clone()]),
+                              None,
+                              beacon_port,
+                             ).unwrap();
+    (config_file_path, temp_dir)
+}
+
+
 fn main() {
+    let temp_config = make_temp_config(Some(9999), None);
     // We receive events (e.g. new connection, message received) from the ConnectionManager via an
     // asynchronous channel.
     let (channel_sender, channel_receiver) = channel();
-    let mut connection_manager = ConnectionManager::new(channel_sender);
+    let mut connection_manager = ConnectionManager::new(channel_sender,
+                                                        Some(temp_config.0.clone()));
 
     // Start listening.  Try to listen on port 8888 for TCP and for UDP broadcasts (beacon) on 9999.
-    let listening_endpoints = match connection_manager.start_listening(vec![Port::Tcp(8888)],
-                                                                        Some(9999)) {
+    let listening_endpoints = match connection_manager.start_accepting() {
         Ok(endpoints) => endpoints,
         Err(why) => {
             println!("ConnectionManager failed to start listening on TCP port 8888: {}", why);
@@ -57,12 +76,8 @@ fn main() {
     };
 
     print!("Listening for new connections on ");
-    for endpoint in &listening_endpoints.0 {
+    for endpoint in &listening_endpoints {
         print!("{:?}, ", *endpoint);
-    };
-    match listening_endpoints.1 {
-        Some(beacon_port) => println!("and listening for UDP broadcast on port {}.", beacon_port),
-        None => println!("and not listening for UDP broadcasts."),
     };
     println!("Run the simple_sender example in another terminal to send messages to this node.");
 
