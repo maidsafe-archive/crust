@@ -21,7 +21,7 @@ use std::collections::{HashMap, HashSet};
 use std::io;
 use std::sync::{Arc, mpsc, Mutex, Weak};
 use std::thread;
-use std::net::IpAddr;
+use std::net::{IpAddr, SocketAddr, SocketAddrV4};
 use std;
 
 use beacon;
@@ -34,6 +34,7 @@ use transport::{Endpoint, Port};
 use asynchronous::{Deferred,ControlFlow};
 
 use std::path::PathBuf;
+use igd;
 
 /// Type used to represent serialised data in a message.
 pub type Bytes = Vec<u8>;
@@ -45,6 +46,7 @@ pub struct ConnectionManager {
     state: Arc<Mutex<State>>,
     beacon_guid_and_port: Option<(beacon::GUID, u16)>,
     config: Config,
+    own_endpoints: Vec<(Endpoint, Arc<Mutex<Option<Endpoint>>>)>,
 }
 
 /// Enum representing different events that will be sent over the asynchronous channel to the user
@@ -70,6 +72,52 @@ struct State {
     stop_called: bool,
 }
 
+fn map_external_port(port: &Port)
+                     -> Vec<(Endpoint, Arc<Mutex<Option<Endpoint>>>)> {
+    let (protocol, port_number) = match *port {
+        Port::Tcp(port) => (igd::PortMappingProtocol::TCP, port),
+        Port::Utp(port) => (igd::PortMappingProtocol::UDP, port),
+    };
+    getifaddrs().into_iter().filter_map(|e| match e.addr {
+        IpAddr::V4(a) => {
+            let addr = SocketAddrV4::new(a, port_number);
+            let ext = Arc::new(Mutex::new(None));
+            let ext2 = ext.clone();
+            let port2 = port.clone();
+
+            let _ = thread::spawn(move || {
+                match igd::search_gateway_from(addr.ip().clone()) {
+                    Ok(gateway) => {
+                        let _ = gateway.add_port(protocol, port_number,
+                                                 addr.clone(), 0, "crust");
+
+                        match gateway.get_external_ip() {
+                            Ok(ip) => {
+                                let endpoint = SocketAddr
+                                    ::V4(SocketAddrV4::new(ip, port_number));
+                                let mut data = ext2.lock().unwrap();
+                                *data = Some(match port2 {
+                                    Port::Tcp(_) => Endpoint::Tcp(endpoint),
+                                    Port::Utp(_) => Endpoint::Utp(endpoint),
+                                })
+                            },
+                            Err(_) => (),
+                        }
+                    },
+                    Err(_) => (),
+                }
+            });
+
+            let addr = SocketAddr::V4(addr);
+            Some((match *port {
+                Port::Tcp(_) => Endpoint::Tcp(addr),
+                Port::Utp(_) => Endpoint::Utp(addr),
+            }, ext))
+        },
+        _ => None,
+    }).collect::<Vec<_>>()
+}
+
 impl ConnectionManager {
     /// Constructs a connection manager. User needs to create an asynchronous channel, and provide
     /// the sender half to this method. Receiver will receive all `Event`s from this library.
@@ -90,7 +138,8 @@ impl ConnectionManager {
                                                stop_called: false,
                                              }));
 
-        ConnectionManager { state: state, beacon_guid_and_port: None, config: config }
+        ConnectionManager { state: state, beacon_guid_and_port: None,
+                            config: config, own_endpoints: Vec::new() }
     }
 
     /// Starts listening on all supported protocols. Ports in preferred_ports of config are tried first.
@@ -113,7 +162,8 @@ impl ConnectionManager {
                 //     PublicKey::Asym(asymmetricbox::PublicKey([0u8; asymmetricbox::PUBLICKEYBYTES]));
 
                 let mut bootstrap_handler = BootstrapHandler::new();
-                self.listen(&self.config.preferred_ports.get(0).unwrap_or(&Port::Tcp(0)).clone());
+                let port = &self.config.preferred_ports.get(0).unwrap_or(&Port::Tcp(0)).clone();
+                self.listen(port);
                 listening_ports = try!(lock_state(&ws, |s| {
                     let buf: Vec<Port> = s.listening_ports.iter().map(|s| s.clone()).collect();
                     Ok(buf)
@@ -144,7 +194,8 @@ impl ConnectionManager {
         };
 
         if self.beacon_guid_and_port.is_none() {
-            self.listen(&self.config.preferred_ports.get(0).unwrap_or(&Port::Tcp(0)).clone());
+            let port = &self.config.preferred_ports.get(0).unwrap_or(&Port::Tcp(0)).clone();
+            self.listen(port);
 
             listening_ports = try!(lock_state(&ws, |s| {
                 let buf: Vec<Port> = s.listening_ports.iter().map(|s| s.clone()).collect();
@@ -423,8 +474,9 @@ impl ConnectionManager {
         Err(io::Error::new(io::ErrorKind::Other, "No bootstrap node got connected"))
     }
 
-    fn listen(&self, port: &Port) {
+    fn listen(&mut self, port: &Port) {
         let acceptor = transport::new_acceptor(port).unwrap();
+        self.own_endpoints = map_external_port(port);
         let local_port = acceptor.local_port();
 
         let mut weak_state = self.state.downgrade();
@@ -450,6 +502,19 @@ impl ConnectionManager {
                 });
             }
         });
+    }
+
+    /// Return the endpoints other peers can use to connect to. External address
+    /// are obtained through UPnP IGD.
+    pub fn get_own_endpoints(&self) -> Vec<Endpoint> {
+        let mut ret = Vec::with_capacity(self.own_endpoints.len());
+        for &(ref local, ref external) in self.own_endpoints.iter() {
+            ret.push(local.clone());
+            if let Some(ref a) = *external.lock().unwrap() {
+                ret.push(a.clone())
+            }
+        };
+        ret
     }
 }
 
