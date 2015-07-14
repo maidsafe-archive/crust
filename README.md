@@ -44,16 +44,23 @@ Several methods are used for NAT traversal, UpNP, hole punching [See here for TC
 
 ##Todo Items
 
-## [0.1.5]
-- [ ] [#1132] (https://maidsafe.atlassian.net/browse/MAID-1132) Integrate UPnP
-- [ ] [#1139] (https://maidsafe.atlassian.net/browse/MAID-1139) Remove Crust API’s start_listening2() and expose `get_own_endpoints()`
-- [ ] [#1142] (https://maidsafe.atlassian.net/browse/MAID-1142) Add UTP protocol support to crust
-
 ## [0.1.6]
-- [ ] [#1136] (https://maidsafe.atlassian.net/browse/MAID-1136) Add a new event `NewBootstrapConnection`
-- [ ] [#1140] (https://maidsafe.atlassian.net/browse/MAID-1140) Memory-mapped file I/O for bootstrap file
+- [ ] [MAID-1132] (https://maidsafe.atlassian.net/browse/MAID-1132) Integrate UPnP
 
-## [0.1.7]
+## [0.1.7] RUST-3 Sprint tasks
+- [ ] [MAID-1149](https://maidsafe.atlassian.net/browse/MAID-1149) Split bootstrap cache file in two files (config & cache)
+- [ ] [MAID-1136](https://maidsafe.atlassian.net/browse/MAID-1136) Add a new event NewBootstrapConnection and make bootstrap method non blocking.
+- [ ] [MAID-1146](https://maidsafe.atlassian.net/browse/MAID-1146) Attempt Bootstrap continuously until it succeeds
+- [ ] [MAID-1148](https://maidsafe.atlassian.net/browse/MAID-1148) Update bootstrap handler to maintain recent endpoints
+- [ ] [MAID-1161](https://maidsafe.atlassian.net/browse/MAID-1161) Update start_listening() to take no parameters
+- [ ] [MAID-1162](https://maidsafe.atlassian.net/browse/MAID-1162) Add get_beacon_acceptor_port() method only for tests
+
+## [0.1.8]
+- [ ] [MAID-1139] (https://maidsafe.atlassian.net/browse/MAID-1139) Remove Crust API’s start_listening2() and expose `get_own_endpoints()`
+- [ ] [MAID-1142] (https://maidsafe.atlassian.net/browse/MAID-1142) Add UTP protocol support to crust
+- [ ] [MAID-1140] (https://maidsafe.atlassian.net/browse/MAID-1140) Memory-mapped file I/O for bootstrap file
+
+## [0.1.9]
 - [ ] Have ConnectionManager guarantee at most one connection between any two nodes
 - [ ] Utp Networking
   - [ ] Utp live port and backup random port selection

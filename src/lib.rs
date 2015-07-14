@@ -44,6 +44,9 @@ extern crate utp;
 extern crate itertools;
 
 #[cfg(test)]
+extern crate tempdir;
+
+#[cfg(test)]
 mod test {
     use std::env;
     use std::io::{Write, stderr};
@@ -64,6 +67,7 @@ mod getifaddrs;
 mod tcp_connections;
 mod utp_connections;
 mod transport;
+mod config_utils;
 
 /// Module implementing the `ConnectionManager` which provides an interface to manage peer-to-peer
 /// connections.
@@ -71,3 +75,4 @@ pub mod connection_manager;
 
 pub use connection_manager::{Event, ConnectionManager};
 pub use transport::{Endpoint, Port};
+pub use config_utils::write_config_file;

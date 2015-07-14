@@ -34,6 +34,7 @@ extern crate docopt;
 extern crate rand;
 extern crate term;
 extern crate time;
+extern crate tempdir;
 
 use core::iter::FromIterator;
 use docopt::Docopt;
@@ -47,8 +48,10 @@ use std::io::Write;
 use std::net::SocketAddr;
 use std::str::FromStr;
 use std::thread;
+use std::path::PathBuf;
+use tempdir::TempDir;
 
-use crust::{ConnectionManager, Endpoint, Port};
+use crust::{ConnectionManager, Endpoint, Port, write_config_file};
 
 static USAGE: &'static str = "
 Usage:
@@ -69,6 +72,7 @@ Options:
                             contacts fails, the node will broadcast to the
                             beacon port in an attempt to connect to a peer on
                             the same LAN.
+  -c CONF, --config=CONF    Use the specified config file to set the configuration
   -s RATE, --speed=RATE     Keep sending random data at a maximum speed of RATE
                             bytes/second to the first connected peer.
   -h, --help                Display this help message.
@@ -80,6 +84,7 @@ struct Args {
     flag_port: Option<u16>,
     flag_utp: bool,
     flag_beacon: Option<u16>,
+    flag_config: Option<String>,
     flag_speed: Option<u64>,
     flag_help: bool,
 }
@@ -268,6 +273,20 @@ fn reset_foreground(stdout: Option<Box<term::StdoutTerminal>>) ->
     }
 }
 
+// TODO update to take listening port once api is updated
+fn make_temp_config(beacon_port: Option<u16>, tcp_port: Option<u16>) -> (PathBuf, TempDir) {
+    let temp_dir = TempDir::new("crust_peer").unwrap();
+    let mut config_file_path = temp_dir.path().to_path_buf();
+    config_file_path.push("crust_peer.config");
+
+    let _ = write_config_file(Some(config_file_path.clone()),
+                              Some(vec![Port::Tcp(tcp_port.unwrap_or(0u16)).clone()]),
+                              None,
+                              beacon_port,
+                             ).unwrap();
+    (config_file_path, temp_dir)
+}
+
 fn main() {
     let args: Args = Docopt::new(USAGE)
                             .and_then(|docopt| docopt.decode())
@@ -295,21 +314,22 @@ fn main() {
         None => listening_hints.push(if utp_mode { Port::Utp(0) } else { Port::Tcp(0) }),
     };
 
-    // Set up beacon port
-    let beacon_port = match args.flag_beacon {
-        Some(port) => Some(port),
-        None => Some(9999u16),
-    };
-
     let mut stdout = term::stdout();
     let mut stdout_copy = term::stdout();
 
+    let (config_path, _tempdir) = match args.flag_config {
+        Some(path_str) => {(PathBuf::from(path_str), None)},
+        None => {
+            let (path, tempdir) = make_temp_config(args.flag_beacon, args.flag_tcp_port);
+            (path, Some(tempdir))
+        }
+    };
+
     // Construct ConnectionManager and start listening
     let (channel_sender, channel_receiver) = channel();
-    let mut connection_manager = ConnectionManager::new(channel_sender);
+    let mut connection_manager = ConnectionManager::new(channel_sender, Some(config_path));
     stdout = green_foreground(stdout);
-    let listening_endpoints = match connection_manager.start_listening(listening_hints,
-                                                                       beacon_port) {
+    let listening_endpoints = match connection_manager.start_listening2() {
         Ok(endpoints) => endpoints,
         Err(e) => {
             println!("Connection manager failed to start listening: {}", e);
@@ -317,19 +337,16 @@ fn main() {
         }
     };
     print!("Listening for new connections on ");
-    for endpoint in &listening_endpoints.0 {
+    for endpoint in &listening_endpoints {
         print!("{:?}, ", *endpoint);
     };
-    match listening_endpoints.1 {
-        Some(beacon_port) => println!("and listening for UDP broadcast on port {}.", beacon_port),
-        None => println!("and not listening for UDP broadcasts."),
-    };
+
     stdout = reset_foreground(stdout);
 
     // Try to bootstrap.  If this fails and we're trying to run the speed test, then fail overall.
     // Otherwise, if no peer endpoints were provided and bootstrapping fails, assume this is
     // OK, i.e. this is the first node of a new network.
-    let connected_peer = match connection_manager.bootstrap(bootstrap_peers.clone(), beacon_port) {
+    let connected_peer = match connection_manager.bootstrap(bootstrap_peers.clone(), None) {
         Ok(endpoint) => {
             stdout = green_foreground(stdout);
             println!("Bootstrapped to {:?}", endpoint);
