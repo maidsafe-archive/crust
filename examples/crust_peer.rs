@@ -272,13 +272,13 @@ fn reset_foreground(stdout: Option<Box<term::StdoutTerminal>>) ->
 }
 
 // TODO update to take listening port once api is updated
-fn make_temp_config(beacon_port: Option<u16>) -> (PathBuf, TempDir) {
+fn make_temp_config(beacon_port: Option<u16>, tcp_port: Option<u16>) -> (PathBuf, TempDir) {
     let temp_dir = TempDir::new("crust_peer").unwrap();
     let mut config_file_path = temp_dir.path().to_path_buf();
     config_file_path.push("crust_peer.config");
 
     let _ = write_config_file(Some(config_file_path.clone()),
-                              None,
+                              Some(vec![Port::Tcp(tcp_port.unwrap_or(0u16)).clone()]),
                               None,
                               beacon_port,
                              ).unwrap();
@@ -312,18 +312,16 @@ fn main() {
     let (config_path, _tempdir) = match args.flag_config {
         Some(path_str) => {(PathBuf::from(path_str), None)},
         None => {
-            let (path, tempdir) = make_temp_config(args.flag_beacon);
+            let (path, tempdir) = make_temp_config(args.flag_beacon, args.flag_tcp_port);
             (path, Some(tempdir))
         }
     };
 
     // Construct ConnectionManager and start listening
     let (channel_sender, channel_receiver) = channel();
-    let mut connection_manager = ConnectionManager::new(channel_sender,
-                                                        Some(config_path));
+    let mut connection_manager = ConnectionManager::new(channel_sender, Some(config_path));
     stdout = green_foreground(stdout);
-    let listening_endpoints = match connection_manager.start_listening2(listening_hints,
-                                                                        None) {
+    let listening_endpoints = match connection_manager.start_listening2() {
         Ok(endpoints) => endpoints,
         Err(e) => {
             println!("Connection manager failed to start listening: {}", e);
@@ -331,13 +329,10 @@ fn main() {
         }
     };
     print!("Listening for new connections on ");
-    for endpoint in &listening_endpoints.0 {
+    for endpoint in &listening_endpoints {
         print!("{:?}, ", *endpoint);
     };
-    match listening_endpoints.1 {
-        Some(beacon_port) => println!("and listening for UDP broadcast on port {}.", beacon_port),
-        None => println!("and not listening for UDP broadcasts."),
-    };
+
     stdout = reset_foreground(stdout);
 
     // Try to bootstrap.  If this fails and we're trying to run the speed test, then fail overall.
