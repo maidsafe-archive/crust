@@ -8,6 +8,10 @@ repository = "https://github.com/maidsafe/crust"
 readme = "README.md"
 license = "GPL-3.0"
 homepage = "http://maidsafe.net"
+build = "build.rs"
+
+[build-dependencies]
+gcc = "*"
 
 [dependencies]
 libc = "*"
@@ -18,12 +22,8 @@ rustc-serialize = "*"
 term = "*"
 time = "*"
 asynchronous = "*"
-#utp = "0.6.0"
 itertools = "*"
 tempdir = "*"
-
-[dependencies.utp]
-path = "../rust-utp"
 
 [[example]]
 name = "simple_sender"

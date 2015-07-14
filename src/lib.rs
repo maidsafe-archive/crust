@@ -31,7 +31,7 @@
        html_favicon_url = "http://maidsafe.net/img/favicon.ico",
        html_root_url = "http:///dirvine.github.io/crust/crust/")]
 #![allow(unused_features)]
-#![feature(arc_weak, core_intrinsics, ip_addr, ip, core, alloc, udp, scoped)]
+#![feature(arc_weak, core_intrinsics, ip_addr, ip, core, alloc, udp, scoped, box_raw, vec_from_raw_buf)]
 
 extern crate cbor;
 extern crate rand;
@@ -40,7 +40,6 @@ extern crate rustc_serialize;
 extern crate time;
 extern crate asynchronous;
 extern crate libc;
-extern crate utp;
 extern crate itertools;
 
 #[cfg(test)]
@@ -65,6 +64,8 @@ mod beacon;
 mod bootstrap_handler;
 mod getifaddrs;
 mod tcp_connections;
+#[path = "../libutp_crust/utp_crust.rs"]
+mod utp_crust;
 mod utp_connections;
 mod transport;
 mod config_utils;

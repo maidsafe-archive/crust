@@ -26,7 +26,7 @@ use std::sync::mpsc;
 use std::str::FromStr;
 use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
 use std::cmp::Ordering;
-use utp::UtpCloneableSocket as UtpSocket;
+use utp_connections::UtpSocket;
 pub type Bytes = Vec<u8>;
 
 /// Enum representing endpoint of supported protocols
@@ -169,12 +169,12 @@ pub enum Receiver {
 }
 
 impl Receiver {
-    pub fn receive(&self) -> IoResult<Bytes> {
+    pub fn receive(&mut self) -> IoResult<Bytes> {
         match *self {
-            Receiver::Tcp(ref r) => {
+            Receiver::Tcp(ref mut r) => {
                 r.recv().map_err(|what| io::Error::new(io::ErrorKind::NotConnected, what.description()))
             },
-            Receiver::Utp(ref r) => {
+            Receiver::Utp(ref mut r) => {
                 r.recv().map_err(|what| io::Error::new(io::ErrorKind::NotConnected, what.description()))
             },
         }
