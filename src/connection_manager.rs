@@ -57,6 +57,8 @@ pub enum Event {
     NewConnection(Endpoint),
     /// Invoked when a connection to a peer is lost.  Passes the peer's endpoint.
     LostConnection(Endpoint),
+    /// Invoked when a new bootstrap connection to a peer is established.  Passes the peer's endpoint.
+    NewBootstrapConnection(Endpoint),
 }
 
 struct Connection {
@@ -214,6 +216,55 @@ impl ConnectionManager {
         Ok(endpoints)
     }
 
+    /// This method tries to connect (bootstrap to existing network) to the default or provided
+    /// override list of bootstrap nodes (via config file named <current executable>.config).
+    ///
+    /// If `override_default_bootstrap_methods` is not set in the config file, it will attempt to read
+    /// a local cached file named <current executable>.bootstrap.cache to populate the list endpoints
+    /// to use for bootstrapping. It will also try `hard_coded_contacts` from config file.
+    /// In addition, it will try to use the beacon port (provided via config file) to connect to a peer
+    /// on the same LAN.
+    /// For more details on bootstrap cache file refer
+    /// https://github.com/maidsafe/crust/blob/master/docs/bootstrap.md
+    ///
+    /// If `override_default_bootstrap_methods` is set in config file, it will only try to connect to
+    /// the endpoints in the override list (`hard_coded_contacts`).
+
+    /// All connections (if any) will be dropped before bootstrap attempt is made.
+    /// This method returns immediately after dropping any active connections.endpoints
+    /// New bootstrap connections will be notified by `NewBootstrapConnection` event.
+    /// Its upper layer's responsibility to maintain or drop these connections.
+    /// Maximum of `max_successful_bootstrap_connection` bootstrap connections will be made and further connection
+    /// attempts will stop.
+    /// It will reiterate the list of all endpoints until it gets at least one connection.
+    pub fn bootstrap_new(&self, _max_successful_bootstrap_connection: u8) {
+        //TODO disconnect existing connections
+
+        //FIXME need to be called on a separate thread and loop until one bootstrap_off_list_new returns failure
+        if self.config.override_default_bootstrap {
+            let res = self.bootstrap_off_list_new(self.config.hard_coded_contacts.clone());
+        } else {
+            let mut combined_endpoint_list = self.seek_peers(self.config.beacon_port);
+            for contacts in self.config.hard_coded_contacts.clone() {
+                combined_endpoint_list.push(contacts.endpoint);
+            }
+
+            if self.beacon_guid_and_port.is_some() {  // this node owns bs file
+                let handler = BootstrapHandler::new();
+                match handler.read_bootstrap_file() {
+                    Ok(read_contacts) => {
+                        for contacts in read_contacts.contacts {
+                            combined_endpoint_list.push(contacts.endpoint);
+                        }
+                    },
+                    _ => {},
+                }
+            }
+            //self.bootstrap_off_list_new(combined_endpoint_list); //FIXME
+        }
+    }
+
+
     /// This method tries to connect (bootstrap to exisiting network) to the default or provided
     /// list of bootstrap nodes.
     ///
@@ -316,7 +367,7 @@ impl ConnectionManager {
                 let ws = ws.clone();
                 let result = transport::connect(endpoint.clone())
                               .and_then(|trans| handle_connect(ws, trans,
-                                        is_broadcast_acceptor));
+                                        is_broadcast_acceptor, false));
                 if result.is_ok() { return; }
             }
         });
@@ -394,6 +445,33 @@ impl ConnectionManager {
         endpoints
     }
 
+    // Returns Ok() if at least one connection succeeds
+    fn bootstrap_off_list_new(&self, mut bootstrap_list: Vec<Contact>) -> io::Result<()> {
+        let own_listening_endpoint = try!(self.get_listening_endpoint());
+        bootstrap_list.retain(|x| !own_listening_endpoint.contains(&x.endpoint));
+        let mut vec_deferred = vec![];
+        for contact in bootstrap_list {
+            let state_cloned = self.state.clone();
+            let beacon_guid_and_port_is_some = self.beacon_guid_and_port.is_some();
+            vec_deferred.push(Deferred::new(move || {
+                match transport::connect(contact.endpoint.clone()) {
+                    Ok(trans) => {
+                        let ep = trans.remote_endpoint.clone();
+                        let _ = try!(handle_connect(state_cloned.downgrade(), trans,
+                                                    beacon_guid_and_port_is_some, true ));
+                        return Ok(ep)
+                    },
+                    Err(e) => Err(e),
+                }
+            }));
+        }
+        let res = Deferred::first_to_promise(15,false,vec_deferred, ControlFlow::ParallelLimit(15)).sync();
+        if let Ok(v) = res {  // FIXME need to return success if at least one connection succeeds
+            if v.len() > 0 { return Ok(()) }
+        }
+        Err(io::Error::new(io::ErrorKind::Other, "No bootstrap node got connected"))
+    }
+
     fn bootstrap_off_list(&self, mut bootstrap_list: Vec<Endpoint>) -> io::Result<Endpoint> {
         // remove own endpoints
         let own_listening_endpoint = try!(self.get_listening_endpoint());
@@ -408,7 +486,7 @@ impl ConnectionManager {
                     Ok(trans) => {
                         let ep = trans.remote_endpoint.clone();
                         let _ = try!(handle_connect(state_cloned.downgrade(), trans,
-                                                    beacon_guid_and_port_is_some ));
+                                                    beacon_guid_and_port_is_some, true ));
                         return Ok(ep)
                     },
                     Err(e) => Err(e),
@@ -496,9 +574,14 @@ fn handle_accept(mut state: WeakState, trans: transport::Transport) -> io::Resul
 }
 
 fn handle_connect(mut state: WeakState, trans: transport::Transport,
-                  is_broadcast_acceptor: bool) -> io::Result<Endpoint> {
+                  is_broadcast_acceptor: bool, is_bootstrap_connection: bool) -> io::Result<Endpoint> {
     let remote_ep = trans.remote_endpoint.clone();
-    let endpoint = register_connection(&mut state, trans, Event::NewConnection(remote_ep));
+    let event = match is_bootstrap_connection {
+        true => Event::NewBootstrapConnection(remote_ep),
+        false => Event::NewConnection(remote_ep)
+    };
+
+    let endpoint = register_connection(&mut state, trans, event);
     if is_broadcast_acceptor {
         if let Ok(ref endpoint) = endpoint {
             let mut contacts = Contacts::new();
@@ -511,6 +594,7 @@ fn handle_connect(mut state: WeakState, trans: transport::Transport,
     }
     endpoint
 }
+
 
 fn register_connection(state: &mut WeakState, trans: transport::Transport,
                        event_to_user: Event) -> io::Result<Endpoint> {
@@ -657,8 +741,9 @@ mod test {
         config_file_path.push("crust_test.config");
 
         let config = Config{ preferred_ports: vec![Port::Tcp(0)],
-                              hard_coded_contacts: Contacts::new(),
-                              beacon_port: beacon_port.unwrap_or(0u16),
+                             override_default_bootstrap: false,
+                             hard_coded_contacts: Contacts::new(),
+                             beacon_port: beacon_port.unwrap_or(0u16),
                            };
         write_file(&config_file_path, &config).unwrap();
         (config_file_path, temp_dir)
@@ -705,6 +790,7 @@ mod test {
                         Event::LostConnection(_) => {
                             // println!("Lost connection to {:?}", other_ep);
                         }
+                        Event::NewBootstrapConnection(_) => {}
                     }
                 }
                 // println!("done");
@@ -753,7 +839,8 @@ mod test {
                             }
                         },
                         Event::LostConnection(_) => {
-                        }
+                        },
+                        Event::NewBootstrapConnection(_) => {}
                     }
                 }
                 // println!("done");
@@ -780,7 +867,8 @@ mod test {
                         },
                         Event::LostConnection(_) => {
                             stat.lost_connection_count += 1;
-                        }
+                        },
+                        Event::NewBootstrapConnection(_) => {}
                     }
                 }
             });
@@ -907,6 +995,7 @@ mod test {
                         // println!("dropping node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
                         break;
                     }
+                    Event::NewBootstrapConnection(_) => {}
                 }
             }
           });

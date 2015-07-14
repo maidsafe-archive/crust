@@ -45,6 +45,7 @@ fn make_temp_config(beacon_port: Option<u16>) -> (PathBuf, TempDir) {
     let _ = write_config_file(Some(config_file_path.clone()),
                               None,
                               None,
+                              None,
                               beacon_port,
                              ).unwrap();
     (config_file_path, temp_dir)

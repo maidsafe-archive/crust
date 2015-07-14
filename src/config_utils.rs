@@ -34,6 +34,7 @@ pub type Contacts = Vec<Contact>;
 #[derive(PartialEq, Debug, RustcDecodable, RustcEncodable)]
 pub struct Config {
     pub preferred_ports: Vec<Port>,
+    pub override_default_bootstrap: bool,
     pub hard_coded_contacts: Contacts,
     pub beacon_port: u16,
 }
@@ -67,6 +68,7 @@ pub fn write_file(file_name : &PathBuf, config: &Config) -> io::Result<()> {
 /// Writes config file and parametes to user specified or default location
 pub fn write_config_file(file_path : Option<PathBuf>,
                          preferred_ports: Option<Vec<Port>>,
+                         override_default_bootstrap: Option<bool>,
                          hard_coded_endpoints: Option<Vec<Endpoint>>,
                          beacon_port: Option<u16>) -> io::Result<(PathBuf)> {
     let mut hard_coded_contacts: Contacts = vec![];
@@ -80,6 +82,7 @@ pub fn write_config_file(file_path : Option<PathBuf>,
     };
 
     let config = Config{ preferred_ports: preferred_ports.unwrap_or(vec![Port::Tcp(0u16)]),
+                         override_default_bootstrap: override_default_bootstrap.unwrap_or(false),
                          hard_coded_contacts: hard_coded_contacts,
                          beacon_port: beacon_port.unwrap_or(0u16),
                        };
@@ -122,6 +125,7 @@ mod test {
                 hard_coded_contacts.push(new_contact);
         }
         let config = Config{ preferred_ports: vec![Port::Tcp(rand::random::<u16>())],
+                             override_default_bootstrap: false,
                              hard_coded_contacts: hard_coded_contacts,
                              beacon_port: rand::random::<u16>(),
                            };

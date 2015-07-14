@@ -280,6 +280,7 @@ fn make_temp_config(beacon_port: Option<u16>, tcp_port: Option<u16>) -> (PathBuf
     let _ = write_config_file(Some(config_file_path.clone()),
                               Some(vec![Port::Tcp(tcp_port.unwrap_or(0u16)).clone()]),
                               None,
+                              None,
                               beacon_port,
                              ).unwrap();
     (config_file_path, temp_dir)
@@ -400,7 +401,8 @@ fn main() {
                     stdout_copy = cyan_foreground(stdout_copy);
                     my_flat_world.drop_node(CrustNode::new(endpoint, false));
                     my_flat_world.print_connected_nodes();
-                }
+                },
+                crust::Event::NewBootstrapConnection(_) => {}
             }
             stdout_copy = reset_foreground(stdout_copy);
             if !running_speed_test {
