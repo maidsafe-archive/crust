@@ -24,7 +24,7 @@ use std::thread;
 use std::net::IpAddr;
 
 use beacon;
-use bootstrap_handler::{BootstrapHandler, Contacts, Contact, parse_contacts};
+use bootstrap_handler::{BootstrapHandler, Contacts, Contact, Timestamp, parse_contacts};
 use getifaddrs::getifaddrs;
 use transport;
 use transport::{Endpoint, Port};
@@ -124,7 +124,11 @@ impl ConnectionManager {
                 let listening_ips = getifaddrs();
                 for port in &listening_ports {
                     for ip in &listening_ips {
-                        contacts.push(Contact { endpoint: Endpoint::tcp((ip.addr.clone(), port.get_port())) });
+                        contacts.push(
+                            Contact {
+                                endpoint: Endpoint::tcp((ip.addr.clone(), port.get_port())),
+                                last_updated: Timestamp::new()
+                            });
                     }
                 }
 
@@ -501,7 +505,11 @@ fn handle_connect(mut state: WeakState, trans: transport::Transport,
             let mut contacts = Contacts::new();
             // TODO PublicKey for contact required...
             // let public_key = PublicKey::Asym(asymmetricbox::PublicKey([0u8; asymmetricbox::PUBLICKEYBYTES]));
-            contacts.push(Contact {  endpoint: endpoint.clone()});
+            contacts.push(
+                Contact {
+                    endpoint: endpoint.clone(),
+                    last_updated: Timestamp::new()
+                });
             let mut bootstrap_handler = BootstrapHandler::new();
             let _ = bootstrap_handler.add_contacts(contacts);
         }
