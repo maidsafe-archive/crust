@@ -500,15 +500,17 @@ impl ConnectionManager {
         });
     }
 
-    /// Return external endpoints. That is, the endpoints other peers can use to
-    /// connect to. If an external IP is not available, the IP obtained through
-    /// the OS is used. The external IP is obtained through UPnP IGD.
+    /// Return the endpoints other peers can use to connect to. External address
+    /// are obtained through UPnP IGD.
     pub fn get_own_endpoints(&self) -> Vec<Endpoint> {
-        self.own_endpoints.iter()
-            .map(|&(ref local, ref external)| match *external.lock().unwrap() {
-                Some(ref a) => a,
-                None => local,
-            }.clone()).collect()
+        let mut ret = Vec::with_capacity(self.own_endpoints.len());
+        for &(ref local, ref external) in self.own_endpoints.iter() {
+            ret.push(local.clone());
+            if let Some(ref a) = *external.lock().unwrap() {
+                ret.push(a.clone())
+            }
+        };
+        ret
     }
 }
 
