@@ -665,19 +665,27 @@ fn bootstrap_off_list(weak_state: WeakState, bootstrap_list: Vec<Contact>,
             match transport::connect(contact.endpoint.clone()) {
                 Ok(trans) => {
                     let ep = trans.remote_endpoint.clone();
-                    let _ = try!(handle_connect(ws.clone(), trans, is_broadcast_acceptor, true ));
+                    let _ = try!(handle_connect(ws.clone(), trans,
+                                                is_broadcast_acceptor, true ));
                     return Ok(ep)
                 },
                 Err(e) => Err(e),
             }
         }));
     }
-    let res = Deferred::first_to_promise(15,false,vec_deferred, ControlFlow::ParallelLimit(15))
-                .sync();
-    if let Ok(v) = res {  // FIXME need to return success if at least one connection succeeds
-        if v.len() > 0 { return Ok(()) }
+    let res = Deferred::first_to_promise(15, false, vec_deferred,
+                                         ControlFlow::ParallelLimit(15))
+        .sync();
+    let v = match res {
+        Ok(v) => v,
+        Err(v) => v.into_iter().filter_map(|e| e.ok()).collect(),
+    };
+    if v.len() > 0 {
+        Ok(())
+    } else {
+        Err(io::Error::new(io::ErrorKind::Other,
+                           "No bootstrap node got connected"))
     }
-    Err(io::Error::new(io::ErrorKind::Other, "No bootstrap node got connected"))
 }
 
 
