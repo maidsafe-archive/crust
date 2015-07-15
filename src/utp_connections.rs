@@ -47,7 +47,7 @@ fn sockaddr_to_addr(_storage: *const ::libc::c_void,
                 Ok(SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new((o >> 24) as u8,
                                                                   (o >> 16) as u8,
                                                                   (o >> 8) as u8,
-                                                                  (o) as u8), s.sin_port)))
+                                                                  (o) as u8), u16::from_be(s.sin_port))))
             }
             libc::AF_INET6 => {
                 assert!(len >= mem::size_of::<libc::sockaddr_in6>());
@@ -61,9 +61,9 @@ fn sockaddr_to_addr(_storage: *const ::libc::c_void,
                       u16::from_be(s.sin6_addr.s6_addr[6]),
                       u16::from_be(s.sin6_addr.s6_addr[7])];
                 Ok(SocketAddr::V6(SocketAddrV6::new(Ipv6Addr::new(o[0], o[1], o[2], o[3], o[4], o[5], o[6], o[7]),
-                                                    s.sin6_port,
-                                                    s.sin6_flowinfo,
-                                                    s.sin6_scope_id)))
+                                                    u16::from_be(s.sin6_port),
+                                                    u32::from_be(s.sin6_flowinfo),
+                                                    u32::from_be(s.sin6_scope_id))))
             }
             _ => {
                 Err(Error::new(ErrorKind::InvalidInput, "invalid argument"))
@@ -85,6 +85,7 @@ extern "C" fn listener_event_callback(_: utp_crust_socket, ev: utp_crust_event_c
         },
         UTP_CRUST_NEW_CONNECTION => {
             let addr = sockaddr_to_addr(data, bytes as usize).unwrap();
+            println!("utp_connections: new connection on listening socket from {}", addr);
             // Create a new socket and connect it to the remote
             let mut utp_socket : utp_crust_socket = 0;
             let mut port : u16 = 0;
@@ -96,6 +97,7 @@ extern "C" fn listener_event_callback(_: utp_crust_socket, ev: utp_crust_event_c
             }
             // Return the newly created socket
             let _ = unsafe {&(*this)}.tx.send((utp_socket, addr));
+            println!("utp_connections: sent newly accepted connection {} to UTP listen thread", utp_socket);
         },
         _ => (),
     }
@@ -115,8 +117,8 @@ pub fn connect_utp<'a, 'b, I, O>(addr: SocketAddr) -> IoResult<(InUtpStream<I>, 
             let o=a.ip().octets();
             let address = ::libc::sockaddr_in {
                 sin_family : libc::AF_INET as u16,
-                sin_port : a.port(),
-                sin_addr : libc::in_addr { s_addr : ((o[0] as u32)<<24)|((o[1] as u32)<<16)|((o[2] as u32)<<8)|(o[3] as u32) },
+                sin_port : u16::to_be(a.port()),
+                sin_addr : libc::in_addr { s_addr : ((o[3] as u32)<<24)|((o[2] as u32)<<16)|((o[1] as u32)<<8)|(o[0] as u32) },
                 sin_zero : [0; 8],
             };
             let _address : *const libc::sockaddr_in = &address;
@@ -129,7 +131,7 @@ pub fn connect_utp<'a, 'b, I, O>(addr: SocketAddr) -> IoResult<(InUtpStream<I>, 
             let o=a.ip().segments();
             let address = ::libc::sockaddr_in6 {
                 sin6_family : libc::AF_INET6 as u16,
-                sin6_port : a.port(),
+                sin6_port : u16::to_be(a.port()),
                 sin6_flowinfo : 0,
                 sin6_scope_id : 0,
                 sin6_addr : libc::in6_addr { s6_addr : [
@@ -176,13 +178,16 @@ extern "C" fn event_callback(_: utp_crust_socket, ev: utp_crust_event_code, data
     if !this.is_null() {
         match ev {
             UTP_CRUST_SOCKET_CLEANUP => {
+                println!("utp_connections socket cleanup");
                 drop(unsafe { Box::from_raw(this) });
             },
             UTP_CRUST_LOST_CONNECTION => {
+                println!("utp_connections lost connection");
                 drop(unsafe {&(*this).in_snd});
             },
             UTP_CRUST_NEW_MESSAGE => {
-                let _ = unsafe {&(*this)}.in_snd.send(unsafe { slice::from_raw_parts(data as *const u8, bytes as usize).to_vec() });
+                let e = unsafe {&(*this)}.in_snd.send(unsafe { slice::from_raw_parts(data as *const u8, bytes as usize).to_vec() });
+                println!("utp_connections: new message mpsc send returns error={}", e.is_err());
             },
             _ => (),
         }
@@ -195,7 +200,7 @@ extern "C" fn event_callback(_: utp_crust_socket, ev: utp_crust_event_code, data
 /// values, that respective part is shut down.
 pub fn upgrade_utp<'a, 'b, I, O>(newconnection: UtpSocket) -> IoResult<(InUtpStream<I>, OutUtpStream<O>)>
 where I: Send + Decodable + 'static, O: Send + Encodable + 'static {
-    
+    println!("utp_connections upgrade_utp {}", newconnection);
     // Configure a reading channel
     let (in_snd, in_rec) = mpsc::channel();
     // Create new private data for this
@@ -223,6 +228,7 @@ impl Read for ReceiverAsStream {
         loop {
             if !self.remaining.is_empty() {
                 let mut bytestogo = self.remaining.len() - self.offset;
+                println!("ReceiverAsStream::read() bytestogo={}, offset={}", bytestogo, self.offset);
                 if bytestogo <= buf.len() {
                     for n in 0..bytestogo {
                         buf[n] = self.remaining[self.offset+n];
@@ -243,6 +249,7 @@ impl Read for ReceiverAsStream {
                 return Err(Error::new(ErrorKind::ConnectionAborted, "Connection aborted"));
             }
             self.remaining=newdata.unwrap();
+            println!("ReceiverAsStream::read() reads {} bytes", self.remaining.len());
         }
     }
 }
@@ -253,8 +260,8 @@ where T: Decodable {
     _phantom: PhantomData<T>
 }
 
-pub struct InUtpStreamIter<'a, T>
-where T: Decodable, T: 'a {
+pub struct InUtpStreamIter<'a, T: 'a>
+where T: Decodable {
     stream : &'a mut InUtpStream<T>,
 }
 
@@ -266,31 +273,44 @@ where T: Decodable {
     }
     
     pub fn recv(&mut self) -> Result<T> {
+        println!("InUtpStream about to read");
         let mut decoder = Decoder::from_reader(&mut self.buffer);
         let result = decoder.decode().next();
+        println!("InUtpStream read is_none={}", result.is_none());
         if result.is_none() {
             return Err(Error::new(ErrorKind::InvalidInput, "Unable to decode"));
         }
         let result = result.unwrap();
+        println!("InUtpStream read is_err={}", result.is_err());
         if result.is_err() {
             return Err(Error::new(ErrorKind::InvalidInput, "Unable to decode"));
         }
         Ok(result.unwrap())
     }
     
-    // This is not unused, and I don't know why Rust claims it is
+    // I don't get why Rust thinks this unused code
     #[allow(dead_code)]
     pub fn iter(&'a mut self) -> InUtpStreamIter<'a, T> {
-        InUtpStreamIter { stream : self }
+        InUtpStreamIter::<'a, T>::new(self)
     }
 }
 
+impl<'a, T> InUtpStreamIter<'a, T>
+where T: Decodable {
+    fn new(stream : &'a mut InUtpStream<T>) -> InUtpStreamIter<'a, T> { InUtpStreamIter { stream : stream } }
+}
+
 impl <'a, T> Iterator for InUtpStreamIter<'a, T>
-where T: Decodable, T: 'a {
+where T: Decodable {
     type Item = T;
+    
     fn next(&mut self) -> Option<T> {
-        // TODO
-        None
+        let ret = self.stream.recv();
+        if ret.is_err() {
+            None
+        } else {
+            Some(ret.unwrap())
+        }
     }
 }
 
@@ -311,6 +331,7 @@ where T: Encodable {
         let mut encoder = Encoder::from_memory();
         let _ =encoder.encode(&[&m]);
         let encoded = encoder.as_bytes();
+        println!("utp_connections: send to socket {} bytes {}", self.socket, encoded.len());
         if -1 == unsafe { utp_crust_send(self.socket, encoded.as_ptr() as *const libc::c_void, encoded.len() as libc::size_t) } {
             return Err(Error::last_os_error());
         }
@@ -329,8 +350,8 @@ where T: Encodable {
 impl <T> Drop for OutUtpStream<T>
 where T: Encodable {
     fn drop(&mut self) {
+        println!("OutUtpStream drops");
         let _ = self.close();
-        //println!("OutUtpStream drops");
     }
 }
 
@@ -342,7 +363,8 @@ mod test {
     use std::net::SocketAddr;
     use std::str::FromStr;
 
- #[test]
+#[test]
+#[ignore]
     fn test_small_stream() {
         let (event_receiver, port) = listen(5483).unwrap();
         let (mut i, mut o) = connect_utp(SocketAddr::from_str(&format!("127.0.0.1:{}", port)).unwrap()).unwrap();
@@ -352,6 +374,7 @@ mod test {
             let (mut i, o) = upgrade_utp(connection).unwrap();
             for x in i.iter() {
                 let x:u32 = x;
+                println!("test_small_stream: new item {}", x);
                 if o.send((x, x + 1)).is_err() { break; }
             }
         });
@@ -375,6 +398,7 @@ mod test {
     }
 
 #[test]
+#[ignore]
     fn test_multiple_nodes_small_stream() {
         const MSG_COUNT: usize = 5;
         const NODE_COUNT: usize = 101;

@@ -274,13 +274,13 @@ fn reset_foreground(stdout: Option<Box<term::StdoutTerminal>>) ->
 }
 
 // TODO update to take listening port once api is updated
-fn make_temp_config(beacon_port: Option<u16>, tcp_port: Option<u16>) -> (PathBuf, TempDir) {
+fn make_temp_config(beacon_port: Option<u16>, hint: Vec<Port>) -> (PathBuf, TempDir) {
     let temp_dir = TempDir::new("crust_peer").unwrap();
     let mut config_file_path = temp_dir.path().to_path_buf();
     config_file_path.push("crust_peer.config");
 
     let _ = write_config_file(Some(config_file_path.clone()),
-                              Some(vec![Port::Tcp(tcp_port.unwrap_or(0u16)).clone()]),
+                              Some(hint),
                               None,
                               beacon_port,
                              ).unwrap();
@@ -320,7 +320,7 @@ fn main() {
     let (config_path, _tempdir) = match args.flag_config {
         Some(path_str) => {(PathBuf::from(path_str), None)},
         None => {
-            let (path, tempdir) = make_temp_config(args.flag_beacon, args.flag_tcp_port);
+            let (path, tempdir) = make_temp_config(args.flag_beacon, listening_hints);
             (path, Some(tempdir))
         }
     };

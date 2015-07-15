@@ -740,6 +740,7 @@ mod test {
     }
 
 #[test]
+#[ignore]
     fn bootstrap_utp() {
         let (cm1_i, _) = channel();
         let config_file1 = make_temp_config_utp(None);
@@ -810,6 +811,7 @@ mod test {
     }
 
 #[test]
+#[ignore]
     fn connection_manager_utp() {
         // Wait 2 seconds until previous bootstrap test ends. If not, that test connects to these endpoints.
         thread::sleep_ms(2000);
@@ -1058,6 +1060,7 @@ mod test {
     }
 
 #[test]
+#[ignore]
     fn connection_manager_start_utp() {
         // Wait 2 seconds until previous bootstrap test ends. If not, that test connects to these endpoints.
         thread::sleep_ms(2000);
