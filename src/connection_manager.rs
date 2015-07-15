@@ -239,31 +239,15 @@ impl ConnectionManager {
     /// It will reiterate the list of all endpoints until it gets at least one connection.
     pub fn bootstrap_new(&self, _max_successful_bootstrap_connection: u8) {
         //TODO disconnect existing connections
-
-        //FIXME need to be called on a separate thread and loop until one bootstrap_off_list_new returns failure
-        if self.config.override_default_bootstrap {
-            let res = self.bootstrap_off_list_new(self.config.hard_coded_contacts.clone());
-        } else {
-            let cached_contacts = match self.beacon_guid_and_port.is_some() {  // this node owns bs file
-                true => {
-                    if let Ok(bootstrap) = BootstrapHandler::new().read_bootstrap_file() {
-                        bootstrap.contacts
-                    } else {
-                        vec![]
-                    }
-                },
-                _ => vec![],
-
-            };
-            let combined_contacts: Vec<_> = self.seek_peers(self.config.beacon_port).iter()
-                        .map(|x| Contact{ endpoint: x.clone()} )
-                            .chain(self.config.hard_coded_contacts.clone().into_iter())
-                                .chain(cached_contacts.into_iter()).collect();
-
-            let res = self.bootstrap_off_list_new(combined_contacts);
-        }
+        // try
+        let contacts = self.populate_bootstrap_contacts();  //FIXME this needs to be in the thread
+        let mut ws = self.state.downgrade();
+        let bs_file_lock = self.beacon_guid_and_port.is_some();
+        let _ = thread::Builder::new().name("ConnectionManager bootstrap loop".to_string()).spawn(move || {
+            // loop
+            let res = bootstrap_off_list(ws, contacts, bs_file_lock);
+        });
     }
-
 
     /// This method tries to connect (bootstrap to exisiting network) to the default or provided
     /// list of bootstrap nodes.
@@ -445,31 +429,28 @@ impl ConnectionManager {
         endpoints
     }
 
-    // Returns Ok() if at least one connection succeeds
-    fn bootstrap_off_list_new(&self, mut bootstrap_list: Vec<Contact>) -> io::Result<()> {
-        let own_listening_endpoint = try!(self.get_listening_endpoint());
-        bootstrap_list.retain(|x| !own_listening_endpoint.contains(&x.endpoint));
-        let mut vec_deferred = vec![];
-        for contact in bootstrap_list {
-            let state_cloned = self.state.clone();
-            let beacon_guid_and_port_is_some = self.beacon_guid_and_port.is_some();
-            vec_deferred.push(Deferred::new(move || {
-                match transport::connect(contact.endpoint.clone()) {
-                    Ok(trans) => {
-                        let ep = trans.remote_endpoint.clone();
-                        let _ = try!(handle_connect(state_cloned.downgrade(), trans,
-                                                    beacon_guid_and_port_is_some, true ));
-                        return Ok(ep)
-                    },
-                    Err(e) => Err(e),
-                }
-            }));
+    fn populate_bootstrap_contacts(&self) -> Vec<Contact> {
+        if self.config.override_default_bootstrap {
+            return self.config.hard_coded_contacts.clone();
+        } else {
+            let cached_contacts = match self.beacon_guid_and_port.is_some() {  // this node owns bs file
+                true => {
+                    if let Ok(bootstrap) = BootstrapHandler::new().read_bootstrap_file() {
+                        bootstrap.contacts
+                    } else {
+                        vec![]
+                    }
+                },
+                _ => vec![],
+
+            };
+            let combined_contacts: Vec<_> = self.seek_peers(self.config.beacon_port).iter()
+                        .map(|x| Contact{ endpoint: x.clone()} )
+                            .chain(self.config.hard_coded_contacts.clone().into_iter())
+                                .chain(cached_contacts.into_iter()).collect();
+
+            combined_contacts
         }
-        let res = Deferred::first_to_promise(15,false,vec_deferred, ControlFlow::ParallelLimit(15)).sync();
-        if let Ok(v) = res {  // FIXME need to return success if at least one connection succeeds
-            if v.len() > 0 { return Ok(()) }
-        }
-        Err(io::Error::new(io::ErrorKind::Other, "No bootstrap node got connected"))
     }
 
     fn bootstrap_off_list(&self, mut bootstrap_list: Vec<Endpoint>) -> io::Result<Endpoint> {
@@ -543,6 +524,7 @@ impl Drop for ConnectionManager {
 //         .map_err(|_|io::Error::new(io::ErrorKind::BrokenPipe, "failed to notify_user"))
 //     })
 // }
+
 
 fn lock_state<T, F: FnOnce(&State) -> io::Result<T>>(state: &WeakState, f: F) -> io::Result<T> {
     state.upgrade().ok_or(io::Error::new(io::ErrorKind::Interrupted,
@@ -653,6 +635,32 @@ fn start_writing_thread(state: WeakState,
         }
         unregister_connection(state, his_ep);
     });
+}
+
+// Returns Ok() if at least one connection succeeds
+fn bootstrap_off_list(mut weak_state: WeakState, mut bootstrap_list: Vec<Contact>,
+                           is_broadcast_acceptor: bool) -> io::Result<()> {
+    // FIXME remove duplicates
+    let mut vec_deferred = vec![];
+    for contact in bootstrap_list {
+        let ws = weak_state.clone();
+        vec_deferred.push(Deferred::new(move || {
+            match transport::connect(contact.endpoint.clone()) {
+                Ok(trans) => {
+                    let ep = trans.remote_endpoint.clone();
+                    let _ = try!(handle_connect(ws.clone(), trans, is_broadcast_acceptor, true ));
+                    return Ok(ep)
+                },
+                Err(e) => Err(e),
+            }
+        }));
+    }
+    let res = Deferred::first_to_promise(15,false,vec_deferred, ControlFlow::ParallelLimit(15))
+                .sync();
+    if let Ok(v) = res {  // FIXME need to return success if at least one connection succeeds
+        if v.len() > 0 { return Ok(()) }
+    }
+    Err(io::Error::new(io::ErrorKind::Other, "No bootstrap node got connected"))
 }
 
 
