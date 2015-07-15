@@ -245,7 +245,17 @@ impl ConnectionManager {
         let bs_file_lock = self.beacon_guid_and_port.is_some();
         let _ = thread::Builder::new().name("ConnectionManager bootstrap loop".to_string()).spawn(move || {
             // loop
-            let res = bootstrap_off_list(ws, contacts, bs_file_lock);
+            loop {
+                match bootstrap_off_list(ws.clone(), contacts.clone(), bs_file_lock) {
+                    Ok(_) => {
+                        println!("Got at least one bootstrap connection. breaking bootstrap loop");
+                        break;
+                    },
+                    Err(_) => {
+                        println!("Failed to get at least one bootstrap connection. continuing bootstrap loop");
+                    }
+                }
+            }
         });
     }
 
