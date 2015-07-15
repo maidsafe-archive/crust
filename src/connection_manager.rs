@@ -32,6 +32,7 @@ use transport;
 use transport::{Endpoint, Port};
 
 use asynchronous::{Deferred,ControlFlow};
+use itertools::Itertools;
 
 use std::path::PathBuf;
 
@@ -241,7 +242,7 @@ impl ConnectionManager {
         //TODO disconnect existing connections
         // try
         let contacts = self.populate_bootstrap_contacts();  //FIXME this needs to be in the thread
-        let mut ws = self.state.downgrade();
+        let ws = self.state.downgrade();
         let bs_file_lock = self.beacon_guid_and_port.is_some();
         let _ = thread::Builder::new().name("ConnectionManager bootstrap loop".to_string()).spawn(move || {
             // loop
@@ -459,6 +460,13 @@ impl ConnectionManager {
                             .chain(self.config.hard_coded_contacts.clone().into_iter())
                                 .chain(cached_contacts.into_iter()).collect();
 
+            // remove duplicates
+            let mut combined_contacts : Vec<Contact> = combined_contacts.into_iter().unique().collect();
+
+            // remove own endpoints
+            if let Ok(own_listening_endpoint) = self.get_listening_endpoint() {
+                combined_contacts.retain(|x| !own_listening_endpoint.contains(&x.endpoint));
+            }
             combined_contacts
         }
     }
@@ -648,9 +656,8 @@ fn start_writing_thread(state: WeakState,
 }
 
 // Returns Ok() if at least one connection succeeds
-fn bootstrap_off_list(mut weak_state: WeakState, mut bootstrap_list: Vec<Contact>,
-                           is_broadcast_acceptor: bool) -> io::Result<()> {
-    // FIXME remove duplicates
+fn bootstrap_off_list(weak_state: WeakState, bootstrap_list: Vec<Contact>,
+                      is_broadcast_acceptor: bool) -> io::Result<()> {
     let mut vec_deferred = vec![];
     for contact in bootstrap_list {
         let ws = weak_state.clone();
