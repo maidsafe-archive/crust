@@ -86,7 +86,7 @@ fn main() {
     // and for UDP broadcasts (beacon) on 9999.
     let receiver_listening_endpoint =
         Endpoint::Tcp(SocketAddr::from_str(&"127.0.0.1:8888").unwrap());
-    let peer_endpoint = match connection_manager.bootstrap(Some(vec![receiver_listening_endpoint]),
+    let peer_endpoint = match connection_manager.bootstrap_old(Some(vec![receiver_listening_endpoint]),
                                                            Some(9999)) {
         Ok(endpoint) => endpoint,
         Err(why) => {

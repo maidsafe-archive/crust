@@ -238,7 +238,7 @@ impl ConnectionManager {
     /// Maximum of `max_successful_bootstrap_connection` bootstrap connections will be made and further connection
     /// attempts will stop.
     /// It will reiterate the list of all endpoints until it gets at least one connection.
-    pub fn bootstrap_new(&mut self, _max_successful_bootstrap_connection: u8) {
+    pub fn bootstrap(&mut self, _max_successful_bootstrap_connection: u8) {
         // Disconnect existing connections
         let mut ws = self.state.downgrade();
         let _ = lock_mut_state(&mut ws, |s: &mut State| {
@@ -282,7 +282,7 @@ impl ConnectionManager {
     /// one of the nodes on the list - we don't fall back to use the beacon protocol.
     ///
     /// It will return Err if it fails to connect to any peer.
-    pub fn bootstrap(&self, bootstrap_list: Option<Vec<Endpoint>>, beacon_port: Option<u16>) ->
+    pub fn bootstrap_old(&self, bootstrap_list: Option<Vec<Endpoint>>, beacon_port: Option<u16>) ->
             io::Result<Endpoint> {
 
         // overriding config file if beacon_port provided in api, remove once api is changed
@@ -496,7 +496,7 @@ impl ConnectionManager {
                 }
             }));
         }
-        let res = Deferred::first_to_promise(1,false,vec_deferred, ControlFlow::ParallelLimit(15)).sync();
+        let res = Deferred::first_to_promise(1, false,vec_deferred, ControlFlow::ParallelLimit(15)).sync();
         if let Ok(v) = res {
             if v.len() > 0 { return Ok(v[0].clone()) }
         }
@@ -792,18 +792,23 @@ mod test {
         let config_file1 = make_temp_config(None);
 
         let mut cm1 = ConnectionManager::new(cm1_i, Some(config_file1.0.clone()));
-        let cm1_eps = cm1.start_accepting().unwrap();
+        let _ = cm1.start_accepting().unwrap();
 
         thread::sleep_ms(1000);
         let config_file2 = make_temp_config(cm1.get_beacon_acceptor_port());
 
-        let (cm2_i, _) = channel();
+        let (cm2_i, cm2_o) = channel();
         let mut cm2 = ConnectionManager::new(cm2_i, Some(config_file2.0.clone()));
         let cm2_eps = cm2.start_accepting().unwrap();
         println!("   cm2 listening port {}", cm2_eps[0].get_port());
-        match cm2.bootstrap(None, cm1.get_beacon_acceptor_port()) {
-            Ok(ep) => { assert_eq!(ep.get_address().port(), cm1_eps[0].get_port()); },
-            Err(_) => { panic!("Failed to bootstrap"); }
+
+        cm2.bootstrap(1);
+
+        match cm2_o.recv() {
+            Ok(Event::NewBootstrapConnection(ep)) => {
+                println!("NewBootstrapConnection {:?}", ep);
+            }
+            _ => { assert!(false, "Failed to receive NewBootstrapConnection event")}
         }
     }
 

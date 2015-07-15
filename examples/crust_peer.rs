@@ -339,7 +339,7 @@ fn main() {
     // Try to bootstrap.  If this fails and we're trying to run the speed test, then fail overall.
     // Otherwise, if no peer endpoints were provided and bootstrapping fails, assume this is
     // OK, i.e. this is the first node of a new network.
-    let connected_peer = match connection_manager.bootstrap(bootstrap_peers.clone(), None) {
+    let connected_peer = match connection_manager.bootstrap_old(bootstrap_peers.clone(), None) {
         Ok(endpoint) => {
             stdout = green_foreground(stdout);
             println!("Bootstrapped to {:?}", endpoint);
