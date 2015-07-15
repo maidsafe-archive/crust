@@ -162,8 +162,13 @@ impl ConnectionManager {
                 //     PublicKey::Asym(asymmetricbox::PublicKey([0u8; asymmetricbox::PUBLICKEYBYTES]));
 
                 let mut bootstrap_handler = BootstrapHandler::new();
-                let port = &self.config.preferred_ports.get(0).unwrap_or(&Port::Tcp(0)).clone();
-                self.listen(port);
+                if self.config.preferred_ports.get(0).is_some() {
+                  let port = &self.config.preferred_ports.get(0).unwrap().clone();
+                  self.listen(port);
+                } else {
+                  self.listen(&Port::Tcp(0));
+                  self.listen(&Port::Utp(0));
+                }
                 listening_ports = try!(lock_state(&ws, |s| {
                     let buf: Vec<Port> = s.listening_ports.iter().map(|s| s.clone()).collect();
                     Ok(buf)
@@ -173,11 +178,10 @@ impl ConnectionManager {
                 let listening_ips = getifaddrs();
                 for port in &listening_ports {
                     for ip in &listening_ips {
-                        contacts.push(
-                            Contact {
-                                endpoint: Endpoint::tcp((ip.addr.clone(), port.get_port())),
-                                last_updated: Timestamp::new()
-                            });
+                        match port {
+                            &Port::Tcp(p) => contacts.push(Contact { endpoint: Endpoint::tcp((ip.addr.clone(), p)), last_updated: Timestamp::new() }),
+                            &Port::Utp(p) => contacts.push(Contact { endpoint: Endpoint::utp((ip.addr.clone(), p)), last_updated: Timestamp::new() }),
+                        }
                     }
                 }
 
@@ -336,7 +340,7 @@ impl ConnectionManager {
         }
         // println!("connection_manager::stop There are {} TCP ports being listened on", listening_ports.len());
         for port in listening_ports {
-            let _ = transport::connect(Endpoint::tcp(("127.0.0.1", port.get_port()))).unwrap();
+            let _ = transport::connect(Endpoint::tcp(("127.0.0.1", port.get_port())));
         }
     }
 
@@ -428,7 +432,7 @@ impl ConnectionManager {
         // For each contact, connect and receive their list of bootstrap contacts
         let mut endpoints: Vec<Endpoint> = vec![];
         for peer in peer_addresses {
-            let transport = transport::connect(transport::Endpoint::Tcp(peer)).unwrap();
+            let mut transport = transport::connect(transport::Endpoint::Tcp(peer)).unwrap();
             let contacts_str = match transport.receiver.receive() {
                 Ok(message) => message,
                 Err(_) => {
@@ -479,33 +483,66 @@ impl ConnectionManager {
     }
 
     fn listen(&mut self, port: &Port) {
-        let acceptor = transport::new_acceptor(port).unwrap();
-        self.own_endpoints = map_external_port(port);
-        let local_port = acceptor.local_port();
+        match port {
+            &Port::Tcp(port) => {
+                let acceptor = transport::new_acceptor(&Port::Tcp(port)).unwrap();
+                self.own_endpoints = map_external_port(&Port::Tcp(port));
+                let local_port = acceptor.local_port();
 
-        let mut weak_state = self.state.downgrade();
+                let mut weak_state = self.state.downgrade();
 
-        let _ = lock_mut_state(&mut weak_state, |s| Ok(s.listening_ports.insert(local_port)));
+                let _ = lock_mut_state(&mut weak_state, |s| Ok(s.listening_ports.insert(local_port)));
 
-        let _ = thread::Builder::new().name("ConnectionManager listen".to_string()).spawn(move || {
-            while let Ok(trans) = transport::accept(&acceptor) {
-                let weak_state_copy = weak_state.clone();
-                let mut stop_called = false;
-                {
-                    let _ = lock_mut_state(&weak_state_copy, |state: &mut State| {
-                        stop_called = state.stop_called;
-                        Ok(())
-                    });
-                }
-                if stop_called {
-                    break
-                }
-                let _ = thread::Builder::new().name("ConnectionManager accept".to_string())
-                                              .spawn(move || {
-                    let _ = handle_accept(weak_state_copy, trans);
+                let _ = thread::Builder::new().name("ConnectionManager TCP listen".to_string()).spawn(move || {
+                    while let Ok(trans) = transport::accept(&acceptor) {
+                        let weak_state_copy = weak_state.clone();
+                        let mut stop_called = false;
+                        {
+                            let _ = lock_mut_state(&weak_state_copy, |state: &mut State| {
+                                stop_called = state.stop_called;
+                                Ok(())
+                            });
+                        }
+                        if stop_called {
+                            break
+                        }
+                        let _ = thread::Builder::new().name("ConnectionManager TCP accept".to_string())
+                                                      .spawn(move || {
+                            let _ = handle_accept(weak_state_copy, trans);
+                        });
+                    }
                 });
-            }
-        });
+            },
+            &Port::Utp(port) => {
+                let acceptor = transport::new_acceptor(&Port::Utp(port)).unwrap();
+                self.own_endpoints = map_external_port(&Port::Utp(port));
+                let local_port = acceptor.local_port();
+
+                let mut weak_state = self.state.downgrade();
+
+                let _ = lock_mut_state(&mut weak_state, |s| Ok(s.listening_ports.insert(local_port)));
+
+                let _ = thread::Builder::new().name("ConnectionManager UTP listen".to_string()).spawn(move || {
+                    while let Ok(trans) = transport::accept(&acceptor) {
+                        let weak_state_copy = weak_state.clone();
+                        let mut stop_called = false;
+                        {
+                            let _ = lock_mut_state(&weak_state_copy, |state: &mut State| {
+                                stop_called = state.stop_called;
+                                Ok(())
+                            });
+                        }
+                        if stop_called {
+                            break
+                        }
+                        let _ = thread::Builder::new().name("ConnectionManager UTP accept".to_string())
+                                                      .spawn(move || {
+                            let _ = handle_accept(weak_state_copy, trans);
+                        });
+                    }
+                });
+            },
+        }
     }
 
     /// Return the endpoints other peers can use to connect to. External address
@@ -616,7 +653,7 @@ fn unregister_connection(state: WeakState, his_ep: Endpoint) {
 
 // pushing events out to event_pipe
 fn start_reading_thread(state: WeakState,
-                        receiver: transport::Receiver,
+                        mut receiver: transport::Receiver,
                         his_ep: Endpoint,
                         sink: mpsc::Sender<Event>) {
     let _ = thread::Builder::new().name("ConnectionManager reader".to_string()).spawn(move || {
@@ -724,7 +761,7 @@ mod test {
          }
      }
 
-    fn make_temp_config(beacon_port: Option<u16>) -> (PathBuf, TempDir) {
+    fn make_temp_config_tcp(beacon_port: Option<u16>) -> (PathBuf, TempDir) {
         let temp_dir = TempDir::new("crust_peer").unwrap();
         let mut config_file_path = temp_dir.path().to_path_buf();
         config_file_path.push("crust_test.config");
@@ -737,16 +774,29 @@ mod test {
         (config_file_path, temp_dir)
     }
 
+    fn make_temp_config_utp(beacon_port: Option<u16>) -> (PathBuf, TempDir) {
+        let temp_dir = TempDir::new("crust_peer").unwrap();
+        let mut config_file_path = temp_dir.path().to_path_buf();
+        config_file_path.push("crust_test.config");
+
+        let config = Config{ preferred_ports: vec![Port::Utp(0)],
+                              hard_coded_contacts: Contacts::new(),
+                              beacon_port: beacon_port.unwrap_or(0u16),
+                           };
+        write_file(&config_file_path, &config).unwrap();
+        (config_file_path, temp_dir)
+    }
+
 #[test]
-    fn bootstrap() {
+    fn bootstrap_tcp() {
         let (cm1_i, _) = channel();
-        let config_file1 = make_temp_config(None);
+        let config_file1 = make_temp_config_tcp(None);
 
         let mut cm1 = ConnectionManager::new(cm1_i, Some(config_file1.0.clone()));
         let cm1_eps = cm1.start_accepting().unwrap();
 
         thread::sleep_ms(1000);
-        let config_file2 = make_temp_config(cm1.get_beacon_acceptor_port());
+        let config_file2 = make_temp_config_tcp(cm1.get_beacon_acceptor_port());
 
         let (cm2_i, _) = channel();
         let mut cm2 = ConnectionManager::new(cm2_i, Some(config_file2.0.clone()));
@@ -758,8 +808,30 @@ mod test {
         }
     }
 
-    #[test]
-    fn connection_manager() {
+#[test]
+#[ignore]
+    fn bootstrap_utp() {
+        let (cm1_i, _) = channel();
+        let config_file1 = make_temp_config_utp(None);
+
+        let mut cm1 = ConnectionManager::new(cm1_i, Some(config_file1.0.clone()));
+        let cm1_eps = cm1.start_accepting().unwrap();
+
+        thread::sleep_ms(1000);
+        let config_file2 = make_temp_config_utp(cm1.get_beacon_acceptor_port());
+
+        let (cm2_i, _) = channel();
+        let mut cm2 = ConnectionManager::new(cm2_i, Some(config_file2.0.clone()));
+        let cm2_eps = cm2.start_accepting().unwrap();
+        println!("   cm2 listening port {}", cm2_eps[0].get_port());
+        match cm2.bootstrap(None, cm1.get_beacon_acceptor_port()) {
+            Ok(ep) => { assert_eq!(ep.get_address().port(), cm1_eps[0].get_port()); },
+            Err(_) => { panic!("Failed to bootstrap"); }
+        }
+    }
+
+#[test]
+    fn connection_manager_tcp() {
         // Wait 2 seconds until previous bootstrap test ends. If not, that test connects to these endpoints.
         thread::sleep_ms(2000);
         let run_cm = |cm: ConnectionManager, o: Receiver<Event>| {
@@ -784,14 +856,14 @@ mod test {
             })
         };
 
-        let mut temp_configs = vec![make_temp_config(None)];
+        let mut temp_configs = vec![make_temp_config_tcp(None)];
 
         let (cm1_i, cm1_o) = channel();
         let mut cm1 = ConnectionManager::new(cm1_i, Some(temp_configs.last().unwrap().0.clone()));
         let cm1_ports = cm1.start_accepting().unwrap();
         let cm1_eps = cm1_ports.iter().map(|p| Endpoint::tcp(("127.0.0.1", p.get_port())));
 
-        temp_configs.push(make_temp_config(cm1.get_beacon_acceptor_port()));
+        temp_configs.push(make_temp_config_tcp(cm1.get_beacon_acceptor_port()));
 
         let (cm2_i, cm2_o) = channel();
         let mut cm2 = ConnectionManager::new(cm2_i, Some(temp_configs.last().unwrap().0.clone()));
@@ -807,8 +879,58 @@ mod test {
         assert!(runner2.join().is_ok());
     }
 
-    #[test]
-    #[ignore]
+#[test]
+#[ignore]
+    fn connection_manager_utp() {
+        // Wait 2 seconds until previous bootstrap test ends. If not, that test connects to these endpoints.
+        thread::sleep_ms(2000);
+        let run_cm = |cm: ConnectionManager, o: Receiver<Event>| {
+            spawn(move || {
+                for i in o.iter() {
+                    match i {
+                        Event::NewConnection(other_ep) => {
+                            // println!("Connected {:?}", other_ep);
+                            let _ = cm.send(other_ep.clone(), encode(&"hello world".to_string()));
+                        },
+                        Event::NewMessage(_, _) => {
+                            // println!("New message from {:?} data:{:?}",
+                            //          from_ep, decode::<String>(data));
+                            break;
+                        },
+                        Event::LostConnection(_) => {
+                            // println!("Lost connection to {:?}", other_ep);
+                        }
+                    }
+                }
+                // println!("done");
+            })
+        };
+
+        let mut temp_configs = vec![make_temp_config_utp(None)];
+
+        let (cm1_i, cm1_o) = channel();
+        let mut cm1 = ConnectionManager::new(cm1_i, Some(temp_configs.last().unwrap().0.clone()));
+        let cm1_ports = cm1.start_accepting().unwrap();
+        let cm1_eps = cm1_ports.iter().map(|p| Endpoint::tcp(("127.0.0.1", p.get_port())));
+
+        temp_configs.push(make_temp_config_utp(cm1.get_beacon_acceptor_port()));
+
+        let (cm2_i, cm2_o) = channel();
+        let mut cm2 = ConnectionManager::new(cm2_i, Some(temp_configs.last().unwrap().0.clone()));
+        let cm2_ports = cm2.start_accepting().unwrap();
+        let cm2_eps = cm2_ports.iter().map(|p| Endpoint::tcp(("127.0.0.1", p.get_port())));
+        cm2.connect(cm1_eps.collect());
+        cm1.connect(cm2_eps.collect());
+
+        let runner1 = run_cm(cm1, cm1_o);
+        let runner2 = run_cm(cm2, cm2_o);
+
+        assert!(runner1.join().is_ok());
+        assert!(runner2.join().is_ok());
+    }
+
+#[test]
+#[ignore]
     fn network() {
         let run_cm = |tx: Sender<Event>, o: Receiver<Event>, conn_eps: Arc<Mutex<Vec<Endpoint>>>| {
             spawn(move || {
@@ -865,14 +987,14 @@ mod test {
                 });
 
         let mut network = Network { nodes: Vec::new() };
-        let mut temp_configs = vec![make_temp_config(None)];
+        let mut temp_configs = vec![make_temp_config_tcp(None)];
         let stats = Arc::new(Mutex::new(Stats {new_connections_count: 0, messages_count: 0, lost_connection_count: 0}));
         let (stats_tx, stats_rx) = channel::<Event>();
         let mut runners = Vec::new();
         let mut beacon_port: Option<u16> = None;
         for index in 0..NETWORK_SIZE {
             if index != 0 {
-               temp_configs.push(make_temp_config(beacon_port));
+               temp_configs.push(make_temp_config_tcp(beacon_port));
             }
             let (receiver, _, port, connected_eps) = network.add( Some(temp_configs.last().unwrap().0.clone()));
             if index == 0 {
@@ -947,10 +1069,10 @@ mod test {
     }
 
 #[test]
-    fn connection_manager_start() {
+    fn connection_manager_start_tcp() {
         // Wait 2 seconds until previous bootstrap test ends. If not, that test connects to these endpoints.
         thread::sleep_ms(2000);
-        let temp_config = make_temp_config(None);
+        let temp_config = make_temp_config_tcp(None);
 
         let (cm_tx, cm_rx) = channel();
         let mut cm = ConnectionManager::new(cm_tx, Some(temp_config.0.clone()));
@@ -986,7 +1108,68 @@ mod test {
         thread::sleep_ms(100);
 
         let _ = spawn(move || {
-            let temp_config = make_temp_config(None);
+            let temp_config = make_temp_config_tcp(None);
+            let (cm_aux_tx, _) = channel();
+            let mut cm_aux = ConnectionManager::new(cm_aux_tx, Some(temp_config.0));
+            // setting the listening port to be greater than 4455 will make the test hanging
+            let _ = match cm_aux.start_accepting() {
+                Ok(result) => {
+                      // println!("aux listening on {} ",
+                      //          match result.0[0].clone() { Endpoint::Tcp(socket_addr) => { socket_addr } });
+                      result[0].clone()
+                    },
+                Err(_) => panic!("aux connection manager start_listening failure")
+            };
+            // changing this to cm_beacon_addr will make the test hanging
+            cm_aux.connect(cm_listen_addrs);
+        }).join();
+        thread::sleep_ms(100);
+
+        let _ = thread.join();
+    }
+
+#[test]
+#[ignore]
+    fn connection_manager_start_utp() {
+        // Wait 2 seconds until previous bootstrap test ends. If not, that test connects to these endpoints.
+        thread::sleep_ms(2000);
+        let temp_config = make_temp_config_utp(None);
+
+        let (cm_tx, cm_rx) = channel();
+        let mut cm = ConnectionManager::new(cm_tx, Some(temp_config.0.clone()));
+        let cm_listen_ports = match cm.start_accepting() {
+            Ok(result) => result,
+            Err(_) => panic!("main connection manager start_listening failure")
+        };
+        let cm_listen_addrs = cm_listen_ports.iter().map(|p| Endpoint::tcp(("127.0.0.1", p.get_port()))).collect();
+
+        let thread = spawn(move || {
+           loop {
+                let event = cm_rx.recv();
+                if event.is_err() {
+                  // println!("stop listening");
+                  break;
+                }
+                match event.unwrap() {
+                    Event::NewMessage(_, _) => {
+                        // println!("received from {} with a new message : {}",
+                        //          match endpoint { Endpoint::Tcp(socket_addr) => socket_addr },
+                        //          match String::from_utf8(bytes) { Ok(msg) => msg, Err(_) => "unknown msg".to_string() });
+                    },
+                    Event::NewConnection(_) => {
+                        // println!("adding new node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
+                    },
+                    Event::LostConnection(_) => {
+                        // println!("dropping node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
+                        break;
+                    }
+                }
+            }
+          });
+        thread::sleep_ms(100);
+
+        let _ = spawn(move || {
+            let temp_config = make_temp_config_utp(None);
             let (cm_aux_tx, _) = channel();
             let mut cm_aux = ConnectionManager::new(cm_aux_tx, Some(temp_config.0));
             // setting the listening port to be greater than 4455 will make the test hanging

@@ -138,7 +138,7 @@ pub fn write_config_file(file_path : Option<PathBuf>,
         None => {}
     };
 
-    let config = Config{ preferred_ports: preferred_ports.unwrap_or(vec![Port::Tcp(0u16)]),
+    let config = Config{ preferred_ports: preferred_ports.unwrap_or(vec![Port::Tcp(0u16), Port::Utp(0u16)]),
                          hard_coded_contacts: hard_coded_contacts,
                          beacon_port: beacon_port.unwrap_or(0u16),
                        };

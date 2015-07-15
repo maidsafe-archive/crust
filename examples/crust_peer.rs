@@ -64,7 +64,8 @@ be chosen. If no listening port is supplied, a random port for each supported
 protocol will be chosen.
 
 Options:
-  -t PORT, --tcp-port=PORT  Start listening on the specified TCP port.
+  -p PORT, --port=PORT      Start listening on the specified port.
+  -u, --utp                 Use UTP instead of TCP.
   -b PORT, --beacon=PORT    Set the beacon port.  If the node can, it will
                             listen for UDP broadcasts on this port.  If
                             bootstrapping using provided contacts or the cached
@@ -80,7 +81,8 @@ Options:
 #[derive(RustcDecodable, Debug)]
 struct Args {
     arg_peer: Vec<PeerEndpoint>,
-    flag_tcp_port: Option<u16>,
+    flag_port: Option<u16>,
+    flag_utp: bool,
     flag_beacon: Option<u16>,
     flag_config: Option<String>,
     flag_speed: Option<u64>,
@@ -105,8 +107,8 @@ struct CliArgs {
 }
 
 #[derive(Debug)]
-enum PeerEndpoint {
-    Tcp(SocketAddr),
+struct PeerEndpoint {
+    pub addr: SocketAddr,
 }
 
 impl Decodable for PeerEndpoint {
@@ -119,7 +121,7 @@ impl Decodable for PeerEndpoint {
                     "Could not decode {} as valid IPv4 or IPv6 address.", str).as_str()));
             },
         };
-        Ok(PeerEndpoint::Tcp(address))
+        Ok(PeerEndpoint { addr: address })
     }
 }
 
@@ -272,13 +274,13 @@ fn reset_foreground(stdout: Option<Box<term::StdoutTerminal>>) ->
 }
 
 // TODO update to take listening port once api is updated
-fn make_temp_config(beacon_port: Option<u16>, tcp_port: Option<u16>) -> (PathBuf, TempDir) {
+fn make_temp_config(beacon_port: Option<u16>, hint: Vec<Port>) -> (PathBuf, TempDir) {
     let temp_dir = TempDir::new("crust_peer").unwrap();
     let mut config_file_path = temp_dir.path().to_path_buf();
     config_file_path.push("crust_peer.config");
 
     let _ = write_config_file(Some(config_file_path.clone()),
-                              Some(vec![Port::Tcp(tcp_port.unwrap_or(0u16)).clone()]),
+                              Some(hint),
                               None,
                               beacon_port,
                              ).unwrap();
@@ -289,21 +291,27 @@ fn main() {
     let args: Args = Docopt::new(USAGE)
                             .and_then(|docopt| docopt.decode())
                             .unwrap_or_else(|error| error.exit());
+    let utp_mode = args.flag_utp;
+    if utp_mode {
+        println!("Started in UTP mode");
+    } else {
+        println!("Started in TCP mode");
+    }
 
     // Convert peer endpoints to usable bootstrap list.
     let bootstrap_peers = if args.arg_peer.is_empty() {
         None
     } else {
         Some(Vec::<Endpoint>::from_iter(args.arg_peer.iter().map(|endpoint| {
-            Endpoint::Tcp(match *endpoint { PeerEndpoint::Tcp(address) => address, })
+            if utp_mode { Endpoint::Utp((*endpoint).addr) } else { Endpoint::Tcp((*endpoint).addr) }
         })))
     };
 
     // Convert requested listening port(s) to usable collection.
     let mut listening_hints: Vec<Port> = vec![];
-    match args.flag_tcp_port {
-        Some(port) => listening_hints.push(Port::Tcp(port)),
-        None => (),
+    match args.flag_port {
+        Some(port) => listening_hints.push(if utp_mode { Port::Utp(port) } else { Port::Tcp(port) }),
+        None => listening_hints.push(if utp_mode { Port::Utp(0) } else { Port::Tcp(0) }),
     };
 
     let mut stdout = term::stdout();
@@ -312,7 +320,7 @@ fn main() {
     let (config_path, _tempdir) = match args.flag_config {
         Some(path_str) => {(PathBuf::from(path_str), None)},
         None => {
-            let (path, tempdir) = make_temp_config(args.flag_beacon, args.flag_tcp_port);
+            let (path, tempdir) = make_temp_config(args.flag_beacon, listening_hints);
             (path, Some(tempdir))
         }
     };
@@ -348,7 +356,7 @@ fn main() {
         Err(e) => {
             if args.flag_speed.is_some() {
                 stdout = red_foreground(stdout);
-                println!("Failed to connect to a peer.  Exiting.");
+                println!("Failed to connect to a peer due to {}.  Exiting.", e);
                 let _ = reset_foreground(stdout);
                 std::process::exit(2);
             };
@@ -468,17 +476,13 @@ fn main() {
             if args.cmd_connect {
                 // docopt should ensure arg_peer is valid
                 assert!(args.arg_peer.is_some());
-                let peer = vec![Endpoint::Tcp(match args.arg_peer.unwrap() {
-                    PeerEndpoint::Tcp(address) => address,
-                })];
+                let peer = vec![if utp_mode { Endpoint::Utp(args.arg_peer.unwrap().addr) } else { Endpoint::Tcp(args.arg_peer.unwrap().addr)}];
                 connection_manager.connect(peer);
             } else if args.cmd_send {
                 // docopt should ensure arg_peer and arg_message are valid
                 assert!(args.arg_peer.is_some());
                 assert!(!args.arg_message.is_empty());
-                let peer = Endpoint::Tcp(match args.arg_peer.unwrap() {
-                    PeerEndpoint::Tcp(address) => address,
-                });
+                let peer = if utp_mode { Endpoint::Utp(args.arg_peer.unwrap().addr) } else { Endpoint::Tcp(args.arg_peer.unwrap().addr)};
                 let mut message: String = args.arg_message[0].clone();
                 for i in 1..args.arg_message.len() {
                     message.push_str(" ");
