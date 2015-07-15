@@ -24,6 +24,7 @@ time = "*"
 asynchronous = "*"
 itertools = "*"
 tempdir = "*"
+igd = "0.1.3"
 
 [[example]]
 name = "simple_sender"

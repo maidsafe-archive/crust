@@ -41,6 +41,7 @@ extern crate time;
 extern crate asynchronous;
 extern crate libc;
 extern crate itertools;
+extern crate igd;
 
 #[cfg(test)]
 extern crate tempdir;
