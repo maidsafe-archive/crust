@@ -244,23 +244,23 @@ impl ConnectionManager {
         if self.config.override_default_bootstrap {
             let res = self.bootstrap_off_list_new(self.config.hard_coded_contacts.clone());
         } else {
-            let mut combined_endpoint_list = self.seek_peers(self.config.beacon_port);
-            for contacts in self.config.hard_coded_contacts.clone() {
-                combined_endpoint_list.push(contacts.endpoint);
-            }
+            let cached_contacts = match self.beacon_guid_and_port.is_some() {  // this node owns bs file
+                true => {
+                    if let Ok(bootstrap) = BootstrapHandler::new().read_bootstrap_file() {
+                        bootstrap.contacts
+                    } else {
+                        vec![]
+                    }
+                },
+                _ => vec![],
 
-            if self.beacon_guid_and_port.is_some() {  // this node owns bs file
-                let handler = BootstrapHandler::new();
-                match handler.read_bootstrap_file() {
-                    Ok(read_contacts) => {
-                        for contacts in read_contacts.contacts {
-                            combined_endpoint_list.push(contacts.endpoint);
-                        }
-                    },
-                    _ => {},
-                }
-            }
-            //self.bootstrap_off_list_new(combined_endpoint_list); //FIXME
+            };
+            let combined_contacts: Vec<_> = self.seek_peers(self.config.beacon_port).iter()
+                        .map(|x| Contact{ endpoint: x.clone()} )
+                            .chain(self.config.hard_coded_contacts.clone().into_iter())
+                                .chain(cached_contacts.into_iter()).collect();
+
+            let res = self.bootstrap_off_list_new(combined_contacts);
         }
     }
 
