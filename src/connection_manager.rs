@@ -238,14 +238,18 @@ impl ConnectionManager {
     /// Maximum of `max_successful_bootstrap_connection` bootstrap connections will be made and further connection
     /// attempts will stop.
     /// It will reiterate the list of all endpoints until it gets at least one connection.
-    pub fn bootstrap_new(&self, _max_successful_bootstrap_connection: u8) {
-        //TODO disconnect existing connections
-        // try
+    pub fn bootstrap_new(&mut self, _max_successful_bootstrap_connection: u8) {
+        // Disconnect existing connections
+        let mut ws = self.state.downgrade();
+        let _ = lock_mut_state(&mut ws, |s: &mut State| {
+            let _ = s.connections.clear();
+            Ok(())
+        });
+
         let contacts = self.populate_bootstrap_contacts();  //FIXME this needs to be in the thread
         let ws = self.state.downgrade();
         let bs_file_lock = self.beacon_guid_and_port.is_some();
         let _ = thread::Builder::new().name("ConnectionManager bootstrap loop".to_string()).spawn(move || {
-            // loop
             loop {
                 match bootstrap_off_list(ws.clone(), contacts.clone(), bs_file_lock) {
                     Ok(_) => {
