@@ -696,16 +696,20 @@ fn bootstrap_off_list(weak_state: WeakState, bootstrap_list: Vec<Contact>,
 #[cfg(test)]
 mod test {
     use super::*;
+    use super::{State, bootstrap_off_list};
+    use std::collections::{HashMap, HashSet};
     use std::thread::spawn;
     use std::thread;
     use std::sync::mpsc::{Receiver, Sender, channel};
     use rustc_serialize::{Decodable, Encodable};
     use cbor::{Encoder, Decoder};
+    use transport;
     use transport::{Endpoint, Port};
     use std::sync::{Mutex, Arc};
-    use config_utils::{Config, Contacts, write_file};
+    use config_utils::{Config, Contacts, write_file, Contact};
     use tempdir::TempDir;
     use std::path::PathBuf;
+    use std::net::{SocketAddr, Ipv4Addr, SocketAddrV4, SocketAddrV6};
 
     fn encode<T>(value: &T) -> Bytes where T: Encodable
     {
@@ -1062,5 +1066,40 @@ mod test {
         thread::sleep_ms(100);
 
         let _ = thread.join();
+    }
+
+    #[test]
+    fn bootstrap_off_list_connects() {
+        let acceptor = transport::new_acceptor(&Port::Tcp(0)).unwrap();
+        let addr = match acceptor {
+            transport::Acceptor::Tcp(_, listener) => listener.local_addr()
+                .unwrap(),
+            _ => panic!("Unable to create a new connection"),
+        };
+        let addr = match addr {
+            SocketAddr::V4(a) => if a.ip().is_unspecified() {
+                SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1),
+                                                 a.port()))
+            } else {
+                SocketAddr::V4(a)
+            },
+            SocketAddr::V6(a) => if a.ip().is_unspecified() {
+                SocketAddr::V6(SocketAddrV6::new("::1".parse().unwrap(),
+                                                 a.port(), a.flowinfo(),
+                                                 a.scope_id()))
+            } else {
+                SocketAddr::V6(a)
+            },
+        };
+        let ep = Endpoint::Tcp(addr);
+        let state = Arc::new(Mutex::new(State{ event_pipe: channel().0,
+                                               connections: HashMap::new(),
+                                               listening_ports: HashSet::new(),
+                                               stop_called: false,
+                                             }));
+        assert!(bootstrap_off_list(state.downgrade(), vec![], false).is_err());
+        assert!(bootstrap_off_list(state.downgrade(),
+                                   vec![Contact{endpoint: ep.clone()}], false)
+                .is_ok());
     }
 }
