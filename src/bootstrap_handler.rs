@@ -27,36 +27,32 @@ use config_utils::Contacts;
 
 const MAX_CONTACTS: usize = 1500;
 
-pub struct BootstrapHandler {
-    file_name: String,
-    last_updated: time::Tm,
-}
-
-
 pub fn serialise_contacts(contacts: Contacts) -> Vec<u8> {
     let encoded = json::encode(&contacts).unwrap();
     return encoded.into_bytes();
 }
 
 pub fn parse_contacts(buffer: Vec<u8>) -> Option<Contacts> {
-    String::from_utf8(buffer).ok().and_then(|contacts_str| {
-        json::decode(&contacts_str).ok()
-    })
+    String::from_utf8(buffer).ok().and_then(|contacts_str| { json::decode(&contacts_str).ok() })
 }
 
 
+pub struct BootstrapHandler {
+    file_name: String,
+    last_updated: time::Tm,
+}
 
 impl BootstrapHandler {
     pub fn get_file_name() -> String {
         let path = match env::current_exe() {
-                Ok(exe_path) => exe_path,
-                Err(e) => panic!("Failed to get current exe path: {}", e),
-            };
-        let name_with_extension = path.file_name().expect("Unknown filename");
-        let name = path::Path::new(name_with_extension).file_stem()
-            .expect("Unknown extension");
+            Ok(exe_path) => exe_path,
+            Err(e) => panic!("Failed to get current exe path: {}", e),
+        };
 
+        let name_with_extension = path.file_name().expect("Unknown filename");
+        let name = path::Path::new(name_with_extension).file_stem().expect("Unknown extension");
         let mut filename = String::new();
+
         filename.push_str("./");
         filename.push_str(name.to_str().unwrap());
         filename.push_str(".bootstrap.cache");
@@ -87,19 +83,24 @@ impl BootstrapHandler {
         let mut file = try!(File::open(&self.file_name));
         let mut contents = String::new();
         let _ = try!(file.read_to_string(&mut contents));
-        json::decode(&contents)
-             .map_err(|error| io::Error::new(io::ErrorKind::Other,
-                                             format!("Failed to decode bootstrap file: {}", error)))
+        json::decode(&contents).map_err(|error| io::Error::new(io::ErrorKind::Other,
+            format!("Error decoding bootstrap file: {}", error)))
     }
 
     #[allow(dead_code)]
     pub fn oldest_contacts(&mut self, n: usize) -> io::Result<(Contacts)> {
-        let bootstrap_contacts = self.read_bootstrap_file()
-            .unwrap_or_else(|e| {
-                println!("Failed to read Bootstrap file : {:?} ; {:?}.", self.file_name, e);
-                Contacts::new()
-            });
-        Ok(bootstrap_contacts.iter().rev().map(|e| e.clone()).take(n).collect::<Contacts>())
+        let bootstrap_contacts = self.read_bootstrap_file().unwrap_or_else(|e| {
+            println!("Error reading Bootstrap file: {:?}. Creating {:?}.", e, self.file_name);
+            Contacts::new()
+        });
+
+        Ok(bootstrap_contacts.iter().rev().map(|contact| contact.clone())
+                             .take(n).collect::<Contacts>())
+    }
+
+    pub fn get_serialised_contacts(&self) -> io::Result<(Vec<u8>)> {
+        let contacts = try!(self.read_bootstrap_file());
+        Ok(serialise_contacts(contacts))
     }
 
     fn write_bootstrap_file(&mut self, mut contacts: Contacts) -> io::Result<()> {
@@ -110,24 +111,19 @@ impl BootstrapHandler {
     }
 
     fn insert_contacts(&mut self, mut contacts: Contacts, prune: Contacts) -> io::Result<()> {
-        let mut bootstrap_contacts = self.read_bootstrap_file()
-            .unwrap_or_else(|e| {
-                println!("Failed to read Bootstrap cache file : {:?} ; {:?} ; Creating New file.",
-                self.file_name, e);
-                Contacts::new()
-            });
+        let mut bootstrap_contacts = self.read_bootstrap_file().unwrap_or_else(|e| {
+            println!("Error reading Bootstrap file: {:?}. Creating {:?}.", e, self.file_name);
+            Contacts::new()
+        });
 
-        if prune.len() > 0 {
-            bootstrap_contacts.retain(|x| !prune.contains(&x));
-        }
-
-        contacts.retain(|x| !bootstrap_contacts.contains(&x));
+        bootstrap_contacts.retain(|contact| !prune.contains(&contact));
+        contacts.retain(|contact| !bootstrap_contacts.contains(&contact));
 
         if bootstrap_contacts.len() == 0usize {
             bootstrap_contacts = contacts;
         } else {
             loop {
-                if (bootstrap_contacts.len() < MAX_CONTACTS) && (!contacts.is_empty()) {
+                if bootstrap_contacts.len() < MAX_CONTACTS && !contacts.is_empty() {
                     bootstrap_contacts.insert(0usize, contacts.remove(0usize));
                 } else {
                     break;
@@ -136,11 +132,6 @@ impl BootstrapHandler {
         }
 
         self.write_bootstrap_file(bootstrap_contacts)
-    }
-
-    pub fn get_serialised_contacts(&self) -> io::Result<(Vec<u8>)> {
-        let contacts = try!(self.read_bootstrap_file());
-        Ok(serialise_contacts(contacts))
     }
 }
 
@@ -335,7 +326,8 @@ mod test {
         prune_contacts.push(prune_contact.clone());
 
         // add the new contact while pruning the last...
-        assert!(bootstrap_handler.update_contacts(new_contacts.clone(), prune_contacts.clone()).is_ok());
+        assert!(bootstrap_handler.update_contacts(
+            new_contacts.clone(), prune_contacts.clone()).is_ok());
 
         let recovered_contacts = bootstrap_handler.read_bootstrap_file().unwrap();
 
@@ -466,7 +458,8 @@ mod test {
         prune_contacts.push(prune_contact.clone());
 
         // insert the new contact again pruning the last entry...
-        assert!(bootstrap_handler.insert_contacts(new_contacts.clone(), prune_contacts.clone()).is_ok());
+        assert!(bootstrap_handler.insert_contacts(
+            new_contacts.clone(), prune_contacts.clone()).is_ok());
         let recovered_contacts = bootstrap_handler.read_bootstrap_file().unwrap();
 
         // check that the recovered contacts are not the same as the originals...
