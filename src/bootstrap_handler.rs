@@ -92,6 +92,16 @@ impl BootstrapHandler {
                                              format!("Failed to decode bootstrap file: {}", error)))
     }
 
+    #[allow(dead_code)]
+    pub fn oldest_contacts(&mut self, n: usize) -> io::Result<(Contacts)> {
+        let bootstrap_contacts = self.read_bootstrap_file()
+            .unwrap_or_else(|e| {
+                println!("Failed to read Bootstrap file : {:?} ; {:?}.", self.file_name, e);
+                Contacts::new()
+            });
+        Ok(bootstrap_contacts.iter().rev().map(|e| e.clone()).take(n).collect::<Contacts>())
+    }
+
     fn write_bootstrap_file(&mut self, mut contacts: Contacts) -> io::Result<()> {
         contacts = contacts.clone().into_iter().unique().collect();
         let mut file = try!(File::create(&self.file_name));
@@ -336,6 +346,57 @@ mod test {
         // check the entries...
         assert_eq!(recovered_contacts, contacts);
         assert_eq!(recovered_contacts.len(), number);
+
+        match fs::remove_file(file_name.clone()) {
+            Ok(_) => (),
+            Err(e) => println!("Failed to remove {}: {}", file_name, e),
+        };
+    }
+
+    #[test]
+    fn oldest() {
+        let mut contacts = Vec::new();
+        let number = 12usize;
+        let twice_number = number * 2;
+        let half_number = number / 2;
+
+        for _ in 0..number {
+            let mut random_addr_0 = Vec::with_capacity(4);
+            random_addr_0.push(rand::random::<u8>());
+            random_addr_0.push(rand::random::<u8>());
+            random_addr_0.push(rand::random::<u8>());
+            random_addr_0.push(rand::random::<u8>());
+
+            let port_0: u16 = rand::random::<u16>();
+            let addr_0 = net::SocketAddrV4::new(net::Ipv4Addr::new(random_addr_0[0],
+                random_addr_0[1], random_addr_0[2], random_addr_0[3]), port_0);
+            let new_contact = Contact { endpoint: Endpoint::Tcp(SocketAddr::V4(addr_0)) };
+            contacts.push(new_contact);
+        }
+
+        let file_name = BootstrapHandler::get_file_name();
+        let path = Path::new(&file_name);
+
+        let mut bootstrap_handler = BootstrapHandler::new();
+        let file = fs::File::create(&path);
+        assert!(file.is_ok());
+
+        // add contacts...
+        assert!(bootstrap_handler.update_contacts(contacts.clone(), Contacts::new()).is_ok());
+        // try taking more than existing number...
+        let oldest_contacts = bootstrap_handler.oldest_contacts(twice_number).unwrap();
+        let reversed_contacts = contacts.iter().rev().map(|e| e.clone())
+                                        .take(number).collect::<Contacts>();
+
+        assert_eq!(oldest_contacts, reversed_contacts);
+        assert_eq!(oldest_contacts.len(), number);
+
+        let oldest_contacts = bootstrap_handler.oldest_contacts(half_number).unwrap();
+        let reversed_contacts = contacts.iter().rev().map(|e| e.clone())
+                                        .take(half_number).collect::<Contacts>();
+
+        assert_eq!(oldest_contacts, reversed_contacts);
+        assert_eq!(oldest_contacts.len(), half_number);
 
         match fs::remove_file(file_name.clone()) {
             Ok(_) => (),
