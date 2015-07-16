@@ -161,62 +161,23 @@ mod test {
     }
 
     #[test]
-    fn bootstrap_handler_test() {
-        let mut contacts = Vec::new();
-        for _ in 0..10 {
-            let mut random_addr_0 = Vec::with_capacity(4);
-            random_addr_0.push(rand::random::<u8>());
-            random_addr_0.push(rand::random::<u8>());
-            random_addr_0.push(rand::random::<u8>());
-            random_addr_0.push(rand::random::<u8>());
-
-            let port_0: u16 = rand::random::<u16>();
-            let addr_0 = net::SocketAddrV4::new(net::Ipv4Addr::new(random_addr_0[0],
-                random_addr_0[1], random_addr_0[2], random_addr_0[3]), port_0);
-            let new_contact = Contact { endpoint: Endpoint::Tcp(SocketAddr::V4(addr_0)) };
-            contacts.push(new_contact);
-        }
-
-        let file_name = BootstrapHandler::get_file_name();
-        let path = Path::new(&file_name);
-
-        let mut bootstrap_handler = BootstrapHandler::new();
-        let file = fs::File::create(&path);
-        assert!(file.is_ok()); // Check whether the database file is created
-        // Add Contacts
-        assert!(bootstrap_handler.insert_contacts(contacts.clone(), Contacts::new()).is_ok());
-
-        // Add duplicate contacts
-        for _ in 1..100 {
-            assert!(bootstrap_handler.insert_contacts(contacts.clone(), Contacts::new()).is_ok());
-        }
-
-        let read_contacts: Contacts = bootstrap_handler.read_bootstrap_file().unwrap();
-
-        assert_eq!(read_contacts, contacts);
-
-        match fs::remove_file(file_name.clone()) {
-            Ok(_) => (),
-            Err(e) => println!("Failed to remove {}: {}", file_name, e),
-        };
-    }
-
-    #[test]
     fn duplicates() {
         let mut contacts = Vec::new();
         let number = 10usize;
-        for _ in 0..number {
-            let mut random_addr_0 = Vec::with_capacity(4);
-            random_addr_0.push(rand::random::<u8>());
-            random_addr_0.push(rand::random::<u8>());
-            random_addr_0.push(rand::random::<u8>());
-            random_addr_0.push(rand::random::<u8>());
 
-            let port_0: u16 = rand::random::<u16>();
-            let addr_0 = net::SocketAddrV4::new(net::Ipv4Addr::new(random_addr_0[0],
-                random_addr_0[1], random_addr_0[2], random_addr_0[3]), port_0);
-            let new_contact = Contact { endpoint: Endpoint::Tcp(SocketAddr::V4(addr_0)) };
-            contacts.push(new_contact);
+        for _ in 0..number {
+            let mut ip = Vec::with_capacity(4);
+
+            ip.push(rand::random::<u8>());
+            ip.push(rand::random::<u8>());
+            ip.push(rand::random::<u8>());
+            ip.push(rand::random::<u8>());
+
+            let port = rand::random::<u16>();
+            let ipport = net::SocketAddrV4::new(Ipv4Addr::new(ip[0], ip[1], ip[2], ip[3]), port);
+            let contact = Contact{ endpoint: Endpoint::Tcp(SocketAddr::V4(ipport)) };
+
+            contacts.push(contact);
         }
 
         let file_name = BootstrapHandler::get_file_name();
@@ -257,18 +218,20 @@ mod test {
     fn prune() {
         let mut contacts = Vec::new();
         let number = 10usize;
-        for _ in 0..number {
-            let mut random_addr_0 = Vec::with_capacity(4);
-            random_addr_0.push(rand::random::<u8>());
-            random_addr_0.push(rand::random::<u8>());
-            random_addr_0.push(rand::random::<u8>());
-            random_addr_0.push(rand::random::<u8>());
 
-            let port_0: u16 = rand::random::<u16>();
-            let addr_0 = net::SocketAddrV4::new(net::Ipv4Addr::new(random_addr_0[0],
-                random_addr_0[1], random_addr_0[2], random_addr_0[3]), port_0);
-            let new_contact = Contact { endpoint: Endpoint::Tcp(SocketAddr::V4(addr_0)) };
-            contacts.push(new_contact);
+        for _ in 0..number {
+            let mut ip = Vec::with_capacity(4);
+
+            ip.push(rand::random::<u8>());
+            ip.push(rand::random::<u8>());
+            ip.push(rand::random::<u8>());
+            ip.push(rand::random::<u8>());
+
+            let port = rand::random::<u16>();
+            let ipport = net::SocketAddrV4::new(Ipv4Addr::new(ip[0], ip[1], ip[2], ip[3]), port);
+            let contact = Contact{ endpoint: Endpoint::Tcp(SocketAddr::V4(ipport)) };
+
+            contacts.push(contact);
         }
 
         let file_name = BootstrapHandler::get_file_name();
@@ -353,17 +316,18 @@ mod test {
         let half_number = number / 2;
 
         for _ in 0..number {
-            let mut random_addr_0 = Vec::with_capacity(4);
-            random_addr_0.push(rand::random::<u8>());
-            random_addr_0.push(rand::random::<u8>());
-            random_addr_0.push(rand::random::<u8>());
-            random_addr_0.push(rand::random::<u8>());
+            let mut ip = Vec::with_capacity(4);
 
-            let port_0: u16 = rand::random::<u16>();
-            let addr_0 = net::SocketAddrV4::new(net::Ipv4Addr::new(random_addr_0[0],
-                random_addr_0[1], random_addr_0[2], random_addr_0[3]), port_0);
-            let new_contact = Contact { endpoint: Endpoint::Tcp(SocketAddr::V4(addr_0)) };
-            contacts.push(new_contact);
+            ip.push(rand::random::<u8>());
+            ip.push(rand::random::<u8>());
+            ip.push(rand::random::<u8>());
+            ip.push(rand::random::<u8>());
+
+            let port = rand::random::<u16>();
+            let ipport = net::SocketAddrV4::new(Ipv4Addr::new(ip[0], ip[1], ip[2], ip[3]), port);
+            let contact = Contact{ endpoint: Endpoint::Tcp(SocketAddr::V4(ipport)) };
+
+            contacts.push(contact);
         }
 
         let file_name = BootstrapHandler::get_file_name();
@@ -377,14 +341,14 @@ mod test {
         assert!(bootstrap_handler.update_contacts(contacts.clone(), Contacts::new()).is_ok());
         // try taking more than existing number...
         let oldest_contacts = bootstrap_handler.oldest_contacts(twice_number).unwrap();
-        let reversed_contacts = contacts.iter().rev().map(|e| e.clone())
+        let reversed_contacts = contacts.iter().rev().map(|contact| contact.clone())
                                         .take(number).collect::<Contacts>();
 
         assert_eq!(oldest_contacts, reversed_contacts);
         assert_eq!(oldest_contacts.len(), number);
 
         let oldest_contacts = bootstrap_handler.oldest_contacts(half_number).unwrap();
-        let reversed_contacts = contacts.iter().rev().map(|e| e.clone())
+        let reversed_contacts = contacts.iter().rev().map(|contact| contact.clone())
                                         .take(half_number).collect::<Contacts>();
 
         assert_eq!(oldest_contacts, reversed_contacts);
@@ -399,6 +363,7 @@ mod test {
     #[test]
     fn max_contacts() {
         let mut contacts = Vec::new();
+
         for _ in 0..MAX_CONTACTS {
             let mut ip = Vec::with_capacity(4);
 
