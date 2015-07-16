@@ -99,7 +99,8 @@ impl BootstrapHandler {
                 println!("Failed to read Bootstrap file : {:?} ; {:?}.", self.file_name, e);
                 Contacts::new()
             });
-        Ok(bootstrap_contacts.iter().rev().map(|e| e.clone()).take(n).collect::<Contacts>())
+        Ok(bootstrap_contacts.iter().rev().map(|contact| contact.clone())
+                             .take(n).collect::<Contacts>())
     }
 
     fn write_bootstrap_file(&mut self, mut contacts: Contacts) -> io::Result<()> {
