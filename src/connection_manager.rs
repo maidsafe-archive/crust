@@ -26,7 +26,7 @@ use std;
 
 use beacon;
 use bootstrap_handler::{BootstrapHandler, parse_contacts};
-use config_utils::{Config, Contact, Contacts, Timestamp, default_config_path, read_file};
+use config_utils::{Config, Contact, Contacts, default_config_path, read_file};
 use getifaddrs::getifaddrs;
 use transport;
 use transport::{Endpoint, Port};
@@ -173,15 +173,14 @@ impl ConnectionManager {
                 let listening_ips = getifaddrs();
                 for port in &listening_ports {
                     for ip in &listening_ips {
-                        contacts.push(
-                            Contact {
-                                endpoint: Endpoint::tcp((ip.addr.clone(), port.get_port())),
-                                last_updated: Timestamp::new()
-                            });
+                        contacts.push(Contact {
+                            endpoint: Endpoint::tcp((ip.addr.clone(), port.get_port()))
+                        });
                     }
                 }
 
-                let _ = bootstrap_handler.add_contacts(contacts);
+                // TODO: provide a prune list as the second argument to update_contacts
+                let _ = bootstrap_handler.update_contacts(contacts, Contacts::new());
                 let _ = thread::Builder::new().name("ConnectionManager beacon acceptor".to_string())
                                               .spawn(move || {
                     while let Ok(mut transport) = acceptor.accept() {
@@ -300,7 +299,7 @@ impl ConnectionManager {
                     let handler = BootstrapHandler::new();
                     match handler.read_bootstrap_file() {
                         Ok(read_contacts) => {
-                            for contacts in read_contacts.contacts {
+                            for contacts in read_contacts {
                                 combined_endpoint_list.push(contacts.endpoint);
                             }
                             for contacts in self.config.hard_coded_contacts.clone() {
@@ -571,15 +570,12 @@ fn handle_connect(mut state: WeakState, trans: transport::Transport,
     if is_broadcast_acceptor {
         if let Ok(ref endpoint) = endpoint {
             let mut contacts = Contacts::new();
+            contacts.push(Contact { endpoint: endpoint.clone() });
             // TODO PublicKey for contact required...
             // let public_key = PublicKey::Asym(asymmetricbox::PublicKey([0u8; asymmetricbox::PUBLICKEYBYTES]));
-            contacts.push(
-                Contact {
-                    endpoint: endpoint.clone(),
-                    last_updated: Timestamp::new()
-                });
             let mut bootstrap_handler = BootstrapHandler::new();
-            let _ = bootstrap_handler.add_contacts(contacts);
+            // TODO: provide a prune list as the second argument to update_contacts
+            let _ = bootstrap_handler.update_contacts(contacts, Contacts::new());
         }
     }
     endpoint
