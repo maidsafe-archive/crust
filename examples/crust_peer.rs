@@ -402,7 +402,12 @@ fn main() {
                     my_flat_world.drop_node(CrustNode::new(endpoint, false));
                     my_flat_world.print_connected_nodes();
                 },
-                crust::Event::NewBootstrapConnection(_) => {}
+                crust::Event::NewBootstrapConnection(endpoint) => {
+                    stdout_copy = cyan_foreground(stdout_copy);
+                    println!("\nNew BootstrapConnection to peer at {:?}", endpoint);
+                    my_flat_world.add_node(CrustNode::new(endpoint, true));
+                    my_flat_world.print_connected_nodes();
+                }
             }
             stdout_copy = reset_foreground(stdout_copy);
             if !running_speed_test {

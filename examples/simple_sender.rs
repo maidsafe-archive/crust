@@ -42,10 +42,15 @@ fn make_temp_config(beacon_port: Option<u16>) -> (PathBuf, TempDir) {
     let mut config_file_path = temp_dir.path().to_path_buf();
     config_file_path.push("simple_sender.config");
 
+    // Try to connect to "simple_receiver" example node which should be listening on TCP port 8888
+    // and for UDP broadcasts (beacon) on 9999.
+    let receiver_listening_endpoint =
+        Endpoint::Tcp(SocketAddr::from_str(&"127.0.0.1:8888").unwrap());
+
     let _ = write_config_file(Some(config_file_path.clone()),
                               None,
                               None,
-                              None,
+                              Some(vec![receiver_listening_endpoint]),
                               beacon_port,
                              ).unwrap();
     (config_file_path, temp_dir)
@@ -56,8 +61,9 @@ fn main() {
     // We receive events (e.g. new connection, message received) from the ConnectionManager via an
     // asynchronous channel.
     let (channel_sender, channel_receiver) = channel();
-    let connection_manager = ConnectionManager::new(channel_sender, Some(temp_config.0.clone()));
+    let mut connection_manager = ConnectionManager::new(channel_sender, Some(temp_config.0.clone()));
 
+    let (bs_sender, bs_receiver) = channel();
     // Start a thread running a loop which will receive and display responses from the peer.
     let _ = thread::Builder::new().name("SimpleSender event handler".to_string()).spawn(move || {
         // Receive the next event
@@ -73,8 +79,9 @@ fn main() {
                         },
                     }
                 },
-                crust::Event::NewConnection(endpoint) => {
-                    println!("New connection made to {:?}", endpoint);
+                crust::Event::NewBootstrapConnection(endpoint) => {
+                    println!("New bootstrap connection made to {:?}", endpoint);
+                    let _ = bs_sender.send(endpoint);
                 },
                 _ => (),
             }
@@ -82,21 +89,23 @@ fn main() {
         println!("Stopped receiving.");
     });
 
-    // Try to connect to "simple_receiver" example node which should be listening on TCP port 8888
-    // and for UDP broadcasts (beacon) on 9999.
-    let receiver_listening_endpoint =
-        Endpoint::Tcp(SocketAddr::from_str(&"127.0.0.1:8888").unwrap());
-    let peer_endpoint = match connection_manager.bootstrap_old(Some(vec![receiver_listening_endpoint]),
-                                                           Some(9999)) {
-        Ok(endpoint) => endpoint,
-        Err(why) => {
-            println!("ConnectionManager failed to bootstrap off node listening on TCP port 8888 \
-                     and UDP broadcast port 9999: {}.", why);
-            println!("This example needs the \"simple_receiver\" example to be running first on \
-                     this same machine.");
-            std::process::exit(1);
-        }
-    };
+    connection_manager.bootstrap(1);
+
+    // Block until bootstrapped
+    let peer_endpoint = bs_receiver.recv().unwrap();
+    println!("New bootstrap connection made to {:?}", peer_endpoint);
+
+    // let peer_endpoint = match connection_manager.bootstrap_old(Some(vec![receiver_listening_endpoint]),
+    //                                                        Some(9999)) {
+    //     Ok(endpoint) => endpoint,
+    //     Err(why) => {
+    //         println!("ConnectionManager failed to bootstrap off node listening on TCP port 8888 \
+    //                  and UDP broadcast port 9999: {}.", why);
+    //         println!("This example needs the \"simple_receiver\" example to be running first on \
+    //                  this same machine.");
+    //         std::process::exit(1);
+    //     }
+    // };
 
     // Send all the numbers from 0 to 12 inclusive.  Expect to receive replies containing the
     // Fibonacci number for each value.

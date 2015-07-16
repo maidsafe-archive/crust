@@ -257,7 +257,7 @@ impl ConnectionManager {
                         break;
                     },
                     Err(_) => {
-                        println!("Failed to get at least one bootstrap connection. continuing bootstrap loop");
+                        // println!("Failed to get at least one bootstrap connection. continuing bootstrap loop");
                     }
                 }
             }
