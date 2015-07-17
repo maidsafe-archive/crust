@@ -91,21 +91,16 @@ fn main() {
 
     connection_manager.bootstrap(1);
 
-    // Block until bootstrapped
-    let peer_endpoint = bs_receiver.recv().unwrap();
-    println!("New bootstrap connection made to {:?}", peer_endpoint);
+    println!("ConnectionManager trying to bootstrap off node listening on TCP port 8888 \
+              and UDP broadcast port 9999");
 
-    // let peer_endpoint = match connection_manager.bootstrap_old(Some(vec![receiver_listening_endpoint]),
-    //                                                        Some(9999)) {
-    //     Ok(endpoint) => endpoint,
-    //     Err(why) => {
-    //         println!("ConnectionManager failed to bootstrap off node listening on TCP port 8888 \
-    //                  and UDP broadcast port 9999: {}.", why);
-    //         println!("This example needs the \"simple_receiver\" example to be running first on \
-    //                  this same machine.");
-    //         std::process::exit(1);
-    //     }
-    // };
+    // Block until bootstrapped
+    let peer_endpoint = bs_receiver.recv().unwrap_or_else(|e| {
+        println!("SimpleSender event handler closed; error : {}", e);
+        std::process::exit(1);
+    });
+
+    println!("New bootstrap connection made to {:?}", peer_endpoint);
 
     // Send all the numbers from 0 to 12 inclusive.  Expect to receive replies containing the
     // Fibonacci number for each value.

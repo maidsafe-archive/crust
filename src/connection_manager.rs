@@ -310,7 +310,7 @@ impl ConnectionManager {
                 match bootstrap_off_list(ws.clone(), contacts.clone(), bs_file_lock,
                                          max_successful_bootstrap_connection) {
                     Ok(_) => {
-                        println!("Got at least one bootstrap connection. breaking bootstrap loop");
+                        println!("Got at least one bootstrap connection. Breaking bootstrap loop.");
                         break;
                     },
                     Err(_) => {
