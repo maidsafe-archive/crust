@@ -239,13 +239,7 @@ impl ConnectionManager {
     }
 
 
-    // NOTE this can be reused at other places.
-    fn get_listening_endpoint(&self) -> io::Result<(Vec<Endpoint>)> {
-        Self::get_listening_endpoint_with_state(self.state.downgrade())
-    }
-
-    fn get_listening_endpoint_with_state(ws: Weak<Mutex<State>>)
-                                         -> io::Result<(Vec<Endpoint>)> {
+    fn get_listening_endpoint(ws: Weak<Mutex<State>>) -> io::Result<(Vec<Endpoint>)> {
         let listening_ports = try!(lock_state(&ws, |s| {
             let buf: Vec<Port> = s.listening_ports.iter().map(|s| s.clone()).collect();
             Ok(buf)
@@ -324,52 +318,6 @@ impl ConnectionManager {
                 }
             }
         });
-    }
-
-    /// This method tries to connect (bootstrap to exisiting network) to the default or provided
-    /// list of bootstrap nodes.
-    ///
-    /// If `bootstrap_list` is `None`, it will attempt to read a local cached file to populate the
-    /// list.  It will then try to connect to all of the endpoints in the list.  It will return
-    /// once a connection with any of the endpoints is established with Ok(Endpoint) and it will
-    /// drop all other ongoing attempts.  If this fails and `beacon_port` is `Some`, it will try to
-    /// use the beacon port to connect to a peer on the same LAN.
-    /// For more details on bootstrap cache file refer
-    /// https://github.com/maidsafe/crust/blob/master/docs/bootstrap.md
-    ///
-    /// If `bootstrap_list` is `Some`, it will try to connect to all of the endpoints in the list.
-    /// It will return once a connection with any of the endpoints is established with Ok(Endpoint)
-    /// and it will drop all other ongoing attempts.  Note that `beacon_port` has no effect if
-    /// `bootstrap_list` is `Some`; i.e. passing an explicit list ensures we only get connected to
-    /// one of the nodes on the list - we don't fall back to use the beacon protocol.
-    ///
-    /// It will return Err if it fails to connect to any peer.
-    pub fn bootstrap_old(&self, bootstrap_list: Option<Vec<Endpoint>>, beacon_port: Option<u16>) ->
-            io::Result<Endpoint> {
-
-        // overriding config file if beacon_port provided in api, remove once api is changed
-        let beacon_port: u16 = beacon_port.unwrap_or(self.config.beacon_port);
-        match bootstrap_list {
-            Some(list) => self.bootstrap_off_list(list),
-            None => {
-                let mut combined_endpoint_list = self.seek_peers(beacon_port);
-                if self.beacon_guid_and_port.is_some() {  // this node owns bs file
-                    let handler = BootstrapHandler::new();
-                    match handler.read_bootstrap_file() {
-                        Ok(read_contacts) => {
-                            for contacts in read_contacts {
-                                combined_endpoint_list.push(contacts.endpoint);
-                            }
-                            for contacts in self.config.hard_coded_contacts.clone() {
-                                combined_endpoint_list.push(contacts.endpoint);
-                            }
-                        },
-                        _ => {},
-                    }
-                }
-                self.bootstrap_off_list(combined_endpoint_list)
-            },
-        }
     }
 
     /// This should be called before destroying an instance of a ConnectionManager to allow the
@@ -472,15 +420,7 @@ impl ConnectionManager {
         }
     }
 
-    /// Uses beacon to try and collect potential bootstrap endpoints from peers on the same subnet.
-    fn seek_peers(&self, beacon_port: u16) -> Vec<Endpoint> {
-        let beacon_guid = self.beacon_guid_and_port
-            .map(|beacon_guid_and_port| beacon_guid_and_port.0);
-        Self::seek_peers_with_guid(beacon_guid, beacon_port)
-    }
-
-    fn seek_peers_with_guid(beacon_guid: Option<[u8; 16]>,
-                            beacon_port: u16) -> Vec<Endpoint> {
+    fn seek_peers(beacon_guid: Option<[u8; 16]>, beacon_port: u16) -> Vec<Endpoint> {
         // Retrieve list of peers' TCP listeners who are on same subnet as us
         let peer_addresses = match beacon::seek_peers(beacon_port, beacon_guid) {
             Ok(peers) => peers,
@@ -521,8 +461,8 @@ impl ConnectionManager {
         } else {
             let cached_contacts = match beacon_guid_and_port.is_some() {  // this node owns bs file
                 true => {
-                    if let Ok(bootstrap) = BootstrapHandler::new().read_bootstrap_file() {
-                        bootstrap.contacts
+                    if let Ok(contacts) = BootstrapHandler::new().read_bootstrap_file() {
+                        contacts
                     } else {
                         vec![]
                     }
@@ -533,7 +473,7 @@ impl ConnectionManager {
             let beacon_guid = beacon_guid_and_port
                 .map(|beacon_guid_and_port| beacon_guid_and_port.0);
             let combined_contacts: Vec<_>
-                = Self::seek_peers_with_guid(beacon_guid, config.beacon_port)
+                = Self::seek_peers(beacon_guid, config.beacon_port)
                 .iter()
                 .map(|x| Contact{ endpoint: x.clone()} )
                 .chain(config.hard_coded_contacts.clone().into_iter())
@@ -543,40 +483,11 @@ impl ConnectionManager {
             let mut combined_contacts : Vec<Contact> = combined_contacts.into_iter().unique().collect();
 
             // remove own endpoints
-            if let Ok(own_listening_endpoint) = Self::get_listening_endpoint_with_state(ws.clone()) {
+            if let Ok(own_listening_endpoint) = Self::get_listening_endpoint(ws.clone()) {
                 combined_contacts.retain(|x| !own_listening_endpoint.contains(&x.endpoint));
             }
             combined_contacts
         }
-    }
-
-    fn bootstrap_off_list(&self, mut bootstrap_list: Vec<Endpoint>) -> io::Result<Endpoint> {
-        // remove own endpoints
-        let own_listening_endpoint = try!(self.get_listening_endpoint());
-        bootstrap_list.retain(|x| !own_listening_endpoint.contains(&x));
-
-        let mut vec_deferred = vec![];
-        for endpoint in bootstrap_list {
-            let state_cloned = self.state.clone();
-            let beacon_guid_and_port_is_some = self.beacon_guid_and_port.is_some();
-            vec_deferred.push(Deferred::new(move || {
-                match transport::connect(endpoint.clone()) {
-                    Ok(trans) => {
-                        let ep = trans.remote_endpoint.clone();
-                        let _ = try!(handle_connect(state_cloned.downgrade(), trans,
-                                                    beacon_guid_and_port_is_some, true ));
-                        return Ok(ep)
-                    },
-                    Err(e) => Err(e),
-                }
-            }));
-        }
-        let res = Deferred::first_to_promise(1, false,vec_deferred, ControlFlow::ParallelLimit(15)).sync();
-        if let Ok(v) = res {
-            if v.len() > 0 { return Ok(v[0].clone()) }
-        }
-        // FIXME: The result should probably be Option<Endpoint>
-        Err(io::Error::new(io::ErrorKind::Other, "No bootstrap node got connected"))
     }
 
     fn listen(&mut self, port: &Port) {
