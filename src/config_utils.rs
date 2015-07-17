@@ -15,7 +15,6 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use time;
 use transport::{Endpoint, Port};
 use std::fs::File;
 use std::io::prelude::*;
@@ -23,68 +22,10 @@ use std::path::PathBuf;
 use std::env;
 use rustc_serialize::json;
 use std::io;
-use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
-
-#[derive(PartialEq, Eq, Hash, Debug, Clone)]
-pub struct Timestamp {
-    pub timestamp: time::Tm,
-}
-
-impl Timestamp {
-
-    /// Construct a Timestamp with current UTC time.
-    pub fn new() -> Timestamp {
-        Timestamp { timestamp: time::now_utc() }
-    }
-}
-
-impl Encodable for Timestamp {
-    fn encode<E: Encoder>(&self, e: &mut E) -> Result<(), E::Error> {
-        e.emit_seq(11usize, |encoder| {
-            try!(encoder.emit_seq_elt(00usize, |encoder| self.timestamp.tm_sec.encode(encoder)));
-            try!(encoder.emit_seq_elt(01usize, |encoder| self.timestamp.tm_min.encode(encoder)));
-            try!(encoder.emit_seq_elt(02usize, |encoder| self.timestamp.tm_hour.encode(encoder)));
-            try!(encoder.emit_seq_elt(03usize, |encoder| self.timestamp.tm_mday.encode(encoder)));
-            try!(encoder.emit_seq_elt(04usize, |encoder| self.timestamp.tm_mon.encode(encoder)));
-            try!(encoder.emit_seq_elt(05usize, |encoder| self.timestamp.tm_year.encode(encoder)));
-            try!(encoder.emit_seq_elt(06usize, |encoder| self.timestamp.tm_wday.encode(encoder)));
-            try!(encoder.emit_seq_elt(07usize, |encoder| self.timestamp.tm_yday.encode(encoder)));
-            try!(encoder.emit_seq_elt(08usize, |encoder| self.timestamp.tm_isdst.encode(encoder)));
-            try!(encoder.emit_seq_elt(09usize, |encoder| self.timestamp.tm_utcoff.encode(encoder)));
-            try!(encoder.emit_seq_elt(10usize, |encoder| self.timestamp.tm_nsec.encode(encoder)));
-
-            Ok(())
-        })
-    }
-}
-
-impl Decodable for Timestamp {
-    fn decode<D: Decoder>(d: &mut D) -> Result<Timestamp, D::Error> {
-        let (sec, min, hour, mday, mon, year, wday, yday, isdst, utcoff, nsec):
-            (i32, i32, i32, i32, i32, i32, i32, i32, i32, i32, i32) = try!(Decodable::decode(d));
-
-        let timestamp = time::Tm {
-            tm_sec    : sec,
-            tm_min    : min,
-            tm_hour   : hour,
-            tm_mday   : mday,
-            tm_mon    : mon,
-            tm_year   : year,
-            tm_wday   : wday,
-            tm_yday   : yday,
-            tm_isdst  : isdst,
-            tm_utcoff : utcoff,
-            tm_nsec   : nsec
-        };
-
-        Ok(Timestamp { timestamp: timestamp })
-    }
-}
 
 #[derive(PartialEq, Eq, Hash, Debug, Clone, RustcDecodable, RustcEncodable)]
 pub struct Contact {
-    pub endpoint: Endpoint,
-    pub last_updated: Timestamp,
+    pub endpoint: Endpoint
 }
 
 pub type Contacts = Vec<Contact>;
@@ -132,7 +73,7 @@ pub fn write_config_file(file_path : Option<PathBuf>,
     match hard_coded_endpoints {
         Some(endpoints) => {
             for endpoint in endpoints {
-                hard_coded_contacts.push(Contact{endpoint: endpoint, last_updated: Timestamp::new()});
+                hard_coded_contacts.push(Contact{endpoint: endpoint });
             }
         },
         None => {}
@@ -177,10 +118,7 @@ mod test {
             let port_0: u16 = rand::random::<u16>();
             let addr_0 = net::SocketAddrV4::new(net::Ipv4Addr::new(random_addr_0[0],
                 random_addr_0[1], random_addr_0[2], random_addr_0[3]), port_0);
-            let new_contact = Contact {
-                endpoint: Endpoint::Tcp(SocketAddr::V4(addr_0)),
-                last_updated: Timestamp::new()
-            };
+            let new_contact = Contact { endpoint: Endpoint::Tcp(SocketAddr::V4(addr_0)) };
             hard_coded_contacts.push(new_contact);
         }
         let config = Config{ preferred_ports: vec![Port::Tcp(rand::random::<u16>())],
