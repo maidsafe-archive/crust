@@ -447,7 +447,7 @@ fn main() {
     stdout = green_foreground(stdout);
     println!("Bootstrapped to {:?}", connected_peer);
     stdout = reset_foreground(stdout);
-    let _ = tx.send(true);
+    let _ = tx.send(true); // stop timer with no error messages
 
     thread::sleep_ms(100);
     println!("");
