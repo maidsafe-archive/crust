@@ -25,7 +25,7 @@ use std::io;
 
 #[derive(PartialEq, Eq, Hash, Debug, Clone, RustcDecodable, RustcEncodable)]
 pub struct Contact {
-    pub endpoint: Endpoint,
+    pub endpoint: Endpoint
 }
 
 pub type Contacts = Vec<Contact>;
@@ -75,7 +75,7 @@ pub fn write_config_file(file_path : Option<PathBuf>,
     match hard_coded_endpoints {
         Some(endpoints) => {
             for endpoint in endpoints {
-                hard_coded_contacts.push(Contact{endpoint: endpoint});
+                hard_coded_contacts.push(Contact{endpoint: endpoint });
             }
         },
         None => {}
@@ -121,8 +121,8 @@ mod test {
             let port_0: u16 = rand::random::<u16>();
             let addr_0 = net::SocketAddrV4::new(net::Ipv4Addr::new(random_addr_0[0],
                 random_addr_0[1], random_addr_0[2], random_addr_0[3]), port_0);
-            let new_contact = Contact{ endpoint: Endpoint::Tcp(SocketAddr::V4(addr_0)) };
-                hard_coded_contacts.push(new_contact);
+            let new_contact = Contact { endpoint: Endpoint::Tcp(SocketAddr::V4(addr_0)) };
+            hard_coded_contacts.push(new_contact);
         }
         let config = Config{ preferred_ports: vec![Port::Tcp(rand::random::<u16>())],
                              override_default_bootstrap: false,
