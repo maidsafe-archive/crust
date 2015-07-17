@@ -187,7 +187,11 @@ impl ConnectionManager {
 
     // NOTE this can be reused at other places.
     fn get_listening_endpoint(&self) -> io::Result<(Vec<Endpoint>)> {
-        let ws = self.state.downgrade();
+        Self::get_listening_endpoint_with_state(self.state.downgrade())
+    }
+
+    fn get_listening_endpoint_with_state(ws: Weak<Mutex<State>>)
+                                         -> io::Result<(Vec<Endpoint>)> {
         let listening_ports = try!(lock_state(&ws, |s| {
             let buf: Vec<Port> = s.listening_ports.iter().map(|s| s.clone()).collect();
             Ok(buf)
@@ -246,11 +250,15 @@ impl ConnectionManager {
             Ok(())
         });
 
-        let contacts = self.populate_bootstrap_contacts();  //FIXME this needs to be in the thread
         let ws = self.state.downgrade();
         let bs_file_lock = self.beacon_guid_and_port.is_some();
+        let config = self.config.clone();
+        let beacon_guid_and_port = self.beacon_guid_and_port.clone();
         let _ = thread::Builder::new().name("ConnectionManager bootstrap loop".to_string()).spawn(move || {
             loop {
+                let contacts = Self::populate_bootstrap_contacts(&config,
+                                                                 &beacon_guid_and_port,
+                                                                 ws.clone());
                 match bootstrap_off_list(ws.clone(), contacts.clone(), bs_file_lock) {
                     Ok(_) => {
                         println!("Got at least one bootstrap connection. breaking bootstrap loop");
@@ -412,9 +420,14 @@ impl ConnectionManager {
 
     /// Uses beacon to try and collect potential bootstrap endpoints from peers on the same subnet.
     fn seek_peers(&self, beacon_port: u16) -> Vec<Endpoint> {
-        // Retrieve list of peers' TCP listeners who are on same subnet as us
         let beacon_guid = self.beacon_guid_and_port
             .map(|beacon_guid_and_port| beacon_guid_and_port.0);
+        Self::seek_peers_with_guid(beacon_guid, beacon_port)
+    }
+
+    fn seek_peers_with_guid(beacon_guid: Option<[u8; 16]>,
+                            beacon_port: u16) -> Vec<Endpoint> {
+        // Retrieve list of peers' TCP listeners who are on same subnet as us
         let peer_addresses = match beacon::seek_peers(beacon_port, beacon_guid) {
             Ok(peers) => peers,
             Err(_) => return Vec::<Endpoint>::new(),
@@ -423,7 +436,8 @@ impl ConnectionManager {
         // For each contact, connect and receive their list of bootstrap contacts
         let mut endpoints: Vec<Endpoint> = vec![];
         for peer in peer_addresses {
-            let transport = transport::connect(transport::Endpoint::Tcp(peer)).unwrap();
+            let transport = transport::connect(transport::Endpoint::Tcp(peer))
+                .unwrap();
             let contacts_str = match transport.receiver.receive() {
                 Ok(message) => message,
                 Err(_) => {
@@ -444,11 +458,14 @@ impl ConnectionManager {
         endpoints
     }
 
-    fn populate_bootstrap_contacts(&self) -> Vec<Contact> {
-        if self.config.override_default_bootstrap {
-            return self.config.hard_coded_contacts.clone();
+    fn populate_bootstrap_contacts(config: &Config,
+                                   beacon_guid_and_port: &Option<([u8; 16], u16)>,
+                                   ws: Weak<Mutex<State>>)
+                                   -> Vec<Contact> {
+        if config.override_default_bootstrap {
+            return config.hard_coded_contacts.clone();
         } else {
-            let cached_contacts = match self.beacon_guid_and_port.is_some() {  // this node owns bs file
+            let cached_contacts = match beacon_guid_and_port.is_some() {  // this node owns bs file
                 true => {
                     if let Ok(bootstrap) = BootstrapHandler::new().read_bootstrap_file() {
                         bootstrap.contacts
@@ -459,16 +476,20 @@ impl ConnectionManager {
                 _ => vec![],
 
             };
-            let combined_contacts: Vec<_> = self.seek_peers(self.config.beacon_port).iter()
-                        .map(|x| Contact{ endpoint: x.clone()} )
-                            .chain(self.config.hard_coded_contacts.clone().into_iter())
-                                .chain(cached_contacts.into_iter()).collect();
+            let beacon_guid = beacon_guid_and_port
+                .map(|beacon_guid_and_port| beacon_guid_and_port.0);
+            let combined_contacts: Vec<_>
+                = Self::seek_peers_with_guid(beacon_guid, config.beacon_port)
+                .iter()
+                .map(|x| Contact{ endpoint: x.clone()} )
+                .chain(config.hard_coded_contacts.clone().into_iter())
+                .chain(cached_contacts.into_iter()).collect();
 
             // remove duplicates
             let mut combined_contacts : Vec<Contact> = combined_contacts.into_iter().unique().collect();
 
             // remove own endpoints
-            if let Ok(own_listening_endpoint) = self.get_listening_endpoint() {
+            if let Ok(own_listening_endpoint) = Self::get_listening_endpoint_with_state(ws.clone()) {
                 combined_contacts.retain(|x| !own_listening_endpoint.contains(&x.endpoint));
             }
             combined_contacts
