@@ -31,7 +31,7 @@ pub struct Contact {
 pub type Contacts = Vec<Contact>;
 
 
-#[derive(PartialEq, Debug, RustcDecodable, RustcEncodable)]
+#[derive(PartialEq, Debug, RustcDecodable, RustcEncodable, Clone)]
 pub struct Config {
     pub preferred_ports: Vec<Port>,
     pub override_default_bootstrap: bool,
