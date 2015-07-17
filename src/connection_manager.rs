@@ -290,7 +290,7 @@ impl ConnectionManager {
     /// Maximum of `max_successful_bootstrap_connection` bootstrap connections will be made and further connection
     /// attempts will stop.
     /// It will reiterate the list of all endpoints until it gets at least one connection.
-    pub fn bootstrap(&mut self, _max_successful_bootstrap_connection: u8) {
+    pub fn bootstrap(&mut self, max_successful_bootstrap_connection: usize) {
         // Disconnect existing connections
         let mut ws = self.state.downgrade();
         let _ = lock_mut_state(&mut ws, |s: &mut State| {
@@ -307,7 +307,8 @@ impl ConnectionManager {
                 let contacts = Self::populate_bootstrap_contacts(&config,
                                                                  &beacon_guid_and_port,
                                                                  ws.clone());
-                match bootstrap_off_list(ws.clone(), contacts.clone(), bs_file_lock) {
+                match bootstrap_off_list(ws.clone(), contacts.clone(), bs_file_lock,
+                                         max_successful_bootstrap_connection) {
                     Ok(_) => {
                         println!("Got at least one bootstrap connection. breaking bootstrap loop");
                         break;
@@ -662,7 +663,8 @@ fn start_writing_thread(state: WeakState,
 
 // Returns Ok() if at least one connection succeeds
 fn bootstrap_off_list(weak_state: WeakState, bootstrap_list: Vec<Contact>,
-                      is_broadcast_acceptor: bool) -> io::Result<()> {
+                      is_broadcast_acceptor: bool,
+                      max_successful_bootstrap_connection: usize) -> io::Result<()> {
     let mut vec_deferred = vec![];
     for contact in bootstrap_list {
         let ws = weak_state.clone();
@@ -678,7 +680,8 @@ fn bootstrap_off_list(weak_state: WeakState, bootstrap_list: Vec<Contact>,
             }
         }));
     }
-    let res = Deferred::first_to_promise(15, false, vec_deferred,
+    let res = Deferred::first_to_promise(max_successful_bootstrap_connection,
+                                         false, vec_deferred,
                                          ControlFlow::ParallelLimit(15))
         .sync();
     let v = match res {
@@ -1098,9 +1101,9 @@ mod test {
                                                listening_ports: HashSet::new(),
                                                stop_called: false,
                                              }));
-        assert!(bootstrap_off_list(state.downgrade(), vec![], false).is_err());
+        assert!(bootstrap_off_list(state.downgrade(), vec![], false, 15).is_err());
         assert!(bootstrap_off_list(state.downgrade(),
-                                   vec![Contact{endpoint: ep.clone()}], false)
+                                   vec![Contact{endpoint: ep.clone()}], false, 15)
                 .is_ok());
     }
 }
