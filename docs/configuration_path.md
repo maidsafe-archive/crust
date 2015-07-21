@@ -6,9 +6,11 @@ For crust_peer example, the config file name will be `crust_peer.config`
 
 ####Reading order
 On construction of `crust::connection_manager` instance, crust will try to read configuration file from the following path in same order.
-1. Current executable directory: `std::env::current_exe` 
-2. Current user's application directory:  `UserAppDir` 
+
+1. Current executable directory: `std::env::current_exe`
+2. Current user's application directory:  `UserAppDir`
 3. Application support directory for all users: `SystemAppSupportDir ` 
+
 
 #####Pro`s:
 
@@ -16,6 +18,7 @@ On construction of `crust::connection_manager` instance, crust will try to read 
 
 ####Writing order
 In case the configuration file is missing at all above paths, crust will attempt to create file at following path in same order.
+
 1. Application support directory for all users: `SystemAppSupportDir `
 2. Current user's application directory:  `UserAppDir`
 
