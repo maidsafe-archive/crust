@@ -15,7 +15,7 @@ On construction of `crust::connection_manager` instance, crust will try to read 
 Pro`s:
 - Intermediate layer libraries need not to know anything about networking configuration.
 - Installers can create the config file at appropriate path with desired name and permissions.
-- Tests can override other paths by placing config file in current directory.
+- Tests can override other paths by placing config file in current exe directory.
 - File name format helps in separating config file of different application.
 
 Cons:
