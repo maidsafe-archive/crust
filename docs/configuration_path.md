@@ -22,7 +22,7 @@ Cons:
 - Running parallel tests will interfere each other.
 - Multiple instances of same application cannot have customised config option per instance.
 - Any user can override existing `SystemAppSupportDir ` config file by creating `UserAppDir`
- -
+ 
 ####Writing order
 In case the configuration file is missing at all above paths, crust will attempt to create file at following path in same order.
 
