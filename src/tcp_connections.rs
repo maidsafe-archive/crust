@@ -16,7 +16,7 @@
 // relating to use of the SAFE Network Software.
 
 use std::net::{TcpListener, TcpStream, SocketAddr, Shutdown};
-use std::io::{BufReader, ErrorKind};
+use std::io::{BufReader, Error, ErrorKind};
 use std::io::Result as IoResult;
 use cbor::{Encoder, CborError, Decoder};
 use std::thread;
@@ -53,7 +53,13 @@ impl <T> Drop for OutTcpStream<T> {
 /// Connect to a peer and open a send-receive pair.  See `upgrade` for more details.
 pub fn connect_tcp<'a, 'b, I, O>(addr: SocketAddr) -> IoResult<(Receiver<I>, OutTcpStream<O>)>
         where I: Send + Decodable + 'static, O: Encodable {
-    Ok(try!(upgrade_tcp(try!(TcpStream::connect(&addr)))))
+    let stream = try!(TcpStream::connect(&addr));
+    if try!(stream.peer_addr()).port() == try!(stream.local_addr()).port() {
+        return Err(Error::new(ErrorKind::ConnectionRefused,
+                              "TCP simultaneous open"))
+    }
+
+    Ok(try!(upgrade_tcp(stream)))
 }
 
 /// Starts listening for connections on this ip and port.
