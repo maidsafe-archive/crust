@@ -33,10 +33,10 @@ In case the configuration file is missing at all above paths, crust will attempt
 - Application's advance users can modify config easily by altering the file
 - Apps not having permissions for creating `SystemAppSupportDir ` will create `UserAppDir` after failing to create `SystemAppSupportDir `. This means crust stays agnostic of type of application (Client or Vault)
 - If config options are default for an application, its installer can skip installing it and application will auto create appropriate file at best path if it can.
-#####Cons:
 
- - If its a client user app having permissions to write to system dir, it will create system dir and not home dir
- -
+#####Cons:
+- If its a client user app having permissions to write to system dir, it will create system dir and not home dir
+ 
 
 #### Platform specific paths
 **UserAppDir**
