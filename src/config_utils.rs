@@ -59,10 +59,13 @@ pub fn get_file_name() -> io::Result<(PathBuf)> {
     Ok(PathBuf::from(os_string))
 }
 
-pub fn read_config() -> io::Result<(Config)> {
-    let _ = utils::user_app_dir();
-    let _ = utils::system_app_support_dir();
-    read_file(&default_config_path().unwrap())
+pub fn read_or_create_config() -> io::Result<(Config)> {
+    let res = read_config_file();
+    if res.is_ok() {
+        return res;
+    }
+    try!(write_default_config_file());
+    read_config_file()
 }
 
 // Try reading in following order:
