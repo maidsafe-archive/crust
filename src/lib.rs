@@ -65,6 +65,7 @@ mod tcp_connections;
 mod utp_connections;
 mod transport;
 mod config_utils;
+mod utils;
 
 /// Module implementing the `ConnectionManager` which provides an interface to manage peer-to-peer
 /// connections.
