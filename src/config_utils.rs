@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use transport::{Endpoint, Port};
+use transport::Endpoint;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::PathBuf;
@@ -33,7 +33,6 @@ pub type Contacts = Vec<Contact>;
 
 #[derive(PartialEq, Debug, RustcDecodable, RustcEncodable, Clone)]
 pub struct Config {
-    pub preferred_ports: Vec<Port>,
     pub override_default_bootstrap: bool,
     pub hard_coded_contacts: Contacts,
     pub beacon_port: u16,
@@ -74,7 +73,6 @@ pub fn write_file(file_name : &PathBuf, config: &Config) -> io::Result<()> {
 
 /// Writes config file and parametes to user specified or default location
 pub fn write_config_file(file_path : Option<PathBuf>,
-                         preferred_ports: Option<Vec<Port>>,
                          override_default_bootstrap: Option<bool>,
                          hard_coded_endpoints: Option<Vec<Endpoint>>,
                          beacon_port: Option<u16>) -> io::Result<(PathBuf)> {
@@ -88,8 +86,7 @@ pub fn write_config_file(file_path : Option<PathBuf>,
         None => {}
     };
 
-    let config = Config{ preferred_ports: preferred_ports.unwrap_or(vec![Port::Tcp(0u16)]),
-                         override_default_bootstrap: override_default_bootstrap.unwrap_or(false),
+    let config = Config{ override_default_bootstrap: override_default_bootstrap.unwrap_or(false),
                          hard_coded_contacts: hard_coded_contacts,
                          beacon_port: beacon_port.unwrap_or(0u16),
                        };
