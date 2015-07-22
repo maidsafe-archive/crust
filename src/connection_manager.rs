@@ -26,7 +26,7 @@ use std;
 
 use beacon;
 use bootstrap_handler::{BootstrapHandler, parse_contacts};
-use config_utils::{Config, Contact, Contacts, default_config_path, read_file};
+use config_utils::{Config, Contact, Contacts, read_config};
 use getifaddrs::getifaddrs;
 use transport;
 use transport::{Endpoint, Port};
@@ -34,7 +34,6 @@ use transport::{Endpoint, Port};
 use asynchronous::{Deferred,ControlFlow};
 use itertools::Itertools;
 
-use std::path::PathBuf;
 use igd;
 
 /// Type used to represent serialised data in a message.
@@ -124,14 +123,9 @@ fn map_external_port(port: &Port)
 impl ConnectionManager {
     /// Constructs a connection manager. User needs to create an asynchronous channel, and provide
     /// the sender half to this method. Receiver will receive all `Event`s from this library.
-    pub fn new(event_pipe: mpsc::Sender<Event>, config_path: Option<PathBuf>) -> ConnectionManager {
-        let config_path = config_path.unwrap_or(default_config_path().unwrap_or_else(|e| {
-            println!("Crust failed to get default config path: {}", e);
-            std::process::exit(1);
-        }));
-
-        let config = read_file(&config_path).unwrap_or_else(|e| {
-            println!("Crust failed to read_config_file at {:?}; Error: {:?}", config_path, e);
+    pub fn new(event_pipe: mpsc::Sender<Event>) -> ConnectionManager {
+        let config = read_config().unwrap_or_else(|e| {
+            println!("Crust failed to read_config_file; Error: {:?}", e);
             std::process::exit(1);
         });
 
@@ -150,8 +144,8 @@ impl ConnectionManager {
     /// protocol. The actual port used will be returned on which it started listening for each
     /// protocol.
     // FIXME: Returning io::Result seems pointless since we always return Ok.
-    pub fn start_accepting(&mut self) -> io::Result<Vec<Port>> {
-        // We need to check for an instance of each supported protocol in the preferred_ports vector.
+    pub fn start_accepting(&mut self, hint: Vec<Port>) -> io::Result<Vec<Port>> {
+        // We need to check for an instance of each supported protocol in the hint vector.
         //  For any protocol that doesn't have an entry, we should inject one (either random or 0).
         //  Currently, only TCP is supported.
 
@@ -165,7 +159,7 @@ impl ConnectionManager {
                 //     PublicKey::Asym(asymmetricbox::PublicKey([0u8; asymmetricbox::PUBLICKEYBYTES]));
 
                 let mut bootstrap_handler = BootstrapHandler::new();
-                let port = &self.config.preferred_ports.get(0).unwrap_or(&Port::Tcp(0)).clone();
+                let port = &hint.get(0).unwrap_or(&Port::Tcp(0)).clone();
                 self.listen(port);
                 listening_ports = try!(lock_state(&ws, |s| {
                     let buf: Vec<Port> = s.listening_ports.iter().map(|s| s.clone()).collect();
@@ -200,7 +194,7 @@ impl ConnectionManager {
         };
 
         if self.beacon_guid_and_port.is_none() {
-            let port = &self.config.preferred_ports.get(0).unwrap_or(&Port::Tcp(0)).clone();
+            let port = &hint.get(0).unwrap_or(&Port::Tcp(0)).clone();
             self.listen(port);
 
             listening_ports = try!(lock_state(&ws, |s| {
@@ -210,34 +204,6 @@ impl ConnectionManager {
         }
         Ok(listening_ports)
     }
-
-    /// For API compatibilty, return a vector of listening endpoints
-    pub fn start_listening2(&mut self) -> io::Result<Vec<Endpoint>> {
-        let ports = try!(self.start_accepting());
-        let mut endpoints = Vec::<Endpoint>::new();
-        for port in ports {
-            match port {
-                Port::Tcp(p) => {
-                    for ifaddr in getifaddrs() {
-                        endpoints.push(match ifaddr.addr {
-                            IpAddr::V4(a) => Endpoint::tcp((a, p)),
-                            IpAddr::V6(a) => Endpoint::tcp((a, p)),
-                        });
-                    }
-                },
-                Port::Utp(p) => {
-                    for ifaddr in getifaddrs() {
-                        endpoints.push(match ifaddr.addr {
-                            IpAddr::V4(a) => Endpoint::utp((a, p)),
-                            IpAddr::V6(a) => Endpoint::utp((a, p)),
-                        });
-                    }
-                },
-            }
-        }
-        Ok(endpoints)
-    }
-
 
     fn get_listening_endpoint(ws: Weak<Mutex<State>>) -> io::Result<(Vec<Endpoint>)> {
         let listening_ports = try!(lock_state(&ws, |s| {

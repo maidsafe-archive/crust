@@ -50,6 +50,13 @@ pub fn default_config_path() -> io::Result<(PathBuf)> {
     Ok(current_dir)
 }
 
+pub fn read_config() -> io::Result<(Config)> {
+    use utils;
+    let _ = utils::user_app_dir();
+    let _ = utils::system_app_support_dir();
+    read_file(&default_config_path().unwrap())
+}
+
 pub fn read_file(file_name : &PathBuf) -> io::Result<(Config)> {
     let mut file = try!(File::open(file_name));
     let mut contents = String::new();
