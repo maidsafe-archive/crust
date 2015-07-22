@@ -2,6 +2,7 @@ use std::path::{Path, PathBuf};
 use std::io::Error as IoError;
 use std::env::VarError;
 
+#[derive(Debug)]
 pub enum Error {
     EnvError(VarError),
     IoError(IoError),

@@ -18,10 +18,11 @@
 use transport::Endpoint;
 use std::fs::File;
 use std::io::prelude::*;
-use std::path::PathBuf;
+use std::path::{PathBuf, Path};
 use std::env;
 use rustc_serialize::json;
 use std::io;
+use utils;
 
 #[derive(PartialEq, Eq, Hash, Debug, Clone, RustcDecodable, RustcEncodable)]
 pub struct Contact {
@@ -49,12 +50,72 @@ pub fn default_config_path() -> io::Result<(PathBuf)> {
     Ok(current_dir)
 }
 
+pub fn get_file_name() -> io::Result<(PathBuf)> {
+    let current_exe_path = try!(env::current_exe());
+    let file_stem = try!(current_exe_path.file_stem()
+        .ok_or_else(||io::Error::new(io::ErrorKind::Other, format!("Failed to read current exe file name"))));
+    let mut os_string = file_stem.to_os_string();
+    os_string.push(".crust.config");
+    Ok(PathBuf::from(os_string))
+}
+
 pub fn read_config() -> io::Result<(Config)> {
-    use utils;
     let _ = utils::user_app_dir();
     let _ = utils::system_app_support_dir();
     read_file(&default_config_path().unwrap())
 }
+
+// Try reading in following order:
+// Current executable directory: using std::env::current_exe
+// Current user's application directory: UserAppDir
+// Application support directory for all users: SystemAppSupportDir
+#[allow(dead_code)]
+pub fn read_config_file() -> io::Result<(Config)> {
+    let file_name = try!(get_file_name());
+
+    // Current executable directory
+    let mut path = try!(env::current_exe());
+    path.pop();
+    let path = path.join(file_name.clone());
+    let res = read_file(&path);
+    if res.is_ok() {
+        return res;
+    }
+
+    // Current user's application directory
+    let file_path = utils::user_app_dir().unwrap().join(&file_name);
+    let res = read_file(&file_path);
+    if res.is_ok() {
+        return res;
+    }
+
+    // Application support directory for all users
+    let file_path = utils::system_app_support_dir().unwrap().join(file_name);
+    read_file(&file_path)
+}
+
+pub fn write_default_config_file() -> io::Result<()> {
+    let file_name = try!(get_file_name());
+
+    // Default Config
+    let config = Config{ override_default_bootstrap: false,
+                         hard_coded_contacts: vec![],
+                         beacon_port: 0u16,
+                       };
+
+
+    // Application support directory for all users
+    let file_path = utils::system_app_support_dir().unwrap().join(&file_name);
+    let res = write_file(&file_path, &config);
+    if res.is_ok() {
+        return res;
+    }
+
+    // Current user's application directory
+    let file_path = utils::user_app_dir().unwrap().join(file_name);
+    write_file(&file_path, &config)
+}
+
 
 pub fn read_file(file_name : &PathBuf) -> io::Result<(Config)> {
     let mut file = try!(File::open(file_name));
@@ -128,8 +189,7 @@ mod test {
             let new_contact = Contact { endpoint: Endpoint::Tcp(SocketAddr::V4(addr_0)) };
             hard_coded_contacts.push(new_contact);
         }
-        let config = Config{ preferred_ports: vec![Port::Tcp(rand::random::<u16>())],
-                             override_default_bootstrap: false,
+        let config = Config{ override_default_bootstrap: false,
                              hard_coded_contacts: hard_coded_contacts,
                              beacon_port: rand::random::<u16>(),
                            };
