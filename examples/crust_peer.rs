@@ -273,7 +273,7 @@ fn reset_foreground(stdout: Option<Box<term::StdoutTerminal>>) ->
 }
 
 // TODO update to take listening port once api is updated
-fn make_temp_config(beacon_port: Option<u16>, tcp_port: Option<u16>,
+fn make_temp_config(beacon_port: Option<u16>,
                     hard_coded_endpoints: Option<Vec<Endpoint>>) -> (PathBuf, TempDir) {
     let temp_dir = TempDir::new("crust_peer").unwrap();
     let mut config_file_path = temp_dir.path().to_path_buf();
@@ -284,7 +284,6 @@ fn make_temp_config(beacon_port: Option<u16>, tcp_port: Option<u16>,
 
 
     let _ = write_config_file(Some(config_file_path.clone()),
-                              Some(vec![Port::Tcp(tcp_port.unwrap_or(0u16)).clone()]),
                               override_default_bootstrap,
                               hard_coded_endpoints,
                               beacon_port,
@@ -357,20 +356,21 @@ fn main() {
     let mut stdout = term::stdout();
     let mut stdout_copy = term::stdout();
 
-    let (config_path, _tempdir) = match args.flag_config {
-        Some(path_str) => {(PathBuf::from(path_str), None)},
+    let _tempdir = match args.flag_config {
+        Some(_) => None,
         None => {
-            let (path, tempdir) = make_temp_config(args.flag_beacon, args.flag_tcp_port, bootstrap_peers.clone());
-            (path, Some(tempdir))
+            let (_, tempdir) = make_temp_config(args.flag_beacon, bootstrap_peers.clone());
+            Some(tempdir)
         }
     };
 
     // Construct ConnectionManager and start listening
     let (channel_sender, channel_receiver) = channel();
     let (bs_sender, bs_receiver) = channel();
-    let mut connection_manager = ConnectionManager::new(channel_sender, Some(config_path));
+    let mut connection_manager = ConnectionManager::new(channel_sender);
     stdout = green_foreground(stdout);
-    let listening_endpoints = match connection_manager.start_listening2() {
+    let _ = connection_manager.start_accepting(vec![]);
+    let listening_endpoints = match connection_manager.get_listening_endpoints() {
         Ok(endpoints) => endpoints,
         Err(e) => {
             println!("Connection manager failed to start listening: {}", e);
