@@ -25,43 +25,18 @@
         unused_qualifications, unused_results, variant_size_differences)]
 
 extern crate crust;
-extern crate tempdir;
 
-use std::net::SocketAddr;
-use std::str::FromStr;
 use std::sync::mpsc::channel;
 use std::thread;
-use std::path::PathBuf;
-use tempdir::TempDir;
 
-use crust::{ConnectionManager, Endpoint, write_config_file};
-
-// TODO update to take listening port once api is updated
-fn make_temp_config(beacon_port: Option<u16>) -> (PathBuf, TempDir) {
-    let temp_dir = TempDir::new("crust_peer").unwrap();
-    let mut config_file_path = temp_dir.path().to_path_buf();
-    config_file_path.push("simple_sender.config");
-
-    // Try to connect to "simple_receiver" example node which should be listening on TCP port 8888
-    // and for UDP broadcasts (beacon) on 9999.
-    let receiver_listening_endpoint =
-        Endpoint::Tcp(SocketAddr::from_str(&"127.0.0.1:8888").unwrap());
-
-    let _ = write_config_file(Some(config_file_path.clone()),
-                              None,
-                              None,
-                              Some(vec![receiver_listening_endpoint]),
-                              beacon_port,
-                             ).unwrap();
-    (config_file_path, temp_dir)
-}
+use crust::{ConnectionManager, write_config_file};
 
 fn main() {
-    let temp_config = make_temp_config(Some(9999));
+    let _ = write_config_file(None, None, Some(9999)).unwrap();
     // We receive events (e.g. new connection, message received) from the ConnectionManager via an
     // asynchronous channel.
     let (channel_sender, channel_receiver) = channel();
-    let mut connection_manager = ConnectionManager::new(channel_sender, Some(temp_config.0.clone()));
+    let mut connection_manager = ConnectionManager::new(channel_sender);
 
     let (bs_sender, bs_receiver) = channel();
     // Start a thread running a loop which will receive and display responses from the peer.

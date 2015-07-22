@@ -18,7 +18,7 @@
 use transport::Endpoint;
 use std::fs::File;
 use std::io::prelude::*;
-use std::path::{PathBuf, Path};
+use std::path::PathBuf;
 use std::env;
 use rustc_serialize::json;
 use std::io;
@@ -39,15 +39,23 @@ pub struct Config {
     pub beacon_port: u16,
 }
 
-pub fn default_config_path() -> io::Result<(PathBuf)> {
-    let current_exe_path = try!(env::current_exe());
-    let exe_name = try!(current_exe_path.file_name()
-        .ok_or_else(||io::Error::new(io::ErrorKind::Other, format!("Failed to read current exe file name"))));
-    let mut config_name: PathBuf = PathBuf::from(exe_name.to_os_string());;
-    config_name.set_extension("config");
-    let mut current_dir = try!(env::current_dir());
-    current_dir.push(config_name);
-    Ok(current_dir)
+// pub fn default_config_path() -> io::Result<(PathBuf)> {
+//     let current_exe_path = try!(env::current_exe());
+//     let exe_name = try!(current_exe_path.file_name()
+//         .ok_or_else(||io::Error::new(io::ErrorKind::Other, format!("Failed to read current exe file name"))));
+//     let mut config_name: PathBuf = PathBuf::from(exe_name.to_os_string());;
+//     config_name.set_extension("config");
+//     let mut current_dir = try!(env::current_dir());
+//     current_dir.push(config_name);
+//     Ok(current_dir)
+// }
+
+pub fn exe_path_config() -> io::Result<(PathBuf)> {
+    let file_name = try!(get_file_name());
+    let mut path = try!(env::current_exe());
+    path.pop();
+    let path = path.join(file_name.clone());
+    Ok(path)
 }
 
 pub fn get_file_name() -> io::Result<(PathBuf)> {
@@ -74,16 +82,14 @@ pub fn read_or_create_config() -> io::Result<(Config)> {
 // Application support directory for all users: SystemAppSupportDir
 #[allow(dead_code)]
 pub fn read_config_file() -> io::Result<(Config)> {
-    let file_name = try!(get_file_name());
-
     // Current executable directory
-    let mut path = try!(env::current_exe());
-    path.pop();
-    let path = path.join(file_name.clone());
+    let path = try!(exe_path_config());
     let res = read_file(&path);
     if res.is_ok() {
         return res;
     }
+
+    let file_name = try!(get_file_name());
 
     // Current user's application directory
     let file_path = utils::user_app_dir().unwrap().join(&file_name);
@@ -135,9 +141,8 @@ pub fn write_file(file_name : &PathBuf, config: &Config) -> io::Result<()> {
     file.sync_all()
 }
 
-/// Writes config file and parametes to user specified or default location
-pub fn write_config_file(file_path : Option<PathBuf>,
-                         override_default_bootstrap: Option<bool>,
+/// Writes config file and parametes to exe directory with required name format
+pub fn write_config_file(override_default_bootstrap: Option<bool>,
                          hard_coded_endpoints: Option<Vec<Endpoint>>,
                          beacon_port: Option<u16>) -> io::Result<(PathBuf)> {
     let mut hard_coded_contacts: Contacts = vec![];
@@ -155,13 +160,7 @@ pub fn write_config_file(file_path : Option<PathBuf>,
                          beacon_port: beacon_port.unwrap_or(0u16),
                        };
 
-    let config_path = match file_path{
-        Some(path)=> { path},
-        None => {
-            try!(default_config_path())
-        }
-    };
-
+    let config_path = try!(exe_path_config());
     try!(write_file(&config_path, &config));
     Ok(config_path)
 }
@@ -197,7 +196,7 @@ mod test {
                              beacon_port: rand::random::<u16>(),
                            };
 
-        let file_name = default_config_path().unwrap();
+        let file_name = exe_path_config().unwrap();
         assert_eq!(write_file(&file_name, &config).ok(), Some(()));
         assert_eq!(read_file(&file_name).ok(), Some(config));
         let _  = fs::remove_file(&file_name);
