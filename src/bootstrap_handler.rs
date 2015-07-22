@@ -23,20 +23,9 @@ use std::env;
 use rustc_serialize::json;
 use std::io;
 use itertools::Itertools;
-use config_utils::{Contact, Contacts};
+use config_utils::Contacts;
 
 const MAX_CONTACTS: usize = 1500;
-
-#[derive(PartialEq, Debug, RustcDecodable, RustcEncodable)]
-pub struct Bootstrap {
-    pub contacts: Contacts,
-}
-
-pub struct BootstrapHandler {
-    file_name: String,
-    last_updated: time::Tm,
-}
-
 
 pub fn serialise_contacts(contacts: Contacts) -> Vec<u8> {
     let encoded = json::encode(&contacts).unwrap();
@@ -44,24 +33,26 @@ pub fn serialise_contacts(contacts: Contacts) -> Vec<u8> {
 }
 
 pub fn parse_contacts(buffer: Vec<u8>) -> Option<Contacts> {
-    String::from_utf8(buffer).ok().and_then(|contacts_str| {
-        json::decode(&contacts_str).ok()
-    })
+    String::from_utf8(buffer).ok().and_then(|contacts_str| { json::decode(&contacts_str).ok() })
 }
 
 
+pub struct BootstrapHandler {
+    file_name: String,
+    last_updated: time::Tm,
+}
 
 impl BootstrapHandler {
     pub fn get_file_name() -> String {
         let path = match env::current_exe() {
-                Ok(exe_path) => exe_path,
-                Err(e) => panic!("Failed to get current exe path: {}", e),
-            };
-        let name_with_extension = path.file_name().expect("Unknown filename");
-        let name = path::Path::new(name_with_extension).file_stem()
-            .expect("Unknown extension");
+            Ok(exe_path) => exe_path,
+            Err(e) => panic!("Failed to get current exe path: {}", e),
+        };
 
+        let name_with_extension = path.file_name().expect("Unknown filename");
+        let name = path::Path::new(name_with_extension).file_stem().expect("Unknown extension");
         let mut filename = String::new();
+
         filename.push_str("./");
         filename.push_str(name.to_str().unwrap());
         filename.push_str(".bootstrap.cache");
@@ -79,8 +70,8 @@ impl BootstrapHandler {
         time::Duration::hours(4)
     }
 
-    pub fn add_contacts(&mut self, contacts: Vec<Contact>) -> io::Result<()> {
-        try!(self.insert_contacts(contacts));
+    pub fn update_contacts(&mut self, contacts: Contacts, prune: Contacts) -> io::Result<()> {
+        try!(self.insert_contacts(contacts, prune));
         // TODO(Team) this implementation is missing and should be considered in next planning
         if time::now() > self.last_updated + BootstrapHandler::get_update_duration() {
             // self.check_bootstrap_contacts();
@@ -88,60 +79,59 @@ impl BootstrapHandler {
         Ok(())
     }
 
-    pub fn read_bootstrap_file(&self) -> io::Result<(Bootstrap)> {
+    pub fn read_bootstrap_file(&self) -> io::Result<(Contacts)> {
         let mut file = try!(File::open(&self.file_name));
         let mut contents = String::new();
         let _ = try!(file.read_to_string(&mut contents));
-        json::decode(&contents)
-             .map_err(|error| io::Error::new(io::ErrorKind::Other,
-                                             format!("Failed to decode bootstrap file: {}", error)))
+        json::decode(&contents).map_err(|error| io::Error::new(io::ErrorKind::Other,
+            format!("Error decoding bootstrap file: {}", error)))
     }
 
-    fn write_bootstrap_file(&mut self, mut bootstrap: Bootstrap) -> io::Result<()> {
-        bootstrap.contacts = bootstrap.contacts.clone().into_iter().unique().collect();
-        let mut file = try!(File::create(&self.file_name));
-        try!(write!(&mut file, "{}", json::as_pretty_json(&bootstrap)));
-        file.sync_all()
-    }
+    #[allow(dead_code)]
+    pub fn oldest_contacts(&mut self, n: usize) -> io::Result<(Contacts)> {
+        let bootstrap_contacts = self.read_bootstrap_file().unwrap_or_else(|e| {
+            println!("Error reading Bootstrap file: {:?}. Creating {:?}.", e, self.file_name);
+            Contacts::new()
+        });
 
-    fn insert_contacts(&mut self, contacts: Contacts) -> io::Result<()> {
-        assert!(!contacts.is_empty());
-        let mut bootstrap = self.read_bootstrap_file()
-            .unwrap_or_else(|e| {
-                println!("Failed to read Bootstrap cache file : {:?} ; {:?} ; Creating New file.",
-                self.file_name, e);
-                Bootstrap{ contacts: Vec::new() }
-            });
-
-        let mut contact_list = contacts.clone();
-
-        for contact in contacts {
-            match bootstrap.contacts.binary_search_by(|e| e.endpoint.cmp(&contact.endpoint)) {
-                Ok(position) => { let _ = bootstrap.contacts.remove(position); },
-                Err(_) => {}
-            }
-        }
-
-        for contact in bootstrap.contacts {
-            contact_list.push(contact.clone());
-        }
-
-        let mut bootstrap_contacts = contact_list
-            .into_iter()
-            .sort_by(|a, b| Ord::cmp(&b.last_updated.timestamp, &a.last_updated.timestamp))
-            .into_iter()
-            .map(|contact| contact)
-            .collect::<Vec<Contact>>();
-
-        bootstrap_contacts.truncate(MAX_CONTACTS);
-        bootstrap.contacts = bootstrap_contacts;
-
-        self.write_bootstrap_file(bootstrap)
+        Ok(bootstrap_contacts.iter().rev().map(|contact| contact.clone())
+                             .take(n).collect::<Contacts>())
     }
 
     pub fn get_serialised_contacts(&self) -> io::Result<(Vec<u8>)> {
-        let bootstrap = try!(self.read_bootstrap_file());
-        Ok(serialise_contacts(bootstrap.contacts))
+        let contacts = try!(self.read_bootstrap_file());
+        Ok(serialise_contacts(contacts))
+    }
+
+    fn write_bootstrap_file(&mut self, mut contacts: Contacts) -> io::Result<()> {
+        contacts = contacts.clone().into_iter().unique().collect();
+        let mut file = try!(File::create(&self.file_name));
+        try!(write!(&mut file, "{}", json::as_pretty_json(&contacts)));
+        file.sync_all()
+    }
+
+    fn insert_contacts(&mut self, mut contacts: Contacts, prune: Contacts) -> io::Result<()> {
+        let mut bootstrap_contacts = self.read_bootstrap_file().unwrap_or_else(|e| {
+            println!("Error reading Bootstrap file: {:?}. Creating {:?}.", e, self.file_name);
+            Contacts::new()
+        });
+
+        bootstrap_contacts.retain(|contact| !prune.contains(&contact));
+        contacts.retain(|contact| !bootstrap_contacts.contains(&contact));
+
+        if bootstrap_contacts.len() == 0usize {
+            bootstrap_contacts = contacts;
+        } else {
+            loop {
+                if bootstrap_contacts.len() < MAX_CONTACTS && !contacts.is_empty() {
+                    bootstrap_contacts.insert(0usize, contacts.remove(0usize));
+                } else {
+                    break;
+                }
+            }
+        }
+
+        self.write_bootstrap_file(bootstrap_contacts)
     }
 }
 
@@ -154,59 +144,40 @@ mod test {
     use rustc_serialize::json;
     use rand;
     use std::path::Path;
-    use time;
-    use itertools::Itertools;
-    use cbor::{Encoder, Decoder};
-    use rustc_serialize::{Decodable, Encodable};
-    use config_utils::{Contact, Contacts, Timestamp};
+    use config_utils::{Contact, Contacts};
 
     use super::MAX_CONTACTS;
 
     #[test]
-    fn timestamp() {
-        let time = time::now_utc();
-        let timestamp = Timestamp{ timestamp: time };
-        let mut timestamp_encoder = Encoder::from_memory();
-        timestamp_encoder.encode(&[&timestamp]).unwrap();
-        let mut timestamp_decoder = Decoder::from_bytes(timestamp_encoder.as_bytes());
-        let decoded_timestamp: Timestamp = timestamp_decoder.decode().next().unwrap().unwrap();
-        assert_eq!(timestamp, decoded_timestamp);
-    }
-
-    #[test]
     fn serialisation() {
         let addr = net::SocketAddrV4::new(net::Ipv4Addr::new(1,2,3,4), 8080);
-        let contact  = Contact {
-            endpoint: Endpoint::Tcp(SocketAddr::V4(addr)),
-            last_updated: Timestamp{ timestamp: time::empty_tm() }
-        };
+        let contact  = Contact { endpoint: Endpoint::Tcp(SocketAddr::V4(addr)) };
         let mut contacts = Contacts::new();
         contacts.push(contact.clone());
         contacts.push(contact.clone());
-        let bootstrap = Bootstrap { contacts: contacts };
-        let encoded = json::encode(&bootstrap).unwrap();
-        let decoded: Bootstrap = json::decode(&encoded).unwrap();
-        assert_eq!(bootstrap, decoded);
+        let encoded = json::encode(&contacts).unwrap();
+        let decoded: Contacts = json::decode(&encoded).unwrap();
+        assert_eq!(contacts, decoded);
     }
 
     #[test]
-    fn bootstrap_handler_test() {
+    fn duplicates() {
         let mut contacts = Vec::new();
-        for _ in 0..10 {
-            let mut random_addr_0 = Vec::with_capacity(4);
-            random_addr_0.push(rand::random::<u8>());
-            random_addr_0.push(rand::random::<u8>());
-            random_addr_0.push(rand::random::<u8>());
-            random_addr_0.push(rand::random::<u8>());
+        let number = 10usize;
 
-            let port_0: u16 = rand::random::<u16>();
-            let addr_0 = net::SocketAddrV4::new(net::Ipv4Addr::new(random_addr_0[0],
-                random_addr_0[1], random_addr_0[2], random_addr_0[3]), port_0);
-            let new_contact = Contact{
-                endpoint: Endpoint::Tcp(SocketAddr::V4(addr_0)),
-                last_updated: Timestamp { timestamp: time::now_utc() }
-            };
-            contacts.push(new_contact);
+        for _ in 0..number {
+            let mut ip = Vec::with_capacity(4);
+
+            ip.push(rand::random::<u8>());
+            ip.push(rand::random::<u8>());
+            ip.push(rand::random::<u8>());
+            ip.push(rand::random::<u8>());
+
+            let port = rand::random::<u16>();
+            let ipport = net::SocketAddrV4::new(Ipv4Addr::new(ip[0], ip[1], ip[2], ip[3]), port);
+            let contact = Contact{ endpoint: Endpoint::Tcp(SocketAddr::V4(ipport)) };
+
+            contacts.push(contact);
         }
 
         let file_name = BootstrapHandler::get_file_name();
@@ -214,26 +185,28 @@ mod test {
 
         let mut bootstrap_handler = BootstrapHandler::new();
         let file = fs::File::create(&path);
-        assert!(file.is_ok()); // Check whether the database file is created
-        // Add Contacts
-        assert!(bootstrap_handler.insert_contacts(contacts.clone()).is_ok());
+        assert!(file.is_ok());
 
-        // Add duplicate contacts
-        for _ in 1..100 {
-            assert!(bootstrap_handler.insert_contacts(contacts.clone()).is_ok());
+        // add contacts...
+        assert!(bootstrap_handler.update_contacts(contacts.clone(), Contacts::new()).is_ok());
+
+        let recovered_contacts = bootstrap_handler.read_bootstrap_file().unwrap();
+
+        assert_eq!(recovered_contacts, contacts);
+        assert_eq!(recovered_contacts.len(), number);
+
+        // try duplicating each contact...
+        for i in 0..number {
+            let mut duplicate_contacts = Vec::new();
+            duplicate_contacts.push(contacts[i].clone());
+            assert!(bootstrap_handler.update_contacts(duplicate_contacts, Contacts::new()).is_ok());
         }
 
-        let read_bootstrap: Bootstrap = bootstrap_handler.read_bootstrap_file().unwrap();
-        let read_contacts : Contacts = read_bootstrap.contacts;
+        let recovered_contacts = bootstrap_handler.read_bootstrap_file().unwrap();
 
-        let sorted_contacts = contacts
-            .into_iter()
-            .sort_by(|a, b| Ord::cmp(&b.last_updated.timestamp, &a.last_updated.timestamp))
-            .into_iter()
-            .map(|contact| contact)
-            .collect::<Vec<Contact>>();
-
-        assert_eq!(read_contacts, sorted_contacts);
+        // bootstrap contacts should remain unaltered...
+        assert_eq!(recovered_contacts, contacts);
+        assert_eq!(recovered_contacts.len(), number);
 
         match fs::remove_file(file_name.clone()) {
             Ok(_) => (),
@@ -242,8 +215,155 @@ mod test {
     }
 
     #[test]
-    fn bootstrap_handler_max_contacts() {
+    fn prune() {
         let mut contacts = Vec::new();
+        let number = 10usize;
+
+        for _ in 0..number {
+            let mut ip = Vec::with_capacity(4);
+
+            ip.push(rand::random::<u8>());
+            ip.push(rand::random::<u8>());
+            ip.push(rand::random::<u8>());
+            ip.push(rand::random::<u8>());
+
+            let port = rand::random::<u16>();
+            let ipport = net::SocketAddrV4::new(Ipv4Addr::new(ip[0], ip[1], ip[2], ip[3]), port);
+            let contact = Contact{ endpoint: Endpoint::Tcp(SocketAddr::V4(ipport)) };
+
+            contacts.push(contact);
+        }
+
+        let file_name = BootstrapHandler::get_file_name();
+        let path = Path::new(&file_name);
+
+        let mut bootstrap_handler = BootstrapHandler::new();
+        let file = fs::File::create(&path);
+        assert!(file.is_ok());
+
+        // add contacts...
+        assert!(bootstrap_handler.update_contacts(contacts.clone(), Contacts::new()).is_ok());
+
+        let recovered_contacts = bootstrap_handler.read_bootstrap_file().unwrap();
+
+        assert_eq!(recovered_contacts, contacts);
+        assert_eq!(recovered_contacts.len(), number);
+
+        // prune each contact...
+        for i in 0..number {
+            let mut prune_contacts = Vec::new();
+            prune_contacts.push(contacts[i].clone());
+            assert!(bootstrap_handler.update_contacts(Contacts::new(), prune_contacts).is_ok());
+        }
+
+        let recovered_contacts = bootstrap_handler.read_bootstrap_file().unwrap();
+
+        // bootstrap contacts should be empty...
+        assert!(recovered_contacts.is_empty());
+
+        // add the contacts back...
+        assert!(bootstrap_handler.update_contacts(contacts.clone(), Contacts::new()).is_ok());
+
+        let recovered_contacts = bootstrap_handler.read_bootstrap_file().unwrap();
+
+        assert_eq!(recovered_contacts, contacts);
+        assert_eq!(recovered_contacts.len(), number);
+
+        // create a new contact...
+        let mut ip = Vec::with_capacity(4);
+
+        ip.push(rand::random::<u8>());
+        ip.push(rand::random::<u8>());
+        ip.push(rand::random::<u8>());
+        ip.push(rand::random::<u8>());
+
+        let port = rand::random::<u16>();
+        let ipport = net::SocketAddrV4::new(Ipv4Addr::new(ip[0], ip[1], ip[2], ip[3]), port);
+        let new_contact = Contact{ endpoint: Endpoint::Tcp(SocketAddr::V4(ipport)) };
+        let mut new_contacts = Vec::new();
+        new_contacts.push(new_contact.clone());
+
+        // get the last contact in the list and prune it from the bootstrap file...
+        let prune_contact = recovered_contacts[recovered_contacts.len() - 1].clone();
+        let mut prune_contacts = Vec::new();
+        prune_contacts.push(prune_contact.clone());
+
+        // add the new contact while pruning the last...
+        assert!(bootstrap_handler.update_contacts(
+            new_contacts.clone(), prune_contacts.clone()).is_ok());
+
+        let recovered_contacts = bootstrap_handler.read_bootstrap_file().unwrap();
+
+        // update contact list with expected entries...
+        let _ = contacts.remove(number - 1);
+        contacts.insert(0usize, new_contact.clone());
+
+        // check the entries...
+        assert_eq!(recovered_contacts, contacts);
+        assert_eq!(recovered_contacts.len(), number);
+
+        match fs::remove_file(file_name.clone()) {
+            Ok(_) => (),
+            Err(e) => println!("Failed to remove {}: {}", file_name, e),
+        };
+    }
+
+    #[test]
+    fn oldest() {
+        let mut contacts = Vec::new();
+        let number = 12usize;
+        let twice_number = number * 2;
+        let half_number = number / 2;
+
+        for _ in 0..number {
+            let mut ip = Vec::with_capacity(4);
+
+            ip.push(rand::random::<u8>());
+            ip.push(rand::random::<u8>());
+            ip.push(rand::random::<u8>());
+            ip.push(rand::random::<u8>());
+
+            let port = rand::random::<u16>();
+            let ipport = net::SocketAddrV4::new(Ipv4Addr::new(ip[0], ip[1], ip[2], ip[3]), port);
+            let contact = Contact{ endpoint: Endpoint::Tcp(SocketAddr::V4(ipport)) };
+
+            contacts.push(contact);
+        }
+
+        let file_name = BootstrapHandler::get_file_name();
+        let path = Path::new(&file_name);
+
+        let mut bootstrap_handler = BootstrapHandler::new();
+        let file = fs::File::create(&path);
+        assert!(file.is_ok());
+
+        // add contacts...
+        assert!(bootstrap_handler.update_contacts(contacts.clone(), Contacts::new()).is_ok());
+        // try taking more than existing number...
+        let oldest_contacts = bootstrap_handler.oldest_contacts(twice_number).unwrap();
+        let reversed_contacts = contacts.iter().rev().map(|contact| contact.clone())
+                                        .take(number).collect::<Contacts>();
+
+        assert_eq!(oldest_contacts, reversed_contacts);
+        assert_eq!(oldest_contacts.len(), number);
+
+        let oldest_contacts = bootstrap_handler.oldest_contacts(half_number).unwrap();
+        let reversed_contacts = contacts.iter().rev().map(|contact| contact.clone())
+                                        .take(half_number).collect::<Contacts>();
+
+        assert_eq!(oldest_contacts, reversed_contacts);
+        assert_eq!(oldest_contacts.len(), half_number);
+
+        match fs::remove_file(file_name.clone()) {
+            Ok(_) => (),
+            Err(e) => println!("Failed to remove {}: {}", file_name, e),
+        };
+    }
+
+    #[test]
+    fn max_contacts() {
+        let mut contacts = Vec::new();
+
         for _ in 0..MAX_CONTACTS {
             let mut ip = Vec::with_capacity(4);
 
@@ -254,10 +374,8 @@ mod test {
 
             let port = rand::random::<u16>();
             let ipport = net::SocketAddrV4::new(Ipv4Addr::new(ip[0], ip[1], ip[2], ip[3]), port);
-            let contact = Contact{
-                endpoint: Endpoint::Tcp(SocketAddr::V4(ipport)),
-                last_updated: Timestamp { timestamp: time::now_utc() }
-            };
+            let contact = Contact{ endpoint: Endpoint::Tcp(SocketAddr::V4(ipport)) };
+
             contacts.push(contact);
         }
 
@@ -270,44 +388,55 @@ mod test {
         assert!(file.is_ok());
 
         // insert contacts...
-        assert!(bootstrap_handler.insert_contacts(contacts.clone()).is_ok());
-        let bootstrap: Bootstrap = bootstrap_handler.read_bootstrap_file().unwrap();
-        let recovered_contacts : Contacts = bootstrap.contacts;
-        // sort contacts w.r.t increasing last updated times...
-        let sorted_contacts = contacts
-            .into_iter()
-            .sort_by(|a, b| Ord::cmp(&b.last_updated.timestamp, &a.last_updated.timestamp))
-            .into_iter()
-            .map(|contact| contact)
-            .collect::<Vec<Contact>>();
-
+        assert!(bootstrap_handler.insert_contacts(contacts.clone(), Contacts::new()).is_ok());
+        let recovered_contacts = bootstrap_handler.read_bootstrap_file().unwrap();
         // check that the recovered contacts are the same as the originals...
-        assert_eq!(recovered_contacts, sorted_contacts);
+        assert_eq!(recovered_contacts, contacts);
         // check the number of contacts is MAX_CONTACTS...
         assert_eq!(recovered_contacts.len(), MAX_CONTACTS);
 
-        // get the last contact in the list and update it...
-        let mut updated_contact = recovered_contacts[recovered_contacts.len() - 1].clone();
-        let mut updated_contacts = Vec::new();
+        // create a new contact...
+        let mut ip = Vec::with_capacity(4);
 
-        updated_contact.last_updated.timestamp = time::now_utc();
-        updated_contacts.push(updated_contact.clone());
+        ip.push(rand::random::<u8>());
+        ip.push(rand::random::<u8>());
+        ip.push(rand::random::<u8>());
+        ip.push(rand::random::<u8>());
 
-        // insert the updated contact...
-        assert!(bootstrap_handler.insert_contacts(updated_contacts.clone()).is_ok());
-        let bootstrap: Bootstrap = bootstrap_handler.read_bootstrap_file().unwrap();
-        let recovered_contacts : Contacts = bootstrap.contacts;
+        let port = rand::random::<u16>();
+        let ipport = net::SocketAddrV4::new(Ipv4Addr::new(ip[0], ip[1], ip[2], ip[3]), port);
+        let new_contact = Contact{ endpoint: Endpoint::Tcp(SocketAddr::V4(ipport)) };
+        let mut new_contacts = Vec::new();
+        new_contacts.push(new_contact.clone());
+
+        // try inserting without also pruning...
+        assert!(bootstrap_handler.insert_contacts(new_contacts.clone(), Contacts::new()).is_ok());
+        let recovered_contacts = bootstrap_handler.read_bootstrap_file().unwrap();
+        // check that the recovered contacts are the same as the originals...
+        assert_eq!(recovered_contacts, contacts);
+        // ...and that the number of contacts is still MAX_CONTACTS...
+        assert_eq!(recovered_contacts.len(), MAX_CONTACTS);
+
+        // get the last contact in the list and prune it from the bootstrap file...
+        let prune_contact = recovered_contacts[recovered_contacts.len() - 1].clone();
+        let mut prune_contacts = Vec::new();
+        prune_contacts.push(prune_contact.clone());
+
+        // insert the new contact again pruning the last entry...
+        assert!(bootstrap_handler.insert_contacts(
+            new_contacts.clone(), prune_contacts.clone()).is_ok());
+        let recovered_contacts = bootstrap_handler.read_bootstrap_file().unwrap();
 
         // check that the recovered contacts are not the same as the originals...
-        assert!(recovered_contacts != sorted_contacts);
-        // check the number of contacts is still MAX_CONTACTS...
+        assert!(recovered_contacts != contacts);
+        // ...and that the number of contacts is still MAX_CONTACTS...
         assert_eq!(recovered_contacts.len(), MAX_CONTACTS);
-        // check that the updated contact is not still at the end of the list...
+        // check that the pruned contact is not still at the end of the list...
         let last_contact = recovered_contacts[recovered_contacts.len() - 1].clone();
-        assert!(last_contact != updated_contact.clone());
-        // check that the updated contact is at the start of the list...
+        assert!(last_contact != prune_contact.clone());
+        // check that the new contact is at the start of the list...
         let first_contact = recovered_contacts[0].clone();
-        assert_eq!(first_contact, updated_contact.clone());
+        assert_eq!(first_contact, new_contact.clone());
 
         // remove the bootstrap file from disk...
         match fs::remove_file(file_name.clone()) {

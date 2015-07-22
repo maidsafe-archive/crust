@@ -52,6 +52,7 @@ fn make_temp_config(beacon_port: Option<u16>, tcp_port: Option<u16>) -> (PathBuf
     let _ = write_config_file(Some(config_file_path.clone()),
                               Some(vec![Port::Tcp(tcp_port.unwrap_or(8888u16)).clone()]),
                               None,
+                              None,
                               beacon_port,
                              ).unwrap();
     (config_file_path, temp_dir)
@@ -118,6 +119,9 @@ fn main() {
             },
             crust::Event::LostConnection(endpoint) => {
                 println!("Lost connection to {:?}", endpoint);
+            },
+            crust::Event::NewBootstrapConnection(endpoint) => {
+                println!("New Bootstrap connection made to {:?}", endpoint);
             }
         }
     }

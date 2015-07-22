@@ -43,6 +43,7 @@ use rand::Rng;
 use rustc_serialize::{Decodable, Decoder};
 use std::cmp;
 use std::sync::mpsc::channel;
+use std::sync::mpsc::Sender;
 use std::io;
 use std::io::Write;
 use std::net::SocketAddr;
@@ -272,17 +273,64 @@ fn reset_foreground(stdout: Option<Box<term::StdoutTerminal>>) ->
 }
 
 // TODO update to take listening port once api is updated
-fn make_temp_config(beacon_port: Option<u16>, tcp_port: Option<u16>) -> (PathBuf, TempDir) {
+fn make_temp_config(beacon_port: Option<u16>, tcp_port: Option<u16>,
+                    hard_coded_endpoints: Option<Vec<Endpoint>>) -> (PathBuf, TempDir) {
     let temp_dir = TempDir::new("crust_peer").unwrap();
     let mut config_file_path = temp_dir.path().to_path_buf();
     config_file_path.push("crust_peer.config");
 
+    // if user provides explict endpoints, then override default methods
+    let override_default_bootstrap = hard_coded_endpoints.clone().map(|_| true);
+
+
     let _ = write_config_file(Some(config_file_path.clone()),
                               Some(vec![Port::Tcp(tcp_port.unwrap_or(0u16)).clone()]),
-                              None,
+                              override_default_bootstrap,
+                              hard_coded_endpoints,
                               beacon_port,
                              ).unwrap();
     (config_file_path, temp_dir)
+}
+
+// If bootstrap doesn't succeed in n seconds and we're trying to run the speed test, then fail overall.
+// Otherwise, if no peer endpoints were provided and bootstrapping fails, assume this is
+// OK, i.e. this is the first node of a new network.
+fn on_time_out(ms: u32, flag_speed: bool, bootstrap_peers: Option<Vec<Endpoint>>) -> Sender<bool> {
+    let (tx, rx) = channel();
+    let _ = std::thread::spawn(move || {
+        std::thread::sleep_ms(ms);
+        match rx.try_recv() {
+            Ok(true) => {},
+            _ => {
+                let mut stdout = term::stdout();
+                if flag_speed {
+                    stdout = red_foreground(stdout);
+                    println!("Failed to connect to a peer.  Exiting.");
+                    let _ = reset_foreground(stdout);
+                    std::process::exit(2);
+                }
+                match bootstrap_peers {
+                Some(_) => {
+                    stdout = red_foreground(stdout);
+                    println!("Failed to bootstrap from provided peers. \nSince peers \
+                             were provided, this is assumed to NOT be the first node of a new \
+                             network.\nExiting.");
+                    let _ = reset_foreground(stdout);
+                    std::process::exit(3);
+                },
+                None => {
+                    stdout = yellow_foreground(stdout);
+                    println!("Didn't bootstrap to an existing network - this may be the first node \
+                                 of a new network.");
+                    let _ = reset_foreground(stdout);
+                },
+            }
+
+            },
+        }
+    });
+
+    tx
 }
 
 fn main() {
@@ -312,13 +360,14 @@ fn main() {
     let (config_path, _tempdir) = match args.flag_config {
         Some(path_str) => {(PathBuf::from(path_str), None)},
         None => {
-            let (path, tempdir) = make_temp_config(args.flag_beacon, args.flag_tcp_port);
+            let (path, tempdir) = make_temp_config(args.flag_beacon, args.flag_tcp_port, bootstrap_peers.clone());
             (path, Some(tempdir))
         }
     };
 
     // Construct ConnectionManager and start listening
     let (channel_sender, channel_receiver) = channel();
+    let (bs_sender, bs_receiver) = channel();
     let mut connection_manager = ConnectionManager::new(channel_sender, Some(config_path));
     stdout = green_foreground(stdout);
     let listening_endpoints = match connection_manager.start_listening2() {
@@ -334,43 +383,7 @@ fn main() {
     };
 
     stdout = reset_foreground(stdout);
-
-    // Try to bootstrap.  If this fails and we're trying to run the speed test, then fail overall.
-    // Otherwise, if no peer endpoints were provided and bootstrapping fails, assume this is
-    // OK, i.e. this is the first node of a new network.
-    let connected_peer = match connection_manager.bootstrap(bootstrap_peers.clone(), None) {
-        Ok(endpoint) => {
-            stdout = green_foreground(stdout);
-            println!("Bootstrapped to {:?}", endpoint);
-            stdout = reset_foreground(stdout);
-            Some(endpoint)
-        },
-        Err(e) => {
-            if args.flag_speed.is_some() {
-                stdout = red_foreground(stdout);
-                println!("Failed to connect to a peer.  Exiting.");
-                let _ = reset_foreground(stdout);
-                std::process::exit(2);
-            };
-            match bootstrap_peers {
-                Some(_) => {
-                    stdout = red_foreground(stdout);
-                    println!("Failed to bootstrap from provided peers with error: {}\nSince peers \
-                             were provided, this is assumed to NOT be the first node of a new \
-                             network.\nExiting.", e);
-                    let _ = reset_foreground(stdout);
-                    std::process::exit(3);
-                },
-                None => {
-                    stdout = yellow_foreground(stdout);
-                    println!("Didn't bootstrap to an existing network - this is the first node \
-                                 of a new network.");
-                    stdout = reset_foreground(stdout);
-                    None
-                },
-            }
-        },
-    };
+    connection_manager.bootstrap(15);
 
     // Start event-handling thread
     let running_speed_test = args.flag_speed.is_some();
@@ -400,6 +413,13 @@ fn main() {
                     stdout_copy = cyan_foreground(stdout_copy);
                     my_flat_world.drop_node(CrustNode::new(endpoint, false));
                     my_flat_world.print_connected_nodes();
+                },
+                crust::Event::NewBootstrapConnection(endpoint) => {
+                    stdout_copy = cyan_foreground(stdout_copy);
+                    println!("\nNew BootstrapConnection to peer at {:?}", endpoint);
+                    my_flat_world.add_node(CrustNode::new(endpoint.clone(), true));
+                    my_flat_world.print_connected_nodes();
+                    let _ = bs_sender.send(endpoint);
                 }
             }
             stdout_copy = reset_foreground(stdout_copy);
@@ -417,12 +437,24 @@ fn main() {
         },
     };
 
+    let tx = on_time_out(5000, running_speed_test, bootstrap_peers);
+    // Block until we get one bootstrap connection
+    let connected_peer = bs_receiver.recv().unwrap_or_else(|e| {
+        println!("CrustNode event handler closed; error : {}", e);
+        std::process::exit(5);
+    });
+
+    stdout = green_foreground(stdout);
+    println!("Bootstrapped to {:?}", connected_peer);
+    stdout = reset_foreground(stdout);
+    let _ = tx.send(true); // stop timer with no error messages
+
     thread::sleep_ms(100);
     println!("");
 
     if running_speed_test {  // Processing interaction till receiving ctrl+C
         let speed = args.flag_speed.unwrap();  // Safe due to `running_speed_test` == true
-        let peer = connected_peer.unwrap();  // Safe due to checks above
+        let peer = connected_peer;
         let mut rng = rand::thread_rng();
         loop {
             let length = rng.gen_range(50, speed);
