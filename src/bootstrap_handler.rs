@@ -170,10 +170,20 @@ mod test {
     use transport::Endpoint;
     use rustc_serialize::json;
     use rand;
-    use std::path::Path;
+    use std::path::{Path, PathBuf};
     use config_utils::{Contact, Contacts};
+    use std::env;
 
     use super::MAX_CONTACTS;
+
+    fn get_file_path() -> PathBuf {
+        let path = env::current_exe().unwrap();
+        let name_with_extension = path.file_name().unwrap();
+        let mut name = Path::new(name_with_extension).file_stem()
+            .unwrap().to_os_string();
+        name.push(".crust.bootstrap.cache");
+        path.parent().unwrap().join(name)
+    }
 
     #[test]
     fn serialisation() {
@@ -207,8 +217,8 @@ mod test {
             contacts.push(contact);
         }
 
-        let file_name = BootstrapHandler::get_file_name();
-        let path = Path::new(&file_name);
+        let file_path = get_file_path();
+        let path = Path::new(&file_path);
 
         let mut bootstrap_handler = BootstrapHandler::new();
         let file = fs::File::create(&path);
@@ -235,9 +245,12 @@ mod test {
         assert_eq!(recovered_contacts, contacts);
         assert_eq!(recovered_contacts.len(), number);
 
-        match fs::remove_file(file_name.clone()) {
+        match fs::remove_file(file_path.clone()) {
             Ok(_) => (),
-            Err(e) => println!("Failed to remove {}: {}", file_name, e),
+            Err(e) => {
+                println!("Failed to remove {}: {}", file_path.to_str().unwrap(),
+                         e)
+            },
         };
     }
 
@@ -261,8 +274,8 @@ mod test {
             contacts.push(contact);
         }
 
-        let file_name = BootstrapHandler::get_file_name();
-        let path = Path::new(&file_name);
+        let file_path = get_file_path();
+        let path = Path::new(&file_path);
 
         let mut bootstrap_handler = BootstrapHandler::new();
         let file = fs::File::create(&path);
@@ -329,9 +342,12 @@ mod test {
         assert_eq!(recovered_contacts, contacts);
         assert_eq!(recovered_contacts.len(), number);
 
-        match fs::remove_file(file_name.clone()) {
+        match fs::remove_file(file_path.clone()) {
             Ok(_) => (),
-            Err(e) => println!("Failed to remove {}: {}", file_name, e),
+            Err(e) => {
+                println!("Failed to remove {}: {}", file_path.to_str().unwrap(),
+                         e)
+            },
         };
     }
 
@@ -357,8 +373,8 @@ mod test {
             contacts.push(contact);
         }
 
-        let file_name = BootstrapHandler::get_file_name();
-        let path = Path::new(&file_name);
+        let file_path = get_file_path();
+        let path = Path::new(&file_path);
 
         let mut bootstrap_handler = BootstrapHandler::new();
         let file = fs::File::create(&path);
@@ -381,9 +397,12 @@ mod test {
         assert_eq!(oldest_contacts, reversed_contacts);
         assert_eq!(oldest_contacts.len(), half_number);
 
-        match fs::remove_file(file_name.clone()) {
+        match fs::remove_file(file_path.clone()) {
             Ok(_) => (),
-            Err(e) => println!("Failed to remove {}: {}", file_name, e),
+            Err(e) => {
+                println!("Failed to remove {}: {}", file_path.to_str().unwrap(),
+                         e)
+            },
         };
     }
 
@@ -406,8 +425,8 @@ mod test {
             contacts.push(contact);
         }
 
-        let file_name = BootstrapHandler::get_file_name();
-        let path = Path::new(&file_name);
+        let file_path = get_file_path();
+        let path = Path::new(&file_path);
         let mut bootstrap_handler = BootstrapHandler::new();
         let file = fs::File::create(&path);
 
@@ -466,9 +485,12 @@ mod test {
         assert_eq!(first_contact, new_contact.clone());
 
         // remove the bootstrap file from disk...
-        match fs::remove_file(file_name.clone()) {
+        match fs::remove_file(file_path.clone()) {
             Ok(_) => (),
-            Err(e) => println!("Failed to remove {}: {}", file_name, e),
+            Err(e) => {
+                println!("Failed to remove {}: {}", file_path.to_str().unwrap(),
+                         e)
+            },
         };
     }
 }
