@@ -205,6 +205,11 @@ impl ConnectionManager {
         Ok(listening_ports)
     }
 
+    /// return a vector of listening endpoints
+    pub fn get_listening_endpoints(&self) -> io::Result<(Vec<Endpoint>)> {
+        Self::get_listening_endpoint(self.state.downgrade())
+    }
+
     fn get_listening_endpoint(ws: Weak<Mutex<State>>) -> io::Result<(Vec<Endpoint>)> {
         let listening_ports = try!(lock_state(&ws, |s| {
             let buf: Vec<Port> = s.listening_ports.iter().map(|s| s.clone()).collect();
