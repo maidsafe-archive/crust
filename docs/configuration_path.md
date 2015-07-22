@@ -48,7 +48,7 @@ In case the configuration file is missing at all above paths, crust will attempt
 **SystemAppSupportDir**
  - *Windows* - `env::var("ALLUSERSPROFILE") / ExeName()`
  - *Apple* - `"/Library/Application Support/" / ExeName()`
- - *Linux* - `"/opt/" / CompanyName() / "sbin"`
+ - *Linux* - `"/var/lib" / ExeName()`
 
 ### Bootstrap cache file path
 
