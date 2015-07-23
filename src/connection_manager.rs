@@ -809,6 +809,8 @@ mod test {
             }
             _ => { assert!(false, "Failed to receive NewBootstrapConnection event")}
         }
+        cm1.stop();
+        cm2.stop();
     }
 
     #[test]
