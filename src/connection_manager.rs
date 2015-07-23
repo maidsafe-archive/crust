@@ -693,7 +693,7 @@ mod test {
     use transport;
     use transport::{Endpoint, Port};
     use std::sync::{Mutex, Arc};
-    use config_utils::{Config, Contacts, Contact, write_config_file};
+    use config_utils::{Contact, write_config_file};
     use tempdir::TempDir;
     use std::path::PathBuf;
     use std::net::{SocketAddr, Ipv4Addr, SocketAddrV4, SocketAddrV6};
@@ -770,7 +770,7 @@ mod test {
 
     impl Drop for TestConfigFile {
         fn drop(&mut self) {
-            remove_file(&self.path);
+            let _ = remove_file(&self.path);
         }
     }
 
@@ -788,13 +788,13 @@ mod test {
     #[test]
     fn bootstrap() {
         let (cm1_i, _) = channel();
-        let _config_file1_guard = make_temp_config(None);
+        let _config_file = make_temp_config(None);
 
         let mut cm1 = ConnectionManager::new(cm1_i);
         let _ = cm1.start_accepting(vec![]).unwrap();
 
         thread::sleep_ms(1000);
-        let config_file2 = make_temp_config(cm1.get_beacon_acceptor_port());
+        let _config_file = make_temp_config(cm1.get_beacon_acceptor_port());
 
         let (cm2_i, cm2_o) = channel();
         let mut cm2 = ConnectionManager::new(cm2_i);
@@ -1006,7 +1006,7 @@ mod test {
     fn connection_manager_start() {
         // Wait 2 seconds until previous bootstrap test ends. If not, that test connects to these endpoints.
         thread::sleep_ms(2000);
-        let temp_config = make_temp_config(None);
+        let _temp_config = make_temp_config(None);
 
         let (cm_tx, cm_rx) = channel();
         let mut cm = ConnectionManager::new(cm_tx);
@@ -1043,7 +1043,7 @@ mod test {
         thread::sleep_ms(100);
 
         let _ = spawn(move || {
-            let temp_config = make_temp_config(None);
+            let _temp_config = make_temp_config(None);
             let (cm_aux_tx, _) = channel();
             let mut cm_aux = ConnectionManager::new(cm_aux_tx);
             // setting the listening port to be greater than 4455 will make the test hanging
