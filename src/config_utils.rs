@@ -161,7 +161,7 @@ mod test {
     use super::*;
     use std::net;
     use std::net::SocketAddr;
-    use transport::{Endpoint};
+    use transport::Endpoint;
     use std::fs;
     use rand;
 
