@@ -206,7 +206,7 @@ impl ConnectionManager {
     }
 
     /// return a vector of listening endpoints
-    pub fn get_listening_endpoints(&self) -> io::Result<(Vec<Endpoint>)> {
+    pub fn get_accepting_endpoints(&self) -> io::Result<(Vec<Endpoint>)> {
         Self::get_listening_endpoint(self.state.downgrade())
     }
 
