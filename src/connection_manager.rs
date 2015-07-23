@@ -681,10 +681,11 @@ mod test {
     use transport;
     use transport::{Endpoint, Port};
     use std::sync::{Mutex, Arc};
-    use config_utils::{Config, Contacts, write_file, Contact};
+    use config_utils::{Config, Contacts, Contact, write_config_file};
     use tempdir::TempDir;
     use std::path::PathBuf;
     use std::net::{SocketAddr, Ipv4Addr, SocketAddrV4, SocketAddrV6};
+    use std::fs::remove_file;
 
     fn encode<T>(value: &T) -> Bytes where T: Encodable
     {
@@ -740,7 +741,7 @@ mod test {
      }
 
      impl Network {
-         pub fn add(&mut self, config_path: Option<PathBuf>) -> (Receiver<Event>, Port, Option<u16>, Arc<Mutex<Vec<Endpoint>>>) {
+         pub fn add(&mut self) -> (Receiver<Event>, Port, Option<u16>, Arc<Mutex<Vec<Endpoint>>>) {
              let (cm_i, cm_o) = channel();
              let node = Node::new(ConnectionManager::new(cm_i));
              let port = node.listening_port.clone();
@@ -751,23 +752,31 @@ mod test {
          }
      }
 
-    fn make_temp_config(beacon_port: Option<u16>) -> (PathBuf, TempDir) {
+    struct TestConfigFile {
+        pub path: PathBuf
+    }
+
+    impl Drop for TestConfigFile {
+        fn drop(&mut self) {
+            remove_file(&self.path);
+        }
+    }
+
+    fn make_temp_config(beacon_port: Option<u16>) -> TestConfigFile {
         let temp_dir = TempDir::new("crust_peer").unwrap();
         let mut config_file_path = temp_dir.path().to_path_buf();
         config_file_path.push("crust_test.config");
 
-        let config = Config{ override_default_bootstrap: false,
-                             hard_coded_contacts: Contacts::new(),
-                             beacon_port: beacon_port.unwrap_or(0u16),
-                           };
-        write_file(&config_file_path, &config).unwrap();
-        (config_file_path, temp_dir)
+        let path = write_config_file(Some(false), Some(vec![]),
+                                     Some(beacon_port.unwrap_or(0u16)))
+            .unwrap();
+        TestConfigFile{path: path}
     }
 
-#[test]
+    #[test]
     fn bootstrap() {
         let (cm1_i, _) = channel();
-        let config_file1 = make_temp_config(None);
+        let _config_file1_guard = make_temp_config(None);
 
         let mut cm1 = ConnectionManager::new(cm1_i);
         let _ = cm1.start_accepting(vec![]).unwrap();
@@ -909,7 +918,7 @@ mod test {
             if index != 0 {
                temp_configs.push(make_temp_config(beacon_port));
             }
-            let (receiver, _, port, connected_eps) = network.add( Some(temp_configs.last().unwrap().0.clone()));
+            let (receiver, _, port, connected_eps) = network.add();
             if index == 0 {
                 beacon_port = port;
             }
