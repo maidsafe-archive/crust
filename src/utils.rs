@@ -25,7 +25,7 @@ fn not_found_error() -> IoError {
     IoError::new(IoErrorKind::NotFound, "No file name component")
 }
 
-#[allow(dead_code)]
+#[cfg(any(target_os="windows",target_os="macos",target_os="ios",target_os="linux"))]
 fn join_exe_name(path: &Path) -> Result<PathBuf, Error> {
     use std::env;
     let exe_path = try!(env::current_exe());
