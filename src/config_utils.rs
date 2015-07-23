@@ -39,17 +39,6 @@ pub struct Config {
     pub beacon_port: u16,
 }
 
-// pub fn default_config_path() -> io::Result<(PathBuf)> {
-//     let current_exe_path = try!(env::current_exe());
-//     let exe_name = try!(current_exe_path.file_name()
-//         .ok_or_else(||io::Error::new(io::ErrorKind::Other, format!("Failed to read current exe file name"))));
-//     let mut config_name: PathBuf = PathBuf::from(exe_name.to_os_string());;
-//     config_name.set_extension("config");
-//     let mut current_dir = try!(env::current_dir());
-//     current_dir.push(config_name);
-//     Ok(current_dir)
-// }
-
 pub fn exe_path_config() -> io::Result<(PathBuf)> {
     let file_name = try!(get_file_name());
     let mut path = try!(env::current_exe());
@@ -80,7 +69,6 @@ pub fn read_or_create_config() -> io::Result<(Config)> {
 // Current executable directory: using std::env::current_exe
 // Current user's application directory: UserAppDir
 // Application support directory for all users: SystemAppSupportDir
-#[allow(dead_code)]
 pub fn read_config_file() -> io::Result<(Config)> {
     // Current executable directory
     let path = try!(exe_path_config());

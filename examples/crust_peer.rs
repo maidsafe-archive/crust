@@ -50,8 +50,6 @@ use std::net::SocketAddr;
 use std::str::FromStr;
 use std::thread;
 use std::fs;
-// use std::path::PathBuf;
-// use tempdir::TempDir;
 
 use crust::{ConnectionManager, Endpoint, Port, write_config_file};
 
