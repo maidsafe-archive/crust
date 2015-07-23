@@ -288,6 +288,18 @@ impl ConnectionManager {
                         // println!("Failed to get at least one bootstrap connection. continuing bootstrap loop");
                     }
                 }
+                // breaking the loop if stop called
+                let weak_state_copy = ws.clone();
+                let mut stop_called = false;
+                {
+                    let _ = lock_mut_state(&weak_state_copy, |state: &mut State| {
+                        stop_called = state.stop_called;
+                        Ok(())
+                    });
+                }
+                if stop_called {
+                    break
+                }
             }
         });
     }
