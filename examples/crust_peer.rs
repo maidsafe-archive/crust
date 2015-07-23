@@ -348,7 +348,7 @@ fn main() {
     let mut connection_manager = ConnectionManager::new(channel_sender);
     stdout = green_foreground(stdout);
     let _ = connection_manager.start_accepting(vec![]);
-    let listening_endpoints = match connection_manager.get_listening_endpoints() {
+    let listening_endpoints = match connection_manager.get_accepting_endpoints() {
         Ok(endpoints) => endpoints,
         Err(e) => {
             println!("Connection manager failed to start listening: {}", e);
