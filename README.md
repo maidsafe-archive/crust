@@ -39,19 +39,19 @@ Several methods are used for NAT traversal, UpNP, hole punching [See here for TC
 
 ##Todo Items
 
-## [0.1.6]
-- [ ] [MAID-1132] (https://maidsafe.atlassian.net/browse/MAID-1132) Integrate UPnP
-
-## [0.1.7] RUST-3 Sprint tasks
-- [ ] [MAID-1149](https://maidsafe.atlassian.net/browse/MAID-1149) Split bootstrap cache file in two files (config & cache)
-- [ ] [MAID-1136](https://maidsafe.atlassian.net/browse/MAID-1136) Add a new event NewBootstrapConnection and make bootstrap method non blocking.
-- [ ] [MAID-1146](https://maidsafe.atlassian.net/browse/MAID-1146) Attempt Bootstrap continuously until it succeeds
-- [ ] [MAID-1148](https://maidsafe.atlassian.net/browse/MAID-1148) Update bootstrap handler to maintain recent endpoints
-- [ ] [MAID-1161](https://maidsafe.atlassian.net/browse/MAID-1161) Update start_listening() to take no parameters
-- [ ] [MAID-1162](https://maidsafe.atlassian.net/browse/MAID-1162) Add get_beacon_acceptor_port() method only for tests
+## [0.1.6] RUST-3
+- [x] [MAID-1132] (https://maidsafe.atlassian.net/browse/MAID-1132) Integrate UPnP
+- [x] [MAID-1139] (https://maidsafe.atlassian.net/browse/MAID-1139) Remove Crust API’s start_listening2() and expose `get_own_endpoints()`
+### Sprint tasks
+- [x] [MAID-1149](https://maidsafe.atlassian.net/browse/MAID-1149) Split bootstrap cache file in two files (config & cache)
+- [x] [MAID-1136](https://maidsafe.atlassian.net/browse/MAID-1136) Add a new event NewBootstrapConnection and make bootstrap method non blocking.
+- [x] [MAID-1146](https://maidsafe.atlassian.net/browse/MAID-1146) Attempt Bootstrap continuously until it succeeds
+- [x] [MAID-1148](https://maidsafe.atlassian.net/browse/MAID-1148) Update bootstrap handler to maintain recent endpoints
+- [x] [MAID-1161](https://maidsafe.atlassian.net/browse/MAID-1161) Update start_listening() to take no parameters
+- [x] [MAID-1162](https://maidsafe.atlassian.net/browse/MAID-1162) Add get_beacon_acceptor_port() method only for tests
+- [x] [MAID-1264](https://maidsafe.atlassian.net/browse/MAID-1264) Update API to hide configuration file path
 
 ## [0.1.8]
-- [ ] [MAID-1139] (https://maidsafe.atlassian.net/browse/MAID-1139) Remove Crust API’s start_listening2() and expose `get_own_endpoints()`
 - [ ] [MAID-1142] (https://maidsafe.atlassian.net/browse/MAID-1142) Add UTP protocol support to crust
 - [ ] [MAID-1140] (https://maidsafe.atlassian.net/browse/MAID-1140) Memory-mapped file I/O for bootstrap file
 
