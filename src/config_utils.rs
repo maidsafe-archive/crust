@@ -141,7 +141,9 @@ pub fn write_file(file_name : &PathBuf, config: &Config) -> io::Result<()> {
     file.sync_all()
 }
 
-/// Writes config file and parametes to exe directory with required name format
+/// Writes config file and parametes to exe directory with appropriate file name format
+/// This method should be only used as a utility for test and examples
+/// For installed application, this file should be created by installer.
 pub fn write_config_file(override_default_bootstrap: Option<bool>,
                          hard_coded_endpoints: Option<Vec<Endpoint>>,
                          beacon_port: Option<u16>) -> io::Result<(PathBuf)> {

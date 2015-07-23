@@ -49,6 +49,7 @@ use std::io::Write;
 use std::net::SocketAddr;
 use std::str::FromStr;
 use std::thread;
+use std::fs;
 // use std::path::PathBuf;
 // use tempdir::TempDir;
 
@@ -272,25 +273,6 @@ fn reset_foreground(stdout: Option<Box<term::StdoutTerminal>>) ->
     }
 }
 
-// // TODO update to take listening port once api is updated
-// fn make_temp_config(beacon_port: Option<u16>,
-//                     hard_coded_endpoints: Option<Vec<Endpoint>>) -> (PathBuf, TempDir) {
-//     let temp_dir = TempDir::new("crust_peer").unwrap();
-//     let mut config_file_path = temp_dir.path().to_path_buf();
-//     config_file_path.push("crust_peer.config");
-
-//     // if user provides explict endpoints, then override default methods
-//     let override_default_bootstrap = hard_coded_endpoints.clone().map(|_| true);
-
-
-//     let _ = write_config_file(Some(config_file_path.clone()),
-//                               override_default_bootstrap,
-//                               hard_coded_endpoints,
-//                               beacon_port,
-//                              ).unwrap();
-//     (config_file_path, temp_dir)
-// }
-
 // If bootstrap doesn't succeed in n seconds and we're trying to run the speed test, then fail overall.
 // Otherwise, if no peer endpoints were provided and bootstrapping fails, assume this is
 // OK, i.e. this is the first node of a new network.
@@ -356,15 +338,12 @@ fn main() {
     let mut stdout = term::stdout();
     let mut stdout_copy = term::stdout();
 
-    // let _tempdir = match args.flag_config {
-    //     Some(_) => None,
-    //     None => {
-    //         let (_, tempdir) = make_temp_config(args.flag_beacon, bootstrap_peers.clone());
-    //         Some(tempdir)
-    //     }
-    // };
+    // if user provides explict endpoints, then override default methods
+    let override_default = bootstrap_peers.clone().map(|_| true);
 
-    let _ = write_config_file(None, None, args.flag_beacon).unwrap();
+    let config_path = write_config_file(override_default,
+                                        bootstrap_peers.clone(),
+                                        args.flag_beacon).unwrap();
 
     // Construct ConnectionManager and start listening
     let (channel_sender, channel_receiver) = channel();
@@ -545,6 +524,7 @@ fn main() {
                     },
                 }
             } else if args.cmd_stop {
+                let _  = fs::remove_file(&config_path);
                 stdout = green_foreground(stdout);
                 println!("Stopped.");
                 let _ = reset_foreground(stdout);
