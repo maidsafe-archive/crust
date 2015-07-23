@@ -34,7 +34,6 @@ extern crate docopt;
 extern crate rand;
 extern crate term;
 extern crate time;
-// extern crate tempdir;
 
 use core::iter::FromIterator;
 use docopt::Docopt;
