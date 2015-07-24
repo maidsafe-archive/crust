@@ -48,13 +48,9 @@ attempt to create file, but use a default instead. If explicitly requested,
 config file will be written at current executable directory (using
 `std::env::current_exe`).
 
-#####Pro`s
-- Application's advance users can modify config easily by altering the file
-- Apps not having permissions for creating `SystemAppSupportDir ` will create `UserAppDir` after failing to create `SystemAppSupportDir `. This means crust stays agnostic of type of application (Client or Vault)
-- If config options are default for an application, its installer can skip installing it and application will auto create appropriate file at best path if it can.
+##### Pros
 
-#####Cons:
-- If its a client user app having permissions to write to system dir, it will create system dir and not home dir. [This is a sysadmin error not a program error.]
+- Application's advanced users can modify config easily by altering the file.
 
 ### Bootstrap cache file path
 
