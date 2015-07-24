@@ -22,11 +22,10 @@ use std::io;
 use std::sync::{Arc, mpsc, Mutex, Weak};
 use std::thread;
 use std::net::{IpAddr, SocketAddr, SocketAddrV4};
-use std;
 
 use beacon;
 use bootstrap_handler::{BootstrapHandler, parse_contacts};
-use config_utils::{Config, Contact, Contacts, read_or_create_config};
+use config_utils::{Config, Contact, Contacts, read_config_file};
 use getifaddrs::getifaddrs;
 use transport;
 use transport::{Endpoint, Port};
@@ -124,9 +123,12 @@ impl ConnectionManager {
     /// Constructs a connection manager. User needs to create an asynchronous channel, and provide
     /// the sender half to this method. Receiver will receive all `Event`s from this library.
     pub fn new(event_pipe: mpsc::Sender<Event>) -> ConnectionManager {
-        let config = read_or_create_config().unwrap_or_else(|e| {
-            println!("Crust failed to read_or_create_config; Error: {:?}", e);
-            std::process::exit(1);
+        let config = read_config_file().unwrap_or_else(|e| {
+            println!("Crust failed to read config file; Error: {:?};", e);
+            let default = Config::make_default();
+            println!("Using default beacon_port {:?} and default bootstraping methods enabled",
+                default.beacon_port);
+            default
         });
 
         let state = Arc::new(Mutex::new(State{ event_pipe: event_pipe,

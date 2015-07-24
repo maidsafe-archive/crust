@@ -39,6 +39,16 @@ pub struct Config {
     pub beacon_port: u16,
 }
 
+impl Config {
+
+    pub fn make_default() -> Config {
+        Config{ override_default_bootstrap: false,  // default bootstraping methods enabled
+                hard_coded_contacts: vec![], // No hardcoded endpoints
+                beacon_port: 5483u16, // LIVE port : crust's default
+              }
+    }
+}
+
 pub fn exe_path_config() -> io::Result<(PathBuf)> {
     let file_name = try!(get_file_name());
     let mut path = try!(env::current_exe());
@@ -54,15 +64,6 @@ pub fn get_file_name() -> io::Result<(PathBuf)> {
     let mut os_string = file_stem.to_os_string();
     os_string.push(".crust.config");
     Ok(PathBuf::from(os_string))
-}
-
-pub fn read_or_create_config() -> io::Result<(Config)> {
-    let res = read_config_file();
-    if res.is_ok() {
-        return res;
-    }
-    try!(write_default_config_file());
-    read_config_file()
 }
 
 // Try reading in following order:
@@ -91,30 +92,7 @@ pub fn read_config_file() -> io::Result<(Config)> {
     read_file(&file_path)
 }
 
-pub fn write_default_config_file() -> io::Result<()> {
-    let file_name = try!(get_file_name());
-
-    // Default Config
-    let config = Config{ override_default_bootstrap: false,
-                         hard_coded_contacts: vec![],
-                         beacon_port: 0u16,
-                       };
-
-
-    // Application support directory for all users
-    let file_path = utils::system_app_support_dir().unwrap().join(&file_name);
-    let res = write_file(&file_path, &config);
-    if res.is_ok() {
-        return res;
-    }
-
-    // Current user's application directory
-    let file_path = utils::user_app_dir().unwrap().join(file_name);
-    write_file(&file_path, &config)
-}
-
-
-pub fn read_file(file_name : &PathBuf) -> io::Result<(Config)> {
+fn read_file(file_name : &PathBuf) -> io::Result<(Config)> {
     let mut file = try!(File::open(file_name));
     let mut contents = String::new();
     let _ = try!(file.read_to_string(&mut contents));
@@ -123,7 +101,7 @@ pub fn read_file(file_name : &PathBuf) -> io::Result<(Config)> {
                                          format!("Failed to decode config file: {}", error)))
 }
 
-pub fn write_file(file_name : &PathBuf, config: &Config) -> io::Result<()> {
+fn write_file(file_name : &PathBuf, config: &Config) -> io::Result<()> {
     let mut file = try!(File::create(file_name));
     try!(write!(&mut file, "{}", json::as_pretty_json(&config)));
     file.sync_all()
@@ -144,12 +122,17 @@ pub fn write_config_file(override_default_bootstrap: Option<bool>,
         },
         None => {}
     };
+    let hard_coded_contacts = Some(hard_coded_contacts);
 
-    let config = Config{ override_default_bootstrap: override_default_bootstrap.unwrap_or(false),
-                         hard_coded_contacts: hard_coded_contacts,
-                         beacon_port: beacon_port.unwrap_or(0u16),
+    let default = Config::make_default();
+
+    let config = Config{ override_default_bootstrap: override_default_bootstrap
+                            .unwrap_or(default.override_default_bootstrap),
+                         hard_coded_contacts: hard_coded_contacts
+                            .unwrap_or(default.hard_coded_contacts),
+                         beacon_port: beacon_port
+                            .unwrap_or(default.beacon_port),
                        };
-
     let config_path = try!(exe_path_config());
     try!(write_file(&config_path, &config));
     Ok(config_path)
@@ -187,8 +170,8 @@ mod test {
                            };
 
         let file_name = exe_path_config().unwrap();
-        assert_eq!(write_file(&file_name, &config).ok(), Some(()));
-        assert_eq!(read_file(&file_name).ok(), Some(config));
+        assert_eq!(super::write_file(&file_name, &config).ok(), Some(()));
+        assert_eq!(super::read_file(&file_name).ok(), Some(config));
         let _  = fs::remove_file(&file_name);
     }
 }
