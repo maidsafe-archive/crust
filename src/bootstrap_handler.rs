@@ -17,6 +17,7 @@
 
 use time;
 use std::fs::File;
+use std::fs::remove_file;
 use std::io::prelude::*;
 use std::path;
 use std::env;
@@ -24,6 +25,7 @@ use rustc_serialize::json;
 use std::io;
 use itertools::Itertools;
 use config_utils::Contacts;
+use utils;
 
 const MAX_CONTACTS: usize = 1500;
 
@@ -38,30 +40,51 @@ pub fn parse_contacts(buffer: Vec<u8>) -> Option<Contacts> {
 
 
 pub struct BootstrapHandler {
-    file_name: String,
+    file_path: path::PathBuf,
     last_updated: time::Tm,
 }
 
 impl BootstrapHandler {
-    pub fn get_file_name() -> String {
-        let path = match env::current_exe() {
-            Ok(exe_path) => exe_path,
-            Err(e) => panic!("Failed to get current exe path: {}", e),
-        };
-
+    fn get_file_path() -> path::PathBuf {
+        let path = env::current_exe().unwrap();
         let name_with_extension = path.file_name().expect("Unknown filename");
-        let name = path::Path::new(name_with_extension).file_stem().expect("Unknown extension");
-        let mut filename = String::new();
+        let mut name = path::Path::new(name_with_extension).file_stem()
+            .expect("Unknown extension").to_os_string();
+        name.push(".crust.bootstrap.cache");
+        let name = name;
 
-        filename.push_str("./");
-        filename.push_str(name.to_str().unwrap());
-        filename.push_str(".bootstrap.cache");
-        filename
+        let file_path = path.parent().unwrap().join(&name);
+        if File::open(&file_path).is_ok() {
+            return file_path;
+        }
+
+        let file_path = utils::user_app_dir().unwrap().join(&name);
+        if File::open(&file_path).is_ok() {
+            return file_path;
+        }
+
+        let file_path = utils::system_app_support_dir().unwrap();
+        if File::open(&file_path).is_ok() {
+            return file_path;
+        }
+
+        if File::create(&file_path).is_ok() {
+            let _ = remove_file(&file_path);
+            return file_path;
+        }
+
+        let file_path = utils::user_app_dir().unwrap().join(&name);
+        if File::create(&file_path).is_ok() {
+            let _ = remove_file(&file_path);
+            return file_path;
+        }
+
+        path.parent().unwrap().join(name)
     }
 
     pub fn new() -> BootstrapHandler {
         BootstrapHandler {
-            file_name: BootstrapHandler::get_file_name(),
+            file_path: BootstrapHandler::get_file_path(),
             last_updated: time::now(),
         }
     }
@@ -79,8 +102,9 @@ impl BootstrapHandler {
         Ok(())
     }
 
-    pub fn read_bootstrap_file(&self) -> io::Result<(Contacts)> {
-        let mut file = try!(File::open(&self.file_name));
+    pub fn read_bootstrap_file(&mut self) -> io::Result<(Contacts)> {
+        self.file_path = BootstrapHandler::get_file_path();
+        let mut file = try!(File::open(&self.file_path));
         let mut contents = String::new();
         let _ = try!(file.read_to_string(&mut contents));
         json::decode(&contents).map_err(|error| io::Error::new(io::ErrorKind::Other,
@@ -90,7 +114,8 @@ impl BootstrapHandler {
     #[allow(dead_code)]
     pub fn oldest_contacts(&mut self, n: usize) -> io::Result<(Contacts)> {
         let bootstrap_contacts = self.read_bootstrap_file().unwrap_or_else(|e| {
-            println!("Error reading Bootstrap file: {:?}. Creating {:?}.", e, self.file_name);
+            println!("Error reading Bootstrap file: {:?}. Creating {:?}.", e,
+                     self.file_path);
             Contacts::new()
         });
 
@@ -98,21 +123,23 @@ impl BootstrapHandler {
                              .take(n).collect::<Contacts>())
     }
 
-    pub fn get_serialised_contacts(&self) -> io::Result<(Vec<u8>)> {
+    pub fn get_serialised_contacts(&mut self) -> io::Result<(Vec<u8>)> {
         let contacts = try!(self.read_bootstrap_file());
         Ok(serialise_contacts(contacts))
     }
 
     fn write_bootstrap_file(&mut self, mut contacts: Contacts) -> io::Result<()> {
         contacts = contacts.clone().into_iter().unique().collect();
-        let mut file = try!(File::create(&self.file_name));
+        self.file_path = BootstrapHandler::get_file_path();
+        let mut file = try!(File::create(&self.file_path));
         try!(write!(&mut file, "{}", json::as_pretty_json(&contacts)));
         file.sync_all()
     }
 
     fn insert_contacts(&mut self, mut contacts: Contacts, prune: Contacts) -> io::Result<()> {
         let mut bootstrap_contacts = self.read_bootstrap_file().unwrap_or_else(|e| {
-            println!("Error reading Bootstrap file: {:?}. Creating {:?}.", e, self.file_name);
+            println!("Error reading Bootstrap file: {:?}. Creating {:?}.", e,
+                     self.file_path);
             Contacts::new()
         });
 
@@ -143,10 +170,20 @@ mod test {
     use transport::Endpoint;
     use rustc_serialize::json;
     use rand;
-    use std::path::Path;
+    use std::path::{Path, PathBuf};
     use config_utils::{Contact, Contacts};
+    use std::env;
 
     use super::MAX_CONTACTS;
+
+    fn get_file_path() -> PathBuf {
+        let path = env::current_exe().unwrap();
+        let name_with_extension = path.file_name().unwrap();
+        let mut name = Path::new(name_with_extension).file_stem()
+            .unwrap().to_os_string();
+        name.push(".crust.bootstrap.cache");
+        path.parent().unwrap().join(name)
+    }
 
     #[test]
     fn serialisation() {
@@ -180,8 +217,8 @@ mod test {
             contacts.push(contact);
         }
 
-        let file_name = BootstrapHandler::get_file_name();
-        let path = Path::new(&file_name);
+        let file_path = get_file_path();
+        let path = Path::new(&file_path);
 
         let mut bootstrap_handler = BootstrapHandler::new();
         let file = fs::File::create(&path);
@@ -208,9 +245,12 @@ mod test {
         assert_eq!(recovered_contacts, contacts);
         assert_eq!(recovered_contacts.len(), number);
 
-        match fs::remove_file(file_name.clone()) {
+        match fs::remove_file(file_path.clone()) {
             Ok(_) => (),
-            Err(e) => println!("Failed to remove {}: {}", file_name, e),
+            Err(e) => {
+                println!("Failed to remove {}: {}", file_path.to_str().unwrap(),
+                         e)
+            },
         };
     }
 
@@ -234,8 +274,8 @@ mod test {
             contacts.push(contact);
         }
 
-        let file_name = BootstrapHandler::get_file_name();
-        let path = Path::new(&file_name);
+        let file_path = get_file_path();
+        let path = Path::new(&file_path);
 
         let mut bootstrap_handler = BootstrapHandler::new();
         let file = fs::File::create(&path);
@@ -302,9 +342,12 @@ mod test {
         assert_eq!(recovered_contacts, contacts);
         assert_eq!(recovered_contacts.len(), number);
 
-        match fs::remove_file(file_name.clone()) {
+        match fs::remove_file(file_path.clone()) {
             Ok(_) => (),
-            Err(e) => println!("Failed to remove {}: {}", file_name, e),
+            Err(e) => {
+                println!("Failed to remove {}: {}", file_path.to_str().unwrap(),
+                         e)
+            },
         };
     }
 
@@ -330,8 +373,8 @@ mod test {
             contacts.push(contact);
         }
 
-        let file_name = BootstrapHandler::get_file_name();
-        let path = Path::new(&file_name);
+        let file_path = get_file_path();
+        let path = Path::new(&file_path);
 
         let mut bootstrap_handler = BootstrapHandler::new();
         let file = fs::File::create(&path);
@@ -354,9 +397,12 @@ mod test {
         assert_eq!(oldest_contacts, reversed_contacts);
         assert_eq!(oldest_contacts.len(), half_number);
 
-        match fs::remove_file(file_name.clone()) {
+        match fs::remove_file(file_path.clone()) {
             Ok(_) => (),
-            Err(e) => println!("Failed to remove {}: {}", file_name, e),
+            Err(e) => {
+                println!("Failed to remove {}: {}", file_path.to_str().unwrap(),
+                         e)
+            },
         };
     }
 
@@ -379,8 +425,8 @@ mod test {
             contacts.push(contact);
         }
 
-        let file_name = BootstrapHandler::get_file_name();
-        let path = Path::new(&file_name);
+        let file_path = get_file_path();
+        let path = Path::new(&file_path);
         let mut bootstrap_handler = BootstrapHandler::new();
         let file = fs::File::create(&path);
 
@@ -439,9 +485,12 @@ mod test {
         assert_eq!(first_contact, new_contact.clone());
 
         // remove the bootstrap file from disk...
-        match fs::remove_file(file_name.clone()) {
+        match fs::remove_file(file_path.clone()) {
             Ok(_) => (),
-            Err(e) => println!("Failed to remove {}: {}", file_name, e),
+            Err(e) => {
+                println!("Failed to remove {}: {}", file_path.to_str().unwrap(),
+                         e)
+            },
         };
     }
 }
