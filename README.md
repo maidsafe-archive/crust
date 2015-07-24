@@ -39,7 +39,7 @@ Several methods are used for NAT traversal, UpNP, hole punching [See here for TC
 
 ##Todo Items
 
-## [0.1.6]
+## [0.2.0]
 - [x] [MAID-1132] (https://maidsafe.atlassian.net/browse/MAID-1132) Integrate UPnP
 - [x] [MAID-1139] (https://maidsafe.atlassian.net/browse/MAID-1139) Remove Crust API’s start_listening2() and expose `get_own_endpoints()`
 
@@ -56,7 +56,7 @@ Several methods are used for NAT traversal, UpNP, hole punching [See here for TC
 - [ ] [MAID-1142] (https://maidsafe.atlassian.net/browse/MAID-1142) Add UTP protocol support to crust
 - [ ] [MAID-1140] (https://maidsafe.atlassian.net/browse/MAID-1140) Memory-mapped file I/O for bootstrap file
 
-## [0.1.9]
+## Future work
 - [ ] Have ConnectionManager guarantee at most one connection between any two nodes
 - [ ] Utp Networking
   - [ ] Utp live port and backup random port selection
@@ -69,8 +69,6 @@ Several methods are used for NAT traversal, UpNP, hole punching [See here for TC
 - [ ] Benchmark tx/rv number of packets
 - [ ] Benchmark tx/rc Bytes per second
 - [ ] Implement NAT hole punch (udp) for reliable udp
-
-## [0.2.0]
 - [ ] Tcp hole punching as per paper
 - [ ] Tracer tcp (TCP with magic in clear [unencrypted])
 - [ ] Wireshark module for tracer TCP
