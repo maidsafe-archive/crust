@@ -30,7 +30,7 @@
 #![doc(html_logo_url = "http://maidsafe.net/img/Resources/branding/maidsafe_logo.fab2.png",
        html_favicon_url = "http://maidsafe.net/img/favicon.ico",
        html_root_url = "http:///dirvine.github.io/crust/crust/")]
-#![feature(ip_addr, ip, udp, arc_weak)]
+#![feature(ip_addr, ip, udp, arc_weak, socket_timeout, duration)]
 
 extern crate cbor;
 extern crate rand;
@@ -65,6 +65,7 @@ mod tcp_connections;
 mod utp_connections;
 mod transport;
 mod config_utils;
+mod utils;
 
 /// Module implementing the `ConnectionManager` which provides an interface to manage peer-to-peer
 /// connections.

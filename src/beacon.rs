@@ -24,6 +24,7 @@ use std::net::{IpAddr, SocketAddr, TcpStream,
 use std::str::FromStr;
 use std::sync::{Arc, mpsc, Mutex};
 use std::thread;
+use std::time::Duration;
 
 use transport;
 use transport::{Acceptor, Port, Transport};
@@ -163,6 +164,8 @@ impl BroadcastAcceptor {
             Ok(socket) => socket,
             Err(_) => return (),
         };
+        let _ = udp_listener_killer
+            .set_read_timeout(Some(Duration::new(10, 0)));
         // Safe to use unwrap here - this will always parse as a SocketAddr.
         let udp_listener_address =
             SocketAddr::from_str(&format!("127.0.0.1:{}", guid_and_port.1)).unwrap();
