@@ -348,13 +348,7 @@ fn main() {
     let mut connection_manager = ConnectionManager::new(channel_sender);
     stdout = green_foreground(stdout);
     let _ = connection_manager.start_accepting(vec![]);
-    let listening_endpoints = match connection_manager.get_accepting_endpoints() {
-        Ok(endpoints) => endpoints,
-        Err(e) => {
-            println!("Connection manager failed to start listening: {}", e);
-            std::process::exit(1);
-        }
-    };
+    let listening_endpoints = connection_manager.get_own_endpoints();
     print!("Listening for new connections on ");
     for endpoint in &listening_endpoints {
         print!("{:?}, ", *endpoint);
