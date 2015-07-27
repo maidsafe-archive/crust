@@ -5,7 +5,7 @@
 
 **Primary Maintainer:**     Chandra Prakash (prakash@maidsafe.net)
 
-**Secondary Maintainer:**   Niall Douglas (niall.douglas@maidsafe.net)
+**Secondary Maintainer:**   Brian Smith (brian.smith@maidsafe.net)
 
 Reliable p2p network connections in Rust with NAT traversal. One of the most needed libraries for any server-less, decentralised project.
 
