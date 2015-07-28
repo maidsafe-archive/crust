@@ -473,8 +473,8 @@ impl ConnectionManager {
 
     fn listen(&mut self, port: &Port) {
         let acceptor = transport::new_acceptor(port).unwrap();
-        self.own_endpoints = map_external_port(port);
         let local_port = acceptor.local_port();
+        self.own_endpoints = map_external_port(&local_port);
 
         let mut weak_state = self.state.downgrade();
 
