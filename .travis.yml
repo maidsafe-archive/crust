@@ -9,10 +9,10 @@ script:
 - cargo build --verbose
 - RUST_TEST_TASKS=1 RUST_TEST_THREADS=1 cargo test
 after_success: |
-  if [[ $TRAVIS_BRANCH = master ]] &&  [[ $TRAVIS_PULL_REQUEST = false ]]; then
+  if [[ $TRAVIS_OS = linux ]] && [[ $TRAVIS_BRANCH = master ]] &&  [[ $TRAVIS_PULL_REQUEST = false ]]; then
     cargo doc &&
     echo "<meta http-equiv=refresh content=0;url=`echo $TRAVIS_REPO_SLUG | cut -d '/' -f 2`/index.html>" > target/doc/index.html &&
-    sudo pip install ghp-import &&
+    pip install --user ghp-import &&
     mkdir docs-stage &&
     COMMIT_MSG=$(git log -1 | tr '[:upper:]' '[:lower:]' | grep "version change to " | tr -d ' ') &&
     git clone https://github.com/${TRAVIS_REPO_SLUG}.git  docs-stage &&
@@ -41,9 +41,17 @@ after_success: |
     cd .. &&
     ghp-import -n docs-stage &&
     git push -fq https://${GH_TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git gh-pages;
-    cargo clean;
-    cargo test --no-run;
-    RUST_TEST_TASKS=1 RUST_TEST_THREADS=1 kcov --coveralls-id=$TRAVIS_JOB_ID --exclude-pattern=/.cargo target/kcov target/debug/crust-*;
+    wget https://github.com/SimonKagstrom/kcov/archive/master.tar.gz &&
+    tar xzf master.tar.gz &&
+    mkdir kcov-master/build &&
+    cd kcov-master/build &&
+    cmake .. -DCMAKE_INSTALL_PREFIX=~/ &&
+    make &&
+    mkdir ~/bin
+    mkdir ~/lib
+    make install &&
+    cd ../.. &&
+    ~/bin/kcov --coveralls-id=$TRAVIS_JOB_ID --exclude-pattern=/.cargo target/kcov target/debug/crust-*;
   fi
 env:
   global:
