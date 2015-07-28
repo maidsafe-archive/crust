@@ -5,6 +5,9 @@ sudo: false
 language: rust
 rust:
     - nightly
+branches:
+  only:
+      - master
 script:
 - cargo build --verbose
 - RUST_TEST_TASKS=1 RUST_TEST_THREADS=1 cargo test
