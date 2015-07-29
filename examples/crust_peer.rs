@@ -17,12 +17,12 @@
 
 // String.as_str() is unstable; waiting RFC revision
 // http://doc.rust-lang.org/nightly/std/string/struct.String.html#method.as_str
-#![feature(convert, core)]
+#![feature(convert, core, negate_unsigned)]
 #![forbid(warnings)]
 #![deny(bad_style, deprecated, drop_with_repr_extern, improper_ctypes, non_shorthand_field_patterns,
         overflowing_literals, plugin_as_library, private_no_mangle_fns, private_no_mangle_statics,
         raw_pointer_derive, stable_features, unconditional_recursion, unknown_lints,
-        unsafe_code, unsigned_negation, unused_allocation, unused_attributes,
+        unsafe_code, unused_allocation, unused_attributes,
         unused_comparisons, unused_features, unused_parens, while_true)]
 #![warn(trivial_casts, trivial_numeric_casts, unused, unused_extern_crates, unused_import_braces,
         unused_qualifications, unused_results, variant_size_differences)]
