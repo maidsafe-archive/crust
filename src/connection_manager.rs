@@ -41,6 +41,11 @@ pub type Bytes = Vec<u8>;
 type WeakState = Weak<Mutex<State>>;
 
 /// A structure representing a connection manager
+///
+/// This abstraction has a hidden dependency on per-executable config
+/// file. Refer to
+/// https://github.com/maidsafe/crust/blob/master/docs/configuration_path.md for
+/// more information.
 pub struct ConnectionManager {
     state: Arc<Mutex<State>>,
     beacon_guid_and_port: Option<(beacon::GUID, u16)>,
@@ -141,10 +146,10 @@ impl ConnectionManager {
                             config: config, own_endpoints: Vec::new() }
     }
 
-    /// Starts listening on all supported protocols. Ports in preferred_ports of config are tried first.
-    /// On failure to listen on none of preferred_ports an OS randomly chosen port will be used for each supported
-    /// protocol. The actual port used will be returned on which it started listening for each
-    /// protocol.
+    /// Starts listening on all supported protocols. Ports in _hint_ are tried
+    /// first.  On failure to listen on none of _hint_ an OS randomly chosen
+    /// port will be used for each supported protocol. The actual port used will
+    /// be returned on which it started listening for each protocol.
     // FIXME: Returning io::Result seems pointless since we always return Ok.
     pub fn start_accepting(&mut self, hint: Vec<Port>) -> io::Result<Vec<Port>> {
         // We need to check for an instance of each supported protocol in the hint vector.
