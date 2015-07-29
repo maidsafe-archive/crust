@@ -41,6 +41,11 @@ pub type Bytes = Vec<u8>;
 type WeakState = Weak<Mutex<State>>;
 
 /// A structure representing a connection manager
+///
+/// This abstraction has a hidden dependency on per-executable config
+/// file. Refer to
+/// https://github.com/maidsafe/crust/blob/master/docs/configuration_path.md for
+/// more information.
 pub struct ConnectionManager {
     state: Arc<Mutex<State>>,
     beacon_guid_and_port: Option<(beacon::GUID, u16)>,
@@ -141,10 +146,10 @@ impl ConnectionManager {
                             config: config, own_endpoints: Vec::new() }
     }
 
-    /// Starts listening on all supported protocols. Ports in preferred_ports of config are tried first.
-    /// On failure to listen on none of preferred_ports an OS randomly chosen port will be used for each supported
-    /// protocol. The actual port used will be returned on which it started listening for each
-    /// protocol.
+    /// Starts listening on all supported protocols. Ports in _hint_ are tried
+    /// first.  On failure to listen on none of _hint_ an OS randomly chosen
+    /// port will be used for each supported protocol. The actual port used will
+    /// be returned on which it started listening for each protocol.
     // FIXME: Returning io::Result seems pointless since we always return Ok.
     pub fn start_accepting(&mut self, hint: Vec<Port>) -> io::Result<Vec<Port>> {
         // We need to check for an instance of each supported protocol in the hint vector.
@@ -473,8 +478,8 @@ impl ConnectionManager {
 
     fn listen(&mut self, port: &Port) {
         let acceptor = transport::new_acceptor(port).unwrap();
-        self.own_endpoints = map_external_port(port);
         let local_port = acceptor.local_port();
+        self.own_endpoints = map_external_port(&local_port);
 
         let mut weak_state = self.state.downgrade();
 
@@ -691,7 +696,6 @@ mod test {
     use transport::{Endpoint, Port};
     use std::sync::{Mutex, Arc};
     use config_utils::{Contact, write_config_file};
-    use tempdir::TempDir;
     use std::path::PathBuf;
     use std::net::{SocketAddr, Ipv4Addr, SocketAddrV4, SocketAddrV6};
     use std::fs::remove_file;
@@ -772,10 +776,6 @@ mod test {
     }
 
     fn make_temp_config(beacon_port: Option<u16>) -> TestConfigFile {
-        let temp_dir = TempDir::new("crust_peer").unwrap();
-        let mut config_file_path = temp_dir.path().to_path_buf();
-        config_file_path.push("crust_test.config");
-
         let path = write_config_file(Some(false), Some(vec![]),
                                      Some(beacon_port.unwrap_or(0u16)))
             .unwrap();

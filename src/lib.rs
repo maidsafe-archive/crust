@@ -23,14 +23,14 @@
 #![deny(bad_style, deprecated, drop_with_repr_extern, improper_ctypes, non_shorthand_field_patterns,
         overflowing_literals, plugin_as_library, private_no_mangle_fns, private_no_mangle_statics,
         raw_pointer_derive, stable_features, unconditional_recursion, unknown_lints,
-        unsafe_code, unsigned_negation, unused_allocation, unused_attributes,
+        unsafe_code, unused_allocation, unused_attributes,
         unused_comparisons, unused_features, unused_parens, while_true)]
 #![warn(trivial_casts, trivial_numeric_casts, unused, unused_extern_crates, unused_import_braces,
         unused_qualifications, unused_results, variant_size_differences)]
 #![doc(html_logo_url = "http://maidsafe.net/img/Resources/branding/maidsafe_logo.fab2.png",
        html_favicon_url = "http://maidsafe.net/img/favicon.ico",
        html_root_url = "http:///dirvine.github.io/crust/crust/")]
-#![feature(ip_addr, ip, udp, arc_weak, socket_timeout, duration)]
+#![feature(ip_addr, ip, udp, arc_weak, socket_timeout, duration, negate_unsigned)]
 
 extern crate cbor;
 extern crate rand;
@@ -42,9 +42,6 @@ extern crate libc;
 extern crate utp;
 extern crate itertools;
 extern crate igd;
-
-#[cfg(test)]
-extern crate tempdir;
 
 #[cfg(test)]
 mod test {
