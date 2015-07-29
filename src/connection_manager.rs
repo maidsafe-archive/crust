@@ -691,7 +691,6 @@ mod test {
     use transport::{Endpoint, Port};
     use std::sync::{Mutex, Arc};
     use config_utils::{Contact, write_config_file};
-    use tempdir::TempDir;
     use std::path::PathBuf;
     use std::net::{SocketAddr, Ipv4Addr, SocketAddrV4, SocketAddrV6};
     use std::fs::remove_file;
@@ -772,10 +771,6 @@ mod test {
     }
 
     fn make_temp_config(beacon_port: Option<u16>) -> TestConfigFile {
-        let temp_dir = TempDir::new("crust_peer").unwrap();
-        let mut config_file_path = temp_dir.path().to_path_buf();
-        config_file_path.push("crust_test.config");
-
         let path = write_config_file(Some(false), Some(vec![]),
                                      Some(beacon_port.unwrap_or(0u16)))
             .unwrap();

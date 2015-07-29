@@ -44,9 +44,6 @@ extern crate itertools;
 extern crate igd;
 
 #[cfg(test)]
-extern crate tempdir;
-
-#[cfg(test)]
 mod test {
     use std::env;
 
