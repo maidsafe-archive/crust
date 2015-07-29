@@ -52,6 +52,8 @@ Several methods are used for NAT traversal, UpNP, hole punching [See here for TC
 - [x] [MAID-1162](https://maidsafe.atlassian.net/browse/MAID-1162) Add get_beacon_acceptor_port() method only for tests
 - [x] [MAID-1264](https://maidsafe.atlassian.net/browse/MAID-1264) Update API to hide configuration file path
 
+## [0.2.1]
+- [#207] (https://github.com/maidsafe/crust/issues/207) `ConnectionManager::get_own_endpoints` returns 0 as port
 
 ## Future work
 
