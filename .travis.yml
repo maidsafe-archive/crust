@@ -11,7 +11,7 @@ branches:
 script:
 - cargo build --verbose
 - RUST_TEST_TASKS=1 RUST_TEST_THREADS=1 cargo test
-after_success: |
+after_success:
 - curl -sSL https://github.com/maidsafe/QA/raw/master/Bash%20Scripts/Travis/deploy_gh-pages.sh | bash
 env:
   global:
