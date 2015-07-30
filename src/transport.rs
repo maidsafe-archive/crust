@@ -30,7 +30,7 @@ use utp::UtpSocket;
 pub type Bytes = Vec<u8>;
 
 /// Enum representing endpoint of supported protocols
-#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub enum Endpoint {
     /// TCP endpoint
     Tcp(SocketAddr),
@@ -86,7 +86,7 @@ impl Decodable for Endpoint {
 
 
 /// Enum representing port of supported protocols
-#[derive(Debug, PartialEq, Eq, Hash, Clone, RustcDecodable, RustcEncodable)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, RustcDecodable, RustcEncodable, Copy)]
 pub enum Port {
     /// TCP port
     Tcp(u16),
@@ -106,7 +106,7 @@ impl Port {
 
 impl PartialOrd for Endpoint {
     fn partial_cmp(&self, other: &Endpoint) -> Option<Ordering> {
-        Some(self.cmp(other))
+        Some(self.cmp(&other))
     }
 }
 
@@ -222,14 +222,14 @@ pub fn connect(remote_ep: Endpoint) -> IoResult<Transport> {
     }
 }
 
-pub fn new_acceptor(port: &Port) -> IoResult<Acceptor> {
-    match *port {
-        Port::Tcp(ref port) => {
-            let (receiver, listener) = try!(tcp_connections::listen(*port));
+pub fn new_acceptor(port: Port) -> IoResult<Acceptor> {
+    match port {
+        Port::Tcp(port) => {
+            let (receiver, listener) = try!(tcp_connections::listen(port));
             Ok(Acceptor::Tcp(receiver, listener))
         },
-        Port::Utp(ref port) => {
-            let (receiver, listener) = try!(utp_connections::listen(*port));
+        Port::Utp(port) => {
+            let (receiver, listener) = try!(utp_connections::listen(port));
             Ok(Acceptor::Utp(receiver, listener))
         },
     }
