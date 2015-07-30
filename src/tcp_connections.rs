@@ -202,7 +202,7 @@ mod test {
 #[test]
     fn test_multiple_nodes_small_stream() {
         const MSG_COUNT: usize = 5;
-        const NODE_COUNT: usize = 101;
+        const NODE_COUNT: usize = 51;
 
         let (event_receiver, listener) = listen(5483).unwrap();
         let port = listener.local_addr().unwrap().port();
