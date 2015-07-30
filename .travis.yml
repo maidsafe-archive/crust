@@ -1,66 +1,18 @@
 os:
 - linux
-
-sudo: true
+- osx
+sudo: false
 language: rust
 rust:
-#    - 1.0.0-beta
     - nightly
-before_install:
-    - sudo apt-get update -qq
-    - sudo apt-get install -qq libcurl4-openssl-dev libelf-dev libdw-dev binutils-dev
-install:
-- wget https://github.com/jedisct1/libsodium/releases/download/1.0.0/libsodium-1.0.0.tar.gz
-- tar xvfz libsodium-1.0.0.tar.gz
-- cd libsodium-1.0.0 && ./configure --prefix=/usr && make && sudo make install && cd ..
-- wget https://github.com/SimonKagstrom/kcov/archive/master.tar.gz
-- tar xzf master.tar.gz
-- mkdir kcov-master/build
-- cd kcov-master/build
-- cmake ..
-- make
-- sudo make install
-- cd ../..
+branches:
+  only:
+      - master
 script:
 - cargo build --verbose
 - RUST_TEST_TASKS=1 RUST_TEST_THREADS=1 cargo test
-after_success: |
-  if [[ $TRAVIS_BRANCH = master ]] &&  [[ $TRAVIS_PULL_REQUEST = false ]]; then
-    cargo doc &&
-    echo "<meta http-equiv=refresh content=0;url=`echo $TRAVIS_REPO_SLUG | cut -d '/' -f 2`/index.html>" > target/doc/index.html &&
-    sudo pip install ghp-import &&
-    mkdir docs-stage &&
-    COMMIT_MSG=$(git log -1 | tr '[:upper:]' '[:lower:]' | grep "version change to " | tr -d ' ') &&
-    git clone https://github.com/${TRAVIS_REPO_SLUG}.git  docs-stage &&
-    cd docs-stage &&
-    git checkout gh-pages;
-    rm -rf .git*;
-    # lines 39 - 43 is a patch script for handling old gh-pages structure
-    OLD_FILE=$(ls | grep "main.js");
-    if [[ $OLD_FILE == main* ]]; then
-      rm -rf * &&
-      echo "<meta http-equiv=refresh content=0;url=master/`echo $TRAVIS_REPO_SLUG | cut -d '/' -f 2`/index.html>" > index.html;
-    fi
-    if [[ $COMMIT_MSG == versionchangeto* ]];  then
-      VERSION=${COMMIT_MSG##*to} &&
-      mkdir -p $VERSION &&
-      mkdir -p latest &&
-      cp -rf ../target/doc/* $VERSION &&
-      cp -rf ../target/doc/* latest &&
-      git config --global user.email dev@miadsafe.net &&
-      git config --global user.name maidsafe-jenkins &&
-      git tag $VERSION -a -m "Version $VERSION" &&
-      git push -q https://${GH_TOKEN}@github.com/${TRAVIS_REPO_SLUG} --tags;
-    fi
-    mkdir -p master
-    cp -rf ../target/doc/* master &&
-    cd .. &&
-    ghp-import -n docs-stage &&
-    git push -fq https://${GH_TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git gh-pages;
-    cargo clean;
-    cargo test --no-run;
-    RUST_TEST_TASKS=1 RUST_TEST_THREADS=1 kcov --coveralls-id=$TRAVIS_JOB_ID --exclude-pattern=/.cargo target/kcov target/debug/crust-*;
-  fi
+after_success:
+- curl -sSL https://github.com/maidsafe/QA/raw/master/Bash%20Scripts/Travis/deploy_gh-pages.sh | bash
 env:
   global:
     secure: DzS6hBiuUQybrHDvXWDPNsyuUwCPVrfayRDR4tQwN90Uykr+X2ILpNjA/wxEJuGOsPQc1qsk1VStSIHbYJjHl1ahS9tQo+PU1oukuT0b2r9EKkIJOLoc9W53DbHzmLef5Qr4GxqoI5IGOcU9G9V7Lovefsm3gebSwL6xosbg8AY=
