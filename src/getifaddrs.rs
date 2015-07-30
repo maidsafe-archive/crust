@@ -90,13 +90,13 @@ mod getifaddrs_posix {
         sockaddr_to_ipaddr(ifaddr.ifa_ifu)
             .unwrap_or(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)))
     }
-    
+
     #[cfg(any(target_os = "freebsd", target_os = "macos", target_os = "ios"))]
     fn do_broadcast(ifaddr : &posix_ifaddrs) -> IpAddr {
         sockaddr_to_ipaddr(ifaddr.ifa_dstaddr)
             .unwrap_or(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)))
     }
-    
+
     /// Return a vector of IP details for all the valid interfaces on this host
     #[allow(unsafe_code)]
     pub fn getifaddrs() -> Vec<IfAddr> {
@@ -108,7 +108,7 @@ mod getifaddrs_posix {
             panic!("failed to retrieve interface details from getifaddrs()");
           }
         }
-            
+
         let mut _ifaddr = ifaddrs;
         let mut first = true;
         while !_ifaddr.is_null() {
@@ -157,7 +157,7 @@ mod getifaddrs_windows {
     use libc::consts::os::bsd44::*;               // the winsock constants
     use libc::types::os::common::bsd44::*;        // the winsock types
     use libc;
-    
+
     #[repr(C)]
     #[allow(bad_style)]
     struct SOCKET_ADDRESS {
@@ -211,7 +211,7 @@ mod getifaddrs_windows {
     extern "system" {
         pub fn GetAdaptersAddresses(family : c_ulong, flags : c_ulong, reserved : *const c_void, addresses : *const IP_ADAPTER_ADDRESSES, size : *mut c_ulong) -> c_ulong;
     }
-    
+
     #[allow(unsafe_code)]
     fn sockaddr_to_ipaddr(sockaddr : *const sockaddr) -> Option<IpAddr> {
         if sockaddr.is_null() { return None }
@@ -271,7 +271,7 @@ mod getifaddrs_windows {
                 }
             }
         }
-            
+
         let mut _ifaddr = ifaddrs;
         let mut first = true;
         while !_ifaddr.is_null() {
@@ -280,7 +280,7 @@ mod getifaddrs_windows {
             if _ifaddr.is_null() { break; }
             let ref ifaddr = unsafe { &*_ifaddr };
             // println!("ifaddr1={}, next={}", _ifaddr as u64, ifaddr.ifa_next as u64);
-            
+
             let mut addr = ifaddr.FirstUnicastAddress;
             if addr.is_null() { continue; }
             let mut firstaddr = true;
@@ -296,7 +296,7 @@ mod getifaddrs_windows {
                 let ipaddr = sockaddr_to_ipaddr(unsafe { (*addr).Address.lpSockaddr });
                 if !ipaddr.is_some() { continue; }
                 item.addr = ipaddr.unwrap();
-                
+
                 // Search prefixes for a prefix matching addr
                 let mut prefix = ifaddr.FirstPrefix;
                 if !prefix.is_null() {
@@ -305,7 +305,7 @@ mod getifaddrs_windows {
                         if firstprefix { firstprefix=false; }
                         else { prefix = unsafe { (*prefix).Next }; }
                         if prefix.is_null() { break; }
-                        
+
                         let ipprefix = sockaddr_to_ipaddr(unsafe { (*prefix).Address.lpSockaddr });
                         if !ipprefix.is_some() { continue; }
                         match ipprefix.unwrap() {
@@ -390,11 +390,24 @@ pub fn getifaddrs() -> Vec<IfAddr> {
     getifaddrs_windows::getifaddrs()
 }
 
+fn is_loopback(if_addr: &IfAddr) -> bool {
+    match if_addr.addr {
+            IpAddr::V4(v4) => v4.is_loopback(),
+            IpAddr::V6(v6) => v6.is_loopback(),
+    }
+}
+
+/// Remove loopback address(s)
+pub fn filter_loopback(mut ifaddrs: Vec<IfAddr>)->Vec<IfAddr> {
+    ifaddrs.retain(|x| !is_loopback(&x));
+    ifaddrs
+}
+
 #[cfg(test)]
 mod test {
-    use super::getifaddrs;
+    use super::{getifaddrs, filter_loopback};
     use std::net::IpAddr;
-    
+
     #[test]
     fn test_getifaddrs() {
         let mut has_loopback4 = false;
@@ -409,5 +422,19 @@ mod test {
         }
         // Quick sanity test, can't think of anything better
         assert_eq!(has_loopback4 || has_loopback6, true);
+    }
+
+    #[test]
+    fn test_filter_loopback() {
+        let ifaddrs = filter_loopback(getifaddrs());
+        for ifaddr in ifaddrs {
+            println!("   Interface {} has IP {} netmask {} broadcast {}", ifaddr.name,
+                     ifaddr.addr, ifaddr.netmask, ifaddr.broadcast);
+            let is_loopback = match ifaddr.addr {
+                IpAddr::V4(v4) => v4.is_loopback(),
+                IpAddr::V6(v6) => v6.is_loopback(),
+            };
+            assert!(!is_loopback);
+        }
     }
 }
