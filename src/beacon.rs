@@ -192,6 +192,7 @@ impl BroadcastAcceptor {
     }
 }
 
+#[allow(deprecated)]
 pub fn seek_peers(port: u16, guid_to_avoid: Option<GUID>) -> Result<Vec<SocketAddr>> {
     // Bind to a UDP socket
     let socket = try!(UdpSocket::bind("0.0.0.0:0"));
