@@ -58,6 +58,9 @@ Several methods are used for NAT traversal, UpNP, hole punching [See here for TC
 ## [0.2.2]
 - [#223] (https://github.com/maidsafe/crust/issues/223) Error: use of unstable library feature 'udp_extras': available through the `net2` crate on crates.io
 
+## [0.2.3]
+- [#230] (https://github.com/maidsafe/crust/issues/230) Cannot compile crust - crust_peer - #[forbid(unused_mut)]
+
 ## Future work
 
 - [ ] [MAID-1142] (https://maidsafe.atlassian.net/browse/MAID-1142) Add UTP protocol support to crust
