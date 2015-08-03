@@ -450,7 +450,7 @@ fn main() {
     } else {
         let ref mut command = String::new();
         let docopt: Docopt = Docopt::new(CLI_USAGE).unwrap_or_else(|error| error.exit());
-        let mut stdin = io::stdin();
+        let stdin = io::stdin();
         loop {
             command.clear();
             print_input_line();
