@@ -26,7 +26,7 @@ use std::net::{IpAddr, SocketAddr, SocketAddrV4};
 use beacon;
 use bootstrap_handler::{BootstrapHandler, parse_contacts};
 use config_utils::{Config, Contact, Contacts, read_config_file};
-use getifaddrs::getifaddrs;
+use getifaddrs::{getifaddrs, filter_loopback};
 use transport;
 use transport::{Endpoint, Port};
 
@@ -84,7 +84,8 @@ fn map_external_port(port: &Port)
         Port::Tcp(port) => (igd::PortMappingProtocol::TCP, port),
         Port::Utp(port) => (igd::PortMappingProtocol::UDP, port),
     };
-    getifaddrs().into_iter().filter_map(|e| match e.addr {
+    // Removing loopback address
+    filter_loopback(getifaddrs()).into_iter().filter_map(|e| match e.addr {
         IpAddr::V4(a) => {
             let addr = SocketAddrV4::new(a, port_number);
             let ext = Arc::new(Mutex::new(None));
@@ -174,7 +175,8 @@ impl ConnectionManager {
                 }));
 
                 let mut contacts = Contacts::new();
-                let listening_ips = getifaddrs();
+                // Removing loopback address
+                let listening_ips = filter_loopback(getifaddrs());
                 for port in &listening_ports {
                     for ip in &listening_ips {
                         contacts.push(Contact {
@@ -222,7 +224,7 @@ impl ConnectionManager {
         for port in listening_ports {
             match port {
                 Port::Tcp(p) => {
-                    for ifaddr in getifaddrs() {
+                    for ifaddr in filter_loopback(getifaddrs()) { // Removing loopback address
                         endpoints.push(match ifaddr.addr {
                             IpAddr::V4(a) => Endpoint::tcp((a, p)),
                             IpAddr::V6(a) => Endpoint::tcp((a, p)),
@@ -230,7 +232,7 @@ impl ConnectionManager {
                     }
                 },
                 Port::Utp(p) => {
-                    for ifaddr in getifaddrs() {
+                    for ifaddr in filter_loopback(getifaddrs()) { // Removing loopback address
                         endpoints.push(match ifaddr.addr {
                             IpAddr::V4(a) => Endpoint::utp((a, p)),
                             IpAddr::V6(a) => Endpoint::utp((a, p)),
