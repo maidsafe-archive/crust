@@ -167,7 +167,8 @@ impl ConnectionManager {
                 //     PublicKey::Asym(asymmetricbox::PublicKey([0u8; asymmetricbox::PUBLICKEYBYTES]));
 
                 let mut bootstrap_handler = BootstrapHandler::new();
-                let port = &hint.get(0).unwrap_or(&Port::Tcp(0)).clone();
+                let port = hint.get(0).map(|ref e| -> Port { *e.clone() })
+                    .unwrap_or(Port::Tcp(0));
                 self.listen(port);
                 listening_ports = try!(lock_state(&ws, |s| {
                     let buf: Vec<Port> = s.listening_ports.iter().map(|s| s.clone()).collect();
@@ -203,7 +204,8 @@ impl ConnectionManager {
         };
 
         if self.beacon_guid_and_port.is_none() {
-            let port = &hint.get(0).unwrap_or(&Port::Tcp(0)).clone();
+            let port = hint.get(0).map(|ref e| -> Port { *e.clone() })
+                .unwrap_or(Port::Tcp(0));
             self.listen(port);
 
             listening_ports = try!(lock_state(&ws, |s| {
@@ -478,7 +480,7 @@ impl ConnectionManager {
         }
     }
 
-    fn listen(&mut self, port: &Port) {
+    fn listen(&mut self, port: Port) {
         let acceptor = transport::new_acceptor(port).unwrap();
         let local_port = acceptor.local_port();
         self.own_endpoints = map_external_port(&local_port);
@@ -1066,7 +1068,7 @@ mod test {
 
     #[test]
     fn bootstrap_off_list_connects() {
-        let acceptor = transport::new_acceptor(&Port::Tcp(0)).unwrap();
+        let acceptor = transport::new_acceptor(Port::Tcp(0)).unwrap();
         let addr = match acceptor {
             transport::Acceptor::Tcp(_, listener) => listener.local_addr()
                 .unwrap(),
