@@ -60,6 +60,7 @@ mod beacon;
 mod bootstrap_handler;
 mod getifaddrs;
 mod tcp_connections;
+mod utp_wrapper;
 mod utp_connections;
 mod transport;
 mod config_utils;
