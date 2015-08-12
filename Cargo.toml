@@ -21,6 +21,10 @@ asynchronous = "*"
 utp = "*"
 itertools = "*"
 igd = "0.1.3"
+net2 = "*"
+
+[dependencies.rc]
+git = "https://github.com/SimonSapin/rust-rc.git"
 
 [[example]]
 name = "simple_sender"
