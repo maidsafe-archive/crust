@@ -54,12 +54,15 @@ Several methods are used for NAT traversal, UpNP, hole punching [See here for TC
 
 ## [0.2.1]
 - [#207] (https://github.com/maidsafe/crust/issues/207) `ConnectionManager::get_own_endpoints` returns 0 as port
- 
+
 ## [0.2.2]
 - [#223] (https://github.com/maidsafe/crust/issues/223) Error: use of unstable library feature 'udp_extras': available through the `net2` crate on crates.io
 
 ## [0.2.3]
 - [#230] (https://github.com/maidsafe/crust/issues/230) Cannot compile crust - crust_peer - #[forbid(unused_mut)]
+
+## [0.2.4]
+- [#215] (https://github.com/maidsafe/crust/issues/215) `connection_manager::get_own_endpoints()` should not return loopback address
 
 ## Future work
 
