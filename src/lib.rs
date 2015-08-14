@@ -31,7 +31,6 @@
        html_favicon_url = "http://maidsafe.net/img/favicon.ico",
        html_root_url = "http:///dirvine.github.io/crust/crust/")]
 #![feature(ip_addr, ip, arc_weak, socket_timeout, negate_unsigned)]
-#![feature(udp_extras)]
 
 extern crate cbor;
 extern crate rand;
@@ -43,6 +42,7 @@ extern crate libc;
 extern crate utp;
 extern crate itertools;
 extern crate igd;
+extern crate net2;
 
 #[cfg(test)]
 mod test {
