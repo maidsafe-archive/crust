@@ -76,6 +76,7 @@ struct State {
     connections: HashMap<Endpoint, Connection>,
     listening_ports: HashSet<Port>,
     stop_called: bool,
+    bs_count: (usize, usize), // (current, max)
 }
 
 fn map_external_port(port: &Port)
@@ -141,6 +142,7 @@ impl ConnectionManager {
                                                connections: HashMap::new(),
                                                listening_ports: HashSet::new(),
                                                stop_called: false,
+                                               bs_count: (0,0),
                                              }));
 
         ConnectionManager { state: state, beacon_guid_and_port: None,
@@ -272,6 +274,7 @@ impl ConnectionManager {
         let mut ws = self.state.downgrade();
         let _ = lock_mut_state(&mut ws, |s: &mut State| {
             let _ = s.connections.clear();
+            s.bs_count = (0, max_successful_bootstrap_connection.clone());
             Ok(())
         });
 
@@ -569,6 +572,14 @@ fn handle_accept(mut state: WeakState, trans: transport::Transport) -> io::Resul
 
 fn handle_connect(mut state: WeakState, trans: transport::Transport,
                   is_broadcast_acceptor: bool, is_bootstrap_connection: bool) -> io::Result<Endpoint> {
+
+    if is_bootstrap_connection {
+        let res = try!(increment_bs_count(&mut state));
+        if !res {
+            return Err(io::Error::new(io::ErrorKind::Other, "Already reached max bootstrap connections"));
+        }
+    }
+
     let remote_ep = trans.remote_endpoint.clone();
     let event = match is_bootstrap_connection {
         true => Event::NewBootstrapConnection(remote_ep),
@@ -590,6 +601,15 @@ fn handle_connect(mut state: WeakState, trans: transport::Transport,
     endpoint
 }
 
+fn increment_bs_count(state: &mut WeakState) -> io::Result<bool> {
+    lock_mut_state(state, move |s: &mut State| {
+        if s.bs_count.0 < s.bs_count.1 {
+            s.bs_count.0 = s.bs_count.0 + 1;
+            return Ok(true);
+        }
+        Ok(false)  // reached max bs connection
+    })
+}
 
 fn register_connection(state: &mut WeakState, trans: transport::Transport,
                        event_to_user: Event) -> io::Result<Endpoint> {
@@ -1094,10 +1114,61 @@ mod test {
                                                connections: HashMap::new(),
                                                listening_ports: HashSet::new(),
                                                stop_called: false,
+                                               bs_count: (0,1),
                                              }));
         assert!(bootstrap_off_list(state.downgrade(), vec![], false, 15).is_err());
         assert!(bootstrap_off_list(state.downgrade(),
                                    vec![Contact{endpoint: ep.clone()}], false, 15)
                 .is_ok());
+    }
+
+    #[test]
+    fn bootstrap_off_list_connects_multiple() {
+        let mut contacts = vec![];
+        let mut acceptors = vec![];
+        loop {
+            let acceptor = transport::new_acceptor(Port::Tcp(0)).unwrap();
+            let addr = match acceptor {
+                transport::Acceptor::Tcp(_, ref listener) => listener.local_addr()
+                    .unwrap(),
+                _ => panic!("Unable to create a new connection"),
+            };
+            let addr = match addr {
+                SocketAddr::V4(a) => if a.ip().is_unspecified() {
+                    SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1),
+                                                     a.port()))
+                } else {
+                    SocketAddr::V4(a)
+                },
+                SocketAddr::V6(a) => if a.ip().is_unspecified() {
+                    SocketAddr::V6(SocketAddrV6::new("::1".parse().unwrap(),
+                                                     a.port(), a.flowinfo(),
+                                                     a.scope_id()))
+                } else {
+                    SocketAddr::V6(a)
+                },
+            };
+            contacts.push(Contact{endpoint: Endpoint::Tcp(addr)});
+            acceptors.push(acceptor);
+            if contacts.len() == 5 {
+                break;
+            }
+        }
+
+        let (tx, _rx) = channel();
+
+        let state = Arc::new(Mutex::new(State{ event_pipe: tx,
+                                               connections: HashMap::new(),
+                                               listening_ports: HashSet::new(),
+                                               stop_called: false,
+                                               bs_count: (0,1),
+                                             }));
+        assert!(bootstrap_off_list(state.downgrade(), vec![], false, 15).is_err());
+        assert!(bootstrap_off_list(state.downgrade(),
+                                   contacts, false, 4)
+                .is_ok());
+
+        // TODO read if rx gets 4 bootstrap eps
+
     }
 }
