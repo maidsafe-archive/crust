@@ -17,10 +17,9 @@
 
 //use cbor;
 //use sodiumoxide::crypto::asymmetricbox;
-use rc::{Weak, Rc};
 use std::collections::{HashMap, HashSet};
 use std::io;
-use std::sync::{mpsc, Mutex};
+use std::sync::{Arc, mpsc, Mutex, Weak};
 use std::thread;
 use std::net::{IpAddr, SocketAddr, SocketAddrV4};
 
@@ -48,7 +47,7 @@ type WeakState = Weak<Mutex<State>>;
 /// https://github.com/maidsafe/crust/blob/master/docs/configuration_path.md for
 /// more information.
 pub struct ConnectionManager {
-    state: Rc<Mutex<State>>,
+    state: Arc<Mutex<State>>,
     beacon_guid_and_port: Option<(beacon::GUID, u16)>,
     config: Config,
     own_endpoints: Vec<(Endpoint, Arc<Mutex<Option<Endpoint>>>)>,
@@ -138,7 +137,7 @@ impl ConnectionManager {
             default
         });
 
-        let state = Rc::new(Mutex::new(State{ event_pipe: event_pipe,
+        let state = Arc::new(Mutex::new(State{ event_pipe: event_pipe,
                                                connections: HashMap::new(),
                                                listening_ports: HashSet::new(),
                                                stop_called: false,
