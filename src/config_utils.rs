@@ -89,7 +89,12 @@ pub fn read_config_file() -> io::Result<(Config)> {
 
     // Application support directory for all users
     let file_path = utils::system_app_support_dir().unwrap().join(file_name);
-    read_file(&file_path)
+    let res = read_file(&file_path);
+    if res.is_ok() {
+        return res;
+    }
+
+    Ok(Config::make_default())
 }
 
 fn read_file(file_name : &PathBuf) -> io::Result<(Config)> {
@@ -133,9 +138,28 @@ pub fn write_config_file(override_default_bootstrap: Option<bool>,
                          beacon_port: beacon_port
                             .unwrap_or(default.beacon_port),
                        };
-    let config_path = try!(exe_path_config());
-    try!(write_file(&config_path, &config));
-    Ok(config_path)
+
+    let mut config_path = try!(exe_path_config());
+    match write_file(&config_path, &config) {
+        Ok(()) => return Ok(config_path),
+        Err(_) => {}
+    }
+
+    let file_name = try!(get_file_name());
+
+    // Current user's application directory
+    config_path = utils::user_app_dir().unwrap().join(&file_name);
+    match write_file(&config_path, &config) {
+        Ok(()) => return Ok(config_path),
+        Err(_) => {}
+    }
+
+    // Application support directory for all users
+    config_path = utils::system_app_support_dir().unwrap().join(file_name);
+    match write_file(&config_path, &config) {
+        Ok(()) => return Ok(config_path),
+        Err(e) => Err(e)
+    }
 }
 
 

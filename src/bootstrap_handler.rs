@@ -45,8 +45,8 @@ pub struct BootstrapHandler {
 }
 
 impl BootstrapHandler {
-    fn get_file_path() -> path::PathBuf {
-        let path = env::current_exe().unwrap();
+    fn get_file_path() -> io::Result<(path::PathBuf)> {
+        let path = try!(env::current_exe());
         let name_with_extension = path.file_name().expect("Unknown filename");
         let mut name = path::Path::new(name_with_extension).file_stem()
             .expect("Unknown extension").to_os_string();
@@ -55,36 +55,36 @@ impl BootstrapHandler {
 
         let file_path = path.parent().unwrap().join(&name);
         if File::open(&file_path).is_ok() {
-            return file_path;
+            return Ok(file_path);
         }
 
         let file_path = utils::user_app_dir().unwrap().join(&name);
         if File::open(&file_path).is_ok() {
-            return file_path;
+            return Ok(file_path);
         }
 
         let file_path = utils::system_app_support_dir().unwrap();
         if File::open(&file_path).is_ok() {
-            return file_path;
+            return Ok(file_path);
         }
 
         if File::create(&file_path).is_ok() {
             let _ = remove_file(&file_path);
-            return file_path;
+            return Ok(file_path);
         }
 
         let file_path = utils::user_app_dir().unwrap().join(&name);
-        if File::create(&file_path).is_ok() {
-            let _ = remove_file(&file_path);
-            return file_path;
+        match File::create(&file_path) {
+            Ok(_) => {  let _ = remove_file(&file_path);
+                        return Ok(file_path);
+                    },
+            Err(e) => Err(e)
         }
-
-        path.parent().unwrap().join(name)
     }
 
     pub fn new() -> BootstrapHandler {
         BootstrapHandler {
-            file_path: BootstrapHandler::get_file_path(),
+            file_path: BootstrapHandler::get_file_path().unwrap(),
             last_updated: time::now(),
         }
     }
@@ -103,7 +103,6 @@ impl BootstrapHandler {
     }
 
     pub fn read_bootstrap_file(&mut self) -> io::Result<(Contacts)> {
-        self.file_path = BootstrapHandler::get_file_path();
         let mut file = try!(File::open(&self.file_path));
         let mut contents = String::new();
         let _ = try!(file.read_to_string(&mut contents));
@@ -130,8 +129,20 @@ impl BootstrapHandler {
 
     fn write_bootstrap_file(&mut self, mut contacts: Contacts) -> io::Result<()> {
         contacts = contacts.clone().into_iter().unique().collect();
-        self.file_path = BootstrapHandler::get_file_path();
-        let mut file = try!(File::create(&self.file_path));
+        let mut file = match File::create(&self.file_path) {
+            Ok(created_file) => created_file,
+            Err(e) => {
+                let user_dir = path::PathBuf::from(utils::user_app_dir().unwrap());
+                let mut file_path = self.file_path.clone();
+                file_path.pop();
+                if file_path != user_dir {
+                    try!(File::create(&self.file_path))
+                }
+                else {
+                    return Err(e)
+                }
+            }
+        };
         try!(write!(&mut file, "{}", json::as_pretty_json(&contacts)));
         file.sync_all()
     }

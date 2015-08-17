@@ -130,11 +130,7 @@ impl ConnectionManager {
     /// the sender half to this method. Receiver will receive all `Event`s from this library.
     pub fn new(event_pipe: mpsc::Sender<Event>) -> ConnectionManager {
         let config = read_config_file().unwrap_or_else(|e| {
-            println!("Crust failed to read config file; Error: {:?};", e);
-            let default = Config::make_default();
-            println!("Using default beacon_port {:?} and default bootstraping methods enabled",
-                default.beacon_port);
-            default
+            panic!("Crust failed to read config file; Error: {:?};", e);
         });
 
         let state = Arc::new(Mutex::new(State{ event_pipe: event_pipe,
