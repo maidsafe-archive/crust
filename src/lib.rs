@@ -30,8 +30,7 @@
 #![doc(html_logo_url = "http://maidsafe.net/img/Resources/branding/maidsafe_logo.fab2.png",
        html_favicon_url = "http://maidsafe.net/img/favicon.ico",
        html_root_url = "http:///dirvine.github.io/crust/crust/")]
-//#![feature(ip_addr, ip, arc_weak, socket_timeout, duration, negate_unsigned)]
-//#![feature(udp_extras)]
+#![feature(ip_addr, ip, arc_weak, socket_timeout, negate_unsigned)]
 
 extern crate cbor;
 extern crate rand;
@@ -44,7 +43,6 @@ extern crate utp;
 extern crate itertools;
 extern crate igd;
 extern crate net2;
-extern crate rc;
 
 #[cfg(test)]
 mod test {
