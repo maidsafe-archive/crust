@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-#![feature(negate_unsigned)]
+#![feature(negate_unsigned, rustc_private)]
 #![forbid(warnings)]
 #![deny(bad_style, deprecated, drop_with_repr_extern, improper_ctypes, non_shorthand_field_patterns,
         overflowing_literals, plugin_as_library, private_no_mangle_fns, private_no_mangle_statics,
@@ -25,6 +25,9 @@
 #![warn(trivial_casts, trivial_numeric_casts, unused, unused_extern_crates, unused_import_braces,
         unused_qualifications, unused_results, variant_size_differences)]
 
+#[macro_use]
+extern crate log;
+extern crate env_logger;
 extern crate crust;
 
 use std::sync::mpsc::channel;
@@ -33,6 +36,11 @@ use std::thread;
 use crust::{ConnectionManager, write_config_file};
 
 fn main() {
+    match env_logger::init() {
+        Ok(()) => {},
+        Err(e) => debug!("Error initialising logger; continuing without: {:?}", e)
+    }
+
     let _ = write_config_file(None, None, Some(9999)).unwrap();
     // We receive events (e.g. new connection, message received) from the ConnectionManager via an
     // asynchronous channel.

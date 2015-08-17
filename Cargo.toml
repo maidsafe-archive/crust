@@ -23,6 +23,9 @@ itertools = "*"
 igd = "0.1.3"
 net2 = "*"
 
+[dev-dependencies]
+env_logger = "*"
+
 [[example]]
 name = "simple_sender"
 path = "examples/simple_sender.rs"

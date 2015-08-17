@@ -30,7 +30,10 @@
 #![doc(html_logo_url = "http://maidsafe.net/img/Resources/branding/maidsafe_logo.fab2.png",
        html_favicon_url = "http://maidsafe.net/img/favicon.ico",
        html_root_url = "http:///dirvine.github.io/crust/crust/")]
-#![feature(ip_addr, ip, arc_weak, socket_timeout, negate_unsigned)]
+#![feature(ip_addr, ip, arc_weak, socket_timeout, negate_unsigned, rustc_private)]
+
+#[macro_use]
+extern crate log;
 
 extern crate cbor;
 extern crate rand;
