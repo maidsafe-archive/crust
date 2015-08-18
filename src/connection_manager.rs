@@ -604,7 +604,7 @@ fn increment_bs_count(state: &mut WeakState) -> io::Result<()> {
             s.bs_count.0 += 1;
             return Ok(());
         }
-        println!("Reached max bootstrap connections : {:?}; Reseting further bs connections", s.bs_count.0);
+        debug!("Reached max bootstrap connections : {:?}; Reseting further bs connections", s.bs_count.0);
         Err(io::Error::new(io::ErrorKind::Other, "Already reached max bootstrap connections"))
     })
 }
@@ -1186,4 +1186,5 @@ mod test {
             assert!(rx.try_recv().is_err());
         }
     }
+
 }
