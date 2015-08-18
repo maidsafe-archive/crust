@@ -65,7 +65,7 @@ Several methods are used for NAT traversal, UpNP, hole punching [See here for TC
 - [#215] (https://github.com/maidsafe/crust/issues/215) `connection_manager::get_own_endpoints()` should not return loopback address
 
 ## [0.2.5]
-- [#221] (https://github.com/maidsafe/crust/issues/221) getting more bootstrap connections then expected
+- [#221] (https://github.com/maidsafe/crust/issues/221) getting more bootstrap connections than expected
 
 ## Future work
 
