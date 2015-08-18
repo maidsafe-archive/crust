@@ -195,7 +195,7 @@ mod test {
         for a in i.iter() {
             responses.push(a);
         }
-        // println!("Responses: {:?}", responses);
+        // debug!("Responses: {:?}", responses);
         assert_eq!(10, responses.len());
     }
 
@@ -269,7 +269,7 @@ mod test {
             };
         }
 
-        // println!("Responses: {:?}", responses);
+        // debug!("Responses: {:?}", responses);
         assert_eq!((node_count() * MSG_COUNT), responses.len());
     }
 

@@ -76,6 +76,7 @@ struct State {
     connections: HashMap<Endpoint, Connection>,
     listening_ports: HashSet<Port>,
     stop_called: bool,
+    bs_count: (usize, usize), // (current, max)
 }
 
 fn map_external_port(port: &Port)
@@ -130,9 +131,9 @@ impl ConnectionManager {
     /// the sender half to this method. Receiver will receive all `Event`s from this library.
     pub fn new(event_pipe: mpsc::Sender<Event>) -> ConnectionManager {
         let config = read_config_file().unwrap_or_else(|e| {
-            println!("Crust failed to read config file; Error: {:?};", e);
+            debug!("Crust failed to read config file; Error: {:?};", e);
             let default = Config::make_default();
-            println!("Using default beacon_port {:?} and default bootstraping methods enabled",
+            debug!("Using default beacon_port {:?} and default bootstraping methods enabled",
                 default.beacon_port);
             default
         });
@@ -141,6 +142,7 @@ impl ConnectionManager {
                                                connections: HashMap::new(),
                                                listening_ports: HashSet::new(),
                                                stop_called: false,
+                                               bs_count: (0,0),
                                              }));
 
         ConnectionManager { state: state, beacon_guid_and_port: None,
@@ -272,6 +274,7 @@ impl ConnectionManager {
         let mut ws = self.state.downgrade();
         let _ = lock_mut_state(&mut ws, |s: &mut State| {
             let _ = s.connections.clear();
+            s.bs_count = (0, max_successful_bootstrap_connection.clone());
             Ok(())
         });
 
@@ -287,11 +290,11 @@ impl ConnectionManager {
                 match bootstrap_off_list(ws.clone(), contacts.clone(), bs_file_lock,
                                          max_successful_bootstrap_connection) {
                     Ok(_) => {
-                        println!("Got at least one bootstrap connection. Breaking bootstrap loop.");
+                        debug!("Got at least one bootstrap connection. Breaking bootstrap loop.");
                         break;
                     },
                     Err(_) => {
-                        // println!("Failed to get at least one bootstrap connection. continuing bootstrap loop");
+                        // debug!("Failed to get at least one bootstrap connection. continuing bootstrap loop");
                     }
                 }
                 // breaking the loop if stop called
@@ -329,7 +332,7 @@ impl ConnectionManager {
                 Ok(())
             });
         }
-        // println!("connection_manager::stop There are {} TCP ports being listened on", listening_ports.len());
+        // debug!("connection_manager::stop There are {} TCP ports being listened on", listening_ports.len());
         for port in listening_ports {
             let _ = transport::connect(Endpoint::tcp(("127.0.0.1", port.get_port()))).unwrap();
         }
@@ -569,6 +572,11 @@ fn handle_accept(mut state: WeakState, trans: transport::Transport) -> io::Resul
 
 fn handle_connect(mut state: WeakState, trans: transport::Transport,
                   is_broadcast_acceptor: bool, is_bootstrap_connection: bool) -> io::Result<Endpoint> {
+
+    if is_bootstrap_connection {
+        try!(increment_bs_count(&mut state));
+    }
+
     let remote_ep = trans.remote_endpoint.clone();
     let event = match is_bootstrap_connection {
         true => Event::NewBootstrapConnection(remote_ep),
@@ -590,6 +598,16 @@ fn handle_connect(mut state: WeakState, trans: transport::Transport,
     endpoint
 }
 
+fn increment_bs_count(state: &mut WeakState) -> io::Result<()> {
+    lock_mut_state(state, move |s: &mut State| {
+        if s.bs_count.0 < s.bs_count.1 {
+            s.bs_count.0 += 1;
+            return Ok(());
+        }
+        debug!("Reached max bootstrap connections : {:?}; Reseting further bs connections", s.bs_count.0);
+        Err(io::Error::new(io::ErrorKind::Other, "Already reached max bootstrap connections"))
+    })
+}
 
 fn register_connection(state: &mut WeakState, trans: transport::Transport,
                        event_to_user: Event) -> io::Result<Endpoint> {
@@ -800,13 +818,13 @@ mod test {
         let (cm2_i, cm2_o) = channel();
         let mut cm2 = ConnectionManager::new(cm2_i);
         let cm2_eps = cm2.start_accepting(vec![]).unwrap();
-        println!("   cm2 listening port {}", cm2_eps[0].get_port());
+        debug!("   cm2 listening port {}", cm2_eps[0].get_port());
 
         cm2.bootstrap(1);
 
         match cm2_o.recv() {
             Ok(Event::NewBootstrapConnection(ep)) => {
-                println!("NewBootstrapConnection {:?}", ep);
+                debug!("NewBootstrapConnection {:?}", ep);
             }
             _ => { assert!(false, "Failed to receive NewBootstrapConnection event")}
         }
@@ -823,21 +841,21 @@ mod test {
                 for i in o.iter() {
                     match i {
                         Event::NewConnection(other_ep) => {
-                            // println!("Connected {:?}", other_ep);
+                            // debug!("Connected {:?}", other_ep);
                             let _ = cm.send(other_ep.clone(), encode(&"hello world".to_string()));
                         },
                         Event::NewMessage(_, _) => {
-                            // println!("New message from {:?} data:{:?}",
+                            // debug!("New message from {:?} data:{:?}",
                             //          from_ep, decode::<String>(data));
                             break;
                         },
                         Event::LostConnection(_) => {
-                            // println!("Lost connection to {:?}", other_ep);
+                            // debug!("Lost connection to {:?}", other_ep);
                         }
                         Event::NewBootstrapConnection(_) => {}
                     }
                 }
-                // println!("done");
+                // debug!("done");
             })
         };
 
@@ -887,7 +905,7 @@ mod test {
                         Event::NewBootstrapConnection(_) => {}
                     }
                 }
-                // println!("done");
+                // debug!("done");
             })
         };
 
@@ -1023,20 +1041,20 @@ mod test {
            loop {
                 let event = cm_rx.recv();
                 if event.is_err() {
-                  // println!("stop listening");
+                  // debug!("stop listening");
                   break;
                 }
                 match event.unwrap() {
                     Event::NewMessage(_, _) => {
-                        // println!("received from {} with a new message : {}",
+                        // debug!("received from {} with a new message : {}",
                         //          match endpoint { Endpoint::Tcp(socket_addr) => socket_addr },
                         //          match String::from_utf8(bytes) { Ok(msg) => msg, Err(_) => "unknown msg".to_string() });
                     },
                     Event::NewConnection(_) => {
-                        // println!("adding new node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
+                        // debug!("adding new node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
                     },
                     Event::LostConnection(_) => {
-                        // println!("dropping node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
+                        // debug!("dropping node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
                         break;
                     }
                     Event::NewBootstrapConnection(_) => {}
@@ -1052,7 +1070,7 @@ mod test {
             // setting the listening port to be greater than 4455 will make the test hanging
             let _ = match cm_aux.start_accepting(vec![]) {
                 Ok(result) => {
-                      // println!("aux listening on {} ",
+                      // debug!("aux listening on {} ",
                       //          match result.0[0].clone() { Endpoint::Tcp(socket_addr) => { socket_addr } });
                       result[0].clone()
                     },
@@ -1094,10 +1112,79 @@ mod test {
                                                connections: HashMap::new(),
                                                listening_ports: HashSet::new(),
                                                stop_called: false,
+                                               bs_count: (0,1),
                                              }));
         assert!(bootstrap_off_list(state.downgrade(), vec![], false, 15).is_err());
         assert!(bootstrap_off_list(state.downgrade(),
                                    vec![Contact{endpoint: ep.clone()}], false, 15)
                 .is_ok());
     }
+
+    #[test]
+    fn bootstrap_off_list_connects_multiple() {
+        let max_count = 4;
+        let available_peer_count = 10;
+
+        let mut contacts = vec![];
+        let mut acceptors = vec![];
+        loop {
+            let acceptor = transport::new_acceptor(Port::Tcp(0)).unwrap();
+            let addr = match acceptor {
+                transport::Acceptor::Tcp(_, ref listener) => listener.local_addr()
+                    .unwrap(),
+                _ => panic!("Unable to create a new connection"),
+            };
+            let addr = match addr {
+                SocketAddr::V4(a) => if a.ip().is_unspecified() {
+                    SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1),
+                                                     a.port()))
+                } else {
+                    SocketAddr::V4(a)
+                },
+                SocketAddr::V6(a) => if a.ip().is_unspecified() {
+                    SocketAddr::V6(SocketAddrV6::new("::1".parse().unwrap(),
+                                                     a.port(), a.flowinfo(),
+                                                     a.scope_id()))
+                } else {
+                    SocketAddr::V6(a)
+                },
+            };
+            contacts.push(Contact{endpoint: Endpoint::Tcp(addr)});
+            acceptors.push(acceptor);
+            if contacts.len() == available_peer_count {
+                break;
+            }
+        }
+
+        let (tx, rx) = channel();
+        let state = Arc::new(Mutex::new(State{ event_pipe: tx,
+                                               connections: HashMap::new(),
+                                               listening_ports: HashSet::new(),
+                                               stop_called: false,
+                                               bs_count: (0,max_count),
+                                             }));
+        assert!(bootstrap_off_list(state.downgrade(), vec![], false, 15).is_err());
+        assert!(bootstrap_off_list(state.downgrade(),
+                                   contacts.clone(), false, max_count)
+                .is_ok());
+
+        // read if rx gets max_count bootstrap eps
+        let mut received_event_count = 0;
+        while received_event_count < max_count {
+            match rx.recv() {
+                Ok(Event::NewBootstrapConnection(ep)) => {
+                    assert!(contacts.contains(&Contact{endpoint: ep}));
+                    received_event_count += 1;
+                },
+                _ => { panic!("Unexpected event !")},
+            }
+        }
+
+        // should not get any more than max bs connections
+        for _ in 0..10 {
+            thread::sleep_ms(100);
+            assert!(rx.try_recv().is_err());
+        }
+    }
+
 }

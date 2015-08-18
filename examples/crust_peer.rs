@@ -17,7 +17,7 @@
 
 // String.as_str() is unstable; waiting RFC revision
 // http://doc.rust-lang.org/nightly/std/string/struct.String.html#method.as_str
-#![feature(convert, core, negate_unsigned)]
+#![feature(convert, core, negate_unsigned, rustc_private)]
 #![forbid(warnings)]
 #![deny(bad_style, deprecated, drop_with_repr_extern, improper_ctypes, non_shorthand_field_patterns,
         overflowing_literals, plugin_as_library, private_no_mangle_fns, private_no_mangle_statics,
@@ -27,6 +27,9 @@
 #![warn(trivial_casts, trivial_numeric_casts, unused, unused_extern_crates, unused_import_braces,
         unused_qualifications, unused_results, variant_size_differences)]
 
+#[macro_use]
+extern crate log;
+extern crate env_logger;
 extern crate core;
 extern crate crust;
 extern crate rustc_serialize;
@@ -312,6 +315,11 @@ fn on_time_out(ms: u32, flag_speed: bool, bootstrap_peers: Option<Vec<Endpoint>>
 }
 
 fn main() {
+    match env_logger::init() {
+        Ok(()) => {},
+        Err(e) => println!("Error initialising logger; continuing without: {:?}", e)
+    }
+
     let args: Args = Docopt::new(USAGE)
                             .and_then(|docopt| docopt.decode())
                             .unwrap_or_else(|error| error.exit());
@@ -435,11 +443,11 @@ fn main() {
             for _ in 0..times {
                 match connection_manager.send(peer.clone(),
                                               generate_random_vec_u8(length as usize)) {
-                    Ok(()) => println!("Sent a message with length of {} bytes to {:?}", length,
+                    Ok(()) => debug!("Sent a message with length of {} bytes to {:?}", length,
                                        peer),
                     Err(_) => {
                         stdout = red_foreground(stdout);
-                        println!("Lost connection to peer.  Exiting.");
+                        debug!("Lost connection to peer.  Exiting.");
                         let _ = reset_foreground(stdout);
                         return;
                     },
