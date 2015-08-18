@@ -16,6 +16,7 @@
 // relating to use of the SAFE Network Software.
 
 use time;
+use std::fs;
 use std::fs::File;
 use std::fs::remove_file;
 use std::io::prelude::*;
@@ -63,7 +64,7 @@ impl BootstrapHandler {
             return Ok(file_path);
         }
 
-        let file_path = utils::system_app_support_dir().unwrap();
+        let file_path = utils::system_app_support_dir().unwrap().join(&name);
         if File::open(&file_path).is_ok() {
             return Ok(file_path);
         }
@@ -77,16 +78,17 @@ impl BootstrapHandler {
         match File::create(&file_path) {
             Ok(_) => {  let _ = remove_file(&file_path);
                         return Ok(file_path);
-                    },
+                     },
             Err(e) => Err(e)
         }
     }
 
-    pub fn new() -> BootstrapHandler {
-        BootstrapHandler {
-            file_path: BootstrapHandler::get_file_path().unwrap(),
+    pub fn new() -> io::Result<(BootstrapHandler)> {
+        let file_path = try!(BootstrapHandler::get_file_path());
+        Ok(BootstrapHandler {
+            file_path: file_path,
             last_updated: time::now(),
-        }
+        })
     }
 
     pub fn get_update_duration() -> time::Duration {
@@ -132,11 +134,19 @@ impl BootstrapHandler {
         let mut file = match File::create(&self.file_path) {
             Ok(created_file) => created_file,
             Err(e) => {
-                let user_dir = path::PathBuf::from(utils::user_app_dir().unwrap());
+                let mut user_dir = path::PathBuf::from(utils::user_app_dir().unwrap());
                 let mut file_path = self.file_path.clone();
                 file_path.pop();
                 if file_path != user_dir {
-                    try!(File::create(&self.file_path))
+                    match fs::create_dir_all(&user_dir) {
+                        Ok(_) => {
+                            user_dir.push(self.file_path.file_name().unwrap());
+                            let file =  try!(File::create(&user_dir));
+                            self.file_path = user_dir;
+                            file
+                        },
+                        Err(e) => return Err(e)
+                    }
                 }
                 else {
                     return Err(e)
@@ -176,6 +186,7 @@ impl BootstrapHandler {
 #[cfg(test)]
 mod test {
     use super::*;
+    use std::fs::File;
     use std::{net, fs};
     use std::net::{SocketAddr, Ipv4Addr};
     use transport::Endpoint;
@@ -184,6 +195,7 @@ mod test {
     use std::path::{Path, PathBuf};
     use config_utils::{Contact, Contacts};
     use std::env;
+    use utils;
 
     use super::MAX_CONTACTS;
 
@@ -192,8 +204,168 @@ mod test {
         let name_with_extension = path.file_name().unwrap();
         let mut name = Path::new(name_with_extension).file_stem()
             .unwrap().to_os_string();
+        println!("{}", name.to_str().unwrap());
         name.push(".crust.bootstrap.cache");
         path.parent().unwrap().join(name)
+    }
+
+    fn remove_bootstrap_files() {
+        let file_path = get_file_path();
+        let name_with_extension = file_path.file_name().unwrap();
+        println!("{}", name_with_extension.to_str().unwrap());
+
+        let _ = fs::remove_file(get_file_path());
+        let _ = fs::remove_file(utils::user_app_dir().unwrap().join(&name_with_extension));
+    }
+
+    fn create_contacts() -> Contacts {
+        let addr = net::SocketAddrV4::new(net::Ipv4Addr::new(1,2,3,4), 8080);
+        let contact  = Contact { endpoint: Endpoint::Tcp(SocketAddr::V4(addr)) };
+        let mut contacts = Contacts::new();
+        contacts.push(contact.clone());
+        contacts
+    }
+
+    #[test]
+    fn file_does_not_exist() {
+        remove_bootstrap_files();
+        assert!(BootstrapHandler::new().is_err());
+    }
+
+    #[test]
+    fn file_in_local_dir() {
+        remove_bootstrap_files();
+        let path = get_file_path();
+        if File::create(&path).is_err() {
+            assert!(false);
+            return;
+        }
+
+        match BootstrapHandler::new().as_mut() {
+            Ok(handler) =>  {
+                let contacts = create_contacts();
+                match handler.write_bootstrap_file(contacts.clone()) {
+                    Ok(_) => {
+                                assert_eq!(path, handler.file_path);
+                                match handler.read_bootstrap_file() {
+                                    Ok(returned) => assert_eq!(returned, contacts),
+                                    Err(_) => assert!(false)
+                             }},
+                    Err(_) =>  assert!(false)
+                }},
+            Err(_) =>  { assert!(false); return }
+        };
+    }
+
+    #[test]
+    fn file_in_user_app_dir() {
+        remove_bootstrap_files();
+        let path = get_file_path();
+        let name_with_extension = path.file_name().unwrap();
+        let user_dir_path = utils::user_app_dir().unwrap();
+        assert!(fs::create_dir_all(&user_dir_path).is_ok());
+        let copy_dir_path = user_dir_path.clone();
+        let user_dir_path = user_dir_path.join(&name_with_extension);
+        if !File::create(&user_dir_path).is_ok() {
+            assert!(false);
+            return
+        };
+
+        match BootstrapHandler::new().as_mut() {
+            Ok(handler) => {
+                   assert_eq!(user_dir_path, handler.file_path);
+                   let contacts = create_contacts();
+                   match handler.write_bootstrap_file(contacts.clone()) {
+                       Ok(_) => { match handler.read_bootstrap_file() {
+                                    Ok(returned) => assert_eq!(returned, contacts),
+                                     Err(_) => assert!(false)
+                                 }},
+                        Err(_) =>  assert!(false)
+                    }
+                },
+            Err(_) =>  { assert!(false); return }
+        };
+        let _ = fs::remove_dir_all(&copy_dir_path);
+    }
+
+    /// please note this test requires the related crust.bootstrap.cache to exist in system path.
+    #[test]
+    fn file_in_system_app_dir() {
+        remove_bootstrap_files();
+        let path = get_file_path();
+        let name_with_extension = path.file_name().unwrap();
+        let system_dir_path = utils::system_app_support_dir().unwrap().join(&name_with_extension);
+        let user_dir_path = utils::user_app_dir().unwrap().join(&name_with_extension);
+        match BootstrapHandler::new().as_mut() {
+            Ok(handler) => {
+                assert_eq!(system_dir_path, handler.file_path);
+                let contacts = create_contacts();
+                match handler.write_bootstrap_file(contacts.clone()) {
+                    Ok(_) => { match handler.read_bootstrap_file() {
+                                  Ok(returned) => assert_eq!(returned, contacts),
+                                  Err(_) => { assert!(false); return }
+                             }},
+                    Err(_) =>  { assert!(false); return }
+                }
+                assert_eq!(user_dir_path, handler.file_path);
+            },
+            Err(_) =>  {  assert!(false); return }
+        };
+    }
+
+    #[test]
+    fn file_in_local_and_user_and_system() {
+        remove_bootstrap_files();
+        let path = get_file_path();
+        assert!(File::create(&path).is_ok());
+        let name_with_extension = path.file_name().unwrap();
+        let user_dir_path = utils::user_app_dir().unwrap();
+        assert!(fs::create_dir_all(&user_dir_path).is_ok());
+        let copy_dir_path = user_dir_path.clone();
+        let user_dir_path = user_dir_path.join(&name_with_extension);
+        assert!(File::create(&user_dir_path).is_ok());
+        match BootstrapHandler::new().as_mut() {
+            Ok(handler) => {
+                assert_eq!(path, handler.file_path);
+                let contacts = create_contacts();
+                match handler.write_bootstrap_file(contacts.clone()) {
+                    Ok(_) => { match handler.read_bootstrap_file() {
+                                  Ok(returned) => assert_eq!(returned, contacts),
+                                  Err(_) => assert!(false)
+                             }},
+                    Err(_) =>  assert!(false)
+                }
+            },
+            Err(_) =>  { assert!(false); return }
+        };
+        let _ = fs::remove_dir_all(&copy_dir_path);
+    }
+
+    #[test]
+    fn file_in_user_and_system() {
+        remove_bootstrap_files();
+        let path = get_file_path();
+        let name_with_extension = path.file_name().unwrap();
+        let user_dir_path = utils::user_app_dir().unwrap();
+        assert!(fs::create_dir_all(&user_dir_path).is_ok());
+        let copy_dir_path = user_dir_path.clone();
+        let user_dir_path = user_dir_path.join(&name_with_extension);
+        assert!(File::create(&user_dir_path).is_ok());
+        match BootstrapHandler::new().as_mut() {
+            Ok(handler) => {
+                assert_eq!(user_dir_path, handler.file_path);
+                let contacts = create_contacts();
+                match handler.write_bootstrap_file(contacts.clone()) {
+                    Ok(_) => { match handler.read_bootstrap_file() {
+                                  Ok(returned) => assert_eq!(returned, contacts),
+                                  Err(_) => assert!(false)
+                             }},
+                    Err(_) =>  assert!(false)
+                }
+            },
+            Err(_) =>  { assert!(false); return }
+        };
+        let _ = fs::remove_dir_all(&copy_dir_path);
     }
 
     #[test]
@@ -231,7 +403,10 @@ mod test {
         let file_path = get_file_path();
         let path = Path::new(&file_path);
 
-        let mut bootstrap_handler = BootstrapHandler::new();
+        let mut bootstrap_handler = match BootstrapHandler::new() {
+            Ok(handler) => handler,
+            Err(_) => { assert!(false); return }
+        };
         let file = fs::File::create(&path);
         assert!(file.is_ok());
 
@@ -288,7 +463,10 @@ mod test {
         let file_path = get_file_path();
         let path = Path::new(&file_path);
 
-        let mut bootstrap_handler = BootstrapHandler::new();
+        let mut bootstrap_handler = match BootstrapHandler::new() {
+            Ok(handler) => handler,
+            Err(_) => { assert!(false); return }
+        };
         let file = fs::File::create(&path);
         assert!(file.is_ok());
 
@@ -387,7 +565,10 @@ mod test {
         let file_path = get_file_path();
         let path = Path::new(&file_path);
 
-        let mut bootstrap_handler = BootstrapHandler::new();
+        let mut bootstrap_handler = match BootstrapHandler::new() {
+            Ok(handler) => handler,
+            Err(_) => { assert!(false); return }
+        };
         let file = fs::File::create(&path);
         assert!(file.is_ok());
 
@@ -438,7 +619,10 @@ mod test {
 
         let file_path = get_file_path();
         let path = Path::new(&file_path);
-        let mut bootstrap_handler = BootstrapHandler::new();
+        let mut bootstrap_handler = match BootstrapHandler::new() {
+            Ok(handler) => handler,
+            Err(_) => { assert!(false); return }
+        };
         let file = fs::File::create(&path);
 
         // check that the file got created...

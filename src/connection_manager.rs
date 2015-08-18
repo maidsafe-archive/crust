@@ -162,7 +162,7 @@ impl ConnectionManager {
                 // let public_key =
                 //     PublicKey::Asym(asymmetricbox::PublicKey([0u8; asymmetricbox::PUBLICKEYBYTES]));
 
-                let mut bootstrap_handler = BootstrapHandler::new();
+                let mut bootstrap_handler = try!(BootstrapHandler::new());
                 let port = hint.get(0).map(|ref e| -> Port { *e.clone() })
                     .unwrap_or(Port::Tcp(0));
                 self.listen(port);
@@ -187,10 +187,18 @@ impl ConnectionManager {
                 let _ = thread::Builder::new().name("ConnectionManager beacon acceptor".to_string())
                                               .spawn(move || {
                     while let Ok(mut transport) = acceptor.accept() {
-                        let mut handler = BootstrapHandler::new();
-                        let read_contacts = handler.get_serialised_contacts();
-                        if read_contacts.is_ok() {
-                            let _ = transport.sender.send(&read_contacts.unwrap());
+                        let mut bootstrap_handler = match BootstrapHandler::new() {
+                            Ok(handler) => Some(handler),
+                            Err(_) => { None }
+                        };
+                        match bootstrap_handler.as_mut() {
+                            Some(handler) => {
+                                let read_contacts = handler.get_serialised_contacts();
+                                if read_contacts.is_ok() {
+                                    let _ = transport.sender.send(&read_contacts.unwrap());
+                                }
+                            },
+                            None => {}
                         }
                     }
                 });
@@ -447,14 +455,16 @@ impl ConnectionManager {
         } else {
             let cached_contacts = match beacon_guid_and_port.is_some() {  // this node owns bs file
                 true => {
-                    if let Ok(contacts) = BootstrapHandler::new().read_bootstrap_file() {
-                        contacts
-                    } else {
-                        vec![]
+                    match BootstrapHandler::new().as_mut() {
+                        Ok(handler) => { match handler.read_bootstrap_file() {
+                                            Ok(contacts) => contacts,
+                                            Err(_) => vec![]
+                                         }
+                                       },
+                        Err(_) => vec![]
                     }
                 },
                 _ => vec![],
-
             };
             let beacon_guid = beacon_guid_and_port
                 .map(|beacon_guid_and_port| beacon_guid_and_port.0);
@@ -578,7 +588,7 @@ fn handle_connect(mut state: WeakState, trans: transport::Transport,
             contacts.push(Contact { endpoint: endpoint.clone() });
             // TODO PublicKey for contact required...
             // let public_key = PublicKey::Asym(asymmetricbox::PublicKey([0u8; asymmetricbox::PUBLICKEYBYTES]));
-            let mut bootstrap_handler = BootstrapHandler::new();
+            let mut bootstrap_handler = try!(BootstrapHandler::new());
             // TODO: provide a prune list as the second argument to update_contacts
             let _ = bootstrap_handler.update_contacts(contacts, Contacts::new());
         }
