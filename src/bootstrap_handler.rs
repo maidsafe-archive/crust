@@ -236,11 +236,7 @@ mod test {
     fn file_in_local_dir() {
         remove_bootstrap_files();
         let path = get_file_path();
-        if File::create(&path).is_err() {
-            assert!(false);
-            return;
-        }
-
+        assert!(File::create(&path).is_ok());
         match BootstrapHandler::new().as_mut() {
             Ok(handler) =>  {
                 let contacts = create_contacts();
@@ -266,10 +262,7 @@ mod test {
         assert!(fs::create_dir_all(&user_dir_path).is_ok());
         let copy_dir_path = user_dir_path.clone();
         let user_dir_path = user_dir_path.join(&name_with_extension);
-        if !File::create(&user_dir_path).is_ok() {
-            assert!(false);
-            return
-        };
+        assert!(File::create(&user_dir_path).is_ok());
 
         match BootstrapHandler::new().as_mut() {
             Ok(handler) => {
