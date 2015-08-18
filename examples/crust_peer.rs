@@ -202,7 +202,7 @@ impl FlatWorld {
                     false => None,
                 }).collect::<Vec<_>>();
         if connected_nodes.is_empty() {
-            debug!("No connected nodes.");
+            println!("No connected nodes.");
         } else {
             if connected_nodes.len() == 1 {
                 print!("1 connected node:");
@@ -212,7 +212,7 @@ impl FlatWorld {
             for i in 0..connected_nodes.len() {
                 print!(" {:?}", connected_nodes[i]);
             }
-            debug!("");
+            println!("");
         }
     }
 
@@ -223,7 +223,7 @@ impl FlatWorld {
             self.performance_start = time::SteadyTime::now();
         }
         if self.performance_start + self.performance_interval < time::SteadyTime::now() {
-            debug!("\nReceived {} messages with total size of {} bytes in last {} seconds.",
+            println!("\nReceived {} messages with total size of {} bytes in last {} seconds.",
                      self.received_msgs, self.received_bytes, self.performance_interval.num_seconds());
             self.received_msgs = 0;
             self.received_bytes = 0;
@@ -286,14 +286,14 @@ fn on_time_out(ms: u32, flag_speed: bool, bootstrap_peers: Option<Vec<Endpoint>>
                 let mut stdout = term::stdout();
                 if flag_speed {
                     stdout = red_foreground(stdout);
-                    debug!("Failed to connect to a peer.  Exiting.");
+                    println!("Failed to connect to a peer.  Exiting.");
                     let _ = reset_foreground(stdout);
                     std::process::exit(2);
                 }
                 match bootstrap_peers {
                 Some(_) => {
                     stdout = red_foreground(stdout);
-                    debug!("Failed to bootstrap from provided peers. \nSince peers \
+                    println!("Failed to bootstrap from provided peers. \nSince peers \
                              were provided, this is assumed to NOT be the first node of a new \
                              network.\nExiting.");
                     let _ = reset_foreground(stdout);
@@ -301,7 +301,7 @@ fn on_time_out(ms: u32, flag_speed: bool, bootstrap_peers: Option<Vec<Endpoint>>
                 },
                 None => {
                     stdout = yellow_foreground(stdout);
-                    debug!("Didn't bootstrap to an existing network - this may be the first node \
+                    println!("Didn't bootstrap to an existing network - this may be the first node \
                                  of a new network.");
                     let _ = reset_foreground(stdout);
                 },
@@ -317,7 +317,7 @@ fn on_time_out(ms: u32, flag_speed: bool, bootstrap_peers: Option<Vec<Endpoint>>
 fn main() {
     match env_logger::init() {
         Ok(()) => {},
-        Err(e) => debug!("Error initialising logger; continuing without: {:?}", e)
+        Err(e) => println!("Error initialising logger; continuing without: {:?}", e)
     }
 
     let args: Args = Docopt::new(USAGE)
@@ -376,27 +376,27 @@ fn main() {
                     stdout_copy = cyan_foreground(stdout_copy);
                     let message_length = bytes.len();
                     my_flat_world.record_received(message_length as u32);
-                    debug!("\nReceived from {:?} message: {}", endpoint,
+                    println!("\nReceived from {:?} message: {}", endpoint,
                              String::from_utf8(bytes)
                              .unwrap_or(format!("non-UTF-8 message of {} bytes",
                                                 message_length)));
                 },
                 crust::Event::NewConnection(endpoint) => {
                     stdout_copy = cyan_foreground(stdout_copy);
-                    debug!("\nConnected to peer at {:?}", endpoint);
+                    println!("\nConnected to peer at {:?}", endpoint);
                     my_flat_world.add_node(CrustNode::new(endpoint, true));
                     my_flat_world.print_connected_nodes();
                 },
                 crust::Event::LostConnection(endpoint) => {
                     stdout_copy = yellow_foreground(stdout_copy);
-                    debug!("\nLost connection to peer at {:?}", endpoint);
+                    println!("\nLost connection to peer at {:?}", endpoint);
                     stdout_copy = cyan_foreground(stdout_copy);
                     my_flat_world.drop_node(CrustNode::new(endpoint, false));
                     my_flat_world.print_connected_nodes();
                 },
                 crust::Event::NewBootstrapConnection(endpoint) => {
                     stdout_copy = cyan_foreground(stdout_copy);
-                    debug!("\nNew BootstrapConnection to peer at {:?}", endpoint);
+                    println!("\nNew BootstrapConnection to peer at {:?}", endpoint);
                     my_flat_world.add_node(CrustNode::new(endpoint.clone(), true));
                     my_flat_world.print_connected_nodes();
                     let _ = bs_sender.send(endpoint);
@@ -411,7 +411,7 @@ fn main() {
         Ok(join_handle) => join_handle,
         Err(e) => {
             stdout = red_foreground(stdout);
-            debug!("Failed to start event-handling thread: {}", e);
+            println!("Failed to start event-handling thread: {}", e);
             let _ = reset_foreground(stdout);
             std::process::exit(4);
         },
@@ -420,17 +420,17 @@ fn main() {
     let tx = on_time_out(5000, running_speed_test, bootstrap_peers);
     // Block until we get one bootstrap connection
     let connected_peer = bs_receiver.recv().unwrap_or_else(|e| {
-        debug!("CrustNode event handler closed; error : {}", e);
+        println!("CrustNode event handler closed; error : {}", e);
         std::process::exit(5);
     });
 
     stdout = green_foreground(stdout);
-    debug!("Bootstrapped to {:?}", connected_peer);
+    println!("Bootstrapped to {:?}", connected_peer);
     stdout = reset_foreground(stdout);
     let _ = tx.send(true); // stop timer with no error messages
 
     thread::sleep_ms(100);
-    debug!("");
+    println!("");
 
     if running_speed_test {  // Processing interaction till receiving ctrl+C
         let speed = args.flag_speed.unwrap();  // Safe due to `running_speed_test` == true
@@ -470,8 +470,8 @@ fn main() {
                 Ok(args) => args,
                 Err(error) => {
                     match error {
-                        docopt::Error::Decode(what) => debug!("{}", what),
-                        _ => debug!("Invalid command."),
+                        docopt::Error::Decode(what) => println!("{}", what),
+                        _ => println!("Invalid command."),
                     };
                     continue
                 },
@@ -499,24 +499,24 @@ fn main() {
                 match connection_manager.send(peer.clone(), message.clone().into_bytes()) {
                     Ok(()) => {
                         stdout = green_foreground(stdout);
-                        debug!("Successfully sent \"{}\" to {:?}", message, peer);
+                        println!("Successfully sent \"{}\" to {:?}", message, peer);
                         stdout = reset_foreground(stdout)
                     },
                     Err(error) => {
                         match error.kind() {
                             io::ErrorKind::NotConnected => {
                                 stdout = yellow_foreground(stdout);
-                                debug!("Failed to send: we have no connection to {:?}", peer);
+                                println!("Failed to send: we have no connection to {:?}", peer);
                                 stdout = reset_foreground(stdout)
                             },
                             io::ErrorKind::BrokenPipe => {
                                 stdout = yellow_foreground(stdout);
-                                debug!("Failed to send to {:?}: internal channel error.", peer);
+                                println!("Failed to send to {:?}: internal channel error.", peer);
                                 stdout = reset_foreground(stdout)
                             },
                             _ => {
                                 stdout = yellow_foreground(stdout);
-                                debug!("Failed to send to {:?}: unexpected error.", peer);
+                                println!("Failed to send to {:?}: unexpected error.", peer);
                                 stdout = reset_foreground(stdout)
                             },
                         }
@@ -525,7 +525,7 @@ fn main() {
             } else if args.cmd_stop {
                 let _  = fs::remove_file(&config_path);
                 stdout = green_foreground(stdout);
-                debug!("Stopped.");
+                println!("Stopped.");
                 let _ = reset_foreground(stdout);
                 break;
             }
