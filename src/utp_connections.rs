@@ -106,3 +106,48 @@ fn upgrade_reader<'a, T>(socket: UtpWrapper) -> Receiver<T>
     });
     rx
 }
+
+#[allow(unused)]
+mod test {
+    use super::*;
+    use std::thread;
+    use std::net::{SocketAddr, SocketAddrV4, Ipv4Addr, UdpSocket};
+
+    #[test]
+    fn cannot_establish_connection() {
+        let listener = UdpSocket::bind({
+            SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), 0)
+        }).unwrap();
+        let port = listener.local_addr().unwrap().port();
+        drop(listener);
+        let _err = connect_utp::<u32, u32>(SocketAddr::V4({
+            SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), port)
+        })).err().unwrap();
+    }
+
+    #[test]
+    fn establishing_connection() {
+        let listener = listen(0).unwrap();
+        let _ = connect_utp::<u32, u32>(SocketAddr::V4({
+            SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), listener.1)
+        })).unwrap();
+    }
+
+    #[test]
+    fn send_receive_data() {
+        let listener = listen(0).unwrap();
+        let (i, o) = connect_utp::<u32, u32>(SocketAddr::V4({
+            SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), listener.1)
+        })).unwrap();
+        let listener = listener.0;
+        let thread = thread::spawn(move || {
+            o.send(42u32);
+            assert_eq!(i.recv().unwrap(), 43u32);
+        });
+        let s = listener.recv().unwrap().0;
+        let (i, o) = upgrade_utp::<u32, u32>(s).unwrap();
+        assert_eq!(i.recv().unwrap(), 42);
+        o.send(43);
+        thread.join();
+    }
+}
