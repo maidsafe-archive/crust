@@ -6,13 +6,13 @@ platform:
   - x64
 
 configuration:
-  # - Debug
+# - Debug
   - Release
 
 environment:
   matrix:
-    # - RUST_VERSION: 1.1.0
-    # - RUST_VERSION: beta
+#	- RUST_VERSION: 1.1.0
+#	- RUST_VERSION: beta
     - RUST_VERSION: nightly
 
 build: false
