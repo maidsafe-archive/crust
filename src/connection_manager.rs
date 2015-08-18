@@ -574,10 +574,7 @@ fn handle_connect(mut state: WeakState, trans: transport::Transport,
                   is_broadcast_acceptor: bool, is_bootstrap_connection: bool) -> io::Result<Endpoint> {
 
     if is_bootstrap_connection {
-        let res = try!(increment_bs_count(&mut state));
-        if !res {
-            return Err(io::Error::new(io::ErrorKind::Other, "Already reached max bootstrap connections"));
-        }
+        try!(increment_bs_count(&mut state));
     }
 
     let remote_ep = trans.remote_endpoint.clone();
@@ -601,13 +598,14 @@ fn handle_connect(mut state: WeakState, trans: transport::Transport,
     endpoint
 }
 
-fn increment_bs_count(state: &mut WeakState) -> io::Result<bool> {
+fn increment_bs_count(state: &mut WeakState) -> io::Result<()> {
     lock_mut_state(state, move |s: &mut State| {
         if s.bs_count.0 < s.bs_count.1 {
-            s.bs_count.0 = s.bs_count.0 + 1;
-            return Ok(true);
+            s.bs_count.0 += 1;
+            return Ok(());
         }
-        Ok(false)  // reached max bs connection
+        println!("Reached max bootstrap connections : {:?}; Reseting further bs connections", s.bs_count.0);
+        Err(io::Error::new(io::ErrorKind::Other, "Already reached max bootstrap connections"))
     })
 }
 
@@ -1124,6 +1122,9 @@ mod test {
 
     #[test]
     fn bootstrap_off_list_connects_multiple() {
+        let max_count = 4;
+        let available_peer_count = 10;
+
         let mut contacts = vec![];
         let mut acceptors = vec![];
         loop {
@@ -1150,25 +1151,39 @@ mod test {
             };
             contacts.push(Contact{endpoint: Endpoint::Tcp(addr)});
             acceptors.push(acceptor);
-            if contacts.len() == 5 {
+            if contacts.len() == available_peer_count {
                 break;
             }
         }
 
-        let (tx, _rx) = channel();
-
+        let (tx, rx) = channel();
         let state = Arc::new(Mutex::new(State{ event_pipe: tx,
                                                connections: HashMap::new(),
                                                listening_ports: HashSet::new(),
                                                stop_called: false,
-                                               bs_count: (0,1),
+                                               bs_count: (0,max_count),
                                              }));
         assert!(bootstrap_off_list(state.downgrade(), vec![], false, 15).is_err());
         assert!(bootstrap_off_list(state.downgrade(),
-                                   contacts, false, 4)
+                                   contacts.clone(), false, max_count)
                 .is_ok());
 
-        // TODO read if rx gets 4 bootstrap eps
+        // read if rx gets max_count bootstrap eps
+        let mut received_event_count = 0;
+        while received_event_count < max_count {
+            match rx.recv() {
+                Ok(Event::NewBootstrapConnection(ep)) => {
+                    assert!(contacts.contains(&Contact{endpoint: ep}));
+                    received_event_count += 1;
+                },
+                _ => { panic!("Unexpected event !")},
+            }
+        }
 
+        // should not get any more than max bs connections
+        for _ in 0..10 {
+            thread::sleep_ms(100);
+            assert!(rx.try_recv().is_err());
+        }
     }
 }
