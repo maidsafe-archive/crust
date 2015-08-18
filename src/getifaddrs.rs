@@ -116,7 +116,7 @@ mod getifaddrs_posix {
             else { _ifaddr = unsafe { (*_ifaddr).ifa_next }; }
             if _ifaddr.is_null() { break; }
             let ref ifaddr = unsafe { *_ifaddr };
-            // println!("ifaddr1={}, next={}", _ifaddr as u64, ifaddr.ifa_next as u64);
+            // debug!("ifaddr1={}, next={}", _ifaddr as u64, ifaddr.ifa_next as u64);
             if ifaddr.ifa_addr.is_null() {
                 continue;
             }
@@ -279,7 +279,7 @@ mod getifaddrs_windows {
             else { _ifaddr = unsafe { (*_ifaddr).Next }; }
             if _ifaddr.is_null() { break; }
             let ref ifaddr = unsafe { &*_ifaddr };
-            // println!("ifaddr1={}, next={}", _ifaddr as u64, ifaddr.ifa_next as u64);
+            // debug!("ifaddr1={}, next={}", _ifaddr as u64, ifaddr.ifa_next as u64);
 
             let mut addr = ifaddr.FirstUnicastAddress;
             if addr.is_null() { continue; }
@@ -413,7 +413,7 @@ mod test {
         let mut has_loopback4 = false;
         let mut has_loopback6 = false;
         for ifaddr in getifaddrs() {
-            println!("   Interface {} has IP {} netmask {} broadcast {}", ifaddr.name,
+            debug!("   Interface {} has IP {} netmask {} broadcast {}", ifaddr.name,
                      ifaddr.addr, ifaddr.netmask, ifaddr.broadcast);
             match ifaddr.addr {
                 IpAddr::V4(v4) => if v4.is_loopback() { has_loopback4=true; },
@@ -428,7 +428,7 @@ mod test {
     fn test_filter_loopback() {
         let ifaddrs = filter_loopback(getifaddrs());
         for ifaddr in ifaddrs {
-            println!("   Interface {} has IP {} netmask {} broadcast {}", ifaddr.name,
+            debug!("   Interface {} has IP {} netmask {} broadcast {}", ifaddr.name,
                      ifaddr.addr, ifaddr.netmask, ifaddr.broadcast);
             let is_loopback = match ifaddr.addr {
                 IpAddr::V4(v4) => v4.is_loopback(),

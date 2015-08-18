@@ -131,9 +131,9 @@ impl ConnectionManager {
     /// the sender half to this method. Receiver will receive all `Event`s from this library.
     pub fn new(event_pipe: mpsc::Sender<Event>) -> ConnectionManager {
         let config = read_config_file().unwrap_or_else(|e| {
-            println!("Crust failed to read config file; Error: {:?};", e);
+            debug!("Crust failed to read config file; Error: {:?};", e);
             let default = Config::make_default();
-            println!("Using default beacon_port {:?} and default bootstraping methods enabled",
+            debug!("Using default beacon_port {:?} and default bootstraping methods enabled",
                 default.beacon_port);
             default
         });
@@ -290,11 +290,11 @@ impl ConnectionManager {
                 match bootstrap_off_list(ws.clone(), contacts.clone(), bs_file_lock,
                                          max_successful_bootstrap_connection) {
                     Ok(_) => {
-                        println!("Got at least one bootstrap connection. Breaking bootstrap loop.");
+                        debug!("Got at least one bootstrap connection. Breaking bootstrap loop.");
                         break;
                     },
                     Err(_) => {
-                        // println!("Failed to get at least one bootstrap connection. continuing bootstrap loop");
+                        // debug!("Failed to get at least one bootstrap connection. continuing bootstrap loop");
                     }
                 }
                 // breaking the loop if stop called
@@ -332,7 +332,7 @@ impl ConnectionManager {
                 Ok(())
             });
         }
-        // println!("connection_manager::stop There are {} TCP ports being listened on", listening_ports.len());
+        // debug!("connection_manager::stop There are {} TCP ports being listened on", listening_ports.len());
         for port in listening_ports {
             let _ = transport::connect(Endpoint::tcp(("127.0.0.1", port.get_port()))).unwrap();
         }
@@ -818,13 +818,13 @@ mod test {
         let (cm2_i, cm2_o) = channel();
         let mut cm2 = ConnectionManager::new(cm2_i);
         let cm2_eps = cm2.start_accepting(vec![]).unwrap();
-        println!("   cm2 listening port {}", cm2_eps[0].get_port());
+        debug!("   cm2 listening port {}", cm2_eps[0].get_port());
 
         cm2.bootstrap(1);
 
         match cm2_o.recv() {
             Ok(Event::NewBootstrapConnection(ep)) => {
-                println!("NewBootstrapConnection {:?}", ep);
+                debug!("NewBootstrapConnection {:?}", ep);
             }
             _ => { assert!(false, "Failed to receive NewBootstrapConnection event")}
         }
@@ -841,21 +841,21 @@ mod test {
                 for i in o.iter() {
                     match i {
                         Event::NewConnection(other_ep) => {
-                            // println!("Connected {:?}", other_ep);
+                            // debug!("Connected {:?}", other_ep);
                             let _ = cm.send(other_ep.clone(), encode(&"hello world".to_string()));
                         },
                         Event::NewMessage(_, _) => {
-                            // println!("New message from {:?} data:{:?}",
+                            // debug!("New message from {:?} data:{:?}",
                             //          from_ep, decode::<String>(data));
                             break;
                         },
                         Event::LostConnection(_) => {
-                            // println!("Lost connection to {:?}", other_ep);
+                            // debug!("Lost connection to {:?}", other_ep);
                         }
                         Event::NewBootstrapConnection(_) => {}
                     }
                 }
-                // println!("done");
+                // debug!("done");
             })
         };
 
@@ -905,7 +905,7 @@ mod test {
                         Event::NewBootstrapConnection(_) => {}
                     }
                 }
-                // println!("done");
+                // debug!("done");
             })
         };
 
@@ -1041,20 +1041,20 @@ mod test {
            loop {
                 let event = cm_rx.recv();
                 if event.is_err() {
-                  // println!("stop listening");
+                  // debug!("stop listening");
                   break;
                 }
                 match event.unwrap() {
                     Event::NewMessage(_, _) => {
-                        // println!("received from {} with a new message : {}",
+                        // debug!("received from {} with a new message : {}",
                         //          match endpoint { Endpoint::Tcp(socket_addr) => socket_addr },
                         //          match String::from_utf8(bytes) { Ok(msg) => msg, Err(_) => "unknown msg".to_string() });
                     },
                     Event::NewConnection(_) => {
-                        // println!("adding new node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
+                        // debug!("adding new node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
                     },
                     Event::LostConnection(_) => {
-                        // println!("dropping node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
+                        // debug!("dropping node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
                         break;
                     }
                     Event::NewBootstrapConnection(_) => {}
@@ -1070,7 +1070,7 @@ mod test {
             // setting the listening port to be greater than 4455 will make the test hanging
             let _ = match cm_aux.start_accepting(vec![]) {
                 Ok(result) => {
-                      // println!("aux listening on {} ",
+                      // debug!("aux listening on {} ",
                       //          match result.0[0].clone() { Endpoint::Tcp(socket_addr) => { socket_addr } });
                       result[0].clone()
                     },
