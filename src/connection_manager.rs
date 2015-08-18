@@ -270,6 +270,7 @@ impl ConnectionManager {
     /// attempts will stop.
     /// It will reiterate the list of all endpoints until it gets at least one connection.
     pub fn bootstrap(&mut self, max_successful_bootstrap_connection: usize) {
+        debug!("cm:bootstrap called !");
         // Disconnect existing connections
         let mut ws = self.state.downgrade();
         let _ = lock_mut_state(&mut ws, |s: &mut State| {
@@ -348,6 +349,8 @@ impl ConnectionManager {
     /// For details on handling of connect in different protocol refer
     /// https://github.com/dirvine/crust/blob/master/docs/connect.md
     pub fn connect(&self, endpoints: Vec<Endpoint>) {
+        debug!("cm::connect to {:?}", endpoints);
+
         let ws = self.state.downgrade();
         {
             let result = lock_mut_state(&ws, |s: &mut State| {
@@ -622,6 +625,11 @@ fn register_connection(state: &mut WeakState, trans: transport::Transport,
         start_reading_thread(state2, trans.receiver, trans.remote_endpoint.clone(),
                              s.event_pipe.clone());
         let _ = s.connections.insert(trans.remote_endpoint.clone(), Connection{writer_channel: tx});
+        match event_to_user.clone() {
+            Event::NewBootstrapConnection(remote_ep) => { debug!("BS register_connection {:?}", remote_ep)},
+            Event::NewConnection(remote_ep) => { debug!("register_connection {:?}", remote_ep)},
+            _ => {},
+        }
         let _ = s.event_pipe.send(event_to_user);
         Ok(trans.remote_endpoint)
     })
@@ -673,6 +681,7 @@ fn bootstrap_off_list(weak_state: WeakState, bootstrap_list: Vec<Contact>,
                       is_broadcast_acceptor: bool,
                       max_successful_bootstrap_connection: usize) -> io::Result<()> {
     let mut vec_deferred = vec![];
+    debug!("bootstrap_list : {:?}", bootstrap_list);
     for contact in bootstrap_list {
         let ws = weak_state.clone();
         vec_deferred.push(Deferred::new(move || {
