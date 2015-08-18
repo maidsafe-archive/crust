@@ -383,6 +383,7 @@ impl ConnectionManager {
     /// mean that the data will be received. It is possible for the corresponding connection to hang
     /// up immediately after this function returns Ok.
     pub fn send(&self, endpoint: Endpoint, message: Bytes) -> io::Result<()> {
+        debug!("send - {:?}", endpoint);
         let ws = self.state.downgrade();
 
         let writer_channel = try!(lock_state(&ws, |s| {
@@ -399,6 +400,7 @@ impl ConnectionManager {
 
     /// Closes connection with the specified endpoint.
     pub fn drop_node(&self, endpoint: Endpoint) {
+        debug!("drop_node - {:?}", endpoint);
         let mut ws = self.state.downgrade();
         let _ = lock_mut_state(&mut ws, |s: &mut State| {
             let _ = s.connections.remove(&endpoint);
