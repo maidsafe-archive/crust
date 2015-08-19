@@ -270,7 +270,7 @@ impl ConnectionManager {
     /// attempts will stop.
     /// It will reiterate the list of all endpoints until it gets at least one connection.
     pub fn bootstrap(&mut self, max_successful_bootstrap_connection: usize) {
-        debug!("cm:bootstrap called !");
+        debug!("bootstrap - max_successful_bootstrap_connection : {:?}", max_successful_bootstrap_connection);
         // Disconnect existing connections
         let mut ws = self.state.downgrade();
         let _ = lock_mut_state(&mut ws, |s: &mut State| {
@@ -349,7 +349,7 @@ impl ConnectionManager {
     /// For details on handling of connect in different protocol refer
     /// https://github.com/dirvine/crust/blob/master/docs/connect.md
     pub fn connect(&self, endpoints: Vec<Endpoint>) {
-        debug!("cm::connect to {:?}", endpoints);
+        debug!("connect - endpoints: {:?}", endpoints);
 
         let ws = self.state.downgrade();
         {
