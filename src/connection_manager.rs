@@ -578,10 +578,6 @@ fn handle_accept(mut state: WeakState, trans: transport::Transport) -> io::Resul
 fn handle_connect(mut state: WeakState, trans: transport::Transport,
                   is_broadcast_acceptor: bool, is_bootstrap_connection: bool) -> io::Result<Endpoint> {
 
-    if is_bootstrap_connection {
-        try!(increment_bs_count(&mut state));
-    }
-
     let remote_ep = trans.remote_endpoint.clone();
     let event = match is_bootstrap_connection {
         true => Event::NewBootstrapConnection(remote_ep),
@@ -600,38 +596,67 @@ fn handle_connect(mut state: WeakState, trans: transport::Transport,
             let _ = bootstrap_handler.update_contacts(contacts, Contacts::new());
         }
     }
+
+    //FIXME  increment on success and already exist case only !!
+    // if is_bootstrap_connection {
+    //     try!(increment_bs_count(&mut state));
+    // }
+
+    // match endpoint {
+    //     Err(ref e) if e.kind() == io::ErrorKind::AlreadyExists => {
+    //         // send bs event ??
+    //         return Ok(remote_ep);
+    //     },
+    //     _ => {},
+    // }
     endpoint
 }
 
-fn increment_bs_count(state: &mut WeakState) -> io::Result<()> {
-    lock_mut_state(state, move |s: &mut State| {
-        if s.bs_count.0 < s.bs_count.1 {
-            s.bs_count.0 += 1;
-            return Ok(());
-        }
-        debug!("Reached max bootstrap connections : {:?}; Reseting further bs connections", s.bs_count.0);
-        Err(io::Error::new(io::ErrorKind::Other, "Already reached max bootstrap connections"))
-    })
-}
+// fn increment_bs_count(state: &mut WeakState) -> io::Result<()> {
+//     lock_mut_state(state, move |s: &mut State| {
+//         if s.bs_count.0 < s.bs_count.1 {
+//             s.bs_count.0 += 1;
+//             return Ok(());
+//         }
+//         debug!("Reached max bootstrap connections : {:?}; Reseting further bs connections", s.bs_count.0);
+//         Err(io::Error::new(io::ErrorKind::Other, "Already reached max bootstrap connections"))
+//     })
+// }
 
 fn register_connection(state: &mut WeakState, trans: transport::Transport,
                        event_to_user: Event) -> io::Result<Endpoint> {
     let state2 = state.clone();
 
     lock_mut_state(state, move |s: &mut State| {
+        let is_bootstrap_connection = match event_to_user {
+            Event::NewBootstrapConnection(_) => { true },
+            _ => { false },
+        };
+
         if s.connections.contains_key(&trans.remote_endpoint) {
+            if is_bootstrap_connection {
+                debug!(" already exist and bs connection returing OK({:?})", trans.remote_endpoint);
+                if s.bs_count.0 < s.bs_count.1 {  // ignore increment if already max
+                    s.bs_count.0 += 1;
+                }
+                return Ok(trans.remote_endpoint)
+            }
+            debug!("Already connected to {:?}", trans.remote_endpoint);
             return Err(io::Error::new(io::ErrorKind::AlreadyExists, "Already connected"))
         }
+
+        // if max bs reached
+        if is_bootstrap_connection && s.bs_count.0 == s.bs_count.1 {
+            debug!("Reached max bootstrap connections : {:?}; Reseting further bs connections", s.bs_count.0);
+            return Err(io::Error::new(io::ErrorKind::Other, "Already reached max bootstrap connections"))
+        }
+
         let (tx, rx) = mpsc::channel();
         start_writing_thread(state2.clone(), trans.sender, trans.remote_endpoint.clone(), rx);
         start_reading_thread(state2, trans.receiver, trans.remote_endpoint.clone(),
                              s.event_pipe.clone());
         let _ = s.connections.insert(trans.remote_endpoint.clone(), Connection{writer_channel: tx});
-        match event_to_user.clone() {
-            Event::NewBootstrapConnection(remote_ep) => { debug!("BS register_connection {:?}", remote_ep)},
-            Event::NewConnection(remote_ep) => { debug!("register_connection {:?}", remote_ep)},
-            _ => {},
-        }
+        s.bs_count.0 += 1;
         let _ = s.event_pipe.send(event_to_user);
         Ok(trans.remote_endpoint)
     })
