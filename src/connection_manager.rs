@@ -596,32 +596,8 @@ fn handle_connect(mut state: WeakState, trans: transport::Transport,
             let _ = bootstrap_handler.update_contacts(contacts, Contacts::new());
         }
     }
-
-    //FIXME  increment on success and already exist case only !!
-    // if is_bootstrap_connection {
-    //     try!(increment_bs_count(&mut state));
-    // }
-
-    // match endpoint {
-    //     Err(ref e) if e.kind() == io::ErrorKind::AlreadyExists => {
-    //         // send bs event ??
-    //         return Ok(remote_ep);
-    //     },
-    //     _ => {},
-    // }
     endpoint
 }
-
-// fn increment_bs_count(state: &mut WeakState) -> io::Result<()> {
-//     lock_mut_state(state, move |s: &mut State| {
-//         if s.bs_count.0 < s.bs_count.1 {
-//             s.bs_count.0 += 1;
-//             return Ok(());
-//         }
-//         debug!("Reached max bootstrap connections : {:?}; Reseting further bs connections", s.bs_count.0);
-//         Err(io::Error::new(io::ErrorKind::Other, "Already reached max bootstrap connections"))
-//     })
-// }
 
 fn register_connection(state: &mut WeakState, trans: transport::Transport,
                        event_to_user: Event) -> io::Result<Endpoint> {
@@ -629,14 +605,14 @@ fn register_connection(state: &mut WeakState, trans: transport::Transport,
 
     lock_mut_state(state, move |s: &mut State| {
         let is_bootstrap_connection = match event_to_user {
-            Event::NewBootstrapConnection(_) => { true },
-            _ => { false },
+            Event::NewBootstrapConnection(_) =>  true,
+            _ => false,
         };
 
         if s.connections.contains_key(&trans.remote_endpoint) {
             if is_bootstrap_connection {
-                debug!(" already exist and bs connection returing OK({:?})", trans.remote_endpoint);
-                if s.bs_count.0 < s.bs_count.1 {  // ignore increment if already max
+                debug!("bootstrap_connection to {:?} already exists ", trans.remote_endpoint);
+                if s.bs_count.0 < s.bs_count.1 {  // ignoring increment if already reached max
                     s.bs_count.0 += 1;
                 }
                 return Ok(trans.remote_endpoint)
@@ -645,7 +621,7 @@ fn register_connection(state: &mut WeakState, trans: transport::Transport,
             return Err(io::Error::new(io::ErrorKind::AlreadyExists, "Already connected"))
         }
 
-        // if max bs reached
+        // if max bootstrap_connection reached
         if is_bootstrap_connection && s.bs_count.0 == s.bs_count.1 {
             debug!("Reached max bootstrap connections : {:?}; Reseting further bs connections", s.bs_count.0);
             return Err(io::Error::new(io::ErrorKind::Other, "Already reached max bootstrap connections"))
@@ -656,7 +632,9 @@ fn register_connection(state: &mut WeakState, trans: transport::Transport,
         start_reading_thread(state2, trans.receiver, trans.remote_endpoint.clone(),
                              s.event_pipe.clone());
         let _ = s.connections.insert(trans.remote_endpoint.clone(), Connection{writer_channel: tx});
-        s.bs_count.0 += 1;
+        if is_bootstrap_connection {
+            s.bs_count.0 += 1;
+        }
         let _ = s.event_pipe.send(event_to_user);
         Ok(trans.remote_endpoint)
     })
