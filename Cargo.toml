@@ -1,6 +1,6 @@
 [package]
 name = "crust"
-version = "0.2.4"
+version = "0.2.5"
 authors = ["MaidSafe Developers <dev@maidsafe.net>"]
 description = "Peer-to-peer networking library. Automatically reconnect and manage connections."
 documentation = "http://maidsafe.net/crust/latest"
@@ -22,6 +22,9 @@ utp = "*"
 itertools = "*"
 igd = "0.1.3"
 net2 = "*"
+
+[dev-dependencies]
+env_logger = "*"
 
 [[example]]
 name = "simple_sender"

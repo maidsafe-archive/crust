@@ -39,7 +39,6 @@ pub fn parse_contacts(buffer: Vec<u8>) -> Option<Contacts> {
     String::from_utf8(buffer).ok().and_then(|contacts_str| { json::decode(&contacts_str).ok() })
 }
 
-
 pub struct BootstrapHandler {
     file_path: path::PathBuf,
     last_updated: time::Tm,
@@ -115,7 +114,7 @@ impl BootstrapHandler {
     #[allow(dead_code)]
     pub fn oldest_contacts(&mut self, n: usize) -> io::Result<(Contacts)> {
         let bootstrap_contacts = self.read_bootstrap_file().unwrap_or_else(|e| {
-            println!("Error reading Bootstrap file: {:?}. Creating {:?}.", e,
+            debug!("Error reading Bootstrap file: {:?}. Creating {:?}.", e,
                      self.file_path);
             Contacts::new()
         });
@@ -159,7 +158,7 @@ impl BootstrapHandler {
 
     fn insert_contacts(&mut self, mut contacts: Contacts, prune: Contacts) -> io::Result<()> {
         let mut bootstrap_contacts = self.read_bootstrap_file().unwrap_or_else(|e| {
-            println!("Error reading Bootstrap file: {:?}. Creating {:?}.", e,
+            debug!("Error reading Bootstrap file: {:?}. Creating {:?}.", e,
                      self.file_path);
             Contacts::new()
         });
@@ -427,8 +426,7 @@ mod test {
         match fs::remove_file(file_path.clone()) {
             Ok(_) => (),
             Err(e) => {
-                println!("Failed to remove {}: {}", file_path.to_str().unwrap(),
-                         e)
+                debug!("Failed to remove {}: {}", file_path.to_str().unwrap(), e)
             },
         };
     }
@@ -527,8 +525,7 @@ mod test {
         match fs::remove_file(file_path.clone()) {
             Ok(_) => (),
             Err(e) => {
-                println!("Failed to remove {}: {}", file_path.to_str().unwrap(),
-                         e)
+                debug!("Failed to remove {}: {}", file_path.to_str().unwrap(), e)
             },
         };
     }
@@ -585,7 +582,7 @@ mod test {
         match fs::remove_file(file_path.clone()) {
             Ok(_) => (),
             Err(e) => {
-                println!("Failed to remove {}: {}", file_path.to_str().unwrap(),
+                debug!("Failed to remove {}: {}", file_path.to_str().unwrap(),
                          e)
             },
         };
@@ -676,7 +673,7 @@ mod test {
         match fs::remove_file(file_path.clone()) {
             Ok(_) => (),
             Err(e) => {
-                println!("Failed to remove {}: {}", file_path.to_str().unwrap(),
+                debug!("Failed to remove {}: {}", file_path.to_str().unwrap(),
                          e)
             },
         };

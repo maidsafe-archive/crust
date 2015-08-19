@@ -1,6 +1,7 @@
 *.exe
 *.lock
 *.swp
+*.rsproj
 tags*
 build/
 build-tests/
