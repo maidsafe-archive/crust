@@ -73,7 +73,6 @@ pub fn read_config_file() -> io::Result<(Config)> {
     let path = try!(exe_path_config());
     let res = read_file(&path);
     if res.is_ok() {
-        println!("reads local");
         return res;
     }
 
@@ -83,7 +82,6 @@ pub fn read_config_file() -> io::Result<(Config)> {
     let file_path = utils::user_app_dir().unwrap().join(&file_name);
     let res = read_file(&file_path);
     if res.is_ok() {
-        println!("reads user");
         return res;
     }
 
@@ -91,10 +89,8 @@ pub fn read_config_file() -> io::Result<(Config)> {
     let file_path = utils::system_app_support_dir().unwrap().join(file_name);
     let res = read_file(&file_path);
     if res.is_ok() {
-        println!("reads system");
         return res;
     }
-    println!("creates default");
     Ok(Config::make_default())
 }
 
@@ -166,19 +162,17 @@ fn get_config_path() -> io::Result<(PathBuf)> {
     let config_name = get_file_name().unwrap();
     let file_path = env::current_exe().unwrap().parent().unwrap().join(&config_name);
     if File::open(&file_path).is_ok() {
-        println!("opens local");
         return Ok(file_path);
     }
 
     let file_path = utils::user_app_dir().unwrap().join(&config_name);
     if File::open(&file_path).is_ok() {
-        println!("opens user {:?}", &file_path);
         return Ok(file_path);
     }
 
     let file_path = utils::system_app_support_dir().unwrap().join(&config_name);
     match File::open(&file_path) {
-        Ok(_) => { println!("opens systen"); Ok(file_path) },
+        Ok(_) => { Ok(file_path) },
         Err(e) => Err(e)
     }
 }

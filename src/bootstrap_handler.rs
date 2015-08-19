@@ -191,7 +191,6 @@ mod test {
         let name_with_extension = path.file_name().unwrap();
         let mut name = Path::new(name_with_extension).file_stem()
             .unwrap().to_os_string();
-        println!("{}", name.to_str().unwrap());
         name.push(".crust.bootstrap.cache");
         path.parent().unwrap().join(name)
     }
