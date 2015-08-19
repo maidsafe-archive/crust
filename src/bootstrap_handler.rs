@@ -18,7 +18,6 @@
 use time;
 use std::fs;
 use std::fs::File;
-use std::fs::remove_file;
 use std::io::prelude::*;
 use std::path;
 use std::env;
@@ -68,18 +67,7 @@ impl BootstrapHandler {
             return Ok(file_path);
         }
 
-        if File::create(&file_path).is_ok() {
-            let _ = remove_file(&file_path);
-            return Ok(file_path);
-        }
-
-        let file_path = utils::user_app_dir().unwrap().join(&name);
-        match File::create(&file_path) {
-            Ok(_) => {  let _ = remove_file(&file_path);
-                        return Ok(file_path);
-                     },
-            Err(e) => Err(e)
-        }
+        Ok(utils::user_app_dir().unwrap().join(&name))
     }
 
     pub fn new() -> io::Result<(BootstrapHandler)> {
@@ -182,8 +170,8 @@ impl BootstrapHandler {
 
 #[cfg(test)]
 mod test {
-    use super::*;
-    use std::fs::File;
+    use super::BootstrapHandler;
+//    use std::fs::File;
     use std::{net, fs};
     use std::net::{SocketAddr, Ipv4Addr};
     use transport::Endpoint;
@@ -215,15 +203,30 @@ mod test {
         let _ = fs::remove_file(utils::user_app_dir().unwrap().join(&name_with_extension));
     }
 
-    fn create_contacts() -> Contacts {
-        let addr = net::SocketAddrV4::new(net::Ipv4Addr::new(1,2,3,4), 8080);
-        let contact  = Contact { endpoint: Endpoint::Tcp(SocketAddr::V4(addr)) };
-        let mut contacts = Contacts::new();
-        contacts.push(contact.clone());
-        contacts
+    // fn create_contacts() -> Contacts {
+    //     let addr = net::SocketAddrV4::new(net::Ipv4Addr::new(1,2,3,4), 8080);
+    //     let contact  = Contact { endpoint: Endpoint::Tcp(SocketAddr::V4(addr)) };
+    //     let mut contacts = Contacts::new();
+    //     contacts.push(contact.clone());
+    //     contacts
+    // }
+    //
+    #[test]
+    fn bootstrap_read() {
+        match BootstrapHandler::new().as_mut() {
+            Ok(handler) => println!("{:?}", handler.read_bootstrap_file()),
+            Err(_) => assert!(false)
+        }
     }
 
     #[test]
+    fn bootstrap_write() {
+        remove_bootstrap_files();
+        assert!(BootstrapHandler::new().is_err());
+    }
+
+
+/*    #[test]
     fn file_does_not_exist() {
         remove_bootstrap_files();
         assert!(BootstrapHandler::new().is_err());
@@ -355,7 +358,7 @@ mod test {
             Err(_) =>  { assert!(false); return }
         };
         let _ = fs::remove_dir_all(&copy_dir_path);
-    }
+    }*/
 
     #[test]
     fn serialisation() {

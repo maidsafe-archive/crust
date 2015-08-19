@@ -39,7 +39,6 @@ pub struct Config {
 }
 
 impl Config {
-
     pub fn make_default() -> Config {
         Config{ override_default_bootstrap: false,  // default bootstraping methods enabled
                 hard_coded_contacts: vec![], // No hardcoded endpoints
@@ -74,6 +73,7 @@ pub fn read_config_file() -> io::Result<(Config)> {
     let path = try!(exe_path_config());
     let res = read_file(&path);
     if res.is_ok() {
+        println!("reads local");
         return res;
     }
 
@@ -83,6 +83,7 @@ pub fn read_config_file() -> io::Result<(Config)> {
     let file_path = utils::user_app_dir().unwrap().join(&file_name);
     let res = read_file(&file_path);
     if res.is_ok() {
+        println!("reads user");
         return res;
     }
 
@@ -90,9 +91,10 @@ pub fn read_config_file() -> io::Result<(Config)> {
     let file_path = utils::system_app_support_dir().unwrap().join(file_name);
     let res = read_file(&file_path);
     if res.is_ok() {
+        println!("reads system");
         return res;
     }
-
+    println!("creates default");
     Ok(Config::make_default())
 }
 
@@ -138,37 +140,73 @@ pub fn write_config_file(override_default_bootstrap: Option<bool>,
                             .unwrap_or(default.beacon_port),
                        };
 
-    let mut config_path = try!(exe_path_config());
-    match write_file(&config_path, &config) {
-        Ok(()) => return Ok(config_path),
+    let file_in_user_path = utils::user_app_dir().unwrap().join(get_file_name().unwrap());
+
+    match get_config_path() {
+        Ok(file_path) => {
+            match write_file(&file_path, &config) {
+                Ok(_) => return Ok(file_path),
+                Err(e) => { if file_path == file_in_user_path {
+                                return Err(e)
+                            }
+                          }
+            }
+        },
         Err(_) => {}
     }
+    match write_file(&file_in_user_path, &config) {
+        Ok(_) => Ok(file_in_user_path),
+        Err(e) => Err(e)
+    }
+}
 
-    let file_name = try!(get_file_name());
-
-    // Current user's application directory
-    config_path = utils::user_app_dir().unwrap().join(&file_name);
-    match write_file(&config_path, &config) {
-        Ok(()) => return Ok(config_path),
-        Err(_) => {}
+fn get_config_path() -> io::Result<(PathBuf)> {
+    let config_name = get_file_name().unwrap();
+    let file_path = env::current_exe().unwrap().parent().unwrap().join(&config_name);
+    if File::open(&file_path).is_ok() {
+        println!("opens local");
+        return Ok(file_path);
     }
 
-    // Application support directory for all users
-    config_path = utils::system_app_support_dir().unwrap().join(file_name);
-    match write_file(&config_path, &config) {
-        Ok(()) => return Ok(config_path),
+    let file_path = utils::user_app_dir().unwrap().join(&config_name);
+    if File::open(&file_path).is_ok() {
+        println!("opens user {:?}", &file_path);
+        return Ok(file_path);
+    }
+
+    let file_path = utils::system_app_support_dir().unwrap().join(&config_name);
+    match File::open(&file_path) {
+        Ok(_) => { println!("opens systen"); Ok(file_path) },
         Err(e) => Err(e)
     }
 }
 
 #[cfg(test)]
 mod test {
-    use super::*;
+    use super::{Config, Contact, exe_path_config, read_config_file, write_config_file};
     use std::net;
     use std::net::SocketAddr;
     use transport::Endpoint;
     use std::fs;
     use rand;
+
+    #[test]
+    fn config_read() {
+        println!("{:?}",  read_config_file());
+    }
+
+    #[test]
+    fn config_write() {
+        let mut config = Config::make_default();
+        config.beacon_port = rand::random::<u16>();
+        match write_config_file(Some(config.override_default_bootstrap),
+                                Some(config.hard_coded_contacts.iter()
+                                        .map(|x|x.endpoint).collect::<Vec<_>>()),
+                                Some(config.beacon_port)) {
+            Ok(_) => { assert!(true) },
+            Err(_) => assert!(true),
+        };
+    }
 
     #[test]
     fn read_config_file_test() {
