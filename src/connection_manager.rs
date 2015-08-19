@@ -1201,4 +1201,16 @@ mod test {
         }
     }
 
+
+    // Connect called before bootstrap loop establishes the connection to same bootstrap endpoint
+    // Refer issue : https://github.com/maidsafe/crust/issues/248
+    // #[test]
+    // fn connect_to_same_bootstrap_endpoint() {
+    //     let (cm1_tx, cm1_rx) = channel();
+    //     let (cm2_tx, cm2_rx) = channel();
+    //     let mut cm1 = ConnectionManager::new(cm1_tx);
+    //     let mut cm2 = ConnectionManager::new(cm2_tx);
+
+
+    // }
 }
