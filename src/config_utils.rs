@@ -16,7 +16,7 @@
 // relating to use of the SAFE Network Software.
 
 use transport::Endpoint;
-use std::fs::File;
+use std::fs::{File, create_dir_all};
 use std::io::prelude::*;
 use std::path::PathBuf;
 use std::env;
@@ -144,6 +144,7 @@ pub fn write_config_file(override_default_bootstrap: Option<bool>,
 
     match get_config_path() {
         Ok(file_path) => {
+            let _ =  create_dir_all(file_path.parent().unwrap());
             match write_file(&file_path, &config) {
                 Ok(_) => return Ok(file_path),
                 Err(e) => { if file_path == file_in_user_path {
@@ -154,6 +155,7 @@ pub fn write_config_file(override_default_bootstrap: Option<bool>,
         },
         Err(_) => {}
     }
+    let _ =  create_dir_all(file_in_user_path.parent().unwrap());
     match write_file(&file_in_user_path, &config) {
         Ok(_) => Ok(file_in_user_path),
         Err(e) => Err(e)
