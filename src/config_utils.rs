@@ -31,7 +31,6 @@ pub struct Contact {
 
 pub type Contacts = Vec<Contact>;
 
-
 #[derive(PartialEq, Debug, RustcDecodable, RustcEncodable, Clone)]
 pub struct Config {
     pub override_default_bootstrap: bool,
@@ -161,7 +160,6 @@ pub fn write_config_file(override_default_bootstrap: Option<bool>,
         Err(e) => Err(e)
     }
 }
-
 
 #[cfg(test)]
 mod test {

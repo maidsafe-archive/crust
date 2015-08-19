@@ -133,13 +133,11 @@ impl BootstrapHandler {
         let mut file = match File::create(&self.file_path) {
             Ok(created_file) => created_file,
             Err(e) => {
-                let mut user_dir = path::PathBuf::from(utils::user_app_dir().unwrap());
-                let mut file_path = self.file_path.clone();
-                file_path.pop();
-                if file_path != user_dir {
-                    match fs::create_dir_all(&user_dir) {
+                let user_dir = path::PathBuf::from(utils::user_app_dir().unwrap()
+                                    .join(self.file_path.file_name().unwrap()));
+                if self.file_path != user_dir {
+                    match fs::create_dir_all(user_dir.parent().unwrap()) {
                         Ok(_) => {
-                            user_dir.push(self.file_path.file_name().unwrap());
                             let file =  try!(File::create(&user_dir));
                             self.file_path = user_dir;
                             file
@@ -262,7 +260,6 @@ mod test {
         let copy_dir_path = user_dir_path.clone();
         let user_dir_path = user_dir_path.join(&name_with_extension);
         assert!(File::create(&user_dir_path).is_ok());
-
         match BootstrapHandler::new().as_mut() {
             Ok(handler) => {
                    assert_eq!(user_dir_path, handler.file_path);
