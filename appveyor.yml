@@ -22,4 +22,5 @@ test_script:
           $env:config_flags = "--release"
         }
   - cargo build --verbose %config_flags%
-  - RUST_TEST_TASKS=1 RUST_TEST_THREADS=1 cargo test --verbose
+  - set RUST_TEST_THREADS=1
+  - cargo test --verbose
