@@ -16,7 +16,7 @@
 // relating to use of the SAFE Network Software.
 
 use transport::Endpoint;
-use std::fs::File;
+use std::fs::{File, create_dir_all, remove_file};
 use std::io::prelude::*;
 use std::path::PathBuf;
 use std::env;
@@ -31,7 +31,6 @@ pub struct Contact {
 
 pub type Contacts = Vec<Contact>;
 
-
 #[derive(PartialEq, Debug, RustcDecodable, RustcEncodable, Clone)]
 pub struct Config {
     pub override_default_bootstrap: bool,
@@ -40,7 +39,6 @@ pub struct Config {
 }
 
 impl Config {
-
     pub fn make_default() -> Config {
         Config{ override_default_bootstrap: false,  // default bootstraping methods enabled
                 hard_coded_contacts: vec![], // No hardcoded endpoints
@@ -89,7 +87,11 @@ pub fn read_config_file() -> io::Result<(Config)> {
 
     // Application support directory for all users
     let file_path = utils::system_app_support_dir().unwrap().join(file_name);
-    read_file(&file_path)
+    let res = read_file(&file_path);
+    if res.is_ok() {
+        return res;
+    }
+    Ok(Config::make_default())
 }
 
 fn read_file(file_name : &PathBuf) -> io::Result<(Config)> {
@@ -133,20 +135,87 @@ pub fn write_config_file(override_default_bootstrap: Option<bool>,
                          beacon_port: beacon_port
                             .unwrap_or(default.beacon_port),
                        };
-    let config_path = try!(exe_path_config());
-    try!(write_file(&config_path, &config));
-    Ok(config_path)
+
+    let file_in_user_path = utils::user_app_dir().unwrap().join(get_file_name().unwrap());
+
+    match get_write_config_path() {
+        Ok(file_path) => {
+            let _ =  create_dir_all(file_path.parent().unwrap());
+            match write_file(&file_path, &config) {
+                Ok(_) => return Ok(file_path),
+                Err(e) => { if file_path == file_in_user_path {
+                                return Err(e)
+                          }
+                }
+            }
+        },
+        Err(_) => {}
+    }
+    let _ =  create_dir_all(file_in_user_path.parent().unwrap());
+    match write_file(&file_in_user_path, &config) {
+        Ok(_) => Ok(file_in_user_path),
+        Err(e) => Err(e)
+    }
 }
 
+fn get_write_config_path() -> io::Result<(PathBuf)> {
+    match get_config_path() {
+        Ok(file) => Ok(file),
+        Err(_) => {
+            let config_name = get_file_name().unwrap();
+            let file_path = utils::system_app_support_dir().unwrap().join(&config_name);
+            let _ =  create_dir_all(file_path.parent().unwrap());
+            match File::create(&file_path) {
+                Ok(_) => {
+                    let _ = remove_file(&file_path);
+                    return Ok(file_path);
+                },
+                Err(e) => Err(e)
+             }
+        }
+    }
+}
+
+fn get_config_path() -> io::Result<(PathBuf)> {
+    let config_name = get_file_name().unwrap();
+    let file_path = env::current_exe().unwrap().parent().unwrap().join(&config_name);
+    if File::open(&file_path).is_ok() {
+        return Ok(file_path);
+    }
+
+    let file_path = utils::user_app_dir().unwrap().join(&config_name);
+    if File::open(&file_path).is_ok() {
+        return Ok(file_path);
+    }
+
+    let file_path = utils::system_app_support_dir().unwrap().join(&config_name);
+    match File::open(&file_path) {
+        Ok(_) => { Ok(file_path) },
+        Err(e) => Err(e)
+    }
+}
 
 #[cfg(test)]
 mod test {
-    use super::*;
+    use super::{Config, Contact, exe_path_config, read_config_file, write_config_file};
     use std::net;
     use std::net::SocketAddr;
     use transport::Endpoint;
     use std::fs;
     use rand;
+
+    #[test]
+    fn config_write() {
+        let mut config = Config::make_default();
+        config.beacon_port = rand::random::<u16>();
+        match write_config_file(Some(config.override_default_bootstrap),
+                                Some(config.hard_coded_contacts.iter()
+                                        .map(|x|x.endpoint).collect::<Vec<_>>()),
+                                Some(config.beacon_port)) {
+            Ok(_) => { assert!(true) },
+            Err(_) => assert!(true),
+        };
+    }
 
     #[test]
     fn read_config_file_test() {

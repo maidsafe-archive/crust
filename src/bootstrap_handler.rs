@@ -16,8 +16,8 @@
 // relating to use of the SAFE Network Software.
 
 use time;
+use std::fs;
 use std::fs::File;
-use std::fs::remove_file;
 use std::io::prelude::*;
 use std::path;
 use std::env;
@@ -44,8 +44,8 @@ pub struct BootstrapHandler {
 }
 
 impl BootstrapHandler {
-    fn get_file_path() -> path::PathBuf {
-        let path = env::current_exe().unwrap();
+    fn get_file_path() -> io::Result<(path::PathBuf)> {
+        let path = try!(env::current_exe());
         let name_with_extension = path.file_name().expect("Unknown filename");
         let mut name = path::Path::new(name_with_extension).file_stem()
             .expect("Unknown extension").to_os_string();
@@ -54,38 +54,28 @@ impl BootstrapHandler {
 
         let file_path = path.parent().unwrap().join(&name);
         if File::open(&file_path).is_ok() {
-            return file_path;
+            return Ok(file_path);
         }
 
         let file_path = utils::user_app_dir().unwrap().join(&name);
         if File::open(&file_path).is_ok() {
-            return file_path;
+            return Ok(file_path);
         }
 
-        let file_path = utils::system_app_support_dir().unwrap();
+        let file_path = utils::system_app_support_dir().unwrap().join(&name);
         if File::open(&file_path).is_ok() {
-            return file_path;
+            return Ok(file_path);
         }
 
-        if File::create(&file_path).is_ok() {
-            let _ = remove_file(&file_path);
-            return file_path;
-        }
-
-        let file_path = utils::user_app_dir().unwrap().join(&name);
-        if File::create(&file_path).is_ok() {
-            let _ = remove_file(&file_path);
-            return file_path;
-        }
-
-        path.parent().unwrap().join(name)
+        Ok(file_path)
     }
 
-    pub fn new() -> BootstrapHandler {
-        BootstrapHandler {
-            file_path: BootstrapHandler::get_file_path(),
+    pub fn new() -> io::Result<(BootstrapHandler)> {
+        let file_path = try!(BootstrapHandler::get_file_path());
+        Ok(BootstrapHandler {
+            file_path: file_path,
             last_updated: time::now(),
-        }
+        })
     }
 
     pub fn get_update_duration() -> time::Duration {
@@ -101,9 +91,11 @@ impl BootstrapHandler {
         Ok(())
     }
 
-    pub fn read_bootstrap_file(&mut self) -> io::Result<(Contacts)> {
-        self.file_path = BootstrapHandler::get_file_path();
-        let mut file = try!(File::open(&self.file_path));
+    pub fn read_bootstrap_file(&self) -> io::Result<(Contacts)> {
+        let mut file = match File::open(&self.file_path) {
+            Ok(file) => file,
+            Err(_) => return Ok(vec![])
+        };
         let mut contents = String::new();
         let _ = try!(file.read_to_string(&mut contents));
         json::decode(&contents).map_err(|error| io::Error::new(io::ErrorKind::Other,
@@ -129,8 +121,22 @@ impl BootstrapHandler {
 
     fn write_bootstrap_file(&mut self, mut contacts: Contacts) -> io::Result<()> {
         contacts = contacts.clone().into_iter().unique().collect();
-        self.file_path = BootstrapHandler::get_file_path();
-        let mut file = try!(File::create(&self.file_path));
+        let _ =  fs::create_dir_all(self.file_path.parent().unwrap());
+        let mut file = match File::create(&self.file_path) {
+            Ok(created_file) => created_file,
+            Err(e) => {
+                let user_dir = path::PathBuf::from(utils::user_app_dir().unwrap()
+                                    .join(self.file_path.file_name().unwrap()));
+                if self.file_path != user_dir {
+                    let _ = try!(fs::create_dir_all(user_dir.parent().unwrap()));
+                    let file =  try!(File::create(&user_dir));
+                    self.file_path = user_dir;
+                    file
+                } else {
+                    return Err(e)
+                }
+            }
+        };
         try!(write!(&mut file, "{}", json::as_pretty_json(&contacts)));
         file.sync_all()
     }
@@ -156,14 +162,13 @@ impl BootstrapHandler {
                 }
             }
         }
-
         self.write_bootstrap_file(bootstrap_contacts)
     }
 }
 
 #[cfg(test)]
 mod test {
-    use super::*;
+    use super::BootstrapHandler;
     use std::{net, fs};
     use std::net::{SocketAddr, Ipv4Addr};
     use transport::Endpoint;
@@ -182,6 +187,20 @@ mod test {
             .unwrap().to_os_string();
         name.push(".crust.bootstrap.cache");
         path.parent().unwrap().join(name)
+    }
+
+    fn create_contacts() -> Contacts {
+        let addr = net::SocketAddrV4::new(net::Ipv4Addr::new(1,2,3,4), 8080);
+        let contact  = Contact { endpoint: Endpoint::Tcp(SocketAddr::V4(addr)) };
+        let mut contacts = Contacts::new();
+        contacts.push(contact.clone());
+        contacts
+    }
+
+    #[test]
+    fn bootstrap_write() {
+        let mut handler = BootstrapHandler::new().unwrap();
+        assert!(handler.write_bootstrap_file(create_contacts()).is_ok());
     }
 
     #[test]
@@ -219,10 +238,10 @@ mod test {
         let file_path = get_file_path();
         let path = Path::new(&file_path);
 
-        let mut bootstrap_handler = BootstrapHandler::new();
         let file = fs::File::create(&path);
         assert!(file.is_ok());
 
+        let mut bootstrap_handler = BootstrapHandler::new().unwrap();
         // add contacts...
         assert!(bootstrap_handler.update_contacts(contacts.clone(), Contacts::new()).is_ok());
 
@@ -274,10 +293,10 @@ mod test {
 
         let file_path = get_file_path();
         let path = Path::new(&file_path);
-
-        let mut bootstrap_handler = BootstrapHandler::new();
         let file = fs::File::create(&path);
         assert!(file.is_ok());
+
+        let mut bootstrap_handler = BootstrapHandler::new().unwrap();
 
         // add contacts...
         assert!(bootstrap_handler.update_contacts(contacts.clone(), Contacts::new()).is_ok());
@@ -373,9 +392,10 @@ mod test {
         let file_path = get_file_path();
         let path = Path::new(&file_path);
 
-        let mut bootstrap_handler = BootstrapHandler::new();
         let file = fs::File::create(&path);
         assert!(file.is_ok());
+
+        let mut bootstrap_handler = BootstrapHandler::new().unwrap();
 
         // add contacts...
         assert!(bootstrap_handler.update_contacts(contacts.clone(), Contacts::new()).is_ok());
@@ -424,9 +444,9 @@ mod test {
 
         let file_path = get_file_path();
         let path = Path::new(&file_path);
-        let mut bootstrap_handler = BootstrapHandler::new();
         let file = fs::File::create(&path);
 
+        let mut bootstrap_handler = BootstrapHandler::new().unwrap();
         // check that the file got created...
         assert!(file.is_ok());
 
