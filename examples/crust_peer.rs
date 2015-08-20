@@ -66,7 +66,8 @@ be chosen. If no listening port is supplied, a random port for each supported
 protocol will be chosen.
 
 Options:
-  -t PORT, --tcp-port=PORT  Start listening on the specified TCP port.
+  -p PORT, --port=PORT      Start listening on the specified TCP port.
+  -u, --utp                 Use uTP instead of TCP.
   -b PORT, --beacon=PORT    Set the beacon port.  If the node can, it will
                             listen for UDP broadcasts on this port.  If
                             bootstrapping using provided contacts or the cached
@@ -82,7 +83,8 @@ Options:
 #[derive(RustcDecodable, Debug)]
 struct Args {
     arg_peer: Vec<PeerEndpoint>,
-    flag_tcp_port: Option<u16>,
+    flag_port: Option<u16>,
+    flag_utp: bool,
     flag_beacon: Option<u16>,
     flag_config: Option<String>,
     flag_speed: Option<u64>,
@@ -107,8 +109,8 @@ struct CliArgs {
 }
 
 #[derive(Debug)]
-enum PeerEndpoint {
-    Tcp(SocketAddr),
+struct PeerEndpoint {
+    pub addr: SocketAddr,
 }
 
 impl Decodable for PeerEndpoint {
@@ -121,7 +123,7 @@ impl Decodable for PeerEndpoint {
                     "Could not decode {} as valid IPv4 or IPv6 address.", str).as_str()));
             },
         };
-        Ok(PeerEndpoint::Tcp(address))
+        Ok(PeerEndpoint { addr: address })
     }
 }
 
@@ -323,22 +325,33 @@ fn main() {
     let args: Args = Docopt::new(USAGE)
                             .and_then(|docopt| docopt.decode())
                             .unwrap_or_else(|error| error.exit());
+    let utp_mode = args.flag_utp;
+
+    if utp_mode {
+        println!("Running in uTP mode")
+    } else {
+        println!("Running in TCP mode")
+    }
 
     // Convert peer endpoints to usable bootstrap list.
     let bootstrap_peers = if args.arg_peer.is_empty() {
         None
     } else {
         Some(Vec::<Endpoint>::from_iter(args.arg_peer.iter().map(|endpoint| {
-            Endpoint::Tcp(match *endpoint { PeerEndpoint::Tcp(address) => address, })
+            if utp_mode {
+                Endpoint::Utp(endpoint.addr)
+            } else {
+                Endpoint::Tcp(endpoint.addr)
+            }
         })))
     };
 
     // Convert requested listening port(s) to usable collection.
     let mut listening_hints: Vec<Port> = vec![];
-    match args.flag_tcp_port {
-        Some(port) => listening_hints.push(Port::Tcp(port)),
-        None => (),
-    };
+    listening_hints.push({
+        let port = args.flag_port.unwrap_or(0);
+        if utp_mode { Port::Utp(port) } else { Port::Tcp(port) }
+    });
 
     let mut stdout = term::stdout();
     let mut stdout_copy = term::stdout();
@@ -355,7 +368,7 @@ fn main() {
     let (bs_sender, bs_receiver) = channel();
     let mut connection_manager = ConnectionManager::new(channel_sender);
     stdout = green_foreground(stdout);
-    let _ = connection_manager.start_accepting(vec![]);
+    let _ = connection_manager.start_accepting(listening_hints);
     let listening_endpoints = connection_manager.get_own_endpoints();
     print!("Listening for new connections on ");
     for endpoint in &listening_endpoints {
@@ -480,17 +493,19 @@ fn main() {
             if args.cmd_connect {
                 // docopt should ensure arg_peer is valid
                 assert!(args.arg_peer.is_some());
-                let peer = vec![Endpoint::Tcp(match args.arg_peer.unwrap() {
-                    PeerEndpoint::Tcp(address) => address,
-                })];
+                let peer = vec![{
+                    let ep = args.arg_peer.unwrap().addr;
+                    if utp_mode { Endpoint::Utp(ep) } else { Endpoint::Tcp(ep) }
+                }];
                 connection_manager.connect(peer);
             } else if args.cmd_send {
                 // docopt should ensure arg_peer and arg_message are valid
                 assert!(args.arg_peer.is_some());
                 assert!(!args.arg_message.is_empty());
-                let peer = Endpoint::Tcp(match args.arg_peer.unwrap() {
-                    PeerEndpoint::Tcp(address) => address,
-                });
+                let peer = {
+                    let ep = args.arg_peer.unwrap().addr;
+                    if utp_mode { Endpoint::Utp(ep) } else { Endpoint::Tcp(ep) }
+                };
                 let mut message: String = args.arg_message[0].clone();
                 for i in 1..args.arg_message.len() {
                     message.push_str(" ");
