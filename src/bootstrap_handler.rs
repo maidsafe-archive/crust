@@ -167,7 +167,6 @@ impl BootstrapHandler {
                 }
             }
         }
-
         self.write_bootstrap_file(bootstrap_contacts)
     }
 }
@@ -257,12 +256,13 @@ mod test {
         let file_path = get_file_path();
         let path = Path::new(&file_path);
 
+        let file = fs::File::create(&path);
+        assert!(file.is_ok());
+
         let mut bootstrap_handler = match BootstrapHandler::new() {
             Ok(handler) => handler,
             Err(_) => { assert!(false); return }
         };
-        let file = fs::File::create(&path);
-        assert!(file.is_ok());
 
         // add contacts...
         assert!(bootstrap_handler.update_contacts(contacts.clone(), Contacts::new()).is_ok());
@@ -315,13 +315,13 @@ mod test {
 
         let file_path = get_file_path();
         let path = Path::new(&file_path);
+        let file = fs::File::create(&path);
+        assert!(file.is_ok());
 
         let mut bootstrap_handler = match BootstrapHandler::new() {
             Ok(handler) => handler,
             Err(_) => { assert!(false); return }
         };
-        let file = fs::File::create(&path);
-        assert!(file.is_ok());
 
         // add contacts...
         assert!(bootstrap_handler.update_contacts(contacts.clone(), Contacts::new()).is_ok());
@@ -417,13 +417,13 @@ mod test {
         let file_path = get_file_path();
         let path = Path::new(&file_path);
 
+        let file = fs::File::create(&path);
+        assert!(file.is_ok());
+
         let mut bootstrap_handler = match BootstrapHandler::new() {
             Ok(handler) => handler,
             Err(_) => { assert!(false); return }
         };
-        let file = fs::File::create(&path);
-        assert!(file.is_ok());
-
         // add contacts...
         assert!(bootstrap_handler.update_contacts(contacts.clone(), Contacts::new()).is_ok());
         // try taking more than existing number...
@@ -471,11 +471,12 @@ mod test {
 
         let file_path = get_file_path();
         let path = Path::new(&file_path);
+        let file = fs::File::create(&path);
+
         let mut bootstrap_handler = match BootstrapHandler::new() {
             Ok(handler) => handler,
             Err(_) => { assert!(false); return }
         };
-        let file = fs::File::create(&path);
 
         // check that the file got created...
         assert!(file.is_ok());
