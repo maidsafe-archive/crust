@@ -243,8 +243,10 @@ mod getifaddrs_windows {
         else { None }
     }
 
+    // trivial_numeric_casts lint may become allow by default.
+    // Refer: https://github.com/rust-lang/rfcs/issues/1020
     /// Return a vector of IP details for all the valid interfaces on this host
-    #[allow(unsafe_code)]
+    #[allow(unsafe_code, trivial_numeric_casts)]
     pub fn getifaddrs() -> Vec<IfAddr> {
         let mut ret = Vec::<IfAddr>::new();
         let mut ifaddrs : *const IP_ADAPTER_ADDRESSES;
