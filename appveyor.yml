@@ -1,0 +1,26 @@
+install:
+  - ps: Start-FileDownload "https://raw.githubusercontent.com/carllerche/travis-rust-matrix/master/install.ps1"; . .\install.ps1
+
+platform:
+  - x86
+  - x64
+
+configuration:
+# - Debug
+  - Release
+
+environment:
+  matrix:
+#	- RUST_VERSION: 1.1.0
+#	- RUST_VERSION: beta
+    - RUST_VERSION: nightly
+
+build: false
+
+test_script:
+  - ps: if ($env:CONFIGURATION -eq "Release") {
+          $env:config_flags = "--release"
+        }
+  - cargo build --verbose %config_flags%
+  - set RUST_TEST_THREADS=1
+  - cargo test --verbose
