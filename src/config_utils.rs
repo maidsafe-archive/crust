@@ -205,11 +205,6 @@ mod test {
     use rand;
 
     #[test]
-    fn config_read() {
-        println!("{:?}",  read_config_file());
-    }
-
-    #[test]
     fn config_write() {
         let mut config = Config::make_default();
         config.beacon_port = rand::random::<u16>();

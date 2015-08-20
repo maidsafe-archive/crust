@@ -198,11 +198,6 @@ mod test {
     }
 
     #[test]
-    fn bootstrap_read() {
-        println!("{:?}", BootstrapHandler::new().unwrap().read_bootstrap_file());
-    }
-
-    #[test]
     fn bootstrap_write() {
         let mut handler = BootstrapHandler::new().unwrap();
         assert!(handler.write_bootstrap_file(create_contacts()).is_ok());
