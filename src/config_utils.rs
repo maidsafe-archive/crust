@@ -16,7 +16,7 @@
 // relating to use of the SAFE Network Software.
 
 use transport::Endpoint;
-use std::fs::{File, create_dir_all};
+use std::fs::{File, create_dir_all, remove_file};
 use std::io::prelude::*;
 use std::path::PathBuf;
 use std::env;
@@ -138,15 +138,15 @@ pub fn write_config_file(override_default_bootstrap: Option<bool>,
 
     let file_in_user_path = utils::user_app_dir().unwrap().join(get_file_name().unwrap());
 
-    match get_config_path() {
+    match get_write_config_path() {
         Ok(file_path) => {
             let _ =  create_dir_all(file_path.parent().unwrap());
             match write_file(&file_path, &config) {
                 Ok(_) => return Ok(file_path),
                 Err(e) => { if file_path == file_in_user_path {
                                 return Err(e)
-                            }
                           }
+                }
             }
         },
         Err(_) => {}
@@ -155,6 +155,24 @@ pub fn write_config_file(override_default_bootstrap: Option<bool>,
     match write_file(&file_in_user_path, &config) {
         Ok(_) => Ok(file_in_user_path),
         Err(e) => Err(e)
+    }
+}
+
+fn get_write_config_path() -> io::Result<(PathBuf)> {
+    match get_config_path() {
+        Ok(file) => Ok(file),
+        Err(_) => {
+            let config_name = get_file_name().unwrap();
+            let file_path = utils::system_app_support_dir().unwrap().join(&config_name);
+            let _ =  create_dir_all(file_path.parent().unwrap());
+            match File::create(&file_path) {
+                Ok(_) => {
+                    let _ = remove_file(&file_path);
+                    return Ok(file_path);
+                },
+                Err(e) => Err(e)
+             }
+        }
     }
 }
 
