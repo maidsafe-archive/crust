@@ -169,9 +169,17 @@ impl ConnectionManager {
                 //     PublicKey::Asym(asymmetricbox::PublicKey([0u8; asymmetricbox::PUBLICKEYBYTES]));
 
                 let mut bootstrap_handler = BootstrapHandler::new();
-                let port = hint.get(0).map(|ref e| -> Port { *e.clone() })
-                    .unwrap_or(Port::Tcp(0));
-                self.listen(port);
+                match hint.len() {
+                    0 => {
+                        self.listen(Port::Tcp(0));
+                        self.listen(Port::Utp(0));
+                    },
+                    _n => {
+                        for p in &hint {
+                            self.listen(*p)
+                        }
+                    },
+                }
                 listening_ports = try!(lock_state(&ws, |s| {
                     let buf: Vec<Port> = s.listening_ports.iter().map(|s| s.clone()).collect();
                     Ok(buf)
@@ -183,7 +191,10 @@ impl ConnectionManager {
                 for port in &listening_ports {
                     for ip in &listening_ips {
                         contacts.push(Contact {
-                            endpoint: Endpoint::tcp((ip.addr.clone(), port.get_port()))
+                            endpoint: match *port {
+                                Port::Tcp(p) => Endpoint::tcp((ip.addr.clone(), p)),
+                                Port::Utp(p) => Endpoint::utp((ip.addr.clone(), p)),
+                            },
                         });
                     }
                 }
@@ -206,9 +217,17 @@ impl ConnectionManager {
         };
 
         if self.beacon_guid_and_port.is_none() {
-            let port = hint.get(0).map(|ref e| -> Port { *e.clone() })
-                .unwrap_or(Port::Tcp(0));
-            self.listen(port);
+            match hint.len() {
+                0 => {
+                    self.listen(Port::Tcp(0));
+                    self.listen(Port::Utp(0));
+                },
+                _n => {
+                    for p in &hint {
+                        self.listen(*p)
+                    }
+                },
+            }
 
             listening_ports = try!(lock_state(&ws, |s| {
                 let buf: Vec<Port> = s.listening_ports.iter().map(|s| s.clone()).collect();
@@ -334,7 +353,16 @@ impl ConnectionManager {
         }
         // debug!("connection_manager::stop There are {} TCP ports being listened on", listening_ports.len());
         for port in listening_ports {
-            let _ = transport::connect(Endpoint::tcp(("127.0.0.1", port.get_port()))).unwrap();
+            let _ = match port {
+                Port::Tcp(port) => {
+                    transport::connect(Endpoint::tcp(("127.0.0.1", port)))
+                        .unwrap()
+                },
+                Port::Utp(port) => {
+                    transport::connect(Endpoint::utp(("127.0.0.1", port)))
+                        .unwrap()
+                },
+            };
         }
     }
 
