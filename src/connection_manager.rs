@@ -289,6 +289,7 @@ impl ConnectionManager {
     /// attempts will stop.
     /// It will reiterate the list of all endpoints until it gets at least one connection.
     pub fn bootstrap(&mut self, max_successful_bootstrap_connection: usize) {
+        debug!("bootstrap - max_successful_bootstrap_connection : {:?}", max_successful_bootstrap_connection);
         // Disconnect existing connections
         let mut ws = self.state.downgrade();
         let _ = lock_mut_state(&mut ws, |s: &mut State| {
@@ -313,7 +314,7 @@ impl ConnectionManager {
                         break;
                     },
                     Err(_) => {
-                        // debug!("Failed to get at least one bootstrap connection. continuing bootstrap loop");
+                        debug!("Failed to get at least one bootstrap connection. continuing bootstrap loop");
                     }
                 }
                 // breaking the loop if stop called
@@ -376,6 +377,8 @@ impl ConnectionManager {
     /// For details on handling of connect in different protocol refer
     /// https://github.com/dirvine/crust/blob/master/docs/connect.md
     pub fn connect(&self, endpoints: Vec<Endpoint>) {
+        debug!("connect - endpoints: {:?}", endpoints);
+
         let ws = self.state.downgrade();
         {
             let result = lock_mut_state(&ws, |s: &mut State| {
@@ -408,6 +411,7 @@ impl ConnectionManager {
     /// mean that the data will be received. It is possible for the corresponding connection to hang
     /// up immediately after this function returns Ok.
     pub fn send(&self, endpoint: Endpoint, message: Bytes) -> io::Result<()> {
+        debug!("send - {:?}", endpoint);
         let ws = self.state.downgrade();
 
         let writer_channel = try!(lock_state(&ws, |s| {
@@ -424,6 +428,7 @@ impl ConnectionManager {
 
     /// Closes connection with the specified endpoint.
     pub fn drop_node(&self, endpoint: Endpoint) {
+        debug!("drop_node - {:?}", endpoint);
         let mut ws = self.state.downgrade();
         let _ = lock_mut_state(&mut ws, |s: &mut State| {
             let _ = s.connections.remove(&endpoint);
@@ -601,10 +606,6 @@ fn handle_accept(mut state: WeakState, trans: transport::Transport) -> io::Resul
 fn handle_connect(mut state: WeakState, trans: transport::Transport,
                   is_broadcast_acceptor: bool, is_bootstrap_connection: bool) -> io::Result<Endpoint> {
 
-    if is_bootstrap_connection {
-        try!(increment_bs_count(&mut state));
-    }
-
     let remote_ep = trans.remote_endpoint.clone();
     let event = match is_bootstrap_connection {
         true => Event::NewBootstrapConnection(remote_ep),
@@ -626,30 +627,42 @@ fn handle_connect(mut state: WeakState, trans: transport::Transport,
     endpoint
 }
 
-fn increment_bs_count(state: &mut WeakState) -> io::Result<()> {
-    lock_mut_state(state, move |s: &mut State| {
-        if s.bs_count.0 < s.bs_count.1 {
-            s.bs_count.0 += 1;
-            return Ok(());
-        }
-        debug!("Reached max bootstrap connections : {:?}; Reseting further bs connections", s.bs_count.0);
-        Err(io::Error::new(io::ErrorKind::Other, "Already reached max bootstrap connections"))
-    })
-}
-
 fn register_connection(state: &mut WeakState, trans: transport::Transport,
                        event_to_user: Event) -> io::Result<Endpoint> {
     let state2 = state.clone();
 
     lock_mut_state(state, move |s: &mut State| {
+        let is_bootstrap_connection = match event_to_user {
+            Event::NewBootstrapConnection(_) =>  true,
+            _ => false,
+        };
+
         if s.connections.contains_key(&trans.remote_endpoint) {
+            if is_bootstrap_connection {
+                debug!("bootstrap_connection to {:?} already exists ", trans.remote_endpoint);
+                if s.bs_count.0 < s.bs_count.1 {  // ignoring increment if already reached max
+                    s.bs_count.0 += 1;
+                }
+                return Ok(trans.remote_endpoint)
+            }
+            debug!("Already connected to {:?}", trans.remote_endpoint);
             return Err(io::Error::new(io::ErrorKind::AlreadyExists, "Already connected"))
         }
+
+        // if max bootstrap_connection reached
+        if is_bootstrap_connection && s.bs_count.0 == s.bs_count.1 {
+            debug!("Reached max bootstrap connections : {:?}; Reseting further bs connections", s.bs_count.0);
+            return Err(io::Error::new(io::ErrorKind::Other, "Already reached max bootstrap connections"))
+        }
+
         let (tx, rx) = mpsc::channel();
         start_writing_thread(state2.clone(), trans.sender, trans.remote_endpoint.clone(), rx);
         start_reading_thread(state2, trans.receiver, trans.remote_endpoint.clone(),
                              s.event_pipe.clone());
         let _ = s.connections.insert(trans.remote_endpoint.clone(), Connection{writer_channel: tx});
+        if is_bootstrap_connection {
+            s.bs_count.0 += 1;
+        }
         let _ = s.event_pipe.send(event_to_user);
         Ok(trans.remote_endpoint)
     })
@@ -701,6 +714,7 @@ fn bootstrap_off_list(weak_state: WeakState, bootstrap_list: Vec<Contact>,
                       is_broadcast_acceptor: bool,
                       max_successful_bootstrap_connection: usize) -> io::Result<()> {
     let mut vec_deferred = vec![];
+    debug!("bootstrap_list : {:?}", bootstrap_list);
     for contact in bootstrap_list {
         let ws = weak_state.clone();
         vec_deferred.push(Deferred::new(move || {
@@ -1215,4 +1229,16 @@ mod test {
         }
     }
 
+
+    // Connect called before bootstrap loop establishes the connection to same bootstrap endpoint
+    // Refer issue : https://github.com/maidsafe/crust/issues/248
+    // #[test]
+    // fn connect_to_same_bootstrap_endpoint() {
+    //     let (cm1_tx, cm1_rx) = channel();
+    //     let (cm2_tx, cm2_rx) = channel();
+    //     let mut cm1 = ConnectionManager::new(cm1_tx);
+    //     let mut cm2 = ConnectionManager::new(cm2_tx);
+
+
+    // }
 }
