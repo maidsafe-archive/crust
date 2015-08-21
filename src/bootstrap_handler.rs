@@ -24,7 +24,7 @@ use std::env;
 use rustc_serialize::json;
 use std::io;
 use itertools::Itertools;
-use config_utils::Contacts;
+use config_handler::Contacts;
 use utils;
 
 const MAX_CONTACTS: usize = 1500;
@@ -49,7 +49,7 @@ impl BootstrapHandler {
         let name_with_extension = path.file_name().expect("Unknown filename");
         let mut name = path::Path::new(name_with_extension).file_stem()
             .expect("Unknown extension").to_os_string();
-        name.push(".crust.bootstrap.cache");
+        name.push(".bootstrap.cache");
         let name = name;
 
         let file_path = path.parent().unwrap().join(&name);
@@ -62,7 +62,7 @@ impl BootstrapHandler {
             return file_path;
         }
 
-        let file_path = utils::system_app_support_dir().unwrap();
+        let file_path = utils::system_cache_dir().unwrap();
         if File::open(&file_path).is_ok() {
             return file_path;
         }
@@ -170,7 +170,7 @@ mod test {
     use rustc_serialize::json;
     use rand;
     use std::path::{Path, PathBuf};
-    use config_utils::{Contact, Contacts};
+    use config_handler::{Contact, Contacts};
     use std::env;
 
     use super::MAX_CONTACTS;

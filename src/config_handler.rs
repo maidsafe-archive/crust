@@ -15,7 +15,6 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use transport::Endpoint;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::PathBuf;
@@ -23,14 +22,6 @@ use std::env;
 use rustc_serialize::json;
 use std::io;
 use utils;
-
-#[derive(PartialEq, Eq, Hash, Debug, Clone, RustcDecodable, RustcEncodable)]
-pub struct Contact {
-    pub endpoint: Endpoint
-}
-
-pub type Contacts = Vec<Contact>;
-
 
 #[derive(PartialEq, Debug, RustcDecodable, RustcEncodable, Clone)]
 pub struct Config {
@@ -40,7 +31,6 @@ pub struct Config {
 }
 
 impl Config {
-
     pub fn make_default() -> Config {
         Config{ override_default_bootstrap: false,  // default bootstraping methods enabled
                 hard_coded_contacts: vec![], // No hardcoded endpoints
@@ -49,15 +39,25 @@ impl Config {
     }
 }
 
+pub struct ConfigHandler {
+    config: Config,
+    path: Option<::std::path::PathBuf>
+}
+
 pub fn exe_path_config() -> io::Result<(PathBuf)> {
+                                                                                                        let _ = ::utils::current_bin_dir();
     let file_name = try!(get_file_name());
+                                                                                                    println!("file_name {:?}", file_name);
     let mut path = try!(env::current_exe());
+                                                                                                    println!("path1 {:?}", path);
     path.pop();
+                                                                                                    println!("path2 {:?}", path);
     let path = path.join(file_name.clone());
+                                                                                                    println!("path3 {:?}", path);
     Ok(path)
 }
 
-pub fn get_file_name() -> io::Result<(PathBuf)> {
+fn get_file_name() -> io::Result<(PathBuf)> {
     let current_exe_path = try!(env::current_exe());
     let file_stem = try!(current_exe_path.file_stem()
         .ok_or_else(||io::Error::new(io::ErrorKind::Other, format!("Failed to read current exe file name"))));
@@ -88,7 +88,7 @@ pub fn read_config_file() -> io::Result<(Config)> {
     }
 
     // Application support directory for all users
-    let file_path = utils::system_app_support_dir().unwrap().join(file_name);
+    let file_path = utils::system_cache_dir().unwrap().join(file_name);
     read_file(&file_path)
 }
 
@@ -107,7 +107,7 @@ fn write_file(file_name : &PathBuf, config: &Config) -> io::Result<()> {
     file.sync_all()
 }
 
-/// Writes config file and parametes to exe directory with appropriate file name format
+/// Writes config file and parameters to exe directory with appropriate file name format
 /// This method should be only used as a utility for test and examples
 /// For installed application, this file should be created by installer.
 pub fn write_config_file(override_default_bootstrap: Option<bool>,
@@ -150,6 +150,9 @@ mod test {
 
     #[test]
     fn read_config_file_test() {
+                                                                                            println!("\ncurrent_bin_dir() {:?}", ::utils::current_bin_dir());
+                                                                                            println!("user_app_dir() {:?}", ::utils::user_app_dir());
+                                                                                            println!("system_cache_dir() {:?}", ::utils::system_cache_dir());
         let mut hard_coded_contacts = Vec::new();
         for _ in 0..10 {
             let mut random_addr_0 = Vec::with_capacity(4);

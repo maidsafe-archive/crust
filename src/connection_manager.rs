@@ -25,7 +25,7 @@ use std::net::{IpAddr, SocketAddr, SocketAddrV4};
 
 use beacon;
 use bootstrap_handler::{BootstrapHandler, parse_contacts};
-use config_utils::{Config, Contact, Contacts, read_config_file};
+use config_handler::{Config, Contact, Contacts, read_config_file};
 use getifaddrs::{getifaddrs, filter_loopback};
 use transport;
 use transport::{Endpoint, Port};
@@ -717,7 +717,7 @@ mod test {
     use transport;
     use transport::{Endpoint, Port};
     use std::sync::{Mutex, Arc};
-    use config_utils::{Contact, write_config_file};
+    use config_handler::{Contact, write_config_file};
     use std::path::PathBuf;
     use std::net::{SocketAddr, Ipv4Addr, SocketAddrV4, SocketAddrV6};
     use std::fs::remove_file;

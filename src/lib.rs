@@ -16,8 +16,7 @@
 // relating to use of the SAFE Network Software.
 
 //! #crust
-//! Reliable p2p network connections in Rust with NAT traversal.
-//! One of the most needed libraries for any server-less / decentralised projects
+//! Reliable peer-to-peer network connections in Rust with NAT traversal.
 
 #![forbid(missing_docs, warnings)]
 #![deny(bad_style, deprecated, drop_with_repr_extern, improper_ctypes, non_shorthand_field_patterns,
@@ -29,44 +28,21 @@
         unused_qualifications, unused_results, variant_size_differences)]
 #![doc(html_logo_url = "http://maidsafe.net/img/Resources/branding/maidsafe_logo.fab2.png",
        html_favicon_url = "http://maidsafe.net/img/favicon.ico",
-       html_root_url = "http:///dirvine.github.io/crust/crust/")]
+       html_root_url = "http://maidsafe.github.io/crust/")]
 #![feature(ip_addr, ip, arc_weak, socket_timeout, negate_unsigned, rustc_private)]
 
+extern crate asynchronous;
+extern crate cbor;
+extern crate igd;
+extern crate itertools;
 #[macro_use]
 extern crate log;
-
-extern crate cbor;
+extern crate libc;
+extern crate net2;
 extern crate rand;
 extern crate rustc_serialize;
-//extern crate sodiumoxide;
 extern crate time;
-extern crate asynchronous;
-extern crate libc;
 extern crate utp;
-extern crate itertools;
-extern crate igd;
-extern crate net2;
-
-#[cfg(test)]
-mod test {
-    use std::env;
-
-    #[test]
-    pub fn check_rust_unit_testing_is_not_parallel() {
-        match env::var_os("RUST_TEST_THREADS") {
-            Some(val) => assert!(val.into_string().unwrap() == "1"),
-            None => panic!("RUST_TEST_THREADS needs to be 1 for the crust unit tests to work"),
-        }
-    }
-}
-mod beacon;
-mod bootstrap_handler;
-mod getifaddrs;
-mod tcp_connections;
-mod utp_connections;
-mod transport;
-mod config_utils;
-mod utils;
 
 /// Module implementing the `ConnectionManager` which provides an interface to manage peer-to-peer
 /// connections.
@@ -74,4 +50,24 @@ pub mod connection_manager;
 
 pub use connection_manager::{Event, ConnectionManager};
 pub use transport::{Endpoint, Port};
-pub use config_utils::write_config_file;
+pub use config_handler::write_config_file;
+
+#[cfg(test)]
+mod test {
+    #[test]
+    pub fn check_rust_unit_testing_is_not_parallel() {
+        match ::std::env::var_os("RUST_TEST_THREADS") {
+            Some(val) => assert!(val.into_string().unwrap() == "1"),
+            None => panic!("RUST_TEST_THREADS needs to be 1 for the crust unit tests to work"),
+        }
+    }
+}
+mod beacon;
+mod bootstrap_handler;
+mod config_handler;
+mod file_handler;
+mod getifaddrs;
+mod tcp_connections;
+mod transport;
+mod utils;
+mod utp_connections;
