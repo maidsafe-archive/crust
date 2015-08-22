@@ -69,7 +69,7 @@ Several methods are used for NAT traversal, UpNP, hole punching [See here for TC
 
 ## Future work
 
-- [x] [MAID-1142] (https://maidsafe.atlassian.net/browse/MAID-1142) Add UTP protocol support to crust
+- [ ] [MAID-1142] (https://maidsafe.atlassian.net/browse/MAID-1142) Add UTP protocol support to crust
 - [ ] [MAID-1140] (https://maidsafe.atlassian.net/browse/MAID-1140) Memory-mapped file I/O for bootstrap file
 - [ ] Have ConnectionManager guarantee at most one connection between any two nodes
 - [ ] Utp Networking
