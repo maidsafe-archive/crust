@@ -37,6 +37,12 @@ pub fn read_config_file() -> Result<Config, ::error::Error> {
     file_handler.read_file::<Config>()
 }
 
+// This is a best-effort to create a config file - we don't care about the result.
+pub fn create_default_config_file() {
+    let mut file_handler = ::file_handler::FileHandler::new(get_file_name());
+    let _ = file_handler.write_file(&Config::make_default());
+}
+
 /// Writes a Crust config file **for use by tests and examples**.
 ///
 /// The file is written to the [`current_bin_dir()`](file_handler/fn.current_bin_dir.html)
@@ -44,6 +50,7 @@ pub fn read_config_file() -> Result<Config, ::error::Error> {
 ///
 /// N.B. This method should only be used as a utility for test and examples.  In normal use cases,
 /// this file should be created by the installer for the dependent application.
+#[cfg(test)]
 pub fn write_config_file(override_default_bootstrap: Option<bool>,
                          hard_coded_endpoints: Option<Vec<::transport::Endpoint>>,
                          beacon_port: Option<u16>) -> Result<::std::path::PathBuf, ::error::Error> {

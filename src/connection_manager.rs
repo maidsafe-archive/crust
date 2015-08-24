@@ -132,6 +132,7 @@ impl ConnectionManager {
     pub fn new(event_pipe: mpsc::Sender<Event>) -> ConnectionManager {
         let config = read_config_file().unwrap_or_else(|e| {
             debug!("Crust failed to read config file; Error: {:?};", e);
+            ::config_handler::create_default_config_file();
             let default = Config::make_default();
             debug!("Using default beacon_port {:?} and default bootstrapping methods enabled",
                 default.beacon_port);
