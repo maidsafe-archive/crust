@@ -15,109 +15,44 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::fs::File;
-use std::io::prelude::*;
-use std::path::PathBuf;
-use std::env;
-use rustc_serialize::json;
-use std::io;
-use utils;
-
-#[derive(PartialEq, Debug, RustcDecodable, RustcEncodable, Clone)]
+#[derive(PartialEq, Eq, Debug, RustcDecodable, RustcEncodable, Clone)]
 pub struct Config {
     pub override_default_bootstrap: bool,
-    pub hard_coded_contacts: Contacts,
+    pub hard_coded_contacts: ::contact::Contacts,
     pub beacon_port: u16,
 }
 
 impl Config {
     pub fn make_default() -> Config {
-        Config{ override_default_bootstrap: false,  // default bootstraping methods enabled
-                hard_coded_contacts: vec![], // No hardcoded endpoints
-                beacon_port: 5483u16, // LIVE port : crust's default
-              }
+        Config{
+            override_default_bootstrap: false,  // Default bootstrapping methods enabled
+            hard_coded_contacts: vec![],  // No hardcoded endpoints
+            beacon_port: 5483u16,  // LIVE port
+        }
     }
 }
 
-pub struct ConfigHandler {
-    config: Config,
-    path: Option<::std::path::PathBuf>
+pub fn read_config_file() -> Result<Config, ::error::Error> {
+    let mut file_handler = ::file_handler::FileHandler::new(get_file_name());
+    file_handler.read_file::<Config>()
 }
 
-pub fn exe_path_config() -> io::Result<(PathBuf)> {
-                                                                                                        let _ = ::utils::current_bin_dir();
-    let file_name = try!(get_file_name());
-                                                                                                    println!("file_name {:?}", file_name);
-    let mut path = try!(env::current_exe());
-                                                                                                    println!("path1 {:?}", path);
-    path.pop();
-                                                                                                    println!("path2 {:?}", path);
-    let path = path.join(file_name.clone());
-                                                                                                    println!("path3 {:?}", path);
-    Ok(path)
-}
-
-fn get_file_name() -> io::Result<(PathBuf)> {
-    let current_exe_path = try!(env::current_exe());
-    let file_stem = try!(current_exe_path.file_stem()
-        .ok_or_else(||io::Error::new(io::ErrorKind::Other, format!("Failed to read current exe file name"))));
-    let mut os_string = file_stem.to_os_string();
-    os_string.push(".crust.config");
-    Ok(PathBuf::from(os_string))
-}
-
-// Try reading in following order:
-// Current executable directory: using std::env::current_exe
-// Current user's application directory: UserAppDir
-// Application support directory for all users: SystemAppSupportDir
-pub fn read_config_file() -> io::Result<(Config)> {
-    // Current executable directory
-    let path = try!(exe_path_config());
-    let res = read_file(&path);
-    if res.is_ok() {
-        return res;
-    }
-
-    let file_name = try!(get_file_name());
-
-    // Current user's application directory
-    let file_path = utils::user_app_dir().unwrap().join(&file_name);
-    let res = read_file(&file_path);
-    if res.is_ok() {
-        return res;
-    }
-
-    // Application support directory for all users
-    let file_path = utils::system_cache_dir().unwrap().join(file_name);
-    read_file(&file_path)
-}
-
-fn read_file(file_name : &PathBuf) -> io::Result<(Config)> {
-    let mut file = try!(File::open(file_name));
-    let mut contents = String::new();
-    let _ = try!(file.read_to_string(&mut contents));
-    json::decode(&contents)
-         .map_err(|error| io::Error::new(io::ErrorKind::Other,
-                                         format!("Failed to decode config file: {}", error)))
-}
-
-fn write_file(file_name : &PathBuf, config: &Config) -> io::Result<()> {
-    let mut file = try!(File::create(file_name));
-    try!(write!(&mut file, "{}", json::as_pretty_json(&config)));
-    file.sync_all()
-}
-
-/// Writes config file and parameters to exe directory with appropriate file name format
-/// This method should be only used as a utility for test and examples
-/// For installed application, this file should be created by installer.
+/// Writes a Crust config file **for use by tests and examples**.
+///
+/// The file is written to the [`current_bin_dir()`](file_handler/fn.current_bin_dir.html)
+/// with the appropriate file name.
+///
+/// N.B. This method should only be used as a utility for test and examples.  In normal use cases,
+/// this file should be created by the installer for the dependent application.
 pub fn write_config_file(override_default_bootstrap: Option<bool>,
-                         hard_coded_endpoints: Option<Vec<Endpoint>>,
-                         beacon_port: Option<u16>) -> io::Result<(PathBuf)> {
-    let mut hard_coded_contacts: Contacts = vec![];
+                         hard_coded_endpoints: Option<Vec<::transport::Endpoint>>,
+                         beacon_port: Option<u16>) -> Result<::std::path::PathBuf, ::error::Error> {
+    use std::io::Write;
+    let mut hard_coded_contacts: ::contact::Contacts = vec![];
     match hard_coded_endpoints {
         Some(endpoints) => {
             for endpoint in endpoints {
-                hard_coded_contacts.push(Contact{endpoint: endpoint });
+                hard_coded_contacts.push(::contact::Contact{endpoint: endpoint });
             }
         },
         None => {}
@@ -133,48 +68,63 @@ pub fn write_config_file(override_default_bootstrap: Option<bool>,
                          beacon_port: beacon_port
                             .unwrap_or(default.beacon_port),
                        };
-    let config_path = try!(exe_path_config());
-    try!(write_file(&config_path, &config));
+    let mut config_path = try!(::file_handler::current_bin_dir());
+    config_path.push(get_file_name());
+    let mut file = try!(::std::fs::File::create(&config_path));
+    let _ = try!(write!(&mut file, "{}", ::rustc_serialize::json::as_pretty_json(&config)));
+    let _ = try!(file.sync_all());
     Ok(config_path)
 }
 
+fn get_file_name() -> ::std::path::PathBuf {
+    let mut name = ::file_handler::exe_file_stem()
+                       .unwrap_or(::std::path::Path::new("unknown").to_path_buf());
+    name.set_extension("crust.config");
+    name
+}
 
 #[cfg(test)]
 mod test {
-    use super::*;
-    use std::net;
-    use std::net::SocketAddr;
-    use transport::Endpoint;
-    use std::fs;
-    use rand;
-
     #[test]
     fn read_config_file_test() {
-                                                                                            println!("\ncurrent_bin_dir() {:?}", ::utils::current_bin_dir());
-                                                                                            println!("user_app_dir() {:?}", ::utils::user_app_dir());
-                                                                                            println!("system_cache_dir() {:?}", ::utils::system_cache_dir());
+        let mut hard_coded_endpoints = Vec::new();
         let mut hard_coded_contacts = Vec::new();
         for _ in 0..10 {
             let mut random_addr_0 = Vec::with_capacity(4);
-            random_addr_0.push(rand::random::<u8>());  // TODO move to utility
-            random_addr_0.push(rand::random::<u8>());
-            random_addr_0.push(rand::random::<u8>());
-            random_addr_0.push(rand::random::<u8>());
+            random_addr_0.push(::rand::random::<u8>());  // TODO move to utility
+            random_addr_0.push(::rand::random::<u8>());
+            random_addr_0.push(::rand::random::<u8>());
+            random_addr_0.push(::rand::random::<u8>());
 
-            let port_0: u16 = rand::random::<u16>();
-            let addr_0 = net::SocketAddrV4::new(net::Ipv4Addr::new(random_addr_0[0],
+            let port_0: u16 = ::rand::random::<u16>();
+            let addr_0 = ::std::net::SocketAddrV4::new(::std::net::Ipv4Addr::new(random_addr_0[0],
                 random_addr_0[1], random_addr_0[2], random_addr_0[3]), port_0);
-            let new_contact = Contact { endpoint: Endpoint::Tcp(SocketAddr::V4(addr_0)) };
+            let new_endpoint = ::transport::Endpoint::Tcp(::std::net::SocketAddr::V4(addr_0));
+            hard_coded_endpoints.push(new_endpoint.clone());
+            let new_contact = ::contact::Contact { endpoint: new_endpoint };
             hard_coded_contacts.push(new_contact);
         }
-        let config = Config{ override_default_bootstrap: false,
-                             hard_coded_contacts: hard_coded_contacts,
-                             beacon_port: rand::random::<u16>(),
-                           };
+        let config =
+            super::Config{
+                override_default_bootstrap: false,
+                hard_coded_contacts: hard_coded_contacts,
+                beacon_port: ::rand::random::<u16>(),
+            };
+        let _ = super::write_config_file(Some(config.override_default_bootstrap),
+                                         Some(hard_coded_endpoints),
+                                         Some(config.beacon_port));
+        match super::read_config_file() {
+            Ok(recovered_config) => assert_eq!(config, recovered_config),
+            Err(_) => panic!("Failed to read config file."),
+        }
 
-        let file_name = exe_path_config().unwrap();
-        assert_eq!(super::write_file(&file_name, &config).ok(), Some(()));
-        assert_eq!(super::read_file(&file_name).ok(), Some(config));
-        let _  = fs::remove_file(&file_name);
+        // Clean up
+        match ::file_handler::current_bin_dir() {
+            Ok(mut config_path) => {
+                config_path.push(super::get_file_name());
+                let _ = ::std::fs::remove_file(&config_path);
+            },
+            Err(_) => (),
+        };
     }
 }

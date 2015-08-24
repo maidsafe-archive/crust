@@ -47,10 +47,16 @@ extern crate utp;
 /// Module implementing the `ConnectionManager` which provides an interface to manage peer-to-peer
 /// connections.
 pub mod connection_manager;
+/// Defines errors.
+pub mod error;
+/// Provides a struct and free functions for working with config files.
+pub mod file_handler;
 
 pub use connection_manager::{Event, ConnectionManager};
 pub use transport::{Endpoint, Port};
 pub use config_handler::write_config_file;
+pub use error::Error;
+pub use file_handler::{FileHandler, current_bin_dir, user_app_dir, system_cache_dir, exe_file_stem};
 
 #[cfg(test)]
 mod test {
@@ -65,10 +71,9 @@ mod test {
 mod beacon;
 mod bootstrap_handler;
 mod config_handler;
-mod file_handler;
+mod contact;
 mod getifaddrs;
 mod tcp_connections;
-mod utp_wrapper;
 mod transport;
-mod utils;
 mod utp_connections;
+mod utp_wrapper;
