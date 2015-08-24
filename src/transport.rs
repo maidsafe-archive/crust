@@ -62,24 +62,35 @@ impl Endpoint {
     }
 }
 
+#[derive(Debug, RustcDecodable, RustcEncodable)]
+struct EndpointSerialiser {
+    pub protocol : String,
+    pub address : String,
+}
 
 impl Encodable for Endpoint {
     fn encode<E: Encoder>(&self, e: &mut E)->Result<(), E::Error> {
-        let address = match *self {
-            Endpoint::Tcp(socket_addr) => socket_addr.to_string(),
-            Endpoint::Utp(socket_addr) => socket_addr.to_string(),
+        let s = EndpointSerialiser {
+            protocol: match *self { Endpoint::Tcp(_) => "tcp".to_string(), Endpoint::Utp(_) => "utp".to_string(), },
+            address: self.get_address().to_string()
         };
-        try!(address.encode(e));
+        try!(s.encode(e));
         Ok(())
     }
 }
 
 impl Decodable for Endpoint {
     fn decode<D: Decoder>(d: &mut D)->Result<Endpoint, D::Error> {
-        let decoded: String = try!(Decodable::decode(d));
-        match SocketAddr::from_str(&decoded) {
-            Ok(address) => Ok(Endpoint::Tcp(address)),
-            _ => Err(d.error(&(format!("Expecting SocketAddr string, but found : {:?}", decoded)))),
+        let decoded: EndpointSerialiser = try!(Decodable::decode(d));
+        match SocketAddr::from_str(&decoded.address) {
+            Ok(address) => if decoded.protocol=="tcp" {
+                Ok(Endpoint::Tcp(address))
+            } else if decoded.protocol=="utp" {
+                Ok(Endpoint::Utp(address))
+            } else {
+                Err(d.error(&(format!("Unknown Protocol {}", decoded.protocol))))
+            },
+            _ => Err(d.error(&(format!("Expecting Protocol and SocketAddr string, but found : {:?}", decoded)))),
         }
     }
 }

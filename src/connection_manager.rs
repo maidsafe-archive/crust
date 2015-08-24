@@ -159,7 +159,7 @@ impl ConnectionManager {
         //  For any protocol that doesn't have an entry, we should inject one (either random or 0).
         //  Currently, only TCP is supported.
 
-        let ws = self.state.downgrade();
+        let ws = Arc::downgrade(&self.state);
 
         let mut listening_ports = Vec::new();
         self.beacon_guid_and_port = match beacon::BroadcastAcceptor::new(self.config.beacon_port) {
@@ -169,9 +169,17 @@ impl ConnectionManager {
                 //     PublicKey::Asym(asymmetricbox::PublicKey([0u8; asymmetricbox::PUBLICKEYBYTES]));
 
                 let mut bootstrap_handler = BootstrapHandler::new();
-                let port = hint.get(0).map(|ref e| -> Port { *e.clone() })
-                    .unwrap_or(Port::Tcp(0));
-                self.listen(port);
+                match hint.len() {
+                    0 => {
+                        self.listen(Port::Tcp(0));
+                        self.listen(Port::Utp(0));
+                    },
+                    _n => {
+                        for p in &hint {
+                            self.listen(*p)
+                        }
+                    },
+                }
                 listening_ports = try!(lock_state(&ws, |s| {
                     let buf: Vec<Port> = s.listening_ports.iter().map(|s| s.clone()).collect();
                     Ok(buf)
@@ -183,7 +191,10 @@ impl ConnectionManager {
                 for port in &listening_ports {
                     for ip in &listening_ips {
                         contacts.push(Contact {
-                            endpoint: Endpoint::tcp((ip.addr.clone(), port.get_port()))
+                            endpoint: match *port {
+                                Port::Tcp(p) => Endpoint::tcp((ip.addr.clone(), p)),
+                                Port::Utp(p) => Endpoint::utp((ip.addr.clone(), p)),
+                            },
                         });
                     }
                 }
@@ -206,9 +217,17 @@ impl ConnectionManager {
         };
 
         if self.beacon_guid_and_port.is_none() {
-            let port = hint.get(0).map(|ref e| -> Port { *e.clone() })
-                .unwrap_or(Port::Tcp(0));
-            self.listen(port);
+            match hint.len() {
+                0 => {
+                    self.listen(Port::Tcp(0));
+                    self.listen(Port::Utp(0));
+                },
+                _n => {
+                    for p in &hint {
+                        self.listen(*p)
+                    }
+                },
+            }
 
             listening_ports = try!(lock_state(&ws, |s| {
                 let buf: Vec<Port> = s.listening_ports.iter().map(|s| s.clone()).collect();
@@ -271,14 +290,14 @@ impl ConnectionManager {
     /// It will reiterate the list of all endpoints until it gets at least one connection.
     pub fn bootstrap(&mut self, max_successful_bootstrap_connection: usize) {
         // Disconnect existing connections
-        let mut ws = self.state.downgrade();
+        let mut ws = Arc::downgrade(&self.state);
         let _ = lock_mut_state(&mut ws, |s: &mut State| {
             let _ = s.connections.clear();
             s.bs_count = (0, max_successful_bootstrap_connection.clone());
             Ok(())
         });
 
-        let ws = self.state.downgrade();
+        let ws = Arc::downgrade(&self.state);
         let bs_file_lock = self.beacon_guid_and_port.is_some();
         let config = self.config.clone();
         let beacon_guid_and_port = self.beacon_guid_and_port.clone();
@@ -321,7 +340,7 @@ impl ConnectionManager {
             self.beacon_guid_and_port = None;
         }
         let mut listening_ports = Vec::<Port>::new();
-        let weak_state = self.state.downgrade();
+        let weak_state = Arc::downgrade(&self.state);
         {
             let _ = lock_mut_state(&weak_state, |state: &mut State| {
                 for itr in &state.listening_ports {
@@ -334,7 +353,16 @@ impl ConnectionManager {
         }
         // debug!("connection_manager::stop There are {} TCP ports being listened on", listening_ports.len());
         for port in listening_ports {
-            let _ = transport::connect(Endpoint::tcp(("127.0.0.1", port.get_port()))).unwrap();
+            let _ = match port {
+                Port::Tcp(port) => {
+                    transport::connect(Endpoint::tcp(("127.0.0.1", port)))
+                        .unwrap()
+                },
+                Port::Utp(port) => {
+                    transport::connect(Endpoint::utp(("127.0.0.1", port)))
+                        .unwrap()
+                },
+            };
         }
     }
 
@@ -348,7 +376,7 @@ impl ConnectionManager {
     /// For details on handling of connect in different protocol refer
     /// https://github.com/dirvine/crust/blob/master/docs/connect.md
     pub fn connect(&self, endpoints: Vec<Endpoint>) {
-        let ws = self.state.downgrade();
+        let ws = Arc::downgrade(&self.state);
         {
             let result = lock_mut_state(&ws, |s: &mut State| {
                 for endpoint in &endpoints {
@@ -380,7 +408,7 @@ impl ConnectionManager {
     /// mean that the data will be received. It is possible for the corresponding connection to hang
     /// up immediately after this function returns Ok.
     pub fn send(&self, endpoint: Endpoint, message: Bytes) -> io::Result<()> {
-        let ws = self.state.downgrade();
+        let ws = Arc::downgrade(&self.state);
 
         let writer_channel = try!(lock_state(&ws, |s| {
             match s.connections.get(&endpoint) {
@@ -396,7 +424,7 @@ impl ConnectionManager {
 
     /// Closes connection with the specified endpoint.
     pub fn drop_node(&self, endpoint: Endpoint) {
-        let mut ws = self.state.downgrade();
+        let mut ws = Arc::downgrade(&self.state);
         let _ = lock_mut_state(&mut ws, |s: &mut State| {
             let _ = s.connections.remove(&endpoint);
             Ok(())
@@ -488,7 +516,7 @@ impl ConnectionManager {
         let local_port = acceptor.local_port();
         self.own_endpoints = map_external_port(&local_port);
 
-        let mut weak_state = self.state.downgrade();
+        let mut weak_state = Arc::downgrade(&self.state);
 
         let _ = lock_mut_state(&mut weak_state, |s| Ok(s.listening_ports.insert(local_port)));
 
@@ -1114,8 +1142,8 @@ mod test {
                                                stop_called: false,
                                                bs_count: (0,1),
                                              }));
-        assert!(bootstrap_off_list(state.downgrade(), vec![], false, 15).is_err());
-        assert!(bootstrap_off_list(state.downgrade(),
+        assert!(bootstrap_off_list(Arc::downgrade(&state), vec![], false, 15).is_err());
+        assert!(bootstrap_off_list(Arc::downgrade(&state),
                                    vec![Contact{endpoint: ep.clone()}], false, 15)
                 .is_ok());
     }
@@ -1163,8 +1191,8 @@ mod test {
                                                stop_called: false,
                                                bs_count: (0,max_count),
                                              }));
-        assert!(bootstrap_off_list(state.downgrade(), vec![], false, 15).is_err());
-        assert!(bootstrap_off_list(state.downgrade(),
+        assert!(bootstrap_off_list(Arc::downgrade(&state), vec![], false, 15).is_err());
+        assert!(bootstrap_off_list(Arc::downgrade(&state),
                                    contacts.clone(), false, max_count)
                 .is_ok());
 

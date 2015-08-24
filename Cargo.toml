@@ -1,6 +1,6 @@
 [package]
 name = "crust"
-version = "0.2.5"
+version = "0.2.6"
 authors = ["MaidSafe Developers <dev@maidsafe.net>"]
 description = "Peer-to-peer networking library. Automatically reconnect and manage connections."
 documentation = "http://maidsafe.net/crust/latest"
@@ -18,10 +18,10 @@ rustc-serialize = "*"
 term = "*"
 time = "*"
 asynchronous = "*"
-utp = "*"
 itertools = "*"
 igd = "0.1.3"
 net2 = "*"
+temp_utp = "*"
 
 [dev-dependencies]
 env_logger = "*"

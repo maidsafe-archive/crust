@@ -68,6 +68,7 @@ mod config_handler;
 mod file_handler;
 mod getifaddrs;
 mod tcp_connections;
+mod utp_wrapper;
 mod transport;
 mod utils;
 mod utp_connections;
