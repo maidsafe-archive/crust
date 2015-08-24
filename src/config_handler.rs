@@ -90,19 +90,9 @@ mod test {
         let mut hard_coded_endpoints = Vec::new();
         let mut hard_coded_contacts = Vec::new();
         for _ in 0..10 {
-            let mut random_addr_0 = Vec::with_capacity(4);
-            random_addr_0.push(::rand::random::<u8>());  // TODO move to utility
-            random_addr_0.push(::rand::random::<u8>());
-            random_addr_0.push(::rand::random::<u8>());
-            random_addr_0.push(::rand::random::<u8>());
-
-            let port_0: u16 = ::rand::random::<u16>();
-            let addr_0 = ::std::net::SocketAddrV4::new(::std::net::Ipv4Addr::new(random_addr_0[0],
-                random_addr_0[1], random_addr_0[2], random_addr_0[3]), port_0);
-            let new_endpoint = ::transport::Endpoint::Tcp(::std::net::SocketAddr::V4(addr_0));
-            hard_coded_endpoints.push(new_endpoint.clone());
-            let new_contact = ::contact::Contact { endpoint: new_endpoint };
-            hard_coded_contacts.push(new_contact);
+            let random_contact = ::contact::random_contact();
+            hard_coded_endpoints.push(random_contact.endpoint.clone());
+            hard_coded_contacts.push(random_contact);
         }
         let config =
             super::Config{

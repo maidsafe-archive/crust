@@ -23,3 +23,24 @@ pub struct Contact {
 
 /// Collection of contacts.
 pub type Contacts = Vec<Contact>;
+
+#[cfg(test)]
+pub fn random_contact() -> Contact {
+    // TODO - randomise V4/V6 and TCP/UTP
+    let address = ::std::net::SocketAddrV4::new(
+        ::std::net::Ipv4Addr::new(::rand::random::<u8>(),
+                                  ::rand::random::<u8>(),
+                                  ::rand::random::<u8>(),
+                                  ::rand::random::<u8>()),
+        ::rand::random::<u16>());
+    Contact{ endpoint: ::transport::Endpoint::Tcp(::std::net::SocketAddr::V4(address)) }
+}
+
+#[cfg(test)]
+pub fn random_contacts(count: usize) -> Contacts {
+    let mut contacts = Vec::new();
+    for _ in 0..count {
+        contacts.push(random_contact());
+    }
+    contacts
+}

@@ -26,6 +26,8 @@ pub enum Error {
     JsonDecoderError(::rustc_serialize::json::DecoderError),
     /// Wrapper for a `::rustc_serialize::json::EncoderError`
     JsonEncoderError(::rustc_serialize::json::EncoderError),
+    /// Wrapper for a `::cbor::CborError`
+    CborError(::cbor::CborError),
     /// Indicates variable has never been set
     NotSet,
 }
@@ -51,5 +53,11 @@ impl From<::rustc_serialize::json::DecoderError> for Error {
 impl From<::rustc_serialize::json::EncoderError> for Error {
     fn from(error: ::rustc_serialize::json::EncoderError) -> Self {
         Error::JsonEncoderError(error)
+    }
+}
+
+impl From<::cbor::CborError> for Error {
+    fn from(error: ::cbor::CborError) -> Self {
+        Error::CborError(error)
     }
 }

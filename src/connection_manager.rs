@@ -205,7 +205,7 @@ impl ConnectionManager {
                                               .spawn(move || {
                     while let Ok(mut transport) = acceptor.accept() {
                         let mut handler = BootstrapHandler::new();
-                        let read_contacts = handler.get_serialised_contacts();
+                        let read_contacts = handler.serialise_contacts();
                         if read_contacts.is_ok() {
                             let _ = transport.sender.send(&read_contacts.unwrap());
                         }
@@ -461,12 +461,12 @@ impl ConnectionManager {
             };
 
             match parse_contacts(contacts_str) {
-                Some(contacts) => {
+                Ok(contacts) => {
                     for contact in contacts {
                         endpoints.push(contact.endpoint);
                     }
                 },
-                None => continue
+                Err(_) => continue
             }
         }
 
@@ -482,7 +482,7 @@ impl ConnectionManager {
         } else {
             let cached_contacts = match beacon_guid_and_port.is_some() {  // this node owns bs file
                 true => {
-                    if let Ok(contacts) = BootstrapHandler::new().read_bootstrap_file() {
+                    if let Ok(contacts) = BootstrapHandler::new().read_file() {
                         contacts
                     } else {
                         vec![]
