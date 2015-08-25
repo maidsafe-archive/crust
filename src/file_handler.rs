@@ -143,9 +143,9 @@ pub fn user_app_dir() -> Result<::std::path::PathBuf, ::error::Error> {
 
 /// The full path to an application support directory for the current user.
 #[cfg(any(target_os="macos", target_os="ios", target_os="linux"))]
-pub fn user_app_dir() -> Result<::std::path::PathBuf, Error> {
+pub fn user_app_dir() -> Result<::std::path::PathBuf, ::error::Error> {
     Ok(try!(join_exe_file_stem(&try!(::std::env::home_dir().ok_or(not_found_error()))
-                              .push(".config"))))
+                              .join(".config"))))
 }
 
 /// The full path to a system cache directory available for all users.
