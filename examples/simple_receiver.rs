@@ -15,7 +15,6 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-#![feature(convert, negate_unsigned, rustc_private)]
 #![forbid(warnings)]
 #![deny(bad_style, deprecated, drop_with_repr_extern, improper_ctypes, non_shorthand_field_patterns,
         overflowing_literals, plugin_as_library, private_no_mangle_fns, private_no_mangle_statics,
@@ -26,14 +25,8 @@
         unused_qualifications, unused_results, variant_size_differences)]
 
 #[macro_use]
-extern crate log;
 extern crate env_logger;
 extern crate crust;
-
-use std::str::FromStr;
-use std::sync::mpsc::channel;
-
-use crust::{ConnectionManager, write_config_file, Port};
 
 fn fibonacci_number(n: u64) -> u64 {
     match n {
@@ -43,26 +36,37 @@ fn fibonacci_number(n: u64) -> u64 {
     }
 }
 
+// TODO - Once Rust gets signal-handling (https://github.com/rust-lang/rust/issues/11203) we should
+// catch ctrl+C signals here to allow the server to exit gracefully.  This will allow the
+// ScopedUserAppDirRemover to remove the user app dir.
 fn main() {
+    use std::str::FromStr;
     match env_logger::init() {
         Ok(()) => {},
-        Err(e) => debug!("Error initialising logger; continuing without: {:?}", e)
+        Err(e) => println!("Error initialising logger; continuing without: {:?}", e)
     }
 
-    let _ = write_config_file(None, None,Some(9999)).unwrap();
+    // The ConnectionManager will probably create a "user app directory" (see the docs for
+    // `FileHandler::write_file()`).  This object will try to clean up this directory when it goes
+    // out of scope.  Normally apps would not do this - this directory will hold the peristent cache
+    // files.
+    let _cleaner = ::crust::ScopedUserAppDirRemover;
+
     // We receive events (e.g. new connection, message received) from the ConnectionManager via an
     // asynchronous channel.
-    let (channel_sender, channel_receiver) = channel();
-    let mut connection_manager = ConnectionManager::new(channel_sender);
+    let (channel_sender, channel_receiver) = ::std::sync::mpsc::channel();
+    let mut connection_manager = ::crust::ConnectionManager::new(channel_sender);
 
-    // Start listening.  Try to listen on port 8888 for TCP and for UDP broadcasts (beacon) on 9999.
-    let listening_endpoints = match connection_manager.start_accepting(vec![Port::Tcp(8888u16)]) {
-        Ok(endpoints) => endpoints,
-        Err(why) => {
-            println!("ConnectionManager failed to start listening on TCP port 8888: {}", why);
-            std::process::exit(1);
-        }
-    };
+    // Start listening.  Try to listen on port 8888 for TCP and for UDP broadcasts (beacon) on
+    // default port 5483.
+    let listening_endpoints =
+        match connection_manager.start_accepting(vec![::crust::Port::Tcp(8888u16)]) {
+            Ok(endpoints) => endpoints,
+            Err(why) => {
+                println!("ConnectionManager failed to start listening on TCP port 8888: {}", why);
+                ::std::process::exit(1);
+            }
+        };
 
     print!("Listening for new connections on ");
     for endpoint in &listening_endpoints {
@@ -78,7 +82,7 @@ fn main() {
                 // For this example, we only expect to receive encoded `u8`s
                 let requested_value = match String::from_utf8(bytes) {
                     Ok(message) => {
-                        match u8::from_str(message.as_str()) {
+                        match u8::from_str(&message) {
                             Ok(value) => value,
                             Err(why) => {
                                 println!("Error parsing message: {}", why);

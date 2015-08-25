@@ -236,4 +236,15 @@ mod test {
         assert_eq!(*retrieved_contacts.first().unwrap(), new_contact);
         assert!(*retrieved_contacts.last().unwrap() != prune_contacts[0]);
     }
+
+    #[test]
+    fn serialise_and_parse() {
+        let contacts = ::contact::random_contacts(5);
+        let mut bootstrap_handler = super::BootstrapHandler::new();
+        assert!(bootstrap_handler.update_contacts(contacts.clone(),
+                                                  ::contact::Contacts::new()).is_ok());
+
+        let serialised_contacts = bootstrap_handler.serialise_contacts().unwrap();
+        assert_eq!(contacts, super::parse_contacts(serialised_contacts).unwrap());
+    }
 }

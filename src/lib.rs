@@ -52,9 +52,11 @@ pub mod error;
 /// Provides a struct and free functions for working with config files.
 pub mod file_handler;
 
+pub use config_handler::write_config_file;
 pub use connection_manager::{Event, ConnectionManager};
 pub use error::Error;
-pub use file_handler::{FileHandler, current_bin_dir, user_app_dir, system_cache_dir, exe_file_stem};
+pub use file_handler::{FileHandler, current_bin_dir, user_app_dir, system_cache_dir, exe_file_stem,
+                       ScopedUserAppDirRemover};
 pub use transport::{Endpoint, Port};
 
 #[cfg(test)]

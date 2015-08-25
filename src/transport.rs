@@ -19,7 +19,6 @@ use std::net::{SocketAddr, TcpStream, TcpListener, ToSocketAddrs};
 use tcp_connections;
 use utp_connections;
 use std::io;
-use std::io::Write;
 use std::io::Result as IoResult;
 use std::error::Error;
 use std::sync::mpsc;
@@ -226,7 +225,7 @@ pub fn connect(remote_ep: Endpoint) -> IoResult<Transport> {
                                          remote_endpoint: remote_ep,
                              }})
                 .map_err(|e| {
-                    let _ = writeln!(&mut io::stderr(), "NOTE: Transport connect {} failure due to {}", ep, e);
+                    let _ = warn!("NOTE: Transport connect {} failure due to {}", ep, e);
                     io::Error::new(io::ErrorKind::NotConnected, e.description())
                 })
         }

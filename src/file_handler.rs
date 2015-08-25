@@ -59,8 +59,10 @@ impl FileHandler {
     ///   1. If the file has previously been read (i.e. [`path()`](#method.path) is `Some(...)`), it
     ///      tries to write the contents to this path.  If this fails, it jumps to step 3.
     ///   2. It tries to create and write the file in
-    ///      [`system_cache_dir()`](fn.system_cache_dir.html)
-    ///   3. It tries to create and write the file in [`user_app_dir()`](fn.user_app_dir.html)
+    ///      [`system_cache_dir()`](fn.system_cache_dir.html).  It will not try and create this
+    ///      directory if it doesn't exist.
+    ///   3. It tries to create and write the file in [`user_app_dir()`](fn.user_app_dir.html).  It
+    ///      will try to create this directory and any parent components if they don't exist.
     pub fn write_file<Contents: ::rustc_serialize::Encodable>(&mut self, contents: &Contents) ->
             Result<(), ::error::Error> {
         self.path().clone().ok_or(::error::Error::NotSet)
@@ -75,6 +77,14 @@ impl FileHandler {
                 }
             })
             .or_else(|_| self.set_path(user_app_dir()).and_then(|path| Self::write(path, contents)))
+            .or_else(|_| self.set_path(user_app_dir())
+                             .and_then(|path| {
+                                 let mut parent = path.clone();
+                                 let _ = parent.pop();
+                                 try!(::std::fs::create_dir_all(parent));
+                                 Ok(path)
+                             })
+                             .and_then(|path| Self::write(path, contents)))
             .or_else(|error| {
                 self.path = None;
                 Err(error)
@@ -157,6 +167,40 @@ pub fn exe_file_stem() -> Result<::std::path::PathBuf, ::error::Error> {
     Ok(::std::path::PathBuf::from(try!(exe_path.file_stem().ok_or(not_found_error()))))
 }
 
+/// RAII object which removes the [`user_app_dir()`](fn.user_app_dir.html) when an instance is
+/// dropped.
+///
+/// Since the `user_app_dir` is frequently created by tests or examples which use Crust, this is a
+/// convenience object which tries to remove the directory when it is destroyed.
+///
+/// # Examples
+///
+/// ```
+/// {
+///     let _cleaner = ::crust::ScopedUserAppDirRemover;
+///     let mut file_handler =
+///         ::crust::FileHandler::new(::std::path::Path::new("test.json").to_path_buf());
+///     // User app dir is possibly created by this call.
+///     let _ = file_handler.write_file(&111u64);
+///     // User app dir is now removed since '_cleaner' goes out of scope.
+/// }
+/// ```
+pub struct ScopedUserAppDirRemover;
+
+impl ScopedUserAppDirRemover {
+    fn remove_dir(&mut self) {
+        let _ = user_app_dir().and_then(|user_app_dir|
+                                            ::std::fs::remove_dir_all(user_app_dir)
+                                                .map_err(|error| ::error::Error::IoError(error)));
+    }
+}
+
+impl Drop for ScopedUserAppDirRemover {
+    fn drop(&mut self) {
+        self.remove_dir();
+    }
+}
+
 fn not_found_error() -> ::std::io::Error {
     ::std::io::Error::new(::std::io::ErrorKind::NotFound, "No file name component")
 }
@@ -169,6 +213,7 @@ fn join_exe_file_stem(path: &::std::path::Path) -> Result<::std::path::PathBuf, 
 mod test {
     #[test]
     fn read_write_file_test() {
+        let _cleaner = super::ScopedUserAppDirRemover;
         let mut file_handler =
             super::FileHandler::new(::std::path::Path::new("file_handler_test.json").to_path_buf());
         let test_value = 123456789u64;

@@ -490,7 +490,6 @@ impl ConnectionManager {
                     }
                 },
                 _ => vec![],
-
             };
             let beacon_guid = beacon_guid_and_port
                 .map(|beacon_guid_and_port| beacon_guid_and_port.0);
@@ -737,7 +736,6 @@ fn bootstrap_off_list(weak_state: WeakState, bootstrap_list: ::contact::Contacts
 #[cfg(test)]
 mod test {
     use super::*;
-    use super::{State, bootstrap_off_list};
     use std::collections::{HashMap, HashSet};
     use std::thread::spawn;
     use std::thread;
@@ -836,6 +834,7 @@ mod test {
 
     #[test]
     fn bootstrap() {
+        let _cleaner = ::file_handler::ScopedUserAppDirRemover;
         let (cm1_i, _) = channel();
         let _config_file = make_temp_config(None);
 
@@ -852,7 +851,14 @@ mod test {
 
         cm2.bootstrap(1);
 
-        match cm2_o.recv() {
+        let timeout = ::time::Duration::seconds(5);
+        let start = ::time::now();
+        let mut result = Err(::std::sync::mpsc::TryRecvError::Empty);
+        while ::time::now() < start + timeout && result.is_err() {
+            result = cm2_o.try_recv();
+            ::std::thread::sleep_ms(100);
+        }
+        match result {
             Ok(Event::NewBootstrapConnection(ep)) => {
                 debug!("NewBootstrapConnection {:?}", ep);
             }
@@ -1053,7 +1059,7 @@ mod test {
         assert_eq!(stat.lost_connection_count, 0);
     }
 
-#[test]
+    #[test]
     fn connection_manager_start() {
         // Wait 2 seconds until previous bootstrap test ends. If not, that test connects to these endpoints.
         thread::sleep_ms(2000);
@@ -1138,15 +1144,15 @@ mod test {
             },
         };
         let ep = Endpoint::Tcp(addr);
-        let state = Arc::new(Mutex::new(State{ event_pipe: channel().0,
+        let state = Arc::new(Mutex::new(super::State{ event_pipe: channel().0,
                                                connections: HashMap::new(),
                                                listening_ports: HashSet::new(),
                                                stop_called: false,
                                                bs_count: (0,1),
                                              }));
-        assert!(bootstrap_off_list(Arc::downgrade(&state), vec![], false, 15).is_err());
-        assert!(bootstrap_off_list(Arc::downgrade(&state),
-                                   vec![::contact::Contact{endpoint: ep.clone()}], false, 15)
+        assert!(super::bootstrap_off_list(Arc::downgrade(&state), vec![], false, 15).is_err());
+        assert!(super::bootstrap_off_list(Arc::downgrade(&state),
+                                          vec![::contact::Contact{endpoint: ep.clone()}], false, 15)
                 .is_ok());
     }
 
@@ -1187,16 +1193,15 @@ mod test {
         }
 
         let (tx, rx) = channel();
-        let state = Arc::new(Mutex::new(State{ event_pipe: tx,
-                                               connections: HashMap::new(),
-                                               listening_ports: HashSet::new(),
-                                               stop_called: false,
-                                               bs_count: (0,max_count),
-                                             }));
-        assert!(bootstrap_off_list(Arc::downgrade(&state), vec![], false, 15).is_err());
-        assert!(bootstrap_off_list(Arc::downgrade(&state),
-                                   contacts.clone(), false, max_count)
-                .is_ok());
+        let state = Arc::new(Mutex::new(super::State{ event_pipe: tx,
+                                                      connections: HashMap::new(),
+                                                      listening_ports: HashSet::new(),
+                                                      stop_called: false,
+                                                      bs_count: (0,max_count),
+                                                    }));
+        assert!(super::bootstrap_off_list(Arc::downgrade(&state), vec![], false, 15).is_err());
+        assert!(super::bootstrap_off_list(Arc::downgrade(&state),
+                                          contacts.clone(), false, max_count).is_ok());
 
         // read if rx gets max_count bootstrap eps
         let mut received_event_count = 0;
@@ -1216,5 +1221,4 @@ mod test {
             assert!(rx.try_recv().is_err());
         }
     }
-
 }
