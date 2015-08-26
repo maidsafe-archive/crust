@@ -15,7 +15,6 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-#![feature(negate_unsigned, rustc_private)]
 #![forbid(warnings)]
 #![deny(bad_style, deprecated, drop_with_repr_extern, improper_ctypes, non_shorthand_field_patterns,
         overflowing_literals, plugin_as_library, private_no_mangle_fns, private_no_mangle_statics,
@@ -26,30 +25,29 @@
         unused_qualifications, unused_results, variant_size_differences)]
 
 #[macro_use]
-extern crate log;
 extern crate env_logger;
 extern crate crust;
-
-use std::sync::mpsc::channel;
-use std::thread;
-
-use crust::{ConnectionManager, write_config_file};
 
 fn main() {
     match env_logger::init() {
         Ok(()) => {},
-        Err(e) => debug!("Error initialising logger; continuing without: {:?}", e)
+        Err(e) => println!("Error initialising logger; continuing without: {:?}", e)
     }
 
-    let _ = write_config_file(None, None, Some(9999)).unwrap();
+    // The ConnectionManager will probably create a "user app directory" (see the docs for
+    // `FileHandler::write_file()`).  This object will try to clean up this directory when it goes
+    // out of scope.  Normally apps would not do this - this directory will hold the peristent cache
+    // files.
+    let _cleaner = ::crust::ScopedUserAppDirRemover;
+
     // We receive events (e.g. new connection, message received) from the ConnectionManager via an
     // asynchronous channel.
-    let (channel_sender, channel_receiver) = channel();
-    let mut connection_manager = ConnectionManager::new(channel_sender);
+    let (channel_sender, channel_receiver) = ::std::sync::mpsc::channel();
+    let mut connection_manager = ::crust::ConnectionManager::new(channel_sender);
 
-    let (bs_sender, bs_receiver) = channel();
+    let (bs_sender, bs_receiver) = ::std::sync::mpsc::channel();
     // Start a thread running a loop which will receive and display responses from the peer.
-    let _ = thread::Builder::new().name("SimpleSender event handler".to_string()).spawn(move || {
+    let _ = ::std::thread::Builder::new().name("SimpleSender event handler".to_string()).spawn(move || {
         // Receive the next event
         while let Ok(event) = channel_receiver.recv() {
             // Handle the event
@@ -76,13 +74,16 @@ fn main() {
     connection_manager.bootstrap(1);
 
     println!("ConnectionManager trying to bootstrap off node listening on TCP port 8888 \
-              and UDP broadcast port 9999");
+              and UDP broadcast port 5483");
 
     // Block until bootstrapped
-    let peer_endpoint = bs_receiver.recv().unwrap_or_else(|e| {
-        println!("SimpleSender event handler closed; error : {}", e);
-        std::process::exit(1);
-    });
+    let peer_endpoint = match bs_receiver.recv() {
+        Ok(endpoint) => endpoint,
+        Err(e) => {
+            println!("SimpleSender event handler closed; error : {}", e);
+            ::std::process::exit(1);
+        },
+    };
 
     println!("New bootstrap connection made to {:?}", peer_endpoint);
 
@@ -95,5 +96,5 @@ fn main() {
     }
 
     // Allow the peer time to process the requests and reply.
-    thread::sleep_ms(2000);
+    ::std::thread::sleep_ms(2000);
 }

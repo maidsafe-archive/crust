@@ -25,7 +25,7 @@ use std::net::{IpAddr, SocketAddr, SocketAddrV4};
 
 use beacon;
 use bootstrap_handler::{BootstrapHandler, parse_contacts};
-use config_utils::{Config, Contact, Contacts, read_config_file};
+use config_handler::{Config, read_config_file};
 use getifaddrs::{getifaddrs, filter_loopback};
 use transport;
 use transport::{Endpoint, Port};
@@ -132,8 +132,9 @@ impl ConnectionManager {
     pub fn new(event_pipe: mpsc::Sender<Event>) -> ConnectionManager {
         let config = read_config_file().unwrap_or_else(|e| {
             debug!("Crust failed to read config file; Error: {:?};", e);
+            ::config_handler::create_default_config_file();
             let default = Config::make_default();
-            debug!("Using default beacon_port {:?} and default bootstraping methods enabled",
+            debug!("Using default beacon_port {:?} and default bootstrapping methods enabled",
                 default.beacon_port);
             default
         });
@@ -185,12 +186,12 @@ impl ConnectionManager {
                     Ok(buf)
                 }));
 
-                let mut contacts = Contacts::new();
+                let mut contacts = ::contact::Contacts::new();
                 // Removing loopback address
                 let listening_ips = filter_loopback(getifaddrs());
                 for port in &listening_ports {
                     for ip in &listening_ips {
-                        contacts.push(Contact {
+                        contacts.push(::contact::Contact {
                             endpoint: match *port {
                                 Port::Tcp(p) => Endpoint::tcp((ip.addr.clone(), p)),
                                 Port::Utp(p) => Endpoint::utp((ip.addr.clone(), p)),
@@ -200,12 +201,12 @@ impl ConnectionManager {
                 }
 
                 // TODO: provide a prune list as the second argument to update_contacts
-                let _ = bootstrap_handler.update_contacts(contacts, Contacts::new());
+                let _ = bootstrap_handler.update_contacts(contacts, ::contact::Contacts::new());
                 let _ = thread::Builder::new().name("ConnectionManager beacon acceptor".to_string())
                                               .spawn(move || {
                     while let Ok(mut transport) = acceptor.accept() {
                         let mut handler = BootstrapHandler::new();
-                        let read_contacts = handler.get_serialised_contacts();
+                        let read_contacts = handler.serialise_contacts();
                         if read_contacts.is_ok() {
                             let _ = transport.sender.send(&read_contacts.unwrap());
                         }
@@ -461,12 +462,12 @@ impl ConnectionManager {
             };
 
             match parse_contacts(contacts_str) {
-                Some(contacts) => {
+                Ok(contacts) => {
                     for contact in contacts {
                         endpoints.push(contact.endpoint);
                     }
                 },
-                None => continue
+                Err(_) => continue
             }
         }
 
@@ -476,32 +477,32 @@ impl ConnectionManager {
     fn populate_bootstrap_contacts(config: &Config,
                                    beacon_guid_and_port: &Option<([u8; 16], u16)>,
                                    ws: Weak<Mutex<State>>)
-                                   -> Vec<Contact> {
+                                   -> ::contact::Contacts {
         if config.override_default_bootstrap {
             return config.hard_coded_contacts.clone();
         } else {
             let cached_contacts = match beacon_guid_and_port.is_some() {  // this node owns bs file
                 true => {
-                    if let Ok(contacts) = BootstrapHandler::new().read_bootstrap_file() {
+                    if let Ok(contacts) = BootstrapHandler::new().read_file() {
                         contacts
                     } else {
                         vec![]
                     }
                 },
                 _ => vec![],
-
             };
             let beacon_guid = beacon_guid_and_port
                 .map(|beacon_guid_and_port| beacon_guid_and_port.0);
             let combined_contacts: Vec<_>
                 = Self::seek_peers(beacon_guid, config.beacon_port)
                 .iter()
-                .map(|x| Contact{ endpoint: x.clone()} )
+                .map(|x| ::contact::Contact{ endpoint: x.clone()} )
                 .chain(config.hard_coded_contacts.clone().into_iter())
                 .chain(cached_contacts.into_iter()).collect();
 
             // remove duplicates
-            let mut combined_contacts : Vec<Contact> = combined_contacts.into_iter().unique().collect();
+            let mut combined_contacts: ::contact::Contacts =
+                combined_contacts.into_iter().unique().collect();
 
             // remove own endpoints
             if let Ok(own_listening_endpoint) = Self::get_listening_endpoint(ws.clone()) {
@@ -614,13 +615,13 @@ fn handle_connect(mut state: WeakState, trans: transport::Transport,
     let endpoint = register_connection(&mut state, trans, event);
     if is_broadcast_acceptor {
         if let Ok(ref endpoint) = endpoint {
-            let mut contacts = Contacts::new();
-            contacts.push(Contact { endpoint: endpoint.clone() });
+            let mut contacts = ::contact::Contacts::new();
+            contacts.push(::contact::Contact { endpoint: endpoint.clone() });
             // TODO PublicKey for contact required...
             // let public_key = PublicKey::Asym(asymmetricbox::PublicKey([0u8; asymmetricbox::PUBLICKEYBYTES]));
             let mut bootstrap_handler = BootstrapHandler::new();
             // TODO: provide a prune list as the second argument to update_contacts
-            let _ = bootstrap_handler.update_contacts(contacts, Contacts::new());
+            let _ = bootstrap_handler.update_contacts(contacts, ::contact::Contacts::new());
         }
     }
     endpoint
@@ -697,7 +698,7 @@ fn start_writing_thread(state: WeakState,
 }
 
 // Returns Ok() if at least one connection succeeds
-fn bootstrap_off_list(weak_state: WeakState, bootstrap_list: Vec<Contact>,
+fn bootstrap_off_list(weak_state: WeakState, bootstrap_list: ::contact::Contacts,
                       is_broadcast_acceptor: bool,
                       max_successful_bootstrap_connection: usize) -> io::Result<()> {
     let mut vec_deferred = vec![];
@@ -735,7 +736,6 @@ fn bootstrap_off_list(weak_state: WeakState, bootstrap_list: Vec<Contact>,
 #[cfg(test)]
 mod test {
     use super::*;
-    use super::{State, bootstrap_off_list};
     use std::collections::{HashMap, HashSet};
     use std::thread::spawn;
     use std::thread;
@@ -745,7 +745,7 @@ mod test {
     use transport;
     use transport::{Endpoint, Port};
     use std::sync::{Mutex, Arc};
-    use config_utils::{Contact, write_config_file};
+    use config_handler::write_config_file;
     use std::path::PathBuf;
     use std::net::{SocketAddr, Ipv4Addr, SocketAddrV4, SocketAddrV6};
     use std::fs::remove_file;
@@ -834,6 +834,7 @@ mod test {
 
     #[test]
     fn bootstrap() {
+        let _cleaner = ::file_handler::ScopedUserAppDirRemover;
         let (cm1_i, _) = channel();
         let _config_file = make_temp_config(None);
 
@@ -850,7 +851,14 @@ mod test {
 
         cm2.bootstrap(1);
 
-        match cm2_o.recv() {
+        let timeout = ::time::Duration::seconds(5);
+        let start = ::time::now();
+        let mut result = Err(::std::sync::mpsc::TryRecvError::Empty);
+        while ::time::now() < start + timeout && result.is_err() {
+            result = cm2_o.try_recv();
+            ::std::thread::sleep_ms(100);
+        }
+        match result {
             Ok(Event::NewBootstrapConnection(ep)) => {
                 debug!("NewBootstrapConnection {:?}", ep);
             }
@@ -1051,7 +1059,7 @@ mod test {
         assert_eq!(stat.lost_connection_count, 0);
     }
 
-#[test]
+    #[test]
     fn connection_manager_start() {
         // Wait 2 seconds until previous bootstrap test ends. If not, that test connects to these endpoints.
         thread::sleep_ms(2000);
@@ -1136,15 +1144,15 @@ mod test {
             },
         };
         let ep = Endpoint::Tcp(addr);
-        let state = Arc::new(Mutex::new(State{ event_pipe: channel().0,
+        let state = Arc::new(Mutex::new(super::State{ event_pipe: channel().0,
                                                connections: HashMap::new(),
                                                listening_ports: HashSet::new(),
                                                stop_called: false,
                                                bs_count: (0,1),
                                              }));
-        assert!(bootstrap_off_list(Arc::downgrade(&state), vec![], false, 15).is_err());
-        assert!(bootstrap_off_list(Arc::downgrade(&state),
-                                   vec![Contact{endpoint: ep.clone()}], false, 15)
+        assert!(super::bootstrap_off_list(Arc::downgrade(&state), vec![], false, 15).is_err());
+        assert!(super::bootstrap_off_list(Arc::downgrade(&state),
+                                          vec![::contact::Contact{endpoint: ep.clone()}], false, 15)
                 .is_ok());
     }
 
@@ -1177,7 +1185,7 @@ mod test {
                     SocketAddr::V6(a)
                 },
             };
-            contacts.push(Contact{endpoint: Endpoint::Tcp(addr)});
+            contacts.push(::contact::Contact{endpoint: Endpoint::Tcp(addr)});
             acceptors.push(acceptor);
             if contacts.len() == available_peer_count {
                 break;
@@ -1185,23 +1193,22 @@ mod test {
         }
 
         let (tx, rx) = channel();
-        let state = Arc::new(Mutex::new(State{ event_pipe: tx,
-                                               connections: HashMap::new(),
-                                               listening_ports: HashSet::new(),
-                                               stop_called: false,
-                                               bs_count: (0,max_count),
-                                             }));
-        assert!(bootstrap_off_list(Arc::downgrade(&state), vec![], false, 15).is_err());
-        assert!(bootstrap_off_list(Arc::downgrade(&state),
-                                   contacts.clone(), false, max_count)
-                .is_ok());
+        let state = Arc::new(Mutex::new(super::State{ event_pipe: tx,
+                                                      connections: HashMap::new(),
+                                                      listening_ports: HashSet::new(),
+                                                      stop_called: false,
+                                                      bs_count: (0,max_count),
+                                                    }));
+        assert!(super::bootstrap_off_list(Arc::downgrade(&state), vec![], false, 15).is_err());
+        assert!(super::bootstrap_off_list(Arc::downgrade(&state),
+                                          contacts.clone(), false, max_count).is_ok());
 
         // read if rx gets max_count bootstrap eps
         let mut received_event_count = 0;
         while received_event_count < max_count {
             match rx.recv() {
                 Ok(Event::NewBootstrapConnection(ep)) => {
-                    assert!(contacts.contains(&Contact{endpoint: ep}));
+                    assert!(contacts.contains(&::contact::Contact{endpoint: ep}));
                     received_event_count += 1;
                 },
                 _ => { panic!("Unexpected event !")},
@@ -1214,5 +1221,4 @@ mod test {
             assert!(rx.try_recv().is_err());
         }
     }
-
 }

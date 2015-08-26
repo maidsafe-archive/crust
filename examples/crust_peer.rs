@@ -61,7 +61,7 @@ Usage:
 
 The crust peer will try and bootstrap off one of the peers if any are provided.
 If none are provided, or if connecting to any of the peers fails, the UDP beacon
-will be used. If no beacon port is specified in the options, then port 9999 will
+will be used. If no beacon port is specified in the options, then port 5483 will
 be chosen. If no listening port is supplied, a random port for each supported
 protocol will be chosen.
 
