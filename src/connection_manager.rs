@@ -157,6 +157,7 @@ impl ConnectionManager {
                                          own_endpoints        : Vec::new()
                                        };
 
+        // TODO: 
         let _ = cm.start_accepting(listening_ports);
 
         cm
