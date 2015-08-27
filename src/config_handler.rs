@@ -136,26 +136,23 @@ mod test {
         let mut file = match ::std::fs::File::open(path) {
             Ok(file) => file,
             Err(what) => {
-                assert!(false, format!("Error opening sample.config: {:?}", what));
-                return;
+                panic!(format!("Error opening sample.config: {:?}", what));
             }
         };
 
         let mut encoded_contents = String::new();
 
         match file.read_to_string(&mut encoded_contents) {
-            Ok(_) => {;},
+            Ok(_) => (),
             Err(what) => {
-                assert!(false, format!("Error reading sample.config: {:?}", what));
-                return;
+                panic!(format!("Error reading sample.config: {:?}", what));
             }
         };
 
-        let _ = match json::decode::<Config>(&encoded_contents) {
-            Ok(config) => config,
+        match json::decode::<Config>(&encoded_contents) {
+            Ok(_) => (),
             Err(err) => {
-                assert!(false, format!("Error parsing sample.config: {:?}", err));
-                return;
+                panic!(format!("Error parsing sample.config: {:?}", err));
             }
         };
     }
