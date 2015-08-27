@@ -15,10 +15,9 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-// String.as_str() is unstable; waiting RFC revision
-// http://doc.rust-lang.org/nightly/std/string/struct.String.html#method.as_str
-#![feature(convert, core, negate_unsigned, rustc_private)]
-#![forbid(warnings)]
+//! Example which runs a Crust node.
+
+#![forbid(missing_docs, warnings)]
 #![deny(bad_style, deprecated, drop_with_repr_extern, improper_ctypes, non_shorthand_field_patterns,
         overflowing_literals, plugin_as_library, private_no_mangle_fns, private_no_mangle_statics,
         raw_pointer_derive, stable_features, unconditional_recursion, unknown_lints,
@@ -26,11 +25,11 @@
         unused_comparisons, unused_features, unused_parens, while_true)]
 #![warn(trivial_casts, trivial_numeric_casts, unused, unused_extern_crates, unused_import_braces,
         unused_qualifications, unused_results, variant_size_differences)]
+#![feature(rustc_private)]
 
 #[macro_use]
 extern crate log;
 extern crate env_logger;
-extern crate core;
 extern crate crust;
 extern crate rustc_serialize;
 extern crate docopt;
@@ -38,7 +37,6 @@ extern crate rand;
 extern crate term;
 extern crate time;
 
-use core::iter::FromIterator;
 use docopt::Docopt;
 use rand::random;
 use rand::Rng;
@@ -51,42 +49,42 @@ use std::io::Write;
 use std::net::SocketAddr;
 use std::str::FromStr;
 use std::thread;
-use std::fs;
 
-use crust::{ConnectionManager, Endpoint, Port, write_config_file};
+use crust::{ConnectionManager, Endpoint};
 
 static USAGE: &'static str = "
 Usage:
-  crust_peer [options] [<peer>...]
+  crust_peer [options]
 
-The crust peer will try and bootstrap off one of the peers if any are provided.
-If none are provided, or if connecting to any of the peers fails, the UDP beacon
-will be used. If no beacon port is specified in the options, then port 5483 will
-be chosen. If no listening port is supplied, a random port for each supported
-protocol will be chosen.
+The crust peer will run, using any config file it can find to try and bootstrap
+off any provided peers.  Locations for the config file are specified at
+http://maidsafe.net/crust/master/crust/file_handler/struct.FileHandler.html#method.read_file
+
+An example of a config file can be found at
+https://github.com/maidsafe/crust/blob/master/installer/sample.config
+This could be copied to the \"target/debug/examples\" directory of this project
+for example (assuming a debug build) and modified to suit.
+
+If a config file can't be located or it contains no contacts, or if connecting
+to all of the peers fails, the UDP beacon will be used.
+
+If no beacon port is specified in the config file, port 5483 will be chosen.
+
+If no listening ports are supplied, a random port for each supported protocol
+will be chosen.
 
 Options:
-  -p PORT, --port=PORT      Start listening on the specified TCP port.
-  -u, --utp                 Use uTP instead of TCP.
-  -b PORT, --beacon=PORT    Set the beacon port.  If the node can, it will
-                            listen for UDP broadcasts on this port.  If
-                            bootstrapping using provided contacts or the cached
-                            contacts fails, the node will broadcast to the
-                            beacon port in an attempt to connect to a peer on
-                            the same LAN.
-  -c CONF, --config=CONF    Use the specified config file to set the configuration
-  -s RATE, --speed=RATE     Keep sending random data at a maximum speed of RATE
-                            bytes/second to the first connected peer.
-  -h, --help                Display this help message.
+  -c, --create-local-config  Tries to create a default config file in the same
+                             directory as this exectable.  Won't overwrite an
+                             existing file.
+  -s RATE, --speed=RATE      Keep sending random data at a maximum speed of RATE
+                             bytes/second to the first connected peer.
+  -h, --help                 Display this help message.
 ";
 
 #[derive(RustcDecodable, Debug)]
 struct Args {
-    arg_peer: Vec<PeerEndpoint>,
-    flag_port: Option<u16>,
-    flag_utp: bool,
-    flag_beacon: Option<u16>,
-    flag_config: Option<String>,
+    flag_create_local_config: bool,
     flag_speed: Option<u64>,
     flag_help: bool,
 }
@@ -119,8 +117,8 @@ impl Decodable for PeerEndpoint {
         let address = match SocketAddr::from_str(&str) {
             Ok(addr) => addr,
             Err(_) => {
-                return Err(decoder.error(format!(
-                    "Could not decode {} as valid IPv4 or IPv6 address.", str).as_str()));
+                return Err(decoder.error(&format!(
+                    "Could not decode {} as valid IPv4 or IPv6 address.", str)));
             },
         };
         Ok(PeerEndpoint { addr: address })
@@ -278,7 +276,7 @@ fn reset_foreground(stdout: Option<Box<term::StdoutTerminal>>) ->
 // If bootstrap doesn't succeed in n seconds and we're trying to run the speed test, then fail overall.
 // Otherwise, if no peer endpoints were provided and bootstrapping fails, assume this is
 // OK, i.e. this is the first node of a new network.
-fn on_time_out(ms: u32, flag_speed: bool, bootstrap_peers: Option<Vec<Endpoint>>) -> Sender<bool> {
+fn on_time_out(ms: u32, flag_speed: bool) -> Sender<bool> {
     let (tx, rx) = channel();
     let _ = std::thread::spawn(move || {
         std::thread::sleep_ms(ms);
@@ -290,30 +288,58 @@ fn on_time_out(ms: u32, flag_speed: bool, bootstrap_peers: Option<Vec<Endpoint>>
                     stdout = red_foreground(stdout);
                     println!("Failed to connect to a peer.  Exiting.");
                     let _ = reset_foreground(stdout);
-                    std::process::exit(2);
-                }
-                match bootstrap_peers {
-                Some(_) => {
-                    stdout = red_foreground(stdout);
-                    println!("Failed to bootstrap from provided peers. \nSince peers \
-                             were provided, this is assumed to NOT be the first node of a new \
-                             network.\nExiting.");
-                    let _ = reset_foreground(stdout);
                     std::process::exit(3);
-                },
-                None => {
-                    stdout = yellow_foreground(stdout);
-                    println!("Didn't bootstrap to an existing network - this may be the first node \
-                                 of a new network.");
-                    let _ = reset_foreground(stdout);
-                },
-            }
-
+                }
+                stdout = yellow_foreground(stdout);
+                println!("Didn't bootstrap to an existing network - this may be the first node \
+                             of a new network.");
+                let _ = reset_foreground(stdout);
             },
         }
     });
 
     tx
+}
+
+fn create_local_config() {
+    let mut stdout = term::stdout();
+    let mut config_path = match ::crust::current_bin_dir() {
+        Ok(path) => path,
+        Err(error) => {
+            stdout = red_foreground(stdout);
+            println!("Failed to get config file path: {:?}", error);
+            let _ = reset_foreground(stdout);
+            std::process::exit(1);
+        },
+    };
+    let mut config_name = ::crust::exe_file_stem()
+                              .unwrap_or(::std::path::Path::new("unknown").to_path_buf());
+    config_name.set_extension("crust.config");
+    config_path.push(config_name);
+
+    match ::std::fs::metadata(&config_path) {
+        Ok(_) => {
+            stdout = red_foreground(stdout);
+            println!("Failed to create {:?} since it already exists.", config_path);
+            let _ = reset_foreground(stdout);
+        },
+        Err(_) => {  // Continue if the file doesn't exist
+            // This test helper function will use defaults for each `None` value.
+            match ::crust::write_config_file(None, None, None) {
+                Ok(file_path) => {
+                    stdout = green_foreground(stdout);
+                    println!("Created default config file at {:?}.", file_path);
+                    let _ = reset_foreground(stdout);
+                },
+                Err(error) => {
+                    stdout = red_foreground(stdout);
+                    println!("Failed to write default config file: {:?}", error);
+                    let _ = reset_foreground(stdout);
+                    std::process::exit(2);
+                },
+            }
+        },
+    }
 }
 
 fn main() {
@@ -325,55 +351,26 @@ fn main() {
     let args: Args = Docopt::new(USAGE)
                             .and_then(|docopt| docopt.decode())
                             .unwrap_or_else(|error| error.exit());
-    let utp_mode = args.flag_utp;
 
-    if utp_mode {
-        println!("Running in uTP mode")
-    } else {
-        println!("Running in TCP mode")
+    if args.flag_create_local_config {
+        create_local_config()
     }
-
-    // Convert peer endpoints to usable bootstrap list.
-    let bootstrap_peers = if args.arg_peer.is_empty() {
-        None
-    } else {
-        Some(Vec::<Endpoint>::from_iter(args.arg_peer.iter().map(|endpoint| {
-            if utp_mode {
-                Endpoint::Utp(endpoint.addr)
-            } else {
-                Endpoint::Tcp(endpoint.addr)
-            }
-        })))
-    };
-
-    // Convert requested listening port(s) to usable collection.
-    let mut listening_hints: Vec<Port> = vec![];
-    listening_hints.push({
-        let port = args.flag_port.unwrap_or(0);
-        if utp_mode { Port::Utp(port) } else { Port::Tcp(port) }
-    });
 
     let mut stdout = term::stdout();
     let mut stdout_copy = term::stdout();
-
-    // if user provides explict endpoints, then override default methods
-    let override_default = bootstrap_peers.clone().map(|_| true);
-
-    let config_path = write_config_file(override_default,
-                                        bootstrap_peers.clone(),
-                                        args.flag_beacon).unwrap();
 
     // Construct ConnectionManager and start listening
     let (channel_sender, channel_receiver) = channel();
     let (bs_sender, bs_receiver) = channel();
     let mut connection_manager = ConnectionManager::new(channel_sender);
     stdout = green_foreground(stdout);
-    let _ = connection_manager.start_accepting(listening_hints);
+    let _ = connection_manager.start_accepting(vec![]);
     let listening_endpoints = connection_manager.get_own_endpoints();
-    print!("Listening for new connections on ");
+    print!("Listening for new connections on");
     for endpoint in &listening_endpoints {
-        print!("{:?}, ", *endpoint);
+        print!(" {:?}", *endpoint);
     };
+    println!("");
 
     stdout = reset_foreground(stdout);
     connection_manager.bootstrap(15);
@@ -426,15 +423,15 @@ fn main() {
             stdout = red_foreground(stdout);
             println!("Failed to start event-handling thread: {}", e);
             let _ = reset_foreground(stdout);
-            std::process::exit(4);
+            std::process::exit(5);
         },
     };
 
-    let tx = on_time_out(5000, running_speed_test, bootstrap_peers);
+    let tx = on_time_out(5000, running_speed_test);
     // Block until we get one bootstrap connection
     let connected_peer = bs_receiver.recv().unwrap_or_else(|e| {
         println!("CrustNode event handler closed; error : {}", e);
-        std::process::exit(5);
+        std::process::exit(6);
     });
 
     stdout = green_foreground(stdout);
@@ -495,7 +492,7 @@ fn main() {
                 assert!(args.arg_peer.is_some());
                 let peer = vec![{
                     let ep = args.arg_peer.unwrap().addr;
-                    if utp_mode { Endpoint::Utp(ep) } else { Endpoint::Tcp(ep) }
+                    /* if utp_mode { Endpoint::Utp(ep) } else { */Endpoint::Tcp(ep) //}
                 }];
                 connection_manager.connect(peer);
             } else if args.cmd_send {
@@ -504,12 +501,12 @@ fn main() {
                 assert!(!args.arg_message.is_empty());
                 let peer = {
                     let ep = args.arg_peer.unwrap().addr;
-                    if utp_mode { Endpoint::Utp(ep) } else { Endpoint::Tcp(ep) }
+                    /*if utp_mode { Endpoint::Utp(ep) } else { */Endpoint::Tcp(ep)// }
                 };
                 let mut message: String = args.arg_message[0].clone();
                 for i in 1..args.arg_message.len() {
                     message.push_str(" ");
-                    message.push_str(args.arg_message[i].as_str());
+                    message.push_str(&args.arg_message[i]);
                 };
                 match connection_manager.send(peer.clone(), message.clone().into_bytes()) {
                     Ok(()) => {
@@ -538,7 +535,6 @@ fn main() {
                     },
                 }
             } else if args.cmd_stop {
-                let _  = fs::remove_file(&config_path);
                 stdout = green_foreground(stdout);
                 println!("Stopped.");
                 let _ = reset_foreground(stdout);
