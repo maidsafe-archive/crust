@@ -146,8 +146,20 @@ impl ConnectionManager {
                                                bs_count: (0,0),
                                              }));
 
-        ConnectionManager { state: state, beacon_guid_and_port: None,
-                            config: config, own_endpoints: Vec::new() }
+        let listening_ports = config.tcp_listening_port.map(Port::Tcp).iter()
+                              .chain(config.utp_listening_port.map(Port::Utp).iter())
+                              .cloned()
+                              .collect::<Vec<Port>>();
+
+        let mut cm = ConnectionManager { state                : state,
+                                         beacon_guid_and_port : None,
+                                         config               : config,
+                                         own_endpoints        : Vec::new()
+                                       };
+
+        let _ = cm.start_accepting(listening_ports);
+
+        cm
     }
 
     /// Starts listening on all supported protocols. Ports in _hint_ are tried
@@ -155,7 +167,7 @@ impl ConnectionManager {
     /// port will be used for each supported protocol. The actual port used will
     /// be returned on which it started listening for each protocol.
     // FIXME: Returning io::Result seems pointless since we always return Ok.
-    pub fn start_accepting(&mut self, hint: Vec<Port>) -> io::Result<Vec<Port>> {
+    fn start_accepting(&mut self, hint: Vec<Port>) -> io::Result<Vec<Port>> {
         // We need to check for an instance of each supported protocol in the hint vector.
         //  For any protocol that doesn't have an entry, we should inject one (either random or 0).
         //  Currently, only TCP is supported.
@@ -780,7 +792,7 @@ mod test {
 
      impl Node {
          pub fn new(mut cm: ConnectionManager) -> Node {
-             let ports =  cm.start_accepting(vec![]).unwrap();
+             let ports = cm.start_accepting(vec![]).unwrap();
              Node { conn_mgr: cm, listening_port: ports[0].clone(), connected_eps: Arc::new(Mutex::new(Vec::new())) }
          }
      }

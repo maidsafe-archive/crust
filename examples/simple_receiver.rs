@@ -55,23 +55,8 @@ fn main() {
     // We receive events (e.g. new connection, message received) from the ConnectionManager via an
     // asynchronous channel.
     let (channel_sender, channel_receiver) = ::std::sync::mpsc::channel();
-    let mut connection_manager = ::crust::ConnectionManager::new(channel_sender);
+    let connection_manager = ::crust::ConnectionManager::new(channel_sender);
 
-    // Start listening.  Try to listen on port 8888 for TCP and for UDP broadcasts (beacon) on
-    // default port 5483.
-    let listening_endpoints =
-        match connection_manager.start_accepting(vec![::crust::Port::Tcp(8888u16)]) {
-            Ok(endpoints) => endpoints,
-            Err(why) => {
-                println!("ConnectionManager failed to start listening on TCP port 8888: {}", why);
-                ::std::process::exit(1);
-            }
-        };
-
-    print!("Listening for new connections on ");
-    for endpoint in &listening_endpoints {
-        print!("{:?}, ", *endpoint);
-    };
     println!("Run the simple_sender example in another terminal to send messages to this node.");
 
     // Receive the next event

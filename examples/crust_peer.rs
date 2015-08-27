@@ -53,7 +53,7 @@ use std::str::FromStr;
 use std::thread;
 use std::fs;
 
-use crust::{ConnectionManager, Endpoint, Port, write_config_file};
+use crust::{ConnectionManager, Endpoint, write_config_file};
 
 static USAGE: &'static str = "
 Usage:
@@ -66,7 +66,6 @@ be chosen. If no listening port is supplied, a random port for each supported
 protocol will be chosen.
 
 Options:
-  -p PORT, --port=PORT      Start listening on the specified TCP port.
   -u, --utp                 Use uTP instead of TCP.
   -b PORT, --beacon=PORT    Set the beacon port.  If the node can, it will
                             listen for UDP broadcasts on this port.  If
@@ -83,7 +82,6 @@ Options:
 #[derive(RustcDecodable, Debug)]
 struct Args {
     arg_peer: Vec<PeerEndpoint>,
-    flag_port: Option<u16>,
     flag_utp: bool,
     flag_beacon: Option<u16>,
     flag_config: Option<String>,
@@ -346,13 +344,6 @@ fn main() {
         })))
     };
 
-    // Convert requested listening port(s) to usable collection.
-    let mut listening_hints: Vec<Port> = vec![];
-    listening_hints.push({
-        let port = args.flag_port.unwrap_or(0);
-        if utp_mode { Port::Utp(port) } else { Port::Tcp(port) }
-    });
-
     let mut stdout = term::stdout();
     let mut stdout_copy = term::stdout();
 
@@ -368,7 +359,6 @@ fn main() {
     let (bs_sender, bs_receiver) = channel();
     let mut connection_manager = ConnectionManager::new(channel_sender);
     stdout = green_foreground(stdout);
-    let _ = connection_manager.start_accepting(listening_hints);
     let listening_endpoints = connection_manager.get_own_endpoints();
     print!("Listening for new connections on ");
     for endpoint in &listening_endpoints {

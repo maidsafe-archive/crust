@@ -17,17 +17,21 @@
 
 #[derive(PartialEq, Eq, Debug, RustcDecodable, RustcEncodable, Clone)]
 pub struct Config {
-    pub override_default_bootstrap: bool,
-    pub hard_coded_contacts: ::contact::Contacts,
-    pub beacon_port: u16,
+    pub tcp_listening_port         : Option<u16>,
+    pub utp_listening_port         : Option<u16>,
+    pub override_default_bootstrap : bool,
+    pub hard_coded_contacts        : ::contact::Contacts,
+    pub beacon_port                : u16,
 }
 
 impl Config {
     pub fn make_default() -> Config {
         Config{
-            override_default_bootstrap: false,  // Default bootstrapping methods enabled
-            hard_coded_contacts: vec![],  // No hardcoded endpoints
-            beacon_port: 5483u16,  // LIVE port
+            tcp_listening_port         : Some(5483),
+            utp_listening_port         : None,
+            override_default_bootstrap : false,  // Default bootstrapping methods enabled
+            hard_coded_contacts        : vec![],  // No hardcoded endpoints
+            beacon_port                : 5483u16,  // LIVE port
         }
     }
 }
@@ -67,7 +71,9 @@ pub fn write_config_file(override_default_bootstrap: Option<bool>,
 
     let default = Config::make_default();
 
-    let config = Config{ override_default_bootstrap: override_default_bootstrap
+    let config = Config{ tcp_listening_port: None,
+                         utp_listening_port: None,
+                         override_default_bootstrap: override_default_bootstrap
                             .unwrap_or(default.override_default_bootstrap),
                          hard_coded_contacts: hard_coded_contacts
                             .unwrap_or(default.hard_coded_contacts),
@@ -102,6 +108,8 @@ mod test {
         }
         let config =
             super::Config{
+                tcp_listening_port: None,
+                utp_listening_port: None,
                 override_default_bootstrap: false,
                 hard_coded_contacts: hard_coded_contacts,
                 beacon_port: ::rand::random::<u16>(),
