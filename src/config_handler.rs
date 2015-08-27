@@ -123,4 +123,31 @@ mod test {
             Err(_) => (),
         };
     }
+
+    #[test]
+    fn parse_sample_config_file() {
+        use ::std::path::Path;
+        use std::io::Read;
+        use ::super::Config;
+        use ::rustc_serialize::json;
+
+        let path = Path::new("installer/sample.config").to_path_buf();
+
+        let mut file = match ::std::fs::File::open(path) {
+            Ok(file) => file,
+            Err(what) => {
+                panic!(format!("Error opening sample.config: {:?}", what));
+            }
+        };
+
+        let mut encoded_contents = String::new();
+
+        if let Err(what) = file.read_to_string(&mut encoded_contents) {
+            panic!(format!("Error reading sample.config: {:?}", what));
+        }
+
+        if let Err(what) = json::decode::<Config>(&encoded_contents) {
+            panic!(format!("Error parsing sample.config: {:?}", what));
+        }
+    }
 }
