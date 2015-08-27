@@ -142,18 +142,12 @@ mod test {
 
         let mut encoded_contents = String::new();
 
-        match file.read_to_string(&mut encoded_contents) {
-            Ok(_) => (),
-            Err(what) => {
-                panic!(format!("Error reading sample.config: {:?}", what));
-            }
-        };
+        if let Err(what) = file.read_to_string(&mut encoded_contents) {
+            panic!(format!("Error reading sample.config: {:?}", what));
+        }
 
-        match json::decode::<Config>(&encoded_contents) {
-            Ok(_) => (),
-            Err(err) => {
-                panic!(format!("Error parsing sample.config: {:?}", err));
-            }
-        };
+        if let Err(what) = json::decode::<Config>(&encoded_contents) {
+            panic!(format!("Error parsing sample.config: {:?}", what));
+        }
     }
 }
