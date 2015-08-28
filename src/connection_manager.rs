@@ -129,7 +129,7 @@ fn map_external_port(port: &Port)
 impl ConnectionManager {
     /// Constructs a connection manager. User needs to create an asynchronous channel, and provide
     /// the sender half to this method. Receiver will receive all `Event`s from this library.
-    pub fn new(event_pipe: mpsc::Sender<Event>) -> ConnectionManager {
+    pub fn new(event_pipe: mpsc::Sender<Event>) -> io::Result<ConnectionManager> {
         let config = read_config_file().unwrap_or_else(|e| {
             debug!("Crust failed to read config file; Error: {:?};", e);
             ::config_handler::create_default_config_file();
@@ -157,10 +157,8 @@ impl ConnectionManager {
                                          own_endpoints        : Vec::new()
                                        };
 
-        // TODO: 
-        let _ = cm.start_accepting(listening_ports);
-
-        cm
+        let _ = try!(cm.start_accepting(listening_ports));
+        Ok(cm)
     }
 
     /// Starts listening on all supported protocols. Ports in _hint_ are tried
@@ -819,7 +817,7 @@ mod test {
      impl Network {
          pub fn add(&mut self) -> (Receiver<Event>, Port, Option<u16>, Arc<Mutex<Vec<Endpoint>>>) {
              let (cm_i, cm_o) = channel();
-             let node = Node::new(ConnectionManager::new(cm_i));
+             let node = Node::new(ConnectionManager::new(cm_i).unwrap());
              let port = node.listening_port.clone();
              let connected_eps = node.connected_eps.clone();
              let beacon_port = node.conn_mgr.get_beacon_acceptor_port();
@@ -839,7 +837,8 @@ mod test {
     }
 
     fn make_temp_config(beacon_port: Option<u16>) -> TestConfigFile {
-        let path = write_config_file(Some(false), Some(vec![]),
+        let path = write_config_file(Some(5483u16), None, Some(false),
+                                     Some(vec![]),
                                      Some(beacon_port.unwrap_or(0u16)))
             .unwrap();
         TestConfigFile{path: path}
@@ -851,15 +850,15 @@ mod test {
         let (cm1_i, _) = channel();
         let _config_file = make_temp_config(None);
 
-        let mut cm1 = ConnectionManager::new(cm1_i);
-        let _ = cm1.start_accepting(vec![]).unwrap();
+        let mut cm1 = ConnectionManager::new(cm1_i).unwrap();
 
         thread::sleep_ms(1000);
         let _config_file = make_temp_config(cm1.get_beacon_acceptor_port());
 
         let (cm2_i, cm2_o) = channel();
-        let mut cm2 = ConnectionManager::new(cm2_i);
-        let cm2_eps = cm2.start_accepting(vec![]).unwrap();
+        let mut cm2 = ConnectionManager::new(cm2_i).unwrap();
+        let cm2_eps = cm2.get_own_endpoints().into_iter()
+            .map(|ep| ep.get_port()).collect::<Vec<Port>>();
         debug!("   cm2 listening port {}", cm2_eps[0].get_port());
 
         cm2.bootstrap(1);
@@ -911,15 +910,17 @@ mod test {
         let mut temp_configs = vec![make_temp_config(None)];
 
         let (cm1_i, cm1_o) = channel();
-        let mut cm1 = ConnectionManager::new(cm1_i);
-        let cm1_ports = cm1.start_accepting(vec![]).unwrap();
+        let cm1 = ConnectionManager::new(cm1_i).unwrap();
+        let cm1_ports = cm1.get_own_endpoints().into_iter()
+            .map(|ep| ep.get_port()).collect::<Vec<Port>>();
         let cm1_eps = cm1_ports.iter().map(|p| Endpoint::tcp(("127.0.0.1", p.get_port())));
 
         temp_configs.push(make_temp_config(cm1.get_beacon_acceptor_port()));
 
         let (cm2_i, cm2_o) = channel();
-        let mut cm2 = ConnectionManager::new(cm2_i);
-        let cm2_ports = cm2.start_accepting(vec![]).unwrap();
+        let cm2 = ConnectionManager::new(cm2_i).unwrap();
+        let cm2_ports = cm2.get_own_endpoints().into_iter()
+            .map(|ep| ep.get_port()).collect::<Vec<Port>>();
         let cm2_eps = cm2_ports.iter().map(|p| Endpoint::tcp(("127.0.0.1", p.get_port())));
         cm2.connect(cm1_eps.collect());
         cm1.connect(cm2_eps.collect());
@@ -1079,11 +1080,9 @@ mod test {
         let _temp_config = make_temp_config(None);
 
         let (cm_tx, cm_rx) = channel();
-        let mut cm = ConnectionManager::new(cm_tx);
-        let cm_listen_ports = match cm.start_accepting(vec![]) {
-            Ok(result) => result,
-            Err(_) => panic!("main connection manager start_listening failure")
-        };
+        let cm = ConnectionManager::new(cm_tx).unwrap();
+        let cm_listen_ports = cm.get_own_endpoints().into_iter()
+            .map(|ep| ep.get_port()).collect::<Vec<Port>>();
         let cm_listen_addrs = cm_listen_ports.iter().map(|p| Endpoint::tcp(("127.0.0.1", p.get_port()))).collect();
 
         let thread = spawn(move || {
@@ -1115,16 +1114,8 @@ mod test {
         let _ = spawn(move || {
             let _temp_config = make_temp_config(None);
             let (cm_aux_tx, _) = channel();
-            let mut cm_aux = ConnectionManager::new(cm_aux_tx);
+            let cm_aux = ConnectionManager::new(cm_aux_tx).unwrap();
             // setting the listening port to be greater than 4455 will make the test hanging
-            let _ = match cm_aux.start_accepting(vec![]) {
-                Ok(result) => {
-                      // debug!("aux listening on {} ",
-                      //          match result.0[0].clone() { Endpoint::Tcp(socket_addr) => { socket_addr } });
-                      result[0].clone()
-                    },
-                Err(_) => panic!("aux connection manager start_listening failure")
-            };
             // changing this to cm_beacon_addr will make the test hanging
             cm_aux.connect(cm_listen_addrs);
         }).join();

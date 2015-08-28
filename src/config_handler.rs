@@ -54,7 +54,9 @@ pub fn create_default_config_file() {
 ///
 /// N.B. This method should only be used as a utility for test and examples.  In normal use cases,
 /// this file should be created by the installer for the dependent application.
-pub fn write_config_file(override_default_bootstrap: Option<bool>,
+pub fn write_config_file(tcp_listening_port: Option<u16>,
+                         utp_listening_port: Option<u16>,
+                         override_default_bootstrap: Option<bool>,
                          hard_coded_endpoints: Option<Vec<::transport::Endpoint>>,
                          beacon_port: Option<u16>) -> Result<::std::path::PathBuf, ::error::Error> {
     use std::io::Write;
@@ -71,8 +73,8 @@ pub fn write_config_file(override_default_bootstrap: Option<bool>,
 
     let default = Config::make_default();
 
-    let config = Config{ tcp_listening_port: None,
-                         utp_listening_port: None,
+    let config = Config{ tcp_listening_port: tcp_listening_port,
+                         utp_listening_port: utp_listening_port,
                          override_default_bootstrap: override_default_bootstrap
                             .unwrap_or(default.override_default_bootstrap),
                          hard_coded_contacts: hard_coded_contacts
@@ -114,7 +116,8 @@ mod test {
                 hard_coded_contacts: hard_coded_contacts,
                 beacon_port: ::rand::random::<u16>(),
             };
-        let _ = super::write_config_file(Some(config.override_default_bootstrap),
+        let _ = super::write_config_file(None, None,
+                                         Some(config.override_default_bootstrap),
                                          Some(hard_coded_endpoints),
                                          Some(config.beacon_port));
         match super::read_config_file() {
