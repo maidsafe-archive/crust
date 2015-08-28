@@ -763,8 +763,9 @@ mod test {
      }
 
      impl Node {
-         pub fn new(mut cm: ConnectionManager) -> Node {
-             let ports = cm.start_accepting(vec![]).unwrap();
+         pub fn new(cm: ConnectionManager) -> Node {
+             let ports = cm.get_own_endpoints().into_iter()
+                 .map(|ep| ep.get_port()).collect::<Vec<Port>>();
              Node { conn_mgr: cm, listening_port: ports[0].clone(), connected_eps: Arc::new(Mutex::new(Vec::new())) }
          }
      }
