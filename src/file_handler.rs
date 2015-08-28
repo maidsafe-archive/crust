@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-/// Struct for reading and writing to config files
+/// Struct for reading and writing config files.
 pub struct FileHandler {
     name: ::std::path::PathBuf,
     path: Option<::std::path::PathBuf>,
@@ -38,6 +38,13 @@ impl FileHandler {
     ///   2. [`current_bin_dir()`](fn.current_bin_dir.html)
     ///   3. [`user_app_dir()`](fn.user_app_dir.html)
     ///   4. [`system_cache_dir()`](fn.system_cache_dir.html)
+    ///
+    /// ## **NOTE**
+    ///
+    /// If a file (or directory) exists at the expected location when an attempt is made to read it,
+    /// and reading or decoding fails, this function **WILL TERMINATE THE APPLICATION.**  This means
+    /// that the only cause for an error to be returned from this function is the non-existence of
+    /// the file in all attempted locations.
     pub fn read_file<Contents: ::rustc_serialize::Decodable>(&mut self) ->
             Result<Contents, ::error::Error> {
         self.path().clone().ok_or(::error::Error::NotSet).and_then(Self::read)
@@ -108,13 +115,48 @@ impl FileHandler {
         })
     }
 
+    fn die(message: String, code: i32) {
+        error!("{}", message);
+        ::std::process::exit(code);
+    }
+
+    #[cfg(target_os="windows")]
+    fn path_or_file_not_found(error: &::std::io::Error) -> bool {
+        let native_error = error.raw_os_error().unwrap_or(0);
+        native_error == 2 || native_error == 3
+    }
+
+    #[cfg(any(target_os="macos", target_os="ios", target_os="linux"))]
+    fn path_or_file_not_found(error: &::std::io::Error) -> bool {
+        error.kind() == ::std::io::ErrorKind::NotFound
+    }
+
     fn read<Contents: ::rustc_serialize::Decodable>(path: ::std::path::PathBuf) ->
             Result<Contents, ::error::Error> {
         use std::io::Read;
-        let mut file = try!(::std::fs::File::open(path));
-        let mut encoded_contents = String::new();
-        let _ = try!(file.read_to_string(&mut encoded_contents));
-        Ok(try!(::rustc_serialize::json::decode(&encoded_contents)))
+        match ::std::fs::File::open(&path) {
+            Ok(mut file) => {
+                let mut encoded_contents = String::new();
+                let _ = file.read_to_string(&mut encoded_contents)
+                            .map(|_| ())
+                            .unwrap_or_else(|error| {
+                                Self::die(format!("Failed to read {:?}: {}", path, error), 2);
+                            });
+                match ::rustc_serialize::json::decode(&encoded_contents) {
+                    Ok(contents) => Ok(contents),
+                    Err(error) => {
+                        Self::die(format!("Failed to decode {:?}: {}", path, error), 3);
+                        unreachable!();
+                    },
+                }
+            },
+            Err(error) => {
+                if !Self::path_or_file_not_found(&error) {
+                    Self::die(format!("Failed to open {:?}: {}", path, error), 1);
+                }
+                Err(::error::Error::IoError(error))
+            },
+        }
     }
 
     fn write<Contents: ::rustc_serialize::Encodable>(path: ::std::path::PathBuf,

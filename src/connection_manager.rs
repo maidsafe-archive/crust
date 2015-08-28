@@ -713,8 +713,18 @@ fn bootstrap_off_list(weak_state: WeakState, bootstrap_list: ::contact::Contacts
                       is_broadcast_acceptor: bool,
                       max_successful_bootstrap_connection: usize) -> io::Result<()> {
     let mut vec_deferred = vec![];
+
     for contact in bootstrap_list {
         let ws = weak_state.clone();
+
+        let already_connected = try!(lock_state(&ws, |s| {
+            Ok(s.connections.contains_key(&contact.endpoint))
+        }));
+
+        if already_connected {
+            return Ok(())
+        }
+
         vec_deferred.push(Deferred::new(move || {
             match transport::connect(contact.endpoint.clone()) {
                 Ok(trans) => {
