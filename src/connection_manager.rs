@@ -178,18 +178,16 @@ impl ConnectionManager {
                 let mut bootstrap_handler = BootstrapHandler::new();
                 let listening_port = try!(self.listen(port));
 
-                let mut contacts = ::contact::Contacts::new();
-                // Removing loopback address
-                let listening_ips = filter_loopback(getifaddrs());
-
-                for ip in &listening_ips {
-                    contacts.push(::contact::Contact {
-                        endpoint: match port {
-                            Port::Tcp(p) => Endpoint::tcp((ip.addr.clone(), p)),
-                            Port::Utp(p) => Endpoint::utp((ip.addr.clone(), p)),
-                        },
-                    });
-                }
+                let contacts = filter_loopback(getifaddrs()).into_iter()
+                    .map(|ip| {
+                        ::contact::Contact {
+                            endpoint: match port {
+                              Port::Tcp(p) => Endpoint::tcp((ip.addr.clone(), p)),
+                              Port::Utp(p) => Endpoint::utp((ip.addr.clone(), p)),
+                            }
+                        }
+                    })
+                    .collect::<Vec<_>>();
 
                 // TODO: provide a prune list as the second argument to update_contacts
                 let _ = bootstrap_handler.update_contacts(contacts, ::contact::Contacts::new());
