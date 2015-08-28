@@ -364,7 +364,7 @@ fn main() {
     let (bs_sender, bs_receiver) = channel();
     let mut connection_manager = ConnectionManager::new(channel_sender);
     stdout = green_foreground(stdout);
-    let _ = connection_manager.start_accepting(vec![]);
+    let _ = connection_manager.start_accepting(listening_hints);
     let listening_endpoints = connection_manager.get_own_endpoints();
     print!("Listening for new connections on");
     for endpoint in &listening_endpoints {
