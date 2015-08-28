@@ -1,5 +1,8 @@
 # CRUST - Change Log
 
+## [0.2.7]
+- Refactored config- and bootstrap-file-handling
+
 ## [0.2.6]
 - [MAID-1142](https://maidsafe.atlassian.net/browse/MAID-1142) Add UTP protocol support to crust
 - [#259](https://github.com/maidsafe/crust/issues/259) Build failure on Win32

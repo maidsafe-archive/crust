@@ -39,8 +39,11 @@ Several methods are used for NAT traversal, UpNP, hole punching [See here for TC
 
 ##Todo Items
 
-## [0.2.7]
-- [x] Refactored config- and bootstrap-file-handling
+## [0.2.8]
+- [x] Updated sample config file
+- [x] Updated crust_peer example to use config file
+- [x] Changed config- and bootstrap-file-handling to terminate application if file is unreadable
+- [x] Fixed bug causing infinite bootstrap loop in Routing
 
 ## Future work
 
