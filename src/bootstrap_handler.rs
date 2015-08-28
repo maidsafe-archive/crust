@@ -240,6 +240,7 @@ mod test {
     #[test]
     fn serialise_and_parse() {
         let contacts = ::contact::random_contacts(5);
+        let _test_file = TestFile::new().unwrap();
         let mut bootstrap_handler = super::BootstrapHandler::new();
         assert!(bootstrap_handler.update_contacts(contacts.clone(),
                                                   ::contact::Contacts::new()).is_ok());
