@@ -59,6 +59,14 @@ impl Endpoint {
             Endpoint::Utp(address) => address,
         }
     }
+
+    /// Returns port
+    pub fn get_port(&self) -> Port {
+        match *self {
+            Endpoint::Tcp(addr) => Port::Tcp(addr.port()),
+            Endpoint::Utp(addr) => Port::Utp(addr.port()),
+        }
+    }
 }
 
 #[derive(Debug, RustcDecodable, RustcEncodable)]
