@@ -225,7 +225,7 @@ pub fn connect(remote_ep: Endpoint) -> IoResult<Transport> {
                                          remote_endpoint: remote_ep,
                              }})
                 .map_err(|e| {
-                    let _ = warn!("NOTE: Transport connect {} failure due to {}", ep, e);
+                    let _ = warn!("NOTE: Transport connect {} failure due to Utp endpoint {}", ep, e);
                     io::Error::new(io::ErrorKind::NotConnected, e.description())
                 })
         }
