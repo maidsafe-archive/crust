@@ -343,8 +343,7 @@ impl ConnectionManager {
         // debug!("connection_manager::stop There are {} TCP ports being listened on", listening_ports.len());
         for port in listening_ports {
             let ip_addr = IpAddr::V4(Ipv4Addr::new(127,0,0,1));
-            // Not sure why we're unwrapping here.
-            let _ = transport::connect(Endpoint::new(ip_addr, port)).unwrap();
+            let _ = transport::connect(Endpoint::new(ip_addr, port));
         }
     }
 
