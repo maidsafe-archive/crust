@@ -26,6 +26,7 @@ use std::str::FromStr;
 use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
 use std::cmp::Ordering;
 use utp::UtpSocket;
+use std::net::IpAddr;
 pub type Bytes = Vec<u8>;
 
 /// Enum representing endpoint of supported protocols
@@ -38,6 +39,14 @@ pub enum Endpoint {
 }
 
 impl Endpoint {
+    /// Construct a new Endpoint
+    pub fn new(addr: IpAddr, port: Port) -> Endpoint {
+        match port {
+            Port::Tcp(p) => Endpoint::Tcp(SocketAddr::new(addr, p)),
+            Port::Utp(p) => Endpoint::Utp(SocketAddr::new(addr, p)),
+        }
+    }
+
     /// Creates a Tcp(SocketAddr)
     pub fn tcp<A: ToSocketAddrs>(addr: A) -> Endpoint {
         match addr.to_socket_addrs().unwrap().next() {
