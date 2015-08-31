@@ -22,12 +22,6 @@
 //! This means that none of the public functions of `BootstrapHandler` should be called concurrently
 //! with any other one.
 
-pub fn parse_contacts(buffer: Vec<u8>) -> Result<::contact::Contacts, ::error::Error> {
-    let mut decoder = ::cbor::Decoder::from_bytes(buffer);
-    let items: ::contact::Contacts = try!(decoder.decode().collect::<Result<_, _>>());
-    Ok(items)
-}
-
 pub struct BootstrapHandler {
     file_handler: ::file_handler::FileHandler,
     last_updated: ::time::Tm,
@@ -53,13 +47,6 @@ impl BootstrapHandler {
 
     pub fn read_file(&mut self) -> Result<::contact::Contacts, ::error::Error> {
         self.file_handler.read_file::<::contact::Contacts>()
-    }
-
-    pub fn serialise_contacts(&mut self) -> Result<Vec<u8>, ::error::Error> {
-        let contacts = try!(self.read_file());
-        let mut encoder = ::cbor::Encoder::from_memory();
-        let _ = try!(encoder.encode(&contacts));
-        Ok(encoder.into_bytes())
     }
 
     fn duration_between_updates() -> ::time::Duration {
@@ -251,8 +238,5 @@ mod test {
         let mut bootstrap_handler = super::BootstrapHandler::new();
         assert!(bootstrap_handler.update_contacts(contacts.clone(),
                                                   ::contact::Contacts::new()).is_ok());
-
-        let serialised_contacts = bootstrap_handler.serialise_contacts().unwrap();
-        assert_eq!(contacts, super::parse_contacts(serialised_contacts).unwrap());
     }
 }
