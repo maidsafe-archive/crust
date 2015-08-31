@@ -38,12 +38,12 @@ pub type Bytes = Vec<u8>;
 
 type WeakState = Weak<Mutex<State>>;
 
-/// A structure representing a connection manager
+/// A structure representing a connection manager.
 ///
-/// This abstraction has a hidden dependency on per-executable config
-/// file. Refer to
-/// https://github.com/maidsafe/crust/blob/master/docs/configuration_path.md for
-/// more information.
+/// This abstraction has a hidden dependency on a config file. Refer to [the docs for `FileHandler`]
+/// (../file_handler/struct.FileHandler.html) and [an example config file flowchart]
+/// (https://github.com/maidsafe/crust/blob/master/docs/vault_config_file_flowchart.pdf) for more
+/// information.
 pub struct ConnectionManager {
     state: Arc<Mutex<State>>,
     beacon_guid_and_port: Option<(beacon::GUID, u16)>,
@@ -343,8 +343,7 @@ impl ConnectionManager {
         // debug!("connection_manager::stop There are {} TCP ports being listened on", listening_ports.len());
         for port in listening_ports {
             let ip_addr = IpAddr::V4(Ipv4Addr::new(127,0,0,1));
-            // Not sure why we're unwrapping here.
-            let _ = transport::connect(Endpoint::new(ip_addr, port)).unwrap();
+            let _ = transport::connect(Endpoint::new(ip_addr, port));
         }
     }
 
@@ -354,9 +353,9 @@ impl ConnectionManager {
     /// be sent to the event channel. On failure, nothing is reported.
     /// Failed attempts are not notified back up to the caller. If the caller wants to know of a
     /// failed attempt, it must maintain a record of the attempt itself which times out if a
-    /// corresponding Event::NewConnection isn't received
-    /// For details on handling of connect in different protocol refer
-    /// https://github.com/dirvine/crust/blob/master/docs/connect.md
+    /// corresponding `Event::NewConnection` isn't received.  See also [Process for Connecting]
+    /// (https://github.com/maidsafe/crust/blob/master/docs/connect.md) for details on handling of
+    /// connect in different protocols.
     pub fn connect(&self, endpoints: Vec<Endpoint>) {
         let ws = Arc::downgrade(&self.state);
         {

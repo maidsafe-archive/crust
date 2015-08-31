@@ -24,13 +24,13 @@
 /// concurrently with that same *or any other* such instance (with the exception of the
 /// [`path()`](#method.path) function which is the only non-mutating member function).
 ///
-/// For instances initialised with different values for `name` it is safe to access separate
+/// For instances initialised with different values for `name`, it is safe to access separate
 /// instances concurrently.
 ///
-/// It is possibly unsafe to call [`write_file()`](#method.write_file) concurrently with
-/// [`read_file()`](#method.read_file) or [`write_file()`](#method.write_file) on a different
-/// process where both processes have the same name and their instances of `FileHandler` are using
-/// the same name, since these may be accessing the same file on disk.  However, it is safe to call
+/// It is possibly unsafe to call [`write_file()`](#method.write_file) concurrently with a different
+/// process calling [`read_file()`](#method.read_file) or [`write_file()`](#method.write_file) where
+/// both processes have the same name and their instances of `FileHandler` are using the same name,
+/// since these may be accessing the same file on disk.  However, it is safe to call
 /// [`read_file()`](#method.read_file) concurrently across multiple such processes, since this
 /// function doesn't modify the file.
 ///
@@ -55,7 +55,9 @@ impl FileHandler {
 
     /// Reads the file and returns the JSON-decoded contents or an error.
     ///
-    /// It tries to read from the following locations in this order:
+    /// It tries to read from the following locations in this order (see also [an example config
+    /// file flowchart]
+    /// (https://github.com/maidsafe/crust/blob/master/docs/vault_config_file_flowchart.pdf)):
     ///
     ///   1. The location of the most recent successful read or write attempt
     ///   2. [`current_bin_dir()`](fn.current_bin_dir.html)
@@ -87,7 +89,8 @@ impl FileHandler {
     /// exist.
     ///
     /// If `contents` fails to encode or the file cannot be written, an error is returned.  The
-    /// process is:
+    /// process is (see also [an example config file flowchart]
+    /// (https://github.com/maidsafe/crust/blob/master/docs/vault_config_file_flowchart.pdf)):
     ///
     ///   1. If the file has previously been read (i.e. [`path()`](#method.path) is `Some(...)`), it
     ///      tries to write the contents to this path.  If this fails, it jumps to step 3.
@@ -201,7 +204,9 @@ impl FileHandler {
     }
 }
 
-/// The full path to the directory containing currently-running binary.
+/// The full path to the directory containing the currently-running binary.  See also [an example
+/// config file flowchart]
+/// (https://github.com/maidsafe/crust/blob/master/docs/vault_config_file_flowchart.pdf).
 pub fn current_bin_dir() -> Result<::std::path::PathBuf, ::error::Error> {
     let mut path = try!(::std::env::current_exe());
     let pop_result = path.pop();
@@ -209,26 +214,34 @@ pub fn current_bin_dir() -> Result<::std::path::PathBuf, ::error::Error> {
     Ok(path)
 }
 
-/// The full path to an application support directory for the current user.
+/// The full path to an application support directory for the current user.  See also [an example
+/// config file flowchart]
+/// (https://github.com/maidsafe/crust/blob/master/docs/vault_config_file_flowchart.pdf).
 #[cfg(target_os="windows")]
 pub fn user_app_dir() -> Result<::std::path::PathBuf, ::error::Error> {
     Ok(try!(join_exe_file_stem(::std::path::Path::new(&try!(::std::env::var("APPDATA"))))))
 }
 
-/// The full path to an application support directory for the current user.
+/// The full path to an application support directory for the current user.  See also [an example
+/// config file flowchart]
+/// (https://github.com/maidsafe/crust/blob/master/docs/vault_config_file_flowchart.pdf).
 #[cfg(any(target_os="macos", target_os="ios", target_os="linux"))]
 pub fn user_app_dir() -> Result<::std::path::PathBuf, ::error::Error> {
     Ok(try!(join_exe_file_stem(&try!(::std::env::home_dir().ok_or(not_found_error()))
                               .join(".config"))))
 }
 
-/// The full path to a system cache directory available for all users.
+/// The full path to a system cache directory available for all users.  See also [an example config
+/// file flowchart]
+/// (https://github.com/maidsafe/crust/blob/master/docs/vault_config_file_flowchart.pdf).
 #[cfg(target_os="windows")]
 pub fn system_cache_dir() -> Result<::std::path::PathBuf, ::error::Error> {
     Ok(try!(join_exe_file_stem(::std::path::Path::new(&try!(::std::env::var("ALLUSERSPROFILE"))))))
 }
 
-/// The full path to a system cache directory available for all users.
+/// The full path to a system cache directory available for all users.  See also [an example config
+/// file flowchart]
+/// (https://github.com/maidsafe/crust/blob/master/docs/vault_config_file_flowchart.pdf).
 #[cfg(any(target_os="macos", target_os="ios", target_os="linux"))]
 pub fn system_cache_dir() -> Result<::std::path::PathBuf, ::error::Error> {
     join_exe_file_stem(::std::path::Path::new("/var/cache"))
@@ -256,8 +269,8 @@ pub fn exe_file_stem() -> Result<::std::path::PathBuf, ::error::Error> {
 ///         ::crust::FileHandler::new(::std::path::Path::new("test.json").to_path_buf());
 ///     // User app dir is possibly created by this call.
 ///     let _ = file_handler.write_file(&111u64);
-///     // User app dir is now removed since '_cleaner' goes out of scope.
 /// }
+/// // User app dir is now removed since '_cleaner' has gone out of scope.
 /// ```
 pub struct ScopedUserAppDirRemover;
 
