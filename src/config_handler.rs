@@ -15,6 +15,13 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+//! For notes on thread- and process-safety of `FileHandler`, please see the docs either in
+//! file_handler.rs or at
+//! http://maidsafe.net/crust/master/crust/file_handler/struct.FileHandler.html#thread--and-process-safety
+//!
+//! This means that `read_config_file()`, `create_default_config_file()`, and
+//! `write_config_file()` should not be called concurrently with one another.
+
 #[derive(PartialEq, Eq, Debug, RustcDecodable, RustcEncodable, Clone)]
 pub struct Config {
     pub tcp_listening_port         : Option<u16>,

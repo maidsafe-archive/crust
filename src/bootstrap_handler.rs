@@ -15,6 +15,13 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+//! For notes on thread- and process-safety of `FileHandler`, please see the docs either in
+//! file_handler.rs or at
+//! http://maidsafe.net/crust/master/crust/file_handler/struct.FileHandler.html#thread--and-process-safety
+//!
+//! This means that none of the public functions of `BootstrapHandler` should be called concurrently
+//! with any other one.
+
 pub fn parse_contacts(buffer: Vec<u8>) -> Result<::contact::Contacts, ::error::Error> {
     let mut decoder = ::cbor::Decoder::from_bytes(buffer);
     let items: ::contact::Contacts = try!(decoder.decode().collect::<Result<_, _>>());

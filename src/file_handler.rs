@@ -16,6 +16,29 @@
 // relating to use of the SAFE Network Software.
 
 /// Struct for reading and writing config files.
+///
+/// # Thread- and Process-Safety
+///
+/// Since all instances of `FileHandler` initialised with the same value for `name` within a single
+/// process will likely refer to the same file on disk, it is not safe to access any such instance
+/// concurrently with that same *or any other* such instance (with the exception of the
+/// [`path()`](#method.path) function which is the only non-mutating member function).
+///
+/// For instances initialised with different values for `name` it is safe to access separate
+/// instances concurrently.
+///
+/// It is possibly unsafe to call [`write_file()`](#method.write_file) concurrently with
+/// [`read_file()`](#method.read_file) or [`write_file()`](#method.write_file) on a different
+/// process where both processes have the same name and their instances of `FileHandler` are using
+/// the same name, since these may be accessing the same file on disk.  However, it is safe to call
+/// [`read_file()`](#method.read_file) concurrently across multiple such processes, since this
+/// function doesn't modify the file.
+///
+/// Perhaps the easiest way to make multi-process access safe is to ensure each process is a single
+/// execution of a binary, and that each binary is located in a directory which is
+/// mutually-exclusive to all other such binaries, and that each config file to be managed by
+/// `FileHandler` is placed in each binary's [`current_bin_dir()`](fn.current_bin_dir.html).  In
+/// this way, each process should be the only one accessing that file.
 pub struct FileHandler {
     name: ::std::path::PathBuf,
     path: Option<::std::path::PathBuf>,
@@ -38,6 +61,9 @@ impl FileHandler {
     ///   2. [`current_bin_dir()`](fn.current_bin_dir.html)
     ///   3. [`user_app_dir()`](fn.user_app_dir.html)
     ///   4. [`system_cache_dir()`](fn.system_cache_dir.html)
+    ///
+    /// See [Thread- and Process-Safety](#thread--and-process-safety) for notes on thread- and
+    /// process-safety.
     ///
     /// ## **NOTE**
     ///
@@ -70,6 +96,9 @@ impl FileHandler {
     ///      directory if it doesn't exist.
     ///   3. It tries to create and write the file in [`user_app_dir()`](fn.user_app_dir.html).  It
     ///      will try to create this directory and any parent components if they don't exist.
+    ///
+    /// See [Thread- and Process-Safety](#thread--and-process-safety) for notes on thread- and
+    /// process-safety.
     pub fn write_file<Contents: ::rustc_serialize::Encodable>(&mut self, contents: &Contents) ->
             Result<(), ::error::Error> {
         self.path().clone().ok_or(::error::Error::NotSet)
@@ -102,6 +131,9 @@ impl FileHandler {
     ///
     /// If no calls to [`read_file()`](#method.read_file) or [`write_file()`](#method.write_file)
     /// have been made, or the last such attempt failed, then this will return `None`.
+    ///
+    /// See [Thread- and Process-Safety](#thread--and-process-safety) for notes on thread- and
+    /// process-safety.
     pub fn path(&self) -> &Option<::std::path::PathBuf> {
         &self.path
     }
