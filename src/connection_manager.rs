@@ -21,7 +21,7 @@ use std::collections::{HashMap, HashSet};
 use std::io;
 use std::sync::{Arc, mpsc, Mutex, Weak};
 use std::thread;
-use std::net::{IpAddr, SocketAddr, SocketAddrV4};
+use std::net::{IpAddr, Ipv4Addr, SocketAddr, SocketAddrV4};
 
 use beacon;
 use bootstrap_handler::{BootstrapHandler, parse_contacts};
@@ -181,10 +181,7 @@ impl ConnectionManager {
                 let contacts = filter_loopback(getifaddrs()).into_iter()
                     .map(|ip| {
                         ::contact::Contact {
-                            endpoint: match port {
-                              Port::Tcp(p) => Endpoint::tcp((ip.addr.clone(), p)),
-                              Port::Utp(p) => Endpoint::utp((ip.addr.clone(), p)),
-                            }
+                            endpoint: Endpoint::new(ip.addr.clone(), port)
                         }
                     })
                     .collect::<Vec<_>>();
@@ -218,23 +215,8 @@ impl ConnectionManager {
 
         let mut endpoints = Vec::<Endpoint>::new();
         for port in listening_ports {
-            match port {
-                Port::Tcp(p) => {
-                    for ifaddr in filter_loopback(getifaddrs()) { // Removing loopback address
-                        endpoints.push(match ifaddr.addr {
-                            IpAddr::V4(a) => Endpoint::tcp((a, p)),
-                            IpAddr::V6(a) => Endpoint::tcp((a, p)),
-                        });
-                    }
-                },
-                Port::Utp(p) => {
-                    for ifaddr in filter_loopback(getifaddrs()) { // Removing loopback address
-                        endpoints.push(match ifaddr.addr {
-                            IpAddr::V4(a) => Endpoint::utp((a, p)),
-                            IpAddr::V6(a) => Endpoint::utp((a, p)),
-                        });
-                    }
-                },
+            for ifaddr in filter_loopback(getifaddrs()) {
+                endpoints.push(Endpoint::new(ifaddr.addr, port));
             }
         }
         Ok(endpoints)
@@ -326,16 +308,9 @@ impl ConnectionManager {
         }
         // debug!("connection_manager::stop There are {} TCP ports being listened on", listening_ports.len());
         for port in listening_ports {
-            let _ = match port {
-                Port::Tcp(port) => {
-                    transport::connect(Endpoint::tcp(("127.0.0.1", port)))
-                        .unwrap()
-                },
-                Port::Utp(port) => {
-                    transport::connect(Endpoint::utp(("127.0.0.1", port)))
-                        .unwrap()
-                },
-            };
+            let ip_addr = IpAddr::V4(Ipv4Addr::new(127,0,0,1));
+            // Not sure why we're unwrapping here.
+            let _ = transport::connect(Endpoint::new(ip_addr, port)).unwrap();
         }
     }
 
@@ -535,14 +510,6 @@ impl Drop for ConnectionManager {
         self.stop();
     }
 }
-
-// fn notify_user(state: &WeakState, event: Event) -> io::Result<()> {
-//     lock_state(state, |s| {
-//         s.event_pipe.send(event)
-//         .map_err(|_|io::Error::new(io::ErrorKind::BrokenPipe, "failed to notify_user"))
-//     })
-// }
-
 
 fn lock_state<T, F: FnOnce(&State) -> io::Result<T>>(state: &WeakState, f: F) -> io::Result<T> {
     state.upgrade().ok_or(io::Error::new(io::ErrorKind::Interrupted,
