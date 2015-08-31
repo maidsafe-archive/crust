@@ -198,10 +198,7 @@ pub fn seek_peers(port: u16, guid_to_avoid: Option<GUID>) -> Result<Vec<SocketAd
     // Bind to a UDP socket
     let socket = try!(UdpSocket::bind("0.0.0.0:0"));
     try!(socket.set_broadcast(true));
-    let my_udp_port = match try!(socket.local_addr()) {
-        SocketAddr::V4(local_address) => local_address.port(),
-        SocketAddr::V6(local_address) => local_address.port(),
-    };
+    let my_udp_port = try!(socket.local_addr()).port();
 
     // Send a broadcast consisting of our GUID with 'maid' as a prefix.
     let mut send_buffer: Vec<_> = From::from(&MAGIC[..]);
