@@ -15,8 +15,6 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-//use cbor;
-//use sodiumoxide::crypto::asymmetricbox;
 use std::collections::{HashMap, HashSet};
 use std::io;
 use std::sync::{Arc, mpsc, Mutex, Weak};
@@ -181,7 +179,7 @@ impl ConnectionManager {
                 let contacts = filter_loopback(getifaddrs()).into_iter()
                     .map(|ip| {
                         ::contact::Contact {
-                            endpoint: Endpoint::new(ip.addr.clone(), port)
+                            endpoint: Endpoint::new(ip.addr.clone(), listening_port)
                         }
                     })
                     .collect::<Vec<_>>();
