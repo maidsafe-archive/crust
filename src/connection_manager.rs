@@ -73,8 +73,9 @@ struct State {
     event_pipe: mpsc::Sender<Event>,
     connections: HashMap<Endpoint, Connection>,
     listening_ports: HashSet<Port>,
+    bootstrap_handler: Option<BootstrapHandler>,
     stop_called: bool,
-    bs_count: (usize, usize), // (current, max)
+    bootstrap_count: (usize, usize), // (current, max)
 }
 
 fn map_external_port(port: &Port)
@@ -140,8 +141,9 @@ impl ConnectionManager {
         let state = Arc::new(Mutex::new(State{ event_pipe: event_pipe,
                                                connections: HashMap::new(),
                                                listening_ports: HashSet::new(),
+                                               bootstrap_handler: None,
                                                stop_called: false,
-                                               bs_count: (0,0),
+                                               bootstrap_count: (0,0),
                                              }));
 
         let tcp_listening_port = config.tcp_listening_port.clone();
@@ -183,10 +185,9 @@ impl ConnectionManager {
                     })
                     .collect::<Vec<_>>();
 
-                let mut bootstrap_handler = BootstrapHandler::new();
+                let weak_state = Arc::downgrade(&self.state);
                 // TODO: provide a prune list as the second argument to update_contacts
-                let _ = bootstrap_handler.update_contacts(contacts, ::contact::Contacts::new());
-
+                update_bootstrap_contacts(weak_state, contacts, ::contact::Contacts::new());
                 Ok(listening_port)
             },
             None => {
@@ -200,18 +201,22 @@ impl ConnectionManager {
 
         // Right now we only expect this function to succeed once.
         assert!(self.beacon_guid_and_port.is_none());
-
         self.beacon_guid_and_port = Some((acceptor.beacon_guid(), acceptor.beacon_port()));
 
+        // If it succeeds we "take ownership" of the `BootstrapHandler` in order to avoid the
+        // process-safety issues described in the docs of `FileHandler`.
+        let _ = lock_mut_state(&mut Arc::downgrade(&self.state), |state: &mut State| {
+            assert!(state.bootstrap_handler.is_none());
+            state.bootstrap_handler = Some(BootstrapHandler::new());
+            Ok(())
+        });
+
+        let weak_state = Arc::downgrade(&self.state);
         let thread_result = thread::Builder::new()
                             .name("ConnectionManager beacon acceptor".to_string())
                             .spawn(move || {
-            while let Ok(mut transport) = acceptor.accept() {
-                let mut handler = BootstrapHandler::new();
-                let read_contacts = handler.serialise_contacts();
-                if read_contacts.is_ok() {
-                    let _ = transport.sender.send(&read_contacts.unwrap());
-                }
+            while let Ok(transport) = acceptor.accept() {
+                Self::respond_to_broadcast(weak_state.clone(), transport);
             }
         });
 
@@ -222,6 +227,18 @@ impl ConnectionManager {
                 Err(what)
             }
         }
+    }
+
+    fn respond_to_broadcast(mut weak_state: Weak<Mutex<State>>,
+                            mut transport: ::transport::Transport) {
+        let _ = lock_mut_state(&mut weak_state, |state: &mut State| {
+            if let Some(ref mut handler) = state.bootstrap_handler {
+                if let Ok(serialised_contacts) = handler.serialise_contacts() {
+                    let _ = transport.sender.send(&serialised_contacts);
+                }
+            }
+            Ok(())
+        });
     }
 
     fn get_listening_endpoint(ws: Weak<Mutex<State>>) -> io::Result<(Vec<Endpoint>)> {
@@ -265,7 +282,7 @@ impl ConnectionManager {
         let mut ws = Arc::downgrade(&self.state);
         let _ = lock_mut_state(&mut ws, |s: &mut State| {
             let _ = s.connections.clear();
-            s.bs_count = (0, max_successful_bootstrap_connection.clone());
+            s.bootstrap_count = (0, max_successful_bootstrap_connection.clone());
             Ok(())
         });
 
@@ -440,18 +457,20 @@ impl ConnectionManager {
 
     fn populate_bootstrap_contacts(config: &Config,
                                    beacon_guid_and_port: &Option<([u8; 16], u16)>,
-                                   ws: Weak<Mutex<State>>)
-                                   -> ::contact::Contacts {
+                                   weak_state: Weak<Mutex<State>>) -> ::contact::Contacts {
         if config.override_default_bootstrap {
             return config.hard_coded_contacts.clone();
         } else {
-            let cached_contacts = match beacon_guid_and_port.is_some() {  // this node owns bs file
+            let cached_contacts = match beacon_guid_and_port.is_some() {
+                // this node "owns" bootstrap file
                 true => {
-                    if let Ok(contacts) = BootstrapHandler::new().read_file() {
-                        contacts
-                    } else {
-                        vec![]
-                    }
+                    lock_mut_state(&mut weak_state.clone(), |state: &mut State| {
+                        let mut contacts = ::contact::Contacts::new();
+                        if let Some(ref mut handler) = state.bootstrap_handler {
+                            contacts = handler.read_file().unwrap_or(vec![]);
+                        }
+                        Ok(contacts)
+                    }).unwrap_or(vec![])
                 },
                 _ => vec![],
             };
@@ -469,7 +488,7 @@ impl ConnectionManager {
                 combined_contacts.into_iter().unique().collect();
 
             // remove own endpoints
-            if let Ok(own_listening_endpoint) = Self::get_listening_endpoint(ws.clone()) {
+            if let Ok(own_listening_endpoint) = Self::get_listening_endpoint(weak_state.clone()) {
                 combined_contacts.retain(|x| !own_listening_endpoint.contains(&x.endpoint));
             }
             combined_contacts
@@ -534,7 +553,7 @@ fn lock_state<T, F: FnOnce(&State) -> io::Result<T>>(state: &WeakState, f: F) ->
     .and_then(|arc_state| {
         let opt_state = arc_state.lock();
         match opt_state {
-            Ok(s)  => f(&s),
+            Ok(s) => f(&s),
             Err(_) => Err(io::Error::new(io::ErrorKind::Interrupted, "?"))
         }
     })
@@ -546,7 +565,7 @@ fn lock_mut_state<T, F: FnOnce(&mut State) -> io::Result<T>>(state: &WeakState, 
     .and_then(move |arc_state| {
         let opt_state = arc_state.lock();
         match opt_state {
-            Ok(mut s)  => f(&mut s),
+            Ok(mut s) => f(&mut s),
             Err(_) => Err(io::Error::new(io::ErrorKind::Interrupted, "?"))
         }
     })
@@ -559,9 +578,8 @@ fn handle_accept(mut state: WeakState, trans: transport::Transport) -> io::Resul
 
 fn handle_connect(mut state: WeakState, trans: transport::Transport,
                   is_broadcast_acceptor: bool, is_bootstrap_connection: bool) -> io::Result<Endpoint> {
-
     if is_bootstrap_connection {
-        try!(increment_bs_count(&mut state));
+        try!(increment_bootstrap_count(&mut state));
     }
 
     let remote_ep = trans.remote_endpoint.clone();
@@ -577,21 +595,32 @@ fn handle_connect(mut state: WeakState, trans: transport::Transport,
             contacts.push(::contact::Contact { endpoint: endpoint.clone() });
             // TODO PublicKey for contact required...
             // let public_key = PublicKey::Asym(asymmetricbox::PublicKey([0u8; asymmetricbox::PUBLICKEYBYTES]));
-            let mut bootstrap_handler = BootstrapHandler::new();
             // TODO: provide a prune list as the second argument to update_contacts
-            let _ = bootstrap_handler.update_contacts(contacts, ::contact::Contacts::new());
+            update_bootstrap_contacts(state, contacts, ::contact::Contacts::new());
         }
     }
     endpoint
 }
 
-fn increment_bs_count(state: &mut WeakState) -> io::Result<()> {
+fn update_bootstrap_contacts(mut weak_state: Weak<Mutex<State>>,
+                             new_contacts: ::contact::Contacts,
+                             contacts_to_be_pruned: ::contact::Contacts) {
+    let _ = lock_mut_state(&mut weak_state, |state: &mut State| {
+        if let Some(ref mut handler) = state.bootstrap_handler {
+            let _ = handler.update_contacts(new_contacts, contacts_to_be_pruned);
+        }
+        Ok(())
+    });
+}
+
+fn increment_bootstrap_count(state: &mut WeakState) -> io::Result<()> {
     lock_mut_state(state, move |s: &mut State| {
-        if s.bs_count.0 < s.bs_count.1 {
-            s.bs_count.0 += 1;
+        if s.bootstrap_count.0 < s.bootstrap_count.1 {
+            s.bootstrap_count.0 += 1;
             return Ok(());
         }
-        debug!("Reached max bootstrap connections : {:?}; Reseting further bs connections", s.bs_count.0);
+        debug!("Reached max bootstrap connections: {:?}; Resetting further bootstrap connections",
+               s.bootstrap_count.0);
         Err(io::Error::new(io::ErrorKind::Other, "Already reached max bootstrap connections"))
     })
 }
@@ -1107,11 +1136,12 @@ mod test {
         };
         let ep = Endpoint::Tcp(addr);
         let state = Arc::new(Mutex::new(super::State{ event_pipe: channel().0,
-                                               connections: HashMap::new(),
-                                               listening_ports: HashSet::new(),
-                                               stop_called: false,
-                                               bs_count: (0,1),
-                                             }));
+                                                      connections: HashMap::new(),
+                                                      listening_ports: HashSet::new(),
+                                                      bootstrap_handler: None,
+                                                      stop_called: false,
+                                                      bootstrap_count: (0,1),
+                                                    }));
         assert!(super::bootstrap_off_list(Arc::downgrade(&state), vec![], false, 15).is_err());
         assert!(super::bootstrap_off_list(Arc::downgrade(&state),
                                           vec![::contact::Contact{endpoint: ep.clone()}], false, 15)
@@ -1158,8 +1188,9 @@ mod test {
         let state = Arc::new(Mutex::new(super::State{ event_pipe: tx,
                                                       connections: HashMap::new(),
                                                       listening_ports: HashSet::new(),
+                                                      bootstrap_handler: None,
                                                       stop_called: false,
-                                                      bs_count: (0,max_count),
+                                                      bootstrap_count: (0,max_count),
                                                     }));
         assert!(super::bootstrap_off_list(Arc::downgrade(&state), vec![], false, 15).is_err());
         assert!(super::bootstrap_off_list(Arc::downgrade(&state),
