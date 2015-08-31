@@ -153,6 +153,8 @@ impl ConnectionManager {
                                          own_endpoints        : Vec::new()
                                        };
 
+        let _ = cm.start_broadcast_acceptor();
+
         if let Some(port) = tcp_listening_port {
             let _ = try!(cm.start_accepting(Port::Tcp(port)));
         }
@@ -169,11 +171,8 @@ impl ConnectionManager {
     /// port will be used for each supported protocol. The actual port used will
     /// be returned on which it started listening for each protocol.
     pub fn start_accepting(&mut self, port: Port) -> io::Result<Port> {
-        match beacon::BroadcastAcceptor::new(self.config.beacon_port) {
-            Ok(acceptor) => {
-                self.beacon_guid_and_port = Some((acceptor.beacon_guid(), acceptor.beacon_port()));
-
-                let mut bootstrap_handler = BootstrapHandler::new();
+        match self.beacon_guid_and_port {
+            Some(_) => {
                 let listening_port = try!(self.listen(port));
 
                 let contacts = filter_loopback(getifaddrs()).into_iter()
@@ -184,23 +183,43 @@ impl ConnectionManager {
                     })
                     .collect::<Vec<_>>();
 
+                let mut bootstrap_handler = BootstrapHandler::new();
                 // TODO: provide a prune list as the second argument to update_contacts
                 let _ = bootstrap_handler.update_contacts(contacts, ::contact::Contacts::new());
-                let _ = thread::Builder::new().name("ConnectionManager beacon acceptor".to_string())
-                                              .spawn(move || {
-                    while let Ok(mut transport) = acceptor.accept() {
-                        let mut handler = BootstrapHandler::new();
-                        let read_contacts = handler.serialise_contacts();
-                        if read_contacts.is_ok() {
-                            let _ = transport.sender.send(&read_contacts.unwrap());
-                        }
-                    }
-                });
 
                 Ok(listening_port)
             },
-            Err(_) => {
+            None => {
                 self.listen(port)
+            }
+        }
+    }
+
+    fn start_broadcast_acceptor(&mut self) -> io::Result<()> {
+        let acceptor = try!(beacon::BroadcastAcceptor::new(self.config.beacon_port));
+
+        // Right now we only expect this function to succeed once.
+        assert!(self.beacon_guid_and_port.is_none());
+
+        self.beacon_guid_and_port = Some((acceptor.beacon_guid(), acceptor.beacon_port()));
+
+        let thread_result = thread::Builder::new()
+                            .name("ConnectionManager beacon acceptor".to_string())
+                            .spawn(move || {
+            while let Ok(mut transport) = acceptor.accept() {
+                let mut handler = BootstrapHandler::new();
+                let read_contacts = handler.serialise_contacts();
+                if read_contacts.is_ok() {
+                    let _ = transport.sender.send(&read_contacts.unwrap());
+                }
+            }
+        });
+
+        match thread_result {
+            Ok(_) => Ok(()),
+            Err(what) => {
+                self.beacon_guid_and_port = None;
+                Err(what)
             }
         }
     }
