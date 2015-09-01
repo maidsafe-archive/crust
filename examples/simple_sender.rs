@@ -43,7 +43,7 @@ fn main() {
     // We receive events (e.g. new connection, message received) from the ConnectionManager via an
     // asynchronous channel.
     let (channel_sender, channel_receiver) = ::std::sync::mpsc::channel();
-    let mut connection_manager = ::crust::ConnectionManager::new(channel_sender).unwrap();
+    let mut connection_manager = ::crust::ConnectionManager::new(channel_sender);
 
     let (bs_sender, bs_receiver) = ::std::sync::mpsc::channel();
     // Start a thread running a loop which will receive and display responses from the peer.
