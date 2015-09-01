@@ -201,7 +201,7 @@ impl ConnectionManager {
     fn start_broadcast_acceptor(&mut self) -> io::Result<()> {
         let acceptor = try!(beacon::BroadcastAcceptor::new(self.config.beacon_port));
 
-        // Right now we only expect this function to succeed once.
+        // Right now we expect this function to succeed only once.
         assert!(self.beacon_guid_and_port.is_none());
         self.beacon_guid_and_port = Some((acceptor.beacon_guid(), acceptor.beacon_port()));
 
