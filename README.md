@@ -39,6 +39,9 @@ Several methods are used for NAT traversal, UpNP, hole punching [See here for TC
 
 ##Todo Items
 
+## [0.2.10]
+- [x] Revert ConnectionManager::new API change
+
 ## [0.2.9]
 - [x] ConnectionManager starts accepting connections as soon as constructed now
 - [x] Config file now also specifies optional TCP and UTP listening ports
