@@ -379,6 +379,7 @@ fn main() {
     let handler = match thread::Builder::new().name("CrustNode event handler".to_string())
                                               .spawn(move || {
         let mut my_flat_world: FlatWorld = FlatWorld::new();
+        let mut bootstrapped = false;
         while let Ok(event) = channel_receiver.recv() {
             match event {
                 crust::Event::NewMessage(endpoint, bytes) => {
@@ -395,6 +396,10 @@ fn main() {
                     println!("\nConnected to peer at {:?}", endpoint);
                     my_flat_world.add_node(CrustNode::new(endpoint, true));
                     my_flat_world.print_connected_nodes();
+                    if !bootstrapped {
+                        bootstrapped = true;
+                        let _ = bs_sender.send(endpoint);
+                    }
                 },
                 crust::Event::LostConnection(endpoint) => {
                     stdout_copy = yellow_foreground(stdout_copy);
@@ -404,6 +409,7 @@ fn main() {
                     my_flat_world.print_connected_nodes();
                 },
                 crust::Event::NewBootstrapConnection(endpoint) => {
+                    bootstrapped = true;
                     stdout_copy = cyan_foreground(stdout_copy);
                     println!("\nNew BootstrapConnection to peer at {:?}", endpoint);
                     my_flat_world.add_node(CrustNode::new(endpoint.clone(), true));
