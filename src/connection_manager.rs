@@ -22,11 +22,11 @@ use std::thread;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, SocketAddrV4};
 
 use beacon;
-use bootstrap_handler::{BootstrapHandler, parse_contacts};
+use bootstrap_handler::BootstrapHandler;
 use config_handler::{Config, read_config_file};
 use getifaddrs::{getifaddrs, filter_loopback};
 use transport;
-use transport::{Endpoint, Port};
+use transport::{Endpoint, Port, Message};
 
 use asynchronous::{Deferred,ControlFlow};
 use itertools::Itertools;
@@ -66,7 +66,7 @@ pub enum Event {
 }
 
 struct Connection {
-    writer_channel: mpsc::Sender<Bytes>,
+    writer_channel: mpsc::Sender<Message>,
 }
 
 struct State {
@@ -235,8 +235,9 @@ impl ConnectionManager {
                             mut transport: ::transport::Transport) {
         let _ = lock_mut_state(&mut weak_state, |state: &mut State| {
             if let Some(ref mut handler) = state.bootstrap_handler {
-                if let Ok(serialised_contacts) = handler.serialise_contacts() {
-                    let _ = transport.sender.send(&serialised_contacts);
+                if let Ok(contacts) = handler.read_file() {
+                    let msg = Message::Contacts(contacts);
+                    let _ = transport.sender.send(&msg);
                 }
             }
             Ok(())
@@ -400,7 +401,7 @@ impl ConnectionManager {
             }
         }));
 
-        let send_result = writer_channel.send(message);
+        let send_result = writer_channel.send(Message::UserBlob(message));
         let cant_send = io::Error::new(io::ErrorKind::BrokenPipe, "?");
         send_result.map_err(|_|cant_send)
     }
@@ -436,20 +437,20 @@ impl ConnectionManager {
         for peer in peer_addresses {
             let transport = transport::connect(transport::Endpoint::Tcp(peer))
                 .unwrap();
-            let contacts_str = match transport.receiver.receive() {
+            let message = match transport.receiver.receive() {
                 Ok(message) => message,
                 Err(_) => {
                     continue
                 },
             };
 
-            match parse_contacts(contacts_str) {
-                Ok(contacts) => {
+            match message {
+                Message::Contacts(contacts) => {
                     for contact in contacts {
                         endpoints.push(contact.endpoint);
                     }
                 },
-                Err(_) => continue
+                _ => continue
             }
         }
 
@@ -662,8 +663,10 @@ fn start_reading_thread(state: WeakState,
                         sink: mpsc::Sender<Event>) {
     let _ = thread::Builder::new().name("ConnectionManager reader".to_string()).spawn(move || {
         while let Ok(msg) = receiver.receive() {
-            if sink.send(Event::NewMessage(his_ep.clone(), msg)).is_err() {
-                break
+            if let Message::UserBlob(msg) = msg {
+                if sink.send(Event::NewMessage(his_ep.clone(), msg)).is_err() {
+                    break
+                }
             }
         }
         unregister_connection(state, his_ep);
@@ -674,7 +677,7 @@ fn start_reading_thread(state: WeakState,
 fn start_writing_thread(state: WeakState,
                         mut sender: transport::Sender,
                         his_ep: Endpoint,
-                        writer_channel: mpsc::Receiver<Bytes>) {
+                        writer_channel: mpsc::Receiver<Message>) {
     let _ = thread::Builder::new().name("ConnectionManager writer".to_string()).spawn(move || {
         for msg in writer_channel.iter() {
             if sender.send(&msg).is_err() {

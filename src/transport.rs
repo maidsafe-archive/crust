@@ -18,6 +18,7 @@
 use std::net::{SocketAddr, TcpStream, TcpListener, ToSocketAddrs};
 use tcp_connections;
 use utp_connections;
+use contact::Contacts;
 use std::io;
 use std::io::Result as IoResult;
 use std::error::Error;
@@ -154,22 +155,32 @@ impl Ord for Endpoint {
 }
 
 //--------------------------------------------------------------------
+
+#[derive(Debug, Clone, RustcDecodable, RustcEncodable)]
+pub enum Message {
+    /// Arbitrary user blob. This is just an opaque message to Crust.
+    UserBlob(Bytes),
+    /// Event to exchange contacts
+    Contacts(Contacts),
+}
+
+//--------------------------------------------------------------------
 pub enum Sender {
-    Tcp(tcp_connections::TcpWriter<Bytes>),
-    Utp(utp_connections::UtpWriter<Bytes>),
+    Tcp(tcp_connections::TcpWriter<Message>),
+    Utp(utp_connections::UtpWriter<Message>),
 }
 
 impl Sender {
-    pub fn send(&mut self, bytes: &Bytes) -> IoResult<()> {
+    pub fn send(&mut self, message: &Message) -> IoResult<()> {
         match *self {
             Sender::Tcp(ref mut s) => {
-                s.send(&bytes).map_err(|_| {
+                s.send(&message).map_err(|_| {
                 // FIXME: This can be done better.
                 io::Error::new(io::ErrorKind::NotConnected, "can't send")
             })
             },
             Sender::Utp(ref mut s) => {
-                s.send((*bytes).clone()).map_err(|_| {
+                s.send((*message).clone()).map_err(|_| {
                 // FIXME: This can be done better.
                 io::Error::new(io::ErrorKind::NotConnected, "can't send")
             })
@@ -180,12 +191,12 @@ impl Sender {
 
 //--------------------------------------------------------------------
 pub enum Receiver {
-    Tcp(tcp_connections::TcpReader<Bytes>),
-    Utp(utp_connections::UtpReader<Bytes>),
+    Tcp(tcp_connections::TcpReader<Message>),
+    Utp(utp_connections::UtpReader<Message>),
 }
 
 impl Receiver {
-    pub fn receive(&self) -> IoResult<Bytes> {
+    pub fn receive(&self) -> IoResult<Message> {
         match *self {
             Receiver::Tcp(ref r) => {
                 r.recv().map_err(|what| io::Error::new(io::ErrorKind::NotConnected, what.description()))

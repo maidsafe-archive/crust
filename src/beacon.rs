@@ -266,6 +266,7 @@ mod test {
     use super::*;
     use std::thread;
     use transport;
+    use transport::Message;
 
     #[test]
     fn test_beacon() {
@@ -274,13 +275,16 @@ mod test {
 
         let t1 = thread::Builder::new().name("test_beacon sender".to_string()).spawn(move || {
             let mut transport = acceptor.accept().unwrap();
-            transport.sender.send(&"hello beacon".to_string().into_bytes()).unwrap();
+            transport.sender.send(&Message::UserBlob("hello beacon".to_string().into_bytes())).unwrap();
         });
 
         let t2 = thread::Builder::new().name("test_beacon receiver".to_string()).spawn(move || {
             let endpoint = seek_peers(acceptor_port, None).unwrap()[0];
             let transport = transport::connect(transport::Endpoint::Tcp(endpoint)).unwrap();
-            let msg = String::from_utf8(transport.receiver.receive().unwrap()).unwrap();
+            let msg = String::from_utf8(match transport.receiver.receive().unwrap() {
+                Message::UserBlob(msg) => msg,
+                _ => panic!("Wrong message type"),
+            }).unwrap();
             assert!(msg == "hello beacon".to_string());
         });
 
