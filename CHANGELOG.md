@@ -1,5 +1,11 @@
 # CRUST - Change Log
 
+## [0.2.8]
+- Updated sample config file
+- Updated crust_peer example to use config file
+- Changed config- and bootstrap-file-handling to terminate application if file is unreadable
+- Fixed bug causing infinite bootstrap loop in Routing
+
 ## [0.2.7]
 - Refactored config- and bootstrap-file-handling
 
