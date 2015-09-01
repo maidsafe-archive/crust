@@ -55,8 +55,7 @@ fn main() {
     // We receive events (e.g. new connection, message received) from the ConnectionManager via an
     // asynchronous channel.
     let (channel_sender, channel_receiver) = ::std::sync::mpsc::channel();
-    let connection_manager = ::crust::ConnectionManager::new(channel_sender)
-        .unwrap();
+    let connection_manager = ::crust::ConnectionManager::new(channel_sender);
 
     println!("Run the simple_sender example in another terminal to send messages to this node.");
 
