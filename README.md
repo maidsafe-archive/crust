@@ -39,11 +39,11 @@ Several methods are used for NAT traversal, UpNP, hole punching [See here for TC
 
 ##Todo Items
 
-## [0.2.8]
-- [x] Updated sample config file
-- [x] Updated crust_peer example to use config file
-- [x] Changed config- and bootstrap-file-handling to terminate application if file is unreadable
-- [x] Fixed bug causing infinite bootstrap loop in Routing
+## [0.2.9]
+- [x] ConnectionManager starts accepting connections as soon as constructed now
+- [x] Config file now also specifies optional TCP and UTP listening ports
+- [x] Improved documentation
+- [x] Fixed [#288](https://github.com/maidsafe/crust/issues/288) unsafe multithreaded access to the bootstrap file.
 
 ## Future work
 
