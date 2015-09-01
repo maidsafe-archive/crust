@@ -362,7 +362,7 @@ fn main() {
     // Construct ConnectionManager and start listening
     let (channel_sender, channel_receiver) = channel();
     let (bs_sender, bs_receiver) = channel();
-    let mut connection_manager = ConnectionManager::new(channel_sender);
+    let mut connection_manager = ConnectionManager::new(channel_sender).unwrap();
     stdout = green_foreground(stdout);
     let listening_endpoints = connection_manager.get_own_endpoints();
     print!("Listening for new connections on");
