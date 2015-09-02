@@ -42,11 +42,12 @@ impl Config {
         }
     }
 
+    /// Create a config which doesn't initiate any network activity.
     pub fn make_zero() -> Config {
         Config{
             tcp_listening_port         : None,
             utp_listening_port         : None,
-            override_default_bootstrap : true,    // Default bootstrapping methods enabled
+            override_default_bootstrap : true,    // Default bootstrapping methods disabled
             hard_coded_contacts        : vec![],  // No hardcoded endpoints
             beacon_port                : None,    // LIVE port
         }

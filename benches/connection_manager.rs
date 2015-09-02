@@ -53,7 +53,8 @@ fn wait_for_connection(receiver: &Receiver<Event>) -> Endpoint{
 #[bench]
 fn send_random_data(b: &mut Bencher) {
     let (cm1_tx, cm1_rx) = channel();
-    let mut cm1 = ConnectionManager::new_inactive(cm1_tx);
+    let mut cm1 = ConnectionManager::new_inactive(cm1_tx).unwrap();
+
     let cm1_port = match cm1.start_accepting(Port::Tcp(0)) {
         Ok(port) => port,
         Err(_) => panic!("Failed to start ConnectionManager #1"),
@@ -62,7 +63,8 @@ fn send_random_data(b: &mut Bencher) {
     let cm1_endpoint = Endpoint::new(IpAddr::V4(Ipv4Addr::new(127,0,0,1)), cm1_port);
 
     let (cm2_tx, cm2_rx) = channel();
-    let mut cm2 = ConnectionManager::new_inactive(cm2_tx);
+    let cm2 = ConnectionManager::new_inactive(cm2_tx).unwrap();
+
     cm2.connect(vec![cm1_endpoint]);
 
     let _cm2_ep = wait_for_connection(&cm1_rx);
