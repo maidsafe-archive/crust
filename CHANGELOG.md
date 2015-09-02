@@ -1,5 +1,14 @@
 # CRUST - Change Log
 
+## [0.2.10]
+- Revert ConnectionManager::new API change
+
+## [0.2.9]
+- ConnectionManager starts accepting connections as soon as constructed now
+- Config file now also specifies optional TCP and UTP listening ports
+- Improved documentation
+- Fixed [#288](https://github.com/maidsafe/crust/issues/288) unsafe multithreaded access to the bootstrap file.
+
 ## [0.2.8]
 - Updated sample config file
 - Updated crust_peer example to use config file

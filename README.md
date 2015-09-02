@@ -39,15 +39,6 @@ Several methods are used for NAT traversal, UpNP, hole punching [See here for TC
 
 ##Todo Items
 
-## [0.2.10]
-- [x] Revert ConnectionManager::new API change
-
-## [0.2.9]
-- [x] ConnectionManager starts accepting connections as soon as constructed now
-- [x] Config file now also specifies optional TCP and UTP listening ports
-- [x] Improved documentation
-- [x] Fixed [#288](https://github.com/maidsafe/crust/issues/288) unsafe multithreaded access to the bootstrap file.
-
 ## Future work
 
 - [ ] [MAID-1140] (https://maidsafe.atlassian.net/browse/MAID-1140) Memory-mapped file I/O for bootstrap file
