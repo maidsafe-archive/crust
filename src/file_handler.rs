@@ -166,6 +166,10 @@ impl FileHandler {
         error.kind() == ::std::io::ErrorKind::NotFound
     }
 
+    fn permission_denied(error: &::std::io::Error) -> bool {
+        error.kind() == ::std::io::ErrorKind::PermissionDenied
+    }
+
     fn read<Contents: ::rustc_serialize::Decodable>(path: ::std::path::PathBuf) ->
             Result<Contents, ::error::Error> {
         use std::io::Read;
@@ -186,7 +190,7 @@ impl FileHandler {
                 }
             },
             Err(error) => {
-                if !Self::path_or_file_not_found(&error) {
+                if !Self::path_or_file_not_found(&error) && !Self::permission_denied(&error) {
                     Self::die(format!("Failed to open {:?}: {}", path, error), 1);
                 }
                 Err(::error::Error::IoError(error))
