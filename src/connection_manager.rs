@@ -138,6 +138,19 @@ impl ConnectionManager {
             default
         });
 
+        ConnectionManager::construct(event_pipe, config)
+    }
+
+    /// Construct a connection manager. As with the `ConnectionManager::new` function,
+    /// but will not implicitly start any network activity. This construtor is intended
+    /// only for testing purposes.
+    pub fn new_inactive(event_pipe: mpsc::Sender<Event>)
+            -> io::Result<ConnectionManager> {
+        ConnectionManager::construct(event_pipe, Config::make_zero())
+    }
+
+    fn construct(event_pipe: mpsc::Sender<Event>, config: Config)
+            -> io::Result<ConnectionManager> {
         let state = Arc::new(Mutex::new(State{ event_pipe: event_pipe,
                                                connections: HashMap::new(),
                                                listening_ports: HashSet::new(),
@@ -148,6 +161,7 @@ impl ConnectionManager {
 
         let tcp_listening_port = config.tcp_listening_port.clone();
         let utp_listening_port = config.utp_listening_port.clone();
+        let beacon_port        = config.beacon_port.clone();
 
         let mut cm = ConnectionManager { state                : state,
                                          beacon_guid_and_port : None,
@@ -155,7 +169,9 @@ impl ConnectionManager {
                                          own_endpoints        : Vec::new()
                                        };
 
-        let _ = cm.start_broadcast_acceptor();
+        if let Some(port) = beacon_port {
+            let _ = cm.start_broadcast_acceptor(port);
+        }
 
         if let Some(port) = tcp_listening_port {
             let _ = try!(cm.start_accepting(Port::Tcp(port)));
@@ -196,8 +212,8 @@ impl ConnectionManager {
         }
     }
 
-    fn start_broadcast_acceptor(&mut self) -> io::Result<()> {
-        let acceptor = try!(beacon::BroadcastAcceptor::new(self.config.beacon_port));
+    fn start_broadcast_acceptor(&mut self, beacon_port: u16) -> io::Result<()> {
+        let acceptor = try!(beacon::BroadcastAcceptor::new(beacon_port));
 
         // Right now we expect this function to succeed only once.
         assert!(self.beacon_guid_and_port.is_none());
@@ -461,35 +477,38 @@ impl ConnectionManager {
         if config.override_default_bootstrap {
             return config.hard_coded_contacts.clone();
         } else {
-            let cached_contacts = match beacon_guid_and_port.is_some() {
+            let cached_contacts = if beacon_guid_and_port.is_some() {
                 // this node "owns" bootstrap file
-                true => {
-                    lock_mut_state(&mut weak_state.clone(), |state: &mut State| {
-                        let mut contacts = ::contact::Contacts::new();
-                        if let Some(ref mut handler) = state.bootstrap_handler {
-                            contacts = handler.read_file().unwrap_or(vec![]);
-                        }
-                        Ok(contacts)
-                    }).unwrap_or(vec![])
-                },
-                _ => vec![],
+                lock_mut_state(&mut weak_state.clone(), |state: &mut State| {
+                    let mut contacts = ::contact::Contacts::new();
+                    if let Some(ref mut handler) = state.bootstrap_handler {
+                        contacts = handler.read_file().unwrap_or(vec![]);
+                    }
+                    Ok(contacts)
+                })
+                .unwrap_or(vec![])
+            } else {
+                vec![]
             };
-            let beacon_guid = beacon_guid_and_port
-                .map(|beacon_guid_and_port| beacon_guid_and_port.0);
-            let combined_contacts: Vec<_>
-                = Self::seek_peers(beacon_guid, config.beacon_port)
-                .iter()
-                .map(|x| ::contact::Contact{ endpoint: x.clone()} )
-                .chain(config.hard_coded_contacts.clone().into_iter())
-                .chain(cached_contacts.into_iter()).collect();
 
-            // remove duplicates
-            let mut combined_contacts: ::contact::Contacts =
-                combined_contacts.into_iter().unique().collect();
+            let beacon_guid = beacon_guid_and_port.map(|(guid, _)| guid);
+
+            let beacon_discovery = match config.beacon_port {
+                Some(port) => Self::seek_peers(beacon_guid, port),
+                None => vec![]
+            };
+
+            let mut combined_contacts
+                = beacon_discovery.into_iter()
+                .map(|e| ::contact::Contact{ endpoint: e} )
+                .chain(config.hard_coded_contacts.iter().cloned())
+                .chain(cached_contacts.into_iter())
+                .unique() // Remove duplicates
+                .collect::<Vec<_>>();
 
             // remove own endpoints
             if let Ok(own_listening_endpoint) = Self::get_listening_endpoint(weak_state.clone()) {
-                combined_contacts.retain(|x| !own_listening_endpoint.contains(&x.endpoint));
+                combined_contacts.retain(|c| !own_listening_endpoint.contains(&c.endpoint));
             }
             combined_contacts
         }

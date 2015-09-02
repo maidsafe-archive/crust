@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-#![feature(test)]
+#![feature(test, ip_addr)]
 extern crate crust;
 extern crate rand;
 extern crate test;
@@ -23,6 +23,7 @@ extern crate test;
 use rand::random;
 use test::Bencher;
 use crust::*;
+use std::net::{IpAddr, Ipv4Addr};
 
 use std::sync::mpsc::{channel, Receiver};
 
@@ -52,14 +53,19 @@ fn wait_for_connection(receiver: &Receiver<Event>) -> Endpoint{
 #[bench]
 fn send_random_data(b: &mut Bencher) {
     let (cm1_tx, cm1_rx) = channel();
-    let mut cm1 = ConnectionManager::new(cm1_tx).unwrap();
-    cm1.bootstrap(1);
+    let mut cm1 = ConnectionManager::new_inactive(cm1_tx).unwrap();
 
-    std::thread::sleep_ms(100);
+    let cm1_port = match cm1.start_accepting(Port::Tcp(0)) {
+        Ok(port) => port,
+        Err(_) => panic!("Failed to start ConnectionManager #1"),
+    };
+
+    let cm1_endpoint = Endpoint::new(IpAddr::V4(Ipv4Addr::new(127,0,0,1)), cm1_port);
 
     let (cm2_tx, cm2_rx) = channel();
-    let mut cm2 = ConnectionManager::new(cm2_tx).unwrap();
-    cm2.bootstrap(1);
+    let cm2 = ConnectionManager::new_inactive(cm2_tx).unwrap();
+
+    cm2.connect(vec![cm1_endpoint]);
 
     let _cm2_ep = wait_for_connection(&cm1_rx);
     let cm1_ep = wait_for_connection(&cm2_rx);
