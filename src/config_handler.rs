@@ -28,7 +28,7 @@ pub struct Config {
     pub utp_listening_port         : Option<u16>,
     pub override_default_bootstrap : bool,
     pub hard_coded_contacts        : ::contact::Contacts,
-    pub beacon_port                : u16,
+    pub beacon_port                : Option<u16>,
 }
 
 impl Config {
@@ -38,14 +38,26 @@ impl Config {
             utp_listening_port         : None,
             override_default_bootstrap : false,  // Default bootstrapping methods enabled
             hard_coded_contacts        : vec![],  // No hardcoded endpoints
-            beacon_port                : 5483u16,  // LIVE port
+            beacon_port                : Some(5483u16),  // LIVE port
+        }
+    }
+
+    pub fn make_zero() -> Config {
+        Config{
+            tcp_listening_port         : None,
+            utp_listening_port         : None,
+            override_default_bootstrap : true,    // Default bootstrapping methods enabled
+            hard_coded_contacts        : vec![],  // No hardcoded endpoints
+            beacon_port                : None,    // LIVE port
         }
     }
 }
 
 pub fn read_config_file() -> Result<Config, ::error::Error> {
     let mut file_handler = ::file_handler::FileHandler::new(get_file_name());
-    file_handler.read_file::<Config>()
+    let cfg = try!(file_handler.read_file::<Config>());
+    assert!(cfg.beacon_port.is_some(), "beacon_port must be set");
+    Ok(cfg)
 }
 
 // This is a best-effort to create a config file - we don't care about the result.
@@ -86,8 +98,7 @@ pub fn write_config_file(tcp_listening_port: Option<u16>,
                             .unwrap_or(default.override_default_bootstrap),
                          hard_coded_contacts: hard_coded_contacts
                             .unwrap_or(default.hard_coded_contacts),
-                         beacon_port: beacon_port
-                            .unwrap_or(default.beacon_port),
+                         beacon_port: beacon_port.or(default.beacon_port),
                        };
     let mut config_path = try!(::file_handler::current_bin_dir());
     config_path.push(get_file_name());
@@ -121,12 +132,12 @@ mod test {
                 utp_listening_port: None,
                 override_default_bootstrap: false,
                 hard_coded_contacts: hard_coded_contacts,
-                beacon_port: ::rand::random::<u16>(),
+                beacon_port: Some(::rand::random::<u16>()),
             };
         let _ = super::write_config_file(None, None,
                                          Some(config.override_default_bootstrap),
                                          Some(hard_coded_endpoints),
-                                         Some(config.beacon_port));
+                                         config.beacon_port);
         match super::read_config_file() {
             Ok(recovered_config) => assert_eq!(config, recovered_config),
             Err(_) => panic!("Failed to read config file."),
