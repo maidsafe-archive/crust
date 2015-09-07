@@ -89,7 +89,7 @@
   -  Tcp live port and backup random port selection
   -  Create send/rcv channel from routing to connections object
   -  Implement test for basic "hello world" two way communication
-  -  Set up Udp broadcast and respond when we have a port (we listen on any random port above 1024 [user space port])  available (broadcast port is 5483)
+  -  Set up Udp broadcast and respond when we have a port (we listen on any random port above 1024 [user space port])  available (broadcast port is 5484)
   -  Add connection established/lost/ new messages to be passed to routing (via channel)
   -  Implement connect() in connection manager
   -  Allow tcp and then utp connections option and wrap in connection object.
@@ -97,7 +97,7 @@
 -  Update handle connect for TCP
 -  Remove FailedToConnect event
 -  Integrate bootstrap (Link ability to read and write bootstrap file)
--  Integrate beacon (Have connection manger start, broadcast on udp broadcast for port 5483 (later multicast for ipv6)
+-  Integrate beacon (Have connection manger start, broadcast on udp broadcast for port 5484 (later multicast for ipv6)
 -  Send serialised bootstrap info as part of beacon reply (Link ability to send bootstrap file to any node requesting it)
 - Examples:
   -  Broadcaster
