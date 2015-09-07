@@ -19,7 +19,7 @@ use std::collections::{HashMap, HashSet};
 use std::io;
 use std::sync::{Arc, mpsc, Mutex, Weak};
 use std::thread;
-use std::net::{IpAddr, Ipv4Addr, SocketAddr, SocketAddrV4};
+use std::net::{IpAddr, Ipv4Addr};
 
 use beacon;
 use bootstrap_handler::BootstrapHandler;
@@ -30,13 +30,21 @@ use transport::{Endpoint, Port, Message};
 
 use asynchronous::{Deferred,ControlFlow};
 use itertools::Itertools;
-
-use igd;
+use map_external_port::map_external_port;
 
 /// Type used to represent serialised data in a message.
 pub type Bytes = Vec<u8>;
 
 type WeakState = Weak<Mutex<State>>;
+
+struct State {
+    event_pipe: mpsc::Sender<Event>,
+    connections: HashMap<Endpoint, Connection>,
+    listening_ports: HashSet<Port>,
+    bootstrap_handler: Option<BootstrapHandler>,
+    stop_called: bool,
+    bootstrap_count: (usize, usize), // (current, max)
+}
 
 /// A structure representing a connection manager.
 ///
@@ -67,62 +75,6 @@ pub enum Event {
 
 struct Connection {
     writer_channel: mpsc::Sender<Message>,
-}
-
-struct State {
-    event_pipe: mpsc::Sender<Event>,
-    connections: HashMap<Endpoint, Connection>,
-    listening_ports: HashSet<Port>,
-    bootstrap_handler: Option<BootstrapHandler>,
-    stop_called: bool,
-    bootstrap_count: (usize, usize), // (current, max)
-}
-
-fn map_external_port(port: &Port)
-                     -> Vec<(Endpoint, Arc<Mutex<Option<Endpoint>>>)> {
-    let (protocol, port_number) = match *port {
-        Port::Tcp(port) => (igd::PortMappingProtocol::TCP, port),
-        Port::Utp(port) => (igd::PortMappingProtocol::UDP, port),
-    };
-    // Removing loopback address
-    filter_loopback(getifaddrs()).into_iter().filter_map(|e| match e.addr {
-        IpAddr::V4(a) => {
-            let addr = SocketAddrV4::new(a, port_number);
-            let ext = Arc::new(Mutex::new(None));
-            let ext2 = ext.clone();
-            let port2 = port.clone();
-
-            let _ = thread::spawn(move || {
-                match igd::search_gateway_from(addr.ip().clone()) {
-                    Ok(gateway) => {
-                        let _ = gateway.add_port(protocol, port_number,
-                                                 addr.clone(), 0, "crust");
-
-                        match gateway.get_external_ip() {
-                            Ok(ip) => {
-                                let endpoint = SocketAddr
-                                    ::V4(SocketAddrV4::new(ip, port_number));
-                                let mut data = ext2.lock().unwrap();
-                                *data = Some(match port2 {
-                                    Port::Tcp(_) => Endpoint::Tcp(endpoint),
-                                    Port::Utp(_) => Endpoint::Utp(endpoint),
-                                })
-                            },
-                            Err(_) => (),
-                        }
-                    },
-                    Err(_) => (),
-                }
-            });
-
-            let addr = SocketAddr::V4(addr);
-            Some((match *port {
-                Port::Tcp(_) => Endpoint::Tcp(addr),
-                Port::Utp(_) => Endpoint::Utp(addr),
-            }, ext))
-        },
-        _ => None,
-    }).collect::<Vec<_>>()
 }
 
 impl ConnectionManager {
