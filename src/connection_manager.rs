@@ -21,6 +21,7 @@ use std::sync::{Arc, mpsc, Mutex};
 use std::sync::mpsc::Sender;
 use std::thread;
 use std::boxed::FnBox;
+use std::thread::JoinHandle;
 
 use beacon;
 use bootstrap_handler::BootstrapHandler;
@@ -86,9 +87,7 @@ impl ConnectionManager {
 
         let cmd_sender2 = cmd_sender.clone();
 
-        let handle = try!(thread::Builder::new()
-                            .name("ConnectionManager main loop".to_string())
-                            .spawn(move || {
+        let handle = try!(Self::new_thread("main loop", move || {
                                 let mut state = State {
                                     event_sender : event_sender,
                                     cmd_sender : cmd_sender,
@@ -169,9 +168,7 @@ impl ConnectionManager {
             assert!(state.bootstrap_handler.is_none());
             state.bootstrap_handler = Some(BootstrapHandler::new());
 
-            let thread_result = thread::Builder::new()
-                                .name("ConnectionManager beacon acceptor".to_string())
-                                .spawn(move || {
+            let thread_result = Self::new_thread("beacon acceptor", move || {
                 while let Ok(transport) = acceptor.accept() {
                     sender.send(Box::new(move |state : &mut State| {
                         state.respond_to_broadcast(transport);
@@ -217,7 +214,7 @@ impl ConnectionManager {
             let _ = state.connections.clear();
             state.bootstrap_count = (0, max_successful_bootstrap_connection.clone());
 
-            let _ = thread::Builder::new().name("ConnectionManager bootstrap loop".to_string()).spawn(move || {
+            let _ = Self::new_thread("bootstrap loop", move || {
                 //loop {
                 //    let contacts = Self::populate_bootstrap_contacts(&config,
                 //                                                     &beacon_guid_and_port,
@@ -299,8 +296,7 @@ impl ConnectionManager {
 
             let cmd_sender = state.cmd_sender.clone();
 
-            let _ = thread::Builder::new().name("ConnectionManager connect".to_string())
-                                          .spawn(move || {
+            let _ = Self::new_thread("connect", move || {
                 for endpoint in endpoints {
                     if let Ok(transport) = transport::connect(endpoint) {
                         cmd_sender.send(Box::new(move |state: &mut State| {
@@ -353,48 +349,13 @@ impl ConnectionManager {
         }
     }
 
-    //fn listen(&mut self, port: Port) -> io::Result<Port> {
-    //    let acceptor = try!(transport::new_acceptor(port));
-    //    let local_port = acceptor.local_port();
-    //    self.own_endpoints = map_external_port(&local_port);
-
-    //    self.cmd_sender.send(Box::new(move |state| {
-    //        state.listening_ports.insert(local_port);
-
-    //        let _ = thread::Builder::new()
-    //                .name("ConnectionManager listen".to_string())
-    //                .spawn(move || {
-    //            while let Ok(trans) = transport::accept(&acceptor) {
-    //                let weak_state_copy = weak_state.clone();
-    //                let mut stop_called = false;
-    //                {
-    //                    let _ = lock_mut_state(&weak_state_copy, |state: &mut State| {
-    //                        stop_called = state.stop_called;
-    //                        Ok(())
-    //                    });
-    //                }
-    //                if stop_called {
-    //                    break
-    //                }
-    //                self.cmd_sender.send(Box::new(move |state| {
-    //                    let _ = state.handle_accept(trans);
-    //                }));
-    //            }
-    //        });
-    //    }));
-
-    //    Ok(local_port)
-    //}
-
     fn accept(cmd_sender: Sender<Closure>, acceptor: transport::Acceptor) {
         let cmd_sender2 = cmd_sender.clone();
 
         cmd_sender.send(Box::new(move |state: &mut State| {
             state.listening_ports.insert(acceptor.local_port());
 
-            let _ = thread::Builder::new()
-                    .name("ConnectionManager listen".to_string())
-                    .spawn(move || {
+            let _ = Self::new_thread("listen", move || {
                 let accept_result = transport::accept(&acceptor);
                 let cmd_sender3 = cmd_sender2.clone();
 
@@ -428,6 +389,12 @@ impl ConnectionManager {
             }
         };
         ret
+    }
+
+    fn new_thread<F,T>(name: &str, f: F) -> io::Result<JoinHandle<T>> 
+            where F: FnOnce() -> T, F: Send + 'static, T: Send + 'static {
+        thread::Builder::new().name("ConnectionManager::".to_string() + name)
+                              .spawn(f)
     }
 }
 
