@@ -38,7 +38,7 @@ impl Config {
             utp_listening_port         : None,
             override_default_bootstrap : false,  // Default bootstrapping methods enabled
             hard_coded_contacts        : vec![],  // No hardcoded endpoints
-            beacon_port                : Some(5483u16),  // LIVE port
+            beacon_port                : Some(5484u16),  // LIVE port
         }
     }
 
