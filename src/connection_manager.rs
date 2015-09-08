@@ -23,6 +23,7 @@ use std::thread;
 use std::boxed::FnBox;
 use std::thread::JoinHandle;
 
+use std::net::{IpAddr, Ipv4Addr};
 use beacon;
 use bootstrap_handler::BootstrapHandler;
 use config_handler::{Config, read_config_file};
@@ -254,24 +255,17 @@ impl ConnectionManager {
             beacon::BroadcastAcceptor::stop(&beacon_guid_and_port);
             self.beacon_guid_and_port = None;
         }
-        // TODO
-        //let mut listening_ports = Vec::<Port>::new();
-        //let weak_state = Arc::downgrade(&self.state);
-        //{
-        //    let _ = lock_mut_state(&weak_state, |state: &mut State| {
-        //        for itr in &state.listening_ports {
-        //            listening_ports.push(itr.clone());
-        //        }
-        //        state.listening_ports.clear();
-        //        state.stop_called = true;
-        //        Ok(())
-        //    });
-        //}
-        //// debug!("connection_manager::stop There are {} TCP ports being listened on", listening_ports.len());
-        //for port in listening_ports {
-        //    let ip_addr = IpAddr::V4(Ipv4Addr::new(127,0,0,1));
-        //    let _ = transport::connect(Endpoint::new(ip_addr, port));
-        //}
+
+        self.cmd_sender.send(Box::new(move |state: &mut State| {
+            state.stop_called = true;
+
+            // Connect to our listening ports, this should unblock
+            // the threads.
+            for port in state.listening_ports.iter() {
+                let ip_addr = IpAddr::V4(Ipv4Addr::new(127,0,0,1));
+                let _ = transport::connect(Endpoint::new(ip_addr, *port));
+            }
+        }));
     }
 
     /// Opens a connection to a remote peer. `endpoints` is a vector of addresses of the remote
