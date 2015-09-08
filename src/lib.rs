@@ -29,7 +29,7 @@
 #![doc(html_logo_url = "http://maidsafe.net/img/Resources/branding/maidsafe_logo.fab2.png",
        html_favicon_url = "http://maidsafe.net/img/favicon.ico",
        html_root_url = "http://maidsafe.github.io/crust/")]
-#![feature(fnbox, ip_addr, ip, arc_weak, socket_timeout, negate_unsigned, rustc_private)]
+#![feature(fnbox, ip_addr, ip, socket_timeout, negate_unsigned, rustc_private)]
 #![allow(unused_variables)]
 
 extern crate asynchronous;
@@ -54,7 +54,8 @@ pub mod error;
 pub mod file_handler;
 
 pub use config_handler::write_config_file;
-pub use connection_manager::{Event, ConnectionManager};
+pub use connection_manager::ConnectionManager;
+pub use event::Event;
 pub use error::Error;
 pub use file_handler::{FileHandler, current_bin_dir, user_app_dir, system_cache_dir, exe_file_stem,
                        ScopedUserAppDirRemover};
@@ -75,8 +76,11 @@ mod bootstrap_handler;
 mod config_handler;
 mod contact;
 mod getifaddrs;
+mod connection;
 mod tcp_connections;
 mod transport;
 mod utp_connections;
 mod utp_wrapper;
+mod state;
+mod event;
 mod map_external_port;
