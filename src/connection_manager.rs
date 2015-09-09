@@ -88,19 +88,22 @@ impl ConnectionManager {
 
         let handle = try!(Self::new_thread("main loop", move || {
                                 let mut state = State {
-                                    event_sender : event_sender,
-                                    cmd_sender : cmd_sender,
-                                    connections : HashMap::new(),
-                                    listening_ports: HashSet::new(),
-                                    bootstrap_handler: None,
-                                    stop_called: false,
-                                    bootstrap_count: (0,0),
+                                    event_sender      : event_sender,
+                                    cmd_sender        : cmd_sender,
+                                    connections       : HashMap::new(),
+                                    listening_ports   : HashSet::new(),
+                                    bootstrap_handler : None,
+                                    stop_called       : false,
+                                    bootstrap_count   : (0,0),
                                 };
 
                                 loop {
                                     match cmd_receiver.recv() {
                                         Ok(cmd) => cmd.call_box((&mut state,)),
                                         Err(_) => break,
+                                    }
+                                    if state.stop_called {
+                                        break;
                                     }
                                 }
                             }));
@@ -268,7 +271,6 @@ impl ConnectionManager {
                         Self::post(&cmd_sender, move |state: &mut State| {
                             let _ = state.handle_connect(transport, is_broadcast_acceptor, false);
                         });
-                        return;
                     }
                 }
             });
@@ -491,7 +493,6 @@ mod test {
         let mut cm2 = ConnectionManager::new(cm2_i).unwrap();
         let cm2_eps = cm2.get_own_endpoints().into_iter()
             .map(|ep| ep.get_port()).collect::<Vec<Port>>();
-        debug!("   cm2 listening port {}", cm2_eps[0].get_port());
 
         cm2.bootstrap(1);
 
@@ -712,41 +713,48 @@ mod test {
         let _temp_config = make_temp_config(None);
 
         let (cm_tx, cm_rx) = channel();
-        let cm = ConnectionManager::new(cm_tx).unwrap();
+
+        let mut cm = ConnectionManager::new(cm_tx).unwrap();
+
         let cm_listen_ports = cm.get_own_endpoints().into_iter()
-            .map(|ep| ep.get_port()).collect::<Vec<Port>>();
-        let cm_listen_addrs = cm_listen_ports.iter().map(|p| Endpoint::tcp(("127.0.0.1", p.get_port()))).collect();
+                                .map(|ep| ep.get_port())
+                                .collect::<Vec<_>>();
+
+        let cm_listen_addrs = cm_listen_ports.iter()
+                              .map(|p| Endpoint::tcp(("127.0.0.1", p.get_port())))
+                              .collect();
 
         let thread = spawn(move || {
-           loop {
-                let event = cm_rx.recv();
-                if event.is_err() {
-                  // debug!("stop listening");
-                  break;
-                }
-                match event.unwrap() {
+            loop {
+                let event = match cm_rx.recv() {
+                    Ok(event) => event,
+                    Err(_) => break,
+                };
+
+                match event {
                     Event::NewMessage(_, _) => {
-                        // debug!("received from {} with a new message : {}",
-                        //          match endpoint { Endpoint::Tcp(socket_addr) => socket_addr },
-                        //          match String::from_utf8(bytes) { Ok(msg) => msg, Err(_) => "unknown msg".to_string() });
+                        debug!("NewMessage");
                     },
                     Event::NewConnection(_) => {
-                        // debug!("adding new node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
+                        debug!("NewConnection");
                     },
                     Event::LostConnection(_) => {
-                        // debug!("dropping node:{}", match endpoint { Endpoint::Tcp(socket_addr) => socket_addr });
+                        debug!("LostConnection");
                         break;
                     }
-                    Event::NewBootstrapConnection(_) => {}
+                    Event::NewBootstrapConnection(_) => {
+                        debug!("NewBootstrapConnection");
+                    }
                 }
             }
-          });
+        });
+
         thread::sleep_ms(100);
 
         let _ = spawn(move || {
             let _temp_config = make_temp_config(None);
             let (cm_aux_tx, _) = channel();
-            let cm_aux = ConnectionManager::new(cm_aux_tx).unwrap();
+            let mut cm_aux = ConnectionManager::new(cm_aux_tx).unwrap();
             // setting the listening port to be greater than 4455 will make the test hanging
             // changing this to cm_beacon_addr will make the test hanging
             cm_aux.connect(cm_listen_addrs);
