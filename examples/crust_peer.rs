@@ -68,7 +68,7 @@ for example (assuming a debug build) and modified to suit.
 If a config file can't be located or it contains no contacts, or if connecting
 to all of the peers fails, the UDP beacon will be used.
 
-If no beacon port is specified in the config file, port 5483 will be chosen.
+If no beacon port is specified in the config file, port 5484 will be chosen.
 
 If no listening ports are supplied, a random port for each supported protocol
 will be chosen.

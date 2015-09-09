@@ -74,7 +74,7 @@ fn main() {
     connection_manager.bootstrap(1);
 
     println!("ConnectionManager trying to bootstrap off node listening on TCP port 8888 \
-              and UDP broadcast port 5483");
+              and UDP broadcast port 5484");
 
     // Block until bootstrapped
     let peer_endpoint = match bs_receiver.recv() {
