@@ -22,6 +22,7 @@ use std::sync::mpsc::Sender;
 use std::thread;
 use std::net::{IpAddr, Ipv4Addr};
 use std::boxed::FnBox;
+use asynchronous::{Deferred,ControlFlow};
 
 use beacon;
 use bootstrap_handler::BootstrapHandler;
@@ -29,6 +30,7 @@ use config_handler::{Config, read_config_file};
 use getifaddrs::{getifaddrs, filter_loopback};
 use transport;
 use transport::{Endpoint, Port, Message};
+use std::thread::JoinHandle;
 
 use itertools::Itertools;
 use event::Event;
@@ -66,9 +68,9 @@ impl State {
         }
     }
 
-    fn populate_bootstrap_contacts(&mut self,
-                                   config: &Config,
-                                   beacon_guid_and_port: &Option<([u8; 16], u16)>)
+    pub fn populate_bootstrap_contacts(&mut self,
+                                       config: &Config,
+                                       beacon_guid_and_port: &Option<([u8; 16], u16)>)
             -> ::contact::Contacts {
         if config.override_default_bootstrap {
             return config.hard_coded_contacts.clone();
@@ -240,6 +242,56 @@ impl State {
         }
     
         endpoints
+    }
+
+    pub fn bootstrap_off_list(&self,
+                              bootstrap_list: ::contact::Contacts,
+                              is_broadcast_acceptor: bool,
+                              max_successful_bootstrap_connection: usize) {
+        // TODO: This check seems to also happen in handle_connect
+        for contact in bootstrap_list.iter() {
+            if self.connections.contains_key(&contact.endpoint) {
+                // TODO: Let user know we're not going to fulfill his request.
+                return;
+            }
+        }
+
+        let event_sender = self.event_sender.clone();
+        let cmd_sender   = self.cmd_sender.clone();
+
+        Self::new_thread("bootstrap_off_list", move || {
+            let mut vec_deferred = vec![];
+
+            for contact in bootstrap_list.into_iter() {
+                vec_deferred.push(Deferred::new(move || {
+                    transport::connect(contact.endpoint.clone())
+                }))
+            }
+
+            let res = Deferred::first_to_promise(max_successful_bootstrap_connection,
+                                                 false,
+                                                 vec_deferred,
+                                                 ControlFlow::ParallelLimit(15)).sync();
+
+            let ts = match res {
+                Ok(ts) => ts,
+                Err(ts) => ts.into_iter().filter_map(|e|e.ok()).collect(),
+            };
+
+            cmd_sender.send(Box::new(move |state: &mut State| {
+                for t in ts {
+                    let e = t.remote_endpoint.clone();
+                    state.handle_connect(t, is_broadcast_acceptor, true);
+                    event_sender.send(Event::NewBootstrapConnection(e));
+                }
+            }));
+        });
+    }
+
+    fn new_thread<F,T>(name: &str, f: F) -> io::Result<JoinHandle<T>> 
+            where F: FnOnce() -> T, F: Send + 'static, T: Send + 'static {
+        thread::Builder::new().name("State::".to_string() + name)
+                              .spawn(f)
     }
 }
 

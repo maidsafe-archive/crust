@@ -31,8 +31,6 @@ use getifaddrs::{getifaddrs, filter_loopback};
 use transport;
 use transport::{Endpoint, Port, Message};
 
-use asynchronous::{Deferred,ControlFlow};
-use itertools::Itertools;
 use map_external_port::map_external_port;
 use state::State;
 use event::Event;
@@ -57,7 +55,7 @@ pub struct ConnectionManager {
 impl ConnectionManager {
     /// Constructs a connection manager. User needs to create an asynchronous channel, and provide
     /// the sender half to this method. Receiver will receive all `Event`s from this library.
-    pub fn new(event_sender: mpsc::Sender<Event>) -> io::Result<ConnectionManager> {
+    pub fn new(event_sender: Sender<Event>) -> io::Result<ConnectionManager> {
         let config = read_config_file().unwrap_or_else(|e| {
             debug!("Crust failed to read config file; Error: {:?};", e);
             ::config_handler::create_default_config_file();
@@ -73,12 +71,12 @@ impl ConnectionManager {
     /// Construct a connection manager. As with the `ConnectionManager::new` function,
     /// but will not implicitly start any network activity. This construtor is intended
     /// only for testing purposes.
-    pub fn new_inactive(event_sender: mpsc::Sender<Event>)
+    pub fn new_inactive(event_sender: Sender<Event>)
             -> io::Result<ConnectionManager> {
         ConnectionManager::construct(event_sender, Config::make_zero())
     }
 
-    fn construct(event_sender: mpsc::Sender<Event>, config: Config)
+    fn construct(event_sender: Sender<Event>, config: Config)
             -> io::Result<ConnectionManager> {
         let tcp_listening_port = config.tcp_listening_port.clone();
         let utp_listening_port = config.utp_listening_port.clone();
@@ -215,37 +213,11 @@ impl ConnectionManager {
             let _ = state.connections.clear();
             state.bootstrap_count = (0, max_successful_bootstrap_connection.clone());
 
-            let _ = Self::new_thread("bootstrap loop", move || {
-                //loop {
-                //    let contacts = Self::populate_bootstrap_contacts(&config,
-                //                                                     &beacon_guid_and_port,
-                //                                                     ws.clone());
-                //    match bootstrap_off_list(ws.clone(), contacts.clone(), beacon_guid_and_port.is_some(),
-                //                             max_successful_bootstrap_connection) {
-                //        Ok(_) => {
-                //            debug!("Got at least one bootstrap connection. Breaking bootstrap loop.");
-                //            break;
-                //        },
-                //        Err(_) => {
-                //            // debug!("Failed to get at least one bootstrap connection. continuing bootstrap loop");
-                //        }
-                //    }
-                //    // breaking the loop if stop called
-                //    let weak_state_copy = ws.clone();
-                //    let mut stop_called = false;
-                //    {
-                //        let _ = lock_mut_state(&weak_state_copy, |state: &mut State| {
-                //            stop_called = state.stop_called;
-                //            Ok(())
-                //        });
-                //    }
-                //    if stop_called {
-                //        break
-                //    }
-                //}
-            });
+            let contacts = state.populate_bootstrap_contacts(&config, &beacon_guid_and_port);
+            state.bootstrap_off_list(contacts.clone(),
+                                     beacon_guid_and_port.is_some(),
+                                     max_successful_bootstrap_connection);
         }));
-
     }
 
     /// This should be called before destroying an instance of a ConnectionManager to allow the
@@ -283,7 +255,7 @@ impl ConnectionManager {
         self.cmd_sender.send(Box::new(move |state : &mut State| {
             for endpoint in &endpoints {
                 if state.connections.contains_key(&endpoint) {
-                    // TODO: User should be let know about this.
+                    // TODO: User should be let known about this.
                     return;
                 }
             }
@@ -398,53 +370,6 @@ impl Drop for ConnectionManager {
     }
 }
 
-
-// Returns Ok() if at least one connection succeeds
-//fn bootstrap_off_list(weak_state: WeakState,
-//                      bootstrap_list: ::contact::Contacts,
-//                      is_broadcast_acceptor: bool,
-//                      max_successful_bootstrap_connection: usize) -> io::Result<()> {
-//    unimplemented!()
-//    //let mut vec_deferred = vec![];
-//
-//    //for contact in bootstrap_list {
-//    //    let ws = weak_state.clone();
-//
-//    //    let already_connected = try!(lock_state(&ws, |s| {
-//    //        Ok(s.connections.contains_key(&contact.endpoint))
-//    //    }));
-//
-//    //    if already_connected {
-//    //        return Ok(())
-//    //    }
-//
-//    //    vec_deferred.push(Deferred::new(move || {
-//    //        match transport::connect(contact.endpoint.clone()) {
-//    //            Ok(trans) => {
-//    //                let ep = trans.remote_endpoint.clone();
-//    //                let _ = try!(handle_connect(ws.clone(), trans,
-//    //                                            is_broadcast_acceptor, true ));
-//    //                return Ok(ep)
-//    //            },
-//    //            Err(e) => Err(e),
-//    //        }
-//    //    }));
-//    //}
-//    //let res = Deferred::first_to_promise(max_successful_bootstrap_connection,
-//    //                                     false, vec_deferred,
-//    //                                     ControlFlow::ParallelLimit(15))
-//    //    .sync();
-//    //let v = match res {
-//    //    Ok(v) => v,
-//    //    Err(v) => v.into_iter().filter_map(|e| e.ok()).collect(),
-//    //};
-//    //if v.len() > 0 {
-//    //    Ok(())
-//    //} else {
-//    //    Err(io::Error::new(io::ErrorKind::Other,
-//    //                       "No bootstrap node got connected"))
-//    //}
-//}
 
 #[cfg(test)]
 mod test {
