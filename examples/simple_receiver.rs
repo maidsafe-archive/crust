@@ -88,9 +88,7 @@ fn main() {
                          endpoint, fibonacci_result);
                 let response =
                     format!("The Fibonacci number for {} is {}", requested_value, fibonacci_result);
-                if let Err(why) = connection_manager.send(endpoint.clone(), response.into_bytes()) {
-                    println!("Failed to send reply to {:?}: {}", endpoint, why)
-                }
+                connection_manager.send(endpoint.clone(), response.into_bytes());
             },
             crust::Event::NewConnection(endpoint) => {
                 println!("New connection made to {:?}", endpoint);

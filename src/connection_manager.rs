@@ -146,9 +146,9 @@ impl ConnectionManager {
                 })
                 .collect::<Vec<_>>();
 
-            self.cmd_sender.send(Box::new(move |state : &mut State| {
+            Self::post(&self.cmd_sender, move |state : &mut State| {
                 state.update_bootstrap_contacts(contacts);
-            }));
+            });
         }
 
         Ok(accept_port)
@@ -163,13 +163,13 @@ impl ConnectionManager {
 
         let sender = self.cmd_sender.clone();
 
-        self.cmd_sender.send(Box::new(move |state : &mut State| {
+        Self::post(&self.cmd_sender, move |state : &mut State| {
             assert!(state.bootstrap_handler.is_none());
             state.bootstrap_handler = Some(BootstrapHandler::new());
 
             let thread_result = Self::new_thread("beacon acceptor", move || {
                 while let Ok(transport) = acceptor.accept() {
-                    sender.send(Box::new(move |state : &mut State| {
+                    let _ = sender.send(Box::new(move |state : &mut State| {
                         state.respond_to_broadcast(transport);
                     }));
                 }
@@ -177,7 +177,7 @@ impl ConnectionManager {
 
             // TODO: Handle gracefuly.
             assert!(thread_result.is_ok());
-        }));
+        });
 
         Ok(())
     }
@@ -207,7 +207,7 @@ impl ConnectionManager {
         let config = self.config.clone();
         let beacon_guid_and_port = self.beacon_guid_and_port.clone();
 
-        self.cmd_sender.send(Box::new(move |state : &mut State| {
+        Self::post(&self.cmd_sender, move |state : &mut State| {
             // TODO: Review whether this is what we want (to disconnect
             // existing connections).
             let _ = state.connections.clear();
@@ -217,7 +217,7 @@ impl ConnectionManager {
             state.bootstrap_off_list(contacts.clone(),
                                      beacon_guid_and_port.is_some(),
                                      max_successful_bootstrap_connection);
-        }));
+        });
     }
 
     /// This should be called before destroying an instance of a ConnectionManager to allow the
@@ -228,7 +228,7 @@ impl ConnectionManager {
             self.beacon_guid_and_port = None;
         }
 
-        self.cmd_sender.send(Box::new(move |state: &mut State| {
+        Self::post(&self.cmd_sender, move |state: &mut State| {
             state.stop_called = true;
 
             // Connect to our listening ports, this should unblock
@@ -237,7 +237,7 @@ impl ConnectionManager {
                 let ip_addr = IpAddr::V4(Ipv4Addr::new(127,0,0,1));
                 let _ = transport::connect(Endpoint::new(ip_addr, *port));
             }
-        }));
+        });
     }
 
     /// Opens a connection to a remote peer. `endpoints` is a vector of addresses of the remote
@@ -252,7 +252,7 @@ impl ConnectionManager {
     pub fn connect(&self, endpoints: Vec<Endpoint>) {
         let is_broadcast_acceptor = self.beacon_guid_and_port.is_some();
 
-        self.cmd_sender.send(Box::new(move |state : &mut State| {
+        Self::post(&self.cmd_sender, move |state : &mut State| {
             for endpoint in &endpoints {
                 if state.connections.contains_key(&endpoint) {
                     // TODO: User should be let known about this.
@@ -265,14 +265,14 @@ impl ConnectionManager {
             let _ = Self::new_thread("connect", move || {
                 for endpoint in endpoints {
                     if let Ok(transport) = transport::connect(endpoint) {
-                        cmd_sender.send(Box::new(move |state: &mut State| {
-                            state.handle_connect(transport, is_broadcast_acceptor, false);
-                        }));
+                        Self::post(&cmd_sender, move |state: &mut State| {
+                            let _ = state.handle_connect(transport, is_broadcast_acceptor, false);
+                        });
                         return;
                     }
                 }
             });
-        }));
+        });
 
     }
 
@@ -280,8 +280,8 @@ impl ConnectionManager {
     /// succeed, and returns an Err if the address is not connected. Return value of Ok does not
     /// mean that the data will be received. It is possible for the corresponding connection to hang
     /// up immediately after this function returns Ok.
-    pub fn send(&self, endpoint: Endpoint, message: Bytes) -> io::Result<()> {
-        self.cmd_sender.send(Box::new(move |state: &mut State| {
+    pub fn send(&self, endpoint: Endpoint, message: Bytes) {
+        Self::post(&self.cmd_sender, move |state: &mut State| {
             let writer_channel = match state.connections.get(&endpoint) {
                 Some(c) => c.writer_channel.clone(),
                 None => {
@@ -294,15 +294,14 @@ impl ConnectionManager {
                 // TODO: Generate async error event (BrokenPipe perhaps?).
                 panic!();
             }
-        }))
-        .map_err(|_|io::Error::new(io::ErrorKind::BrokenPipe, "Main loop stoped"))
+        })
     }
 
     /// Closes connection with the specified endpoint.
     pub fn drop_node(&self, endpoint: Endpoint) {
-        self.cmd_sender.send(Box::new(move |state: &mut State| {
-            state.connections.remove(&endpoint);
-        }));
+        Self::post(&self.cmd_sender, move |state: &mut State| {
+            let _ = state.connections.remove(&endpoint);
+        })
     }
 
     /// Returns beacon acceptor port if beacon acceptor is accepting, otherwise returns `None`
@@ -318,14 +317,14 @@ impl ConnectionManager {
     fn accept(cmd_sender: Sender<Closure>, acceptor: transport::Acceptor) {
         let cmd_sender2 = cmd_sender.clone();
 
-        cmd_sender.send(Box::new(move |state: &mut State| {
+        Self::post(&cmd_sender, move |state: &mut State| {
             state.listening_ports.insert(acceptor.local_port());
 
             let _ = Self::new_thread("listen", move || {
                 let accept_result = transport::accept(&acceptor);
                 let cmd_sender3 = cmd_sender2.clone();
 
-                cmd_sender2.send(Box::new(move |state: &mut State| {
+                let _ = cmd_sender2.send(Box::new(move |state: &mut State| {
                     if state.stop_called {
                         return;
                     }
@@ -341,7 +340,7 @@ impl ConnectionManager {
                     Self::accept(cmd_sender3, acceptor);
                 }));
             });
-        }));
+        })
     }
 
     /// Return the endpoints other peers can use to connect to. External address
@@ -361,6 +360,10 @@ impl ConnectionManager {
             where F: FnOnce() -> T, F: Send + 'static, T: Send + 'static {
         thread::Builder::new().name("ConnectionManager::".to_string() + name)
                               .spawn(f)
+    }
+
+    fn post<F>(sender: &Sender<Closure>, cmd: F) where F: FnBox(&mut State) + Send + 'static {
+        assert!(sender.send(Box::new(cmd)).is_ok());
     }
 }
 

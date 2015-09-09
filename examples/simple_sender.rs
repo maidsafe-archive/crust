@@ -90,9 +90,7 @@ fn main() {
     // Send all the numbers from 0 to 12 inclusive.  Expect to receive replies containing the
     // Fibonacci number for each value.
     for value in (0u8..13u8) {
-        if let Err(why) = connection_manager.send(peer_endpoint.clone(), value.to_string().into_bytes()) {
-            println!("Failed to send {} to {:?}: {}", value, peer_endpoint, why)
-        }
+        connection_manager.send(peer_endpoint.clone(), value.to_string().into_bytes());
     }
 
     // Allow the peer time to process the requests and reply.

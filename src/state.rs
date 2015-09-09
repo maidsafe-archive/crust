@@ -17,16 +17,15 @@
 
 use std::collections::{HashMap, HashSet};
 use std::io;
-use std::sync::{Arc, mpsc};
-use std::sync::mpsc::Sender;
+use std::sync::mpsc;
+use std::sync::mpsc::{Sender, Receiver};
 use std::thread;
-use std::net::{IpAddr, Ipv4Addr};
 use std::boxed::FnBox;
 use asynchronous::{Deferred,ControlFlow};
 
 use beacon;
 use bootstrap_handler::BootstrapHandler;
-use config_handler::{Config, read_config_file};
+use config_handler::Config;
 use getifaddrs::{getifaddrs, filter_loopback};
 use transport;
 use transport::{Endpoint, Port, Message};
@@ -162,7 +161,7 @@ impl State {
     // pushing messages out to socket
     fn start_writing_thread(&self, mut sender     : transport::Sender,
                                    his_ep         : Endpoint,
-                                   writer_channel : mpsc::Receiver<Message>) {
+                                   writer_channel : Receiver<Message>) {
         let cmd_sender = self.cmd_sender.clone();
 
         let _ = thread::Builder::new()
@@ -173,7 +172,7 @@ impl State {
                     break;
                 }
             }
-            cmd_sender.send(Box::new(move |state : &mut State| {
+            let _ = cmd_sender.send(Box::new(move |state : &mut State| {
                 state.unregister_connection(his_ep);
             }));
         });
@@ -193,7 +192,7 @@ impl State {
                     }
                 }
             }
-            cmd_sender.send(Box::new(move |state : &mut State| {
+            let _ = cmd_sender.send(Box::new(move |state : &mut State| {
                 state.unregister_connection(his_ep);
             }));
         });
@@ -259,7 +258,7 @@ impl State {
         let event_sender = self.event_sender.clone();
         let cmd_sender   = self.cmd_sender.clone();
 
-        Self::new_thread("bootstrap_off_list", move || {
+        let _ = Self::new_thread("bootstrap_off_list", move || {
             let mut vec_deferred = vec![];
 
             for contact in bootstrap_list.into_iter() {
@@ -278,11 +277,12 @@ impl State {
                 Err(ts) => ts.into_iter().filter_map(|e|e.ok()).collect(),
             };
 
-            cmd_sender.send(Box::new(move |state: &mut State| {
+            let _ = cmd_sender.send(Box::new(move |state: &mut State| {
                 for t in ts {
                     let e = t.remote_endpoint.clone();
-                    state.handle_connect(t, is_broadcast_acceptor, true);
-                    event_sender.send(Event::NewBootstrapConnection(e));
+                    if state.handle_connect(t, is_broadcast_acceptor, true).is_ok() {
+                        let _ = event_sender.send(Event::NewBootstrapConnection(e));
+                    }
                 }
             }));
         });

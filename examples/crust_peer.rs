@@ -456,17 +456,8 @@ fn main() {
             let times = cmp::max(1, speed / length);
             let sleep_time = cmp::max(1, 1000 / times);
             for _ in 0..times {
-                match connection_manager.send(peer.clone(),
-                                              generate_random_vec_u8(length as usize)) {
-                    Ok(()) => debug!("Sent a message with length of {} bytes to {:?}", length,
-                                       peer),
-                    Err(_) => {
-                        stdout = red_foreground(stdout);
-                        debug!("Lost connection to peer.  Exiting.");
-                        let _ = reset_foreground(stdout);
-                        return;
-                    },
-                };
+                connection_manager.send(peer.clone(), generate_random_vec_u8(length as usize));
+                debug!("Sent a message with length of {} bytes to {:?}", length, peer);
                 std::thread::sleep_ms(sleep_time as u32);
             }
         }
@@ -513,32 +504,7 @@ fn main() {
                     message.push_str(" ");
                     message.push_str(&args.arg_message[i]);
                 };
-                match connection_manager.send(peer.clone(), message.clone().into_bytes()) {
-                    Ok(()) => {
-                        stdout = green_foreground(stdout);
-                        println!("Successfully sent \"{}\" to {:?}", message, peer);
-                        stdout = reset_foreground(stdout)
-                    },
-                    Err(error) => {
-                        match error.kind() {
-                            io::ErrorKind::NotConnected => {
-                                stdout = yellow_foreground(stdout);
-                                println!("Failed to send: we have no connection to {:?}", peer);
-                                stdout = reset_foreground(stdout)
-                            },
-                            io::ErrorKind::BrokenPipe => {
-                                stdout = yellow_foreground(stdout);
-                                println!("Failed to send to {:?}: internal channel error.", peer);
-                                stdout = reset_foreground(stdout)
-                            },
-                            _ => {
-                                stdout = yellow_foreground(stdout);
-                                println!("Failed to send to {:?}: unexpected error.", peer);
-                                stdout = reset_foreground(stdout)
-                            },
-                        }
-                    },
-                }
+                connection_manager.send(peer.clone(), message.clone().into_bytes());
             } else if args.cmd_stop {
                 stdout = green_foreground(stdout);
                 println!("Stopped.");
