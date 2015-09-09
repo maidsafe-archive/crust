@@ -268,9 +268,9 @@ impl ConnectionManager {
             let _ = Self::new_thread("connect", move || {
                 for endpoint in endpoints {
                     if let Ok(transport) = transport::connect(endpoint) {
-                        Self::post(&cmd_sender, move |state: &mut State| {
+                        let _ = cmd_sender.send(Box::new(move |state: &mut State| {
                             let _ = state.handle_connect(transport, is_broadcast_acceptor, false);
-                        });
+                        }));
                     }
                 }
             });
@@ -379,18 +379,15 @@ impl Drop for ConnectionManager {
 #[cfg(test)]
 mod test {
     use super::*;
-    use std::collections::{HashMap, HashSet};
     use std::thread::spawn;
     use std::thread;
     use std::sync::mpsc::{Receiver, Sender, channel};
     use rustc_serialize::{Decodable, Encodable};
     use cbor::{Encoder, Decoder};
-    use transport;
     use transport::{Endpoint, Port};
     use std::sync::{Mutex, Arc};
     use config_handler::write_config_file;
     use std::path::PathBuf;
-    use std::net::{SocketAddr, Ipv4Addr, SocketAddrV4, SocketAddrV6};
     use std::fs::remove_file;
     use event::Event;
 
@@ -714,7 +711,7 @@ mod test {
 
         let (cm_tx, cm_rx) = channel();
 
-        let mut cm = ConnectionManager::new(cm_tx).unwrap();
+        let cm = ConnectionManager::new(cm_tx).unwrap();
 
         let cm_listen_ports = cm.get_own_endpoints().into_iter()
                                 .map(|ep| ep.get_port())
@@ -733,17 +730,17 @@ mod test {
 
                 match event {
                     Event::NewMessage(_, _) => {
-                        debug!("NewMessage");
+                        //debug!("NewMessage");
                     },
                     Event::NewConnection(_) => {
-                        debug!("NewConnection");
+                        //debug!("NewConnection");
                     },
                     Event::LostConnection(_) => {
-                        debug!("LostConnection");
+                        //debug!("LostConnection");
                         break;
                     }
                     Event::NewBootstrapConnection(_) => {
-                        debug!("NewBootstrapConnection");
+                        //debug!("NewBootstrapConnection");
                     }
                 }
             }
@@ -754,7 +751,7 @@ mod test {
         let _ = spawn(move || {
             let _temp_config = make_temp_config(None);
             let (cm_aux_tx, _) = channel();
-            let mut cm_aux = ConnectionManager::new(cm_aux_tx).unwrap();
+            let cm_aux = ConnectionManager::new(cm_aux_tx).unwrap();
             // setting the listening port to be greater than 4455 will make the test hanging
             // changing this to cm_beacon_addr will make the test hanging
             cm_aux.connect(cm_listen_addrs);
