@@ -18,7 +18,6 @@
 use std::net::{SocketAddr, TcpStream, TcpListener, ToSocketAddrs};
 use tcp_connections;
 use utp_connections;
-use contact::Contacts;
 use std::io;
 use std::io::Result as IoResult;
 use std::error::Error;
@@ -28,6 +27,7 @@ use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
 use std::cmp::Ordering;
 use utp::UtpSocket;
 use std::net::IpAddr;
+use contact::Contact;
 pub type Bytes = Vec<u8>;
 
 /// Enum representing endpoint of supported protocols
@@ -161,7 +161,7 @@ pub enum Message {
     /// Arbitrary user blob. This is just an opaque message to Crust.
     UserBlob(Bytes),
     /// Event to exchange contacts
-    Contacts(Contacts),
+    Contacts(Vec<Contact>),
 }
 
 //--------------------------------------------------------------------

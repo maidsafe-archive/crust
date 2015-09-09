@@ -22,6 +22,7 @@ use std::sync::mpsc::{Sender, Receiver};
 use std::thread;
 use std::boxed::FnBox;
 use asynchronous::{Deferred,ControlFlow};
+use contact::Contact;
 
 use beacon;
 use bootstrap_handler::BootstrapHandler;
@@ -50,10 +51,10 @@ pub struct State {
 
 impl State {
     pub fn update_bootstrap_contacts(&mut self,
-                                     new_contacts: ::contact::Contacts) {
+                                     new_contacts: Vec<Contact>) {
         if let Some(ref mut bs) = self.bootstrap_handler {
             // TODO: What was the second arg supposed to be?
-            let _ = bs.update_contacts(new_contacts, ::contact::Contacts::new());
+            let _ = bs.update_contacts(new_contacts, Vec::<Contact>::new());
         }
     }
 
@@ -70,14 +71,14 @@ impl State {
     pub fn populate_bootstrap_contacts(&mut self,
                                        config: &Config,
                                        beacon_guid_and_port: &Option<([u8; 16], u16)>)
-            -> ::contact::Contacts {
+            -> Vec<Contact> {
         if config.override_default_bootstrap {
             return config.hard_coded_contacts.clone();
         }
 
         let cached_contacts = if beacon_guid_and_port.is_some() {
             // this node "owns" bootstrap file
-            let mut contacts = ::contact::Contacts::new();
+            let mut contacts = Vec::<Contact>::new();
             if let Some(ref mut handler) = self.bootstrap_handler {
                 contacts = handler.read_file().unwrap_or(vec![]);
             }
@@ -136,7 +137,7 @@ impl State {
         let endpoint = self.register_connection(trans, event);
         if is_broadcast_acceptor {
             if let Ok(ref endpoint) = endpoint {
-                let mut contacts = ::contact::Contacts::new();
+                let mut contacts = Vec::<Contact>::new();
                 contacts.push(::contact::Contact { endpoint: endpoint.clone() });
                 self.update_bootstrap_contacts(contacts);
             }
@@ -244,7 +245,7 @@ impl State {
     }
 
     pub fn bootstrap_off_list(&self,
-                              bootstrap_list: ::contact::Contacts,
+                              bootstrap_list: Vec<Contact>,
                               is_broadcast_acceptor: bool,
                               max_successful_bootstrap_connection: usize) {
         // TODO: This check seems to also happen in handle_connect

@@ -22,12 +22,14 @@
 //! This means that `read_config_file()`, `create_default_config_file()`, and
 //! `write_config_file()` should not be called concurrently with one another.
 
+use contact::Contact;
+
 #[derive(PartialEq, Eq, Debug, RustcDecodable, RustcEncodable, Clone)]
 pub struct Config {
     pub tcp_listening_port         : Option<u16>,
     pub utp_listening_port         : Option<u16>,
     pub override_default_bootstrap : bool,
-    pub hard_coded_contacts        : ::contact::Contacts,
+    pub hard_coded_contacts        : Vec<Contact>,
     pub beacon_port                : Option<u16>,
 }
 
@@ -80,7 +82,7 @@ pub fn write_config_file(tcp_listening_port: Option<u16>,
                          hard_coded_endpoints: Option<Vec<::transport::Endpoint>>,
                          beacon_port: Option<u16>) -> Result<::std::path::PathBuf, ::error::Error> {
     use std::io::Write;
-    let mut hard_coded_contacts: ::contact::Contacts = vec![];
+    let mut hard_coded_contacts = Vec::<Contact>::new();
     match hard_coded_endpoints {
         Some(endpoints) => {
             for endpoint in endpoints {

@@ -22,7 +22,7 @@ pub struct Contact {
 }
 
 /// Collection of contacts.
-pub type Contacts = Vec<Contact>;
+//pub type Contacts = Vec<Contact>;
 
 #[cfg(test)]
 pub fn random_contact() -> Contact {
