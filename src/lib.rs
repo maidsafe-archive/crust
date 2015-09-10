@@ -45,16 +45,16 @@ extern crate rustc_serialize;
 extern crate time;
 extern crate utp;
 
-/// Module implementing the `ConnectionManager` which provides an interface to manage peer-to-peer
+/// Module implementing the `Service` which provides an interface to manage peer-to-peer
 /// connections.
-pub mod connection_manager;
+pub mod service;
 /// Defines errors.
 pub mod error;
 /// Provides a struct and free functions for working with config files.
 pub mod file_handler;
 
 pub use config_handler::write_config_file;
-pub use connection_manager::ConnectionManager;
+pub use service::Service;
 pub use event::Event;
 pub use error::Error;
 pub use file_handler::{FileHandler, current_bin_dir, user_app_dir, system_cache_dir, exe_file_stem,

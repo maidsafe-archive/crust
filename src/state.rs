@@ -163,9 +163,7 @@ impl State {
                                    writer_channel : Receiver<Message>) {
         let cmd_sender = self.cmd_sender.clone();
 
-        let _ = thread::Builder::new()
-                .name("ConnectionManager writer".to_string())
-                .spawn(move || {
+        let _ = Self::new_thread("writer", move || {
             for msg in writer_channel.iter() {
                 if sender.send(&msg).is_err() {
                     break;
@@ -183,7 +181,7 @@ impl State {
         let cmd_sender = self.cmd_sender.clone();
         let sink       = self.event_sender.clone();
 
-        let _ = thread::Builder::new().name("ConnectionManager reader".to_string()).spawn(move || {
+        let _ = Self::new_thread("reader", move || {
             while let Ok(msg) = receiver.receive() {
                 if let Message::UserBlob(msg) = msg {
                     if sink.send(Event::NewMessage(his_ep.clone(), msg)).is_err() {

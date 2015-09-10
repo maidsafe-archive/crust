@@ -45,17 +45,17 @@ type Closure = Box<FnBox(&mut State) + Send>;
 /// (../file_handler/struct.FileHandler.html) and [an example config file flowchart]
 /// (https://github.com/maidsafe/crust/blob/master/docs/vault_config_file_flowchart.pdf) for more
 /// information.
-pub struct ConnectionManager {
+pub struct Service {
     beacon_guid_and_port : Option<(beacon::GUID, u16)>,
     config               : Config,
     own_endpoints        : Vec<(Endpoint, Arc<Mutex<Option<Endpoint>>>)>,
     cmd_sender           : Sender<Closure>,
 }
 
-impl ConnectionManager {
+impl Service {
     /// Constructs a connection manager. User needs to create an asynchronous channel, and provide
     /// the sender half to this method. Receiver will receive all `Event`s from this library.
-    pub fn new(event_sender: Sender<Event>) -> io::Result<ConnectionManager> {
+    pub fn new(event_sender: Sender<Event>) -> io::Result<Service> {
         let config = read_config_file().unwrap_or_else(|e| {
             debug!("Crust failed to read config file; Error: {:?};", e);
             ::config_handler::create_default_config_file();
@@ -65,19 +65,19 @@ impl ConnectionManager {
             default
         });
 
-        ConnectionManager::construct(event_sender, config)
+        Service::construct(event_sender, config)
     }
 
-    /// Construct a connection manager. As with the `ConnectionManager::new` function,
+    /// Construct a connection manager. As with the `Service::new` function,
     /// but will not implicitly start any network activity. This construtor is intended
     /// only for testing purposes.
     pub fn new_inactive(event_sender: Sender<Event>)
-            -> io::Result<ConnectionManager> {
-        ConnectionManager::construct(event_sender, Config::make_zero())
+            -> io::Result<Service> {
+        Service::construct(event_sender, Config::make_zero())
     }
 
     fn construct(event_sender: Sender<Event>, config: Config)
-            -> io::Result<ConnectionManager> {
+            -> io::Result<Service> {
         let tcp_listening_port = config.tcp_listening_port.clone();
         let utp_listening_port = config.utp_listening_port.clone();
         let beacon_port        = config.beacon_port.clone();
@@ -108,11 +108,11 @@ impl ConnectionManager {
                                 }
                             }));
 
-        let mut cm = ConnectionManager { beacon_guid_and_port : None,
-                                         config               : config,
-                                         own_endpoints        : Vec::new(),
-                                         cmd_sender           : cmd_sender2,
-                                       };
+        let mut cm = Service { beacon_guid_and_port : None,
+                               config               : config,
+                               own_endpoints        : Vec::new(),
+                               cmd_sender           : cmd_sender2,
+                             };
 
         if let Some(port) = beacon_port {
             let _ = cm.start_broadcast_acceptor(port);
@@ -219,8 +219,8 @@ impl ConnectionManager {
         });
     }
 
-    /// This should be called before destroying an instance of a ConnectionManager to allow the
-    /// listener threads to join.  Once called, the ConnectionManager should be destroyed.
+    /// This should be called before destroying an instance of a Service to allow the
+    /// listener threads to join.  Once called, the Service should be destroyed.
     pub fn stop(&mut self) {
         if let Some(beacon_guid_and_port) = self.beacon_guid_and_port {
             beacon::BroadcastAcceptor::stop(&beacon_guid_and_port);
@@ -356,7 +356,7 @@ impl ConnectionManager {
 
     fn new_thread<F,T>(name: &str, f: F) -> io::Result<JoinHandle<T>> 
             where F: FnOnce() -> T, F: Send + 'static, T: Send + 'static {
-        thread::Builder::new().name("ConnectionManager::".to_string() + name)
+        thread::Builder::new().name("Service::".to_string() + name)
                               .spawn(f)
     }
 
@@ -365,7 +365,7 @@ impl ConnectionManager {
     }
 }
 
-impl Drop for ConnectionManager {
+impl Drop for Service {
     fn drop(&mut self) {
         self.stop();
     }
@@ -403,7 +403,7 @@ mod test {
     const  MESSAGE_PER_NODE: u32 = 10;
 
      struct Node {
-         conn_mgr: ConnectionManager,
+         conn_mgr: Service,
          listening_port: Port,
          connected_eps: Arc<Mutex<Vec<Endpoint>>>
      }
@@ -416,7 +416,7 @@ mod test {
      }
 
      impl Node {
-         pub fn new(cm: ConnectionManager) -> Node {
+         pub fn new(cm: Service) -> Node {
              let ports = cm.get_own_endpoints().into_iter()
                  .map(|ep| ep.get_port()).collect::<Vec<Port>>();
              Node { conn_mgr: cm, listening_port: ports[0].clone(), connected_eps: Arc::new(Mutex::new(Vec::new())) }
@@ -444,7 +444,7 @@ mod test {
      impl Network {
          pub fn add(&mut self) -> (Receiver<Event>, Port, Option<u16>, Arc<Mutex<Vec<Endpoint>>>) {
              let (cm_i, cm_o) = channel();
-             let node = Node::new(ConnectionManager::new(cm_i).unwrap());
+             let node = Node::new(Service::new(cm_i).unwrap());
              let port = node.listening_port.clone();
              let connected_eps = node.connected_eps.clone();
              let beacon_port = node.conn_mgr.get_beacon_acceptor_port();
@@ -477,13 +477,13 @@ mod test {
         let (cm1_i, _) = channel();
         let _config_file = make_temp_config(None);
 
-        let mut cm1 = ConnectionManager::new(cm1_i).unwrap();
+        let mut cm1 = Service::new(cm1_i).unwrap();
 
         thread::sleep_ms(1000);
         let _config_file = make_temp_config(cm1.get_beacon_acceptor_port());
 
         let (cm2_i, cm2_o) = channel();
-        let mut cm2 = ConnectionManager::new(cm2_i).unwrap();
+        let mut cm2 = Service::new(cm2_i).unwrap();
         let cm2_eps = cm2.get_own_endpoints().into_iter()
             .map(|ep| ep.get_port()).collect::<Vec<Port>>();
 
@@ -510,7 +510,7 @@ mod test {
     fn connection_manager() {
         // Wait 2 seconds until previous bootstrap test ends. If not, that test connects to these endpoints.
         thread::sleep_ms(2000);
-        let run_cm = |cm: ConnectionManager, o: Receiver<Event>| {
+        let run_cm = |cm: Service, o: Receiver<Event>| {
             spawn(move || {
                 for i in o.iter() {
                     match i {
@@ -536,7 +536,7 @@ mod test {
         let mut temp_configs = vec![make_temp_config(None)];
 
         let (cm1_i, cm1_o) = channel();
-        let cm1 = ConnectionManager::new(cm1_i).unwrap();
+        let cm1 = Service::new(cm1_i).unwrap();
         let cm1_ports = cm1.get_own_endpoints().into_iter()
             .map(|ep| ep.get_port()).collect::<Vec<Port>>();
         let cm1_eps = cm1_ports.iter().map(|p| Endpoint::tcp(("127.0.0.1", p.get_port())));
@@ -544,7 +544,7 @@ mod test {
         temp_configs.push(make_temp_config(cm1.get_beacon_acceptor_port()));
 
         let (cm2_i, cm2_o) = channel();
-        let cm2 = ConnectionManager::new(cm2_i).unwrap();
+        let cm2 = Service::new(cm2_i).unwrap();
         let cm2_ports = cm2.get_own_endpoints().into_iter()
             .map(|ep| ep.get_port()).collect::<Vec<Port>>();
         let cm2_eps = cm2_ports.iter().map(|p| Endpoint::tcp(("127.0.0.1", p.get_port())));
@@ -689,7 +689,7 @@ mod test {
 
         let stats_copy = stats.clone();
         let stat = stats_copy.lock().unwrap();
-        // It is currently not the case that ConnectionManager guarantees at
+        // It is currently not the case that Service guarantees at
         // most one connection between any two peers (although it does make
         // some effort in the `connect` function to do so). It is currently
         // in the TODO. When/if this will be the case, replace the >= operator
@@ -707,7 +707,7 @@ mod test {
 
         let (cm_tx, cm_rx) = channel();
 
-        let cm = ConnectionManager::new(cm_tx).unwrap();
+        let cm = Service::new(cm_tx).unwrap();
 
         let cm_listen_ports = cm.get_own_endpoints().into_iter()
                                 .map(|ep| ep.get_port())
@@ -747,7 +747,7 @@ mod test {
         let _ = spawn(move || {
             let _temp_config = make_temp_config(None);
             let (cm_aux_tx, _) = channel();
-            let cm_aux = ConnectionManager::new(cm_aux_tx).unwrap();
+            let cm_aux = Service::new(cm_aux_tx).unwrap();
             // setting the listening port to be greater than 4455 will make the test hanging
             // changing this to cm_beacon_addr will make the test hanging
             cm_aux.connect(cm_listen_addrs);
