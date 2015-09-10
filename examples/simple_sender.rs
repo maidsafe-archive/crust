@@ -34,16 +34,16 @@ fn main() {
         Err(e) => println!("Error initialising logger; continuing without: {:?}", e)
     }
 
-    // The ConnectionManager will probably create a "user app directory" (see the docs for
+    // The Service will probably create a "user app directory" (see the docs for
     // `FileHandler::write_file()`).  This object will try to clean up this directory when it goes
     // out of scope.  Normally apps would not do this - this directory will hold the peristent cache
     // files.
     let _cleaner = ::crust::ScopedUserAppDirRemover;
 
-    // We receive events (e.g. new connection, message received) from the ConnectionManager via an
+    // We receive events (e.g. new connection, message received) from the Service via an
     // asynchronous channel.
     let (channel_sender, channel_receiver) = ::std::sync::mpsc::channel();
-    let mut connection_manager = ::crust::ConnectionManager::new(channel_sender).unwrap();
+    let mut service = ::crust::Service::new(channel_sender).unwrap();
 
     let (bs_sender, bs_receiver) = ::std::sync::mpsc::channel();
     // Start a thread running a loop which will receive and display responses from the peer.
@@ -71,9 +71,9 @@ fn main() {
         println!("Stopped receiving.");
     });
 
-    connection_manager.bootstrap(1);
+    service.bootstrap(1);
 
-    println!("ConnectionManager trying to bootstrap off node listening on TCP port 8888 \
+    println!("Service trying to bootstrap off node listening on TCP port 8888 \
               and UDP broadcast port 5484");
 
     // Block until bootstrapped
@@ -90,9 +90,7 @@ fn main() {
     // Send all the numbers from 0 to 12 inclusive.  Expect to receive replies containing the
     // Fibonacci number for each value.
     for value in (0u8..13u8) {
-        if let Err(why) = connection_manager.send(peer_endpoint.clone(), value.to_string().into_bytes()) {
-            println!("Failed to send {} to {:?}: {}", value, peer_endpoint, why)
-        }
+        service.send(peer_endpoint.clone(), value.to_string().into_bytes());
     }
 
     // Allow the peer time to process the requests and reply.

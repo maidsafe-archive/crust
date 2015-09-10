@@ -18,7 +18,6 @@
 use std::net::{SocketAddr, TcpStream, TcpListener, ToSocketAddrs};
 use tcp_connections;
 use utp_connections;
-use contact::Contacts;
 use std::io;
 use std::io::Result as IoResult;
 use std::error::Error;
@@ -161,7 +160,7 @@ pub enum Message {
     /// Arbitrary user blob. This is just an opaque message to Crust.
     UserBlob(Bytes),
     /// Event to exchange contacts
-    Contacts(Contacts),
+    Contacts(Vec<Endpoint>),
 }
 
 //--------------------------------------------------------------------

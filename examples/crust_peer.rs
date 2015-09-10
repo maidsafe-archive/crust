@@ -50,7 +50,7 @@ use std::net::SocketAddr;
 use std::str::FromStr;
 use std::thread;
 
-use crust::{ConnectionManager, Endpoint};
+use crust::{Service, Endpoint};
 
 static USAGE: &'static str = "
 Usage:
@@ -359,12 +359,12 @@ fn main() {
     let mut stdout = term::stdout();
     let mut stdout_copy = term::stdout();
 
-    // Construct ConnectionManager and start listening
+    // Construct Service and start listening
     let (channel_sender, channel_receiver) = channel();
     let (bs_sender, bs_receiver) = channel();
-    let mut connection_manager = ConnectionManager::new(channel_sender).unwrap();
+    let mut service = Service::new(channel_sender).unwrap();
     stdout = green_foreground(stdout);
-    let listening_endpoints = connection_manager.get_own_endpoints();
+    let listening_endpoints = service.get_own_endpoints();
     print!("Listening for new connections on");
     for endpoint in &listening_endpoints {
         print!(" {:?}", *endpoint);
@@ -372,7 +372,7 @@ fn main() {
     println!("");
 
     stdout = reset_foreground(stdout);
-    connection_manager.bootstrap(15);
+    service.bootstrap(15);
 
     // Start event-handling thread
     let running_speed_test = args.flag_speed.is_some();
@@ -456,17 +456,8 @@ fn main() {
             let times = cmp::max(1, speed / length);
             let sleep_time = cmp::max(1, 1000 / times);
             for _ in 0..times {
-                match connection_manager.send(peer.clone(),
-                                              generate_random_vec_u8(length as usize)) {
-                    Ok(()) => debug!("Sent a message with length of {} bytes to {:?}", length,
-                                       peer),
-                    Err(_) => {
-                        stdout = red_foreground(stdout);
-                        debug!("Lost connection to peer.  Exiting.");
-                        let _ = reset_foreground(stdout);
-                        return;
-                    },
-                };
+                service.send(peer.clone(), generate_random_vec_u8(length as usize));
+                debug!("Sent a message with length of {} bytes to {:?}", length, peer);
                 std::thread::sleep_ms(sleep_time as u32);
             }
         }
@@ -499,7 +490,7 @@ fn main() {
                     let ep = args.arg_peer.unwrap().addr;
                     /* if utp_mode { Endpoint::Utp(ep) } else { */Endpoint::Tcp(ep) //}
                 }];
-                connection_manager.connect(peer);
+                service.connect(peer);
             } else if args.cmd_send {
                 // docopt should ensure arg_peer and arg_message are valid
                 assert!(args.arg_peer.is_some());
@@ -513,32 +504,7 @@ fn main() {
                     message.push_str(" ");
                     message.push_str(&args.arg_message[i]);
                 };
-                match connection_manager.send(peer.clone(), message.clone().into_bytes()) {
-                    Ok(()) => {
-                        stdout = green_foreground(stdout);
-                        println!("Successfully sent \"{}\" to {:?}", message, peer);
-                        stdout = reset_foreground(stdout)
-                    },
-                    Err(error) => {
-                        match error.kind() {
-                            io::ErrorKind::NotConnected => {
-                                stdout = yellow_foreground(stdout);
-                                println!("Failed to send: we have no connection to {:?}", peer);
-                                stdout = reset_foreground(stdout)
-                            },
-                            io::ErrorKind::BrokenPipe => {
-                                stdout = yellow_foreground(stdout);
-                                println!("Failed to send to {:?}: internal channel error.", peer);
-                                stdout = reset_foreground(stdout)
-                            },
-                            _ => {
-                                stdout = yellow_foreground(stdout);
-                                println!("Failed to send to {:?}: unexpected error.", peer);
-                                stdout = reset_foreground(stdout)
-                            },
-                        }
-                    },
-                }
+                service.send(peer.clone(), message.clone().into_bytes());
             } else if args.cmd_stop {
                 stdout = green_foreground(stdout);
                 println!("Stopped.");
@@ -547,7 +513,7 @@ fn main() {
             }
         }
     }
-    connection_manager.stop();
-    drop(connection_manager);
+    service.stop();
+    drop(service);
     let _ = handler.join();
 }

@@ -27,7 +27,7 @@ pub struct Config {
     pub tcp_listening_port         : Option<u16>,
     pub utp_listening_port         : Option<u16>,
     pub override_default_bootstrap : bool,
-    pub hard_coded_contacts        : ::contact::Contacts,
+    pub hard_coded_contacts        : Vec<::transport::Endpoint>,
     pub beacon_port                : Option<u16>,
 }
 
@@ -80,16 +80,6 @@ pub fn write_config_file(tcp_listening_port: Option<u16>,
                          hard_coded_endpoints: Option<Vec<::transport::Endpoint>>,
                          beacon_port: Option<u16>) -> Result<::std::path::PathBuf, ::error::Error> {
     use std::io::Write;
-    let mut hard_coded_contacts: ::contact::Contacts = vec![];
-    match hard_coded_endpoints {
-        Some(endpoints) => {
-            for endpoint in endpoints {
-                hard_coded_contacts.push(::contact::Contact{endpoint: endpoint });
-            }
-        },
-        None => {}
-    };
-    let hard_coded_contacts = Some(hard_coded_contacts);
 
     let default = Config::make_default();
 
@@ -97,7 +87,7 @@ pub fn write_config_file(tcp_listening_port: Option<u16>,
                          utp_listening_port: utp_listening_port,
                          override_default_bootstrap: override_default_bootstrap
                             .unwrap_or(default.override_default_bootstrap),
-                         hard_coded_contacts: hard_coded_contacts
+                         hard_coded_contacts: hard_coded_endpoints
                             .unwrap_or(default.hard_coded_contacts),
                          beacon_port: beacon_port.or(default.beacon_port),
                        };
@@ -123,8 +113,8 @@ mod test {
         let mut hard_coded_endpoints = Vec::new();
         let mut hard_coded_contacts = Vec::new();
         for _ in 0..10 {
-            let random_contact = ::contact::random_contact();
-            hard_coded_endpoints.push(random_contact.endpoint.clone());
+            let random_contact = ::util::random_endpoint();
+            hard_coded_endpoints.push(random_contact.clone());
             hard_coded_contacts.push(random_contact);
         }
         let config =

@@ -52,36 +52,34 @@ fn wait_for_connection(receiver: &Receiver<Event>) -> Endpoint{
 
 #[bench]
 fn send_random_data(b: &mut Bencher) {
-    let (cm1_tx, cm1_rx) = channel();
-    let mut cm1 = ConnectionManager::new_inactive(cm1_tx).unwrap();
+    let (s1_tx, s1_rx) = channel();
+    let mut s1 = Service::new_inactive(s1_tx).unwrap();
 
-    let cm1_port = match cm1.start_accepting(Port::Tcp(0)) {
+    let s1_port = match s1.start_accepting(Port::Tcp(0)) {
         Ok(port) => port,
-        Err(_) => panic!("Failed to start ConnectionManager #1"),
+        Err(_) => panic!("Failed to start Service #1"),
     };
 
-    let cm1_endpoint = Endpoint::new(IpAddr::V4(Ipv4Addr::new(127,0,0,1)), cm1_port);
+    let s1_endpoint = Endpoint::new(IpAddr::V4(Ipv4Addr::new(127,0,0,1)), s1_port);
 
-    let (cm2_tx, cm2_rx) = channel();
-    let cm2 = ConnectionManager::new_inactive(cm2_tx).unwrap();
+    let (s2_tx, s2_rx) = channel();
+    let s2 = Service::new_inactive(s2_tx).unwrap();
 
-    cm2.connect(vec![cm1_endpoint]);
+    s2.connect(vec![s1_endpoint]);
 
-    let _cm2_ep = wait_for_connection(&cm1_rx);
-    let cm1_ep = wait_for_connection(&cm2_rx);
+    let _s2_ep = wait_for_connection(&s1_rx);
+    let s1_ep = wait_for_connection(&s2_rx);
 
     let data = generate_random_vec_u8(1024 * 1024);
     let data_len = data.len();
 
     b.iter(move || {
-        if let Err(what) = cm2.send(cm1_ep.clone(), data.clone()) {
-            panic!(format!("ConnectionManager #2 failed to send data: {:?}", what));
-        }
+        s2.send(s1_ep.clone(), data.clone());
 
         loop {
-            let event = match cm1_rx.recv() {
+            let event = match s1_rx.recv() {
                 Ok(event) => event,
-                Err(_)    => panic!("ConnectionManager #1 closed connection"),
+                Err(_)    => panic!("Service #1 closed connection"),
             };
 
             match event {

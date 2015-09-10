@@ -46,16 +46,16 @@ fn main() {
         Err(e) => println!("Error initialising logger; continuing without: {:?}", e)
     }
 
-    // The ConnectionManager will probably create a "user app directory" (see the docs for
+    // The Service will probably create a "user app directory" (see the docs for
     // `FileHandler::write_file()`).  This object will try to clean up this directory when it goes
     // out of scope.  Normally apps would not do this - this directory will hold the peristent cache
     // files.
     let _cleaner = ::crust::ScopedUserAppDirRemover;
 
-    // We receive events (e.g. new connection, message received) from the ConnectionManager via an
+    // We receive events (e.g. new connection, message received) from the Service via an
     // asynchronous channel.
     let (channel_sender, channel_receiver) = ::std::sync::mpsc::channel();
-    let connection_manager = ::crust::ConnectionManager::new(channel_sender)
+    let service = ::crust::Service::new(channel_sender)
         .unwrap();
 
     println!("Run the simple_sender example in another terminal to send messages to this node.");
@@ -88,9 +88,7 @@ fn main() {
                          endpoint, fibonacci_result);
                 let response =
                     format!("The Fibonacci number for {} is {}", requested_value, fibonacci_result);
-                if let Err(why) = connection_manager.send(endpoint.clone(), response.into_bytes()) {
-                    println!("Failed to send reply to {:?}: {}", endpoint, why)
-                }
+                service.send(endpoint.clone(), response.into_bytes());
             },
             crust::Event::NewConnection(endpoint) => {
                 println!("New connection made to {:?}", endpoint);

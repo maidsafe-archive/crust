@@ -18,18 +18,19 @@
 //! #crust
 //! Reliable peer-to-peer network connections in Rust with NAT traversal.
 
-#![forbid(missing_docs, warnings)]
-#![deny(bad_style, deprecated, drop_with_repr_extern, improper_ctypes, non_shorthand_field_patterns,
-        overflowing_literals, plugin_as_library, private_no_mangle_fns, private_no_mangle_statics,
-        raw_pointer_derive, stable_features, unconditional_recursion, unknown_lints,
-        unsafe_code, unused_allocation, unused_attributes,
-        unused_comparisons, unused_features, unused_parens, while_true)]
+//#![forbid(missing_docs, warnings)]
+//#![deny(bad_style, deprecated, drop_with_repr_extern, improper_ctypes, non_shorthand_field_patterns,
+//        overflowing_literals, plugin_as_library, private_no_mangle_fns, private_no_mangle_statics,
+//        raw_pointer_derive, stable_features, unconditional_recursion, unknown_lints,
+//        unsafe_code, unused_allocation, unused_attributes,
+//        unused_comparisons, unused_features, unused_parens, while_true)]
 #![warn(trivial_casts, trivial_numeric_casts, unused, unused_extern_crates, unused_import_braces,
         unused_qualifications, unused_results, variant_size_differences)]
 #![doc(html_logo_url = "http://maidsafe.net/img/Resources/branding/maidsafe_logo.fab2.png",
        html_favicon_url = "http://maidsafe.net/img/favicon.ico",
        html_root_url = "http://maidsafe.github.io/crust/")]
-#![feature(ip_addr, ip, arc_weak, socket_timeout, negate_unsigned, rustc_private)]
+#![feature(fnbox, ip_addr, ip, socket_timeout, negate_unsigned, rustc_private)]
+#![allow(unused_variables)]
 
 extern crate asynchronous;
 extern crate cbor;
@@ -44,16 +45,17 @@ extern crate rustc_serialize;
 extern crate time;
 extern crate utp;
 
-/// Module implementing the `ConnectionManager` which provides an interface to manage peer-to-peer
+/// Module implementing the `Service` which provides an interface to manage peer-to-peer
 /// connections.
-pub mod connection_manager;
+pub mod service;
 /// Defines errors.
 pub mod error;
 /// Provides a struct and free functions for working with config files.
 pub mod file_handler;
 
 pub use config_handler::write_config_file;
-pub use connection_manager::{Event, ConnectionManager};
+pub use service::Service;
+pub use event::Event;
 pub use error::Error;
 pub use file_handler::{FileHandler, current_bin_dir, user_app_dir, system_cache_dir, exe_file_stem,
                        ScopedUserAppDirRemover};
@@ -72,9 +74,13 @@ mod test {
 mod beacon;
 mod bootstrap_handler;
 mod config_handler;
-mod contact;
+mod util;
 mod getifaddrs;
+mod connection;
 mod tcp_connections;
 mod transport;
 mod utp_connections;
 mod utp_wrapper;
+mod state;
+mod event;
+mod map_external_port;
