@@ -227,7 +227,7 @@ impl Service {
             self.beacon_guid_and_port = None;
         }
 
-        Self::post(&self.cmd_sender, move |state: &mut State| {
+        let _ = self.cmd_sender.send(Box::new(move |state: &mut State| {
             state.stop_called = true;
 
             // Connect to our listening ports, this should unblock
@@ -236,7 +236,7 @@ impl Service {
                 let ip_addr = IpAddr::V4(Ipv4Addr::new(127,0,0,1));
                 let _ = transport::connect(Endpoint::new(ip_addr, *port));
             }
-        });
+        }));
     }
 
     /// Opens a connection to a remote peer. `endpoints` is a vector of addresses of the remote
