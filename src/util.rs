@@ -15,14 +15,8 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-/// Simple wrapper for an endpoint.
-//#[derive(PartialEq, Eq, Hash, Debug, Clone, RustcDecodable, RustcEncodable)]
-//pub struct Contact {
-//    pub endpoint: ::transport::Endpoint
-//}
-
 #[cfg(test)]
-pub fn random_contact() -> ::transport::Endpoint {
+pub fn random_endpoint() -> ::transport::Endpoint {
     // TODO - randomise V4/V6 and TCP/UTP
     let address = ::std::net::SocketAddrV4::new(
         ::std::net::Ipv4Addr::new(::rand::random::<u8>(),
@@ -34,10 +28,10 @@ pub fn random_contact() -> ::transport::Endpoint {
 }
 
 #[cfg(test)]
-pub fn random_contacts(count: usize) -> Vec<::transport::Endpoint> {
+pub fn random_endpoints(count: usize) -> Vec<::transport::Endpoint> {
     let mut contacts = Vec::new();
     for _ in 0..count {
-        contacts.push(random_contact());
+        contacts.push(random_endpoint());
     }
     contacts
 }

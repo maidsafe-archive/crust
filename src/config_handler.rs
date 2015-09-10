@@ -113,7 +113,7 @@ mod test {
         let mut hard_coded_endpoints = Vec::new();
         let mut hard_coded_contacts = Vec::new();
         for _ in 0..10 {
-            let random_contact = ::contact::random_contact();
+            let random_contact = ::util::random_endpoint();
             hard_coded_endpoints.push(random_contact.clone());
             hard_coded_contacts.push(random_contact);
         }

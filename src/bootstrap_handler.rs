@@ -130,7 +130,7 @@ mod test {
     #[test]
     fn duplicates() {
         let number = 10usize;
-        let contacts = ::contact::random_contacts(number);
+        let contacts = ::util::random_endpoints(number);
         assert_eq!(contacts.len(), number);
         let _test_file = TestFile::new().unwrap();
 
@@ -157,7 +157,7 @@ mod test {
     #[test]
     fn prune() {
         let number = 10usize;
-        let mut contacts = ::contact::random_contacts(number);
+        let mut contacts = ::util::random_endpoints(number);
         assert_eq!(contacts.len(), number);
         let _test_file = TestFile::new().unwrap();
 
@@ -185,7 +185,7 @@ mod test {
         assert_eq!(retrieved_contacts, contacts);
 
         // Create a new contact
-        let new_contact = ::contact::random_contact();
+        let new_contact = ::util::random_endpoint();
         let new_contacts = vec![new_contact.clone(); 1];
 
         // Get the last contact in the list and prune it from the bootstrap file
@@ -203,7 +203,7 @@ mod test {
 
     #[test]
     fn max_contacts() {
-        let contacts = ::contact::random_contacts(super::BootstrapHandler::max_contacts());
+        let contacts = ::util::random_endpoints(super::BootstrapHandler::max_contacts());
         assert_eq!(contacts.len(), super::BootstrapHandler::max_contacts());
         let _test_file = TestFile::new().unwrap();
 
@@ -214,7 +214,7 @@ mod test {
         assert_eq!(bootstrap_handler.read_file().unwrap(), contacts);
 
         // Create a new contact
-        let new_contact = ::contact::random_contact();
+        let new_contact = ::util::random_endpoint();
         let new_contacts = vec![new_contact.clone(); 1];
 
         // Try inserting without also pruning - bootstrap contacts should remain unaltered
@@ -238,7 +238,7 @@ mod test {
 
     #[test]
     fn serialise_and_parse() {
-        let contacts = ::contact::random_contacts(5);
+        let contacts = ::util::random_endpoints(5);
         let _test_file = TestFile::new().unwrap();
         let mut bootstrap_handler = super::BootstrapHandler::new();
         assert!(bootstrap_handler.update_contacts(contacts.clone(),

@@ -74,7 +74,7 @@ mod test {
 mod beacon;
 mod bootstrap_handler;
 mod config_handler;
-mod contact;
+mod util;
 mod getifaddrs;
 mod connection;
 mod tcp_connections;
