@@ -96,9 +96,7 @@ fn main() {
             crust::Event::LostConnection(endpoint) => {
                 println!("Lost connection to {:?}", endpoint);
             },
-            crust::Event::NewBootstrapConnection(endpoint) => {
-                println!("New Bootstrap connection made to {:?}", endpoint);
-            }
+            crust::Event::BootstrapFinished => {},
         }
     }
     println!("Stopped receiving.");

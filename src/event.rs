@@ -28,6 +28,6 @@ pub enum Event {
     /// Invoked when a connection to a peer is lost.  Passes the peer's endpoint.
     LostConnection(Endpoint),
     /// Invoked when a new bootstrap connection to a peer is established.  Passes the peer's endpoint.
-    NewBootstrapConnection(Endpoint),
+    BootstrapFinished,
 }
 

@@ -94,7 +94,7 @@ impl Service {
                                     listening_ports   : HashSet::new(),
                                     bootstrap_handler : None,
                                     stop_called       : false,
-                                    bootstrap_count   : (0,0),
+                                    is_bootstrapping  : false,
                                 };
 
                                 loop {
@@ -199,23 +199,14 @@ impl Service {
     /// This method returns immediately after dropping any active connections.endpoints
     /// New bootstrap connections will be notified by `NewBootstrapConnection` event.
     /// Its upper layer's responsibility to maintain or drop these connections.
-    /// Maximum of `max_successful_bootstrap_connection` bootstrap connections will be made and further connection
-    /// attempts will stop.
-    /// It will reiterate the list of all endpoints until it gets at least one connection.
-    pub fn bootstrap(&mut self, max_successful_bootstrap_connection: usize) {
+    pub fn bootstrap(&mut self) {
         let config = self.config.clone();
         let beacon_guid_and_port = self.beacon_guid_and_port.clone();
 
         Self::post(&self.cmd_sender, move |state : &mut State| {
-            // TODO: Review whether this is what we want (to disconnect
-            // existing connections).
-            let _ = state.connections.clear();
-            state.bootstrap_count = (0, max_successful_bootstrap_connection.clone());
-
             let contacts = state.populate_bootstrap_contacts(&config, &beacon_guid_and_port);
             state.bootstrap_off_list(contacts.clone(),
-                                     beacon_guid_and_port.is_some(),
-                                     max_successful_bootstrap_connection);
+                                     beacon_guid_and_port.is_some());
         });
     }
 
@@ -265,7 +256,7 @@ impl Service {
                 for endpoint in endpoints {
                     if let Ok(transport) = transport::connect(endpoint) {
                         let _ = cmd_sender.send(Box::new(move |state: &mut State| {
-                            let _ = state.handle_connect(transport, is_broadcast_acceptor, false);
+                            let _ = state.handle_connect(transport, is_broadcast_acceptor);
                         }));
                     }
                 }
@@ -487,7 +478,7 @@ mod test {
         let cm2_eps = cm2.get_own_endpoints().into_iter()
             .map(|ep| ep.get_port()).collect::<Vec<Port>>();
 
-        cm2.bootstrap(1);
+        cm2.bootstrap();
 
         let timeout = ::time::Duration::seconds(5);
         let start = ::time::now();
@@ -497,10 +488,10 @@ mod test {
             ::std::thread::sleep_ms(100);
         }
         match result {
-            Ok(Event::NewBootstrapConnection(ep)) => {
-                debug!("NewBootstrapConnection {:?}", ep);
+            Ok(Event::NewConnection(ep)) => {
+                debug!("NewConnection {:?}", ep);
             }
-            _ => { assert!(false, "Failed to receive NewBootstrapConnection event")}
+            _ => { assert!(false, "Failed to receive NewConnection event")}
         }
         cm1.stop();
         cm2.stop();
@@ -525,8 +516,8 @@ mod test {
                         },
                         Event::LostConnection(_) => {
                             // debug!("Lost connection to {:?}", other_ep);
-                        }
-                        Event::NewBootstrapConnection(_) => {}
+                        },
+                        Event::BootstrapFinished => {}
                     }
                 }
                 // debug!("done");
@@ -578,7 +569,7 @@ mod test {
                         },
                         Event::LostConnection(_) => {
                         },
-                        Event::NewBootstrapConnection(_) => {}
+                        Event::BootstrapFinished => {}
                     }
                 }
                 // debug!("done");
@@ -606,7 +597,7 @@ mod test {
                         Event::LostConnection(_) => {
                             stat.lost_connection_count += 1;
                         },
-                        Event::NewBootstrapConnection(_) => {}
+                        Event::BootstrapFinished => {}
                     }
                 }
             });
@@ -734,10 +725,8 @@ mod test {
                     Event::LostConnection(_) => {
                         //debug!("LostConnection");
                         break;
-                    }
-                    Event::NewBootstrapConnection(_) => {
-                        //debug!("NewBootstrapConnection");
-                    }
+                    },
+                    Event::BootstrapFinished => {}
                 }
             }
         });
@@ -786,7 +775,6 @@ mod test {
     //                                                  listening_ports: HashSet::new(),
     //                                                  bootstrap_handler: None,
     //                                                  stop_called: false,
-    //                                                  bootstrap_count: (0,1),
     //                                                }));
     //    assert!(super::bootstrap_off_list(Arc::downgrade(&state), vec![], false, 15).is_err());
     //    assert!(super::bootstrap_off_list(Arc::downgrade(&state),
@@ -836,7 +824,6 @@ mod test {
     //                                                  listening_ports: HashSet::new(),
     //                                                  bootstrap_handler: None,
     //                                                  stop_called: false,
-    //                                                  bootstrap_count: (0,max_count),
     //                                                }));
     //    assert!(super::bootstrap_off_list(Arc::downgrade(&state), vec![], false, 15).is_err());
     //    assert!(super::bootstrap_off_list(Arc::downgrade(&state),
@@ -846,7 +833,7 @@ mod test {
     //    let mut received_event_count = 0;
     //    while received_event_count < max_count {
     //        match rx.recv() {
-    //            Ok(Event::NewBootstrapConnection(ep)) => {
+    //            Ok(Event::NewConnection(ep)) => {
     //                assert!(contacts.contains(&::contact::Contact{endpoint: ep}));
     //                received_event_count += 1;
     //            },

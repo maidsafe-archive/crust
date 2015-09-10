@@ -372,7 +372,7 @@ fn main() {
     println!("");
 
     stdout = reset_foreground(stdout);
-    service.bootstrap(15);
+    service.bootstrap();
 
     // Start event-handling thread
     let running_speed_test = args.flag_speed.is_some();
@@ -408,14 +408,7 @@ fn main() {
                     my_flat_world.drop_node(CrustNode::new(endpoint, false));
                     my_flat_world.print_connected_nodes();
                 },
-                crust::Event::NewBootstrapConnection(endpoint) => {
-                    bootstrapped = true;
-                    stdout_copy = cyan_foreground(stdout_copy);
-                    println!("\nNew BootstrapConnection to peer at {:?}", endpoint);
-                    my_flat_world.add_node(CrustNode::new(endpoint.clone(), true));
-                    my_flat_world.print_connected_nodes();
-                    let _ = bs_sender.send(endpoint);
-                }
+                crust::Event::BootstrapFinished => {}
             }
             stdout_copy = reset_foreground(stdout_copy);
             if !running_speed_test {

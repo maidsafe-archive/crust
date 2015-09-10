@@ -45,7 +45,7 @@ pub struct State {
     pub listening_ports   : HashSet<Port>,
     pub bootstrap_handler : Option<BootstrapHandler>,
     pub stop_called       : bool,
-    pub bootstrap_count   : (usize, usize), // (current, max)
+    pub is_bootstrapping  : bool,
 }
 
 impl State {
@@ -119,18 +119,10 @@ impl State {
     }
 
     pub fn handle_connect(&mut self,
-                          trans                   : transport::Transport,
-                          is_broadcast_acceptor   : bool,
-                          is_bootstrap_connection : bool) -> io::Result<Endpoint> {
-        if is_bootstrap_connection {
-            self.bootstrap_count.0 += 1;
-        }
-    
+                          trans                 : transport::Transport,
+                          is_broadcast_acceptor : bool) -> io::Result<Endpoint> {
         let remote_ep = trans.remote_endpoint.clone();
-        let event = match is_bootstrap_connection {
-            true => Event::NewBootstrapConnection(remote_ep),
-            false => Event::NewConnection(remote_ep)
-        };
+        let event = Event::NewConnection(remote_ep);
     
         let endpoint = self.register_connection(trans, event);
         if is_broadcast_acceptor {
@@ -240,16 +232,16 @@ impl State {
         endpoints
     }
 
-    pub fn bootstrap_off_list(&self,
-                              bootstrap_list: Vec<Endpoint>,
-                              is_broadcast_acceptor: bool,
-                              max_successful_bootstrap_connection: usize) {
-        // TODO: This check seems to also happen in handle_connect
-        for contact in bootstrap_list.iter() {
-            if self.connections.contains_key(&contact) {
-                // TODO: Let user know we're not going to fulfill his request.
-                return;
-            }
+    pub fn bootstrap_off_list(&mut self,
+                              mut bootstrap_list: Vec<Endpoint>,
+                              is_broadcast_acceptor: bool) {
+        self.is_bootstrapping = true;
+
+        bootstrap_list.retain(|e| { !self.connections.contains_key(&e) });
+
+        if bootstrap_list.is_empty() {
+            let _ = self.event_sender.send(Event::BootstrapFinished);
+            return;
         }
 
         let event_sender = self.event_sender.clone();
@@ -264,7 +256,7 @@ impl State {
                 }))
             }
 
-            let res = Deferred::first_to_promise(max_successful_bootstrap_connection,
+            let res = Deferred::first_to_promise(1,
                                                  false,
                                                  vec_deferred,
                                                  ControlFlow::ParallelLimit(15)).sync();
@@ -275,11 +267,20 @@ impl State {
             };
 
             let _ = cmd_sender.send(Box::new(move |state: &mut State| {
+                if !state.is_bootstrapping {
+                    let _ = event_sender.send(Event::BootstrapFinished);
+                    return;
+                }
+
+                if !state.is_bootstrapping || ts.is_empty() {
+                    state.is_bootstrapping = false;
+                    let _ = event_sender.send(Event::BootstrapFinished);
+                    return;
+                }
+
                 for t in ts {
                     let e = t.remote_endpoint.clone();
-                    if state.handle_connect(t, is_broadcast_acceptor, true).is_ok() {
-                        let _ = event_sender.send(Event::NewBootstrapConnection(e));
-                    }
+                    let _ = state.handle_connect(t, is_broadcast_acceptor);
                 }
             }));
         });
