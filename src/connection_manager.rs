@@ -142,11 +142,7 @@ impl ConnectionManager {
 
         if self.beacon_guid_and_port.is_some() {
             let contacts = filter_loopback(getifaddrs()).into_iter()
-                .map(|ip| {
-                    ::contact::Contact {
-                        endpoint: Endpoint::new(ip.addr.clone(), accept_port)
-                    }
-                })
+                .map(|ip| { Endpoint::new(ip.addr.clone(), accept_port) })
                 .collect::<Vec<_>>();
 
             Self::post(&self.cmd_sender, move |state : &mut State| {

@@ -16,16 +16,13 @@
 // relating to use of the SAFE Network Software.
 
 /// Simple wrapper for an endpoint.
-#[derive(PartialEq, Eq, Hash, Debug, Clone, RustcDecodable, RustcEncodable)]
-pub struct Contact {
-    pub endpoint: ::transport::Endpoint
-}
-
-/// Collection of contacts.
-//pub type Contacts = Vec<Contact>;
+//#[derive(PartialEq, Eq, Hash, Debug, Clone, RustcDecodable, RustcEncodable)]
+//pub struct Contact {
+//    pub endpoint: ::transport::Endpoint
+//}
 
 #[cfg(test)]
-pub fn random_contact() -> Contact {
+pub fn random_contact() -> ::transport::Endpoint {
     // TODO - randomise V4/V6 and TCP/UTP
     let address = ::std::net::SocketAddrV4::new(
         ::std::net::Ipv4Addr::new(::rand::random::<u8>(),
@@ -33,11 +30,11 @@ pub fn random_contact() -> Contact {
                                   ::rand::random::<u8>(),
                                   ::rand::random::<u8>()),
         ::rand::random::<u16>());
-    Contact{ endpoint: ::transport::Endpoint::Tcp(::std::net::SocketAddr::V4(address)) }
+    ::transport::Endpoint::Tcp(::std::net::SocketAddr::V4(address))
 }
 
 #[cfg(test)]
-pub fn random_contacts(count: usize) -> Contacts {
+pub fn random_contacts(count: usize) -> Vec<::transport::Endpoint> {
     let mut contacts = Vec::new();
     for _ in 0..count {
         contacts.push(random_contact());

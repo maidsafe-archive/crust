@@ -74,9 +74,7 @@ fn send_random_data(b: &mut Bencher) {
     let data_len = data.len();
 
     b.iter(move || {
-        if let Err(what) = cm2.send(cm1_ep.clone(), data.clone()) {
-            panic!(format!("ConnectionManager #2 failed to send data: {:?}", what));
-        }
+        cm2.send(cm1_ep.clone(), data.clone());
 
         loop {
             let event = match cm1_rx.recv() {

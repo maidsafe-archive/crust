@@ -22,7 +22,6 @@ use std::sync::mpsc::{Sender, Receiver};
 use std::thread;
 use std::boxed::FnBox;
 use asynchronous::{Deferred,ControlFlow};
-use contact::Contact;
 
 use beacon;
 use bootstrap_handler::BootstrapHandler;
@@ -51,10 +50,10 @@ pub struct State {
 
 impl State {
     pub fn update_bootstrap_contacts(&mut self,
-                                     new_contacts: Vec<Contact>) {
+                                     new_contacts: Vec<Endpoint>) {
         if let Some(ref mut bs) = self.bootstrap_handler {
             // TODO: What was the second arg supposed to be?
-            let _ = bs.update_contacts(new_contacts, Vec::<Contact>::new());
+            let _ = bs.update_contacts(new_contacts, Vec::<Endpoint>::new());
         }
     }
 
@@ -71,14 +70,14 @@ impl State {
     pub fn populate_bootstrap_contacts(&mut self,
                                        config: &Config,
                                        beacon_guid_and_port: &Option<([u8; 16], u16)>)
-            -> Vec<Contact> {
+            -> Vec<Endpoint> {
         if config.override_default_bootstrap {
             return config.hard_coded_contacts.clone();
         }
 
         let cached_contacts = if beacon_guid_and_port.is_some() {
             // this node "owns" bootstrap file
-            let mut contacts = Vec::<Contact>::new();
+            let mut contacts = Vec::<Endpoint>::new();
             if let Some(ref mut handler) = self.bootstrap_handler {
                 contacts = handler.read_file().unwrap_or(vec![]);
             }
@@ -96,7 +95,6 @@ impl State {
 
         let mut combined_contacts
             = beacon_discovery.into_iter()
-            .map(|e| ::contact::Contact{ endpoint: e} )
             .chain(config.hard_coded_contacts.iter().cloned())
             .chain(cached_contacts.into_iter())
             .unique() // Remove duplicates
@@ -104,7 +102,7 @@ impl State {
 
         // remove own endpoints
         let own_listening_endpoint = self.get_listening_endpoint();
-        combined_contacts.retain(|c| !own_listening_endpoint.contains(&c.endpoint));
+        combined_contacts.retain(|c| !own_listening_endpoint.contains(&c));
         combined_contacts
     }
 
@@ -137,8 +135,8 @@ impl State {
         let endpoint = self.register_connection(trans, event);
         if is_broadcast_acceptor {
             if let Ok(ref endpoint) = endpoint {
-                let mut contacts = Vec::<Contact>::new();
-                contacts.push(::contact::Contact { endpoint: endpoint.clone() });
+                let mut contacts = Vec::<Endpoint>::new();
+                contacts.push(endpoint.clone());
                 self.update_bootstrap_contacts(contacts);
             }
         }
@@ -232,9 +230,9 @@ impl State {
             };
     
             match message {
-                Message::Contacts(contacts) => {
-                    for contact in contacts {
-                        endpoints.push(contact.endpoint);
+                Message::Contacts(new_endpoints) => {
+                    for ep in new_endpoints {
+                        endpoints.push(ep);
                     }
                 },
                 _ => continue
@@ -245,12 +243,12 @@ impl State {
     }
 
     pub fn bootstrap_off_list(&self,
-                              bootstrap_list: Vec<Contact>,
+                              bootstrap_list: Vec<Endpoint>,
                               is_broadcast_acceptor: bool,
                               max_successful_bootstrap_connection: usize) {
         // TODO: This check seems to also happen in handle_connect
         for contact in bootstrap_list.iter() {
-            if self.connections.contains_key(&contact.endpoint) {
+            if self.connections.contains_key(&contact) {
                 // TODO: Let user know we're not going to fulfill his request.
                 return;
             }
@@ -264,7 +262,7 @@ impl State {
 
             for contact in bootstrap_list.into_iter() {
                 vec_deferred.push(Deferred::new(move || {
-                    transport::connect(contact.endpoint.clone())
+                    transport::connect(contact.clone())
                 }))
             }
 

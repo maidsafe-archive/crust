@@ -22,7 +22,7 @@
 //! This means that none of the public functions of `BootstrapHandler` should be called concurrently
 //! with any other one.
 
-use contact::Contact;
+use transport::Endpoint;
 
 pub struct BootstrapHandler {
     file_handler: ::file_handler::FileHandler,
@@ -37,8 +37,8 @@ impl BootstrapHandler {
         }
     }
 
-    pub fn update_contacts(&mut self, contacts: Vec<Contact>,
-                           prune: Vec<Contact>) -> Result<(), ::error::Error> {
+    pub fn update_contacts(&mut self, contacts: Vec<Endpoint>,
+                           prune: Vec<Endpoint>) -> Result<(), ::error::Error> {
         try!(self.insert_contacts(contacts, prune));
         // TODO(Team) this implementation is missing and should be considered in next planning
         if ::time::now() > self.last_updated + Self::duration_between_updates() {
@@ -47,8 +47,8 @@ impl BootstrapHandler {
         Ok(())
     }
 
-    pub fn read_file(&mut self) -> Result<Vec<Contact>, ::error::Error> {
-        self.file_handler.read_file::<Vec<Contact>>()
+    pub fn read_file(&mut self) -> Result<Vec<Endpoint>, ::error::Error> {
+        self.file_handler.read_file::<Vec<Endpoint>>()
     }
 
     fn duration_between_updates() -> ::time::Duration {
@@ -59,8 +59,8 @@ impl BootstrapHandler {
         1500
     }
 
-    fn insert_contacts(&mut self, mut contacts: Vec<Contact>,
-                                  prune: Vec<Contact>)
+    fn insert_contacts(&mut self, mut contacts: Vec<Endpoint>,
+                                  prune: Vec<Endpoint>)
             -> Result<(), ::error::Error> {
         let mut bootstrap_contacts = self.read_file().unwrap_or_else(|e| {
             debug!("Error reading Bootstrap file: {:?}.", e);
@@ -95,6 +95,8 @@ fn get_file_name() -> ::std::path::PathBuf {
 
 #[cfg(test)]
 mod test {
+    use transport::Endpoint;
+
     struct TestFile {
         file_path: ::std::path::PathBuf,
     }
@@ -109,7 +111,7 @@ mod test {
             path.push(super::get_file_name());
             let mut file = try!(::std::fs::File::create(&path));
             let _ = try!(write!(&mut file, "{}",
-                ::rustc_serialize::json::as_pretty_json(&Vec<Contact>::new())));
+                ::rustc_serialize::json::as_pretty_json(&Vec::<Endpoint>::new())));
             let _ = try!(file.sync_all());
             Ok(TestFile { file_path: path })
         }
@@ -135,7 +137,7 @@ mod test {
         // Add contacts
         let mut bootstrap_handler = super::BootstrapHandler::new();
         assert!(bootstrap_handler.update_contacts(contacts.clone(),
-                                                  Vec<Contact>::new()).is_ok());
+                                                  Vec::<Endpoint>::new()).is_ok());
 
         // Check contacts can be retrieved OK
         assert_eq!(bootstrap_handler.read_file().unwrap(), contacts);
@@ -145,7 +147,7 @@ mod test {
             let mut duplicate_contacts = Vec::new();
             duplicate_contacts.push(contacts[i].clone());
             assert!(bootstrap_handler.update_contacts(duplicate_contacts,
-                                                      Vec<Contact>::new()).is_ok());
+                                                      Vec::<Endpoint>::new()).is_ok());
         }
 
         // Bootstrap contacts should remain unaltered
@@ -162,14 +164,14 @@ mod test {
         // Add contacts
         let mut bootstrap_handler = super::BootstrapHandler::new();
         assert!(bootstrap_handler.update_contacts(contacts.clone(),
-                                                  Vec<Contact>::new()).is_ok());
+                                                  Vec::<Endpoint>::new()).is_ok());
         assert_eq!(bootstrap_handler.read_file().unwrap(), contacts);
 
         // Prune each contact
         for i in 0..number {
             let mut prune_contacts = Vec::new();
             prune_contacts.push(contacts[i].clone());
-            assert!(bootstrap_handler.update_contacts(Vec<Contact>::new(),
+            assert!(bootstrap_handler.update_contacts(Vec::<Endpoint>::new(),
                                                       prune_contacts).is_ok());
         }
 
@@ -178,7 +180,7 @@ mod test {
 
         // Re-add the contacts and check they can be retrieved OK
         assert!(bootstrap_handler.update_contacts(contacts.clone(),
-                                                  Vec<Contact>::new()).is_ok());
+                                                  Vec::<Endpoint>::new()).is_ok());
         let mut retrieved_contacts = bootstrap_handler.read_file().unwrap();
         assert_eq!(retrieved_contacts, contacts);
 
@@ -208,7 +210,7 @@ mod test {
         // Add contacts
         let mut bootstrap_handler = super::BootstrapHandler::new();
         assert!(bootstrap_handler.update_contacts(contacts.clone(),
-                                                  Vec<Contact>::new()).is_ok());
+                                                  Vec::<Endpoint>::new()).is_ok());
         assert_eq!(bootstrap_handler.read_file().unwrap(), contacts);
 
         // Create a new contact
@@ -217,7 +219,7 @@ mod test {
 
         // Try inserting without also pruning - bootstrap contacts should remain unaltered
         assert!(bootstrap_handler.insert_contacts(new_contacts.clone(),
-                                                  Vec<Contact>::new()).is_ok());
+                                                  Vec::<Endpoint>::new()).is_ok());
         assert_eq!(bootstrap_handler.read_file().unwrap(), contacts);
 
         // Get the last contact in the list and prune it from the bootstrap file
@@ -240,6 +242,6 @@ mod test {
         let _test_file = TestFile::new().unwrap();
         let mut bootstrap_handler = super::BootstrapHandler::new();
         assert!(bootstrap_handler.update_contacts(contacts.clone(),
-                                                  Vec<Contact>::new()).is_ok());
+                                                  Vec::<Endpoint>::new()).is_ok());
     }
 }

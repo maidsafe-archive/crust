@@ -27,7 +27,6 @@ use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
 use std::cmp::Ordering;
 use utp::UtpSocket;
 use std::net::IpAddr;
-use contact::Contact;
 pub type Bytes = Vec<u8>;
 
 /// Enum representing endpoint of supported protocols
@@ -161,7 +160,7 @@ pub enum Message {
     /// Arbitrary user blob. This is just an opaque message to Crust.
     UserBlob(Bytes),
     /// Event to exchange contacts
-    Contacts(Vec<Contact>),
+    Contacts(Vec<Endpoint>),
 }
 
 //--------------------------------------------------------------------
