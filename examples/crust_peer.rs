@@ -342,6 +342,10 @@ fn create_local_config() {
     }
 }
 
+fn count_ok<T>(vec: &Vec<io::Result<T>>) -> usize {
+    vec.iter().filter(|a|a.is_ok()).count()
+}
+
 fn main() {
     match env_logger::init() {
         Ok(()) => {},
@@ -363,6 +367,8 @@ fn main() {
     let (channel_sender, channel_receiver) = channel();
     let (bs_sender, bs_receiver) = channel();
     let mut service = Service::new(channel_sender).unwrap();
+    assert!(count_ok(&service.start_default_acceptors()) >= 1);
+
     stdout = green_foreground(stdout);
     let listening_endpoints = service.get_own_endpoints();
     print!("Listening for new connections on");

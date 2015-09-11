@@ -77,10 +77,6 @@ impl Service {
 
     fn construct(event_sender: Sender<Event>, config: Config)
             -> io::Result<Service> {
-        let tcp_listening_port = config.tcp_listening_port.clone();
-        let utp_listening_port = config.utp_listening_port.clone();
-        let beacon_port        = config.beacon_port.clone();
-
         let mut state = State::new(event_sender);
         let cmd_sender = state.cmd_sender.clone();
 
@@ -94,19 +90,30 @@ impl Service {
                                cmd_sender           : cmd_sender,
                              };
 
+        let beacon_port = cm.config.beacon_port.clone();
+
         if let Some(port) = beacon_port {
             let _ = cm.start_broadcast_acceptor(port);
         }
 
+        Ok(cm)
+    }
+
+    pub fn start_default_acceptors(&mut self) -> Vec<io::Result<Port>> {
+        let tcp_listening_port = self.config.tcp_listening_port.clone();
+        let utp_listening_port = self.config.utp_listening_port.clone();
+
+        let mut result = Vec::new();
+
         if let Some(port) = tcp_listening_port {
-            let _ = try!(cm.start_accepting(Port::Tcp(port)));
+            result.push(self.start_accepting(Port::Tcp(port)));
         }
 
         if let Some(port) = utp_listening_port {
-            let _ = try!(cm.start_accepting(Port::Utp(port)));
+            result.push(self.start_accepting(Port::Utp(port)));
         }
 
-        Ok(cm)
+        result
     }
 
     /// Starts listening on all supported protocols. Ports in _hint_ are tried
@@ -363,6 +370,7 @@ mod test {
     use std::path::PathBuf;
     use std::fs::remove_file;
     use event::Event;
+    use std::io;
 
     fn encode<T>(value: &T) -> Bytes where T: Encodable
     {
@@ -448,6 +456,10 @@ mod test {
         TestConfigFile{path: path}
     }
 
+    fn count_ok<T>(vec: &Vec<io::Result<T>>) -> usize {
+        vec.iter().filter(|a|a.is_ok()).count()
+    }
+
     #[test]
     fn bootstrap() {
         let _cleaner = ::file_handler::ScopedUserAppDirRemover;
@@ -455,12 +467,14 @@ mod test {
         let _config_file = make_temp_config(None);
 
         let mut cm1 = Service::new(cm1_i).unwrap();
+        assert_eq!(count_ok(&cm1.start_default_acceptors()), 1);
 
         thread::sleep_ms(1000);
         let _config_file = make_temp_config(cm1.get_beacon_acceptor_port());
 
         let (cm2_i, cm2_o) = channel();
         let mut cm2 = Service::new(cm2_i).unwrap();
+
         let cm2_eps = cm2.get_own_endpoints().into_iter()
             .map(|ep| ep.get_port()).collect::<Vec<Port>>();
 
@@ -513,7 +527,9 @@ mod test {
         let mut temp_configs = vec![make_temp_config(None)];
 
         let (cm1_i, cm1_o) = channel();
-        let cm1 = Service::new(cm1_i).unwrap();
+        let mut cm1 = Service::new(cm1_i).unwrap();
+        assert!(count_ok(&cm1.start_default_acceptors()) >= 1);
+
         let cm1_ports = cm1.get_own_endpoints().into_iter()
             .map(|ep| ep.get_port()).collect::<Vec<Port>>();
         let cm1_eps = cm1_ports.iter().map(|p| Endpoint::tcp(("127.0.0.1", p.get_port())));
@@ -521,7 +537,9 @@ mod test {
         temp_configs.push(make_temp_config(cm1.get_beacon_acceptor_port()));
 
         let (cm2_i, cm2_o) = channel();
-        let cm2 = Service::new(cm2_i).unwrap();
+        let mut cm2 = Service::new(cm2_i).unwrap();
+        assert!(count_ok(&cm2.start_default_acceptors()) >= 1);
+
         let cm2_ports = cm2.get_own_endpoints().into_iter()
             .map(|ep| ep.get_port()).collect::<Vec<Port>>();
         let cm2_eps = cm2_ports.iter().map(|p| Endpoint::tcp(("127.0.0.1", p.get_port())));
@@ -684,7 +702,9 @@ mod test {
 
         let (cm_tx, cm_rx) = channel();
 
-        let cm = Service::new(cm_tx).unwrap();
+        let mut cm = Service::new(cm_tx).unwrap();
+        assert!(count_ok(&cm.start_default_acceptors()) >= 1);
+        
 
         let cm_listen_ports = cm.get_own_endpoints().into_iter()
                                 .map(|ep| ep.get_port())
