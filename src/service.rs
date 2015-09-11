@@ -15,7 +15,6 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::collections::{HashMap, HashSet};
 use std::io;
 use std::sync::{Arc, mpsc, Mutex};
 use std::sync::mpsc::Sender;
@@ -82,36 +81,17 @@ impl Service {
         let utp_listening_port = config.utp_listening_port.clone();
         let beacon_port        = config.beacon_port.clone();
 
-        let (cmd_sender, cmd_receiver) = mpsc::channel::<Closure>();
+        let mut state = State::new(event_sender);
+        let cmd_sender = state.cmd_sender.clone();
 
-        let cmd_sender2 = cmd_sender.clone();
-
-        let handle = try!(Self::new_thread("main loop", move || {
-                                let mut state = State {
-                                    event_sender      : event_sender,
-                                    cmd_sender        : cmd_sender,
-                                    connections       : HashMap::new(),
-                                    listening_ports   : HashSet::new(),
-                                    bootstrap_handler : None,
-                                    stop_called       : false,
-                                    is_bootstrapping  : false,
-                                };
-
-                                loop {
-                                    match cmd_receiver.recv() {
-                                        Ok(cmd) => cmd.call_box((&mut state,)),
-                                        Err(_) => break,
-                                    }
-                                    if state.stop_called {
-                                        break;
-                                    }
-                                }
+        let handle = try!(Self::new_thread("run loop", move || {
+                                state.run();
                             }));
 
         let mut cm = Service { beacon_guid_and_port : None,
                                config               : config,
                                own_endpoints        : Vec::new(),
-                               cmd_sender           : cmd_sender2,
+                               cmd_sender           : cmd_sender,
                              };
 
         if let Some(port) = beacon_port {

@@ -41,6 +41,7 @@ pub type Closure = Box<FnBox(&mut State) + Send>;
 pub struct State {
     pub event_sender      : Sender<Event>,
     pub cmd_sender        : Sender<Closure>,
+    pub cmd_receiver      : Receiver<Closure>,
     pub connections       : HashMap<Endpoint, Connection>,
     pub listening_ports   : HashSet<Port>,
     pub bootstrap_handler : Option<BootstrapHandler>,
@@ -49,6 +50,34 @@ pub struct State {
 }
 
 impl State {
+    pub fn new(event_sender: Sender<Event>) -> State {
+        let (cmd_sender, cmd_receiver) = mpsc::channel::<Closure>();
+
+        State {
+            event_sender      : event_sender,
+            cmd_sender        : cmd_sender,
+            cmd_receiver      : cmd_receiver,
+            connections       : HashMap::new(),
+            listening_ports   : HashSet::new(),
+            bootstrap_handler : None,
+            stop_called       : false,
+            is_bootstrapping  : false,
+        }
+    }
+
+    pub fn run(&mut self) {
+        let mut state = self;
+        loop {
+            match state.cmd_receiver.recv() {
+                Ok(cmd) => cmd.call_box((&mut state,)),
+                Err(_) => break,
+            }
+            if state.stop_called {
+                break;
+            }
+        }
+    }
+
     pub fn update_bootstrap_contacts(&mut self,
                                      new_contacts: Vec<Endpoint>) {
         if let Some(ref mut bs) = self.bootstrap_handler {
@@ -235,6 +264,7 @@ impl State {
     pub fn bootstrap_off_list(&mut self,
                               mut bootstrap_list: Vec<Endpoint>,
                               is_broadcast_acceptor: bool) {
+        if self.is_bootstrapping { return; }
         self.is_bootstrapping = true;
 
         bootstrap_list.retain(|e| { !self.connections.contains_key(&e) });
