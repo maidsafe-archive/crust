@@ -342,8 +342,8 @@ fn create_local_config() {
     }
 }
 
-fn count_ok<T>(vec: &Vec<io::Result<T>>) -> usize {
-    vec.iter().filter(|a|a.is_ok()).count()
+fn filter_ok<T>(vec: Vec<io::Result<T>>) -> Vec<T> {
+    vec.into_iter().filter_map(|a|a.ok()).collect()
 }
 
 fn main() {
@@ -367,13 +367,13 @@ fn main() {
     let (channel_sender, channel_receiver) = channel();
     let (bs_sender, bs_receiver) = channel();
     let mut service = Service::new(channel_sender).unwrap();
-    assert!(count_ok(&service.start_default_acceptors()) >= 1);
+    let listening_ports = filter_ok(service.start_default_acceptors());
+    assert!(listening_ports.len() >= 1);
 
     stdout = green_foreground(stdout);
-    let listening_endpoints = service.get_own_endpoints();
-    print!("Listening for new connections on");
-    for endpoint in &listening_endpoints {
-        print!(" {:?}", *endpoint);
+    print!("Listening on ports");
+    for port in &listening_ports {
+        print!(" {:?}", *port);
     };
     println!("");
 

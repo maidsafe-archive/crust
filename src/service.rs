@@ -401,10 +401,13 @@ mod test {
      }
 
      impl Node {
-         pub fn new(cm: Service) -> Node {
-             let ports = cm.get_own_endpoints().into_iter()
-                 .map(|ep| ep.get_port()).collect::<Vec<Port>>();
-             Node { conn_mgr: cm, listening_port: ports[0].clone(), connected_eps: Arc::new(Mutex::new(Vec::new())) }
+         pub fn new(mut cm: Service) -> Node {
+             let ports = filter_ok(cm.start_default_acceptors());
+             Node {
+                 conn_mgr: cm,
+                 listening_port: ports[0].clone(),
+                 connected_eps: Arc::new(Mutex::new(Vec::new()))
+             }
          }
      }
 
@@ -456,8 +459,8 @@ mod test {
         TestConfigFile{path: path}
     }
 
-    fn count_ok<T>(vec: &Vec<io::Result<T>>) -> usize {
-        vec.iter().filter(|a|a.is_ok()).count()
+    fn filter_ok<T>(vec: Vec<io::Result<T>>) -> Vec<T> {
+        vec.into_iter().filter_map(|a|a.ok()).collect()
     }
 
     #[test]
@@ -467,16 +470,14 @@ mod test {
         let _config_file = make_temp_config(None);
 
         let mut cm1 = Service::new(cm1_i).unwrap();
-        assert_eq!(count_ok(&cm1.start_default_acceptors()), 1);
+        let cm1_ports = filter_ok(cm1.start_default_acceptors());
+        assert_eq!(cm1_ports.len(), 1);
 
         thread::sleep_ms(1000);
         let _config_file = make_temp_config(cm1.get_beacon_acceptor_port());
 
         let (cm2_i, cm2_o) = channel();
         let mut cm2 = Service::new(cm2_i).unwrap();
-
-        let cm2_eps = cm2.get_own_endpoints().into_iter()
-            .map(|ep| ep.get_port()).collect::<Vec<Port>>();
 
         cm2.bootstrap();
 
@@ -535,20 +536,18 @@ mod test {
 
         let (cm1_i, cm1_o) = channel();
         let mut cm1 = Service::new(cm1_i).unwrap();
-        assert!(count_ok(&cm1.start_default_acceptors()) >= 1);
+        let cm1_ports = filter_ok(cm1.start_default_acceptors());
+        assert!(cm1_ports.len() >= 1);
 
-        let cm1_ports = cm1.get_own_endpoints().into_iter()
-            .map(|ep| ep.get_port()).collect::<Vec<Port>>();
         let cm1_eps = cm1_ports.iter().map(|p| Endpoint::tcp(("127.0.0.1", p.get_port())));
 
         temp_configs.push(make_temp_config(cm1.get_beacon_acceptor_port()));
 
         let (cm2_i, cm2_o) = channel();
         let mut cm2 = Service::new(cm2_i).unwrap();
-        assert!(count_ok(&cm2.start_default_acceptors()) >= 1);
+        let cm2_ports = filter_ok(cm2.start_default_acceptors());
+        assert!(cm2_ports.len() >= 1);
 
-        let cm2_ports = cm2.get_own_endpoints().into_iter()
-            .map(|ep| ep.get_port()).collect::<Vec<Port>>();
         let cm2_eps = cm2_ports.iter().map(|p| Endpoint::tcp(("127.0.0.1", p.get_port())));
         cm2.connect(cm1_eps.collect());
         cm1.connect(cm2_eps.collect());
@@ -717,12 +716,9 @@ mod test {
         let (cm_tx, cm_rx) = channel();
 
         let mut cm = Service::new(cm_tx).unwrap();
-        assert!(count_ok(&cm.start_default_acceptors()) >= 1);
+        let cm_listen_ports = filter_ok(cm.start_default_acceptors());
+        assert!(cm_listen_ports.len() >= 1);
         
-
-        let cm_listen_ports = cm.get_own_endpoints().into_iter()
-                                .map(|ep| ep.get_port())
-                                .collect::<Vec<_>>();
 
         let cm_listen_addrs = cm_listen_ports.iter()
                               .map(|p| Endpoint::tcp(("127.0.0.1", p.get_port())))
