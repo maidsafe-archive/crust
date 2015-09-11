@@ -27,6 +27,7 @@ use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
 use std::cmp::Ordering;
 use utp::UtpSocket;
 use std::net::IpAddr;
+use std::fmt;
 pub type Bytes = Vec<u8>;
 
 /// Enum representing endpoint of supported protocols
@@ -228,6 +229,12 @@ pub struct Transport {
     pub receiver: Receiver,
     pub sender: Sender,
     pub remote_endpoint: Endpoint,
+}
+
+impl fmt::Debug for Transport {
+    fn fmt(&self, formatter: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        formatter.write_str(&format!("Transport {:?}", self.remote_endpoint))
+    }
 }
 
 // FIXME: There needs to be a way to break from this blocking command.

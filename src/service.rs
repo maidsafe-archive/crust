@@ -16,7 +16,7 @@
 // relating to use of the SAFE Network Software.
 
 use std::io;
-use std::sync::{Arc, mpsc, Mutex};
+use std::sync::{Arc, Mutex};
 use std::sync::mpsc::Sender;
 use std::thread;
 use std::boxed::FnBox;
@@ -199,7 +199,7 @@ impl Service {
         }
 
         let _ = self.cmd_sender.send(Box::new(move |state: &mut State| {
-            state.stop_called = true;
+            state.stop();
 
             // Connect to our listening ports, this should unblock
             // the threads.
@@ -725,106 +725,4 @@ mod test {
 
         let _ = thread.join();
     }
-
-    //#[test]
-    //fn bootstrap_off_list_connects() {
-    //    let acceptor = transport::new_acceptor(Port::Tcp(0)).unwrap();
-    //    let addr = match acceptor {
-    //        transport::Acceptor::Tcp(_, listener) => listener.local_addr()
-    //            .unwrap(),
-    //        _ => panic!("Unable to create a new connection"),
-    //    };
-    //    let addr = match addr {
-    //        SocketAddr::V4(a) => if a.ip().is_unspecified() {
-    //            SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1),
-    //                                             a.port()))
-    //        } else {
-    //            SocketAddr::V4(a)
-    //        },
-    //        SocketAddr::V6(a) => if a.ip().is_unspecified() {
-    //            SocketAddr::V6(SocketAddrV6::new("::1".parse().unwrap(),
-    //                                             a.port(), a.flowinfo(),
-    //                                             a.scope_id()))
-    //        } else {
-    //            SocketAddr::V6(a)
-    //        },
-    //    };
-    //    let ep = Endpoint::Tcp(addr);
-    //    let state = Arc::new(Mutex::new(super::State{ event_sender: channel().0,
-    //                                                  connections: HashMap::new(),
-    //                                                  listening_ports: HashSet::new(),
-    //                                                  bootstrap_handler: None,
-    //                                                  stop_called: false,
-    //                                                }));
-    //    assert!(super::bootstrap_off_list(Arc::downgrade(&state), vec![], false, 15).is_err());
-    //    assert!(super::bootstrap_off_list(Arc::downgrade(&state),
-    //                                      vec![::contact::Contact{endpoint: ep.clone()}], false, 15)
-    //            .is_ok());
-    //}
-
-    //#[test]
-    //fn bootstrap_off_list_connects_multiple() {
-    //    let max_count = 4;
-    //    let available_peer_count = 10;
-
-    //    let mut contacts = vec![];
-    //    let mut acceptors = vec![];
-    //    loop {
-    //        let acceptor = transport::new_acceptor(Port::Tcp(0)).unwrap();
-    //        let addr = match acceptor {
-    //            transport::Acceptor::Tcp(_, ref listener) => listener.local_addr()
-    //                .unwrap(),
-    //            _ => panic!("Unable to create a new connection"),
-    //        };
-    //        let addr = match addr {
-    //            SocketAddr::V4(a) => if a.ip().is_unspecified() {
-    //                SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1),
-    //                                                 a.port()))
-    //            } else {
-    //                SocketAddr::V4(a)
-    //            },
-    //            SocketAddr::V6(a) => if a.ip().is_unspecified() {
-    //                SocketAddr::V6(SocketAddrV6::new("::1".parse().unwrap(),
-    //                                                 a.port(), a.flowinfo(),
-    //                                                 a.scope_id()))
-    //            } else {
-    //                SocketAddr::V6(a)
-    //            },
-    //        };
-    //        contacts.push(::contact::Contact{endpoint: Endpoint::Tcp(addr)});
-    //        acceptors.push(acceptor);
-    //        if contacts.len() == available_peer_count {
-    //            break;
-    //        }
-    //    }
-
-    //    let (tx, rx) = channel();
-    //    let state = Arc::new(Mutex::new(super::State{ event_sender: tx,
-    //                                                  connections: HashMap::new(),
-    //                                                  listening_ports: HashSet::new(),
-    //                                                  bootstrap_handler: None,
-    //                                                  stop_called: false,
-    //                                                }));
-    //    assert!(super::bootstrap_off_list(Arc::downgrade(&state), vec![], false, 15).is_err());
-    //    assert!(super::bootstrap_off_list(Arc::downgrade(&state),
-    //                                      contacts.clone(), false, max_count).is_ok());
-
-    //    // read if rx gets max_count bootstrap eps
-    //    let mut received_event_count = 0;
-    //    while received_event_count < max_count {
-    //        match rx.recv() {
-    //            Ok(Event::NewConnection(ep)) => {
-    //                assert!(contacts.contains(&::contact::Contact{endpoint: ep}));
-    //                received_event_count += 1;
-    //            },
-    //            _ => { panic!("Unexpected event !")},
-    //        }
-    //    }
-
-    //    // should not get any more than max bs connections
-    //    for _ in 0..10 {
-    //        thread::sleep_ms(100);
-    //        assert!(rx.try_recv().is_err());
-    //    }
-    //}
 }

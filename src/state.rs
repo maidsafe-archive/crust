@@ -280,16 +280,20 @@ impl State {
         let _ = Self::new_thread("bootstrap_off_list", move || {
             let mut vec_deferred = vec![];
 
-            for contact in bootstrap_list.into_iter() {
+            for contact in bootstrap_list.iter() {
+                let c = contact.clone();
                 vec_deferred.push(Deferred::new(move || {
-                    transport::connect(contact.clone())
+                    transport::connect(c)
                 }))
             }
 
+            // TODO: Setting ParallelLimit to more than 1 makes the
+            // below tests fail. Investigate why and how it can be
+            // fixed.
             let res = Deferred::first_to_promise(1,
                                                  false,
                                                  vec_deferred,
-                                                 ControlFlow::ParallelLimit(15)).sync();
+                                                 ControlFlow::ParallelLimit(1)).sync();
 
             let ts = match res {
                 Ok(ts) => ts,
@@ -302,8 +306,9 @@ impl State {
                     return;
                 }
 
-                if !state.is_bootstrapping || ts.is_empty() {
-                    state.is_bootstrapping = false;
+                state.is_bootstrapping = false;
+
+                if ts.is_empty() {
                     let _ = event_sender.send(Event::BootstrapFinished);
                     return;
                 }
@@ -312,8 +317,14 @@ impl State {
                     let e = t.remote_endpoint.clone();
                     let _ = state.handle_connect(t, is_broadcast_acceptor);
                 }
+
+                state.bootstrap_off_list(bootstrap_list, is_broadcast_acceptor);
             }));
         });
+    }
+
+    pub fn stop(&mut self) {
+        self.stop_called = true;
     }
 
     fn new_thread<F,T>(name: &str, f: F) -> io::Result<JoinHandle<T>> 
@@ -323,4 +334,110 @@ impl State {
     }
 }
 
+#[cfg(test)]
+mod test {
+    use super::*;
+    use std::thread;
+    use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+    use std::sync::mpsc::channel;
+    use transport::{Endpoint, Port, new_acceptor, Acceptor};
+    use event::Event;
 
+    fn loopback_if_unspecified(addr : IpAddr) -> IpAddr {
+        match addr {
+            IpAddr::V4(addr) => {
+                IpAddr::V4(if addr.is_unspecified() {
+                               Ipv4Addr::new(127,0,0,1)
+                           } else {
+                               addr
+                           })
+            },
+            IpAddr::V6(addr) => {
+                IpAddr::V6(if addr.is_unspecified() {
+                               "::1".parse().unwrap()
+                           } else {
+                               addr
+                           })
+            }
+        }
+    }
+
+    fn testable_endpoint(acceptor: &Acceptor) -> Endpoint {
+        let acceptor = new_acceptor(Port::Tcp(0)).unwrap();
+
+        let addr = match &acceptor {
+            &Acceptor::Tcp(_, ref listener) => listener.local_addr()
+                .unwrap(),
+            _ => panic!("Unable to create a new connection"),
+        };
+
+        let addr = SocketAddr::new(loopback_if_unspecified(addr.ip()), addr.port());
+        Endpoint::Tcp(addr)
+    }
+
+    fn test_bootstrap_off_list(n: u16) {
+        let acceptors = (0..n).map(|_|new_acceptor(Port::Tcp(0)).unwrap())
+                              .collect::<Vec<_>>();
+
+        let eps = acceptors.iter().map(|a|testable_endpoint(&a))
+                                  .collect();
+
+        let (event_sender, event_receiver) = channel();
+
+        let mut s = State::new(event_sender);
+
+        let cmd_sender = s.cmd_sender.clone();
+
+        assert!(cmd_sender.send(Box::new(move |s: &mut State| {
+            s.bootstrap_off_list(eps, false);
+        })).is_ok());
+
+        let accept_thread = thread::spawn(move || {
+            // Currently acceptor starts accepting implicitly,
+            // once fixed (https://github.com/maidsafe/crust/issues/316),
+            // the following lines should be uncommented.
+            //for a in acceptors {
+            //    assert!(::transport::accept(&a).is_ok());
+            //}
+        });
+
+        let t = thread::spawn(move || { s.run(); });
+
+        let mut accept_count = 0;
+
+        loop {
+            match event_receiver.recv() {
+                Ok(event) => {
+                    match event {
+                        Event::NewConnection(_) => {
+                            accept_count += 1;
+                            if accept_count == n {
+                                assert!(cmd_sender.send(Box::new(move |s: &mut State| {
+                                    s.stop();
+                                })).is_ok());
+                                break;
+                            }
+                        },
+                        Event::LostConnection(_) => { },
+                        Event::BootstrapFinished => { },
+                        _ => {
+                            panic!("Unexpected event {:?}", event);
+                        }
+                    }
+                },
+                Err(_) => { panic!("Error while receiving events"); }
+            }
+        }
+
+        assert!(t.join().is_ok());
+        assert!(accept_thread.join().is_ok());
+    }
+
+    #[test]
+    fn bootstrap_off_list() {
+        test_bootstrap_off_list(1);
+        test_bootstrap_off_list(2);
+        test_bootstrap_off_list(4);
+        test_bootstrap_off_list(8);
+    }
+}
