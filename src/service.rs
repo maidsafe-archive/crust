@@ -488,8 +488,11 @@ mod test {
             ::std::thread::sleep_ms(100);
         }
         match result {
-            Ok(Event::NewConnection(ep)) => {
-                debug!("NewConnection {:?}", ep);
+            Ok(Event::OnConnect(ep)) => {
+                debug!("OnConnect {:?}", ep);
+            }
+            Ok(Event::OnAccept(ep)) => {
+                debug!("OnAccept {:?}", ep);
             }
             _ => { assert!(false, "Failed to receive NewConnection event")}
         }
@@ -505,7 +508,11 @@ mod test {
             spawn(move || {
                 for i in o.iter() {
                     match i {
-                        Event::NewConnection(other_ep) => {
+                        Event::OnConnect(other_ep) => {
+                            // debug!("Connected {:?}", other_ep);
+                            let _ = cm.send(other_ep.clone(), encode(&"hello world".to_string()));
+                        },
+                        Event::OnAccept(other_ep) => {
                             // debug!("Connected {:?}", other_ep);
                             let _ = cm.send(other_ep.clone(), encode(&"hello world".to_string()));
                         },
@@ -562,7 +569,11 @@ mod test {
                 for i in o.iter() {
                     let _ = tx.send(i.clone());
                     match i {
-                        Event::NewConnection(other_ep) => {
+                        Event::OnConnect(other_ep) => {
+                            let mut connected_eps = conn_eps.lock().unwrap();
+                            connected_eps.push(other_ep);
+                        },
+                        Event::OnAccept(other_ep) => {
                             let mut connected_eps = conn_eps.lock().unwrap();
                             connected_eps.push(other_ep);
                         },
@@ -585,7 +596,10 @@ mod test {
                 for event in stats_rx.iter() {
                     let mut stat = stats.lock().unwrap();
                     match event {
-                            Event::NewConnection(_) => {
+                        Event::OnConnect(_) => {
+                            stat.new_connections_count += 1;
+                        },
+                        Event::OnAccept(_) => {
                             stat.new_connections_count += 1;
                         },
                         Event::NewMessage(_, data) => {
@@ -723,13 +737,12 @@ mod test {
 
                 match event {
                     Event::NewMessage(_, _) => {
-                        //debug!("NewMessage");
                     },
-                    Event::NewConnection(_) => {
-                        //debug!("NewConnection");
+                    Event::OnConnect(_) => {
+                    },
+                    Event::OnAccept(_) => {
                     },
                     Event::LostConnection(_) => {
-                        //debug!("LostConnection");
                         break;
                     },
                     Event::BootstrapFinished => {}

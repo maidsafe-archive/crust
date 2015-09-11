@@ -61,8 +61,12 @@ fn main() {
                         },
                     }
                 },
-                crust::Event::NewConnection(endpoint) => {
-                    println!("New connection made to {:?}", endpoint);
+                crust::Event::OnConnect(endpoint) => {
+                    println!("Connected to {:?}", endpoint);
+                    let _ = bs_sender.send(endpoint);
+                },
+                crust::Event::OnAccept(endpoint) => {
+                    println!("Accepted {:?}", endpoint);
                     let _ = bs_sender.send(endpoint);
                 },
                 _ => (),

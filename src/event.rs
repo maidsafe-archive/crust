@@ -23,8 +23,10 @@ use transport::Endpoint;
 pub enum Event {
     /// Invoked when a new message is received.  Passes the peer's endpoint and the message.
     NewMessage(Endpoint, Vec<u8>),
-    /// Invoked when a new connection to a peer is established.  Passes the peer's endpoint.
-    NewConnection(Endpoint),
+    /// Invoked when a new connection to a peer is established. Passes the peer's endpoint.
+    OnConnect(Endpoint),
+    /// Invoked when a new connection is accepted. Passes the peer's endpoint.
+    OnAccept(Endpoint),
     /// Invoked when a connection to a peer is lost.  Passes the peer's endpoint.
     LostConnection(Endpoint),
     /// Invoked when a new bootstrap connection to a peer is established.  Passes the peer's endpoint.

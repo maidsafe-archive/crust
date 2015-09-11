@@ -151,7 +151,7 @@ impl State {
                           trans                 : transport::Transport,
                           is_broadcast_acceptor : bool) -> io::Result<Endpoint> {
         let remote_ep = trans.remote_endpoint.clone();
-        let event = Event::NewConnection(remote_ep);
+        let event = Event::OnConnect(remote_ep);
     
         let endpoint = self.register_connection(trans, event);
         if is_broadcast_acceptor {
@@ -226,7 +226,7 @@ impl State {
 
     pub fn handle_accept(&mut self, trans: transport::Transport) -> io::Result<Endpoint> {
         let remote_ep = trans.remote_endpoint.clone();
-        self.register_connection(trans, Event::NewConnection(remote_ep))
+        self.register_connection(trans, Event::OnAccept(remote_ep))
     }
 
     fn seek_peers(beacon_guid: Option<[u8; 16]>, beacon_port: u16) -> Vec<Endpoint> {
@@ -413,7 +413,7 @@ mod test {
             match event_receiver.recv() {
                 Ok(event) => {
                     match event {
-                        Event::NewConnection(_) => {
+                        Event::OnConnect(_) => {
                             accept_count += 1;
                             if accept_count == n {
                                 assert!(cmd_sender.send(Box::new(move |s: &mut State| {

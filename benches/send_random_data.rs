@@ -43,7 +43,8 @@ fn wait_for_connection(receiver: &Receiver<Event>) -> Endpoint{
         };
 
         match event {
-            crust::Event::NewConnection(ep)          => return ep,
+            crust::Event::OnConnect(ep) => return ep,
+            crust::Event::OnAccept(ep)  => return ep,
             _ => panic!("Unexpected event"),
         }
     }
@@ -85,8 +86,11 @@ fn send_random_data(b: &mut Bencher) {
                 crust::Event::NewMessage(_endpoint, _bytes) => {
                     break;
                 },
-                crust::Event::NewConnection(_endpoint) => {
-                    panic!("Unexpected event: NewConnection");
+                crust::Event::OnConnect(_endpoint) => {
+                    panic!("Unexpected event: OnConnect");
+                },
+                crust::Event::OnAccept(_endpoint) => {
+                    panic!("Unexpected event: OnAccept");
                 },
                 crust::Event::LostConnection(_endpoint) => {
                     break;

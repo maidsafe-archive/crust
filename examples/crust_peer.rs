@@ -397,9 +397,19 @@ fn main() {
                              .unwrap_or(format!("non-UTF-8 message of {} bytes",
                                                 message_length)));
                 },
-                crust::Event::NewConnection(endpoint) => {
+                crust::Event::OnConnect(endpoint) => {
                     stdout_copy = cyan_foreground(stdout_copy);
                     println!("\nConnected to peer at {:?}", endpoint);
+                    my_flat_world.add_node(CrustNode::new(endpoint, true));
+                    my_flat_world.print_connected_nodes();
+                    if !bootstrapped {
+                        bootstrapped = true;
+                        let _ = bs_sender.send(endpoint);
+                    }
+                },
+                crust::Event::OnAccept(endpoint) => {
+                    stdout_copy = cyan_foreground(stdout_copy);
+                    println!("\nAccepted peer at {:?}", endpoint);
                     my_flat_world.add_node(CrustNode::new(endpoint, true));
                     my_flat_world.print_connected_nodes();
                     if !bootstrapped {
