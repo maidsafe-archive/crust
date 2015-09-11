@@ -190,6 +190,12 @@ impl Service {
         });
     }
 
+    pub fn stop_bootstrap(&mut self) {
+        Self::post(&self.cmd_sender, move |state : &mut State| {
+            state.stop_bootstrap();
+        });
+    }
+
     /// This should be called before destroying an instance of a Service to allow the
     /// listener threads to join.  Once called, the Service should be destroyed.
     pub fn stop(&mut self) {

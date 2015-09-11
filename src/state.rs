@@ -323,6 +323,10 @@ impl State {
         });
     }
 
+    pub fn stop_bootstrap(&mut self) {
+        self.is_bootstrapping = false;
+    }
+
     pub fn stop(&mut self) {
         self.stop_called = true;
     }
