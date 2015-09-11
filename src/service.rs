@@ -15,9 +15,8 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::collections::{HashMap, HashSet};
 use std::io;
-use std::sync::{Arc, mpsc, Mutex};
+use std::sync::{Arc, Mutex};
 use std::sync::mpsc::Sender;
 use std::thread;
 use std::boxed::FnBox;
@@ -78,55 +77,43 @@ impl Service {
 
     fn construct(event_sender: Sender<Event>, config: Config)
             -> io::Result<Service> {
-        let tcp_listening_port = config.tcp_listening_port.clone();
-        let utp_listening_port = config.utp_listening_port.clone();
-        let beacon_port        = config.beacon_port.clone();
+        let mut state = State::new(event_sender);
+        let cmd_sender = state.cmd_sender.clone();
 
-        let (cmd_sender, cmd_receiver) = mpsc::channel::<Closure>();
-
-        let cmd_sender2 = cmd_sender.clone();
-
-        let handle = try!(Self::new_thread("main loop", move || {
-                                let mut state = State {
-                                    event_sender      : event_sender,
-                                    cmd_sender        : cmd_sender,
-                                    connections       : HashMap::new(),
-                                    listening_ports   : HashSet::new(),
-                                    bootstrap_handler : None,
-                                    stop_called       : false,
-                                    bootstrap_count   : (0,0),
-                                };
-
-                                loop {
-                                    match cmd_receiver.recv() {
-                                        Ok(cmd) => cmd.call_box((&mut state,)),
-                                        Err(_) => break,
-                                    }
-                                    if state.stop_called {
-                                        break;
-                                    }
-                                }
+        let handle = try!(Self::new_thread("run loop", move || {
+                                state.run();
                             }));
 
         let mut cm = Service { beacon_guid_and_port : None,
                                config               : config,
                                own_endpoints        : Vec::new(),
-                               cmd_sender           : cmd_sender2,
+                               cmd_sender           : cmd_sender,
                              };
+
+        let beacon_port = cm.config.beacon_port.clone();
 
         if let Some(port) = beacon_port {
             let _ = cm.start_broadcast_acceptor(port);
         }
 
+        Ok(cm)
+    }
+
+    pub fn start_default_acceptors(&mut self) -> Vec<io::Result<Port>> {
+        let tcp_listening_port = self.config.tcp_listening_port.clone();
+        let utp_listening_port = self.config.utp_listening_port.clone();
+
+        let mut result = Vec::new();
+
         if let Some(port) = tcp_listening_port {
-            let _ = try!(cm.start_accepting(Port::Tcp(port)));
+            result.push(self.start_accepting(Port::Tcp(port)));
         }
 
         if let Some(port) = utp_listening_port {
-            let _ = try!(cm.start_accepting(Port::Utp(port)));
+            result.push(self.start_accepting(Port::Utp(port)));
         }
 
-        Ok(cm)
+        result
     }
 
     /// Starts listening on all supported protocols. Ports in _hint_ are tried
@@ -199,23 +186,20 @@ impl Service {
     /// This method returns immediately after dropping any active connections.endpoints
     /// New bootstrap connections will be notified by `NewBootstrapConnection` event.
     /// Its upper layer's responsibility to maintain or drop these connections.
-    /// Maximum of `max_successful_bootstrap_connection` bootstrap connections will be made and further connection
-    /// attempts will stop.
-    /// It will reiterate the list of all endpoints until it gets at least one connection.
-    pub fn bootstrap(&mut self, max_successful_bootstrap_connection: usize) {
+    pub fn bootstrap(&mut self) {
         let config = self.config.clone();
         let beacon_guid_and_port = self.beacon_guid_and_port.clone();
 
         Self::post(&self.cmd_sender, move |state : &mut State| {
-            // TODO: Review whether this is what we want (to disconnect
-            // existing connections).
-            let _ = state.connections.clear();
-            state.bootstrap_count = (0, max_successful_bootstrap_connection.clone());
-
             let contacts = state.populate_bootstrap_contacts(&config, &beacon_guid_and_port);
             state.bootstrap_off_list(contacts.clone(),
-                                     beacon_guid_and_port.is_some(),
-                                     max_successful_bootstrap_connection);
+                                     beacon_guid_and_port.is_some());
+        });
+    }
+
+    pub fn stop_bootstrap(&mut self) {
+        Self::post(&self.cmd_sender, move |state : &mut State| {
+            state.stop_bootstrap();
         });
     }
 
@@ -228,7 +212,7 @@ impl Service {
         }
 
         let _ = self.cmd_sender.send(Box::new(move |state: &mut State| {
-            state.stop_called = true;
+            state.stop();
 
             // Connect to our listening ports, this should unblock
             // the threads.
@@ -265,7 +249,7 @@ impl Service {
                 for endpoint in endpoints {
                     if let Ok(transport) = transport::connect(endpoint) {
                         let _ = cmd_sender.send(Box::new(move |state: &mut State| {
-                            let _ = state.handle_connect(transport, is_broadcast_acceptor, false);
+                            let _ = state.handle_connect(transport, is_broadcast_acceptor);
                         }));
                     }
                 }
@@ -386,6 +370,7 @@ mod test {
     use std::path::PathBuf;
     use std::fs::remove_file;
     use event::Event;
+    use std::io;
 
     fn encode<T>(value: &T) -> Bytes where T: Encodable
     {
@@ -471,6 +456,10 @@ mod test {
         TestConfigFile{path: path}
     }
 
+    fn count_ok<T>(vec: &Vec<io::Result<T>>) -> usize {
+        vec.iter().filter(|a|a.is_ok()).count()
+    }
+
     #[test]
     fn bootstrap() {
         let _cleaner = ::file_handler::ScopedUserAppDirRemover;
@@ -478,16 +467,18 @@ mod test {
         let _config_file = make_temp_config(None);
 
         let mut cm1 = Service::new(cm1_i).unwrap();
+        assert_eq!(count_ok(&cm1.start_default_acceptors()), 1);
 
         thread::sleep_ms(1000);
         let _config_file = make_temp_config(cm1.get_beacon_acceptor_port());
 
         let (cm2_i, cm2_o) = channel();
         let mut cm2 = Service::new(cm2_i).unwrap();
+
         let cm2_eps = cm2.get_own_endpoints().into_iter()
             .map(|ep| ep.get_port()).collect::<Vec<Port>>();
 
-        cm2.bootstrap(1);
+        cm2.bootstrap();
 
         let timeout = ::time::Duration::seconds(5);
         let start = ::time::now();
@@ -497,10 +488,13 @@ mod test {
             ::std::thread::sleep_ms(100);
         }
         match result {
-            Ok(Event::NewBootstrapConnection(ep)) => {
-                debug!("NewBootstrapConnection {:?}", ep);
+            Ok(Event::OnConnect(ep)) => {
+                debug!("OnConnect {:?}", ep);
             }
-            _ => { assert!(false, "Failed to receive NewBootstrapConnection event")}
+            Ok(Event::OnAccept(ep)) => {
+                debug!("OnAccept {:?}", ep);
+            }
+            _ => { assert!(false, "Failed to receive NewConnection event")}
         }
         cm1.stop();
         cm2.stop();
@@ -514,7 +508,11 @@ mod test {
             spawn(move || {
                 for i in o.iter() {
                     match i {
-                        Event::NewConnection(other_ep) => {
+                        Event::OnConnect(other_ep) => {
+                            // debug!("Connected {:?}", other_ep);
+                            let _ = cm.send(other_ep.clone(), encode(&"hello world".to_string()));
+                        },
+                        Event::OnAccept(other_ep) => {
                             // debug!("Connected {:?}", other_ep);
                             let _ = cm.send(other_ep.clone(), encode(&"hello world".to_string()));
                         },
@@ -525,8 +523,8 @@ mod test {
                         },
                         Event::LostConnection(_) => {
                             // debug!("Lost connection to {:?}", other_ep);
-                        }
-                        Event::NewBootstrapConnection(_) => {}
+                        },
+                        Event::BootstrapFinished => {}
                     }
                 }
                 // debug!("done");
@@ -536,7 +534,9 @@ mod test {
         let mut temp_configs = vec![make_temp_config(None)];
 
         let (cm1_i, cm1_o) = channel();
-        let cm1 = Service::new(cm1_i).unwrap();
+        let mut cm1 = Service::new(cm1_i).unwrap();
+        assert!(count_ok(&cm1.start_default_acceptors()) >= 1);
+
         let cm1_ports = cm1.get_own_endpoints().into_iter()
             .map(|ep| ep.get_port()).collect::<Vec<Port>>();
         let cm1_eps = cm1_ports.iter().map(|p| Endpoint::tcp(("127.0.0.1", p.get_port())));
@@ -544,7 +544,9 @@ mod test {
         temp_configs.push(make_temp_config(cm1.get_beacon_acceptor_port()));
 
         let (cm2_i, cm2_o) = channel();
-        let cm2 = Service::new(cm2_i).unwrap();
+        let mut cm2 = Service::new(cm2_i).unwrap();
+        assert!(count_ok(&cm2.start_default_acceptors()) >= 1);
+
         let cm2_ports = cm2.get_own_endpoints().into_iter()
             .map(|ep| ep.get_port()).collect::<Vec<Port>>();
         let cm2_eps = cm2_ports.iter().map(|p| Endpoint::tcp(("127.0.0.1", p.get_port())));
@@ -567,7 +569,11 @@ mod test {
                 for i in o.iter() {
                     let _ = tx.send(i.clone());
                     match i {
-                        Event::NewConnection(other_ep) => {
+                        Event::OnConnect(other_ep) => {
+                            let mut connected_eps = conn_eps.lock().unwrap();
+                            connected_eps.push(other_ep);
+                        },
+                        Event::OnAccept(other_ep) => {
                             let mut connected_eps = conn_eps.lock().unwrap();
                             connected_eps.push(other_ep);
                         },
@@ -578,7 +584,7 @@ mod test {
                         },
                         Event::LostConnection(_) => {
                         },
-                        Event::NewBootstrapConnection(_) => {}
+                        Event::BootstrapFinished => {}
                     }
                 }
                 // debug!("done");
@@ -590,7 +596,10 @@ mod test {
                 for event in stats_rx.iter() {
                     let mut stat = stats.lock().unwrap();
                     match event {
-                            Event::NewConnection(_) => {
+                        Event::OnConnect(_) => {
+                            stat.new_connections_count += 1;
+                        },
+                        Event::OnAccept(_) => {
                             stat.new_connections_count += 1;
                         },
                         Event::NewMessage(_, data) => {
@@ -606,7 +615,7 @@ mod test {
                         Event::LostConnection(_) => {
                             stat.lost_connection_count += 1;
                         },
-                        Event::NewBootstrapConnection(_) => {}
+                        Event::BootstrapFinished => {}
                     }
                 }
             });
@@ -707,7 +716,9 @@ mod test {
 
         let (cm_tx, cm_rx) = channel();
 
-        let cm = Service::new(cm_tx).unwrap();
+        let mut cm = Service::new(cm_tx).unwrap();
+        assert!(count_ok(&cm.start_default_acceptors()) >= 1);
+        
 
         let cm_listen_ports = cm.get_own_endpoints().into_iter()
                                 .map(|ep| ep.get_port())
@@ -726,18 +737,15 @@ mod test {
 
                 match event {
                     Event::NewMessage(_, _) => {
-                        //debug!("NewMessage");
                     },
-                    Event::NewConnection(_) => {
-                        //debug!("NewConnection");
+                    Event::OnConnect(_) => {
+                    },
+                    Event::OnAccept(_) => {
                     },
                     Event::LostConnection(_) => {
-                        //debug!("LostConnection");
                         break;
-                    }
-                    Event::NewBootstrapConnection(_) => {
-                        //debug!("NewBootstrapConnection");
-                    }
+                    },
+                    Event::BootstrapFinished => {}
                 }
             }
         });
@@ -756,108 +764,4 @@ mod test {
 
         let _ = thread.join();
     }
-
-    //#[test]
-    //fn bootstrap_off_list_connects() {
-    //    let acceptor = transport::new_acceptor(Port::Tcp(0)).unwrap();
-    //    let addr = match acceptor {
-    //        transport::Acceptor::Tcp(_, listener) => listener.local_addr()
-    //            .unwrap(),
-    //        _ => panic!("Unable to create a new connection"),
-    //    };
-    //    let addr = match addr {
-    //        SocketAddr::V4(a) => if a.ip().is_unspecified() {
-    //            SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1),
-    //                                             a.port()))
-    //        } else {
-    //            SocketAddr::V4(a)
-    //        },
-    //        SocketAddr::V6(a) => if a.ip().is_unspecified() {
-    //            SocketAddr::V6(SocketAddrV6::new("::1".parse().unwrap(),
-    //                                             a.port(), a.flowinfo(),
-    //                                             a.scope_id()))
-    //        } else {
-    //            SocketAddr::V6(a)
-    //        },
-    //    };
-    //    let ep = Endpoint::Tcp(addr);
-    //    let state = Arc::new(Mutex::new(super::State{ event_sender: channel().0,
-    //                                                  connections: HashMap::new(),
-    //                                                  listening_ports: HashSet::new(),
-    //                                                  bootstrap_handler: None,
-    //                                                  stop_called: false,
-    //                                                  bootstrap_count: (0,1),
-    //                                                }));
-    //    assert!(super::bootstrap_off_list(Arc::downgrade(&state), vec![], false, 15).is_err());
-    //    assert!(super::bootstrap_off_list(Arc::downgrade(&state),
-    //                                      vec![::contact::Contact{endpoint: ep.clone()}], false, 15)
-    //            .is_ok());
-    //}
-
-    //#[test]
-    //fn bootstrap_off_list_connects_multiple() {
-    //    let max_count = 4;
-    //    let available_peer_count = 10;
-
-    //    let mut contacts = vec![];
-    //    let mut acceptors = vec![];
-    //    loop {
-    //        let acceptor = transport::new_acceptor(Port::Tcp(0)).unwrap();
-    //        let addr = match acceptor {
-    //            transport::Acceptor::Tcp(_, ref listener) => listener.local_addr()
-    //                .unwrap(),
-    //            _ => panic!("Unable to create a new connection"),
-    //        };
-    //        let addr = match addr {
-    //            SocketAddr::V4(a) => if a.ip().is_unspecified() {
-    //                SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1),
-    //                                                 a.port()))
-    //            } else {
-    //                SocketAddr::V4(a)
-    //            },
-    //            SocketAddr::V6(a) => if a.ip().is_unspecified() {
-    //                SocketAddr::V6(SocketAddrV6::new("::1".parse().unwrap(),
-    //                                                 a.port(), a.flowinfo(),
-    //                                                 a.scope_id()))
-    //            } else {
-    //                SocketAddr::V6(a)
-    //            },
-    //        };
-    //        contacts.push(::contact::Contact{endpoint: Endpoint::Tcp(addr)});
-    //        acceptors.push(acceptor);
-    //        if contacts.len() == available_peer_count {
-    //            break;
-    //        }
-    //    }
-
-    //    let (tx, rx) = channel();
-    //    let state = Arc::new(Mutex::new(super::State{ event_sender: tx,
-    //                                                  connections: HashMap::new(),
-    //                                                  listening_ports: HashSet::new(),
-    //                                                  bootstrap_handler: None,
-    //                                                  stop_called: false,
-    //                                                  bootstrap_count: (0,max_count),
-    //                                                }));
-    //    assert!(super::bootstrap_off_list(Arc::downgrade(&state), vec![], false, 15).is_err());
-    //    assert!(super::bootstrap_off_list(Arc::downgrade(&state),
-    //                                      contacts.clone(), false, max_count).is_ok());
-
-    //    // read if rx gets max_count bootstrap eps
-    //    let mut received_event_count = 0;
-    //    while received_event_count < max_count {
-    //        match rx.recv() {
-    //            Ok(Event::NewBootstrapConnection(ep)) => {
-    //                assert!(contacts.contains(&::contact::Contact{endpoint: ep}));
-    //                received_event_count += 1;
-    //            },
-    //            _ => { panic!("Unexpected event !")},
-    //        }
-    //    }
-
-    //    // should not get any more than max bs connections
-    //    for _ in 0..10 {
-    //        thread::sleep_ms(100);
-    //        assert!(rx.try_recv().is_err());
-    //    }
-    //}
 }

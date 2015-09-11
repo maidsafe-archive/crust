@@ -342,6 +342,10 @@ fn create_local_config() {
     }
 }
 
+fn count_ok<T>(vec: &Vec<io::Result<T>>) -> usize {
+    vec.iter().filter(|a|a.is_ok()).count()
+}
+
 fn main() {
     match env_logger::init() {
         Ok(()) => {},
@@ -363,6 +367,8 @@ fn main() {
     let (channel_sender, channel_receiver) = channel();
     let (bs_sender, bs_receiver) = channel();
     let mut service = Service::new(channel_sender).unwrap();
+    assert!(count_ok(&service.start_default_acceptors()) >= 1);
+
     stdout = green_foreground(stdout);
     let listening_endpoints = service.get_own_endpoints();
     print!("Listening for new connections on");
@@ -372,7 +378,7 @@ fn main() {
     println!("");
 
     stdout = reset_foreground(stdout);
-    service.bootstrap(15);
+    service.bootstrap();
 
     // Start event-handling thread
     let running_speed_test = args.flag_speed.is_some();
@@ -391,9 +397,19 @@ fn main() {
                              .unwrap_or(format!("non-UTF-8 message of {} bytes",
                                                 message_length)));
                 },
-                crust::Event::NewConnection(endpoint) => {
+                crust::Event::OnConnect(endpoint) => {
                     stdout_copy = cyan_foreground(stdout_copy);
                     println!("\nConnected to peer at {:?}", endpoint);
+                    my_flat_world.add_node(CrustNode::new(endpoint, true));
+                    my_flat_world.print_connected_nodes();
+                    if !bootstrapped {
+                        bootstrapped = true;
+                        let _ = bs_sender.send(endpoint);
+                    }
+                },
+                crust::Event::OnAccept(endpoint) => {
+                    stdout_copy = cyan_foreground(stdout_copy);
+                    println!("\nAccepted peer at {:?}", endpoint);
                     my_flat_world.add_node(CrustNode::new(endpoint, true));
                     my_flat_world.print_connected_nodes();
                     if !bootstrapped {
@@ -408,14 +424,7 @@ fn main() {
                     my_flat_world.drop_node(CrustNode::new(endpoint, false));
                     my_flat_world.print_connected_nodes();
                 },
-                crust::Event::NewBootstrapConnection(endpoint) => {
-                    bootstrapped = true;
-                    stdout_copy = cyan_foreground(stdout_copy);
-                    println!("\nNew BootstrapConnection to peer at {:?}", endpoint);
-                    my_flat_world.add_node(CrustNode::new(endpoint.clone(), true));
-                    my_flat_world.print_connected_nodes();
-                    let _ = bs_sender.send(endpoint);
-                }
+                crust::Event::BootstrapFinished => {}
             }
             stdout_copy = reset_foreground(stdout_copy);
             if !running_speed_test {

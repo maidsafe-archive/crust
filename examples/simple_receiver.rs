@@ -90,15 +90,16 @@ fn main() {
                     format!("The Fibonacci number for {} is {}", requested_value, fibonacci_result);
                 service.send(endpoint.clone(), response.into_bytes());
             },
-            crust::Event::NewConnection(endpoint) => {
-                println!("New connection made to {:?}", endpoint);
+            crust::Event::OnConnect(endpoint) => {
+                println!("Connected to {:?}", endpoint);
+            },
+            crust::Event::OnAccept(endpoint) => {
+                println!("Accepted from {:?}", endpoint);
             },
             crust::Event::LostConnection(endpoint) => {
                 println!("Lost connection to {:?}", endpoint);
             },
-            crust::Event::NewBootstrapConnection(endpoint) => {
-                println!("New Bootstrap connection made to {:?}", endpoint);
-            }
+            crust::Event::BootstrapFinished => {},
         }
     }
     println!("Stopped receiving.");
