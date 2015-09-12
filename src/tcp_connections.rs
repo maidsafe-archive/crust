@@ -15,44 +15,15 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::net::{TcpListener, TcpStream, SocketAddr, Shutdown};
-use std::io::{BufReader, Error, ErrorKind};
+use std::net::{TcpListener, TcpStream, SocketAddr};
+use std::io::{Error, ErrorKind};
 use std::io::Result as IoResult;
-use cbor::{Encoder, CborError, Decoder};
 use std::thread;
-use std::marker::PhantomData;
-use rustc_serialize::{Decodable, Encodable};
 use std::sync::mpsc;
-use std::sync::mpsc::Receiver;
-
-pub type InTcpStream<T> = Receiver<T>;
-
-pub type TcpReader<T> = Receiver<T>;
-pub type TcpWriter<T> = OutTcpStream<T>;
-
-pub struct OutTcpStream<T> {
-    tcp_stream: TcpStream,
-    _phantom: PhantomData<T>
-}
-
-impl <'a, T> OutTcpStream<T>
-where T: Encodable {
-    pub fn send(&mut self, m: &T) -> Result<(), CborError> {
-        let mut e = Encoder::from_writer(&mut self.tcp_stream);
-        e.encode(&[&m])
-    }
-}
-
-//#[unsafe_destructor]
-impl <T> Drop for OutTcpStream<T> {
-    fn drop(&mut self) {
-        let _ = self.tcp_stream.shutdown(Shutdown::Write);
-    }
-}
+use std::sync::mpsc::{Receiver, Sender};
 
 /// Connect to a peer and open a send-receive pair.  See `upgrade` for more details.
-pub fn connect_tcp<'a, 'b, I, O>(addr: SocketAddr) -> IoResult<(Receiver<I>, OutTcpStream<O>)>
-        where I: Send + Decodable + 'static, O: Encodable {
+pub fn connect_tcp(addr: SocketAddr) -> IoResult<(TcpStream, Sender<Vec<u8>>)> {
     let stream = try!(TcpStream::connect(&addr));
     if try!(stream.peer_addr()).port() == try!(stream.local_addr()).port() {
         return Err(Error::new(ErrorKind::ConnectionRefused,
@@ -109,56 +80,25 @@ pub fn listen(port: u16) -> IoResult<(Receiver<(TcpStream, SocketAddr)>, TcpList
 /// Upgrades a TcpStream to a Sender-Receiver pair that you can use to send and
 /// receive objects automatically.  If there is an error decoding or encoding
 /// values, that respective part is shut down.
-pub fn upgrade_tcp<'a, 'b, I, O>(stream: TcpStream) -> IoResult<(InTcpStream<I>, OutTcpStream<O>)>
-where I: Send + Decodable + 'static, O: Encodable {
+pub fn upgrade_tcp(stream: TcpStream)
+                   -> IoResult<(TcpStream, Sender<Vec<u8>>)> {
     let s1 = stream;
     let s2 = try!(s1.try_clone());
-    Ok((upgrade_reader(s1), upgrade_writer(s2)))
+    Ok((s1, upgrade_writer(s2)))
 }
 
-fn upgrade_writer<'a, T>(stream: TcpStream) -> OutTcpStream<T>
-where T: Encodable {
-    OutTcpStream {
-        tcp_stream: stream,
-        _phantom: PhantomData
-    }
-}
-
-fn upgrade_reader<'a, T>(stream: TcpStream) -> InTcpStream<T>
-where T: Send + Decodable + 'static {
-    let (in_snd, in_rec) = mpsc::channel();
-
-    let _ = thread::Builder::new().name("TCP reader".to_string()).spawn(move || {
-        let mut buffer = BufReader::new(stream);
-        {
-            let mut decoder = Decoder::from_reader(&mut buffer);
-            loop {
-                let data = match decoder.decode().next() {
-                  Some(a) => a,
-                  None => { break; }
-                  };
-                match data {
-                    Ok(a) => {
-                        // Try to send, and if we can't, then the channel is closed.
-                        if in_snd.send(a).is_err() {
-                            break;
-                        }
-                    },
-                    // if we can't decode, close the stream with an error.
-                    Err(_) => {
-                        // let _ = in_snd.error(e);
-                        break;
-                    }
-                }
+fn upgrade_writer(mut stream: TcpStream) -> Sender<Vec<u8>> {
+    let (tx, rx) = mpsc::channel::<Vec<u8>>();
+    let _ = thread::spawn(move || {
+        while let Ok(v) = rx.recv() {
+            use std::io::Write;
+            if stream.write_all(&v).is_err() {
+                break;
             }
         }
-        let s1 = buffer.into_inner();
-        let _ = s1.shutdown(Shutdown::Read);
     });
-    in_rec
+    tx
 }
-
-
 
 #[cfg(test)]
 mod test {
@@ -166,15 +106,19 @@ mod test {
     use std::thread;
     use std::net::SocketAddr;
     use std::str::FromStr;
+    use std::time::Duration;
+    use std::io::Read;
+    use std::sync::mpsc;
 
  #[test]
     fn test_small_stream() {
         let (event_receiver, listener) = listen(5483).unwrap();
         let port = listener.local_addr().unwrap().port();
-        let (i, mut o) = connect_tcp(SocketAddr::from_str(&format!("127.0.0.1:{}", port)).unwrap()).unwrap();
+        let (mut i, o) = connect_tcp(SocketAddr::from_str(&format!("127.0.0.1:{}", port)).unwrap()).unwrap();
 
-        for x in 0u64 .. 10u64 {
-            if o.send(&x).is_err() { break; }
+        for x in 0 .. 10 {
+            let x = vec![x];
+            o.send(x).unwrap()
         }
         drop(o);
         let _ = thread::spawn(move || {
@@ -182,21 +126,29 @@ mod test {
                 let (connection, _) = x;
                 // Spawn a new thread for each connection that we get.
                 let _ = thread::spawn(move || {
-                    let (i, mut o) = upgrade_tcp(connection).unwrap();
-                    for x in i.iter() {
-                        let x:u32 = x;
-                        if o.send(&(x, x + 1)).is_err() { break; }
+                    let (mut i, o) = upgrade_tcp(connection).unwrap();
+                    i.set_read_timeout(Some(Duration::new(5, 0))).unwrap();
+                    let mut buf = [0u8; 10];
+                    let mut len = 0;
+                    while len < 10 {
+                        len += i.read(&mut buf[len..]).unwrap();
                     }
+                    for i in 0..buf.len() {
+                        buf[i] += 1;
+                    }
+                    o.send(buf.iter().cloned().collect()).unwrap();
                 });
             }
         });
         // Collect everything that we get back.
-        let mut responses: Vec<(u64, u64)> = Vec::new();
-        for a in i.iter() {
-            responses.push(a);
+        i.set_read_timeout(Some(Duration::new(5, 0))).unwrap();
+        let mut buf = [0u8; 10];
+        let mut len = 0;
+        while len < 10 {
+            len += i.read(&mut buf[len..]).unwrap();
         }
-        // debug!("Responses: {:?}", responses);
-        assert_eq!(10, responses.len());
+        assert_eq!(buf.iter().cloned().collect::<Vec<_>>(),
+                   vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
     }
 
     // Downscaling node count only for mac for test to pass.
@@ -215,62 +167,44 @@ mod test {
 
         let (event_receiver, listener) = listen(5483).unwrap();
         let port = listener.local_addr().unwrap().port();
-        let mut vector_senders = Vec::new();
-        let mut vector_receiver = Vec::new();
+
+        let (tx, rx) = mpsc::channel();
+
         for _ in 0..node_count() {
-            let (i, o) = connect_tcp(SocketAddr::from_str(&format!("127.0.0.1:{}", port)).unwrap()).unwrap();
-            let boxed_output: Box<OutTcpStream<u64>> = Box::new(o);
-            vector_senders.push(boxed_output);
-            let boxed_input: Box<InTcpStream<(u64, u64)>> = Box::new(i);
-            vector_receiver.push(boxed_input);
-        }
-
-        //  send
-        for mut v in &mut vector_senders {
-            for x in 0u64 .. MSG_COUNT as u64 {
-                if v.send(&x).is_err() { break; }
-            }
-        }
-
-        //  close sender
-        loop {
-           let _ = match vector_senders.pop() {
-                None => break, // empty
-                Some(_) => (),
-            };
-        }
-
-
-        // event_receiver
-        let _ = thread::spawn(move || {
-            for (connection, _) in event_receiver.iter() {
-                // Spawn a new thread for each connection that we get.
-                let _ = thread::spawn(move || {
-                    let (i, mut o) = upgrade_tcp(connection).unwrap();
-                    for x in i.iter() {
-                        let x:u32 = x;
-                        if o.send(&(x, x + 1)).is_err() { break; }
-                    }
-                });
-            }
-        });
-
-        // Collect everything that we get back.
-        let mut responses: Vec<(u64, u64)> = Vec::new();
-
-        loop {
-           let _ = match vector_receiver.pop() {
-                None => break, // empty
-                Some(receiver) => {
-                    for a in receiver.iter() {
-                        responses.push(a);
-                    }
+            let tx2 = tx.clone();
+            let (mut i, o) = connect_tcp(SocketAddr::from_str(&format!("127.0.0.1:{}", port)).unwrap()).unwrap();
+            let _ = thread::spawn(move || {
+                let mut buf = Vec::with_capacity(MSG_COUNT);
+                for i in 0..MSG_COUNT as u8 {
+                    buf.push(i)
                 }
-            };
+                o.send(buf.clone()).unwrap();
+                let mut len = 0;
+                while len < MSG_COUNT {
+                    len += i.read(&mut buf[len..]).unwrap();
+                }
+                tx2.send(buf)
+            });
+            let (connection, _) = event_receiver.recv().unwrap();
+            let _ = thread::spawn(move || {
+                let (mut i, o) = upgrade_tcp(connection).unwrap();
+                i.set_read_timeout(Some(Duration::new(5, 0))).unwrap();
+                let mut buf = [0u8; MSG_COUNT];
+                let mut len = 0;
+                while len < MSG_COUNT {
+                    len += i.read(&mut buf[len..]).unwrap()
+                }
+                for i in 0..buf.len() {
+                    buf[i] += 1
+                }
+                o.send(buf.iter().cloned().collect()).unwrap()
+            });
         }
 
-        // debug!("Responses: {:?}", responses);
-        assert_eq!((node_count() * MSG_COUNT), responses.len());
+        let v = (0..MSG_COUNT as u8).map(|i| i + 1).collect::<Vec<u8>>();
+        for _ in 0..node_count() {
+            assert_eq!(rx.recv().unwrap(), v);
+        }
     }
 
 
