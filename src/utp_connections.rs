@@ -16,24 +16,16 @@
 // relating to use of the SAFE Network Software.
 
 use utp::{UtpSocket, UtpListener};
-use utp_wrapper::UtpWrapper;
+pub use utp_wrapper::UtpWrapper;
 use std::net::{SocketAddr, SocketAddrV4, Ipv4Addr};
 use std::io::Result as IoResult;
-use rustc_serialize::{Decodable, Encodable};
-use cbor::{Encoder, Decoder};
 use std::sync::mpsc::{Sender, Receiver};
 use std::sync::mpsc;
 use std::thread;
 
-pub type UtpReader<T> = Receiver<T>;
-pub type UtpWriter<T> = Sender<T>;
-
-pub type InUtpStream<T> = Receiver<T>;
-pub type OutUtpStream<T> = Sender<T>;
-
 /// Connect to a peer and open a send-receive pair.  See `upgrade` for more details.
-pub fn connect_utp<'a, 'b, I, O>(addr: SocketAddr) -> IoResult<(Receiver<I>, Sender<O>)>
-        where I: Send + Decodable + 'static, O: Send + Encodable + 'static {
+pub fn connect_utp(addr: SocketAddr)
+                   -> IoResult<(UtpWrapper, Sender<Vec<u8>>)> {
     upgrade_utp(try!(UtpSocket::connect(addr)))
 }
 
@@ -61,50 +53,11 @@ pub fn listen(port: u16) -> IoResult<(Receiver<(UtpSocket, SocketAddr)>, u16)> {
 /// Upgrades a newly connected UtpSocket to a Sender-Receiver pair that you can use to send and
 /// receive objects automatically.  If there is an error decoding or encoding
 /// values, that respective part is shut down.
-pub fn upgrade_utp<'a, 'b, I, O>(newconnection: UtpSocket)
-                                 -> IoResult<(Receiver<I>, Sender<O>)>
-where I: Send + Decodable + 'static, O: Send + Encodable + 'static {
+pub fn upgrade_utp(newconnection: UtpSocket)
+                   -> IoResult<(UtpWrapper, Sender<Vec<u8>>)> {
     let socket = UtpWrapper::wrap(newconnection);
     let output = socket.output();
-    Ok((upgrade_reader(socket), upgrade_writer(output)))
-}
-
-fn upgrade_writer<'a, T>(sender: Sender<Vec<u8>>) -> Sender<T>
-    where T: Send + Encodable + 'static {
-    let (tx, rx) = mpsc::channel();
-    let _ = thread::spawn(move || {
-        let mut e = Encoder::from_memory();
-        while let Ok(v) = rx.recv() {
-            e.encode(&vec![v]).unwrap();
-            if sender.send(Vec::from(e.as_bytes())).is_err() {
-                break;
-            }
-        }
-    });
-    tx
-}
-
-fn upgrade_reader<'a, T>(socket: UtpWrapper) -> Receiver<T>
-    where T: Send + Decodable + 'static {
-    let (tx, rx) = mpsc::channel();
-    let _ = thread::spawn(move || {
-        let mut decoder = Decoder::from_reader(socket);
-        loop {
-            let data = match decoder.decode().next() {
-                Some(a) => a,
-                None => break,
-            };
-            match data {
-                Ok(data) => {
-                    if tx.send(data).is_err() {
-                        break
-                    }
-                },
-                Err(_) => break,
-            }
-        }
-    });
-    rx
+    Ok((socket, output))
 }
 
 #[allow(unused)]
@@ -112,6 +65,7 @@ mod test {
     use super::*;
     use std::thread;
     use std::net::{SocketAddr, SocketAddrV4, Ipv4Addr, UdpSocket};
+    use std::io::Read;
 
     #[test]
     fn cannot_establish_connection() {
@@ -120,7 +74,7 @@ mod test {
         }).unwrap();
         let port = listener.local_addr().unwrap().port();
         drop(listener);
-        let _err = connect_utp::<u32, u32>(SocketAddr::V4({
+        let _err = connect_utp(SocketAddr::V4({
             SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), port)
         })).err().unwrap();
     }
@@ -128,7 +82,7 @@ mod test {
     #[test]
     fn establishing_connection() {
         let listener = listen(0).unwrap();
-        let _ = connect_utp::<u32, u32>(SocketAddr::V4({
+        let _ = connect_utp(SocketAddr::V4({
             SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), listener.1)
         })).unwrap();
     }
@@ -136,18 +90,22 @@ mod test {
     #[test]
     fn send_receive_data() {
         let listener = listen(0).unwrap();
-        let (i, o) = connect_utp::<u32, u32>(SocketAddr::V4({
+        let (mut i, o) = connect_utp(SocketAddr::V4({
             SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), listener.1)
         })).unwrap();
         let listener = listener.0;
         let thread = thread::spawn(move || {
-            o.send(42u32);
-            assert_eq!(i.recv().unwrap(), 43u32);
+            o.send(vec![42]);
+            let mut buf = [0u8; 1];
+            let _ = i.read(&mut buf).unwrap();
+            assert_eq!(buf[0], 43);
         });
         let s = listener.recv().unwrap().0;
-        let (i, o) = upgrade_utp::<u32, u32>(s).unwrap();
-        assert_eq!(i.recv().unwrap(), 42);
-        o.send(43);
+        let (mut i, o) = upgrade_utp(s).unwrap();
+        let mut buf = [0u8; 1];
+        let _ = i.read(&mut buf).unwrap();
+        assert_eq!(buf[0], 42);
+        o.send(vec![43]);
         thread.join();
     }
 }
