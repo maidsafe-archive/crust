@@ -129,3 +129,36 @@ fn map_external_port(local_ep: SocketAddrV4, ext_port: ip::Port)
     Ok(ip::Endpoint::new(IpAddr::V4(ext_ip), ext_port))
 }
 
+// --- Tests -------------------------------------------------------------------
+#[cfg(test)]
+mod test {
+    use super::*;
+    use std::net::{IpAddr, Ipv4Addr, SocketAddrV4};
+    use std::sync::mpsc;
+    use ip;
+    use std::io;
+
+    #[test]
+    fn upnp() {
+        type R = io::Result<Vec<(SocketAddrV4, ip::Endpoint)>>;
+        let (sender, receiver) = mpsc::channel::<R>();
+        let unspecified_ip = IpAddr::V4(Ipv4Addr::new(0,0,0,0));
+        let local_ep = ip::Endpoint::new(unspecified_ip, ip::Port::Udp(5484));
+        async_map_external_port(&local_ep, Box::new(move |result: R| {
+            assert!(sender.send(result).is_ok());
+        }));
+
+        let igd_result = match receiver.recv() {
+            Ok(igd_result) => igd_result,
+            Err(what) => panic!(what),
+        };
+
+        let endpoints = match igd_result {
+            Ok(endpoints) => endpoints,
+            Err(what) => panic!(what),
+        };
+
+        assert!(endpoints.len() >= 1);
+    }
+}
+
