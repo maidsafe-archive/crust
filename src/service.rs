@@ -754,11 +754,17 @@ mod test {
 
         let _ = spawn(move || {
             let _temp_config = make_temp_config(None);
-            let (cm_aux_tx, _) = channel();
+            let (cm_aux_tx, cm_aux_rx) = channel();
             let cm_aux = Service::new(cm_aux_tx).unwrap();
             // setting the listening port to be greater than 4455 will make the test hanging
             // changing this to cm_beacon_addr will make the test hanging
             cm_aux.connect(cm_listen_addrs);
+            while let Ok(e) = cm_aux_rx.recv() {
+                match e {
+                    Event::OnConnect(_) => break,
+                    _ => (),
+                }
+            }
         }).join();
         thread::sleep_ms(100);
 

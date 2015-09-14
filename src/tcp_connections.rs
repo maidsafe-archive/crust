@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::net::{TcpListener, TcpStream, SocketAddr};
+use std::net::{TcpListener, TcpStream, SocketAddr, Shutdown};
 use std::io::{Error, ErrorKind};
 use std::io::Result as IoResult;
 use std::thread;
@@ -96,6 +96,7 @@ fn upgrade_writer(mut stream: TcpStream) -> Sender<Vec<u8>> {
                 break;
             }
         }
+        stream.shutdown(Shutdown::Both)
     });
     tx
 }
