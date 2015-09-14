@@ -341,11 +341,11 @@ impl Service {
             }));
 
             for internal_ep in internal_eps {
-                let port = internal_ep.to_ip().port();
                 let async = async.clone();
                 let event_sender = state.event_sender.clone();
 
-                async_map_external_port(&port, Box::new(move |results: io::Result<Vec<T>>| {
+                async_map_external_port(&internal_ep.to_ip(),
+                                        Box::new(move |results: io::Result<Vec<T>>| {
                     let mut async = async.lock().unwrap();
                     async.remaining -= 1;
                     if let Ok(results) = results {

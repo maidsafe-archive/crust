@@ -24,17 +24,41 @@ use std::net::{IpAddr, SocketAddrV4};
 use std::thread;
 use std::boxed::FnBox;
 
-pub fn async_map_external_port<Callback>(port: &ip::Port, callback: Box<Callback>)
+pub fn async_map_external_port<Callback>(local_ep: &ip::Endpoint, callback: Box<Callback>)
     where Callback: FnBox(io::Result<Vec<(SocketAddrV4, ip::Endpoint)>>) +
           Send + 'static
 {
-    let local_eps = filter_loopback(getifaddrs()).into_iter()
-                    .filter_map(|e| match e.addr {
-                        IpAddr::V4(ip) => Some(ip),
-                        IpAddr::V6(_) => None,
-                    })
-                    .map(|ip| SocketAddrV4::new(ip, port.number()))
-                    .collect::<Vec<_>>();
+    let is_unspecified = match local_ep.ip() {
+        IpAddr::V4(addr) => addr.is_unspecified(),
+        IpAddr::V6(addr) => addr.is_unspecified(),
+    };
+
+    let local_eps = if !is_unspecified {
+        let ip = match local_ep.ip() {
+            IpAddr::V4(ip_addr) => ip_addr,
+            IpAddr::V6(_) => {
+                let e = Err(io::Error::new(io::ErrorKind::Other,
+                                           "Ip v6 not supported by the uPnP library"));
+                callback.call_box((e,));
+                return;
+            }
+        };
+        vec![SocketAddrV4::new(ip, local_ep.port().number())]
+    }
+    else {
+        // TODO: Check if we really need to do this, perhaps uPnP can deal
+        // with unspecified addresses itself? Also, it doesn't sound right
+        // that we want to map one external port to multiple internal
+        // endpoints...
+        filter_loopback(getifaddrs())
+            .into_iter()
+            .filter_map(|e| match e.addr {
+                IpAddr::V4(ip) => Some(ip),
+                IpAddr::V6(_) => None,
+            })
+            .map(|ip| SocketAddrV4::new(ip, local_ep.port().number()))
+            .collect::<Vec<_>>()
+    };
 
     let eps_count = local_eps.len();
 
@@ -47,15 +71,15 @@ pub fn async_map_external_port<Callback>(port: &ip::Port, callback: Box<Callback
     type R = io::Result<(SocketAddrV4, ip::Endpoint)>;
     let results = Arc::new(Mutex::new(Vec::<R>::new()));
     let callback_mut = Arc::new(Mutex::new(Some(callback)));
+    let local_port = local_ep.port();
 
     for local_ep in local_eps {
-        let port     = port.clone();
         let local_ep = local_ep.clone();
-        let results  = results.clone();
+        let results = results.clone();
         let callback_mut = callback_mut.clone();
 
         let _join_handle = thread::spawn(move || {
-            let result = map_external_port(local_ep.clone(), port);
+            let result = map_external_port(local_ep.clone(), local_port);
             let mut results = results.lock().unwrap();
             results.push(result.map(|ext_ep| (local_ep, ext_ep)));
             if results.len() == eps_count {
