@@ -138,6 +138,9 @@ mod test {
     use ip;
     use std::io;
 
+    // Ignore because we don't know what (if any) IGD enabled
+    // device is on CI machines.
+    #[ignore]
     #[test]
     fn upnp() {
         type R = io::Result<Vec<(SocketAddrV4, ip::Endpoint)>>;
