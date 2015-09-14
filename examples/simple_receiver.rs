@@ -100,6 +100,7 @@ fn main() {
                 println!("Lost connection to {:?}", endpoint);
             },
             crust::Event::BootstrapFinished => {},
+            crust::Event::ExternalEndpoints(_) => {},
         }
     }
     println!("Stopped receiving.");

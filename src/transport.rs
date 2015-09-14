@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::net::{SocketAddr, TcpStream, TcpListener, ToSocketAddrs};
+use std::net::{SocketAddr, TcpStream, TcpListener, ToSocketAddrs, IpAddr};
 use tcp_connections;
 use utp_connections;
 use std::io;
@@ -26,8 +26,8 @@ use std::str::FromStr;
 use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
 use std::cmp::Ordering;
 use utp::UtpSocket;
-use std::net::IpAddr;
 use std::fmt;
+use ip;
 pub type Bytes = Vec<u8>;
 
 /// Enum representing endpoint of supported protocols
@@ -76,6 +76,14 @@ impl Endpoint {
             Endpoint::Tcp(addr) => Port::Tcp(addr.port()),
             Endpoint::Utp(addr) => Port::Utp(addr.port()),
         }
+    }
+
+    pub fn to_ip(&self) -> ip::Endpoint {
+        let port = match self.get_port() {
+            Port::Tcp(n) => ip::Port::Tcp(n),
+            Port::Utp(n) => ip::Port::Udp(n),
+        };
+        ip::Endpoint::new(self.get_address().ip(), port)
     }
 }
 

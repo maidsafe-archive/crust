@@ -16,21 +16,23 @@
 // relating to use of the SAFE Network Software.
 
 use std::io;
-use std::sync::{Arc, Mutex};
 use std::sync::mpsc::Sender;
 use std::thread;
 use std::boxed::FnBox;
 use std::thread::JoinHandle;
+use std::sync::{Arc, Mutex};
 
-use std::net::{IpAddr, Ipv4Addr};
+use std::net::{IpAddr, Ipv4Addr, SocketAddrV4};
 use beacon;
 use bootstrap_handler::BootstrapHandler;
 use config_handler::{Config, read_config_file};
 use getifaddrs::{getifaddrs, filter_loopback};
 use transport;
 use transport::{Endpoint, Port, Message};
+use ip;
+use map_external_port::async_map_external_port;
 
-use map_external_port::map_external_port;
+//use map_external_port::map_external_port;
 use state::State;
 use event::Event;
 
@@ -47,7 +49,6 @@ type Closure = Box<FnBox(&mut State) + Send>;
 pub struct Service {
     beacon_guid_and_port : Option<(beacon::GUID, u16)>,
     config               : Config,
-    own_endpoints        : Vec<(Endpoint, Arc<Mutex<Option<Endpoint>>>)>,
     cmd_sender           : Sender<Closure>,
 }
 
@@ -86,7 +87,6 @@ impl Service {
 
         let mut cm = Service { beacon_guid_and_port : None,
                                config               : config,
-                               own_endpoints        : Vec::new(),
                                cmd_sender           : cmd_sender,
                              };
 
@@ -123,7 +123,6 @@ impl Service {
     pub fn start_accepting(&mut self, port: Port) -> io::Result<Port> {
         let acceptor = try!(transport::new_acceptor(port));
         let accept_port = acceptor.local_port();
-        self.own_endpoints = map_external_port(&accept_port);
 
         Self::accept(self.cmd_sender.clone(), acceptor);
 
@@ -325,17 +324,47 @@ impl Service {
         })
     }
 
-    /// Return the endpoints other peers can use to connect to. External address
-    /// are obtained through UPnP IGD.
-    pub fn get_own_endpoints(&self) -> Vec<Endpoint> {
-        let mut ret = Vec::with_capacity(self.own_endpoints.len());
-        for &(ref local, ref external) in self.own_endpoints.iter() {
-            ret.push(local.clone());
-            if let Some(ref a) = *external.lock().unwrap() {
-                ret.push(a.clone())
+    pub fn get_external_endpoints(&self) {
+        Self::post(&self.cmd_sender, move |state: &mut State| {
+            type T = (SocketAddrV4, ip::Endpoint);
+
+            struct Async {
+                remaining: usize,
+                results: Vec<Endpoint>,
             }
-        };
-        ret
+
+            let internal_eps = state.get_accepting_endpoints();
+
+            let async = Arc::new(Mutex::new(Async {
+                remaining: internal_eps.len(),
+                results: Vec::new(),
+            }));
+
+            for internal_ep in internal_eps {
+                let port = internal_ep.to_ip().port();
+                let async = async.clone();
+                let event_sender = state.event_sender.clone();
+
+                async_map_external_port(&port, Box::new(move |results: io::Result<Vec<T>>| {
+                    let mut async = async.lock().unwrap();
+                    async.remaining -= 1;
+                    if let Ok(results) = results {
+                        for result in results {
+                            let transport_port = match internal_ep {
+                                Endpoint::Tcp(_) => Port::Tcp(result.1.port().number()),
+                                Endpoint::Utp(_) => Port::Utp(result.1.port().number()),
+                            };
+                            let ext_ep = Endpoint::new(result.1.ip(), transport_port);
+                            async.results.push(ext_ep);
+                        }
+                    }
+                    if async.remaining == 0 {
+                        let event = Event::ExternalEndpoints(async.results.clone());
+                        let _ = event_sender.send(event);
+                    }
+                }));
+            }
+        });
     }
 
     fn new_thread<F,T>(name: &str, f: F) -> io::Result<JoinHandle<T>> 
@@ -526,6 +555,7 @@ mod test {
                             // debug!("Lost connection to {:?}", other_ep);
                         },
                         Event::BootstrapFinished => {}
+                        Event::ExternalEndpoints(_) => {}
                     }
                 }
                 // debug!("done");
@@ -583,7 +613,8 @@ mod test {
                         },
                         Event::LostConnection(_) => {
                         },
-                        Event::BootstrapFinished => {}
+                        Event::BootstrapFinished => {},
+                        Event::ExternalEndpoints(_) => {},
                     }
                 }
                 // debug!("done");
@@ -614,7 +645,8 @@ mod test {
                         Event::LostConnection(_) => {
                             stat.lost_connection_count += 1;
                         },
-                        Event::BootstrapFinished => {}
+                        Event::BootstrapFinished => {},
+                        Event::ExternalEndpoints(_) => {},
                     }
                 }
             });
@@ -741,7 +773,8 @@ mod test {
                     Event::LostConnection(_) => {
                         break;
                     },
-                    Event::BootstrapFinished => {}
+                    Event::BootstrapFinished => {},
+                    Event::ExternalEndpoints(_) => {},
                 }
             }
         });

@@ -75,6 +75,7 @@ mod beacon;
 mod bootstrap_handler;
 mod config_handler;
 mod util;
+mod ip;
 mod getifaddrs;
 mod connection;
 mod tcp_connections;
