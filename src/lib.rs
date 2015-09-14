@@ -29,7 +29,7 @@
 #![doc(html_logo_url = "http://maidsafe.net/img/Resources/branding/maidsafe_logo.fab2.png",
        html_favicon_url = "http://maidsafe.net/img/favicon.ico",
        html_root_url = "http://maidsafe.github.io/crust/")]
-#![feature(fnbox, ip_addr, ip, socket_timeout, negate_unsigned, rustc_private)]
+#![feature(fnbox, ip_addr, ip, negate_unsigned, rustc_private)]
 #![allow(unused_variables)]
 
 extern crate asynchronous;
