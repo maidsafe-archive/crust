@@ -710,23 +710,14 @@ mod test {
 
     #[test]
     fn connection_manager_start() {
-        // Wait 2 seconds until previous bootstrap test ends. If not, that test connects to these endpoints.
-        thread::sleep_ms(2000);
         let _temp_config = make_temp_config(None);
 
         let (cm_tx, cm_rx) = channel();
 
-        let mut cm = Service::new(cm_tx).unwrap();
-        assert!(count_ok(&cm.start_default_acceptors()) >= 1);
-        
+        let mut cm = Service::new_inactive(cm_tx).unwrap();
 
-        let cm_listen_ports = cm.get_own_endpoints().into_iter()
-                                .map(|ep| ep.get_port())
-                                .collect::<Vec<_>>();
-
-        let cm_listen_addrs = cm_listen_ports.iter()
-                              .map(|p| Endpoint::tcp(("127.0.0.1", p.get_port())))
-                              .collect();
+        let cm_listen_port = cm.start_accepting(Port::Tcp(0)).unwrap();
+        let cm_listen_addr = Endpoint::tcp(("127.0.0.1", cm_listen_port.get_port()));
 
         let thread = spawn(move || {
             loop {
@@ -750,15 +741,13 @@ mod test {
             }
         });
 
-        thread::sleep_ms(100);
-
         let _ = spawn(move || {
             let _temp_config = make_temp_config(None);
             let (cm_aux_tx, _) = channel();
-            let cm_aux = Service::new(cm_aux_tx).unwrap();
+            let cm_aux = Service::new_inactive(cm_aux_tx).unwrap();
             // setting the listening port to be greater than 4455 will make the test hanging
             // changing this to cm_beacon_addr will make the test hanging
-            cm_aux.connect(cm_listen_addrs);
+            cm_aux.connect(vec![cm_listen_addr]);
         }).join();
         thread::sleep_ms(100);
 
