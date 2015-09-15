@@ -31,5 +31,7 @@ pub enum Event {
     LostConnection(Endpoint),
     /// Invoked when a new bootstrap connection to a peer is established.  Passes the peer's endpoint.
     BootstrapFinished,
+    /// Invoked when a new bootstrap connection to a peer is established.  Passes the peer's endpoint.
+    ExternalEndpoints(Vec<Endpoint>),
 }
 

@@ -30,6 +30,7 @@ use getifaddrs::{getifaddrs, filter_loopback};
 use transport;
 use transport::{Endpoint, Port, Message};
 use std::thread::JoinHandle;
+use std::net::{IpAddr, Ipv4Addr};
 
 use itertools::Itertools;
 use event::Event;
@@ -84,6 +85,16 @@ impl State {
             // TODO: What was the second arg supposed to be?
             let _ = bs.update_contacts(new_contacts, Vec::<Endpoint>::new());
         }
+    }
+
+    pub fn get_accepting_endpoints(&self) -> Vec<Endpoint> {
+        // FIXME: We should get real endpoints from the acceptors
+        // not use 'unspecified' ips.
+        let unspecified_ip = IpAddr::V4(Ipv4Addr::new(0,0,0,0));
+        self.listening_ports.iter()
+            .cloned()
+            .map(|port| Endpoint::new(unspecified_ip, port))
+            .collect()
     }
 
     pub fn respond_to_broadcast(&mut self,
