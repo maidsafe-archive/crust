@@ -263,7 +263,7 @@ impl Service {
     pub fn send(&self, endpoint: Endpoint, message: Bytes) {
         Self::post(&self.cmd_sender, move |state: &mut State| {
             let writer_channel = match state.connections.get(&endpoint) {
-                Some(c) => c.writer_channel.clone(),
+                Some(writer_channel) => writer_channel.clone(),
                 None => {
                     // TODO: Generate async io::ErrorKind::NotConnected event
                     panic!();

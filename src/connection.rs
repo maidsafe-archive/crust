@@ -15,10 +15,10 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::sync::mpsc::Sender;
-use transport::Message;
-
-pub struct Connection {
-    pub writer_channel: Sender<Message>,
-}
+//use std::sync::mpsc::Sender;
+//use transport::Message;
+//
+//pub struct Connection {
+//    pub writer_channel: Sender<Message>,
+//}
 

@@ -34,7 +34,6 @@ use std::net::{IpAddr, Ipv4Addr};
 
 use itertools::Itertools;
 use event::Event;
-use connection::Connection;
 
 pub type Bytes = Vec<u8>;
 pub type Closure = Box<FnBox(&mut State) + Send>;
@@ -43,7 +42,7 @@ pub struct State {
     pub event_sender      : Sender<Event>,
     pub cmd_sender        : Sender<Closure>,
     pub cmd_receiver      : Receiver<Closure>,
-    pub connections       : HashMap<Endpoint, Connection>,
+    pub connections       : HashMap<Endpoint, Sender<Message>>,
     pub listening_ports   : HashSet<Port>,
     pub bootstrap_handler : Option<BootstrapHandler>,
     pub stop_called       : bool,
@@ -184,7 +183,7 @@ impl State {
         let (tx, rx) = mpsc::channel();
         self.start_writing_thread(trans.sender, trans.remote_endpoint.clone(), rx);
         self.start_reading_thread(trans.receiver, trans.remote_endpoint.clone());
-        let _ = self.connections.insert(trans.remote_endpoint.clone(), Connection{writer_channel: tx});
+        let _ = self.connections.insert(trans.remote_endpoint.clone(), tx);
         let _ = self.event_sender.send(event_to_user);
         Ok(trans.remote_endpoint)
     }
