@@ -137,10 +137,35 @@ mod test {
     use std::sync::mpsc;
     use ip;
     use std::io;
+    use std::thread;
+
+    fn timed_recv<T>(receiver: mpsc::Receiver<T>, timeout_ms: u32)
+        -> Result<T, mpsc::TryRecvError>
+    {
+        let step_ms = 20;
+        let mut time = 0;
+        loop {
+            match receiver.try_recv() {
+                Ok(v) => return Ok(v),
+                Err(what) => match what {
+                    mpsc::TryRecvError::Empty => {
+                        if time >= timeout_ms {
+                            return Err(what);
+                        }
+                    },
+                    mpsc::TryRecvError::Disconnected => {
+                        return Err(what);
+                    }
+                }
+            }
+            thread::sleep_ms(step_ms);
+            time += step_ms;
+        }
+    }
 
     // Ignore because we don't know what (if any) IGD enabled
     // device is on CI machines.
-    #[ignore]
+    //#[ignore]
     #[test]
     fn upnp() {
         type R = io::Result<Vec<(SocketAddrV4, ip::Endpoint)>>;
@@ -151,7 +176,7 @@ mod test {
             assert!(sender.send(result).is_ok());
         }));
 
-        let igd_result = match receiver.recv() {
+        let igd_result = match timed_recv(receiver, 3000) {
             Ok(igd_result) => igd_result,
             Err(what) => panic!(what),
         };
