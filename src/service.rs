@@ -32,7 +32,6 @@ use transport::{Endpoint, Port, Message};
 use ip;
 use map_external_port::async_map_external_port;
 
-//use map_external_port::map_external_port;
 use state::State;
 use event::Event;
 
