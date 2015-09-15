@@ -165,7 +165,7 @@ mod test {
 
     // Ignore because we don't know what (if any) IGD enabled
     // device is on CI machines.
-    //#[ignore]
+    #[ignore]
     #[test]
     fn upnp() {
         type R = io::Result<Vec<(SocketAddrV4, ip::Endpoint)>>;
