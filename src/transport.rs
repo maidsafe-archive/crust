@@ -22,6 +22,7 @@ use std::io;
 use std::io::Result as IoResult;
 use std::error::Error;
 use std::sync::mpsc;
+use cbor;
 use std::str::FromStr;
 use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
 use std::cmp::Ordering;
@@ -174,44 +175,48 @@ pub enum Message {
 
 //--------------------------------------------------------------------
 pub enum Sender {
-    Tcp(tcp_connections::TcpWriter<Message>),
-    Utp(utp_connections::UtpWriter<Message>),
+    Tcp(mpsc::Sender<Vec<u8>>),
+    Utp(mpsc::Sender<Vec<u8>>),
 }
 
 impl Sender {
     pub fn send(&mut self, message: &Message) -> IoResult<()> {
-        match *self {
-            Sender::Tcp(ref mut s) => {
-                s.send(&message).map_err(|_| {
-                // FIXME: This can be done better.
-                io::Error::new(io::ErrorKind::NotConnected, "can't send")
-            })
-            },
-            Sender::Utp(ref mut s) => {
-                s.send((*message).clone()).map_err(|_| {
-                // FIXME: This can be done better.
-                io::Error::new(io::ErrorKind::NotConnected, "can't send")
-            })
-            },
-        }
+        let sender = match *self {
+            Sender::Tcp(ref mut s) => s,
+            Sender::Utp(ref mut s) => s,
+        };
+        let mut e = cbor::Encoder::from_memory();
+        e.encode(&vec![&message]).unwrap();
+        sender.send(Vec::from(e.as_bytes())).map_err(|_| {
+            // FIXME: This can be done better.
+            io::Error::new(io::ErrorKind::NotConnected, "can't send")
+        })
     }
 }
 
 //--------------------------------------------------------------------
+#[allow(variant_size_differences)]
 pub enum Receiver {
-    Tcp(tcp_connections::TcpReader<Message>),
-    Utp(utp_connections::UtpReader<Message>),
+    Tcp(TcpStream),
+    Utp(utp_connections::UtpWrapper),
 }
 
 impl Receiver {
-    pub fn receive(&self) -> IoResult<Message> {
-        match *self {
-            Receiver::Tcp(ref r) => {
-                r.recv().map_err(|what| io::Error::new(io::ErrorKind::NotConnected, what.description()))
-            },
-            Receiver::Utp(ref r) => {
-                r.recv().map_err(|what| io::Error::new(io::ErrorKind::NotConnected, what.description()))
-            },
+    pub fn receive(&mut self) -> IoResult<Message> {
+        match {
+            match *self {
+                Receiver::Tcp(ref mut r) => {
+                    cbor::Decoder::from_reader(r).decode().next()
+                },
+                Receiver::Utp(ref mut r) => {
+                    cbor::Decoder::from_reader(r).decode().next()
+                },
+            }
+        } {
+            Some(a) => a.or(Err(io::Error::new(io::ErrorKind::InvalidData,
+                                               "Failed to decode CBOR"))),
+            None => Err(io::Error::new(io::ErrorKind::NotConnected,
+                                       "Decoder reached end of stream")),
         }
     }
 }

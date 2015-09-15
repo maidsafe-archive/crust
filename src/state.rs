@@ -208,7 +208,7 @@ impl State {
     }
 
     // pushing events out to event_sender
-    fn start_reading_thread(&self, receiver : transport::Receiver,
+    fn start_reading_thread(&self, mut receiver : transport::Receiver,
                                    his_ep   : Endpoint) {
         let cmd_sender = self.cmd_sender.clone();
         let sink       = self.event_sender.clone();
@@ -250,8 +250,8 @@ impl State {
         // For each contact, connect and receive their list of bootstrap contacts
         let mut endpoints: Vec<Endpoint> = vec![];
         for peer in peer_addresses {
-            let transport = transport::connect(transport::Endpoint::Tcp(peer))
-                .unwrap();
+            let mut transport
+                = transport::connect(transport::Endpoint::Tcp(peer)).unwrap();
             let message = match transport.receiver.receive() {
                 Ok(message) => message,
                 Err(_) => {
