@@ -35,7 +35,7 @@ pub fn generate_random_vec_u8(size: usize) -> Vec<u8> {
     vec
 }
 
-fn wait_for_connection(receiver: &Receiver<Event>) -> Endpoint{
+fn wait_for_connection(receiver: &Receiver<Event>) -> Connection {
     loop {
         let event = match receiver.recv() {
             Ok(event) => event,
@@ -43,8 +43,8 @@ fn wait_for_connection(receiver: &Receiver<Event>) -> Endpoint{
         };
 
         match event {
-            crust::Event::OnConnect(ep) => return ep,
-            crust::Event::OnAccept(ep)  => return ep,
+            crust::Event::OnConnect(c) => return c,
+            crust::Event::OnAccept(c)  => return c,
             _ => panic!("Unexpected event"),
         }
     }
@@ -83,20 +83,14 @@ fn send_random_data(b: &mut Bencher) {
             };
 
             match event {
-                crust::Event::NewMessage(_endpoint, _bytes) => {
+                crust::Event::NewMessage(_, _bytes) => {
                     break;
                 },
-                crust::Event::OnConnect(_endpoint) => {
-                    panic!("Unexpected event: OnConnect");
-                },
-                crust::Event::OnAccept(_endpoint) => {
-                    panic!("Unexpected event: OnAccept");
-                },
-                crust::Event::LostConnection(_endpoint) => {
+                crust::Event::LostConnection(_) => {
                     break;
-                }
-                crust::Event::BootstrapFinished => {
-                    panic!("Unexpected event: BootstrapFinished");
+                },
+                _ => {
+                    panic!("Unexpected event: {:?}", event);
                 },
             }
         }

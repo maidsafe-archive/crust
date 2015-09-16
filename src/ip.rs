@@ -18,6 +18,12 @@
 use std::net::{SocketAddr, IpAddr};
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+pub enum Protocol {
+    Tcp,
+    Udp,
+}
+
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub enum Port {
     /// TCP port
     Tcp(u16),

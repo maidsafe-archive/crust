@@ -34,6 +34,7 @@ use std::net::{IpAddr, Ipv4Addr};
 
 use itertools::Itertools;
 use event::Event;
+use connection::Connection;
 
 pub type Bytes = Vec<u8>;
 pub type Closure = Box<FnBox(&mut State) + Send>;
@@ -42,7 +43,7 @@ pub struct State {
     pub event_sender      : Sender<Event>,
     pub cmd_sender        : Sender<Closure>,
     pub cmd_receiver      : Receiver<Closure>,
-    pub connections       : HashMap<Endpoint, Sender<Message>>,
+    pub connections       : HashMap<Connection, Sender<Message>>,
     pub listening_ports   : HashSet<Port>,
     pub bootstrap_handler : Option<BootstrapHandler>,
     pub stop_called       : bool,
@@ -159,38 +160,38 @@ impl State {
 
     pub fn handle_connect(&mut self,
                           trans                 : transport::Transport,
-                          is_broadcast_acceptor : bool) -> io::Result<Endpoint> {
-        let remote_ep = trans.remote_endpoint.clone();
-        let event = Event::OnConnect(remote_ep);
+                          is_broadcast_acceptor : bool) -> io::Result<Connection> {
+        let c = trans.connection_id.clone();
+        let event = Event::OnConnect(c);
     
-        let endpoint = self.register_connection(trans, event);
+        let connection = self.register_connection(trans, event);
         if is_broadcast_acceptor {
-            if let Ok(ref endpoint) = endpoint {
+            if let Ok(ref connection) = connection {
                 let mut contacts = Vec::<Endpoint>::new();
-                contacts.push(endpoint.clone());
+                contacts.push(connection.peer_endpoint());
                 self.update_bootstrap_contacts(contacts);
             }
         }
-        endpoint
+        connection
     }
 
     fn register_connection(&mut self,
                            trans         : transport::Transport,
-                           event_to_user : Event) -> io::Result<Endpoint> {
-        if self.connections.contains_key(&trans.remote_endpoint) {
-            return Err(io::Error::new(io::ErrorKind::AlreadyExists, "Already connected"))
-        }
+                           event_to_user : Event) -> io::Result<Connection> {
+        let connection = trans.connection_id.clone();
+
+        debug_assert!(!self.connections.contains_key(&connection));
         let (tx, rx) = mpsc::channel();
-        self.start_writing_thread(trans.sender, trans.remote_endpoint.clone(), rx);
-        self.start_reading_thread(trans.receiver, trans.remote_endpoint.clone());
-        let _ = self.connections.insert(trans.remote_endpoint.clone(), tx);
+        self.start_writing_thread(trans.sender, connection.clone(), rx);
+        self.start_reading_thread(trans.receiver, connection.clone());
+        let _ = self.connections.insert(connection, tx);
         let _ = self.event_sender.send(event_to_user);
-        Ok(trans.remote_endpoint)
+        Ok(trans.connection_id)
     }
 
     // pushing messages out to socket
     fn start_writing_thread(&self, mut sender     : transport::Sender,
-                                   his_ep         : Endpoint,
+                                   connection     : Connection,
                                    writer_channel : Receiver<Message>) {
         let cmd_sender = self.cmd_sender.clone();
 
@@ -201,42 +202,42 @@ impl State {
                 }
             }
             let _ = cmd_sender.send(Box::new(move |state : &mut State| {
-                state.unregister_connection(his_ep);
+                state.unregister_connection(connection);
             }));
         });
     }
 
     // pushing events out to event_sender
     fn start_reading_thread(&self, mut receiver : transport::Receiver,
-                                   his_ep   : Endpoint) {
+                                   connection   : Connection) {
         let cmd_sender = self.cmd_sender.clone();
         let sink       = self.event_sender.clone();
 
         let _ = Self::new_thread("reader", move || {
             while let Ok(msg) = receiver.receive() {
                 if let Message::UserBlob(msg) = msg {
-                    if sink.send(Event::NewMessage(his_ep.clone(), msg)).is_err() {
+                    if sink.send(Event::NewMessage(connection.clone(), msg)).is_err() {
                         break
                     }
                 }
             }
             let _ = cmd_sender.send(Box::new(move |state : &mut State| {
-                state.unregister_connection(his_ep);
+                state.unregister_connection(connection);
             }));
         });
     }
 
-    fn unregister_connection(&mut self, his_ep: Endpoint) {
-        if self.connections.remove(&his_ep).is_some() {
+    fn unregister_connection(&mut self, connection: Connection) {
+        if self.connections.remove(&connection).is_some() {
             // Only send the event if the connection was there
             // to avoid duplicate events.
-            let _ = self.event_sender.send(Event::LostConnection(his_ep));
+            let _ = self.event_sender.send(Event::LostConnection(connection));
         }
     }
 
-    pub fn handle_accept(&mut self, trans: transport::Transport) -> io::Result<Endpoint> {
-        let remote_ep = trans.remote_endpoint.clone();
-        self.register_connection(trans, Event::OnAccept(remote_ep))
+    pub fn handle_accept(&mut self, trans: transport::Transport) -> io::Result<Connection> {
+        let c = trans.connection_id.clone();
+        self.register_connection(trans, Event::OnAccept(c))
     }
 
     fn seek_peers(beacon_guid: Option<[u8; 16]>, beacon_port: u16) -> Vec<Endpoint> {
@@ -272,12 +273,10 @@ impl State {
     }
 
     pub fn bootstrap_off_list(&mut self,
-                              mut bootstrap_list: Vec<Endpoint>,
+                              bootstrap_list: Vec<Endpoint>,
                               is_broadcast_acceptor: bool) {
         if self.is_bootstrapping { return; }
         self.is_bootstrapping = true;
-
-        bootstrap_list.retain(|e| { !self.connections.contains_key(&e) });
 
         if bootstrap_list.is_empty() {
             let _ = self.event_sender.send(Event::BootstrapFinished);
@@ -324,7 +323,7 @@ impl State {
                 }
 
                 for t in ts {
-                    let e = t.remote_endpoint.clone();
+                    let e = t.connection_id.peer_endpoint();
                     let _ = state.handle_connect(t, is_broadcast_acceptor);
                 }
 

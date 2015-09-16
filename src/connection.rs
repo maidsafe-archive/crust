@@ -15,10 +15,22 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-//use std::sync::mpsc::Sender;
-//use transport::Message;
-//
-//pub struct Connection {
-//    pub writer_channel: Sender<Message>,
-//}
+use transport::{Endpoint, Protocol};
+use std::net::SocketAddr;
+
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct Connection {
+    pub transport_protocol: Protocol,
+    pub peer_addr: SocketAddr,
+    pub local_addr: SocketAddr,
+}
+
+impl Connection {
+    pub fn peer_endpoint(&self) -> Endpoint {
+        match self.transport_protocol {
+            Protocol::Tcp => Endpoint::Tcp(self.peer_addr.clone()),
+            Protocol::Utp => Endpoint::Utp(self.peer_addr.clone()),
+        }
+    }
+}
 

@@ -48,8 +48,9 @@ use std::io::Write;
 use std::net::SocketAddr;
 use std::str::FromStr;
 use std::thread;
+use std::sync::{Arc, Mutex};
 
-use crust::{Service, Endpoint};
+use crust::{Service, Endpoint, Connection};
 
 static USAGE: &'static str = "
 Usage:
@@ -91,7 +92,7 @@ struct Args {
 // We'll use docopt to help parse the ongoing CLI commands entered by the user.
 static CLI_USAGE: &'static str = "
 Usage:
-  cli connect <peer>
+  cli connect <endpoint>
   cli send <peer> <message>...
   cli stop
 ";
@@ -101,7 +102,8 @@ struct CliArgs {
     cmd_connect: bool,
     cmd_send: bool,
     cmd_stop: bool,
-    arg_peer: Option<PeerEndpoint>,
+    arg_endpoint: Option<PeerEndpoint>,
+    arg_peer: Option<usize>,
     arg_message: Vec<String>,
 }
 
@@ -156,20 +158,20 @@ fn node_user_repr(node: &Endpoint) -> String {
 // simple "NodeInfo", without PKI
 #[derive(Clone)]
 struct CrustNode {
-    pub endpoint: Endpoint,
+    pub connection_id: Connection,
     pub connected: bool
 }
 
 impl CrustNode {
-    pub fn new(endpoint: Endpoint, connected: bool) -> CrustNode {
+    pub fn new(connection_id: Connection, connected: bool) -> CrustNode {
         CrustNode{
-            endpoint: endpoint,
+            connection_id: connection_id,
             connected: connected
         }
     }
 }
 
-struct FlatWorld {
+struct Network {
     crust_nodes: Vec<CrustNode>,
     performance_start: time::SteadyTime,
     performance_interval: time::Duration,
@@ -178,9 +180,9 @@ struct FlatWorld {
 }
 
 // simple "routing table" without any structure
-impl FlatWorld {
-    pub fn new() -> FlatWorld {
-        FlatWorld {
+impl Network {
+    pub fn new() -> Network {
+        Network {
             crust_nodes: Vec::with_capacity(40),
             performance_start: time::SteadyTime::now(),
             performance_interval: time::Duration::seconds(10),
@@ -192,19 +194,19 @@ impl FlatWorld {
     // Will add node if not duplicated.  Returns true when added.
     pub fn add_node(&mut self, new_node: CrustNode) -> bool {
         if self.crust_nodes.iter()
-                           .filter(|node| node.endpoint == new_node.endpoint)
+                           .filter(|node| node.connection_id == new_node.connection_id)
                            .count() == 0 {
             self.crust_nodes.push(new_node);
             return true;
         }
-        for node in self.crust_nodes.iter_mut().filter(|node| node.endpoint == new_node.endpoint) {
+        for node in self.crust_nodes.iter_mut().filter(|node| node.connection_id == new_node.connection_id) {
             node.connected = true;
         }
         return false;
     }
 
-    pub fn drop_node(&mut self, lost_node: CrustNode) {
-        for node in self.crust_nodes.iter_mut().filter(|node| node.endpoint == lost_node.endpoint) {
+    pub fn drop_node(&mut self, lost_node: Connection) {
+        for node in self.crust_nodes.iter_mut().filter(|node| node.connection_id == lost_node) {
             node.connected = false;
         }
     }
@@ -213,7 +215,7 @@ impl FlatWorld {
         let connected_nodes =
             self.crust_nodes.iter().filter_map(|node|
                 match node.connected {
-                    true => Some(node.endpoint.clone()),
+                    true => Some(node.connection_id.clone()),
                     false => None,
                 }).collect::<Vec<_>>();
         if connected_nodes.is_empty() {
@@ -224,11 +226,17 @@ impl FlatWorld {
             } else {
                 print!("{} connected nodes:", connected_nodes.len());
             }
+            let mut i = 0;
             for node in &connected_nodes {
-                print!(" {}", node_user_repr(node))
+                print!(" [{}] {:?}", i, node);
+                i += 1;
             }
             println!("");
         }
+    }
+
+    pub fn get(&self, n: usize) -> Option<&CrustNode> {
+        self.crust_nodes.get(n)
     }
 
     pub fn record_received(&mut self, msg_size: u32) {
@@ -395,50 +403,56 @@ fn main() {
     stdout = reset_foreground(stdout);
     service.bootstrap();
 
+    let network = Arc::new(Mutex::new(Network::new()));
+    let network2 = network.clone();
+
     // Start event-handling thread
     let running_speed_test = args.flag_speed.is_some();
     let handler = match thread::Builder::new().name("CrustNode event handler".to_string())
                                               .spawn(move || {
-        let mut my_flat_world: FlatWorld = FlatWorld::new();
         let mut bootstrapped = false;
         while let Ok(event) = channel_receiver.recv() {
             match event {
-                crust::Event::NewMessage(endpoint, bytes) => {
+                crust::Event::NewMessage(connection, bytes) => {
                     stdout_copy = cyan_foreground(stdout_copy);
                     let message_length = bytes.len();
-                    my_flat_world.record_received(message_length as u32);
+                    let mut network = network2.lock().unwrap();
+                    network.record_received(message_length as u32);
                     println!("\nReceived from {} message: {}",
-                             node_user_repr(&endpoint),
+                             node_user_repr(&connection.peer_endpoint()),
                              String::from_utf8(bytes)
                              .unwrap_or(format!("non-UTF-8 message of {} bytes",
                                                 message_length)));
                 },
-                crust::Event::OnConnect(endpoint) => {
+                crust::Event::OnConnect(connection) => {
                     stdout_copy = cyan_foreground(stdout_copy);
-                    println!("\nConnected to peer at {:?}", endpoint);
-                    my_flat_world.add_node(CrustNode::new(endpoint, true));
-                    my_flat_world.print_connected_nodes();
+                    println!("\nConnected to peer at {:?}", connection.peer_endpoint());
+                    let mut network = network2.lock().unwrap();
+                    network.add_node(CrustNode::new(connection, true));
+                    network.print_connected_nodes();
                     if !bootstrapped {
                         bootstrapped = true;
-                        let _ = bs_sender.send(endpoint);
+                        let _ = bs_sender.send(connection);
                     }
                 },
-                crust::Event::OnAccept(endpoint) => {
+                crust::Event::OnAccept(connection) => {
                     stdout_copy = cyan_foreground(stdout_copy);
-                    println!("\nAccepted peer at {:?}", endpoint);
-                    my_flat_world.add_node(CrustNode::new(endpoint, true));
-                    my_flat_world.print_connected_nodes();
+                    println!("\nAccepted peer at {:?}", connection);
+                    let mut network = network2.lock().unwrap();
+                    network.add_node(CrustNode::new(connection, true));
+                    network.print_connected_nodes();
                     if !bootstrapped {
                         bootstrapped = true;
-                        let _ = bs_sender.send(endpoint);
+                        let _ = bs_sender.send(connection);
                     }
                 },
-                crust::Event::LostConnection(endpoint) => {
+                crust::Event::LostConnection(c) => {
                     stdout_copy = yellow_foreground(stdout_copy);
-                    println!("\nLost connection to peer at {:?}", endpoint);
+                    println!("\nLost connection to peer at {:?}", c);
                     stdout_copy = cyan_foreground(stdout_copy);
-                    my_flat_world.drop_node(CrustNode::new(endpoint, false));
-                    my_flat_world.print_connected_nodes();
+                    let mut network = network2.lock().unwrap();
+                    network.drop_node(c);
+                    network.print_connected_nodes();
                 },
                 crust::Event::BootstrapFinished => {}
                 crust::Event::ExternalEndpoints(_) => {
@@ -512,20 +526,24 @@ fn main() {
 
             if args.cmd_connect {
                 // docopt should ensure arg_peer is valid
-                assert!(args.arg_peer.is_some());
-                let peer = vec![args.arg_peer.unwrap().addr];
+                assert!(args.arg_endpoint.is_some());
+                let peer = vec![args.arg_endpoint.unwrap().addr];
                 service.connect(peer);
             } else if args.cmd_send {
                 // docopt should ensure arg_peer and arg_message are valid
                 assert!(args.arg_peer.is_some());
                 assert!(!args.arg_message.is_empty());
-                let peer = args.arg_peer.unwrap().addr;
+                let peer = args.arg_peer.unwrap();
                 let mut message: String = args.arg_message[0].clone();
                 for i in 1..args.arg_message.len() {
                     message.push_str(" ");
                     message.push_str(&args.arg_message[i]);
                 };
-                service.send(peer.clone(), message.clone().into_bytes());
+                let network = network.lock().unwrap();
+                match network.get(peer) {
+                    Some(ref node) => service.send(node.connection_id, message.clone().into_bytes()),
+                    None => println!("Invalid connection #"),
+                }
             } else if args.cmd_stop {
                 stdout = green_foreground(stdout);
                 println!("Stopped.");

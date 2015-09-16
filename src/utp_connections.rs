@@ -55,7 +55,7 @@ pub fn listen(port: u16) -> IoResult<(Receiver<(UtpSocket, SocketAddr)>, u16)> {
 /// values, that respective part is shut down.
 pub fn upgrade_utp(newconnection: UtpSocket)
                    -> IoResult<(UtpWrapper, Sender<Vec<u8>>)> {
-    let socket = UtpWrapper::wrap(newconnection);
+    let socket = try!(UtpWrapper::wrap(newconnection));
     let output = socket.output();
     Ok((socket, output))
 }

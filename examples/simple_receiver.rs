@@ -62,9 +62,8 @@ fn main() {
 
     // Receive the next event
     while let Ok(event) = channel_receiver.recv() {
-        // Handle the event
         match event {
-            crust::Event::NewMessage(endpoint, bytes) => {
+            crust::Event::NewMessage(connection, bytes) => {
                 // For this example, we only expect to receive encoded `u8`s
                 let requested_value = match String::from_utf8(bytes) {
                     Ok(message) => {
@@ -85,22 +84,14 @@ fn main() {
                 // Calculate the Fibonacci number for the requested value and respond with that
                 let fibonacci_result = fibonacci_number(requested_value as u64);
                 println!("Received \"{}\" from {:?} - replying with \"{}\"", requested_value,
-                         endpoint, fibonacci_result);
+                         connection, fibonacci_result);
                 let response =
                     format!("The Fibonacci number for {} is {}", requested_value, fibonacci_result);
-                service.send(endpoint.clone(), response.into_bytes());
+                service.send(connection.clone(), response.into_bytes());
             },
-            crust::Event::OnConnect(endpoint) => {
-                println!("Connected to {:?}", endpoint);
-            },
-            crust::Event::OnAccept(endpoint) => {
-                println!("Accepted from {:?}", endpoint);
-            },
-            crust::Event::LostConnection(endpoint) => {
-                println!("Lost connection to {:?}", endpoint);
-            },
-            crust::Event::BootstrapFinished => {},
-            crust::Event::ExternalEndpoints(_) => {},
+            _ => {
+                println!("Received event {:?}", event);
+            }
         }
     }
     println!("Stopped receiving.");
