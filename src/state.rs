@@ -242,7 +242,7 @@ impl State {
 
     fn seek_peers(beacon_guid: Option<[u8; 16]>, beacon_port: u16) -> Vec<Endpoint> {
         // Retrieve list of peers' TCP listeners who are on same subnet as us
-        let mut peer_addresses = match beacon::seek_peers(beacon_port, beacon_guid) {
+        let peer_addresses = match beacon::seek_peers(beacon_port, beacon_guid) {
             Ok(peers) => peers,
             Err(_) => return Vec::<Endpoint>::new(),
         };
