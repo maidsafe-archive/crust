@@ -254,23 +254,27 @@ impl fmt::Debug for Transport {
 pub fn connect(remote_ep: Endpoint) -> IoResult<Transport> {
     match remote_ep {
         Endpoint::Tcp(ep) => {
-            tcp_connections::connect_tcp(ep)
-                .map(|(i, o)| {
-                    Transport{ receiver: Receiver::Tcp(i),
-                                         sender: Sender::Tcp(o),
-                                         remote_endpoint: remote_ep,
-                             }})
-                .map_err(|e| {
-                    io::Error::new(io::ErrorKind::NotConnected, e.description())
-                })
+            let (i,o) = try!(tcp_connections::connect_tcp(ep)
+                             .map_err(|e| io::Error::new(io::ErrorKind::NotConnected,
+                                                         e.description())));
+            let remote_addr = try!(i.peer_addr());
+
+            Ok(Transport{
+                receiver: Receiver::Tcp(i),
+                sender: Sender::Tcp(o),
+                remote_endpoint: Endpoint::Tcp(remote_addr),
+            })
         },
         Endpoint::Utp(ep) => {
             utp_connections::connect_utp(ep)
                 .map(|(i, o)| {
+                    let peer_addr = i.peer_addr();
+
                     Transport{ receiver: Receiver::Utp(i),
-                                         sender: Sender::Utp(o),
-                                         remote_endpoint: remote_ep,
+                               sender: Sender::Utp(o),
+                               remote_endpoint: Endpoint::Utp(peer_addr),
                              }})
+
                 .map_err(|e| {
                     let _ = warn!("NOTE: Transport connect {} failure due to Utp endpoint {}", ep, e);
                     io::Error::new(io::ErrorKind::NotConnected, e.description())

@@ -21,8 +21,11 @@ asynchronous = "*"
 itertools = "*"
 igd = "0.1.3"
 net2 = "*"
-temp_utp = "*"
+#temp_utp = "*"
 log = "*"
+
+[dependencies.temp_utp]
+path = "/home/peter/work/rust/rust-utp"
 
 [dev-dependencies]
 env_logger = "*"

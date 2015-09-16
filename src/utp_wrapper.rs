@@ -4,6 +4,7 @@ use std::sync::mpsc;
 use std::thread;
 use std::io::{Read, ErrorKind};
 use std::io;
+use std::net::SocketAddr;
 
 const CHECK_FOR_NEW_WRITES_INTERVAL_MS: i64 = 50;
 const BUFFER_SIZE: usize = 1000;
@@ -12,12 +13,15 @@ pub struct UtpWrapper {
     input: Receiver<Vec<u8>>,
     output: Sender<Vec<u8>>,
     unread_bytes: Vec<u8>,
+    peer_addr: SocketAddr,
 }
 
 impl UtpWrapper {
     pub fn wrap(socket: UtpSocket) -> UtpWrapper {
         let (itx, irx) = mpsc::channel();
         let (otx, orx) = mpsc::channel::<Vec<u8>>();
+        let peer_addr = socket.peer_addr();
+
         let _ = thread::spawn(move || {
             let mut socket = socket;
             socket.set_read_timeout(Some(CHECK_FOR_NEW_WRITES_INTERVAL_MS));
@@ -50,7 +54,12 @@ impl UtpWrapper {
             input: irx,
             output: otx,
             unread_bytes: Vec::new(),
+            peer_addr: peer_addr,
         }
+    }
+
+    pub fn peer_addr(&self) -> SocketAddr {
+        self.peer_addr.clone()
     }
 
     pub fn output(&self) -> Sender<Vec<u8>> {
