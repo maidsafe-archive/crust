@@ -107,20 +107,29 @@ struct CliArgs {
 
 #[derive(Debug)]
 struct PeerEndpoint {
-    pub addr: SocketAddr,
+    pub addr: Endpoint,
 }
 
 impl Decodable for PeerEndpoint {
     fn decode<D: Decoder>(decoder: &mut D)->Result<PeerEndpoint, D::Error> {
         let str = try!(decoder.read_str());
-        let address = match SocketAddr::from_str(&str) {
+        if !str.ends_with(')') {
+            return Err(decoder.error("Protocol missing"))
+        }
+        let address = match SocketAddr::from_str(&str[4 .. str.len() - 1]) {
             Ok(addr) => addr,
             Err(_) => {
                 return Err(decoder.error(&format!(
                     "Could not decode {} as valid IPv4 or IPv6 address.", str)));
             },
         };
-        Ok(PeerEndpoint { addr: address })
+        if str.starts_with("Tcp(") {
+            Ok(PeerEndpoint { addr: Endpoint::tcp(address) })
+        } else if str.starts_with("Utp(") {
+            Ok(PeerEndpoint { addr: Endpoint::utp(address) })
+        } else {
+            Err(decoder.error("Unrecognized protocol"))
+        }
     }
 }
 
@@ -135,6 +144,13 @@ fn generate_random_vec_u8(size: usize) -> Vec<u8> {
 fn print_input_line() {
     print!("Enter command (stop | connect <endpoint> | send <endpoint> <message>)>");
     let _ = io::stdout().flush();
+}
+
+fn node_user_repr(node: &Endpoint) -> String {
+    match *node {
+        Endpoint::Tcp(addr) => format!("Tcp({})", addr),
+        Endpoint::Utp(addr) => format!("Utp({})", addr),
+    }
 }
 
 // simple "NodeInfo", without PKI
@@ -208,8 +224,8 @@ impl FlatWorld {
             } else {
                 print!("{} connected nodes:", connected_nodes.len());
             }
-            for i in 0..connected_nodes.len() {
-                print!(" {:?}", connected_nodes[i]);
+            for node in &connected_nodes {
+                print!(" {}", node_user_repr(node))
             }
             println!("");
         }
@@ -391,7 +407,8 @@ fn main() {
                     stdout_copy = cyan_foreground(stdout_copy);
                     let message_length = bytes.len();
                     my_flat_world.record_received(message_length as u32);
-                    println!("\nReceived from {:?} message: {}", endpoint,
+                    println!("\nReceived from {} message: {}",
+                             node_user_repr(&endpoint),
                              String::from_utf8(bytes)
                              .unwrap_or(format!("non-UTF-8 message of {} bytes",
                                                 message_length)));
@@ -496,19 +513,13 @@ fn main() {
             if args.cmd_connect {
                 // docopt should ensure arg_peer is valid
                 assert!(args.arg_peer.is_some());
-                let peer = vec![{
-                    let ep = args.arg_peer.unwrap().addr;
-                    /* if utp_mode { Endpoint::Utp(ep) } else { */Endpoint::Tcp(ep) //}
-                }];
+                let peer = vec![args.arg_peer.unwrap().addr];
                 service.connect(peer);
             } else if args.cmd_send {
                 // docopt should ensure arg_peer and arg_message are valid
                 assert!(args.arg_peer.is_some());
                 assert!(!args.arg_message.is_empty());
-                let peer = {
-                    let ep = args.arg_peer.unwrap().addr;
-                    /*if utp_mode { Endpoint::Utp(ep) } else { */Endpoint::Tcp(ep)// }
-                };
+                let peer = args.arg_peer.unwrap().addr;
                 let mut message: String = args.arg_message[0].clone();
                 for i in 1..args.arg_message.len() {
                     message.push_str(" ");
