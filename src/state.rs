@@ -242,7 +242,7 @@ impl State {
 
     fn seek_peers(beacon_guid: Option<[u8; 16]>, beacon_port: u16) -> Vec<Endpoint> {
         // Retrieve list of peers' TCP listeners who are on same subnet as us
-        let peer_addresses = match beacon::seek_peers(beacon_port, beacon_guid) {
+        let mut peer_addresses = match beacon::seek_peers(beacon_port, beacon_guid) {
             Ok(peers) => peers,
             Err(_) => return Vec::<Endpoint>::new(),
         };
@@ -273,10 +273,12 @@ impl State {
     }
 
     pub fn bootstrap_off_list(&mut self,
-                              bootstrap_list: Vec<Endpoint>,
+                              mut bootstrap_list: Vec<Endpoint>,
                               is_broadcast_acceptor: bool) {
         if self.is_bootstrapping { return; }
         self.is_bootstrapping = true;
+
+        bootstrap_list.retain(|e| !self.is_connected_to(e));
 
         if bootstrap_list.is_empty() {
             let _ = self.event_sender.send(Event::BootstrapFinished);
@@ -344,6 +346,15 @@ impl State {
             where F: FnOnce() -> T, F: Send + 'static, T: Send + 'static {
         thread::Builder::new().name("State::".to_string() + name)
                               .spawn(f)
+    }
+
+    fn is_connected_to(&self, endpoint: &Endpoint) -> bool {
+        for pair in self.connections.iter() {
+            if pair.0.peer_endpoint() == *endpoint {
+                return true;
+            }
+        }
+        return false;
     }
 }
 
