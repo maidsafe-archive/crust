@@ -30,6 +30,8 @@ use utp::UtpSocket;
 use std::fmt;
 use ip;
 use connection::Connection;
+use std::io::BufReader;
+
 pub type Bytes = Vec<u8>;
 
 /// Enum representing supported transport protocols
@@ -207,19 +209,19 @@ impl Sender {
 //--------------------------------------------------------------------
 #[allow(variant_size_differences)]
 pub enum Receiver {
-    Tcp(TcpStream),
-    Utp(utp_connections::UtpWrapper),
+    Tcp(cbor::Decoder<BufReader<TcpStream>>),
+    Utp(cbor::Decoder<BufReader<utp_connections::UtpWrapper>>),
 }
 
 impl Receiver {
     pub fn receive(&mut self) -> IoResult<Message> {
         match {
             match *self {
-                Receiver::Tcp(ref mut r) => {
-                    cbor::Decoder::from_reader(r).decode().next()
+                Receiver::Tcp(ref mut decoder) => {
+                    decoder.decode().next()
                 },
-                Receiver::Utp(ref mut r) => {
-                    cbor::Decoder::from_reader(r).decode().next()
+                Receiver::Utp(ref mut decoder) => {
+                    decoder.decode().next()
                 },
             }
         } {
@@ -274,7 +276,7 @@ pub fn connect(remote_ep: Endpoint) -> IoResult<Transport> {
             };
 
             Ok(Transport {
-                receiver: Receiver::Tcp(i),
+                receiver: Receiver::Tcp(cbor::Decoder::from_reader(i)),
                 sender: Sender::Tcp(o),
                 connection_id: connection_id,
             })
@@ -291,7 +293,7 @@ pub fn connect(remote_ep: Endpoint) -> IoResult<Transport> {
             };
 
             Ok(Transport {
-                receiver: Receiver::Utp(i),
+                receiver: Receiver::Utp(cbor::Decoder::from_reader(i)),
                 sender: Sender::Utp(o),
                 connection_id: connection_id,
             })
@@ -330,7 +332,7 @@ pub fn accept(acceptor: &Acceptor) -> IoResult<Transport> {
             };
 
             Ok(Transport {
-                receiver: Receiver::Tcp(i),
+                receiver: Receiver::Tcp(cbor::Decoder::from_reader(i)),
                 sender: Sender::Tcp(o),
                 connection_id: connection_id,
             })
@@ -348,7 +350,7 @@ pub fn accept(acceptor: &Acceptor) -> IoResult<Transport> {
             };
 
             Ok(Transport{
-                receiver: Receiver::Utp(i),
+                receiver: Receiver::Utp(cbor::Decoder::from_reader(i)),
                 sender: Sender::Utp(o),
                 connection_id: connection_id,
             })

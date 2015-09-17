@@ -107,11 +107,15 @@ mod test {
     use std::io::Read;
     use std::sync::mpsc;
 
+    fn loopback(port: u16) -> SocketAddr {
+        SocketAddr::from_str(&format!("127.0.0.1:{}", port)).unwrap()
+    }
+
  #[test]
     fn test_small_stream() {
         let (event_receiver, listener) = listen(5483).unwrap();
         let port = listener.local_addr().unwrap().port();
-        let (mut i, o) = connect_tcp(SocketAddr::from_str(&format!("127.0.0.1:{}", port)).unwrap()).unwrap();
+        let (mut i, o) = connect_tcp(loopback(port)).unwrap();
 
         for x in 0 .. 10 {
             let x = vec![x];
@@ -169,7 +173,7 @@ mod test {
 
         for _ in 0..node_count() {
             let tx2 = tx.clone();
-            let (mut i, o) = connect_tcp(SocketAddr::from_str(&format!("127.0.0.1:{}", port)).unwrap()).unwrap();
+            let (mut i, o) = connect_tcp(loopback(port)).unwrap();
             let _ = thread::spawn(move || {
                 let mut buf = Vec::with_capacity(MSG_COUNT);
                 for i in 0..MSG_COUNT as u8 {
@@ -204,6 +208,54 @@ mod test {
         }
     }
 
+    #[test]
+    fn send_messages_fast() {
+        use cbor;
+        use std::net::TcpStream;
+        use rustc_serialize::{Decodable, Encodable};
+        use cbor::Encoder;
+
+        const MSG_COUNT: u16 = 20;
+
+        fn encode<T>(value: &T) -> Vec<u8> where T: Encodable {
+            let mut enc = Encoder::from_memory();
+            let _ = enc.encode(&[value]);
+            enc.into_bytes()
+        }
+
+        let (event_receiver, listener) = listen(0).unwrap();
+        let port = listener.local_addr().unwrap().port();
+
+        let (i1, o1) = connect_tcp(loopback(port)).unwrap();
+        let (connection, _) = event_receiver.recv().unwrap();
+        let (i2, o2) = upgrade_tcp(connection).unwrap();
+
+        fn read_messages(reader: TcpStream) {
+            let d = &mut cbor::Decoder::from_reader(&reader);
+            let mut received = 0;
+            reader.set_read_timeout(Some(Duration::new(5, 0))).unwrap();
+            'outer:
+            loop {
+                for m in d.decode::<String>() {
+                    match m {
+                        Ok(m) => println!("received {:?}", m),
+                        Err(what) => panic!(format!("Problem decoding message {}", what)),
+                    }
+                    received += 1;
+                    if received == MSG_COUNT { break 'outer }
+                }
+            }
+        }
+
+        let t = thread::spawn(move || read_messages(i2));
+
+        for i in 0..MSG_COUNT {
+            let msg = encode(&format!("MSG{}", i));
+            assert!(o1.send(msg.clone()).is_ok());
+        }
+
+        assert!(t.join().is_ok());
+    }
 
  // #[test]
     // fn graceful_port_close() {
