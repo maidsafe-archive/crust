@@ -39,11 +39,7 @@ pub fn connect_tcp(addr: SocketAddr) -> IoResult<(TcpStream, Sender<Vec<u8>>)> {
 /// * A TcpAcceptor.  This can be used to close the listener from outside of the listening thread.
 pub fn listen(port: u16) -> IoResult<(Receiver<(TcpStream, SocketAddr)>, TcpListener)> {
     let tcp_listener = {
-        /*if let Ok(listener) = TcpListener::bind(("::", port)) {
-            listener
-        } else if let Ok(listener) = TcpListener::bind(("::", 0)) {
-            listener
-        } else*/ if let Ok(listener) = TcpListener::bind(("0.0.0.0", port)) {
+        if let Ok(listener) = TcpListener::bind(("0.0.0.0", port)) {
             listener
         } else {
             try!(TcpListener::bind(("0.0.0.0", 0)))

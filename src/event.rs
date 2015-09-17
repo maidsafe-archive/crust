@@ -16,19 +16,20 @@
 // relating to use of the SAFE Network Software.
 
 use transport::Endpoint;
+use connection::Connection;
 
 /// Enum representing different events that will be sent over the asynchronous channel to the user
 /// of this module.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Event {
     /// Invoked when a new message is received.  Passes the peer's endpoint and the message.
-    NewMessage(Endpoint, Vec<u8>),
+    NewMessage(Connection, Vec<u8>),
     /// Invoked when a new connection to a peer is established. Passes the peer's endpoint.
-    OnConnect(Endpoint),
+    OnConnect(Connection),
     /// Invoked when a new connection is accepted. Passes the peer's endpoint.
-    OnAccept(Endpoint),
+    OnAccept(Connection),
     /// Invoked when a connection to a peer is lost.  Passes the peer's endpoint.
-    LostConnection(Endpoint),
+    LostConnection(Connection),
     /// Invoked when a new bootstrap connection to a peer is established.  Passes the peer's endpoint.
     BootstrapFinished,
     /// Invoked when a new bootstrap connection to a peer is established.  Passes the peer's endpoint.

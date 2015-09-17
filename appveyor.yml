@@ -24,4 +24,4 @@ test_script:
   - cargo build --verbose %config_flags%
   - set RUST_TEST_THREADS=1
   - set RUST_BACKTRACE=1
-  - cargo test --verbose --nocapture
+  - cargo test --verbose

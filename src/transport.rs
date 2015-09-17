@@ -29,7 +29,17 @@ use std::cmp::Ordering;
 use utp::UtpSocket;
 use std::fmt;
 use ip;
+use connection::Connection;
 pub type Bytes = Vec<u8>;
+
+/// Enum representing supported transport protocols
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+pub enum Protocol {
+    /// TCP protocol
+    Tcp,
+    /// UTP protocol
+    Utp,
+}
 
 /// Enum representing endpoint of supported protocols
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
@@ -241,12 +251,12 @@ impl Acceptor {
 pub struct Transport {
     pub receiver: Receiver,
     pub sender: Sender,
-    pub remote_endpoint: Endpoint,
+    pub connection_id: Connection,
 }
 
 impl fmt::Debug for Transport {
     fn fmt(&self, formatter: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        formatter.write_str(&format!("Transport {:?}", self.remote_endpoint))
+        formatter.write_str(&format!("Transport {:?}", self.connection_id))
     }
 }
 
@@ -254,27 +264,37 @@ impl fmt::Debug for Transport {
 pub fn connect(remote_ep: Endpoint) -> IoResult<Transport> {
     match remote_ep {
         Endpoint::Tcp(ep) => {
-            tcp_connections::connect_tcp(ep)
-                .map(|(i, o)| {
-                    Transport{ receiver: Receiver::Tcp(i),
-                                         sender: Sender::Tcp(o),
-                                         remote_endpoint: remote_ep,
-                             }})
-                .map_err(|e| {
-                    io::Error::new(io::ErrorKind::NotConnected, e.description())
-                })
+            let (i,o) = try!(tcp_connections::connect_tcp(ep)
+                             .map_err(|e| io::Error::new(io::ErrorKind::NotConnected,
+                                                         e.description())));
+            let connection_id = Connection {
+                transport_protocol: Protocol::Tcp,
+                peer_addr: try!(i.peer_addr()),
+                local_addr: try!(i.local_addr()),
+            };
+
+            Ok(Transport {
+                receiver: Receiver::Tcp(i),
+                sender: Sender::Tcp(o),
+                connection_id: connection_id,
+            })
         },
         Endpoint::Utp(ep) => {
-            utp_connections::connect_utp(ep)
-                .map(|(i, o)| {
-                    Transport{ receiver: Receiver::Utp(i),
-                                         sender: Sender::Utp(o),
-                                         remote_endpoint: remote_ep,
-                             }})
-                .map_err(|e| {
-                    let _ = warn!("NOTE: Transport connect {} failure due to Utp endpoint {}", ep, e);
-                    io::Error::new(io::ErrorKind::NotConnected, e.description())
-                })
+            let (i, o) = try!(utp_connections::connect_utp(ep)
+                              .map_err(|e| io::Error::new(io::ErrorKind::NotConnected,
+                                                          e.description())));
+
+            let connection_id = Connection {
+                transport_protocol: Protocol::Utp,
+                peer_addr: i.peer_addr(),
+                local_addr: i.local_addr(),
+            };
+
+            Ok(Transport {
+                receiver: Receiver::Utp(i),
+                sender: Sender::Utp(o),
+                connection_id: connection_id,
+            })
         }
     }
 }
@@ -303,10 +323,17 @@ pub fn accept(acceptor: &Acceptor) -> IoResult<Transport> {
 
             let (i, o) = try!(tcp_connections::upgrade_tcp(stream));
 
-            Ok(Transport{ receiver: Receiver::Tcp(i),
-                          sender: Sender::Tcp(o),
-                          remote_endpoint: Endpoint::Tcp(remote_endpoint),
-                        })
+            let connection_id = Connection {
+                transport_protocol: Protocol::Tcp,
+                peer_addr: try!(i.peer_addr()),
+                local_addr: try!(i.local_addr()),
+            };
+
+            Ok(Transport {
+                receiver: Receiver::Tcp(i),
+                sender: Sender::Tcp(o),
+                connection_id: connection_id,
+            })
         },
         Acceptor::Utp(ref rx_channel, _) => {
             let (stream, remote_endpoint) = try!(rx_channel.recv()
@@ -314,10 +341,17 @@ pub fn accept(acceptor: &Acceptor) -> IoResult<Transport> {
 
             let (i, o) = try!(utp_connections::upgrade_utp(stream));
 
-            Ok(Transport{ receiver: Receiver::Utp(i),
-                          sender: Sender::Utp(o),
-                          remote_endpoint: Endpoint::Utp(remote_endpoint),
-                        })
+            let connection_id = Connection {
+                transport_protocol: Protocol::Utp,
+                peer_addr: i.peer_addr(),
+                local_addr: i.local_addr(),
+            };
+
+            Ok(Transport{
+                receiver: Receiver::Utp(i),
+                sender: Sender::Utp(o),
+                connection_id: connection_id,
+            })
         },
     }
 }
