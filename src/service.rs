@@ -385,8 +385,8 @@ mod test {
     use std::thread::spawn;
     use std::thread;
     use std::sync::mpsc::{Receiver, Sender, channel};
-    use rustc_serialize::Encodable;
-    use cbor::Encoder;
+    use rustc_serialize::{Decodable, Encodable};
+    use cbor::{Decoder, Encoder};
     use transport::{Endpoint, Port};
     use std::sync::{Mutex, Arc};
     use config_handler::write_config_file;
@@ -402,68 +402,74 @@ mod test {
         enc.into_bytes()
     }
 
-     struct Node {
-         service: Service,
-         listening_port: Port,
-         connections: Arc<Mutex<Vec<Connection>>>
-     }
+    fn decode<T>(bytes: &Vec<u8>) -> T where T: Decodable
+    {
+        let mut dec = Decoder::from_bytes(&bytes[..]);
+        dec.decode().next().unwrap().unwrap()
+    }
 
-     #[derive(Debug)]
-     struct Stats {
-         new_connections_count: u32,
-         messages_count: u32,
-         lost_connection_count: u32
-     }
+    struct Node {
+        service: Service,
+        listening_port: Port,
+        connections: Arc<Mutex<Vec<Connection>>>
+    }
 
-     impl Stats {
-         fn new() -> Stats {
-             Stats {
-                 new_connections_count: 0,
-                 messages_count: 0,
-                 lost_connection_count: 0,
-             }
-         }
-     }
+    #[derive(Debug)]
+    struct Stats {
+        new_connections_count: u32,
+        messages_count: u32,
+        lost_connection_count: u32
+    }
 
-     impl Node {
-         pub fn new(mut cm: Service) -> Node {
-             let ports = filter_ok(cm.start_default_acceptors());
-             Node {
-                 service: cm,
-                 listening_port: ports[0].clone(),
-                 connections: Arc::new(Mutex::new(Vec::new()))
-             }
-         }
-     }
+    impl Stats {
+        fn new() -> Stats {
+            Stats {
+                new_connections_count: 0,
+                messages_count: 0,
+                lost_connection_count: 0,
+            }
+        }
+    }
 
-     fn get_port(node: &Arc<Mutex<Node>>) -> Port {
-         let node = node.clone();
-         let node = node.lock().unwrap();
-         node.listening_port.clone()
-     }
+    impl Node {
+        pub fn new(mut cm: Service) -> Node {
+            let ports = filter_ok(cm.start_default_acceptors());
+            Node {
+                service: cm,
+                listening_port: ports[0].clone(),
+                connections: Arc::new(Mutex::new(Vec::new()))
+            }
+        }
+    }
 
-     fn get_connections(node: &Arc<Mutex<Node>>) -> Vec<Connection> {
-         let node = node.clone();
-         let node = node.lock().unwrap();
-         let eps = node.connections.clone();
-         let connections = eps.lock().unwrap();
-         connections.clone()
-     }
+    fn get_port(node: &Arc<Mutex<Node>>) -> Port {
+        let node = node.clone();
+        let node = node.lock().unwrap();
+        node.listening_port.clone()
+    }
 
-     struct Network {
-         nodes: Vec<Arc<Mutex<Node>>>
-     }
+    fn get_connections(node: &Arc<Mutex<Node>>) -> Vec<Connection> {
+        let node = node.clone();
+        let node = node.lock().unwrap();
+        let eps = node.connections.clone();
+        let connections = eps.lock().unwrap();
+        connections.clone()
+    }
 
-     impl Network {
-         pub fn add(&mut self) -> (Receiver<Event>, Option<u16>, Arc<Mutex<Vec<Connection>>>) {
-             let (cm_i, cm_o) = channel();
-             let node = Node::new(Service::new(cm_i).unwrap());
-             let connections = node.connections.clone();
-             let beacon_port = node.service.get_beacon_acceptor_port();
-             self.nodes.push(Arc::new(Mutex::new(node)));
-             (cm_o, beacon_port, connections)
-         }
-     }
+    struct Network {
+        nodes: Vec<Arc<Mutex<Node>>>
+    }
+
+    impl Network {
+        pub fn add(&mut self) -> (Receiver<Event>, Option<u16>, Arc<Mutex<Vec<Connection>>>) {
+            let (cm_i, cm_o) = channel();
+            let node = Node::new(Service::new(cm_i).unwrap());
+            let connections = node.connections.clone();
+            let beacon_port = node.service.get_beacon_acceptor_port();
+            self.nodes.push(Arc::new(Mutex::new(node)));
+            (cm_o, beacon_port, connections)
+        }
+    }
 
     struct TestConfigFile {
         pub path: PathBuf
@@ -580,10 +586,10 @@ mod test {
     }
 
     #[test]
-    //#[ignore]
+    #[ignore]
     fn network() {
         const NETWORK_SIZE: u32 = 2;
-        const MESSAGE_PER_NODE: u32 = 2;
+        const MESSAGE_PER_NODE: u32 = 5;
 
         enum StatEvent {
             Crust(Event),
@@ -593,26 +599,28 @@ mod test {
         let run_cm = |tx: Sender<StatEvent>, o: Receiver<Event>, conns: Arc<Mutex<Vec<Connection>>>| {
             spawn(move || {
                 let count: u32 = 0;
-                for i in o.iter() {
-                    let _ = tx.send(StatEvent::Crust(i.clone()));
-                    match i {
-                        Event::OnConnect(other_ep) => {
-                            let mut connected_eps = conns.lock().unwrap();
-                            connected_eps.push(other_ep);
+                for event in o.iter() {
+                    assert!(tx.send(StatEvent::Crust(event.clone())).is_ok());
+
+                    match event {
+                        Event::OnConnect(other) => {
+                            let mut conns = conns.lock().unwrap();
+                            conns.push(other);
                         },
-                        Event::OnAccept(other_ep) => {
-                            let mut connected_eps = conns.lock().unwrap();
-                            connected_eps.push(other_ep);
+                        Event::OnAccept(other) => {
+                            let mut conns = conns.lock().unwrap();
+                            conns.push(other);
                         },
-                        Event::NewMessage(_, _) => {
+                        Event::NewMessage(from, bytes) => {
+                            let msg = decode::<String>(&bytes);
+                            println!("Received {:?} from {:?}", msg, from);
                             if count == MESSAGE_PER_NODE * (NETWORK_SIZE - 1) {
                                 break;
                             }
                         },
-                        Event::LostConnection(_) => {
-                        },
-                        Event::BootstrapFinished => {},
-                        Event::ExternalEndpoints(_) => {},
+                        _ => {
+                            println!("Received event {:?}", event);
+                        }
                     }
                 }
             })
@@ -698,16 +706,17 @@ mod test {
             }
         }
 
-        for node in network.nodes.iter() {
-            let connections = get_connections(node);
-            for connection in connections.into_iter() {
-                for _ in 0..MESSAGE_PER_NODE {
-                    let node = node.clone();
-                    let _ = spawn(move || {
-                        let node = node.lock().unwrap();
-                        let _ = node.service.send(connection, encode(&"MESSAGE".to_string()));
-                    });
+        {
+            let mut node_i = 0;
+            for node in network.nodes.iter() {
+                for connection in get_connections(node).into_iter() {
+                    let node = node.lock().unwrap();
+                    for i in 0..MESSAGE_PER_NODE {
+                        let msg = format!("MESSAGE {} from {}", i, node_i);
+                        node.service.send(connection, encode(&msg));
+                    }
                 }
+                node_i += 1;
             }
         }
 
