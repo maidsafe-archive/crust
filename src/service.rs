@@ -586,9 +586,8 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn network() {
-        const NETWORK_SIZE: u32 = 2;
+        const NETWORK_SIZE: u32 = 10;
         const MESSAGE_PER_NODE: u32 = 5;
 
         enum StatEvent {
@@ -613,7 +612,7 @@ mod test {
                         },
                         Event::NewMessage(from, bytes) => {
                             let msg = decode::<String>(&bytes);
-                            println!("Received {:?} from {:?}", msg, from);
+                            //println!("Received {:?} from {:?}", msg, from);
                             if count == MESSAGE_PER_NODE * (NETWORK_SIZE - 1) {
                                 break;
                             }
@@ -681,7 +680,6 @@ mod test {
 
         let run_stats = stats_accumulator(stats.clone(), stats_rx);
 
-        println!("network.nodes.len() = {}", network.nodes.len());
         let mut listening_ports = network.nodes.iter()
             .map(|node| get_port(node))
             .collect::<::std::collections::LinkedList<_>>();
@@ -735,8 +733,6 @@ mod test {
 
         let stats_copy = stats.clone();
         let stat = stats_copy.lock().unwrap();
-        println!(">>> connection_count (connect + accept) = {}", stat.new_connections_count);
-        println!(">>> message_count = {}", stat.messages_count);
         assert_eq!(stat.new_connections_count, NETWORK_SIZE * (NETWORK_SIZE - 1));
         assert_eq!(stat.messages_count,  NETWORK_SIZE * MESSAGE_PER_NODE * (NETWORK_SIZE - 1));
         assert_eq!(stat.lost_connection_count, 0);
