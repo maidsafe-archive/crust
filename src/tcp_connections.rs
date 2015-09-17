@@ -209,6 +209,63 @@ mod test {
     }
 
 
+    // Test to show that the TcpStream has problem reading and writing
+    // simultaneously.
+    #[ignore]
+    #[test]
+    fn exchange() {
+        use cbor;
+        use std::net::{TcpStream, SocketAddr};
+        use rustc_serialize::{Decodable, Encodable};
+        use cbor::Encoder;
+
+        const MSG_COUNT: u16 = 10;
+
+        fn encode<T>(value: &T) -> Vec<u8> where T: Encodable {
+            let mut enc = Encoder::from_memory();
+            let _ = enc.encode(&[value]);
+            enc.into_bytes()
+        }
+
+        let (event_receiver, listener) = listen(0).unwrap();
+        let port = listener.local_addr().unwrap().port();
+
+        let addr = SocketAddr::from_str(&format!("127.0.0.1:{}", port)).unwrap();
+        let (i1, o1) = connect_tcp(addr).unwrap();
+        let (connection, _) = event_receiver.recv().unwrap();
+        let (i2, o2) = upgrade_tcp(connection).unwrap();
+
+        fn start_reading(reader: TcpStream) -> thread::JoinHandle<()> {
+            thread::spawn(move || {
+                let ref r = &reader;
+                for i in 0..MSG_COUNT {
+                    reader.set_read_timeout(Some(Duration::new(5, 0))).unwrap();
+                    let m: String = match cbor::Decoder::from_reader(*r).decode().next() {
+                        Some(m) => match m {
+                            Ok(m) => m,
+                            Err(what) => panic!(format!("Problem decoding message {}", what)),
+                        },
+                        None => panic!("No more data in TcpStream"),
+                    };
+                    println!("received {:?}", m);
+                }
+            })
+        }
+
+        let t1 = start_reading(i1);
+        let t2 = start_reading(i2);
+
+        let msg = encode(&"MSG".to_string());
+
+        for i in 0..MSG_COUNT {
+            assert!(o1.send(msg.clone()).is_ok());
+            assert!(o2.send(msg.clone()).is_ok());
+        }
+
+        assert!(t1.join().is_ok());
+        assert!(t2.join().is_ok());
+    }
+
  // #[test]
     // fn graceful_port_close() {
         //use std::net::{TcpListener};
