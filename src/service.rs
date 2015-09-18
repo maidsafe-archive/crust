@@ -220,7 +220,7 @@ impl Service {
             // Connect to our listening ports, this should unblock
             // the threads.
             for port in state.listening_ports.iter() {
-                let _ = transport::connect(::util::loopback_v4(*port));
+                let _ = State::connect(::util::loopback_v4(*port));
             }
         }));
     }
@@ -242,7 +242,7 @@ impl Service {
 
             let _ = Self::new_thread("connect", move || {
                 for endpoint in endpoints {
-                    if let Ok(transport) = transport::connect(endpoint) {
+                    if let Ok(transport) = State::connect(endpoint) {
                         let _ = cmd_sender.send(Box::new(move |state: &mut State| {
                             let _ = state.handle_connect(transport, is_broadcast_acceptor);
                         }));
@@ -293,7 +293,7 @@ impl Service {
             state.listening_ports.insert(acceptor.local_port());
 
             let _ = Self::new_thread("listen", move || {
-                let accept_result = transport::accept(&acceptor);
+                let accept_result = State::accept(&acceptor);
                 let cmd_sender3 = cmd_sender2.clone();
 
                 let _ = cmd_sender2.send(Box::new(move |state: &mut State| {
@@ -361,7 +361,7 @@ impl Service {
         });
     }
 
-    fn new_thread<F,T>(name: &str, f: F) -> io::Result<JoinHandle<T>> 
+    fn new_thread<F,T>(name: &str, f: F) -> io::Result<JoinHandle<T>>
             where F: FnOnce() -> T, F: Send + 'static, T: Send + 'static {
         thread::Builder::new().name("Service::".to_string() + name)
                               .spawn(f)
@@ -666,11 +666,22 @@ mod test {
 
         let _ = spawn(move || {
             let _temp_config = make_temp_config(None);
-            let (cm_aux_tx, _) = channel();
+            let (cm_aux_tx, cm_aux_rx) = channel();
             let cm_aux = Service::new_inactive(cm_aux_tx).unwrap();
             // setting the listening port to be greater than 4455 will make the test hanging
             // changing this to cm_beacon_addr will make the test hanging
             cm_aux.connect(vec![cm_listen_ep]);
+
+            loop {
+                let ev = match cm_aux_rx.recv() {
+                    Ok(ev) => ev,
+                    Err(_) => break,
+                };
+                match ev {
+                    Event::OnConnect(_) => break,
+                    _ => (),
+                }
+            }
         }).join();
         thread::sleep_ms(100);
 
