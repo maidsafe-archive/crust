@@ -17,20 +17,31 @@
 
 use transport::{Endpoint, Protocol};
 use std::net::SocketAddr;
+use util::SocketAddrW;
 
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+#[derive(Debug, PartialOrd, Ord, PartialEq, Eq, Hash, Clone, Copy)]
 pub struct Connection {
-    pub transport_protocol: Protocol,
-    pub peer_addr: SocketAddr,
-    pub local_addr: SocketAddr,
+    transport_protocol: Protocol,
+    peer_addr: SocketAddrW,
+    local_addr: SocketAddrW,
 }
 
 impl Connection {
+    pub fn new(proto: Protocol, local_addr: SocketAddr, peer_addr: SocketAddr)
+        -> Connection {
+        Connection {
+            transport_protocol: proto,
+            peer_addr: SocketAddrW(peer_addr),
+            local_addr: SocketAddrW(local_addr),
+        }
+    }
+
     pub fn peer_endpoint(&self) -> Endpoint {
         match self.transport_protocol {
-            Protocol::Tcp => Endpoint::Tcp(self.peer_addr.clone()),
-            Protocol::Utp => Endpoint::Utp(self.peer_addr.clone()),
+            Protocol::Tcp => Endpoint::Tcp(self.peer_addr.0.clone()),
+            Protocol::Utp => Endpoint::Utp(self.peer_addr.0.clone()),
         }
     }
 }
+
 

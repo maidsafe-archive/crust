@@ -18,6 +18,7 @@
 use std::net::{SocketAddr, TcpStream, TcpListener, ToSocketAddrs, IpAddr};
 use tcp_connections;
 use utp_connections;
+use std::cmp::Ordering;
 use std::io;
 use std::io::Result as IoResult;
 use std::error::Error;
@@ -25,17 +26,17 @@ use std::sync::mpsc;
 use cbor;
 use std::str::FromStr;
 use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
-use std::cmp::Ordering;
 use utp::UtpSocket;
 use std::fmt;
 use ip;
 use connection::Connection;
 use std::io::BufReader;
+use util::compare_ip_addrs;
 
 pub type Bytes = Vec<u8>;
 
 /// Enum representing supported transport protocols
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+#[derive(Debug, PartialOrd, Ord, PartialEq, Eq, Hash, Clone, Copy)]
 pub enum Protocol {
     /// TCP protocol
     Tcp,
@@ -269,11 +270,11 @@ pub fn connect(remote_ep: Endpoint) -> IoResult<Transport> {
             let (i,o) = try!(tcp_connections::connect_tcp(ep)
                              .map_err(|e| io::Error::new(io::ErrorKind::NotConnected,
                                                          e.description())));
-            let connection_id = Connection {
-                transport_protocol: Protocol::Tcp,
-                peer_addr: try!(i.peer_addr()),
-                local_addr: try!(i.local_addr()),
-            };
+            let connection_id = Connection::new(
+                Protocol::Tcp,
+                try!(i.local_addr()),
+                try!(i.peer_addr()),
+            );
 
             Ok(Transport {
                 receiver: Receiver::Tcp(cbor::Decoder::from_reader(i)),
@@ -286,11 +287,11 @@ pub fn connect(remote_ep: Endpoint) -> IoResult<Transport> {
                               .map_err(|e| io::Error::new(io::ErrorKind::NotConnected,
                                                           e.description())));
 
-            let connection_id = Connection {
-                transport_protocol: Protocol::Utp,
-                peer_addr: i.peer_addr(),
-                local_addr: i.local_addr(),
-            };
+            let connection_id = Connection::new(
+                Protocol::Utp,
+                i.local_addr(),
+                i.peer_addr(),
+            );
 
             Ok(Transport {
                 receiver: Receiver::Utp(cbor::Decoder::from_reader(i)),
@@ -325,11 +326,11 @@ pub fn accept(acceptor: &Acceptor) -> IoResult<Transport> {
 
             let (i, o) = try!(tcp_connections::upgrade_tcp(stream));
 
-            let connection_id = Connection {
-                transport_protocol: Protocol::Tcp,
-                peer_addr: try!(i.peer_addr()),
-                local_addr: try!(i.local_addr()),
-            };
+            let connection_id = Connection::new(
+                Protocol::Tcp,
+                try!(i.local_addr()),
+                try!(i.peer_addr())
+            );
 
             Ok(Transport {
                 receiver: Receiver::Tcp(cbor::Decoder::from_reader(i)),
@@ -343,11 +344,11 @@ pub fn accept(acceptor: &Acceptor) -> IoResult<Transport> {
 
             let (i, o) = try!(utp_connections::upgrade_utp(stream));
 
-            let connection_id = Connection {
-                transport_protocol: Protocol::Utp,
-                peer_addr: i.peer_addr(),
-                local_addr: i.local_addr(),
-            };
+            let connection_id = Connection::new(
+                Protocol::Utp,
+                i.local_addr(),
+                i.peer_addr(),
+            );
 
             Ok(Transport{
                 receiver: Receiver::Utp(cbor::Decoder::from_reader(i)),
@@ -355,21 +356,6 @@ pub fn accept(acceptor: &Acceptor) -> IoResult<Transport> {
                 connection_id: connection_id,
             })
         },
-    }
-}
-
-fn compare_ip_addrs(a1: &SocketAddr, a2: &SocketAddr) -> Ordering {
-    use std::net::SocketAddr::{V4,V6};
-    match *a1 {
-        V4(ref a1) => match *a2 {
-            V4(ref a2) => (a1.ip(), a1.port()).cmp(&(a2.ip(), a2.port())),
-            V6(_) => Ordering::Less,
-        },
-        V6(ref a1) => match *a2 {
-            V4(_) => Ordering::Greater,
-            V6(ref a2) => (a1.ip(), a1.port(), a1.flowinfo(), a1.scope_id())
-                          .cmp(&(a2.ip(), a2.port(), a2.flowinfo(), a2.scope_id())),
-        }
     }
 }
 

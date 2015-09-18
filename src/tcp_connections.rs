@@ -238,7 +238,9 @@ mod test {
             loop {
                 for m in d.decode::<String>() {
                     match m {
-                        Ok(m) => println!("received {:?}", m),
+                        Ok(m) => {
+                            //println!("received {:?}", m)
+                        },
                         Err(what) => panic!(format!("Problem decoding message {}", what)),
                     }
                     received += 1;

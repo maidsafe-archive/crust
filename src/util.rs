@@ -15,6 +15,39 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use std::net::SocketAddr;
+use std::cmp::Ordering;
+
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct SocketAddrW(pub SocketAddr);
+
+impl PartialOrd for SocketAddrW {
+    fn partial_cmp(&self, other: &SocketAddrW) -> Option<Ordering> {
+        Some(self.cmp(&other))
+    }
+}
+
+impl Ord for SocketAddrW {
+    fn cmp(&self, other: &SocketAddrW) -> Ordering {
+        compare_ip_addrs(&self.0, &other.0)
+    }
+}
+
+pub fn compare_ip_addrs(a1: &SocketAddr, a2: &SocketAddr) -> Ordering {
+    use std::net::SocketAddr::{V4,V6};
+    match *a1 {
+        V4(ref a1) => match *a2 {
+            V4(ref a2) => (a1.ip(), a1.port()).cmp(&(a2.ip(), a2.port())),
+            V6(_) => Ordering::Less,
+        },
+        V6(ref a1) => match *a2 {
+            V4(_) => Ordering::Greater,
+            V6(ref a2) => (a1.ip(), a1.port(), a1.flowinfo(), a1.scope_id())
+                          .cmp(&(a2.ip(), a2.port(), a2.flowinfo(), a2.scope_id())),
+        }
+    }
+}
+
 #[cfg(test)]
 pub fn random_endpoint() -> ::transport::Endpoint {
     // TODO - randomise V4/V6 and TCP/UTP
