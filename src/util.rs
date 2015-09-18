@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::net::SocketAddr;
+use std::net::{SocketAddr, IpAddr, Ipv4Addr};
 use std::cmp::Ordering;
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
@@ -46,6 +46,11 @@ pub fn compare_ip_addrs(a1: &SocketAddr, a2: &SocketAddr) -> Ordering {
                           .cmp(&(a2.ip(), a2.port(), a2.flowinfo(), a2.scope_id())),
         }
     }
+}
+
+pub fn loopback_v4(port: ::transport::Port) -> ::transport::Endpoint {
+    let ip = IpAddr::V4(Ipv4Addr::new(127,0,0,1));
+    ::transport::Endpoint::new(ip, port)
 }
 
 #[cfg(test)]
