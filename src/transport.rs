@@ -146,7 +146,7 @@ pub enum Port {
 
 impl Port {
     /// Return the port
-    pub fn get_port(&self) -> u16 {
+    pub fn number(&self) -> u16 {
         match *self {
             Port::Tcp(p) => p,
             Port::Utp(p) => p,

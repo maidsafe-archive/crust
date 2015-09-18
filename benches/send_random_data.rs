@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-#![feature(test, ip_addr)]
+#![feature(test)]
 extern crate crust;
 extern crate rand;
 extern crate test;
@@ -23,7 +23,6 @@ extern crate test;
 use rand::random;
 use test::Bencher;
 use crust::*;
-use std::net::{IpAddr, Ipv4Addr};
 
 use std::sync::mpsc::{channel, Receiver};
 
@@ -55,12 +54,10 @@ fn send_random_data(b: &mut Bencher) {
     let (s1_tx, s1_rx) = channel();
     let mut s1 = Service::new_inactive(s1_tx).unwrap();
 
-    let s1_port = match s1.start_accepting(Port::Tcp(0)) {
-        Ok(port) => port,
+    let s1_endpoint = match s1.start_accepting(Port::Tcp(0)) {
+        Ok(ep) => ep,
         Err(_) => panic!("Failed to start Service #1"),
     };
-
-    let s1_endpoint = Endpoint::new(IpAddr::V4(Ipv4Addr::new(127,0,0,1)), s1_port);
 
     let (s2_tx, s2_rx) = channel();
     let s2 = Service::new_inactive(s2_tx).unwrap();

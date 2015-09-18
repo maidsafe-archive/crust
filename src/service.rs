@@ -100,7 +100,7 @@ impl Service {
         Ok(service)
     }
 
-    pub fn start_default_acceptors(&mut self) -> Vec<io::Result<Port>> {
+    pub fn start_default_acceptors(&mut self) -> Vec<io::Result<Endpoint>> {
         let tcp_listening_port = self.config.tcp_listening_port.clone();
         let utp_listening_port = self.config.utp_listening_port.clone();
 
@@ -121,7 +121,7 @@ impl Service {
     /// first.  On failure to listen on none of _hint_ an OS randomly chosen
     /// port will be used for each supported protocol. The actual port used will
     /// be returned on which it started listening for each protocol.
-    pub fn start_accepting(&mut self, port: Port) -> io::Result<Port> {
+    pub fn start_accepting(&mut self, port: Port) -> io::Result<Endpoint> {
         let acceptor = try!(transport::new_acceptor(port));
         let accept_port = acceptor.local_port();
 
@@ -137,7 +137,9 @@ impl Service {
             });
         }
 
-        Ok(accept_port)
+        // FIXME: Instead of hardcoded wrapping in loopback V4, the
+        // acceptor should tell us what address it is accepting on.
+        Ok(::util::loopback_v4(accept_port))
     }
 
     fn start_broadcast_acceptor(&mut self, beacon_port: u16) -> io::Result<()> {
@@ -410,7 +412,7 @@ mod test {
 
     struct Node {
         service: Service,
-        listening_port: Port,
+        listening_endpoint: Endpoint,
         connections: Arc<Mutex<Vec<Connection>>>
     }
 
@@ -433,19 +435,19 @@ mod test {
 
     impl Node {
         pub fn new(mut cm: Service) -> Node {
-            let ports = filter_ok(cm.start_default_acceptors());
+            let eps = filter_ok(cm.start_default_acceptors());
             Node {
                 service: cm,
-                listening_port: ports[0].clone(),
+                listening_endpoint: eps[0].clone(),
                 connections: Arc::new(Mutex::new(Vec::new()))
             }
         }
     }
 
-    fn get_port(node: &Arc<Mutex<Node>>) -> Port {
+    fn get_acceptor_endpoint(node: &Arc<Mutex<Node>>) -> Endpoint {
         let node = node.clone();
         let node = node.lock().unwrap();
-        node.listening_port.clone()
+        node.listening_endpoint.clone()
     }
 
     fn get_connections(node: &Arc<Mutex<Node>>) -> Vec<Connection> {
@@ -562,21 +564,18 @@ mod test {
 
         let (cm1_i, cm1_o) = channel();
         let mut cm1 = Service::new(cm1_i).unwrap();
-        let cm1_ports = filter_ok(cm1.start_default_acceptors());
-        assert!(cm1_ports.len() >= 1);
-
-        let cm1_eps = cm1_ports.iter().map(|p| Endpoint::tcp(("127.0.0.1", p.get_port())));
+        let cm1_eps = filter_ok(cm1.start_default_acceptors());
+        assert!(cm1_eps.len() >= 1);
 
         temp_configs.push(make_temp_config(cm1.get_beacon_acceptor_port()));
 
         let (cm2_i, cm2_o) = channel();
         let mut cm2 = Service::new(cm2_i).unwrap();
-        let cm2_ports = filter_ok(cm2.start_default_acceptors());
-        assert!(cm2_ports.len() >= 1);
+        let cm2_eps = filter_ok(cm2.start_default_acceptors());
+        assert!(cm2_eps.len() >= 1);
 
-        let cm2_eps = cm2_ports.iter().map(|p| Endpoint::tcp(("127.0.0.1", p.get_port())));
-        cm2.connect(cm1_eps.collect());
-        cm1.connect(cm2_eps.collect());
+        cm2.connect(cm1_eps);
+        cm1.connect(cm2_eps);
 
         let runner1 = run_cm(cm1, cm1_o);
         let runner2 = run_cm(cm2, cm2_o);
@@ -680,16 +679,16 @@ mod test {
 
         let run_stats = stats_accumulator(stats.clone(), stats_rx);
 
-        let mut listening_ports = network.nodes.iter()
-            .map(|node| get_port(node))
+        let mut listening_eps = network.nodes.iter()
+            .map(|node| get_acceptor_endpoint(node))
             .collect::<::std::collections::LinkedList<_>>();
 
         for node in network.nodes.iter() {
-            assert!(listening_ports.pop_front().is_some());
+            assert!(listening_eps.pop_front().is_some());
 
-            for port in listening_ports.iter() {
+            for ep in listening_eps.iter() {
                 let node = node.clone();
-                let ep = Endpoint::tcp(("127.0.0.1", port.get_port()));
+                let ep = ep.clone();
                 let _ = spawn(move || {
                     let node = node.lock().unwrap();
                     node.service.connect(vec![ep]);
@@ -746,8 +745,7 @@ mod test {
 
         let mut cm = Service::new_inactive(cm_tx).unwrap();
 
-        let cm_listen_port = cm.start_accepting(Port::Tcp(0)).unwrap();
-        let cm_listen_addr = Endpoint::tcp(("127.0.0.1", cm_listen_port.get_port()));
+        let cm_listen_ep = cm.start_accepting(Port::Tcp(0)).unwrap();
 
         let thread = spawn(move || {
             loop {
@@ -778,7 +776,7 @@ mod test {
             let cm_aux = Service::new_inactive(cm_aux_tx).unwrap();
             // setting the listening port to be greater than 4455 will make the test hanging
             // changing this to cm_beacon_addr will make the test hanging
-            cm_aux.connect(vec![cm_listen_addr]);
+            cm_aux.connect(vec![cm_listen_ep]);
         }).join();
         thread::sleep_ms(100);
 
