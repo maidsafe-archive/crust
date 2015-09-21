@@ -59,7 +59,7 @@ pub use event::Event;
 pub use error::Error;
 pub use file_handler::{FileHandler, current_bin_dir, user_app_dir, system_cache_dir, exe_file_stem,
                        ScopedUserAppDirRemover};
-pub use transport::{Endpoint, Port};
+pub use transport::{Endpoint, Port, Protocol};
 pub use connection::Connection;
 
 #[cfg(test)]
