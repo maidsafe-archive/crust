@@ -227,12 +227,14 @@ impl State {
         });
     }
 
-    fn unregister_connection(&mut self, connection: Connection) {
-        if self.connections.remove(&connection).is_some() {
+    pub fn unregister_connection(&mut self, connection: Connection) {
+        if self.connections.remove(&connection).is_none() {
             // Only send the event if the connection was there
             // to avoid duplicate events.
-            let _ = self.event_sender.send(Event::LostConnection(connection));
+            return;
         }
+
+        let _ = self.event_sender.send(Event::LostConnection(connection));
     }
 
     pub fn handle_accept(&mut self, trans: transport::Transport) -> io::Result<Connection> {
