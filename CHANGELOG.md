@@ -1,5 +1,16 @@
 # CRUST - Change Log
 
+## [0.3.1]
+- Reduces number of threads by using channels.
+- Renames ConnectionManager to Service
+- All Service public API functions are now async
+- Removes NewConnection and NewBootstrapConnection events in favor of OnConnect and OnAccept
+- Code reduction by doing encoding and decoding at one place (helped fixing a decoder bug we had)
+- Consistent usage of the 5483 and 5484 ports
+
+## [0.3.0]
+- Revert-revert ConnectionManager::new API change
+
 ## [0.2.10]
 - Revert ConnectionManager::new API change
 
