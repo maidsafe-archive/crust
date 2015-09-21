@@ -22,7 +22,7 @@ use std::boxed::FnBox;
 use std::thread::JoinHandle;
 use std::sync::{Arc, Mutex};
 
-use std::net::{IpAddr, Ipv4Addr, SocketAddrV4};
+use std::net::SocketAddrV4;
 use beacon;
 use bootstrap_handler::BootstrapHandler;
 use config_handler::{Config, read_config_file};
@@ -53,7 +53,7 @@ pub struct Service {
 }
 
 impl Service {
-    /// Constructs a connection manager. User needs to create an asynchronous channel, and provide
+    /// Constructs a service. User needs to create an asynchronous channel, and provide
     /// the sender half to this method. Receiver will receive all `Event`s from this library.
     pub fn new(event_sender: Sender<Event>) -> io::Result<Service> {
         let config = read_config_file().unwrap_or_else(|e| {
@@ -68,8 +68,8 @@ impl Service {
         Service::construct(event_sender, config)
     }
 
-    /// Construct a connection manager. As with the `Service::new` function,
-    /// but will not implicitly start any network activity. This construtor is intended
+    /// Construct a service. As with the `Service::new` function, but will not
+    /// implicitly start any network activity. This construtor is intended
     /// only for testing purposes.
     pub fn new_inactive(event_sender: Sender<Event>)
             -> io::Result<Service> {
@@ -100,6 +100,9 @@ impl Service {
         Ok(service)
     }
 
+    /// Start accepting on ports defined in the config file. Returns
+    /// a vector of Ok(endpoint) for endpoints where the accetation
+    /// started successfully.
     pub fn start_default_acceptors(&mut self) -> Vec<io::Result<Endpoint>> {
         let tcp_listening_port = self.config.tcp_listening_port.clone();
         let utp_listening_port = self.config.utp_listening_port.clone();
@@ -117,10 +120,8 @@ impl Service {
         result
     }
 
-    /// Starts listening on all supported protocols. Ports in _hint_ are tried
-    /// first.  On failure to listen on none of _hint_ an OS randomly chosen
-    /// port will be used for each supported protocol. The actual port used will
-    /// be returned on which it started listening for each protocol.
+    /// Starts accepting on a given port. If port number is 0, the OS
+    /// will pick one randomly. The actual port used will be returned.
     pub fn start_accepting(&mut self, port: Port) -> io::Result<Endpoint> {
         let acceptor = try!(transport::new_acceptor(port));
         let accept_port = acceptor.local_port();
@@ -138,7 +139,7 @@ impl Service {
         }
 
         // FIXME: Instead of hardcoded wrapping in loopback V4, the
-        // acceptor should tell us what address it is accepting on.
+        // acceptor should tell us the address it is accepting on.
         Ok(::util::loopback_v4(accept_port))
     }
 
@@ -219,8 +220,7 @@ impl Service {
             // Connect to our listening ports, this should unblock
             // the threads.
             for port in state.listening_ports.iter() {
-                let ip_addr = IpAddr::V4(Ipv4Addr::new(127,0,0,1));
-                let _ = transport::connect(Endpoint::new(ip_addr, *port));
+                let _ = transport::connect(::util::loopback_v4(*port));
             }
         }));
     }
@@ -252,10 +252,7 @@ impl Service {
         });
     }
 
-    /// Sends a message to specified address (endpoint). Returns Ok(()) if the sending might
-    /// succeed, and returns an Err if the address is not connected. Return value of Ok does not
-    /// mean that the data will be received. It is possible for the corresponding connection to hang
-    /// up immediately after this function returns Ok.
+    /// Sends a message over a specified connection.
     pub fn send(&self, connection: Connection, message: Bytes) {
         Self::post(&self.cmd_sender, move |state: &mut State| {
             let writer_channel = match state.connections.get(&connection) {
@@ -273,7 +270,7 @@ impl Service {
         })
     }
 
-    /// Closes connection with the specified endpoint.
+    /// Closes a connection.
     pub fn drop_node(&self, connection: Connection) {
         Self::post(&self.cmd_sender, move |state: &mut State| {
             let _ = state.connections.remove(&connection);
@@ -319,6 +316,9 @@ impl Service {
         })
     }
 
+    /// Initiates uPnP port mapping of the currently used accepting endpoints.
+    /// On success ExternalEndpoint event is generated containg our external
+    /// endpoints.
     pub fn get_external_endpoints(&self) {
         Self::post(&self.cmd_sender, move |state: &mut State| {
             type T = (SocketAddrV4, ip::Endpoint);
