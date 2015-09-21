@@ -258,14 +258,13 @@ impl Service {
             let writer_channel = match state.connections.get(&connection) {
                 Some(writer_channel) => writer_channel.clone(),
                 None => {
-                    // TODO: Generate async io::ErrorKind::NotConnected event
-                    panic!();
+                    // Connection already destroyed or never existed.
+                    return;
                 }
             };
 
             if let Err(what) = writer_channel.send(Message::UserBlob(message)) {
-                // TODO: Generate async error event (BrokenPipe perhaps?).
-                panic!();
+                state.unregister_connection(connection);
             }
         })
     }
