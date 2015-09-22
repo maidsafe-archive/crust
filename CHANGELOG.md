@@ -1,5 +1,8 @@
 # CRUST - Change Log
 
+## [0.3.2]
+- Fixes explicit panic when trying to send on a closed connection
+
 ## [0.3.1]
 - Reduces number of threads by using channels.
 - Renames ConnectionManager to Service
