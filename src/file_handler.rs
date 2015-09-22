@@ -151,7 +151,7 @@ impl FileHandler {
     }
 
     fn die(message: String, code: i32) {
-        error!("{}", message);
+        error!("die {}", message);
         ::std::process::exit(code);
     }
 
