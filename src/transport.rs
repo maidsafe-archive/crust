@@ -179,6 +179,19 @@ impl Ord for Endpoint {
 //--------------------------------------------------------------------
 
 #[derive(Debug, Clone, RustcDecodable, RustcEncodable)]
+/// After a connection is established, peers should exchange a handshake.
+///
+/// Only after the handshake is exchanged, crust should generate new connection
+/// events.
+pub struct Handshake;
+
+impl Handshake {
+    pub fn new() -> Handshake {
+        Handshake
+    }
+}
+
+#[derive(Debug, Clone, RustcDecodable, RustcEncodable)]
 pub enum Message {
     /// Arbitrary user blob. This is just an opaque message to Crust.
     UserBlob(Bytes),
@@ -193,17 +206,27 @@ pub enum Sender {
 }
 
 impl Sender {
-    pub fn send(&mut self, message: &Message) -> IoResult<()> {
+    fn send_bytes(&mut self, bytes: Vec<u8>) -> IoResult<()> {
         let sender = match *self {
             Sender::Tcp(ref mut s) => s,
             Sender::Utp(ref mut s) => s,
         };
-        let mut e = cbor::Encoder::from_memory();
-        e.encode(&vec![&message]).unwrap();
-        sender.send(Vec::from(e.as_bytes())).map_err(|_| {
+        sender.send(bytes).map_err(|_| {
             // FIXME: This can be done better.
             io::Error::new(io::ErrorKind::NotConnected, "can't send")
         })
+    }
+
+    pub fn send_handshake(&mut self, handshake: Handshake) -> IoResult<()> {
+        let mut e = cbor::Encoder::from_memory();
+        e.encode(&vec![&handshake]).unwrap();
+        self.send_bytes(Vec::from(e.as_bytes()))
+    }
+
+    pub fn send(&mut self, message: &Message) -> IoResult<()> {
+        let mut e = cbor::Encoder::from_memory();
+        e.encode(&vec![&message]).unwrap();
+        self.send_bytes(Vec::from(e.as_bytes()))
     }
 }
 
@@ -215,14 +238,14 @@ pub enum Receiver {
 }
 
 impl Receiver {
-    pub fn receive(&mut self) -> IoResult<Message> {
+    fn basic_receive<D: Decodable>(&mut self) -> IoResult<D> {
         match {
             match *self {
                 Receiver::Tcp(ref mut decoder) => {
-                    decoder.decode().next()
+                    decoder.decode::<D>().next()
                 },
                 Receiver::Utp(ref mut decoder) => {
-                    decoder.decode().next()
+                    decoder.decode::<D>().next()
                 },
             }
         } {
@@ -231,6 +254,14 @@ impl Receiver {
             None => Err(io::Error::new(io::ErrorKind::NotConnected,
                                        "Decoder reached end of stream")),
         }
+    }
+
+    pub fn receive_handshake(&mut self) -> IoResult<Handshake> {
+        self.basic_receive()
+    }
+
+    pub fn receive(&mut self) -> IoResult<Message> {
+        self.basic_receive()
     }
 }
 

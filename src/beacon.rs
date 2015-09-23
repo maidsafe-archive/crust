@@ -30,6 +30,7 @@ use net2::UdpSocketExt;
 
 use transport;
 use transport::{Acceptor, Port, Transport};
+use state::State;
 
 const GUID_SIZE: usize = 16;
 const MAGIC_SIZE: usize = 4;
@@ -96,7 +97,7 @@ impl BroadcastAcceptor {
                 .name("Beacon accept TCP acceptor".to_string())
                 .spawn(move || -> Result<()> {
             let tcp_acceptor = protected_tcp_acceptor.lock().unwrap();
-            let transport = try!(transport::accept(&tcp_acceptor));
+            let transport = try!(State::accept(&tcp_acceptor));
             let _ = transport_sender.send(transport);
             Ok(())
         }));
@@ -267,6 +268,7 @@ mod test {
     use std::thread;
     use transport;
     use transport::Message;
+    use state::State;
 
     #[test]
     fn test_beacon() {
@@ -280,7 +282,7 @@ mod test {
 
         let t2 = thread::Builder::new().name("test_beacon receiver".to_string()).spawn(move || {
             let endpoint = seek_peers(acceptor_port, None).unwrap()[0];
-            let mut transport = transport::connect(transport::Endpoint::Tcp(endpoint)).unwrap();
+            let mut transport = State::connect(transport::Endpoint::Tcp(endpoint)).unwrap();
             let msg = String::from_utf8(match transport.receiver.receive().unwrap() {
                 Message::UserBlob(msg) => msg,
                 _ => panic!("Wrong message type"),
@@ -315,7 +317,7 @@ mod test {
                                        .spawn(move || {
             thread::sleep_ms(700);
             let endpoint = seek_peers(acceptor_port, None).unwrap()[0];
-            let _ = transport::connect(transport::Endpoint::Tcp(endpoint)).unwrap();
+            let _ = State::connect(transport::Endpoint::Tcp(endpoint)).unwrap();
         });
 
         assert!(t1.is_ok());

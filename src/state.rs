@@ -28,7 +28,7 @@ use bootstrap_handler::BootstrapHandler;
 use config_handler::Config;
 use getifaddrs::{getifaddrs, filter_loopback};
 use transport;
-use transport::{Endpoint, Port, Message};
+use transport::{Endpoint, Port, Message, Handshake};
 use std::thread::JoinHandle;
 use std::net::{IpAddr, Ipv4Addr};
 
@@ -158,17 +158,35 @@ impl State {
         endpoints
     }
 
+    fn handle_handshake(mut trans: transport::Transport)
+                        -> io::Result<transport::Transport> {
+        let handshake_err = Err(io::Error::new(io::ErrorKind::Other,
+                                               "handshake failed"));
+        if let Err(_) = trans.sender.send_handshake(Handshake::new()) {
+            return handshake_err
+        }
+        trans.receiver.receive_handshake().and(Ok(trans)).or(handshake_err)
+    }
+
+    pub fn connect(remote_ep: Endpoint) -> io::Result<transport::Transport> {
+        Self::handle_handshake(try!(transport::connect(remote_ep)))
+    }
+
+    pub fn accept(acceptor: &transport::Acceptor)
+                  -> io::Result<transport::Transport> {
+        Self::handle_handshake(try!(transport::accept(acceptor)))
+    }
+
     pub fn handle_connect(&mut self,
                           trans                 : transport::Transport,
                           is_broadcast_acceptor : bool) -> io::Result<Connection> {
         let c = trans.connection_id.clone();
         let event = Event::OnConnect(c);
-    
+
         let connection = self.register_connection(trans, event);
         if is_broadcast_acceptor {
             if let Ok(ref connection) = connection {
-                let mut contacts = Vec::<Endpoint>::new();
-                contacts.push(connection.peer_endpoint());
+                let contacts = vec![connection.peer_endpoint()];
                 self.update_bootstrap_contacts(contacts);
             }
         }
@@ -209,7 +227,7 @@ impl State {
 
     // pushing events out to event_sender
     fn start_reading_thread(&self, mut receiver : transport::Receiver,
-                                   connection   : Connection) {
+                            connection : Connection) {
         let cmd_sender = self.cmd_sender.clone();
         let sink       = self.event_sender.clone();
 
@@ -252,7 +270,10 @@ impl State {
         let mut endpoints: Vec<Endpoint> = vec![];
         for peer in peer_addresses {
             let mut transport
-                = transport::connect(transport::Endpoint::Tcp(peer)).unwrap();
+                = match State::connect(transport::Endpoint::Tcp(peer)) {
+                    Ok(t) => t,
+                    Err(_) => continue,
+                };
             let message = match transport.receiver.receive() {
                 Ok(message) => message,
                 Err(_) => {
@@ -295,7 +316,7 @@ impl State {
             for contact in bootstrap_list.iter() {
                 let c = contact.clone();
                 vec_deferred.push(Deferred::new(move || {
-                    transport::connect(c)
+                    Self::connect(c)
                 }))
             }
 
@@ -326,7 +347,6 @@ impl State {
                 }
 
                 for t in ts {
-                    let e = t.connection_id.peer_endpoint();
                     let _ = state.handle_connect(t, is_broadcast_acceptor);
                 }
 
@@ -388,9 +408,7 @@ mod test {
     }
 
     fn testable_endpoint(acceptor: &Acceptor) -> Endpoint {
-        let acceptor = new_acceptor(Port::Tcp(0)).unwrap();
-
-        let addr = match &acceptor {
+        let addr = match acceptor {
             &Acceptor::Tcp(_, ref listener) => listener.local_addr()
                 .unwrap(),
             _ => panic!("Unable to create a new connection"),
@@ -418,12 +436,9 @@ mod test {
         })).is_ok());
 
         let accept_thread = thread::spawn(move || {
-            // Currently acceptor starts accepting implicitly,
-            // once fixed (https://github.com/maidsafe/crust/issues/316),
-            // the following lines should be uncommented.
-            //for a in acceptors {
-            //    assert!(::transport::accept(&a).is_ok());
-            //}
+            for a in acceptors {
+                assert!(State::accept(&a).is_ok())
+            }
         });
 
         let t = thread::spawn(move || { s.run(); });
