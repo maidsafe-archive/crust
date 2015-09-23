@@ -274,6 +274,19 @@ pub enum Acceptor {
 }
 
 impl Acceptor {
+    pub fn new(port: Port) -> IoResult<Acceptor> {
+        match port {
+            Port::Tcp(port) => {
+                let (receiver, listener) = try!(tcp_connections::listen(port));
+                Ok(Acceptor::Tcp(receiver, listener))
+            },
+            Port::Utp(port) => {
+                let (receiver, listener) = try!(utp_connections::listen(port));
+                Ok(Acceptor::Utp(receiver, listener))
+            },
+        }
+    }
+
     pub fn local_port(&self) -> Port {
         match *self {
             Acceptor::Tcp(_, ref listener) => Port::Tcp(listener.local_addr().unwrap().port()),
@@ -337,19 +350,6 @@ pub fn connect(remote_ep: Endpoint) -> IoResult<Transport> {
                 connection_id: connection_id,
             })
         }
-    }
-}
-
-pub fn new_acceptor(port: Port) -> IoResult<Acceptor> {
-    match port {
-        Port::Tcp(port) => {
-            let (receiver, listener) = try!(tcp_connections::listen(port));
-            Ok(Acceptor::Tcp(receiver, listener))
-        },
-        Port::Utp(port) => {
-            let (receiver, listener) = try!(utp_connections::listen(port));
-            Ok(Acceptor::Utp(receiver, listener))
-        },
     }
 }
 
