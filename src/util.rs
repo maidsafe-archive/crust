@@ -17,6 +17,8 @@
 
 use std::net::{SocketAddr, IpAddr, Ipv4Addr};
 use std::cmp::Ordering;
+use getifaddrs::getifaddrs;
+use transport;
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub struct SocketAddrW(pub SocketAddr);
@@ -48,9 +50,61 @@ pub fn compare_ip_addrs(a1: &SocketAddr, a2: &SocketAddr) -> Ordering {
     }
 }
 
-pub fn loopback_v4(port: ::transport::Port) -> ::transport::Endpoint {
+pub fn loopback_v4(port: transport::Port) -> transport::Endpoint {
     let ip = IpAddr::V4(Ipv4Addr::new(127,0,0,1));
-    ::transport::Endpoint::new(ip, port)
+    transport::Endpoint::new(ip, port)
+}
+
+pub fn is_v4(ip_addr: &IpAddr) -> bool {
+    match ip_addr {
+        &IpAddr::V4(_) => true,
+        &IpAddr::V6(_) => false,
+    }
+}
+
+pub fn is_unspecified(ip_addr: &IpAddr) -> bool {
+    match ip_addr {
+        &IpAddr::V4(ref ip) => ip.is_unspecified(),
+        &IpAddr::V6(ref ip) => ip.is_unspecified(),
+    }
+}
+
+// This function should really take IpAddr as an argument
+// but it is used outside of this library and IpAddr
+// is currently considered experimental.
+pub fn ifaddr_if_unspecified(ep: transport::Endpoint) -> Vec<transport::Endpoint> {
+    if !is_unspecified(&ep.get_address().ip()) {
+        return vec![ep];
+    }
+
+    let ep_is_v4 = is_v4(&ep.get_address().ip());
+
+    getifaddrs().into_iter()
+        .filter_map(|iface| {
+            if ep_is_v4 != is_v4(&iface.addr) { return None; }
+            Some(transport::Endpoint::new(iface.addr, ep.get_port()))
+        })
+        .collect()
+}
+
+#[cfg(test)]
+pub fn loopback_if_unspecified(addr : IpAddr) -> IpAddr {
+    match addr {
+        IpAddr::V4(addr) => {
+            IpAddr::V4(if addr.is_unspecified() {
+                           Ipv4Addr::new(127,0,0,1)
+                       } else {
+                           addr
+                       })
+        },
+        IpAddr::V6(addr) => {
+            IpAddr::V6(if addr.is_unspecified() {
+                           "::1".parse().unwrap()
+                       } else {
+                           addr
+                       })
+        }
+    }
 }
 
 #[cfg(test)]
