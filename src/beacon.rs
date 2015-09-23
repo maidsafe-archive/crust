@@ -28,7 +28,6 @@ use std::time::Duration;
 
 use net2::UdpSocketExt;
 
-use transport;
 use transport::{Acceptor, Port, Transport};
 use state::State;
 
@@ -77,7 +76,7 @@ pub struct BroadcastAcceptor {
 impl BroadcastAcceptor {
     pub fn new(port: u16) -> Result<BroadcastAcceptor> {
         let socket = try!(UdpSocket::bind(("0.0.0.0", port)));
-        let acceptor = try!(transport::new_acceptor(Port::Tcp(0)));
+        let acceptor = try!(Acceptor::new(Port::Tcp(0)));
         let mut guid = [0; GUID_SIZE];
         for i in 0..GUID_SIZE {
             guid[i] = random::<u8>();
