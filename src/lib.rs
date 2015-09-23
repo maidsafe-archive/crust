@@ -61,6 +61,7 @@ pub use file_handler::{FileHandler, current_bin_dir, user_app_dir, system_cache_
                        ScopedUserAppDirRemover};
 pub use transport::{Endpoint, Port, Protocol};
 pub use connection::Connection;
+pub use util::ifaddr_if_unspecified;
 pub use getifaddrs::getifaddrs;
 
 #[cfg(test)]
