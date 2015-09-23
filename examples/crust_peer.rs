@@ -222,13 +222,13 @@ impl Network {
             println!("No connected nodes.");
         } else {
             if connected_nodes.len() == 1 {
-                print!("1 connected node:");
+                println!("1 connected node:");
             } else {
-                print!("{} connected nodes:", connected_nodes.len());
+                println!("{} connected nodes:", connected_nodes.len());
             }
             let mut i = 0;
             for node in &connected_nodes {
-                print!(" [{}] {:?}", i, node);
+                println!("  [{}] {:?}", i, node);
                 i += 1;
             }
             println!("");
