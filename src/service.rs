@@ -124,13 +124,13 @@ impl Service {
     /// will pick one randomly. The actual port used will be returned.
     pub fn start_accepting(&mut self, port: Port) -> io::Result<Endpoint> {
         let acceptor = try!(transport::new_acceptor(port));
-        let accept_port = acceptor.local_port();
+        let accept_addr = acceptor.local_addr();
 
         Self::accept(self.cmd_sender.clone(), acceptor);
 
         if self.beacon_guid_and_port.is_some() {
             let contacts = filter_loopback(getifaddrs()).into_iter()
-                .map(|ip| { Endpoint::new(ip.addr.clone(), accept_port) })
+                .map(|ip| { Endpoint::new(ip.addr.clone(), accept_addr.get_port()) })
                 .collect::<Vec<_>>();
 
             Self::post(&self.cmd_sender, move |state : &mut State| {
@@ -140,7 +140,7 @@ impl Service {
 
         // FIXME: Instead of hardcoded wrapping in loopback V4, the
         // acceptor should tell us the address it is accepting on.
-        Ok(::util::loopback_v4(accept_port))
+        Ok(accept_addr)
     }
 
     fn start_broadcast_acceptor(&mut self, beacon_port: u16) -> io::Result<()> {

@@ -239,14 +239,21 @@ pub enum Acceptor {
     // Channel receiver, TCP listener
     Tcp(mpsc::Receiver<(TcpStream, SocketAddr)>, TcpListener),
     // Channel receiver, UTP listener and port
-    Utp(mpsc::Receiver<(UtpSocket, SocketAddr)>, u16),
+    Utp(mpsc::Receiver<(UtpSocket, SocketAddr)>, SocketAddr),
 }
 
 impl Acceptor {
     pub fn local_port(&self) -> Port {
         match *self {
             Acceptor::Tcp(_, ref listener) => Port::Tcp(listener.local_addr().unwrap().port()),
-            Acceptor::Utp(_, listener) => Port::Utp(listener),
+            Acceptor::Utp(_, local_addr) => Port::Utp(local_addr.port()),
+        }
+    }
+
+    pub fn local_addr(&self) -> Endpoint {
+        match *self {
+            Acceptor::Tcp(_, ref listener) => Endpoint::Tcp(listener.local_addr().unwrap()),
+            Acceptor::Utp(_, local_addr) => Endpoint::Utp(local_addr),
         }
     }
 }
