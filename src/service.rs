@@ -123,7 +123,7 @@ impl Service {
     /// Starts accepting on a given port. If port number is 0, the OS
     /// will pick one randomly. The actual port used will be returned.
     pub fn start_accepting(&mut self, port: Port) -> io::Result<Endpoint> {
-        let acceptor = try!(transport::new_acceptor(port));
+        let acceptor = try!(transport::Acceptor::new(port));
         let accept_addr = acceptor.local_addr();
 
         Self::accept(self.cmd_sender.clone(), acceptor);
