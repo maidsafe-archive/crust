@@ -72,7 +72,7 @@ pub fn is_unspecified(ip_addr: &IpAddr) -> bool {
 // This function should really take IpAddr as an argument
 // but it is used outside of this library and IpAddr
 // is currently considered experimental.
-pub fn ifaddr_if_unspecified(ep: transport::Endpoint) -> Vec<transport::Endpoint> {
+pub fn ifaddrs_if_unspecified(ep: transport::Endpoint) -> Vec<transport::Endpoint> {
     if !is_unspecified(&ep.get_address().ip()) {
         return vec![ep];
     }
