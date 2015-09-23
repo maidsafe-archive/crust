@@ -45,6 +45,7 @@ pub fn listen(port: u16) -> IoResult<(Receiver<(TcpStream, SocketAddr)>, TcpList
             try!(TcpListener::bind(("0.0.0.0", 0)))
         }
     };
+
     let (tx, rx) = mpsc::channel();
 
     let tcp_listener2 = try!(tcp_listener.try_clone());
