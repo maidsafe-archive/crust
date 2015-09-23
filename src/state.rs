@@ -385,7 +385,7 @@ mod test {
     use std::thread;
     use std::net::{IpAddr, Ipv4Addr, SocketAddr};
     use std::sync::mpsc::channel;
-    use transport::{Endpoint, Port, new_acceptor, Acceptor};
+    use transport::{Endpoint, Port, Acceptor};
     use event::Event;
 
     fn loopback_if_unspecified(addr : IpAddr) -> IpAddr {
@@ -419,7 +419,7 @@ mod test {
     }
 
     fn test_bootstrap_off_list(n: u16) {
-        let acceptors = (0..n).map(|_|new_acceptor(Port::Tcp(0)).unwrap())
+        let acceptors = (0..n).map(|_|Acceptor::new(Port::Tcp(0)).unwrap())
                               .collect::<Vec<_>>();
 
         let eps = acceptors.iter().map(|a|testable_endpoint(&a))
