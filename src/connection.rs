@@ -15,11 +15,12 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use std::fmt;
 use transport::{Endpoint, Protocol};
 use std::net::SocketAddr;
 use util::SocketAddrW;
 
-#[derive(Debug, PartialOrd, Ord, PartialEq, Eq, Hash, Clone, Copy)]
+#[derive(PartialOrd, Ord, PartialEq, Eq, Hash, Clone, Copy)]
 pub struct Connection {
     transport_protocol: Protocol,
     peer_addr: SocketAddrW,
@@ -44,4 +45,12 @@ impl Connection {
     }
 }
 
+impl fmt::Debug for Connection {
+    fn fmt(&self, formatter: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        formatter.write_str(&format!("Connection({:?} {:?} -> {:?})",
+            self.transport_protocol,
+            self.local_addr.0,
+            self.peer_addr.0))
+    }
+}
 
