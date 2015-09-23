@@ -99,6 +99,13 @@ impl Endpoint {
         };
         ip::Endpoint::new(self.get_address().ip(), port)
     }
+
+    pub fn has_unspecified_ip(&self) -> bool {
+        match self.get_address().ip() {
+            IpAddr::V4(ip) => ip.is_unspecified(),
+            IpAddr::V6(ip) => ip.is_unspecified(),
+        }
+    }
 }
 
 #[derive(Debug, RustcDecodable, RustcEncodable)]
