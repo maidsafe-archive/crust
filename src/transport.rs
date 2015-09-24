@@ -31,7 +31,7 @@ use std::fmt;
 use ip;
 use connection::Connection;
 use std::io::BufReader;
-use util::compare_ip_addrs;
+use util;
 
 pub type Bytes = Vec<u8>;
 
@@ -141,6 +141,27 @@ impl Decodable for Endpoint {
     }
 }
 
+impl PartialOrd for Endpoint {
+    fn partial_cmp(&self, other: &Endpoint) -> Option<Ordering> {
+        Some(self.cmp(&other))
+    }
+}
+
+impl Ord for Endpoint {
+    fn cmp(&self, other: &Endpoint) -> Ordering {
+        use Endpoint::{Tcp, Utp};
+        match *self {
+            Tcp(ref a1) => match *other {
+                Tcp(ref a2) => util::compare_ip_addrs(a1, a2),
+                Utp(_) => Ordering::Greater,
+            },
+            Utp(ref a1) => match *other {
+                Tcp(_) => Ordering::Less,
+                Utp(ref a2) => util::compare_ip_addrs(a1, a2)
+            },
+        }
+    }
+}
 
 /// Enum representing port of supported protocols
 #[derive(Debug, PartialEq, Eq, Hash, Clone, RustcDecodable, RustcEncodable, Copy)]
@@ -157,28 +178,6 @@ impl Port {
         match *self {
             Port::Tcp(p) => p,
             Port::Utp(p) => p,
-        }
-    }
-}
-
-impl PartialOrd for Endpoint {
-    fn partial_cmp(&self, other: &Endpoint) -> Option<Ordering> {
-        Some(self.cmp(&other))
-    }
-}
-
-impl Ord for Endpoint {
-    fn cmp(&self, other: &Endpoint) -> Ordering {
-        use Endpoint::{Tcp, Utp};
-        match *self {
-            Tcp(ref a1) => match *other {
-                Tcp(ref a2) => compare_ip_addrs(a1, a2),
-                Utp(_) => panic!("Should never happen"),
-            },
-            Utp(ref a1) => match *other {
-                Tcp(_) => panic!("Should never happen"),
-                Utp(ref a2) => compare_ip_addrs(a1, a2)
-            },
         }
     }
 }
