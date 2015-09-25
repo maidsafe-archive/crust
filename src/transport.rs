@@ -31,7 +31,7 @@ use std::fmt;
 use ip;
 use connection::Connection;
 use std::io::BufReader;
-use util::compare_ip_addrs;
+use util;
 
 pub type Bytes = Vec<u8>;
 
@@ -99,6 +99,13 @@ impl Endpoint {
         };
         ip::Endpoint::new(self.get_address().ip(), port)
     }
+
+    pub fn has_unspecified_ip(&self) -> bool {
+        match self.get_address().ip() {
+            IpAddr::V4(ip) => ip.is_unspecified(),
+            IpAddr::V6(ip) => ip.is_unspecified(),
+        }
+    }
 }
 
 #[derive(Debug, RustcDecodable, RustcEncodable)]
@@ -134,6 +141,27 @@ impl Decodable for Endpoint {
     }
 }
 
+impl PartialOrd for Endpoint {
+    fn partial_cmp(&self, other: &Endpoint) -> Option<Ordering> {
+        Some(self.cmp(&other))
+    }
+}
+
+impl Ord for Endpoint {
+    fn cmp(&self, other: &Endpoint) -> Ordering {
+        use Endpoint::{Tcp, Utp};
+        match *self {
+            Tcp(ref a1) => match *other {
+                Tcp(ref a2) => util::compare_ip_addrs(a1, a2),
+                Utp(_) => Ordering::Greater,
+            },
+            Utp(ref a1) => match *other {
+                Tcp(_) => Ordering::Less,
+                Utp(ref a2) => util::compare_ip_addrs(a1, a2)
+            },
+        }
+    }
+}
 
 /// Enum representing port of supported protocols
 #[derive(Debug, PartialEq, Eq, Hash, Clone, RustcDecodable, RustcEncodable, Copy)]
@@ -150,28 +178,6 @@ impl Port {
         match *self {
             Port::Tcp(p) => p,
             Port::Utp(p) => p,
-        }
-    }
-}
-
-impl PartialOrd for Endpoint {
-    fn partial_cmp(&self, other: &Endpoint) -> Option<Ordering> {
-        Some(self.cmp(&other))
-    }
-}
-
-impl Ord for Endpoint {
-    fn cmp(&self, other: &Endpoint) -> Ordering {
-        use Endpoint::{Tcp, Utp};
-        match *self {
-            Tcp(ref a1) => match *other {
-                Tcp(ref a2) => compare_ip_addrs(a1, a2),
-                Utp(_) => panic!("Should never happen"),
-            },
-            Utp(ref a1) => match *other {
-                Tcp(_) => panic!("Should never happen"),
-                Utp(ref a2) => compare_ip_addrs(a1, a2)
-            },
         }
     }
 }
@@ -270,14 +276,34 @@ pub enum Acceptor {
     // Channel receiver, TCP listener
     Tcp(mpsc::Receiver<(TcpStream, SocketAddr)>, TcpListener),
     // Channel receiver, UTP listener and port
-    Utp(mpsc::Receiver<(UtpSocket, SocketAddr)>, u16),
+    Utp(mpsc::Receiver<(UtpSocket, SocketAddr)>, SocketAddr),
 }
 
 impl Acceptor {
+    pub fn new(port: Port) -> IoResult<Acceptor> {
+        match port {
+            Port::Tcp(port) => {
+                let (receiver, listener) = try!(tcp_connections::listen(port));
+                Ok(Acceptor::Tcp(receiver, listener))
+            },
+            Port::Utp(port) => {
+                let (receiver, listener) = try!(utp_connections::listen(port));
+                Ok(Acceptor::Utp(receiver, listener))
+            },
+        }
+    }
+
     pub fn local_port(&self) -> Port {
         match *self {
             Acceptor::Tcp(_, ref listener) => Port::Tcp(listener.local_addr().unwrap().port()),
-            Acceptor::Utp(_, listener) => Port::Utp(listener),
+            Acceptor::Utp(_, local_addr) => Port::Utp(local_addr.port()),
+        }
+    }
+
+    pub fn local_addr(&self) -> Endpoint {
+        match *self {
+            Acceptor::Tcp(_, ref listener) => Endpoint::Tcp(listener.local_addr().unwrap()),
+            Acceptor::Utp(_, local_addr) => Endpoint::Utp(local_addr),
         }
     }
 }
@@ -330,19 +356,6 @@ pub fn connect(remote_ep: Endpoint) -> IoResult<Transport> {
                 connection_id: connection_id,
             })
         }
-    }
-}
-
-pub fn new_acceptor(port: Port) -> IoResult<Acceptor> {
-    match port {
-        Port::Tcp(port) => {
-            let (receiver, listener) = try!(tcp_connections::listen(port));
-            Ok(Acceptor::Tcp(receiver, listener))
-        },
-        Port::Utp(port) => {
-            let (receiver, listener) = try!(utp_connections::listen(port));
-            Ok(Acceptor::Utp(receiver, listener))
-        },
     }
 }
 

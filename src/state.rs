@@ -383,29 +383,11 @@ impl State {
 mod test {
     use super::*;
     use std::thread;
-    use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+    use std::net::SocketAddr;
     use std::sync::mpsc::channel;
-    use transport::{Endpoint, Port, new_acceptor, Acceptor};
+    use transport::{Endpoint, Port, Acceptor};
     use event::Event;
-
-    fn loopback_if_unspecified(addr : IpAddr) -> IpAddr {
-        match addr {
-            IpAddr::V4(addr) => {
-                IpAddr::V4(if addr.is_unspecified() {
-                               Ipv4Addr::new(127,0,0,1)
-                           } else {
-                               addr
-                           })
-            },
-            IpAddr::V6(addr) => {
-                IpAddr::V6(if addr.is_unspecified() {
-                               "::1".parse().unwrap()
-                           } else {
-                               addr
-                           })
-            }
-        }
-    }
+    use util;
 
     fn testable_endpoint(acceptor: &Acceptor) -> Endpoint {
         let addr = match acceptor {
@@ -414,12 +396,12 @@ mod test {
             _ => panic!("Unable to create a new connection"),
         };
 
-        let addr = SocketAddr::new(loopback_if_unspecified(addr.ip()), addr.port());
+        let addr = SocketAddr::new(util::loopback_if_unspecified(addr.ip()), addr.port());
         Endpoint::Tcp(addr)
     }
 
     fn test_bootstrap_off_list(n: u16) {
-        let acceptors = (0..n).map(|_|new_acceptor(Port::Tcp(0)).unwrap())
+        let acceptors = (0..n).map(|_|Acceptor::new(Port::Tcp(0)).unwrap())
                               .collect::<Vec<_>>();
 
         let eps = acceptors.iter().map(|a|testable_endpoint(&a))
