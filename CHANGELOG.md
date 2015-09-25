@@ -1,5 +1,12 @@
 # CRUST - Change Log
 
+## [0.4.0]
+- Small change in protocol as preparation for UDP hole punching
+- Impl of Ord for transport::Endpoint no longer panics
+- Exports util function `ifaddrs_if_unspecified`
+- Calls which start accepting connections now return real socket addresses where
+  IP is usually 0.0.0.0 (to be used with the fn from previous bullet)
+
 ## [0.3.2]
 - Fixes explicit panic when trying to send on a closed connection
 
