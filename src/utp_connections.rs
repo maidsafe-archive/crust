@@ -33,11 +33,11 @@ pub fn connect_utp(addr: SocketAddr)
 /// Returns:
 /// * A receiver of Utp socket objects.  It is recommended that you `upgrade` these.
 /// * Port
-pub fn listen(port: u16) -> IoResult<(Receiver<(UtpSocket, SocketAddr)>, u16)> {
+pub fn listen(port: u16) -> IoResult<(Receiver<(UtpSocket, SocketAddr)>, SocketAddr)> {
     let listener = try!(UtpListener::bind(SocketAddr::V4({
         SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), port)
     })));
-    let port = try!(listener.local_addr()).port();
+    let local_addr = try!(listener.local_addr());
     let (tx, rx) = mpsc::channel();
     let _ = thread::spawn(move || {
         loop {
@@ -47,7 +47,7 @@ pub fn listen(port: u16) -> IoResult<(Receiver<(UtpSocket, SocketAddr)>, u16)> {
             }
         }
     });
-    Ok((rx, port))
+    Ok((rx, local_addr))
 }
 
 /// Upgrades a newly connected UtpSocket to a Sender-Receiver pair that you can use to send and
@@ -83,7 +83,7 @@ mod test {
     fn establishing_connection() {
         let listener = listen(0).unwrap();
         let _ = connect_utp(SocketAddr::V4({
-            SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), listener.1)
+            SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), listener.1.port())
         })).unwrap();
     }
 
@@ -91,7 +91,7 @@ mod test {
     fn send_receive_data() {
         let listener = listen(0).unwrap();
         let (mut i, o) = connect_utp(SocketAddr::V4({
-            SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), listener.1)
+            SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), listener.1.port())
         })).unwrap();
         let listener = listener.0;
         let thread = thread::spawn(move || {
