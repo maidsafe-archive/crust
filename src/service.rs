@@ -490,6 +490,7 @@ mod test {
     }
 
     #[test]
+    #[ignore]
     fn connection_manager() {
         // Wait 2 seconds until previous bootstrap test ends. If not, that test connects to these endpoints.
         thread::sleep_ms(2000);
@@ -541,6 +542,7 @@ mod test {
     }
 
     #[test]
+    #[ignore]
     fn network() {
         const NETWORK_SIZE: u32 = 10;
         const MESSAGE_PER_NODE: u32 = 5;
@@ -632,6 +634,7 @@ mod test {
     }
 
     #[test]
+    #[ignore]
     fn connection_manager_start() {
         let _temp_config = make_temp_config(None);
 
