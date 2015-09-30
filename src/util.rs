@@ -20,6 +20,11 @@ use std::cmp::Ordering;
 use getifaddrs::getifaddrs;
 use transport;
 
+#[cfg(test)]
+use std::sync::mpsc;
+#[cfg(test)]
+use std::thread;
+
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub struct SocketAddrW(pub SocketAddr);
 
@@ -126,4 +131,29 @@ pub fn random_endpoints(count: usize) -> Vec<::transport::Endpoint> {
         contacts.push(random_endpoint());
     }
     contacts
+}
+
+#[cfg(test)]
+pub fn timed_recv<T>(receiver: &mpsc::Receiver<T>, timeout_ms: u32)
+                     -> Result<T, mpsc::TryRecvError>
+{
+    let step_ms = 20;
+    let mut time = 0;
+    loop {
+        match receiver.try_recv() {
+            Ok(v) => return Ok(v),
+            Err(what) => match what {
+                mpsc::TryRecvError::Empty => {
+                    if time >= timeout_ms {
+                        return Err(what);
+                    }
+                },
+                mpsc::TryRecvError::Disconnected => {
+                    return Err(what);
+                }
+            }
+        }
+        thread::sleep_ms(step_ms);
+        time += step_ms;
+    }
 }
