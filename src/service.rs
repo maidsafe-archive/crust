@@ -412,20 +412,23 @@ mod test {
 
     #[derive(Debug)]
     struct Stats {
-        new_connections_count: u32,
+        connect_count: u32,
+        accept_count: u32,
         messages_count: u32,
     }
 
     impl Stats {
         fn new() -> Stats {
             Stats {
-                new_connections_count: 0,
+                connect_count: 0,
+                accept_count: 0,
                 messages_count: 0,
             }
         }
 
         fn add(&mut self, s: Stats) {
-            self.new_connections_count += s.new_connections_count;
+            self.connect_count += s.connect_count;
+            self.accept_count += s.accept_count;
             self.messages_count += s.messages_count;
         }
     }
@@ -570,11 +573,11 @@ mod test {
                 while let Ok(event) = timed_recv(&self.reader, 5000) {
                     match event {
                         Event::OnConnect(connection) => {
-                            stats.new_connections_count += 1;
+                            stats.connect_count += 1;
                             self.send_data_to(connection);
                         },
                         Event::OnAccept(connection) => {
-                            stats.new_connections_count += 1;
+                            stats.accept_count += 1;
                             self.send_data_to(connection);
                         },
                         Event::NewMessage(from, bytes) => {
@@ -629,7 +632,8 @@ mod test {
             stats.add(s)
         }
 
-        assert_eq!(stats.new_connections_count, NETWORK_SIZE * (NETWORK_SIZE - 1));
+        assert_eq!(stats.connect_count + stats.accept_count,
+                   NETWORK_SIZE * (NETWORK_SIZE - 1));
         assert_eq!(stats.messages_count,  NETWORK_SIZE * MESSAGE_PER_NODE * (NETWORK_SIZE - 1));
     }
 
