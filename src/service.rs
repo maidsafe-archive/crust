@@ -542,7 +542,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn network() {
         const NETWORK_SIZE: u32 = 10;
         const MESSAGE_PER_NODE: u32 = 5;
