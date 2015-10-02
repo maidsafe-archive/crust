@@ -201,6 +201,10 @@ impl State {
         debug_assert!(!self.connections.contains_key(&connection));
         let (tx, rx) = mpsc::channel();
 
+        // We need to insert the event into event_sender *before* the
+        // reading thread starts. It is because the reading thread
+        // also inserts events into the pipe and if done very quickly
+        // they may be inserted in wrong order.
         let _ = self.connections.insert(connection, tx);
         let _ = self.event_sender.send(event_to_user);
 
