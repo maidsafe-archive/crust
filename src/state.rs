@@ -200,10 +200,13 @@ impl State {
 
         debug_assert!(!self.connections.contains_key(&connection));
         let (tx, rx) = mpsc::channel();
-        self.start_writing_thread(trans.sender, connection.clone(), rx);
-        self.start_reading_thread(trans.receiver, connection.clone());
+
         let _ = self.connections.insert(connection, tx);
         let _ = self.event_sender.send(event_to_user);
+
+        self.start_writing_thread(trans.sender, connection.clone(), rx);
+        self.start_reading_thread(trans.receiver, connection.clone());
+
         Ok(trans.connection_id)
     }
 
