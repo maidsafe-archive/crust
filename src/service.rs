@@ -394,7 +394,6 @@ mod test {
     use std::fs::remove_file;
     use event::Event;
     use std::io;
-    use util::timed_recv;
 
     fn encode<T>(value: &T) -> Bytes where T: Encodable
     {
@@ -570,7 +569,7 @@ mod test {
             fn run(&mut self) -> Stats {
                 let mut stats = Stats::new();
 
-                while let Ok(event) = timed_recv(&self.reader, 5000) {
+                for event in self.reader.iter() {
                     match event {
                         Event::OnConnect(connection) => {
                             stats.connect_count += 1;
