@@ -632,9 +632,9 @@ mod test {
             stats.add(s)
         }
 
-        assert_eq!(stats.connect_count + stats.accept_count,
-                   NETWORK_SIZE * (NETWORK_SIZE - 1));
-        assert_eq!(stats.messages_count,  NETWORK_SIZE * MESSAGE_PER_NODE * (NETWORK_SIZE - 1));
+        assert_eq!(stats.connect_count,  NETWORK_SIZE * (NETWORK_SIZE - 1) / 2);
+        assert_eq!(stats.accept_count,   NETWORK_SIZE * (NETWORK_SIZE - 1) / 2);
+        assert_eq!(stats.messages_count, NETWORK_SIZE * (NETWORK_SIZE - 1) * MESSAGE_PER_NODE);
     }
 
     #[test]
