@@ -593,6 +593,7 @@ mod test {
                         }
                     }
                 }
+                thread::sleep_ms(200);
                 stats
             }
 
