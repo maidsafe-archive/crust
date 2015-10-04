@@ -106,6 +106,10 @@ impl Endpoint {
             IpAddr::V6(ip) => ip.is_unspecified(),
         }
     }
+
+    pub fn map_ip_addr<F: Fn(IpAddr) -> IpAddr>(&self, f: F) -> Endpoint {
+        Endpoint::new(f(self.to_ip().ip()), self.get_port())
+    }
 }
 
 #[derive(Debug, RustcDecodable, RustcEncodable)]

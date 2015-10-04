@@ -612,6 +612,7 @@ mod test {
 
         let mut listening_eps = nodes.iter_mut()
             .map(|node| node.service.start_accepting(Port::Tcp(0)).unwrap())
+            .map(|ep| ep.map_ip_addr(::util::loopback_if_unspecified))
             .collect::<::std::collections::LinkedList<_>>();
 
         for mut node in nodes.into_iter() {
