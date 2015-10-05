@@ -1,5 +1,9 @@
 # CRUST - Change Log
 
+## [0.4.1]
+- Fixes
+- `service::test::network` test is working again
+
 ## [0.4.0]
 - Small change in protocol as preparation for UDP hole punching
 - Impl of Ord for transport::Endpoint no longer panics
