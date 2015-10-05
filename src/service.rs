@@ -382,6 +382,7 @@ impl Drop for Service {
 #[cfg(test)]
 mod test {
     use super::*;
+    use transport::Endpoint;
     use connection::Connection;
     use std::thread::spawn;
     use std::thread;
@@ -394,6 +395,7 @@ mod test {
     use std::fs::remove_file;
     use event::Event;
     use std::io;
+    use util;
 
     fn encode<T>(value: &T) -> Bytes where T: Encodable
     {
@@ -454,6 +456,10 @@ mod test {
         vec.into_iter().filter_map(|a|a.ok()).collect()
     }
 
+    fn loopback_if_unspecified(eps: Vec<Endpoint>) -> Vec<Endpoint> {
+        eps.iter().map(|e|e.map_ip_addr(util::loopback_if_unspecified)).collect()
+    }
+
     #[test]
     fn bootstrap() {
         let _cleaner = ::file_handler::ScopedUserAppDirRemover;
@@ -493,7 +499,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn connection_manager() {
         // Wait 2 seconds until previous bootstrap test ends. If not, that test connects to these endpoints.
         thread::sleep_ms(2000);
@@ -534,8 +539,8 @@ mod test {
         let cm2_eps = filter_ok(cm2.start_default_acceptors());
         assert!(cm2_eps.len() >= 1);
 
-        cm2.connect(cm1_eps);
-        cm1.connect(cm2_eps);
+        cm2.connect(loopback_if_unspecified(cm1_eps));
+        cm1.connect(loopback_if_unspecified(cm2_eps));
 
         let runner1 = run_cm(cm1, cm1_o);
         let runner2 = run_cm(cm2, cm2_o);
@@ -612,6 +617,7 @@ mod test {
 
         let mut listening_eps = nodes.iter_mut()
             .map(|node| node.service.start_accepting(Port::Tcp(0)).unwrap())
+            .map(|ep| ep.map_ip_addr(::util::loopback_if_unspecified))
             .collect::<::std::collections::LinkedList<_>>();
 
         for mut node in nodes.into_iter() {
@@ -637,7 +643,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn connection_manager_start() {
         let _temp_config = make_temp_config(None);
 
@@ -676,7 +681,7 @@ mod test {
             let cm_aux = Service::new_inactive(cm_aux_tx).unwrap();
             // setting the listening port to be greater than 4455 will make the test hanging
             // changing this to cm_beacon_addr will make the test hanging
-            cm_aux.connect(vec![cm_listen_ep]);
+            cm_aux.connect(loopback_if_unspecified(vec![cm_listen_ep]));
 
             loop {
                 let ev = match cm_aux_rx.recv() {
