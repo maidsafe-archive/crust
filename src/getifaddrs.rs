@@ -161,13 +161,11 @@ mod getifaddrs_windows {
     use libc;
 
     #[repr(C)]
-    #[allow(bad_style)]
     struct SOCKET_ADDRESS {
         pub lpSockaddr : *const sockaddr,
         pub iSockaddrLength : c_int,
     }
     #[repr(C)]
-    #[allow(bad_style)]
     struct IP_ADAPTER_UNICAST_ADDRESS {
         pub Length : c_ulong,
         pub Flags : DWORD,
@@ -176,7 +174,6 @@ mod getifaddrs_windows {
         // Loads more follows, but I'm not bothering to map these for now
     }
     #[repr(C)]
-    #[allow(bad_style)]
     struct IP_ADAPTER_PREFIX {
         pub Length : c_ulong,
         pub Flags : DWORD,
@@ -185,7 +182,6 @@ mod getifaddrs_windows {
         pub PrefixLength : c_ulong,
     }
     #[repr(C)]
-    #[allow(bad_style)]
     struct IP_ADAPTER_ADDRESSES {
         pub Length : c_ulong,
         pub IfIndex : DWORD,
