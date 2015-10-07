@@ -81,7 +81,7 @@ impl Service {
         let mut state = State::new(event_sender);
         let cmd_sender = state.cmd_sender.clone();
 
-        let handle = try!(Self::new_thread("run loop", move || {
+        let _handle = try!(Self::new_thread("run loop", move || {
                                 state.run();
                             }));
 
@@ -200,6 +200,7 @@ impl Service {
         });
     }
 
+    /// Stop the bootstraping procedure
     pub fn stop_bootstrap(&mut self) {
         Self::post(&self.cmd_sender, move |state : &mut State| {
             state.stop_bootstrap();
@@ -263,7 +264,7 @@ impl Service {
                 }
             };
 
-            if let Err(what) = writer_channel.send(Message::UserBlob(message)) {
+            if let Err(_what) = writer_channel.send(Message::UserBlob(message)) {
                 state.unregister_connection(connection);
             }
         })
@@ -584,7 +585,7 @@ mod test {
                             stats.accept_count += 1;
                             self.send_data_to(connection);
                         },
-                        Event::NewMessage(from, bytes) => {
+                        Event::NewMessage(_from, _bytes) => {
                             stats.messages_count += 1;
                             //let msg = decode::<String>(&bytes);
                             if stats.messages_count == TOTAL_MSG_TO_RECEIVE {

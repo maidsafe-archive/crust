@@ -139,6 +139,8 @@ mod getifaddrs_posix {
         ret
     }
 }
+
+/// For non-Windows operating system, use this function to get address
 #[cfg(not(windows))]
 pub fn getifaddrs() -> Vec<IfAddr> {
     getifaddrs_posix::getifaddrs()
