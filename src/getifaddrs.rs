@@ -390,6 +390,7 @@ mod getifaddrs_windows {
     }
 }
 #[cfg(windows)]
+/// Get address
 pub fn getifaddrs() -> Vec<IfAddr> {
     getifaddrs_windows::getifaddrs()
 }
