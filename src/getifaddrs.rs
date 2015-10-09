@@ -277,7 +277,7 @@ mod getifaddrs_windows {
         let mut first = true;
         while !_ifaddr.is_null() {
             if first { first=false; }
-            else { _ifaddr = unsafe { (*_ifaddr).Next }; }
+            else { _ifaddr = unsafe { (*_ifaddr).next }; }
             if _ifaddr.is_null() { break; }
             let ref ifaddr = unsafe { &*_ifaddr };
             // debug!("ifaddr1={}, next={}", _ifaddr as u64, ifaddr.ifa_next as u64);
@@ -287,7 +287,7 @@ mod getifaddrs_windows {
             let mut firstaddr = true;
             while !addr.is_null() {
                 if firstaddr { firstaddr=false; }
-                else { addr = unsafe { (*addr).Next }; }
+                else { addr = unsafe { (*addr).next }; }
                 if addr.is_null() { break; }
 
                 let mut item = IfAddr::new();
@@ -299,12 +299,12 @@ mod getifaddrs_windows {
                 item.addr = ipaddr.unwrap();
 
                 // Search prefixes for a prefix matching addr
-                let mut prefix = ifaddr.FirstPrefix;
+                let mut prefix = ifaddr.first_prefix;
                 if !prefix.is_null() {
-                    let mut firstprefix = true;
+                    let mut first_prefix = true;
                     'prefixloop: while !prefix.is_null() {
-                        if firstprefix { firstprefix=false; }
-                        else { prefix = unsafe { (*prefix).Next }; }
+                        if first_prefix { first_prefix = false; }
+                        else { prefix = unsafe { (*prefix).next }; }
                         if prefix.is_null() { break; }
 
                         let ipprefix = sockaddr_to_ipaddr(unsafe { (*prefix).address.lp_socket_address });
