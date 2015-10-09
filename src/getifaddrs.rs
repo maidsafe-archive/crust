@@ -195,7 +195,7 @@ mod getifaddrs_windows {
         description : *const c_void,
         friendly_name : *const c_void,
         physical_address : [c_char; 8],
-        physical_addressLength : DWORD,
+        physical_address_length : DWORD,
         flags : DWORD,
         mtu : DWORD,
         if_type : DWORD,
