@@ -350,11 +350,11 @@ mod getifaddrs_windows {
                                     // Iterate the bits in the prefix, if they all match this prefix is the
                                     // right one, else try the next prefix
                                     let mut netmask : [u16; 8] = [0; 8];
-                                    for n in 0..unsafe{ (*prefix).PrefixLength as usize + 15 }/16 {
+                                    for n in 0..unsafe{ (*prefix).prefix_length as usize + 15 }/16 {
                                         let x_word = b.segments()[n];
                                         let y_word = a.segments()[n];
                                         for m in 0..16 {
-                                            if (n * 16) + m > unsafe{ (*prefix).PrefixLength as usize } { break; }
+                                            if (n * 16) + m > unsafe{ (*prefix).prefix_length as usize } { break; }
                                             let bit = 1 << m;
                                             if (x_word & bit) == (y_word & bit) {
                                                 netmask[n] = netmask[n] | bit;
