@@ -74,6 +74,7 @@ mod test {
         }
     }
 }
+mod sequence_number;
 mod beacon;
 mod bootstrap_handler;
 mod config_handler;
