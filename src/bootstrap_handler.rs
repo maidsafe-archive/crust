@@ -93,6 +93,39 @@ fn get_file_name() -> ::std::path::PathBuf {
     name
 }
 
+
+/// Since some tests enforcing an empty bootstrap file to be provided at the beginning, this is a
+/// convenience object which tries to remove the bootstrap file on request or when it is destroyed.
+///
+/// # Examples
+///
+/// ```
+/// {
+///     let _cleaner = ::crust::BootstrapRemover;
+///     // clean up the staled bootstrap file
+///     _cleaner.remove();
+///     let mut bootstrap_handler = BootstrapHandler::new();
+///     // Bootstrap file is possibly created by this call.
+///     let _ = bootstrap_handler.read_file();
+/// }
+/// // bootstrap file is now removed since '_cleaner' has gone out of scope.
+/// ```
+pub struct BootstrapRemover;
+
+impl BootstrapRemover {
+    pub fn remove(&mut self) {
+        let mut file_handler = ::file_handler::FileHandler::new(get_file_name());
+        let _ = file_handler.remove_file();
+    }
+}
+
+impl Drop for BootstrapRemover {
+    fn drop(&mut self) {
+        self.remove();
+    }
+}
+
+
 #[cfg(test)]
 mod test {
     use transport::Endpoint;
