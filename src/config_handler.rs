@@ -99,6 +99,36 @@ pub fn write_config_file(tcp_listening_port: Option<u16>,
     Ok(config_path)
 }
 
+/// Since some tests enforcing an empty config file to be provided at the beginning, this is a
+/// convenience object which tries to remove the config file on request or when it is destroyed.
+///
+/// # Examples
+///
+/// ```
+/// {
+///     let cleaner = ::crust::ConfigRemover;
+///     // clean up the staled config file
+///     cleaner.remove();
+///     // Config file is possibly created by this call.
+///     create_default_config_file();
+/// }
+/// // config file is now removed since 'cleaner' has gone out of scope.
+/// ```
+pub struct ConfigRemover;
+
+impl ConfigRemover {
+    pub fn remove(&mut self) {
+        let mut file_handler = ::file_handler::FileHandler::new(get_file_name());
+        let _ = file_handler.remove_file();
+    }
+}
+
+impl Drop for ConfigRemover {
+    fn drop(&mut self) {
+        self.remove();
+    }
+}
+
 fn get_file_name() -> ::std::path::PathBuf {
     let mut name = ::file_handler::exe_file_stem()
                        .unwrap_or(::std::path::Path::new("unknown").to_path_buf());

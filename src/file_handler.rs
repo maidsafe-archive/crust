@@ -130,6 +130,14 @@ impl FileHandler {
             })
     }
 
+    /// Trying to remove the file from all possible location on request
+    pub fn remove_file(&mut self) -> Result<bool, ::error::Error> {
+        let _ = self.path().clone().ok_or(::error::Error::NotSet).and_then(Self::remove);
+        let _ = self.set_path(current_bin_dir()).and_then(Self::remove);
+        let _ = self.set_path(user_app_dir()).and_then(Self::remove);
+        self.set_path(system_cache_dir()).and_then(Self::remove)
+    }
+
     /// Get the full path to the file.
     ///
     /// If no calls to [`read_file()`](#method.read_file) or [`write_file()`](#method.write_file)
@@ -153,6 +161,11 @@ impl FileHandler {
     fn die(message: String, code: i32) {
         error!("die {}", message);
         ::std::process::exit(code);
+    }
+
+    fn remove(path: ::std::path::PathBuf) -> Result<bool, ::error::Error> {
+        let _ = ::std::fs::remove_file(path);
+        Ok(true)
     }
 
     #[cfg(target_os="windows")]
