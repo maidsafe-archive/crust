@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::net::{SocketAddr, IpAddr, Ipv4Addr};
+use std::net::{SocketAddr, IpAddr, Ipv4Addr, Ipv6Addr};
 use std::cmp::Ordering;
 use getifaddrs::getifaddrs;
 use transport;
@@ -72,6 +72,65 @@ pub fn is_unspecified(ip_addr: &IpAddr) -> bool {
         &IpAddr::V4(ref ip) => ip.is_unspecified(),
         &IpAddr::V6(ref ip) => ip.is_unspecified(),
     }
+}
+
+pub fn on_same_subnet_v4( ip_addr1: Ipv4Addr
+                        , ip_addr2: Ipv4Addr
+                        , netmask:  Ipv4Addr) -> bool {
+    let o1 = ip_addr1.octets();
+    let o2 = ip_addr2.octets();
+    let m  = netmask.octets();
+
+    for i in 0..4 {
+        if o1[i] & m[i] != o2[i] & m[i] {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+pub fn on_same_subnet_v6( ip_addr1: Ipv6Addr
+                        , ip_addr2: Ipv6Addr
+                        , netmask:  Ipv6Addr) -> bool {
+    let s1 = ip_addr1.segments();
+    let s2 = ip_addr2.segments();
+    let m  = netmask.segments();
+
+    for i in 0..8 {
+        if s1[i] & m[i] != s2[i] & m[i] {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+pub fn on_same_subnet(ip_addr1: IpAddr,
+                      ip_addr2: IpAddr,
+                      netmask:  IpAddr) -> bool {
+    use ::std::net::IpAddr::V4;
+    use ::std::net::IpAddr::V6;
+
+    match (ip_addr1, ip_addr2, netmask) {
+        (V4(ip1), V4(ip2), V4(m)) => {
+            on_same_subnet_v4(ip1, ip2, m)
+        },
+        (V6(ip1), V6(ip2), V6(m)) => {
+            on_same_subnet_v6(ip1, ip2, m)
+        },
+        _ => {
+            false
+        }
+    }
+}
+
+pub fn is_local(ip_addr: &IpAddr) -> bool {
+    getifaddrs().into_iter()
+        .filter(|iface| {
+            on_same_subnet(iface.addr, *ip_addr, iface.netmask)
+        })
+        .nth(0).is_some()
 }
 
 // This function should really take IpAddr as an argument
