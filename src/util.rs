@@ -17,7 +17,7 @@
 
 use std::net::{SocketAddr, IpAddr, Ipv4Addr, Ipv6Addr};
 use std::cmp::Ordering;
-use getifaddrs::getifaddrs;
+use getifaddrs::{getifaddrs, IfAddr};
 use transport;
 
 #[cfg(test)]
@@ -74,6 +74,41 @@ pub fn is_unspecified(ip_addr: &IpAddr) -> bool {
     }
 }
 
+pub fn is_loopback(ip_addr: &IpAddr) -> bool {
+    match ip_addr {
+        &IpAddr::V4(ref ip) => ip.is_loopback(),
+        &IpAddr::V6(ref ip) => ip.is_loopback(),
+    }
+}
+
+pub fn is_link_local(ip_addr: &IpAddr) -> bool {
+    match ip_addr {
+        &IpAddr::V4(ref ip) => ip.is_link_local(),
+        &IpAddr::V6(ref ip) => false, // Not applicable
+    }
+}
+
+pub fn is_unicast_link_local(ip_addr: &IpAddr) -> bool {
+    match ip_addr {
+        &IpAddr::V4(ref ip) => false, // Not applicable
+        &IpAddr::V6(ref ip) => ip.is_unicast_link_local(),
+    }
+}
+
+pub fn is_private(ip_addr: &IpAddr) -> bool {
+    match ip_addr {
+        &IpAddr::V4(ref ip) => ip.is_private(),
+        &IpAddr::V6(ref ip) => false, // Not applicable
+    }
+}
+
+pub fn is_unique_local(ip_addr: &IpAddr) -> bool {
+    match ip_addr {
+        &IpAddr::V4(ref ip) => false, // Not applicable
+        &IpAddr::V6(ref ip) => ip.is_unique_local(),
+    }
+}
+
 pub fn on_same_subnet_v4( ip_addr1: Ipv4Addr
                         , ip_addr2: Ipv4Addr
                         , netmask:  Ipv4Addr) -> bool {
@@ -125,12 +160,72 @@ pub fn on_same_subnet(ip_addr1: IpAddr,
     }
 }
 
-pub fn is_local(ip_addr: &IpAddr) -> bool {
-    getifaddrs().into_iter()
-        .filter(|iface| {
-            on_same_subnet(iface.addr, *ip_addr, iface.netmask)
-        })
-        .nth(0).is_some()
+pub fn is_local(ip_addr: &IpAddr, interfaces: &Vec<IfAddr>) -> bool {
+    for i in interfaces.iter() {
+        if on_same_subnet(i.addr, *ip_addr, i.netmask) {
+            return true;
+        }
+    }
+    false
+}
+
+/// Use heuristic to determine which IP is closer to us
+/// geographically. That is, ip1 is closer to us than ip2 => ip1 < ip2.
+pub fn heuristic_geo_cmp(ip1: &IpAddr, ip2: &IpAddr) -> Ordering {
+    use ::std::cmp::Ordering::{Less, Equal, Greater};
+
+    if ip1 == ip2 { return Equal; }
+
+    match (is_unspecified(ip1), is_unspecified(ip2)) {
+        (true, true)  => return Equal,
+        (true, false) => return Less,
+        (false, true) => return Greater,
+        _ => (),
+    }
+
+    match (is_loopback(ip1), is_loopback(ip2)) {
+        (true, true)  => return Equal,
+        (true, false) => return Less,
+        (false, true) => return Greater,
+        _ => (),
+    }
+
+    match (is_link_local(ip1), is_link_local(ip2)) {
+        (true, true)  => return Equal,
+        (true, false) => return Less,
+        (false, true) => return Greater,
+        _ => (),
+    }
+
+    match (is_unicast_link_local(ip1), is_unicast_link_local(ip2)) {
+        (true, true)  => return Equal,
+        (true, false) => return Less,
+        (false, true) => return Greater,
+        _ => (),
+    }
+
+    match (is_private(ip1), is_private(ip2)) {
+        (true, true)  => return Equal,
+        (true, false) => return Less,
+        (false, true) => return Greater,
+        _ => (),
+    }
+
+    match (is_unique_local(ip1), is_unique_local(ip2)) {
+        (true, true)  => return Equal,
+        (true, false) => return Less,
+        (false, true) => return Greater,
+        _ => (),
+    }
+
+    let interfaces = getifaddrs();
+
+    match (is_local(ip1, &interfaces), is_local(ip2, &interfaces)) {
+        (true, true)   => return Equal,
+        (true, false)  => return Less,
+        (false, true)  => return Greater,
+        (false, false) => return Equal,
+    }
 }
 
 // This function should really take IpAddr as an argument
@@ -214,5 +309,35 @@ pub fn timed_recv<T>(receiver: &mpsc::Receiver<T>, timeout_ms: u32)
         }
         thread::sleep_ms(step_ms);
         time += step_ms;
+    }
+}
+
+#[cfg(test)]
+mod test {
+    #[test]
+    fn test_heuristic_geo_cmp() {
+        use getifaddrs::getifaddrs;
+        use ::std::cmp::Ordering::{Less, Equal, Greater};
+        use ::std::net::Ipv4Addr;
+        use ::std::net::IpAddr::V4;
+
+        let g = V4(Ipv4Addr::new(173,194,116,137));
+        let l = V4(Ipv4Addr::new(127,0,0,1));
+
+        assert_eq!(super::heuristic_geo_cmp(&l, &l), Equal);
+        assert_eq!(super::heuristic_geo_cmp(&l, &l), Equal);
+
+        assert_eq!(super::heuristic_geo_cmp(&l, &g), Less);
+        assert_eq!(super::heuristic_geo_cmp(&g, &l), Greater);
+
+        let ifs = getifaddrs().into_iter()
+            .map(|interface| interface.addr)
+            .filter(|addr| !super::is_loopback(&addr))
+            .collect::<Vec<_>>();
+
+        for i in ifs {
+            assert_eq!(super::heuristic_geo_cmp(&i, &l), Greater);
+            assert_eq!(super::heuristic_geo_cmp(&i, &g), Less);
+        }
     }
 }
