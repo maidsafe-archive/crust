@@ -215,7 +215,6 @@ impl FileHandler {
                                                      contents: &Contents) ->
             Result<(), ::error::Error> {
         use std::io::Write;
-        println!("trying to create boostrap file at {:?}", path);
         let mut file = try!(::std::fs::File::create(path));
         let _ = try!(write!(&mut file, "{}", ::rustc_serialize::json::as_pretty_json(contents)));
         file.sync_all().map_err(|error| ::error::Error::IoError(error))

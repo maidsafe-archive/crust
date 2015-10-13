@@ -54,7 +54,7 @@ pub mod error;
 pub mod file_handler;
 
 pub use bootstrap_handler::BootstrapRemover;
-pub use config_handler::write_config_file;
+pub use config_handler::{ConfigRemover, write_config_file};
 pub use service::Service;
 pub use event::Event;
 pub use error::Error;
