@@ -18,9 +18,16 @@
 use transport::Endpoint;
 use connection::Connection;
 
+#[derive(Debug)]
+pub struct HolePunchResult {
+    pub result_token: u32,
+    pub udp_socket: ::std::net::UdpSocket,
+    pub peer_addr: ::std::io::Result<::std::net::SocketAddr>,
+}
+
 /// Enum representing different events that will be sent over the asynchronous channel to the user
 /// of this module.
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug)]
 pub enum Event {
     /// Invoked when a new message is received.  Passes the peer's endpoint and the message.
     NewMessage(Connection, Vec<u8>),
@@ -34,5 +41,7 @@ pub enum Event {
     BootstrapFinished,
     /// Invoked when a new bootstrap connection to a peer is established.  Passes the peer's endpoint.
     ExternalEndpoints(Vec<Endpoint>),
+    /// Invoked when the udp hole-punching procedure has finished.
+    OnHolePunched(HolePunchResult),
 }
 
