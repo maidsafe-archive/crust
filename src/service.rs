@@ -28,7 +28,7 @@ use bootstrap_handler::BootstrapHandler;
 use config_handler::{Config, read_config_file};
 use getifaddrs::{getifaddrs, filter_loopback};
 use transport;
-use transport::{Endpoint, Port, Message};
+use transport::{Endpoint, Port, Handshake};
 use ip;
 use map_external_port::async_map_external_port;
 use connection::Connection;
@@ -80,7 +80,11 @@ impl Service {
 
     fn construct(event_sender: Sender<Event>, config: Config)
             -> io::Result<Service> {
-        let mut state = State::new(event_sender);
+        // TODO (peterj) fill this with a real value once
+        // the mapper server is created.
+        let our_mapper_port : Option<u16> = None;
+
+        let mut state = State::new(event_sender, our_mapper_port);
         let cmd_sender = state.cmd_sender.clone();
 
         let handle = try!(Self::new_thread("run loop", move || {
@@ -222,7 +226,7 @@ impl Service {
             // Connect to our listening ports, this should unblock
             // the threads.
             for port in state.listening_ports.iter() {
-                let _ = State::connect(::util::loopback_v4(*port));
+                let _ = State::connect(Handshake::default(), ::util::loopback_v4(*port));
             }
         }));
     }
@@ -242,11 +246,17 @@ impl Service {
         Self::post(&self.cmd_sender, move |state : &mut State| {
             let cmd_sender = state.cmd_sender.clone();
 
+            let handshake = Handshake {
+                mapper_port: state.our_mapper_port.clone(),
+            };
+
             let _ = Self::new_thread("connect", move || {
                 for endpoint in endpoints {
-                    if let Ok(transport) = State::connect(endpoint) {
+                    if let Ok((h, t)) = State::connect(handshake.clone(), endpoint) {
                         let _ = cmd_sender.send(Box::new(move |state: &mut State| {
-                            let _ = state.handle_connect(transport, is_broadcast_acceptor);
+                            let _ = state.handle_connect(h,
+                                                         t,
+                                                         is_broadcast_acceptor);
                         }));
                     }
                 }
@@ -257,17 +267,7 @@ impl Service {
     /// Sends a message over a specified connection.
     pub fn send(&self, connection: Connection, message: Bytes) {
         Self::post(&self.cmd_sender, move |state: &mut State| {
-            let writer_channel = match state.connections.get(&connection) {
-                Some(writer_channel) => writer_channel.clone(),
-                None => {
-                    // Connection already destroyed or never existed.
-                    return;
-                }
-            };
-
-            if let Err(what) = writer_channel.send(Message::UserBlob(message)) {
-                state.unregister_connection(connection);
-            }
+            state.send(connection, message);
         })
     }
 
@@ -294,8 +294,12 @@ impl Service {
         Self::post(&cmd_sender, move |state: &mut State| {
             state.listening_ports.insert(acceptor.local_port());
 
+            let handshake = Handshake {
+                mapper_port: state.our_mapper_port.clone(),
+            };
+
             let _ = Self::new_thread("listen", move || {
-                let accept_result = State::accept(&acceptor);
+                let accept_result = State::accept(handshake, &acceptor);
                 let cmd_sender3 = cmd_sender2.clone();
 
                 let _ = cmd_sender2.send(Box::new(move |state: &mut State| {
@@ -304,7 +308,9 @@ impl Service {
                     }
 
                     match accept_result {
-                        Ok(transport) => { let _ = state.handle_accept(transport); },
+                        Ok((handshake, transport)) => {
+                            let _ = state.handle_accept(handshake, transport);
+                        },
                         Err(_) => {
                             // TODO: What now? Stop? Start again?
                             panic!();
