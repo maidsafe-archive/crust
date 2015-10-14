@@ -17,12 +17,22 @@
 
 use transport::Endpoint;
 use connection::Connection;
+use std::net::{UdpSocket, SocketAddr};
+use std::collections::HashSet;
+use std::io;
+
+#[derive(Debug)]
+pub struct MappedUdpSocket {
+    pub result_token: u32,
+    // Using HashSet because SocketAddr is not Ord.
+    pub result: io::Result<(UdpSocket, HashSet<SocketAddr>)>,
+}
 
 #[derive(Debug)]
 pub struct HolePunchResult {
     pub result_token: u32,
-    pub udp_socket: ::std::net::UdpSocket,
-    pub peer_addr: ::std::io::Result<::std::net::SocketAddr>,
+    pub udp_socket:   UdpSocket,
+    pub peer_addr:    io::Result<SocketAddr>,
 }
 
 /// Enum representing different events that will be sent over the asynchronous channel to the user
@@ -41,7 +51,9 @@ pub enum Event {
     BootstrapFinished,
     /// Invoked when a new bootstrap connection to a peer is established.  Passes the peer's endpoint.
     ExternalEndpoints(Vec<Endpoint>),
-    /// Invoked when the udp hole-punching procedure has finished.
+    /// Invoked as a result of the call to Service::get_mapped_udp_socket.
+    OnUdpSocketMapped(MappedUdpSocket),
+    /// Invoked as a result of the call to Service::udp_punch_hole.
     OnHolePunched(HolePunchResult),
 }
 

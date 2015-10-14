@@ -363,6 +363,12 @@ impl Service {
         });
     }
 
+    pub fn get_mapped_udp_socket(&self, result_token: u32) {
+        Self::post(&self.cmd_sender, move |state: &mut State| {
+            state.get_mapped_udp_socket(result_token);
+        });
+    }
+
     fn new_thread<F,T>(name: &str, f: F) -> io::Result<JoinHandle<T>>
             where F: FnOnce() -> T, F: Send + 'static, T: Send + 'static {
         thread::Builder::new().name("Service::".to_string() + name)
@@ -427,8 +433,8 @@ impl Service {
                 // TODO (canndrew): we currently have no means to handle this error
                 let _ = event_sender.send(Event::OnHolePunched(HolePunchResult {
                     result_token: result_token,
-                    udp_socket:   udp_socket,
-                    peer_addr:    addr_res,
+                    udp_socket: udp_socket,
+                    peer_addr: addr_res,
                 }));
             });
         });

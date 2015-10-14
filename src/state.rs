@@ -30,10 +30,10 @@ use getifaddrs::{getifaddrs, filter_loopback};
 use transport;
 use transport::{Endpoint, Port, Message, Handshake};
 use std::thread::JoinHandle;
-use std::net::{IpAddr, Ipv4Addr};
+use std::net::{SocketAddr, IpAddr, Ipv4Addr};
 
 use itertools::Itertools;
-use event::Event;
+use event::{Event, MappedUdpSocket};
 use connection::Connection;
 use sequence_number::SequenceNumber;
 
@@ -386,6 +386,40 @@ impl State {
             }
         }
         return false;
+    }
+
+    fn get_ordered_helping_nodes(&self) -> Vec<SocketAddr> {
+        unimplemented!()
+    }
+
+    pub fn get_mapped_udp_socket(&mut self, result_token: u32) {
+        use ::hole_punching::blocking_get_mapped_udp_socket;
+
+        let seq_id = self.next_punch_sequence.number();
+        self.next_punch_sequence.increment();
+
+        let event_sender = self.event_sender.clone();
+        let helping_nodes = self.get_ordered_helping_nodes();
+
+        let result_handle = Self::new_thread("map_udp", move || {
+            let result = blocking_get_mapped_udp_socket(seq_id, helping_nodes);
+
+            let result = match result {
+                // TODO (peterj) use _rest
+                Ok((socket, opt_mapped_addr, _rest)) => {
+                    let addrs = opt_mapped_addr.into_iter().collect();
+                    Ok((socket, addrs))
+                },
+                Err(what) => Err(what),
+            };
+
+            let _ = event_sender.send(
+                Event::OnUdpSocketMapped(
+                    MappedUdpSocket{
+                        result_token: result_token,
+                        result: result,
+                    }));
+        });
     }
 }
 
