@@ -164,3 +164,51 @@ pub fn blocking_get_mapped_udp_socket(request_id: u32, helper_nodes: Vec<SocketA
     }
 }
 
+pub fn start_hole_punch_server() -> io::Result<(::std::sync::mpsc::Sender<()>, ::std::thread::JoinHandle<io::Result<()>>)> {
+    let (tx, rx) = ::std::sync::mpsc::channel::<()>();
+    let udp_socket = try!(UdpSocket::bind("0.0.0.0:0"));
+    let local_addr = try!(udp_socket.local_addr());
+    /*
+     * TODO (canndrew):
+     * Currently we set a read timeout so that the hole punch server thread continually wakes
+     * and checks to see if it's time to exit. This is a really crappy way of implementing
+     * this but currently rust doesn't have a good cross-platform select/epoll interface.
+     */
+    try!(udp_socket.set_read_timeout(Some(::std::time::Duration::from_millis(500))));
+    let hole_punch_listener = try!(::std::thread::Builder::new().name(String::from("udp hole punch server"))
+                                                                .spawn(move || {
+        loop {
+            match rx.try_recv() {
+                Err(::std::sync::mpsc::TryRecvError::Empty)        => (),
+                Err(::std::sync::mpsc::TryRecvError::Disconnected) => panic!(),
+                Ok(())  => return Ok(()),
+            }
+            let mut data_recv = [0u8; 16];
+            let (read_size, addr) = try!(udp_socket.recv_from(&mut data_recv[..]));
+            match ::cbor::Decoder::from_reader(&data_recv[..read_size])
+                                 .decode::<GetExternalAddr>().next() {
+                Some(Ok(gea)) => {
+                    if gea.magic != GET_EXTERNAL_ADDR_MAGIC {
+                        continue;
+                    }
+                    let data_send = {
+                        let sea = SetExternalAddr {
+                            request_id: gea.request_id,
+                            addr: WrapSocketAddr(addr),
+                        };
+                        let mut enc = ::cbor::Encoder::from_memory();
+                        enc.encode(::std::iter::once(&sea)).unwrap();
+                        enc.into_bytes()
+                    };
+                    let send_size = try!(udp_socket.send_to(&data_send[..], addr));
+                    if send_size != data_send.len() {
+                        warn!("Failed to send entire SetExternalAddr message. {} < {}", send_size, data_send.len());
+                    }
+                }
+                x => info!("Hole punch server received invalid GetExternalAddr: {:?}", x),
+            };
+        }
+    }));
+    Ok((tx, hole_punch_listener))
+}
+

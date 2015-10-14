@@ -49,9 +49,13 @@ type Closure = Box<FnBox(&mut State) + Send>;
 /// (https://github.com/maidsafe/crust/blob/master/docs/vault_config_file_flowchart.pdf) for more
 /// information.
 pub struct Service {
-    beacon_guid_and_port : Option<(beacon::GUID, u16)>,
-    config               : Config,
-    cmd_sender           : Sender<Closure>,
+    beacon_guid_and_port                : Option<(beacon::GUID, u16)>,
+    config                              : Config,
+    cmd_sender                          : Sender<Closure>,
+    hole_punch_server_shutdown_notifier : ::std::sync::mpsc::Sender<()>,
+    // TODO (canndrew): Ideally this should not need to be an Option<> as the server thread should
+    // have the same lifetime as the Server object. Can change this one rust has linear types.
+    hole_punch_server_handle            : Option<::std::thread::JoinHandle<io::Result<()>>>,
 }
 
 impl Service {
@@ -87,10 +91,14 @@ impl Service {
                                 state.run();
                             }));
 
+        let (hole_punch_server_shutdown_notifier, hole_punch_server_handle)
+            = try!(::hole_punching::start_hole_punch_server());
         let mut service = Service {
-                              beacon_guid_and_port : None,
-                              config               : config,
-                              cmd_sender           : cmd_sender,
+                              beacon_guid_and_port                : None,
+                              config                              : config,
+                              cmd_sender                          : cmd_sender,
+                              hole_punch_server_shutdown_notifier : hole_punch_server_shutdown_notifier,
+                              hole_punch_server_handle            : Some(hole_punch_server_handle),
                           };
 
         let beacon_port = service.config.beacon_port.clone();
@@ -211,6 +219,21 @@ impl Service {
     /// This should be called before destroying an instance of a Service to allow the
     /// listener threads to join.  Once called, the Service should be destroyed.
     pub fn stop(&mut self) {
+        // Ignore this error. If the server thread has exited we'll find out about it when we
+        // join the JoinHandle.
+        let _ = self.hole_punch_server_shutdown_notifier.send(());
+
+        if let Some(join_handle) = self.hole_punch_server_handle.take() {
+            // unwrap to propogate failure if the server thread panicked
+            match join_handle.join().unwrap() {
+                Ok(())  => (),
+                Err(e)  => {
+                    // TODO (canndrew): Should this error be propogated up to the caller?
+                    warn!("The udp hole punch server exited due to IO error: {}", e)
+                },
+            }
+        };
+
         if let Some(beacon_guid_and_port) = self.beacon_guid_and_port {
             beacon::BroadcastAcceptor::stop(&beacon_guid_and_port);
             self.beacon_guid_and_port = None;
@@ -582,6 +605,7 @@ mod test {
                         },
                         Event::BootstrapFinished => {}
                         Event::ExternalEndpoints(_) => {}
+                        Event::OnHolePunched(_) => {}
                     }
                 }
                 // debug!("done");
@@ -734,6 +758,7 @@ mod test {
                     },
                     Event::BootstrapFinished => {},
                     Event::ExternalEndpoints(_) => {},
+                    Event::OnHolePunched(_) => {},
                 }
             }
         });
