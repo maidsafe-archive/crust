@@ -44,6 +44,7 @@ extern crate rand;
 extern crate rustc_serialize;
 extern crate time;
 extern crate utp;
+extern crate crossbeam;
 
 /// Module implementing the `Service` which provides an interface to manage peer-to-peer
 /// connections.
@@ -89,3 +90,6 @@ mod utp_wrapper;
 mod state;
 mod event;
 mod map_external_port;
+mod hole_punching;
+mod periodic_sender;
+
