@@ -171,6 +171,7 @@ pub fn is_local(ip_addr: &IpAddr, interfaces: &Vec<IfAddr>) -> bool {
 
 /// Use heuristic to determine which IP is closer to us
 /// geographically. That is, ip1 is closer to us than ip2 => ip1 < ip2.
+#[allow(dead_code)]
 pub fn heuristic_geo_cmp(ip1: &IpAddr, ip2: &IpAddr) -> Ordering {
     use ::std::cmp::Ordering::{Less, Equal, Greater};
 
