@@ -35,19 +35,21 @@ use std::net::{IpAddr, Ipv4Addr};
 use itertools::Itertools;
 use event::Event;
 use connection::Connection;
+use sequence_number::SequenceNumber;
 
 pub type Bytes = Vec<u8>;
 pub type Closure = Box<FnBox(&mut State) + Send>;
 
 pub struct State {
-    pub event_sender      : Sender<Event>,
-    pub cmd_sender        : Sender<Closure>,
-    pub cmd_receiver      : Receiver<Closure>,
-    pub connections       : HashMap<Connection, Sender<Message>>,
-    pub listening_ports   : HashSet<Port>,
-    pub bootstrap_handler : Option<BootstrapHandler>,
-    pub stop_called       : bool,
-    pub is_bootstrapping  : bool,
+    pub event_sender        : Sender<Event>,
+    pub cmd_sender          : Sender<Closure>,
+    pub cmd_receiver        : Receiver<Closure>,
+    pub connections         : HashMap<Connection, Sender<Message>>,
+    pub listening_ports     : HashSet<Port>,
+    pub bootstrap_handler   : Option<BootstrapHandler>,
+    pub stop_called         : bool,
+    pub is_bootstrapping    : bool,
+    pub next_punch_sequence : SequenceNumber,
 }
 
 impl State {
@@ -55,14 +57,15 @@ impl State {
         let (cmd_sender, cmd_receiver) = mpsc::channel::<Closure>();
 
         State {
-            event_sender      : event_sender,
-            cmd_sender        : cmd_sender,
-            cmd_receiver      : cmd_receiver,
-            connections       : HashMap::new(),
-            listening_ports   : HashSet::new(),
-            bootstrap_handler : None,
-            stop_called       : false,
-            is_bootstrapping  : false,
+            event_sender        : event_sender,
+            cmd_sender          : cmd_sender,
+            cmd_receiver        : cmd_receiver,
+            connections         : HashMap::new(),
+            listening_ports     : HashSet::new(),
+            bootstrap_handler   : None,
+            stop_called         : false,
+            is_bootstrapping    : false,
+            next_punch_sequence : SequenceNumber::new(::rand::random()),
         }
     }
 
