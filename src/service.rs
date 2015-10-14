@@ -578,10 +578,7 @@ mod test {
                         Event::NewMessage(_, _) => {
                             break;
                         },
-                        Event::LostConnection(_) => {
-                        },
-                        Event::BootstrapFinished => {}
-                        Event::ExternalEndpoints(_) => {}
+                        _ => {},
                     }
                 }
                 // debug!("done");
@@ -723,17 +720,10 @@ mod test {
                 };
 
                 match event {
-                    Event::NewMessage(_, _) => {
-                    },
-                    Event::OnConnect(_) => {
-                    },
-                    Event::OnAccept(_) => {
-                    },
                     Event::LostConnection(_) => {
                         break;
                     },
-                    Event::BootstrapFinished => {},
-                    Event::ExternalEndpoints(_) => {},
+                    _ => {},
                 }
             }
         });
