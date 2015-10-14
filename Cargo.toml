@@ -23,6 +23,7 @@ igd = "0.1.3"
 net2 = "*"
 temp_utp = "*"
 log = "*"
+crossbeam = "*"
 
 [dev-dependencies]
 env_logger = "*"

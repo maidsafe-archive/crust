@@ -454,9 +454,7 @@ fn main() {
                     network.drop_node(c);
                     network.print_connected_nodes();
                 },
-                crust::Event::BootstrapFinished => {}
-                crust::Event::ExternalEndpoints(_) => {
-                }
+                _ => {}
             }
             stdout_copy = reset_foreground(stdout_copy);
             if !running_speed_test {
