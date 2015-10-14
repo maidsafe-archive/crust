@@ -1,5 +1,8 @@
 # CRUST - Change Log
 
+## [0.4.2]
+- Adapts to new rust-utp API
+
 ## [0.4.1]
 - Fixes
 - `service::test::network` test is working again
