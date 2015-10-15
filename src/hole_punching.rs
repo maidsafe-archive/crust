@@ -305,8 +305,8 @@ mod tests {
         let r1 = t1.join();
         let r2 = t2.join();
 
-        assert!(r1.is_ok());
-        assert!(r2.is_ok());
+        assert!(r1.unwrap().is_ok());
+        assert!(r2.unwrap().is_ok());
     }
 
     #[test]
@@ -325,8 +325,8 @@ mod tests {
         let r1 = t1.join();
         let r2 = t2.join();
 
-        assert!(r1.is_ok());
-        assert!(r2.is_ok());
+        assert!(r1.unwrap().is_ok());
+        assert!(r2.unwrap().is_ok());
     }
 
     #[test]
