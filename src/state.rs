@@ -30,39 +30,49 @@ use getifaddrs::{getifaddrs, filter_loopback};
 use transport;
 use transport::{Endpoint, Port, Message, Handshake};
 use std::thread::JoinHandle;
-use std::net::{IpAddr, Ipv4Addr};
+use std::net::{SocketAddr, IpAddr, Ipv4Addr};
 
 use itertools::Itertools;
-use event::Event;
+use event::{Event, MappedUdpSocket};
 use connection::Connection;
+use sequence_number::SequenceNumber;
 
-pub type Bytes = Vec<u8>;
 pub type Closure = Box<FnBox(&mut State) + Send>;
 
+pub struct ConnectionData {
+    message_sender: Sender<Message>,
+    mapper_address: Option<SocketAddr>,
+}
+
 pub struct State {
-    pub event_sender      : Sender<Event>,
-    pub cmd_sender        : Sender<Closure>,
-    pub cmd_receiver      : Receiver<Closure>,
-    pub connections       : HashMap<Connection, Sender<Message>>,
-    pub listening_ports   : HashSet<Port>,
-    pub bootstrap_handler : Option<BootstrapHandler>,
-    pub stop_called       : bool,
-    pub is_bootstrapping  : bool,
+    pub event_sender        : Sender<Event>,
+    pub cmd_sender          : Sender<Closure>,
+    pub cmd_receiver        : Receiver<Closure>,
+    pub connections         : HashMap<Connection, ConnectionData>,
+    pub listening_ports     : HashSet<Port>,
+    pub bootstrap_handler   : Option<BootstrapHandler>,
+    pub stop_called         : bool,
+    pub is_bootstrapping    : bool,
+    pub next_punch_sequence : SequenceNumber,
+    pub our_mapper_port     : Option<u16>,
 }
 
 impl State {
-    pub fn new(event_sender: Sender<Event>) -> State {
+    pub fn new(event_sender: Sender<Event>,
+               our_mapper_port: Option<u16>) -> State {
         let (cmd_sender, cmd_receiver) = mpsc::channel::<Closure>();
 
         State {
-            event_sender      : event_sender,
-            cmd_sender        : cmd_sender,
-            cmd_receiver      : cmd_receiver,
-            connections       : HashMap::new(),
-            listening_ports   : HashSet::new(),
-            bootstrap_handler : None,
-            stop_called       : false,
-            is_bootstrapping  : false,
+            event_sender        : event_sender,
+            cmd_sender          : cmd_sender,
+            cmd_receiver        : cmd_receiver,
+            connections         : HashMap::new(),
+            listening_ports     : HashSet::new(),
+            bootstrap_handler   : None,
+            stop_called         : false,
+            is_bootstrapping    : false,
+            next_punch_sequence : SequenceNumber::new(::rand::random()),
+            our_mapper_port     : our_mapper_port,
         }
     }
 
@@ -158,32 +168,56 @@ impl State {
         endpoints
     }
 
-    fn handle_handshake(mut trans: transport::Transport)
-                        -> io::Result<transport::Transport> {
+    fn handle_handshake(handshake : Handshake,
+                        mut trans : transport::Transport)
+            -> io::Result<(Handshake, transport::Transport)> {
         let handshake_err = Err(io::Error::new(io::ErrorKind::Other,
                                                "handshake failed"));
-        if let Err(_) = trans.sender.send_handshake(Handshake::new()) {
+
+        if let Err(_) = trans.sender.send_handshake(handshake) {
             return handshake_err
         }
-        trans.receiver.receive_handshake().and(Ok(trans)).or(handshake_err)
+
+        trans.receiver.receive_handshake()
+                      .and_then(|handshake| Ok((handshake, trans)))
+                      .or(handshake_err)
     }
 
-    pub fn connect(remote_ep: Endpoint) -> io::Result<transport::Transport> {
-        Self::handle_handshake(try!(transport::connect(remote_ep)))
+    pub fn send(&mut self, connection: Connection, bytes: Vec<u8>) {
+        let writer_channel = match self.connections.get(&connection) {
+            Some(connection_data) => connection_data.message_sender.clone(),
+            None => {
+                // Connection already destroyed or never existed.
+                return;
+            }
+        };
+
+        if let Err(what) = writer_channel.send(Message::UserBlob(bytes)) {
+            self.unregister_connection(connection);
+        }
     }
 
-    pub fn accept(acceptor: &transport::Acceptor)
-                  -> io::Result<transport::Transport> {
-        Self::handle_handshake(try!(transport::accept(acceptor)))
+    pub fn connect(handshake : Handshake,
+                   remote_ep : Endpoint)
+            -> io::Result<(Handshake, transport::Transport)> {
+        Self::handle_handshake(handshake,
+                               try!(transport::connect(remote_ep)))
+    }
+
+    pub fn accept(handshake : Handshake,
+                  acceptor  : &transport::Acceptor)
+            -> io::Result<(Handshake, transport::Transport)> {
+        Self::handle_handshake(handshake, try!(transport::accept(acceptor)))
     }
 
     pub fn handle_connect(&mut self,
+                          handshake             : Handshake,
                           trans                 : transport::Transport,
                           is_broadcast_acceptor : bool) -> io::Result<Connection> {
         let c = trans.connection_id.clone();
         let event = Event::OnConnect(c);
 
-        let connection = self.register_connection(trans, event);
+        let connection = self.register_connection(handshake, trans, event);
         if is_broadcast_acceptor {
             if let Ok(ref connection) = connection {
                 let contacts = vec![connection.peer_endpoint()];
@@ -194,6 +228,7 @@ impl State {
     }
 
     fn register_connection(&mut self,
+                           handshake     : Handshake,
                            trans         : transport::Transport,
                            event_to_user : Event) -> io::Result<Connection> {
         let connection = trans.connection_id.clone();
@@ -201,11 +236,22 @@ impl State {
         debug_assert!(!self.connections.contains_key(&connection));
         let (tx, rx) = mpsc::channel();
 
+        let mapper_addr = handshake.mapper_port
+            .map(|port| {
+                let peer_addr = trans.connection_id.peer_endpoint().get_address();
+                SocketAddr::new(peer_addr.ip(), port)
+            });
+
+        let connection_data = ConnectionData {
+            message_sender: tx,
+            mapper_address: mapper_addr,
+        };
+
         // We need to insert the event into event_sender *before* the
         // reading thread starts. It is because the reading thread
         // also inserts events into the pipe and if done very quickly
         // they may be inserted in wrong order.
-        let _ = self.connections.insert(connection, tx);
+        let _ = self.connections.insert(connection, connection_data);
         let _ = self.event_sender.send(event_to_user);
 
         self.start_writing_thread(trans.sender, connection.clone(), rx);
@@ -261,9 +307,12 @@ impl State {
         let _ = self.event_sender.send(Event::LostConnection(connection));
     }
 
-    pub fn handle_accept(&mut self, trans: transport::Transport) -> io::Result<Connection> {
+    pub fn handle_accept(&mut self,
+                         handshake : Handshake,
+                         trans     : transport::Transport)
+            -> io::Result<Connection> {
         let c = trans.connection_id.clone();
-        self.register_connection(trans, Event::OnAccept(c))
+        self.register_connection(handshake, trans, Event::OnAccept(c))
     }
 
     fn seek_peers(beacon_guid: Option<[u8; 16]>, beacon_port: u16) -> Vec<Endpoint> {
@@ -277,8 +326,9 @@ impl State {
         let mut endpoints: Vec<Endpoint> = vec![];
         for peer in peer_addresses {
             let mut transport
-                = match State::connect(transport::Endpoint::Tcp(peer)) {
-                    Ok(t) => t,
+                = match State::connect(Handshake::default(),
+                                       transport::Endpoint::Tcp(peer)) {
+                    Ok(pair) => pair.1,
                     Err(_) => continue,
                 };
             let message = match transport.receiver.receive() {
@@ -316,14 +366,20 @@ impl State {
 
         let event_sender = self.event_sender.clone();
         let cmd_sender   = self.cmd_sender.clone();
+        let mapper_port  = self.our_mapper_port.clone();
 
         let _ = Self::new_thread("bootstrap_off_list", move || {
             let mut vec_deferred = vec![];
 
+            // TODO (peterj) would be useful if bootstrap_list contained
+            // information whether the peer was connected using beacon
+            // or otherwise. If using beacon, we do not want to send
+            // him our mapper_port (it would be of no use for him).
             for contact in bootstrap_list.iter() {
                 let c = contact.clone();
                 vec_deferred.push(Deferred::new(move || {
-                    Self::connect(c)
+                    let h = Handshake { mapper_port: mapper_port };
+                    Self::connect(h, c)
                 }))
             }
 
@@ -354,7 +410,7 @@ impl State {
                 }
 
                 for t in ts {
-                    let _ = state.handle_connect(t, is_broadcast_acceptor);
+                    let _ = state.handle_connect(t.0, t.1, is_broadcast_acceptor);
                 }
 
                 state.bootstrap_off_list(bootstrap_list, is_broadcast_acceptor);
@@ -384,6 +440,48 @@ impl State {
         }
         return false;
     }
+
+    fn get_ordered_helping_nodes(&self) -> Vec<SocketAddr> {
+        let mut addrs = self.connections.iter()
+                            .filter_map(|pair| pair.1.mapper_address)
+                            .collect::<Vec<_>>();
+
+        addrs.sort_by(|&addr1, &addr2| {
+            ::util::heuristic_geo_cmp(&addr1.ip(), &addr2.ip()).reverse()
+        });
+
+        addrs
+    }
+
+    pub fn get_mapped_udp_socket(&mut self, result_token: u32) {
+        use ::hole_punching::blocking_get_mapped_udp_socket;
+
+        let seq_id = self.next_punch_sequence.number();
+        self.next_punch_sequence.increment();
+
+        let event_sender = self.event_sender.clone();
+        let helping_nodes = self.get_ordered_helping_nodes();
+
+        let result_handle = Self::new_thread("map_udp", move || {
+            let result = blocking_get_mapped_udp_socket(seq_id, helping_nodes);
+
+            let result = match result {
+                // TODO (peterj) use _rest
+                Ok((socket, opt_mapped_addr, _rest)) => {
+                    let addrs = opt_mapped_addr.into_iter().collect();
+                    Ok((socket, addrs))
+                },
+                Err(what) => Err(what),
+            };
+
+            let _ = event_sender.send(
+                Event::OnUdpSocketMapped(
+                    MappedUdpSocket{
+                        result_token: result_token,
+                        result: result,
+                    }));
+        });
+    }
 }
 
 #[cfg(test)]
@@ -392,7 +490,7 @@ mod test {
     use std::thread;
     use std::net::SocketAddr;
     use std::sync::mpsc::channel;
-    use transport::{Endpoint, Port, Acceptor};
+    use transport::{Endpoint, Port, Acceptor, Handshake};
     use event::Event;
     use util;
 
@@ -416,7 +514,7 @@ mod test {
 
         let (event_sender, event_receiver) = channel();
 
-        let mut s = State::new(event_sender);
+        let mut s = State::new(event_sender, None);
 
         let cmd_sender = s.cmd_sender.clone();
 
@@ -426,7 +524,7 @@ mod test {
 
         let accept_thread = thread::spawn(move || {
             for a in acceptors {
-                assert!(State::accept(&a).is_ok())
+                assert!(State::accept(Handshake::default(), &a).is_ok())
             }
         });
 
