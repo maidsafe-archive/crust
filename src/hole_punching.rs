@@ -193,7 +193,7 @@ pub fn blocking_udp_punch_hole(udp_socket: UdpSocket,
         enc.into_bytes()
     };
 
-    let peer_addrs = peer_addrs.iter().cloned().collect::<Vec<SocketAddr>>();
+    let peer_addrs = peer_addrs.into_iter().collect::<Vec<SocketAddr>>();
 
     let addr_res: io::Result<SocketAddr> = ::crossbeam::scope(|scope| {
         let sender          = try!(udp_socket.try_clone());
@@ -211,9 +211,9 @@ pub fn blocking_udp_punch_hole(udp_socket: UdpSocket,
                 let (read_size, addr) = try!(receiver.recv_from(&mut recv_data[..]));
                 match ::cbor::Decoder::from_reader(&recv_data[..read_size])
                                       .decode::<HolePunch>().next() {
-                    Some(Ok(ref hp)) if hp.ack && hp.secret == secret
+                    Some(Ok(ref hp)) if hp.secret == secret
                         => return Ok(addr),
-                    x   => info!("udp_hole_punch received invalid ack: {:?}", x),
+                    x   => println!("udp_hole_punch received invalid ack: {:?}", x),
                 };
             }
         })();
@@ -230,29 +230,88 @@ mod tests {
     use std::io;
     use std::net::{UdpSocket, SocketAddr, SocketAddrV4, Ipv4Addr};
     use std::str::FromStr;
+    use std::thread::spawn;
 
     fn loopback_v4(port: u16) -> SocketAddr {
         SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(127,0,0,1), port))
     }
 
+    fn seconds(count: u64) -> ::std::time::Duration {
+        ::std::time::Duration::from_secs(count)
+    }
+
+    fn run_hole_punching(socket:    UdpSocket,
+                         peer_addr: SocketAddr,
+                         secret:    Option<[u8; 4]>)
+            -> io::Result<SocketAddr> {
+        let peers   = Some(peer_addr).into_iter().collect();
+        let timeout = seconds(2);
+
+        blocking_udp_punch_hole(socket, secret, peers, Some(timeout)).1
+    }
+
+    // Note: numbers in function names are used to specify order in
+    //       which they should be run.
+
     #[test]
-    fn test_hole_punching_terminates() {
+    fn test_udp_hole_punching_0_time_out() {
+        let s1 = UdpSocket::bind(loopback_v4(0)).unwrap();
+        let s2 = UdpSocket::bind(loopback_v4(0)).unwrap();
+
+        let s2_addr = s2.local_addr().unwrap();
+
+        let t1 = spawn(move || {
+            let mut recv_data = [0u8; 16];
+            assert!(s2.set_read_timeout(Some(seconds(10))).is_ok());
+
+            loop {
+                if s2.recv_from(&mut recv_data[..]).is_err() {
+                    break;
+                }
+            }
+        });
+
+        let t2 = spawn(move || run_hole_punching(s1, s2_addr, None));
+
+        let thread_status = t2.join();
+        assert!(thread_status.is_ok());
+
+        let punch_status = thread_status.unwrap();
+        assert_eq!(punch_status.unwrap_err().kind(), io::ErrorKind::TimedOut);
+
+        assert!(t1.join().is_ok());
+    }
+
+    #[test]
+    fn test_udp_hole_punching_1_terminates_no_secret() {
         let s1 = UdpSocket::bind(loopback_v4(0)).unwrap();
         let s2 = UdpSocket::bind(loopback_v4(0)).unwrap();
 
         let s1_addr = s1.local_addr().unwrap();
         let s2_addr = s2.local_addr().unwrap();
 
-        fn run_hole_punching(socket: UdpSocket, peer_addr: SocketAddr)
-                -> io::Result<SocketAddr> {
-            let peers   = Some(peer_addr).into_iter().collect();
-            let timeout = ::std::time::Duration::from_secs(2);
+        let t1 = spawn(move || run_hole_punching(s1, s2_addr, None));
+        let t2 = spawn(move || run_hole_punching(s2, s1_addr, None));
 
-            blocking_udp_punch_hole(socket, None, peers, Some(timeout)).1
-        }
+        let r1 = t1.join();
+        let r2 = t2.join();
 
-        let t1 = ::std::thread::spawn(move || run_hole_punching(s1, s2_addr));
-        let t2 = ::std::thread::spawn(move || run_hole_punching(s2, s1_addr));
+        assert!(r1.is_ok());
+        assert!(r2.is_ok());
+    }
+
+    #[test]
+    fn test_udp_hole_punching_2_terminates_with_secret() {
+        let s1 = UdpSocket::bind(loopback_v4(0)).unwrap();
+        let s2 = UdpSocket::bind(loopback_v4(0)).unwrap();
+
+        let s1_addr = s1.local_addr().unwrap();
+        let s2_addr = s2.local_addr().unwrap();
+
+        let secret = ::rand::random();
+
+        let t1 = spawn(move || run_hole_punching(s1, s2_addr, secret));
+        let t2 = spawn(move || run_hole_punching(s2, s1_addr, secret));
 
         let r1 = t1.join();
         let r2 = t2.join();
