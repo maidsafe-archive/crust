@@ -35,8 +35,6 @@ use connection::Connection;
 
 use state::State;
 use event::{Event, HolePunchResult};
-use periodic_sender::PeriodicSender;
-use hole_punching::HolePunch;
 
 /// Type used to represent serialised data in a message.
 pub type Bytes = Vec<u8>;
@@ -430,42 +428,17 @@ impl Service {
 
             // TODO (canndrew): we currently have no means to handle this error
             let _ = Self::new_thread("udp_punch_hole", move || {
-                let send_data = {
-                    let hole_punch = HolePunch {
-                        secret: secret,
-                        ack: false,
-                    };
-                    let mut enc = ::cbor::Encoder::from_memory();
-                    enc.encode(::std::iter::once(&hole_punch)).unwrap();
-                    enc.into_bytes()
-                };
-                let peer_addrs = peer_addrs.iter().cloned().collect::<Vec<SocketAddr>>();
-                let addr_res: io::Result<SocketAddr> = ::crossbeam::scope(|scope| {
-                    let sender = try!(udp_socket.try_clone());
-                    let receiver = try!(udp_socket.try_clone());
-                    let periodic_sender = PeriodicSender::start(sender, &peer_addrs[..], scope, &send_data[..], 1000);
-                    
-                    let addr_res = (|| {
-                        let mut recv_data = [0u8; 16];
-                        try!(receiver.set_read_timeout(timeout));
-                        loop {
-                            let (read_size, addr) = try!(receiver.recv_from(&mut recv_data[..]));
-                            match ::cbor::Decoder::from_reader(&recv_data[..read_size])
-                                                  .decode::<HolePunch>().next() {
-                                Some(Ok(ref hp)) if hp.ack && hp.secret == secret
-                                    => return Ok(addr),
-                                x   => info!("udp_hole_punch received invalid ack: {:?}", x),
-                            };
-                        }
-                    })();
-                    //try!(periodic_sender.stop());
-                    addr_res
-                });
+                let (udp_socket, result_addr)
+                    = ::hole_punching::blocking_udp_punch_hole(udp_socket,
+                                                               secret,
+                                                               peer_addrs,
+                                                               timeout);
+
                 // TODO (canndrew): we currently have no means to handle this error
                 let _ = event_sender.send(Event::OnHolePunched(HolePunchResult {
                     result_token: result_token,
-                    udp_socket: udp_socket,
-                    peer_addr: addr_res,
+                    udp_socket:   udp_socket,
+                    peer_addr:    result_addr,
                 }));
             });
         });

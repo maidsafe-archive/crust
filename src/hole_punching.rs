@@ -1,4 +1,4 @@
-use std::net::{SocketAddr, SocketAddrV4, UdpSocket, SocketAddrV6, Ipv4Addr, Ipv6Addr};
+use std::net::{SocketAddr, UdpSocket};
 use std::io;
 use std::str::FromStr;
 
@@ -176,6 +176,53 @@ pub fn start_hole_punch_server() -> io::Result<(::std::sync::mpsc::Sender<()>, :
     Ok((tx, hole_punch_listener, local_addr))
 }
 
+pub fn blocking_udp_punch_hole(udp_socket: UdpSocket,
+                               secret: Option<[u8; 4]>,
+                               // TODO (canndrew): ToSocketAddrs would
+                               // prolly make more sense
+                               peer_addrs: ::std::collections::BTreeSet<SocketAddr>,
+                               timeout: Option<::std::time::Duration>)
+            -> (UdpSocket, io::Result<SocketAddr>) {
+    let send_data = {
+        let hole_punch = HolePunch {
+            secret: secret,
+            ack: false,
+        };
+        let mut enc = ::cbor::Encoder::from_memory();
+        enc.encode(::std::iter::once(&hole_punch)).unwrap();
+        enc.into_bytes()
+    };
+
+    let peer_addrs = peer_addrs.iter().cloned().collect::<Vec<SocketAddr>>();
+
+    let addr_res: io::Result<SocketAddr> = ::crossbeam::scope(|scope| {
+        let sender          = try!(udp_socket.try_clone());
+        let receiver        = try!(udp_socket.try_clone());
+        let periodic_sender = PeriodicSender::start(sender,
+                                                    &peer_addrs[..],
+                                                    scope,
+                                                    &send_data[..],
+                                                    1000);
+
+        let addr_res = (|| {
+            let mut recv_data = [0u8; 16];
+            try!(receiver.set_read_timeout(timeout));
+            loop {
+                let (read_size, addr) = try!(receiver.recv_from(&mut recv_data[..]));
+                match ::cbor::Decoder::from_reader(&recv_data[..read_size])
+                                      .decode::<HolePunch>().next() {
+                    Some(Ok(ref hp)) if hp.ack && hp.secret == secret
+                        => return Ok(addr),
+                    x   => info!("udp_hole_punch received invalid ack: {:?}", x),
+                };
+            }
+        })();
+
+        addr_res
+    });
+
+    (udp_socket, addr_res)
+}
 
 #[cfg(test)]
 mod tests {
@@ -194,5 +241,6 @@ mod tests {
         assert_eq!(SocketAddr::V4(SocketAddrV4::new(localhost, socket_addr.port())), received_addr);
         assert!(remaining.is_empty());
     }
+
 }
 
