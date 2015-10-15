@@ -183,6 +183,8 @@ pub fn blocking_udp_punch_hole(udp_socket: UdpSocket,
                                peer_addrs: ::std::collections::HashSet<SocketAddr>,
                                timeout: Option<::std::time::Duration>)
             -> (UdpSocket, io::Result<SocketAddr>) {
+    const MAX_DATAGRAM_SIZE: usize = 16;
+
     let send_data = {
         let hole_punch = HolePunch {
             secret: secret,
@@ -192,6 +194,11 @@ pub fn blocking_udp_punch_hole(udp_socket: UdpSocket,
         enc.encode(::std::iter::once(&hole_punch)).unwrap();
         enc.into_bytes()
     };
+
+    assert!(send_data.len() <= MAX_DATAGRAM_SIZE,
+            format!("Data exceed MAX_DATAGRAM_SIZE: {} > {}",
+                    send_data.len(),
+                    MAX_DATAGRAM_SIZE));
 
     let peer_addrs = peer_addrs.into_iter().collect::<Vec<SocketAddr>>();
 
@@ -205,7 +212,7 @@ pub fn blocking_udp_punch_hole(udp_socket: UdpSocket,
                                                     1000);
 
         let addr_res = (|| {
-            let mut recv_data = [0u8; 16];
+            let mut recv_data = [0u8; MAX_DATAGRAM_SIZE];
             try!(receiver.set_read_timeout(timeout));
             loop {
                 let (read_size, addr) = try!(receiver.recv_from(&mut recv_data[..]));
