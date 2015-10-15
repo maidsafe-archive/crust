@@ -180,7 +180,7 @@ pub fn blocking_udp_punch_hole(udp_socket: UdpSocket,
                                secret: Option<[u8; 4]>,
                                // TODO (canndrew): ToSocketAddrs would
                                // prolly make more sense
-                               peer_addrs: ::std::collections::BTreeSet<SocketAddr>,
+                               peer_addrs: ::std::collections::HashSet<SocketAddr>,
                                timeout: Option<::std::time::Duration>)
             -> (UdpSocket, io::Result<SocketAddr>) {
     let send_data = {
@@ -227,18 +227,51 @@ pub fn blocking_udp_punch_hole(udp_socket: UdpSocket,
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::net::{SocketAddr, SocketAddrV4, Ipv4Addr};
+    use std::io;
+    use std::net::{UdpSocket, SocketAddr, SocketAddrV4, Ipv4Addr};
     use std::str::FromStr;
+
+    fn loopback_v4(port: u16) -> SocketAddr {
+        SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(127,0,0,1), port))
+    }
+
+    #[test]
+    fn test_hole_punching_terminates() {
+        let s1 = UdpSocket::bind(loopback_v4(0)).unwrap();
+        let s2 = UdpSocket::bind(loopback_v4(0)).unwrap();
+
+        let s1_addr = s1.local_addr().unwrap();
+        let s2_addr = s2.local_addr().unwrap();
+
+        fn run_hole_punching(socket: UdpSocket, peer_addr: SocketAddr)
+                -> io::Result<SocketAddr> {
+            let peers   = Some(peer_addr).into_iter().collect();
+            let timeout = ::std::time::Duration::from_secs(2);
+
+            blocking_udp_punch_hole(socket, None, peers, Some(timeout)).1
+        }
+
+        let t1 = ::std::thread::spawn(move || run_hole_punching(s1, s2_addr));
+        let t2 = ::std::thread::spawn(move || run_hole_punching(s2, s1_addr));
+
+        let r1 = t1.join();
+        let r2 = t2.join();
+
+        assert!(r1.is_ok());
+        assert!(r2.is_ok());
+    }
 
     #[test]
     fn test_get_mapped_socket_from_self() {
-        let localhost = Ipv4Addr::new(127, 0, 0, 1);
         let (sender, join_handle, local_addr) = start_hole_punch_server().unwrap();
-        let (socket, our_addr, remaining) = blocking_get_mapped_udp_socket(12345, vec![SocketAddr::V4(SocketAddrV4::new(localhost, local_addr.port()))]).unwrap();
+        let (socket, our_addr, remaining)
+            = blocking_get_mapped_udp_socket(::rand::random(),
+                                             vec![loopback_v4(local_addr.port())]).unwrap();
+
         sender.send(()).unwrap();
         let received_addr = our_addr.unwrap();
         let socket_addr = socket.local_addr().unwrap();
-        assert_eq!(SocketAddr::V4(SocketAddrV4::new(localhost, socket_addr.port())), received_addr);
+        assert_eq!(loopback_v4(socket_addr.port()), received_addr);
         assert!(remaining.is_empty());
     }
 

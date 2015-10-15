@@ -415,7 +415,7 @@ impl Service {
 
                             // TODO (canndrew): ToSocketAddrs would
                             // prolly make more sense
-                          peer_addrs: ::std::collections::BTreeSet<SocketAddr>
+                          peer_addrs: ::std::collections::HashSet<SocketAddr>
 
                             // TODO (canndrew): may as well let the
                             // caller decide the timeout
