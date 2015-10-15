@@ -108,7 +108,6 @@ pub fn blocking_get_mapped_udp_socket(request_id: u32, helper_nodes: Vec<SocketA
     let timeout = ::time::Duration::seconds(2);
 
     let udp_socket = try!(UdpSocket::bind("0.0.0.0:0"));
-    let sender = try!(udp_socket.try_clone());
     let receiver = try!(udp_socket.try_clone());
 
     let send_data = {
@@ -118,48 +117,54 @@ pub fn blocking_get_mapped_udp_socket(request_id: u32, helper_nodes: Vec<SocketA
         enc.into_bytes()
     };
 
-    let res = try!(::crossbeam::scope(|scope| -> io::Result<Option<(SocketAddr, SocketAddr)>> {
-        let periodic_sender = PeriodicSender::start(sender, &helper_nodes[..], scope, &send_data[..], 1000);
-        let start_time = ::time::now();
-        let res = try!((|| -> io::Result<Option<(SocketAddr, SocketAddr)>> {
-            loop {
-                let current_time = ::time::now();
-                let time_spent = current_time - start_time;
-                let timeout_remaining = timeout - time_spent;
-                if timeout_remaining <= ::time::Duration::zero() {
-                    return Ok(None);
-                }
+    let res = try!(::crossbeam::scope(|scope| -> io::Result<Option<(SocketAddr, usize)>> {
+        for helper in helper_nodes.iter() {
+            let sender = try!(udp_socket.try_clone());
+            let periodic_sender = PeriodicSender::start(sender, ::std::slice::ref_slice(helper), scope, &send_data[..], 300);
+            let start_time = ::time::now();
+            let res = try!((|| -> io::Result<Option<(SocketAddr, usize)>> {
+                loop {
+                    let current_time = ::time::now();
+                    let time_spent = current_time - start_time;
+                    let timeout_remaining = timeout - time_spent;
+                    if timeout_remaining <= ::time::Duration::zero() {
+                        return Ok(None);
+                    }
 
-                // TODO (canndrew): should eventually be able to remove this conversion
-                let timeout_remaining = ::std::time::Duration::from_millis(timeout_remaining.num_milliseconds() as u64);
+                    // TODO (canndrew): should eventually be able to remove this conversion
+                    let timeout_remaining = ::std::time::Duration::from_millis(timeout_remaining.num_milliseconds() as u64);
 
-                try!(receiver.set_read_timeout(Some(timeout_remaining)));
-                let mut recv_data = [0u8; 16];
-                let (read_size, recv_addr) = try!(receiver.recv_from(&mut recv_data[..]));
-                match helper_nodes.iter().position(|&a| a == recv_addr) {
-                    None    => continue,
-                    Some(i) => match ::cbor::Decoder::from_reader(&recv_data[..read_size])
-                                                     .decode::<SetExternalAddr>().next() {
-                        Some(Ok(sea)) => {
-                            if sea.request_id != request_id {
-                                continue;
+                    try!(receiver.set_read_timeout(Some(timeout_remaining)));
+                    let mut recv_data = [0u8; 16];
+                    let (read_size, recv_addr) = try!(receiver.recv_from(&mut recv_data[..]));
+                    match helper_nodes.iter().position(|&a| a == recv_addr) {
+                        None    => continue,
+                        Some(i) => match ::cbor::Decoder::from_reader(&recv_data[..read_size])
+                                                         .decode::<SetExternalAddr>().next() {
+                            Some(Ok(sea)) => {
+                                if sea.request_id != request_id {
+                                    continue;
+                                }
+                                return Ok(Some((sea.addr.0, i)))
                             }
-                            return Ok(Some((sea.addr.0, recv_addr)))
+                            _   => continue,
                         }
-                        _   => continue,
                     }
                 }
+            })());
+            match res {
+                Some(x) => return Ok(Some(x)),
+                None    => continue,
             }
-        })());
-        //try!(periodic_sender.stop());
-        Ok(res)
+        }
+        Ok(None)
     }));
     match res {
-        None => Ok((udp_socket, None, helper_nodes)),
-        Some((our_addr, responder_addr))
+        None => Ok((udp_socket, None, Vec::new())),
+        Some((our_addr, responder_index))
             => Ok((udp_socket, Some(our_addr), helper_nodes.iter()
                                                            .cloned()
-                                                           .filter(|&a| a != responder_addr)
+                                                           .skip(responder_index + 1)
                                                            .collect::<Vec<SocketAddr>>())),
     }
 }
