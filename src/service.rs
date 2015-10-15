@@ -54,7 +54,6 @@ pub struct Service {
     // TODO (canndrew): Ideally this should not need to be an Option<> as the server thread should
     // have the same lifetime as the Server object. Can change this one rust has linear types.
     hole_punch_server_handle            : Option<::std::thread::JoinHandle<io::Result<()>>>,
-    hole_punch_server_addr              : SocketAddr,
 }
 
 impl Service {
@@ -83,26 +82,22 @@ impl Service {
 
     fn construct(event_sender: Sender<Event>, config: Config)
             -> io::Result<Service> {
-        // TODO (peterj) fill this with a real value once
-        // the mapper server is created.
-        let our_mapper_port : Option<u16> = None;
+        let (hole_punch_server_shutdown_notifier, hole_punch_server_handle, hole_punch_server_addr)
+            = try!(::hole_punching::start_hole_punch_server());
 
-        let mut state = State::new(event_sender, our_mapper_port);
+        let mut state = State::new(event_sender, Some(hole_punch_server_addr.port()));
         let cmd_sender = state.cmd_sender.clone();
 
         let handle = try!(Self::new_thread("run loop", move || {
                                 state.run();
                             }));
 
-        let (hole_punch_server_shutdown_notifier, hole_punch_server_handle, hole_punch_server_addr)
-            = try!(::hole_punching::start_hole_punch_server());
         let mut service = Service {
                               beacon_guid_and_port                : None,
                               config                              : config,
                               cmd_sender                          : cmd_sender,
                               hole_punch_server_shutdown_notifier : hole_punch_server_shutdown_notifier,
                               hole_punch_server_handle            : Some(hole_punch_server_handle),
-                              hole_punch_server_addr              : hole_punch_server_addr,
                           };
 
         let beacon_port = service.config.beacon_port.clone();

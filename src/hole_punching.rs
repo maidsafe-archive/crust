@@ -254,7 +254,6 @@ mod tests {
     use super::*;
     use std::io;
     use std::net::{UdpSocket, SocketAddr, SocketAddrV4, Ipv4Addr};
-    use std::str::FromStr;
     use std::thread::spawn;
 
     fn loopback_v4(port: u16) -> SocketAddr {
