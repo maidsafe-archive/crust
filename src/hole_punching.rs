@@ -267,12 +267,15 @@ mod tests {
 
     fn run_hole_punching(socket:    UdpSocket,
                          peer_addr: SocketAddr,
-                         secret:    Option<[u8; 4]>)
+                         secret:    Option<[u8; 4]>,
+                         timeout:   Option<::std::time::Duration>)
             -> io::Result<SocketAddr> {
-        let peers   = Some(peer_addr).into_iter().collect();
-        let timeout = seconds(2);
+        let peers = Some(peer_addr).into_iter().collect();
+        blocking_udp_punch_hole(socket, secret, peers, timeout).1
+    }
 
-        blocking_udp_punch_hole(socket, secret, peers, Some(timeout)).1
+    fn duration_diff(t1: ::time::Duration, t2: ::time::Duration) -> ::time::Duration {
+        if t1 >= t2 { t1 - t2 } else { t2 - t1 }
     }
 
     // Note: numbers in function names are used to specify order in
@@ -280,31 +283,25 @@ mod tests {
 
     #[test]
     fn test_udp_hole_punching_0_time_out() {
+        let std_timeout = seconds(3);
+        let timeout     = ::time::Duration::seconds(3);
+
         let s1 = UdpSocket::bind(loopback_v4(0)).unwrap();
         let s2 = UdpSocket::bind(loopback_v4(0)).unwrap();
 
         let s2_addr = s2.local_addr().unwrap();
+        let start = ::time::now();
 
-        let t1 = spawn(move || {
-            let mut recv_data = [0u8; 16];
-            assert!(s2.set_read_timeout(Some(seconds(10))).is_ok());
+        let t = spawn(move || run_hole_punching(s1, s2_addr, None, Some(std_timeout)));
 
-            loop {
-                if s2.recv_from(&mut recv_data[..]).is_err() {
-                    break;
-                }
-            }
-        });
-
-        let t2 = spawn(move || run_hole_punching(s1, s2_addr, None));
-
-        let thread_status = t2.join();
+        let thread_status = t.join();
         assert!(thread_status.is_ok());
+
+        let diff = duration_diff(::time::now() - start, timeout);
+        assert!(diff < ::time::Duration::milliseconds(200));
 
         let punch_status = thread_status.unwrap();
         assert_eq!(punch_status.unwrap_err().kind(), io::ErrorKind::TimedOut);
-
-        assert!(t1.join().is_ok());
     }
 
     #[test]
@@ -315,8 +312,9 @@ mod tests {
         let s1_addr = s1.local_addr().unwrap();
         let s2_addr = s2.local_addr().unwrap();
 
-        let t1 = spawn(move || run_hole_punching(s1, s2_addr, None));
-        let t2 = spawn(move || run_hole_punching(s2, s1_addr, None));
+        let timeout = Some(seconds(2));
+        let t1 = spawn(move || run_hole_punching(s1, s2_addr, None, timeout));
+        let t2 = spawn(move || run_hole_punching(s2, s1_addr, None, timeout));
 
         let r1 = t1.join();
         let r2 = t2.join();
@@ -335,8 +333,9 @@ mod tests {
 
         let secret = ::rand::random();
 
-        let t1 = spawn(move || run_hole_punching(s1, s2_addr, secret));
-        let t2 = spawn(move || run_hole_punching(s2, s1_addr, secret));
+        let timeout = Some(seconds(2));
+        let t1 = spawn(move || run_hole_punching(s1, s2_addr, secret, timeout));
+        let t2 = spawn(move || run_hole_punching(s2, s1_addr, secret, timeout));
 
         let r1 = t1.join();
         let r2 = t2.join();
