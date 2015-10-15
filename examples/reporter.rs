@@ -48,10 +48,48 @@ use std::sync::mpsc::channel;
 use std::thread;
 use time::Tm;
 
-static USAGE: &'static str = "
+static USAGE: &'static str = r#"
 Usage:
     reporter <config>
-";
+    reporter (-h | --help)
+
+Options:
+    -h, --help      Display this help message
+
+Example config file:
+
+    {
+        "ips": ["123.124.125.126", "223.224.225.226:1234"],
+        "listening_port": 9999,
+        "msg_to_send": "hello",
+        "service_runs": 2,
+        "output_report_path": "/tmp/file.json",
+        "max_wait_before_restart_service_secs": 5
+    }
+
+Explanation of the config fields:
+
+    ips             IPs (and optionally ports) this node should try to
+                    connect to. Those without port specified are assumed to
+                    listen on listening_port.
+
+    listening_port  Port this node listens on.
+
+    msg_to_send     Contents of the messages this node should send to other
+                    nodes once is connected. Each node can specify a different
+                    msg_to_send, so this information can be used to uniquely
+                    identify a node on the network.
+
+    service_runs    Number of times this node will fire a new Service. A new
+                    Service is fired only once the previous one has stopped.
+
+    max_wait_before_restart_service_secs
+                    Maximum number of time (in seconds) the node should wait
+                    before starting a new service (if there are remaining runs
+                    to execute).
+
+See also the example config files in examples/reporter directory.
+"#;
 
 const MIN_RUN_TIME_MS: u32 = 1000;
 const MAX_RUN_TIME_MS: u32 = 2500;
@@ -78,7 +116,8 @@ fn main() {
         report.update(run(&config));
         debug!("Service stopped ({} of {})", i + 1, config.service_runs);
 
-        thread::sleep_ms(thread_rng().gen_range(0, config.max_wait_before_restart_service_secs * 1000));
+        thread::sleep_ms(thread_rng().gen_range(
+            0, config.max_wait_before_restart_service_secs * 1000));
     }
 
     let mut file_handler = FileHandler::new(Path::new(&config.output_report_path).to_path_buf());
@@ -105,8 +144,8 @@ impl Config {
     // the listening_port field.
     fn sanitize(&mut self) {
         if let Some(port) = self.listening_port {
-            for sa in self.ips.iter_mut() {
-                sa.ensure_port(port);
+            for addr in self.ips.iter_mut() {
+                addr.ensure_port(port);
             }
         }
     }
@@ -127,27 +166,29 @@ impl SocketAddr {
         if self.0.port() != 0 { return; }
 
         self.0 = match self.0 {
-            V4(a) => V4(SocketAddrV4::new(*a.ip(), port)),
-            V6(a) => V6(SocketAddrV6::new(*a.ip(), port, a.flowinfo(), a.scope_id()))
+            V4(addr) => V4(SocketAddrV4::new(*addr.ip(), port)),
+            V6(addr) => V6(SocketAddrV6::new(*addr.ip(), port, addr.flowinfo(), addr.scope_id()))
         }
     }
 }
 
 impl Decodable for SocketAddr {
-    fn decode<D: Decoder>(d: &mut D) -> Result<Self, D::Error> {
-        let encoded = try!(d.read_str());
+    fn decode<D: Decoder>(decoder: &mut D) -> Result<Self, D::Error> {
+        let encoded = try!(decoder.read_str());
 
         // Try to parse first as address:port pair, if that fails, parse it as
         // IPv4 address only. If even that fails, parse it as IPv6 address only.
         encoded.parse::<std::net::SocketAddr>().or_else(|_| {
-            encoded.parse::<std::net::Ipv4Addr>().map(|a| {
-                std::net::SocketAddr::V4(std::net::SocketAddrV4::new(a, 0))
+            encoded.parse::<std::net::Ipv4Addr>().map(|ip| {
+                std::net::SocketAddr::V4(std::net::SocketAddrV4::new(ip, 0))
             })
         }).or_else(|_| {
-            encoded.parse::<std::net::Ipv6Addr>().map(|a| {
-                std::net::SocketAddr::V6(std::net::SocketAddrV6::new(a, 0, 0, 0))
+            encoded.parse::<std::net::Ipv6Addr>().map(|ip| {
+                std::net::SocketAddr::V6(std::net::SocketAddrV6::new(ip, 0, 0, 0))
             })
-        }).map(|s| SocketAddr(s)).map_err(|_| d.error("Invalid socket address"))
+        }).map(|addr| SocketAddr(addr)).map_err(|_| {
+            decoder.error("Invalid socket address")
+        })
     }
 }
 
@@ -200,9 +241,9 @@ struct EventEntry {
 }
 
 impl Encodable for EventEntry {
-    fn encode<E: Encoder>(&self, e: &mut E) -> Result<(), E::Error> {
+    fn encode<E: Encoder>(&self, encoder: &mut E) -> Result<(), E::Error> {
         let timestamp_string = format!("{}", self.timestamp.rfc3339());
-        [&timestamp_string, &self.description].encode(e)
+        [&timestamp_string, &self.description].encode(encoder)
     }
 }
 
