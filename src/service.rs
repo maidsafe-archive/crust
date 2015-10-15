@@ -56,6 +56,7 @@ pub struct Service {
     // TODO (canndrew): Ideally this should not need to be an Option<> as the server thread should
     // have the same lifetime as the Server object. Can change this one rust has linear types.
     hole_punch_server_handle            : Option<::std::thread::JoinHandle<io::Result<()>>>,
+    hole_punch_server_addr              : SocketAddr,
 }
 
 impl Service {
@@ -91,7 +92,7 @@ impl Service {
                                 state.run();
                             }));
 
-        let (hole_punch_server_shutdown_notifier, hole_punch_server_handle)
+        let (hole_punch_server_shutdown_notifier, hole_punch_server_handle, hole_punch_server_addr)
             = try!(::hole_punching::start_hole_punch_server());
         let mut service = Service {
                               beacon_guid_and_port                : None,
@@ -99,6 +100,7 @@ impl Service {
                               cmd_sender                          : cmd_sender,
                               hole_punch_server_shutdown_notifier : hole_punch_server_shutdown_notifier,
                               hole_punch_server_handle            : Some(hole_punch_server_handle),
+                              hole_punch_server_addr              : hole_punch_server_addr,
                           };
 
         let beacon_port = service.config.beacon_port.clone();

@@ -1,5 +1,6 @@
 use std::net::{SocketAddr, SocketAddrV4, UdpSocket, SocketAddrV6, Ipv4Addr, Ipv6Addr};
 use std::io;
+use std::str::FromStr;
 
 use periodic_sender::PeriodicSender;
 
@@ -38,65 +39,20 @@ pub struct WrapSocketAddr(pub SocketAddr);
 
 impl ::rustc_serialize::Encodable for WrapSocketAddr {
     fn encode<S: ::rustc_serialize::Encoder>(&self, s: &mut S) -> Result<(), S::Error> {
-        match self.0 {
-            SocketAddr::V4(ref v4)  => {
-                try!(s.emit_bool(false));
-                let ip = v4.ip().octets();
-                let port = v4.port();
-                try!(s.emit_u8(ip[0]));
-                try!(s.emit_u8(ip[1]));
-                try!(s.emit_u8(ip[2]));
-                try!(s.emit_u8(ip[3]));
-                try!(s.emit_u16(port));
-            }
-            SocketAddr::V6(ref v6) => {
-                try!(s.emit_bool(true));
-                let ip = v6.ip().segments();
-                let port = v6.port();
-                let flowinfo = v6.flowinfo();
-                let scope_id = v6.scope_id();
-                try!(s.emit_u16(ip[0]));
-                try!(s.emit_u16(ip[1]));
-                try!(s.emit_u16(ip[2]));
-                try!(s.emit_u16(ip[3]));
-                try!(s.emit_u16(ip[4]));
-                try!(s.emit_u16(ip[5]));
-                try!(s.emit_u16(ip[6]));
-                try!(s.emit_u16(ip[7]));
-                try!(s.emit_u16(port));
-                try!(s.emit_u32(flowinfo));
-                try!(s.emit_u32(scope_id));
-            }
-        }
+        let as_string = format!("{}", self.0);
+        try!(s.emit_str(&as_string[..]));
         Ok(())
     }
 }
 
 impl ::rustc_serialize::Decodable for WrapSocketAddr {
     fn decode<D: ::rustc_serialize::Decoder>(d: &mut D) -> Result<WrapSocketAddr, D::Error> {
-        let tag = try!(d.read_bool());
-        match tag {
-            false   => {
-                let a0 = try!(d.read_u8());
-                let a1 = try!(d.read_u8());
-                let a2 = try!(d.read_u8());
-                let a3 = try!(d.read_u8());
-                let port = try!(d.read_u16());
-                Ok(WrapSocketAddr(SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(a0, a1, a2, a3), port))))
-            }
-            true    => {
-                let a0 = try!(d.read_u16());
-                let a1 = try!(d.read_u16());
-                let a2 = try!(d.read_u16());
-                let a3 = try!(d.read_u16());
-                let a4 = try!(d.read_u16());
-                let a5 = try!(d.read_u16());
-                let a6 = try!(d.read_u16());
-                let a7 = try!(d.read_u16());
-                let port = try!(d.read_u16());
-                let flowinfo = try!(d.read_u32());
-                let scope_id = try!(d.read_u32());
-                Ok(WrapSocketAddr(SocketAddr::V6(SocketAddrV6::new(Ipv6Addr::new(a0, a1, a2, a3, a4, a5, a6, a7), port, flowinfo, scope_id))))
+        let as_string = try!(d.read_str());
+        match SocketAddr::from_str(&as_string[..]) {
+            Ok(sa)  => Ok(WrapSocketAddr(sa)),
+            Err(e)  => {
+                let err = format!("Failed to decode WrapSocketAddr: {}", e);
+                Err(d.error(&err[..]))
             }
         }
     }
@@ -135,7 +91,7 @@ pub fn blocking_get_mapped_udp_socket(request_id: u32, helper_nodes: Vec<SocketA
                     let timeout_remaining = ::std::time::Duration::from_millis(timeout_remaining.num_milliseconds() as u64);
 
                     try!(receiver.set_read_timeout(Some(timeout_remaining)));
-                    let mut recv_data = [0u8; 16];
+                    let mut recv_data = [0u8; 256];
                     let (read_size, recv_addr) = try!(receiver.recv_from(&mut recv_data[..]));
                     match helper_nodes.iter().position(|&a| a == recv_addr) {
                         None    => continue,
@@ -147,7 +103,10 @@ pub fn blocking_get_mapped_udp_socket(request_id: u32, helper_nodes: Vec<SocketA
                                 }
                                 return Ok(Some((sea.addr.0, i)))
                             }
-                            _   => continue,
+                            x   => {
+                                info!("Received invalid reply from udp hole punch server: {:?}", x);
+                                continue;
+                            }
                         }
                     }
                 }
@@ -169,7 +128,7 @@ pub fn blocking_get_mapped_udp_socket(request_id: u32, helper_nodes: Vec<SocketA
     }
 }
 
-pub fn start_hole_punch_server() -> io::Result<(::std::sync::mpsc::Sender<()>, ::std::thread::JoinHandle<io::Result<()>>)> {
+pub fn start_hole_punch_server() -> io::Result<(::std::sync::mpsc::Sender<()>, ::std::thread::JoinHandle<io::Result<()>>, SocketAddr)> {
     let (tx, rx) = ::std::sync::mpsc::channel::<()>();
     let udp_socket = try!(UdpSocket::bind("0.0.0.0:0"));
     let local_addr = try!(udp_socket.local_addr());
@@ -188,7 +147,7 @@ pub fn start_hole_punch_server() -> io::Result<(::std::sync::mpsc::Sender<()>, :
                 Err(::std::sync::mpsc::TryRecvError::Disconnected) => panic!(),
                 Ok(())  => return Ok(()),
             }
-            let mut data_recv = [0u8; 16];
+            let mut data_recv = [0u8; 256];
             let (read_size, addr) = try!(udp_socket.recv_from(&mut data_recv[..]));
             match ::cbor::Decoder::from_reader(&data_recv[..read_size])
                                  .decode::<GetExternalAddr>().next() {
@@ -214,6 +173,26 @@ pub fn start_hole_punch_server() -> io::Result<(::std::sync::mpsc::Sender<()>, :
             };
         }
     }));
-    Ok((tx, hole_punch_listener))
+    Ok((tx, hole_punch_listener, local_addr))
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::net::{SocketAddr, SocketAddrV4, Ipv4Addr};
+    use std::str::FromStr;
+
+    #[test]
+    fn test_get_mapped_socket_from_self() {
+        let localhost = Ipv4Addr::new(127, 0, 0, 1);
+        let (sender, join_handle, local_addr) = start_hole_punch_server().unwrap();
+        let (socket, our_addr, remaining) = blocking_get_mapped_udp_socket(12345, vec![SocketAddr::V4(SocketAddrV4::new(localhost, local_addr.port()))]).unwrap();
+        sender.send(()).unwrap();
+        let received_addr = our_addr.unwrap();
+        let socket_addr = socket.local_addr().unwrap();
+        assert_eq!(SocketAddr::V4(SocketAddrV4::new(localhost, socket_addr.port())), received_addr);
+        assert!(remaining.is_empty());
+    }
 }
 
