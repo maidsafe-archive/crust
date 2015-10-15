@@ -205,24 +205,40 @@ pub fn blocking_udp_punch_hole(udp_socket: UdpSocket,
     let peer_addrs = peer_addrs.into_iter().collect::<Vec<SocketAddr>>();
 
     let addr_res: io::Result<SocketAddr> = ::crossbeam::scope(|scope| {
+        use ::std::io::Error;
+        use ::std::io::ErrorKind::{WouldBlock, TimedOut};
+
         let sender          = try!(udp_socket.try_clone());
         let receiver        = try!(udp_socket.try_clone());
         let periodic_sender = PeriodicSender::start(sender,
                                                     &peer_addrs[..],
                                                     scope,
                                                     &send_data[..],
-                                                    1000);
+                                                    500);
 
         let addr_res = (|| {
             let mut recv_data = [0u8; MAX_DATAGRAM_SIZE];
             try!(receiver.set_read_timeout(timeout));
             loop {
-                let (read_size, addr) = try!(receiver.recv_from(&mut recv_data[..]));
+                let (read_size, addr) = match receiver.recv_from(&mut recv_data[..]) {
+                    Ok(x) => x,
+                    Err(e) => {
+                        if e.kind() == WouldBlock {
+                            return Err(Error::new(TimedOut, "timed out"));
+                        }
+                        return Err(e);
+                    }
+                };
+
                 match ::cbor::Decoder::from_reader(&recv_data[..read_size])
                                       .decode::<HolePunch>().next() {
-                    Some(Ok(ref hp)) if hp.secret == secret
-                        => return Ok(addr),
-                    x   => println!("udp_hole_punch received invalid ack: {:?}", x),
+                    Some(Ok(ref hp)) => {
+                        if hp.secret == secret {
+                            return Ok(addr);
+                        }
+                        println!("udp_hole_punch non matching secret");
+                    },
+                    x   => println!("udp_hole_punch received invalid data: {:?}", x),
                 };
             }
         })();
