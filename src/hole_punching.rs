@@ -183,7 +183,9 @@ pub fn blocking_udp_punch_hole(udp_socket: UdpSocket,
                                peer_addrs: ::std::collections::HashSet<SocketAddr>,
                                timeout: Option<::std::time::Duration>)
             -> (UdpSocket, io::Result<SocketAddr>) {
-    const MAX_DATAGRAM_SIZE: usize = 16;
+    // Cbor seems to serialize into bytes of different sizes and
+    // it sometimes exceeded 16 bytes, let's be safe and use 128.
+    const MAX_DATAGRAM_SIZE: usize = 128;
 
     let send_data = {
         let hole_punch = HolePunch {
