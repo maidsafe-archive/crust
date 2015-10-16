@@ -89,39 +89,9 @@ struct Args {
     flag_help: bool,
 }
 
-#[derive(Debug)]
-struct PeerEndpoint {
-    pub addr: Endpoint,
-}
-
-impl Decodable for PeerEndpoint {
-    fn decode<D: Decoder>(decoder: &mut D)->Result<PeerEndpoint, D::Error> {
-        let str = try!(decoder.read_str());
-        if !str.ends_with(')') {
-            return Err(decoder.error("Protocol missing"))
-        }
-        let address = match SocketAddr::from_str(&str[4 .. str.len() - 1]) {
-            Ok(addr) => addr,
-            Err(_) => {
-                return Err(decoder.error(&format!(
-                    "Could not decode {} as valid IPv4 or IPv6 address.", str)));
-            },
-        };
-        if str.starts_with("Tcp(") {
-            Ok(PeerEndpoint { addr: Endpoint::tcp(address) })
-        } else if str.starts_with("Utp(") {
-            Ok(PeerEndpoint { addr: Endpoint::utp(address) })
-        } else {
-            Err(decoder.error("Unrecognized protocol"))
-        }
-    }
-}
-
 fn generate_random_vec_u8(size: usize) -> Vec<u8> {
     let mut vec: Vec<u8> = Vec::with_capacity(size);
-    for _ in 0..size {
-        vec.push(random::<u8>());
-    }
+    for _ in 0..size { vec.push(random::<u8>()); }
     vec
 }
 
@@ -137,7 +107,11 @@ fn node_user_repr(node: &Endpoint) -> String {
     }
 }
 
-// simple "NodeInfo", without PKI
+////////////////////////////////////////////////////////////////////////////////
+//
+// CrustNode
+//
+////////////////////////////////////////////////////////////////////////////////
 #[derive(Clone)]
 struct CrustNode {
     pub connection_id: Connection,
@@ -588,4 +562,37 @@ fn parse_user_command(cmd : String) -> Option<UserCommand> {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+//
+// Parse transport::Endpoint
+//
+////////////////////////////////////////////////////////////////////////////////
 
+#[derive(Debug)]
+struct PeerEndpoint {
+    pub addr: Endpoint,
+}
+
+impl Decodable for PeerEndpoint {
+    fn decode<D: Decoder>(decoder: &mut D)->Result<PeerEndpoint, D::Error> {
+        let str = try!(decoder.read_str());
+        if !str.ends_with(')') {
+            return Err(decoder.error("Protocol missing"))
+        }
+        let address = match SocketAddr::from_str(&str[4 .. str.len() - 1]) {
+            Ok(addr) => addr,
+            Err(_) => {
+                return Err(decoder.error(&format!(
+                    "Could not decode {} as valid IPv4 or IPv6 address.", str)));
+            },
+        };
+        if str.starts_with("Tcp(") {
+            Ok(PeerEndpoint { addr: Endpoint::tcp(address) })
+        } else if str.starts_with("Utp(") {
+            Ok(PeerEndpoint { addr: Endpoint::utp(address) })
+        } else {
+            Err(decoder.error("Unrecognized protocol"))
+        }
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
