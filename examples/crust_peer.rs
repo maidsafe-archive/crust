@@ -428,24 +428,24 @@ fn main() {
         },
     };
 
-    let tx = on_time_out(5000, running_speed_test);
-
-    // Block until we get one bootstrap connection
-    let connected_peer = bs_receiver.recv().unwrap_or_else(|e| {
-        println!("CrustNode event handler closed; error : {}", e);
-        std::process::exit(6);
-    });
-
-    stdout = green_foreground(stdout);
-    println!("Bootstrapped to {:?}", connected_peer);
-    reset_foreground(stdout);
-
-    let _ = tx.send(true); // stop timer with no error messages
-
-    thread::sleep_ms(100);
-    println!("");
-
     if running_speed_test {  // Processing interaction till receiving ctrl+C
+        let tx = on_time_out(5000, running_speed_test);
+
+        // Block until we get one bootstrap connection
+        let connected_peer = bs_receiver.recv().unwrap_or_else(|e| {
+            println!("CrustNode event handler closed; error : {}", e);
+            std::process::exit(6);
+        });
+
+        stdout = green_foreground(stdout);
+        println!("Bootstrapped to {:?}", connected_peer);
+        reset_foreground(stdout);
+
+        let _ = tx.send(true); // stop timer with no error messages
+
+        thread::sleep_ms(100);
+        println!("");
+
         let speed = args.flag_speed.unwrap();  // Safe due to `running_speed_test` == true
         let peer = connected_peer;
         let mut rng = rand::thread_rng();
