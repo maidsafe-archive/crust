@@ -45,3 +45,9 @@ name = "crust_peer"
 path = "examples/crust_peer.rs"
 test = true
 bench = false
+
+[[example]]
+name = "reporter"
+path = "examples/reporter.rs"
+test = true
+bench = false

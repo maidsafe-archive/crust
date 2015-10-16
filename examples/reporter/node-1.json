@@ -1,0 +1,8 @@
+{
+  "ips": ["127.0.0.1:10000"],
+  "msg_to_send": "hello from node-1",
+  "listening_port": 10001,
+  "service_runs": 2,
+  "output_report_path": "/tmp/report-1.json",
+  "max_wait_before_restart_service_secs": 1
+}
