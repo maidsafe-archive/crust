@@ -89,24 +89,6 @@ struct Args {
     flag_help: bool,
 }
 
-// We'll use docopt to help parse the ongoing CLI commands entered by the user.
-static CLI_USAGE: &'static str = "
-Usage:
-  cli connect <endpoint>
-  cli send <peer> <message>...
-  cli stop
-";
-
-#[derive(RustcDecodable, Debug)]
-struct CliArgs {
-    cmd_connect: bool,
-    cmd_send: bool,
-    cmd_stop: bool,
-    arg_endpoint: Option<PeerEndpoint>,
-    arg_peer: Option<usize>,
-    arg_message: Vec<String>,
-}
-
 #[derive(Debug)]
 struct PeerEndpoint {
     pub addr: Endpoint,
@@ -408,6 +390,7 @@ fn main() {
 
     // Start event-handling thread
     let running_speed_test = args.flag_speed.is_some();
+
     let handler = match thread::Builder::new().name("CrustNode event handler".to_string())
                                               .spawn(move || {
         let mut bootstrapped = false;
@@ -472,6 +455,7 @@ fn main() {
     };
 
     let tx = on_time_out(5000, running_speed_test);
+
     // Block until we get one bootstrap connection
     let connected_peer = bs_receiver.recv().unwrap_or_else(|e| {
         println!("CrustNode event handler closed; error : {}", e);
@@ -480,7 +464,8 @@ fn main() {
 
     stdout = green_foreground(stdout);
     println!("Bootstrapped to {:?}", connected_peer);
-    stdout = reset_foreground(stdout);
+    reset_foreground(stdout);
+
     let _ = tx.send(true); // stop timer with no error messages
 
     thread::sleep_ms(100);
@@ -501,56 +486,106 @@ fn main() {
             }
         }
     } else {
-        let ref mut command = String::new();
-        let docopt: Docopt = Docopt::new(CLI_USAGE).unwrap_or_else(|error| error.exit());
         let stdin = io::stdin();
-        loop {
-            command.clear();
-            print_input_line();
-            let _ = stdin.read_line(command);
-            let x: &[_] = &['\r', '\n'];
-            let mut raw_args: Vec<&str> = command.trim_right_matches(x).split(' ').collect();
-            raw_args.insert(0, "cli");
-            let args: CliArgs = match docopt.clone().argv(raw_args.into_iter()).decode() {
-                Ok(args) => args,
-                Err(error) => {
-                    match error {
-                        docopt::Error::Decode(what) => println!("{}", what),
-                        _ => println!("Invalid command."),
-                    };
-                    continue
-                },
-            };
 
-            if args.cmd_connect {
-                // docopt should ensure arg_peer is valid
-                assert!(args.arg_endpoint.is_some());
-                let peer = vec![args.arg_endpoint.unwrap().addr];
-                service.connect(peer);
-            } else if args.cmd_send {
-                // docopt should ensure arg_peer and arg_message are valid
-                assert!(args.arg_peer.is_some());
-                assert!(!args.arg_message.is_empty());
-                let peer = args.arg_peer.unwrap();
-                let mut message: String = args.arg_message[0].clone();
-                for i in 1..args.arg_message.len() {
-                    message.push_str(" ");
-                    message.push_str(&args.arg_message[i]);
-                };
-                let network = network.lock().unwrap();
-                match network.get(peer) {
-                    Some(ref node) => service.send(node.connection_id, message.clone().into_bytes()),
-                    None => println!("Invalid connection #"),
-                }
-            } else if args.cmd_stop {
-                stdout = green_foreground(stdout);
-                println!("Stopped.");
-                let _ = reset_foreground(stdout);
-                break;
+        loop {
+            let mut command = String::new();
+            print_input_line();
+            assert!(stdin.read_line(&mut command).is_ok());
+
+            let cmd = match parse_user_command(command) {
+                Some(cmd) => cmd,
+                None => continue,
+            };
+            
+            match cmd {
+                UserCommand::Connect(ep) => {
+                    service.connect(vec![ep]);
+                },
+                UserCommand::Send(peer, message) => {
+                    let network = network.lock().unwrap();
+                    match network.get(peer) {
+                        Some(ref node) => service.send(node.connection_id, message.into_bytes()),
+                        None => println!("Invalid connection #"),
+                    }
+                },
+                UserCommand::Stop => {
+                    break;
+                },
             }
         }
     }
+
     service.stop();
     drop(service);
-    let _ = handler.join();
+
+    assert!(handler.join().is_ok());
 }
+
+////////////////////////////////////////////////////////////////////////////////
+//
+//  Paring user commands.
+//
+////////////////////////////////////////////////////////////////////////////////
+// We'll use docopt to help parse the ongoing CLI commands entered by the user.
+static CLI_USAGE: &'static str = "
+Usage:
+  cli connect <endpoint>
+  cli send <peer> <message>...
+  cli stop
+";
+
+#[derive(RustcDecodable, Debug)]
+struct CliArgs {
+    cmd_connect: bool,
+    cmd_send: bool,
+    cmd_stop: bool,
+    arg_endpoint: Option<PeerEndpoint>,
+    arg_peer: Option<usize>,
+    arg_message: Vec<String>,
+}
+
+#[derive(PartialEq, Eq, Debug, Clone)]
+enum UserCommand {
+    Stop,
+    Connect(Endpoint),
+    Send(usize, String),
+}
+
+fn parse_user_command(cmd : String) -> Option<UserCommand> {
+    let docopt: Docopt = Docopt::new(CLI_USAGE).unwrap_or_else(|error| error.exit());
+
+    let mut cmds = cmd.trim_right_matches(|c| c == '\r' || c == '\n')
+                      .split(' ')
+                      .collect::<Vec<_>>();
+
+    cmds.insert(0, "cli");
+
+    let args: CliArgs = match docopt.clone().argv(cmds.into_iter()).decode() {
+        Ok(args) => args,
+        Err(error) => {
+            match error {
+                docopt::Error::Decode(what) => println!("{}", what),
+                _ => println!("Invalid command."),
+            };
+            return None;
+        },
+    };
+
+    if args.cmd_connect {
+        let peer = args.arg_endpoint.unwrap().addr;
+        Some(UserCommand::Connect(peer))
+    } else if args.cmd_send {
+        let peer = args.arg_peer.unwrap();
+        let msg  = args.arg_message.join(" ");
+        Some(UserCommand::Send(peer, msg))
+    } else if args.cmd_stop {
+        Some(UserCommand::Stop)
+    }
+    else {
+        None
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
