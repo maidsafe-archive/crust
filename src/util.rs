@@ -18,13 +18,16 @@
 use std::net::{SocketAddr, IpAddr, Ipv4Addr, Ipv6Addr};
 use std::cmp::Ordering;
 use getifaddrs::{getifaddrs, IfAddr};
+use ::rustc_serialize::{Encodable, Decodable, Decoder, Encoder};
 use transport;
+use std::str::FromStr;
 
 #[cfg(test)]
 use std::sync::mpsc;
 #[cfg(test)]
 use std::thread;
 
+////////////////////////////////////////////////////////////////////////////////
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub struct SocketAddrW(pub SocketAddr);
 
@@ -40,6 +43,28 @@ impl Ord for SocketAddrW {
     }
 }
 
+impl Encodable for SocketAddrW {
+    fn encode<S: Encoder>(&self, s: &mut S) -> Result<(), S::Error> {
+        let as_string = format!("{}", self.0);
+        try!(s.emit_str(&as_string[..]));
+        Ok(())
+    }
+}
+
+impl Decodable for SocketAddrW {
+    fn decode<D: Decoder>(d: &mut D) -> Result<SocketAddrW, D::Error> {
+        let as_string = try!(d.read_str());
+        match SocketAddr::from_str(&as_string[..]) {
+            Ok(sa)  => Ok(SocketAddrW(sa)),
+            Err(e)  => {
+                let err = format!("Failed to decode SocketAddrW: {}", e);
+                Err(d.error(&err[..]))
+            }
+        }
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
 pub fn compare_ip_addrs(a1: &SocketAddr, a2: &SocketAddr) -> Ordering {
     use std::net::SocketAddr::{V4,V6};
     match *a1 {
@@ -55,6 +80,7 @@ pub fn compare_ip_addrs(a1: &SocketAddr, a2: &SocketAddr) -> Ordering {
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////
 pub fn loopback_v4(port: transport::Port) -> transport::Endpoint {
     let ip = IpAddr::V4(Ipv4Addr::new(127,0,0,1));
     transport::Endpoint::new(ip, port)
