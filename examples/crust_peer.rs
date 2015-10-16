@@ -181,7 +181,7 @@ impl UdpData {
 
     pub fn send_to(&self, destination: SocketAddr) {
         let buf = [0u8; 256];
-        self.socket.send_to(&buf, destination);
+        assert!(self.socket.send_to(&buf, destination).is_ok());
     }
 }
 
@@ -541,7 +541,7 @@ fn main() {
 
         stdout = green_foreground(stdout);
         println!("Bootstrapped to {:?}", connected_peer);
-        reset_foreground(stdout);
+        let _ = reset_foreground(stdout);
 
         let _ = tx.send(true); // stop timer with no error messages
 
@@ -587,7 +587,7 @@ fn main() {
                         None => println!("Invalid connection #"),
                     }
                 },
-                UserCommand::SendUdp(peer, dst, message) => {
+                UserCommand::SendUdp(peer, dst, _message) => {
                     let network = network.lock().unwrap();
                     match network.get_udp(peer) {
                         Some(ref udp) => udp.send_to(dst),
