@@ -50,10 +50,6 @@ pub struct Service {
     beacon_guid_and_port                : Option<(beacon::GUID, u16)>,
     config                              : Config,
     cmd_sender                          : Sender<Closure>,
-    hole_punch_server_shutdown_notifier : ::std::sync::mpsc::Sender<()>,
-    // TODO (canndrew): Ideally this should not need to be an Option<> as the server thread should
-    // have the same lifetime as the Server object. Can change this one rust has linear types.
-    hole_punch_server_handle            : Option<::std::thread::JoinHandle<io::Result<()>>>,
 }
 
 impl Service {
@@ -82,10 +78,9 @@ impl Service {
 
     fn construct(event_sender: Sender<Event>, config: Config)
             -> io::Result<Service> {
-        let (hole_punch_server_shutdown_notifier, hole_punch_server_handle, hole_punch_server_addr)
-            = try!(::hole_punching::start_hole_punch_server());
+        let mapper = try!(::hole_punching::HolePunchServer::start());
 
-        let mut state = State::new(event_sender, Some(hole_punch_server_addr.port()));
+        let mut state = State::new(event_sender, mapper);
         let cmd_sender = state.cmd_sender.clone();
 
         let handle = try!(Self::new_thread("run loop", move || {
@@ -96,8 +91,6 @@ impl Service {
                               beacon_guid_and_port                : None,
                               config                              : config,
                               cmd_sender                          : cmd_sender,
-                              hole_punch_server_shutdown_notifier : hole_punch_server_shutdown_notifier,
-                              hole_punch_server_handle            : Some(hole_punch_server_handle),
                           };
 
         let beacon_port = service.config.beacon_port.clone();
@@ -218,21 +211,6 @@ impl Service {
     /// This should be called before destroying an instance of a Service to allow the
     /// listener threads to join.  Once called, the Service should be destroyed.
     pub fn stop(&mut self) {
-        // Ignore this error. If the server thread has exited we'll find out about it when we
-        // join the JoinHandle.
-        let _ = self.hole_punch_server_shutdown_notifier.send(());
-
-        if let Some(join_handle) = self.hole_punch_server_handle.take() {
-            // unwrap to propogate failure if the server thread panicked
-            match join_handle.join().unwrap() {
-                Ok(())  => (),
-                Err(e)  => {
-                    // TODO (canndrew): Should this error be propogated up to the caller?
-                    warn!("The udp hole punch server exited due to IO error: {}", e)
-                },
-            }
-        };
-
         if let Some(beacon_guid_and_port) = self.beacon_guid_and_port {
             beacon::BroadcastAcceptor::stop(&beacon_guid_and_port);
             self.beacon_guid_and_port = None;
@@ -265,7 +243,7 @@ impl Service {
             let cmd_sender = state.cmd_sender.clone();
 
             let handshake = Handshake {
-                mapper_port: state.our_mapper_port.clone(),
+                mapper_port: Some(state.mapper.listening_addr().port()),
             };
 
             let _ = Self::new_thread("connect", move || {
@@ -313,7 +291,7 @@ impl Service {
             state.listening_ports.insert(acceptor.local_port());
 
             let handshake = Handshake {
-                mapper_port: state.our_mapper_port.clone(),
+                mapper_port: Some(state.mapper.listening_addr().port()),
             };
 
             let _ = Self::new_thread("listen", move || {
@@ -410,14 +388,8 @@ impl Service {
 
                             // TODO (canndrew): ToSocketAddrs would
                             // prolly make more sense
-                          peer_addrs: ::std::collections::HashSet<SocketAddr>
-
-                            // TODO (canndrew): may as well let the
-                            // caller decide the timeout
-                          /* timeout: Option<Duration> */)
+                          peer_addrs: ::std::collections::HashSet<SocketAddr>)
     {
-        let timeout = Some(::std::time::Duration::from_secs(2));
-
         Self::post(&self.cmd_sender, move |state: &mut State| {
             let event_sender = state.event_sender.clone();
 
@@ -426,8 +398,7 @@ impl Service {
                 let (udp_socket, result_addr)
                     = ::hole_punching::blocking_udp_punch_hole(udp_socket,
                                                                secret,
-                                                               peer_addrs,
-                                                               timeout);
+                                                               peer_addrs);
 
                 // TODO (canndrew): we currently have no means to handle this error
                 let _ = event_sender.send(Event::OnHolePunched(HolePunchResult {

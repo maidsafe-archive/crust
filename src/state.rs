@@ -36,6 +36,7 @@ use itertools::Itertools;
 use event::{Event, MappedUdpSocket};
 use connection::Connection;
 use sequence_number::SequenceNumber;
+use hole_punching::HolePunchServer;
 
 pub type Closure = Box<FnBox(&mut State) + Send>;
 
@@ -54,12 +55,12 @@ pub struct State {
     pub stop_called         : bool,
     pub is_bootstrapping    : bool,
     pub next_punch_sequence : SequenceNumber,
-    pub our_mapper_port     : Option<u16>,
+    pub mapper              : HolePunchServer,
 }
 
 impl State {
     pub fn new(event_sender: Sender<Event>,
-               our_mapper_port: Option<u16>) -> State {
+               mapper: HolePunchServer) -> State {
         let (cmd_sender, cmd_receiver) = mpsc::channel::<Closure>();
 
         State {
@@ -72,7 +73,7 @@ impl State {
             stop_called         : false,
             is_bootstrapping    : false,
             next_punch_sequence : SequenceNumber::new(::rand::random()),
-            our_mapper_port     : our_mapper_port,
+            mapper              : mapper,
         }
     }
 
@@ -366,7 +367,7 @@ impl State {
 
         let event_sender = self.event_sender.clone();
         let cmd_sender   = self.cmd_sender.clone();
-        let mapper_port  = self.our_mapper_port.clone();
+        let mapper_port  = self.mapper.listening_addr().port();
 
         let _ = Self::new_thread("bootstrap_off_list", move || {
             let mut vec_deferred = vec![];
@@ -378,7 +379,7 @@ impl State {
             for contact in bootstrap_list.iter() {
                 let c = contact.clone();
                 vec_deferred.push(Deferred::new(move || {
-                    let h = Handshake { mapper_port: mapper_port };
+                    let h = Handshake { mapper_port: Some(mapper_port) };
                     Self::connect(h, c)
                 }))
             }
@@ -514,7 +515,8 @@ mod test {
 
         let (event_sender, event_receiver) = channel();
 
-        let mut s = State::new(event_sender, None);
+        let mapper = ::hole_punching::HolePunchServer::start().unwrap();
+        let mut s = State::new(event_sender, mapper);
 
         let cmd_sender = s.cmd_sender.clone();
 

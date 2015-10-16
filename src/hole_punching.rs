@@ -3,6 +3,7 @@ use std::io;
 use std::str::FromStr;
 
 use periodic_sender::PeriodicSender;
+use socket_utils::RecvUntil;
 
 #[derive(Debug, RustcEncodable, RustcDecodable)]
 pub struct HolePunch {
@@ -61,7 +62,7 @@ impl ::rustc_serialize::Decodable for WrapSocketAddr {
 pub fn blocking_get_mapped_udp_socket(request_id: u32, helper_nodes: Vec<SocketAddr>)
         -> io::Result<(UdpSocket, Option<SocketAddr>, Vec<SocketAddr>)>
 {
-    let timeout = ::time::Duration::seconds(2);
+    const MAX_DATAGRAM_SIZE: usize = 256;
 
     let udp_socket = try!(UdpSocket::bind("0.0.0.0:0"));
     let receiver = try!(udp_socket.try_clone());
@@ -77,22 +78,14 @@ pub fn blocking_get_mapped_udp_socket(request_id: u32, helper_nodes: Vec<SocketA
         for helper in helper_nodes.iter() {
             let sender = try!(udp_socket.try_clone());
             let periodic_sender = PeriodicSender::start(sender, ::std::slice::ref_slice(helper), scope, &send_data[..], 300);
-            let start_time = ::time::now();
+            let deadline = ::time::now() + ::time::Duration::seconds(2);
             let res = try!((|| -> io::Result<Option<(SocketAddr, usize)>> {
                 loop {
-                    let current_time = ::time::now();
-                    let time_spent = current_time - start_time;
-                    let timeout_remaining = timeout - time_spent;
-                    if timeout_remaining <= ::time::Duration::zero() {
-                        return Ok(None);
-                    }
-
-                    // TODO (canndrew): should eventually be able to remove this conversion
-                    let timeout_remaining = ::std::time::Duration::from_millis(timeout_remaining.num_milliseconds() as u64);
-
-                    try!(receiver.set_read_timeout(Some(timeout_remaining)));
-                    let mut recv_data = [0u8; 256];
-                    let (read_size, recv_addr) = try!(receiver.recv_from(&mut recv_data[..]));
+                    let mut recv_data = [0u8; MAX_DATAGRAM_SIZE];
+                    let (read_size, recv_addr) = match try!(receiver.recv_until(&mut recv_data[..], deadline)) {
+                        Some(x) => x,
+                        None    => return Ok(None),
+                    };
                     match helper_nodes.iter().position(|&a| a == recv_addr) {
                         None    => continue,
                         Some(i) => match ::cbor::Decoder::from_reader(&recv_data[..read_size])
@@ -128,60 +121,11 @@ pub fn blocking_get_mapped_udp_socket(request_id: u32, helper_nodes: Vec<SocketA
     }
 }
 
-pub fn start_hole_punch_server() -> io::Result<(::std::sync::mpsc::Sender<()>, ::std::thread::JoinHandle<io::Result<()>>, SocketAddr)> {
-    let (tx, rx) = ::std::sync::mpsc::channel::<()>();
-    let udp_socket = try!(UdpSocket::bind("0.0.0.0:0"));
-    let local_addr = try!(udp_socket.local_addr());
-    /*
-     * TODO (canndrew):
-     * Currently we set a read timeout so that the hole punch server thread continually wakes
-     * and checks to see if it's time to exit. This is a really crappy way of implementing
-     * this but currently rust doesn't have a good cross-platform select/epoll interface.
-     */
-    try!(udp_socket.set_read_timeout(Some(::std::time::Duration::from_millis(500))));
-    let hole_punch_listener = try!(::std::thread::Builder::new().name(String::from("udp hole punch server"))
-                                                                .spawn(move || {
-        loop {
-            match rx.try_recv() {
-                Err(::std::sync::mpsc::TryRecvError::Empty)        => (),
-                Err(::std::sync::mpsc::TryRecvError::Disconnected) => panic!(),
-                Ok(())  => return Ok(()),
-            }
-            let mut data_recv = [0u8; 256];
-            let (read_size, addr) = try!(udp_socket.recv_from(&mut data_recv[..]));
-            match ::cbor::Decoder::from_reader(&data_recv[..read_size])
-                                 .decode::<GetExternalAddr>().next() {
-                Some(Ok(gea)) => {
-                    if gea.magic != GET_EXTERNAL_ADDR_MAGIC {
-                        continue;
-                    }
-                    let data_send = {
-                        let sea = SetExternalAddr {
-                            request_id: gea.request_id,
-                            addr: WrapSocketAddr(addr),
-                        };
-                        let mut enc = ::cbor::Encoder::from_memory();
-                        enc.encode(::std::iter::once(&sea)).unwrap();
-                        enc.into_bytes()
-                    };
-                    let send_size = try!(udp_socket.send_to(&data_send[..], addr));
-                    if send_size != data_send.len() {
-                        warn!("Failed to send entire SetExternalAddr message. {} < {}", send_size, data_send.len());
-                    }
-                }
-                x => info!("Hole punch server received invalid GetExternalAddr: {:?}", x),
-            };
-        }
-    }));
-    Ok((tx, hole_punch_listener, local_addr))
-}
-
 pub fn blocking_udp_punch_hole(udp_socket: UdpSocket,
                                secret: Option<[u8; 4]>,
                                // TODO (canndrew): ToSocketAddrs would
                                // prolly make more sense
-                               peer_addrs: ::std::collections::HashSet<SocketAddr>,
-                               timeout: Option<::std::time::Duration>)
+                               peer_addrs: ::std::collections::HashSet<SocketAddr>)
             -> (UdpSocket, io::Result<SocketAddr>) {
     // Cbor seems to serialize into bytes of different sizes and
     // it sometimes exceeded 16 bytes, let's be safe and use 128.
@@ -198,55 +142,159 @@ pub fn blocking_udp_punch_hole(udp_socket: UdpSocket,
     };
 
     assert!(send_data.len() <= MAX_DATAGRAM_SIZE,
-            format!("Data exceed MAX_DATAGRAM_SIZE: {} > {}",
+            format!("Data exceed MAX_DATAGRAM_SIZE in blocking_udp_punch_hole: {} > {}",
                     send_data.len(),
                     MAX_DATAGRAM_SIZE));
 
     let peer_addrs = peer_addrs.into_iter().collect::<Vec<SocketAddr>>();
 
     let addr_res: io::Result<SocketAddr> = ::crossbeam::scope(|scope| {
-        use ::std::io::Error;
-        use ::std::io::ErrorKind::{WouldBlock, TimedOut};
-
         let sender          = try!(udp_socket.try_clone());
         let receiver        = try!(udp_socket.try_clone());
         let periodic_sender = PeriodicSender::start(sender,
                                                     &peer_addrs[..],
                                                     scope,
-                                                    &send_data[..],
+                                                    send_data,
                                                     500);
 
-        let addr_res = (|| {
+        let addr_res: io::Result<Option<SocketAddr>> = (|| {
             let mut recv_data = [0u8; MAX_DATAGRAM_SIZE];
-            try!(receiver.set_read_timeout(timeout));
+            let mut peer_addr: Option<SocketAddr> = None;
+            let deadline = ::time::now() + ::time::Duration::seconds(2);
             loop {
-                let (read_size, addr) = match receiver.recv_from(&mut recv_data[..]) {
-                    Ok(x) => x,
-                    Err(e) => {
-                        if e.kind() == WouldBlock {
-                            return Err(Error::new(TimedOut, "timed out"));
-                        }
-                        return Err(e);
-                    }
+                let (read_size, addr) = match try!(receiver.recv_until(&mut recv_data[..], deadline)) {
+                    Some(x) => x,
+                    None    => return Ok(peer_addr),
                 };
 
                 match ::cbor::Decoder::from_reader(&recv_data[..read_size])
                                       .decode::<HolePunch>().next() {
                     Some(Ok(ref hp)) => {
                         if hp.secret == secret {
-                            return Ok(addr);
+                            if hp.ack {
+                                return Ok(Some(addr))
+                            }
+                            else {
+                                let send_data = {
+                                    let hole_punch = HolePunch {
+                                        secret: secret,
+                                        ack: true,
+                                    };
+                                    let mut enc = ::cbor::Encoder::from_memory();
+                                    enc.encode(::std::iter::once(&hole_punch)).unwrap();
+                                    enc.into_bytes()
+                                };
+                                periodic_sender.set_payload(send_data);
+                                peer_addr = Some(addr);
+                            }
                         }
-                        println!("udp_hole_punch non matching secret");
+                        else {
+                            info!("udp_hole_punch non matching secret");
+                        }
                     },
-                    x   => println!("udp_hole_punch received invalid data: {:?}", x),
+                    x   => info!("udp_hole_punch received invalid data: {:?}", x),
                 };
             }
         })();
-
-        addr_res
+        match addr_res {
+            Err(e)      => Err(e),
+            Ok(Some(x)) => Ok(x),
+            Ok(None)    => Err(io::Error::new(io::ErrorKind::TimedOut, "Timed out waiting for rendevous connection")),
+        }
     });
 
     (udp_socket, addr_res)
+}
+
+/// RAII type for udp hole punching server.
+pub struct HolePunchServer {
+    shutdown_notifier: ::std::sync::mpsc::Sender<()>,
+
+    // TODO (canndrew): Ideally this should not need to be an Option<> as the server thread should
+    // have the same lifetime as the Server object. Can change this once rust has linear types.
+    join_handle: Option<::std::thread::JoinHandle<io::Result<()>>>,
+    addr: SocketAddr,
+}
+
+impl HolePunchServer {
+    /// Create a new hole punching server.
+    pub fn start() -> io::Result<HolePunchServer> {
+        const MAX_DATAGRAM_SIZE: usize = 256;
+
+        let (tx, rx) = ::std::sync::mpsc::channel::<()>();
+        let udp_socket = try!(UdpSocket::bind("0.0.0.0:0"));
+        let local_addr = try!(udp_socket.local_addr());
+        let hole_punch_listener = try!(::std::thread::Builder::new().name(String::from("udp hole punch server"))
+                                                                    .spawn(move || {
+            loop {
+                match rx.try_recv() {
+                    Err(::std::sync::mpsc::TryRecvError::Empty)        => (),
+                    Err(::std::sync::mpsc::TryRecvError::Disconnected) => panic!(),
+                    Ok(())  => return Ok(()),
+                }
+                let mut data_recv = [0u8; MAX_DATAGRAM_SIZE];
+                /*
+                 * TODO (canndrew):
+                 * Currently we set a read timeout so that the hole punch server thread continually wakes
+                 * and checks to see if it's time to exit. This is a really crappy way of implementing
+                 * this but currently rust doesn't have a good cross-platform select/epoll interface.
+                 */
+                let deadline = ::time::now() + ::time::Duration::seconds(1);
+                let (read_size, addr) = match try!(udp_socket.recv_until(&mut data_recv[..], deadline)) {
+                    Some(x) => x,
+                    None    => continue,
+                };
+                match ::cbor::Decoder::from_reader(&data_recv[..read_size])
+                                     .decode::<GetExternalAddr>().next() {
+                    Some(Ok(gea)) => {
+                        if gea.magic != GET_EXTERNAL_ADDR_MAGIC {
+                            continue;
+                        }
+                        let data_send = {
+                            let sea = SetExternalAddr {
+                                request_id: gea.request_id,
+                                addr: WrapSocketAddr(addr),
+                            };
+                            let mut enc = ::cbor::Encoder::from_memory();
+                            enc.encode(::std::iter::once(&sea)).unwrap();
+                            enc.into_bytes()
+                        };
+                        let send_size = try!(udp_socket.send_to(&data_send[..], addr));
+                        if send_size != data_send.len() {
+                            warn!("Failed to send entire SetExternalAddr message. {} < {}", send_size, data_send.len());
+                        }
+                    }
+                    x => info!("Hole punch server received invalid GetExternalAddr: {:?}", x),
+                };
+            }
+        }));
+        Ok(HolePunchServer {
+            shutdown_notifier: tx,
+            join_handle: Some(hole_punch_listener),
+            addr: local_addr,
+        })
+    }
+
+    /// Get the address that this server is listening on.
+    pub fn listening_addr(&self) -> SocketAddr {
+        self.addr
+    }
+}
+
+impl Drop for HolePunchServer {
+    fn drop(&mut self) {
+        // Ignore this error. If the server thread has exited we'll find out about it when we
+        // join the JoinHandle.
+        let _ = self.shutdown_notifier.send(());
+
+        if let Some(join_handle) = self.join_handle.take() {
+            match join_handle.join() {
+                Ok(Ok(()))  => (),
+                Ok(Err(e))  => warn!("The udp hole punch server exited due to IO error: {}", e),
+                Err(e)      => error!("The udp hole punch server panicked!: {:?}", e),
+            }
+        };
+    }
 }
 
 #[cfg(test)]
@@ -260,17 +308,12 @@ mod tests {
         SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(127,0,0,1), port))
     }
 
-    fn seconds(count: u64) -> ::std::time::Duration {
-        ::std::time::Duration::from_secs(count)
-    }
-
     fn run_hole_punching(socket:    UdpSocket,
                          peer_addr: SocketAddr,
-                         secret:    Option<[u8; 4]>,
-                         timeout:   Option<::std::time::Duration>)
+                         secret:    Option<[u8; 4]>)
             -> io::Result<SocketAddr> {
         let peers = Some(peer_addr).into_iter().collect();
-        blocking_udp_punch_hole(socket, secret, peers, timeout).1
+        blocking_udp_punch_hole(socket, secret, peers).1
     }
 
     fn duration_diff(t1: ::time::Duration, t2: ::time::Duration) -> ::time::Duration {
@@ -282,8 +325,7 @@ mod tests {
 
     #[test]
     fn test_udp_hole_punching_0_time_out() {
-        let std_timeout = seconds(3);
-        let timeout     = ::time::Duration::seconds(3);
+        let timeout     = ::time::Duration::seconds(2);
 
         let s1 = UdpSocket::bind(loopback_v4(0)).unwrap();
         let s2 = UdpSocket::bind(loopback_v4(0)).unwrap();
@@ -291,7 +333,7 @@ mod tests {
         let s2_addr = s2.local_addr().unwrap();
         let start = ::time::now();
 
-        let t = spawn(move || run_hole_punching(s1, s2_addr, None, Some(std_timeout)));
+        let t = spawn(move || run_hole_punching(s1, s2_addr, None));
 
         let thread_status = t.join();
         assert!(thread_status.is_ok());
@@ -311,9 +353,8 @@ mod tests {
         let s1_addr = s1.local_addr().unwrap();
         let s2_addr = s2.local_addr().unwrap();
 
-        let timeout = Some(seconds(2));
-        let t1 = spawn(move || run_hole_punching(s1, s2_addr, None, timeout));
-        let t2 = spawn(move || run_hole_punching(s2, s1_addr, None, timeout));
+        let t1 = spawn(move || run_hole_punching(s1, s2_addr, None));
+        let t2 = spawn(move || run_hole_punching(s2, s1_addr, None));
 
         let r1 = t1.join();
         let r2 = t2.join();
@@ -332,9 +373,8 @@ mod tests {
 
         let secret = ::rand::random();
 
-        let timeout = Some(seconds(2));
-        let t1 = spawn(move || run_hole_punching(s1, s2_addr, secret, timeout));
-        let t2 = spawn(move || run_hole_punching(s2, s1_addr, secret, timeout));
+        let t1 = spawn(move || run_hole_punching(s1, s2_addr, secret));
+        let t2 = spawn(move || run_hole_punching(s2, s1_addr, secret));
 
         let r1 = t1.join();
         let r2 = t2.join();
@@ -345,12 +385,11 @@ mod tests {
 
     #[test]
     fn test_get_mapped_socket_from_self() {
-        let (sender, join_handle, local_addr) = start_hole_punch_server().unwrap();
+        let mapper = HolePunchServer::start().unwrap();
         let (socket, our_addr, remaining)
             = blocking_get_mapped_udp_socket(::rand::random(),
-                                             vec![loopback_v4(local_addr.port())]).unwrap();
+                                             vec![loopback_v4(mapper.listening_addr().port())]).unwrap();
 
-        sender.send(()).unwrap();
         let received_addr = our_addr.unwrap();
         let socket_addr = socket.local_addr().unwrap();
         assert_eq!(loopback_v4(socket_addr.port()), received_addr);
