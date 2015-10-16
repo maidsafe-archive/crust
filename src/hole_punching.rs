@@ -77,7 +77,7 @@ pub fn blocking_get_mapped_udp_socket(request_id: u32, helper_nodes: Vec<SocketA
     let res = try!(::crossbeam::scope(|scope| -> io::Result<Option<(SocketAddr, usize)>> {
         for helper in helper_nodes.iter() {
             let sender = try!(udp_socket.try_clone());
-            let periodic_sender = PeriodicSender::start(sender, ::std::slice::ref_slice(helper), scope, &send_data[..], 300);
+            let periodic_sender = PeriodicSender::start(sender, *helper, scope, &send_data[..], 300);
             let deadline = ::time::now() + ::time::Duration::seconds(2);
             let res = try!((|| -> io::Result<Option<(SocketAddr, usize)>> {
                 loop {
@@ -114,8 +114,7 @@ pub fn blocking_get_mapped_udp_socket(request_id: u32, helper_nodes: Vec<SocketA
     match res {
         None => Ok((udp_socket, None, Vec::new())),
         Some((our_addr, responder_index))
-            => Ok((udp_socket, Some(our_addr), helper_nodes.iter()
-                                                           .cloned()
+            => Ok((udp_socket, Some(our_addr), helper_nodes.into_iter()
                                                            .skip(responder_index + 1)
                                                            .collect::<Vec<SocketAddr>>())),
     }
@@ -125,7 +124,7 @@ pub fn blocking_udp_punch_hole(udp_socket: UdpSocket,
                                secret: Option<[u8; 4]>,
                                // TODO (canndrew): ToSocketAddrs would
                                // prolly make more sense
-                               peer_addrs: ::std::collections::HashSet<SocketAddr>)
+                               peer_addr: SocketAddr)
             -> (UdpSocket, io::Result<SocketAddr>) {
     // Cbor seems to serialize into bytes of different sizes and
     // it sometimes exceeded 16 bytes, let's be safe and use 128.
@@ -146,13 +145,11 @@ pub fn blocking_udp_punch_hole(udp_socket: UdpSocket,
                     send_data.len(),
                     MAX_DATAGRAM_SIZE));
 
-    let peer_addrs = peer_addrs.into_iter().collect::<Vec<SocketAddr>>();
-
     let addr_res: io::Result<SocketAddr> = ::crossbeam::scope(|scope| {
         let sender          = try!(udp_socket.try_clone());
         let receiver        = try!(udp_socket.try_clone());
         let periodic_sender = PeriodicSender::start(sender,
-                                                    &peer_addrs[..],
+                                                    peer_addr,
                                                     scope,
                                                     send_data,
                                                     500);
@@ -312,8 +309,7 @@ mod tests {
                          peer_addr: SocketAddr,
                          secret:    Option<[u8; 4]>)
             -> io::Result<SocketAddr> {
-        let peers = Some(peer_addr).into_iter().collect();
-        blocking_udp_punch_hole(socket, secret, peers).1
+        blocking_udp_punch_hole(socket, secret, peer_addr).1
     }
 
     fn duration_diff(t1: ::time::Duration, t2: ::time::Duration) -> ::time::Duration {
@@ -325,7 +321,7 @@ mod tests {
 
     #[test]
     fn test_udp_hole_punching_0_time_out() {
-        let timeout     = ::time::Duration::seconds(2);
+        let timeout = ::time::Duration::seconds(2);
 
         let s1 = UdpSocket::bind(loopback_v4(0)).unwrap();
         let s2 = UdpSocket::bind(loopback_v4(0)).unwrap();

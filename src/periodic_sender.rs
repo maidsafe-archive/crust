@@ -11,7 +11,7 @@ pub struct PeriodicSender<D> {
 impl<'a, 'b: 'a, D: AsRef<[u8]> + Send + 'b> PeriodicSender<D> {
     pub fn start(
             udp_socket: UdpSocket,
-            destinations: &'b [SocketAddr],
+            destination: SocketAddr,
             scope: &::crossbeam::Scope<'a>,
             data: D,
             period_ms: u32
@@ -22,13 +22,12 @@ impl<'a, 'b: 'a, D: AsRef<[u8]> + Send + 'b> PeriodicSender<D> {
         let join_guard = scope.spawn(move || {
             let mut data = data;
             loop {
-                for dest in destinations.iter() {
-                    // TODO (canndrew): Will be possible to extract this error through `stop()`
-                    // once the rust guys implement linear types/disableable drop.
-                    // see: https://github.com/rust-lang/rfcs/issues/523
-                    // see: https://github.com/rust-lang/rfcs/issues/814
-                    let _ = udp_socket.send_to(data.as_ref(), dest);
-                };
+                // TODO (canndrew): Will be possible to extract this error through `stop()`
+                // once the rust guys implement linear types/disableable drop.
+                // see: https://github.com/rust-lang/rfcs/issues/523
+                // see: https://github.com/rust-lang/rfcs/issues/814
+                let _ = udp_socket.send_to(data.as_ref(), destination);
+
                 ::std::thread::park_timeout_ms(period_ms);
                 match rx.try_recv() {
                     Err(::std::sync::mpsc::TryRecvError::Empty)        => (),

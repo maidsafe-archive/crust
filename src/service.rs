@@ -47,9 +47,9 @@ type Closure = Box<FnBox(&mut State) + Send>;
 /// (https://github.com/maidsafe/crust/blob/master/docs/vault_config_file_flowchart.pdf) for more
 /// information.
 pub struct Service {
-    beacon_guid_and_port                : Option<(beacon::GUID, u16)>,
-    config                              : Config,
-    cmd_sender                          : Sender<Closure>,
+    beacon_guid_and_port : Option<(beacon::GUID, u16)>,
+    config               : Config,
+    cmd_sender           : Sender<Closure>,
 }
 
 impl Service {
@@ -88,9 +88,9 @@ impl Service {
                             }));
 
         let mut service = Service {
-                              beacon_guid_and_port                : None,
-                              config                              : config,
-                              cmd_sender                          : cmd_sender,
+                              beacon_guid_and_port : None,
+                              config               : config,
+                              cmd_sender           : cmd_sender,
                           };
 
         let beacon_port = service.config.beacon_port.clone();
@@ -388,7 +388,7 @@ impl Service {
 
                             // TODO (canndrew): ToSocketAddrs would
                             // prolly make more sense
-                          peer_addrs: ::std::collections::HashSet<SocketAddr>)
+                          peer_addr: SocketAddr)
     {
         Self::post(&self.cmd_sender, move |state: &mut State| {
             let event_sender = state.event_sender.clone();
@@ -398,7 +398,7 @@ impl Service {
                 let (udp_socket, result_addr)
                     = ::hole_punching::blocking_udp_punch_hole(udp_socket,
                                                                secret,
-                                                               peer_addrs);
+                                                               peer_addr);
 
                 // TODO (canndrew): we currently have no means to handle this error
                 let _ = event_sender.send(Event::OnHolePunched(HolePunchResult {
