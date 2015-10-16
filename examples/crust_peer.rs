@@ -21,10 +21,11 @@
 #![deny(bad_style, deprecated, drop_with_repr_extern, improper_ctypes, non_shorthand_field_patterns,
         overflowing_literals, plugin_as_library, private_no_mangle_fns, private_no_mangle_statics,
         raw_pointer_derive, stable_features, unconditional_recursion, unknown_lints,
-        unsafe_code, unused_allocation, unused_attributes,
+        unused_allocation, unused_attributes,
         unused_comparisons, unused_features, unused_parens, while_true)]
 #![warn(trivial_casts, trivial_numeric_casts, unused, unused_extern_crates, unused_import_braces,
         unused_qualifications, unused_results, variant_size_differences)]
+#![feature(mpsc_select)]
 
 #[macro_use]
 extern crate log;
@@ -42,7 +43,6 @@ use rand::Rng;
 use rustc_serialize::{Decodable, Decoder};
 use std::cmp;
 use std::sync::mpsc::channel;
-use std::sync::mpsc::Sender;
 use std::io;
 use std::io::Write;
 use std::net::SocketAddr;
@@ -296,34 +296,6 @@ fn reset_foreground(stdout: Option<Box<term::StdoutTerminal>>) ->
     }
 }
 
-// If bootstrap doesn't succeed in n seconds and we're trying to run the speed test, then fail overall.
-// Otherwise, if no peer endpoints were provided and bootstrapping fails, assume this is
-// OK, i.e. this is the first node of a new network.
-fn on_time_out(ms: u32, flag_speed: bool) -> Sender<bool> {
-    let (tx, rx) = channel();
-    let _ = std::thread::spawn(move || {
-        std::thread::sleep_ms(ms);
-        match rx.try_recv() {
-            Ok(true) => {},
-            _ => {
-                let mut stdout = term::stdout();
-                if flag_speed {
-                    stdout = red_foreground(stdout);
-                    println!("Failed to connect to a peer.  Exiting.");
-                    let _ = reset_foreground(stdout);
-                    std::process::exit(3);
-                }
-                stdout = yellow_foreground(stdout);
-                println!("Didn't bootstrap to an existing network - this may be the first node \
-                             of a new network.");
-                let _ = reset_foreground(stdout);
-            },
-        }
-    });
-
-    tx
-}
-
 fn create_local_config() {
     let mut stdout = term::stdout();
     let mut config_path = match ::crust::current_bin_dir() {
@@ -454,8 +426,13 @@ fn main() {
                     network.drop_node(c);
                     network.print_connected_nodes();
                 },
-                crust::Event::BootstrapFinished => {}
+                crust::Event::BootstrapFinished => {
+                    stdout_copy = cyan_foreground(stdout_copy);
+                    println!("\nBootstrap finished");
+                },
                 crust::Event::ExternalEndpoints(_) => {
+                    stdout_copy = cyan_foreground(stdout_copy);
+                    println!("\nRecieved external endpoints");
                 }
             }
             stdout_copy = reset_foreground(stdout_copy);
@@ -473,33 +450,55 @@ fn main() {
         },
     };
 
-    let tx = on_time_out(5000, running_speed_test);
-    // Block until we get one bootstrap connection
-    let connected_peer = bs_receiver.recv().unwrap_or_else(|e| {
-        println!("CrustNode event handler closed; error : {}", e);
-        std::process::exit(6);
-    });
-
-    stdout = green_foreground(stdout);
-    println!("Bootstrapped to {:?}", connected_peer);
-    stdout = reset_foreground(stdout);
-    let _ = tx.send(true); // stop timer with no error messages
-
+    /*
     thread::sleep_ms(100);
     println!("");
+    */
 
     if running_speed_test {  // Processing interaction till receiving ctrl+C
-        let speed = args.flag_speed.unwrap();  // Safe due to `running_speed_test` == true
-        let peer = connected_peer;
-        let mut rng = rand::thread_rng();
-        loop {
-            let length = rng.gen_range(50, speed);
-            let times = cmp::max(1, speed / length);
-            let sleep_time = cmp::max(1, 1000 / times);
-            for _ in 0..times {
-                service.send(peer.clone(), generate_random_vec_u8(length as usize));
-                debug!("Sent a message with length of {} bytes to {:?}", length, peer);
-                std::thread::sleep_ms(sleep_time as u32);
+        // Block until we get one bootstrap connection
+        let (timeout_tx, timeout_rx) = channel::<()>();
+        let timeout_join_guard = thread::Builder::new().name(String::from("Bootstrap timeout")).spawn(move || {
+            thread::park_timeout_ms(5000);
+            let _ = timeout_tx.send(());
+        }).unwrap();
+        let timeout_thread = timeout_join_guard.thread();
+        select! {
+            // Timed out waiting for bootstrap
+            _  = timeout_rx.recv() => {
+                stdout = red_foreground(stdout);
+                println!("Failed to connect to a peer.  Exiting.");
+                let _ = reset_foreground(stdout);
+                std::process::exit(3);
+            },
+
+            // Received a bootstrap connection
+            peer_res = bs_receiver.recv() => {
+                timeout_thread.unpark();
+                match peer_res {
+                    Ok(peer) => {
+                        stdout = green_foreground(stdout);
+                        println!("Bootstrapped to {:?}", peer);
+                        let _ = reset_foreground(stdout);
+
+                        let speed = args.flag_speed.unwrap();  // Safe due to `running_speed_test` == true
+                        let mut rng = rand::thread_rng();
+                        loop {
+                            let length = rng.gen_range(50, speed);
+                            let times = cmp::max(1, speed / length);
+                            let sleep_time = cmp::max(1, 1000 / times);
+                            for _ in 0..times {
+                                service.send(peer.clone(), generate_random_vec_u8(length as usize));
+                                debug!("Sent a message with length of {} bytes to {:?}", length, peer);
+                                std::thread::sleep_ms(sleep_time as u32);
+                            }
+                        }
+                    },
+                    Err(e) => {
+                        println!("CrustNode event handler closed; error : {}", e);
+                        std::process::exit(6);
+                    },
+                }
             }
         }
     } else {
@@ -513,6 +512,7 @@ fn main() {
             let x: &[_] = &['\r', '\n'];
             let mut raw_args: Vec<&str> = command.trim_right_matches(x).split(' ').collect();
             raw_args.insert(0, "cli");
+
             let args: CliArgs = match docopt.clone().argv(raw_args.into_iter()).decode() {
                 Ok(args) => args,
                 Err(error) => {
