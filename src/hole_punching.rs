@@ -326,7 +326,7 @@ mod tests {
         let s1 = UdpSocket::bind(loopback_v4(0)).unwrap();
         let s2 = UdpSocket::bind(loopback_v4(0)).unwrap();
 
-        let s2_addr = s2.local_addr().unwrap();
+        let s2_addr = loopback_v4(s2.local_addr().unwrap().port());
         let start = ::time::now();
 
         let t = spawn(move || run_hole_punching(s1, s2_addr, None));
@@ -346,8 +346,8 @@ mod tests {
         let s1 = UdpSocket::bind(loopback_v4(0)).unwrap();
         let s2 = UdpSocket::bind(loopback_v4(0)).unwrap();
 
-        let s1_addr = s1.local_addr().unwrap();
-        let s2_addr = s2.local_addr().unwrap();
+        let s1_addr = loopback_v4(s1.local_addr().unwrap().port());
+        let s2_addr = loopback_v4(s2.local_addr().unwrap().port());
 
         let t1 = spawn(move || run_hole_punching(s1, s2_addr, None));
         let t2 = spawn(move || run_hole_punching(s2, s1_addr, None));
@@ -364,8 +364,8 @@ mod tests {
         let s1 = UdpSocket::bind(loopback_v4(0)).unwrap();
         let s2 = UdpSocket::bind(loopback_v4(0)).unwrap();
 
-        let s1_addr = s1.local_addr().unwrap();
-        let s2_addr = s2.local_addr().unwrap();
+        let s1_addr = loopback_v4(s1.local_addr().unwrap().port());
+        let s2_addr = loopback_v4(s2.local_addr().unwrap().port());
 
         let secret = ::rand::random();
 
