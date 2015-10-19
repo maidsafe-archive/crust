@@ -122,8 +122,6 @@ pub fn blocking_get_mapped_udp_socket(request_id: u32, helper_nodes: Vec<SocketA
 
 pub fn blocking_udp_punch_hole(udp_socket: UdpSocket,
                                secret: Option<[u8; 4]>,
-                               // TODO (canndrew): ToSocketAddrs would
-                               // prolly make more sense
                                peer_addr: SocketAddr)
             -> (UdpSocket, io::Result<SocketAddr>) {
     // Cbor seems to serialize into bytes of different sizes and
@@ -182,6 +180,7 @@ pub fn blocking_udp_punch_hole(udp_socket: UdpSocket,
                                     enc.into_bytes()
                                 };
                                 periodic_sender.set_payload(send_data);
+                                periodic_sender.set_destination(addr);
                                 peer_addr = Some(addr);
                             }
                         }
@@ -355,8 +354,8 @@ mod tests {
         let r1 = t1.join();
         let r2 = t2.join();
 
-        assert!(r1.unwrap().is_ok());
-        assert!(r2.unwrap().is_ok());
+        let _ = r1.unwrap().unwrap();
+        let _ = r2.unwrap().unwrap();
     }
 
     #[test]
@@ -375,8 +374,8 @@ mod tests {
         let r1 = t1.join();
         let r2 = t2.join();
 
-        assert!(r1.unwrap().is_ok());
-        assert!(r2.unwrap().is_ok());
+        let _ = r1.unwrap().unwrap();
+        let _ = r2.unwrap().unwrap();
     }
 
     #[test]

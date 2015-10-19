@@ -385,9 +385,6 @@ impl Service {
                           result_token: u32,
                           udp_socket: UdpSocket,
                           secret: Option<[u8; 4]>,
-
-                            // TODO (canndrew): ToSocketAddrs would
-                            // prolly make more sense
                           peer_addr: SocketAddr)
     {
         Self::post(&self.cmd_sender, move |state: &mut State| {
