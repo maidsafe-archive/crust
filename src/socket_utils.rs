@@ -11,7 +11,7 @@ impl RecvUntil for UdpSocket {
         loop {
             let current_time = ::time::SteadyTime::now();
             let timeout = deadline - current_time;
-            if timeout < ::time::Duration::zero() {
+            if timeout <= ::time::Duration::zero() {
                 return Ok(None);
             }
             else {
