@@ -28,8 +28,12 @@ pub enum Error {
     JsonEncoderError(::rustc_serialize::json::EncoderError),
     /// Wrapper for a `::cbor::CborError`
     CborError(::cbor::CborError),
-    /// Indicates variable has never been set
-    NotSet,
+    /// The file was found. Either we don't know where to look for it or no file existed at any of
+    /// the candidate locations.
+    ReadFileFailed,
+    /// Failed to write a file. Either we don't know where to write it to or writing to all the
+    /// candidate locations failed.
+    WriteFileFailed,
 }
 
 impl From<::std::env::VarError> for Error {
