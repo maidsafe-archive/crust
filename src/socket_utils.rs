@@ -3,13 +3,13 @@ use std::net::{UdpSocket, SocketAddr};
 use std::io::ErrorKind;
 
 pub trait RecvUntil {
-    fn recv_until(&self, buf: &mut [u8], deadline: ::time::Tm) -> io::Result<Option<(usize, SocketAddr)>>;
+    fn recv_until(&self, buf: &mut [u8], deadline: ::time::SteadyTime) -> io::Result<Option<(usize, SocketAddr)>>;
 }
 
 impl RecvUntil for UdpSocket {
-    fn recv_until(&self, buf: &mut [u8], deadline: ::time::Tm) -> io::Result<Option<(usize, SocketAddr)>> {
+    fn recv_until(&self, buf: &mut [u8], deadline: ::time::SteadyTime) -> io::Result<Option<(usize, SocketAddr)>> {
         loop {
-            let current_time = ::time::now();
+            let current_time = ::time::SteadyTime::now();
             let timeout = deadline - current_time;
             if timeout < ::time::Duration::zero() {
                 return Ok(None);

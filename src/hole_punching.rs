@@ -78,7 +78,7 @@ pub fn blocking_get_mapped_udp_socket(request_id: u32, helper_nodes: Vec<SocketA
         for helper in helper_nodes.iter() {
             let sender = try!(udp_socket.try_clone());
             let periodic_sender = PeriodicSender::start(sender, *helper, scope, &send_data[..], 300);
-            let deadline = ::time::now() + ::time::Duration::seconds(2);
+            let deadline = ::time::SteadyTime::now() + ::time::Duration::seconds(2);
             let res = try!((|| -> io::Result<Option<(SocketAddr, usize)>> {
                 loop {
                     let mut recv_data = [0u8; MAX_DATAGRAM_SIZE];
@@ -155,7 +155,7 @@ pub fn blocking_udp_punch_hole(udp_socket: UdpSocket,
         let addr_res: io::Result<Option<SocketAddr>> = (|| {
             let mut recv_data = [0u8; MAX_DATAGRAM_SIZE];
             let mut peer_addr: Option<SocketAddr> = None;
-            let deadline = ::time::now() + ::time::Duration::seconds(2);
+            let deadline = ::time::SteadyTime::now() + ::time::Duration::seconds(2);
             loop {
                 let (read_size, addr) = match try!(receiver.recv_until(&mut recv_data[..], deadline)) {
                     Some(x) => x,
@@ -235,7 +235,7 @@ impl HolePunchServer {
                  * and checks to see if it's time to exit. This is a really crappy way of implementing
                  * this but currently rust doesn't have a good cross-platform select/epoll interface.
                  */
-                let deadline = ::time::now() + ::time::Duration::seconds(1);
+                let deadline = ::time::SteadyTime::now() + ::time::Duration::seconds(1);
                 let (read_size, addr) = match try!(udp_socket.recv_until(&mut data_recv[..], deadline)) {
                     Some(x) => x,
                     None    => continue,
@@ -326,14 +326,14 @@ mod tests {
         let s2 = UdpSocket::bind(loopback_v4(0)).unwrap();
 
         let s2_addr = loopback_v4(s2.local_addr().unwrap().port());
-        let start = ::time::now();
+        let start = ::time::SteadyTime::now();
 
         let t = spawn(move || run_hole_punching(s1, s2_addr, None));
 
         let thread_status = t.join();
         assert!(thread_status.is_ok());
 
-        let diff = duration_diff(::time::now() - start, timeout);
+        let diff = duration_diff(::time::SteadyTime::now() - start, timeout);
         assert!(diff < ::time::Duration::milliseconds(200));
 
         let punch_status = thread_status.unwrap();
