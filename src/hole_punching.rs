@@ -334,6 +334,22 @@ mod tests {
         if t1 >= t2 { t1 - t2 } else { t2 - t1 }
     }
 
+    // On Windows, setting UdpSocket::set_read_timeout(X) causes
+    // the UdpSocket::recv_from function to wait (X + E) where E
+    // is ~500ms. We calculate this E here to adjust our tests.
+    // See here for more info:
+    // https://users.rust-lang.org/t/on-windows-udpsocket-set-read-timeout-x-waits-x-500ms/3334
+    fn read_timeout_error() -> ::time::Duration {
+        let mut buf = [0u8; 32];
+        let s = UdpSocket::bind(loopback_v4(0)).unwrap();
+
+        ::time::Duration::span(|| {
+            let timeout = ::std::time::Duration::from_millis(1);
+            s.set_read_timeout(Some(timeout)).unwrap();
+            let _ = s.recv_from(&mut buf);
+        })
+    }
+
     // Note: numbers in function names are used to specify order in
     //       which they should be run.
 
@@ -352,7 +368,16 @@ mod tests {
         let thread_status = t.join();
         assert!(thread_status.is_ok());
 
-        let diff = duration_diff(::time::SteadyTime::now() - start, timeout);
+        let end = ::time::SteadyTime::now();
+
+        let duration = if !cfg!(windows) {
+            end - start
+        }
+        else {
+            end - start - read_timeout_error()
+        };
+
+        let diff = duration_diff(duration, timeout);
         assert!(diff < ::time::Duration::milliseconds(200));
 
         let punch_status = thread_status.unwrap();
