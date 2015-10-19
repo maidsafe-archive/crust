@@ -23,6 +23,14 @@ impl RecvUntil for UdpSocket {
                     Err(e)  => match e.kind() {
                         ErrorKind::TimedOut | ErrorKind::WouldBlock => return Ok(None),
                         ErrorKind::Interrupted => (),
+                        // On Windows, when we send a packet to an endpoint
+                        // which is not being listened on, the system responds
+                        // with an ICMP packet "ICMP port unreachable".
+                        // We do not care about this silly behavior, so we just
+                        // ignore it.
+                        // See here for more info:
+                        // https://bobobobo.wordpress.com/2009/05/17/udp-an-existing-connection-was-forcibly-closed-by-the-remote-host/
+                        ErrorKind::ConnectionReset => (),
                         _   => return Err(e),
                     },
                 }

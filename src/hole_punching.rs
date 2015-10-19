@@ -157,28 +157,9 @@ pub fn blocking_udp_punch_hole(udp_socket: UdpSocket,
             let mut peer_addr: Option<SocketAddr> = None;
             let deadline = ::time::SteadyTime::now() + ::time::Duration::seconds(2);
             loop {
-                let recv_result = receiver.recv_until(&mut recv_data[..], deadline);
-
-                let (read_size, addr) = match recv_result {
-                    Ok(opt_pair) => {
-                        match opt_pair {
-                            Some(x) => x,
-                            None => return Ok(peer_addr),
-                        }
-                    },
-                    Err(err) => {
-                        // On Windows, when we send a packet to an endpoint
-                        // which is not being listened on, the system responds
-                        // with an ICMP packet "ICMP port unreachable".
-                        // We do not care about this silly behavior, so we just
-                        // ignore it.
-                        // See here for more info:
-                        // https://bobobobo.wordpress.com/2009/05/17/udp-an-existing-connection-was-forcibly-closed-by-the-remote-host/
-                        if err.kind() == io::ErrorKind::ConnectionReset {
-                            continue;
-                        }
-                        return Err(err);
-                    }
+                let (read_size, addr) = match try!(receiver.recv_until(&mut recv_data[..], deadline)) {
+                    Some(x) => x,
+                    None => return Ok(peer_addr),
                 };
 
                 match ::cbor::Decoder::from_reader(&recv_data[..read_size])
