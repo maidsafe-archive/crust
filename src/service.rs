@@ -342,7 +342,7 @@ impl Service {
                 let async = async.clone();
                 let event_sender = state.event_sender.clone();
 
-                async_map_external_port(&internal_ep.to_ip(),
+                async_map_external_port(internal_ep.to_ip().clone(),
                                         Box::new(move |results: io::Result<Vec<T>>| {
                     let mut async = async.lock().unwrap();
                     async.remaining -= 1;

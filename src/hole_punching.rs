@@ -1,8 +1,11 @@
-use std::net::{SocketAddr, UdpSocket};
+use std::net::{SocketAddr, UdpSocket, SocketAddrV4};
 use std::io;
+use std::str::FromStr;
+use std::sync::{Arc, RwLock};
 
 use periodic_sender::PeriodicSender;
 use socket_utils::RecvUntil;
+use ip::Endpoint;
 use util::SocketAddrW;
 
 #[derive(Debug, RustcEncodable, RustcDecodable)]
@@ -180,12 +183,15 @@ pub fn blocking_udp_punch_hole(udp_socket: UdpSocket,
 
 /// RAII type for udp hole punching server.
 pub struct HolePunchServer {
-    shutdown_notifier: ::std::sync::mpsc::Sender<()>,
+    listener_shutdown: ::std::sync::mpsc::Sender<()>,
+    upnp_shutdown: ::std::sync::mpsc::Sender<()>,
 
     // TODO (canndrew): Ideally this should not need to be an Option<> as the server thread should
     // have the same lifetime as the Server object. Can change this once rust has linear types.
-    join_handle: Option<::std::thread::JoinHandle<io::Result<()>>>,
-    addr: SocketAddr,
+    listener_handle: Option<::std::thread::JoinHandle<io::Result<()>>>,
+    upnp_handle: Option<::std::thread::JoinHandle<()>>,
+    internal_addr: SocketAddrV4,
+    external_addr: Arc<RwLock<Option<SocketAddrV4>>>,
 }
 
 impl HolePunchServer {
@@ -193,13 +199,16 @@ impl HolePunchServer {
     pub fn start() -> io::Result<HolePunchServer> {
         const MAX_DATAGRAM_SIZE: usize = 256;
 
-        let (tx, rx) = ::std::sync::mpsc::channel::<()>();
+        let (listener_tx, listener_rx) = ::std::sync::mpsc::channel::<()>();
         let udp_socket = try!(UdpSocket::bind("0.0.0.0:0"));
-        let local_addr = try!(udp_socket.local_addr());
+        let local_addr = match try!(udp_socket.local_addr()) {
+            SocketAddr::V4(sa)  => sa,
+            SocketAddr::V6(_)   => return Err(io::Error::new(io::ErrorKind::Other, "bind(\"0.0.0.0:0\") returned an ipv6 socket")),
+        };
         let hole_punch_listener = try!(::std::thread::Builder::new().name(String::from("udp hole punch server"))
                                                                     .spawn(move || {
             loop {
-                match rx.try_recv() {
+                match listener_rx.try_recv() {
                     Err(::std::sync::mpsc::TryRecvError::Empty)        => (),
                     Err(::std::sync::mpsc::TryRecvError::Disconnected) => panic!(),
                     Ok(())  => return Ok(()),
@@ -240,16 +249,62 @@ impl HolePunchServer {
                 };
             }
         }));
+
+        let external_ip = Arc::new(RwLock::new(None::<SocketAddrV4>));
+        let external_ip_writer = external_ip.clone();
+        let local_ep = Endpoint::Udp(SocketAddr::V4(local_addr.clone()));
+        let (upnp_tx, upnp_rx) = ::std::sync::mpsc::channel::<()>();
+        let upnp_hole_puncher = try!(::std::thread::Builder::new().name(String::from("upnp hole puncher"))
+                                                                  .spawn(move || {
+            loop {
+                match upnp_rx.try_recv() {
+                    Err(::std::sync::mpsc::TryRecvError::Empty)        => (),
+                    Err(::std::sync::mpsc::TryRecvError::Disconnected) => panic!(),
+                    Ok(())  => return (),
+                }
+                match ::map_external_port::sync_map_external_port(&local_ep) {
+                    Ok(v)   => {
+                        for (internal, external) in v {
+                            if internal == local_addr {
+                                match external {
+                                    Endpoint::Udp(SocketAddr::V4(sa))   => {
+                                        let mut ext_ip = external_ip_writer.write().unwrap();
+                                        *ext_ip = Some(sa);
+                                    },
+
+                                    // TODO (canndrew): improve the igd APIs to make this panic
+                                    // unnecessary.
+                                    _                                   => panic!(),
+                                }
+                            }
+                        }
+                    }
+                    Err(e)  => info!("Failed to get external IP using upnp: {:?}", e),
+                }
+                // TODO (canndrew): What is a sensible time to wait between refreshes of our
+                // external ip?
+                ::std::thread::park_timeout_ms(1000 * 60 * 60);
+            }
+        }));
         Ok(HolePunchServer {
-            shutdown_notifier: tx,
-            join_handle: Some(hole_punch_listener),
-            addr: local_addr,
+            listener_shutdown: listener_tx,
+            upnp_shutdown: upnp_tx,
+            listener_handle: Some(hole_punch_listener),
+            upnp_handle: Some(upnp_hole_puncher),
+            internal_addr: local_addr,
+            external_addr: external_ip,
         })
     }
 
     /// Get the address that this server is listening on.
-    pub fn listening_addr(&self) -> SocketAddr {
-        self.addr
+    pub fn listening_addr(&self) -> SocketAddrV4 {
+        self.internal_addr
+    }
+
+    /// Get the external address of the server (if it is known)
+    pub fn external_address(&self) -> Option<SocketAddrV4> {
+        let guard = self.external_addr.read().unwrap();
+        *guard
     }
 }
 
@@ -257,13 +312,22 @@ impl Drop for HolePunchServer {
     fn drop(&mut self) {
         // Ignore this error. If the server thread has exited we'll find out about it when we
         // join the JoinHandle.
-        let _ = self.shutdown_notifier.send(());
+        let _ = self.listener_shutdown.send(());
+        let _ = self.upnp_shutdown.send(());
 
-        if let Some(join_handle) = self.join_handle.take() {
-            match join_handle.join() {
+        if let Some(listener_handle) = self.listener_handle.take() {
+            match listener_handle.join() {
                 Ok(Ok(()))  => (),
                 Ok(Err(e))  => warn!("The udp hole punch server exited due to IO error: {}", e),
                 Err(e)      => error!("The udp hole punch server panicked!: {:?}", e),
+            }
+        };
+
+        if let Some(upnp_handle) = self.upnp_handle.take() {
+            upnp_handle.thread().unpark();
+            match upnp_handle.join() {
+                Ok(())  => (),
+                Err(e)  => error!("The upnp hole puncher panicked!: {:?}", e),
             }
         };
     }
