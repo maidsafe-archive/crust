@@ -24,6 +24,7 @@ net2 = "*"
 temp_utp = "*"
 log = "*"
 crossbeam = "*"
+readline = "*"
 
 [dev-dependencies]
 env_logger = "*"

@@ -35,6 +35,7 @@ extern crate docopt;
 extern crate rand;
 extern crate term;
 extern crate time;
+extern crate readline;
 
 use docopt::Docopt;
 use rand::random;
@@ -44,7 +45,6 @@ use std::cmp;
 use std::sync::mpsc::channel;
 use std::sync::mpsc::Sender;
 use std::io;
-use std::io::Write;
 use std::net::{UdpSocket, SocketAddr};
 use std::collections::HashSet;
 use std::str::FromStr;
@@ -94,11 +94,6 @@ fn generate_random_vec_u8(size: usize) -> Vec<u8> {
     let mut vec: Vec<u8> = Vec::with_capacity(size);
     for _ in 0..size { vec.push(random::<u8>()); }
     vec
-}
-
-fn print_input_line() {
-    print!("Enter command (stop | connect <endpoint> | send <endpoint> <message>)>");
-    let _ = io::stdout().flush();
 }
 
 fn node_user_repr(node: &Endpoint) -> String {
@@ -516,9 +511,6 @@ fn main() {
                 }
             }
             stdout_copy = reset_foreground(stdout_copy);
-            if !running_speed_test {
-                print_input_line();
-            }
         }
     }) {
         Ok(join_handle) => join_handle,
@@ -562,12 +554,16 @@ fn main() {
             }
         }
     } else {
-        let stdin = io::stdin();
+        use std::ops::Deref;
 
         loop {
-            let mut command = String::new();
-            print_input_line();
-            assert!(stdin.read_line(&mut command).is_ok());
+            let prompt = ::std::ffi::CString::new("> ").unwrap();
+
+            let command = ::readline::readline(&*prompt)
+                        .unwrap()
+                        .deref()
+                        .to_string_lossy()
+                        .into_owned();
 
             let cmd = match parse_user_command(command) {
                 Some(cmd) => cmd,
@@ -634,7 +630,22 @@ Usage:
   cli map
   cli punch <peer> <destination>
   cli stop
+  cli help
+
 ";
+
+fn print_usage() {
+    static USAGE: &'static str = r#"
+stop                               - exit the app.
+connect <endpoint>                 - E.g. connect Tcp(a.b.c.d:p)
+send <connection-id> <message>     - E.g. send 0 foo bar
+send-udp <connection-id> <message> - E.g. send-udp 0 foo bar
+map                                - Use existing connections to
+                                     - find our external IP address.
+                                     - Also creates an UDP socket.
+"#;
+    println!("{}", USAGE);
+}
 
 #[derive(RustcDecodable, Debug)]
 struct CliArgs {
@@ -644,6 +655,7 @@ struct CliArgs {
     cmd_map:         bool,
     cmd_punch:       bool,
     cmd_stop:        bool,
+    cmd_help:        bool,
     arg_endpoint:    Option<PeerEndpoint>,
     arg_destination: Option<::crust::SocketAddrW>,
     arg_peer:        Option<usize>,
@@ -701,6 +713,9 @@ fn parse_user_command(cmd : String) -> Option<UserCommand> {
         Some(UserCommand::Punch(peer, dst))
     } else if args.cmd_stop {
         Some(UserCommand::Stop)
+    } else if args.cmd_help {
+        print_usage();
+        None
     }
     else {
         None
