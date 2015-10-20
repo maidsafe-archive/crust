@@ -448,7 +448,7 @@ fn main() {
     println!("");
 
     stdout = reset_foreground(stdout);
-    service.bootstrap();
+    service.bootstrap(0);
 
     let network = Arc::new(Mutex::new(Network::new()));
     let network2 = network.clone();
@@ -472,8 +472,8 @@ fn main() {
                              .unwrap_or(format!("non-UTF-8 message of {} bytes",
                                                 message_length)));
                 },
-                crust::Event::OnConnect(connection) |
-                    crust::Event::OnRendezvousConnect(connection) => {
+                crust::Event::OnConnect(connection, _) |
+                crust::Event::OnRendezvousConnect(connection) => {
                     stdout_copy = cyan_foreground(stdout_copy);
                     println!("\nConnected to peer at {:?}", connection.peer_endpoint());
                     let mut network = network2.lock().unwrap();
@@ -586,7 +586,7 @@ fn main() {
             match cmd {
                 UserCommand::Connect(ep) => {
                     println!("Connecting to {:?}", ep);
-                    service.connect(vec![ep]);
+                    service.connect(0, vec![ep]);
                 },
                 UserCommand::ConnectRendezvous(udp_id, endpoint) => {
                     let mut network = network.lock().unwrap();
