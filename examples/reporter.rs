@@ -305,7 +305,7 @@ fn run(connected: Arc<AtomicBool>, config: &Config) -> Report {
                     let _ = message_sender0.send(Some(connection));
                 },
 
-                Event::OnConnect(connection) => {
+                Event::OnConnect(connection, _) => {
                     debug!("OnConnect {:?}", connection);
                     let _ = message_sender0.send(Some(connection));
                 },
@@ -369,8 +369,8 @@ fn connect_to_all(service: &mut Service, addrs: &[SocketAddr]) {
 
         debug!("Connecting to {}", addr);
 
-        service.connect(vec![Endpoint::Tcp(addr)]);
-        service.connect(vec![Endpoint::Utp(addr)]);
+        service.connect(0, vec![Endpoint::Tcp(addr)]);
+        service.connect(0, vec![Endpoint::Utp(addr)]);
     }
 }
 
