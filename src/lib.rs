@@ -44,6 +44,7 @@ extern crate rand;
 extern crate rustc_serialize;
 extern crate time;
 extern crate utp;
+extern crate crossbeam;
 
 /// Module implementing the `Service` which provides an interface to manage peer-to-peer
 /// connections.
@@ -61,7 +62,7 @@ pub use file_handler::{FileHandler, current_bin_dir, user_app_dir, system_cache_
                        ScopedUserAppDirRemover};
 pub use transport::{Endpoint, Port, Protocol};
 pub use connection::Connection;
-pub use util::ifaddrs_if_unspecified;
+pub use util::{ifaddrs_if_unspecified, SocketAddrW};
 pub use getifaddrs::getifaddrs;
 
 #[cfg(test)]
@@ -74,6 +75,7 @@ mod test {
         }
     }
 }
+mod sequence_number;
 mod beacon;
 mod bootstrap_handler;
 mod config_handler;
@@ -88,3 +90,7 @@ mod utp_wrapper;
 mod state;
 mod event;
 mod map_external_port;
+mod hole_punching;
+mod periodic_sender;
+mod socket_utils;
+

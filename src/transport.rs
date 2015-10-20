@@ -193,11 +193,15 @@ impl Port {
 ///
 /// Only after the handshake is exchanged, crust should generate new connection
 /// events.
-pub struct Handshake;
+pub struct Handshake {
+    pub mapper_port: Option<u16>,
+}
 
 impl Handshake {
-    pub fn new() -> Handshake {
-        Handshake
+    pub fn default() -> Handshake {
+        Handshake {
+            mapper_port: None,
+        }
     }
 }
 

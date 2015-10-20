@@ -28,7 +28,7 @@ use std::time::Duration;
 
 use net2::UdpSocketExt;
 
-use transport::{Acceptor, Port, Transport};
+use transport::{Acceptor, Port, Transport, Handshake};
 use state::State;
 
 const GUID_SIZE: usize = 16;
@@ -96,8 +96,8 @@ impl BroadcastAcceptor {
                 .name("Beacon accept TCP acceptor".to_string())
                 .spawn(move || -> Result<()> {
             let tcp_acceptor = protected_tcp_acceptor.lock().unwrap();
-            let transport = try!(State::accept(&tcp_acceptor));
-            let _ = transport_sender.send(transport);
+            let transport = try!(State::accept(Handshake::default(), &tcp_acceptor));
+            let _ = transport_sender.send(transport.1);
             Ok(())
         }));
 
@@ -266,7 +266,7 @@ mod test {
     use super::*;
     use std::thread;
     use transport;
-    use transport::Message;
+    use transport::{Message, Handshake};
     use state::State;
 
     #[test]
@@ -281,7 +281,8 @@ mod test {
 
         let t2 = thread::Builder::new().name("test_beacon receiver".to_string()).spawn(move || {
             let endpoint = seek_peers(acceptor_port, None).unwrap()[0];
-            let mut transport = State::connect(transport::Endpoint::Tcp(endpoint)).unwrap();
+            let mut transport = State::connect(Handshake::default(),
+                                               transport::Endpoint::Tcp(endpoint)).unwrap().1;
             let msg = String::from_utf8(match transport.receiver.receive().unwrap() {
                 Message::UserBlob(msg) => msg,
                 _ => panic!("Wrong message type"),
@@ -316,7 +317,8 @@ mod test {
                                        .spawn(move || {
             thread::sleep_ms(700);
             let endpoint = seek_peers(acceptor_port, None).unwrap()[0];
-            let _ = State::connect(transport::Endpoint::Tcp(endpoint)).unwrap();
+            let _ = State::connect(Handshake::default(),
+                                   transport::Endpoint::Tcp(endpoint)).unwrap();
         });
 
         assert!(t1.is_ok());
