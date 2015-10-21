@@ -542,7 +542,7 @@ mod test {
 
         let accept_thread = thread::spawn(move || {
             for a in acceptors {
-                State::accept(Handshake::default(), &a).unwrap();
+                let _ = State::accept(Handshake::default(), &a).unwrap();
             }
         });
 
