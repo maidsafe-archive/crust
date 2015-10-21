@@ -17,7 +17,7 @@
 
 use utp::{UtpSocket, UtpListener};
 pub use utp_wrapper::UtpWrapper;
-use std::net::{SocketAddr, SocketAddrV4, Ipv4Addr};
+use std::net::{SocketAddr, SocketAddrV4, Ipv4Addr, UdpSocket};
 use std::io::Result as IoResult;
 use std::sync::mpsc::{Sender, Receiver};
 use std::sync::mpsc;
@@ -27,6 +27,11 @@ use std::thread;
 pub fn connect_utp(addr: SocketAddr)
                    -> IoResult<(UtpWrapper, Sender<Vec<u8>>)> {
     upgrade_utp(try!(UtpSocket::connect(addr)))
+}
+
+pub fn rendezvous_connect_utp(udp_socket: UdpSocket, addr: SocketAddr)
+                              -> IoResult<(UtpWrapper, Sender<Vec<u8>>)> {
+    upgrade_utp(try!(UtpSocket::rendezvous_connect(udp_socket, addr)))
 }
 
 /// Starts listening for connections on this ip and port.

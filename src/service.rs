@@ -260,6 +260,27 @@ impl Service {
         });
     }
 
+    pub fn rendezvous_connect(&self, udp_socket: UdpSocket,
+                              public_endpoint: Endpoint /* of B */) {
+        Self::post(&self.cmd_sender, move |state : &mut State| {
+            let cmd_sender = state.cmd_sender.clone();
+
+            let handshake = Handshake {
+                mapper_port: Some(state.mapper.listening_addr().port()),
+            };
+
+            let _ = Self::new_thread("rendezvous connect", move || {
+                if let Ok((h, t)) = State::rendezvous_connect(handshake.clone(),
+                                                              udp_socket,
+                                                              public_endpoint) {
+                    let _ = cmd_sender.send(Box::new(move |state: &mut State| {
+                        let _ = state.handle_rendezvous_connect(h, t);
+                    }));
+                }
+            });
+        });
+    }
+
     /// Sends a message over a specified connection.
     pub fn send(&self, connection: Connection, message: Bytes) {
         Self::post(&self.cmd_sender, move |state: &mut State| {
