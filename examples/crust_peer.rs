@@ -603,6 +603,10 @@ fn main() {
                 UserCommand::Map => {
                     service.get_mapped_udp_socket(0);
                 },
+                UserCommand::List => {
+                    let network = network.lock().unwrap();
+                    network.print_connected_nodes();
+                },
                 UserCommand::Stop => {
                     break;
                 },
@@ -629,6 +633,7 @@ Usage:
   cli send-udp <peer> <destination> <message>...
   cli map
   cli punch <peer> <destination>
+  cli list
   cli stop
   cli help
 
@@ -636,13 +641,17 @@ Usage:
 
 fn print_usage() {
     static USAGE: &'static str = r#"
-stop                               - exit the app.
-connect <endpoint>                 - E.g. connect Tcp(a.b.c.d:p)
-send <connection-id> <message>     - E.g. send 0 foo bar
-send-udp <connection-id> <message> - E.g. send-udp 0 foo bar
-map                                - Use existing connections to
-                                     - find our external IP address.
-                                     - Also creates an UDP socket.
+connect <endpoint>                  - E.g. connect Tcp(a.b.c.d:p)
+send <connection-id> <message>      - E.g. send 0 foo bar
+send-udp <udp-socket-id> <message>  - E.g. send-udp 0 foo bar
+map                                 - Use existing connections to
+                                      find our external IP address.
+                                      Also creates a UDP socket.
+punch <udp-socket-id> <destination> - UDP hole punch with given socket to the
+                                      given destination.
+list                                - List existing connections and UDP sockets.
+stop                                - exit the app.
+help                                - Prints this help.
 "#;
     println!("{}", USAGE);
 }
@@ -653,6 +662,7 @@ struct CliArgs {
     cmd_send:        bool,
     cmd_send_udp:    bool,
     cmd_map:         bool,
+    cmd_list:        bool,
     cmd_punch:       bool,
     cmd_stop:        bool,
     cmd_help:        bool,
@@ -669,6 +679,7 @@ enum UserCommand {
     Send(usize, String),
     SendUdp(usize, SocketAddr, String),
     Punch(usize, SocketAddr),
+    List,
     Map,
 }
 
@@ -711,6 +722,8 @@ fn parse_user_command(cmd : String) -> Option<UserCommand> {
         let peer = args.arg_peer.unwrap();
         let dst  = args.arg_destination.unwrap().0;
         Some(UserCommand::Punch(peer, dst))
+    } else if args.cmd_list {
+        Some(UserCommand::List)
     } else if args.cmd_stop {
         Some(UserCommand::Stop)
     } else if args.cmd_help {
