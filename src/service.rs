@@ -35,6 +35,7 @@ use connection::Connection;
 
 use state::State;
 use event::{Event, HolePunchResult};
+use socket_utils::WrapSocketAddrV4;
 
 /// Type used to represent serialised data in a message.
 pub type Bytes = Vec<u8>;
@@ -78,9 +79,7 @@ impl Service {
 
     fn construct(event_sender: Sender<Event>, config: Config)
             -> io::Result<Service> {
-        let mapper = try!(::hole_punching::HolePunchServer::start());
-
-        let mut state = State::new(event_sender, mapper);
+        let mut state = try!(State::new(event_sender));
         let cmd_sender = state.cmd_sender.clone();
 
         let handle = try!(Self::new_thread("run loop", move || {
@@ -244,6 +243,7 @@ impl Service {
 
             let handshake = Handshake {
                 mapper_port: Some(state.mapper.listening_addr().port()),
+                external_ip: state.mapper.external_address().map(WrapSocketAddrV4),
             };
 
             let _ = Self::new_thread("connect", move || {
@@ -292,6 +292,7 @@ impl Service {
 
             let handshake = Handshake {
                 mapper_port: Some(state.mapper.listening_addr().port()),
+                external_ip: state.mapper.external_address().map(WrapSocketAddrV4),
             };
 
             let _ = Self::new_thread("listen", move || {
