@@ -1,12 +1,14 @@
-install:
-  - ps: Start-FileDownload "https://github.com/maidsafe/QA/raw/master/Powershell%20Scripts/InstallRust.ps1"; . .\InstallRust.ps1
+  install:
+  - ps: |
+        Start-FileDownload "https://github.com/maidsafe/QA/raw/master/Powershell%20Scripts/InstallRust.ps1"; . .\InstallRust.ps1
+        $env:RUST_TEST_THREADS = 1
+        $env:RUST_BACKTRACE = 1
 
 platform:
   - x86
   - x64
 
 configuration:
-# - Debug
   - Release
 
 environment:
@@ -18,10 +20,18 @@ environment:
 build: false
 
 test_script:
-  - ps: if ($env:CONFIGURATION -eq "Release") {
-          $env:config_flags = "--release"
-        }
-  - cargo build --verbose %config_flags%
-  - set RUST_TEST_THREADS=1
-  - set RUST_BACKTRACE=1
-  - cargo test --verbose
+    - ps: |
+          cargo build --verbose --release
+          $timeoutSeconds = 600
+          $cargo_test = {
+            cd $($env:APPVEYOR_BUILD_FOLDER)
+            cargo test --release
+          }
+          $j = Start-Job -ScriptBlock $cargo_test
+          if (Wait-Job $j -Timeout $timeoutSeconds) {
+            Receive-Job -Job $j
+          } else {
+            "Test running for longer than 10 minutes"
+            $host.SetShouldExit(-1)
+            }
+            Remove-Job -force $j
