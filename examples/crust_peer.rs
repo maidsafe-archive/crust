@@ -35,7 +35,6 @@ extern crate docopt;
 extern crate rand;
 extern crate term;
 extern crate time;
-extern crate readline;
 
 use docopt::Docopt;
 use rand::random;
@@ -563,16 +562,14 @@ fn main() {
             }
         }
     } else {
-        use std::ops::Deref;
-
         loop {
-            let prompt = ::std::ffi::CString::new("> ").unwrap();
+            use ::std::io::Write; // For flush().
 
-            let command = ::readline::readline(&*prompt)
-                        .unwrap()
-                        .deref()
-                        .to_string_lossy()
-                        .into_owned();
+            print!("> ");
+            assert!(io::stdout().flush().is_ok());
+
+            let mut command = String::new();
+            assert!(io::stdin().read_line(&mut command).is_ok());
 
             let cmd = match parse_user_command(command) {
                 Some(cmd) => cmd,
