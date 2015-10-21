@@ -1,4 +1,4 @@
-  install:
+install:
   - ps: |
         Start-FileDownload "https://github.com/maidsafe/QA/raw/master/Powershell%20Scripts/InstallRust.ps1"; . .\InstallRust.ps1
         $env:RUST_TEST_THREADS = 1
