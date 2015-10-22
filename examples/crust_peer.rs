@@ -468,7 +468,8 @@ fn main() {
                              .unwrap_or(format!("non-UTF-8 message of {} bytes",
                                                 message_length)));
                 },
-                crust::Event::OnConnect(connection) => {
+                crust::Event::OnConnect(connection) |
+                    crust::Event::OnRendezvousConnect(connection) => {
                     stdout_copy = cyan_foreground(stdout_copy);
                     println!("\nConnected to peer at {:?}", connection.peer_endpoint());
                     let mut network = network2.lock().unwrap();
