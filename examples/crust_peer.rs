@@ -563,6 +563,8 @@ fn main() {
             }
         }
     } else {
+        print_usage();
+
         loop {
             use ::std::io::Write; // For flush().
 
@@ -660,7 +662,7 @@ Usage:
 ";
 
 fn print_usage() {
-    static USAGE: &'static str = r#"
+    static USAGE: &'static str = r#"\
 # Commands:
     connect <endpoint>                            - Initiate a connection to the remote endpoint
     connect-rendezvous <udp-socket-id> <endpoint> - As above, but using rendezvous connect
@@ -676,10 +678,11 @@ fn print_usage() {
     help                                          - Prints this help.
 
 # Where
-    <endpoint>      - Specifies transport and socket address. It's form is
+    <endpoint>      - Specifies transport and socket address. Its form is
                       [Tcp|Utp](a.b.c.d:p)
                       E.g. Tcp(192.168.0.1:5483)
     <udp-socket-id> - Id of a UDP socket as listed using the `list` command.
+    <connection-id> - Id of a connection as listed using the `list` command.
     <socketaddr>    - Ip address and port. E.g. 192.168.0.1:5483
 "#;
     println!("{}", USAGE);
