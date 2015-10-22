@@ -260,6 +260,29 @@ impl Service {
         });
     }
 
+    /// Opens a connection to a remote peer. `public_endpoint` is the endpoint
+    /// of the remote peer. `udp_socket` is a socket whose public address will
+    /// be used by the other peer.
+    ///
+    /// A rendezvous connection setup is different to the traditional BSD socket
+    /// setup in which there is no client or server side. Both ends create a
+    /// socket and send somehow its public address to the other peer. Once both
+    /// ends know each other address, both must call this function passing the
+    /// socket which possess the address used by the other peer and passing the
+    /// other peer's address.
+    ///
+    /// Only UDP-based protocols are supported. This means that you must use a
+    /// uTP endpoint or nothing will happen.
+    ///
+    /// On success `Event::OnRendezvousConnect` with connected `Endpoint` will
+    /// be sent to the event channel. On failure, nothing is reported. Failed
+    /// attempts are not notified back up to the caller. If the caller wants to
+    /// know of a failed attempt, it must maintain a record of the attempt
+    /// itself which times out if a corresponding
+    /// `Event::OnRendezvousConnection` isn't received. See also [Process for
+    /// Connecting]
+    /// (https://github.com/maidsafe/crust/blob/master/docs/connect.md) for
+    /// details on handling of connect in different protocols.
     pub fn rendezvous_connect(&self, udp_socket: UdpSocket,
                               public_endpoint: Endpoint /* of B */) {
         Self::post(&self.cmd_sender, move |state : &mut State| {
@@ -443,7 +466,8 @@ mod test {
     use connection::Connection;
     use std::thread::spawn;
     use std::thread;
-    use std::sync::mpsc::{Receiver, channel};
+    use std::sync::mpsc::{Sender, Receiver, channel};
+    use std::net::{UdpSocket, Ipv4Addr, SocketAddrV4};
     use rustc_serialize::{Decodable, Encodable};
     use cbor::{Decoder, Encoder};
     use transport::Port;
@@ -598,6 +622,70 @@ mod test {
 
         let runner1 = run_cm(cm1, cm1_o);
         let runner2 = run_cm(cm2, cm2_o);
+
+        assert!(runner1.join().is_ok());
+        assert!(runner2.join().is_ok());
+    }
+
+    #[test]
+    fn rendezvous_connection() {
+        // Wait 2 seconds until previous bootstrap test ends. If not, that test connects to these endpoints.
+        thread::sleep_ms(2000);
+        let run_cm = |cm: Service, o: Receiver<Event>,
+                      shutdown_recver: Receiver<()>, ready_sender: Sender<()>| {
+            spawn(move || {
+                for i in o.iter() {
+                    match i {
+                        Event::OnRendezvousConnect(other_ep) => {
+                            let _ = cm.send(other_ep.clone(),
+                                            encode(&"hello world".to_string()));
+                        },
+                        Event::NewMessage(_, _) => break,
+                        _ => (),
+                    }
+                }
+
+                let _ = ready_sender.send(());
+                let _ = shutdown_recver.recv();
+            })
+        };
+
+        let mut temp_configs = vec![make_temp_config(None)];
+
+        let (cm1_i, cm1_o) = channel();
+        let cm1 = Service::new(cm1_i).unwrap();
+
+        temp_configs.push(make_temp_config(cm1.get_beacon_acceptor_port()));
+
+        let (cm2_i, cm2_o) = channel();
+        let cm2 = Service::new(cm2_i).unwrap();
+
+        let peer1_udp_socket = UdpSocket::bind("0.0.0.0:0").unwrap();
+        let peer2_udp_socket = UdpSocket::bind("0.0.0.0:0").unwrap();
+
+        let peer1_port = peer1_udp_socket.local_addr().unwrap().port();
+        let peer1_addr = SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1),
+                                           peer1_port);
+
+        let peer2_port = peer2_udp_socket.local_addr().unwrap().port();
+        let peer2_addr = SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1),
+                                           peer2_port);
+
+        cm2.rendezvous_connect(peer1_udp_socket, Endpoint::utp(peer2_addr));
+        cm1.rendezvous_connect(peer2_udp_socket, Endpoint::utp(peer1_addr));
+
+        let (ready_tx1, ready_rx1) = channel();
+        let (shut_tx1, shut_rx1) = channel();
+        let (ready_tx2, ready_rx2) = channel();
+        let (shut_tx2, shut_rx2) = channel();
+
+        let runner1 = run_cm(cm1, cm1_o, shut_rx1, ready_tx1);
+        let runner2 = run_cm(cm2, cm2_o, shut_rx2, ready_tx2);
+
+        let _ = ready_rx1.recv();
+        let _ = ready_rx2.recv();
+        let _ = shut_tx1.send(());
+        let _ = shut_tx2.send(());
 
         assert!(runner1.join().is_ok());
         assert!(runner2.join().is_ok());

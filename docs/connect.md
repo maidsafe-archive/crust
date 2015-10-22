@@ -9,7 +9,14 @@ So, if the `ConnectionManager` has no known endpoints of its own (i.e. it has ju
 If the `ConnectionManager` has at least one endpoint of its own, then we decide whether to attempt to connect based on which peer has the ‘lowest’ endpoint out of the two vectors of endpoints.  The definition of lowest in this context doesn't really matter, but we do need both peers to be looking at the same two vectors for the process to be valid.
 
 ### UTP
-To be confirmed, but it is anticipated that UTP handles rendezvous connect natively, so newly-joining nodes can just call `utp::connect` and in all other cases the attempted connection will be triggered by both peers concurrently calling `utp::rendezvous_connect`.
+
+uTP is a transport protocol layered on top of UDP that. Like TCP, uTP is
+connection oriented and has congestion control and reliable data exchange.
+
+Official uTP doesn't support rendezvous connect, but we extended the protocol to
+support it. In CRUST, you can use uTP into a more traditional server-client
+setup or use it in rendezvous connection setup. Rendezvous setup is useful in
+UDP hole punching, where you pass down the hole punched sockets to be used.
 
 ### General
 Once a connection is established, the `Event::NewConnection` should be triggered.  Failed attempts are not notified back up to the caller.  If the caller wants to know of a failed attempt, it must maintain a record of the attempt itself which times out if a corresponding `Event::NewConnection` isn't received.
