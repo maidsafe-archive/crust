@@ -22,6 +22,7 @@ use getifaddrs::{getifaddrs, filter_loopback};
 use std::net::{IpAddr, SocketAddrV4};
 use std::thread;
 use std::boxed::FnBox;
+use std::time::Duration;
 
 pub fn async_map_external_port<Callback>(local_ep: ip::Endpoint, callback: Box<Callback>)
     where Callback: FnBox(io::Result<Vec<(SocketAddrV4, ip::Endpoint)>>) +
@@ -102,7 +103,8 @@ fn from_request_result<T>(r: Result<T, igd::RequestError>) -> io::Result<T> {
 fn map_external_port(local_ep: SocketAddrV4, ext_port: ip::Port)
     -> io::Result<ip::Endpoint>
 {
-    let gateway = try!(from_search_result(igd::search_gateway_from(local_ep.ip().clone())));
+    let gateway = try!(from_search_result(igd::search_gateway_from_timeout(local_ep.ip().clone(), 
+                                                                           Duration::from_secs(1))));
 
     let igd_protocol = match &ext_port {
         &ip::Port::Tcp(_) => igd::PortMappingProtocol::TCP,

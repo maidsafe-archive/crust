@@ -5,12 +5,11 @@ use std::sync::mpsc::Sender;
 use std::boxed::FnBox;
 
 use periodic_sender::PeriodicSender;
-use socket_utils::{RecvUntil, WrapSocketAddr};
+use socket_utils::RecvUntil;
 use ip::Endpoint;
 use state::State;
 use transport::Message;
-use socket_utils::WrapSocketAddrV4;
-use util::SocketAddrW;
+use util::{SocketAddrW, SocketAddrV4W};
 
 #[derive(Debug, RustcEncodable, RustcDecodable)]
 pub struct HolePunch {
@@ -278,7 +277,7 @@ impl HolePunchServer {
                                         };
                                         let _ = cmd_sender.send(Box::new(move |state: &mut State| {
                                             for cd in state.connections.values() {
-                                                let _ = cd.message_sender.send(Message::HolePunchAddress(WrapSocketAddrV4(sa)));
+                                                let _ = cd.message_sender.send(Message::HolePunchAddress(SocketAddrV4W(sa)));
                                             }
                                         }));
                                     },

@@ -1,7 +1,6 @@
 use std::io;
-use std::net::{UdpSocket, SocketAddr, SocketAddrV4};
+use std::net::{UdpSocket, SocketAddr};
 use std::io::ErrorKind;
-use std::str::FromStr;
 
 pub trait RecvUntil {
     fn recv_until(&self, buf: &mut [u8], deadline: ::time::SteadyTime) -> io::Result<Option<(usize, SocketAddr)>>;
@@ -39,59 +38,4 @@ impl RecvUntil for UdpSocket {
         }
     }
 }
-
-/// This type exists solely because there is no impl of `Encodable` for `SocketAddr`.
-#[derive(Debug, Clone)]
-pub struct WrapSocketAddr(pub SocketAddr);
-
-impl ::rustc_serialize::Encodable for WrapSocketAddr {
-    fn encode<S: ::rustc_serialize::Encoder>(&self, s: &mut S) -> Result<(), S::Error> {
-        let as_string = format!("{}", self.0);
-        try!(s.emit_str(&as_string[..]));
-        Ok(())
-    }
-}
-
-impl ::rustc_serialize::Decodable for WrapSocketAddr {
-    fn decode<D: ::rustc_serialize::Decoder>(d: &mut D) -> Result<WrapSocketAddr, D::Error> {
-        let as_string = try!(d.read_str());
-        match SocketAddr::from_str(&as_string[..]) {
-            Ok(sa)  => Ok(WrapSocketAddr(sa)),
-            Err(e)  => {
-                let err = format!("Failed to decode WrapSocketAddr: {}", e);
-                Err(d.error(&err[..]))
-            }
-        }
-    }
-}
-
-/// This type exists solely because there is no impl of `Encodable` for `SocketAddrV4`.
-#[derive(Debug, Clone)]
-pub struct WrapSocketAddrV4(pub SocketAddrV4);
-
-impl ::rustc_serialize::Encodable for WrapSocketAddrV4 {
-    fn encode<S: ::rustc_serialize::Encoder>(&self, s: &mut S) -> Result<(), S::Error> {
-        let as_string = format!("{}", self.0);
-        try!(s.emit_str(&as_string[..]));
-        Ok(())
-    }
-}
-
-impl ::rustc_serialize::Decodable for WrapSocketAddrV4 {
-    fn decode<D: ::rustc_serialize::Decoder>(d: &mut D) -> Result<WrapSocketAddrV4, D::Error> {
-        let as_string = try!(d.read_str());
-        match SocketAddr::from_str(&as_string[..]) {
-            Ok(SocketAddr::V4(sa))  => Ok(WrapSocketAddrV4(sa)),
-            Ok(SocketAddr::V6(sa))  => {
-                let err = format!("Decoded an ipv6 address where ipv4 was expected");
-                Err(d.error(&err[..]))
-            },
-            Err(e)  => {
-                let err = format!("Failed to decode WrapSocketAddrV4: {}", e);
-                Err(d.error(&err[..]))
-            }
-        }
-    }
-}
-
 

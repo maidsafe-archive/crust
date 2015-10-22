@@ -37,7 +37,7 @@ use event::{Event, MappedUdpSocket};
 use connection::Connection;
 use sequence_number::SequenceNumber;
 use hole_punching::HolePunchServer;
-use socket_utils::WrapSocketAddrV4;
+use util;
 
 pub type Closure = Box<FnBox(&mut State) + Send>;
 
@@ -395,7 +395,7 @@ impl State {
                 vec_deferred.push(Deferred::new(move || {
                     let h = Handshake {
                         mapper_port: Some(mapper_port),
-                        external_ip: external_ip.map(WrapSocketAddrV4),
+                        external_ip: external_ip.map(util::SocketAddrV4W),
                     };
                     Self::connect(h, c)
                 }))

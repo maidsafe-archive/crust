@@ -32,7 +32,6 @@ use ip;
 use connection::Connection;
 use std::io::BufReader;
 use util;
-use socket_utils::WrapSocketAddrV4;
 
 pub type Bytes = Vec<u8>;
 
@@ -196,7 +195,7 @@ impl Port {
 /// events.
 pub struct Handshake {
     pub mapper_port: Option<u16>,
-    pub external_ip: Option<WrapSocketAddrV4>,
+    pub external_ip: Option<util::SocketAddrV4W>,
 }
 
 impl Handshake {
@@ -216,7 +215,7 @@ pub enum Message {
     Contacts(Vec<Endpoint>),
     /// We have an external (non-NATed) address+port that other nodes can use as a hole-punching
     /// server.
-    HolePunchAddress(WrapSocketAddrV4),
+    HolePunchAddress(util::SocketAddrV4W),
 }
 
 //--------------------------------------------------------------------

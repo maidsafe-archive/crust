@@ -35,7 +35,7 @@ use connection::Connection;
 
 use state::State;
 use event::{Event, HolePunchResult};
-use socket_utils::WrapSocketAddrV4;
+use util::SocketAddrV4W;
 
 /// Type used to represent serialised data in a message.
 pub type Bytes = Vec<u8>;
@@ -243,7 +243,7 @@ impl Service {
 
             let handshake = Handshake {
                 mapper_port: Some(state.mapper.listening_addr().port()),
-                external_ip: state.mapper.external_address().map(WrapSocketAddrV4),
+                external_ip: state.mapper.external_address().map(SocketAddrV4W),
             };
 
             let _ = Self::new_thread("connect", move || {
@@ -292,7 +292,7 @@ impl Service {
 
             let handshake = Handshake {
                 mapper_port: Some(state.mapper.listening_addr().port()),
-                external_ip: state.mapper.external_address().map(WrapSocketAddrV4),
+                external_ip: state.mapper.external_address().map(SocketAddrV4W),
             };
 
             let _ = Self::new_thread("listen", move || {

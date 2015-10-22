@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::net::{SocketAddr, IpAddr, Ipv4Addr, Ipv6Addr};
+use std::net::{SocketAddr, SocketAddrV4, SocketAddrV6, IpAddr, Ipv4Addr, Ipv6Addr};
 use std::cmp::Ordering;
 use getifaddrs::{getifaddrs, IfAddr};
 use ::rustc_serialize::{Encodable, Decodable, Decoder, Encoder};
@@ -64,20 +64,76 @@ impl Decodable for SocketAddrW {
     }
 }
 
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct SocketAddrV4W(pub SocketAddrV4);
+
+impl PartialOrd for SocketAddrV4W {
+    fn partial_cmp(&self, other: &SocketAddrV4W) -> Option<Ordering> {
+        Some(self.cmp(&other))
+    }
+}
+
+impl Ord for SocketAddrV4W {
+    fn cmp(&self, other: &SocketAddrV4W) -> Ordering {
+        compare_ipv4_addrs(&self.0, &other.0)
+    }
+}
+
+impl Encodable for SocketAddrV4W {
+    fn encode<S: Encoder>(&self, s: &mut S) -> Result<(), S::Error> {
+        let as_string = format!("{}", self.0);
+        try!(s.emit_str(&as_string[..]));
+        Ok(())
+    }
+}
+
+impl Decodable for SocketAddrV4W {
+    fn decode<D: Decoder>(d: &mut D) -> Result<SocketAddrV4W, D::Error> {
+        let as_string = try!(d.read_str());
+        // TODO: use this code once `impl FromStr for SocketAddrV4` makes it into libstd
+        //match SocketAddrV4::from_str(&as_string[..]) {
+        //    Ok(sa)  => Ok(SocketAddrV4W(sa)),
+        //    Err(e)  => {
+        //        let err = format!("Failed to decode SocketAddrV4W: {}", e);
+        //        Err(d.error(&err[..]))
+        //    }
+        //}
+        match SocketAddr::from_str(&as_string[..]) {
+            Ok(SocketAddr::V4(sa)) => Ok(SocketAddrV4W(sa)),
+            Ok(SocketAddr::V6(sa)) => {
+                let err = format!("Failed to decode SocketAddrV4W - Ipv6 address received where ipv4 address expected");
+                Err(d.error(&err[..]))
+            }
+            Err(e)  => {
+                let err = format!("Failed to decode SocketAddrV4W: {}", e);
+                Err(d.error(&err[..]))
+            }
+        }
+    }
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 pub fn compare_ip_addrs(a1: &SocketAddr, a2: &SocketAddr) -> Ordering {
     use std::net::SocketAddr::{V4,V6};
     match *a1 {
         V4(ref a1) => match *a2 {
-            V4(ref a2) => (a1.ip(), a1.port()).cmp(&(a2.ip(), a2.port())),
+            V4(ref a2) => compare_ipv4_addrs(a1, a2),
             V6(_) => Ordering::Less,
         },
         V6(ref a1) => match *a2 {
             V4(_) => Ordering::Greater,
-            V6(ref a2) => (a1.ip(), a1.port(), a1.flowinfo(), a1.scope_id())
-                          .cmp(&(a2.ip(), a2.port(), a2.flowinfo(), a2.scope_id())),
+            V6(ref a2) => compare_ipv6_addrs(a1, a2),
         }
     }
+}
+
+pub fn compare_ipv4_addrs(a1: &SocketAddrV4, a2: &SocketAddrV4) -> Ordering {
+    (a1.ip(), a1.port()).cmp(&(a2.ip(), a2.port()))
+}
+
+pub fn compare_ipv6_addrs(a1: &SocketAddrV6, a2: &SocketAddrV6) -> Ordering {
+    (a1.ip(), a1.port(), a1.flowinfo(), a1.scope_id())
+    .cmp(&(a2.ip(), a2.port(), a2.flowinfo(), a2.scope_id()))
 }
 
 ////////////////////////////////////////////////////////////////////////////////
