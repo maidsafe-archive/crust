@@ -637,6 +637,8 @@ mod test {
                 for i in o.iter() {
                     match i {
                         Event::OnRendezvousConnect(other_ep) => {
+                            // TODO: remove this workaround sleep once issue 374 is solved
+                            thread::sleep_ms(2000);
                             let _ = cm.send(other_ep.clone(),
                                             encode(&"hello world".to_string()));
                         },
