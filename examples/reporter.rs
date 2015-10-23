@@ -50,11 +50,15 @@ use time::Tm;
 
 static USAGE: &'static str = r#"
 Usage:
-    reporter <config>
+    reporter [-i | --connect-immediately] <config>
     reporter (-h | --help)
 
 Options:
-    -h, --help      Display this help message
+    -i, --connect-immediately   If this flag is set, this node will connect to
+                                other nodes and start sending messages
+                                immediately. Otherwise, it will wait until
+                                someone connects to it first.
+    -h, --help                  Display this help message.
 
 Example config file:
 
@@ -113,7 +117,7 @@ fn main() {
 
     for i in 0..config.service_runs {
         debug!("Service started ({} of {})", i + 1, config.service_runs);
-        report.update(run(&config));
+        report.update(run(args.flag_connect_immediately, &config));
         debug!("Service stopped ({} of {})", i + 1, config.service_runs);
 
         thread::sleep_ms(thread_rng().gen_range(
@@ -126,7 +130,8 @@ fn main() {
 
 #[derive(RustcDecodable)]
 struct Args {
-    arg_config: String
+    arg_config: String,
+    flag_connect_immediately: bool
 }
 
 #[derive(Debug, RustcDecodable)]
@@ -153,7 +158,7 @@ impl Config {
 
 // This is a wrapper for std::net::SocketAdds so we can implement Decodable
 // for it.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct SocketAddr(std::net::SocketAddr);
 
 impl SocketAddr {
@@ -247,14 +252,14 @@ impl Encodable for EventEntry {
     }
 }
 
-fn run(config: &Config) -> Report {
+fn run(connect_immediately: bool, config: &Config) -> Report {
     let (event_sender, event_receiver) = channel();
     let (message_sender0, message_receiver) = channel();
     let message_sender1 = message_sender0.clone();
 
     let mut service = Service::new(event_sender).unwrap();
 
-    if !config.ips.is_empty() {
+    if connect_immediately && !config.ips.is_empty() {
         connect_to_all(&mut service, &config.ips);
     }
 
@@ -263,6 +268,7 @@ fn run(config: &Config) -> Report {
     }
 
     let message_bytes = config.msg_to_send.bytes().collect::<Vec<_>>();
+    let ips = config.ips.clone();
 
     // This thread is for receiving events from the service.
     let event_thread_handle = thread::spawn(move || {
@@ -300,10 +306,17 @@ fn run(config: &Config) -> Report {
 
     // This thread is for sending messages via the service.
     let message_thread_handle = thread::spawn(move || {
+        let mut connected = connect_immediately;
+
         for connection in message_receiver.iter() {
             match connection {
                 Some(connection) => {
                     service.send(connection, message_bytes.clone());
+
+                    if !connected {
+                        connect_to_all(&mut service, &ips);
+                        connected = true;
+                    }
                 },
                 None => {
                     service.stop();
@@ -329,6 +342,9 @@ fn run(config: &Config) -> Report {
 fn connect_to_all(service: &mut Service, addrs: &[SocketAddr]) {
     for addr in addrs {
         let addr = addr.0;
+
+        debug!("Connecting to {}", addr);
+
         service.connect(vec![Endpoint::Tcp(addr)]);
         service.connect(vec![Endpoint::Utp(addr)]);
     }
