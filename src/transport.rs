@@ -26,7 +26,7 @@ use std::sync::mpsc;
 use cbor;
 use std::str::FromStr;
 use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
-use utp::UtpSocket;
+use utp::UtpListener;
 use std::fmt;
 use ip;
 use connection::Connection;
@@ -281,37 +281,41 @@ impl Receiver {
 
 //--------------------------------------------------------------------
 pub enum Acceptor {
-    // Channel receiver, TCP listener
-    Tcp(mpsc::Receiver<(TcpStream, SocketAddr)>, TcpListener),
-    // Channel receiver, UTP listener and port
-    Utp(mpsc::Receiver<(UtpSocket, SocketAddr)>, SocketAddr),
+    // TCP listener
+    Tcp(TcpListener),
+    // UTP listener
+    Utp(UtpListener),
 }
 
 impl Acceptor {
     pub fn new(port: Port) -> IoResult<Acceptor> {
         match port {
             Port::Tcp(port) => {
-                let (receiver, listener) = try!(tcp_connections::listen(port));
-                Ok(Acceptor::Tcp(receiver, listener))
+                let listener = {
+                    if let Ok(listener) = TcpListener::bind(("0.0.0.0", port)) {
+                        listener
+                    } else {
+                        try!(TcpListener::bind(("0.0.0.0", 0)))
+                    }
+                };
+
+                Ok(Acceptor::Tcp(listener))
             },
             Port::Utp(port) => {
-                let (receiver, listener) = try!(utp_connections::listen(port));
-                Ok(Acceptor::Utp(receiver, listener))
+                let listener = try!(UtpListener::bind(("0.0.0.0", port)));
+                Ok(Acceptor::Utp(listener))
             },
         }
     }
 
     pub fn local_port(&self) -> Port {
-        match *self {
-            Acceptor::Tcp(_, ref listener) => Port::Tcp(listener.local_addr().unwrap().port()),
-            Acceptor::Utp(_, local_addr) => Port::Utp(local_addr.port()),
-        }
+        self.local_addr().get_port()
     }
 
     pub fn local_addr(&self) -> Endpoint {
         match *self {
-            Acceptor::Tcp(_, ref listener) => Endpoint::Tcp(listener.local_addr().unwrap()),
-            Acceptor::Utp(_, local_addr) => Endpoint::Utp(local_addr),
+            Acceptor::Tcp(ref listener) => Endpoint::Tcp(listener.local_addr().unwrap()),
+            Acceptor::Utp(ref listener) => Endpoint::Utp(listener.local_addr().unwrap()),
         }
     }
 }
@@ -398,9 +402,8 @@ pub fn rendezvous_connect(udp_socket: UdpSocket,
 // (Though this seems to be impossible with the current Rust TCP API).
 pub fn accept(acceptor: &Acceptor) -> IoResult<Transport> {
     match *acceptor {
-        Acceptor::Tcp(ref rx_channel, _) => {
-            let rx = rx_channel.recv();
-            let (stream, remote_endpoint) = try!(rx
+        Acceptor::Tcp(ref listener) => {
+            let (stream, remote_endpoint) = try!(listener.accept()
                 .map_err(|e| io::Error::new(io::ErrorKind::NotConnected, e.description())));
 
             let (i, o) = try!(tcp_connections::upgrade_tcp(stream));
@@ -417,8 +420,8 @@ pub fn accept(acceptor: &Acceptor) -> IoResult<Transport> {
                 connection_id: connection_id,
             })
         },
-        Acceptor::Utp(ref rx_channel, _) => {
-            let (stream, remote_endpoint) = try!(rx_channel.recv()
+        Acceptor::Utp(ref listener) => {
+            let (stream, remote_endpoint) = try!(listener.accept()
                 .map_err(|e| io::Error::new(io::ErrorKind::NotConnected, e.description())));
 
             let (i, o) = try!(utp_connections::upgrade_utp(stream));

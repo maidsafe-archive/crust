@@ -15,13 +15,11 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use utp::{UtpSocket, UtpListener};
+use utp::UtpSocket;
 pub use utp_wrapper::UtpWrapper;
-use std::net::{SocketAddr, SocketAddrV4, Ipv4Addr, UdpSocket};
+use std::net::{SocketAddr, UdpSocket};
 use std::io::Result as IoResult;
-use std::sync::mpsc::{Sender, Receiver};
-use std::sync::mpsc;
-use std::thread;
+use std::sync::mpsc::Sender;
 
 /// Connect to a peer and open a send-receive pair.  See `upgrade` for more details.
 pub fn connect_utp(addr: SocketAddr)
@@ -32,27 +30,6 @@ pub fn connect_utp(addr: SocketAddr)
 pub fn rendezvous_connect_utp(udp_socket: UdpSocket, addr: SocketAddr)
                               -> IoResult<(UtpWrapper, Sender<Vec<u8>>)> {
     upgrade_utp(try!(UtpSocket::rendezvous_connect(udp_socket, addr)))
-}
-
-/// Starts listening for connections on this ip and port.
-/// Returns:
-/// * A receiver of Utp socket objects.  It is recommended that you `upgrade` these.
-/// * Port
-pub fn listen(port: u16) -> IoResult<(Receiver<(UtpSocket, SocketAddr)>, SocketAddr)> {
-    let listener = try!(UtpListener::bind(SocketAddr::V4({
-        SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), port)
-    })));
-    let local_addr = try!(listener.local_addr());
-    let (tx, rx) = mpsc::channel();
-    let _ = thread::spawn(move || {
-        loop {
-            match listener.accept() {
-                Ok(s) => if tx.send(s).is_err() { break },
-                Err(_) => break,
-            }
-        }
-    });
-    Ok((rx, local_addr))
 }
 
 /// Upgrades a newly connected UtpSocket to a Sender-Receiver pair that you can use to send and
@@ -70,7 +47,12 @@ mod test {
     use super::*;
     use std::thread;
     use std::net::{SocketAddr, SocketAddrV4, Ipv4Addr, UdpSocket};
-    use std::io::Read;
+    use std::io::{Read, Result};
+    use utp::UtpListener;
+
+    fn listen(port: u16) -> Result<UtpListener> {
+        UtpListener::bind(("0.0.0.0", port))
+    }
 
     #[test]
     fn cannot_establish_connection() {
@@ -87,30 +69,43 @@ mod test {
     #[test]
     fn establishing_connection() {
         let listener = listen(0).unwrap();
+        let port = listener.local_addr().unwrap().port();
+
+        let handle = thread::spawn(move || listener.accept().unwrap());
+
         let _ = connect_utp(SocketAddr::V4({
-            SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), listener.1.port())
+            SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), port)
         })).unwrap();
+
+        let _ = handle.join().unwrap();
     }
 
     #[test]
     fn send_receive_data() {
         let listener = listen(0).unwrap();
+        let port = listener.local_addr().unwrap().port();
+
+        let th0 = thread::spawn(move || {
+            let s = listener.accept().unwrap().0;
+            let (mut i, o) = upgrade_utp(s).unwrap();
+            let mut buf = [0u8; 1];
+            let _ = i.read(&mut buf).unwrap();
+            assert_eq!(buf[0], 42);
+            o.send(vec![43]);
+        });
+
         let (mut i, o) = connect_utp(SocketAddr::V4({
-            SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), listener.1.port())
+            SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), port)
         })).unwrap();
-        let listener = listener.0;
-        let thread = thread::spawn(move || {
+
+        let th1 = thread::spawn(move || {
             o.send(vec![42]);
             let mut buf = [0u8; 1];
             let _ = i.read(&mut buf).unwrap();
             assert_eq!(buf[0], 43);
         });
-        let s = listener.recv().unwrap().0;
-        let (mut i, o) = upgrade_utp(s).unwrap();
-        let mut buf = [0u8; 1];
-        let _ = i.read(&mut buf).unwrap();
-        assert_eq!(buf[0], 42);
-        o.send(vec![43]);
-        thread.join();
+
+        th1.join();
+        th0.join();
     }
 }

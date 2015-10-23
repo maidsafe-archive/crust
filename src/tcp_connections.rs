@@ -15,12 +15,12 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::net::{TcpListener, TcpStream, SocketAddr, Shutdown};
+use std::net::{TcpStream, SocketAddr, Shutdown};
 use std::io::{Error, ErrorKind};
 use std::io::Result as IoResult;
 use std::thread;
 use std::sync::mpsc;
-use std::sync::mpsc::{Receiver, Sender};
+use std::sync::mpsc::Sender;
 
 /// Connect to a peer and open a send-receive pair.  See `upgrade` for more details.
 pub fn connect_tcp(addr: SocketAddr) -> IoResult<(TcpStream, Sender<Vec<u8>>)> {
@@ -31,46 +31,6 @@ pub fn connect_tcp(addr: SocketAddr) -> IoResult<(TcpStream, Sender<Vec<u8>>)> {
     }
 
     Ok(try!(upgrade_tcp(stream)))
-}
-
-/// Starts listening for connections on this ip and port.
-/// Returns:
-/// * A receiver of Tcp stream objects.  It is recommended that you `upgrade` these.
-/// * A TcpAcceptor.  This can be used to close the listener from outside of the listening thread.
-pub fn listen(port: u16) -> IoResult<(Receiver<(TcpStream, SocketAddr)>, TcpListener)> {
-    let tcp_listener = {
-        if let Ok(listener) = TcpListener::bind(("0.0.0.0", port)) {
-            listener
-        } else {
-            try!(TcpListener::bind(("0.0.0.0", 0)))
-        }
-    };
-
-    let (tx, rx) = mpsc::channel();
-
-    let tcp_listener2 = try!(tcp_listener.try_clone());
-    let _ = thread::Builder::new().name("TCP listener".to_string()).spawn(move || {
-        loop {
-            // if tx.is_closed() {       // FIXME (Prakash)
-            //     break;
-            // }
-            match tcp_listener2.accept() {
-                Ok(stream) => {
-                    if tx.send(stream).is_err() {
-                        break;
-                    }
-                }
-                Err(ref e) if e.kind() == ErrorKind::TimedOut => {
-                    continue;
-                }
-                Err(_) => {
-                    //let _  = tx.error(e);
-                    break;
-                }
-            }
-        }
-    });
-    Ok((rx, tcp_listener))
 }
 
 // Almost a straight copy of https://github.com/TyOverby/wire/blob/master/src/tcp.rs
@@ -102,7 +62,7 @@ fn upgrade_writer(mut stream: TcpStream) -> Sender<Vec<u8>> {
 mod test {
     use super::*;
     use std::thread;
-    use std::net::SocketAddr;
+    use std::net::{SocketAddr, TcpListener};
     use std::str::FromStr;
     use std::time::Duration;
     use std::io::Read;
@@ -112,9 +72,9 @@ mod test {
         SocketAddr::from_str(&format!("127.0.0.1:{}", port)).unwrap()
     }
 
- #[test]
+    #[test]
     fn test_small_stream() {
-        let (event_receiver, listener) = listen(5483).unwrap();
+        let listener = TcpListener::bind(("0.0.0.0", 5483)).unwrap();
         let port = listener.local_addr().unwrap().port();
         let (mut i, o) = connect_tcp(loopback(port)).unwrap();
 
@@ -124,8 +84,8 @@ mod test {
         }
         drop(o);
         let _ = thread::spawn(move || {
-            for x in event_receiver.iter() {
-                let (connection, _) = x;
+            for x in listener.incoming() {
+                let connection = x.unwrap();
                 // Spawn a new thread for each connection that we get.
                 let _ = thread::spawn(move || {
                     let (mut i, o) = upgrade_tcp(connection).unwrap();
@@ -163,11 +123,11 @@ mod test {
         }
     }
 
-#[test]
+    #[test]
     fn test_multiple_nodes_small_stream() {
         const MSG_COUNT: usize = 5;
 
-        let (event_receiver, listener) = listen(5483).unwrap();
+        let listener = TcpListener::bind(("0.0.0.0", 5483)).unwrap();
         let port = listener.local_addr().unwrap().port();
 
         let (tx, rx) = mpsc::channel();
@@ -187,7 +147,7 @@ mod test {
                 }
                 tx2.send(buf)
             });
-            let (connection, _) = event_receiver.recv().unwrap();
+            let (connection, _) = listener.accept().unwrap();
             let _ = thread::spawn(move || {
                 let (mut i, o) = upgrade_tcp(connection).unwrap();
                 i.set_read_timeout(Some(Duration::new(5, 0))).unwrap();
@@ -224,11 +184,11 @@ mod test {
             enc.into_bytes()
         }
 
-        let (event_receiver, listener) = listen(0).unwrap();
+        let listener = TcpListener::bind(("0.0.0.0", 0)).unwrap();
         let port = listener.local_addr().unwrap().port();
 
         let (i1, o1) = connect_tcp(loopback(port)).unwrap();
-        let (connection, _) = event_receiver.recv().unwrap();
+        let (connection, _) = listener.accept().unwrap();
         let (i2, o2) = upgrade_tcp(connection).unwrap();
 
         fn read_messages(reader: TcpStream) {

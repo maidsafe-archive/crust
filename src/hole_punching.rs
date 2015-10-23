@@ -1,9 +1,9 @@
 use std::net::{SocketAddr, UdpSocket};
 use std::io;
-use std::str::FromStr;
 
 use periodic_sender::PeriodicSender;
 use socket_utils::RecvUntil;
+use util::SocketAddrW;
 
 #[derive(Debug, RustcEncodable, RustcDecodable)]
 pub struct HolePunch {
@@ -32,31 +32,7 @@ impl GetExternalAddr {
 #[derive(Debug, RustcEncodable, RustcDecodable)]
 pub struct SetExternalAddr {
     pub request_id: u32,
-    pub addr: WrapSocketAddr,
-}
-
-#[derive(Debug)]
-pub struct WrapSocketAddr(pub SocketAddr);
-
-impl ::rustc_serialize::Encodable for WrapSocketAddr {
-    fn encode<S: ::rustc_serialize::Encoder>(&self, s: &mut S) -> Result<(), S::Error> {
-        let as_string = format!("{}", self.0);
-        try!(s.emit_str(&as_string[..]));
-        Ok(())
-    }
-}
-
-impl ::rustc_serialize::Decodable for WrapSocketAddr {
-    fn decode<D: ::rustc_serialize::Decoder>(d: &mut D) -> Result<WrapSocketAddr, D::Error> {
-        let as_string = try!(d.read_str());
-        match SocketAddr::from_str(&as_string[..]) {
-            Ok(sa)  => Ok(WrapSocketAddr(sa)),
-            Err(e)  => {
-                let err = format!("Failed to decode WrapSocketAddr: {}", e);
-                Err(d.error(&err[..]))
-            }
-        }
-    }
+    pub addr: SocketAddrW,
 }
 
 pub fn blocking_get_mapped_udp_socket(request_id: u32, helper_nodes: Vec<SocketAddr>)
@@ -249,7 +225,7 @@ impl HolePunchServer {
                         let data_send = {
                             let sea = SetExternalAddr {
                                 request_id: gea.request_id,
-                                addr: WrapSocketAddr(addr),
+                                addr: SocketAddrW(addr),
                             };
                             let mut enc = ::cbor::Encoder::from_memory();
                             enc.encode(::std::iter::once(&sea)).unwrap();
