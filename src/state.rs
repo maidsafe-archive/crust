@@ -322,7 +322,7 @@ impl State {
             Ok(peers) => peers,
             Err(_) => return Vec::<Endpoint>::new(),
         };
-    
+
         // For each contact, connect and receive their list of bootstrap contacts
         let mut endpoints: Vec<Endpoint> = vec![];
         for peer in peer_addresses {
@@ -338,7 +338,7 @@ impl State {
                     continue
                 },
             };
-    
+
             match message {
                 Message::Contacts(new_endpoints) => {
                     for ep in new_endpoints {
@@ -348,7 +348,7 @@ impl State {
                 _ => continue
             }
         }
-    
+
         endpoints
     }
 
@@ -427,7 +427,7 @@ impl State {
         self.stop_called = true;
     }
 
-    fn new_thread<F,T>(name: &str, f: F) -> io::Result<JoinHandle<T>> 
+    fn new_thread<F,T>(name: &str, f: F) -> io::Result<JoinHandle<T>>
             where F: FnOnce() -> T, F: Send + 'static, T: Send + 'static {
         thread::Builder::new().name("State::".to_string() + name)
                               .spawn(f)
@@ -497,7 +497,7 @@ mod test {
 
     fn testable_endpoint(acceptor: &Acceptor) -> Endpoint {
         let addr = match acceptor {
-            &Acceptor::Tcp(_, ref listener) => listener.local_addr()
+            &Acceptor::Tcp(ref listener) => listener.local_addr()
                 .unwrap(),
             _ => panic!("Unable to create a new connection"),
         };
