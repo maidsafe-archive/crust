@@ -50,6 +50,7 @@ pub struct Service {
     beacon_guid_and_port : Option<(beacon::GUID, u16)>,
     config               : Config,
     cmd_sender           : Sender<Closure>,
+    state_thread_handle  : Option<JoinHandle<()>>,
 }
 
 impl Service {
@@ -83,14 +84,13 @@ impl Service {
         let mut state = State::new(event_sender, mapper);
         let cmd_sender = state.cmd_sender.clone();
 
-        let handle = try!(Self::new_thread("run loop", move || {
-                                state.run();
-                            }));
+        let handle = try!(Self::new_thread("run loop", move || state.run() ));
 
         let mut service = Service {
                               beacon_guid_and_port : None,
                               config               : config,
                               cmd_sender           : cmd_sender,
+                              state_thread_handle  : Some(handle)
                           };
 
         let beacon_port = service.config.beacon_port.clone();
@@ -211,6 +211,9 @@ impl Service {
     /// This should be called before destroying an instance of a Service to allow the
     /// listener threads to join.  Once called, the Service should be destroyed.
     pub fn stop(&mut self) {
+        use std::net::TcpStream;
+        use utp::UtpSocket;
+
         if let Some(beacon_guid_and_port) = self.beacon_guid_and_port {
             beacon::BroadcastAcceptor::stop(&beacon_guid_and_port);
             self.beacon_guid_and_port = None;
@@ -222,9 +225,18 @@ impl Service {
             // Connect to our listening ports, this should unblock
             // the threads.
             for port in state.listening_ports.iter() {
-                let _ = State::connect(Handshake::default(), ::util::loopback_v4(*port));
+                let addr = ::util::loopback_v4(*port).get_address();
+
+                match *port {
+                    Port::Tcp(_) => { let _ = TcpStream::connect(&addr); },
+                    Port::Utp(_) => { let _ = UtpSocket::connect(&addr); }
+                }
             }
         }));
+
+        if let Some(handle) = self.state_thread_handle.take() {
+            let _ = handle.join();
+        }
     }
 
     /// Opens a connection to a remote peer. `endpoints` is a vector of addresses of the remote
@@ -332,7 +344,8 @@ impl Service {
         let cmd_sender2 = cmd_sender.clone();
 
         Self::post(&cmd_sender, move |state: &mut State| {
-            state.listening_ports.insert(acceptor.local_port());
+            let port = acceptor.local_port();
+            state.listening_ports.insert(port);
 
             let handshake = Handshake {
                 mapper_port: Some(state.mapper.listening_addr().port()),
@@ -343,6 +356,8 @@ impl Service {
                 let cmd_sender3 = cmd_sender2.clone();
 
                 let _ = cmd_sender2.send(Box::new(move |state: &mut State| {
+                    state.listening_ports.remove(&port);
+
                     if state.stop_called {
                         return;
                     }
@@ -581,8 +596,6 @@ mod test {
 
     #[test]
     fn connection_manager() {
-        // Wait 2 seconds until previous bootstrap test ends. If not, that test connects to these endpoints.
-        thread::sleep_ms(2000);
         let run_cm = |cm: Service, o: Receiver<Event>| {
             spawn(move || {
                 for i in o.iter() {
@@ -637,8 +650,6 @@ mod test {
                 for i in o.iter() {
                     match i {
                         Event::OnRendezvousConnect(other_ep) => {
-                            // TODO: remove this workaround sleep once issue 374 is solved
-                            thread::sleep_ms(2000);
                             let _ = cm.send(other_ep.clone(),
                                             encode(&"hello world".to_string()));
                         },
@@ -834,5 +845,27 @@ mod test {
         thread::sleep_ms(100);
 
         let _ = thread.join();
+    }
+
+    #[test]
+    fn reaccept() {
+        let tcp_port;
+        let utp_port;
+
+        {
+            let (sender, _) = channel();
+            let mut service = Service::new(sender).unwrap();
+            // random port assigned by os
+            tcp_port = service.start_accepting(Port::Tcp(0)).unwrap().get_port();
+            utp_port = service.start_accepting(Port::Utp(0)).unwrap().get_port();
+        }
+
+        {
+            let (sender, _) = channel();
+            let mut service = Service::new(sender.clone()).unwrap();
+            // reuse the ports from above
+            let _ = service.start_accepting(tcp_port).unwrap();
+            let _ = service.start_accepting(utp_port).unwrap();
+        }
     }
 }
