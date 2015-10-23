@@ -44,7 +44,9 @@ use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
 use std::collections::HashMap;
 use std::io;
 use std::path::Path;
+use std::sync::Arc;
 use std::sync::mpsc::channel;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 use time::Tm;
 
@@ -115,9 +117,11 @@ fn main() {
     let mut report = Report::new();
     report.id = config.msg_to_send.clone();
 
+    let connected = Arc::new(AtomicBool::new(args.flag_connect_immediately));
+
     for i in 0..config.service_runs {
         debug!("Service started ({} of {})", i + 1, config.service_runs);
-        report.update(run(args.flag_connect_immediately, &config));
+        report.update(run(connected.clone(), &config));
         debug!("Service stopped ({} of {})", i + 1, config.service_runs);
 
         thread::sleep_ms(thread_rng().gen_range(
@@ -252,15 +256,23 @@ impl Encodable for EventEntry {
     }
 }
 
-fn run(connect_immediately: bool, config: &Config) -> Report {
+fn run(connected: Arc<AtomicBool>, config: &Config) -> Report {
     let (event_sender, event_receiver) = channel();
+
     let (message_sender0, message_receiver) = channel();
     let message_sender1 = message_sender0.clone();
 
+    // This channel is used to wait until someone connects to us.
+    let (wait_sender, wait_receiver) = channel();
+
     let mut service = Service::new(event_sender).unwrap();
 
-    if connect_immediately && !config.ips.is_empty() {
-        connect_to_all(&mut service, &config.ips);
+    if connected.load(Ordering::Relaxed) {
+        if !config.ips.is_empty() {
+            connect_to_all(&mut service, &config.ips);
+        }
+
+        wait_sender.send(()).unwrap();
     }
 
     if let Some(port) = config.listening_port {
@@ -305,17 +317,16 @@ fn run(connect_immediately: bool, config: &Config) -> Report {
     });
 
     // This thread is for sending messages via the service.
+    let connected2 = connected.clone();
     let message_thread_handle = thread::spawn(move || {
-        let mut connected = connect_immediately;
-
         for connection in message_receiver.iter() {
             match connection {
                 Some(connection) => {
                     service.send(connection, message_bytes.clone());
 
-                    if !connected {
+                    if !connected2.swap(true, Ordering::Relaxed) {
                         connect_to_all(&mut service, &ips);
-                        connected = true;
+                        wait_sender.send(()).unwrap();
                     }
                 },
                 None => {
@@ -325,6 +336,9 @@ fn run(connect_immediately: bool, config: &Config) -> Report {
             };
         }
     });
+
+    // Wait until someone connects to us.
+    let _ = wait_receiver.recv();
 
     thread::sleep_ms(thread_rng().gen_range(MIN_RUN_TIME_MS, MAX_RUN_TIME_MS));
 
@@ -356,6 +370,7 @@ fn start_accepting(service: &mut Service, port: u16) -> io::Result<()> {
     // FIXME: this panics on the second run, with "Address already in use"
     //        error. Seems like Service is not cleaning up it's stuff properly
     //        when stopped.
+    //        When issue #361 is resolved, this can be uncommented.
     // if let Err(e) = service.start_accepting(Port::Utp(port)) { return Err(e); }
 
     Ok(())
