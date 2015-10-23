@@ -225,7 +225,7 @@ impl Report {
     fn record_event(&mut self, event: &Event) {
         self.events.push(Some(EventEntry {
             timestamp:   time::now(),
-            description: format!("{:?}", event)
+            description: format_event(event)
         }));
     }
 
@@ -253,6 +253,16 @@ impl Encodable for EventEntry {
     fn encode<E: Encoder>(&self, encoder: &mut E) -> Result<(), E::Error> {
         let timestamp_string = format!("{}", self.timestamp.rfc3339());
         [&timestamp_string, &self.description].encode(encoder)
+    }
+}
+
+fn format_event(event: &Event) -> String {
+    match *event {
+        Event::NewMessage(ref connection, ref data) => {
+            format!("NewMessage({:?}, \"{}\")", connection,
+                    String::from_utf8_lossy(&data))
+        },
+        _ => format!("{:?}", event)
     }
 }
 
