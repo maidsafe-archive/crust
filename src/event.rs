@@ -43,6 +43,8 @@ pub enum Event {
     NewMessage(Connection, Vec<u8>),
     /// Invoked when a new connection to a peer is established. Passes the peer's endpoint.
     OnConnect(Connection),
+    /// Invoked when a new rendezvous connection to a peer is established. Passes the peer's endpoint.
+    OnRendezvousConnect(Connection),
     /// Invoked when a new connection is accepted. Passes the peer's endpoint.
     OnAccept(Connection),
     /// Invoked when a connection to a peer is lost.  Passes the peer's endpoint.

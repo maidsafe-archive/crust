@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::net::{SocketAddr, TcpStream, TcpListener, ToSocketAddrs, IpAddr};
+use std::net::{SocketAddr, TcpStream, TcpListener, ToSocketAddrs, IpAddr, UdpSocket};
 use tcp_connections;
 use utp_connections;
 use std::cmp::Ordering;
@@ -364,6 +364,33 @@ pub fn connect(remote_ep: Endpoint) -> IoResult<Transport> {
                 connection_id: connection_id,
             })
         }
+    }
+}
+
+pub fn rendezvous_connect(udp_socket: UdpSocket,
+                          public_ep: Endpoint /* of B */ )
+                          -> IoResult<Transport> {
+    match public_ep {
+        Endpoint::Utp(ep) => {
+            let (i, o) = try!(utp_connections::rendezvous_connect_utp(udp_socket,
+                                                                      ep)
+                              .map_err(|e| io::Error::new(io::ErrorKind::NotConnected,
+                                                          e.description())));
+
+            let connection_id = Connection::new(
+                Protocol::Utp,
+                i.local_addr(),
+                i.peer_addr(),
+            );
+
+            Ok(Transport {
+                receiver: Receiver::Utp(cbor::Decoder::from_reader(i)),
+                sender: Sender::Utp(o),
+                connection_id: connection_id,
+            })
+        },
+        _ => Err(io::Error::new(io::ErrorKind::InvalidInput,
+                                "TCP rendezvous connect not supported")),
     }
 }
 
