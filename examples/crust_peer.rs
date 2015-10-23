@@ -75,7 +75,7 @@ will be chosen.
 
 Options:
   -c, --create-local-config  Tries to create a default config file in the same
-                             directory as this exectable.  Won't overwrite an
+                             directory as this executable.  Won't overwrite an
                              existing file.
   -s RATE, --speed=RATE      Keep sending random data at a maximum speed of RATE
                              bytes/second to the first connected peer.
@@ -237,7 +237,7 @@ impl Network {
         }
         let d = self.udp_data.remove(id);
         d.socket.try_clone().ok()
-        
+
     }
 
     pub fn drop_node(&mut self, lost_node: Connection) {
@@ -253,7 +253,7 @@ impl Network {
                     true => Some(node.connection_id.clone()),
                     false => None,
                 }).collect::<Vec<_>>();
- 
+
         println!("Connected node count: {}", connected_nodes.len());
         let mut i = 0;
         for node in &connected_nodes {
@@ -280,6 +280,10 @@ impl Network {
 
     pub fn get_udp(&self, n: usize) -> Option<&UdpData> {
         self.udp_data.get(n)
+    }
+
+    pub fn get_all(&self) -> &Vec<CrustNode> {
+        &self.crust_nodes
     }
 
     pub fn record_received(&mut self, msg_size: usize) {
@@ -578,7 +582,7 @@ fn main() {
                 Some(cmd) => cmd,
                 None => continue,
             };
-            
+
             match cmd {
                 UserCommand::Connect(ep) => {
                     println!("Connecting to {:?}", ep);
@@ -609,6 +613,12 @@ fn main() {
                     match network.get_udp(peer) {
                         Some(ref udp) => udp.send_to(dst),
                         None => println!("Invalid udp #"),
+                    }
+                },
+                UserCommand::SendAll(message) => {
+                    let network = network.lock().unwrap();
+                    for node in network.get_all() {
+                        service.send(node.connection_id, message.clone().into_bytes());
                     }
                 },
                 UserCommand::Punch(peer, dst) => {
@@ -653,6 +663,7 @@ Usage:
   cli connect-rendezvous <peer> <endpoint>
   cli send <peer> <message>...
   cli send-udp <peer> <destination> <message>...
+  cli send-all <message>...
   cli map
   cli punch <peer> <destination>
   cli list
@@ -668,22 +679,22 @@ fn print_usage() {
     connect-rendezvous <udp-socket-id> <endpoint> - As above, but using rendezvous connect
     send <connection-id> <message>                - Send a string to the given connection
     send-udp <udp-socket-id> <message>            - E.g. send-udp 0 foo bar
-    map                                           - Use existing connections to
-                                                    find our external IP address.
-                                                    Also creates a UDP socket.
-    punch <udp-socket-id> <socketaddr>            - UDP hole punch with given socket to the
-                                                    given destination.
-    list                                          - List existing connections and UDP sockets.
-    stop                                          - exit the app.
-    help                                          - Prints this help.
+    send-all <message>                            - Send a string to all connections
+    map                                           - Use existing connections to find our external
+                                                    IP address.  Also creates a UDP socket.
+    punch <udp-socket-id> <socketaddr>            - UDP hole punch with given socket to the given
+                                                    destination
+    list                                          - List existing connections and UDP sockets
+    stop                                          - Exit the app
+    help                                          - Print this help
 
 # Where
-    <endpoint>      - Specifies transport and socket address. Its form is
+    <endpoint>      - Specifies transport and socket address.  Its form is
                       [Tcp|Utp](a.b.c.d:p)
                       E.g. Tcp(192.168.0.1:5483)
-    <udp-socket-id> - Id of a UDP socket as listed using the `list` command.
-    <connection-id> - Id of a connection as listed using the `list` command.
-    <socketaddr>    - Ip address and port. E.g. 192.168.0.1:5483
+    <udp-socket-id> - ID of a UDP socket as listed using the `list` command
+    <connection-id> - ID of a connection as listed using the `list` command
+    <socketaddr>    - IP address and port.  E.g. 192.168.0.1:5483
 "#;
     println!("{}", USAGE);
 }
@@ -694,6 +705,7 @@ struct CliArgs {
     cmd_connect_rendezvous: bool,
     cmd_send:               bool,
     cmd_send_udp:           bool,
+    cmd_send_all:           bool,
     cmd_map:                bool,
     cmd_list:               bool,
     cmd_punch:              bool,
@@ -712,6 +724,7 @@ enum UserCommand {
     ConnectRendezvous(usize, Endpoint),
     Send(usize, String),
     SendUdp(usize, SocketAddr, String),
+    SendAll(String),
     Punch(usize, SocketAddr),
     List,
     Map,
@@ -754,6 +767,9 @@ fn parse_user_command(cmd : String) -> Option<UserCommand> {
         let dst  = args.arg_destination.unwrap().0;
         let msg  = args.arg_message.join(" ");
         Some(UserCommand::SendUdp(peer, dst, msg))
+    } else if args.cmd_send_all {
+        let msg  = args.arg_message.join(" ");
+        Some(UserCommand::SendAll(msg))
     } else if args.cmd_map {
         Some(UserCommand::Map)
     } else if args.cmd_punch {
