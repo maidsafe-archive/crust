@@ -460,6 +460,50 @@ mod test {
         assert!(smaller != bigger);
     }
 
+    #[test]
+    fn test_cbor() {
+        use cbor::{Decoder, Encoder};
+        use std::io::Write;
+        use std::net::{TcpStream, TcpListener, SocketAddrV4, Ipv4Addr};
+        use std::sync::mpsc::channel;
+        use std::thread;
+
+        let handshake = Handshake::default();
+        let message = Message::UserBlob(vec![1, 2, 3]);
+
+        let mut enc = Encoder::from_memory();
+        enc.encode(&vec![&handshake]).unwrap();
+        enc.encode(&vec![&message]).unwrap();
+        let mut burst = Vec::from(enc.as_bytes());
+        let last_byte = burst.pop().unwrap();
+
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let port = listener.local_addr().unwrap().port();
+        let (tx, rx) = channel();
+        let t = thread::spawn(move || {
+            let addr = Ipv4Addr::new(127, 0, 0, 1);
+            let _ = tx.send(TcpStream::connect(SocketAddrV4::new(addr, port))
+                            .unwrap());
+        });
+        let socketa = listener.accept().unwrap().0;
+        t.join().unwrap();
+        let mut socketb = rx.recv().unwrap();
+
+        let _ = socketb.write_all(&burst[..]);
+        let mut dec = Decoder::from_reader(socketa);
+        let handshake2: Handshake = dec.decode().next().unwrap().unwrap();
+        let _ = socketb.write_all(&vec![last_byte][..]);
+        let message2: Message = dec.decode().next().unwrap().unwrap();
+
+        assert_eq!(handshake.mapper_port, handshake2.mapper_port);
+        match (message, message2) {
+            (Message::UserBlob(ref blob), Message::UserBlob(ref blob2)) => {
+                assert_eq!(blob, blob2);
+            }
+            _ => panic!(""),
+        }
+    }
+
 #[test]
     fn test_ord() {
         test(v4(1,2,3,4,5), v4(2,2,3,4,5));
