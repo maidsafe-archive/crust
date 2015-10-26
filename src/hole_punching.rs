@@ -202,6 +202,9 @@ impl HolePunchServer {
     pub fn start(cmd_sender: Sender<Box<FnBox(&mut State) + Send>>) -> io::Result<HolePunchServer> {
         const MAX_DATAGRAM_SIZE: usize = 256;
 
+        // Refresh the hole punched for our server socket every hour.
+        const UPNP_REFRESH_PERIOD: u32 = 1000 * 60 * 60;
+
         let (listener_tx, listener_rx) = ::std::sync::mpsc::channel::<()>();
         let udp_socket = try!(UdpSocket::bind("0.0.0.0:0"));
         let local_addr = match try!(udp_socket.local_addr()) {
@@ -293,7 +296,7 @@ impl HolePunchServer {
                 }
                 // TODO (canndrew): What is a sensible time to wait between refreshes of our
                 // external ip?
-                ::std::thread::park_timeout_ms(1000 * 60 * 60);
+                ::std::thread::park_timeout_ms(UPNP_REFRESH_PERIOD);
             }
         }));
         Ok(HolePunchServer {

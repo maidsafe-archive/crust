@@ -24,6 +24,9 @@ use std::thread;
 use std::boxed::FnBox;
 use std::time::Duration;
 
+// How long do we wait to receive a response from the IGD?
+const IGD_SEARCH_TIMEOUT_SECS: u64 = 1;
+
 pub fn async_map_external_port<Callback>(local_ep: ip::Endpoint, callback: Box<Callback>)
     where Callback: FnBox(io::Result<Vec<(SocketAddrV4, ip::Endpoint)>>) +
           Send + 'static
@@ -103,8 +106,9 @@ fn from_request_result<T>(r: Result<T, igd::RequestError>) -> io::Result<T> {
 fn map_external_port(local_ep: SocketAddrV4, ext_port: ip::Port)
     -> io::Result<ip::Endpoint>
 {
-    let gateway = try!(from_search_result(igd::search_gateway_from_timeout(local_ep.ip().clone(), 
-                                                                           Duration::from_secs(1))));
+    let gateway = try!(from_search_result(igd::search_gateway_from_timeout(
+                            local_ep.ip().clone(), 
+                            Duration::from_secs(IGD_SEARCH_TIMEOUT_SECS))));
 
     let igd_protocol = match &ext_port {
         &ip::Port::Tcp(_) => igd::PortMappingProtocol::TCP,
