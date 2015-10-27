@@ -666,12 +666,12 @@ mod test {
         let mut temp_configs = vec![make_temp_config(None)];
 
         let (cm1_i, cm1_o) = channel();
-        let cm1 = Service::new(cm1_i).unwrap();
+        let cm1 = Service::new_inactive(cm1_i).unwrap();
 
         temp_configs.push(make_temp_config(cm1.get_beacon_acceptor_port()));
 
         let (cm2_i, cm2_o) = channel();
-        let cm2 = Service::new(cm2_i).unwrap();
+        let cm2 = Service::new_inactive(cm2_i).unwrap();
 
         let peer1_udp_socket = UdpSocket::bind("0.0.0.0:0").unwrap();
         let peer2_udp_socket = UdpSocket::bind("0.0.0.0:0").unwrap();
