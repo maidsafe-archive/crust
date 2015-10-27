@@ -195,12 +195,14 @@ impl Port {
 /// events.
 pub struct Handshake {
     pub mapper_port: Option<u16>,
+    pub external_ip: Option<util::SocketAddrV4W>,
 }
 
 impl Handshake {
     pub fn default() -> Handshake {
         Handshake {
             mapper_port: None,
+            external_ip: None,
         }
     }
 }
@@ -211,6 +213,9 @@ pub enum Message {
     UserBlob(Bytes),
     /// Event to exchange contacts
     Contacts(Vec<Endpoint>),
+    /// We have an external (non-NATed) address+port that other nodes can use as a hole-punching
+    /// server.
+    HolePunchAddress(util::SocketAddrV4W),
 }
 
 //--------------------------------------------------------------------

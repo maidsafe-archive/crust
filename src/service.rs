@@ -35,6 +35,7 @@ use connection::Connection;
 
 use state::State;
 use event::{Event, HolePunchResult};
+use util::SocketAddrV4W;
 
 /// Type used to represent serialised data in a message.
 pub type Bytes = Vec<u8>;
@@ -79,9 +80,7 @@ impl Service {
 
     fn construct(event_sender: Sender<Event>, config: Config)
             -> io::Result<Service> {
-        let mapper = try!(::hole_punching::HolePunchServer::start());
-
-        let mut state = State::new(event_sender, mapper);
+        let mut state = try!(State::new(event_sender));
         let cmd_sender = state.cmd_sender.clone();
 
         let handle = try!(Self::new_thread("run loop", move || state.run() ));
@@ -256,6 +255,7 @@ impl Service {
 
             let handshake = Handshake {
                 mapper_port: Some(state.mapper.listening_addr().port()),
+                external_ip: state.mapper.external_address().map(SocketAddrV4W),
             };
 
             let _ = Self::new_thread("connect", move || {
@@ -305,6 +305,7 @@ impl Service {
 
             let handshake = Handshake {
                 mapper_port: Some(state.mapper.listening_addr().port()),
+                external_ip: state.mapper.external_address().map(SocketAddrV4W),
             };
 
             let _ = Self::new_thread("listen", move || {
@@ -357,7 +358,7 @@ impl Service {
                 let async = async.clone();
                 let event_sender = state.event_sender.clone();
 
-                async_map_external_port(&internal_ep.to_ip(),
+                async_map_external_port(internal_ep.to_ip().clone(),
                                         Box::new(move |results: io::Result<Vec<T>>| {
                     let mut async = async.lock().unwrap();
                     async.remaining -= 1;
