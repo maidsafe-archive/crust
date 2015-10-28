@@ -15,9 +15,6 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use rustc_serialize::Decodable;
-use std::fmt::Debug;
-
 /// Struct for reading and writing config files.
 ///
 /// # Thread- and Process-Safety
@@ -76,41 +73,16 @@ impl FileHandler {
     /// and reading or decoding fails, this function **WILL TERMINATE THE APPLICATION.**  This means
     /// that the only cause for an error to be returned from this function is the non-existence of
     /// the file in all attempted locations.
-    pub fn read_file<Contents: Decodable + Debug>(&mut self) ->
+    pub fn read_file<Contents: ::rustc_serialize::Decodable>(&mut self) ->
             Result<Contents, ::error::Error> {
-        use ::error::Error::NotSet;
-
-        let entries = vec![("last_used"       , self.path.clone().ok_or(NotSet)),
-                           ("current_bind_dir", current_bin_dir()),
-                           ("user_app_dir"    , user_app_dir()),
-                           ("system_cache_dir", system_cache_dir())];
-
-        let mut last_err = Err(NotSet);
-
-        for entry in entries {
-            let path = match entry.1 {
-                Ok(path) => path,
-                Err(what) => {
-                    info!("read_file: directory {:?} not used {:?}", entry.0, what);
-                    continue;
-                }
-            };
-
-            let name = self.name.clone();
-
-            match self.set_path(Ok(path.clone())).and_then(Self::read) {
-                Ok(content) => {
-                    info!("read_file: {:?} OK {:?}", path.join(name), content);
-                    return Ok(content);
-                },
-                Err(what) => {
-                    info!("read_file: {:?} {}", path.join(name), what);
-                    last_err = Err(what);
-                }
-            }
-        }
-
-        last_err
+        self.path().clone().ok_or(::error::Error::NotSet).and_then(Self::read)
+            .or_else(|_| self.set_path(current_bin_dir()).and_then(Self::read))
+            .or_else(|_| self.set_path(user_app_dir()).and_then(Self::read))
+            .or_else(|_| self.set_path(system_cache_dir()).and_then(Self::read))
+            .or_else(|error| {
+                self.path = None;
+                Err(error)
+            })
     }
 
     /// JSON-encodes then writes `contents` to the file.  Creates the file if it doesn't already
@@ -172,14 +144,14 @@ impl FileHandler {
     fn set_path(&mut self, new_path: Result<::std::path::PathBuf, ::error::Error>) ->
             Result<::std::path::PathBuf, ::error::Error> {
         new_path.and_then(|mut path| {
-            self.path = Some(path.clone());
             path.push(self.name.clone());
+            self.path = Some(path.clone());
             Ok(path)
         })
     }
 
     fn die(message: String, code: i32) {
-        error!("Die {}", message);
+        error!("die {}", message);
         ::std::process::exit(code);
     }
 

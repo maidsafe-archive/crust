@@ -32,19 +32,6 @@ pub enum Error {
     NotSet,
 }
 
-impl ::std::fmt::Display for Error {
-    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        match self {
-            &Error::EnvError(ref v) => write!(f, "EnvError {}", v),
-            &Error::IoError(ref v) => write!(f, "IoError {}", v),
-            &Error::JsonDecoderError(ref v) => write!(f, "JsonDecoderError {}", v),
-            &Error::JsonEncoderError(ref v) => write!(f, "JsonEncoderError {}", v),
-            &Error::CborError(ref v) => write!(f, "CborError {}", v),
-            &Error::NotSet => write!(f, "NotSet"),
-        }
-    }
-}
-
 impl From<::std::env::VarError> for Error {
     fn from(error: ::std::env::VarError) -> Self {
         Error::EnvError(error)
