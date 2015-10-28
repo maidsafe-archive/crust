@@ -325,10 +325,10 @@ mod test {
 
         assert!(file_handler.read_file::<u64>().is_err());
         assert!(file_handler.path().is_none());
-        evaluate_result!(file_handler.write_file(&test_value));
-        evaluate_option!(file_handler.path(), "Path should be set");
-        let result = evaluate_result!(file_handler.read_file::<u64>());
+        file_handler.write_file(&test_value).unwrap();
+        assert!(file_handler.path().is_some());
+        let result = file_handler.read_file::<u64>().unwrap();
         assert_eq!(result, test_value);
-        evaluate_option!(file_handler.path(), "Path should still be set");
+        assert!(file_handler.path().is_some());
     }
 }
