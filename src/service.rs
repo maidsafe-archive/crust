@@ -22,19 +22,20 @@ use std::boxed::FnBox;
 use std::thread::JoinHandle;
 use std::sync::{Arc, Mutex};
 
-use std::net::SocketAddrV4;
+use std::net::{SocketAddr, SocketAddrV4, UdpSocket};
 use beacon;
 use bootstrap_handler::BootstrapHandler;
 use config_handler::{Config, read_config_file};
 use getifaddrs::{getifaddrs, filter_loopback};
 use transport;
-use transport::{Endpoint, Port, Message};
+use transport::{Endpoint, Port, Handshake};
 use ip;
 use map_external_port::async_map_external_port;
 use connection::Connection;
 
 use state::State;
-use event::Event;
+use event::{Event, HolePunchResult};
+use util::SocketAddrV4W;
 
 /// Type used to represent serialised data in a message.
 pub type Bytes = Vec<u8>;
@@ -50,6 +51,7 @@ pub struct Service {
     beacon_guid_and_port : Option<(beacon::GUID, u16)>,
     config               : Config,
     cmd_sender           : Sender<Closure>,
+    state_thread_handle  : Option<JoinHandle<()>>,
 }
 
 impl Service {
@@ -78,10 +80,10 @@ impl Service {
 
     fn construct(event_sender: Sender<Event>, config: Config)
             -> io::Result<Service> {
-        let mut state = State::new(event_sender);
+        let mut state = try!(State::new(event_sender));
         let cmd_sender = state.cmd_sender.clone();
 
-        let _handle = try!(Self::new_thread("run loop", move || {
+        let handle = try!(Self::new_thread("run loop", move || {
                                 state.run();
                             }));
 
@@ -89,6 +91,7 @@ impl Service {
                               beacon_guid_and_port : None,
                               config               : config,
                               cmd_sender           : cmd_sender,
+                              state_thread_handle  : Some(handle)
                           };
 
         let beacon_port = service.config.beacon_port.clone();
@@ -210,6 +213,9 @@ impl Service {
     /// This should be called before destroying an instance of a Service to allow the
     /// listener threads to join.  Once called, the Service should be destroyed.
     pub fn stop(&mut self) {
+        use std::net::TcpStream;
+        use utp::UtpSocket;
+
         if let Some(beacon_guid_and_port) = self.beacon_guid_and_port {
             beacon::BroadcastAcceptor::stop(&beacon_guid_and_port);
             self.beacon_guid_and_port = None;
@@ -221,9 +227,18 @@ impl Service {
             // Connect to our listening ports, this should unblock
             // the threads.
             for port in state.listening_ports.iter() {
-                let _ = State::connect(::util::loopback_v4(*port));
+                let addr = ::util::loopback_v4(*port).get_address();
+
+                match *port {
+                    Port::Tcp(_) => { let _ = TcpStream::connect(&addr); },
+                    Port::Utp(_) => { let _ = UtpSocket::connect(&addr); }
+                }
             }
         }));
+
+        if let Some(handle) = self.state_thread_handle.take() {
+            let _ = handle.join();
+        }
     }
 
     /// Opens a connection to a remote peer. `endpoints` is a vector of addresses of the remote
@@ -241,11 +256,18 @@ impl Service {
         Self::post(&self.cmd_sender, move |state : &mut State| {
             let cmd_sender = state.cmd_sender.clone();
 
+            let handshake = Handshake {
+                mapper_port: Some(state.mapper.listening_addr().port()),
+                external_ip: state.mapper.external_address().map(SocketAddrV4W),
+            };
+
             let _ = Self::new_thread("connect", move || {
                 for endpoint in endpoints {
-                    if let Ok(transport) = State::connect(endpoint) {
+                    if let Ok((h, t)) = State::connect(handshake.clone(), endpoint) {
                         let _ = cmd_sender.send(Box::new(move |state: &mut State| {
-                            let _ = state.handle_connect(transport, is_broadcast_acceptor);
+                            let _ = state.handle_connect(h,
+                                                         t,
+                                                         is_broadcast_acceptor);
                         }));
                     }
                 }
@@ -256,17 +278,7 @@ impl Service {
     /// Sends a message over a specified connection.
     pub fn send(&self, connection: Connection, message: Bytes) {
         Self::post(&self.cmd_sender, move |state: &mut State| {
-            let writer_channel = match state.connections.get(&connection) {
-                Some(writer_channel) => writer_channel.clone(),
-                None => {
-                    // Connection already destroyed or never existed.
-                    return;
-                }
-            };
-
-            if let Err(_what) = writer_channel.send(Message::UserBlob(message)) {
-                state.unregister_connection(connection);
-            }
+            state.send(connection, message);
         })
     }
 
@@ -291,19 +303,29 @@ impl Service {
         let cmd_sender2 = cmd_sender.clone();
 
         Self::post(&cmd_sender, move |state: &mut State| {
-            state.listening_ports.insert(acceptor.local_port());
+            let port = acceptor.local_port();
+            state.listening_ports.insert(port);
+
+            let handshake = Handshake {
+                mapper_port: Some(state.mapper.listening_addr().port()),
+                external_ip: state.mapper.external_address().map(SocketAddrV4W),
+            };
 
             let _ = Self::new_thread("listen", move || {
-                let accept_result = State::accept(&acceptor);
+                let accept_result = State::accept(handshake, &acceptor);
                 let cmd_sender3 = cmd_sender2.clone();
 
                 let _ = cmd_sender2.send(Box::new(move |state: &mut State| {
+                    state.listening_ports.remove(&port);
+
                     if state.stop_called {
                         return;
                     }
 
                     match accept_result {
-                        Ok(transport) => { let _ = state.handle_accept(transport); },
+                        Ok((handshake, transport)) => {
+                            let _ = state.handle_accept(handshake, transport);
+                        },
                         Err(_) => {
                             // TODO: What now? Stop? Start again?
                             panic!();
@@ -339,7 +361,7 @@ impl Service {
                 let async = async.clone();
                 let event_sender = state.event_sender.clone();
 
-                async_map_external_port(&internal_ep.to_ip(),
+                async_map_external_port(internal_ep.to_ip().clone(),
                                         Box::new(move |results: io::Result<Vec<T>>| {
                     let mut async = async.lock().unwrap();
                     async.remaining -= 1;
@@ -362,6 +384,12 @@ impl Service {
         });
     }
 
+    pub fn get_mapped_udp_socket(&self, result_token: u32) {
+        Self::post(&self.cmd_sender, move |state: &mut State| {
+            state.get_mapped_udp_socket(result_token);
+        });
+    }
+
     fn new_thread<F,T>(name: &str, f: F) -> io::Result<JoinHandle<T>>
             where F: FnOnce() -> T, F: Send + 'static, T: Send + 'static {
         thread::Builder::new().name("Service::".to_string() + name)
@@ -370,6 +398,32 @@ impl Service {
 
     fn post<F>(sender: &Sender<Closure>, cmd: F) where F: FnBox(&mut State) + Send + 'static {
         assert!(sender.send(Box::new(cmd)).is_ok());
+    }
+
+    pub fn udp_punch_hole(&self,
+                          result_token: u32,
+                          udp_socket: UdpSocket,
+                          secret: Option<[u8; 4]>,
+                          peer_addr: SocketAddr)
+    {
+        Self::post(&self.cmd_sender, move |state: &mut State| {
+            let event_sender = state.event_sender.clone();
+
+            // TODO (canndrew): we currently have no means to handle this error
+            let _ = Self::new_thread("udp_punch_hole", move || {
+                let (udp_socket, result_addr)
+                    = ::hole_punching::blocking_udp_punch_hole(udp_socket,
+                                                               secret,
+                                                               peer_addr);
+
+                // TODO (canndrew): we currently have no means to handle this error
+                let _ = event_sender.send(Event::OnHolePunched(HolePunchResult {
+                    result_token: result_token,
+                    udp_socket:   udp_socket,
+                    peer_addr:    result_addr,
+                }));
+            });
+        });
     }
 }
 
@@ -501,8 +555,6 @@ mod test {
 
     #[test]
     fn connection_manager() {
-        // Wait 2 seconds until previous bootstrap test ends. If not, that test connects to these endpoints.
-        thread::sleep_ms(2000);
         let run_cm = |cm: Service, o: Receiver<Event>| {
             spawn(move || {
                 for i in o.iter() {
@@ -516,10 +568,7 @@ mod test {
                         Event::NewMessage(_, _) => {
                             break;
                         },
-                        Event::LostConnection(_) => {
-                        },
-                        Event::BootstrapFinished => {}
-                        Event::ExternalEndpoints(_) => {}
+                        _ => {},
                     }
                 }
                 // debug!("done");
@@ -661,17 +710,10 @@ mod test {
                 };
 
                 match event {
-                    Event::NewMessage(_, _) => {
-                    },
-                    Event::OnConnect(_) => {
-                    },
-                    Event::OnAccept(_) => {
-                    },
                     Event::LostConnection(_) => {
                         break;
                     },
-                    Event::BootstrapFinished => {},
-                    Event::ExternalEndpoints(_) => {},
+                    _ => {},
                 }
             }
         });
@@ -698,5 +740,27 @@ mod test {
         thread::sleep_ms(100);
 
         let _ = thread.join();
+    }
+
+    #[test]
+    fn reaccept() {
+        let tcp_port;
+        let utp_port;
+
+        {
+            let (sender, _) = channel();
+            let mut service = Service::new(sender).unwrap();
+            // random port assigned by os
+            tcp_port = service.start_accepting(Port::Tcp(0)).unwrap().get_port();
+            utp_port = service.start_accepting(Port::Utp(0)).unwrap().get_port();
+        }
+
+        {
+            let (sender, _) = channel();
+            let mut service = Service::new(sender.clone()).unwrap();
+            // reuse the ports from above
+            let _ = service.start_accepting(tcp_port).unwrap();
+            let _ = service.start_accepting(utp_port).unwrap();
+        }
     }
 }

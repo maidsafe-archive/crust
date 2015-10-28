@@ -18,15 +18,26 @@
 use ip;
 use igd;
 use std::io;
-use std::sync::{Arc, Mutex};
 use getifaddrs::{getifaddrs, filter_loopback};
 use std::net::{IpAddr, SocketAddrV4};
 use std::thread;
 use std::boxed::FnBox;
+use std::time::Duration;
 
-pub fn async_map_external_port<Callback>(local_ep: &ip::Endpoint, callback: Box<Callback>)
+// How long do we wait to receive a response from the IGD?
+const IGD_SEARCH_TIMEOUT_SECS: u64 = 1;
+
+pub fn async_map_external_port<Callback>(local_ep: ip::Endpoint, callback: Box<Callback>)
     where Callback: FnBox(io::Result<Vec<(SocketAddrV4, ip::Endpoint)>>) +
           Send + 'static
+{
+    let _detach = thread::spawn(move || {
+        let res = sync_map_external_port(&local_ep);
+        callback.call_box((res,));
+    });
+}
+
+pub fn sync_map_external_port(local_ep: &ip::Endpoint) -> io::Result<Vec<(SocketAddrV4, ip::Endpoint)>>
 {
     let is_unspecified = match local_ep.ip() {
         IpAddr::V4(addr) => addr.is_unspecified(),
@@ -37,10 +48,8 @@ pub fn async_map_external_port<Callback>(local_ep: &ip::Endpoint, callback: Box<
         let ip = match local_ep.ip() {
             IpAddr::V4(ip_addr) => ip_addr,
             IpAddr::V6(_) => {
-                let e = Err(io::Error::new(io::ErrorKind::Other,
+                return Err(io::Error::new(io::ErrorKind::Other,
                                            "Ip v6 not supported by the uPnP library"));
-                callback.call_box((e,));
-                return;
             }
         };
         vec![SocketAddrV4::new(ip, local_ep.port().number())]
@@ -63,36 +72,22 @@ pub fn async_map_external_port<Callback>(local_ep: &ip::Endpoint, callback: Box<
     let eps_count = local_eps.len();
 
     if eps_count == 0 {
-        let e = Err(io::Error::new(io::ErrorKind::Other, "No network interface found"));
-        callback.call_box((e,));
-        return;
+        return Err(io::Error::new(io::ErrorKind::Other, "No network interface found"));
     }
 
-    type R = io::Result<(SocketAddrV4, ip::Endpoint)>;
-    let results = Arc::new(Mutex::new(Vec::<R>::new()));
-    let callback_mut = Arc::new(Mutex::new(Some(callback)));
     let local_port = local_ep.port();
-
+    let mut join_handles = Vec::with_capacity(eps_count);
     for local_ep in local_eps {
-        let local_ep = local_ep.clone();
-        let results = results.clone();
-        let callback_mut = callback_mut.clone();
-
-        let _join_handle = thread::spawn(move || {
-            let result = map_external_port(local_ep.clone(), local_port);
-            let mut results = results.lock().unwrap();
-            results.push(result.map(|ext_ep| (local_ep, ext_ep)));
-            if results.len() == eps_count {
-                let opt_callback = callback_mut.lock().unwrap().take();
-                if let Some(c) = opt_callback {
-                    c.call_box((Ok(Vec::new()),));
-                }
-                else {
-                    panic!("Callback should have been called only once");
-                }
-            }
-        });
+        join_handles.push(thread::spawn(move || {
+            let result = map_external_port(local_ep, local_port);
+            result.map(|ext_ep| (local_ep, ext_ep))
+        }));
+    };
+    let mut ret = Vec::with_capacity(eps_count);
+    for h in join_handles {
+        ret.push(try!(h.join().unwrap()));
     }
+    Ok(ret)
 }
 
 // --- Private helper functions ------------------------------------------------
@@ -111,7 +106,9 @@ fn from_request_result<T>(r: Result<T, igd::RequestError>) -> io::Result<T> {
 fn map_external_port(local_ep: SocketAddrV4, ext_port: ip::Port)
     -> io::Result<ip::Endpoint>
 {
-    let gateway = try!(from_search_result(igd::search_gateway_from(local_ep.ip().clone())));
+    let gateway = try!(from_search_result(igd::search_gateway_from_timeout(
+                            local_ep.ip().clone(), 
+                            Duration::from_secs(IGD_SEARCH_TIMEOUT_SECS))));
 
     let igd_protocol = match &ext_port {
         &ip::Port::Tcp(_) => igd::PortMappingProtocol::TCP,
@@ -148,7 +145,7 @@ mod test {
         let (sender, receiver) = mpsc::channel::<R>();
         let unspecified_ip = IpAddr::V4(Ipv4Addr::new(0,0,0,0));
         let local_ep = ip::Endpoint::new(unspecified_ip, ip::Port::Udp(5484));
-        async_map_external_port(&local_ep, Box::new(move |result: R| {
+        async_map_external_port(local_ep, Box::new(move |result: R| {
             assert!(sender.send(result).is_ok());
         }));
 

@@ -45,7 +45,8 @@ use std::sync::mpsc::channel;
 use std::sync::mpsc::Sender;
 use std::io;
 use std::io::Write;
-use std::net::SocketAddr;
+use std::net::{UdpSocket, SocketAddr};
+use std::collections::HashSet;
 use std::str::FromStr;
 use std::thread;
 use std::sync::{Arc, Mutex};
@@ -89,57 +90,9 @@ struct Args {
     flag_help: bool,
 }
 
-// We'll use docopt to help parse the ongoing CLI commands entered by the user.
-static CLI_USAGE: &'static str = "
-Usage:
-  cli connect <endpoint>
-  cli send <peer> <message>...
-  cli stop
-";
-
-#[derive(RustcDecodable, Debug)]
-struct CliArgs {
-    cmd_connect: bool,
-    cmd_send: bool,
-    cmd_stop: bool,
-    arg_endpoint: Option<PeerEndpoint>,
-    arg_peer: Option<usize>,
-    arg_message: Vec<String>,
-}
-
-#[derive(Debug)]
-struct PeerEndpoint {
-    pub addr: Endpoint,
-}
-
-impl Decodable for PeerEndpoint {
-    fn decode<D: Decoder>(decoder: &mut D)->Result<PeerEndpoint, D::Error> {
-        let str = try!(decoder.read_str());
-        if !str.ends_with(')') {
-            return Err(decoder.error("Protocol missing"))
-        }
-        let address = match SocketAddr::from_str(&str[4 .. str.len() - 1]) {
-            Ok(addr) => addr,
-            Err(_) => {
-                return Err(decoder.error(&format!(
-                    "Could not decode {} as valid IPv4 or IPv6 address.", str)));
-            },
-        };
-        if str.starts_with("Tcp(") {
-            Ok(PeerEndpoint { addr: Endpoint::tcp(address) })
-        } else if str.starts_with("Utp(") {
-            Ok(PeerEndpoint { addr: Endpoint::utp(address) })
-        } else {
-            Err(decoder.error("Unrecognized protocol"))
-        }
-    }
-}
-
 fn generate_random_vec_u8(size: usize) -> Vec<u8> {
     let mut vec: Vec<u8> = Vec::with_capacity(size);
-    for _ in 0..size {
-        vec.push(random::<u8>());
-    }
+    for _ in 0..size { vec.push(random::<u8>()); }
     vec
 }
 
@@ -155,7 +108,11 @@ fn node_user_repr(node: &Endpoint) -> String {
     }
 }
 
-// simple "NodeInfo", without PKI
+////////////////////////////////////////////////////////////////////////////////
+//
+// CrustNode
+//
+////////////////////////////////////////////////////////////////////////////////
 #[derive(Clone)]
 struct CrustNode {
     pub connection_id: Connection,
@@ -171,23 +128,98 @@ impl CrustNode {
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////
+//
+// UdpData
+//
+////////////////////////////////////////////////////////////////////////////////
+struct UdpData {
+    stopped:            Arc<Mutex<bool>>,
+    socket:             UdpSocket,
+    external_endpoints: HashSet<SocketAddr>,
+    receiver_join_handle: Option<thread::JoinHandle<()>>,
+}
+
+impl UdpData {
+    pub fn new(socket: UdpSocket, ext_eps: HashSet<SocketAddr>) -> UdpData {
+        use ::std::io::ErrorKind::{TimedOut, WouldBlock, Interrupted};
+
+        let stopped = Arc::new(Mutex::new(false));
+        let stopped_copy = stopped.clone();
+        let socket_copy  = socket.try_clone().unwrap();
+
+        let join_handle = thread::spawn(move || {
+            let mut buf = [0u8; 256];
+            let timeout = ::std::time::Duration::from_millis(100);
+            assert!(socket.set_read_timeout(Some(timeout)).is_ok());
+            loop {
+                {
+                    let stopped = stopped.lock().unwrap();
+                    if *stopped { break; }
+                }
+
+                match socket.recv_from(&mut buf) {
+                    Ok(_x)   => {
+                        println!("UdpSocket received data");
+                    },
+                    Err(e)  => match e.kind() {
+                        TimedOut | WouldBlock => continue,
+                        Interrupted => (),
+                        _   => break,
+                    },
+                }
+            }
+        });
+
+        UdpData {
+            stopped: stopped_copy,
+            socket: socket_copy,
+            external_endpoints: ext_eps,
+            receiver_join_handle: Some(join_handle),
+        }
+    }
+
+    pub fn send_to(&self, destination: SocketAddr) {
+        let buf = [0u8; 256];
+        assert!(self.socket.send_to(&buf, destination).is_ok());
+    }
+}
+
+impl Drop for UdpData {
+    fn drop(&mut self) {
+        {
+            let mut stopped = self.stopped.lock().unwrap();
+            *stopped = true;
+        }
+        let join_handle = self.receiver_join_handle.take();
+        assert!(join_handle.unwrap().join().is_ok());
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// Network
+//
+////////////////////////////////////////////////////////////////////////////////
 struct Network {
-    crust_nodes: Vec<CrustNode>,
-    performance_start: time::SteadyTime,
+    crust_nodes:          Vec<CrustNode>,
+    udp_data:             Vec<UdpData>,
+    performance_start:    time::SteadyTime,
     performance_interval: time::Duration,
-    received_msgs: u32,
-    received_bytes: u32
+    received_msgs:        u32,
+    received_bytes:       usize
 }
 
 // simple "routing table" without any structure
 impl Network {
     pub fn new() -> Network {
         Network {
-            crust_nodes: Vec::with_capacity(40),
-            performance_start: time::SteadyTime::now(),
+            crust_nodes:          Vec::new(),
+            udp_data:             Vec::new(),
+            performance_start:    time::SteadyTime::now(),
             performance_interval: time::Duration::seconds(10),
-            received_msgs: 0,
-            received_bytes: 0
+            received_msgs:        0,
+            received_bytes:       0
         }
     }
 
@@ -218,28 +250,36 @@ impl Network {
                     true => Some(node.connection_id.clone()),
                     false => None,
                 }).collect::<Vec<_>>();
-        if connected_nodes.is_empty() {
-            println!("No connected nodes.");
-        } else {
-            if connected_nodes.len() == 1 {
-                println!("1 connected node:");
-            } else {
-                println!("{} connected nodes:", connected_nodes.len());
-            }
-            let mut i = 0;
-            for node in &connected_nodes {
-                println!("  [{}] {:?}", i, node);
-                i += 1;
-            }
-            println!("");
+ 
+        println!("Connected node count: {}", connected_nodes.len());
+        let mut i = 0;
+        for node in &connected_nodes {
+            println!("    [{}] {:?}", i, node);
+            i += 1;
         }
+
+        println!("Udp socket count: {}", self.udp_data.len());
+        let mut i = 0;
+        for data in &self.udp_data {
+            println!("    [{}] {:?} {:?}",
+                     i,
+                     data.socket.local_addr().unwrap(),
+                     data.external_endpoints);
+            i += 1;
+        }
+
+        println!("");
     }
 
     pub fn get(&self, n: usize) -> Option<&CrustNode> {
         self.crust_nodes.get(n)
     }
 
-    pub fn record_received(&mut self, msg_size: u32) {
+    pub fn get_udp(&self, n: usize) -> Option<&UdpData> {
+        self.udp_data.get(n)
+    }
+
+    pub fn record_received(&mut self, msg_size: usize) {
         self.received_msgs += 1;
         self.received_bytes += msg_size;
         if self.received_msgs == 1 {
@@ -408,6 +448,7 @@ fn main() {
 
     // Start event-handling thread
     let running_speed_test = args.flag_speed.is_some();
+
     let handler = match thread::Builder::new().name("CrustNode event handler".to_string())
                                               .spawn(move || {
         let mut bootstrapped = false;
@@ -417,7 +458,7 @@ fn main() {
                     stdout_copy = cyan_foreground(stdout_copy);
                     let message_length = bytes.len();
                     let mut network = network2.lock().unwrap();
-                    network.record_received(message_length as u32);
+                    network.record_received(message_length);
                     println!("\nReceived from {} message: {}",
                              node_user_repr(&connection.peer_endpoint()),
                              String::from_utf8(bytes)
@@ -454,8 +495,24 @@ fn main() {
                     network.drop_node(c);
                     network.print_connected_nodes();
                 },
-                crust::Event::BootstrapFinished => {}
-                crust::Event::ExternalEndpoints(_) => {
+                crust::Event::OnUdpSocketMapped(content) => {
+                    match content.result {
+                        Ok((socket, ext_endpoints)) => {
+                            println!("UdpSocket mapped: {} {:?}",
+                                     content.result_token, ext_endpoints);
+
+                            let mut network = network2.lock().unwrap();
+                            network.udp_data.push(UdpData::new(socket, ext_endpoints));
+                            network.print_connected_nodes();
+                        },
+                        Err(what) => {
+                            println!("UdpSocket mapping failed: {} {:?}",
+                                     content.result_token, what);
+                        },
+                    }
+                }
+                e => {
+                    println!("\nReceived event {:?} (not handled)", e);
                 }
             }
             stdout_copy = reset_foreground(stdout_copy);
@@ -473,22 +530,24 @@ fn main() {
         },
     };
 
-    let tx = on_time_out(5000, running_speed_test);
-    // Block until we get one bootstrap connection
-    let connected_peer = bs_receiver.recv().unwrap_or_else(|e| {
-        println!("CrustNode event handler closed; error : {}", e);
-        std::process::exit(6);
-    });
-
-    stdout = green_foreground(stdout);
-    println!("Bootstrapped to {:?}", connected_peer);
-    stdout = reset_foreground(stdout);
-    let _ = tx.send(true); // stop timer with no error messages
-
-    thread::sleep_ms(100);
-    println!("");
-
     if running_speed_test {  // Processing interaction till receiving ctrl+C
+        let tx = on_time_out(5000, running_speed_test);
+
+        // Block until we get one bootstrap connection
+        let connected_peer = bs_receiver.recv().unwrap_or_else(|e| {
+            println!("CrustNode event handler closed; error : {}", e);
+            std::process::exit(6);
+        });
+
+        stdout = green_foreground(stdout);
+        println!("Bootstrapped to {:?}", connected_peer);
+        let _ = reset_foreground(stdout);
+
+        let _ = tx.send(true); // stop timer with no error messages
+
+        thread::sleep_ms(100);
+        println!("");
+
         let speed = args.flag_speed.unwrap();  // Safe due to `running_speed_test` == true
         let peer = connected_peer;
         let mut rng = rand::thread_rng();
@@ -503,56 +562,183 @@ fn main() {
             }
         }
     } else {
-        let ref mut command = String::new();
-        let docopt: Docopt = Docopt::new(CLI_USAGE).unwrap_or_else(|error| error.exit());
         let stdin = io::stdin();
-        loop {
-            command.clear();
-            print_input_line();
-            let _ = stdin.read_line(command);
-            let x: &[_] = &['\r', '\n'];
-            let mut raw_args: Vec<&str> = command.trim_right_matches(x).split(' ').collect();
-            raw_args.insert(0, "cli");
-            let args: CliArgs = match docopt.clone().argv(raw_args.into_iter()).decode() {
-                Ok(args) => args,
-                Err(error) => {
-                    match error {
-                        docopt::Error::Decode(what) => println!("{}", what),
-                        _ => println!("Invalid command."),
-                    };
-                    continue
-                },
-            };
 
-            if args.cmd_connect {
-                // docopt should ensure arg_peer is valid
-                assert!(args.arg_endpoint.is_some());
-                let peer = vec![args.arg_endpoint.unwrap().addr];
-                service.connect(peer);
-            } else if args.cmd_send {
-                // docopt should ensure arg_peer and arg_message are valid
-                assert!(args.arg_peer.is_some());
-                assert!(!args.arg_message.is_empty());
-                let peer = args.arg_peer.unwrap();
-                let mut message: String = args.arg_message[0].clone();
-                for i in 1..args.arg_message.len() {
-                    message.push_str(" ");
-                    message.push_str(&args.arg_message[i]);
-                };
-                let network = network.lock().unwrap();
-                match network.get(peer) {
-                    Some(ref node) => service.send(node.connection_id, message.clone().into_bytes()),
-                    None => println!("Invalid connection #"),
-                }
-            } else if args.cmd_stop {
-                stdout = green_foreground(stdout);
-                println!("Stopped.");
-                let _ = reset_foreground(stdout);
-                break;
+        loop {
+            let mut command = String::new();
+            print_input_line();
+            assert!(stdin.read_line(&mut command).is_ok());
+
+            let cmd = match parse_user_command(command) {
+                Some(cmd) => cmd,
+                None => continue,
+            };
+            
+            match cmd {
+                UserCommand::Connect(ep) => {
+                    println!("Connecting to {:?}", ep);
+                    service.connect(vec![ep]);
+                },
+                UserCommand::Send(peer, message) => {
+                    let network = network.lock().unwrap();
+                    match network.get(peer) {
+                        Some(ref node) => service.send(node.connection_id,
+                                                       message.into_bytes()),
+                        None => println!("Invalid connection #"),
+                    }
+                },
+                UserCommand::SendUdp(peer, dst, _message) => {
+                    let network = network.lock().unwrap();
+                    match network.get_udp(peer) {
+                        Some(ref udp) => udp.send_to(dst),
+                        None => println!("Invalid udp #"),
+                    }
+                },
+                UserCommand::Punch(peer, dst) => {
+                    let network = network.lock().unwrap();
+                    match network.get_udp(peer) {
+                        Some(ref udp) => {
+                            let socket = udp.socket.try_clone().unwrap();
+                            service.udp_punch_hole(0, socket, None, dst);
+                        },
+                        None => println!("Invalid udp #"),
+                    }
+                },
+                UserCommand::Map => {
+                    service.get_mapped_udp_socket(0);
+                },
+                UserCommand::Stop => {
+                    break;
+                },
             }
         }
     }
+
     service.stop();
     drop(service);
-    let _ = handler.join();
+
+    assert!(handler.join().is_ok());
 }
+
+////////////////////////////////////////////////////////////////////////////////
+//
+//  Paring user commands.
+//
+////////////////////////////////////////////////////////////////////////////////
+// We'll use docopt to help parse the ongoing CLI commands entered by the user.
+static CLI_USAGE: &'static str = "
+Usage:
+  cli connect <endpoint>
+  cli send <peer> <message>...
+  cli send-udp <peer> <destination> <message>...
+  cli map
+  cli punch <peer> <destination>
+  cli stop
+";
+
+#[derive(RustcDecodable, Debug)]
+struct CliArgs {
+    cmd_connect:     bool,
+    cmd_send:        bool,
+    cmd_send_udp:    bool,
+    cmd_map:         bool,
+    cmd_punch:       bool,
+    cmd_stop:        bool,
+    arg_endpoint:    Option<PeerEndpoint>,
+    arg_destination: Option<::crust::SocketAddrW>,
+    arg_peer:        Option<usize>,
+    arg_message:     Vec<String>,
+}
+
+#[derive(PartialEq, Eq, Debug, Clone)]
+enum UserCommand {
+    Stop,
+    Connect(Endpoint),
+    Send(usize, String),
+    SendUdp(usize, SocketAddr, String),
+    Punch(usize, SocketAddr),
+    Map,
+}
+
+fn parse_user_command(cmd : String) -> Option<UserCommand> {
+    let docopt: Docopt = Docopt::new(CLI_USAGE)
+                         .unwrap_or_else(|error| error.exit());
+
+    let mut cmds = cmd.trim_right_matches(|c| c == '\r' || c == '\n')
+                      .split(' ')
+                      .collect::<Vec<_>>();
+
+    cmds.insert(0, "cli");
+
+    let args: CliArgs = match docopt.clone().argv(cmds.into_iter()).decode() {
+        Ok(args) => args,
+        Err(error) => {
+            match error {
+                docopt::Error::Decode(what) => println!("{}", what),
+                _ => println!("Invalid command."),
+            };
+            return None;
+        },
+    };
+
+    if args.cmd_connect {
+        let peer = args.arg_endpoint.unwrap().addr;
+        Some(UserCommand::Connect(peer))
+    } else if args.cmd_send {
+        let peer = args.arg_peer.unwrap();
+        let msg  = args.arg_message.join(" ");
+        Some(UserCommand::Send(peer, msg))
+    } else if args.cmd_send_udp {
+        let peer = args.arg_peer.unwrap();
+        let dst  = args.arg_destination.unwrap().0;
+        let msg  = args.arg_message.join(" ");
+        Some(UserCommand::SendUdp(peer, dst, msg))
+    } else if args.cmd_map {
+        Some(UserCommand::Map)
+    } else if args.cmd_punch {
+        let peer = args.arg_peer.unwrap();
+        let dst  = args.arg_destination.unwrap().0;
+        Some(UserCommand::Punch(peer, dst))
+    } else if args.cmd_stop {
+        Some(UserCommand::Stop)
+    }
+    else {
+        None
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// Parse transport::Endpoint
+//
+////////////////////////////////////////////////////////////////////////////////
+
+#[derive(Debug)]
+struct PeerEndpoint {
+    pub addr: Endpoint,
+}
+
+impl Decodable for PeerEndpoint {
+    fn decode<D: Decoder>(decoder: &mut D)->Result<PeerEndpoint, D::Error> {
+        let str = try!(decoder.read_str());
+        if !str.ends_with(')') {
+            return Err(decoder.error("Protocol missing"))
+        }
+        let address = match SocketAddr::from_str(&str[4 .. str.len() - 1]) {
+            Ok(addr) => addr,
+            Err(_) => {
+                return Err(decoder.error(&format!(
+                    "Could not decode {} as valid IPv4 or IPv6 address.", str)));
+            },
+        };
+        if str.starts_with("Tcp(") {
+            Ok(PeerEndpoint { addr: Endpoint::tcp(address) })
+        } else if str.starts_with("Utp(") {
+            Ok(PeerEndpoint { addr: Endpoint::utp(address) })
+        } else {
+            Err(decoder.error("Unrecognized protocol"))
+        }
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
