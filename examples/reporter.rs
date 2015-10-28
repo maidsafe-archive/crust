@@ -44,17 +44,23 @@ use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
 use std::collections::HashMap;
 use std::io;
 use std::path::Path;
+use std::sync::Arc;
 use std::sync::mpsc::channel;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 use time::Tm;
 
 static USAGE: &'static str = r#"
 Usage:
-    reporter <config>
+    reporter [-i | --connect-immediately] <config>
     reporter (-h | --help)
 
 Options:
-    -h, --help      Display this help message
+    -i, --connect-immediately   If this flag is set, this node will connect to
+                                other nodes and start sending messages
+                                immediately. Otherwise, it will wait until
+                                someone connects to it first.
+    -h, --help                  Display this help message.
 
 Example config file:
 
@@ -111,9 +117,11 @@ fn main() {
     let mut report = Report::new();
     report.id = config.msg_to_send.clone();
 
+    let connected = Arc::new(AtomicBool::new(args.flag_connect_immediately));
+
     for i in 0..config.service_runs {
         debug!("Service started ({} of {})", i + 1, config.service_runs);
-        report.update(run(&config));
+        report.update(run(connected.clone(), &config));
         debug!("Service stopped ({} of {})", i + 1, config.service_runs);
 
         thread::sleep_ms(thread_rng().gen_range(
@@ -126,7 +134,8 @@ fn main() {
 
 #[derive(RustcDecodable)]
 struct Args {
-    arg_config: String
+    arg_config: String,
+    flag_connect_immediately: bool
 }
 
 #[derive(Debug, RustcDecodable)]
@@ -153,7 +162,7 @@ impl Config {
 
 // This is a wrapper for std::net::SocketAdds so we can implement Decodable
 // for it.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct SocketAddr(std::net::SocketAddr);
 
 impl SocketAddr {
@@ -216,7 +225,7 @@ impl Report {
     fn record_event(&mut self, event: &Event) {
         self.events.push(Some(EventEntry {
             timestamp:   time::now(),
-            description: format!("{:?}", event)
+            description: format_event(event)
         }));
     }
 
@@ -247,15 +256,33 @@ impl Encodable for EventEntry {
     }
 }
 
-fn run(config: &Config) -> Report {
+fn format_event(event: &Event) -> String {
+    match *event {
+        Event::NewMessage(ref connection, ref data) => {
+            format!("NewMessage({:?}, \"{}\")", connection,
+                    String::from_utf8_lossy(&data))
+        },
+        _ => format!("{:?}", event)
+    }
+}
+
+fn run(connected: Arc<AtomicBool>, config: &Config) -> Report {
     let (event_sender, event_receiver) = channel();
+
     let (message_sender0, message_receiver) = channel();
     let message_sender1 = message_sender0.clone();
 
+    // This channel is used to wait until someone connects to us.
+    let (wait_sender, wait_receiver) = channel();
+
     let mut service = Service::new(event_sender).unwrap();
 
-    if !config.ips.is_empty() {
-        connect_to_all(&mut service, &config.ips);
+    if connected.load(Ordering::Relaxed) {
+        if !config.ips.is_empty() {
+            connect_to_all(&mut service, &config.ips);
+        }
+
+        wait_sender.send(()).unwrap();
     }
 
     if let Some(port) = config.listening_port {
@@ -263,6 +290,7 @@ fn run(config: &Config) -> Report {
     }
 
     let message_bytes = config.msg_to_send.bytes().collect::<Vec<_>>();
+    let ips = config.ips.clone();
 
     // This thread is for receiving events from the service.
     let event_thread_handle = thread::spawn(move || {
@@ -299,11 +327,17 @@ fn run(config: &Config) -> Report {
     });
 
     // This thread is for sending messages via the service.
+    let connected2 = connected.clone();
     let message_thread_handle = thread::spawn(move || {
         for connection in message_receiver.iter() {
             match connection {
                 Some(connection) => {
                     service.send(connection, message_bytes.clone());
+
+                    if !connected2.swap(true, Ordering::Relaxed) {
+                        connect_to_all(&mut service, &ips);
+                        wait_sender.send(()).unwrap();
+                    }
                 },
                 None => {
                     service.stop();
@@ -312,6 +346,9 @@ fn run(config: &Config) -> Report {
             };
         }
     });
+
+    // Wait until someone connects to us.
+    let _ = wait_receiver.recv();
 
     thread::sleep_ms(thread_rng().gen_range(MIN_RUN_TIME_MS, MAX_RUN_TIME_MS));
 
@@ -329,6 +366,9 @@ fn run(config: &Config) -> Report {
 fn connect_to_all(service: &mut Service, addrs: &[SocketAddr]) {
     for addr in addrs {
         let addr = addr.0;
+
+        debug!("Connecting to {}", addr);
+
         service.connect(vec![Endpoint::Tcp(addr)]);
         service.connect(vec![Endpoint::Utp(addr)]);
     }
@@ -340,6 +380,7 @@ fn start_accepting(service: &mut Service, port: u16) -> io::Result<()> {
     // FIXME: this panics on the second run, with "Address already in use"
     //        error. Seems like Service is not cleaning up it's stuff properly
     //        when stopped.
+    //        When issue #361 is resolved, this can be uncommented.
     // if let Err(e) = service.start_accepting(Port::Utp(port)) { return Err(e); }
 
     Ok(())
