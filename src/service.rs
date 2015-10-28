@@ -642,6 +642,9 @@ mod test {
         assert!(runner2.join().is_ok());
     }
 
+    // Temporarily ignored this test, should be fixed once a pending PR
+    // to https://github.com/maidsafe/rust-utp/pull/5 gets merged.
+    #[ignore]
     #[test]
     fn rendezvous_connection() {
         // Wait 2 seconds until previous bootstrap test ends. If not, that test connects to these endpoints.
