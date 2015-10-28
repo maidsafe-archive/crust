@@ -30,19 +30,21 @@ use getifaddrs::{getifaddrs, filter_loopback};
 use transport;
 use transport::{Endpoint, Port, Message, Handshake};
 use std::thread::JoinHandle;
-use std::net::{SocketAddr, IpAddr, Ipv4Addr, UdpSocket};
+use std::net::{SocketAddr, IpAddr, Ipv4Addr, SocketAddrV4, UdpSocket};
 
 use itertools::Itertools;
 use event::{Event, MappedUdpSocket};
 use connection::Connection;
 use sequence_number::SequenceNumber;
 use hole_punching::HolePunchServer;
+use util;
 
 pub type Closure = Box<FnBox(&mut State) + Send>;
 
 pub struct ConnectionData {
-    message_sender: Sender<Message>,
-    mapper_address: Option<SocketAddr>,
+    pub message_sender: Sender<Message>,
+    pub mapper_address: Option<SocketAddr>,
+    pub mapper_external_address: Option<SocketAddrV4>,
 }
 
 pub struct State {
@@ -59,11 +61,11 @@ pub struct State {
 }
 
 impl State {
-    pub fn new(event_sender: Sender<Event>,
-               mapper: HolePunchServer) -> State {
+    pub fn new(event_sender: Sender<Event>) -> io::Result<State> {
         let (cmd_sender, cmd_receiver) = mpsc::channel::<Closure>();
+        let mapper = try!(::hole_punching::HolePunchServer::start(cmd_sender.clone()));
 
-        State {
+        Ok(State {
             event_sender        : event_sender,
             cmd_sender          : cmd_sender,
             cmd_receiver        : cmd_receiver,
@@ -74,7 +76,7 @@ impl State {
             is_bootstrapping    : false,
             next_punch_sequence : SequenceNumber::new(::rand::random()),
             mapper              : mapper,
-        }
+        })
     }
 
     pub fn run(&mut self) {
@@ -263,6 +265,7 @@ impl State {
         let connection_data = ConnectionData {
             message_sender: tx,
             mapper_address: mapper_addr,
+            mapper_external_address: handshake.external_ip.map(|sa| sa.0),
         };
 
         // We need to insert the event into event_sender *before* the
@@ -304,10 +307,20 @@ impl State {
 
         let _ = Self::new_thread("reader", move || {
             while let Ok(msg) = receiver.receive() {
-                if let Message::UserBlob(msg) = msg {
-                    if sink.send(Event::NewMessage(connection.clone(), msg)).is_err() {
-                        break
-                    }
+                match msg {
+                    Message::UserBlob(msg) => {
+                        if sink.send(Event::NewMessage(connection.clone(), msg)).is_err() {
+                            break
+                        }
+                    },
+                    Message::HolePunchAddress(a) => {
+                        let _ = cmd_sender.send(Box::new(move |state: &mut State| {
+                            if let Some(cd) = state.connections.get_mut(&connection.clone()) {
+                                cd.mapper_external_address = Some(a.0);
+                            }
+                        }));
+                    },
+                    _ => (),
                 }
             }
             let _ = cmd_sender.send(Box::new(move |state : &mut State| {
@@ -385,6 +398,7 @@ impl State {
         let event_sender = self.event_sender.clone();
         let cmd_sender   = self.cmd_sender.clone();
         let mapper_port  = self.mapper.listening_addr().port();
+        let external_ip  = self.mapper.external_address();
 
         let _ = Self::new_thread("bootstrap_off_list", move || {
             let mut vec_deferred = vec![];
@@ -396,7 +410,10 @@ impl State {
             for contact in bootstrap_list.iter() {
                 let c = contact.clone();
                 vec_deferred.push(Deferred::new(move || {
-                    let h = Handshake { mapper_port: Some(mapper_port) };
+                    let h = Handshake {
+                        mapper_port: Some(mapper_port),
+                        external_ip: external_ip.map(util::SocketAddrV4W),
+                    };
                     Self::connect(h, c)
                 }))
             }
@@ -532,18 +549,17 @@ mod test {
 
         let (event_sender, event_receiver) = channel();
 
-        let mapper = ::hole_punching::HolePunchServer::start().unwrap();
-        let mut s = State::new(event_sender, mapper);
+        let mut s = State::new(event_sender).unwrap();
 
         let cmd_sender = s.cmd_sender.clone();
 
-        assert!(cmd_sender.send(Box::new(move |s: &mut State| {
+        cmd_sender.send(Box::new(move |s: &mut State| {
             s.bootstrap_off_list(eps, false);
-        })).is_ok());
+        })).unwrap();
 
         let accept_thread = thread::spawn(move || {
             for a in acceptors {
-                assert!(State::accept(Handshake::default(), &a).is_ok())
+                let _ = State::accept(Handshake::default(), &a).unwrap();
             }
         });
 
@@ -558,9 +574,9 @@ mod test {
                         Event::OnConnect(_) => {
                             accept_count += 1;
                             if accept_count == n {
-                                assert!(cmd_sender.send(Box::new(move |s: &mut State| {
+                                cmd_sender.send(Box::new(move |s: &mut State| {
                                     s.stop();
-                                })).is_ok());
+                                })).unwrap();
                                 break;
                             }
                         },
@@ -575,8 +591,8 @@ mod test {
             }
         }
 
-        assert!(t.join().is_ok());
-        assert!(accept_thread.join().is_ok());
+        t.join().unwrap();
+        accept_thread.join().unwrap();
     }
 
     #[test]
@@ -587,3 +603,4 @@ mod test {
         test_bootstrap_off_list(8);
     }
 }
+
