@@ -61,7 +61,7 @@ fn main() {
                         },
                     }
                 },
-                crust::Event::OnConnect(endpoint) => {
+                crust::Event::OnConnect(endpoint, _) => {
                     println!("Connected to {:?}", endpoint);
                     let _ = bs_sender.send(endpoint);
                 },
@@ -75,7 +75,7 @@ fn main() {
         println!("Stopped receiving.");
     });
 
-    service.bootstrap();
+    service.bootstrap(0);
 
     println!("Service trying to bootstrap off node listening on TCP port 8888 \
               and UDP broadcast port 5484");

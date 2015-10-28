@@ -190,13 +190,14 @@ impl Service {
     /// This method returns immediately after dropping any active connections.endpoints
     /// New bootstrap connections will be notified by `NewBootstrapConnection` event.
     /// Its upper layer's responsibility to maintain or drop these connections.
-    pub fn bootstrap(&mut self) {
+    pub fn bootstrap(&mut self, token: u32) {
         let config = self.config.clone();
         let beacon_guid_and_port = self.beacon_guid_and_port.clone();
 
         Self::post(&self.cmd_sender, move |state : &mut State| {
             let contacts = state.populate_bootstrap_contacts(&config, &beacon_guid_and_port);
-            state.bootstrap_off_list(contacts.clone(),
+            state.bootstrap_off_list(token,
+                                     contacts.clone(),
                                      beacon_guid_and_port.is_some());
         });
     }
@@ -247,7 +248,7 @@ impl Service {
     /// corresponding `Event::NewConnection` isn't received.  See also [Process for Connecting]
     /// (https://github.com/maidsafe/crust/blob/master/docs/connect.md) for details on handling of
     /// connect in different protocols.
-    pub fn connect(&self, endpoints: Vec<Endpoint>) {
+    pub fn connect(&self, token: u32, endpoints: Vec<Endpoint>) {
         let is_broadcast_acceptor = self.beacon_guid_and_port.is_some();
 
         Self::post(&self.cmd_sender, move |state : &mut State| {
@@ -262,7 +263,8 @@ impl Service {
                 for endpoint in endpoints {
                     if let Ok((h, t)) = State::connect(handshake.clone(), endpoint) {
                         let _ = cmd_sender.send(Box::new(move |state: &mut State| {
-                            let _ = state.handle_connect(h,
+                            let _ = state.handle_connect(token,
+                                                         h,
                                                          t,
                                                          is_broadcast_acceptor);
                         }));
@@ -528,7 +530,7 @@ mod test {
         let (cm2_i, cm2_o) = channel();
         let mut cm2 = Service::new(cm2_i).unwrap();
 
-        cm2.bootstrap();
+        cm2.bootstrap(0);
 
         let timeout = ::time::Duration::seconds(5);
         let start = ::time::now();
@@ -538,7 +540,7 @@ mod test {
             ::std::thread::sleep_ms(100);
         }
         match result {
-            Ok(Event::OnConnect(ep)) => {
+            Ok(Event::OnConnect(ep, _)) => {
                 debug!("OnConnect {:?}", ep);
             }
             Ok(Event::OnAccept(ep)) => {
@@ -556,7 +558,7 @@ mod test {
             spawn(move || {
                 for i in o.iter() {
                     match i {
-                        Event::OnConnect(other_ep) => {
+                        Event::OnConnect(other_ep, _) => {
                             let _ = cm.send(other_ep.clone(), encode(&"hello world".to_string()));
                         },
                         Event::OnAccept(other_ep) => {
@@ -586,8 +588,8 @@ mod test {
         let cm2_eps = filter_ok(cm2.start_default_acceptors());
         assert!(cm2_eps.len() >= 1);
 
-        cm2.connect(loopback_if_unspecified(cm1_eps));
-        cm1.connect(loopback_if_unspecified(cm2_eps));
+        cm2.connect(0, loopback_if_unspecified(cm1_eps));
+        cm1.connect(1, loopback_if_unspecified(cm2_eps));
 
         let runner1 = run_cm(cm1, cm1_o);
         let runner2 = run_cm(cm2, cm2_o);
@@ -623,7 +625,7 @@ mod test {
 
                 for event in self.reader.iter() {
                     match event {
-                        Event::OnConnect(connection) => {
+                        Event::OnConnect(connection, _) => {
                             stats.connect_count += 1;
                             self.send_data_to(connection);
                         },
@@ -671,7 +673,7 @@ mod test {
             assert!(listening_eps.pop_front().is_some());
 
             for ep in listening_eps.iter() {
-                node.service.connect(vec![ep.clone()]);
+                node.service.connect(0, vec![ep.clone()]);
             }
 
             runners.push(spawn(move || node.run()));
@@ -721,7 +723,7 @@ mod test {
             let cm_aux = Service::new_inactive(cm_aux_tx).unwrap();
             // setting the listening port to be greater than 4455 will make the test hanging
             // changing this to cm_beacon_addr will make the test hanging
-            cm_aux.connect(loopback_if_unspecified(vec![cm_listen_ep]));
+            cm_aux.connect(0, loopback_if_unspecified(vec![cm_listen_ep]));
 
             loop {
                 let ev = match cm_aux_rx.recv() {
@@ -729,7 +731,7 @@ mod test {
                     Err(_) => break,
                 };
                 match ev {
-                    Event::OnConnect(_) => break,
+                    Event::OnConnect(_, _) => break,
                     _ => (),
                 }
             }
