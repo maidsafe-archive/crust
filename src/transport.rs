@@ -385,7 +385,7 @@ pub fn connect(remote_ep: Endpoint) -> IoResult<Transport> {
 pub fn accept(acceptor: &Acceptor) -> IoResult<Transport> {
     match *acceptor {
         Acceptor::Tcp(ref listener) => {
-            let (stream, remote_endpoint) = try!(listener.accept()
+            let (stream, _remote_endpoint) = try!(listener.accept()
                 .map_err(|e| io::Error::new(io::ErrorKind::NotConnected, e.description())));
 
             let (i, o) = try!(tcp_connections::upgrade_tcp(stream));
@@ -403,7 +403,7 @@ pub fn accept(acceptor: &Acceptor) -> IoResult<Transport> {
             })
         },
         Acceptor::Utp(ref listener) => {
-            let (stream, remote_endpoint) = try!(listener.accept()
+            let (stream, _remote_endpoint) = try!(listener.accept()
                 .map_err(|e| io::Error::new(io::ErrorKind::NotConnected, e.description())));
 
             let (i, o) = try!(utp_connections::upgrade_utp(stream));

@@ -384,6 +384,7 @@ impl Service {
         });
     }
 
+    /// Lookup a mapped udp socket based on result_token
     pub fn get_mapped_udp_socket(&self, result_token: u32) {
         Self::post(&self.cmd_sender, move |state: &mut State| {
             state.get_mapped_udp_socket(result_token);
@@ -400,6 +401,7 @@ impl Service {
         assert!(sender.send(Box::new(cmd)).is_ok());
     }
 
+    /// Udp hole punching process
     pub fn udp_punch_hole(&self,
                           result_token: u32,
                           udp_socket: UdpSocket,
