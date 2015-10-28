@@ -111,6 +111,7 @@ impl FileHandler {
             };
         };
 
+        self.path = None;
         Err(::error::Error::ReadFileFailed)
     }
 
@@ -160,6 +161,7 @@ impl FileHandler {
             }
         };
 
+        self.path = None;
         Err(::error::Error::WriteFileFailed)
     }
 
@@ -321,25 +323,12 @@ mod test {
             super::FileHandler::new(::std::path::Path::new("file_handler_test.json").to_path_buf());
         let test_value = 123456789u64;
 
-        match file_handler.read_file::<u64>() {
-            Ok(result) => {
-                assert_eq!(result, test_value);
-                assert!(!file_handler.path().is_none());
-            },
-            Err(_) => assert!(file_handler.path().is_none()),
-        }
-
-        match file_handler.write_file(&test_value) {
-            Ok(_) => assert!(!file_handler.path().is_none()),
-            Err(_) => assert!(file_handler.path().is_none()),
-        }
-
-        match file_handler.read_file::<u64>() {
-            Ok(result) => {
-                assert_eq!(result, test_value);
-                assert!(!file_handler.path().is_none());
-            },
-            Err(_) => assert!(file_handler.path().is_none()),
-        }
+        assert!(file_handler.read_file::<u64>().is_err());
+        assert!(file_handler.path().is_none());
+        evaluate_result!(file_handler.write_file(&test_value));
+        evaluate_option!(file_handler.path(), "Path should be set");
+        let result = evaluate_result!(file_handler.read_file::<u64>());
+        assert_eq!(result, test_value);
+        evaluate_option!(file_handler.path(), "Path should still be set");
     }
 }
