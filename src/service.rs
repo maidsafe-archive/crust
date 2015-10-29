@@ -301,6 +301,7 @@ impl Service {
     /// (https://github.com/maidsafe/crust/blob/master/docs/connect.md) for
     /// details on handling of connect in different protocols.
     pub fn rendezvous_connect(&self, udp_socket: UdpSocket,
+                              token: u32,
                               public_endpoint: Endpoint /* of B */) {
         Self::post(&self.cmd_sender, move |state : &mut State| {
             let cmd_sender = state.cmd_sender.clone();
@@ -315,7 +316,7 @@ impl Service {
                                                               udp_socket,
                                                               public_endpoint) {
                     let _ = cmd_sender.send(Box::new(move |state: &mut State| {
-                        let _ = state.handle_rendezvous_connect(h, t);
+                        let _ = state.handle_rendezvous_connect(token, h, t);
                     }));
                 }
             });
@@ -658,7 +659,7 @@ mod test {
             spawn(move || {
                 for i in o.iter() {
                     match i {
-                        Event::OnRendezvousConnect(other_ep) => {
+                        Event::OnRendezvousConnect(other_ep, _) => {
                             let _ = cm.send(other_ep.clone(),
                                             encode(&"hello world".to_string()));
                         },
@@ -693,8 +694,8 @@ mod test {
         let peer2_addr = SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1),
                                            peer2_port);
 
-        cm2.rendezvous_connect(peer1_udp_socket, Endpoint::utp(peer2_addr));
-        cm1.rendezvous_connect(peer2_udp_socket, Endpoint::utp(peer1_addr));
+        cm2.rendezvous_connect(peer1_udp_socket, 0, Endpoint::utp(peer2_addr));
+        cm1.rendezvous_connect(peer2_udp_socket, 0, Endpoint::utp(peer1_addr));
 
         let (ready_tx1, ready_rx1) = channel();
         let (shut_tx1, shut_rx1) = channel();

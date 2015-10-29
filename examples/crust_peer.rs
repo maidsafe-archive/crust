@@ -473,7 +473,7 @@ fn main() {
                                                 message_length)));
                 },
                 crust::Event::OnConnect(connection, _) |
-                crust::Event::OnRendezvousConnect(connection) => {
+                crust::Event::OnRendezvousConnect(connection, _) => {
                     stdout_copy = cyan_foreground(stdout_copy);
                     println!("\nConnected to peer at {:?}", connection.peer_endpoint());
                     let mut network = network2.lock().unwrap();
@@ -598,7 +598,7 @@ fn main() {
                         }
                     };
                     println!("ConnectingRendezvous with {} to {:?}", udp_id, endpoint);
-                    service.rendezvous_connect(socket, endpoint);
+                    service.rendezvous_connect(socket, 0, endpoint);
                 },
                 UserCommand::Send(peer, message) => {
                     let network = network.lock().unwrap();

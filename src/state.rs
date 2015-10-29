@@ -239,11 +239,13 @@ impl State {
         connection
     }
 
-    pub fn handle_rendezvous_connect(&mut self, handshake: Handshake,
+    pub fn handle_rendezvous_connect(&mut self,
+                                     token: u32,
+                                     handshake: Handshake,
                                      trans: transport::Transport)
                                      -> io::Result<Connection> {
         let c = trans.connection_id.clone();
-        let event = Event::OnRendezvousConnect(c);
+        let event = Event::OnRendezvousConnect(c, token);
         let connection = self.register_connection(handshake, trans, event);
         connection
     }
