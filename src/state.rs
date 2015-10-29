@@ -222,11 +222,12 @@ impl State {
     }
 
     pub fn handle_connect(&mut self,
+                          token                 : u32,
                           handshake             : Handshake,
                           trans                 : transport::Transport,
                           is_broadcast_acceptor : bool) -> io::Result<Connection> {
         let c = trans.connection_id.clone();
-        let event = Event::OnConnect(c);
+        let event = Event::OnConnect(c, token);
 
         let connection = self.register_connection(handshake, trans, event);
         if is_broadcast_acceptor {
@@ -238,11 +239,13 @@ impl State {
         connection
     }
 
-    pub fn handle_rendezvous_connect(&mut self, handshake: Handshake,
+    pub fn handle_rendezvous_connect(&mut self,
+                                     token: u32,
+                                     handshake: Handshake,
                                      trans: transport::Transport)
                                      -> io::Result<Connection> {
         let c = trans.connection_id.clone();
-        let event = Event::OnRendezvousConnect(c);
+        let event = Event::OnRendezvousConnect(c, token);
         let connection = self.register_connection(handshake, trans, event);
         connection
     }
@@ -383,6 +386,7 @@ impl State {
     }
 
     pub fn bootstrap_off_list(&mut self,
+                              token: u32,
                               mut bootstrap_list: Vec<Endpoint>,
                               is_broadcast_acceptor: bool) {
         if self.is_bootstrapping { return; }
@@ -445,10 +449,10 @@ impl State {
                 }
 
                 for t in ts {
-                    let _ = state.handle_connect(t.0, t.1, is_broadcast_acceptor);
+                    let _ = state.handle_connect(token, t.0, t.1, is_broadcast_acceptor);
                 }
 
-                state.bootstrap_off_list(bootstrap_list, is_broadcast_acceptor);
+                state.bootstrap_off_list(token, bootstrap_list, is_broadcast_acceptor);
             }));
         });
     }
@@ -554,7 +558,7 @@ mod test {
         let cmd_sender = s.cmd_sender.clone();
 
         cmd_sender.send(Box::new(move |s: &mut State| {
-            s.bootstrap_off_list(eps, false);
+            s.bootstrap_off_list(0, eps, false);
         })).unwrap();
 
         let accept_thread = thread::spawn(move || {
@@ -571,7 +575,7 @@ mod test {
             match event_receiver.recv() {
                 Ok(event) => {
                     match event {
-                        Event::OnConnect(_) => {
+                        Event::OnConnect(_, _) => {
                             accept_count += 1;
                             if accept_count == n {
                                 cmd_sender.send(Box::new(move |s: &mut State| {
