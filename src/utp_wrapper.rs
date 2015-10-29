@@ -24,7 +24,7 @@ impl UtpWrapper {
         let peer_addr = try!(socket.peer_addr());
         let local_addr = try!(socket.local_addr());
 
-        let _ = thread::spawn(move || {
+        let _ = thread::Builder::new().name("rust-utp multiplexer".to_string()).spawn(move || {
             let mut socket = socket;
             socket.set_read_timeout(Some(CHECK_FOR_NEW_WRITES_INTERVAL_MS));
             'outer:
@@ -53,7 +53,7 @@ impl UtpWrapper {
                     Err(_) => break,
                 }
             }
-        });
+        }).unwrap();
         Ok(UtpWrapper {
             input: irx,
             output: otx,

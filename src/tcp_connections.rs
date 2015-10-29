@@ -46,7 +46,7 @@ pub fn upgrade_tcp(stream: TcpStream)
 
 fn upgrade_writer(mut stream: TcpStream) -> Sender<Vec<u8>> {
     let (tx, rx) = mpsc::channel::<Vec<u8>>();
-    let _ = thread::spawn(move || {
+    let _ = thread::Builder::new().name("TCP writer".to_string()).spawn(move || {
         while let Ok(v) = rx.recv() {
             use std::io::Write;
             if stream.write_all(&v).is_err() {
@@ -54,7 +54,7 @@ fn upgrade_writer(mut stream: TcpStream) -> Sender<Vec<u8>> {
             }
         }
         stream.shutdown(Shutdown::Write)
-    });
+    }).unwrap();
     tx
 }
 
