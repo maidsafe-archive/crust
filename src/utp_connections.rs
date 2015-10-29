@@ -17,7 +17,7 @@
 
 use utp::UtpSocket;
 pub use utp_wrapper::UtpWrapper;
-use std::net::SocketAddr;
+use std::net::{SocketAddr, UdpSocket};
 use std::io::Result as IoResult;
 use std::sync::mpsc::Sender;
 
@@ -25,6 +25,11 @@ use std::sync::mpsc::Sender;
 pub fn connect_utp(addr: SocketAddr)
                    -> IoResult<(UtpWrapper, Sender<Vec<u8>>)> {
     upgrade_utp(try!(UtpSocket::connect(addr)))
+}
+
+pub fn rendezvous_connect_utp(udp_socket: UdpSocket, addr: SocketAddr)
+                              -> IoResult<(UtpWrapper, Sender<Vec<u8>>)> {
+    upgrade_utp(try!(UtpSocket::rendezvous_connect(udp_socket, addr)))
 }
 
 /// Upgrades a newly connected UtpSocket to a Sender-Receiver pair that you can use to send and

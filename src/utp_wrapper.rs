@@ -36,16 +36,14 @@ impl UtpWrapper {
                         let _ = itx.send(Vec::from(buf));
                     },
                     Err(ref e) if e.kind() == ErrorKind::TimedOut => {
-                        loop {
-                            match orx.try_recv() {
-                                Ok(v) => {
-                                    if socket.send_to(&v[..]).is_err() {
-                                        break 'outer;
-                                    }
-                                },
-                                Err(TryRecvError::Disconnected) => break 'outer,
-                                Err(TryRecvError::Empty) => break,
-                            }
+                        match orx.try_recv() {
+                            Ok(v) => {
+                                if socket.send_to(&v[..]).is_err() {
+                                    break;
+                                }
+                            },
+                            Err(TryRecvError::Disconnected) => break,
+                            Err(TryRecvError::Empty) => (),
                         }
                     },
                     Err(_) => break,

@@ -44,7 +44,6 @@ use std::cmp;
 use std::sync::mpsc::channel;
 use std::sync::mpsc::Sender;
 use std::io;
-use std::io::Write;
 use std::net::{UdpSocket, SocketAddr};
 use std::collections::HashSet;
 use std::str::FromStr;
@@ -76,7 +75,7 @@ will be chosen.
 
 Options:
   -c, --create-local-config  Tries to create a default config file in the same
-                             directory as this exectable.  Won't overwrite an
+                             directory as this executable.  Won't overwrite an
                              existing file.
   -s RATE, --speed=RATE      Keep sending random data at a maximum speed of RATE
                              bytes/second to the first connected peer.
@@ -94,11 +93,6 @@ fn generate_random_vec_u8(size: usize) -> Vec<u8> {
     let mut vec: Vec<u8> = Vec::with_capacity(size);
     for _ in 0..size { vec.push(random::<u8>()); }
     vec
-}
-
-fn print_input_line() {
-    print!("Enter command (stop | connect <endpoint> | send <endpoint> <message>)>");
-    let _ = io::stdout().flush();
 }
 
 fn node_user_repr(node: &Endpoint) -> String {
@@ -237,6 +231,15 @@ impl Network {
         return false;
     }
 
+    pub fn release_udp_socket(&mut self, id: usize) -> Option<UdpSocket> {
+        if id >= self.udp_data.len() {
+            return None;
+        }
+        let d = self.udp_data.remove(id);
+        d.socket.try_clone().ok()
+
+    }
+
     pub fn drop_node(&mut self, lost_node: Connection) {
         for node in self.crust_nodes.iter_mut().filter(|node| node.connection_id == lost_node) {
             node.connected = false;
@@ -250,7 +253,7 @@ impl Network {
                     true => Some(node.connection_id.clone()),
                     false => None,
                 }).collect::<Vec<_>>();
- 
+
         println!("Connected node count: {}", connected_nodes.len());
         let mut i = 0;
         for node in &connected_nodes {
@@ -277,6 +280,10 @@ impl Network {
 
     pub fn get_udp(&self, n: usize) -> Option<&UdpData> {
         self.udp_data.get(n)
+    }
+
+    pub fn get_all(&self) -> &Vec<CrustNode> {
+        &self.crust_nodes
     }
 
     pub fn record_received(&mut self, msg_size: usize) {
@@ -465,7 +472,8 @@ fn main() {
                              .unwrap_or(format!("non-UTF-8 message of {} bytes",
                                                 message_length)));
                 },
-                crust::Event::OnConnect(connection) => {
+                crust::Event::OnConnect(connection) |
+                    crust::Event::OnRendezvousConnect(connection) => {
                     stdout_copy = cyan_foreground(stdout_copy);
                     println!("\nConnected to peer at {:?}", connection.peer_endpoint());
                     let mut network = network2.lock().unwrap();
@@ -516,9 +524,6 @@ fn main() {
                 }
             }
             stdout_copy = reset_foreground(stdout_copy);
-            if !running_speed_test {
-                print_input_line();
-            }
         }
     }) {
         Ok(join_handle) => join_handle,
@@ -562,22 +567,38 @@ fn main() {
             }
         }
     } else {
-        let stdin = io::stdin();
+        print_usage();
 
         loop {
+            use ::std::io::Write; // For flush().
+
+            print!("> ");
+            assert!(io::stdout().flush().is_ok());
+
             let mut command = String::new();
-            print_input_line();
-            assert!(stdin.read_line(&mut command).is_ok());
+            assert!(io::stdin().read_line(&mut command).is_ok());
 
             let cmd = match parse_user_command(command) {
                 Some(cmd) => cmd,
                 None => continue,
             };
-            
+
             match cmd {
                 UserCommand::Connect(ep) => {
                     println!("Connecting to {:?}", ep);
                     service.connect(vec![ep]);
+                },
+                UserCommand::ConnectRendezvous(udp_id, endpoint) => {
+                    let mut network = network.lock().unwrap();
+                    let socket = match network.release_udp_socket(udp_id) {
+                        Some(socket) => socket,
+                        None => {
+                            println!("No such UDP socket #{}", udp_id);
+                            continue;
+                        }
+                    };
+                    println!("ConnectingRendezvous with {} to {:?}", udp_id, endpoint);
+                    service.rendezvous_connect(socket, endpoint);
                 },
                 UserCommand::Send(peer, message) => {
                     let network = network.lock().unwrap();
@@ -594,6 +615,12 @@ fn main() {
                         None => println!("Invalid udp #"),
                     }
                 },
+                UserCommand::SendAll(message) => {
+                    let network = network.lock().unwrap();
+                    for node in network.get_all() {
+                        service.send(node.connection_id, message.clone().into_bytes());
+                    }
+                },
                 UserCommand::Punch(peer, dst) => {
                     let network = network.lock().unwrap();
                     match network.get_udp(peer) {
@@ -606,6 +633,10 @@ fn main() {
                 },
                 UserCommand::Map => {
                     service.get_mapped_udp_socket(0);
+                },
+                UserCommand::List => {
+                    let network = network.lock().unwrap();
+                    network.print_connected_nodes();
                 },
                 UserCommand::Stop => {
                     break;
@@ -629,34 +660,73 @@ fn main() {
 static CLI_USAGE: &'static str = "
 Usage:
   cli connect <endpoint>
+  cli connect-rendezvous <peer> <endpoint>
   cli send <peer> <message>...
   cli send-udp <peer> <destination> <message>...
+  cli send-all <message>...
   cli map
   cli punch <peer> <destination>
+  cli list
   cli stop
+  cli help
+
 ";
+
+fn print_usage() {
+    static USAGE: &'static str = r#"\
+# Commands:
+    connect <endpoint>                            - Initiate a connection to the remote endpoint
+    connect-rendezvous <udp-socket-id> <endpoint> - As above, but using rendezvous connect
+    send <connection-id> <message>                - Send a string to the given connection
+    send-udp <udp-socket-id> <message>            - E.g. send-udp 0 foo bar
+    send-all <message>                            - Send a string to all connections
+    map                                           - Use existing connections to find our external
+                                                    IP address.  Also creates a UDP socket.
+    punch <udp-socket-id> <socketaddr>            - UDP hole punch with given socket to the given
+                                                    destination
+    list                                          - List existing connections and UDP sockets
+    stop                                          - Exit the app
+    help                                          - Print this help
+
+# Where
+    <endpoint>      - Specifies transport and socket address.  Its form is
+                      [Tcp|Utp](a.b.c.d:p)
+                      E.g. Tcp(192.168.0.1:5483)
+    <udp-socket-id> - ID of a UDP socket as listed using the `list` command
+    <connection-id> - ID of a connection as listed using the `list` command
+    <socketaddr>    - IP address and port.  E.g. 192.168.0.1:5483
+"#;
+    println!("{}", USAGE);
+}
 
 #[derive(RustcDecodable, Debug)]
 struct CliArgs {
-    cmd_connect:     bool,
-    cmd_send:        bool,
-    cmd_send_udp:    bool,
-    cmd_map:         bool,
-    cmd_punch:       bool,
-    cmd_stop:        bool,
-    arg_endpoint:    Option<PeerEndpoint>,
-    arg_destination: Option<::crust::SocketAddrW>,
-    arg_peer:        Option<usize>,
-    arg_message:     Vec<String>,
+    cmd_connect:            bool,
+    cmd_connect_rendezvous: bool,
+    cmd_send:               bool,
+    cmd_send_udp:           bool,
+    cmd_send_all:           bool,
+    cmd_map:                bool,
+    cmd_list:               bool,
+    cmd_punch:              bool,
+    cmd_stop:               bool,
+    cmd_help:               bool,
+    arg_endpoint:           Option<PeerEndpoint>,
+    arg_destination:        Option<::crust::SocketAddrW>,
+    arg_peer:               Option<usize>,
+    arg_message:            Vec<String>,
 }
 
 #[derive(PartialEq, Eq, Debug, Clone)]
 enum UserCommand {
     Stop,
     Connect(Endpoint),
+    ConnectRendezvous(usize, Endpoint),
     Send(usize, String),
     SendUdp(usize, SocketAddr, String),
+    SendAll(String),
     Punch(usize, SocketAddr),
+    List,
     Map,
 }
 
@@ -684,6 +754,10 @@ fn parse_user_command(cmd : String) -> Option<UserCommand> {
     if args.cmd_connect {
         let peer = args.arg_endpoint.unwrap().addr;
         Some(UserCommand::Connect(peer))
+    } else if args.cmd_connect_rendezvous {
+        let peer = args.arg_peer.unwrap();
+        let endpoint = args.arg_endpoint.unwrap().addr;
+        Some(UserCommand::ConnectRendezvous(peer, endpoint))
     } else if args.cmd_send {
         let peer = args.arg_peer.unwrap();
         let msg  = args.arg_message.join(" ");
@@ -693,14 +767,22 @@ fn parse_user_command(cmd : String) -> Option<UserCommand> {
         let dst  = args.arg_destination.unwrap().0;
         let msg  = args.arg_message.join(" ");
         Some(UserCommand::SendUdp(peer, dst, msg))
+    } else if args.cmd_send_all {
+        let msg  = args.arg_message.join(" ");
+        Some(UserCommand::SendAll(msg))
     } else if args.cmd_map {
         Some(UserCommand::Map)
     } else if args.cmd_punch {
         let peer = args.arg_peer.unwrap();
         let dst  = args.arg_destination.unwrap().0;
         Some(UserCommand::Punch(peer, dst))
+    } else if args.cmd_list {
+        Some(UserCommand::List)
     } else if args.cmd_stop {
         Some(UserCommand::Stop)
+    } else if args.cmd_help {
+        print_usage();
+        None
     }
     else {
         None

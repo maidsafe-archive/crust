@@ -30,7 +30,7 @@ use getifaddrs::{getifaddrs, filter_loopback};
 use transport;
 use transport::{Endpoint, Port, Message, Handshake};
 use std::thread::JoinHandle;
-use std::net::{SocketAddr, IpAddr, Ipv4Addr, SocketAddrV4};
+use std::net::{SocketAddr, IpAddr, Ipv4Addr, UdpSocket, SocketAddrV4};
 
 use itertools::Itertools;
 use event::{Event, MappedUdpSocket};
@@ -207,6 +207,14 @@ impl State {
                                try!(transport::connect(remote_ep)))
     }
 
+    pub fn rendezvous_connect(handshake: Handshake, udp_socket: UdpSocket,
+                              public_ep: Endpoint /* of B */)
+            -> io::Result<(Handshake, transport::Transport)> {
+        Self::handle_handshake(handshake,
+                               try!(transport::rendezvous_connect(udp_socket,
+                                                                  public_ep)))
+    }
+
     pub fn accept(handshake : Handshake,
                   acceptor  : &transport::Acceptor)
             -> io::Result<(Handshake, transport::Transport)> {
@@ -227,6 +235,15 @@ impl State {
                 self.update_bootstrap_contacts(contacts);
             }
         }
+        connection
+    }
+
+    pub fn handle_rendezvous_connect(&mut self, handshake: Handshake,
+                                     trans: transport::Transport)
+                                     -> io::Result<Connection> {
+        let c = trans.connection_id.clone();
+        let event = Event::OnRendezvousConnect(c);
+        let connection = self.register_connection(handshake, trans, event);
         connection
     }
 
