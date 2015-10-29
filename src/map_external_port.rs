@@ -31,10 +31,10 @@ pub fn async_map_external_port<Callback>(local_ep: ip::Endpoint, callback: Box<C
     where Callback: FnBox(io::Result<Vec<(SocketAddrV4, ip::Endpoint)>>) +
           Send + 'static
 {
-    let _detach = thread::spawn(move || {
+    let _detach = thread::Builder::new().name("async_map_external_port".to_string()).spawn(move || {
         let res = sync_map_external_port(&local_ep);
         callback.call_box((res,));
-    });
+    }).unwrap();
 }
 
 pub fn sync_map_external_port(local_ep: &ip::Endpoint) -> io::Result<Vec<(SocketAddrV4, ip::Endpoint)>>
@@ -78,10 +78,10 @@ pub fn sync_map_external_port(local_ep: &ip::Endpoint) -> io::Result<Vec<(Socket
     let local_port = local_ep.port();
     let mut join_handles = Vec::with_capacity(eps_count);
     for local_ep in local_eps {
-        join_handles.push(thread::spawn(move || {
+        join_handles.push(thread::Builder::new().name("sync_map_external_port".to_string()).spawn(move || {
             let result = map_external_port(local_ep, local_port);
             result.map(|ext_ep| (local_ep, ext_ep))
-        }));
+        }).unwrap());
     };
     let mut ret = Vec::with_capacity(eps_count);
     for h in join_handles {
