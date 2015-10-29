@@ -139,6 +139,8 @@ mod getifaddrs_posix {
         ret
     }
 }
+
+/// For non-Windows operating system, use this function to get address
 #[cfg(not(windows))]
 pub fn getifaddrs() -> Vec<IfAddr> {
     getifaddrs_posix::getifaddrs()
@@ -159,57 +161,54 @@ mod getifaddrs_windows {
     use libc;
 
     #[repr(C)]
-    #[allow(bad_style)]
-    struct SOCKET_ADDRESS {
-        pub lpSockaddr : *const sockaddr,
-        pub iSockaddrLength : c_int,
+    struct SocketAddress {
+        pub lp_socket_address : *const sockaddr,
+        pub i_socket_address_length : c_int,
     }
     #[repr(C)]
-    #[allow(bad_style)]
-    struct IP_ADAPTER_UNICAST_ADDRESS {
-        pub Length : c_ulong,
-        pub Flags : DWORD,
-        pub Next : *const IP_ADAPTER_UNICAST_ADDRESS,
-        pub Address : SOCKET_ADDRESS,
+    struct IpAdapterUnicastAddress {
+        pub length : c_ulong,
+        pub flags : DWORD,
+        pub next : *const IpAdapterUnicastAddress,
+        pub address : SocketAddress,
         // Loads more follows, but I'm not bothering to map these for now
     }
     #[repr(C)]
-    #[allow(bad_style)]
-    struct IP_ADAPTER_PREFIX {
-        pub Length : c_ulong,
-        pub Flags : DWORD,
-        pub Next : *const IP_ADAPTER_PREFIX,
-        pub Address : SOCKET_ADDRESS,
-        pub PrefixLength : c_ulong,
+    struct IpAdapterPrefix {
+        pub length : c_ulong,
+        pub flags : DWORD,
+        pub next : *const IpAdapterPrefix,
+        pub address : SocketAddress,
+        pub prefix_length : c_ulong,
     }
     #[repr(C)]
-    #[allow(bad_style)]
-    struct IP_ADAPTER_ADDRESSES {
-        pub Length : c_ulong,
-        pub IfIndex : DWORD,
-        pub Next : *const IP_ADAPTER_ADDRESSES,
-        pub AdapterName : *const c_char,
-        pub FirstUnicastAddress : *const IP_ADAPTER_UNICAST_ADDRESS,
-        FirstAnycastAddress : *const c_void,
-        FirstMulticastAddress : *const c_void,
-        FirstDnsServerAddress : *const c_void,
-        DnsSuffix : *const c_void,
-        Description : *const c_void,
-        FriendlyName : *const c_void,
-        PhysicalAddress : [c_char; 8],
-        PhysicalAddressLength : DWORD,
-        Flags : DWORD,
-        Mtu : DWORD,
-        IfType : DWORD,
-        OperStatus : c_int,
-        Ipv6IfIndex : DWORD,
-        ZoneIndices : [DWORD; 16],
-        pub FirstPrefix : *const IP_ADAPTER_PREFIX,
+    struct IpAdapterAddresses {
+        pub length : c_ulong,
+        pub if_index : DWORD,
+        pub next : *const IpAdapterAddresses,
+        pub adapter_name : *const c_char,
+        pub first_unicast_address : *const IpAdapterUnicastAddress,
+        first_anycast_address : *const c_void,
+        first_multicast_address : *const c_void,
+        first_dns_server_address : *const c_void,
+        dns_suffix : *const c_void,
+        description : *const c_void,
+        friendly_name : *const c_void,
+        physical_address : [c_char; 8],
+        physical_address_length : DWORD,
+        flags : DWORD,
+        mtu : DWORD,
+        if_type : DWORD,
+        oper_status : c_int,
+        ipv6_if_index : DWORD,
+        zone_indices : [DWORD; 16],
+        pub first_prefix : *const IpAdapterPrefix,
         // Loads more follows, but I'm not bothering to map these for now
     }
     #[link(name="Iphlpapi")]
     extern "system" {
-        pub fn GetAdaptersAddresses(family : c_ulong, flags : c_ulong, reserved : *const c_void, addresses : *const IP_ADAPTER_ADDRESSES, size : *mut c_ulong) -> c_ulong;
+        /// get adapter's addresses
+        pub fn GetAdaptersAddresses(family : c_ulong, flags : c_ulong, reserved : *const c_void, addresses : *const IpAdapterAddresses, size : *mut c_ulong) -> c_ulong;
     }
 
     #[allow(unsafe_code)]
@@ -249,11 +248,11 @@ mod getifaddrs_windows {
     #[allow(unsafe_code, trivial_numeric_casts)]
     pub fn getifaddrs() -> Vec<IfAddr> {
         let mut ret = Vec::<IfAddr>::new();
-        let mut ifaddrs : *const IP_ADAPTER_ADDRESSES;
+        let mut ifaddrs : *const IpAdapterAddresses;
         let mut buffersize : c_ulong = 15000;
         loop {
             unsafe {
-                ifaddrs = libc::malloc(buffersize as size_t) as *mut IP_ADAPTER_ADDRESSES;
+                ifaddrs = libc::malloc(buffersize as size_t) as *mut IpAdapterAddresses;
                 if ifaddrs.is_null() {
                     panic!("Failed to allocate buffer in getifaddrs()");
                 }
@@ -278,47 +277,47 @@ mod getifaddrs_windows {
         let mut first = true;
         while !_ifaddr.is_null() {
             if first { first=false; }
-            else { _ifaddr = unsafe { (*_ifaddr).Next }; }
+            else { _ifaddr = unsafe { (*_ifaddr).next }; }
             if _ifaddr.is_null() { break; }
             let ref ifaddr = unsafe { &*_ifaddr };
             // debug!("ifaddr1={}, next={}", _ifaddr as u64, ifaddr.ifa_next as u64);
 
-            let mut addr = ifaddr.FirstUnicastAddress;
+            let mut addr = ifaddr.first_unicast_address;
             if addr.is_null() { continue; }
             let mut firstaddr = true;
             while !addr.is_null() {
                 if firstaddr { firstaddr=false; }
-                else { addr = unsafe { (*addr).Next }; }
+                else { addr = unsafe { (*addr).next }; }
                 if addr.is_null() { break; }
 
                 let mut item = IfAddr::new();
-                let name = unsafe { CStr::from_ptr(ifaddr.AdapterName) }.to_bytes();
+                let name = unsafe { CStr::from_ptr(ifaddr.adapter_name) }.to_bytes();
                 item.name = item.name + str::from_utf8(name).unwrap();
 
-                let ipaddr = sockaddr_to_ipaddr(unsafe { (*addr).Address.lpSockaddr });
+                let ipaddr = sockaddr_to_ipaddr(unsafe { (*addr).address.lp_socket_address });
                 if !ipaddr.is_some() { continue; }
                 item.addr = ipaddr.unwrap();
 
                 // Search prefixes for a prefix matching addr
-                let mut prefix = ifaddr.FirstPrefix;
+                let mut prefix = ifaddr.first_prefix;
                 if !prefix.is_null() {
-                    let mut firstprefix = true;
+                    let mut first_prefix = true;
                     'prefixloop: while !prefix.is_null() {
-                        if firstprefix { firstprefix=false; }
-                        else { prefix = unsafe { (*prefix).Next }; }
+                        if first_prefix { first_prefix = false; }
+                        else { prefix = unsafe { (*prefix).next }; }
                         if prefix.is_null() { break; }
 
-                        let ipprefix = sockaddr_to_ipaddr(unsafe { (*prefix).Address.lpSockaddr });
+                        let ipprefix = sockaddr_to_ipaddr(unsafe { (*prefix).address.lp_socket_address });
                         if !ipprefix.is_some() { continue; }
                         match ipprefix.unwrap() {
                             IpAddr::V4(ref a) => {
                                 if let IpAddr::V4(b) = item.addr {
                                     let mut netmask : [u8; 4] = [0; 4];
-                                    for n in 0..unsafe{ (*prefix).PrefixLength as usize + 7 }/8 {
+                                    for n in 0..unsafe{ (*prefix).prefix_length as usize + 7 }/8 {
                                         let x_byte = b.octets()[n];
                                         let y_byte = a.octets()[n];
                                         for m in 0..8 {
-                                            if (n * 8) + m > unsafe{ (*prefix).PrefixLength as usize } { break; }
+                                            if (n * 8) + m > unsafe{ (*prefix).prefix_length as usize } { break; }
                                             let bit = 1 << m;
                                             if (x_byte & bit) == (y_byte & bit) {
                                                 netmask[n] = netmask[n] | bit;
@@ -351,11 +350,11 @@ mod getifaddrs_windows {
                                     // Iterate the bits in the prefix, if they all match this prefix is the
                                     // right one, else try the next prefix
                                     let mut netmask : [u16; 8] = [0; 8];
-                                    for n in 0..unsafe{ (*prefix).PrefixLength as usize + 15 }/16 {
+                                    for n in 0..unsafe{ (*prefix).prefix_length as usize + 15 }/16 {
                                         let x_word = b.segments()[n];
                                         let y_word = a.segments()[n];
                                         for m in 0..16 {
-                                            if (n * 16) + m > unsafe{ (*prefix).PrefixLength as usize } { break; }
+                                            if (n * 16) + m > unsafe{ (*prefix).prefix_length as usize } { break; }
                                             let bit = 1 << m;
                                             if (x_word & bit) == (y_word & bit) {
                                                 netmask[n] = netmask[n] | bit;
@@ -388,6 +387,7 @@ mod getifaddrs_windows {
     }
 }
 #[cfg(windows)]
+/// Get address
 pub fn getifaddrs() -> Vec<IfAddr> {
     getifaddrs_windows::getifaddrs()
 }

@@ -18,19 +18,25 @@
 //! #crust
 //! Reliable peer-to-peer network connections in Rust with NAT traversal.
 
-//#![forbid(missing_docs, warnings)]
-//#![deny(bad_style, deprecated, drop_with_repr_extern, improper_ctypes, non_shorthand_field_patterns,
-//        overflowing_literals, plugin_as_library, private_no_mangle_fns, private_no_mangle_statics,
-//        raw_pointer_derive, stable_features, unconditional_recursion, unknown_lints,
-//        unsafe_code, unused_allocation, unused_attributes,
-//        unused_comparisons, unused_features, unused_parens, while_true)]
-#![warn(trivial_casts, trivial_numeric_casts, unused, unused_extern_crates, unused_import_braces,
-        unused_qualifications, unused_results, variant_size_differences)]
-#![doc(html_logo_url = "https://raw.githubusercontent.com/maidsafe/QA/master/Images/maidsafe_logo.png",
+#![doc(html_logo_url =
+           "https://raw.githubusercontent.com/maidsafe/QA/master/Images/maidsafe_logo.png",
        html_favicon_url = "http://maidsafe.net/img/favicon.ico",
        html_root_url = "http://maidsafe.github.io/crust/")]
+
+// For explanation of lint checks, run `rustc -W help` or see
+// https://github.com/maidsafe/QA/blob/master/Documentation/Rust%20Lint%20Checks.md
+#![forbid(bad_style, exceeding_bitshifts, mutable_transmutes, no_mangle_const_items,
+          unknown_crate_types, warnings)]
+#![deny(deprecated, drop_with_repr_extern, improper_ctypes, missing_docs,
+        non_shorthand_field_patterns, overflowing_literals, plugin_as_library,
+        private_no_mangle_fns, private_no_mangle_statics, raw_pointer_derive, stable_features,
+        unconditional_recursion, unknown_lints, unsafe_code, unused, unused_allocation,
+        unused_attributes, unused_comparisons, unused_features, unused_parens, while_true)]
+#![warn(trivial_casts, trivial_numeric_casts, unused_extern_crates, unused_import_braces,
+        unused_qualifications, unused_results, variant_size_differences)]
+#![allow(box_pointers, fat_ptr_transmutes, missing_copy_implementations,
+         missing_debug_implementations)]
 #![feature(fnbox, ip_addr, ip)]
-#![allow(unused_variables)]
 
 extern crate asynchronous;
 extern crate cbor;

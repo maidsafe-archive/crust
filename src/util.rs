@@ -29,6 +29,7 @@ use std::thread;
 
 ////////////////////////////////////////////////////////////////////////////////
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+/// Utility struct of SocketAddr for hole punching
 pub struct SocketAddrW(pub SocketAddr);
 
 impl PartialOrd for SocketAddrW {
@@ -65,6 +66,7 @@ impl Decodable for SocketAddrW {
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+/// Utility struct of SocketAddrV4 for hole punching
 pub struct SocketAddrV4W(pub SocketAddrV4);
 
 impl PartialOrd for SocketAddrV4W {
@@ -100,7 +102,7 @@ impl Decodable for SocketAddrV4W {
         //}
         match SocketAddr::from_str(&as_string[..]) {
             Ok(SocketAddr::V4(sa)) => Ok(SocketAddrV4W(sa)),
-            Ok(SocketAddr::V6(sa)) => {
+            Ok(SocketAddr::V6(_sa)) => {
                 let err = format!("Failed to decode SocketAddrV4W - Ipv6 address received where ipv4 address expected");
                 Err(d.error(&err[..]))
             }
@@ -166,13 +168,13 @@ pub fn is_loopback(ip_addr: &IpAddr) -> bool {
 pub fn is_link_local(ip_addr: &IpAddr) -> bool {
     match ip_addr {
         &IpAddr::V4(ref ip) => ip.is_link_local(),
-        &IpAddr::V6(ref ip) => false, // Not applicable
+        &IpAddr::V6(ref _ip) => false, // Not applicable
     }
 }
 
 pub fn is_unicast_link_local(ip_addr: &IpAddr) -> bool {
     match ip_addr {
-        &IpAddr::V4(ref ip) => false, // Not applicable
+        &IpAddr::V4(ref _ip) => false, // Not applicable
         &IpAddr::V6(ref ip) => ip.is_unicast_link_local(),
     }
 }
@@ -180,13 +182,13 @@ pub fn is_unicast_link_local(ip_addr: &IpAddr) -> bool {
 pub fn is_private(ip_addr: &IpAddr) -> bool {
     match ip_addr {
         &IpAddr::V4(ref ip) => ip.is_private(),
-        &IpAddr::V6(ref ip) => false, // Not applicable
+        &IpAddr::V6(ref _ip) => false, // Not applicable
     }
 }
 
 pub fn is_unique_local(ip_addr: &IpAddr) -> bool {
     match ip_addr {
-        &IpAddr::V4(ref ip) => false, // Not applicable
+        &IpAddr::V4(ref _ip) => false, // Not applicable
         &IpAddr::V6(ref ip) => ip.is_unique_local(),
     }
 }
@@ -311,9 +313,9 @@ pub fn heuristic_geo_cmp(ip1: &IpAddr, ip2: &IpAddr) -> Ordering {
     }
 }
 
-// This function should really take IpAddr as an argument
-// but it is used outside of this library and IpAddr
-// is currently considered experimental.
+/// This function should really take IpAddr as an argument
+/// but it is used outside of this library and IpAddr
+/// is currently considered experimental.
 pub fn ifaddrs_if_unspecified(ep: transport::Endpoint) -> Vec<transport::Endpoint> {
     if !is_unspecified(&ep.get_address().ip()) {
         return vec![ep];

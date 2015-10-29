@@ -59,7 +59,7 @@ pub fn blocking_get_mapped_udp_socket(request_id: u32, helper_nodes: Vec<SocketA
     let res = try!(::crossbeam::scope(|scope| -> io::Result<Option<(SocketAddr, usize)>> {
         for helper in helper_nodes.iter() {
             let sender = try!(udp_socket.try_clone());
-            let periodic_sender = PeriodicSender::start(sender, *helper, scope, &send_data[..], 300);
+            let _periodic_sender = PeriodicSender::start(sender, *helper, scope, &send_data[..], 300);
             let deadline = ::time::SteadyTime::now() + ::time::Duration::seconds(2);
             let res = try!((|| -> io::Result<Option<(SocketAddr, usize)>> {
                 loop {
@@ -458,7 +458,7 @@ mod tests {
 
     #[test]
     fn test_get_mapped_socket_from_self() {
-        let (tx, rx) = ::std::sync::mpsc::channel();
+        let (tx, _rx) = ::std::sync::mpsc::channel();
         let mut state = ::state::State::new(tx).unwrap();
         let (socket, our_addr, remaining)
             = blocking_get_mapped_udp_socket(::rand::random(),

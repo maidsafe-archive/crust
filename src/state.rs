@@ -195,7 +195,7 @@ impl State {
             }
         };
 
-        if let Err(what) = writer_channel.send(Message::UserBlob(bytes)) {
+        if let Err(_what) = writer_channel.send(Message::UserBlob(bytes)) {
             self.unregister_connection(connection);
         }
     }
@@ -497,7 +497,7 @@ impl State {
         let event_sender = self.event_sender.clone();
         let helping_nodes = self.get_ordered_helping_nodes();
 
-        let result_handle = Self::new_thread("map_udp", move || {
+        let _result_handle = Self::new_thread("map_udp", move || {
             let result = blocking_get_mapped_udp_socket(seq_id, helping_nodes);
 
             let result = match result {
