@@ -247,21 +247,17 @@ impl Network {
     }
 
     pub fn print_connected_nodes(&self) {
-        let connected_nodes =
-            self.crust_nodes.iter().filter_map(|node|
-                match node.connected {
-                    true => Some(node.connection_id.clone()),
-                    false => None,
-                }).collect::<Vec<_>>();
-
-        println!("Connected node count: {}", connected_nodes.len());
+        println!("Node count: {}", self.crust_nodes.len());
         let mut i = 0;
-        for node in &connected_nodes {
-            println!("    [{}] {:?}", i, node);
+        for node in self.crust_nodes.iter() {
+            let status = if node.connected { "Connected   " }
+                                      else { "Disconnected" };
+
+            println!("    [{}] {} {:?}", i, status, node.connection_id);
             i += 1;
         }
 
-        println!("Udp socket count: {}", self.udp_data.len());
+        println!("\nUdp socket count: {}", self.udp_data.len());
         let mut i = 0;
         for data in &self.udp_data {
             println!("    [{}] {:?} {:?}",
@@ -272,6 +268,10 @@ impl Network {
         }
 
         println!("");
+    }
+
+    pub fn remove_disconnected_nodes(&mut self) {
+        self.crust_nodes.retain(|node|node.connected);
     }
 
     pub fn get(&self, n: usize) -> Option<&CrustNode> {
@@ -638,6 +638,11 @@ fn main() {
                     let network = network.lock().unwrap();
                     network.print_connected_nodes();
                 },
+                UserCommand::Clean => {
+                    let mut network = network.lock().unwrap();
+                    network.remove_disconnected_nodes();
+                    network.print_connected_nodes();
+                },
                 UserCommand::Stop => {
                     break;
                 },
@@ -667,6 +672,7 @@ Usage:
   cli map
   cli punch <peer> <destination>
   cli list
+  cli clean
   cli stop
   cli help
 
@@ -685,6 +691,7 @@ fn print_usage() {
     punch <udp-socket-id> <socketaddr>            - UDP hole punch with given socket to the given
                                                     destination
     list                                          - List existing connections and UDP sockets
+    clean                                         - Remove disconnected connections from the list
     stop                                          - Exit the app
     help                                          - Print this help
 
@@ -707,8 +714,9 @@ struct CliArgs {
     cmd_send_udp:           bool,
     cmd_send_all:           bool,
     cmd_map:                bool,
-    cmd_list:               bool,
     cmd_punch:              bool,
+    cmd_list:               bool,
+    cmd_clean:              bool,
     cmd_stop:               bool,
     cmd_help:               bool,
     arg_endpoint:           Option<PeerEndpoint>,
@@ -727,6 +735,7 @@ enum UserCommand {
     SendAll(String),
     Punch(usize, SocketAddr),
     List,
+    Clean,
     Map,
 }
 
@@ -778,6 +787,8 @@ fn parse_user_command(cmd : String) -> Option<UserCommand> {
         Some(UserCommand::Punch(peer, dst))
     } else if args.cmd_list {
         Some(UserCommand::List)
+    } else if args.cmd_clean {
+        Some(UserCommand::Clean)
     } else if args.cmd_stop {
         Some(UserCommand::Stop)
     } else if args.cmd_help {
