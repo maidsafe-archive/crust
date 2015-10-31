@@ -13,10 +13,11 @@ Reliable p2p network connections in Rust with NAT traversal. One of the most nee
 |:---:|:--------:|:---------:|:-----:|:------:|:----:|
 |[![](http://meritbadge.herokuapp.com/crust)](https://crates.io/crates/crust)|[![Build Status](https://travis-ci.org/maidsafe/crust.svg?branch=master)](https://travis-ci.org/maidsafe/crust)|[![Build Status](http://ci.maidsafe.net:8080/buildStatus/icon?job=crust_arm_status_badge)](http://ci.maidsafe.net:8080/job/crust_arm_status_badge/)|[![Build status](https://ci.appveyor.com/api/projects/status/ajw6ab26p86jdac4/branch/master?svg=true)](https://ci.appveyor.com/project/MaidSafe-QA/crust/branch/master)|[![Coverage Status](https://coveralls.io/repos/maidsafe/crust/badge.svg)](https://coveralls.io/r/maidsafe/crust)|[![Stories in Ready](https://badge.waffle.io/maidsafe/crust.png?label=ready&title=Ready)](https://waffle.io/maidsafe/crust)|
 
-| [API Documentation - master branch](http://maidsafe.net/crust/master) | [SAFE Network System Documentation](http://systemdocs.maidsafe.net) | [MaidSafe website](http://maidsafe.net) | [SAFE Network Forum](https://forum.safenetwork.io) |
+
+| [API Documentation - master branch](http://maidsafe.net/crust/master) | [SAFE Network System Documention](http://systemdocs.maidsafe.net) | [MaidSafe website](http://maidsafe.net) | [Safe Community site](https://forum.safenetwork.io) |
 |:------:|:-------:|:-------:|:-------:|
 
-## Overview
+#Overview
 
 ![crusty] (https://github.com/maidsafe/crust/blob/master/img/crust-diagram_1024.png?raw=true)
 
@@ -30,13 +31,13 @@ Encryption of all streams will also allow for better masking of such networks an
 
 _direct connected == Nodes we were previously connected to. TCP nodes or reliable UDP nodes that allow incoming connections (i.e. direct or full cone nat that has been hole punched). This library also supports fallback endpoints being passed at construction that will allow a fallback should nodes from previous sessions become unavailable.
 
-## NAT Traversal/Handling
+##Nat traversal/Handling
 
 Several methods are used for NAT traversal, UpNP, hole punching [See here for TCP NAT traversal] (http://www.cmlab.csie.ntu.edu.tw/~franklai/NATBT.pdf) and [here for UCP/DHT NAT traversal
   ](http://maidsafe.net/Whitepapers/pdf/DHTbasedNATTraversal.pdf) etc. These methods will be added to by the community to allow a p2p network that cannot be easily blocked. By default this library spawns sockets randomly, enabling nodes to appear on several ports over time. This makes them very difficult to trace.
 
 
-## Todo Items
+##Todo Items
 
 ## Future work
 

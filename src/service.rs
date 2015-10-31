@@ -83,9 +83,7 @@ impl Service {
         let mut state = try!(State::new(event_sender));
         let cmd_sender = state.cmd_sender.clone();
 
-        let handle = try!(Self::new_thread("run loop", move || {
-                                state.run();
-                            }));
+        let handle = try!(Self::new_thread("run loop", move || state.run() ));
 
         let mut service = Service {
                               beacon_guid_and_port : None,
@@ -204,7 +202,6 @@ impl Service {
         });
     }
 
-    /// Stop the bootstraping procedure
     pub fn stop_bootstrap(&mut self) {
         Self::post(&self.cmd_sender, move |state : &mut State| {
             state.stop_bootstrap();
@@ -432,7 +429,6 @@ impl Service {
         });
     }
 
-    /// Lookup a mapped udp socket based on result_token
     pub fn get_mapped_udp_socket(&self, result_token: u32) {
         Self::post(&self.cmd_sender, move |state: &mut State| {
             state.get_mapped_udp_socket(result_token);
@@ -449,7 +445,6 @@ impl Service {
         assert!(sender.send(Box::new(cmd)).is_ok());
     }
 
-    /// Udp hole punching process
     pub fn udp_punch_hole(&self,
                           result_token: u32,
                           udp_socket: UdpSocket,
@@ -749,7 +744,7 @@ mod test {
                             stats.accept_count += 1;
                             self.send_data_to(connection);
                         },
-                        Event::NewMessage(_from, _bytes) => {
+                        Event::NewMessage(from, bytes) => {
                             stats.messages_count += 1;
                             //let msg = decode::<String>(&bytes);
                             if stats.messages_count == TOTAL_MSG_TO_RECEIVE {

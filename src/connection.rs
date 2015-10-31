@@ -20,7 +20,6 @@ use transport::{Endpoint, Protocol};
 use std::net::SocketAddr;
 use util::SocketAddrW;
 
-/// Information hold for the connection between a pair of nodes
 #[derive(PartialOrd, Ord, PartialEq, Eq, Hash, Clone, Copy)]
 pub struct Connection {
     transport_protocol: Protocol,
@@ -29,7 +28,6 @@ pub struct Connection {
 }
 
 impl Connection {
-    /// Constructor of struct Connection
     pub fn new(proto: Protocol, local_addr: SocketAddr, peer_addr: SocketAddr)
         -> Connection {
         Connection {
@@ -39,7 +37,6 @@ impl Connection {
         }
     }
 
-    /// Getter returning peer's Endpoint info
     pub fn peer_endpoint(&self) -> Endpoint {
         match self.transport_protocol {
             Protocol::Tcp => Endpoint::Tcp(self.peer_addr.0.clone()),

@@ -2,9 +2,7 @@ use std::io;
 use std::net::{UdpSocket, SocketAddr};
 use std::io::ErrorKind;
 
-/// A self interruptable receive trait that allows a timed-out period to be defined
 pub trait RecvUntil {
-    /// After specified timed-out period, the blocking receive method shall return with an error
     fn recv_until(&self, buf: &mut [u8], deadline: ::time::SteadyTime) -> io::Result<Option<(usize, SocketAddr)>>;
 }
 

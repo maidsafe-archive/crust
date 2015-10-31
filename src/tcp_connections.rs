@@ -187,9 +187,9 @@ mod test {
         let listener = TcpListener::bind(("0.0.0.0", 0)).unwrap();
         let port = listener.local_addr().unwrap().port();
 
-        let (_i1, o1) = connect_tcp(loopback(port)).unwrap();
+        let (i1, o1) = connect_tcp(loopback(port)).unwrap();
         let (connection, _) = listener.accept().unwrap();
-        let (i2, _o2) = upgrade_tcp(connection).unwrap();
+        let (i2, o2) = upgrade_tcp(connection).unwrap();
 
         fn read_messages(reader: TcpStream) {
             let d = &mut cbor::Decoder::from_reader(&reader);
@@ -199,7 +199,7 @@ mod test {
             loop {
                 for m in d.decode::<String>() {
                     match m {
-                        Ok(_m) => {
+                        Ok(m) => {
                             //println!("received {:?}", m)
                         },
                         Err(what) => panic!(format!("Problem decoding message {}", what)),
