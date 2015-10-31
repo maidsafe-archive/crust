@@ -92,7 +92,6 @@ impl Endpoint {
         }
     }
 
-    /// Convert address format from Port to Endpoint
     pub fn to_ip(&self) -> ip::Endpoint {
         let port = match self.get_port() {
             Port::Tcp(n) => ip::Port::Tcp(n),
@@ -101,8 +100,6 @@ impl Endpoint {
         ip::Endpoint::new(self.get_address().ip(), port)
     }
 
-    /// Check whether the current address is specified
-    /// returns true if address is un-specified, and false when specified
     pub fn has_unspecified_ip(&self) -> bool {
         match self.get_address().ip() {
             IpAddr::V4(ip) => ip.is_unspecified(),
@@ -110,7 +107,6 @@ impl Endpoint {
         }
     }
 
-    /// Convert address's format from ::std::net::IpAddr to Endpoint
     pub fn map_ip_addr<F: Fn(IpAddr) -> IpAddr>(&self, f: F) -> Endpoint {
         Endpoint::new(f(self.to_ip().ip()), self.get_port())
     }
@@ -412,7 +408,7 @@ pub fn rendezvous_connect(udp_socket: UdpSocket,
 pub fn accept(acceptor: &Acceptor) -> IoResult<Transport> {
     match *acceptor {
         Acceptor::Tcp(ref listener) => {
-            let (stream, _remote_endpoint) = try!(listener.accept()
+            let (stream, remote_endpoint) = try!(listener.accept()
                 .map_err(|e| io::Error::new(io::ErrorKind::NotConnected, e.description())));
 
             let (i, o) = try!(tcp_connections::upgrade_tcp(stream));
@@ -430,7 +426,7 @@ pub fn accept(acceptor: &Acceptor) -> IoResult<Transport> {
             })
         },
         Acceptor::Utp(ref listener) => {
-            let (stream, _remote_endpoint) = try!(listener.accept()
+            let (stream, remote_endpoint) = try!(listener.accept()
                 .map_err(|e| io::Error::new(io::ErrorKind::NotConnected, e.description())));
 
             let (i, o) = try!(utp_connections::upgrade_utp(stream));
