@@ -566,6 +566,7 @@ mod test {
         eps.iter().map(|e|e.map_ip_addr(util::loopback_if_unspecified)).collect()
     }
 
+    #[ignore]
     #[test]
     fn bootstrap() {
         let _cleaner = ::file_handler::ScopedUserAppDirRemover;
@@ -604,6 +605,7 @@ mod test {
         cm2.stop();
     }
 
+    #[ignore]
     #[test]
     fn connection_manager() {
         let run_cm = |cm: Service, o: Receiver<Event>| {
@@ -650,6 +652,7 @@ mod test {
         assert!(runner2.join().is_ok());
     }
 
+    #[ignore]
     #[test]
     fn rendezvous_connection() {
         // Wait 2 seconds until previous bootstrap test ends. If not, that test connects to these endpoints.
@@ -714,6 +717,7 @@ mod test {
         assert!(runner2.join().is_ok());
     }
 
+    #[ignore]
     #[test]
     fn network() {
         const NETWORK_SIZE: u32 = 10;
@@ -807,6 +811,7 @@ mod test {
         assert_eq!(stats.messages_count, NETWORK_SIZE * (NETWORK_SIZE - 1) * MESSAGE_PER_NODE);
     }
 
+    #[ignore]
     #[test]
     fn connection_manager_start() {
         let _temp_config = make_temp_config(None);
