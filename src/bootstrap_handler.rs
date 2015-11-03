@@ -23,16 +23,23 @@
 //! with any other one.
 
 use transport::Endpoint;
+use file_handler::FileHandler;
+use std::io;
 
 pub struct BootstrapHandler {
-    file_handler: ::file_handler::FileHandler,
+    file_handler: FileHandler,
     last_updated: ::time::Tm,
 }
 
 impl BootstrapHandler {
+    #[allow(dead_code)]
+    pub fn cleanup() -> io::Result<()> {
+        FileHandler::cleanup(&get_file_name())
+    }
+
     pub fn new() -> BootstrapHandler {
         BootstrapHandler {
-            file_handler: ::file_handler::FileHandler::new(get_file_name()),
+            file_handler: FileHandler::new(get_file_name()),
             last_updated: ::time::now(),
         }
     }
