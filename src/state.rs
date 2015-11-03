@@ -123,9 +123,12 @@ impl State {
                                        config: &Config,
                                        beacon_guid_and_port: &Option<([u8; 16], u16)>)
             -> Vec<Endpoint> {
+        println!("populate_bootstrap_contacts 0");
         if config.override_default_bootstrap {
+            println!("populate_bootstrap_contacts hard coded override {:?}", config.hard_coded_contacts);
             return config.hard_coded_contacts.clone();
         }
+        println!("populate_bootstrap_contacts hard coded {:?}", config.hard_coded_contacts);
 
         let cached_contacts = if beacon_guid_and_port.is_some() {
             // this node "owns" bootstrap file
@@ -133,6 +136,7 @@ impl State {
             if let Some(ref mut handler) = self.bootstrap_handler {
                 contacts = handler.read_file().unwrap_or(vec![]);
             }
+            println!("populate_bootstrap_contacts cached {:?}", contacts);
             contacts
         } else {
             vec![]
@@ -144,6 +148,7 @@ impl State {
             Some(port) => Self::seek_peers(beacon_guid, port),
             None => vec![]
         };
+        println!("populate_bootstrap_contacts beacon {:?}", beacon_discovery);
 
         let mut combined_contacts
             = beacon_discovery.into_iter()
@@ -388,6 +393,7 @@ impl State {
                               token: u32,
                               mut bootstrap_list: Vec<Endpoint>,
                               is_broadcast_acceptor: bool) {
+        println!("bootstrap_off_list {:?}", bootstrap_list);
         if self.is_bootstrapping { return; }
         self.is_bootstrapping = true;
 
@@ -411,7 +417,9 @@ impl State {
                 external_ip: external_ip.map(util::SocketAddrV4W),
             };
 
+            println!("connecting... {:?}", head);
             let connect_result = Self::connect(h, head);
+            println!("...done {:?}", connect_result);
 
             let _ = cmd_sender.send(Box::new(move |state: &mut State| {
                 if !state.is_bootstrapping {

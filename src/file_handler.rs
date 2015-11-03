@@ -15,6 +15,10 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use std::path::{Path, PathBuf};
+use std::fs;
+use std::io;
+
 /// Struct for reading and writing config files.
 ///
 /// # Thread- and Process-Safety
@@ -103,6 +107,26 @@ impl FileHandler {
 
         self.path = None;
         Err(last_error)
+    }
+
+    /// cleanup
+    pub fn cleanup(name: &PathBuf) -> io::Result<()> {
+        let i1 = current_bin_dir().into_iter();
+        let i2 = user_app_dir().into_iter();
+        let i3 = system_cache_dir().into_iter();
+
+        let dirs = i1.chain(i2.chain(i3));
+
+        for mut dir in dirs {
+            dir.push(name.clone());
+            let path = Path::new(&dir);
+
+            if path.exists() {
+                try!(fs::remove_file(path));
+            }
+        }
+
+        Ok(())
     }
 
     /// JSON-encodes then writes `contents` to the file.  Creates the file if it doesn't already
