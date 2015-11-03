@@ -17,7 +17,6 @@ rand = "*"
 rustc-serialize = "*"
 term = "*"
 time = "*"
-asynchronous = "*"
 itertools = "*"
 igd = { version = "0.2.1", features = [ "unstable" ] }
 net2 = "*"

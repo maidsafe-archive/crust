@@ -15,6 +15,10 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use std::path::{Path, PathBuf};
+use std::fs;
+use std::io;
+
 /// Struct for reading and writing config files.
 ///
 /// # Thread- and Process-Safety
@@ -75,14 +79,54 @@ impl FileHandler {
     /// the file in all attempted locations.
     pub fn read_file<Contents: ::rustc_serialize::Decodable>(&mut self) ->
             Result<Contents, ::error::Error> {
-        self.path().clone().ok_or(::error::Error::NotSet).and_then(Self::read)
-            .or_else(|_| self.set_path(current_bin_dir()).and_then(Self::read))
-            .or_else(|_| self.set_path(user_app_dir()).and_then(Self::read))
-            .or_else(|_| self.set_path(system_cache_dir()).and_then(Self::read))
-            .or_else(|error| {
-                self.path = None;
-                Err(error)
-            })
+        let mut last_error = ::error::Error::NotSet;
+
+        let paths = vec![self.path().clone().ok_or(::error::Error::NotSet),
+                         current_bin_dir(),
+                         user_app_dir(),
+                         system_cache_dir()];
+
+        for path_result in paths {
+            match self.set_path(path_result) {
+                Ok(mut path) => {
+                    path.push(self.name.clone());
+                    match Self::read::<Contents>(path.clone()) {
+                        Ok(content) => {
+                            return Ok(content);
+                        },
+                        Err(error) => {
+                            last_error = error;
+                        }
+                    }
+                },
+                Err(error) => {
+                    last_error = error;
+                }
+            }
+        }
+
+        self.path = None;
+        Err(last_error)
+    }
+
+    /// cleanup
+    pub fn cleanup(name: &PathBuf) -> io::Result<()> {
+        let i1 = current_bin_dir().into_iter();
+        let i2 = user_app_dir().into_iter();
+        let i3 = system_cache_dir().into_iter();
+
+        let dirs = i1.chain(i2.chain(i3));
+
+        for mut dir in dirs {
+            dir.push(name.clone());
+            let path = Path::new(&dir);
+
+            if path.exists() {
+                try!(fs::remove_file(path));
+            }
+        }
+
+        Ok(())
     }
 
     /// JSON-encodes then writes `contents` to the file.  Creates the file if it doesn't already
@@ -105,25 +149,35 @@ impl FileHandler {
     pub fn write_file<Contents: ::rustc_serialize::Encodable>(&mut self, contents: &Contents) ->
             Result<(), ::error::Error> {
         self.path().clone().ok_or(::error::Error::NotSet)
-            .and_then(|path| Self::write(path, contents))
+            .and_then(|mut path| {
+                path.push(self.name.clone());
+                Self::write(path, contents)
+            })
             .or_else(|error| {
                 // Only try to create in the sys dir if we've not previously read the file
                 match error {
                     ::error::Error::NotSet =>
                         self.set_path(system_cache_dir())
-                            .and_then(|path| Self::write(path, contents)),
+                            .and_then(|mut path| {
+                                path.push(self.name.clone());
+                                Self::write(path, contents)
+                            }),
                     _ => Err(error),
                 }
             })
-            .or_else(|_| self.set_path(user_app_dir()).and_then(|path| Self::write(path, contents)))
+            .or_else(|_| self.set_path(user_app_dir()).and_then(|mut path| {
+                path.push(self.name.clone());
+                Self::write(path, contents)
+            }))
             .or_else(|_| self.set_path(user_app_dir())
                              .and_then(|path| {
-                                 let mut parent = path.clone();
-                                 let _ = parent.pop();
-                                 try!(::std::fs::create_dir_all(parent));
-                                 Ok(path)
+                                try!(::std::fs::create_dir_all(path.clone()));
+                                Ok(path)
                              })
-                             .and_then(|path| Self::write(path, contents)))
+                             .and_then(|mut path| {
+                                path.push(self.name.clone());
+                                Self::write(path, contents)
+                             }))
             .or_else(|error| {
                 self.path = None;
                 Err(error)
@@ -143,8 +197,8 @@ impl FileHandler {
 
     fn set_path(&mut self, new_path: Result<::std::path::PathBuf, ::error::Error>) ->
             Result<::std::path::PathBuf, ::error::Error> {
-        new_path.and_then(|mut path| {
-            path.push(self.name.clone());
+        new_path.and_then(|path| {
+            //path.push(self.name.clone());
             self.path = Some(path.clone());
             Ok(path)
         })

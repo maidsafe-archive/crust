@@ -502,6 +502,7 @@ mod test {
     use event::Event;
     use std::io;
     use util;
+    use bootstrap_handler::BootstrapHandler;
 
     fn encode<T>(value: &T) -> Bytes where T: Encodable
     {
@@ -568,6 +569,8 @@ mod test {
 
     #[test]
     fn bootstrap() {
+        BootstrapHandler::cleanup().unwrap();
+
         let _cleaner = ::file_handler::ScopedUserAppDirRemover;
         let (cm1_i, _) = channel();
         let _config_file = make_temp_config(None);
@@ -606,6 +609,8 @@ mod test {
 
     #[test]
     fn connection_manager() {
+        BootstrapHandler::cleanup().unwrap();
+
         let run_cm = |cm: Service, o: Receiver<Event>| {
             spawn(move || {
                 for i in o.iter() {
@@ -652,6 +657,8 @@ mod test {
 
     #[test]
     fn rendezvous_connection() {
+        BootstrapHandler::cleanup().unwrap();
+
         // Wait 2 seconds until previous bootstrap test ends. If not, that test connects to these endpoints.
         thread::sleep_ms(2000);
         let run_cm = |cm: Service, o: Receiver<Event>,
@@ -716,6 +723,8 @@ mod test {
 
     #[test]
     fn network() {
+        BootstrapHandler::cleanup().unwrap();
+
         const NETWORK_SIZE: u32 = 10;
         const MESSAGE_PER_NODE: u32 = 5;
         const TOTAL_MSG_TO_RECEIVE: u32 = MESSAGE_PER_NODE * (NETWORK_SIZE - 1);
@@ -809,6 +818,8 @@ mod test {
 
     #[test]
     fn connection_manager_start() {
+        BootstrapHandler::cleanup().unwrap();
+
         let _temp_config = make_temp_config(None);
 
         let (cm_tx, cm_rx) = channel();
@@ -859,6 +870,8 @@ mod test {
 
     #[test]
     fn reaccept() {
+        BootstrapHandler::cleanup().unwrap();
+
         let tcp_port;
         let utp_port;
 
