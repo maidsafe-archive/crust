@@ -15,10 +15,7 @@ branches:
     - master
 cache:
   directories:
-    - $HOME/elfutils-$ElfUtilsVersion
-before_install:
-    - curl -sSLO https://github.com/maidsafe/QA/raw/master/Bash%20Scripts/Travis/dependency_versions.sh
-    - . dependency_versions.sh
+    - $HOME/elfutils
 script:
   - export RUST_TEST_THREADS=1
   - curl -sSL https://github.com/maidsafe/QA/raw/master/Bash%20Scripts/Travis/build_and_run_tests.sh | bash
