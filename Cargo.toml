@@ -10,7 +10,7 @@ license = "GPL-3.0"
 homepage = "http://maidsafe.net"
 
 [dependencies]
-libc = "*"
+libc = "0.1.12"
 cbor = "*"
 docopt = "*"
 rand = "*"
