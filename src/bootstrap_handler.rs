@@ -25,6 +25,7 @@
 use transport::Endpoint;
 use file_handler::FileHandler;
 use std::io;
+use std::net::SocketAddr;
 
 pub struct BootstrapHandler {
     file_handler: FileHandler,
@@ -72,6 +73,14 @@ impl BootstrapHandler {
         let mut bootstrap_contacts = self.read_file().unwrap_or_else(|e| {
             debug!("Error reading Bootstrap file: {:?}.", e);
             Vec::new()
+        });
+
+        // We wouldn't add any loopback addresses nor addresses from our local
+        // LAN to the bootstrap cache. We can always find such addresses using
+        // beacon and more often than not they would be obsolete very soon.
+        contacts.retain(|contact| match contact.get_address() {
+            SocketAddr::V4(a) => a.ip().is_global(),
+            SocketAddr::V6(a) => a.ip().is_global(),
         });
 
         bootstrap_contacts.retain(|contact| !prune.contains(&contact));

@@ -355,7 +355,7 @@ pub fn loopback_if_unspecified(addr : IpAddr) -> IpAddr {
 pub fn random_endpoint() -> ::transport::Endpoint {
     // TODO - randomise V4/V6 and TCP/UTP
     let address = ::std::net::SocketAddrV4::new(
-        ::std::net::Ipv4Addr::new(::rand::random::<u8>(),
+        ::std::net::Ipv4Addr::new(173, // ensure is a global addr
                                   ::rand::random::<u8>(),
                                   ::rand::random::<u8>(),
                                   ::rand::random::<u8>()),
