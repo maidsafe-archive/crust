@@ -567,6 +567,7 @@ mod test {
         eps.iter().map(|e|e.map_ip_addr(util::loopback_if_unspecified)).collect()
     }
 
+    #[ignore]
     #[test]
     fn bootstrap() {
         BootstrapHandler::cleanup().unwrap();
@@ -607,6 +608,7 @@ mod test {
         cm2.stop();
     }
 
+    #[ignore]
     #[test]
     fn connection_manager() {
         BootstrapHandler::cleanup().unwrap();
@@ -655,6 +657,7 @@ mod test {
         assert!(runner2.join().is_ok());
     }
 
+    #[ignore]
     #[test]
     fn rendezvous_connection() {
         BootstrapHandler::cleanup().unwrap();
@@ -721,6 +724,7 @@ mod test {
         assert!(runner2.join().is_ok());
     }
 
+    #[ignore]
     #[test]
     fn network() {
         BootstrapHandler::cleanup().unwrap();
@@ -816,6 +820,7 @@ mod test {
         assert_eq!(stats.messages_count, NETWORK_SIZE * (NETWORK_SIZE - 1) * MESSAGE_PER_NODE);
     }
 
+    #[ignore]
     #[test]
     fn connection_manager_start() {
         BootstrapHandler::cleanup().unwrap();
