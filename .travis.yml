@@ -1,7 +1,6 @@
 env:
   global:
     - secure: oXc5B0QaYC05GZ9imgUHpsBnCb4fIJpLjAtqzLm8r6d7xGWy3fToYlD6oMMsGmG+SXWnQNcoS5/R3vhZLpurGeTtPEGJlZCGxtDbAh7rOeh/GJf2PVehAkgRLdVO1mxz8GFoMoTrjTDZIpilZIApg56hRScnX8aK6YvYhN72wOo=
-    - ElfUtilsVersion=0.163
 os:
   - linux
   - osx
@@ -16,7 +15,7 @@ branches:
     - master
 cache:
   directories:
-    - $HOME/elfutils-$ElfUtilsVersion
+    - $HOME/elfutils
 script:
   - export RUST_TEST_THREADS=1
   - curl -sSL https://github.com/maidsafe/QA/raw/master/Bash%20Scripts/Travis/build_and_run_tests.sh | bash
