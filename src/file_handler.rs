@@ -75,14 +75,44 @@ impl FileHandler {
     /// the file in all attempted locations.
     pub fn read_file<Contents: ::rustc_serialize::Decodable>(&mut self) ->
             Result<Contents, ::error::Error> {
-        self.path().clone().ok_or(::error::Error::NotSet).and_then(Self::read)
-            .or_else(|_| self.set_path(current_bin_dir()).and_then(Self::read))
-            .or_else(|_| self.set_path(user_app_dir()).and_then(Self::read))
-            .or_else(|_| self.set_path(system_cache_dir()).and_then(Self::read))
-            .or_else(|error| {
-                self.path = None;
-                Err(error)
-            })
+
+        if let Some(ref path) = self.path {
+            match Self::read(path) {
+                Err(::error::Error::IoError(ref e)) if path_or_file_not_found(e)
+                    => info!("File not found: {:?}", path),
+                x   => return x,
+            };
+        };
+
+        if let Ok(path) = current_bin_dir() {
+            let path = self.set_dir(path);
+            match Self::read(path) {
+                Err(::error::Error::IoError(ref e)) if path_or_file_not_found(e)
+                    => info!("File not found: {:?}", path),
+                x   => return x
+            };
+        };
+
+        if let Ok(path) = user_app_dir() {
+            let path = self.set_dir(path);
+            match Self::read(path) {
+                Err(::error::Error::IoError(ref e)) if path_or_file_not_found(e)
+                    => info!("File not found: {:?}", path),
+                x   => return x
+            };
+        };
+
+        if let Ok(path) = system_cache_dir() {
+            let path = self.set_dir(path);
+            match Self::read(path) {
+                Err(::error::Error::IoError(ref e)) if path_or_file_not_found(e)
+                    => info!("File not found: {:?}", path),
+                x   => return x
+            };
+        };
+
+        self.path = None;
+        Err(::error::Error::ReadFileFailed)
     }
 
     /// JSON-encodes then writes `contents` to the file.  Creates the file if it doesn't already
@@ -104,30 +134,35 @@ impl FileHandler {
     /// process-safety.
     pub fn write_file<Contents: ::rustc_serialize::Encodable>(&mut self, contents: &Contents) ->
             Result<(), ::error::Error> {
-        self.path().clone().ok_or(::error::Error::NotSet)
-            .and_then(|path| Self::write(path, contents))
-            .or_else(|error| {
-                // Only try to create in the sys dir if we've not previously read the file
-                match error {
-                    ::error::Error::NotSet =>
-                        self.set_path(system_cache_dir())
-                            .and_then(|path| Self::write(path, contents)),
-                    _ => Err(error),
+        match self.path {
+            Some(ref path) => match Self::write(path, contents) {
+                Ok(())  => return Ok(()),
+                Err(e)  => info!("write_file failed for self.path == {:?}: {:?}", path, e),
+            },
+            None           => if let Ok(path) = system_cache_dir() {
+                let path = self.set_dir(path);
+                match Self::write(path, contents) {
+                    Ok(())  => return Ok(()),
+                    Err(e)  => info!("write_file failed for system_cache_dir == {:?}: {:?}", path, e),
                 }
-            })
-            .or_else(|_| self.set_path(user_app_dir()).and_then(|path| Self::write(path, contents)))
-            .or_else(|_| self.set_path(user_app_dir())
-                             .and_then(|path| {
-                                 let mut parent = path.clone();
-                                 let _ = parent.pop();
-                                 try!(::std::fs::create_dir_all(parent));
-                                 Ok(path)
-                             })
-                             .and_then(|path| Self::write(path, contents)))
-            .or_else(|error| {
-                self.path = None;
-                Err(error)
-            })
+            },
+        };
+
+        if let Ok(path) = user_app_dir() {
+            match ::std::fs::create_dir_all(&*path) {
+                Ok(())  => {
+                    let path = self.set_dir(path);
+                    match Self::write(path, contents) {
+                        Ok(())  => return Ok(()),
+                        Err(e)  => info!("write_file failed for user_app_dir == {:?}: {:?}", path, e),
+                    }
+                },
+                Err(e)  => info!("create_dir_all({:?}) failed: {:?}", path, e),
+            }
+        };
+
+        self.path = None;
+        Err(::error::Error::WriteFileFailed)
     }
 
     /// Get the full path to the file.
@@ -141,70 +176,38 @@ impl FileHandler {
         &self.path
     }
 
-    fn set_path(&mut self, new_path: Result<::std::path::PathBuf, ::error::Error>) ->
-            Result<::std::path::PathBuf, ::error::Error> {
-        new_path.and_then(|mut path| {
-            path.push(self.name.clone());
-            self.path = Some(path.clone());
-            Ok(path)
-        })
-    }
-
-    fn die(message: String, code: i32) {
-        error!("die {}", message);
-        ::std::process::exit(code);
-    }
-
-    #[cfg(target_os="windows")]
-    fn path_or_file_not_found(error: &::std::io::Error) -> bool {
-        let native_error = error.raw_os_error().unwrap_or(0);
-        native_error == 2 || native_error == 3
-    }
-
-    #[cfg(any(target_os="macos", target_os="ios", target_os="linux"))]
-    fn path_or_file_not_found(error: &::std::io::Error) -> bool {
-        error.kind() == ::std::io::ErrorKind::NotFound
+    /// Set the directory of the file.
+    ///
+    /// Returns a reference to the new full path to the file.
+    fn set_dir(&mut self, mut new_dir: ::std::path::PathBuf) -> &::std::path::Path {
+        new_dir.push(&*self.name);
+        self.path = Some(new_dir);
+        self.path.as_ref().unwrap().as_path()   // safe to use unwrap as we just set it to a Some(...)
     }
 
     fn permission_denied(error: &::std::io::Error) -> bool {
         error.kind() == ::std::io::ErrorKind::PermissionDenied
     }
 
-    fn read<Contents: ::rustc_serialize::Decodable>(path: ::std::path::PathBuf) ->
+    fn read<Contents: ::rustc_serialize::Decodable, P: AsRef<::std::path::Path>>(path: P) ->
             Result<Contents, ::error::Error> {
         use std::io::Read;
-        match ::std::fs::File::open(&path) {
-            Ok(mut file) => {
-                let mut encoded_contents = String::new();
-                let _ = file.read_to_string(&mut encoded_contents)
-                            .map(|_| ())
-                            .unwrap_or_else(|error| {
-                                Self::die(format!("Failed to read {:?}: {}", path, error), 2);
-                            });
-                match ::rustc_serialize::json::decode(&encoded_contents) {
-                    Ok(contents) => Ok(contents),
-                    Err(error) => {
-                        Self::die(format!("Failed to decode {:?}: {}", path, error), 3);
-                        unreachable!();
-                    },
-                }
-            },
-            Err(error) => {
-                if !Self::path_or_file_not_found(&error) && !Self::permission_denied(&error) {
-                    Self::die(format!("Failed to open {:?}: {}", path, error), 1);
-                }
-                Err(::error::Error::IoError(error))
-            },
-        }
+        let path = path.as_ref();
+        let mut file = try!(::std::fs::File::open(path));
+        let mut encoded_contents = String::new();
+        let _ = try!(file.read_to_string(&mut encoded_contents));
+        let contents = try!(::rustc_serialize::json::decode(&encoded_contents));
+        Ok(contents)
     }
 
-    fn write<Contents: ::rustc_serialize::Encodable>(path: ::std::path::PathBuf,
+    fn write<Contents: ::rustc_serialize::Encodable, P: AsRef<::std::path::Path>>(path: P,
                                                      contents: &Contents) ->
             Result<(), ::error::Error> {
         use std::io::Write;
         let mut file = try!(::std::fs::File::create(path));
         let _ = try!(write!(&mut file, "{}", ::rustc_serialize::json::as_pretty_json(contents)));
-        file.sync_all().map_err(|error| ::error::Error::IoError(error))
+        try!(file.sync_all());
+        Ok(())
     }
 }
 
@@ -300,6 +303,17 @@ fn join_exe_file_stem(path: &::std::path::Path) -> Result<::std::path::PathBuf, 
     Ok(path.join(try!(exe_file_stem())))
 }
 
+#[cfg(target_os="windows")]
+fn path_or_file_not_found(error: &::std::io::Error) -> bool {
+    let native_error = error.raw_os_error().unwrap_or(0);
+    native_error == 2 || native_error == 3
+}
+
+#[cfg(any(target_os="macos", target_os="ios", target_os="linux"))]
+fn path_or_file_not_found(error: &::std::io::Error) -> bool {
+    error.kind() == ::std::io::ErrorKind::NotFound
+}
+
 #[cfg(test)]
 mod test {
     #[test]
@@ -309,25 +323,12 @@ mod test {
             super::FileHandler::new(::std::path::Path::new("file_handler_test.json").to_path_buf());
         let test_value = 123456789u64;
 
-        match file_handler.read_file::<u64>() {
-            Ok(result) => {
-                assert_eq!(result, test_value);
-                assert!(!file_handler.path().is_none());
-            },
-            Err(_) => assert!(file_handler.path().is_none()),
-        }
-
-        match file_handler.write_file(&test_value) {
-            Ok(_) => assert!(!file_handler.path().is_none()),
-            Err(_) => assert!(file_handler.path().is_none()),
-        }
-
-        match file_handler.read_file::<u64>() {
-            Ok(result) => {
-                assert_eq!(result, test_value);
-                assert!(!file_handler.path().is_none());
-            },
-            Err(_) => assert!(file_handler.path().is_none()),
-        }
+        assert!(file_handler.read_file::<u64>().is_err());
+        assert!(file_handler.path().is_none());
+        file_handler.write_file(&test_value).unwrap();
+        assert!(file_handler.path().is_some());
+        let result = file_handler.read_file::<u64>().unwrap();
+        assert_eq!(result, test_value);
+        assert!(file_handler.path().is_some());
     }
 }
