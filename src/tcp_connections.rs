@@ -83,24 +83,19 @@ mod test {
             o.send(x).unwrap()
         }
         drop(o);
-        let _ = thread::spawn(move || {
-            for x in listener.incoming() {
-                let connection = x.unwrap();
-                // Spawn a new thread for each connection that we get.
-                let _ = thread::spawn(move || {
-                    let (mut i, o) = upgrade_tcp(connection).unwrap();
-                    i.set_read_timeout(Some(Duration::new(5, 0))).unwrap();
-                    let mut buf = [0u8; 10];
-                    let mut len = 0;
-                    while len < 10 {
-                        len += i.read(&mut buf[len..]).unwrap();
-                    }
-                    for i in 0..buf.len() {
-                        buf[i] += 1;
-                    }
-                    o.send(buf.iter().cloned().collect()).unwrap();
-                });
+        let t = thread::spawn(move || {
+            let connection = listener.accept().unwrap().0;
+            let (mut i, o) = upgrade_tcp(connection).unwrap();
+            i.set_read_timeout(Some(Duration::new(5, 0))).unwrap();
+            let mut buf = [0u8; 10];
+            let mut len = 0;
+            while len < 10 {
+                len += i.read(&mut buf[len..]).unwrap();
             }
+            for i in 0..buf.len() {
+                buf[i] += 1;
+            }
+            o.send(buf.iter().cloned().collect()).unwrap();
         });
         // Collect everything that we get back.
         i.set_read_timeout(Some(Duration::new(5, 0))).unwrap();
@@ -111,6 +106,8 @@ mod test {
         }
         assert_eq!(buf.iter().cloned().collect::<Vec<_>>(),
                    vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+
+        t.join().unwrap();
     }
 
     // Downscaling node count only for mac for test to pass.
