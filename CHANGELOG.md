@@ -1,5 +1,23 @@
 # CRUST - Change Log
 
+## [0.5.0]
+- Update lint checks
+- Style changes
+- Documentation updates
+- Hole punching API
+  - Functions to use the P2P network to help punch an UDP hole
+  - Rendezvous connections using custom UDP sockets
+- Breakages in network protocol (handshake strucutre changed)
+- Updated examples
+- New example: reporter
+- Bug fixes
+- API updates (now an `u32` token is associated with connections)
+- Remove dependency on packages that were unnecessary and were
+  causing stability issues on crust
+- Tests are more predictable.
+- Tests are more stable (tests can contain bugs too).
+- Changes to build against most recent Rust (and libraries).
+
 ## [0.4.2]
 - Adapts to new rust-utp API
 
