@@ -20,9 +20,13 @@ time = "*"
 itertools = "*"
 igd = { version = "0.2.1", features = [ "unstable" ] }
 net2 = "*"
-temp_utp = "*"
+#temp_utp = "*"
 log = "*"
 crossbeam = "*"
+
+[dependencies.temp_utp]
+git = "https://github.com/inetic/rust-utp.git"
+branch = "win-libc-0.1.12"
 
 [dev-dependencies]
 env_logger = "*"
