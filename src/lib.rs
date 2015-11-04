@@ -38,7 +38,6 @@
          missing_debug_implementations)]
 #![feature(fnbox, ip_addr, ip)]
 
-extern crate asynchronous;
 extern crate cbor;
 extern crate igd;
 extern crate itertools;

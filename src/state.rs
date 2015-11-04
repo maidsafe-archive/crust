@@ -21,7 +21,6 @@ use std::sync::mpsc;
 use std::sync::mpsc::{Sender, Receiver};
 use std::thread;
 use std::boxed::FnBox;
-use asynchronous::{Deferred,ControlFlow};
 
 use beacon;
 use bootstrap_handler::BootstrapHandler;
@@ -399,41 +398,20 @@ impl State {
             return;
         }
 
+        let head = bootstrap_list.remove(0);
+
         let event_sender = self.event_sender.clone();
         let cmd_sender   = self.cmd_sender.clone();
         let mapper_port  = self.mapper.listening_addr().port();
         let external_ip  = self.mapper.external_address();
 
         let _ = Self::new_thread("bootstrap_off_list", move || {
-            let mut vec_deferred = vec![];
-
-            // TODO (peterj) would be useful if bootstrap_list contained
-            // information whether the peer was connected using beacon
-            // or otherwise. If using beacon, we do not want to send
-            // him our mapper_port (it would be of no use for him).
-            for contact in bootstrap_list.iter() {
-                let c = contact.clone();
-                vec_deferred.push(Deferred::new(move || {
-                    let h = Handshake {
-                        mapper_port: Some(mapper_port),
-                        external_ip: external_ip.map(util::SocketAddrV4W),
-                    };
-                    Self::connect(h, c)
-                }))
-            }
-
-            // TODO: Setting ParallelLimit to more than 1 makes the
-            // below tests fail. Investigate why and how it can be
-            // fixed.
-            let res = Deferred::first_to_promise(1,
-                                                 false,
-                                                 vec_deferred,
-                                                 ControlFlow::ParallelLimit(1)).sync();
-
-            let ts = match res {
-                Ok(ts) => ts,
-                Err(ts) => ts.into_iter().filter_map(|e|e.ok()).collect(),
+            let h = Handshake {
+                mapper_port: Some(mapper_port),
+                external_ip: external_ip.map(util::SocketAddrV4W),
             };
+
+            let connect_result = Self::connect(h, head);
 
             let _ = cmd_sender.send(Box::new(move |state: &mut State| {
                 if !state.is_bootstrapping {
@@ -443,13 +421,8 @@ impl State {
 
                 state.is_bootstrapping = false;
 
-                if ts.is_empty() {
-                    let _ = event_sender.send(Event::BootstrapFinished);
-                    return;
-                }
-
-                for t in ts {
-                    let _ = state.handle_connect(token, t.0, t.1, is_broadcast_acceptor);
+                if let Ok(c) = connect_result {
+                    let _ = state.handle_connect(token, c.0, c.1, is_broadcast_acceptor);
                 }
 
                 state.bootstrap_off_list(token, bootstrap_list, is_broadcast_acceptor);
