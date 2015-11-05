@@ -149,6 +149,22 @@ impl Service {
         Ok(Endpoint::from_socket_addr(Protocol::Tcp, SocketAddr(accept_addr)))
     }
 
+    #[cfg(test)]
+    pub fn start_accepting_utp(&mut self, port: u16) -> io::Result<Endpoint> {
+        use utp::UtpListener;
+        let listener = try!(UtpListener::bind(("0.0.0.0", port)));
+        let accept_addr = try!(listener.local_addr());
+
+        let hole_punch_server = self.mapper.clone();
+        let acceptor = try!(Acceptor::with_utp(listener, hole_punch_server,
+                                               self.connection_map.clone()));
+        self.acceptors.push(acceptor);
+
+        // FIXME: Instead of hardcoded wrapping in loopback V4, the
+        // listener should tell us the address it is accepting on.
+        Ok(Endpoint::from_socket_addr(Protocol::Utp, SocketAddr(accept_addr)))
+    }
+
     fn populate_bootstrap_contacts(&mut self,
                                    config: &Config,
                                    beacon_port: Option<u16>,
@@ -1185,8 +1201,7 @@ mod test {
         }));
     }
 
-    #[test]
-    fn network() {
+    fn test_network(protocol: Protocol) {
         BootstrapHandler::cleanup().unwrap();
 
         const NETWORK_SIZE: u32 = 10;
@@ -1269,7 +1284,12 @@ mod test {
         let mut runners = Vec::new();
 
         let mut listening_eps = nodes.iter_mut()
-                                     .map(|node| node.service.start_accepting(0).unwrap())
+                                     .map(|node| {
+                                         match protocol {
+                                             Protocol::Tcp => node.service.start_accepting(0).unwrap(),
+                                             Protocol::Utp => node.service.start_accepting_utp(0).unwrap(),
+                                         }
+                                     })
                                      .map(|ep| ep.unspecified_to_loopback())
                                      .collect::<::std::collections::VecDeque<_>>();
 
@@ -1297,6 +1317,16 @@ mod test {
         assert_eq!(stats.accept_count, NETWORK_SIZE * (NETWORK_SIZE - 1) / 2);
         assert_eq!(stats.messages_count,
                    NETWORK_SIZE * (NETWORK_SIZE - 1) * MESSAGE_PER_NODE);
+    }
+
+    #[test]
+    fn test_network_tcp() {
+        test_network(Protocol::Tcp);
+    }
+
+    #[test]
+    fn test_network_utp() {
+        test_network(Protocol::Utp);
     }
 
     #[test]
