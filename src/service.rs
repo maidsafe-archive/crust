@@ -124,6 +124,19 @@ impl Service {
         Ok(Endpoint::from_socket_addr(Protocol::Tcp, SocketAddr(accept_addr)))
     }
 
+    #[cfg(test)]
+    pub fn start_accepting_utp(&mut self, port: u16) -> io::Result<Endpoint> {
+        use utp::UtpListener;
+        let acceptor = try!(UtpListener::bind(("0.0.0.0", port)));
+        let accept_addr = try!(acceptor.local_addr());
+
+        Self::accept_utp(self.cmd_sender.clone(), acceptor);
+
+        // FIXME: Instead of hardcoded wrapping in loopback V4, the
+        // acceptor should tell us the address it is accepting on.
+        Ok(Endpoint::from_socket_addr(Protocol::Utp, SocketAddr(accept_addr)))
+    }
+
     fn start_broadcast_acceptor(&mut self, beacon_port: u16) -> io::Result<u16> {
         let acceptor = try!(beacon::BroadcastAcceptor::new(beacon_port));
         let b_port = acceptor.beacon_port();
@@ -384,6 +397,47 @@ impl Service {
                     }
 
                     Self::accept(cmd_sender3, acceptor);
+                }));
+            });
+        })
+    }
+
+    #[cfg(test)]
+    fn accept_utp(cmd_sender: Sender<Closure>, acceptor: ::utp::UtpListener) {
+        let cmd_sender2 = cmd_sender.clone();
+
+        Self::post(&cmd_sender, move |state: &mut State| {
+            let port = acceptor.local_addr().unwrap().port();
+            state.listening_ports.insert(port);
+
+            let handshake = Handshake {
+                mapper_port: Some(state.mapper.listening_addr().port()),
+                external_ip: state.mapper.external_address(),
+                remote_ip: SocketAddr(net::SocketAddr::from_str("0.0.0.0:0").unwrap()),
+            };
+
+            let _ = Self::new_thread("listen-utp", move || {
+                let accept_result = State::accept_utp(handshake, &acceptor);
+                let cmd_sender3 = cmd_sender2.clone();
+
+                let _ = cmd_sender2.send(Closure::new(move |state: &mut State| {
+                    state.listening_ports.remove(&port);
+
+                    if state.stop_called {
+                        return;
+                    }
+
+                    match accept_result {
+                        Ok((handshake, transport)) => {
+                            let _ = state.handle_accept(handshake, transport);
+                        }
+                        Err(_) => {
+                            // TODO: What now? Stop? Start again?
+                            panic!();
+                        }
+                    }
+
+                    Self::accept_utp(cmd_sender3, acceptor);
                 }));
             });
         })
@@ -860,8 +914,7 @@ mod test {
         assert!(runner2.join().is_ok());
     }
 
-    #[test]
-    fn network() {
+    fn test_network(protocol: Protocol) {
         BootstrapHandler::cleanup().unwrap();
 
         const NETWORK_SIZE: u32 = 10;
@@ -944,7 +997,12 @@ mod test {
         let mut runners = Vec::new();
 
         let mut listening_eps = nodes.iter_mut()
-                                     .map(|node| node.service.start_accepting(0).unwrap())
+                                     .map(|node| {
+                                         match protocol {
+                                             Protocol::Tcp => node.service.start_accepting(0).unwrap(),
+                                             Protocol::Utp => node.service.start_accepting_utp(0).unwrap(),
+                                         }
+                                     })
                                      .map(|ep| ep.unspecified_to_loopback())
                                      .collect::<::std::collections::VecDeque<_>>();
 
@@ -969,6 +1027,16 @@ mod test {
         assert_eq!(stats.accept_count, NETWORK_SIZE * (NETWORK_SIZE - 1) / 2);
         assert_eq!(stats.messages_count,
                    NETWORK_SIZE * (NETWORK_SIZE - 1) * MESSAGE_PER_NODE);
+    }
+
+    #[test]
+    fn test_network_tcp() {
+        test_network(Protocol::Tcp);
+    }
+
+    #[test]
+    fn test_network_utp() {
+        test_network(Protocol::Utp);
     }
 
     #[test]

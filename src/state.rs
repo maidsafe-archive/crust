@@ -224,6 +224,12 @@ impl State {
         Self::handle_handshake(handshake, try!(transport::accept(acceptor)))
     }
 
+    #[cfg(test)]
+    pub fn accept_utp(handshake: Handshake, acceptor: &::utp::UtpListener)
+                  -> io::Result<(Handshake, transport::Transport)> {
+        Self::handle_handshake(handshake, try!(transport::accept_utp(acceptor)))
+    }
+
     pub fn handle_connect(&mut self,
                           token: u32,
                           handshake: Handshake,
