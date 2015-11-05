@@ -501,7 +501,6 @@ impl Drop for Service {
 #[cfg(test)]
 mod test {
     use super::*;
-    use transport::Endpoint;
     use connection::Connection;
     use std::thread::spawn;
     use std::thread;
@@ -509,7 +508,7 @@ mod test {
     use std::net::{UdpSocket, Ipv4Addr, SocketAddrV4};
     use rustc_serialize::{Decodable, Encodable};
     use cbor::{Decoder, Encoder};
-    use transport::Port;
+    use transport::{Endpoint, Port, Protocol};
     use config_handler::write_config_file;
     use std::path::PathBuf;
     use std::fs::remove_file;
@@ -735,8 +734,7 @@ mod test {
         assert!(runner2.join().is_ok());
     }
 
-    #[test]
-    fn network() {
+    fn test_network(protocol: Protocol) {
         BootstrapHandler::cleanup().unwrap();
 
         const NETWORK_SIZE: u32 = 10;
@@ -804,7 +802,13 @@ mod test {
         let mut runners = Vec::new();
 
         let mut listening_eps = nodes.iter_mut()
-            .map(|node| node.service.start_accepting(Port::Tcp(0)).unwrap())
+            .map(|node| {
+                let port = match protocol {
+                    Protocol::Tcp => Port::Tcp(0),
+                    Protocol::Utp => Port::Utp(0),
+                };
+                node.service.start_accepting(port).unwrap()
+            })
             .map(|ep| ep.map_ip_addr(::util::loopback_if_unspecified))
             .collect::<::std::collections::LinkedList<_>>();
 
@@ -828,6 +832,16 @@ mod test {
         assert_eq!(stats.connect_count,  NETWORK_SIZE * (NETWORK_SIZE - 1) / 2);
         assert_eq!(stats.accept_count,   NETWORK_SIZE * (NETWORK_SIZE - 1) / 2);
         assert_eq!(stats.messages_count, NETWORK_SIZE * (NETWORK_SIZE - 1) * MESSAGE_PER_NODE);
+    }
+
+    #[test]
+    fn test_network_tcp() {
+        test_network(Protocol::Tcp);
+    }
+
+    #[test]
+    fn test_network_utp() {
+        test_network(Protocol::Utp);
     }
 
     #[test]
