@@ -20,9 +20,12 @@ time = "*"
 itertools = "*"
 igd = { version = "0.2.1", features = [ "unstable" ] }
 net2 = "*"
-temp_utp = "*"
+#temp_utp = "*"
 log = "*"
 crossbeam = "*"
+
+[dependencies.temp_utp]
+path = "/home/peter/work/rust/rust-utp"
 
 [dev-dependencies]
 env_logger = "*"

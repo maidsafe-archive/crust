@@ -723,8 +723,8 @@ mod test {
     fn test_network(protocol: Protocol) {
         BootstrapHandler::cleanup().unwrap();
 
-        const NETWORK_SIZE: u32 = 10;
-        const MESSAGE_PER_NODE: u32 = 5;
+        const NETWORK_SIZE: u32 = 2;
+        const MESSAGE_PER_NODE: u32 = 1;
         const TOTAL_MSG_TO_RECEIVE: u32 = MESSAGE_PER_NODE * (NETWORK_SIZE - 1);
 
         struct Node {

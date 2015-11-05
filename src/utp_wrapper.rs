@@ -32,25 +32,35 @@ impl UtpWrapper {
                 let mut buf = [0; BUFFER_SIZE];
                 match socket.recv_from(&mut buf) {
                     Ok((amt, _src)) => {
-                        let buf = &buf[..amt];
-                        let _ = itx.send(Vec::from(buf));
+                        if amt != 0 {
+                            println!("received {} {:?}", amt, _src);
+                            let buf = &buf[..amt];
+                            let _ = itx.send(Vec::from(buf));
+                        }
                     },
                     Err(ref e) if e.kind() == ErrorKind::TimedOut => {
+                        println!("timedout");
                         // This extra loop ensures all pending messages are sent
                         // before we try to read again.
                         loop {
                             match orx.try_recv() {
                                 Ok(v) => {
-                                    if socket.send_to(&v[..]).is_err() {
+                                    let r = socket.send_to(&v[..]);
+                                    if r.is_err() {
+                                        println!("aaaaaaaaaaaaaaaaaaa {:?}", r);
                                         break 'outer;
                                     }
+                                    println!("sent {:?} bytes to {:?}", r.unwrap(), socket.peer_addr().unwrap());
                                 },
                                 Err(TryRecvError::Disconnected) => break 'outer,
                                 Err(TryRecvError::Empty) => break,
                             }
                         }
                     },
-                    Err(_) => break,
+                    Err(_) => {
+                        println!("errored");
+                        break;
+                    }
                 }
             }
         }).unwrap();
