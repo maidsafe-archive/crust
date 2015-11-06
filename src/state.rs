@@ -349,39 +349,12 @@ impl State {
     }
 
     fn seek_peers(beacon_guid: Option<[u8; 16]>, beacon_port: u16) -> Vec<Endpoint> {
-        // Retrieve list of peers' TCP listeners who are on same subnet as us
-        let peer_addresses = match beacon::seek_peers(beacon_port, beacon_guid) {
-            Ok(peers) => peers,
-            Err(_) => return Vec::<Endpoint>::new(),
-        };
-
-        // For each contact, connect and receive their list of bootstrap contacts
-        let mut endpoints: Vec<Endpoint> = vec![];
-        for peer in peer_addresses {
-            let mut transport
-                = match State::connect(Handshake::default(),
-                                       transport::Endpoint::Tcp(peer)) {
-                    Ok(pair) => pair.1,
-                    Err(_) => continue,
-                };
-            let message = match transport.receiver.receive() {
-                Ok(message) => message,
-                Err(_) => {
-                    continue
-                },
-            };
-
-            match message {
-                Message::Contacts(new_endpoints) => {
-                    for ep in new_endpoints {
-                        endpoints.push(ep);
-                    }
-                },
-                _ => continue
-            }
+        match beacon::seek_peers(beacon_port, beacon_guid) {
+            Ok(peers) => {
+                peers.into_iter().map(|a| transport::Endpoint::Tcp(a)).collect()
+            },
+            Err(_) => Vec::new(),
         }
-
-        endpoints
     }
 
     pub fn bootstrap_off_list(&mut self,
