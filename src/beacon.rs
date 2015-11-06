@@ -89,15 +89,15 @@ impl BroadcastAcceptor {
                             })
     }
 
-    pub fn accept(&self) -> Result<Transport> {
-        let (transport_sender, transport_receiver) = mpsc::channel::<Transport>();
+    pub fn accept(&self) -> Result<(Handshake, Transport)> {
+        let (transport_sender, transport_receiver) = mpsc::channel();
         let protected_tcp_acceptor = self.acceptor.clone();
         let tcp_acceptor_thread = try!(thread::Builder::new()
                 .name("Beacon accept TCP acceptor".to_string())
                 .spawn(move || -> Result<()> {
             let tcp_acceptor = protected_tcp_acceptor.lock().unwrap();
             let transport = try!(State::accept(Handshake::default(), &tcp_acceptor));
-            let _ = transport_sender.send(transport.1);
+            let _ = transport_sender.send(transport);
             Ok(())
         }));
 
@@ -275,7 +275,7 @@ mod test {
         let acceptor_port = acceptor.beacon_port();
 
         let t1 = thread::Builder::new().name("test_beacon sender".to_string()).spawn(move || {
-            let mut transport = acceptor.accept().unwrap();
+            let mut transport = acceptor.accept().unwrap().1;
             transport.sender.send(&Message::UserBlob("hello beacon".to_string().into_bytes())).unwrap();
         });
 

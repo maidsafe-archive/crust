@@ -109,16 +109,6 @@ impl State {
             .collect()
     }
 
-    pub fn respond_to_broadcast(&mut self,
-                                mut transport: ::transport::Transport) {
-        if let Some(ref mut handler) = self.bootstrap_handler {
-            if let Ok(contacts) = handler.read_file() {
-                let msg = Message::Contacts(contacts);
-                let _ = transport.sender.send(&msg);
-            }
-        }
-    }
-
     pub fn populate_bootstrap_contacts(&mut self,
                                        config: &Config,
                                        beacon_guid_and_port: &Option<([u8; 16], u16)>)
@@ -322,7 +312,6 @@ impl State {
                             }
                         }));
                     },
-                    _ => (),
                 }
             }
             let _ = cmd_sender.send(Box::new(move |state : &mut State| {
