@@ -373,6 +373,27 @@ pub fn random_endpoints(count: usize) -> Vec<::transport::Endpoint> {
 }
 
 #[cfg(test)]
+pub fn random_global_endpoint() -> ::transport::Endpoint {
+    // TODO - randomise V4/V6 and TCP/UTP
+    let address = ::std::net::SocketAddrV4::new(
+        ::std::net::Ipv4Addr::new(173, // ensure is a global addr
+                                  ::rand::random::<u8>(),
+                                  ::rand::random::<u8>(),
+                                  ::rand::random::<u8>()),
+        ::rand::random::<u16>());
+    ::transport::Endpoint::Tcp(::std::net::SocketAddr::V4(address))
+}
+
+#[cfg(test)]
+pub fn random_global_endpoints(count: usize) -> Vec<::transport::Endpoint> {
+    let mut contacts = Vec::new();
+    for _ in 0..count {
+        contacts.push(random_global_endpoint());
+    }
+    contacts
+}
+
+#[cfg(test)]
 pub fn timed_recv<T>(receiver: &mpsc::Receiver<T>, timeout_ms: u32)
                      -> Result<T, mpsc::TryRecvError>
 {

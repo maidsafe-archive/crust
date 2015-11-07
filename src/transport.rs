@@ -215,8 +215,6 @@ impl Handshake {
 pub enum Message {
     /// Arbitrary user blob. This is just an opaque message to Crust.
     UserBlob(Bytes),
-    /// Event to exchange contacts
-    Contacts(Vec<Endpoint>),
     /// We have an external (non-NATed) address+port that other nodes can use as a hole-punching
     /// server.
     HolePunchAddress(util::SocketAddrV4W),

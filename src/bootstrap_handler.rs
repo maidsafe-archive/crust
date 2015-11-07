@@ -25,6 +25,7 @@
 use transport::Endpoint;
 use file_handler::FileHandler;
 use std::io;
+use std::net::SocketAddr;
 
 pub struct BootstrapHandler {
     file_handler: FileHandler,
@@ -72,6 +73,14 @@ impl BootstrapHandler {
         let mut bootstrap_contacts = self.read_file().unwrap_or_else(|e| {
             debug!("Error reading Bootstrap file: {:?}.", e);
             Vec::new()
+        });
+
+        // We wouldn't add any loopback addresses nor addresses from our local
+        // LAN to the bootstrap cache. We can always find such addresses using
+        // beacon and more often than not they would be obsolete very soon.
+        contacts.retain(|contact| match contact.get_address() {
+            SocketAddr::V4(a) => a.ip().is_global(),
+            SocketAddr::V6(a) => a.ip().is_global(),
         });
 
         bootstrap_contacts.retain(|contact| !prune.contains(&contact));
@@ -137,7 +146,7 @@ mod test {
     #[test]
     fn duplicates() {
         let number = 10usize;
-        let contacts = ::util::random_endpoints(number);
+        let contacts = ::util::random_global_endpoints(number);
         assert_eq!(contacts.len(), number);
         let _test_file = TestFile::new().unwrap();
 
@@ -164,7 +173,7 @@ mod test {
     #[test]
     fn prune() {
         let number = 10usize;
-        let mut contacts = ::util::random_endpoints(number);
+        let mut contacts = ::util::random_global_endpoints(number);
         assert_eq!(contacts.len(), number);
         let _test_file = TestFile::new().unwrap();
 
@@ -192,7 +201,7 @@ mod test {
         assert_eq!(retrieved_contacts, contacts);
 
         // Create a new contact
-        let new_contact = ::util::random_endpoint();
+        let new_contact = ::util::random_global_endpoint();
         let new_contacts = vec![new_contact.clone(); 1];
 
         // Get the last contact in the list and prune it from the bootstrap file
@@ -210,7 +219,7 @@ mod test {
 
     #[test]
     fn max_contacts() {
-        let contacts = ::util::random_endpoints(super::BootstrapHandler::max_contacts());
+        let contacts = ::util::random_global_endpoints(super::BootstrapHandler::max_contacts());
         assert_eq!(contacts.len(), super::BootstrapHandler::max_contacts());
         let _test_file = TestFile::new().unwrap();
 
@@ -221,7 +230,7 @@ mod test {
         assert_eq!(bootstrap_handler.read_file().unwrap(), contacts);
 
         // Create a new contact
-        let new_contact = ::util::random_endpoint();
+        let new_contact = ::util::random_global_endpoint();
         let new_contacts = vec![new_contact.clone(); 1];
 
         // Try inserting without also pruning - bootstrap contacts should remain unaltered

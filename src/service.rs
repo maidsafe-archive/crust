@@ -160,9 +160,9 @@ impl Service {
             state.bootstrap_handler = Some(BootstrapHandler::new());
 
             let thread_result = Self::new_thread("beacon acceptor", move || {
-                while let Ok(transport) = acceptor.accept() {
+                while let Ok((h, t)) = acceptor.accept() {
                     let _ = sender.send(Box::new(move |state : &mut State| {
-                        state.respond_to_broadcast(transport);
+                        let _ = state.handle_accept(h, t);
                     }));
                 }
             });
