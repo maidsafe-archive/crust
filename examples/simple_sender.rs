@@ -98,5 +98,5 @@ fn main() {
     }
 
     // Allow the peer time to process the requests and reply.
-    ::std::thread::sleep_ms(2000);
+    ::std::thread::sleep(::std::time::Duration::from_secs(2));
 }

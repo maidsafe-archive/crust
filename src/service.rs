@@ -579,7 +579,7 @@ mod test {
         let cm1_ports = filter_ok(cm1.start_default_acceptors());
         assert_eq!(cm1_ports.len(), 1);
 
-        thread::sleep_ms(1000);
+        thread::sleep(::std::time::Duration::from_secs(1));
         let _config_file = make_temp_config(cm1.get_beacon_acceptor_port());
 
         let (cm2_i, cm2_o) = channel();
@@ -592,7 +592,7 @@ mod test {
         let mut result = Err(::std::sync::mpsc::TryRecvError::Empty);
         while ::time::now() < start + timeout && result.is_err() {
             result = cm2_o.try_recv();
-            ::std::thread::sleep_ms(100);
+            ::std::thread::sleep(::std::time::Duration::from_millis(100));
         }
         match result {
             Ok(Event::OnConnect(ep, _)) => {
@@ -660,7 +660,7 @@ mod test {
         BootstrapHandler::cleanup().unwrap();
 
         // Wait 2 seconds until previous bootstrap test ends. If not, that test connects to these endpoints.
-        thread::sleep_ms(2000);
+        thread::sleep(::std::time::Duration::from_secs(2));
         let run_cm = |cm: Service, o: Receiver<Event>,
                       shutdown_recver: Receiver<()>, ready_sender: Sender<()>| {
             spawn(move || {
@@ -863,7 +863,7 @@ mod test {
                 }
             }
         }).join();
-        thread::sleep_ms(100);
+        thread::sleep(::std::time::Duration::from_millis(100));
 
         let _ = thread.join();
     }

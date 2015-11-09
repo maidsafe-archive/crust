@@ -394,17 +394,17 @@ pub fn random_global_endpoints(count: usize) -> Vec<::transport::Endpoint> {
 }
 
 #[cfg(test)]
-pub fn timed_recv<T>(receiver: &mpsc::Receiver<T>, timeout_ms: u32)
+pub fn timed_recv<T>(receiver: &mpsc::Receiver<T>, timeout: ::std::time::Duration)
                      -> Result<T, mpsc::TryRecvError>
 {
-    let step_ms = 20;
-    let mut time = 0;
+    let step = ::std::time::Duration::from_millis(20);
+    let mut time = ::std::time::Duration::new(0, 0);
     loop {
         match receiver.try_recv() {
             Ok(v) => return Ok(v),
             Err(what) => match what {
                 mpsc::TryRecvError::Empty => {
-                    if time >= timeout_ms {
+                    if time >= timeout {
                         return Err(what);
                     }
                 },
@@ -413,8 +413,8 @@ pub fn timed_recv<T>(receiver: &mpsc::Receiver<T>, timeout_ms: u32)
                 }
             }
         }
-        thread::sleep_ms(step_ms);
-        time += step_ms;
+        thread::sleep(step);
+        time = time + step;
     }
 }
 

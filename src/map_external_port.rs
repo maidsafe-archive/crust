@@ -149,7 +149,7 @@ mod test {
             assert!(sender.send(result).is_ok());
         }));
 
-        let igd_result = match timed_recv(&receiver, 3000) {
+        let igd_result = match timed_recv(&receiver, ::std::time::Duration::from_secs(3)) {
             Ok(igd_result) => igd_result,
             Err(what) => panic!(what),
         };

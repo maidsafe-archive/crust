@@ -24,7 +24,7 @@
         unsafe_code, unused_allocation, unused_attributes,
         unused_comparisons, unused_features, unused_parens, while_true)]
 #![warn(trivial_casts, trivial_numeric_casts, unused, unused_extern_crates, unused_import_braces,
-        unused_qualifications, unused_results, variant_size_differences)]
+        unused_qualifications, variant_size_differences)]
 
 #[macro_use]
 extern crate log;
@@ -49,6 +49,7 @@ use std::collections::HashSet;
 use std::str::FromStr;
 use std::thread;
 use std::sync::{Arc, Mutex};
+use std::time::Duration;
 
 use crust::{Service, Endpoint, Connection};
 
@@ -346,10 +347,10 @@ fn reset_foreground(stdout: Option<Box<term::StdoutTerminal>>) ->
 // If bootstrap doesn't succeed in n seconds and we're trying to run the speed test, then fail overall.
 // Otherwise, if no peer endpoints were provided and bootstrapping fails, assume this is
 // OK, i.e. this is the first node of a new network.
-fn on_time_out(ms: u32, flag_speed: bool) -> Sender<bool> {
+fn on_time_out(timeout: Duration, flag_speed: bool) -> Sender<bool> {
     let (tx, rx) = channel();
     let _ = std::thread::spawn(move || {
-        std::thread::sleep_ms(ms);
+        std::thread::sleep(timeout);
         match rx.try_recv() {
             Ok(true) => {},
             _ => {
@@ -536,7 +537,7 @@ fn main() {
     };
 
     if running_speed_test {  // Processing interaction till receiving ctrl+C
-        let tx = on_time_out(5000, running_speed_test);
+        let tx = on_time_out(Duration::from_secs(5), running_speed_test);
 
         // Block until we get one bootstrap connection
         let connected_peer = bs_receiver.recv().unwrap_or_else(|e| {
@@ -550,7 +551,7 @@ fn main() {
 
         let _ = tx.send(true); // stop timer with no error messages
 
-        thread::sleep_ms(100);
+        thread::sleep(Duration::from_millis(100));
         println!("");
 
         let speed = args.flag_speed.unwrap();  // Safe due to `running_speed_test` == true
@@ -563,7 +564,7 @@ fn main() {
             for _ in 0..times {
                 service.send(peer.clone(), generate_random_vec_u8(length as usize));
                 debug!("Sent a message with length of {} bytes to {:?}", length, peer);
-                std::thread::sleep_ms(sleep_time as u32);
+                std::thread::sleep(Duration::from_millis(sleep_time));
             }
         }
     } else {

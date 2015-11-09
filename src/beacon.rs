@@ -315,7 +315,7 @@ mod test {
         // This one is just so that the first thread breaks.
         let t3 = thread::Builder::new().name("test_avoid_beacon seek_peers 2".to_string())
                                        .spawn(move || {
-            thread::sleep_ms(700);
+            thread::sleep(::std::time::Duration::from_millis(700));
             let endpoint = seek_peers(acceptor_port, None).unwrap()[0];
             let _ = State::connect(Handshake::default(),
                                    transport::Endpoint::Tcp(endpoint)).unwrap();
