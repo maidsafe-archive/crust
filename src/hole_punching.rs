@@ -59,7 +59,7 @@ pub fn blocking_get_mapped_udp_socket(request_id: u32, helper_nodes: Vec<SocketA
     let res = try!(::crossbeam::scope(|scope| -> io::Result<Option<(SocketAddr, usize)>> {
         for helper in helper_nodes.iter() {
             let sender = try!(udp_socket.try_clone());
-            let _periodic_sender = PeriodicSender::start(sender, *helper, scope, &send_data[..], 300);
+            let _periodic_sender = PeriodicSender::start(sender, *helper, scope, &send_data[..], ::std::time::Duration::from_millis(300));
             let deadline = ::time::SteadyTime::now() + ::time::Duration::seconds(2);
             let res = try!((|| -> io::Result<Option<(SocketAddr, usize)>> {
                 loop {
@@ -132,7 +132,7 @@ pub fn blocking_udp_punch_hole(udp_socket: UdpSocket,
                                                     peer_addr,
                                                     scope,
                                                     send_data,
-                                                    500);
+                                                    ::std::time::Duration::from_millis(500));
 
         let addr_res: io::Result<Option<SocketAddr>> = (|| {
             let mut recv_data = [0u8; MAX_DATAGRAM_SIZE];
@@ -203,7 +203,8 @@ impl HolePunchServer {
         const MAX_DATAGRAM_SIZE: usize = 256;
 
         // Refresh the hole punched for our server socket every hour.
-        const UPNP_REFRESH_PERIOD: u32 = 1000 * 60 * 60;
+        // TODO: make this a Duration once Duration has a const constructor
+        const UPNP_REFRESH_PERIOD_MS: u64 = 1000 * 60 * 60;
 
         let (listener_tx, listener_rx) = ::std::sync::mpsc::channel::<()>();
         let udp_socket = try!(UdpSocket::bind("0.0.0.0:0"));
@@ -296,7 +297,7 @@ impl HolePunchServer {
                 }
                 // TODO (canndrew): What is a sensible time to wait between refreshes of our
                 // external ip?
-                ::std::thread::park_timeout_ms(UPNP_REFRESH_PERIOD);
+                ::std::thread::park_timeout(::std::time::Duration::from_millis(UPNP_REFRESH_PERIOD_MS));
             }
         }));
         Ok(HolePunchServer {

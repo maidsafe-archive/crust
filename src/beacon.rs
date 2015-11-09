@@ -242,7 +242,7 @@ pub fn seek_peers(port: u16, guid_to_avoid: Option<GUID>) -> Result<Vec<SocketAd
     let _shutdown_thread = thread::Builder::new()
             .name("Beacon seek_peers UDP shutdown".to_string())
             .spawn(move || {
-        thread::sleep_ms(500);
+        thread::sleep(Duration::from_millis(500));
         let killer_socket = match UdpSocket::bind("0.0.0.0:0") {
             Ok(socket) => socket,
             Err(_) => return (),

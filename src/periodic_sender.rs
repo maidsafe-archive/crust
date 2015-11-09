@@ -15,7 +15,7 @@ impl<'a, 'b: 'a, D: AsRef<[u8]> + Send + 'b> PeriodicSender<D> {
             destination: SocketAddr,
             scope: &::crossbeam::Scope<'a>,
             data: D,
-            period_ms: u32
+            period: ::std::time::Duration
         ) -> PeriodicSender<D>
     {
         let (tx, rx) = ::std::sync::mpsc::channel::<()>();
@@ -30,7 +30,7 @@ impl<'a, 'b: 'a, D: AsRef<[u8]> + Send + 'b> PeriodicSender<D> {
                 // see: https://github.com/rust-lang/rfcs/issues/523
                 // see: https://github.com/rust-lang/rfcs/issues/814
                 let _ = udp_socket.send_to(data.as_ref(), destination);
-                ::std::thread::park_timeout_ms(period_ms);
+                ::std::thread::park_timeout(period);
                 match rx.try_recv() {
                     Err(::std::sync::mpsc::TryRecvError::Empty)        => (),
                     Err(::std::sync::mpsc::TryRecvError::Disconnected) => panic!(),
