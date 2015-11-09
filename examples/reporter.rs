@@ -97,8 +97,8 @@ Explanation of the config fields:
 See also the example config files in examples/reporter directory.
 "#;
 
-const MIN_RUN_TIME_MS: u32 = 1000;
-const MAX_RUN_TIME_MS: u32 = 2500;
+const MIN_RUN_TIME_MS: u64 = 1000;
+const MAX_RUN_TIME_MS: u64 = 2500;
 
 fn main() {
     match env_logger::init() {
@@ -124,8 +124,8 @@ fn main() {
         report.update(run(connected.clone(), &config));
         debug!("Service stopped ({} of {})", i + 1, config.service_runs);
 
-        thread::sleep_ms(thread_rng().gen_range(
-            0, config.max_wait_before_restart_service_secs * 1000));
+        thread::sleep(::std::time::Duration::from_millis(thread_rng().gen_range(
+            0, config.max_wait_before_restart_service_secs * 1000)));
     }
 
     let mut file_handler = FileHandler::new(Path::new(&config.output_report_path).to_path_buf());
@@ -145,7 +145,7 @@ struct Config {
     listening_port:                       Option<u16>,
     service_runs:                         u64,
     output_report_path:                   String,
-    max_wait_before_restart_service_secs: u32
+    max_wait_before_restart_service_secs: u64
 }
 
 impl Config {
@@ -350,7 +350,7 @@ fn run(connected: Arc<AtomicBool>, config: &Config) -> Report {
     // Wait until someone connects to us.
     let _ = wait_receiver.recv();
 
-    thread::sleep_ms(thread_rng().gen_range(MIN_RUN_TIME_MS, MAX_RUN_TIME_MS));
+    thread::sleep(::std::time::Duration::from_millis(thread_rng().gen_range(MIN_RUN_TIME_MS, MAX_RUN_TIME_MS)));
 
     message_sender1.send(None).unwrap();
     message_thread_handle.join().unwrap();
