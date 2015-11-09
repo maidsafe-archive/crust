@@ -33,7 +33,7 @@
         unconditional_recursion, unknown_lints, unsafe_code, unused, unused_allocation,
         unused_attributes, unused_comparisons, unused_features, unused_parens, while_true)]
 #![warn(trivial_casts, trivial_numeric_casts, unused_extern_crates, unused_import_braces,
-        unused_qualifications, unused_results, variant_size_differences)]
+        unused_qualifications, variant_size_differences)]
 #![allow(box_pointers, fat_ptr_transmutes, missing_copy_implementations,
          missing_debug_implementations)]
 #![feature(fnbox, ip_addr, ip)]
