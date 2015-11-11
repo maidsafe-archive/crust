@@ -70,6 +70,20 @@ impl Service {
         Service::construct(event_sender, config)
     }
 
+    /// Construct a service. As with the `Service::new` function, but will
+    /// ignore beaconing (i.e. assumes `beacon_port` of config file is `null`
+    /// and proceeds).
+    pub fn with_no_beacon(event_sender: Sender<Event>) -> io::Result<Service> {
+        let mut config = read_config_file().unwrap_or_else(|e| {
+            debug!("Crust failed to read config file; Error: {:?};", e);
+            ::config_handler::create_default_config_file();
+            Config::make_default()
+        });
+        config.beacon_port = None;
+
+        Service::construct(event_sender, config)
+    }
+
     /// Construct a service. As with the `Service::new` function, but will not
     /// implicitly start any network activity. This construtor is intended
     /// only for testing purposes.
