@@ -57,7 +57,6 @@ impl Config {
 pub fn read_config_file() -> Result<Config, ::error::Error> {
     let mut file_handler = ::file_handler::FileHandler::new(get_file_name());
     let cfg = try!(file_handler.read_file::<Config>());
-    assert!(cfg.beacon_port.is_some(), "beacon_port must be set");
     Ok(cfg)
 }
 
