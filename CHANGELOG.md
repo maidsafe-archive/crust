@@ -1,5 +1,8 @@
 # CRUST - Change Log
 
+## [0.5.1]
+- Remove wildcards from dependencies.
+
 ## [0.5.0]
 - Update lint checks
 - Style changes
