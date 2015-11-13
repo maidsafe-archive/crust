@@ -111,13 +111,14 @@ impl State {
 
     pub fn populate_bootstrap_contacts(&mut self,
                                        config: &Config,
-                                       beacon_guid_and_port: &Option<([u8; 16], u16)>)
+                                       beacon_port: Option<u16>,
+                                       own_beacon_guid_and_port: &Option<([u8; 16], u16)>)
             -> Vec<Endpoint> {
         if config.override_default_bootstrap {
             return config.hard_coded_contacts.clone();
         }
 
-        let cached_contacts = if beacon_guid_and_port.is_some() {
+        let cached_contacts = if own_beacon_guid_and_port.is_some() {
             // this node "owns" bootstrap file
             let mut contacts = Vec::<Endpoint>::new();
             if let Some(ref mut handler) = self.bootstrap_handler {
@@ -128,9 +129,9 @@ impl State {
             vec![]
         };
 
-        let beacon_guid = beacon_guid_and_port.map(|(guid, _)| guid);
+        let beacon_guid = own_beacon_guid_and_port.map(|(guid, _)| guid);
 
-        let beacon_discovery = match config.beacon_port {
+        let beacon_discovery = match beacon_port {
             Some(port) => Self::seek_peers(beacon_guid, port),
             None => vec![]
         };

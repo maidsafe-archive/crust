@@ -75,7 +75,7 @@ fn main() {
         println!("Stopped receiving.");
     });
 
-    service.bootstrap(0);
+    service.bootstrap(0, None);
 
     println!("Service trying to bootstrap off node listening on TCP port 8888 \
               and UDP broadcast port 5484");

@@ -28,7 +28,6 @@ pub struct Config {
     pub utp_listening_port         : Option<u16>,
     pub override_default_bootstrap : bool,
     pub hard_coded_contacts        : Vec<::transport::Endpoint>,
-    pub beacon_port                : Option<u16>,
 }
 
 impl Config {
@@ -38,7 +37,6 @@ impl Config {
             utp_listening_port         : None,
             override_default_bootstrap : false,  // Default bootstrapping methods enabled
             hard_coded_contacts        : vec![],  // No hardcoded endpoints
-            beacon_port                : Some(5484u16),  // LIVE port
         }
     }
 
@@ -49,7 +47,6 @@ impl Config {
             utp_listening_port         : None,
             override_default_bootstrap : true,    // Default bootstrapping methods disabled
             hard_coded_contacts        : vec![],  // No hardcoded endpoints
-            beacon_port                : None,    // LIVE port
         }
     }
 }
@@ -76,8 +73,7 @@ pub fn create_default_config_file() {
 pub fn write_config_file(tcp_listening_port: Option<u16>,
                          utp_listening_port: Option<u16>,
                          override_default_bootstrap: Option<bool>,
-                         hard_coded_endpoints: Option<Vec<::transport::Endpoint>>,
-                         beacon_port: Option<u16>) -> Result<::std::path::PathBuf, ::error::Error> {
+                         hard_coded_endpoints: Option<Vec<::transport::Endpoint>>) -> Result<::std::path::PathBuf, ::error::Error> {
     use std::io::Write;
 
     let default = Config::make_default();
@@ -88,7 +84,6 @@ pub fn write_config_file(tcp_listening_port: Option<u16>,
                             .unwrap_or(default.override_default_bootstrap),
                          hard_coded_contacts: hard_coded_endpoints
                             .unwrap_or(default.hard_coded_contacts),
-                         beacon_port: beacon_port.or(default.beacon_port),
                        };
     let mut config_path = try!(::file_handler::current_bin_dir());
     config_path.push(get_file_name());
@@ -122,12 +117,10 @@ mod test {
                 utp_listening_port: None,
                 override_default_bootstrap: false,
                 hard_coded_contacts: hard_coded_contacts,
-                beacon_port: Some(::rand::random::<u16>()),
             };
         let _ = super::write_config_file(None, None,
                                          Some(config.override_default_bootstrap),
-                                         Some(hard_coded_endpoints),
-                                         config.beacon_port);
+                                         Some(hard_coded_endpoints));
         match super::read_config_file() {
             Ok(recovered_config) => assert_eq!(config, recovered_config),
             Err(_) => panic!("Failed to read config file."),
