@@ -50,6 +50,7 @@ extern crate rustc_serialize;
 extern crate time;
 extern crate utp;
 extern crate crossbeam;
+extern crate memmap;
 
 /// Module implementing the `Service` which provides an interface to manage peer-to-peer
 /// connections.
