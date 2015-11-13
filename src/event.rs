@@ -41,10 +41,10 @@ pub struct HolePunchResult {
 pub enum Event {
     /// Invoked when a new message is received.  Passes the peer's endpoint and the message.
     NewMessage(Connection, Vec<u8>),
-    /// Invoked when a new connection to a peer is established. Passes the peer's endpoint.
-    OnConnect(Connection, u32 /* token */),
-    /// Invoked when a new rendezvous connection to a peer is established. Passes the peer's endpoint.
-    OnRendezvousConnect(Connection, u32 /* token */),
+    /// Invoked when the new connection request finishes. Passes the peer's endpoint and the token used in the request.
+    OnConnect(io::Result<Connection>, u32 /* token */),
+    /// Invoked when the new rendezvous connection request finishes. Passes the peer's endpoint and the token used in the request.
+    OnRendezvousConnect(io::Result<Connection>, u32 /* token */),
     /// Invoked when a new connection is accepted. Passes the peer's endpoint.
     OnAccept(Connection),
     /// Invoked when a connection to a peer is lost.  Passes the peer's endpoint.
