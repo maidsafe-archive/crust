@@ -24,7 +24,6 @@ use std::sync::{Arc, Mutex};
 
 use std::net::{SocketAddr, SocketAddrV4, UdpSocket};
 use beacon;
-use bootstrap_handler::BootstrapHandler;
 use config_handler::{Config, read_config_file};
 use getifaddrs::{getifaddrs, filter_loopback};
 use transport;
@@ -156,21 +155,16 @@ impl Service {
 
         let sender = self.cmd_sender.clone();
 
-        Self::post(&self.cmd_sender, move |state : &mut State| {
-            assert!(state.bootstrap_handler.is_none());
-            state.bootstrap_handler = Some(BootstrapHandler::new());
-
-            let thread_result = Self::new_thread("beacon acceptor", move || {
-                while let Ok((h, t)) = acceptor.accept() {
-                    let _ = sender.send(Box::new(move |state : &mut State| {
-                        let _ = state.handle_accept(h, t);
-                    }));
-                }
-            });
-
-            // TODO: Handle gracefuly.
-            assert!(thread_result.is_ok());
+        let thread_result = Self::new_thread("beacon acceptor", move || {
+            while let Ok((h, t)) = acceptor.accept() {
+                let _ = sender.send(Box::new(move |state : &mut State| {
+                    let _ = state.handle_accept(h, t);
+                }));
+            }
         });
+
+        // TODO: Handle gracefuly.
+        assert!(thread_result.is_ok());
 
         Ok(beacon_port)
     }
@@ -199,9 +193,7 @@ impl Service {
 
         Self::post(&self.cmd_sender, move |state : &mut State| {
             let contacts = state.populate_bootstrap_contacts(&config, beacon_port, &beacon_guid_and_port);
-            state.bootstrap_off_list(token,
-                                     contacts.clone(),
-                                     beacon_guid_and_port.is_some());
+            state.bootstrap_off_list(token, contacts.clone());
         });
     }
 
@@ -253,8 +245,6 @@ impl Service {
     /// (https://github.com/maidsafe/crust/blob/master/docs/connect.md) for details on handling of
     /// connect in different protocols.
     pub fn connect(&self, token: u32, endpoints: Vec<Endpoint>) {
-        let is_broadcast_acceptor = self.beacon_guid_and_port.is_some();
-
         Self::post(&self.cmd_sender, move |state : &mut State| {
             let cmd_sender = state.cmd_sender.clone();
 
@@ -268,8 +258,7 @@ impl Service {
                     match State::connect(handshake.clone(), endpoint) {
                         Ok((h, t)) => {
                             let _ = cmd_sender.send(Box::new(move |state: &mut State| {
-                                let _ = state.handle_connect(token, h, t,
-                                                             is_broadcast_acceptor);
+                                let _ = state.handle_connect(token, h, t);
                             }));
                         },
                         Err(e) => {
