@@ -261,13 +261,20 @@ impl FileHandler {
         }
     }
 
+    #[allow(unsafe_code)]
     fn write<Contents: ::rustc_serialize::Encodable>(path: ::std::path::PathBuf,
                                                      contents: &Contents) ->
             Result<(), ::error::Error> {
+        use memmap::{Mmap, Protection};
+        use rustc_serialize::json;
+        use std::fs::OpenOptions;
         use std::io::Write;
-        let mut file = try!(::std::fs::File::create(path));
-        let _ = try!(write!(&mut file, "{}", ::rustc_serialize::json::as_pretty_json(contents)));
-        file.sync_all().map_err(|error| ::error::Error::IoError(error))
+        let contents = format!("{}", json::as_pretty_json(contents)).into_bytes();
+        let file = try!(OpenOptions::new().read(true).write(true).create(true).open(path));
+        try!(file.set_len(contents.len() as u64));
+        let mut mmap = try!(Mmap::open(&file, Protection::ReadWrite));
+        try!(unsafe { mmap.as_mut_slice() }.write_all(&contents[..]));
+        mmap.flush().map_err(|error| ::error::Error::IoError(error))
     }
 }
 
