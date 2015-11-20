@@ -61,7 +61,7 @@ fn main() {
                         },
                     }
                 },
-                crust::Event::OnConnect(endpoint, _) => {
+                crust::Event::OnConnect(Ok(endpoint), _) => {
                     println!("Connected to {:?}", endpoint);
                     let _ = bs_sender.send(endpoint);
                 },

@@ -305,7 +305,7 @@ fn run(connected: Arc<AtomicBool>, config: &Config) -> Report {
                     let _ = message_sender0.send(Some(connection));
                 },
 
-                Event::OnConnect(connection, _) => {
+                Event::OnConnect(Ok(connection), _) => {
                     debug!("OnConnect {:?}", connection);
                     let _ = message_sender0.send(Some(connection));
                 },

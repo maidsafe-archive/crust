@@ -278,13 +278,18 @@ impl Service {
 
             let _ = Self::new_thread("connect", move || {
                 for endpoint in endpoints {
-                    if let Ok((h, t)) = State::connect(handshake.clone(), endpoint) {
-                        let _ = cmd_sender.send(Box::new(move |state: &mut State| {
-                            let _ = state.handle_connect(token,
-                                                         h,
-                                                         t,
-                                                         is_broadcast_acceptor);
-                        }));
+                    match State::connect(handshake.clone(), endpoint) {
+                        Ok((h, t)) => {
+                            let _ = cmd_sender.send(Box::new(move |state: &mut State| {
+                                let _ = state.handle_connect(token, h, t,
+                                                             is_broadcast_acceptor);
+                            }));
+                        },
+                        Err(e) => {
+                            let _ = cmd_sender.send(Box::new(move |state: &mut State| {
+                                let _ = state.event_sender.send(Event::OnConnect(Err(e), token));
+                            }));
+                        },
                     }
                 }
             });
@@ -326,12 +331,18 @@ impl Service {
             };
 
             let _ = Self::new_thread("rendezvous connect", move || {
-                if let Ok((h, t)) = State::rendezvous_connect(handshake.clone(),
-                                                              udp_socket,
-                                                              public_endpoint) {
-                    let _ = cmd_sender.send(Box::new(move |state: &mut State| {
-                        let _ = state.handle_rendezvous_connect(token, h, t);
-                    }));
+                match State::rendezvous_connect(handshake.clone(), udp_socket,
+                                                public_endpoint) {
+                    Ok((h, t)) => {
+                        let _ = cmd_sender.send(Box::new(move |state: &mut State| {
+                            let _ = state.handle_rendezvous_connect(token, h, t);
+                        }));
+                    },
+                    Err(e) => {
+                        let _ = cmd_sender.send(Box::new(move |state: &mut State| {
+                            let _ = state.event_sender.send(Event::OnRendezvousConnect(Err(e), token));
+                        }));
+                    },
                 }
             });
         });
@@ -629,7 +640,7 @@ mod test {
             spawn(move || {
                 for i in o.iter() {
                     match i {
-                        Event::OnConnect(other_ep, _) => {
+                        Event::OnConnect(Ok(other_ep), _) => {
                             let _ = cm.send(other_ep.clone(), encode(&"hello world".to_string()));
                         },
                         Event::OnAccept(other_ep) => {
@@ -680,7 +691,7 @@ mod test {
             spawn(move || {
                 for i in o.iter() {
                     match i {
-                        Event::OnRendezvousConnect(other_ep, _) => {
+                        Event::OnRendezvousConnect(Ok(other_ep), _) => {
                             let _ = cm.send(other_ep.clone(),
                                             encode(&"hello world".to_string()));
                         },
@@ -764,7 +775,7 @@ mod test {
 
                 for event in self.reader.iter() {
                     match event {
-                        Event::OnConnect(connection, _) => {
+                        Event::OnConnect(Ok(connection), _) => {
                             stats.connect_count += 1;
                             self.send_data_to(connection);
                         },
