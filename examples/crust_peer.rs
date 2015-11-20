@@ -20,11 +20,11 @@
 #![forbid(missing_docs, warnings)]
 #![deny(bad_style, deprecated, drop_with_repr_extern, improper_ctypes, non_shorthand_field_patterns,
         overflowing_literals, plugin_as_library, private_no_mangle_fns, private_no_mangle_statics,
-        raw_pointer_derive, stable_features, unconditional_recursion, unknown_lints,
+        stable_features, unconditional_recursion, unknown_lints,
         unsafe_code, unused_allocation, unused_attributes,
         unused_comparisons, unused_features, unused_parens, while_true)]
 #![warn(trivial_casts, trivial_numeric_casts, unused, unused_extern_crates, unused_import_braces,
-        unused_qualifications, variant_size_differences)]
+        unused_qualifications, unused_results, variant_size_differences)]
 
 #[macro_use]
 extern crate log;
@@ -473,8 +473,8 @@ fn main() {
                              .unwrap_or(format!("non-UTF-8 message of {} bytes",
                                                 message_length)));
                 },
-                crust::Event::OnConnect(connection, _) |
-                crust::Event::OnRendezvousConnect(connection, _) => {
+                crust::Event::OnConnect(Ok(connection), _) |
+                crust::Event::OnRendezvousConnect(Ok(connection), _) => {
                     stdout_copy = cyan_foreground(stdout_copy);
                     println!("\nConnected to peer at {:?}", connection.peer_endpoint());
                     let mut network = network2.lock().unwrap();

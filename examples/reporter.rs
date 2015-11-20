@@ -20,11 +20,11 @@
 #![forbid(missing_docs, warnings)]
 #![deny(bad_style, deprecated, drop_with_repr_extern, improper_ctypes, non_shorthand_field_patterns,
         overflowing_literals, plugin_as_library, private_no_mangle_fns, private_no_mangle_statics,
-        raw_pointer_derive, stable_features, unconditional_recursion, unknown_lints,
+        stable_features, unconditional_recursion, unknown_lints,
         unsafe_code, unused_allocation, unused_attributes,
         unused_comparisons, unused_features, unused_parens, while_true)]
 #![warn(trivial_casts, trivial_numeric_casts, unused, unused_extern_crates, unused_import_braces,
-        unused_qualifications, variant_size_differences)]
+        unused_qualifications, unused_results, variant_size_differences)]
 
 extern crate crust;
 extern crate docopt;
@@ -305,7 +305,7 @@ fn run(connected: Arc<AtomicBool>, config: &Config) -> Report {
                     let _ = message_sender0.send(Some(connection));
                 },
 
-                Event::OnConnect(connection, _) => {
+                Event::OnConnect(Ok(connection), _) => {
                     debug!("OnConnect {:?}", connection);
                     let _ = message_sender0.send(Some(connection));
                 },

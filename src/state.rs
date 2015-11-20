@@ -216,7 +216,7 @@ impl State {
                           trans                 : transport::Transport,
                           is_broadcast_acceptor : bool) -> io::Result<Connection> {
         let c = trans.connection_id.clone();
-        let event = Event::OnConnect(c, token);
+        let event = Event::OnConnect(Ok(c), token);
 
         let connection = self.register_connection(handshake, trans, event);
         if is_broadcast_acceptor {
@@ -234,7 +234,7 @@ impl State {
                                      trans: transport::Transport)
                                      -> io::Result<Connection> {
         let c = trans.connection_id.clone();
-        let event = Event::OnRendezvousConnect(c, token);
+        let event = Event::OnRendezvousConnect(Ok(c), token);
         let connection = self.register_connection(handshake, trans, event);
         connection
     }

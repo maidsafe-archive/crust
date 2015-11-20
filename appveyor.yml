@@ -6,6 +6,9 @@ environment:
 #    - RUST_VERSION: stable
 #    - RUST_VERSION: beta
     - RUST_VERSION: nightly
+branches:
+  only:
+    - master
 
 clone_depth: 50
 
