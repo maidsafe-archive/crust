@@ -42,7 +42,7 @@ fn wait_for_connection(receiver: &Receiver<Event>) -> Connection {
         };
 
         match event {
-            crust::Event::OnConnect(c) => return c,
+            crust::Event::OnConnect(c, _) => return c,
             crust::Event::OnAccept(c)  => return c,
             _ => panic!("Unexpected event"),
         }
@@ -62,7 +62,7 @@ fn send_random_data(b: &mut Bencher) {
     let (s2_tx, s2_rx) = channel();
     let s2 = Service::new_inactive(s2_tx).unwrap();
 
-    s2.connect(vec![s1_endpoint]);
+    s2.connect(0, vec![s1_endpoint]);
 
     let _s2_ep = wait_for_connection(&s1_rx);
     let s1_ep = wait_for_connection(&s2_rx);

@@ -50,3 +50,9 @@ name = "reporter"
 path = "examples/reporter.rs"
 test = true
 bench = false
+
+[[example]]
+name = "simple_benchmark"
+path = "examples/simple_benchmark.rs"
+test = true
+bench = false
