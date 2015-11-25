@@ -83,6 +83,8 @@ Options:
   -h, --help                 Display this help message.
 ";
 
+const BEACON_PORT: u16 = 5484;
+
 #[derive(RustcDecodable, Debug)]
 struct Args {
     flag_create_local_config: bool,
@@ -396,7 +398,7 @@ fn create_local_config() {
         },
         Err(_) => {  // Continue if the file doesn't exist
             // This test helper function will use defaults for each `None` value.
-            match ::crust::write_config_file(None, None, None, None, None) {
+            match ::crust::write_config_file(None, None, None, None) {
                 Ok(file_path) => {
                     stdout = green_foreground(stdout);
                     println!("Created default config file at {:?}.", file_path);
@@ -440,6 +442,7 @@ fn main() {
     let mut service = Service::new(channel_sender).unwrap();
     let listening_ports = filter_ok(service.start_default_acceptors());
     assert!(listening_ports.len() >= 1);
+    let _ = service.start_beacon(BEACON_PORT);
 
     stdout = green_foreground(stdout);
     print!("Listening on ports");
@@ -449,7 +452,7 @@ fn main() {
     println!("");
 
     stdout = reset_foreground(stdout);
-    service.bootstrap(0);
+    service.bootstrap(0, Some(BEACON_PORT));
 
     let network = Arc::new(Mutex::new(Network::new()));
     let network2 = network.clone();

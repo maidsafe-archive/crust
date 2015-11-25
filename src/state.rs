@@ -52,7 +52,7 @@ pub struct State {
     pub cmd_receiver        : Receiver<Closure>,
     pub connections         : HashMap<Connection, ConnectionData>,
     pub listening_ports     : HashSet<Port>,
-    pub bootstrap_handler   : Option<BootstrapHandler>,
+    pub bootstrap_handler   : BootstrapHandler,
     pub stop_called         : bool,
     pub is_bootstrapping    : bool,
     pub next_punch_sequence : SequenceNumber,
@@ -70,7 +70,7 @@ impl State {
             cmd_receiver        : cmd_receiver,
             connections         : HashMap::new(),
             listening_ports     : HashSet::new(),
-            bootstrap_handler   : None,
+            bootstrap_handler   : BootstrapHandler::new(),
             stop_called         : false,
             is_bootstrapping    : false,
             next_punch_sequence : SequenceNumber::new(::rand::random()),
@@ -93,10 +93,7 @@ impl State {
 
     pub fn update_bootstrap_contacts(&mut self,
                                      new_contacts: Vec<Endpoint>) {
-        if let Some(ref mut bs) = self.bootstrap_handler {
-            // TODO: What was the second arg supposed to be?
-            let _ = bs.update_contacts(new_contacts, Vec::<Endpoint>::new());
-        }
+        let _ = self.bootstrap_handler.update_contacts(new_contacts, vec![]);
     }
 
     pub fn get_accepting_endpoints(&self) -> Vec<Endpoint> {
@@ -111,26 +108,18 @@ impl State {
 
     pub fn populate_bootstrap_contacts(&mut self,
                                        config: &Config,
-                                       beacon_guid_and_port: &Option<([u8; 16], u16)>)
+                                       beacon_port: Option<u16>,
+                                       own_beacon_guid_and_port: &Option<([u8; 16], u16)>)
             -> Vec<Endpoint> {
         if config.override_default_bootstrap {
             return config.hard_coded_contacts.clone();
         }
 
-        let cached_contacts = if beacon_guid_and_port.is_some() {
-            // this node "owns" bootstrap file
-            let mut contacts = Vec::<Endpoint>::new();
-            if let Some(ref mut handler) = self.bootstrap_handler {
-                contacts = handler.read_file().unwrap_or(vec![]);
-            }
-            contacts
-        } else {
-            vec![]
-        };
+        let cached_contacts = self.bootstrap_handler.read_file().unwrap_or(vec![]);
 
-        let beacon_guid = beacon_guid_and_port.map(|(guid, _)| guid);
+        let beacon_guid = own_beacon_guid_and_port.map(|(guid, _)| guid);
 
-        let beacon_discovery = match config.beacon_port {
+        let beacon_discovery = match beacon_port {
             Some(port) => Self::seek_peers(beacon_guid, port),
             None => vec![]
         };
@@ -210,20 +199,16 @@ impl State {
         Self::handle_handshake(handshake, try!(transport::accept(acceptor)))
     }
 
-    pub fn handle_connect(&mut self,
-                          token                 : u32,
-                          handshake             : Handshake,
-                          trans                 : transport::Transport,
-                          is_broadcast_acceptor : bool) -> io::Result<Connection> {
+    pub fn handle_connect(&mut self, token: u32, handshake: Handshake,
+                          trans: transport::Transport)
+                          -> io::Result<Connection> {
         let c = trans.connection_id.clone();
         let event = Event::OnConnect(Ok(c), token);
 
         let connection = self.register_connection(handshake, trans, event);
-        if is_broadcast_acceptor {
-            if let Ok(ref connection) = connection {
-                let contacts = vec![connection.peer_endpoint()];
-                self.update_bootstrap_contacts(contacts);
-            }
+        if let Ok(ref connection) = connection {
+            let contacts = vec![connection.peer_endpoint()];
+            self.update_bootstrap_contacts(contacts);
         }
         connection
     }
@@ -235,8 +220,7 @@ impl State {
                                      -> io::Result<Connection> {
         let c = trans.connection_id.clone();
         let event = Event::OnRendezvousConnect(Ok(c), token);
-        let connection = self.register_connection(handshake, trans, event);
-        connection
+        self.register_connection(handshake, trans, event)
     }
 
     fn register_connection(&mut self,
@@ -348,8 +332,7 @@ impl State {
 
     pub fn bootstrap_off_list(&mut self,
                               token: u32,
-                              mut bootstrap_list: Vec<Endpoint>,
-                              is_broadcast_acceptor: bool) {
+                              mut bootstrap_list: Vec<Endpoint>) {
         if self.is_bootstrapping { return; }
         self.is_bootstrapping = true;
 
@@ -384,10 +367,10 @@ impl State {
                 state.is_bootstrapping = false;
 
                 if let Ok(c) = connect_result {
-                    let _ = state.handle_connect(token, c.0, c.1, is_broadcast_acceptor);
+                    let _ = state.handle_connect(token, c.0, c.1);
                 }
 
-                state.bootstrap_off_list(token, bootstrap_list, is_broadcast_acceptor);
+                state.bootstrap_off_list(token, bootstrap_list);
             }));
         });
     }
@@ -493,7 +476,7 @@ mod test {
         let cmd_sender = s.cmd_sender.clone();
 
         cmd_sender.send(Box::new(move |s: &mut State| {
-            s.bootstrap_off_list(0, eps, false);
+            s.bootstrap_off_list(0, eps);
         })).unwrap();
 
         let accept_thread = thread::spawn(move || {

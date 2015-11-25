@@ -24,7 +24,6 @@ use std::sync::{Arc, Mutex};
 
 use std::net::{SocketAddr, SocketAddrV4, UdpSocket};
 use beacon;
-use bootstrap_handler::BootstrapHandler;
 use config_handler::{Config, read_config_file};
 use getifaddrs::{getifaddrs, filter_loopback};
 use transport;
@@ -61,25 +60,8 @@ impl Service {
         let config = read_config_file().unwrap_or_else(|e| {
             debug!("Crust failed to read config file; Error: {:?};", e);
             ::config_handler::create_default_config_file();
-            let default = Config::make_default();
-            debug!("Using default beacon_port {:?} and default bootstrapping methods enabled",
-                default.beacon_port);
-            default
-        });
-
-        Service::construct(event_sender, config)
-    }
-
-    /// Construct a service. As with the `Service::new` function, but will
-    /// ignore beaconing (i.e. assumes `beacon_port` of config file is `null`
-    /// and proceeds).
-    pub fn with_no_beacon(event_sender: Sender<Event>) -> io::Result<Service> {
-        let mut config = read_config_file().unwrap_or_else(|e| {
-            debug!("Crust failed to read config file; Error: {:?};", e);
-            ::config_handler::create_default_config_file();
             Config::make_default()
         });
-        config.beacon_port = None;
 
         Service::construct(event_sender, config)
     }
@@ -101,18 +83,12 @@ impl Service {
                                 state.run();
                             }));
 
-        let mut service = Service {
-                              beacon_guid_and_port : None,
-                              config               : config,
-                              cmd_sender           : cmd_sender,
-                              state_thread_handle  : Some(handle)
-                          };
-
-        let beacon_port = service.config.beacon_port.clone();
-
-        if let Some(port) = beacon_port {
-            let _ = service.start_broadcast_acceptor(port);
-        }
+        let service = Service {
+                          beacon_guid_and_port : None,
+                          config               : config,
+                          cmd_sender           : cmd_sender,
+                          state_thread_handle  : Some(handle)
+                      };
 
         Ok(service)
     }
@@ -135,6 +111,15 @@ impl Service {
         }
 
         result
+    }
+
+    /// Start the beaconing on port `udp_port`. If port number is 0, the OS will
+    /// pick one randomly. The actual port used will be returned.
+    ///
+    /// This function MUST NOT be called more than once. Currently crust has a
+    /// limit of listenning at most once per process.
+    pub fn start_beacon(&mut self, udp_port: u16) -> io::Result<u16> {
+        self.start_broadcast_acceptor(udp_port)
     }
 
     /// Starts accepting on a given port. If port number is 0, the OS
@@ -160,32 +145,28 @@ impl Service {
         Ok(accept_addr)
     }
 
-    fn start_broadcast_acceptor(&mut self, beacon_port: u16) -> io::Result<()> {
+    fn start_broadcast_acceptor(&mut self, beacon_port: u16) -> io::Result<u16> {
         let acceptor = try!(beacon::BroadcastAcceptor::new(beacon_port));
+        let beacon_port = acceptor.beacon_port();
 
         // Right now we expect this function to succeed only once.
         assert!(self.beacon_guid_and_port.is_none());
-        self.beacon_guid_and_port = Some((acceptor.beacon_guid(), acceptor.beacon_port()));
+        self.beacon_guid_and_port = Some((acceptor.beacon_guid(), beacon_port));
 
         let sender = self.cmd_sender.clone();
 
-        Self::post(&self.cmd_sender, move |state : &mut State| {
-            assert!(state.bootstrap_handler.is_none());
-            state.bootstrap_handler = Some(BootstrapHandler::new());
-
-            let thread_result = Self::new_thread("beacon acceptor", move || {
-                while let Ok((h, t)) = acceptor.accept() {
-                    let _ = sender.send(Box::new(move |state : &mut State| {
-                        let _ = state.handle_accept(h, t);
-                    }));
-                }
-            });
-
-            // TODO: Handle gracefuly.
-            assert!(thread_result.is_ok());
+        let thread_result = Self::new_thread("beacon acceptor", move || {
+            while let Ok((h, t)) = acceptor.accept() {
+                let _ = sender.send(Box::new(move |state : &mut State| {
+                    let _ = state.handle_accept(h, t);
+                }));
+            }
         });
 
-        Ok(())
+        // TODO: Handle gracefuly.
+        assert!(thread_result.is_ok());
+
+        Ok(beacon_port)
     }
 
     /// This method tries to connect (bootstrap to existing network) to the default or provided
@@ -206,15 +187,13 @@ impl Service {
     /// This method returns immediately after dropping any active connections.endpoints
     /// New bootstrap connections will be notified by `NewBootstrapConnection` event.
     /// Its upper layer's responsibility to maintain or drop these connections.
-    pub fn bootstrap(&mut self, token: u32) {
+    pub fn bootstrap(&mut self, token: u32, beacon_port: Option<u16>) {
         let config = self.config.clone();
         let beacon_guid_and_port = self.beacon_guid_and_port.clone();
 
         Self::post(&self.cmd_sender, move |state : &mut State| {
-            let contacts = state.populate_bootstrap_contacts(&config, &beacon_guid_and_port);
-            state.bootstrap_off_list(token,
-                                     contacts.clone(),
-                                     beacon_guid_and_port.is_some());
+            let contacts = state.populate_bootstrap_contacts(&config, beacon_port, &beacon_guid_and_port);
+            state.bootstrap_off_list(token, contacts.clone());
         });
     }
 
@@ -266,8 +245,6 @@ impl Service {
     /// (https://github.com/maidsafe/crust/blob/master/docs/connect.md) for details on handling of
     /// connect in different protocols.
     pub fn connect(&self, token: u32, endpoints: Vec<Endpoint>) {
-        let is_broadcast_acceptor = self.beacon_guid_and_port.is_some();
-
         Self::post(&self.cmd_sender, move |state : &mut State| {
             let cmd_sender = state.cmd_sender.clone();
 
@@ -281,8 +258,7 @@ impl Service {
                     match State::connect(handshake.clone(), endpoint) {
                         Ok((h, t)) => {
                             let _ = cmd_sender.send(Box::new(move |state: &mut State| {
-                                let _ = state.handle_connect(token, h, t,
-                                                             is_broadcast_acceptor);
+                                let _ = state.handle_connect(token, h, t);
                             }));
                         },
                         Err(e) => {
@@ -576,10 +552,9 @@ mod test {
         }
     }
 
-    fn make_temp_config(beacon_port: Option<u16>) -> TestConfigFile {
+    fn make_temp_config() -> TestConfigFile {
         let path = write_config_file(Some(5483u16), None, Some(false),
-                                     Some(vec![]),
-                                     Some(beacon_port.unwrap_or(0u16)))
+                                     Some(vec![]))
             .unwrap();
         TestConfigFile{path: path}
     }
@@ -598,19 +573,21 @@ mod test {
 
         let _cleaner = ::file_handler::ScopedUserAppDirRemover;
         let (cm1_i, _) = channel();
-        let _config_file = make_temp_config(None);
+        let _config_file = make_temp_config();
 
         let mut cm1 = Service::new(cm1_i).unwrap();
         let cm1_ports = filter_ok(cm1.start_default_acceptors());
+        let beacon_port = cm1.start_beacon(0).unwrap();
         assert_eq!(cm1_ports.len(), 1);
+        assert_eq!(Some(beacon_port), cm1.get_beacon_acceptor_port());
 
         thread::sleep(::std::time::Duration::from_secs(1));
-        let _config_file = make_temp_config(cm1.get_beacon_acceptor_port());
+        let _config_file = make_temp_config();
 
         let (cm2_i, cm2_o) = channel();
         let mut cm2 = Service::new(cm2_i).unwrap();
 
-        cm2.bootstrap(0);
+        cm2.bootstrap(0, Some(beacon_port));
 
         let timeout = ::time::Duration::seconds(5);
         let start = ::time::now();
@@ -656,14 +633,14 @@ mod test {
             })
         };
 
-        let mut temp_configs = vec![make_temp_config(None)];
+        let mut temp_configs = vec![make_temp_config()];
 
         let (cm1_i, cm1_o) = channel();
         let mut cm1 = Service::new(cm1_i).unwrap();
         let cm1_eps = filter_ok(cm1.start_default_acceptors());
         assert!(cm1_eps.len() >= 1);
 
-        temp_configs.push(make_temp_config(cm1.get_beacon_acceptor_port()));
+        temp_configs.push(make_temp_config());
 
         let (cm2_i, cm2_o) = channel();
         let mut cm2 = Service::new(cm2_i).unwrap();
@@ -705,12 +682,12 @@ mod test {
             })
         };
 
-        let mut temp_configs = vec![make_temp_config(None)];
+        let mut temp_configs = vec![make_temp_config()];
 
         let (cm1_i, cm1_o) = channel();
         let cm1 = Service::new_inactive(cm1_i).unwrap();
 
-        temp_configs.push(make_temp_config(cm1.get_beacon_acceptor_port()));
+        temp_configs.push(make_temp_config());
 
         let (cm2_i, cm2_o) = channel();
         let cm2 = Service::new_inactive(cm2_i).unwrap();
@@ -845,7 +822,7 @@ mod test {
     fn connection_manager_start() {
         BootstrapHandler::cleanup().unwrap();
 
-        let _temp_config = make_temp_config(None);
+        let _temp_config = make_temp_config();
 
         let (cm_tx, cm_rx) = channel();
 
@@ -870,7 +847,7 @@ mod test {
         });
 
         let _ = spawn(move || {
-            let _temp_config = make_temp_config(None);
+            let _temp_config = make_temp_config();
             let (cm_aux_tx, cm_aux_rx) = channel();
             let cm_aux = Service::new_inactive(cm_aux_tx).unwrap();
             // setting the listening port to be greater than 4455 will make the test hanging
