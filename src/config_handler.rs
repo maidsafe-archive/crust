@@ -24,18 +24,12 @@
 
 #[derive(PartialEq, Eq, Debug, RustcDecodable, RustcEncodable, Clone)]
 pub struct Config {
-    pub tcp_listening_port         : Option<u16>,
-    pub utp_listening_port         : Option<u16>,
-    pub override_default_bootstrap : bool,
     pub hard_coded_contacts        : Vec<::transport::Endpoint>,
 }
 
 impl Config {
     pub fn make_default() -> Config {
         Config{
-            tcp_listening_port         : Some(5483),
-            utp_listening_port         : None,
-            override_default_bootstrap : false,  // Default bootstrapping methods enabled
             hard_coded_contacts        : vec![],  // No hardcoded endpoints
         }
     }
@@ -43,9 +37,6 @@ impl Config {
     /// Create a config which doesn't initiate any network activity.
     pub fn make_zero() -> Config {
         Config{
-            tcp_listening_port         : None,
-            utp_listening_port         : None,
-            override_default_bootstrap : true,    // Default bootstrapping methods disabled
             hard_coded_contacts        : vec![],  // No hardcoded endpoints
         }
     }
@@ -70,19 +61,12 @@ pub fn create_default_config_file() {
 ///
 /// N.B. This method should only be used as a utility for test and examples.  In normal use cases,
 /// this file should be created by the installer for the dependent application.
-pub fn write_config_file(tcp_listening_port: Option<u16>,
-                         utp_listening_port: Option<u16>,
-                         override_default_bootstrap: Option<bool>,
-                         hard_coded_endpoints: Option<Vec<::transport::Endpoint>>) -> Result<::std::path::PathBuf, ::error::Error> {
+pub fn write_config_file(hard_coded_endpoints: Option<Vec<::transport::Endpoint>>) -> Result<::std::path::PathBuf, ::error::Error> {
     use std::io::Write;
 
     let default = Config::make_default();
 
-    let config = Config{ tcp_listening_port: tcp_listening_port,
-                         utp_listening_port: utp_listening_port,
-                         override_default_bootstrap: override_default_bootstrap
-                            .unwrap_or(default.override_default_bootstrap),
-                         hard_coded_contacts: hard_coded_endpoints
+    let config = Config{ hard_coded_contacts: hard_coded_endpoints
                             .unwrap_or(default.hard_coded_contacts),
                        };
     let mut config_path = try!(::file_handler::current_bin_dir());
@@ -113,14 +97,9 @@ mod test {
         }
         let config =
             super::Config{
-                tcp_listening_port: None,
-                utp_listening_port: None,
-                override_default_bootstrap: false,
                 hard_coded_contacts: hard_coded_contacts,
             };
-        let _ = super::write_config_file(None, None,
-                                         Some(config.override_default_bootstrap),
-                                         Some(hard_coded_endpoints));
+        let _ = super::write_config_file(Some(hard_coded_endpoints));
         match super::read_config_file() {
             Ok(recovered_config) => assert_eq!(config, recovered_config),
             Err(_) => panic!("Failed to read config file."),
