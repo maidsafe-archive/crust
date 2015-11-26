@@ -93,26 +93,6 @@ impl Service {
         Ok(service)
     }
 
-    /// Start accepting on ports defined in the config file. Returns
-    /// a vector of Ok(endpoint) for endpoints where the accetation
-    /// started successfully.
-    pub fn start_default_acceptors(&mut self) -> Vec<io::Result<Endpoint>> {
-        let tcp_listening_port = self.config.tcp_listening_port.clone();
-        let utp_listening_port = self.config.utp_listening_port.clone();
-
-        let mut result = Vec::new();
-
-        if let Some(port) = tcp_listening_port {
-            result.push(self.start_accepting(Port::Tcp(port)));
-        }
-
-        if let Some(port) = utp_listening_port {
-            result.push(self.start_accepting(Port::Utp(port)));
-        }
-
-        result
-    }
-
     /// Start the beaconing on port `udp_port`. If port number is 0, the OS will
     /// pick one randomly. The actual port used will be returned.
     ///
@@ -553,8 +533,7 @@ mod test {
     }
 
     fn make_temp_config() -> TestConfigFile {
-        let path = write_config_file(Some(5483u16), None, Some(false),
-                                     Some(vec![]))
+        let path = write_config_file(Some(vec![]))
             .unwrap();
         TestConfigFile{path: path}
     }
@@ -576,7 +555,7 @@ mod test {
         let _config_file = make_temp_config();
 
         let mut cm1 = Service::new(cm1_i).unwrap();
-        let cm1_ports = filter_ok(cm1.start_default_acceptors());
+        let cm1_ports = filter_ok(vec![cm1.start_accepting(Port::Tcp(0))]);
         let beacon_port = cm1.start_beacon(0).unwrap();
         assert_eq!(cm1_ports.len(), 1);
         assert_eq!(Some(beacon_port), cm1.get_beacon_acceptor_port());
@@ -637,14 +616,14 @@ mod test {
 
         let (cm1_i, cm1_o) = channel();
         let mut cm1 = Service::new(cm1_i).unwrap();
-        let cm1_eps = filter_ok(cm1.start_default_acceptors());
+        let cm1_eps = filter_ok(vec![cm1.start_accepting(Port::Tcp(0))]);
         assert!(cm1_eps.len() >= 1);
 
         temp_configs.push(make_temp_config());
 
         let (cm2_i, cm2_o) = channel();
         let mut cm2 = Service::new(cm2_i).unwrap();
-        let cm2_eps = filter_ok(cm2.start_default_acceptors());
+        let cm2_eps = filter_ok(vec![cm2.start_accepting(Port::Tcp(0))]);
         assert!(cm2_eps.len() >= 1);
 
         cm2.connect(0, loopback_if_unspecified(cm1_eps));

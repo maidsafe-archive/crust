@@ -51,7 +51,7 @@ use std::thread;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use crust::{Service, Endpoint, Connection};
+use crust::{Service, Endpoint, Connection, Port};
 
 static USAGE: &'static str = "
 Usage:
@@ -398,7 +398,7 @@ fn create_local_config() {
         },
         Err(_) => {  // Continue if the file doesn't exist
             // This test helper function will use defaults for each `None` value.
-            match ::crust::write_config_file(None, None, None, None) {
+            match ::crust::write_config_file(None) {
                 Ok(file_path) => {
                     stdout = green_foreground(stdout);
                     println!("Created default config file at {:?}.", file_path);
@@ -440,7 +440,7 @@ fn main() {
     let (channel_sender, channel_receiver) = channel();
     let (bs_sender, bs_receiver) = channel();
     let mut service = Service::new(channel_sender).unwrap();
-    let listening_ports = filter_ok(service.start_default_acceptors());
+    let listening_ports = filter_ok(vec![service.start_accepting(Port::Tcp(0))]);
     assert!(listening_ports.len() >= 1);
     let _ = service.start_beacon(BEACON_PORT);
 

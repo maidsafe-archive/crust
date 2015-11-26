@@ -42,7 +42,7 @@ fn wait_for_connection(receiver: &Receiver<Event>) -> Connection {
         };
 
         match event {
-            crust::Event::OnConnect(c, _) => return c,
+            crust::Event::OnConnect(Ok(c), _) => return c,
             crust::Event::OnAccept(c)  => return c,
             _ => panic!("Unexpected event"),
         }
