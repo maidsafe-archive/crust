@@ -1,5 +1,17 @@
 # CRUST - Change Log
 
+## [0.6.0]
+- Change API to notify failures (e.g. now it is
+  `OnConnect(io::Result<Connection>, u32 /* token */)`.
+- Don't start any acceptor implicitly.
+- Remove default acceptors settings from config file.
+- Use memory mapped file abstractions to manage bootstrap cache files. We no
+  longer rely on a "file cache owner" that is chosen based on whoever is
+  successful to start some default acceptor implicitly.
+- A bugfix to uTP code.
+- Lint changes.
+- A new benchmark.
+
 ## [0.5.1]
 - Remove wildcards from dependencies.
 
