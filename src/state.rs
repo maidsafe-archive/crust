@@ -111,10 +111,6 @@ impl State {
                                        beacon_port: Option<u16>,
                                        own_beacon_guid_and_port: &Option<([u8; 16], u16)>)
             -> Vec<Endpoint> {
-        if config.override_default_bootstrap {
-            return config.hard_coded_contacts.clone();
-        }
-
         let cached_contacts = self.bootstrap_handler.read_file().unwrap_or(vec![]);
 
         let beacon_guid = own_beacon_guid_and_port.map(|(guid, _)| guid);
