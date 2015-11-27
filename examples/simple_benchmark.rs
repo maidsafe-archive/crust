@@ -31,6 +31,7 @@ extern crate docopt;
 extern crate rand;
 extern crate crust;
 extern crate time;
+#[macro_use] extern crate maidsafe_utilities;
 
 use rand::random;
 use docopt::Docopt;
@@ -93,13 +94,21 @@ fn main() {
         .and_then(|docopt| docopt.decode())
         .unwrap();
 
+    let (category_tx, _) = ::std::sync::mpsc::channel();
+    let crust_event_category = ::maidsafe_utilities::event_sender::RoutingEventCategory::CrustEvent;
     let (tx, s1_rx) = channel();
-    let mut s1 = Service::new_inactive(tx).unwrap();
+    let event_sender0 = ::maidsafe_utilities::event_sender::RoutingObserver::new(tx,
+                                                                                 crust_event_category.clone(),
+                                                                                 category_tx.clone());
+    let mut s1 = Service::new_inactive(event_sender0).unwrap();
 
     let s1_ep = s1.start_accepting(Port::Tcp(0)).unwrap();
 
     let (tx, s2_rx) = channel();
-    let s2 = Service::new_inactive(tx).unwrap();
+    let event_sender1 = ::maidsafe_utilities::event_sender::RoutingObserver::new(tx,
+                                                                                 crust_event_category,
+                                                                                 category_tx);
+    let s2 = Service::new_inactive(event_sender1).unwrap();
 
     s2.connect(0, vec![s1_ep]);
 

@@ -27,6 +27,7 @@
 #[macro_use]
 extern crate env_logger;
 extern crate crust;
+#[macro_use] extern crate maidsafe_utilities;
 
 fn fibonacci_number(n: u64) -> u64 {
     match n {
@@ -54,8 +55,13 @@ fn main() {
 
     // We receive events (e.g. new connection, message received) from the Service via an
     // asynchronous channel.
+    let (category_tx, _) = ::std::sync::mpsc::channel();
+    let crust_event_category = ::maidsafe_utilities::event_sender::RoutingEventCategory::CrustEvent;
     let (channel_sender, channel_receiver) = ::std::sync::mpsc::channel();
-    let service = ::crust::Service::new(channel_sender)
+    let event_sender = ::maidsafe_utilities::event_sender::RoutingObserver::new(channel_sender,
+                                                                                crust_event_category,
+                                                                                category_tx);
+    let service = ::crust::Service::new(event_sender)
         .unwrap();
 
     println!("Run the simple_sender example in another terminal to send messages to this node.");

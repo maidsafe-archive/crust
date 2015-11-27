@@ -35,6 +35,7 @@ extern crate docopt;
 extern crate rand;
 extern crate term;
 extern crate time;
+#[macro_use] extern crate maidsafe_utilities;
 
 use docopt::Docopt;
 use rand::random;
@@ -438,8 +439,15 @@ fn main() {
 
     // Construct Service and start listening
     let (channel_sender, channel_receiver) = channel();
+    let (category_tx, _) = channel();
+
     let (bs_sender, bs_receiver) = channel();
-    let mut service = Service::new(channel_sender).unwrap();
+
+    let crust_event_category = ::maidsafe_utilities::event_sender::RoutingEventCategory::CrustEvent;
+    let event_sender = ::maidsafe_utilities::event_sender::RoutingObserver::new(channel_sender,
+                                                                                crust_event_category,
+                                                                                category_tx);
+    let mut service = Service::new(event_sender).unwrap();
     let listening_ports = filter_ok(service.start_default_acceptors());
     assert!(listening_ports.len() >= 1);
     let _ = service.start_beacon(BEACON_PORT);

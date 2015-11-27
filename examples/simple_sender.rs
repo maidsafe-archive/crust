@@ -27,6 +27,7 @@
 #[macro_use]
 extern crate env_logger;
 extern crate crust;
+#[macro_use] extern crate maidsafe_utilities;
 
 fn main() {
     match env_logger::init() {
@@ -42,8 +43,15 @@ fn main() {
 
     // We receive events (e.g. new connection, message received) from the Service via an
     // asynchronous channel.
+    let (category_tx, _) = ::std::sync::mpsc::channel();
     let (channel_sender, channel_receiver) = ::std::sync::mpsc::channel();
-    let mut service = ::crust::Service::new(channel_sender).unwrap();
+
+    let crust_event_category = ::maidsafe_utilities::event_sender::RoutingEventCategory::CrustEvent;
+    let event_sender = ::maidsafe_utilities::event_sender::RoutingObserver::new(channel_sender,
+                                                                                crust_event_category,
+                                                                                category_tx);
+
+    let mut service = ::crust::Service::new(event_sender).unwrap();
 
     let (bs_sender, bs_receiver) = ::std::sync::mpsc::channel();
     // Start a thread running a loop which will receive and display responses from the peer.

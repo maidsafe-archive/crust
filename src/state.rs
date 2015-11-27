@@ -47,7 +47,7 @@ pub struct ConnectionData {
 }
 
 pub struct State {
-    pub event_sender        : Sender<Event>,
+    pub event_sender        : ::CrustEventSender,
     pub cmd_sender          : Sender<Closure>,
     pub cmd_receiver        : Receiver<Closure>,
     pub connections         : HashMap<Connection, ConnectionData>,
@@ -60,7 +60,7 @@ pub struct State {
 }
 
 impl State {
-    pub fn new(event_sender: Sender<Event>) -> io::Result<State> {
+    pub fn new(event_sender: ::CrustEventSender) -> io::Result<State> {
         let (cmd_sender, cmd_receiver) = mpsc::channel::<Closure>();
         let mapper = try!(::hole_punching::HolePunchServer::start(cmd_sender.clone()));
 
@@ -469,7 +469,12 @@ mod test {
         let eps = acceptors.iter().map(|a|testable_endpoint(&a))
                                   .collect();
 
-        let (event_sender, event_receiver) = channel();
+        let (category_tx, _) = channel();
+        let (event_tx, event_receiver) = channel();
+        let crust_event_category = ::maidsafe_utilities::event_sender::RoutingEventCategory::CrustEvent;
+        let event_sender = ::maidsafe_utilities::event_sender::RoutingObserver::new(event_tx,
+                                                                                    crust_event_category,
+                                                                                    category_tx);
 
         let mut s = State::new(event_sender).unwrap();
 

@@ -36,6 +36,7 @@ extern crate log;
 extern crate rand;
 extern crate rustc_serialize;
 extern crate time;
+#[macro_use] extern crate maidsafe_utilities;
 
 use crust::{Endpoint, Event, FileHandler,  Port, Service};
 use docopt::Docopt;
@@ -267,14 +268,19 @@ fn format_event(event: &Event) -> String {
 }
 
 fn run(connected: Arc<AtomicBool>, config: &Config) -> Report {
-    let (event_sender, event_receiver) = channel();
+    let (event_tx, event_receiver) = channel();
 
+    let (category_tx, _) = ::std::sync::mpsc::channel();
+    let crust_event_category = ::maidsafe_utilities::event_sender::RoutingEventCategory::CrustEvent;
     let (message_sender0, message_receiver) = channel();
     let message_sender1 = message_sender0.clone();
 
     // This channel is used to wait until someone connects to us.
     let (wait_sender, wait_receiver) = channel();
 
+    let event_sender = ::maidsafe_utilities::event_sender::RoutingObserver::new(event_tx,
+                                                                                crust_event_category.clone(),
+                                                                                category_tx.clone());
     let mut service = Service::new(event_sender).unwrap();
 
     if connected.load(Ordering::Relaxed) {
