@@ -439,13 +439,13 @@ fn main() {
 
     // Construct Service and start listening
     let (channel_sender, channel_receiver) = channel();
-    let (category_tx, _) = channel();
+    let (category_tx, category_rx) = channel();
 
     let (bs_sender, bs_receiver) = channel();
-    let crust_event_category = ::maidsafe_utilities::event_sender::RoutingEventCategory::CrustEvent;
-    let event_sender = ::maidsafe_utilities::event_sender::RoutingObserver::new(channel_sender,
-                                                                                crust_event_category,
-                                                                                category_tx);
+    let crust_event_category = ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
+    let event_sender = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(channel_sender,
+                                                                                 crust_event_category,
+                                                                                 category_tx);
     let mut service = Service::new(event_sender).unwrap();
     let listening_ports = filter_ok(vec![service.start_accepting(Port::Tcp(0))]);
     assert!(listening_ports.len() >= 1);
@@ -470,71 +470,81 @@ fn main() {
     let handler = match thread::Builder::new().name("CrustNode event handler".to_string())
                                               .spawn(move || {
         let mut bootstrapped = false;
-        while let Ok(event) = channel_receiver.recv() {
-            match event {
-                crust::Event::NewMessage(connection, bytes) => {
-                    stdout_copy = cyan_foreground(stdout_copy);
-                    let message_length = bytes.len();
-                    let mut network = network2.lock().unwrap();
-                    network.record_received(message_length);
-                    println!("\nReceived from {} message: {}",
-                             node_user_repr(&connection.peer_endpoint()),
-                             String::from_utf8(bytes)
-                             .unwrap_or(format!("non-UTF-8 message of {} bytes",
-                                                message_length)));
-                },
-                crust::Event::OnConnect(Ok(connection), _) |
-                crust::Event::OnRendezvousConnect(Ok(connection), _) => {
-                    stdout_copy = cyan_foreground(stdout_copy);
-                    println!("\nConnected to peer at {:?}", connection.peer_endpoint());
-                    let mut network = network2.lock().unwrap();
-                    network.add_node(CrustNode::new(connection, true));
-                    network.print_connected_nodes();
-                    if !bootstrapped {
-                        bootstrapped = true;
-                        let _ = bs_sender.send(connection);
-                    }
-                },
-                crust::Event::OnAccept(connection) => {
-                    stdout_copy = cyan_foreground(stdout_copy);
-                    println!("\nAccepted peer at {:?}", connection);
-                    let mut network = network2.lock().unwrap();
-                    network.add_node(CrustNode::new(connection, true));
-                    network.print_connected_nodes();
-                    if !bootstrapped {
-                        bootstrapped = true;
-                        let _ = bs_sender.send(connection);
-                    }
-                },
-                crust::Event::LostConnection(c) => {
-                    stdout_copy = yellow_foreground(stdout_copy);
-                    println!("\nLost connection to peer at {:?}", c);
-                    stdout_copy = cyan_foreground(stdout_copy);
-                    let mut network = network2.lock().unwrap();
-                    network.drop_node(c);
-                    network.print_connected_nodes();
-                },
-                crust::Event::OnUdpSocketMapped(content) => {
-                    match content.result {
-                        Ok((socket, ext_endpoints)) => {
-                            println!("UdpSocket mapped: {} {:?}",
-                                     content.result_token, ext_endpoints);
+        for it in category_rx.iter() {
+            match it {
+                ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent => {
+                    if let Ok(event) = channel_receiver.try_recv() {
+                        match event {
+                            crust::Event::NewMessage(connection, bytes) => {
+                                stdout_copy = cyan_foreground(stdout_copy);
+                                let message_length = bytes.len();
+                                let mut network = network2.lock().unwrap();
+                                network.record_received(message_length);
+                                println!("\nReceived from {} message: {}",
+                                         node_user_repr(&connection.peer_endpoint()),
+                                         String::from_utf8(bytes)
+                                         .unwrap_or(format!("non-UTF-8 message of {} bytes",
+                                                            message_length)));
+                            },
+                            crust::Event::OnConnect(Ok(connection), _) |
+                            crust::Event::OnRendezvousConnect(Ok(connection), _) => {
+                                stdout_copy = cyan_foreground(stdout_copy);
+                                println!("\nConnected to peer at {:?}", connection.peer_endpoint());
+                                let mut network = network2.lock().unwrap();
+                                network.add_node(CrustNode::new(connection, true));
+                                network.print_connected_nodes();
+                                if !bootstrapped {
+                                    bootstrapped = true;
+                                    let _ = bs_sender.send(connection);
+                                }
+                            },
+                            crust::Event::OnAccept(connection) => {
+                                stdout_copy = cyan_foreground(stdout_copy);
+                                println!("\nAccepted peer at {:?}", connection);
+                                let mut network = network2.lock().unwrap();
+                                network.add_node(CrustNode::new(connection, true));
+                                network.print_connected_nodes();
+                                if !bootstrapped {
+                                    bootstrapped = true;
+                                    let _ = bs_sender.send(connection);
+                                }
+                            },
+                            crust::Event::LostConnection(c) => {
+                                stdout_copy = yellow_foreground(stdout_copy);
+                                println!("\nLost connection to peer at {:?}", c);
+                                stdout_copy = cyan_foreground(stdout_copy);
+                                let mut network = network2.lock().unwrap();
+                                network.drop_node(c);
+                                network.print_connected_nodes();
+                            },
+                            crust::Event::OnUdpSocketMapped(content) => {
+                                match content.result {
+                                    Ok((socket, ext_endpoints)) => {
+                                        println!("UdpSocket mapped: {} {:?}",
+                                                 content.result_token, ext_endpoints);
 
-                            let mut network = network2.lock().unwrap();
-                            network.udp_data.push(UdpData::new(socket, ext_endpoints));
-                            network.print_connected_nodes();
-                        },
-                        Err(what) => {
-                            println!("UdpSocket mapping failed: {} {:?}",
-                                     content.result_token, what);
-                        },
+                                        let mut network = network2.lock().unwrap();
+                                        network.udp_data.push(UdpData::new(socket, ext_endpoints));
+                                        network.print_connected_nodes();
+                                    },
+                                    Err(what) => {
+                                        println!("UdpSocket mapping failed: {} {:?}",
+                                                 content.result_token, what);
+                                    },
+                                }
+                            }
+                            e => {
+                                println!("\nReceived event {:?} (not handled)", e);
+                            }
+                        }
+
+                        stdout_copy = reset_foreground(stdout_copy);
+                    } else {
+                        break;
                     }
-                }
-                e => {
-                    println!("\nReceived event {:?} (not handled)", e);
-                }
+                },
+                _ => unreachable!("This category should not have been fired - {:?}", it),
             }
-            stdout_copy = reset_foreground(stdout_copy);
         }
     }) {
         Ok(join_handle) => join_handle,

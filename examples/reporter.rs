@@ -270,17 +270,17 @@ fn format_event(event: &Event) -> String {
 fn run(connected: Arc<AtomicBool>, config: &Config) -> Report {
     let (event_tx, event_receiver) = channel();
 
-    let (category_tx, _) = ::std::sync::mpsc::channel();
-    let crust_event_category = ::maidsafe_utilities::event_sender::RoutingEventCategory::CrustEvent;
+    let (category_tx, category_rx) = ::std::sync::mpsc::channel();
+    let crust_event_category = ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
     let (message_sender0, message_receiver) = channel();
     let message_sender1 = message_sender0.clone();
 
     // This channel is used to wait until someone connects to us.
     let (wait_sender, wait_receiver) = channel();
 
-    let event_sender = ::maidsafe_utilities::event_sender::RoutingObserver::new(event_tx,
-                                                                                crust_event_category.clone(),
-                                                                                category_tx.clone());
+    let event_sender = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(event_tx,
+                                                                                 crust_event_category.clone(),
+                                                                                 category_tx.clone());
     let mut service = Service::new(event_sender).unwrap();
 
     if connected.load(Ordering::Relaxed) {
@@ -302,30 +302,36 @@ fn run(connected: Arc<AtomicBool>, config: &Config) -> Report {
     let event_thread_handle = thread::spawn(move || {
         let mut report = Report::new();
 
-        for event in event_receiver.iter() {
-            report.record_event(&event);
+        for it in category_rx.iter() {
+            match it {
+                ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent => {
+                    if let Ok(event) = event_receiver.try_recv() {
+                        report.record_event(&event);
 
-            match event {
-                Event::OnAccept(connection) => {
-                    debug!("OnAccept {:?}", connection);
-                    let _ = message_sender0.send(Some(connection));
-                },
+                        match event {
+                            Event::OnAccept(connection) => {
+                                debug!("OnAccept {:?}", connection);
+                                let _ = message_sender0.send(Some(connection));
+                            },
 
-                Event::OnConnect(Ok(connection), _) => {
-                    debug!("OnConnect {:?}", connection);
-                    let _ = message_sender0.send(Some(connection));
-                },
+                            Event::OnConnect(Ok(connection), _) => {
+                                debug!("OnConnect {:?}", connection);
+                                let _ = message_sender0.send(Some(connection));
+                            },
 
-                Event::NewMessage(connection, bytes) => {
-                    debug!("NewMessage {:?}", connection);
+                            Event::NewMessage(connection, bytes) => {
+                                debug!("NewMessage {:?}", connection);
 
-                    if let Ok(string) = String::from_utf8(bytes) {
-                        report.record_message(&string);
-                        let _ = message_sender0.send(Some(connection));
+                                if let Ok(string) = String::from_utf8(bytes) {
+                                    report.record_message(&string);
+                                    let _ = message_sender0.send(Some(connection));
+                                }
+                            },
+                            _ => (),
+                        }
                     }
                 },
-
-                _ => ()
+                _ => unreachable!("This category should not have been fired - {:?}", it),
             }
         }
 
