@@ -465,7 +465,7 @@ mod test {
         let eps = acceptors.iter().map(|a|testable_endpoint(&a))
                                   .collect();
 
-        let (category_tx, _) = channel();
+        let (category_tx, category_rx) = channel();
         let (event_tx, event_receiver) = channel();
         let crust_event_category = ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
         let event_sender = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(event_tx,
@@ -490,27 +490,29 @@ mod test {
 
         let mut accept_count = 0;
 
-        loop {
-            match event_receiver.recv() {
-                Ok(event) => {
-                    match event {
-                        Event::OnConnect(_, _) => {
-                            accept_count += 1;
-                            if accept_count == n {
-                                cmd_sender.send(Box::new(move |s: &mut State| {
-                                    s.stop();
-                                })).unwrap();
-                                break;
+        for it in category_rx.iter() {
+            match it {
+                ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent => {
+                    if let Ok(event) = event_receiver.try_recv() {
+                        match event {
+                            Event::OnConnect(_, _) => {
+                                accept_count += 1;
+                                if accept_count == n {
+                                    cmd_sender.send(Box::new(move |s: &mut State| {
+                                        s.stop();
+                                    })).unwrap();
+                                    break;
+                                }
+                            },
+                            Event::LostConnection(_) => { },
+                            Event::BootstrapFinished => { },
+                            _ => {
+                                panic!("Unexpected event {:?}", event);
                             }
-                        },
-                        Event::LostConnection(_) => { },
-                        Event::BootstrapFinished => { },
-                        _ => {
-                            panic!("Unexpected event {:?}", event);
                         }
                     }
                 },
-                Err(_) => { panic!("Error while receiving events"); }
+                _ => unreachable!("This category should not have been fired - {:?}", it),
             }
         }
 
