@@ -1,6 +1,6 @@
 [package]
 name = "crust"
-version = "0.6.0"
+version = "0.6.1"
 authors = ["MaidSafe Developers <dev@maidsafe.net>"]
 description = "Peer-to-peer networking library. Automatically reconnect and manage connections."
 documentation = "http://maidsafe.net/crust/latest"
