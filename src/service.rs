@@ -726,8 +726,11 @@ mod test {
 
             fn run(&mut self) -> Stats {
                 let mut stats = Stats::new();
+                let mut inner_count = 0;
 
                 for event in self.reader.iter() {
+                    debug!("node {:?} received event : {:?} current msg counting {:?} among {:?} with inner count {:?}",
+                           self._id, event, stats.messages_count, TOTAL_MSG_TO_RECEIVE, inner_count);
                     match event {
                         Event::OnConnect(Ok(connection), _) => {
                             stats.connect_count += 1;
@@ -738,16 +741,23 @@ mod test {
                             self.send_data_to(connection);
                         },
                         Event::NewMessage(_from, _bytes) => {
+                            if ((stats.connect_count + stats.accept_count) == (NETWORK_SIZE - 1)) &&
+                               (inner_count < (MESSAGE_PER_NODE * (NETWORK_SIZE - 2))) {
+                                inner_count = MESSAGE_PER_NODE * (NETWORK_SIZE - 2);
+                            }
                             stats.messages_count += 1;
-                            //let msg = decode::<String>(&bytes);
-                            if stats.messages_count == TOTAL_MSG_TO_RECEIVE {
+                            inner_count += 1;
+                            if inner_count == TOTAL_MSG_TO_RECEIVE {
                                 break;
                             }
                         },
                         Event::LostConnection(_) => {
+                            println!("connection lost");
+                            break;
                         },
                         _ => {
-                            println!("Received event {:?}", event);
+                            println!("Received unknown event {:?}", event);
+                            break;
                         }
                     }
                 }
