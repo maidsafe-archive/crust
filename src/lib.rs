@@ -51,6 +51,7 @@ extern crate time;
 extern crate utp;
 extern crate crossbeam;
 extern crate memmap;
+#[macro_use] extern crate maidsafe_utilities;
 
 /// Module implementing the `Service` which provides an interface to manage peer-to-peer
 /// connections.
@@ -59,6 +60,9 @@ pub mod service;
 pub mod error;
 /// Provides a struct and free functions for working with config files.
 pub mod file_handler;
+
+/// Crust Observers will be informed of crust events on this
+pub type CrustEventSender = ::maidsafe_utilities::event_sender::MaidSafeObserver<Event>;
 
 pub use config_handler::write_config_file;
 pub use service::Service;

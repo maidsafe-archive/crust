@@ -459,8 +459,14 @@ mod tests {
 
     #[test]
     fn test_get_mapped_socket_from_self() {
+        let (category_tx, _) = ::std::sync::mpsc::channel();
         let (tx, _rx) = ::std::sync::mpsc::channel();
-        let mut state = ::state::State::new(tx).unwrap();
+
+        let crust_event_category = ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
+        let event_sender = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(tx,
+                                                                                     crust_event_category,
+                                                                                     category_tx);
+        let mut state = ::state::State::new(event_sender).unwrap();
         let (socket, our_addr, remaining)
             = blocking_get_mapped_udp_socket(::rand::random(),
                                              vec![loopback_v4(state.mapper.listening_addr().port())]).unwrap();
@@ -471,6 +477,4 @@ mod tests {
         assert!(remaining.is_empty());
         state.stop();
     }
-
 }
-

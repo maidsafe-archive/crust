@@ -47,7 +47,7 @@ pub struct ConnectionData {
 }
 
 pub struct State {
-    pub event_sender        : Sender<Event>,
+    pub event_sender        : ::CrustEventSender,
     pub cmd_sender          : Sender<Closure>,
     pub cmd_receiver        : Receiver<Closure>,
     pub connections         : HashMap<Connection, ConnectionData>,
@@ -60,7 +60,7 @@ pub struct State {
 }
 
 impl State {
-    pub fn new(event_sender: Sender<Event>) -> io::Result<State> {
+    pub fn new(event_sender: ::CrustEventSender) -> io::Result<State> {
         let (cmd_sender, cmd_receiver) = mpsc::channel::<Closure>();
         let mapper = try!(::hole_punching::HolePunchServer::start(cmd_sender.clone()));
 
@@ -465,7 +465,12 @@ mod test {
         let eps = acceptors.iter().map(|a|testable_endpoint(&a))
                                   .collect();
 
-        let (event_sender, event_receiver) = channel();
+        let (category_tx, category_rx) = channel();
+        let (event_tx, event_receiver) = channel();
+        let crust_event_category = ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
+        let event_sender = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(event_tx,
+                                                                                     crust_event_category,
+                                                                                     category_tx);
 
         let mut s = State::new(event_sender).unwrap();
 
@@ -485,27 +490,29 @@ mod test {
 
         let mut accept_count = 0;
 
-        loop {
-            match event_receiver.recv() {
-                Ok(event) => {
-                    match event {
-                        Event::OnConnect(_, _) => {
-                            accept_count += 1;
-                            if accept_count == n {
-                                cmd_sender.send(Box::new(move |s: &mut State| {
-                                    s.stop();
-                                })).unwrap();
-                                break;
+        for it in category_rx.iter() {
+            match it {
+                ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent => {
+                    if let Ok(event) = event_receiver.try_recv() {
+                        match event {
+                            Event::OnConnect(_, _) => {
+                                accept_count += 1;
+                                if accept_count == n {
+                                    cmd_sender.send(Box::new(move |s: &mut State| {
+                                        s.stop();
+                                    })).unwrap();
+                                    break;
+                                }
+                            },
+                            Event::LostConnection(_) => { },
+                            Event::BootstrapFinished => { },
+                            _ => {
+                                panic!("Unexpected event {:?}", event);
                             }
-                        },
-                        Event::LostConnection(_) => { },
-                        Event::BootstrapFinished => { },
-                        _ => {
-                            panic!("Unexpected event {:?}", event);
                         }
                     }
                 },
-                Err(_) => { panic!("Error while receiving events"); }
+                _ => unreachable!("This category should not have been fired - {:?}", it),
             }
         }
 
