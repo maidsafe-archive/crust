@@ -467,10 +467,10 @@ mod test {
 
         let (category_tx, _) = channel();
         let (event_tx, event_receiver) = channel();
-        let crust_event_category = ::maidsafe_utilities::event_sender::RoutingEventCategory::CrustEvent;
-        let event_sender = ::maidsafe_utilities::event_sender::RoutingObserver::new(event_tx,
-                                                                                    crust_event_category,
-                                                                                    category_tx);
+        let crust_event_category = ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
+        let event_sender = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(event_tx,
+                                                                                     crust_event_category,
+                                                                                     category_tx);
 
         let mut s = State::new(event_sender).unwrap();
 

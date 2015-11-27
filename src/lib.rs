@@ -62,7 +62,7 @@ pub mod error;
 pub mod file_handler;
 
 /// Crust Observers will be informed of crust events on this
-pub type CrustEventSender = ::maidsafe_utilities::event_sender::RoutingObserver<Event>;
+pub type CrustEventSender = ::maidsafe_utilities::event_sender::MaidSafeObserver<Event>;
 
 pub use config_handler::write_config_file;
 pub use service::Service;

@@ -462,10 +462,10 @@ mod tests {
         let (category_tx, _) = ::std::sync::mpsc::channel();
         let (tx, _rx) = ::std::sync::mpsc::channel();
 
-        let crust_event_category = ::maidsafe_utilities::event_sender::RoutingEventCategory::CrustEvent;
-        let event_sender = ::maidsafe_utilities::event_sender::RoutingObserver::new(tx,
-                                                                                    crust_event_category,
-                                                                                    category_tx);
+        let crust_event_category = ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
+        let event_sender = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(tx,
+                                                                                     crust_event_category,
+                                                                                     category_tx);
         let mut state = ::state::State::new(event_sender).unwrap();
         let (socket, our_addr, remaining)
             = blocking_get_mapped_udp_socket(::rand::random(),

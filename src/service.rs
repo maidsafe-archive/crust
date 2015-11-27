@@ -555,10 +555,10 @@ mod test {
         let (cm1_i, _) = channel();
         let _config_file = make_temp_config();
 
-        let crust_event_category = ::maidsafe_utilities::event_sender::RoutingEventCategory::CrustEvent;
-        let event_sender1 = ::maidsafe_utilities::event_sender::RoutingObserver::new(cm1_i,
-                                                                                     crust_event_category.clone(),
-                                                                                     category_tx.clone());
+        let crust_event_category = ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
+        let event_sender1 = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(cm1_i,
+                                                                                      crust_event_category.clone(),
+                                                                                      category_tx.clone());
 
         let mut cm1 = Service::new(event_sender1).unwrap();
         let cm1_ports = filter_ok(vec![cm1.start_accepting(Port::Tcp(0))]);
@@ -570,9 +570,9 @@ mod test {
         let _config_file = make_temp_config();
 
         let (cm2_i, cm2_o) = channel();
-        let event_sender2 = ::maidsafe_utilities::event_sender::RoutingObserver::new(cm2_i,
-                                                                                     crust_event_category,
-                                                                                     category_tx);
+        let event_sender2 = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(cm2_i,
+                                                                                      crust_event_category,
+                                                                                      category_tx);
         let mut cm2 = Service::new(event_sender2).unwrap();
 
         cm2.bootstrap(0, Some(beacon_port));
@@ -625,10 +625,10 @@ mod test {
 
         let (category_tx, _) = channel();
         let (cm1_i, cm1_o) = channel();
-        let crust_event_category = ::maidsafe_utilities::event_sender::RoutingEventCategory::CrustEvent;
-        let event_sender1 = ::maidsafe_utilities::event_sender::RoutingObserver::new(cm1_i,
-                                                                                     crust_event_category.clone(),
-                                                                                     category_tx.clone());
+        let crust_event_category = ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
+        let event_sender1 = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(cm1_i,
+                                                                                      crust_event_category.clone(),
+                                                                                      category_tx.clone());
         let mut cm1 = Service::new(event_sender1).unwrap();
         let cm1_eps = filter_ok(vec![cm1.start_accepting(Port::Tcp(0))]);
         assert!(cm1_eps.len() >= 1);
@@ -636,9 +636,9 @@ mod test {
         temp_configs.push(make_temp_config());
 
         let (cm2_i, cm2_o) = channel();
-        let event_sender2 = ::maidsafe_utilities::event_sender::RoutingObserver::new(cm2_i,
-                                                                                     crust_event_category,
-                                                                                     category_tx);
+        let event_sender2 = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(cm2_i,
+                                                                                      crust_event_category,
+                                                                                      category_tx);
         let mut cm2 = Service::new(event_sender2).unwrap();
         let cm2_eps = filter_ok(vec![cm2.start_accepting(Port::Tcp(0))]);
         assert!(cm2_eps.len() >= 1);
@@ -682,18 +682,18 @@ mod test {
 
         let (category_tx, _) = channel();
         let (cm1_i, cm1_o) = channel();
-        let crust_event_category = ::maidsafe_utilities::event_sender::RoutingEventCategory::CrustEvent;
-        let event_sender1 = ::maidsafe_utilities::event_sender::RoutingObserver::new(cm1_i,
-                                                                                     crust_event_category.clone(),
-                                                                                     category_tx.clone());
+        let crust_event_category = ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
+        let event_sender1 = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(cm1_i,
+                                                                                      crust_event_category.clone(),
+                                                                                      category_tx.clone());
         let cm1 = Service::new_inactive(event_sender1).unwrap();
 
         temp_configs.push(make_temp_config());
 
         let (cm2_i, cm2_o) = channel();
-        let event_sender2 = ::maidsafe_utilities::event_sender::RoutingObserver::new(cm2_i,
-                                                                                     crust_event_category,
-                                                                                     category_tx);
+        let event_sender2 = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(cm2_i,
+                                                                                      crust_event_category,
+                                                                                      category_tx);
         let cm2 = Service::new_inactive(event_sender2).unwrap();
 
         let peer1_udp_socket = UdpSocket::bind("0.0.0.0:0").unwrap();
@@ -745,10 +745,10 @@ mod test {
             fn new(id: u32) -> Node {
                 let (category_tx, _) = channel();
                 let (writer, reader) = channel();
-                let crust_event_category = ::maidsafe_utilities::event_sender::RoutingEventCategory::CrustEvent;
-                let event_sender1 = ::maidsafe_utilities::event_sender::RoutingObserver::new(writer,
-                                                                                             crust_event_category,
-                                                                                             category_tx);
+                let crust_event_category = ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
+                let event_sender1 = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(writer,
+                                                                                              crust_event_category,
+                                                                                              category_tx);
                 Node {
                     _id: id,
                     service: Service::new(event_sender1).unwrap(),
@@ -838,12 +838,12 @@ mod test {
 
         let (cm_tx, cm_rx) = channel();
 
-        let crust_event_category = ::maidsafe_utilities::event_sender::RoutingEventCategory::CrustEvent;
+        let crust_event_category = ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
         let cloned_crust_event_category = crust_event_category.clone();
 
-        let event_sender1 = ::maidsafe_utilities::event_sender::RoutingObserver::new(cm_tx,
-                                                                                     crust_event_category,
-                                                                                     category_tx);
+        let event_sender1 = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(cm_tx,
+                                                                                      crust_event_category,
+                                                                                      category_tx);
         let mut cm = Service::new_inactive(event_sender1).unwrap();
 
         let cm_listen_ep = cm.start_accepting(Port::Tcp(0)).unwrap();
@@ -867,9 +867,9 @@ mod test {
         let _ = spawn(move || {
             let _temp_config = make_temp_config();
             let (cm_aux_tx, cm_aux_rx) = channel();
-            let event_sender1 = ::maidsafe_utilities::event_sender::RoutingObserver::new(cm_aux_tx,
-                                                                                         cloned_crust_event_category,
-                                                                                         cloned_category_tx);
+            let event_sender1 = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(cm_aux_tx,
+                                                                                          cloned_crust_event_category,
+                                                                                          cloned_category_tx);
             let cm_aux = Service::new_inactive(event_sender1).unwrap();
             // setting the listening port to be greater than 4455 will make the test hanging
             // changing this to cm_beacon_addr will make the test hanging
@@ -899,13 +899,13 @@ mod test {
         let utp_port;
 
         let (category_tx, _) = channel();
-        let crust_event_category = ::maidsafe_utilities::event_sender::RoutingEventCategory::CrustEvent;
+        let crust_event_category = ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
 
         {
             let (sender, _) = channel();
-            let event_sender1 = ::maidsafe_utilities::event_sender::RoutingObserver::new(sender,
-                                                                                         crust_event_category.clone(),
-                                                                                         category_tx.clone());
+            let event_sender1 = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(sender,
+                                                                                          crust_event_category.clone(),
+                                                                                          category_tx.clone());
             let mut service = Service::new(event_sender1).unwrap();
             // random port assigned by os
             tcp_port = service.start_accepting(Port::Tcp(0)).unwrap().get_port();
@@ -914,10 +914,10 @@ mod test {
 
         {
             let (sender, _) = channel();
-            let crust_event_category = ::maidsafe_utilities::event_sender::RoutingEventCategory::CrustEvent;
-            let event_sender1 = ::maidsafe_utilities::event_sender::RoutingObserver::new(sender,
-                                                                                         crust_event_category,
-                                                                                         category_tx);
+            let crust_event_category = ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
+            let event_sender1 = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(sender,
+                                                                                          crust_event_category,
+                                                                                          category_tx);
             let mut service = Service::new(event_sender1).unwrap();
             // reuse the ports from above
             let _ = service.start_accepting(tcp_port).unwrap();
