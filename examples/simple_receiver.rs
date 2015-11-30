@@ -27,6 +27,7 @@
 #[macro_use]
 extern crate env_logger;
 extern crate crust;
+#[macro_use] extern crate maidsafe_utilities;
 
 fn fibonacci_number(n: u64) -> u64 {
     match n {
@@ -54,45 +55,58 @@ fn main() {
 
     // We receive events (e.g. new connection, message received) from the Service via an
     // asynchronous channel.
+    let (category_tx, category_rx) = ::std::sync::mpsc::channel();
+    let crust_event_category = ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
     let (channel_sender, channel_receiver) = ::std::sync::mpsc::channel();
-    let service = ::crust::Service::new(channel_sender)
+    let event_sender = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(channel_sender,
+                                                                                 crust_event_category,
+                                                                                 category_tx);
+    let service = ::crust::Service::new(event_sender)
         .unwrap();
 
     println!("Run the simple_sender example in another terminal to send messages to this node.");
 
     // Receive the next event
-    while let Ok(event) = channel_receiver.recv() {
-        match event {
-            crust::Event::NewMessage(connection, bytes) => {
-                // For this example, we only expect to receive encoded `u8`s
-                let requested_value = match String::from_utf8(bytes) {
-                    Ok(message) => {
-                        match u8::from_str(&message) {
-                            Ok(value) => value,
-                            Err(why) => {
-                                println!("Error parsing message: {}", why);
-                                continue;
-                            },
-                        }
-                    },
-                    Err(why) => {
-                        println!("Error receiving message: {}", why);
-                        continue;
-                    },
-                };
+    for it in category_rx.iter() {
+        match it {
+            ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent => {
+                if let Ok(event) = channel_receiver.try_recv() {
+                    match event {
+                        crust::Event::NewMessage(connection, bytes) => {
+                            // For this example, we only expect to receive encoded `u8`s
+                            let requested_value = match String::from_utf8(bytes) {
+                                Ok(message) => {
+                                    match u8::from_str(&message) {
+                                        Ok(value) => value,
+                                        Err(why) => {
+                                            println!("Error parsing message: {}", why);
+                                            continue;
+                                        },
+                                    }
+                                },
+                                Err(why) => {
+                                    println!("Error receiving message: {}", why);
+                                    continue;
+                                },
+                            };
 
-                // Calculate the Fibonacci number for the requested value and respond with that
-                let fibonacci_result = fibonacci_number(requested_value as u64);
-                println!("Received \"{}\" from {:?} - replying with \"{}\"", requested_value,
-                         connection, fibonacci_result);
-                let response =
-                    format!("The Fibonacci number for {} is {}", requested_value, fibonacci_result);
-                service.send(connection.clone(), response.into_bytes());
+                            // Calculate the Fibonacci number for the requested value and respond with that
+                            let fibonacci_result = fibonacci_number(requested_value as u64);
+                            println!("Received \"{}\" from {:?} - replying with \"{}\"", requested_value,
+                                     connection, fibonacci_result);
+                            let response =
+                                format!("The Fibonacci number for {} is {}", requested_value, fibonacci_result);
+                            service.send(connection.clone(), response.into_bytes());
+                        },
+                        _ => {
+                            println!("Received event {:?}", event);
+                        }
+                    }
+                }
             },
-            _ => {
-                println!("Received event {:?}", event);
-            }
+            _ => unreachable!("This category should not have been fired - {:?}", it),
         }
     }
+
     println!("Stopped receiving.");
 }

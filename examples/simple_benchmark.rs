@@ -31,6 +31,7 @@ extern crate docopt;
 extern crate rand;
 extern crate crust;
 extern crate time;
+#[macro_use] extern crate maidsafe_utilities;
 
 use rand::random;
 use docopt::Docopt;
@@ -52,17 +53,25 @@ fn generate_random_vec_u8(size: usize) -> Vec<u8> {
     vec
 }
 
-fn wait_for_connection(receiver: &Receiver<Event>) -> Connection {
+fn wait_for_connection(receiver: &Receiver<Event>,
+                       category_rx: &::std::sync::mpsc::Receiver<::maidsafe_utilities
+                                                                 ::event_sender::MaidSafeEventCategory>) -> Connection {
     loop {
-        let event = match receiver.recv() {
-            Ok(event) => event,
-            Err(what) => panic!(format!("Could not connect {:?}", what)),
-        };
-
-        match event {
-            crust::Event::OnConnect(Ok(c), _) => return c,
-            crust::Event::OnAccept(c)  => return c,
-            _ => panic!("Unexpected event"),
+        for it in category_rx.iter() {
+            match it {
+                ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent => {
+                    if let Ok(event) = receiver.try_recv() {
+                        match event {
+                            crust::Event::OnConnect(Ok(c), _) => return c,
+                            crust::Event::OnAccept(c)  => return c,
+                            _ => panic!("Unexpected event"),
+                        }
+                    } else {
+                        panic!("Could not connect");
+                    }
+                },
+                _ => unreachable!("This event category should not have been fired - {:?}", it),
+            }
         }
     }
 }
@@ -93,18 +102,26 @@ fn main() {
         .and_then(|docopt| docopt.decode())
         .unwrap();
 
+    let (category_tx, category_rx) = ::std::sync::mpsc::channel();
+    let crust_event_category = ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
     let (tx, s1_rx) = channel();
-    let mut s1 = Service::new_inactive(tx).unwrap();
+    let event_sender0 = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(tx,
+                                                                                  crust_event_category.clone(),
+                                                                                  category_tx.clone());
+    let mut s1 = Service::new_inactive(event_sender0).unwrap();
 
     let s1_ep = s1.start_accepting(Port::Tcp(0)).unwrap();
 
     let (tx, s2_rx) = channel();
-    let s2 = Service::new_inactive(tx).unwrap();
+    let event_sender1 = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(tx,
+                                                                                  crust_event_category,
+                                                                                  category_tx);
+    let s2 = Service::new_inactive(event_sender1).unwrap();
 
     s2.connect(0, vec![s1_ep]);
 
-    let s2_ep = wait_for_connection(&s1_rx);
-    let _s1_ep = wait_for_connection(&s2_rx);
+    let s2_ep = wait_for_connection(&s1_rx, &category_rx);
+    let _s1_ep = wait_for_connection(&s2_rx, &category_rx);
 
     let chunk_size = args.flag_chunk_size.unwrap_or(1024*1024);
     let chunk = generate_random_vec_u8(chunk_size as usize);

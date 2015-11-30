@@ -27,6 +27,7 @@
 #[macro_use]
 extern crate env_logger;
 extern crate crust;
+#[macro_use] extern crate maidsafe_utilities;
 
 fn main() {
     match env_logger::init() {
@@ -42,36 +43,52 @@ fn main() {
 
     // We receive events (e.g. new connection, message received) from the Service via an
     // asynchronous channel.
+    let (category_tx, category_rx) = ::std::sync::mpsc::channel();
     let (channel_sender, channel_receiver) = ::std::sync::mpsc::channel();
-    let mut service = ::crust::Service::new(channel_sender).unwrap();
+
+    let crust_event_category = ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
+    let event_sender = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(channel_sender,
+                                                                                 crust_event_category,
+                                                                                 category_tx);
+
+    let mut service = ::crust::Service::new(event_sender).unwrap();
 
     let (bs_sender, bs_receiver) = ::std::sync::mpsc::channel();
     // Start a thread running a loop which will receive and display responses from the peer.
     let _ = ::std::thread::Builder::new().name("SimpleSender event handler".to_string()).spawn(move || {
         // Receive the next event
-        while let Ok(event) = channel_receiver.recv() {
-            // Handle the event
-            match event {
-                crust::Event::NewMessage(endpoint, bytes) => {
-                    match String::from_utf8(bytes) {
-                        Ok(reply) => println!("Peer on {:?} replied with \"{}\"", endpoint, reply),
-                        Err(why) => {
-                            println!("Error receiving message: {}", why);
-                            continue
-                        },
+        for it in category_rx.iter() {
+            match it {
+                ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent => {
+                    if let Ok(event) = channel_receiver.try_recv() {
+                        match event {
+                            crust::Event::NewMessage(endpoint, bytes) => {
+                                match String::from_utf8(bytes) {
+                                    Ok(reply) => println!("Peer on {:?} replied with \"{}\"", endpoint, reply),
+                                    Err(why) => {
+                                        println!("Error receiving message: {}", why);
+                                        continue
+                                    },
+                                }
+                            },
+                            crust::Event::OnConnect(Ok(endpoint), _) => {
+                                println!("Connected to {:?}", endpoint);
+                                let _ = bs_sender.send(endpoint);
+                            },
+                            crust::Event::OnAccept(endpoint) => {
+                                println!("Accepted {:?}", endpoint);
+                                let _ = bs_sender.send(endpoint);
+                            },
+                            _ => (),
+                        }
+                    } else {
+                        break;
                     }
                 },
-                crust::Event::OnConnect(Ok(endpoint), _) => {
-                    println!("Connected to {:?}", endpoint);
-                    let _ = bs_sender.send(endpoint);
-                },
-                crust::Event::OnAccept(endpoint) => {
-                    println!("Accepted {:?}", endpoint);
-                    let _ = bs_sender.send(endpoint);
-                },
-                _ => (),
+                _ => unreachable!("This category should not have been fired - {:?}", it),
             }
         }
+
         println!("Stopped receiving.");
     });
 

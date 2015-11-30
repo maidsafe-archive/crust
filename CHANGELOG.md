@@ -1,5 +1,8 @@
 # CRUST - Change Log
 
+## [0.6.1]
+- Replaced Event with EventSender from maidsafe_utilities
+
 ## [0.6.0]
 - Change API to notify failures (e.g. now it is
   `OnConnect(io::Result<Connection>, u32 /* token */)`.
