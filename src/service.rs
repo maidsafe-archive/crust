@@ -726,41 +726,48 @@ mod test {
 
             fn run(&mut self) -> Stats {
                 let mut stats = Stats::new();
-                let mut inner_count = 0;
+                let timeout = ::time::SteadyTime::now() + ::time::Duration::milliseconds(60000);
 
-                for event in self.reader.iter() {
-                    debug!("node {:?} received event : {:?} current msg counting {:?} among {:?} with inner count {:?}",
-                           self._id, event, stats.messages_count, TOTAL_MSG_TO_RECEIVE, inner_count);
-                    match event {
-                        Event::OnConnect(Ok(connection), _) => {
-                            stats.connect_count += 1;
-                            self.send_data_to(connection);
-                        },
-                        Event::OnAccept(connection) => {
-                            stats.accept_count += 1;
-                            self.send_data_to(connection);
-                        },
-                        Event::NewMessage(_from, _bytes) => {
-                            if ((stats.connect_count + stats.accept_count) == (NETWORK_SIZE - 1)) &&
-                               (inner_count < (MESSAGE_PER_NODE * (NETWORK_SIZE - 2))) {
-                                inner_count = MESSAGE_PER_NODE * (NETWORK_SIZE - 2);
+                loop {
+                    match self.reader.try_recv() {
+                        Err(_) => {}
+                        Ok(event) => {
+                            debug!("node {:?} received event : {:?} current msg counting {:?} among {:?}",
+                                   self._id, event, stats.messages_count, TOTAL_MSG_TO_RECEIVE);
+                            match event {
+                                Event::OnConnect(Ok(connection), _) => {
+                                    stats.connect_count += 1;
+                                    self.send_data_to(connection);
+                                },
+                                Event::OnAccept(connection) => {
+                                    stats.accept_count += 1;
+                                    self.send_data_to(connection);
+                                },
+                                Event::NewMessage(_from, _bytes) => {
+                                    stats.messages_count += 1;
+                                    if stats.messages_count == TOTAL_MSG_TO_RECEIVE {
+                                        break;
+                                    }
+                                },
+                                Event::LostConnection(_) => {
+                                    println!("connection lost");
+                                    break;
+                                },
+                                _ => {
+                                    println!("Received unknown event {:?}", event);
+                                    break;
+                                }
                             }
-                            stats.messages_count += 1;
-                            inner_count += 1;
-                            if inner_count == TOTAL_MSG_TO_RECEIVE {
-                                break;
-                            }
-                        },
-                        Event::LostConnection(_) => {
-                            println!("connection lost");
-                            break;
-                        },
-                        _ => {
-                            println!("Received unknown event {:?}", event);
-                            break;
                         }
                     }
+                    if ::time::SteadyTime::now() < timeout {
+                        let duration = ::std::time::Duration::from_millis(1);
+                        ::std::thread::sleep(duration);
+                    } else {
+                        break;
+                    }
                 }
+
                 stats
             }
 
