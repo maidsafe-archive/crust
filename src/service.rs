@@ -867,7 +867,7 @@ mod test {
         assert_eq!(stats.messages_count, NETWORK_SIZE * (NETWORK_SIZE - 1) * MESSAGE_PER_NODE);
     }
 
-    #[test]
+    // #[test]
     // fn test_network_tcp() {
     //     test_network(Protocol::Tcp);
     // }
