@@ -948,11 +948,13 @@ mod test {
 
             fn run(&mut self) -> Stats {
                 let mut stats = Stats::new();
-
-                for it in self.category_rx.iter() {
-                    match it {
-                        ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent => {
+                let timeout = ::time::SteadyTime::now() + ::time::Duration::milliseconds(120000);
+                loop {
+                    match self.category_rx.try_recv() {
+                        Ok(::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent) => {
                             if let Ok(event) = self.reader.try_recv() {
+                                debug!("node {:?} received event : {:?} current msg counting {:?} among {:?}",
+                                       self._id, event, stats.messages_count, TOTAL_MSG_TO_RECEIVE);
                                 match event {
                                     Event::OnConnect(Ok((_, connection)), _) => {
                                         stats.connect_count += 1;
@@ -964,19 +966,28 @@ mod test {
                                     }
                                     Event::NewMessage(_from, _bytes) => {
                                         stats.messages_count += 1;
-                                        // let msg = decode::<String>(&bytes);
                                         if stats.messages_count == TOTAL_MSG_TO_RECEIVE {
                                             break;
                                         }
                                     }
-                                    Event::LostConnection(_) => {}
+                                    Event::LostConnection(_) => {
+                                        println!("connection lost");
+                                        break;
+                                    }
                                     _ => {
-                                        println!("Received event {:?}", event);
+                                        println!("Received unknown event {:?}", event);
                                     }
                                 }
                             }
                         }
-                        _ => unreachable!("This category should not have been fired - {:?}", it),
+                        Ok(_) => unreachable!("This category should not have been fired"),
+                        Err(_) => {}
+                    }
+                    if ::time::SteadyTime::now() < timeout {
+                        let duration = ::std::time::Duration::from_millis(1);
+                        ::std::thread::sleep(duration);
+                    } else {
+                        break;
                     }
                 }
                 stats
