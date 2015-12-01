@@ -1258,8 +1258,7 @@ mod test {
                                         }
                                     }
                                     Event::LostConnection(_) => {
-                                        println!("connection lost");
-                                        break;
+                                        debug!("connection lost");
                                     }
                                     _ => {
                                         println!("Received unknown event {:?}", event);
