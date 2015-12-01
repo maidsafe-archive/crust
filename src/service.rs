@@ -872,10 +872,10 @@ mod test {
         test_network(Protocol::Tcp);
     }
 
-    #[test]
-    fn test_network_utp() {
-        test_network(Protocol::Utp);
-    }
+    // #[test]
+    // fn test_network_utp() {
+    //     test_network(Protocol::Utp);
+    // }
 
     #[test]
     fn connection_manager_start() {
