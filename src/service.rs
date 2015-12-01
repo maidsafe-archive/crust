@@ -817,6 +817,7 @@ mod test {
                         break;
                     }
                 }
+                self.service.stop();
                 stats
             }
 
@@ -873,9 +874,8 @@ mod test {
     // }
 
     #[test]
-    fn network_test() {
+    fn test_network_utp() {
         test_network(Protocol::Utp);
-        test_network(Protocol::Tcp);
     }
 
     #[test]
