@@ -873,8 +873,9 @@ mod test {
     // }
 
     #[test]
-    fn test_network_utp() {
+    fn test_network() {
         test_network(Protocol::Utp);
+        test_network(Protocol::Tcp);
     }
 
     #[test]
