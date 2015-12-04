@@ -21,6 +21,7 @@ use std::sync::mpsc;
 use std::sync::mpsc::{Sender, Receiver};
 use std::thread;
 use std::boxed::FnBox;
+use std::str::FromStr;
 
 use beacon;
 use bootstrap_handler::BootstrapHandler;
@@ -145,12 +146,13 @@ impl State {
         endpoints
     }
 
-    fn handle_handshake(handshake : Handshake,
+    fn handle_handshake(mut handshake : Handshake,
                         mut trans : transport::Transport)
             -> io::Result<(Handshake, transport::Transport)> {
         let handshake_err = Err(io::Error::new(io::ErrorKind::Other,
                                                "handshake failed"));
 
+        handshake.remote_ip = util::SocketAddrW(trans.connection_id.peer_endpoint().get_address());
         if let Err(_) = trans.sender.send_handshake(handshake) {
             return handshake_err
         }
@@ -199,7 +201,7 @@ impl State {
                           trans: transport::Transport)
                           -> io::Result<Connection> {
         let c = trans.connection_id.clone();
-        let event = Event::OnConnect(Ok(c), token);
+        let event = Event::OnConnect(Ok((handshake.remote_ip.0, c)), token);
 
         let connection = self.register_connection(handshake, trans, event);
         if let Ok(ref connection) = connection {
@@ -215,7 +217,8 @@ impl State {
                                      trans: transport::Transport)
                                      -> io::Result<Connection> {
         let c = trans.connection_id.clone();
-        let event = Event::OnRendezvousConnect(Ok(c), token);
+        let our_external_address = handshake.remote_ip.0;
+        let event = Event::OnRendezvousConnect(Ok((our_external_address, c)), token);
         self.register_connection(handshake, trans, event)
     }
 
@@ -314,7 +317,8 @@ impl State {
                          trans     : transport::Transport)
             -> io::Result<Connection> {
         let c = trans.connection_id.clone();
-        self.register_connection(handshake, trans, Event::OnAccept(c))
+        let our_external_address = handshake.remote_ip.0;
+        self.register_connection(handshake, trans, Event::OnAccept(our_external_address, c))
     }
 
     fn seek_peers(beacon_guid: Option<[u8; 16]>, beacon_port: u16) -> Vec<Endpoint> {
@@ -350,6 +354,7 @@ impl State {
             let h = Handshake {
                 mapper_port: Some(mapper_port),
                 external_ip: external_ip.map(util::SocketAddrV4W),
+                remote_ip: util::SocketAddrW(SocketAddr::from_str("0.0.0.0:0").unwrap()),
             };
 
             let connect_result = Self::connect(h, head);
