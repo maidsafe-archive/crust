@@ -49,10 +49,12 @@ impl UtpWrapper {
                                 Err(TryRecvError::Disconnected) => break 'outer,
                                 Err(TryRecvError::Empty) => break,
                             }
+                            ::std::thread::sleep(::std::time::Duration::from_millis(1));
                         }
                     },
                     Err(_) => break,
                 }
+                ::std::thread::sleep(::std::time::Duration::from_millis(100));
             }
         }).unwrap();
         Ok(UtpWrapper {
