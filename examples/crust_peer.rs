@@ -486,8 +486,8 @@ fn main() {
                                          .unwrap_or(format!("non-UTF-8 message of {} bytes",
                                                             message_length)));
                             },
-                            crust::Event::OnConnect(Ok(connection), _) |
-                            crust::Event::OnRendezvousConnect(Ok(connection), _) => {
+                            crust::Event::OnConnect(Ok((_, connection)), _) |
+                            crust::Event::OnRendezvousConnect(Ok((_, connection)), _) => {
                                 stdout_copy = cyan_foreground(stdout_copy);
                                 println!("\nConnected to peer at {:?}", connection.peer_endpoint());
                                 let mut network = network2.lock().unwrap();
@@ -498,7 +498,7 @@ fn main() {
                                     let _ = bs_sender.send(connection);
                                 }
                             },
-                            crust::Event::OnAccept(connection) => {
+                            crust::Event::OnAccept(_, connection) => {
                                 stdout_copy = cyan_foreground(stdout_copy);
                                 println!("\nAccepted peer at {:?}", connection);
                                 let mut network = network2.lock().unwrap();

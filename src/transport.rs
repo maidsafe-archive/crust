@@ -200,6 +200,8 @@ impl Port {
 pub struct Handshake {
     pub mapper_port: Option<u16>,
     pub external_ip: Option<util::SocketAddrV4W>,
+    // used to tell the remote peer their ip (as seen by us)
+    pub remote_ip: util::SocketAddrW,
 }
 
 impl Handshake {
@@ -207,6 +209,7 @@ impl Handshake {
         Handshake {
             mapper_port: None,
             external_ip: None,
+            remote_ip: util::SocketAddrW(SocketAddr::from_str("0.0.0.0:0").unwrap()),
         }
     }
 }
