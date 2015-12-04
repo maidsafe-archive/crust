@@ -666,6 +666,7 @@ mod test {
         assert!(runner2.join().is_ok());
     }
 
+    #[ignore]
     #[test]
     fn rendezvous_connection() {
         BootstrapHandler::cleanup().unwrap();
