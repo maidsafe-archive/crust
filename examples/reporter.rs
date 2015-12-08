@@ -309,12 +309,12 @@ fn run(connected: Arc<AtomicBool>, config: &Config) -> Report {
                         report.record_event(&event);
 
                         match event {
-                            Event::OnAccept(connection) => {
+                            Event::OnAccept(_, connection) => {
                                 debug!("OnAccept {:?}", connection);
                                 let _ = message_sender0.send(Some(connection));
                             },
 
-                            Event::OnConnect(Ok(connection), _) => {
+                            Event::OnConnect(Ok((_, connection)), _) => {
                                 debug!("OnConnect {:?}", connection);
                                 let _ = message_sender0.send(Some(connection));
                             },

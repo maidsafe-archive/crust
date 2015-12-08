@@ -62,8 +62,8 @@ fn wait_for_connection(receiver: &Receiver<Event>,
                 ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent => {
                     if let Ok(event) = receiver.try_recv() {
                         match event {
-                            crust::Event::OnConnect(Ok(c), _) => return c,
-                            crust::Event::OnAccept(c)  => return c,
+                            crust::Event::OnConnect(Ok((_, c)), _) => return c,
+                            crust::Event::OnAccept(_, c)  => return c,
                             _ => panic!("Unexpected event"),
                         }
                     } else {

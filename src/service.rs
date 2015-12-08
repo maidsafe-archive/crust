@@ -21,6 +21,7 @@ use std::thread;
 use std::boxed::FnBox;
 use std::thread::JoinHandle;
 use std::sync::{Arc, Mutex};
+use std::str::FromStr;
 
 use std::net::{SocketAddr, SocketAddrV4, UdpSocket};
 use beacon;
@@ -34,7 +35,7 @@ use connection::Connection;
 
 use state::State;
 use event::{Event, HolePunchResult};
-use util::SocketAddrV4W;
+use util::{SocketAddrW, SocketAddrV4W};
 
 /// Type used to represent serialised data in a message.
 pub type Bytes = Vec<u8>;
@@ -231,6 +232,7 @@ impl Service {
             let handshake = Handshake {
                 mapper_port: Some(state.mapper.listening_addr().port()),
                 external_ip: state.mapper.external_address().map(SocketAddrV4W),
+                remote_ip: SocketAddrW(SocketAddr::from_str("0.0.0.0:0").unwrap()),
             };
 
             let _ = Self::new_thread("connect", move || {
@@ -284,6 +286,7 @@ impl Service {
             let handshake = Handshake {
                 mapper_port: Some(state.mapper.listening_addr().port()),
                 external_ip: state.mapper.external_address().map(::util::SocketAddrV4W),
+                remote_ip: SocketAddrW(SocketAddr::from_str("0.0.0.0:0").unwrap()),
             };
 
             let _ = Self::new_thread("rendezvous connect", move || {
@@ -338,6 +341,7 @@ impl Service {
             let handshake = Handshake {
                 mapper_port: Some(state.mapper.listening_addr().port()),
                 external_ip: state.mapper.external_address().map(SocketAddrV4W),
+                remote_ip: SocketAddrW(SocketAddr::from_str("0.0.0.0:0").unwrap()),
             };
 
             let _ = Self::new_thread("listen", move || {
@@ -587,11 +591,11 @@ mod test {
             ::std::thread::sleep(::std::time::Duration::from_millis(100));
         }
         match result {
-            Ok(Event::OnConnect(ep, _)) => {
-                debug!("OnConnect {:?}", ep);
+            Ok(Event::OnConnect(conn, _)) => {
+                debug!("OnConnect {:?}", conn);
             }
-            Ok(Event::OnAccept(ep)) => {
-                debug!("OnAccept {:?}", ep);
+            Ok(Event::OnAccept(addr, ep)) => {
+                debug!("OnAccept {:?} {:?}", addr, ep);
             }
             _ => { assert!(false, "Failed to receive NewConnection event")}
         }
@@ -610,10 +614,10 @@ mod test {
                         ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent => {
                             if let Ok(event) = o.try_recv() {
                                 match event {
-                                    Event::OnConnect(Ok(other_ep), _) => {
+                                    Event::OnConnect(Ok((_, other_ep)), _) => {
                                         let _ = cm.send(other_ep.clone(), encode(&"hello world".to_string()));
                                     },
-                                    Event::OnAccept(other_ep) => {
+                                    Event::OnAccept(_, other_ep) => {
                                         let _ = cm.send(other_ep.clone(), encode(&"hello world".to_string()));
                                     },
                                     Event::NewMessage(_, _) => {
@@ -676,7 +680,7 @@ mod test {
                         ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent => {
                             if let Ok(event) = o.try_recv() {
                                 match event {
-                                    Event::OnRendezvousConnect(Ok(other_ep), _) => {
+                                    Event::OnRendezvousConnect(Ok((_, other_ep)), _) => {
                                         let _ = cm.send(other_ep.clone(),
                                                         encode(&"hello world".to_string()));
                                     },
@@ -784,11 +788,11 @@ mod test {
                                 debug!("node {:?} received event : {:?} current msg counting {:?} among {:?}",
                                        self._id, event, stats.messages_count, TOTAL_MSG_TO_RECEIVE);
                                 match event {
-                                    Event::OnConnect(Ok(connection), _) => {
+                                    Event::OnConnect(Ok((_, connection)), _) => {
                                         stats.connect_count += 1;
                                         self.send_data_to(connection);
                                     },
-                                    Event::OnAccept(connection) => {
+                                    Event::OnAccept(_, connection) => {
                                         stats.accept_count += 1;
                                         self.send_data_to(connection);
                                     },
