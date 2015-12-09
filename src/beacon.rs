@@ -19,8 +19,7 @@ use rand::random;
 use std::error::Error;
 use std::io;
 use std::io::Result;
-use std::net::{IpAddr, SocketAddr, TcpStream,
-               UdpSocket};
+use std::net::{SocketAddr, TcpStream, UdpSocket, SocketAddrV4, SocketAddrV6};
 use std::str::FromStr;
 use std::sync::{Arc, mpsc, Mutex};
 use std::thread;
@@ -60,9 +59,9 @@ fn parse_shutdown_value(data: &[u8]) -> u64 {
 }
 
 fn is_loopback(address: &SocketAddr) -> bool {
-    match address.ip() {
-        IpAddr::V4(ip) => ip.is_loopback(),
-        IpAddr::V6(ip) => ip.is_loopback(),
+    match *address {
+        SocketAddr::V4(a) => a.ip().is_loopback(),
+        SocketAddr::V6(a) => a.ip().is_loopback(),
     }
 }
 
@@ -221,7 +220,19 @@ pub fn seek_peers(port: u16, guid_to_avoid: Option<GUID>) -> Result<Vec<SocketAd
             let (size, source) = try!(socket.recv_from(&mut buffer));
             match size {
                 2usize => {  // The response is a serialised port
-                    let _ = tx.send(SocketAddr::new(source.ip(), parse_port(&buffer)));
+                    let _ = tx.send({
+                        let port = parse_port(&buffer);
+                        match source {
+                            SocketAddr::V4(a) => {
+                                SocketAddr::V4(SocketAddrV4::new(*a.ip(), port))
+                            },
+                            SocketAddr::V6(a) => {
+                                SocketAddr::V6(SocketAddrV6::new(*a.ip(), port,
+                                                                 a.flowinfo(),
+                                                                 a.scope_id()))
+                            },
+                        }
+                    });
                 },
                 8usize => {  // The response is a shutdown signal
                     if parse_shutdown_value(&buffer) == shutdown_value && is_loopback(&source) {

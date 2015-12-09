@@ -29,7 +29,7 @@ use config_handler::{Config, read_config_file};
 use getifaddrs::{getifaddrs, filter_loopback};
 use transport;
 use transport::{Endpoint, Port, Handshake};
-use ip;
+use auxip;
 use map_external_port::async_map_external_port;
 use connection::Connection;
 
@@ -376,7 +376,7 @@ impl Service {
     /// endpoints.
     pub fn get_external_endpoints(&self) {
         Self::post(&self.cmd_sender, move |state: &mut State| {
-            type T = (SocketAddrV4, ip::Endpoint);
+            type T = (SocketAddrV4, auxip::Endpoint);
 
             struct Async {
                 remaining: usize,

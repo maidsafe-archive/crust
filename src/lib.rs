@@ -36,7 +36,7 @@
         unused_qualifications, unused_results, variant_size_differences)]
 #![allow(box_pointers, fat_ptr_transmutes, missing_copy_implementations,
          missing_debug_implementations)]
-#![feature(fnbox, ip_addr, ip)]
+#![feature(fnbox, ip)]
 
 extern crate cbor;
 extern crate igd;
@@ -52,6 +52,7 @@ extern crate utp;
 extern crate crossbeam;
 extern crate memmap;
 #[macro_use] extern crate maidsafe_utilities;
+extern crate ip;
 
 /// Module implementing the `Service` which provides an interface to manage peer-to-peer
 /// connections.
@@ -90,7 +91,7 @@ mod beacon;
 mod bootstrap_handler;
 mod config_handler;
 mod util;
-mod ip;
+mod auxip;
 mod getifaddrs;
 mod connection;
 mod tcp_connections;

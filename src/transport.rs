@@ -15,7 +15,8 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::net::{SocketAddr, TcpStream, TcpListener, ToSocketAddrs, IpAddr, UdpSocket};
+use std::net::{SocketAddr, SocketAddrV4, SocketAddrV6, TcpStream, TcpListener, ToSocketAddrs, UdpSocket};
+use ip::IpAddr;
 use tcp_connections;
 use utp_connections;
 use std::cmp::Ordering;
@@ -28,9 +29,10 @@ use std::str::FromStr;
 use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
 use utp::UtpListener;
 use std::fmt;
-use ip;
+use auxip;
 use connection::Connection;
 use std::io::BufReader;
+use util::ip_from_socketaddr;
 use util;
 
 pub type Bytes = Vec<u8>;
@@ -56,9 +58,17 @@ pub enum Endpoint {
 impl Endpoint {
     /// Construct a new Endpoint
     pub fn new(addr: IpAddr, port: Port) -> Endpoint {
+        let socketaddr = match addr {
+            IpAddr::V4(a) => {
+                SocketAddr::V4(SocketAddrV4::new(a, port.number()))
+            },
+            IpAddr::V6(a) => {
+                SocketAddr::V6(SocketAddrV6::new(a, port.number(), 0, 0xe))
+            },
+        };
         match port {
-            Port::Tcp(p) => Endpoint::Tcp(SocketAddr::new(addr, p)),
-            Port::Utp(p) => Endpoint::Utp(SocketAddr::new(addr, p)),
+            Port::Tcp(_) => Endpoint::Tcp(socketaddr),
+            Port::Utp(_) => Endpoint::Utp(socketaddr),
         }
     }
 
@@ -93,18 +103,18 @@ impl Endpoint {
     }
 
     /// Convert address format from Port to Endpoint
-    pub fn to_ip(&self) -> ip::Endpoint {
+    pub fn to_ip(&self) -> auxip::Endpoint {
         let port = match self.get_port() {
-            Port::Tcp(n) => ip::Port::Tcp(n),
-            Port::Utp(n) => ip::Port::Udp(n),
+            Port::Tcp(n) => auxip::Port::Tcp(n),
+            Port::Utp(n) => auxip::Port::Udp(n),
         };
-        ip::Endpoint::new(self.get_address().ip(), port)
+        auxip::Endpoint::new(ip_from_socketaddr(self.get_address()), port)
     }
 
     /// Check whether the current address is specified
     /// returns true if address is un-specified, and false when specified
     pub fn has_unspecified_ip(&self) -> bool {
-        match self.get_address().ip() {
+        match ip_from_socketaddr(self.get_address()) {
             IpAddr::V4(ip) => ip.is_unspecified(),
             IpAddr::V6(ip) => ip.is_unspecified(),
         }

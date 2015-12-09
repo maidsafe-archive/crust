@@ -15,7 +15,8 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::net::{IpAddr, Ipv4Addr};
+use std::net::Ipv4Addr;
+use ip::IpAddr;
 
 /// Details about an interface on this host
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
@@ -45,7 +46,8 @@ impl IfAddr {
 #[cfg(not(windows))]
 mod getifaddrs_posix {
     use super::IfAddr;
-    use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
+    use std::net::{Ipv4Addr, Ipv6Addr};
+    use ip::IpAddr;
     use std::{mem, str};
     use std::ffi::CStr;
     use libc::consts::os::bsd44::{AF_INET, AF_INET6};
@@ -149,7 +151,8 @@ pub fn getifaddrs() -> Vec<IfAddr> {
 #[cfg(windows)]
 mod getifaddrs_windows {
     use super::IfAddr;
-    use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
+    use std::net::{Ipv4Addr, Ipv6Addr};
+    use ip::IpAddr;
     use std::{str, ptr};
     use std::ffi::CStr;
     use libc::types::common::c95::c_void;
@@ -408,7 +411,7 @@ pub fn filter_loopback(mut ifaddrs: Vec<IfAddr>)->Vec<IfAddr> {
 #[cfg(test)]
 mod test {
     use super::{getifaddrs, filter_loopback};
-    use std::net::IpAddr;
+    use ip::IpAddr;
 
     #[test]
     fn test_getifaddrs() {

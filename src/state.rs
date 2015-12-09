@@ -30,13 +30,15 @@ use getifaddrs::{getifaddrs, filter_loopback};
 use transport;
 use transport::{Endpoint, Port, Message, Handshake};
 use std::thread::JoinHandle;
-use std::net::{SocketAddr, IpAddr, Ipv4Addr, UdpSocket, SocketAddrV4};
+use std::net::{SocketAddr, Ipv4Addr, UdpSocket, SocketAddrV4, SocketAddrV6};
+use ip::IpAddr;
 
 use itertools::Itertools;
 use event::{Event, MappedUdpSocket};
 use connection::Connection;
 use sequence_number::SequenceNumber;
 use hole_punching::HolePunchServer;
+use util::ip_from_socketaddr;
 use util;
 
 pub type Closure = Box<FnBox(&mut State) + Send>;
@@ -201,7 +203,11 @@ impl State {
                           trans: transport::Transport)
                           -> io::Result<Connection> {
         let c = trans.connection_id.clone();
-        let event = Event::OnConnect(Ok((handshake.remote_ip.0, c)), token);
+        let our_external_endpoint = match trans.connection_id.peer_endpoint() {
+            Endpoint::Utp(..) => Endpoint::Utp(handshake.remote_ip.0),
+            Endpoint::Tcp(..) => Endpoint::Tcp(handshake.remote_ip.0),
+        };
+        let event = Event::OnConnect(Ok((our_external_endpoint, c)), token);
 
         let connection = self.register_connection(handshake, trans, event);
         if let Ok(ref connection) = connection {
@@ -217,8 +223,11 @@ impl State {
                                      trans: transport::Transport)
                                      -> io::Result<Connection> {
         let c = trans.connection_id.clone();
-        let our_external_address = handshake.remote_ip.0;
-        let event = Event::OnRendezvousConnect(Ok((our_external_address, c)), token);
+        let our_external_endpoint = match trans.connection_id.peer_endpoint() {
+            Endpoint::Utp(..) => Endpoint::Utp(handshake.remote_ip.0),
+            Endpoint::Tcp(..) => Endpoint::Tcp(handshake.remote_ip.0),
+        };
+        let event = Event::OnRendezvousConnect(Ok((our_external_endpoint, c)), token);
         self.register_connection(handshake, trans, event)
     }
 
@@ -234,7 +243,16 @@ impl State {
         let mapper_addr = handshake.mapper_port
             .map(|port| {
                 let peer_addr = trans.connection_id.peer_endpoint().get_address();
-                SocketAddr::new(peer_addr.ip(), port)
+                match peer_addr {
+                    SocketAddr::V4(a) => {
+                        SocketAddr::V4(SocketAddrV4::new(*a.ip(), port))
+                    },
+                    SocketAddr::V6(a) => {
+                        SocketAddr::V6(SocketAddrV6::new(*a.ip(), port,
+                                                         a.flowinfo(),
+                                                         a.scope_id()))
+                    },
+                }
             });
 
         let connection_data = ConnectionData {
@@ -317,8 +335,11 @@ impl State {
                          trans     : transport::Transport)
             -> io::Result<Connection> {
         let c = trans.connection_id.clone();
-        let our_external_address = handshake.remote_ip.0;
-        self.register_connection(handshake, trans, Event::OnAccept(our_external_address, c))
+        let our_external_endpoint = match trans.connection_id.peer_endpoint() {
+            Endpoint::Utp(..) => Endpoint::Utp(handshake.remote_ip.0),
+            Endpoint::Tcp(..) => Endpoint::Tcp(handshake.remote_ip.0),
+        };
+        self.register_connection(handshake, trans, Event::OnAccept(our_external_endpoint, c))
     }
 
     fn seek_peers(beacon_guid: Option<[u8; 16]>, beacon_port: u16) -> Vec<Endpoint> {
@@ -405,7 +426,8 @@ impl State {
                             .collect::<Vec<_>>();
 
         addrs.sort_by(|&addr1, &addr2| {
-            ::util::heuristic_geo_cmp(&addr1.ip(), &addr2.ip()).reverse()
+            ::util::heuristic_geo_cmp(&ip_from_socketaddr(addr1),
+                                      &ip_from_socketaddr(addr2)).reverse()
         });
 
         addrs
@@ -446,7 +468,8 @@ impl State {
 mod test {
     use super::*;
     use std::thread;
-    use std::net::SocketAddr;
+    use std::net::{SocketAddr, SocketAddrV4, SocketAddrV6};
+    use ip::IpAddr;
     use std::sync::mpsc::channel;
     use transport::{Endpoint, Port, Acceptor, Handshake};
     use event::Event;
@@ -459,7 +482,18 @@ mod test {
             _ => panic!("Unable to create a new connection"),
         };
 
-        let addr = SocketAddr::new(util::loopback_if_unspecified(addr.ip()), addr.port());
+        let ip = util::loopback_if_unspecified(util::ip_from_socketaddr(addr));
+        let addr = match (ip, addr) {
+            (IpAddr::V4(ip), _) => {
+                SocketAddr::V4(SocketAddrV4::new(ip, addr.port()))
+            },
+            (IpAddr::V6(ip), SocketAddr::V6(addr)) => {
+                SocketAddr::V6(SocketAddrV6::new(ip, addr.port(),
+                                                 addr.flowinfo(),
+                                                 addr.scope_id()))
+            },
+            _ => panic!("Unreachable"),
+        };
         Endpoint::Tcp(addr)
     }
 
