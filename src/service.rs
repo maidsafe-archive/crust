@@ -392,7 +392,7 @@ impl Service {
                         }
                         Err(_) => {
                             // TODO: What now? Stop? Start again?
-                            panic!();
+                            return
                         }
                     }
 
