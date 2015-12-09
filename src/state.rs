@@ -201,7 +201,11 @@ impl State {
                           trans: transport::Transport)
                           -> io::Result<Connection> {
         let c = trans.connection_id.clone();
-        let event = Event::OnConnect(Ok((handshake.remote_ip.0, c)), token);
+        let our_external_endpoint = match trans.connection_id.peer_endpoint() {
+            Endpoint::Utp(..) => Endpoint::Utp(handshake.remote_ip.0),
+            Endpoint::Tcp(..) => Endpoint::Tcp(handshake.remote_ip.0),
+        };
+        let event = Event::OnConnect(Ok((our_external_endpoint, c)), token);
 
         let connection = self.register_connection(handshake, trans, event);
         if let Ok(ref connection) = connection {
@@ -217,8 +221,11 @@ impl State {
                                      trans: transport::Transport)
                                      -> io::Result<Connection> {
         let c = trans.connection_id.clone();
-        let our_external_address = handshake.remote_ip.0;
-        let event = Event::OnRendezvousConnect(Ok((our_external_address, c)), token);
+        let our_external_endpoint = match trans.connection_id.peer_endpoint() {
+            Endpoint::Utp(..) => Endpoint::Utp(handshake.remote_ip.0),
+            Endpoint::Tcp(..) => Endpoint::Tcp(handshake.remote_ip.0),
+        };
+        let event = Event::OnRendezvousConnect(Ok((our_external_endpoint, c)), token);
         self.register_connection(handshake, trans, event)
     }
 
@@ -317,8 +324,11 @@ impl State {
                          trans     : transport::Transport)
             -> io::Result<Connection> {
         let c = trans.connection_id.clone();
-        let our_external_address = handshake.remote_ip.0;
-        self.register_connection(handshake, trans, Event::OnAccept(our_external_address, c))
+        let our_external_endpoint = match trans.connection_id.peer_endpoint() {
+            Endpoint::Utp(..) => Endpoint::Utp(handshake.remote_ip.0),
+            Endpoint::Tcp(..) => Endpoint::Tcp(handshake.remote_ip.0),
+        };
+        self.register_connection(handshake, trans, Event::OnAccept(our_external_endpoint, c))
     }
 
     fn seek_peers(beacon_guid: Option<[u8; 16]>, beacon_port: u16) -> Vec<Endpoint> {
