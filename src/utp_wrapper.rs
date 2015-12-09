@@ -18,15 +18,15 @@ pub struct UtpWrapper {
 }
 
 impl UtpWrapper {
-    pub fn wrap(socket: UtpSocket) -> io::Result<UtpWrapper> {
+    pub fn wrap(mut socket: UtpSocket) -> io::Result<UtpWrapper> {
         let (itx, irx) = mpsc::channel();
         let (otx, orx) = mpsc::channel::<Vec<u8>>();
         let peer_addr = try!(socket.peer_addr());
         let local_addr = try!(socket.local_addr());
+        socket.set_read_timeout(Some(CHECK_FOR_NEW_WRITES_INTERVAL_MS));
 
         let _ = thread::Builder::new().name("rust-utp multiplexer".to_string()).spawn(move || {
-            let mut socket = socket;
-            socket.set_read_timeout(Some(CHECK_FOR_NEW_WRITES_INTERVAL_MS));
+            let mut attempts = 0;        
             'outer:
             loop {
                 let mut buf = [0; BUFFER_SIZE];
@@ -35,6 +35,7 @@ impl UtpWrapper {
                     Ok((amt, _src)) => {
                         let buf = &buf[..amt];
                         let _ = itx.send(Vec::from(buf));
+                        attempts = 0;
                     },
                     Err(ref e) if e.kind() == ErrorKind::TimedOut => {
                         // This extra loop ensures all pending messages are sent
@@ -47,12 +48,20 @@ impl UtpWrapper {
                                     }
                                 },
                                 Err(TryRecvError::Disconnected) => break 'outer,
-                                Err(TryRecvError::Empty) => break,
+                                Err(TryRecvError::Empty) => {
+                                    attempts += 1;
+                                    if attempts < 5000 {
+                                        break;
+                                    } else {
+                                        break 'outer;
+                                    }
+                                }
                             }
                         }
                     },
                     Err(_) => break,
                 }
+                ::std::thread::sleep(::std::time::Duration::from_millis(1));
             }
         }).unwrap();
         Ok(UtpWrapper {
