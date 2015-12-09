@@ -15,11 +15,12 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use ip;
+use auxip;
 use igd;
 use std::io;
 use getifaddrs::{getifaddrs, filter_loopback};
-use std::net::{IpAddr, SocketAddrV4};
+use std::net::SocketAddrV4;
+use ip::IpAddr;
 use std::thread;
 use std::boxed::FnBox;
 use std::time::Duration;
@@ -27,8 +28,8 @@ use std::time::Duration;
 // How long do we wait to receive a response from the IGD?
 const IGD_SEARCH_TIMEOUT_SECS: u64 = 1;
 
-pub fn async_map_external_port<Callback>(local_ep: ip::Endpoint, callback: Box<Callback>)
-    where Callback: FnBox(io::Result<Vec<(SocketAddrV4, ip::Endpoint)>>) +
+pub fn async_map_external_port<Callback>(local_ep: auxip::Endpoint, callback: Box<Callback>)
+    where Callback: FnBox(io::Result<Vec<(SocketAddrV4, auxip::Endpoint)>>) +
           Send + 'static
 {
     let _detach = thread::Builder::new().name("async_map_external_port".to_string()).spawn(move || {
@@ -37,7 +38,7 @@ pub fn async_map_external_port<Callback>(local_ep: ip::Endpoint, callback: Box<C
     }).unwrap();
 }
 
-pub fn sync_map_external_port(local_ep: &ip::Endpoint) -> io::Result<Vec<(SocketAddrV4, ip::Endpoint)>>
+pub fn sync_map_external_port(local_ep: &auxip::Endpoint) -> io::Result<Vec<(SocketAddrV4, auxip::Endpoint)>>
 {
     let is_unspecified = match local_ep.ip() {
         IpAddr::V4(addr) => addr.is_unspecified(),
@@ -103,16 +104,16 @@ fn from_request_result<T>(r: Result<T, igd::RequestError>) -> io::Result<T> {
     })
 }
 
-fn map_external_port(local_ep: SocketAddrV4, ext_port: ip::Port)
-    -> io::Result<ip::Endpoint>
+fn map_external_port(local_ep: SocketAddrV4, ext_port: auxip::Port)
+    -> io::Result<auxip::Endpoint>
 {
     let gateway = try!(from_search_result(igd::search_gateway_from_timeout(
                             local_ep.ip().clone(), 
                             Duration::from_secs(IGD_SEARCH_TIMEOUT_SECS))));
 
     let igd_protocol = match &ext_port {
-        &ip::Port::Tcp(_) => igd::PortMappingProtocol::TCP,
-        &ip::Port::Udp(_) => igd::PortMappingProtocol::UDP,
+        &auxip::Port::Tcp(_) => igd::PortMappingProtocol::TCP,
+        &auxip::Port::Udp(_) => igd::PortMappingProtocol::UDP,
     };
 
     try!(from_request_result(gateway.add_port(igd_protocol,
@@ -123,16 +124,17 @@ fn map_external_port(local_ep: SocketAddrV4, ext_port: ip::Port)
 
     let ext_ip = try!(from_request_result(gateway.get_external_ip()));
 
-    Ok(ip::Endpoint::new(IpAddr::V4(ext_ip), ext_port))
+    Ok(auxip::Endpoint::new(IpAddr::V4(ext_ip), ext_port))
 }
 
 // --- Tests -------------------------------------------------------------------
 #[cfg(test)]
 mod test {
     use super::*;
-    use std::net::{IpAddr, Ipv4Addr, SocketAddrV4};
+    use std::net::{Ipv4Addr, SocketAddrV4};
+    use ip::IpAddr;
     use std::sync::mpsc;
-    use ip;
+    use auxip;
     use std::io;
     use util::timed_recv;
 
@@ -141,10 +143,10 @@ mod test {
     #[ignore]
     #[test]
     fn upnp() {
-        type R = io::Result<Vec<(SocketAddrV4, ip::Endpoint)>>;
+        type R = io::Result<Vec<(SocketAddrV4, auxip::Endpoint)>>;
         let (sender, receiver) = mpsc::channel::<R>();
         let unspecified_ip = IpAddr::V4(Ipv4Addr::new(0,0,0,0));
-        let local_ep = ip::Endpoint::new(unspecified_ip, ip::Port::Udp(5484));
+        let local_ep = auxip::Endpoint::new(unspecified_ip, auxip::Port::Udp(5484));
         async_map_external_port(local_ep, Box::new(move |result: R| {
             assert!(sender.send(result).is_ok());
         }));
