@@ -15,7 +15,8 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::net::{SocketAddr, SocketAddrV4, SocketAddrV6, IpAddr, Ipv4Addr, Ipv6Addr};
+use std::net::{SocketAddr, SocketAddrV4, SocketAddrV6, Ipv4Addr, Ipv6Addr};
+use ip::IpAddr;
 use std::cmp::Ordering;
 use getifaddrs::{getifaddrs, IfAddr};
 use ::rustc_serialize::{Encodable, Decodable, Decoder, Encoder};
@@ -139,6 +140,13 @@ pub fn compare_ipv6_addrs(a1: &SocketAddrV6, a2: &SocketAddrV6) -> Ordering {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+pub fn ip_from_socketaddr(addr: SocketAddr) -> IpAddr {
+    match addr {
+        SocketAddr::V4(a) => IpAddr::V4(*a.ip()),
+        SocketAddr::V6(a) => IpAddr::V6(*a.ip()),
+    }
+}
+
 pub fn loopback_v4(port: transport::Port) -> transport::Endpoint {
     let ip = IpAddr::V4(Ipv4Addr::new(127,0,0,1));
     transport::Endpoint::new(ip, port)
@@ -228,8 +236,8 @@ pub fn on_same_subnet_v6( ip_addr1: Ipv6Addr
 pub fn on_same_subnet(ip_addr1: IpAddr,
                       ip_addr2: IpAddr,
                       netmask:  IpAddr) -> bool {
-    use ::std::net::IpAddr::V4;
-    use ::std::net::IpAddr::V6;
+    use ip::IpAddr::V4;
+    use ip::IpAddr::V6;
 
     match (ip_addr1, ip_addr2, netmask) {
         (V4(ip1), V4(ip2), V4(m)) => {
@@ -317,11 +325,11 @@ pub fn heuristic_geo_cmp(ip1: &IpAddr, ip2: &IpAddr) -> Ordering {
 /// but it is used outside of this library and IpAddr
 /// is currently considered experimental.
 pub fn ifaddrs_if_unspecified(ep: transport::Endpoint) -> Vec<transport::Endpoint> {
-    if !is_unspecified(&ep.get_address().ip()) {
+    if !is_unspecified(&ip_from_socketaddr(ep.get_address())) {
         return vec![ep];
     }
 
-    let ep_is_v4 = is_v4(&ep.get_address().ip());
+    let ep_is_v4 = is_v4(&ip_from_socketaddr(ep.get_address()));
 
     getifaddrs().into_iter()
         .filter_map(|iface| {
@@ -425,7 +433,7 @@ mod test {
         use getifaddrs::getifaddrs;
         use ::std::cmp::Ordering::{Less, Equal, Greater};
         use ::std::net::Ipv4Addr;
-        use ::std::net::IpAddr::V4;
+        use ip::IpAddr::V4;
 
         let g = V4(Ipv4Addr::new(173,194,116,137));
         let l = V4(Ipv4Addr::new(127,0,0,1));

@@ -15,7 +15,9 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::net::{SocketAddr, IpAddr};
+use std::net::{SocketAddr, SocketAddrV4, SocketAddrV6};
+use ip::IpAddr;
+use util::ip_from_socketaddr;
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub enum Port {
@@ -43,9 +45,17 @@ pub enum Endpoint {
 impl Endpoint {
     /// Construct a new Endpoint
     pub fn new(addr: IpAddr, port: Port) -> Endpoint {
+        let socketaddr = match addr {
+            IpAddr::V4(a) => {
+                SocketAddr::V4(SocketAddrV4::new(a, port.number()))
+            },
+            IpAddr::V6(a) => {
+                SocketAddr::V6(SocketAddrV6::new(a, port.number(), 0, 0xe))
+            },
+        };
         match port {
-            Port::Tcp(p) => Endpoint::Tcp(SocketAddr::new(addr, p)),
-            Port::Udp(p) => Endpoint::Udp(SocketAddr::new(addr, p)),
+            Port::Tcp(_) => Endpoint::Tcp(socketaddr),
+            Port::Udp(_) => Endpoint::Udp(socketaddr),
         }
     }
 
@@ -58,8 +68,8 @@ impl Endpoint {
 
     pub fn ip(&self) -> IpAddr {
         match *self {
-            Endpoint::Tcp(saddr) => saddr.ip(),
-            Endpoint::Udp(saddr) => saddr.ip(),
+            Endpoint::Tcp(saddr) => ip_from_socketaddr(saddr),
+            Endpoint::Udp(saddr) => ip_from_socketaddr(saddr),
         }
     }
 }

@@ -6,7 +6,7 @@ use std::boxed::FnBox;
 
 use periodic_sender::PeriodicSender;
 use socket_utils::RecvUntil;
-use ip::Endpoint;
+use auxip::Endpoint;
 use state::State;
 use transport::Message;
 use util::{SocketAddrW, SocketAddrV4W};
