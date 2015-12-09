@@ -151,7 +151,8 @@ pub fn getifaddrs() -> Vec<IfAddr> {
 #[cfg(windows)]
 mod getifaddrs_windows {
     use super::IfAddr;
-    use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
+    use std::net::{Ipv4Addr, Ipv6Addr};
+    use ip::IpAddr;
     use std::{str, ptr};
     use std::ffi::CStr;
     use libc::types::common::c95::c_void;
