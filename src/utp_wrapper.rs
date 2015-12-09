@@ -57,7 +57,6 @@ impl UtpWrapper {
                                     }
                                 }
                             }
-                            ::std::thread::sleep(::std::time::Duration::from_millis(1));
                         }
                     },
                     Err(_) => break,
