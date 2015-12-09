@@ -50,18 +50,18 @@ impl UtpWrapper {
                                 Err(TryRecvError::Disconnected) => break 'outer,
                                 Err(TryRecvError::Empty) => {
                                     attempts += 1;
-                                    if attempts < 5000 {
+                                    if attempts < 10000 {
                                         break;
                                     } else {
                                         break 'outer;
                                     }
                                 }
                             }
+                            ::std::thread::sleep(::std::time::Duration::from_millis(1));
                         }
                     },
                     Err(_) => break,
                 }
-                ::std::thread::sleep(::std::time::Duration::from_millis(1));
             }
         }).unwrap();
         Ok(UtpWrapper {
