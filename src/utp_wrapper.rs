@@ -50,7 +50,7 @@ impl UtpWrapper {
                                 Err(TryRecvError::Disconnected) => break 'outer,
                                 Err(TryRecvError::Empty) => {
                                     attempts += 1;
-                                    if attempts < 10000 {
+                                    if attempts < 10 {
                                         break;
                                     } else {
                                         break 'outer;
