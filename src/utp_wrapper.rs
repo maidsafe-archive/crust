@@ -27,7 +27,7 @@ impl UtpWrapper {
         socket.set_read_timeout(Some(CHECK_FOR_NEW_WRITES_INTERVAL_MS));
 
         let _ = thread::Builder::new().name("rust-utp multiplexer".to_string()).spawn(move || {
-            let mut socket_last_success = ::time::SteadyTime::now();        
+            let mut timeout = ::time::SteadyTime::now() + ::time::Duration::seconds(SOCKET_FAILURE_ALLOWANCE);
             'outer:
             loop {
                 let mut buf = [0; BUFFER_SIZE];
@@ -36,7 +36,7 @@ impl UtpWrapper {
                     Ok((amt, _src)) => {
                         let buf = &buf[..amt];
                         let _ = itx.send(Vec::from(buf));
-                        socket_last_success = ::time::SteadyTime::now();
+                        timeout = ::time::SteadyTime::now() + ::time::Duration::seconds(SOCKET_FAILURE_ALLOWANCE);
                     },
                     Err(ref e) if e.kind() == ErrorKind::TimedOut => {
                         // This extra loop ensures all pending messages are sent
@@ -50,7 +50,7 @@ impl UtpWrapper {
                                 },
                                 Err(TryRecvError::Disconnected) => break 'outer,
                                 Err(TryRecvError::Empty) => {
-                                    if socket_last_success + ::time::Duration::seconds(SOCKET_FAILURE_ALLOWANCE) < ::time::SteadyTime::now() {
+                                    if timeout < ::time::SteadyTime::now() {
                                         break 'outer;
                                     } else {
                                         break;
