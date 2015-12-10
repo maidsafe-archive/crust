@@ -231,6 +231,8 @@ pub enum Message {
     /// We have an external (non-NATed) address+port that other nodes can use as a hole-punching
     /// server.
     HolePunchAddress(util::SocketAddrV4W),
+    Ping,
+    Pong,
 }
 
 //--------------------------------------------------------------------
