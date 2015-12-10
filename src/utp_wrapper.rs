@@ -8,6 +8,7 @@ use std::net::SocketAddr;
 
 const CHECK_FOR_NEW_WRITES_INTERVAL_MS: i64 = 50;
 const BUFFER_SIZE: usize = 1000;
+const SOCKET_FAILURE_ALLOWANCE : i64 = 15;
 
 pub struct UtpWrapper {
     input: Receiver<Vec<u8>>,
@@ -26,7 +27,7 @@ impl UtpWrapper {
         socket.set_read_timeout(Some(CHECK_FOR_NEW_WRITES_INTERVAL_MS));
 
         let _ = thread::Builder::new().name("rust-utp multiplexer".to_string()).spawn(move || {
-            let mut attempts = 0;        
+            let mut socket_last_success = ::time::SteadyTime::now();        
             'outer:
             loop {
                 let mut buf = [0; BUFFER_SIZE];
@@ -35,7 +36,7 @@ impl UtpWrapper {
                     Ok((amt, _src)) => {
                         let buf = &buf[..amt];
                         let _ = itx.send(Vec::from(buf));
-                        attempts = 0;
+                        socket_last_success = ::time::SteadyTime::now();
                     },
                     Err(ref e) if e.kind() == ErrorKind::TimedOut => {
                         // This extra loop ensures all pending messages are sent
@@ -49,11 +50,10 @@ impl UtpWrapper {
                                 },
                                 Err(TryRecvError::Disconnected) => break 'outer,
                                 Err(TryRecvError::Empty) => {
-                                    attempts += 1;
-                                    if attempts < 50 {
-                                        break;
-                                    } else {
+                                    if socket_last_success + ::time::Duration::seconds(SOCKET_FAILURE_ALLOWANCE) < ::time::SteadyTime::now() {
                                         break 'outer;
+                                    } else {
+                                        break;
                                     }
                                 }
                             }
