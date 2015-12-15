@@ -1,5 +1,9 @@
 # CRUST - Change Log
 
+## [0.7.0]
+- OnConnect, OnAccept and OnRendezvousConnect events now report what the remote
+  peer sees this peer's endpoint as
+
 ## [0.6.1]
 - Replaced Event with EventSender from maidsafe_utilities
 
