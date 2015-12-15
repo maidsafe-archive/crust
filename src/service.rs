@@ -68,7 +68,7 @@ impl Service {
     }
 
     /// Construct a service. As with the `Service::new` function, but will not
-    /// implicitly start any network activity. This construtor is intended
+    /// implicitly start any network activity. This constructor is intended
     /// only for testing purposes.
     pub fn new_inactive(event_sender: ::CrustEventSender)
             -> io::Result<Service> {

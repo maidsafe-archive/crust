@@ -17,12 +17,16 @@
 
 #![feature(test)]
 extern crate crust;
+#[macro_use]
+extern crate maidsafe_utilities;
 extern crate rand;
 extern crate test;
 
 use rand::random;
 use test::Bencher;
 use crust::*;
+use maidsafe_utilities::event_sender::MaidSafeEventCategory;
+use maidsafe_utilities::log::init;
 
 use std::sync::mpsc::{channel, Receiver};
 
@@ -34,25 +38,33 @@ pub fn generate_random_vec_u8(size: usize) -> Vec<u8> {
     vec
 }
 
-fn wait_for_connection(receiver: &Receiver<Event>) -> Connection {
-    loop {
-        let event = match receiver.recv() {
-            Ok(event) => event,
-            Err(what) => panic!(format!("Could not connect {:?}", what)),
-        };
+fn wait_for_connection(category_receiver: &Receiver<MaidSafeEventCategory>,
+                       crust_receiver: &Receiver<Event>) -> Connection {
+    match unwrap_result!(category_receiver.recv()) {
+        MaidSafeEventCategory::CrustEvent => {
+            let event = match crust_receiver.recv() {
+                Ok(event) => event,
+                Err(what) => panic!(format!("Could not connect {:?}", what)),
+            };
 
-        match event {
-            crust::Event::OnConnect(Ok(c), _) => return c,
-            crust::Event::OnAccept(c)  => return c,
-            _ => panic!("Unexpected event"),
-        }
+            match event {
+                crust::Event::OnConnect(Ok((_endpoint, connection)), _token) => return connection,
+                crust::Event::OnAccept(_endpoint, connection)  => return connection,
+                _ => panic!("Unexpected event"),
+            }
+        },
+        _ => panic!("Unexpected event"),
     }
 }
 
 #[bench]
 fn send_random_data(b: &mut Bencher) {
+    init(true);
     let (s1_tx, s1_rx) = channel();
-    let mut s1 = Service::new_inactive(s1_tx).unwrap();
+    let (category1_tx, category1_rx) = ::std::sync::mpsc::channel();
+    let crust_event_category = MaidSafeEventCategory::CrustEvent;
+    let event_sender1 = CrustEventSender::new(s1_tx, crust_event_category.clone(), category1_tx);
+    let mut s1 = unwrap_result!(Service::new_inactive(event_sender1));
 
     let s1_endpoint = match s1.start_accepting(Port::Tcp(0)) {
         Ok(ep) => ep,
@@ -60,12 +72,14 @@ fn send_random_data(b: &mut Bencher) {
     };
 
     let (s2_tx, s2_rx) = channel();
-    let s2 = Service::new_inactive(s2_tx).unwrap();
+    let (category2_tx, category2_rx) = ::std::sync::mpsc::channel();
+    let event_sender2 = CrustEventSender::new(s2_tx, crust_event_category, category2_tx);
+    let s2 = unwrap_result!(Service::new_inactive(event_sender2));
 
     s2.connect(0, vec![s1_endpoint]);
 
-    let _s2_ep = wait_for_connection(&s1_rx);
-    let s1_ep = wait_for_connection(&s2_rx);
+    let _s2_ep = wait_for_connection(&category1_rx, &s1_rx);
+    let s1_ep = wait_for_connection(&category2_rx, &s2_rx);
 
     let data = generate_random_vec_u8(1024 * 1024);
     let data_len = data.len();

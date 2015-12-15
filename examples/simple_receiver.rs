@@ -25,9 +25,8 @@
         unused_qualifications, unused_results, variant_size_differences)]
 
 #[macro_use]
-extern crate env_logger;
+extern crate maidsafe_utilities;
 extern crate crust;
-#[macro_use] extern crate maidsafe_utilities;
 
 fn fibonacci_number(n: u64) -> u64 {
     match n {
@@ -42,10 +41,7 @@ fn fibonacci_number(n: u64) -> u64 {
 // ScopedUserAppDirRemover to remove the user app dir.
 fn main() {
     use std::str::FromStr;
-    match env_logger::init() {
-        Ok(()) => {},
-        Err(e) => println!("Error initialising logger; continuing without: {:?}", e)
-    }
+    ::maidsafe_utilities::log::init(true);
 
     // The Service will probably create a "user app directory" (see the docs for
     // `FileHandler::write_file()`).  This object will try to clean up this directory when it goes
