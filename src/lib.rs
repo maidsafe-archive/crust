@@ -51,7 +51,8 @@ extern crate time;
 extern crate utp;
 extern crate crossbeam;
 extern crate memmap;
-#[macro_use] extern crate maidsafe_utilities;
+#[macro_use]
+extern crate maidsafe_utilities;
 extern crate ip;
 
 /// Module implementing the `Service` which provides an interface to manage peer-to-peer

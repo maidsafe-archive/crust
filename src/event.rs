@@ -58,4 +58,3 @@ pub enum Event {
     /// Invoked as a result of the call to Service::udp_punch_hole.
     OnHolePunched(HolePunchResult),
 }
-

@@ -28,14 +28,14 @@
 
 #[macro_use]
 extern crate log;
-extern crate env_logger;
+#[macro_use]
+extern crate maidsafe_utilities;
 extern crate crust;
 extern crate rustc_serialize;
 extern crate docopt;
 extern crate rand;
 extern crate term;
 extern crate time;
-#[macro_use] extern crate maidsafe_utilities;
 
 use docopt::Docopt;
 use rand::random;
@@ -421,10 +421,7 @@ fn filter_ok<T>(vec: Vec<io::Result<T>>) -> Vec<T> {
 }
 
 fn main() {
-    match env_logger::init() {
-        Ok(()) => {},
-        Err(e) => println!("Error initialising logger; continuing without: {:?}", e)
-    }
+    ::maidsafe_utilities::log::init(true);
 
     let args: Args = Docopt::new(USAGE)
                             .and_then(|docopt| docopt.decode())

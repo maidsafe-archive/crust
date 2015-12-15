@@ -26,9 +26,10 @@
 #![warn(trivial_casts, trivial_numeric_casts, unused, unused_extern_crates, unused_import_braces,
         unused_qualifications, unused_results, variant_size_differences)]
 
+#[macro_use]
+extern crate maidsafe_utilities;
 extern crate crust;
 extern crate docopt;
-extern crate env_logger;
 
 #[macro_use]
 extern crate log;
@@ -36,7 +37,6 @@ extern crate log;
 extern crate rand;
 extern crate rustc_serialize;
 extern crate time;
-#[macro_use] extern crate maidsafe_utilities;
 
 use crust::{Endpoint, Event, FileHandler,  Port, Service};
 use docopt::Docopt;
@@ -102,10 +102,7 @@ const MIN_RUN_TIME_MS: u64 = 1000;
 const MAX_RUN_TIME_MS: u64 = 2500;
 
 fn main() {
-    match env_logger::init() {
-        Ok(()) => {},
-        Err(e) => println!("Error initialising logger; continuing without: {:?}", e)
-    }
+    ::maidsafe_utilities::log::init(true);
 
     let args: Args = Docopt::new(USAGE).and_then(|d| d.decode())
                                        .unwrap_or_else(|e| e.exit());

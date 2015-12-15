@@ -26,12 +26,13 @@
 #![warn(trivial_casts, trivial_numeric_casts, unused, unused_extern_crates, unused_import_braces,
         unused_qualifications, unused_results, variant_size_differences)]
 
+#[macro_use]
+extern crate maidsafe_utilities;
 extern crate rustc_serialize;
 extern crate docopt;
 extern crate rand;
 extern crate crust;
 extern crate time;
-#[macro_use] extern crate maidsafe_utilities;
 
 use rand::random;
 use docopt::Docopt;
