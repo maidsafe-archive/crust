@@ -57,8 +57,11 @@ fn main() {
     let event_sender = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(channel_sender,
                                                                                  crust_event_category,
                                                                                  category_tx);
-    let service = ::crust::Service::new(event_sender)
-        .unwrap();
+    let mut service = unwrap_result!(::crust::Service::new(event_sender));
+    match service.start_beacon(5484) {
+        Ok(_)  => (),
+        Err(e) => println!("Warning: Couldn't start beacon: {}. (perhaps another crust instance is using the port?)", e),
+    };
 
     println!("Run the simple_sender example in another terminal to send messages to this node.");
 
