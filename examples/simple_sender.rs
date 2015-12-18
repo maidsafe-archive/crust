@@ -47,7 +47,7 @@ fn main() {
                                                                                  crust_event_category,
                                                                                  category_tx);
 
-    let mut service = ::crust::Service::new(event_sender).unwrap();
+    let mut service = unwrap_result!(::crust::Service::new(event_sender));
 
     let (bs_sender, bs_receiver) = ::std::sync::mpsc::channel();
     // Start a thread running a loop which will receive and display responses from the peer.
@@ -88,7 +88,8 @@ fn main() {
         println!("Stopped receiving.");
     });
 
-    service.bootstrap(0, None);
+    let _ = service.start_beacon(5484);
+    service.bootstrap(0, Some(5484));
 
     println!("Service trying to bootstrap off node listening on TCP port 8888 \
               and UDP broadcast port 5484");
