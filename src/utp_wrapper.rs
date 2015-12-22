@@ -8,6 +8,7 @@ use std::net::SocketAddr;
 
 const CHECK_FOR_NEW_WRITES_INTERVAL_MS: i64 = 50;
 const BUFFER_SIZE: usize = 1000;
+const SOCKET_FAILURE_ALLOWANCE : i64 = 15;
 
 pub struct UtpWrapper {
     input: Receiver<Vec<u8>>,
@@ -18,15 +19,15 @@ pub struct UtpWrapper {
 }
 
 impl UtpWrapper {
-    pub fn wrap(socket: UtpSocket) -> io::Result<UtpWrapper> {
+    pub fn wrap(mut socket: UtpSocket) -> io::Result<UtpWrapper> {
         let (itx, irx) = mpsc::channel();
         let (otx, orx) = mpsc::channel::<Vec<u8>>();
         let peer_addr = try!(socket.peer_addr());
         let local_addr = try!(socket.local_addr());
+        socket.set_read_timeout(Some(CHECK_FOR_NEW_WRITES_INTERVAL_MS));
 
         let _ = thread::Builder::new().name("rust-utp multiplexer".to_string()).spawn(move || {
-            let mut socket = socket;
-            socket.set_read_timeout(Some(CHECK_FOR_NEW_WRITES_INTERVAL_MS));
+            let mut timeout = ::time::SteadyTime::now() + ::time::Duration::seconds(SOCKET_FAILURE_ALLOWANCE);
             'outer:
             loop {
                 let mut buf = [0; BUFFER_SIZE];
@@ -35,6 +36,7 @@ impl UtpWrapper {
                     Ok((amt, _src)) => {
                         let buf = &buf[..amt];
                         let _ = itx.send(Vec::from(buf));
+                        timeout = ::time::SteadyTime::now() + ::time::Duration::seconds(SOCKET_FAILURE_ALLOWANCE);
                     },
                     Err(ref e) if e.kind() == ErrorKind::TimedOut => {
                         // This extra loop ensures all pending messages are sent
@@ -47,7 +49,13 @@ impl UtpWrapper {
                                     }
                                 },
                                 Err(TryRecvError::Disconnected) => break 'outer,
-                                Err(TryRecvError::Empty) => break,
+                                Err(TryRecvError::Empty) => {
+                                    if timeout < ::time::SteadyTime::now() {
+                                        break 'outer;
+                                    } else {
+                                        break;
+                                    }
+                                }
                             }
                         }
                     },
