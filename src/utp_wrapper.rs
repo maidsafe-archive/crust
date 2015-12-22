@@ -6,7 +6,7 @@ use std::io::{Read, ErrorKind};
 use std::io;
 use std::net::SocketAddr;
 
-const CHECK_FOR_NEW_WRITES_INTERVAL_MS: i64 = 50;
+const CHECK_FOR_NEW_WRITES_INTERVAL_MS: i64 = 200;
 const BUFFER_SIZE: usize = 1000;
 
 pub struct UtpWrapper {

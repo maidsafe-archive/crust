@@ -18,10 +18,11 @@
 use std::collections::{HashMap, HashSet};
 use std::io;
 use std::sync::mpsc;
-use std::sync::mpsc::{Sender, Receiver};
+use std::sync::mpsc::{Sender, Receiver, TryRecvError};
 use std::thread;
 use std::boxed::FnBox;
 use std::str::FromStr;
+use std::time::Duration;
 
 use beacon;
 use bootstrap_handler::BootstrapHandler;
@@ -61,6 +62,8 @@ pub struct State {
     pub next_punch_sequence : SequenceNumber,
     pub mapper              : HolePunchServer,
 }
+
+const INACTIVITY_TO_CONNECTION_LOSS_SECS: u64 = 5 * 60;
 
 impl State {
     pub fn new(event_sender: ::CrustEventSender) -> io::Result<State> {
@@ -296,10 +299,14 @@ impl State {
     fn start_reading_thread(&self, mut receiver : transport::Receiver,
                             connection : Connection) {
         let cmd_sender = self.cmd_sender.clone();
+        let cmd_sender2 = self.cmd_sender.clone();
         let sink       = self.event_sender.clone();
+
+        let (alive_tx, alive_rx) = mpsc::channel();
 
         let _ = Self::new_thread("reader", move || {
             while let Ok(msg) = receiver.receive() {
+                let _ = alive_tx.send(());
                 match msg {
                     Message::UserBlob(msg) => {
                         if sink.send(Event::NewMessage(connection.clone(), msg)).is_err() {
@@ -313,11 +320,42 @@ impl State {
                             }
                         }));
                     },
+                    Message::Ping => {
+                        let _ = cmd_sender.send(Box::new(move |state: &mut State| {
+                            if let Some(connection_data)
+                                = state.connections.get(&connection) {
+                                let writer_channel
+                                    = connection_data.message_sender.clone();
+                                let _ = writer_channel.send(Message::Pong);
+                            }
+                        }));
+                    },
+                    Message::Pong => (),
                 }
             }
             let _ = cmd_sender.send(Box::new(move |state : &mut State| {
                 state.unregister_connection(connection);
             }));
+        });
+
+        let _ = Self::new_thread("check activity", move || {
+            let mut last_was_empty = false;
+            loop {
+                match alive_rx.try_recv() {
+                    Ok(_) => last_was_empty = false,
+                    Err(TryRecvError::Empty) => {
+                        if last_was_empty {
+                            let _ = cmd_sender2.send(Box::new(move |state: &mut State| {
+                                state.unregister_connection(connection);
+                            }));
+                        } else {
+                            last_was_empty = true;
+                            thread::sleep(Duration::from_secs(INACTIVITY_TO_CONNECTION_LOSS_SECS));
+                        }
+                    },
+                    Err(TryRecvError::Disconnected) => break,
+                }
+            }
         });
     }
 
