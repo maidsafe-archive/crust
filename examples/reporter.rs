@@ -42,6 +42,7 @@ use crust::{Endpoint, Event, FileHandler,  Port, Service};
 use docopt::Docopt;
 use rand::{thread_rng, Rng};
 use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
+use std::cmp::max;
 use std::collections::HashMap;
 use std::io;
 use std::path::Path;
@@ -49,7 +50,7 @@ use std::sync::Arc;
 use std::sync::mpsc::channel;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
-use time::Tm;
+use time::{Duration, Tm};
 
 static USAGE: &'static str = r#"
 Usage:
@@ -71,7 +72,8 @@ Example config file:
         "msg_to_send": "hello",
         "service_runs": 2,
         "output_report_path": "/tmp/file.json",
-        "max_wait_before_restart_service_secs": 5
+        "max_wait_before_restart_service_secs": 5,
+        "max_msgs_per_sec": 25
     }
 
 Explanation of the config fields:
@@ -94,6 +96,11 @@ Explanation of the config fields:
                     Maximum number of time (in seconds) the node should wait
                     before starting a new service (if there are remaining runs
                     to execute).
+
+    max_msgs_per_sec
+                    Maximum number of messages per second to send. Use this to
+                    throttle the message sending. If blank or zero, there is
+                    no throttling.
 
 See also the example config files in examples/reporter directory.
 "#;
@@ -143,7 +150,8 @@ struct Config {
     listening_port:                       Option<u16>,
     service_runs:                         u64,
     output_report_path:                   String,
-    max_wait_before_restart_service_secs: u64
+    max_wait_before_restart_service_secs: u64,
+    max_msgs_per_sec:                     Option<u32>,
 }
 
 impl Config {
@@ -275,9 +283,11 @@ fn run(connected: Arc<AtomicBool>, config: &Config) -> Report {
     // This channel is used to wait until someone connects to us.
     let (wait_sender, wait_receiver) = channel();
 
-    let event_sender = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(event_tx,
-                                                                                 crust_event_category.clone(),
-                                                                                 category_tx.clone());
+    let event_sender = ::maidsafe_utilities::event_sender
+                       ::MaidSafeObserver::new(event_tx,
+                                               crust_event_category.clone(),
+                                               category_tx);
+
     let mut service = Service::new(event_sender).unwrap();
 
     if connected.load(Ordering::Relaxed) {
@@ -337,11 +347,27 @@ fn run(connected: Arc<AtomicBool>, config: &Config) -> Report {
 
     // This thread is for sending messages via the service.
     let connected2 = connected.clone();
+
+    let msgs_per_sec = config.max_msgs_per_sec.unwrap_or(0);
+    let msg_time = if msgs_per_sec > 0 {
+        Duration::milliseconds(1000 / msgs_per_sec as i64)
+    } else {
+        Duration::zero()
+    };
+
     let message_thread_handle = thread::spawn(move || {
+        let mut sent_at = time::now() - msg_time;
+
         for connection in message_receiver.iter() {
             match connection {
                 Some(connection) => {
+                    let sleep = max(msg_time - (time::now() - sent_at), Duration::zero());
+                    if sleep > Duration::zero() {
+                        thread::sleep(::std::time::Duration::from_millis(sleep.num_milliseconds() as u64));
+                    }
+
                     service.send(connection, message_bytes.clone());
+                    sent_at = time::now();
 
                     if !connected2.swap(true, Ordering::Relaxed) {
                         connect_to_all(&mut service, &ips);
