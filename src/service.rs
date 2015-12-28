@@ -679,15 +679,22 @@ mod test {
                 for it in category_rx.iter() {
                     match it {
                         ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent => {
-                            if let Ok(event) = o.try_recv() {
-                                match event {
-                                    Event::OnRendezvousConnect(Ok((_, other_ep)), _) => {
-                                        let _ = cm.send(other_ep.clone(),
-                                                        encode(&"hello world".to_string()));
-                                    },
-                                    Event::NewMessage(_, _) => break,
-                                    _ => (),
+                            match o.try_recv() {
+                                Ok(event) => {
+                                    match event {
+                                        Event::OnRendezvousConnect(Ok((_, other_ep)), _) => {
+                                            let _ = cm.send(other_ep.clone(),
+                                                            encode(&"hello world".to_string()));
+                                        },
+                                        Event::OnRendezvousConnect(Err(_), _) => {
+                                            panic!("Cannot establish rendezvous connection");
+                                        }
+                                        Event::NewMessage(_, _) => break,
+                                        _ => (),
+                                    }
                                 }
+                                Err(::std::sync::mpsc::TryRecvError::Disconnected) => break,
+                                _ => (),
                             }
                         },
                         _ => unreachable!("This category should not have been fired - {:?}", it),
