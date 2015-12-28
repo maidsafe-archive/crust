@@ -6,9 +6,8 @@ use std::io::{Read, ErrorKind};
 use std::io;
 use std::net::SocketAddr;
 
-const CHECK_FOR_NEW_WRITES_INTERVAL_MS: i64 = 50;
+const CHECK_FOR_NEW_WRITES_INTERVAL_MS: u64 = 50;
 const BUFFER_SIZE: usize = 1000;
-const SOCKET_FAILURE_ALLOWANCE : i64 = 15;
 
 pub struct UtpWrapper {
     input: Receiver<Vec<u8>>,
@@ -27,7 +26,6 @@ impl UtpWrapper {
         socket.set_read_timeout(Some(CHECK_FOR_NEW_WRITES_INTERVAL_MS));
 
         let _ = thread::Builder::new().name("rust-utp multiplexer".to_string()).spawn(move || {
-            let mut timeout = ::time::SteadyTime::now() + ::time::Duration::seconds(SOCKET_FAILURE_ALLOWANCE);
             'outer:
             loop {
                 let mut buf = [0; BUFFER_SIZE];
@@ -36,7 +34,6 @@ impl UtpWrapper {
                     Ok((amt, _src)) => {
                         let buf = &buf[..amt];
                         let _ = itx.send(Vec::from(buf));
-                        timeout = ::time::SteadyTime::now() + ::time::Duration::seconds(SOCKET_FAILURE_ALLOWANCE);
                     },
                     Err(ref e) if e.kind() == ErrorKind::TimedOut => {
                         // This extra loop ensures all pending messages are sent
@@ -49,13 +46,7 @@ impl UtpWrapper {
                                     }
                                 },
                                 Err(TryRecvError::Disconnected) => break 'outer,
-                                Err(TryRecvError::Empty) => {
-                                    if timeout < ::time::SteadyTime::now() {
-                                        break 'outer;
-                                    } else {
-                                        break;
-                                    }
-                                }
+                                Err(TryRecvError::Empty) => break,
                             }
                         }
                     },
