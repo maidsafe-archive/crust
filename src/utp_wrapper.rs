@@ -18,15 +18,14 @@ pub struct UtpWrapper {
 }
 
 impl UtpWrapper {
-    pub fn wrap(socket: UtpSocket) -> io::Result<UtpWrapper> {
+    pub fn wrap(mut socket: UtpSocket) -> io::Result<UtpWrapper> {
         let (itx, irx) = mpsc::channel();
         let (otx, orx) = mpsc::channel::<Vec<u8>>();
         let peer_addr = try!(socket.peer_addr());
         let local_addr = try!(socket.local_addr());
+        socket.set_read_timeout(Some(CHECK_FOR_NEW_WRITES_INTERVAL_MS));
 
         let _ = thread::Builder::new().name("rust-utp multiplexer".to_string()).spawn(move || {
-            let mut socket = socket;
-            socket.set_read_timeout(Some(CHECK_FOR_NEW_WRITES_INTERVAL_MS));
             'outer:
             loop {
                 let mut buf = [0; BUFFER_SIZE];
