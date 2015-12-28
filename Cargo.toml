@@ -19,7 +19,7 @@ time = "~0.1.34"
 itertools = "~0.4.3"
 igd = { version = "~0.2.1", features = [ "unstable" ] }
 net2 = "~0.2.19"
-temp_utp = "~0.6.21"
+temp_utp = "~0.7.0"
 log = "~0.3.4"
 crossbeam = "~0.1.6"
 memmap = "~0.2.3"
