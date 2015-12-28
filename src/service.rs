@@ -361,7 +361,7 @@ impl Service {
                         },
                         Err(_) => {
                             // TODO: What now? Stop? Start again?
-                            panic!();
+                            return
                         }
                     }
 
@@ -472,7 +472,6 @@ impl Drop for Service {
 #[cfg(test)]
 mod test {
     use super::*;
-    use transport::Endpoint;
     use connection::Connection;
     use std::thread::spawn;
     use std::thread;
@@ -480,7 +479,7 @@ mod test {
     use std::net::{UdpSocket, Ipv4Addr, SocketAddrV4};
     use rustc_serialize::{Decodable, Encodable};
     use cbor::{Decoder, Encoder};
-    use transport::Port;
+    use transport::{Endpoint, Port, Protocol};
     use config_handler::write_config_file;
     use std::path::PathBuf;
     use std::fs::remove_file;
@@ -667,6 +666,7 @@ mod test {
         assert!(runner2.join().is_ok());
     }
 
+    #[ignore]
     #[test]
     fn rendezvous_connection() {
         BootstrapHandler::cleanup().unwrap();
@@ -756,8 +756,7 @@ mod test {
         assert!(runner2.join().is_ok());
     }
 
-    #[test]
-    fn network() {
+    fn test_network(protocol: Protocol) {
         BootstrapHandler::cleanup().unwrap();
 
         const NETWORK_SIZE: u32 = 10;
@@ -789,11 +788,13 @@ mod test {
 
             fn run(&mut self) -> Stats {
                 let mut stats = Stats::new();
-
-                for it in self.category_rx.iter() {
-                    match it {
-                        ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent => {
+                let timeout = ::time::SteadyTime::now() + ::time::Duration::milliseconds(120000);
+                loop {
+                    match self.category_rx.try_recv() {
+                        Ok(::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent) => {
                             if let Ok(event) = self.reader.try_recv() {
+                                debug!("node {:?} received event : {:?} current msg counting {:?} among {:?}",
+                                       self._id, event, stats.messages_count, TOTAL_MSG_TO_RECEIVE);
                                 match event {
                                     Event::OnConnect(Ok((_, connection)), _) => {
                                         stats.connect_count += 1;
@@ -805,20 +806,27 @@ mod test {
                                     },
                                     Event::NewMessage(_from, _bytes) => {
                                         stats.messages_count += 1;
-                                        //let msg = decode::<String>(&bytes);
                                         if stats.messages_count == TOTAL_MSG_TO_RECEIVE {
                                             break;
                                         }
                                     },
                                     Event::LostConnection(_) => {
+                                        debug!("connection lost");
                                     },
                                     _ => {
-                                        println!("Received event {:?}", event);
+                                        println!("Received unknown event {:?}", event);
                                     }
                                 }
                             }
                         },
-                        _ => unreachable!("This category should not have been fired - {:?}", it),
+                        Ok(_) => unreachable!("This category should not have been fired"),
+                        Err(_) => {}
+                    }
+                    if ::time::SteadyTime::now() < timeout {
+                        let duration = ::std::time::Duration::from_millis(1);
+                        ::std::thread::sleep(duration);
+                    } else {
+                        break;
                     }
                 }
                 stats
@@ -839,7 +847,13 @@ mod test {
         let mut runners = Vec::new();
 
         let mut listening_eps = nodes.iter_mut()
-            .map(|node| node.service.start_accepting(Port::Tcp(0)).unwrap())
+            .map(|node| {
+                let port = match protocol {
+                    Protocol::Tcp => Port::Tcp(0),
+                    Protocol::Utp => Port::Utp(0),
+                };
+                node.service.start_accepting(port).unwrap()
+            })
             .map(|ep| ep.map_ip_addr(::util::loopback_if_unspecified))
             .collect::<::std::collections::LinkedList<_>>();
 
@@ -863,6 +877,17 @@ mod test {
         assert_eq!(stats.connect_count,  NETWORK_SIZE * (NETWORK_SIZE - 1) / 2);
         assert_eq!(stats.accept_count,   NETWORK_SIZE * (NETWORK_SIZE - 1) / 2);
         assert_eq!(stats.messages_count, NETWORK_SIZE * (NETWORK_SIZE - 1) * MESSAGE_PER_NODE);
+    }
+
+    #[test]
+    fn test_network_tcp() {
+        test_network(Protocol::Tcp);
+    }
+
+    #[ignore]
+    #[test]
+    fn test_network_utp() {
+        test_network(Protocol::Utp);
     }
 
     #[test]
