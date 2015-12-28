@@ -45,8 +45,8 @@ impl UtpWrapper {
                         loop {
                             match output_rx.try_recv() {
                                 Ok(v) => {
-                                    if socket.send_to(&v[..]).is_err() {
-                                        break 'outer;
+                                    if let Err(e) = socket.send_to(&v[..]) {
+                                        panic!("VINIPSMAKER, listen2: {:?}", e);
                                     }
                                 }
                                 Err(TryRecvError::Disconnected) => break 'outer,
@@ -54,7 +54,9 @@ impl UtpWrapper {
                             }
                         }
                     }
-                    Err(_) => break,
+                    Err(e) => {
+                        panic!("VINIPSMAKER, listen: {:?}", e);
+                    }
                 }
             }
         }).unwrap();
