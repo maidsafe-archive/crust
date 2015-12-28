@@ -211,7 +211,7 @@ mod getifaddrs_windows {
     #[link(name="Iphlpapi")]
     extern "system" {
         /// get adapter's addresses
-        pub fn GetAdaptersAddresses(family : c_ulong, flags : c_ulong, reserved : *const c_void, addresses : *const IpAdapterAddresses, size : *mut c_ulong) -> c_ulong;
+        fn GetAdaptersAddresses(family : c_ulong, flags : c_ulong, reserved : *const c_void, addresses : *const IpAdapterAddresses, size : *mut c_ulong) -> c_ulong;
     }
 
     #[allow(unsafe_code)]
