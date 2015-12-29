@@ -22,7 +22,9 @@ memmap = "~0.2.2"
 net2 = "~0.2.20"
 rand = "~0.3.12"
 rustc-serialize = "~0.3.16"
-temp_utp = "~0.7.0"
+#temp_utp = { git = "https://github.com/vinipsmaker/rust-utp.git", branch = "donottouchthis" }
+#temp_utp = { git = "https://github.com/inetic/rust-utp.git", rev = "66e5b716a8c9d19ee54c56873bc451ff78088c73" }
+temp_utp = { git = "https://github.com/vinipsmaker/rust-utp.git", branch = "hope4" }
 term = "~0.2.14"
 time = "~0.1.34"
 
