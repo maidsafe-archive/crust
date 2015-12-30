@@ -960,6 +960,10 @@ mod test {
                                         stats.connect_count += 1;
                                         self.send_data_to(connection);
                                     }
+                                    Event::OnConnect(Err(e), _) => {
+                                        thread::sleep(::std::time::Duration::from_secs(120));
+                                        panic!("Cannot establish all connections {:?}", e)
+                                    }
                                     Event::OnAccept(_, connection) => {
                                         stats.accept_count += 1;
                                         self.send_data_to(connection);
