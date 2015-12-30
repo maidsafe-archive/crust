@@ -184,10 +184,19 @@ impl State {
             return handshake_err;
         }
 
-        trans.receiver
-             .receive_handshake()
-             .and_then(|handshake| Ok((handshake, trans)))
-             .or(handshake_err)
+        {
+            use std::error::Error;
+            trans.receiver.receive_handshake()
+                .and_then(|handshake| Ok((handshake, trans)))
+                .or_else(|e| {
+                    println!("WHY? {:?}", e);
+                    println!("WHY2? {:?}", e.cause());
+                    if let Some(c) = e.cause() {
+                        println!("WHY3? {:?}", c.cause());
+                    }
+                    handshake_err
+                })
+        }
     }
 
     pub fn send(&mut self, connection: Connection, bytes: Vec<u8>) {
