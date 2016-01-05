@@ -36,7 +36,7 @@
         unused_qualifications, unused_results, variant_size_differences)]
 #![allow(box_pointers, fat_ptr_transmutes, missing_copy_implementations,
          missing_debug_implementations)]
-#![feature(fnbox, ip)]
+#![feature(fnbox)]
 
 extern crate cbor;
 extern crate igd;
@@ -105,4 +105,4 @@ mod map_external_port;
 mod hole_punching;
 mod periodic_sender;
 mod socket_utils;
-
+mod ip_info;

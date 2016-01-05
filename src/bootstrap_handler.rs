@@ -79,8 +79,8 @@ impl BootstrapHandler {
         // LAN to the bootstrap cache. We can always find such addresses using
         // beacon and more often than not they would be obsolete very soon.
         contacts.retain(|contact| match contact.get_address() {
-            SocketAddr::V4(a) => a.ip().is_global(),
-            SocketAddr::V6(a) => a.ip().is_global(),
+            SocketAddr::V4(a) => ::ip_info::v4::is_global(a.ip()),
+            SocketAddr::V6(a) => ::ip_info::v6::is_global(a.ip()),
         });
 
         bootstrap_contacts.retain(|contact| !prune.contains(&contact));

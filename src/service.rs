@@ -33,13 +33,12 @@ use auxip;
 use map_external_port::async_map_external_port;
 use connection::Connection;
 
-use state::State;
+use state::{Closure, State};
 use event::{Event, HolePunchResult};
 use util::{SocketAddrW, SocketAddrV4W};
 
 /// Type used to represent serialised data in a message.
 pub type Bytes = Vec<u8>;
-type Closure = Box<FnBox(&mut State) + Send>;
 
 /// A structure representing a connection manager.
 ///

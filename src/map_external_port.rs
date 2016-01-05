@@ -40,10 +40,7 @@ pub fn async_map_external_port<Callback>(local_ep: auxip::Endpoint, callback: Bo
 
 pub fn sync_map_external_port(local_ep: &auxip::Endpoint) -> io::Result<Vec<(SocketAddrV4, auxip::Endpoint)>>
 {
-    let is_unspecified = match local_ep.ip() {
-        IpAddr::V4(addr) => addr.is_unspecified(),
-        IpAddr::V6(addr) => addr.is_unspecified(),
-    };
+    let is_unspecified = ::util::is_unspecified(&local_ep.ip());
 
     let local_eps = if !is_unspecified {
         let ip = match local_ep.ip() {
@@ -108,7 +105,7 @@ fn map_external_port(local_ep: SocketAddrV4, ext_port: auxip::Port)
     -> io::Result<auxip::Endpoint>
 {
     let gateway = try!(from_search_result(igd::search_gateway_from_timeout(
-                            local_ep.ip().clone(), 
+                            local_ep.ip().clone(),
                             Duration::from_secs(IGD_SEARCH_TIMEOUT_SECS))));
 
     let igd_protocol = match &ext_port {

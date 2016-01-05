@@ -114,10 +114,7 @@ impl Endpoint {
     /// Check whether the current address is specified
     /// returns true if address is un-specified, and false when specified
     pub fn has_unspecified_ip(&self) -> bool {
-        match ip_from_socketaddr(self.get_address()) {
-            IpAddr::V4(ip) => ip.is_unspecified(),
-            IpAddr::V6(ip) => ip.is_unspecified(),
-        }
+        util::is_unspecified(&ip_from_socketaddr(self.get_address()))
     }
 
     /// Convert address's format from ::std::net::IpAddr to Endpoint
