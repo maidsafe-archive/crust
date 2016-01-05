@@ -95,8 +95,11 @@ impl State {
     }
 
     pub fn update_bootstrap_contacts(&mut self,
-                                     new_contacts: Vec<Endpoint>) {
-        let _ = self.bootstrap_handler.update_contacts(new_contacts, vec![]);
+                                     contacts_to_add: Vec<Endpoint>,
+                                     contacts_to_remove: Vec<Endpoint>)
+    {
+        let _ = self.bootstrap_handler.update_contacts(contacts_to_add,
+                                                       contacts_to_remove);
     }
 
     pub fn get_accepting_endpoints(&self) -> Vec<Endpoint> {
@@ -212,7 +215,7 @@ impl State {
         let connection = self.register_connection(handshake, trans, event);
         if let Ok(ref connection) = connection {
             let contacts = vec![connection.peer_endpoint()];
-            self.update_bootstrap_contacts(contacts);
+            self.update_bootstrap_contacts(contacts, vec![]);
         }
         connection
     }
