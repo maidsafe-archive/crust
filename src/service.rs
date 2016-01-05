@@ -655,21 +655,24 @@ mod test {
                                 MaidSafeEventCategory::CrustEvent,
                                 category_tx);
 
+
+
         // Start accepting on these two services and keep their endpoints.
         let mut service0 = Service::new(event_sender0).unwrap();
         let mut service1 = Service::new(event_sender1).unwrap();
 
-        let endpoint0 = service0.start_accepting(Port::Tcp(0)).unwrap();
-        let endpoint1 = service1.start_accepting(Port::Tcp(0)).unwrap();
+        let endpoints = loopback_if_unspecified(vec![
+                            service0.start_accepting(Port::Tcp(0)).unwrap(),
+                            service1.start_accepting(Port::Tcp(0)).unwrap()
+                        ]);
 
         // Write those endpoints to the config file, so the next service will
         // try to connect to them.
-        let _config_file = make_temp_config_with_endpoints(&[endpoint0,
-                                                             endpoint1]);
+        let _config_file = make_temp_config_with_endpoints(&endpoints);
 
         // Bootstrap another service but blacklist one of the endpoints in the
         // config file.
-        let blacklisted_endpoint = endpoint0;
+        let blacklisted_endpoint = endpoints[0];
         let mut service2 = Service::new(event_sender2).unwrap();
         service2.bootstrap_with_blacklist(0, None, &[blacklisted_endpoint]);
 
@@ -693,14 +696,10 @@ mod test {
 
         // Test that the third service did not connect to the blacklisted
         // endpoints.
-        //
-        // (comparing only ports here, because the
-        // blacklisted_endpoint's address is unspecified (0.0.0.0) but the
-        // endpoints gathered from the OnConnect events have concrete addresses.
         assert!(!connected_endpoints.is_empty());
 
         for endpoint in connected_endpoints {
-            assert!(endpoint.get_port() != blacklisted_endpoint.get_port());
+            assert!(endpoint != blacklisted_endpoint);
         }
     }
 
