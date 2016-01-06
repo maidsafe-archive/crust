@@ -1,5 +1,8 @@
 # CRUST - Change Log
 
+## [0.8.0]
+- Removes feature gates, Crust can now compile on stable rust compiler.
+
 ## [0.7.0]
 - OnConnect, OnAccept and OnRendezvousConnect events now report what the remote
   peer sees this peer's endpoint as
