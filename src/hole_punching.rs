@@ -2,12 +2,11 @@ use std::net::{SocketAddr, UdpSocket, SocketAddrV4};
 use std::io;
 use std::sync::{Arc, RwLock};
 use std::sync::mpsc::Sender;
-use std::boxed::FnBox;
 
 use periodic_sender::PeriodicSender;
 use socket_utils::RecvUntil;
 use auxip::Endpoint;
-use state::State;
+use state::{Closure, State};
 use transport::Message;
 use util::{SocketAddrW, SocketAddrV4W};
 
@@ -199,7 +198,7 @@ pub struct HolePunchServer {
 
 impl HolePunchServer {
     /// Create a new hole punching server.
-    pub fn start(cmd_sender: Sender<Box<FnBox(&mut State) + Send>>) -> io::Result<HolePunchServer> {
+    pub fn start(cmd_sender: Sender<Closure>) -> io::Result<HolePunchServer> {
         const MAX_DATAGRAM_SIZE: usize = 256;
 
         // Refresh the hole punched for our server socket every hour.
@@ -279,7 +278,7 @@ impl HolePunchServer {
                                             let mut ext_ip = external_ip_writer.write().unwrap();
                                             *ext_ip = Some(sa);
                                         };
-                                        let _ = cmd_sender.send(Box::new(move |state: &mut State| {
+                                        let _ = cmd_sender.send(Closure::new(move |state: &mut State| {
                                             for cd in state.connections.values() {
                                                 let _ = cd.message_sender.send(Message::HolePunchAddress(SocketAddrV4W(sa)));
                                             }

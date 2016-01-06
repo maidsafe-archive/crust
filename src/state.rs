@@ -20,7 +20,6 @@ use std::io;
 use std::sync::mpsc;
 use std::sync::mpsc::{Sender, Receiver};
 use std::thread;
-use std::boxed::FnBox;
 use std::str::FromStr;
 
 use beacon;
@@ -41,7 +40,29 @@ use hole_punching::HolePunchServer;
 use util::ip_from_socketaddr;
 use util;
 
-pub type Closure = Box<FnBox(&mut State) + Send>;
+// Closure is a wapper around boxed closures that tries to work around the fact
+// that it is not possible to call Box<FnOnce> in the current stable rust.
+// The idea is to wrap the FnOnce in something that implements FnMut using some
+// dirty tricks, because Box<FnMut> is fine to call.
+//
+// This workaround can be removed once FnBox becomes stable or Box<FnOnce>
+// becomes usable.
+pub struct Closure(Box<FnMut(&mut State) + Send>);
+
+impl Closure {
+    pub fn new<F : FnOnce(&mut State) + Send + 'static>(f: F) -> Closure {
+        let mut f = Some(f);
+        Closure(Box::new(move |state: &mut State| {
+            if let Some(f) = f.take() {
+                f(state)
+            }
+        }))
+    }
+
+    pub fn invoke(mut self, state: &mut State) {
+        (self.0)(state)
+    }
+}
 
 pub struct ConnectionData {
     pub message_sender: Sender<Message>,
@@ -85,7 +106,7 @@ impl State {
         let mut state = self;
         loop {
             match state.cmd_receiver.recv() {
-                Ok(cmd) => cmd.call_box((&mut state,)),
+                Ok(cmd) => cmd.invoke(&mut state),
                 Err(_) => break,
             }
             if state.stop_called {
@@ -286,7 +307,7 @@ impl State {
                     break;
                 }
             }
-            let _ = cmd_sender.send(Box::new(move |state : &mut State| {
+            let _ = cmd_sender.send(Closure::new(move |state : &mut State| {
                 state.unregister_connection(connection);
             }));
         });
@@ -307,7 +328,7 @@ impl State {
                         }
                     },
                     Message::HolePunchAddress(a) => {
-                        let _ = cmd_sender.send(Box::new(move |state: &mut State| {
+                        let _ = cmd_sender.send(Closure::new(move |state: &mut State| {
                             if let Some(cd) = state.connections.get_mut(&connection.clone()) {
                                 cd.mapper_external_address = Some(a.0);
                             }
@@ -315,7 +336,7 @@ impl State {
                     },
                 }
             }
-            let _ = cmd_sender.send(Box::new(move |state : &mut State| {
+            let _ = cmd_sender.send(Closure::new(move |state : &mut State| {
                 state.unregister_connection(connection);
             }));
         });
@@ -380,7 +401,7 @@ impl State {
 
             let connect_result = Self::connect(h, head);
 
-            let _ = cmd_sender.send(Box::new(move |state: &mut State| {
+            let _ = cmd_sender.send(Closure::new(move |state: &mut State| {
                 if !state.is_bootstrapping {
                     let _ = event_sender.send(Event::BootstrapFinished);
                     return;
@@ -515,7 +536,7 @@ mod test {
 
         let cmd_sender = s.cmd_sender.clone();
 
-        cmd_sender.send(Box::new(move |s: &mut State| {
+        cmd_sender.send(Closure::new(move |s: &mut State| {
             s.bootstrap_off_list(0, eps);
         })).unwrap();
 
@@ -537,7 +558,7 @@ mod test {
                             Event::OnConnect(_, _) => {
                                 accept_count += 1;
                                 if accept_count == n {
-                                    cmd_sender.send(Box::new(move |s: &mut State| {
+                                    cmd_sender.send(Closure::new(move |s: &mut State| {
                                         s.stop();
                                     })).unwrap();
                                     break;
