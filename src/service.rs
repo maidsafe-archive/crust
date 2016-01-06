@@ -117,7 +117,7 @@ impl Service {
                 .collect::<Vec<_>>();
 
             Self::post(&self.cmd_sender, move |state : &mut State| {
-                state.update_bootstrap_contacts(contacts);
+                state.update_bootstrap_contacts(contacts, vec![]);
             });
         }
 
@@ -169,11 +169,27 @@ impl Service {
     /// New bootstrap connections will be notified by `NewBootstrapConnection` event.
     /// Its upper layer's responsibility to maintain or drop these connections.
     pub fn bootstrap(&mut self, token: u32, beacon_port: Option<u16>) {
+        self.bootstrap_with_blacklist(token, beacon_port, &[])
+    }
+
+    /// Same as bootstrap, but allows to specify a blacklist of endpoints
+    /// this service should never connect to.
+    pub fn bootstrap_with_blacklist(&mut self, token: u32,
+                                               beacon_port: Option<u16>,
+                                               blacklist: &[Endpoint])
+    {
         let config = self.config.clone();
         let beacon_guid_and_port = self.beacon_guid_and_port.clone();
+        let blacklist = blacklist.to_vec();
 
         Self::post(&self.cmd_sender, move |state : &mut State| {
-            let contacts = state.populate_bootstrap_contacts(&config, beacon_port, &beacon_guid_and_port);
+            let mut contacts = state.populate_bootstrap_contacts(
+                                    &config,
+                                    beacon_port,
+                                    &beacon_guid_and_port);
+
+            contacts.retain(|endpoint| !blacklist.contains(&endpoint));
+
             state.bootstrap_off_list(token, contacts.clone());
         });
     }
@@ -182,6 +198,13 @@ impl Service {
     pub fn stop_bootstrap(&mut self) {
         Self::post(&self.cmd_sender, move |state : &mut State| {
             state.stop_bootstrap();
+        });
+    }
+
+    /// Remove endpoint from the bootstrap cache.
+    pub fn remove_bootstrap_contact(&mut self, endpoint: Endpoint) {
+        Self::post(&self.cmd_sender, move |state: &mut State| {
+            state.update_bootstrap_contacts(vec![], vec![endpoint]);
         });
     }
 
@@ -472,25 +495,24 @@ impl Drop for Service {
 #[cfg(test)]
 mod test {
     use super::*;
-    use transport::Endpoint;
-    use connection::Connection;
-    use std::thread::spawn;
-    use std::thread;
-    use std::sync::mpsc::{Sender, Receiver, channel};
+    use std::fs::remove_file;
+    use std::io;
     use std::net::{UdpSocket, Ipv4Addr, SocketAddrV4};
+    use std::path::PathBuf;
+    use std::sync::mpsc::{Sender, Receiver, channel};
+    use std::thread;
+    use std::thread::spawn;
     use rustc_serialize::{Decodable, Encodable};
     use cbor::{Decoder, Encoder};
-    use transport::Port;
+    use connection::Connection;
+    use transport::{Endpoint, Port};
     use config_handler::write_config_file;
-    use std::path::PathBuf;
-    use std::fs::remove_file;
     use event::Event;
-    use std::io;
     use util;
     use bootstrap_handler::BootstrapHandler;
+    use maidsafe_utilities::event_sender::{MaidSafeEventCategory, MaidSafeObserver};
 
-    type CategoryRx = ::std::sync::mpsc::Receiver<::maidsafe_utilities
-                                                  ::event_sender::MaidSafeEventCategory>;
+    type CategoryRx = ::std::sync::mpsc::Receiver<MaidSafeEventCategory>;
 
     fn encode<T>(value: &T) -> Bytes where T: Encodable
     {
@@ -540,8 +562,12 @@ mod test {
     }
 
     fn make_temp_config() -> TestConfigFile {
-        let path = write_config_file(Some(vec![]))
-            .unwrap();
+        make_temp_config_with_endpoints(&[])
+    }
+
+    fn make_temp_config_with_endpoints(endpoints: &[Endpoint]) -> TestConfigFile
+    {
+        let path = write_config_file(Some(endpoints.to_vec())).unwrap();
         TestConfigFile{path: path}
     }
 
@@ -562,10 +588,10 @@ mod test {
         let (cm1_i, _) = channel();
         let _config_file = make_temp_config();
 
-        let crust_event_category = ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
-        let event_sender1 = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(cm1_i,
-                                                                                      crust_event_category.clone(),
-                                                                                      category_tx.clone());
+        let crust_event_category = MaidSafeEventCategory::CrustEvent;
+        let event_sender1 = MaidSafeObserver::new(cm1_i,
+                                                  crust_event_category.clone(),
+                                                  category_tx.clone());
 
         let mut cm1 = Service::new(event_sender1).unwrap();
         let cm1_ports = filter_ok(vec![cm1.start_accepting(Port::Tcp(0))]);
@@ -577,9 +603,9 @@ mod test {
         let _config_file = make_temp_config();
 
         let (cm2_i, cm2_o) = channel();
-        let event_sender2 = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(cm2_i,
-                                                                                      crust_event_category,
-                                                                                      category_tx);
+        let event_sender2 = MaidSafeObserver::new(cm2_i,
+                                                  crust_event_category,
+                                                  category_tx);
         let mut cm2 = Service::new(event_sender2).unwrap();
 
         cm2.bootstrap(0, Some(beacon_port));
@@ -605,6 +631,79 @@ mod test {
     }
 
     #[test]
+    fn bootstrap_with_blacklist() {
+        BootstrapHandler::cleanup().unwrap();
+
+        let (ignored_category_tx, _) = channel();
+        let (ignored_event_tx, _) = channel();
+
+        let (category_tx, category_rx) = channel();
+        let (event_tx, event_rx) = channel();
+
+        let event_sender0 = MaidSafeObserver::new(
+                                ignored_event_tx.clone(),
+                                MaidSafeEventCategory::CrustEvent,
+                                ignored_category_tx.clone());
+
+        let event_sender1 = MaidSafeObserver::new(
+                                ignored_event_tx,
+                                MaidSafeEventCategory::CrustEvent,
+                                ignored_category_tx);
+
+        let event_sender2 = MaidSafeObserver::new(
+                                event_tx,
+                                MaidSafeEventCategory::CrustEvent,
+                                category_tx);
+
+
+
+        // Start accepting on these two services and keep their endpoints.
+        let mut service0 = Service::new(event_sender0).unwrap();
+        let mut service1 = Service::new(event_sender1).unwrap();
+
+        let endpoints = loopback_if_unspecified(vec![
+                            service0.start_accepting(Port::Tcp(0)).unwrap(),
+                            service1.start_accepting(Port::Tcp(0)).unwrap()
+                        ]);
+
+        // Write those endpoints to the config file, so the next service will
+        // try to connect to them.
+        let _config_file = make_temp_config_with_endpoints(&endpoints);
+
+        // Bootstrap another service but blacklist one of the endpoints in the
+        // config file.
+        let blacklisted_endpoint = endpoints[0];
+        let mut service2 = Service::new(event_sender2).unwrap();
+        service2.bootstrap_with_blacklist(0, None, &[blacklisted_endpoint]);
+
+        let mut connected_endpoints = Vec::new();
+
+        for category in category_rx.iter() {
+            match category {
+                MaidSafeEventCategory::CrustEvent => {
+                    match event_rx.try_recv() {
+                        Ok(Event::BootstrapFinished) => break,
+                        Ok(Event::OnConnect(Ok((_, conn)), _)) => {
+                            connected_endpoints.push(conn.peer_endpoint());
+                        },
+                        event => println!("event: {:?}", event),
+                    }
+                },
+
+                _ => unreachable!("This category should not have been fired - {:?}", category),
+            }
+        }
+
+        // Test that the third service did not connect to the blacklisted
+        // endpoints.
+        assert!(!connected_endpoints.is_empty());
+
+        for endpoint in connected_endpoints {
+            assert!(endpoint != blacklisted_endpoint);
+        }
+    }
+
+    #[test]
     fn connection_manager() {
         BootstrapHandler::cleanup().unwrap();
 
@@ -612,7 +711,7 @@ mod test {
             spawn(move || {
                 for it in category_rx.iter() {
                     match it {
-                        ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent => {
+                        MaidSafeEventCategory::CrustEvent => {
                             if let Ok(event) = o.try_recv() {
                                 match event {
                                     Event::OnConnect(Ok((_, other_ep)), _) => {
@@ -638,10 +737,10 @@ mod test {
 
         let (category_tx, category_rx0) = channel();
         let (cm1_i, cm1_o) = channel();
-        let crust_event_category = ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
-        let event_sender1 = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(cm1_i,
-                                                                                      crust_event_category.clone(),
-                                                                                      category_tx);
+        let crust_event_category = MaidSafeEventCategory::CrustEvent;
+        let event_sender1 = MaidSafeObserver::new(cm1_i,
+                                                  crust_event_category.clone(),
+                                                  category_tx);
         let mut cm1 = Service::new(event_sender1).unwrap();
         let cm1_eps = filter_ok(vec![cm1.start_accepting(Port::Tcp(0))]);
         assert!(cm1_eps.len() >= 1);
@@ -650,9 +749,9 @@ mod test {
 
         let (cm2_i, cm2_o) = channel();
         let (category_tx, category_rx1) = channel();
-        let event_sender2 = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(cm2_i,
-                                                                                      crust_event_category,
-                                                                                      category_tx);
+        let event_sender2 = MaidSafeObserver::new(cm2_i,
+                                                  crust_event_category,
+                                                  category_tx);
         let mut cm2 = Service::new(event_sender2).unwrap();
         let cm2_eps = filter_ok(vec![cm2.start_accepting(Port::Tcp(0))]);
         assert!(cm2_eps.len() >= 1);
@@ -945,13 +1044,13 @@ mod test {
         let utp_port;
 
         let (category_tx, _) = channel();
-        let crust_event_category = ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
+        let crust_event_category = MaidSafeEventCategory::CrustEvent;
 
         {
             let (sender, _) = channel();
-            let event_sender1 = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(sender,
-                                                                                          crust_event_category.clone(),
-                                                                                          category_tx.clone());
+            let event_sender1 = MaidSafeObserver::new(sender,
+                                                      crust_event_category.clone(),
+                                                      category_tx.clone());
             let mut service = Service::new(event_sender1).unwrap();
             // random port assigned by os
             tcp_port = service.start_accepting(Port::Tcp(0)).unwrap().get_port();
@@ -960,14 +1059,41 @@ mod test {
 
         {
             let (sender, _) = channel();
-            let crust_event_category = ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
-            let event_sender1 = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(sender,
-                                                                                          crust_event_category,
-                                                                                          category_tx);
+            let crust_event_category = MaidSafeEventCategory::CrustEvent;
+            let event_sender1 = MaidSafeObserver::new(sender,
+                                                      crust_event_category,
+                                                      category_tx);
             let mut service = Service::new(event_sender1).unwrap();
             // reuse the ports from above
             let _ = service.start_accepting(tcp_port).unwrap();
             let _ = service.start_accepting(utp_port).unwrap();
         }
+    }
+
+    #[test]
+    fn remove_bootstrap_contact() {
+        let endpoint0 = Endpoint::tcp("250.0.0.1:55555");
+        let endpoint1 = Endpoint::tcp("250.0.0.2:55556");
+
+        BootstrapHandler::cleanup().unwrap();
+        let mut cache = BootstrapHandler::new();
+        cache.update_contacts(vec![endpoint0, endpoint1], vec![]).unwrap();
+
+        {
+            let (category_tx, _) = channel();
+            let (event_tx, _) = channel();
+            let event_sender = MaidSafeObserver::new(event_tx,
+                                                     MaidSafeEventCategory::CrustEvent,
+                                                     category_tx);
+            let mut service = Service::new(event_sender).unwrap();
+            service.remove_bootstrap_contact(endpoint0);
+
+            // The nested scope here causes the service to be dropped which
+            // joins all its internal threads. This is to make sure all
+            // asynchronous operations are completed before we continue.
+        }
+
+        let contacts = cache.read_file().unwrap();
+        assert!(!contacts.contains(&endpoint0));
     }
 }
