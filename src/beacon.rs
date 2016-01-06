@@ -60,8 +60,8 @@ fn parse_shutdown_value(data: &[u8]) -> u64 {
 
 fn is_loopback(address: &SocketAddr) -> bool {
     match *address {
-        SocketAddr::V4(a) => a.ip().is_loopback(),
-        SocketAddr::V6(a) => a.ip().is_loopback(),
+        SocketAddr::V4(a) => ::ip_info::v4::is_loopback(a.ip()),
+        SocketAddr::V6(a) => ::ip_info::v6::is_loopback(a.ip()),
     }
 }
 

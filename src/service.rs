@@ -18,7 +18,6 @@
 use std::io;
 use std::sync::mpsc::Sender;
 use std::thread;
-use std::boxed::FnBox;
 use std::thread::JoinHandle;
 use std::sync::{Arc, Mutex};
 use std::str::FromStr;
@@ -33,13 +32,12 @@ use auxip;
 use map_external_port::async_map_external_port;
 use connection::Connection;
 
-use state::State;
+use state::{Closure, State};
 use event::{Event, HolePunchResult};
 use util::{SocketAddrW, SocketAddrV4W};
 
 /// Type used to represent serialised data in a message.
 pub type Bytes = Vec<u8>;
-type Closure = Box<FnBox(&mut State) + Send>;
 
 /// A structure representing a connection manager.
 ///
@@ -138,7 +136,7 @@ impl Service {
 
         let thread_result = Self::new_thread("beacon acceptor", move || {
             while let Ok((h, t)) = acceptor.accept() {
-                let _ = sender.send(Box::new(move |state : &mut State| {
+                let _ = sender.send(Closure::new(move |state : &mut State| {
                     let _ = state.handle_accept(h, t);
                 }));
             }
@@ -219,7 +217,7 @@ impl Service {
             self.beacon_guid_and_port = None;
         }
 
-        let _ = self.cmd_sender.send(Box::new(move |state: &mut State| {
+        let _ = self.cmd_sender.send(Closure::new(move |state: &mut State| {
             state.stop();
 
             // Connect to our listening ports, this should unblock
@@ -262,12 +260,12 @@ impl Service {
                 for endpoint in endpoints {
                     match State::connect(handshake.clone(), endpoint) {
                         Ok((h, t)) => {
-                            let _ = cmd_sender.send(Box::new(move |state: &mut State| {
+                            let _ = cmd_sender.send(Closure::new(move |state: &mut State| {
                                 let _ = state.handle_connect(token, h, t);
                             }));
                         },
                         Err(e) => {
-                            let _ = cmd_sender.send(Box::new(move |state: &mut State| {
+                            let _ = cmd_sender.send(Closure::new(move |state: &mut State| {
                                 let _ = state.event_sender.send(Event::OnConnect(Err(e), token));
                             }));
                         },
@@ -316,12 +314,12 @@ impl Service {
                 match State::rendezvous_connect(handshake.clone(), udp_socket,
                                                 public_endpoint) {
                     Ok((h, t)) => {
-                        let _ = cmd_sender.send(Box::new(move |state: &mut State| {
+                        let _ = cmd_sender.send(Closure::new(move |state: &mut State| {
                             let _ = state.handle_rendezvous_connect(token, h, t);
                         }));
                     },
                     Err(e) => {
-                        let _ = cmd_sender.send(Box::new(move |state: &mut State| {
+                        let _ = cmd_sender.send(Closure::new(move |state: &mut State| {
                             let _ = state.event_sender.send(Event::OnRendezvousConnect(Err(e), token));
                         }));
                     },
@@ -371,7 +369,7 @@ impl Service {
                 let accept_result = State::accept(handshake, &acceptor);
                 let cmd_sender3 = cmd_sender2.clone();
 
-                let _ = cmd_sender2.send(Box::new(move |state: &mut State| {
+                let _ = cmd_sender2.send(Closure::new(move |state: &mut State| {
                     state.listening_ports.remove(&port);
 
                     if state.stop_called {
@@ -418,7 +416,7 @@ impl Service {
                 let event_sender = state.event_sender.clone();
 
                 async_map_external_port(internal_ep.to_ip().clone(),
-                                        Box::new(move |results: io::Result<Vec<T>>| {
+                                        move |results: io::Result<Vec<T>>| {
                     let mut async = async.lock().unwrap();
                     async.remaining -= 1;
                     if let Ok(results) = results {
@@ -435,7 +433,7 @@ impl Service {
                         let event = Event::ExternalEndpoints(async.results.clone());
                         let _ = event_sender.send(event);
                     }
-                }));
+                });
             }
         });
     }
@@ -453,8 +451,8 @@ impl Service {
                               .spawn(f)
     }
 
-    fn post<F>(sender: &Sender<Closure>, cmd: F) where F: FnBox(&mut State) + Send + 'static {
-        assert!(sender.send(Box::new(cmd)).is_ok());
+    fn post<F>(sender: &Sender<Closure>, cmd: F) where F: FnOnce(&mut State) + Send + 'static {
+        assert!(sender.send(Closure::new(cmd)).is_ok());
     }
 
     /// Udp hole punching process

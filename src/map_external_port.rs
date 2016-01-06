@@ -22,28 +22,24 @@ use getifaddrs::{getifaddrs, filter_loopback};
 use std::net::SocketAddrV4;
 use ip::IpAddr;
 use std::thread;
-use std::boxed::FnBox;
 use std::time::Duration;
 
 // How long do we wait to receive a response from the IGD?
 const IGD_SEARCH_TIMEOUT_SECS: u64 = 1;
 
-pub fn async_map_external_port<Callback>(local_ep: auxip::Endpoint, callback: Box<Callback>)
-    where Callback: FnBox(io::Result<Vec<(SocketAddrV4, auxip::Endpoint)>>) +
+pub fn async_map_external_port<Callback>(local_ep: auxip::Endpoint, callback: Callback)
+    where Callback: FnOnce(io::Result<Vec<(SocketAddrV4, auxip::Endpoint)>>) +
           Send + 'static
 {
     let _detach = thread::Builder::new().name("async_map_external_port".to_string()).spawn(move || {
         let res = sync_map_external_port(&local_ep);
-        callback.call_box((res,));
+        callback(res);
     }).unwrap();
 }
 
 pub fn sync_map_external_port(local_ep: &auxip::Endpoint) -> io::Result<Vec<(SocketAddrV4, auxip::Endpoint)>>
 {
-    let is_unspecified = match local_ep.ip() {
-        IpAddr::V4(addr) => addr.is_unspecified(),
-        IpAddr::V6(addr) => addr.is_unspecified(),
-    };
+    let is_unspecified = ::util::is_unspecified(&local_ep.ip());
 
     let local_eps = if !is_unspecified {
         let ip = match local_ep.ip() {
@@ -108,7 +104,7 @@ fn map_external_port(local_ep: SocketAddrV4, ext_port: auxip::Port)
     -> io::Result<auxip::Endpoint>
 {
     let gateway = try!(from_search_result(igd::search_gateway_from_timeout(
-                            local_ep.ip().clone(), 
+                            local_ep.ip().clone(),
                             Duration::from_secs(IGD_SEARCH_TIMEOUT_SECS))));
 
     let igd_protocol = match &ext_port {
@@ -147,9 +143,9 @@ mod test {
         let (sender, receiver) = mpsc::channel::<R>();
         let unspecified_ip = IpAddr::V4(Ipv4Addr::new(0,0,0,0));
         let local_ep = auxip::Endpoint::new(unspecified_ip, auxip::Port::Udp(5484));
-        async_map_external_port(local_ep, Box::new(move |result: R| {
+        async_map_external_port(local_ep, move |result: R| {
             assert!(sender.send(result).is_ok());
-        }));
+        });
 
         let igd_result = match timed_recv(&receiver, ::std::time::Duration::from_secs(3)) {
             Ok(igd_result) => igd_result,

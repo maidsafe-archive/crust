@@ -161,21 +161,21 @@ pub fn is_v4(ip_addr: &IpAddr) -> bool {
 
 pub fn is_unspecified(ip_addr: &IpAddr) -> bool {
     match ip_addr {
-        &IpAddr::V4(ref ip) => ip.is_unspecified(),
-        &IpAddr::V6(ref ip) => ip.is_unspecified(),
+        &IpAddr::V4(ref ip) => ::ip_info::v4::is_unspecified(ip),
+        &IpAddr::V6(ref ip) => ::ip_info::v6::is_unspecified(ip),
     }
 }
 
 pub fn is_loopback(ip_addr: &IpAddr) -> bool {
     match ip_addr {
-        &IpAddr::V4(ref ip) => ip.is_loopback(),
-        &IpAddr::V6(ref ip) => ip.is_loopback(),
+        &IpAddr::V4(ref ip) => ::ip_info::v4::is_loopback(ip),
+        &IpAddr::V6(ref ip) => ::ip_info::v6::is_loopback(ip),
     }
 }
 
 pub fn is_link_local(ip_addr: &IpAddr) -> bool {
     match ip_addr {
-        &IpAddr::V4(ref ip) => ip.is_link_local(),
+        &IpAddr::V4(ref ip) => ::ip_info::v4::is_link_local(ip),
         &IpAddr::V6(ref _ip) => false, // Not applicable
     }
 }
@@ -183,13 +183,13 @@ pub fn is_link_local(ip_addr: &IpAddr) -> bool {
 pub fn is_unicast_link_local(ip_addr: &IpAddr) -> bool {
     match ip_addr {
         &IpAddr::V4(ref _ip) => false, // Not applicable
-        &IpAddr::V6(ref ip) => ip.is_unicast_link_local(),
+        &IpAddr::V6(ref ip) => ::ip_info::v6::is_unicast_link_local(ip),
     }
 }
 
 pub fn is_private(ip_addr: &IpAddr) -> bool {
     match ip_addr {
-        &IpAddr::V4(ref ip) => ip.is_private(),
+        &IpAddr::V4(ref ip) => ::ip_info::v4::is_private(ip),
         &IpAddr::V6(ref _ip) => false, // Not applicable
     }
 }
@@ -197,7 +197,7 @@ pub fn is_private(ip_addr: &IpAddr) -> bool {
 pub fn is_unique_local(ip_addr: &IpAddr) -> bool {
     match ip_addr {
         &IpAddr::V4(ref _ip) => false, // Not applicable
-        &IpAddr::V6(ref ip) => ip.is_unique_local(),
+        &IpAddr::V6(ref ip) => ::ip_info::v6::is_unique_local(ip),
     }
 }
 
@@ -343,14 +343,14 @@ pub fn ifaddrs_if_unspecified(ep: transport::Endpoint) -> Vec<transport::Endpoin
 pub fn loopback_if_unspecified(addr : IpAddr) -> IpAddr {
     match addr {
         IpAddr::V4(addr) => {
-            IpAddr::V4(if addr.is_unspecified() {
+            IpAddr::V4(if ::ip_info::v4::is_unspecified(&addr) {
                            Ipv4Addr::new(127,0,0,1)
                        } else {
                            addr
                        })
         },
         IpAddr::V6(addr) => {
-            IpAddr::V6(if addr.is_unspecified() {
+            IpAddr::V6(if ::ip_info::v6::is_unspecified(&addr) {
                            "::1".parse().unwrap()
                        } else {
                            addr

@@ -3,9 +3,9 @@ environment:
     RUST_TEST_THREADS: 1
     RUST_BACKTRACE: 1
   matrix:
-#    - RUST_VERSION: stable
+    - RUST_VERSION: stable
 #    - RUST_VERSION: beta
-    - RUST_VERSION: nightly
+#    - RUST_VERSION: nightly
 branches:
   only:
     - master

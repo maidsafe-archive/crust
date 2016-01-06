@@ -396,10 +396,7 @@ pub fn getifaddrs() -> Vec<IfAddr> {
 }
 
 fn is_loopback(if_addr: &IfAddr) -> bool {
-    match if_addr.addr {
-            IpAddr::V4(v4) => v4.is_loopback(),
-            IpAddr::V6(v6) => v6.is_loopback(),
-    }
+    ::util::is_loopback(&if_addr.addr)
 }
 
 /// Remove loopback address(s)
@@ -421,8 +418,8 @@ mod test {
             debug!("   Interface {} has IP {} netmask {} broadcast {}", ifaddr.name,
                      ifaddr.addr, ifaddr.netmask, ifaddr.broadcast);
             match ifaddr.addr {
-                IpAddr::V4(v4) => if v4.is_loopback() { has_loopback4=true; },
-                IpAddr::V6(v6) => if v6.is_loopback() { has_loopback6=true; },
+                IpAddr::V4(v4) => if ::ip_info::v4::is_loopback(&v4) { has_loopback4=true; },
+                IpAddr::V6(v6) => if ::ip_info::v6::is_loopback(&v6) { has_loopback6=true; },
             }
         }
         // Quick sanity test, can't think of anything better
@@ -435,11 +432,7 @@ mod test {
         for ifaddr in ifaddrs {
             debug!("   Interface {} has IP {} netmask {} broadcast {}", ifaddr.name,
                      ifaddr.addr, ifaddr.netmask, ifaddr.broadcast);
-            let is_loopback = match ifaddr.addr {
-                IpAddr::V4(v4) => v4.is_loopback(),
-                IpAddr::V6(v6) => v6.is_loopback(),
-            };
-            assert!(!is_loopback);
+            assert!(!::util::is_loopback(&ifaddr.addr));
         }
     }
 }
