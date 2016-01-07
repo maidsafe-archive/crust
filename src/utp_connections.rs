@@ -81,11 +81,17 @@ mod test {
 
         let handle = thread::spawn(move || listener.accept().unwrap());
 
-        let _ = connect_utp(SocketAddr(net::SocketAddr::V4(net::SocketAddrV4::new(Ipv4Addr::new(127,
-                                                                                           0,
-                                                                                           0,
-                                                                                           1),
-                                                                             port))))
+        // Note: when the result of connect_utp here is assigned to a variable
+        // named _, this test takes much longet to complete. My guess is that
+        // it happens because _ is dropped immediately, but any other named
+        // variable is dropped only at the end of the scope. So when naming
+        // this variable, the socket outlives the above thread, which somehow
+        // makes this test finish faster for some reason.
+        let _socket = connect_utp(SocketAddr(net::SocketAddr::V4(net::SocketAddrV4::new(Ipv4Addr::new(127,
+                                                                                                      0,
+                                                                                                      0,
+                                                                                                      1),
+                                                                                        port))))
                     .unwrap();
 
         let _ = handle.join().unwrap();
