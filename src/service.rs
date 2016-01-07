@@ -65,14 +65,6 @@ impl Service {
         Service::construct(event_sender, config)
     }
 
-    /// Construct a service. As with the `Service::new` function, but will not
-    /// implicitly start any network activity. This constructor is intended
-    /// only for testing purposes.
-    pub fn new_inactive(event_sender: ::CrustEventSender)
-            -> io::Result<Service> {
-        Service::construct(event_sender, Config::make_zero())
-    }
-
     fn construct(event_sender: ::CrustEventSender, config: Config)
             -> io::Result<Service> {
         let mut state = try!(State::new(event_sender));
@@ -811,7 +803,7 @@ mod test {
         let event_sender1 = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(cm1_i,
                                                                                       crust_event_category.clone(),
                                                                                       category_tx);
-        let cm1 = Service::new_inactive(event_sender1).unwrap();
+        let cm1 = Service::new(event_sender1).unwrap();
 
         temp_configs.push(make_temp_config());
 
@@ -820,7 +812,7 @@ mod test {
         let event_sender2 = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(cm2_i,
                                                                                       crust_event_category,
                                                                                       category_tx);
-        let cm2 = Service::new_inactive(event_sender2).unwrap();
+        let cm2 = Service::new(event_sender2).unwrap();
 
         let peer1_udp_socket = UdpSocket::bind("0.0.0.0:0").unwrap();
         let peer2_udp_socket = UdpSocket::bind("0.0.0.0:0").unwrap();
@@ -977,7 +969,7 @@ mod test {
         let event_sender = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(cm_tx,
                                                                                      crust_event_category,
                                                                                      category_tx);
-        let mut cm = Service::new_inactive(event_sender).unwrap();
+        let mut cm = Service::new(event_sender).unwrap();
 
         let cm_listen_ep = cm.start_accepting(Port::Tcp(0)).unwrap();
 
@@ -1008,7 +1000,7 @@ mod test {
             let event_sender = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(cm_aux_tx,
                                                                                          cloned_crust_event_category,
                                                                                          category_tx);
-            let cm_aux = Service::new_inactive(event_sender).unwrap();
+            let cm_aux = Service::new(event_sender).unwrap();
             // setting the listening port to be greater than 4455 will make the test hanging
             // changing this to cm_beacon_addr will make the test hanging
             cm_aux.connect(0, loopback_if_unspecified(vec![cm_listen_ep]));

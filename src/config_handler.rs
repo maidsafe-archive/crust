@@ -33,13 +33,6 @@ impl Config {
             hard_coded_contacts        : vec![],  // No hardcoded endpoints
         }
     }
-
-    /// Create a config which doesn't initiate any network activity.
-    pub fn make_zero() -> Config {
-        Config{
-            hard_coded_contacts        : vec![],  // No hardcoded endpoints
-        }
-    }
 }
 
 pub fn read_config_file() -> Result<Config, ::error::Error> {

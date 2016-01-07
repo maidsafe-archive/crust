@@ -64,7 +64,7 @@ fn send_random_data(b: &mut Bencher) {
     let (category1_tx, category1_rx) = ::std::sync::mpsc::channel();
     let crust_event_category = MaidSafeEventCategory::CrustEvent;
     let event_sender1 = CrustEventSender::new(s1_tx, crust_event_category.clone(), category1_tx);
-    let mut s1 = unwrap_result!(Service::new_inactive(event_sender1));
+    let mut s1 = unwrap_result!(Service::new(event_sender1));
 
     let s1_endpoint = match s1.start_accepting(Port::Tcp(0)) {
         Ok(ep) => ep,
@@ -74,7 +74,7 @@ fn send_random_data(b: &mut Bencher) {
     let (s2_tx, s2_rx) = channel();
     let (category2_tx, category2_rx) = ::std::sync::mpsc::channel();
     let event_sender2 = CrustEventSender::new(s2_tx, crust_event_category, category2_tx);
-    let s2 = unwrap_result!(Service::new_inactive(event_sender2));
+    let s2 = unwrap_result!(Service::new(event_sender2));
 
     s2.connect(0, vec![s1_endpoint]);
 

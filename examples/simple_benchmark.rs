@@ -109,7 +109,7 @@ fn main() {
     let event_sender0 = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(tx,
                                                                                   crust_event_category.clone(),
                                                                                   category_tx.clone());
-    let mut s1 = Service::new_inactive(event_sender0).unwrap();
+    let mut s1 = Service::new(event_sender0).unwrap();
 
     let s1_ep = s1.start_accepting(Port::Tcp(0)).unwrap();
 
@@ -117,7 +117,7 @@ fn main() {
     let event_sender1 = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(tx,
                                                                                   crust_event_category,
                                                                                   category_tx);
-    let s2 = Service::new_inactive(event_sender1).unwrap();
+    let s2 = Service::new(event_sender1).unwrap();
 
     s2.connect(0, vec![s1_ep]);
 
