@@ -212,9 +212,8 @@ impl Service {
         use std::net::TcpStream;
         use utp::UtpSocket;
 
-        if let Some(beacon_guid_and_port) = self.beacon_guid_and_port {
+        if let Some(beacon_guid_and_port) = self.beacon_guid_and_port.take() {
             beacon::BroadcastAcceptor::stop(&beacon_guid_and_port);
-            self.beacon_guid_and_port = None;
         }
 
         let _ = self.cmd_sender.send(Closure::new(move |state: &mut State| {
