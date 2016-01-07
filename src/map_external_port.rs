@@ -88,37 +88,35 @@ pub fn sync_map_external_port(local_ep: &auxip::Endpoint) -> io::Result<Vec<(Soc
 }
 
 // --- Private helper functions ------------------------------------------------
-fn from_search_result<T>(r: Result<T, igd::SearchError>) -> io::Result<T> {
+fn to_io_result<T, E: ::std::fmt::Debug>(error_name: &str, r: Result<T, E>)
+    -> io::Result<T>
+{
     r.map_err(|e| {
-        io::Error::new(io::ErrorKind::Other, format!("SearchError: {:?}", e))
-    })
-}
-
-fn from_request_result<T>(r: Result<T, igd::RequestError>) -> io::Result<T> {
-    r.map_err(|e| {
-        io::Error::new(io::ErrorKind::Other, format!("RequestError: {:?}", e))
+        io::Error::new(io::ErrorKind::Other, format!("{}: {:?}", error_name, e))
     })
 }
 
 fn map_external_port(local_ep: SocketAddrV4, ext_port: auxip::Port)
     -> io::Result<auxip::Endpoint>
 {
-    let gateway = try!(from_search_result(igd::search_gateway_from_timeout(
-                            local_ep.ip().clone(),
-                            Duration::from_secs(IGD_SEARCH_TIMEOUT_SECS))));
+    let gateway = try!(to_io_result("SearchError",
+                                    igd::search_gateway_from_timeout(
+                                        local_ep.ip().clone(),
+                                        Duration::from_secs(IGD_SEARCH_TIMEOUT_SECS))));
 
     let igd_protocol = match &ext_port {
         &auxip::Port::Tcp(_) => igd::PortMappingProtocol::TCP,
         &auxip::Port::Udp(_) => igd::PortMappingProtocol::UDP,
     };
 
-    try!(from_request_result(gateway.add_port(igd_protocol,
-                                              ext_port.number(),
-                                              local_ep,
-                                              0,
-                                              "crust")));
+    try!(to_io_result("AddPortError",
+                      gateway.add_port(igd_protocol,
+                                       ext_port.number(),
+                                       local_ep,
+                                       0,
+                                       "crust")));
 
-    let ext_ip = try!(from_request_result(gateway.get_external_ip()));
+    let ext_ip = try!(to_io_result("GetExternalIpError", gateway.get_external_ip()));
 
     Ok(auxip::Endpoint::new(IpAddr::V4(ext_ip), ext_port))
 }
