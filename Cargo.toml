@@ -1,61 +1,62 @@
 [package]
-name = "crust"
-version = "0.8.0"
 authors = ["MaidSafe Developers <dev@maidsafe.net>"]
 description = "Peer-to-peer networking library. Automatically reconnect and manage connections."
 documentation = "http://maidsafe.net/crust/latest"
-repository = "https://github.com/maidsafe/crust"
-readme = "README.md"
-license = "GPL-3.0"
 homepage = "http://maidsafe.net"
+license = "GPL-3.0"
+name = "crust"
+readme = "README.md"
+repository = "https://github.com/maidsafe/crust"
+version = "0.8.0"
 
 [dependencies]
-libc = "~0.1.12"
 cbor = "~0.3.16"
+clippy = "0.0.35"
+crossbeam = "~0.1.6"
+igd = "~0.4.0"
+ip = "~1.0.0"
+itertools = "~0.4.3"
+libc = "~0.1.12"
+log = "~0.3.4"
+maidsafe_utilities = "~0.1.5"
+memmap = "~0.2.3"
+net2 = "~0.2.19"
 rand = "~0.3.12"
 rustc-serialize = "~0.3.16"
+temp_utp = "~0.7.0"
 term = "~0.2.14"
 time = "~0.1.34"
-itertools = "~0.4.3"
-igd =  "~0.4.0"
-net2 = "~0.2.19"
-temp_utp = "~0.7.0"
-log = "~0.3.4"
-crossbeam = "~0.1.6"
-memmap = "~0.2.3"
-maidsafe_utilities = "~0.1.5"
-ip = "~1.0.0"
 
 [dev-dependencies]
 docopt = "~0.6.78"
 env_logger = "~0.3.2"
 
 [[example]]
+bench = false
 name = "simple_sender"
 path = "examples/simple_sender.rs"
 test = true
-bench = false
 
 [[example]]
+bench = false
 name = "simple_receiver"
 path = "examples/simple_receiver.rs"
 test = true
-bench = false
 
 [[example]]
+bench = false
 name = "crust_peer"
 path = "examples/crust_peer.rs"
 test = true
-bench = false
 
 [[example]]
+bench = false
 name = "reporter"
 path = "examples/reporter.rs"
 test = true
-bench = false
 
 [[example]]
+bench = false
 name = "simple_benchmark"
 path = "examples/simple_benchmark.rs"
 test = true
-bench = false

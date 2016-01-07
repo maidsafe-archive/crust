@@ -50,7 +50,7 @@ use util;
 pub struct Closure(Box<FnMut(&mut State) + Send>);
 
 impl Closure {
-    pub fn new<F : FnOnce(&mut State) + Send + 'static>(f: F) -> Closure {
+    pub fn new<F: FnOnce(&mut State) + Send + 'static>(f: F) -> Closure {
         let mut f = Some(f);
         Closure(Box::new(move |state: &mut State| {
             if let Some(f) = f.take() {
@@ -71,16 +71,16 @@ pub struct ConnectionData {
 }
 
 pub struct State {
-    pub event_sender        : ::CrustEventSender,
-    pub cmd_sender          : Sender<Closure>,
-    pub cmd_receiver        : Receiver<Closure>,
-    pub connections         : HashMap<Connection, ConnectionData>,
-    pub listening_ports     : HashSet<Port>,
-    pub bootstrap_handler   : BootstrapHandler,
-    pub stop_called         : bool,
-    pub is_bootstrapping    : bool,
-    pub next_punch_sequence : SequenceNumber,
-    pub mapper              : HolePunchServer,
+    pub event_sender: ::CrustEventSender,
+    pub cmd_sender: Sender<Closure>,
+    pub cmd_receiver: Receiver<Closure>,
+    pub connections: HashMap<Connection, ConnectionData>,
+    pub listening_ports: HashSet<Port>,
+    pub bootstrap_handler: BootstrapHandler,
+    pub stop_called: bool,
+    pub is_bootstrapping: bool,
+    pub next_punch_sequence: SequenceNumber,
+    pub mapper: HolePunchServer,
 }
 
 impl State {
@@ -89,16 +89,16 @@ impl State {
         let mapper = try!(::hole_punching::HolePunchServer::start(cmd_sender.clone()));
 
         Ok(State {
-            event_sender        : event_sender,
-            cmd_sender          : cmd_sender,
-            cmd_receiver        : cmd_receiver,
-            connections         : HashMap::new(),
-            listening_ports     : HashSet::new(),
-            bootstrap_handler   : BootstrapHandler::new(),
-            stop_called         : false,
-            is_bootstrapping    : false,
-            next_punch_sequence : SequenceNumber::new(::rand::random()),
-            mapper              : mapper,
+            event_sender: event_sender,
+            cmd_sender: cmd_sender,
+            cmd_receiver: cmd_receiver,
+            connections: HashMap::new(),
+            listening_ports: HashSet::new(),
+            bootstrap_handler: BootstrapHandler::new(),
+            stop_called: false,
+            is_bootstrapping: false,
+            next_punch_sequence: SequenceNumber::new(::rand::random()),
+            mapper: mapper,
         })
     }
 
@@ -117,17 +117,16 @@ impl State {
 
     pub fn update_bootstrap_contacts(&mut self,
                                      contacts_to_add: Vec<Endpoint>,
-                                     contacts_to_remove: Vec<Endpoint>)
-    {
-        let _ = self.bootstrap_handler.update_contacts(contacts_to_add,
-                                                       contacts_to_remove);
+                                     contacts_to_remove: Vec<Endpoint>) {
+        let _ = self.bootstrap_handler.update_contacts(contacts_to_add, contacts_to_remove);
     }
 
     pub fn get_accepting_endpoints(&self) -> Vec<Endpoint> {
         // FIXME: We should get real endpoints from the acceptors
         // not use 'unspecified' ips.
-        let unspecified_ip = IpAddr::V4(Ipv4Addr::new(0,0,0,0));
-        self.listening_ports.iter()
+        let unspecified_ip = IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0));
+        self.listening_ports
+            .iter()
             .cloned()
             .map(|port| Endpoint::new(unspecified_ip, port))
             .collect()
@@ -137,22 +136,23 @@ impl State {
                                        config: &Config,
                                        beacon_port: Option<u16>,
                                        own_beacon_guid_and_port: &Option<([u8; 16], u16)>)
-            -> Vec<Endpoint> {
+                                       -> Vec<Endpoint> {
         let cached_contacts = self.bootstrap_handler.read_file().unwrap_or(vec![]);
 
         let beacon_guid = own_beacon_guid_and_port.map(|(guid, _)| guid);
 
         let beacon_discovery = match beacon_port {
             Some(port) => Self::seek_peers(beacon_guid, port),
-            None => vec![]
+            None => vec![],
         };
 
-        let mut combined_contacts
-            = beacon_discovery.into_iter()
-            .chain(config.hard_coded_contacts.iter().cloned())
-            .chain(cached_contacts.into_iter())
-            .unique() // Remove duplicates
-            .collect::<Vec<_>>();
+        let mut combined_contacts = beacon_discovery.into_iter()
+                                                    .chain(config.hard_coded_contacts
+                                                                 .iter()
+                                                                 .cloned())
+                                                    .chain(cached_contacts.into_iter())
+                                                    .unique()
+                                                    .collect::<Vec<_>>();
 
         // remove own endpoints
         let own_listening_endpoint = self.get_listening_endpoint();
@@ -172,20 +172,20 @@ impl State {
         endpoints
     }
 
-    fn handle_handshake(mut handshake : Handshake,
-                        mut trans : transport::Transport)
-            -> io::Result<(Handshake, transport::Transport)> {
-        let handshake_err = Err(io::Error::new(io::ErrorKind::Other,
-                                               "handshake failed"));
+    fn handle_handshake(mut handshake: Handshake,
+                        mut trans: transport::Transport)
+                        -> io::Result<(Handshake, transport::Transport)> {
+        let handshake_err = Err(io::Error::new(io::ErrorKind::Other, "handshake failed"));
 
         handshake.remote_ip = util::SocketAddrW(trans.connection_id.peer_endpoint().get_address());
         if let Err(_) = trans.sender.send_handshake(handshake) {
-            return handshake_err
+            return handshake_err;
         }
 
-        trans.receiver.receive_handshake()
-                      .and_then(|handshake| Ok((handshake, trans)))
-                      .or(handshake_err)
+        trans.receiver
+             .receive_handshake()
+             .and_then(|handshake| Ok((handshake, trans)))
+             .or(handshake_err)
     }
 
     pub fn send(&mut self, connection: Connection, bytes: Vec<u8>) {
@@ -202,28 +202,29 @@ impl State {
         }
     }
 
-    pub fn connect(handshake : Handshake,
-                   remote_ep : Endpoint)
-            -> io::Result<(Handshake, transport::Transport)> {
-        Self::handle_handshake(handshake,
-                               try!(transport::connect(remote_ep)))
+    pub fn connect(handshake: Handshake,
+                   remote_ep: Endpoint)
+                   -> io::Result<(Handshake, transport::Transport)> {
+        Self::handle_handshake(handshake, try!(transport::connect(remote_ep)))
     }
 
-    pub fn rendezvous_connect(handshake: Handshake, udp_socket: UdpSocket,
+    pub fn rendezvous_connect(handshake: Handshake,
+                              udp_socket: UdpSocket,
                               public_ep: Endpoint /* of B */)
-            -> io::Result<(Handshake, transport::Transport)> {
+                              -> io::Result<(Handshake, transport::Transport)> {
         Self::handle_handshake(handshake,
-                               try!(transport::rendezvous_connect(udp_socket,
-                                                                  public_ep)))
+                               try!(transport::rendezvous_connect(udp_socket, public_ep)))
     }
 
-    pub fn accept(handshake : Handshake,
-                  acceptor  : &transport::Acceptor)
-            -> io::Result<(Handshake, transport::Transport)> {
+    pub fn accept(handshake: Handshake,
+                  acceptor: &transport::Acceptor)
+                  -> io::Result<(Handshake, transport::Transport)> {
         Self::handle_handshake(handshake, try!(transport::accept(acceptor)))
     }
 
-    pub fn handle_connect(&mut self, token: u32, handshake: Handshake,
+    pub fn handle_connect(&mut self,
+                          token: u32,
+                          handshake: Handshake,
                           trans: transport::Transport)
                           -> io::Result<Connection> {
         let c = trans.connection_id.clone();
@@ -256,28 +257,32 @@ impl State {
     }
 
     fn register_connection(&mut self,
-                           handshake     : Handshake,
-                           trans         : transport::Transport,
-                           event_to_user : Event) -> io::Result<Connection> {
+                           handshake: Handshake,
+                           trans: transport::Transport,
+                           event_to_user: Event)
+                           -> io::Result<Connection> {
         let connection = trans.connection_id.clone();
 
         debug_assert!(!self.connections.contains_key(&connection));
         let (tx, rx) = mpsc::channel();
 
         let mapper_addr = handshake.mapper_port
-            .map(|port| {
-                let peer_addr = trans.connection_id.peer_endpoint().get_address();
-                match peer_addr {
-                    SocketAddr::V4(a) => {
-                        SocketAddr::V4(SocketAddrV4::new(*a.ip(), port))
-                    },
-                    SocketAddr::V6(a) => {
-                        SocketAddr::V6(SocketAddrV6::new(*a.ip(), port,
-                                                         a.flowinfo(),
-                                                         a.scope_id()))
-                    },
-                }
-            });
+                                   .map(|port| {
+                                       let peer_addr = trans.connection_id
+                                                            .peer_endpoint()
+                                                            .get_address();
+                                       match peer_addr {
+                                           SocketAddr::V4(a) => {
+                                               SocketAddr::V4(SocketAddrV4::new(*a.ip(), port))
+                                           }
+                                           SocketAddr::V6(a) => {
+                                               SocketAddr::V6(SocketAddrV6::new(*a.ip(),
+                                                                                port,
+                                                                                a.flowinfo(),
+                                                                                a.scope_id()))
+                                           }
+                                       }
+                                   });
 
         let connection_data = ConnectionData {
             message_sender: tx,
@@ -299,9 +304,10 @@ impl State {
     }
 
     // pushing messages out to socket
-    fn start_writing_thread(&self, mut sender     : transport::Sender,
-                                   connection     : Connection,
-                                   writer_channel : Receiver<Message>) {
+    fn start_writing_thread(&self,
+                            mut sender: transport::Sender,
+                            connection: Connection,
+                            writer_channel: Receiver<Message>) {
         let cmd_sender = self.cmd_sender.clone();
 
         let _ = Self::new_thread("writer", move || {
@@ -310,36 +316,35 @@ impl State {
                     break;
                 }
             }
-            let _ = cmd_sender.send(Closure::new(move |state : &mut State| {
+            let _ = cmd_sender.send(Closure::new(move |state: &mut State| {
                 state.unregister_connection(connection);
             }));
         });
     }
 
     // pushing events out to event_sender
-    fn start_reading_thread(&self, mut receiver : transport::Receiver,
-                            connection : Connection) {
+    fn start_reading_thread(&self, mut receiver: transport::Receiver, connection: Connection) {
         let cmd_sender = self.cmd_sender.clone();
-        let sink       = self.event_sender.clone();
+        let sink = self.event_sender.clone();
 
         let _ = Self::new_thread("reader", move || {
             while let Ok(msg) = receiver.receive() {
                 match msg {
                     Message::UserBlob(msg) => {
                         if sink.send(Event::NewMessage(connection.clone(), msg)).is_err() {
-                            break
+                            break;
                         }
-                    },
+                    }
                     Message::HolePunchAddress(a) => {
                         let _ = cmd_sender.send(Closure::new(move |state: &mut State| {
                             if let Some(cd) = state.connections.get_mut(&connection.clone()) {
                                 cd.mapper_external_address = Some(a.0);
                             }
                         }));
-                    },
+                    }
                 }
             }
-            let _ = cmd_sender.send(Closure::new(move |state : &mut State| {
+            let _ = cmd_sender.send(Closure::new(move |state: &mut State| {
                 state.unregister_connection(connection);
             }));
         });
@@ -355,9 +360,9 @@ impl State {
     }
 
     pub fn handle_accept(&mut self,
-                         handshake : Handshake,
-                         trans     : transport::Transport)
-            -> io::Result<Connection> {
+                         handshake: Handshake,
+                         trans: transport::Transport)
+                         -> io::Result<Connection> {
         let c = trans.connection_id.clone();
         let our_external_endpoint = match trans.connection_id.peer_endpoint() {
             Endpoint::Utp(..) => Endpoint::Utp(handshake.remote_ip.0),
@@ -368,17 +373,15 @@ impl State {
 
     fn seek_peers(beacon_guid: Option<[u8; 16]>, beacon_port: u16) -> Vec<Endpoint> {
         match beacon::seek_peers(beacon_port, beacon_guid) {
-            Ok(peers) => {
-                peers.into_iter().map(|a| transport::Endpoint::Tcp(a)).collect()
-            },
+            Ok(peers) => peers.into_iter().map(|a| transport::Endpoint::Tcp(a)).collect(),
             Err(_) => Vec::new(),
         }
     }
 
-    pub fn bootstrap_off_list(&mut self,
-                              token: u32,
-                              mut bootstrap_list: Vec<Endpoint>) {
-        if self.is_bootstrapping { return; }
+    pub fn bootstrap_off_list(&mut self, token: u32, mut bootstrap_list: Vec<Endpoint>) {
+        if self.is_bootstrapping {
+            return;
+        }
         self.is_bootstrapping = true;
 
         bootstrap_list.retain(|e| !self.is_connected_to(e));
@@ -391,9 +394,9 @@ impl State {
         let head = bootstrap_list.remove(0);
 
         let event_sender = self.event_sender.clone();
-        let cmd_sender   = self.cmd_sender.clone();
-        let mapper_port  = self.mapper.listening_addr().port();
-        let external_ip  = self.mapper.external_address();
+        let cmd_sender = self.cmd_sender.clone();
+        let mapper_port = self.mapper.listening_addr().port();
+        let external_ip = self.mapper.external_address();
 
         let _ = Self::new_thread("bootstrap_off_list", move || {
             let h = Handshake {
@@ -429,36 +432,41 @@ impl State {
         self.stop_called = true;
     }
 
-    fn new_thread<F,T>(name: &str, f: F) -> io::Result<JoinHandle<T>>
-            where F: FnOnce() -> T, F: Send + 'static, T: Send + 'static {
-        thread::Builder::new().name("State::".to_string() + name)
-                              .spawn(f)
+    fn new_thread<F, T>(name: &str, f: F) -> io::Result<JoinHandle<T>>
+        where F: FnOnce() -> T,
+              F: Send + 'static,
+              T: Send + 'static
+    {
+        thread::Builder::new()
+            .name("State::".to_string() + name)
+            .spawn(f)
     }
 
     fn is_connected_to(&self, endpoint: &Endpoint) -> bool {
-        for pair in self.connections.iter() {
+        for pair in &self.connections {
             if pair.0.peer_endpoint() == *endpoint {
                 return true;
             }
         }
-        return false;
+        false
     }
 
     fn get_ordered_helping_nodes(&self) -> Vec<SocketAddr> {
-        let mut addrs = self.connections.iter()
+        let mut addrs = self.connections
+                            .iter()
                             .filter_map(|pair| pair.1.mapper_address)
                             .collect::<Vec<_>>();
 
         addrs.sort_by(|&addr1, &addr2| {
-            ::util::heuristic_geo_cmp(&ip_from_socketaddr(addr1),
-                                      &ip_from_socketaddr(addr2)).reverse()
+            ::util::heuristic_geo_cmp(&ip_from_socketaddr(addr1), &ip_from_socketaddr(addr2))
+                .reverse()
         });
 
         addrs
     }
 
     pub fn get_mapped_udp_socket(&mut self, result_token: u32) {
-        use ::hole_punching::blocking_get_mapped_udp_socket;
+        use hole_punching::blocking_get_mapped_udp_socket;
 
         let seq_id = self.next_punch_sequence.number();
         self.next_punch_sequence.increment();
@@ -469,21 +477,19 @@ impl State {
         let _result_handle = Self::new_thread("map_udp", move || {
             let result = blocking_get_mapped_udp_socket(seq_id, helping_nodes);
 
-            let result = match result {
+            let res = match result {
                 // TODO (peterj) use _rest
                 Ok((socket, opt_mapped_addr, _rest)) => {
                     let addrs = opt_mapped_addr.into_iter().collect();
                     Ok((socket, addrs))
-                },
+                }
                 Err(what) => Err(what),
             };
 
-            let _ = event_sender.send(
-                Event::OnUdpSocketMapped(
-                    MappedUdpSocket{
-                        result_token: result_token,
-                        result: result,
-                    }));
+            let _ = event_sender.send(Event::OnUdpSocketMapped(MappedUdpSocket {
+                result_token: result_token,
+                result: res,
+            }));
         });
     }
 }
@@ -501,47 +507,50 @@ mod test {
 
     fn testable_endpoint(acceptor: &Acceptor) -> Endpoint {
         let addr = match acceptor {
-            &Acceptor::Tcp(ref listener) => listener.local_addr()
-                .unwrap(),
+            &Acceptor::Tcp(ref listener) => {
+                listener.local_addr()
+                        .unwrap()
+            }
             _ => panic!("Unable to create a new connection"),
         };
 
         let ip = util::loopback_if_unspecified(util::ip_from_socketaddr(addr));
         let addr = match (ip, addr) {
-            (IpAddr::V4(ip), _) => {
-                SocketAddr::V4(SocketAddrV4::new(ip, addr.port()))
-            },
+            (IpAddr::V4(ip), _) => SocketAddr::V4(SocketAddrV4::new(ip, addr.port())),
             (IpAddr::V6(ip), SocketAddr::V6(addr)) => {
-                SocketAddr::V6(SocketAddrV6::new(ip, addr.port(),
-                                                 addr.flowinfo(),
-                                                 addr.scope_id()))
-            },
+                SocketAddr::V6(SocketAddrV6::new(ip, addr.port(), addr.flowinfo(), addr.scope_id()))
+            }
             _ => panic!("Unreachable"),
         };
         Endpoint::Tcp(addr)
     }
 
     fn test_bootstrap_off_list(n: u16) {
-        let acceptors = (0..n).map(|_|Acceptor::new(Port::Tcp(0)).unwrap())
-                              .collect::<Vec<_>>();
+        let acceptors = (0..n)
+                            .map(|_| Acceptor::new(Port::Tcp(0)).unwrap())
+                            .collect::<Vec<_>>();
 
-        let eps = acceptors.iter().map(|a|testable_endpoint(&a))
-                                  .collect();
+        let eps = acceptors.iter()
+                           .map(|a| testable_endpoint(&a))
+                           .collect();
 
         let (category_tx, category_rx) = channel();
         let (event_tx, event_receiver) = channel();
-        let crust_event_category = ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
-        let event_sender = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(event_tx,
-                                                                                     crust_event_category,
-                                                                                     category_tx);
+        let crust_event_category =
+            ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
+        let event_sender =
+            ::maidsafe_utilities::event_sender::MaidSafeObserver::new(event_tx,
+                                                                      crust_event_category,
+                                                                      category_tx);
 
         let mut s = State::new(event_sender).unwrap();
 
         let cmd_sender = s.cmd_sender.clone();
 
         cmd_sender.send(Closure::new(move |s: &mut State| {
-            s.bootstrap_off_list(0, eps);
-        })).unwrap();
+                      s.bootstrap_off_list(0, eps);
+                  }))
+                  .unwrap();
 
         let accept_thread = thread::spawn(move || {
             for a in acceptors {
@@ -549,7 +558,9 @@ mod test {
             }
         });
 
-        let t = thread::spawn(move || { s.run(); });
+        let t = thread::spawn(move || {
+            s.run();
+        });
 
         let mut accept_count = 0;
 
@@ -562,19 +573,20 @@ mod test {
                                 accept_count += 1;
                                 if accept_count == n {
                                     cmd_sender.send(Closure::new(move |s: &mut State| {
-                                        s.stop();
-                                    })).unwrap();
+                                                  s.stop();
+                                              }))
+                                              .unwrap();
                                     break;
                                 }
-                            },
-                            Event::LostConnection(_) => { },
-                            Event::BootstrapFinished => { },
+                            }
+                            Event::LostConnection(_) => {}
+                            Event::BootstrapFinished => {}
                             _ => {
                                 panic!("Unexpected event {:?}", event);
                             }
                         }
                     }
-                },
+                }
                 _ => unreachable!("This category should not have been fired - {:?}", it),
             }
         }
@@ -591,4 +603,3 @@ mod test {
         test_bootstrap_off_list(8);
     }
 }
-

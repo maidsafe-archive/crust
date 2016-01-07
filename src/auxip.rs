@@ -29,9 +29,9 @@ pub enum Port {
 
 impl Port {
     pub fn number(&self) -> u16 {
-        match self {
-            &Port::Tcp(n) => n,
-            &Port::Udp(n) => n,
+        match *self {
+            Port::Tcp(n) => n,
+            Port::Udp(n) => n,
         }
     }
 }
@@ -46,12 +46,8 @@ impl Endpoint {
     /// Construct a new Endpoint
     pub fn new(addr: IpAddr, port: Port) -> Endpoint {
         let socketaddr = match addr {
-            IpAddr::V4(a) => {
-                SocketAddr::V4(SocketAddrV4::new(a, port.number()))
-            },
-            IpAddr::V6(a) => {
-                SocketAddr::V6(SocketAddrV6::new(a, port.number(), 0, 0xe))
-            },
+            IpAddr::V4(a) => SocketAddr::V4(SocketAddrV4::new(a, port.number())),
+            IpAddr::V6(a) => SocketAddr::V6(SocketAddrV6::new(a, port.number(), 0, 0xe)),
         };
         match port {
             Port::Tcp(_) => Endpoint::Tcp(socketaddr),
@@ -73,4 +69,3 @@ impl Endpoint {
         }
     }
 }
-
