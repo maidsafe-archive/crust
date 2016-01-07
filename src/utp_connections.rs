@@ -22,12 +22,12 @@ use std::io::Result as IoResult;
 use std::sync::mpsc::Sender;
 
 /// Connect to a peer and open a send-receive pair.  See `upgrade` for more details.
-pub fn connect_utp(addr: SocketAddr) -> IoResult<(UtpWrapper, Sender<Vec<u8>>)> {
+pub fn connect_utp(addr: SocketAddr)
+                   -> IoResult<(UtpWrapper, Sender<Vec<u8>>)> {
     upgrade_utp(try!(UtpSocket::connect(addr)))
 }
 
-pub fn rendezvous_connect_utp(udp_socket: UdpSocket,
-                              addr: SocketAddr)
+pub fn rendezvous_connect_utp(udp_socket: UdpSocket, addr: SocketAddr)
                               -> IoResult<(UtpWrapper, Sender<Vec<u8>>)> {
     upgrade_utp(try!(UtpSocket::rendezvous_connect(udp_socket, addr)))
 }
@@ -35,7 +35,8 @@ pub fn rendezvous_connect_utp(udp_socket: UdpSocket,
 /// Upgrades a newly connected UtpSocket to a Sender-Receiver pair that you can use to send and
 /// receive objects automatically.  If there is an error decoding or encoding
 /// values, that respective part is shut down.
-pub fn upgrade_utp(newconnection: UtpSocket) -> IoResult<(UtpWrapper, Sender<Vec<u8>>)> {
+pub fn upgrade_utp(newconnection: UtpSocket)
+                   -> IoResult<(UtpWrapper, Sender<Vec<u8>>)> {
     let socket = try!(UtpWrapper::wrap(newconnection));
     let output = socket.output();
     Ok((socket, output))
@@ -56,16 +57,13 @@ mod test {
     #[test]
     fn cannot_establish_connection() {
         let listener = UdpSocket::bind({
-                           SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), 0)
-                       })
-                           .unwrap();
+            SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), 0)
+        }).unwrap();
         let port = listener.local_addr().unwrap().port();
         drop(listener);
         let _err = connect_utp(SocketAddr::V4({
-                       SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), port)
-                   }))
-                       .err()
-                       .unwrap();
+            SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), port)
+        })).err().unwrap();
     }
 
     #[test]
@@ -75,10 +73,15 @@ mod test {
 
         let handle = thread::spawn(move || listener.accept().unwrap());
 
-        let _ = connect_utp(SocketAddr::V4({
-                    SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), port)
-                }))
-                    .unwrap();
+        // Note: when the result of connect_utp here is assigned to a variable
+        // named _, this test takes much longet to complete. My guess is that
+        // it happens because _ is dropped immediately, but any other named
+        // variable is dropped only at the end of the scope. So when naming
+        // this variable, the socket outlives the above thread, which somehow
+        // makes this test finish faster for some reason.
+        let _socket = connect_utp(SocketAddr::V4({
+            SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), port)
+        })).unwrap();
 
         let _ = handle.join().unwrap();
     }
@@ -98,9 +101,8 @@ mod test {
         });
 
         let (mut i, o) = connect_utp(SocketAddr::V4({
-                             SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), port)
-                         }))
-                             .unwrap();
+            SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), port)
+        })).unwrap();
 
         let th1 = thread::spawn(move || {
             o.send(vec![42]);
