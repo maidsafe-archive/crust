@@ -20,6 +20,7 @@ pub use utp_wrapper::UtpWrapper;
 use std::net::UdpSocket;
 use socket_addr::SocketAddr;
 use std::io::Result as IoResult;
+use std::sync::mpsc;
 use std::sync::mpsc::Sender;
 
 /// Connect to a peer and open a send-receive pair.  See `upgrade` for more details.
@@ -37,9 +38,10 @@ pub fn rendezvous_connect_utp(udp_socket: UdpSocket,
 /// receive objects automatically.  If there is an error decoding or encoding
 /// values, that respective part is shut down.
 pub fn upgrade_utp(newconnection: UtpSocket) -> IoResult<(UtpWrapper, Sender<Vec<u8>>)> {
-    let socket = try!(UtpWrapper::wrap(newconnection));
-    let output = socket.output();
-    Ok((socket, output))
+    let (output_tx, output_rx) = mpsc::channel();
+    let wrapper = try!(UtpWrapper::wrap(newconnection, output_rx));
+
+    Ok((wrapper, output_tx))
 }
 
 #[allow(unused)]
