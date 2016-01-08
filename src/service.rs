@@ -198,9 +198,9 @@ impl Service {
         });
     }
 
-    /// This should be called before destroying an instance of a Service to allow the
-    /// listener threads to join.  Once called, the Service should be destroyed.
-    pub fn stop(&mut self) {
+    // This should be called before destroying an instance of a Service to allow the
+    // listener threads to join.  Once called, the Service should be destroyed.
+    fn stop(&mut self) {
         use std::net::TcpStream;
         use utp::UtpSocket;
 
@@ -616,8 +616,9 @@ mod test {
             }
             _ => { assert!(false, "Failed to receive NewConnection event")}
         }
-        cm1.stop();
-        cm2.stop();
+
+        drop(cm1);
+        drop(cm2);
     }
 
     #[test]
