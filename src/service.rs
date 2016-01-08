@@ -925,7 +925,7 @@ mod test {
 
             let mut peer0_received_lost_connection = false;
 
-            let timeout = ::std::time::Duration::from_millis(1000);
+            let timeout = ::std::time::Duration::from_secs(10);
 
             while let Some(category) = try_recv_with_timeout(&category_rx, timeout) {
                 match category {
@@ -995,7 +995,7 @@ mod test {
 
             let mut service1 = Some(service1);
 
-            let timeout = ::std::time::Duration::from_millis(1000);
+            let timeout = ::std::time::Duration::from_secs(10);
 
             while let Some(category) = try_recv_with_timeout(&category_rx, timeout) {
                 match category {
