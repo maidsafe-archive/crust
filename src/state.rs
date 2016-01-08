@@ -334,6 +334,7 @@ impl State {
             let _ = cmd_sender.send(Closure::new(move |state: &mut State| {
                 state.unregister_connection(connection);
             }));
+            println!("################# thread exitting: writer");
         });
     }
 
@@ -363,6 +364,7 @@ impl State {
             let _ = cmd_sender.send(Closure::new(move |state: &mut State| {
                 state.unregister_connection(connection);
             }));
+            println!("################# thread exitting: reader");
         });
     }
 
