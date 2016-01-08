@@ -46,10 +46,10 @@ pub type Bytes = Vec<u8>;
 /// (https://github.com/maidsafe/crust/blob/master/docs/vault_config_file_flowchart.pdf) for more
 /// information.
 pub struct Service {
-    beacon_guid_and_port : Option<(beacon::GUID, u16)>,
-    config               : Config,
-    cmd_sender           : Sender<Closure>,
-    state_thread_handle  : Option<JoinHandle<()>>,
+    beacon_guid_and_port: Option<(beacon::GUID, u16)>,
+    config: Config,
+    cmd_sender: Sender<Closure>,
+    state_thread_handle: Option<JoinHandle<()>>,
 }
 
 impl Service {
@@ -65,21 +65,20 @@ impl Service {
         Service::construct(event_sender, config)
     }
 
-    fn construct(event_sender: ::CrustEventSender, config: Config)
-            -> io::Result<Service> {
+    fn construct(event_sender: ::CrustEventSender, config: Config) -> io::Result<Service> {
         let mut state = try!(State::new(event_sender));
         let cmd_sender = state.cmd_sender.clone();
 
         let handle = try!(Self::new_thread("run loop", move || {
-                                state.run();
-                            }));
+            state.run();
+        }));
 
         let service = Service {
-                          beacon_guid_and_port : None,
-                          config               : config,
-                          cmd_sender           : cmd_sender,
-                          state_thread_handle  : Some(handle)
-                      };
+            beacon_guid_and_port: None,
+            config: config,
+            cmd_sender: cmd_sender,
+            state_thread_handle: Some(handle),
+        };
 
         Ok(service)
     }
@@ -102,11 +101,12 @@ impl Service {
         Self::accept(self.cmd_sender.clone(), acceptor);
 
         if self.beacon_guid_and_port.is_some() {
-            let contacts = filter_loopback(getifaddrs()).into_iter()
-                .map(|ip| { Endpoint::new(ip.addr.clone(), accept_addr.get_port()) })
-                .collect::<Vec<_>>();
+            let contacts = filter_loopback(getifaddrs())
+                               .into_iter()
+                               .map(|ip| Endpoint::new(ip.addr.clone(), accept_addr.get_port()))
+                               .collect::<Vec<_>>();
 
-            Self::post(&self.cmd_sender, move |state : &mut State| {
+            Self::post(&self.cmd_sender, move |state: &mut State| {
                 state.update_bootstrap_contacts(contacts, vec![]);
             });
         }
@@ -128,7 +128,7 @@ impl Service {
 
         let thread_result = Self::new_thread("beacon acceptor", move || {
             while let Ok((h, t)) = acceptor.accept() {
-                let _ = sender.send(Closure::new(move |state : &mut State| {
+                let _ = sender.send(Closure::new(move |state: &mut State| {
                     let _ = state.handle_accept(h, t);
                 }));
             }
@@ -164,19 +164,18 @@ impl Service {
 
     /// Same as bootstrap, but allows to specify a blacklist of endpoints
     /// this service should never connect to.
-    pub fn bootstrap_with_blacklist(&mut self, token: u32,
-                                               beacon_port: Option<u16>,
-                                               blacklist: &[Endpoint])
-    {
+    pub fn bootstrap_with_blacklist(&mut self,
+                                    token: u32,
+                                    beacon_port: Option<u16>,
+                                    blacklist: &[Endpoint]) {
         let config = self.config.clone();
         let beacon_guid_and_port = self.beacon_guid_and_port.clone();
         let blacklist = blacklist.to_vec();
 
-        Self::post(&self.cmd_sender, move |state : &mut State| {
-            let mut contacts = state.populate_bootstrap_contacts(
-                                    &config,
-                                    beacon_port,
-                                    &beacon_guid_and_port);
+        Self::post(&self.cmd_sender, move |state: &mut State| {
+            let mut contacts = state.populate_bootstrap_contacts(&config,
+                                                                 beacon_port,
+                                                                 &beacon_guid_and_port);
 
             contacts.retain(|endpoint| !blacklist.contains(&endpoint));
 
@@ -186,7 +185,7 @@ impl Service {
 
     /// Stop the bootstraping procedure
     pub fn stop_bootstrap(&mut self) {
-        Self::post(&self.cmd_sender, move |state : &mut State| {
+        Self::post(&self.cmd_sender, move |state: &mut State| {
             state.stop_bootstrap();
         });
     }
@@ -218,8 +217,12 @@ impl Service {
                 let addr = ::util::loopback_v4(*port).get_address();
 
                 match *port {
-                    Port::Tcp(_) => { let _ = TcpStream::connect(&addr); },
-                    Port::Utp(_) => { let _ = UtpSocket::connect(&addr); }
+                    Port::Tcp(_) => {
+                        let _ = TcpStream::connect(&addr);
+                    }
+                    Port::Utp(_) => {
+                        let _ = UtpSocket::connect(&addr);
+                    }
                 }
             }
         }));
@@ -239,7 +242,7 @@ impl Service {
     /// (https://github.com/maidsafe/crust/blob/master/docs/connect.md) for details on handling of
     /// connect in different protocols.
     pub fn connect(&self, token: u32, endpoints: Vec<Endpoint>) {
-        Self::post(&self.cmd_sender, move |state : &mut State| {
+        Self::post(&self.cmd_sender, move |state: &mut State| {
             let cmd_sender = state.cmd_sender.clone();
 
             let handshake = Handshake {
@@ -255,12 +258,12 @@ impl Service {
                             let _ = cmd_sender.send(Closure::new(move |state: &mut State| {
                                 let _ = state.handle_connect(token, h, t);
                             }));
-                        },
+                        }
                         Err(e) => {
                             let _ = cmd_sender.send(Closure::new(move |state: &mut State| {
                                 let _ = state.event_sender.send(Event::OnConnect(Err(e), token));
                             }));
-                        },
+                        }
                     }
                 }
             });
@@ -290,10 +293,11 @@ impl Service {
     /// Connecting]
     /// (https://github.com/maidsafe/crust/blob/master/docs/connect.md) for
     /// details on handling of connect in different protocols.
-    pub fn rendezvous_connect(&self, udp_socket: UdpSocket,
+    pub fn rendezvous_connect(&self,
+                              udp_socket: UdpSocket,
                               token: u32,
                               public_endpoint: Endpoint /* of B */) {
-        Self::post(&self.cmd_sender, move |state : &mut State| {
+        Self::post(&self.cmd_sender, move |state: &mut State| {
             let cmd_sender = state.cmd_sender.clone();
 
             let handshake = Handshake {
@@ -303,18 +307,18 @@ impl Service {
             };
 
             let _ = Self::new_thread("rendezvous connect", move || {
-                match State::rendezvous_connect(handshake.clone(), udp_socket,
-                                                public_endpoint) {
+                match State::rendezvous_connect(handshake.clone(), udp_socket, public_endpoint) {
                     Ok((h, t)) => {
                         let _ = cmd_sender.send(Closure::new(move |state: &mut State| {
                             let _ = state.handle_rendezvous_connect(token, h, t);
                         }));
-                    },
+                    }
                     Err(e) => {
                         let _ = cmd_sender.send(Closure::new(move |state: &mut State| {
-                            let _ = state.event_sender.send(Event::OnRendezvousConnect(Err(e), token));
+                            let _ = state.event_sender
+                                         .send(Event::OnRendezvousConnect(Err(e), token));
                         }));
-                    },
+                    }
                 }
             });
         });
@@ -371,7 +375,7 @@ impl Service {
                     match accept_result {
                         Ok((handshake, transport)) => {
                             let _ = state.handle_accept(handshake, transport);
-                        },
+                        }
                         Err(_) => {
                             // TODO: What now? Stop? Start again?
                             panic!();
@@ -409,23 +413,29 @@ impl Service {
 
                 async_map_external_port(internal_ep.to_ip().clone(),
                                         move |results: io::Result<Vec<T>>| {
-                    let mut async = async.lock().unwrap();
-                    async.remaining -= 1;
-                    if let Ok(results) = results {
-                        for result in results {
-                            let transport_port = match internal_ep {
-                                Endpoint::Tcp(_) => Port::Tcp(result.1.port().number()),
-                                Endpoint::Utp(_) => Port::Utp(result.1.port().number()),
-                            };
-                            let ext_ep = Endpoint::new(result.1.ip(), transport_port);
-                            async.results.push(ext_ep);
-                        }
-                    }
-                    if async.remaining == 0 {
-                        let event = Event::ExternalEndpoints(async.results.clone());
-                        let _ = event_sender.send(event);
-                    }
-                });
+                                            let mut async = async.lock().unwrap();
+                                            async.remaining -= 1;
+                                            if let Ok(results) = results {
+                                                for result in results {
+                                                    let transport_port = match internal_ep {
+                                                        Endpoint::Tcp(_) => {
+                                                            Port::Tcp(result.1.port().number())
+                                                        }
+                                                        Endpoint::Utp(_) => {
+                                                            Port::Utp(result.1.port().number())
+                                                        }
+                                                    };
+                                                    let ext_ep = Endpoint::new(result.1.ip(),
+                                                                               transport_port);
+                                                    async.results.push(ext_ep);
+                                                }
+                                            }
+                                            if async.remaining == 0 {
+                                                let event = Event::ExternalEndpoints(async.results
+                                                                                          .clone());
+                                                let _ = event_sender.send(event);
+                                            }
+                                        });
             }
         });
     }
@@ -437,13 +447,19 @@ impl Service {
         });
     }
 
-    fn new_thread<F,T>(name: &str, f: F) -> io::Result<JoinHandle<T>>
-            where F: FnOnce() -> T, F: Send + 'static, T: Send + 'static {
-        thread::Builder::new().name("Service::".to_string() + name)
-                              .spawn(f)
+    fn new_thread<F, T>(name: &str, f: F) -> io::Result<JoinHandle<T>>
+        where F: FnOnce() -> T,
+              F: Send + 'static,
+              T: Send + 'static
+    {
+        thread::Builder::new()
+            .name("Service::".to_string() + name)
+            .spawn(f)
     }
 
-    fn post<F>(sender: &Sender<Closure>, cmd: F) where F: FnOnce(&mut State) + Send + 'static {
+    fn post<F>(sender: &Sender<Closure>, cmd: F)
+        where F: FnOnce(&mut State) + Send + 'static
+    {
         assert!(sender.send(Closure::new(cmd)).is_ok());
     }
 
@@ -452,23 +468,20 @@ impl Service {
                           result_token: u32,
                           udp_socket: UdpSocket,
                           secret: Option<[u8; 4]>,
-                          peer_addr: SocketAddr)
-    {
+                          peer_addr: SocketAddr) {
         Self::post(&self.cmd_sender, move |state: &mut State| {
             let event_sender = state.event_sender.clone();
 
             // TODO (canndrew): we currently have no means to handle this error
             let _ = Self::new_thread("udp_punch_hole", move || {
-                let (udp_socket, result_addr)
-                    = ::hole_punching::blocking_udp_punch_hole(udp_socket,
-                                                               secret,
-                                                               peer_addr);
+                let (udp_socket, result_addr) =
+                    ::hole_punching::blocking_udp_punch_hole(udp_socket, secret, peer_addr);
 
                 // TODO (canndrew): we currently have no means to handle this error
                 let _ = event_sender.send(Event::OnHolePunched(HolePunchResult {
                     result_token: result_token,
-                    udp_socket:   udp_socket,
-                    peer_addr:    result_addr,
+                    udp_socket: udp_socket,
+                    peer_addr: result_addr,
                 }));
             });
         });
@@ -504,7 +517,8 @@ mod test {
 
     type CategoryRx = ::std::sync::mpsc::Receiver<MaidSafeEventCategory>;
 
-    fn encode<T>(value: &T) -> Bytes where T: Encodable
+    fn encode<T>(value: &T) -> Bytes
+        where T: Encodable
     {
         let mut enc = Encoder::from_memory();
         let _ = enc.encode(&[value]);
@@ -512,7 +526,8 @@ mod test {
     }
 
     #[allow(dead_code)]
-    fn decode<T>(bytes: &Vec<u8>) -> T where T: Decodable
+    fn decode<T>(bytes: &Vec<u8>) -> T
+        where T: Decodable
     {
         let mut dec = Decoder::from_bytes(&bytes[..]);
         dec.decode().next().unwrap().unwrap()
@@ -542,7 +557,7 @@ mod test {
     }
 
     struct TestConfigFile {
-        pub path: PathBuf
+        pub path: PathBuf,
     }
 
     impl Drop for TestConfigFile {
@@ -555,18 +570,17 @@ mod test {
         make_temp_config_with_endpoints(&[])
     }
 
-    fn make_temp_config_with_endpoints(endpoints: &[Endpoint]) -> TestConfigFile
-    {
+    fn make_temp_config_with_endpoints(endpoints: &[Endpoint]) -> TestConfigFile {
         let path = write_config_file(Some(endpoints.to_vec())).unwrap();
-        TestConfigFile{path: path}
+        TestConfigFile { path: path }
     }
 
     fn filter_ok<T>(vec: Vec<io::Result<T>>) -> Vec<T> {
-        vec.into_iter().filter_map(|a|a.ok()).collect()
+        vec.into_iter().filter_map(|a| a.ok()).collect()
     }
 
     fn loopback_if_unspecified(eps: Vec<Endpoint>) -> Vec<Endpoint> {
-        eps.iter().map(|e|e.map_ip_addr(util::loopback_if_unspecified)).collect()
+        eps.iter().map(|e| e.map_ip_addr(util::loopback_if_unspecified)).collect()
     }
 
     #[test]
@@ -593,9 +607,7 @@ mod test {
         let _config_file = make_temp_config();
 
         let (cm2_i, cm2_o) = channel();
-        let event_sender2 = MaidSafeObserver::new(cm2_i,
-                                                  crust_event_category,
-                                                  category_tx);
+        let event_sender2 = MaidSafeObserver::new(cm2_i, crust_event_category, category_tx);
         let mut cm2 = Service::new(event_sender2).unwrap();
 
         cm2.bootstrap(0, Some(beacon_port));
@@ -614,7 +626,7 @@ mod test {
             Ok(Event::OnAccept(addr, ep)) => {
                 debug!("OnAccept {:?} {:?}", addr, ep);
             }
-            _ => { assert!(false, "Failed to receive NewConnection event")}
+            _ => assert!(false, "Failed to receive NewConnection event"),
         }
         cm1.stop();
         cm2.stop();
@@ -630,20 +642,17 @@ mod test {
         let (category_tx, category_rx) = channel();
         let (event_tx, event_rx) = channel();
 
-        let event_sender0 = MaidSafeObserver::new(
-                                ignored_event_tx.clone(),
-                                MaidSafeEventCategory::CrustEvent,
-                                ignored_category_tx.clone());
+        let event_sender0 = MaidSafeObserver::new(ignored_event_tx.clone(),
+                                                  MaidSafeEventCategory::CrustEvent,
+                                                  ignored_category_tx.clone());
 
-        let event_sender1 = MaidSafeObserver::new(
-                                ignored_event_tx,
-                                MaidSafeEventCategory::CrustEvent,
-                                ignored_category_tx);
+        let event_sender1 = MaidSafeObserver::new(ignored_event_tx,
+                                                  MaidSafeEventCategory::CrustEvent,
+                                                  ignored_category_tx);
 
-        let event_sender2 = MaidSafeObserver::new(
-                                event_tx,
-                                MaidSafeEventCategory::CrustEvent,
-                                category_tx);
+        let event_sender2 = MaidSafeObserver::new(event_tx,
+                                                  MaidSafeEventCategory::CrustEvent,
+                                                  category_tx);
 
 
 
@@ -651,10 +660,10 @@ mod test {
         let mut service0 = Service::new(event_sender0).unwrap();
         let mut service1 = Service::new(event_sender1).unwrap();
 
-        let endpoints = loopback_if_unspecified(vec![
-                            service0.start_accepting(Port::Tcp(0)).unwrap(),
-                            service1.start_accepting(Port::Tcp(0)).unwrap()
-                        ]);
+        let endpoints = loopback_if_unspecified(vec![service0.start_accepting(Port::Tcp(0))
+                                                             .unwrap(),
+                                                     service1.start_accepting(Port::Tcp(0))
+                                                             .unwrap()]);
 
         // Write those endpoints to the config file, so the next service will
         // try to connect to them.
@@ -675,10 +684,10 @@ mod test {
                         Ok(Event::BootstrapFinished) => break,
                         Ok(Event::OnConnect(Ok((_, conn)), _)) => {
                             connected_endpoints.push(conn.peer_endpoint());
-                        },
+                        }
                         event => println!("event: {:?}", event),
                     }
-                },
+                }
 
                 _ => unreachable!("This category should not have been fired - {:?}", category),
             }
@@ -705,18 +714,20 @@ mod test {
                             if let Ok(event) = o.try_recv() {
                                 match event {
                                     Event::OnConnect(Ok((_, other_ep)), _) => {
-                                        let _ = cm.send(other_ep.clone(), encode(&"hello world".to_string()));
-                                    },
+                                        let _ = cm.send(other_ep.clone(),
+                                                        encode(&"hello world".to_string()));
+                                    }
                                     Event::OnAccept(_, other_ep) => {
-                                        let _ = cm.send(other_ep.clone(), encode(&"hello world".to_string()));
-                                    },
+                                        let _ = cm.send(other_ep.clone(),
+                                                        encode(&"hello world".to_string()));
+                                    }
                                     Event::NewMessage(_, _) => {
                                         break;
-                                    },
-                                    _ => {},
+                                    }
+                                    _ => {}
                                 }
                             }
-                        },
+                        }
                         _ => unreachable!("This category should not have been fired - {:?}", it),
                     }
                 }
@@ -728,9 +739,7 @@ mod test {
         let (category_tx, category_rx0) = channel();
         let (cm1_i, cm1_o) = channel();
         let crust_event_category = MaidSafeEventCategory::CrustEvent;
-        let event_sender1 = MaidSafeObserver::new(cm1_i,
-                                                  crust_event_category.clone(),
-                                                  category_tx);
+        let event_sender1 = MaidSafeObserver::new(cm1_i, crust_event_category.clone(), category_tx);
         let mut cm1 = Service::new(event_sender1).unwrap();
         let cm1_eps = filter_ok(vec![cm1.start_accepting(Port::Tcp(0))]);
         assert!(cm1_eps.len() >= 1);
@@ -739,9 +748,7 @@ mod test {
 
         let (cm2_i, cm2_o) = channel();
         let (category_tx, category_rx1) = channel();
-        let event_sender2 = MaidSafeObserver::new(cm2_i,
-                                                  crust_event_category,
-                                                  category_tx);
+        let event_sender2 = MaidSafeObserver::new(cm2_i, crust_event_category, category_tx);
         let mut cm2 = Service::new(event_sender2).unwrap();
         let cm2_eps = filter_ok(vec![cm2.start_accepting(Port::Tcp(0))]);
         assert!(cm2_eps.len() >= 1);
@@ -762,8 +769,11 @@ mod test {
 
         // Wait 2 seconds until previous bootstrap test ends. If not, that test connects to these endpoints.
         thread::sleep(::std::time::Duration::from_secs(2));
-        let run_cm = |cm: Service, o: Receiver<Event>, category_rx: CategoryRx,
-                      shutdown_recver: Receiver<()>, ready_sender: Sender<()>| {
+        let run_cm = |cm: Service,
+                      o: Receiver<Event>,
+                      category_rx: CategoryRx,
+                      shutdown_recver: Receiver<()>,
+                      ready_sender: Sender<()>| {
             spawn(move || {
                 for it in category_rx.iter() {
                     match it {
@@ -774,7 +784,7 @@ mod test {
                                         Event::OnRendezvousConnect(Ok((_, other_ep)), _) => {
                                             let _ = cm.send(other_ep.clone(),
                                                             encode(&"hello world".to_string()));
-                                        },
+                                        }
                                         Event::OnRendezvousConnect(Err(_), _) => {
                                             panic!("Cannot establish rendezvous connection");
                                         }
@@ -785,7 +795,7 @@ mod test {
                                 Err(::std::sync::mpsc::TryRecvError::Disconnected) => break,
                                 _ => (),
                             }
-                        },
+                        }
                         _ => unreachable!("This category should not have been fired - {:?}", it),
                     }
                 }
@@ -799,31 +809,32 @@ mod test {
 
         let (category_tx, category_rx0) = channel();
         let (cm1_i, cm1_o) = channel();
-        let crust_event_category = ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
-        let event_sender1 = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(cm1_i,
-                                                                                      crust_event_category.clone(),
-                                                                                      category_tx);
+        let crust_event_category =
+            ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
+        let event_sender1 =
+            ::maidsafe_utilities::event_sender::MaidSafeObserver::new(cm1_i,
+                                                                      crust_event_category.clone(),
+                                                                      category_tx);
         let cm1 = Service::new(event_sender1).unwrap();
 
         temp_configs.push(make_temp_config());
 
         let (cm2_i, cm2_o) = channel();
         let (category_tx, category_rx1) = channel();
-        let event_sender2 = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(cm2_i,
-                                                                                      crust_event_category,
-                                                                                      category_tx);
+        let event_sender2 =
+            ::maidsafe_utilities::event_sender::MaidSafeObserver::new(cm2_i,
+                                                                      crust_event_category,
+                                                                      category_tx);
         let cm2 = Service::new(event_sender2).unwrap();
 
         let peer1_udp_socket = UdpSocket::bind("0.0.0.0:0").unwrap();
         let peer2_udp_socket = UdpSocket::bind("0.0.0.0:0").unwrap();
 
         let peer1_port = peer1_udp_socket.local_addr().unwrap().port();
-        let peer1_addr = SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1),
-                                           peer1_port);
+        let peer1_addr = SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), peer1_port);
 
         let peer2_port = peer2_udp_socket.local_addr().unwrap().port();
-        let peer2_addr = SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1),
-                                           peer2_port);
+        let peer2_addr = SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), peer2_port);
 
         cm2.rendezvous_connect(peer1_udp_socket, 0, Endpoint::utp(peer2_addr));
         cm1.rendezvous_connect(peer2_udp_socket, 0, Endpoint::utp(peer1_addr));
@@ -864,10 +875,12 @@ mod test {
             fn new(id: u32) -> Node {
                 let (category_tx, category_rx) = channel();
                 let (writer, reader) = channel();
-                let crust_event_category = ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
-                let event_sender1 = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(writer,
-                                                                                              crust_event_category,
-                                                                                              category_tx);
+                let crust_event_category =
+                    ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
+                let event_sender1 =
+                    ::maidsafe_utilities::event_sender::MaidSafeObserver::new(writer,
+                                                                              crust_event_category,
+                                                                              category_tx);
                 Node {
                     _id: id,
                     service: Service::new(event_sender1).unwrap(),
@@ -887,26 +900,25 @@ mod test {
                                     Event::OnConnect(Ok((_, connection)), _) => {
                                         stats.connect_count += 1;
                                         self.send_data_to(connection);
-                                    },
+                                    }
                                     Event::OnAccept(_, connection) => {
                                         stats.accept_count += 1;
                                         self.send_data_to(connection);
-                                    },
+                                    }
                                     Event::NewMessage(_from, _bytes) => {
                                         stats.messages_count += 1;
-                                        //let msg = decode::<String>(&bytes);
+                                        // let msg = decode::<String>(&bytes);
                                         if stats.messages_count == TOTAL_MSG_TO_RECEIVE {
                                             break;
                                         }
-                                    },
-                                    Event::LostConnection(_) => {
-                                    },
+                                    }
+                                    Event::LostConnection(_) => {}
                                     _ => {
                                         println!("Received event {:?}", event);
                                     }
                                 }
                             }
-                        },
+                        }
                         _ => unreachable!("This category should not have been fired - {:?}", it),
                     }
                 }
@@ -922,15 +934,17 @@ mod test {
         }
 
         let mut nodes = (0..NETWORK_SIZE)
-            .map(|i|Node::new(i))
-            .collect::<Vec<_>>();
+                            .map(|i| Node::new(i))
+                            .collect::<Vec<_>>();
 
         let mut runners = Vec::new();
 
         let mut listening_eps = nodes.iter_mut()
-            .map(|node| node.service.start_accepting(Port::Tcp(0)).unwrap())
-            .map(|ep| ep.map_ip_addr(::util::loopback_if_unspecified))
-            .collect::<::std::collections::LinkedList<_>>();
+                                     .map(|node| {
+                                         node.service.start_accepting(Port::Tcp(0)).unwrap()
+                                     })
+                                     .map(|ep| ep.map_ip_addr(::util::loopback_if_unspecified))
+                                     .collect::<::std::collections::LinkedList<_>>();
 
         for mut node in nodes.into_iter() {
             assert!(listening_eps.pop_front().is_some());
@@ -949,9 +963,10 @@ mod test {
             stats.add(s)
         }
 
-        assert_eq!(stats.connect_count,  NETWORK_SIZE * (NETWORK_SIZE - 1) / 2);
-        assert_eq!(stats.accept_count,   NETWORK_SIZE * (NETWORK_SIZE - 1) / 2);
-        assert_eq!(stats.messages_count, NETWORK_SIZE * (NETWORK_SIZE - 1) * MESSAGE_PER_NODE);
+        assert_eq!(stats.connect_count, NETWORK_SIZE * (NETWORK_SIZE - 1) / 2);
+        assert_eq!(stats.accept_count, NETWORK_SIZE * (NETWORK_SIZE - 1) / 2);
+        assert_eq!(stats.messages_count,
+                   NETWORK_SIZE * (NETWORK_SIZE - 1) * MESSAGE_PER_NODE);
     }
 
     #[test]
@@ -963,12 +978,14 @@ mod test {
         let (cm_tx, cm_rx) = channel();
         let (category_tx, category_rx) = channel();
 
-        let crust_event_category = ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
+        let crust_event_category =
+            ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
         let cloned_crust_event_category = crust_event_category.clone();
 
-        let event_sender = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(cm_tx,
-                                                                                     crust_event_category,
-                                                                                     category_tx);
+        let event_sender =
+            ::maidsafe_utilities::event_sender::MaidSafeObserver::new(cm_tx,
+                                                                      crust_event_category,
+                                                                      category_tx);
         let mut cm = Service::new(event_sender).unwrap();
 
         let cm_listen_ep = cm.start_accepting(Port::Tcp(0)).unwrap();
@@ -981,13 +998,13 @@ mod test {
                             match event {
                                 Event::LostConnection(_) => {
                                     break;
-                                },
-                                _ => {},
+                                }
+                                _ => {}
                             }
                         } else {
                             break;
                         }
-                    },
+                    }
                     _ => unreachable!("This category should not have been fired - {:?}", it),
                 }
             }
@@ -1050,9 +1067,7 @@ mod test {
         {
             let (sender, _) = channel();
             let crust_event_category = MaidSafeEventCategory::CrustEvent;
-            let event_sender1 = MaidSafeObserver::new(sender,
-                                                      crust_event_category,
-                                                      category_tx);
+            let event_sender1 = MaidSafeObserver::new(sender, crust_event_category, category_tx);
             let mut service = Service::new(event_sender1).unwrap();
             // reuse the ports from above
             let _ = service.start_accepting(tcp_port).unwrap();

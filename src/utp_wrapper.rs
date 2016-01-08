@@ -24,37 +24,39 @@ impl UtpWrapper {
         let peer_addr = try!(socket.peer_addr());
         let local_addr = try!(socket.local_addr());
 
-        let _ = thread::Builder::new().name("rust-utp multiplexer".to_string()).spawn(move || {
-            let mut socket = socket;
-            socket.set_read_timeout(Some(CHECK_FOR_NEW_WRITES_INTERVAL_MS));
-            'outer:
-            loop {
-                let mut buf = [0; BUFFER_SIZE];
-                match socket.recv_from(&mut buf) {
-                    Ok((0, _src)) => break,
-                    Ok((amt, _src)) => {
-                        let buf = &buf[..amt];
-                        let _ = itx.send(Vec::from(buf));
-                    },
-                    Err(ref e) if e.kind() == ErrorKind::TimedOut => {
-                        // This extra loop ensures all pending messages are sent
-                        // before we try to read again.
-                        loop {
-                            match orx.try_recv() {
-                                Ok(v) => {
-                                    if socket.send_to(&v[..]).is_err() {
-                                        break 'outer;
+        let _ = thread::Builder::new()
+                    .name("rust-utp multiplexer".to_string())
+                    .spawn(move || {
+                        let mut socket = socket;
+                        socket.set_read_timeout(Some(CHECK_FOR_NEW_WRITES_INTERVAL_MS));
+                        'outer: loop {
+                            let mut buf = [0; BUFFER_SIZE];
+                            match socket.recv_from(&mut buf) {
+                                Ok((0, _src)) => break,
+                                Ok((amt, _src)) => {
+                                    let buf = &buf[..amt];
+                                    let _ = itx.send(Vec::from(buf));
+                                }
+                                Err(ref e) if e.kind() == ErrorKind::TimedOut => {
+                                    // This extra loop ensures all pending messages are sent
+                                    // before we try to read again.
+                                    loop {
+                                        match orx.try_recv() {
+                                            Ok(v) => {
+                                                if socket.send_to(&v[..]).is_err() {
+                                                    break 'outer;
+                                                }
+                                            }
+                                            Err(TryRecvError::Disconnected) => break 'outer,
+                                            Err(TryRecvError::Empty) => break,
+                                        }
                                     }
-                                },
-                                Err(TryRecvError::Disconnected) => break 'outer,
-                                Err(TryRecvError::Empty) => break,
+                                }
+                                Err(_) => break,
                             }
                         }
-                    },
-                    Err(_) => break,
-                }
-            }
-        }).unwrap();
+                    })
+                    .unwrap();
         Ok(UtpWrapper {
             input: irx,
             output: otx,
@@ -77,10 +79,8 @@ impl UtpWrapper {
     }
 }
 
-impl Read for UtpWrapper
-{
-    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize>
-    {
+impl Read for UtpWrapper {
+    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         let mut written = 0;
         for (idx, e) in self.unread_bytes.iter().take(buf.len()).enumerate() {
             buf[idx] = *e;
@@ -99,14 +99,13 @@ impl Read for UtpWrapper
         // application logic may require these bytes before it's possible to
         // get/generate the next ones.
         if written != 0 {
-            return Ok(written)
+            return Ok(written);
         }
 
         let mut buf = &mut buf[written..];
-        let recved = try!(self.input.recv()
-                          .or_else(|e| {
-                              Err(io::Error::new(ErrorKind::BrokenPipe, e))
-                          }));
+        let recved = try!(self.input
+                              .recv()
+                              .or_else(|e| Err(io::Error::new(ErrorKind::BrokenPipe, e))));
         for (idx, e) in recved.iter().take(buf.len()).enumerate() {
             buf[idx] = *e;
             written += 1;

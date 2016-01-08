@@ -31,24 +31,20 @@ pub mod v4 {
     }
 
     pub fn is_global(a: &Ipv4Addr) -> bool {
-        !is_private(a) &&
-        !is_loopback(a) &&
-        !is_link_local(a) &&
-        !is_broadcast(a) &&
+        !is_private(a) && !is_loopback(a) && !is_link_local(a) && !is_broadcast(a) &&
         !is_documentation(a)
     }
 
     pub fn is_broadcast(a: &Ipv4Addr) -> bool {
-        a.octets()[0] == 255 && a.octets()[1] == 255 &&
-        a.octets()[2] == 255 && a.octets()[3] == 255
+        a.octets()[0] == 255 && a.octets()[1] == 255 && a.octets()[2] == 255 && a.octets()[3] == 255
     }
 
     pub fn is_documentation(a: &Ipv4Addr) -> bool {
-        match(a.octets()[0], a.octets()[1], a.octets()[2], a.octets()[3]) {
+        match (a.octets()[0], a.octets()[1], a.octets()[2], a.octets()[3]) {
             (192, 0, 2, _) => true,
             (198, 51, 100, _) => true,
             (203, 0, 113, _) => true,
-            _ => false
+            _ => false,
         }
     }
 
@@ -57,7 +53,7 @@ pub mod v4 {
             (10, _) => true,
             (172, b) if b >= 16 && b <= 31 => true,
             (192, 168) => true,
-            _ => false
+            _ => false,
         }
     }
 
@@ -77,7 +73,7 @@ pub mod v6 {
         AdminLocal,
         SiteLocal,
         OrganizationLocal,
-        Global
+        Global,
     }
 
     pub fn is_unspecified(a: &Ipv6Addr) -> bool {
@@ -92,7 +88,7 @@ pub mod v6 {
         match multicast_scope(a) {
             Some(Ipv6MulticastScope::Global) => true,
             None => is_unicast_global(a),
-            _ => false
+            _ => false,
         }
     }
 
@@ -104,16 +100,13 @@ pub mod v6 {
         (a.segments()[0] & 0xffc0) == 0xfe80
     }
 
-    pub fn is_unicast_site_local(a : &Ipv6Addr) -> bool {
+    pub fn is_unicast_site_local(a: &Ipv6Addr) -> bool {
         (a.segments()[0] & 0xffc0) == 0xfec0
     }
 
     pub fn is_unicast_global(a: &Ipv6Addr) -> bool {
-        !is_multicast(a) &&
-        !is_loopback(a) &&
-        !is_unicast_link_local(a) &&
-        !is_unicast_site_local(a) &&
-        !is_unique_local(a)
+        !is_multicast(a) && !is_loopback(a) && !is_unicast_link_local(a) &&
+        !is_unicast_site_local(a) && !is_unique_local(a)
     }
 
     pub fn is_multicast(a: &Ipv6Addr) -> bool {
@@ -130,7 +123,7 @@ pub mod v6 {
                 5 => Some(Ipv6MulticastScope::SiteLocal),
                 8 => Some(Ipv6MulticastScope::OrganizationLocal),
                 14 => Some(Ipv6MulticastScope::Global),
-                _ => None
+                _ => None,
             }
         } else {
             None

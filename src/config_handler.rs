@@ -24,14 +24,12 @@
 
 #[derive(PartialEq, Eq, Debug, RustcDecodable, RustcEncodable, Clone)]
 pub struct Config {
-    pub hard_coded_contacts        : Vec<::transport::Endpoint>,
+    pub hard_coded_contacts: Vec<::transport::Endpoint>,
 }
 
 impl Config {
     pub fn make_default() -> Config {
-        Config{
-            hard_coded_contacts        : vec![],  // No hardcoded endpoints
-        }
+        Config { hard_coded_contacts: vec![] /* No hardcoded endpoints */ }
     }
 }
 
@@ -54,18 +52,21 @@ pub fn create_default_config_file() {
 ///
 /// N.B. This method should only be used as a utility for test and examples.  In normal use cases,
 /// this file should be created by the installer for the dependent application.
-pub fn write_config_file(hard_coded_endpoints: Option<Vec<::transport::Endpoint>>) -> Result<::std::path::PathBuf, ::error::Error> {
+pub fn write_config_file(hard_coded_endpoints: Option<Vec<::transport::Endpoint>>)
+                         -> Result<::std::path::PathBuf, ::error::Error> {
     use std::io::Write;
 
     let default = Config::make_default();
 
-    let config = Config{ hard_coded_contacts: hard_coded_endpoints
-                            .unwrap_or(default.hard_coded_contacts),
-                       };
+    let config = Config {
+        hard_coded_contacts: hard_coded_endpoints.unwrap_or(default.hard_coded_contacts),
+    };
     let mut config_path = try!(::file_handler::current_bin_dir());
     config_path.push(get_file_name());
     let mut file = try!(::std::fs::File::create(&config_path));
-    let _ = try!(write!(&mut file, "{}", ::rustc_serialize::json::as_pretty_json(&config)));
+    let _ = try!(write!(&mut file,
+                        "{}",
+                        ::rustc_serialize::json::as_pretty_json(&config)));
     let _ = try!(file.sync_all());
     Ok(config_path)
 }
@@ -88,10 +89,7 @@ mod test {
             hard_coded_endpoints.push(random_contact.clone());
             hard_coded_contacts.push(random_contact);
         }
-        let config =
-            super::Config{
-                hard_coded_contacts: hard_coded_contacts,
-            };
+        let config = super::Config { hard_coded_contacts: hard_coded_contacts };
         let _ = super::write_config_file(Some(hard_coded_endpoints));
         match super::read_config_file() {
             Ok(recovered_config) => assert_eq!(config, recovered_config),
@@ -103,17 +101,17 @@ mod test {
             Ok(mut config_path) => {
                 config_path.push(super::get_file_name());
                 let _ = ::std::fs::remove_file(&config_path);
-            },
+            }
             Err(_) => (),
         };
     }
 
     #[test]
     fn parse_sample_config_file() {
-        use ::std::path::Path;
+        use std::path::Path;
         use std::io::Read;
-        use ::super::Config;
-        use ::rustc_serialize::json;
+        use super::Config;
+        use rustc_serialize::json;
 
         let path = Path::new("installer/sample.config").to_path_buf();
 

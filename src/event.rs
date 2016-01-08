@@ -31,8 +31,8 @@ pub struct MappedUdpSocket {
 #[derive(Debug)]
 pub struct HolePunchResult {
     pub result_token: u32,
-    pub udp_socket:   UdpSocket,
-    pub peer_addr:    io::Result<SocketAddr>,
+    pub udp_socket: UdpSocket,
+    pub peer_addr: io::Result<SocketAddr>,
 }
 
 /// Enum representing different events that will be sent over the asynchronous channel to the user
@@ -41,17 +41,21 @@ pub struct HolePunchResult {
 pub enum Event {
     /// Invoked when a new message is received.  Passes the peer's endpoint and the message.
     NewMessage(Connection, Vec<u8>),
-    /// Invoked when the new connection request finishes. Passes the peer's endpoint and the token used in the request.
+    /// Invoked when the new connection request finishes.
+    /// Passes the peer's endpoint and the token used in the request.
     OnConnect(io::Result<(Endpoint, Connection)>, u32 /* token */),
-    /// Invoked when the new rendezvous connection request finishes. Passes the peer's endpoint and the token used in the request.
+    /// Invoked when the new rendezvous connection request finishes.
+    /// Passes the peer's endpoint and the token used in the request.
     OnRendezvousConnect(io::Result<(Endpoint, Connection)>, u32 /* token */),
     /// Invoked when a new connection is accepted. Passes the peer's endpoint.
     OnAccept(Endpoint, Connection),
     /// Invoked when a connection to a peer is lost.  Passes the peer's endpoint.
     LostConnection(Connection),
-    /// Invoked when a new bootstrap connection to a peer is established.  Passes the peer's endpoint.
+    /// Invoked when a new bootstrap connection to a peer is established.
+    /// Passes the peer's endpoint.
     BootstrapFinished,
-    /// Invoked when a new bootstrap connection to a peer is established.  Passes the peer's endpoint.
+    /// Invoked when a new bootstrap connection to a peer is established.
+    /// Passes the peer's endpoint.
     ExternalEndpoints(Vec<Endpoint>),
     /// Invoked as a result of the call to Service::get_mapped_udp_socket.
     OnUdpSocketMapped(MappedUdpSocket),

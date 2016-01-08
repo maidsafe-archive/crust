@@ -5,19 +5,16 @@ pub struct PeriodicSender<D> {
     notify_exit: ::std::sync::mpsc::Sender<()>,
     join_guard: ::crossbeam::ScopedJoinHandle<()>,
     payload_sender: ::std::sync::mpsc::Sender<D>,
-    destination_sender: ::std::sync::mpsc::Sender<SocketAddr>,
-    //join_guard: ::crossbeam::ScopedJoinHandle<io::Result<()>>,
+    destination_sender: ::std::sync::mpsc::Sender<SocketAddr>, /* join_guard: ::crossbeam::ScopedJoinHandle<io::Result<()>>, */
 }
 
 impl<'a, 'b: 'a, D: AsRef<[u8]> + Send + 'b> PeriodicSender<D> {
-    pub fn start(
-            udp_socket: UdpSocket,
-            destination: SocketAddr,
-            scope: &::crossbeam::Scope<'a>,
-            data: D,
-            period: ::std::time::Duration
-        ) -> PeriodicSender<D>
-    {
+    pub fn start(udp_socket: UdpSocket,
+                 destination: SocketAddr,
+                 scope: &::crossbeam::Scope<'a>,
+                 data: D,
+                 period: ::std::time::Duration)
+                 -> PeriodicSender<D> {
         let (tx, rx) = ::std::sync::mpsc::channel::<()>();
         let (payload_tx, payload_rx) = ::std::sync::mpsc::channel::<D>();
         let (destination_tx, destination_rx) = ::std::sync::mpsc::channel::<SocketAddr>();
@@ -32,19 +29,19 @@ impl<'a, 'b: 'a, D: AsRef<[u8]> + Send + 'b> PeriodicSender<D> {
                 let _ = udp_socket.send_to(data.as_ref(), destination);
                 ::std::thread::park_timeout(period);
                 match rx.try_recv() {
-                    Err(::std::sync::mpsc::TryRecvError::Empty)        => (),
+                    Err(::std::sync::mpsc::TryRecvError::Empty) => (),
                     Err(::std::sync::mpsc::TryRecvError::Disconnected) => panic!(),
                     Ok(()) => return,
                 }
                 match payload_rx.try_recv() {
-                    Err(::std::sync::mpsc::TryRecvError::Empty)        => (),
+                    Err(::std::sync::mpsc::TryRecvError::Empty) => (),
                     Err(::std::sync::mpsc::TryRecvError::Disconnected) => panic!(),
-                    Ok(d)  => data = d,
+                    Ok(d) => data = d,
                 }
                 match destination_rx.try_recv() {
-                    Err(::std::sync::mpsc::TryRecvError::Empty)        => (),
+                    Err(::std::sync::mpsc::TryRecvError::Empty) => (),
                     Err(::std::sync::mpsc::TryRecvError::Disconnected) => panic!(),
-                    Ok(a)  => destination = a,
+                    Ok(a) => destination = a,
                 }
             }
         });
@@ -66,13 +63,12 @@ impl<'a, 'b: 'a, D: AsRef<[u8]> + Send + 'b> PeriodicSender<D> {
         let _ = self.destination_sender.send(destination);
     }
 
-    /*
-    pub fn stop(self) -> io::Result<()> {
-        self.notify_exit.send(());
-        self.join_guard.thread().unpark();
-        self.join_guard.join()
-    }
-    */
+    // pub fn stop(self) -> io::Result<()> {
+    // self.notify_exit.send(());
+    // self.join_guard.thread().unpark();
+    // self.join_guard.join()
+    // }
+    //
 }
 
 impl<T> Drop for PeriodicSender<T> {
@@ -81,4 +77,3 @@ impl<T> Drop for PeriodicSender<T> {
         self.join_guard.thread().unpark();
     }
 }
-
