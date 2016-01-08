@@ -118,11 +118,11 @@ impl Service {
 
     fn start_broadcast_acceptor(&mut self, beacon_port: u16) -> io::Result<u16> {
         let acceptor = try!(beacon::BroadcastAcceptor::new(beacon_port));
-        let b_port = acceptor.beacon_port();
+        let beacon_port = acceptor.beacon_port();
 
         // Right now we expect this function to succeed only once.
         assert!(self.beacon_guid_and_port.is_none());
-        self.beacon_guid_and_port = Some((acceptor.beacon_guid(), b_port));
+        self.beacon_guid_and_port = Some((acceptor.beacon_guid(), beacon_port));
 
         let sender = self.cmd_sender.clone();
 
@@ -137,7 +137,7 @@ impl Service {
         // TODO: Handle gracefuly.
         assert!(thread_result.is_ok());
 
-        Ok(b_port)
+        Ok(beacon_port)
     }
 
     /// This method tries to connect (bootstrap to existing network) to the default or provided
@@ -170,14 +170,15 @@ impl Service {
                                     blacklist: &[Endpoint]) {
         let config = self.config.clone();
         let beacon_guid_and_port = self.beacon_guid_and_port.clone();
-        let blist = blacklist.to_vec();
+        let blacklist = blacklist.to_vec();
 
-        Self::post(&self.cmd_sender, move |state: &mut State| {
-            let mut contacts = state.populate_bootstrap_contacts(&config,
-                                                                 beacon_port,
-                                                                 &beacon_guid_and_port);
+        Self::post(&self.cmd_sender, move |state : &mut State| {
+            let mut contacts = state.populate_bootstrap_contacts(
+                                    &config,
+                                    beacon_port,
+                                    &beacon_guid_and_port);
 
-            contacts.retain(|endpoint| !blist.contains(&endpoint));
+            contacts.retain(|endpoint| !blacklist.contains(&endpoint));
 
             state.bootstrap_off_list(token, contacts.clone());
         });
@@ -213,14 +214,14 @@ impl Service {
             // Connect to our listening ports, this should unblock
             // the threads.
             for port in &state.listening_ports {
+                let addr = ::util::loopback_v4(*port).get_address();
+
                 match *port {
                     Port::Tcp(_) => {
-                        let _ = TcpStream::connect(SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1),
-                                                                     port.number()));
+                        let _ = TcpStream::connect(SocketAddrV4::new(addr, port.number()));
                     }
                     Port::Utp(_) => {
-                        let _ = UtpSocket::connect(SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1),
-                                                                     port.number()));
+                        let _ = UtpSocket::connect(SocketAddrV4::new(addr, port.number()));
                     }
                 }
             }
@@ -580,7 +581,33 @@ mod test {
     }
 
     fn loopback_if_unspecified(eps: Vec<Endpoint>) -> Vec<Endpoint> {
-        eps.iter().map(|e| e.map_ip_addr(util::loopback_if_unspecified)).collect()
+        eps.iter().map(|e|e.map_ip_addr(util::loopback_if_unspecified)).collect()
+    }
+
+    fn try_recv_with_timeout<T>(receiver: &Receiver<T>,
+                                timeout: ::std::time::Duration) -> Option<T>
+    {
+        use ::std::sync::mpsc::TryRecvError;
+
+        let interval = ::std::time::Duration::from_millis(100);
+        let mut elapsed = ::std::time::Duration::from_millis(0);
+
+        loop {
+            match receiver.try_recv() {
+                Ok(value)                       => return Some(value),
+                Err(TryRecvError::Disconnected) => break,
+                _                               => (),
+            }
+
+            thread::sleep(interval);
+            elapsed = elapsed + interval;
+
+            if elapsed > timeout {
+                break;
+            }
+        }
+
+        None
     }
 
     #[test]
@@ -633,75 +660,75 @@ mod test {
         drop(cm2);
     }
 
-    // #[test]
-    // fn bootstrap_with_blacklist() {
-    //     BootstrapHandler::cleanup().unwrap();
-    //
-    //     let (ignored_category_tx, _) = channel();
-    //     let (ignored_event_tx, _) = channel();
-    //
-    //     let (category_tx, category_rx) = channel();
-    //     let (event_tx, event_rx) = channel();
-    //
-    //     let event_sender0 = MaidSafeObserver::new(ignored_event_tx.clone(),
-    //                                               MaidSafeEventCategory::CrustEvent,
-    //                                               ignored_category_tx.clone());
-    //
-    //     let event_sender1 = MaidSafeObserver::new(ignored_event_tx,
-    //                                               MaidSafeEventCategory::CrustEvent,
-    //                                               ignored_category_tx);
-    //
-    //     let event_sender2 = MaidSafeObserver::new(event_tx,
-    //                                               MaidSafeEventCategory::CrustEvent,
-    //                                               category_tx);
-    //
-    //
-    //
-    //     // Start accepting on these two services and keep their endpoints.
-    //     let mut service0 = Service::new(event_sender0).unwrap();
-    //     let mut service1 = Service::new(event_sender1).unwrap();
-    //
-    //     let endpoints = loopback_if_unspecified(vec![service0.start_accepting(Port::Tcp(0))
-    //                                                          .unwrap(),
-    //                                                  service1.start_accepting(Port::Tcp(0))
-    //                                                          .unwrap()]);
-    //
-    //     // Write those endpoints to the config file, so the next service will
-    //     // try to connect to them.
-    //     let _config_file = make_temp_config_with_endpoints(&endpoints);
-    //
-    //     // Bootstrap another service but blacklist one of the endpoints in the
-    //     // config file.
-    //     let blacklisted_endpoint = endpoints[0];
-    //     let mut service2 = Service::new(event_sender2).unwrap();
-    //     service2.bootstrap_with_blacklist(0, None, &[blacklisted_endpoint]);
-    //
-    //     let mut connected_endpoints = Vec::new();
-    //
-    //     for category in category_rx.iter() {
-    //         match category {
-    //             MaidSafeEventCategory::CrustEvent => {
-    //                 match event_rx.try_recv() {
-    //                     Ok(Event::BootstrapFinished) => break,
-    //                     Ok(Event::OnConnect(Ok((_, conn)), _)) => {
-    //                         connected_endpoints.push(conn.peer_endpoint());
-    //                     }
-    //                     event => println!("event: {:?}", event),
-    //                 }
-    //             }
-    //
-    //             _ => unreachable!("This category should not have been fired - {:?}", category),
-    //         }
-    //     }
-    //
-    //     // Test that the third service did not connect to the blacklisted
-    //     // endpoints.
-    //     assert!(!connected_endpoints.is_empty());
-    //
-    //     for endpoint in connected_endpoints {
-    //         assert!(endpoint != blacklisted_endpoint);
-    //     }
-    // }
+    #[test]
+    fn bootstrap_with_blacklist() {
+        BootstrapHandler::cleanup().unwrap();
+
+        let (ignored_category_tx, _) = channel();
+        let (ignored_event_tx, _) = channel();
+
+        let (category_tx, category_rx) = channel();
+        let (event_tx, event_rx) = channel();
+
+        let event_sender0 = MaidSafeObserver::new(ignored_event_tx.clone(),
+                                                  MaidSafeEventCategory::CrustEvent,
+                                                  ignored_category_tx.clone());
+
+        let event_sender1 = MaidSafeObserver::new(ignored_event_tx,
+                                                  MaidSafeEventCategory::CrustEvent,
+                                                  ignored_category_tx);
+
+        let event_sender2 = MaidSafeObserver::new(event_tx,
+                                                  MaidSafeEventCategory::CrustEvent,
+                                                  category_tx);
+
+
+
+        // Start accepting on these two services and keep their endpoints.
+        let mut service0 = Service::new(event_sender0).unwrap();
+        let mut service1 = Service::new(event_sender1).unwrap();
+
+        let endpoints = loopback_if_unspecified(vec![service0.start_accepting(Port::Tcp(0))
+                                                             .unwrap(),
+                                                     service1.start_accepting(Port::Tcp(0))
+                                                             .unwrap()]);
+
+        // Write those endpoints to the config file, so the next service will
+        // try to connect to them.
+        let _config_file = make_temp_config_with_endpoints(&endpoints);
+
+        // Bootstrap another service but blacklist one of the endpoints in the
+        // config file.
+        let blacklisted_endpoint = endpoints[0];
+        let mut service2 = Service::new(event_sender2).unwrap();
+        service2.bootstrap_with_blacklist(0, None, &[blacklisted_endpoint]);
+
+        let mut connected_endpoints = Vec::new();
+
+        for category in category_rx.iter() {
+            match category {
+                MaidSafeEventCategory::CrustEvent => {
+                    match event_rx.try_recv() {
+                        Ok(Event::BootstrapFinished) => break,
+                        Ok(Event::OnConnect(Ok((_, conn)), _)) => {
+                            connected_endpoints.push(conn.peer_endpoint());
+                        }
+                        event => println!("event: {:?}", event),
+                    }
+                }
+
+                _ => unreachable!("This category should not have been fired - {:?}", category),
+            }
+        }
+
+        // Test that the third service did not connect to the blacklisted
+        // endpoints.
+        assert!(!connected_endpoints.is_empty());
+
+        for endpoint in connected_endpoints {
+            assert!(endpoint != blacklisted_endpoint);
+        }
+    }
 
     #[test]
     fn connection_manager() {
@@ -855,6 +882,151 @@ mod test {
 
         assert!(runner1.join().is_ok());
         assert!(runner2.join().is_ok());
+    }
+
+    #[test]
+    fn lost_rendezvous_connection() {
+        let (category_tx, category_rx) = channel();
+        let (event_tx, event_rx) = channel();
+
+        let event_sender0 = MaidSafeObserver::new(
+                                event_tx.clone(),
+                                MaidSafeEventCategory::CrustEvent,
+                                category_tx.clone());
+
+        let event_sender1 = MaidSafeObserver::new(
+                                event_tx,
+                                MaidSafeEventCategory::CrustEvent,
+                                category_tx);
+
+        let service0 = Service::new(event_sender0).unwrap();
+        let service1 = Service::new(event_sender1).unwrap();
+
+        let socket0 = UdpSocket::bind("0.0.0.0:0").unwrap();
+        let socket1 = UdpSocket::bind("0.0.0.0:0").unwrap();
+
+        let port0 = socket0.local_addr().unwrap().port();
+        let addr0 = SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), port0);
+
+        let port1 = socket1.local_addr().unwrap().port();
+        let addr1 = SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), port1);
+
+        let token0 = 0;
+        let token1 = 1;
+
+        service0.rendezvous_connect(socket0, token0, Endpoint::utp(addr1));
+        service1.rendezvous_connect(socket1, token1, Endpoint::utp(addr0));
+
+        let _joiner = RaiiThreadJoiner::new(spawn(move || {
+            let mut service1 = Some(service1);
+
+            let mut peer0_connection = None;
+            let mut peer1_connection = None;
+
+            let mut peer0_received_lost_connection = false;
+
+            let timeout = ::std::time::Duration::from_millis(1000);
+
+            while let Some(category) = try_recv_with_timeout(&category_rx, timeout) {
+                match category {
+                    MaidSafeEventCategory::CrustEvent => {
+                        match event_rx.try_recv() {
+                            Ok(Event::OnRendezvousConnect(Ok((_, conn)), token)) => {
+                                match token {
+                                    0 => peer0_connection = Some(conn),
+                                    1 => peer1_connection = Some(conn),
+                                    _ => unreachable!("Token {} should not have been sent", token)
+                                }
+
+                                if peer0_connection.is_some() &&
+                                   peer1_connection.is_some()
+                                {
+                                    // Drop this service to cause lost connection.
+                                    let _ = service1.take();
+                                }
+                            },
+
+                            Ok(Event::LostConnection(conn)) => {
+                                if Some(conn) == peer0_connection {
+                                    peer0_received_lost_connection = true;
+                                    break;
+                                }
+                            },
+
+                            event => println!("event: {:?}", event),
+                        }
+                    },
+
+                    _ => unreachable!("This category should not have been fired - {:?}", category),
+                }
+            }
+
+            assert!(peer0_received_lost_connection);
+        }));
+    }
+
+    #[test]
+    fn lost_tcp_connection() {
+        let (category_tx, category_rx) = channel();
+        let (event_tx, event_rx) = channel();
+
+        let event_sender0 = MaidSafeObserver::new(
+                                event_tx.clone(),
+                                MaidSafeEventCategory::CrustEvent,
+                                category_tx.clone());
+
+        let event_sender1 = MaidSafeObserver::new(
+                                event_tx,
+                                MaidSafeEventCategory::CrustEvent,
+                                category_tx);
+
+        let mut service0 = Service::new(event_sender0).unwrap();
+        let service1     = Service::new(event_sender1).unwrap();
+
+        let endpoint0 = service0.start_accepting(Port::Tcp(0))
+                                .unwrap()
+                                .map_ip_addr(::util::loopback_if_unspecified);
+
+        service1.connect(0, vec![endpoint0]);
+
+        let _joiner = RaiiThreadJoiner::new(spawn(move || {
+            let mut peer0_connection = None;
+            let mut peer0_received_lost_connection = false;
+
+            let mut service1 = Some(service1);
+
+            let timeout = ::std::time::Duration::from_millis(1000);
+
+            while let Some(category) = try_recv_with_timeout(&category_rx, timeout) {
+                match category {
+                    MaidSafeEventCategory::CrustEvent => {
+                        match event_rx.try_recv() {
+                            Ok(Event::OnAccept(_, conn)) => {
+                                peer0_connection = Some(conn);
+                            },
+
+                            Ok(Event::OnConnect(Ok(_), _)) => {
+                                // Drop this service.
+                                let _ = service1.take();
+                            },
+
+                            Ok(Event::LostConnection(conn)) => {
+                                if Some(conn) == peer0_connection {
+                                    peer0_received_lost_connection = true;
+                                    break;
+                                }
+                            },
+
+                            _ => (),
+                        }
+                    },
+
+                    _ => unreachable!("This category should not have been fired - {:?}", category),
+                }
+            }
+
+            assert!(peer0_received_lost_connection);
+        }));
     }
 
     #[test]
@@ -1072,30 +1244,30 @@ mod test {
         }
     }
 
-    // #[test]
-    // fn remove_bootstrap_contact() {
-    //     let endpoint0 = Endpoint::tcp("250.0.0.1:55555");
-    //     let endpoint1 = Endpoint::tcp("250.0.0.2:55556");
-    //
-    //     BootstrapHandler::cleanup().unwrap();
-    //     let mut cache = BootstrapHandler::new();
-    //     cache.update_contacts(vec![endpoint0, endpoint1], vec![]).unwrap();
-    //
-    //     {
-    //         let (category_tx, _) = channel();
-    //         let (event_tx, _) = channel();
-    //         let event_sender = MaidSafeObserver::new(event_tx,
-    //                                                  MaidSafeEventCategory::CrustEvent,
-    //                                                  category_tx);
-    //         let mut service = Service::new(event_sender).unwrap();
-    //         service.remove_bootstrap_contact(endpoint0);
-    //
-    //         // The nested scope here causes the service to be dropped which
-    //         // joins all its internal threads. This is to make sure all
-    //         // asynchronous operations are completed before we continue.
-    //     }
-    //
-    //     let contacts = cache.read_file().unwrap();
-    //     assert!(!contacts.contains(&endpoint0));
-    // }
+    #[test]
+    fn remove_bootstrap_contact() {
+        let endpoint0 = Endpoint::tcp("250.0.0.1:55555");
+        let endpoint1 = Endpoint::tcp("250.0.0.2:55556");
+
+        BootstrapHandler::cleanup().unwrap();
+        let mut cache = BootstrapHandler::new();
+        cache.update_contacts(vec![endpoint0, endpoint1], vec![]).unwrap();
+
+        {
+            let (category_tx, _) = channel();
+            let (event_tx, _) = channel();
+            let event_sender = MaidSafeObserver::new(event_tx,
+                                                     MaidSafeEventCategory::CrustEvent,
+                                                     category_tx);
+            let mut service = Service::new(event_sender).unwrap();
+            service.remove_bootstrap_contact(endpoint0);
+
+            // The nested scope here causes the service to be dropped which
+            // joins all its internal threads. This is to make sure all
+            // asynchronous operations are completed before we continue.
+        }
+
+        let contacts = cache.read_file().unwrap();
+        assert!(!contacts.contains(&endpoint0));
+    }
 }

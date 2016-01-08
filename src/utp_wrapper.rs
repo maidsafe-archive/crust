@@ -1,5 +1,5 @@
 use utp::UtpSocket;
-use std::sync::mpsc::{Sender, Receiver, TryRecvError};
+use std::sync::mpsc::{Receiver, TryRecvError};
 use std::sync::mpsc;
 use std::thread;
 use std::io::{Read, ErrorKind};
@@ -11,19 +11,19 @@ const CHECK_FOR_NEW_WRITES_INTERVAL_MS: u64 = 50;
 const BUFFER_SIZE: usize = 1000;
 
 pub struct UtpWrapper {
-    input: Receiver<Vec<u8>>,
-    output: Sender<Vec<u8>>,
-    unread_bytes: Vec<u8>,
-    peer_addr: SocketAddr,
-    local_addr: SocketAddr,
-    _thread_joiner: RaiiThreadJoiner
+    input          : Receiver<Vec<u8>>,
+    unread_bytes   : Vec<u8>,
+    peer_addr      : SocketAddr,
+    local_addr     : SocketAddr,
+    _thread_joiner : RaiiThreadJoiner,
 }
 
 impl UtpWrapper {
-    pub fn wrap(socket: UtpSocket) -> io::Result<UtpWrapper> {
-        let (itx, irx) = mpsc::channel();
-        let (otx, orx) = mpsc::channel::<Vec<u8>>();
-        let peer_addr = try!(socket.peer_addr());
+    pub fn wrap(socket: UtpSocket, output_rx: Receiver<Vec<u8>>)
+        -> io::Result<UtpWrapper>
+    {
+        let (input_tx, input_rx) = mpsc::channel();
+        let peer_addr  = try!(socket.peer_addr());
         let local_addr = try!(socket.local_addr());
 
         let thread_handle = thread::Builder::new()
@@ -38,13 +38,13 @@ impl UtpWrapper {
                     Ok((0, _src)) => break,
                     Ok((amt, _src)) => {
                         let buf = &buf[..amt];
-                        let _ = itx.send(Vec::from(buf));
+                        let _ = input_tx.send(Vec::from(buf));
                     },
                     Err(ref e) if e.kind() == ErrorKind::TimedOut => {
                         // This extra loop ensures all pending messages are sent
                         // before we try to read again.
                         loop {
-                            match orx.try_recv() {
+                            match output_rx.try_recv() {
                                 Ok(v) => {
                                     if socket.send_to(&v[..]).is_err() {
                                         break 'outer;
@@ -61,12 +61,11 @@ impl UtpWrapper {
         }).unwrap();
 
         Ok(UtpWrapper {
-            input: irx,
-            output: otx,
-            unread_bytes: Vec::new(),
-            peer_addr: peer_addr,
-            local_addr: local_addr,
-            _thread_joiner: RaiiThreadJoiner::new(thread_handle)
+            input          : input_rx,
+            unread_bytes   : Vec::new(),
+            peer_addr      : peer_addr,
+            local_addr     : local_addr,
+            _thread_joiner : RaiiThreadJoiner::new(thread_handle),
         })
     }
 
@@ -76,10 +75,6 @@ impl UtpWrapper {
 
     pub fn local_addr(&self) -> SocketAddr {
         self.local_addr.clone()
-    }
-
-    pub fn output(&self) -> Sender<Vec<u8>> {
-        self.output.clone()
     }
 }
 
