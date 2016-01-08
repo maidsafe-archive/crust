@@ -64,10 +64,10 @@ pub fn write_config_file(hard_coded_endpoints: Option<Vec<::transport::Endpoint>
     let mut config_path = try!(::file_handler::current_bin_dir());
     config_path.push(get_file_name());
     let mut file = try!(::std::fs::File::create(&config_path));
-    let _ = try!(write!(&mut file,
-                        "{}",
-                        ::rustc_serialize::json::as_pretty_json(&config)));
-    let _ = try!(file.sync_all());
+    try!(write!(&mut file,
+                "{}",
+                ::rustc_serialize::json::as_pretty_json(&config)));
+    try!(file.sync_all());
     Ok(config_path)
 }
 

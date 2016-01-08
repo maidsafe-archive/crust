@@ -57,7 +57,7 @@ pub fn blocking_get_mapped_udp_socket
     };
 
     let res = try!(::crossbeam::scope(|scope| -> io::Result<Option<(SocketAddr, usize)>> {
-        for helper in helper_nodes.iter() {
+        for helper in &helper_nodes {
             let sender = try!(udp_socket.try_clone());
             let _periodic_sender = PeriodicSender::start(sender,
                                                          *helper,

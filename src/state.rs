@@ -373,7 +373,7 @@ impl State {
 
     fn seek_peers(beacon_guid: Option<[u8; 16]>, beacon_port: u16) -> Vec<Endpoint> {
         match beacon::seek_peers(beacon_port, beacon_guid) {
-            Ok(peers) => peers.into_iter().map(|a| transport::Endpoint::Tcp(a)).collect(),
+            Ok(peers) => peers.into_iter().map(transport::Endpoint::Tcp).collect(),
             Err(_) => Vec::new(),
         }
     }
@@ -438,17 +438,17 @@ impl State {
               T: Send + 'static
     {
         thread::Builder::new()
-            .name("State::".to_string() + name)
+            .name("State::".to_owned() + name)
             .spawn(f)
     }
 
     fn is_connected_to(&self, endpoint: &Endpoint) -> bool {
-        for pair in self.connections.iter() {
+        for pair in &self.connections {
             if pair.0.peer_endpoint() == *endpoint {
                 return true;
             }
         }
-        return false;
+        false
     }
 
     fn get_ordered_helping_nodes(&self) -> Vec<SocketAddr> {
@@ -506,8 +506,8 @@ mod test {
     use util;
 
     fn testable_endpoint(acceptor: &Acceptor) -> Endpoint {
-        let addr = match acceptor {
-            &Acceptor::Tcp(ref listener) => {
+        let addr = match *acceptor {
+            Acceptor::Tcp(ref listener) => {
                 listener.local_addr()
                         .unwrap()
             }

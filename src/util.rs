@@ -158,51 +158,51 @@ pub fn loopback_v4(port: transport::Port) -> transport::Endpoint {
 }
 
 pub fn is_v4(ip_addr: &IpAddr) -> bool {
-    match ip_addr {
-        &IpAddr::V4(_) => true,
-        &IpAddr::V6(_) => false,
+    match *ip_addr {
+        IpAddr::V4(_) => true,
+        IpAddr::V6(_) => false,
     }
 }
 
 pub fn is_unspecified(ip_addr: &IpAddr) -> bool {
-    match ip_addr {
-        &IpAddr::V4(ref ip) => ::ip_info::v4::is_unspecified(ip),
-        &IpAddr::V6(ref ip) => ::ip_info::v6::is_unspecified(ip),
+    match *ip_addr {
+        IpAddr::V4(ref ip) => ::ip_info::v4::is_unspecified(ip),
+        IpAddr::V6(ref ip) => ::ip_info::v6::is_unspecified(ip),
     }
 }
 
 pub fn is_loopback(ip_addr: &IpAddr) -> bool {
-    match ip_addr {
-        &IpAddr::V4(ref ip) => ::ip_info::v4::is_loopback(ip),
-        &IpAddr::V6(ref ip) => ::ip_info::v6::is_loopback(ip),
+    match *ip_addr {
+        IpAddr::V4(ref ip) => ::ip_info::v4::is_loopback(ip),
+        IpAddr::V6(ref ip) => ::ip_info::v6::is_loopback(ip),
     }
 }
 
 pub fn is_link_local(ip_addr: &IpAddr) -> bool {
-    match ip_addr {
-        &IpAddr::V4(ref ip) => ::ip_info::v4::is_link_local(ip),
-        &IpAddr::V6(ref _ip) => false, // Not applicable
+    match *ip_addr {
+        IpAddr::V4(ref ip) => ::ip_info::v4::is_link_local(ip),
+        IpAddr::V6(ref _ip) => false, // Not applicable
     }
 }
 
 pub fn is_unicast_link_local(ip_addr: &IpAddr) -> bool {
-    match ip_addr {
-        &IpAddr::V4(ref _ip) => false, // Not applicable
-        &IpAddr::V6(ref ip) => ::ip_info::v6::is_unicast_link_local(ip),
+    match *ip_addr {
+        IpAddr::V4(ref _ip) => false, // Not applicable
+        IpAddr::V6(ref ip) => ::ip_info::v6::is_unicast_link_local(ip),
     }
 }
 
 pub fn is_private(ip_addr: &IpAddr) -> bool {
-    match ip_addr {
-        &IpAddr::V4(ref ip) => ::ip_info::v4::is_private(ip),
-        &IpAddr::V6(ref _ip) => false, // Not applicable
+    match *ip_addr {
+        IpAddr::V4(ref ip) => ::ip_info::v4::is_private(ip),
+        IpAddr::V6(ref _ip) => false, // Not applicable
     }
 }
 
 pub fn is_unique_local(ip_addr: &IpAddr) -> bool {
-    match ip_addr {
-        &IpAddr::V4(ref _ip) => false, // Not applicable
-        &IpAddr::V6(ref ip) => ::ip_info::v6::is_unique_local(ip),
+    match *ip_addr {
+        IpAddr::V4(ref _ip) => false, // Not applicable
+        IpAddr::V6(ref ip) => ::ip_info::v6::is_unique_local(ip),
     }
 }
 
@@ -217,7 +217,7 @@ pub fn on_same_subnet_v4(ip_addr1: Ipv4Addr, ip_addr2: Ipv4Addr, netmask: Ipv4Ad
         }
     }
 
-    return true;
+    true
 }
 
 pub fn on_same_subnet_v6(ip_addr1: Ipv6Addr, ip_addr2: Ipv6Addr, netmask: Ipv6Addr) -> bool {
@@ -231,7 +231,7 @@ pub fn on_same_subnet_v6(ip_addr1: Ipv6Addr, ip_addr2: Ipv6Addr, netmask: Ipv6Ad
         }
     }
 
-    return true;
+    true
 }
 
 pub fn on_same_subnet(ip_addr1: IpAddr, ip_addr2: IpAddr, netmask: IpAddr) -> bool {
@@ -245,7 +245,7 @@ pub fn on_same_subnet(ip_addr1: IpAddr, ip_addr2: IpAddr, netmask: IpAddr) -> bo
     }
 }
 
-pub fn is_local(ip_addr: &IpAddr, interfaces: &Vec<IfAddr>) -> bool {
+pub fn is_local(ip_addr: &IpAddr, interfaces: &[IfAddr]) -> bool {
     for i in interfaces.iter() {
         if on_same_subnet(i.addr, *ip_addr, i.netmask) {
             return true;
@@ -309,10 +309,10 @@ pub fn heuristic_geo_cmp(ip1: &IpAddr, ip2: &IpAddr) -> Ordering {
     let interfaces = getifaddrs();
 
     match (is_local(ip1, &interfaces), is_local(ip2, &interfaces)) {
-        (true, true) => return Equal,
-        (true, false) => return Less,
-        (false, true) => return Greater,
-        (false, false) => return Equal,
+        (true, true) => Equal,
+        (true, false) => Less,
+        (false, true) => Greater,
+        (false, false) => Equal,
     }
 }
 

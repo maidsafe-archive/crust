@@ -131,10 +131,10 @@ mod test {
             let mut path = try!(::file_handler::current_bin_dir());
             path.push(super::get_file_name());
             let mut file = try!(::std::fs::File::create(&path));
-            let _ = try!(write!(&mut file,
-                                "{}",
-                                ::rustc_serialize::json::as_pretty_json(&Vec::<Endpoint>::new())));
-            let _ = try!(file.sync_all());
+            try!(write!(&mut file,
+                        "{}",
+                        ::rustc_serialize::json::as_pretty_json(&Vec::<Endpoint>::new())));
+            try!(file.sync_all());
             Ok(TestFile { file_path: path })
         }
 
@@ -165,9 +165,9 @@ mod test {
         assert_eq!(bootstrap_handler.read_file().unwrap(), contacts);
 
         // Try duplicating each contact
-        for i in 0..number {
+        for item in &contacts {
             let mut duplicate_contacts = Vec::new();
-            duplicate_contacts.push(contacts[i].clone());
+            duplicate_contacts.push(item.clone());
             assert!(bootstrap_handler.update_contacts(duplicate_contacts, Vec::<Endpoint>::new())
                                      .is_ok());
         }
@@ -190,9 +190,9 @@ mod test {
         assert_eq!(bootstrap_handler.read_file().unwrap(), contacts);
 
         // Prune each contact
-        for i in 0..number {
+        for item in &contacts {
             let mut prune_contacts = Vec::new();
-            prune_contacts.push(contacts[i].clone());
+            prune_contacts.push(item.clone());
             assert!(bootstrap_handler.update_contacts(Vec::<Endpoint>::new(), prune_contacts)
                                      .is_ok());
         }

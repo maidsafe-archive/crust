@@ -284,7 +284,7 @@ impl FileHandler {
         try!(file.set_len(contents.len() as u64));
         let mut mmap = try!(Mmap::open(&file, Protection::ReadWrite));
         try!(unsafe { mmap.as_mut_slice() }.write_all(&contents[..]));
-        mmap.flush().map_err(|error| ::error::Error::IoError(error))
+        mmap.flush().map_err(::error::Error::IoError)
     }
 }
 
@@ -361,7 +361,7 @@ pub struct ScopedUserAppDirRemover;
 impl ScopedUserAppDirRemover {
     fn remove_dir(&mut self) {
         let _ = user_app_dir().and_then(|user_app_dir| {
-            ::std::fs::remove_dir_all(user_app_dir).map_err(|error| ::error::Error::IoError(error))
+            ::std::fs::remove_dir_all(user_app_dir).map_err(::error::Error::IoError)
         });
     }
 }

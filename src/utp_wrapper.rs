@@ -25,7 +25,7 @@ impl UtpWrapper {
         let local_addr = try!(socket.local_addr());
 
         let _ = thread::Builder::new()
-                    .name("rust-utp multiplexer".to_string())
+                    .name("rust-utp multiplexer".to_owned())
                     .spawn(move || {
                         let mut socket = socket;
                         socket.set_read_timeout(Some(CHECK_FOR_NEW_WRITES_INTERVAL_MS));

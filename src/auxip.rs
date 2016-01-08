@@ -29,9 +29,9 @@ pub enum Port {
 
 impl Port {
     pub fn number(&self) -> u16 {
-        match self {
-            &Port::Tcp(n) => n,
-            &Port::Udp(n) => n,
+        match *self {
+            Port::Tcp(n) => n,
+            Port::Udp(n) => n,
         }
     }
 }

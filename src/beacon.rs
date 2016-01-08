@@ -81,8 +81,8 @@ impl BroadcastAcceptor {
         let socket = try!(UdpSocket::bind(("0.0.0.0", port)));
         let acceptor = try!(Acceptor::new(Port::Tcp(0)));
         let mut guid = [0; GUID_SIZE];
-        for i in 0..GUID_SIZE {
-            guid[i] = random::<u8>();
+        for item in &mut guid {
+            *item = random::<u8>();
         }
         let tcp_listener_port = acceptor.local_port().number();
         Ok(BroadcastAcceptor {
@@ -97,7 +97,7 @@ impl BroadcastAcceptor {
         let (transport_sender, transport_receiver) = mpsc::channel();
         let protected_tcp_acceptor = self.acceptor.clone();
         let tcp_acceptor_thread = try!(thread::Builder::new()
-                                           .name("Beacon accept TCP acceptor".to_string())
+                                           .name("Beacon accept TCP acceptor".to_owned())
                                            .spawn(move || -> Result<()> {
                                                let tcp_acceptor = protected_tcp_acceptor.lock()
                                                                                         .unwrap();
@@ -113,7 +113,7 @@ impl BroadcastAcceptor {
         let tcp_port = self.tcp_listener_port;
         let (socket_sender, socket_receiver) = mpsc::channel::<SocketAddr>();
         let udp_listener_thread = try!(thread::Builder::new()
-                .name("Beacon accept UDP listener".to_string())
+                .name("Beacon accept UDP listener".to_owned())
                 .spawn(move || -> Result<()> {
             let socket = protected_socket.lock().unwrap();
             let mut buffer = vec![0u8; MAGIC_SIZE + GUID_SIZE];
@@ -226,7 +226,7 @@ pub fn seek_peers(port: u16, guid_to_avoid: Option<GUID>) -> Result<Vec<SocketAd
     // Start receiving responses to the broadcast
     let (tx, rx) = mpsc::channel::<SocketAddr>();
     let _udp_response_thread = thread::Builder::new()
-                                   .name("Beacon seek_peers UDP response".to_string())
+                                   .name("Beacon seek_peers UDP response".to_owned())
                                    .spawn(move || -> Result<()> {
                                        loop {
                                            let mut buffer = [0u8; 8];
@@ -270,7 +270,7 @@ pub fn seek_peers(port: u16, guid_to_avoid: Option<GUID>) -> Result<Vec<SocketAd
     // Send the shutdown signal, giving the peers some time to respond first.
     let _shutdown_thread =
         thread::Builder::new()
-            .name("Beacon seek_peers UDP shutdown".to_string())
+            .name("Beacon seek_peers UDP shutdown".to_owned())
             .spawn(move || {
                 thread::sleep(Duration::from_millis(500));
                 let killer_socket = match UdpSocket::bind("0.0.0.0:0") {
@@ -304,14 +304,14 @@ mod test {
         let acceptor = BroadcastAcceptor::new(0).unwrap();
         let acceptor_port = acceptor.beacon_port();
 
-        let t1 = thread::Builder::new().name("test_beacon sender".to_string()).spawn(move || {
+        let t1 = thread::Builder::new().name("test_beacon sender".to_owned()).spawn(move || {
             let mut transport = acceptor.accept().unwrap().1;
             transport.sender
-                     .send(&Message::UserBlob("hello beacon".to_string().into_bytes()))
+                     .send(&Message::UserBlob("hello beacon".to_owned().into_bytes()))
                      .unwrap();
         });
 
-        let t2 = thread::Builder::new().name("test_beacon receiver".to_string()).spawn(move || {
+        let t2 = thread::Builder::new().name("test_beacon receiver".to_owned()).spawn(move || {
             let endpoint = seek_peers(acceptor_port, None).unwrap()[0];
             let mut transport = State::connect(Handshake::default(),
                                                transport::Endpoint::Tcp(endpoint))
@@ -322,7 +322,7 @@ mod test {
                           _ => panic!("Wrong message type"),
                       })
                           .unwrap();
-            assert!(msg == "hello beacon".to_string());
+            assert!(msg == "hello beacon");
         });
 
         assert!(t1.is_ok());
@@ -338,20 +338,20 @@ mod test {
         let my_guid = acceptor.guid.clone();
 
         let t1 = thread::Builder::new()
-                     .name("test_avoid_beacon acceptor".to_string())
+                     .name("test_avoid_beacon acceptor".to_owned())
                      .spawn(move || {
                          let _ = acceptor.accept().unwrap();
                      });
 
         let t2 = thread::Builder::new()
-                     .name("test_avoid_beacon seek_peers 1".to_string())
+                     .name("test_avoid_beacon seek_peers 1".to_owned())
                      .spawn(move || {
-                         assert!(seek_peers(acceptor_port, Some(my_guid)).unwrap().len() == 0);
+                         assert!(seek_peers(acceptor_port, Some(my_guid)).unwrap().is_empty());
                      });
 
         // This one is just so that the first thread breaks.
         let t3 = thread::Builder::new()
-                     .name("test_avoid_beacon seek_peers 2".to_string())
+                     .name("test_avoid_beacon seek_peers 2".to_owned())
                      .spawn(move || {
                          thread::sleep(::std::time::Duration::from_millis(700));
                          let endpoint = seek_peers(acceptor_port, None).unwrap()[0];

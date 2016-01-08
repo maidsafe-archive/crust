@@ -45,7 +45,7 @@ pub fn upgrade_tcp(stream: TcpStream) -> IoResult<(TcpStream, Sender<Vec<u8>>)> 
 fn upgrade_writer(mut stream: TcpStream) -> Sender<Vec<u8>> {
     let (tx, rx) = mpsc::channel::<Vec<u8>>();
     let _ = thread::Builder::new()
-                .name("TCP writer".to_string())
+                .name("TCP writer".to_owned())
                 .spawn(move || {
                     while let Ok(v) = rx.recv() {
                         use std::io::Write;
@@ -93,8 +93,8 @@ mod test {
             while len < 10 {
                 len += i.read(&mut buf[len..]).unwrap();
             }
-            for i in 0..buf.len() {
-                buf[i] += 1;
+            for item in &mut buf {
+                *item += 1;
             }
             o.send(buf.iter().cloned().collect()).unwrap();
         });
@@ -154,8 +154,8 @@ mod test {
                 while len < MSG_COUNT {
                     len += i.read(&mut buf[len..]).unwrap()
                 }
-                for i in 0..buf.len() {
-                    buf[i] += 1
+                for item in &mut buf {
+                    *item += 1
                 }
                 o.send(buf.iter().cloned().collect()).unwrap()
             });
@@ -241,18 +241,18 @@ mod test {
 
     // drop(tcp_listener);
     // assert!(t.join().is_ok());
-    // /let first_binding;
+    // let first_binding;
 
-    /// /{
-    /// /    let (event_receiver, listener) = listen().unwrap();
-    /// /    first_binding = listener.local_addr().unwrap();
-    /// /}
-    /// /{
-    /// /    let (event_receiver, listener) = listen().unwrap();
-    /// /    let second_binding = listener.local_addr().unwrap();
-    /// /    assert_eq!(first_binding.port(), second_binding.port());
-    /// /}
-    /// }
+    // {
+    //     let (event_receiver, listener) = listen().unwrap();
+    //     first_binding = listener.local_addr().unwrap();
+    // }
+    // {
+    //     let (event_receiver, listener) = listen().unwrap();
+    //     let second_binding = listener.local_addr().unwrap();
+    //     assert_eq!(first_binding.port(), second_binding.port());
+    // }
+    // }
 
     // #[test]
     // fn test_stream_large_data() {

@@ -130,8 +130,8 @@ impl Encodable for Endpoint {
     fn encode<E: Encoder>(&self, e: &mut E) -> Result<(), E::Error> {
         let s = EndpointSerialiser {
             protocol: match *self {
-                Endpoint::Tcp(_) => "tcp".to_string(),
-                Endpoint::Utp(_) => "utp".to_string(),
+                Endpoint::Tcp(_) => "tcp".to_owned(),
+                Endpoint::Utp(_) => "utp".to_owned(),
             },
             address: self.get_address().to_string(),
         };
@@ -221,8 +221,8 @@ pub struct Handshake {
     pub remote_ip: util::SocketAddrW,
 }
 
-impl Handshake {
-    pub fn default() -> Handshake {
+impl Default for Handshake {
+    fn default() -> Self {
         Handshake {
             mapper_port: None,
             external_ip: None,

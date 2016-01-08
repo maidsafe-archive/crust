@@ -64,13 +64,13 @@ mod getifaddrs_posix {
             return None;
         }
         if unsafe { *sockaddr }.sa_family as u32 == AF_INET as u32 {
-            let ref sa = unsafe { *(sockaddr as *const posix_sockaddr_in) };
-            Some(IpAddr::V4(Ipv4Addr::new(((sa.sin_addr.s_addr >> 0) & 255) as u8,
+            let sa = &unsafe { *(sockaddr as *const posix_sockaddr_in) };
+            Some(IpAddr::V4(Ipv4Addr::new(((sa.sin_addr.s_addr) & 255) as u8,
                                           ((sa.sin_addr.s_addr >> 8) & 255) as u8,
                                           ((sa.sin_addr.s_addr >> 16) & 255) as u8,
                                           ((sa.sin_addr.s_addr >> 24) & 255) as u8)))
         } else if unsafe { *sockaddr }.sa_family as u32 == AF_INET6 as u32 {
-            let ref sa = unsafe { *(sockaddr as *const posix_sockaddr_in6) };
+            let sa = &unsafe { *(sockaddr as *const posix_sockaddr_in6) };
             // Ignore all fe80:: addresses as these are link locals
             if sa.sin6_addr.s6_addr[0] == 0x80fe {
                 return None;
@@ -118,19 +118,19 @@ mod getifaddrs_posix {
             }
         }
 
-        let mut _ifaddr = ifaddrs;
+        let mut ifaddr = ifaddrs;
         let mut first = true;
-        while !_ifaddr.is_null() {
+        while !ifaddr.is_null() {
             if first {
                 first = false;
             } else {
-                _ifaddr = unsafe { (*_ifaddr).ifa_next };
+                ifaddr = unsafe { (*ifaddr).ifa_next };
             }
-            if _ifaddr.is_null() {
+            if ifaddr.is_null() {
                 break;
             }
-            let ref ifaddr = unsafe { *_ifaddr };
-            // debug!("ifaddr1={}, next={}", _ifaddr as u64, ifaddr.ifa_next as u64);
+            let ifaddr = &unsafe { *ifaddr };
+            // debug!("ifaddr1={}, next={}", ifaddr as u64, ifaddr.ifa_next as u64);
             if ifaddr.ifa_addr.is_null() {
                 continue;
             }
@@ -312,19 +312,19 @@ mod getifaddrs_windows {
             }
         }
 
-        let mut _ifaddr = ifaddrs;
+        let mut ifaddr = ifaddrs;
         let mut first = true;
-        while !_ifaddr.is_null() {
+        while !ifaddr.is_null() {
             if first {
                 first = false;
             } else {
-                _ifaddr = unsafe { (*_ifaddr).next };
+                ifaddr = unsafe { (*ifaddr).next };
             }
-            if _ifaddr.is_null() {
+            if ifaddr.is_null() {
                 break;
             }
-            let ref ifaddr = unsafe { &*_ifaddr };
-            // debug!("ifaddr1={}, next={}", _ifaddr as u64, ifaddr.ifa_next as u64);
+            let ref ifaddr = unsafe { &*ifaddr };
+            // debug!("ifaddr1={}, next={}", ifaddr as u64, ifaddr.ifa_next as u64);
 
             let mut addr = ifaddr.first_unicast_address;
             if addr.is_null() {
