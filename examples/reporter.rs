@@ -375,7 +375,7 @@ fn run(connected: Arc<AtomicBool>, config: &Config) -> Report {
                     }
                 },
                 None => {
-                    service.stop();
+                    drop(service);
                     break;
                 }
             };
