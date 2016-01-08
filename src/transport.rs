@@ -268,6 +268,38 @@ pub enum Receiver {
     Utp(cbor::Decoder<BufReader<utp_connections::UtpWrapper>>),
 }
 
+#[derive(Debug)]
+enum ReceiverError {
+    FailedToDecodeCbor(cbor::CborError),
+    EndOfStream
+}
+
+impl fmt::Display for ReceiverError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let msg = match *self {
+            ReceiverError::FailedToDecodeCbor(_) => "Failed to decode CBOR",
+            ReceiverError::EndOfStream => "Decoder reached end of stream",
+        };
+        write!(f, "ReceiverError({})", msg)
+    }
+}
+
+impl ::std::error::Error for ReceiverError {
+    fn description(&self) -> &str {
+        match *self {
+            ReceiverError::FailedToDecodeCbor(_) => "Failed to decode CBOR",
+            ReceiverError::EndOfStream => "Decoder reached end of stream",
+        }
+    }
+
+    fn cause(&self) -> Option<&Error> {
+        match *self {
+            ReceiverError::FailedToDecodeCbor(ref e) => Some(e),
+            ReceiverError::EndOfStream => None,
+        }
+    }
+}
+
 impl Receiver {
     fn basic_receive<D: Decodable>(&mut self) -> IoResult<D> {
         match {
@@ -280,10 +312,12 @@ impl Receiver {
                 },
             }
         } {
-            Some(a) => a.or(Err(io::Error::new(io::ErrorKind::InvalidData,
-                                               "Failed to decode CBOR"))),
+            Some(a) => a.or_else(|e| {
+                Err(io::Error::new(io::ErrorKind::InvalidData,
+                                   ReceiverError::FailedToDecodeCbor(e)))
+            }),
             None => Err(io::Error::new(io::ErrorKind::NotConnected,
-                                       "Decoder reached end of stream")),
+                                       ReceiverError::EndOfStream)),
         }
     }
 
