@@ -915,6 +915,7 @@ mod test {
     }
 
     fn test_network(protocol: Protocol) {
+        thread::sleep(::std::time::Duration::from_secs(5));
         BootstrapHandler::cleanup().unwrap();
 
         const NETWORK_SIZE: u32 = 10;
