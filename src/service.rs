@@ -525,7 +525,7 @@ mod test {
     }
 
     #[allow(dead_code)]
-    fn decode<T>(bytes: &Vec<u8>) -> T
+    fn decode<T>(bytes: &[u8]) -> T
         where T: Decodable
     {
         let mut dec = Decoder::from_bytes(&bytes[..]);
@@ -714,12 +714,12 @@ mod test {
                             if let Ok(event) = o.try_recv() {
                                 match event {
                                     Event::OnConnect(Ok((_, other_ep)), _) => {
-                                        let _ = cm.send(other_ep.clone(),
-                                                        encode(&"hello world".to_string()));
+                                        cm.send(other_ep.clone(),
+                                                encode(&"hello world".to_owned()));
                                     }
                                     Event::OnAccept(_, other_ep) => {
-                                        let _ = cm.send(other_ep.clone(),
-                                                        encode(&"hello world".to_string()));
+                                        cm.send(other_ep.clone(),
+                                                encode(&"hello world".to_owned()));
                                     }
                                     Event::NewMessage(_, _) => {
                                         break;
@@ -782,8 +782,8 @@ mod test {
                                 Ok(event) => {
                                     match event {
                                         Event::OnRendezvousConnect(Ok((_, other_ep)), _) => {
-                                            let _ = cm.send(other_ep.clone(),
-                                                            encode(&"hello world".to_string()));
+                                            cm.send(other_ep.clone(),
+                                                    encode(&"hello world".to_owned()));
                                         }
                                         Event::OnRendezvousConnect(Err(_), _) => {
                                             panic!("Cannot establish rendezvous connection");
@@ -934,7 +934,7 @@ mod test {
         }
 
         let mut nodes = (0..NETWORK_SIZE)
-                            .map(|i| Node::new(i))
+                            .map(Node::new)
                             .collect::<Vec<_>>();
 
         let mut runners = Vec::new();
@@ -944,12 +944,12 @@ mod test {
                                          node.service.start_accepting(Port::Tcp(0)).unwrap()
                                      })
                                      .map(|ep| ep.map_ip_addr(::util::loopback_if_unspecified))
-                                     .collect::<::std::collections::LinkedList<_>>();
+                                     .collect::<::std::collections::VecDeque<_>>();
 
-        for mut node in nodes.into_iter() {
+        for mut node in nodes {
             assert!(listening_eps.pop_front().is_some());
 
-            for ep in listening_eps.iter() {
+            for ep in &listening_eps {
                 node.service.connect(0, vec![ep.clone()]);
             }
 
@@ -958,7 +958,7 @@ mod test {
 
         let mut stats = Stats::new();
 
-        for runner in runners.into_iter() {
+        for runner in runners {
             let s = runner.join().unwrap();
             stats.add(s)
         }
@@ -995,11 +995,8 @@ mod test {
                 match it {
                     ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent => {
                         if let Ok(event) = cm_rx.try_recv() {
-                            match event {
-                                Event::LostConnection(_) => {
-                                    break;
-                                }
-                                _ => {}
+                            if let Event::LostConnection(_) = event {
+                                break;
                             }
                         } else {
                             break;
@@ -1026,9 +1023,8 @@ mod test {
                 match it {
                     ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent => {
                         if let Ok(event) = cm_aux_rx.try_recv() {
-                            match event {
-                                Event::OnConnect(_, _) => break,
-                                _ => (),
+                            if let Event::OnConnect(_, _) = event {
+                                break;
                             }
                         } else {
                             break;

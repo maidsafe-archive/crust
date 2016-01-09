@@ -373,7 +373,7 @@ impl State {
 
     fn seek_peers(beacon_guid: Option<[u8; 16]>, beacon_port: u16) -> Vec<Endpoint> {
         match beacon::seek_peers(beacon_port, beacon_guid) {
-            Ok(peers) => peers.into_iter().map(|a| transport::Endpoint::Tcp(a)).collect(),
+            Ok(peers) => peers.into_iter().map(transport::Endpoint::Tcp).collect(),
             Err(_) => Vec::new(),
         }
     }
@@ -438,7 +438,7 @@ impl State {
               T: Send + 'static
     {
         thread::Builder::new()
-            .name("State::".to_string() + name)
+            .name("State::".to_owned() + name)
             .spawn(f)
     }
 
@@ -488,7 +488,7 @@ impl State {
 
             let _ = event_sender.send(Event::OnUdpSocketMapped(MappedUdpSocket {
                 result_token: result_token,
-                result: res,
+                result: result,
             }));
         });
     }
@@ -506,8 +506,8 @@ mod test {
     use util;
 
     fn testable_endpoint(acceptor: &Acceptor) -> Endpoint {
-        let addr = match acceptor {
-            &Acceptor::Tcp(ref listener) => {
+        let addr = match *acceptor {
+            Acceptor::Tcp(ref listener) => {
                 listener.local_addr()
                         .unwrap()
             }

@@ -245,7 +245,7 @@ pub fn on_same_subnet(ip_addr1: IpAddr, ip_addr2: IpAddr, netmask: IpAddr) -> bo
     }
 }
 
-pub fn is_local(ip_addr: &IpAddr, interfaces: &Vec<IfAddr>) -> bool {
+pub fn is_local(ip_addr: &IpAddr, interfaces: &[IfAddr]) -> bool {
     for i in interfaces.iter() {
         if on_same_subnet(i.addr, *ip_addr, i.netmask) {
             return true;

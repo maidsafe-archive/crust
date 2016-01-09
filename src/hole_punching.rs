@@ -41,9 +41,9 @@ pub struct SetExternalAddr {
 }
 
 pub fn blocking_get_mapped_udp_socket
-                                      (request_id: u32,
-                                       helper_nodes: Vec<SocketAddr>)
-                                       -> io::Result<(UdpSocket, Option<SocketAddr>, Vec<SocketAddr>)> {
+    (request_id: u32,
+     helper_nodes: Vec<SocketAddr>)
+     -> io::Result<(UdpSocket, Option<SocketAddr>, Vec<SocketAddr>)> {
     const MAX_DATAGRAM_SIZE: usize = 256;
 
     let udp_socket = try!(UdpSocket::bind("0.0.0.0:0"));

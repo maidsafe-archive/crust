@@ -31,7 +31,7 @@ pub fn async_map_external_port<Callback>(local_ep: auxip::Endpoint, callback: Ca
     where Callback: FnOnce(io::Result<Vec<(SocketAddrV4, auxip::Endpoint)>>) + Send + 'static
 {
     let _detach = thread::Builder::new()
-                      .name("async_map_external_port".to_string())
+                      .name("async_map_external_port".to_owned())
                       .spawn(move || {
                           let res = sync_map_external_port(&local_ep);
                           callback(res);
@@ -79,7 +79,7 @@ pub fn sync_map_external_port(local_ep: &auxip::Endpoint)
     let mut join_handles = Vec::with_capacity(eps_count);
     for local_ep in local_eps {
         join_handles.push(thread::Builder::new()
-                              .name("sync_map_external_port".to_string())
+                              .name("sync_map_external_port".to_owned())
                               .spawn(move || {
                                   let result = map_external_port(local_ep, local_port);
                                   result.map(|ext_ep| (local_ep, ext_ep))

@@ -77,8 +77,9 @@ impl FileHandler {
     /// and reading or decoding fails, this function **WILL TERMINATE THE APPLICATION.**  This means
     /// that the only cause for an error to be returned from this function is the non-existence of
     /// the file in all attempted locations.
-    pub fn read_file<Contents: ::rustc_serialize::Decodable>(&mut self) ->
-            Result<Contents, ::error::Error> {
+    pub fn read_file<Contents: ::rustc_serialize::Decodable>
+        (&mut self)
+         -> Result<Contents, ::error::Error> {
         let mut last_error = ::error::Error::NotSet;
 
         let paths = vec![self.path().clone().ok_or(::error::Error::NotSet),
@@ -93,12 +94,12 @@ impl FileHandler {
                     match Self::read::<Contents>(path.clone()) {
                         Ok(content) => {
                             return Ok(content);
-                        },
+                        }
                         Err(error) => {
                             last_error = error;
                         }
                     }
-                },
+                }
                 Err(error) => {
                     last_error = error;
                 }
@@ -146,9 +147,12 @@ impl FileHandler {
     ///
     /// See [Thread- and Process-Safety](#thread--and-process-safety) for notes on thread- and
     /// process-safety.
-    pub fn write_file<Contents: ::rustc_serialize::Encodable>(&mut self, contents: &Contents) ->
-            Result<(), ::error::Error> {
-        self.path().clone().ok_or(::error::Error::NotSet)
+    pub fn write_file<Contents: ::rustc_serialize::Encodable>(&mut self,
+                                                              contents: &Contents)
+                                                              -> Result<(), ::error::Error> {
+        self.path()
+            .clone()
+            .ok_or(::error::Error::NotSet)
             .and_then(|mut path| {
                 path.push(self.name.clone());
                 Self::write(path, contents)
@@ -156,28 +160,33 @@ impl FileHandler {
             .or_else(|error| {
                 // Only try to create in the sys dir if we've not previously read the file
                 match error {
-                    ::error::Error::NotSet =>
+                    ::error::Error::NotSet => {
                         self.set_path(system_cache_dir())
                             .and_then(|mut path| {
                                 path.push(self.name.clone());
                                 Self::write(path, contents)
-                            }),
+                            })
+                    }
                     _ => Err(error),
                 }
             })
-            .or_else(|_| self.set_path(user_app_dir()).and_then(|mut path| {
-                path.push(self.name.clone());
-                Self::write(path, contents)
-            }))
-            .or_else(|_| self.set_path(user_app_dir())
-                             .and_then(|path| {
-                                try!(::std::fs::create_dir_all(path.clone()));
-                                Ok(path)
-                             })
-                             .and_then(|mut path| {
-                                path.push(self.name.clone());
-                                Self::write(path, contents)
-                             }))
+            .or_else(|_| {
+                self.set_path(user_app_dir()).and_then(|mut path| {
+                    path.push(self.name.clone());
+                    Self::write(path, contents)
+                })
+            })
+            .or_else(|_| {
+                self.set_path(user_app_dir())
+                    .and_then(|path| {
+                        try!(::std::fs::create_dir_all(path.clone()));
+                        Ok(path)
+                    })
+                    .and_then(|mut path| {
+                        path.push(self.name.clone());
+                        Self::write(path, contents)
+                    })
+            })
             .or_else(|error| {
                 self.path = None;
                 Err(error)
@@ -195,10 +204,11 @@ impl FileHandler {
         &self.path
     }
 
-    fn set_path(&mut self, new_path: Result<::std::path::PathBuf, ::error::Error>) ->
-            Result<::std::path::PathBuf, ::error::Error> {
+    fn set_path(&mut self,
+                new_path: Result<::std::path::PathBuf, ::error::Error>)
+                -> Result<::std::path::PathBuf, ::error::Error> {
         new_path.and_then(|path| {
-            //path.push(self.name.clone());
+            // path.push(self.name.clone());
             self.path = Some(path.clone());
             Ok(path)
         })
@@ -225,9 +235,9 @@ impl FileHandler {
     }
 
     #[allow(unsafe_code)]
-    fn read<Contents: ::rustc_serialize::Decodable>(path: ::std::path::PathBuf) ->
-            Result<Contents, ::error::Error> {
-        use ::rustc_serialize::json::{Json, Decoder};
+    fn read<Contents: ::rustc_serialize::Decodable>(path: ::std::path::PathBuf)
+                                                    -> Result<Contents, ::error::Error> {
+        use rustc_serialize::json::{Json, Decoder};
         use memmap::{Mmap, Protection};
         match ::std::fs::File::open(&path) {
             Ok(file) => {
@@ -236,35 +246,35 @@ impl FileHandler {
                     Err(error) => {
                         Self::die(format!("Failed to read {:?}: {}", path, error), 2);
                         unreachable!()
-                    },
+                    }
                 };
                 let bytes: &[u8] = unsafe { file.as_slice() };
                 let mut cursor = io::Cursor::new(bytes);
-                match Json::from_reader(&mut cursor).map_err(|e| format!("{}", e))
-                    .and_then(|j| {
-                        Contents::decode(&mut Decoder::new(j))
-                            .map_err(|e| format!("{}", e))
-                    }) {
+                match Json::from_reader(&mut cursor)
+                          .map_err(|e| format!("{}", e))
+                          .and_then(|j| {
+                              Contents::decode(&mut Decoder::new(j)).map_err(|e| format!("{}", e))
+                          }) {
                     Ok(contents) => Ok(contents),
                     Err(error) => {
                         Self::die(format!("Failed to decode {:?}: {}", path, error), 3);
                         unreachable!();
-                    },
+                    }
                 }
-            },
+            }
             Err(error) => {
                 if !Self::path_or_file_not_found(&error) && !Self::permission_denied(&error) {
                     Self::die(format!("Failed to open {:?}: {}", path, error), 1);
                 }
                 Err(::error::Error::IoError(error))
-            },
+            }
         }
     }
 
     #[allow(unsafe_code)]
     fn write<Contents: ::rustc_serialize::Encodable>(path: ::std::path::PathBuf,
-                                                     contents: &Contents) ->
-            Result<(), ::error::Error> {
+                                                     contents: &Contents)
+                                                     -> Result<(), ::error::Error> {
         use memmap::{Mmap, Protection};
         use rustc_serialize::json;
         use std::fs::OpenOptions;
@@ -274,7 +284,7 @@ impl FileHandler {
         try!(file.set_len(contents.len() as u64));
         let mut mmap = try!(Mmap::open(&file, Protection::ReadWrite));
         try!(unsafe { mmap.as_mut_slice() }.write_all(&contents[..]));
-        mmap.flush().map_err(|error| ::error::Error::IoError(error))
+        mmap.flush().map_err(::error::Error::IoError)
     }
 }
 
@@ -302,7 +312,7 @@ pub fn user_app_dir() -> Result<::std::path::PathBuf, ::error::Error> {
 #[cfg(any(target_os="macos", target_os="ios", target_os="linux"))]
 pub fn user_app_dir() -> Result<::std::path::PathBuf, ::error::Error> {
     Ok(try!(join_exe_file_stem(&try!(::std::env::home_dir().ok_or(not_found_error()))
-                              .join(".config"))))
+                                    .join(".config"))))
 }
 
 /// The full path to a system cache directory available for all users.  See also [an example config
@@ -350,9 +360,9 @@ pub struct ScopedUserAppDirRemover;
 
 impl ScopedUserAppDirRemover {
     fn remove_dir(&mut self) {
-        let _ = user_app_dir().and_then(|user_app_dir|
-                                            ::std::fs::remove_dir_all(user_app_dir)
-                                                .map_err(|error| ::error::Error::IoError(error)));
+        let _ = user_app_dir().and_then(|user_app_dir| {
+            ::std::fs::remove_dir_all(user_app_dir).map_err(::error::Error::IoError)
+        });
     }
 }
 
@@ -375,15 +385,16 @@ mod test {
     #[test]
     fn read_write_file_test() {
         let _cleaner = super::ScopedUserAppDirRemover;
-        let mut file_handler =
-            super::FileHandler::new(::std::path::Path::new("file_handler_test.json").to_path_buf());
+        let mut file_handler = super::FileHandler::new(::std::path::Path::new("file_handler_test\
+                                                                               .json")
+                                                           .to_path_buf());
         let test_value = 123456789u64;
 
         match file_handler.read_file::<u64>() {
             Ok(result) => {
                 assert_eq!(result, test_value);
                 assert!(!file_handler.path().is_none());
-            },
+            }
             Err(_) => assert!(file_handler.path().is_none()),
         }
 
@@ -396,7 +407,7 @@ mod test {
             Ok(result) => {
                 assert_eq!(result, test_value);
                 assert!(!file_handler.path().is_none());
-            },
+            }
             Err(_) => assert!(file_handler.path().is_none()),
         }
     }

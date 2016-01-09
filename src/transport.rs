@@ -15,7 +15,8 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::net::{SocketAddr, SocketAddrV4, SocketAddrV6, TcpStream, TcpListener, ToSocketAddrs, UdpSocket};
+use std::net::{SocketAddr, SocketAddrV4, SocketAddrV6, TcpStream, TcpListener, ToSocketAddrs,
+               UdpSocket};
 use ip::IpAddr;
 use tcp_connections;
 use utp_connections;
@@ -59,12 +60,8 @@ impl Endpoint {
     /// Construct a new Endpoint
     pub fn new(addr: IpAddr, port: Port) -> Endpoint {
         let socketaddr = match addr {
-            IpAddr::V4(a) => {
-                SocketAddr::V4(SocketAddrV4::new(a, port.number()))
-            },
-            IpAddr::V6(a) => {
-                SocketAddr::V6(SocketAddrV6::new(a, port.number(), 0, 0xe))
-            },
+            IpAddr::V4(a) => SocketAddr::V4(SocketAddrV4::new(a, port.number())),
+            IpAddr::V6(a) => SocketAddr::V6(SocketAddrV6::new(a, port.number(), 0, 0xe)),
         };
         match port {
             Port::Tcp(_) => Endpoint::Tcp(socketaddr),
@@ -125,15 +122,18 @@ impl Endpoint {
 
 #[derive(Debug, RustcDecodable, RustcEncodable)]
 struct EndpointSerialiser {
-    pub protocol : String,
-    pub address : String,
+    pub protocol: String,
+    pub address: String,
 }
 
 impl Encodable for Endpoint {
-    fn encode<E: Encoder>(&self, e: &mut E)->Result<(), E::Error> {
+    fn encode<E: Encoder>(&self, e: &mut E) -> Result<(), E::Error> {
         let s = EndpointSerialiser {
-            protocol: match *self { Endpoint::Tcp(_) => "tcp".to_string(), Endpoint::Utp(_) => "utp".to_string(), },
-            address: self.get_address().to_string()
+            protocol: match *self {
+                Endpoint::Tcp(_) => "tcp".to_owned(),
+                Endpoint::Utp(_) => "utp".to_owned(),
+            },
+            address: self.get_address().to_string(),
         };
         try!(s.encode(e));
         Ok(())
@@ -141,17 +141,23 @@ impl Encodable for Endpoint {
 }
 
 impl Decodable for Endpoint {
-    fn decode<D: Decoder>(d: &mut D)->Result<Endpoint, D::Error> {
+    fn decode<D: Decoder>(d: &mut D) -> Result<Endpoint, D::Error> {
         let decoded: EndpointSerialiser = try!(Decodable::decode(d));
         match SocketAddr::from_str(&decoded.address) {
-            Ok(address) => if decoded.protocol=="tcp" {
-                Ok(Endpoint::Tcp(address))
-            } else if decoded.protocol=="utp" {
-                Ok(Endpoint::Utp(address))
-            } else {
-                Err(d.error(&(format!("Unknown Protocol {}", decoded.protocol))))
-            },
-            _ => Err(d.error(&(format!("Expecting Protocol and SocketAddr string, but found : {:?}", decoded)))),
+            Ok(address) => {
+                if decoded.protocol == "tcp" {
+                    Ok(Endpoint::Tcp(address))
+                } else if decoded.protocol == "utp" {
+                    Ok(Endpoint::Utp(address))
+                } else {
+                    Err(d.error(&(format!("Unknown Protocol {}", decoded.protocol))))
+                }
+            }
+            _ => {
+                Err(d.error(&(format!("Expecting Protocol and SocketAddr string, but found : \
+                                       {:?}",
+                                      decoded))))
+            }
         }
     }
 }
@@ -166,14 +172,18 @@ impl Ord for Endpoint {
     fn cmp(&self, other: &Endpoint) -> Ordering {
         use Endpoint::{Tcp, Utp};
         match *self {
-            Tcp(ref a1) => match *other {
-                Tcp(ref a2) => util::compare_ip_addrs(a1, a2),
-                Utp(_) => Ordering::Greater,
-            },
-            Utp(ref a1) => match *other {
-                Tcp(_) => Ordering::Less,
-                Utp(ref a2) => util::compare_ip_addrs(a1, a2)
-            },
+            Tcp(ref a1) => {
+                match *other {
+                    Tcp(ref a2) => util::compare_ip_addrs(a1, a2),
+                    Utp(_) => Ordering::Greater,
+                }
+            }
+            Utp(ref a1) => {
+                match *other {
+                    Tcp(_) => Ordering::Less,
+                    Utp(ref a2) => util::compare_ip_addrs(a1, a2),
+                }
+            }
         }
     }
 }
@@ -197,7 +207,7 @@ impl Port {
     }
 }
 
-//--------------------------------------------------------------------
+// --------------------------------------------------------------------
 
 #[derive(Debug, Clone, RustcDecodable, RustcEncodable)]
 /// After a connection is established, peers should exchange a handshake.
@@ -211,8 +221,8 @@ pub struct Handshake {
     pub remote_ip: util::SocketAddrW,
 }
 
-impl Handshake {
-    pub fn default() -> Handshake {
+impl Default for Handshake {
+    fn default() -> Self {
         Handshake {
             mapper_port: None,
             external_ip: None,
@@ -230,7 +240,7 @@ pub enum Message {
     HolePunchAddress(util::SocketAddrV4W),
 }
 
-//--------------------------------------------------------------------
+// --------------------------------------------------------------------
 pub enum Sender {
     Tcp(mpsc::Sender<Vec<u8>>),
     Utp(mpsc::Sender<Vec<u8>>),
@@ -261,7 +271,7 @@ impl Sender {
     }
 }
 
-//--------------------------------------------------------------------
+// --------------------------------------------------------------------
 #[allow(variant_size_differences)]
 pub enum Receiver {
     Tcp(cbor::Decoder<BufReader<TcpStream>>),
@@ -304,20 +314,16 @@ impl Receiver {
     fn basic_receive<D: Decodable>(&mut self) -> IoResult<D> {
         match {
             match *self {
-                Receiver::Tcp(ref mut decoder) => {
-                    decoder.decode::<D>().next()
-                },
-                Receiver::Utp(ref mut decoder) => {
-                    decoder.decode::<D>().next()
-                },
+                Receiver::Tcp(ref mut decoder) => decoder.decode::<D>().next(),
+                Receiver::Utp(ref mut decoder) => decoder.decode::<D>().next(),
             }
         } {
-            Some(a) => a.or_else(|e| {
-                Err(io::Error::new(io::ErrorKind::InvalidData,
-                                   ReceiverError::FailedToDecodeCbor(e)))
-            }),
-            None => Err(io::Error::new(io::ErrorKind::NotConnected,
-                                       ReceiverError::EndOfStream)),
+            Some(a) => {
+                a.or(Err(io::Error::new(io::ErrorKind::InvalidData, "Failed to decode CBOR")))
+            }
+            None => {
+                Err(io::Error::new(io::ErrorKind::NotConnected, "Decoder reached end of stream"))
+            }
         }
     }
 
@@ -330,7 +336,7 @@ impl Receiver {
     }
 }
 
-//--------------------------------------------------------------------
+// --------------------------------------------------------------------
 pub enum Acceptor {
     // TCP listener
     Tcp(TcpListener),
@@ -351,11 +357,11 @@ impl Acceptor {
                 };
 
                 Ok(Acceptor::Tcp(listener))
-            },
+            }
             Port::Utp(port) => {
                 let listener = try!(UtpListener::bind(("0.0.0.0", port)));
                 Ok(Acceptor::Utp(listener))
-            },
+            }
         }
     }
 
@@ -387,31 +393,25 @@ impl fmt::Debug for Transport {
 pub fn connect(remote_ep: Endpoint) -> IoResult<Transport> {
     match remote_ep {
         Endpoint::Tcp(ep) => {
-            let (i,o) = try!(tcp_connections::connect_tcp(ep)
-                             .map_err(|e| io::Error::new(io::ErrorKind::NotConnected,
-                                                         e.description())));
-            let connection_id = Connection::new(
-                Protocol::Tcp,
-                try!(i.local_addr()),
-                try!(i.peer_addr()),
-            );
+            let (i, o) = try!(tcp_connections::connect_tcp(ep).map_err(|e| {
+                io::Error::new(io::ErrorKind::NotConnected, e.description())
+            }));
+            let connection_id = Connection::new(Protocol::Tcp,
+                                                try!(i.local_addr()),
+                                                try!(i.peer_addr()));
 
             Ok(Transport {
                 receiver: Receiver::Tcp(cbor::Decoder::from_reader(i)),
                 sender: Sender::Tcp(o),
                 connection_id: connection_id,
             })
-        },
+        }
         Endpoint::Utp(ep) => {
-            let (i, o) = try!(utp_connections::connect_utp(ep)
-                              .map_err(|e| io::Error::new(io::ErrorKind::NotConnected,
-                                                          e.description())));
+            let (i, o) = try!(utp_connections::connect_utp(ep).map_err(|e| {
+                io::Error::new(io::ErrorKind::NotConnected, e.description())
+            }));
 
-            let connection_id = Connection::new(
-                Protocol::Utp,
-                i.local_addr(),
-                i.peer_addr(),
-            );
+            let connection_id = Connection::new(Protocol::Utp, i.local_addr(), i.peer_addr());
 
             Ok(Transport {
                 receiver: Receiver::Utp(cbor::Decoder::from_reader(i)),
@@ -423,29 +423,27 @@ pub fn connect(remote_ep: Endpoint) -> IoResult<Transport> {
 }
 
 pub fn rendezvous_connect(udp_socket: UdpSocket,
-                          public_ep: Endpoint /* of B */ )
+                          public_ep: Endpoint /* of B */)
                           -> IoResult<Transport> {
     match public_ep {
         Endpoint::Utp(ep) => {
-            let (i, o) = try!(utp_connections::rendezvous_connect_utp(udp_socket,
-                                                                      ep)
-                              .map_err(|e| io::Error::new(io::ErrorKind::NotConnected,
-                                                          e.description())));
+            let (i, o) = try!(utp_connections::rendezvous_connect_utp(udp_socket, ep)
+                                  .map_err(|e| {
+                                      io::Error::new(io::ErrorKind::NotConnected, e.description())
+                                  }));
 
-            let connection_id = Connection::new(
-                Protocol::Utp,
-                i.local_addr(),
-                i.peer_addr(),
-            );
+            let connection_id = Connection::new(Protocol::Utp, i.local_addr(), i.peer_addr());
 
             Ok(Transport {
                 receiver: Receiver::Utp(cbor::Decoder::from_reader(i)),
                 sender: Sender::Utp(o),
                 connection_id: connection_id,
             })
-        },
-        _ => Err(io::Error::new(io::ErrorKind::InvalidInput,
-                                "TCP rendezvous connect not supported")),
+        }
+        _ => {
+            Err(io::Error::new(io::ErrorKind::InvalidInput,
+                               "TCP rendezvous connect not supported"))
+        }
     }
 }
 
@@ -459,36 +457,30 @@ pub fn accept(acceptor: &Acceptor) -> IoResult<Transport> {
 
             let (i, o) = try!(tcp_connections::upgrade_tcp(stream));
 
-            let connection_id = Connection::new(
-                Protocol::Tcp,
-                try!(i.local_addr()),
-                try!(i.peer_addr())
-            );
+            let connection_id = Connection::new(Protocol::Tcp,
+                                                try!(i.local_addr()),
+                                                try!(i.peer_addr()));
 
             Ok(Transport {
                 receiver: Receiver::Tcp(cbor::Decoder::from_reader(i)),
                 sender: Sender::Tcp(o),
                 connection_id: connection_id,
             })
-        },
+        }
         Acceptor::Utp(ref listener) => {
             let (stream, _remote_endpoint) = try!(listener.accept()
                 .map_err(|e| io::Error::new(io::ErrorKind::NotConnected, e.description())));
 
             let (i, o) = try!(utp_connections::upgrade_utp(stream));
 
-            let connection_id = Connection::new(
-                Protocol::Utp,
-                i.local_addr(),
-                i.peer_addr(),
-            );
+            let connection_id = Connection::new(Protocol::Utp, i.local_addr(), i.peer_addr());
 
-            Ok(Transport{
+            Ok(Transport {
                 receiver: Receiver::Utp(cbor::Decoder::from_reader(i)),
                 sender: Sender::Utp(o),
                 connection_id: connection_id,
             })
-        },
+        }
     }
 }
 
@@ -498,11 +490,25 @@ mod test {
     use std::net::{SocketAddr, SocketAddrV4, SocketAddrV6, Ipv4Addr, Ipv6Addr};
 
     fn v4(a: u8, b: u8, c: u8, d: u8, e: u16) -> Endpoint {
-        Endpoint::Tcp(SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(a,b,c,d),e)))
+        Endpoint::Tcp(SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(a, b, c, d), e)))
     }
 
-    fn v6(a: u16, b: u16, c: u16, d: u16, e: u16, f: u16, g: u16, h: u16, i: u16, j: u32, k: u32) -> Endpoint {
-        Endpoint::Tcp(SocketAddr::V6(SocketAddrV6::new(Ipv6Addr::new(a,b,c,d,e,f,g,h),i, j, k)))
+    fn v6(a: u16,
+          b: u16,
+          c: u16,
+          d: u16,
+          e: u16,
+          f: u16,
+          g: u16,
+          h: u16,
+          i: u16,
+          j: u32,
+          k: u32)
+          -> Endpoint {
+        Endpoint::Tcp(SocketAddr::V6(SocketAddrV6::new(Ipv6Addr::new(a, b, c, d, e, f, g, h),
+                                                       i,
+                                                       j,
+                                                       k)))
     }
 
     fn test(smaller: Endpoint, bigger: Endpoint) {
@@ -533,8 +539,7 @@ mod test {
         let (tx, rx) = channel();
         let t = thread::spawn(move || {
             let addr = Ipv4Addr::new(127, 0, 0, 1);
-            let _ = tx.send(TcpStream::connect(SocketAddrV4::new(addr, port))
-                            .unwrap());
+            let _ = tx.send(TcpStream::connect(SocketAddrV4::new(addr, port)).unwrap());
         });
         let socketa = listener.accept().unwrap().0;
         t.join().unwrap();
@@ -555,40 +560,62 @@ mod test {
         }
     }
 
-#[test]
+    #[test]
     fn test_ord() {
-        test(v4(1,2,3,4,5), v4(2,2,3,4,5));
-        test(v4(1,2,3,4,5), v4(1,3,3,4,5));
-        test(v4(1,2,3,4,5), v4(1,2,4,4,5));
-        test(v4(1,2,3,4,5), v4(1,2,3,5,5));
-        test(v4(1,2,3,4,5), v4(1,2,3,4,6));
+        test(v4(1, 2, 3, 4, 5), v4(2, 2, 3, 4, 5));
+        test(v4(1, 2, 3, 4, 5), v4(1, 3, 3, 4, 5));
+        test(v4(1, 2, 3, 4, 5), v4(1, 2, 4, 4, 5));
+        test(v4(1, 2, 3, 4, 5), v4(1, 2, 3, 5, 5));
+        test(v4(1, 2, 3, 4, 5), v4(1, 2, 3, 4, 6));
 
-        test(v4(1,2,3,4,5), v6(0,0,0,0,0,0,0,0,0,0,0));
-        test(v4(1,2,3,4,5), v6(1,2,3,4,5,6,7,8,9,10,11));
-        test(v4(1,2,3,4,5), v6(2,3,4,5,6,7,8,9,10,11,12));
+        test(v4(1, 2, 3, 4, 5), v6(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0));
+        test(v4(1, 2, 3, 4, 5), v6(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11));
+        test(v4(1, 2, 3, 4, 5), v6(2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12));
 
-        test(v6(0,0,0,0,0,0,0,0,0,0,0), v6(1,0,0,0,0,0,0,0,0,0,0));
-        test(v6(0,0,0,0,0,0,0,0,0,0,0), v6(0,1,0,0,0,0,0,0,0,0,0));
-        test(v6(0,0,0,0,0,0,0,0,0,0,0), v6(0,0,1,0,0,0,0,0,0,0,0));
-        test(v6(0,0,0,0,0,0,0,0,0,0,0), v6(0,0,0,1,0,0,0,0,0,0,0));
-        test(v6(0,0,0,0,0,0,0,0,0,0,0), v6(0,0,0,0,1,0,0,0,0,0,0));
-        test(v6(0,0,0,0,0,0,0,0,0,0,0), v6(0,0,0,0,0,1,0,0,0,0,0));
-        test(v6(0,0,0,0,0,0,0,0,0,0,0), v6(0,0,0,0,0,0,1,0,0,0,0));
-        test(v6(0,0,0,0,0,0,0,0,0,0,0), v6(0,0,0,0,0,0,0,1,0,0,0));
-        test(v6(0,0,0,0,0,0,0,0,0,0,0), v6(0,0,0,0,0,0,0,0,1,0,0));
-        test(v6(0,0,0,0,0,0,0,0,0,0,0), v6(0,0,0,0,0,0,0,0,0,1,0));
-        test(v6(0,0,0,0,0,0,0,0,0,0,0), v6(0,0,0,0,0,0,0,0,0,0,1));
+        test(v6(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+             v6(1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0));
+        test(v6(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+             v6(0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0));
+        test(v6(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+             v6(0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0));
+        test(v6(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+             v6(0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0));
+        test(v6(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+             v6(0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0));
+        test(v6(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+             v6(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0));
+        test(v6(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+             v6(0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0));
+        test(v6(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+             v6(0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0));
+        test(v6(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+             v6(0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0));
+        test(v6(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+             v6(0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0));
+        test(v6(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+             v6(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1));
 
-        test(v6(1,2,3,4,5,6,7,8,9,10,11), v6(2,2,3,4,5,6,7,8,9,10,11));
-        test(v6(1,2,3,4,5,6,7,8,9,10,11), v6(1,3,3,4,5,6,7,8,9,10,11));
-        test(v6(1,2,3,4,5,6,7,8,9,10,11), v6(1,2,4,4,5,6,7,8,9,10,11));
-        test(v6(1,2,3,4,5,6,7,8,9,10,11), v6(1,2,3,5,5,6,7,8,9,10,11));
-        test(v6(1,2,3,4,5,6,7,8,9,10,11), v6(1,2,3,4,6,6,7,8,9,10,11));
-        test(v6(1,2,3,4,5,6,7,8,9,10,11), v6(1,2,3,4,5,7,7,8,9,10,11));
-        test(v6(1,2,3,4,5,6,7,8,9,10,11), v6(1,2,3,4,5,6,8,8,9,10,11));
-        test(v6(1,2,3,4,5,6,7,8,9,10,11), v6(1,2,3,4,5,6,7,9,9,10,11));
-        test(v6(1,2,3,4,5,6,7,8,9,10,11), v6(1,2,3,4,5,6,7,8,10,10,11));
-        test(v6(1,2,3,4,5,6,7,8,9,10,11), v6(1,2,3,4,5,6,7,8,9,11,11));
-        test(v6(1,2,3,4,5,6,7,8,9,10,11), v6(1,2,3,4,5,6,7,8,9,10,12));
+        test(v6(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
+             v6(2, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11));
+        test(v6(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
+             v6(1, 3, 3, 4, 5, 6, 7, 8, 9, 10, 11));
+        test(v6(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
+             v6(1, 2, 4, 4, 5, 6, 7, 8, 9, 10, 11));
+        test(v6(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
+             v6(1, 2, 3, 5, 5, 6, 7, 8, 9, 10, 11));
+        test(v6(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
+             v6(1, 2, 3, 4, 6, 6, 7, 8, 9, 10, 11));
+        test(v6(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
+             v6(1, 2, 3, 4, 5, 7, 7, 8, 9, 10, 11));
+        test(v6(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
+             v6(1, 2, 3, 4, 5, 6, 8, 8, 9, 10, 11));
+        test(v6(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
+             v6(1, 2, 3, 4, 5, 6, 7, 9, 9, 10, 11));
+        test(v6(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
+             v6(1, 2, 3, 4, 5, 6, 7, 8, 10, 10, 11));
+        test(v6(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
+             v6(1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 11));
+        test(v6(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
+             v6(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12));
     }
 }

@@ -32,8 +32,7 @@ impl SequenceNumber {
     pub fn increment(&mut self) {
         if self.num != ::std::u32::MAX {
             self.num += 1
-        }
-        else {
+        } else {
             self.num = 0;
         }
     }
@@ -58,8 +57,7 @@ impl Ord for SequenceNumber {
             } else {
                 Ordering::Greater
             }
-        }
-        else {
+        } else {
             if (self.num - other.num) > MIDDLE {
                 Ordering::Less
             } else {
@@ -79,7 +77,7 @@ impl PartialOrd for SequenceNumber {
 mod test {
     use sequence_number::SequenceNumber;
 
-    const MAX:    u32 = ::std::u32::MAX;
+    const MAX: u32 = ::std::u32::MAX;
     const MIDDLE: u32 = ::std::u32::MAX / 2;
 
     #[test]
@@ -120,4 +118,3 @@ mod test {
         assert!(b > a);
     }
 }
-
