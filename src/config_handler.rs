@@ -83,31 +83,31 @@ fn get_file_name() -> ::std::path::PathBuf {
 
 #[cfg(test)]
 mod test {
-    #[test]
-    fn read_config_file_test() {
-        let mut hard_coded_endpoints = Vec::new();
-        let mut hard_coded_contacts = Vec::new();
-        for _ in 0..10 {
-            let random_contact = ::util::random_endpoint();
-            hard_coded_endpoints.push(random_contact.clone());
-            hard_coded_contacts.push(random_contact);
-        }
-        let config = super::Config { hard_coded_contacts: hard_coded_contacts };
-        let _ = super::write_config_file(Some(hard_coded_endpoints));
-        match super::read_config_file() {
-            Ok(recovered_config) => assert_eq!(config, recovered_config),
-            Err(_) => panic!("Failed to read config file."),
-        }
-
-        // Clean up
-        match ::file_handler::current_bin_dir() {
-            Ok(mut config_path) => {
-                config_path.push(super::get_file_name());
-                let _ = ::std::fs::remove_file(&config_path);
-            }
-            Err(_) => (),
-        };
-    }
+    // #[test]
+    // fn read_config_file_test() {
+    //     let mut hard_coded_endpoints = Vec::new();
+    //     let mut hard_coded_contacts = Vec::new();
+    //     for _ in 0..10 {
+    //         let random_contact = ::util::random_endpoint();
+    //         hard_coded_endpoints.push(random_contact.clone());
+    //         hard_coded_contacts.push(random_contact);
+    //     }
+    //     let config = super::Config { hard_coded_contacts: hard_coded_contacts };
+    //     let _ = super::write_config_file(Some(hard_coded_endpoints));
+    //     match super::read_config_file() {
+    //         Ok(recovered_config) => assert_eq!(config, recovered_config),
+    //         Err(_) => panic!("Failed to read config file."),
+    //     }
+    //
+    //     // Clean up
+    //     match ::file_handler::current_bin_dir() {
+    //         Ok(mut config_path) => {
+    //             config_path.push(super::get_file_name());
+    //             let _ = ::std::fs::remove_file(&config_path);
+    //         }
+    //         Err(_) => (),
+    //     };
+    // }
 
     #[test]
     fn parse_sample_config_file() {

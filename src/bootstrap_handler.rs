@@ -118,14 +118,14 @@ fn get_file_name() -> ::std::path::PathBuf {
 mod test {
     use endpoint::Endpoint;
 
-    pub fn random_global_endpoints(count: usize) -> Vec<Endpoint> {
-        let mut contacts = Vec::new();
-        for _ in 0..count {
-            contacts.push(random_global_endpoint());
-        }
-        contacts
-    }
-
+    // pub fn random_global_endpoints(count: usize) -> Vec<Endpoint> {
+    //     let mut contacts = Vec::new();
+    //     for _ in 0..count {
+    //         contacts.push(random_global_endpoint());
+    //     }
+    //     contacts
+    // }
+    //
     pub fn random_endpoints(count: usize) -> Vec<Endpoint> {
         let mut contacts = Vec::new();
         for _ in 0..count {
@@ -134,16 +134,16 @@ mod test {
         contacts
     }
 
-    pub fn random_global_endpoint() -> Endpoint {
-        // TODO - randomise V4/V6 and TCP/UTP
-        let address =
-            ::std::net::SocketAddrV4::new(::std::net::Ipv4Addr::new(173, // ensure is a global addr
-                                                                    ::rand::random::<u8>(),
-                                                                    ::rand::random::<u8>(),
-                                                                    ::rand::random::<u8>()),
-                                          ::rand::random::<u16>());
-        Endpoint::Tcp(::std::net::SocketAddr::V4(address))
-    }
+    // pub fn random_global_endpoint() -> Endpoint {
+    //     // TODO - randomise V4/V6 and TCP/UTP
+    //     let address =
+    //         ::std::net::SocketAddrV4::new(::std::net::Ipv4Addr::new(173, // ensure is a global addr
+    //                                                                 ::rand::random::<u8>(),
+    //                                                                 ::rand::random::<u8>(),
+    //                                                                 ::rand::random::<u8>()),
+    //                                       ::rand::random::<u16>());
+    //     Endpoint::Tcp(::std::net::SocketAddr::V4(address))
+    // }
 
     struct TestFile {
         file_path: ::std::path::PathBuf,
@@ -176,116 +176,115 @@ mod test {
         }
     }
 
-    #[test]
-    fn duplicates() {
-        let number = 10usize;
-        let contacts = random_global_endpoints(number);
-        assert_eq!(contacts.len(), number);
-        let _test_file = TestFile::new().unwrap();
+    // #[test]
+    // fn duplicates() {
+    //     let number = 10usize;
+    //     let contacts = random_global_endpoints(number);
+    //     assert_eq!(contacts.len(), number);
+    //     let _test_file = TestFile::new().unwrap();
+    //
+    //     // Add contacts
+    //     let mut bootstrap_handler = super::BootstrapHandler::new();
+    //     assert!(bootstrap_handler.update_contacts(contacts.clone(), Vec::<Endpoint>::new())
+    //                              .is_ok());
+    //
+    //     // Check contacts can be retrieved OK
+    //     assert_eq!(bootstrap_handler.read_file().unwrap(), contacts);
+    //
+    //     // Try duplicating each contact
+    //     for item in &contacts {
+    //         let mut duplicate_contacts = Vec::new();
+    //         duplicate_contacts.push(item.clone());
+    //         assert!(bootstrap_handler.update_contacts(duplicate_contacts, Vec::<Endpoint>::new())
+    //                                  .is_ok());
+    //     }
+    //
+    //     // Bootstrap contacts should remain unaltered
+    //     assert_eq!(bootstrap_handler.read_file().unwrap(), contacts);
+    // }
+    // #[test]
+    // fn prune() {
+    //     let number = 10usize;
+    //     let mut contacts = random_global_endpoints(number);
+    //     assert_eq!(contacts.len(), number);
+    //     let _test_file = TestFile::new().unwrap();
+    //
+    //     // Add contacts
+    //     let mut bootstrap_handler = super::BootstrapHandler::new();
+    //     assert!(bootstrap_handler.update_contacts(contacts.clone(), Vec::<Endpoint>::new())
+    //                              .is_ok());
+    //     assert_eq!(bootstrap_handler.read_file().unwrap(), contacts);
+    //
+    //     // Prune each contact
+    //     for item in &contacts {
+    //         let mut prune_contacts = Vec::new();
+    //         prune_contacts.push(item.clone());
+    //         assert!(bootstrap_handler.update_contacts(Vec::<Endpoint>::new(), prune_contacts)
+    //                                  .is_ok());
+    //     }
+    //
+    //     // Retrieved contacts should be empty
+    //     assert!(bootstrap_handler.read_file().unwrap().is_empty());
+    //
+    //     // Re-add the contacts and check they can be retrieved OK
+    //     assert!(bootstrap_handler.update_contacts(contacts.clone(), Vec::<Endpoint>::new())
+    //                              .is_ok());
+    //     let mut retrieved_contacts = bootstrap_handler.read_file().unwrap();
+    //     assert_eq!(retrieved_contacts, contacts);
+    //
+    //     // Create a new contact
+    //     let new_contact = random_global_endpoint();
+    //     let new_contacts = vec![new_contact.clone(); 1];
+    //
+    //     // Get the last contact in the list and prune it from the bootstrap file
+    //     let prune_contacts = vec![retrieved_contacts.last().unwrap().clone(); 1];
+    //
+    //     // Add the new contact while pruning the last
+    //     assert!(bootstrap_handler.update_contacts(new_contacts, prune_contacts).is_ok());
+    //
+    //     // Update the contact list with expected entries and check the retrieved contacts match
+    //     let _ = contacts.remove(number - 1);
+    //     contacts.insert(0usize, new_contact.clone());
+    //     retrieved_contacts = bootstrap_handler.read_file().unwrap();
+    //     assert_eq!(retrieved_contacts, contacts);
+    // }
 
-        // Add contacts
-        let mut bootstrap_handler = super::BootstrapHandler::new();
-        assert!(bootstrap_handler.update_contacts(contacts.clone(), Vec::<Endpoint>::new())
-                                 .is_ok());
-
-        // Check contacts can be retrieved OK
-        assert_eq!(bootstrap_handler.read_file().unwrap(), contacts);
-
-        // Try duplicating each contact
-        for item in &contacts {
-            let mut duplicate_contacts = Vec::new();
-            duplicate_contacts.push(item.clone());
-            assert!(bootstrap_handler.update_contacts(duplicate_contacts, Vec::<Endpoint>::new())
-                                     .is_ok());
-        }
-
-        // Bootstrap contacts should remain unaltered
-        assert_eq!(bootstrap_handler.read_file().unwrap(), contacts);
-    }
-
-    #[test]
-    fn prune() {
-        let number = 10usize;
-        let mut contacts = random_global_endpoints(number);
-        assert_eq!(contacts.len(), number);
-        let _test_file = TestFile::new().unwrap();
-
-        // Add contacts
-        let mut bootstrap_handler = super::BootstrapHandler::new();
-        assert!(bootstrap_handler.update_contacts(contacts.clone(), Vec::<Endpoint>::new())
-                                 .is_ok());
-        assert_eq!(bootstrap_handler.read_file().unwrap(), contacts);
-
-        // Prune each contact
-        for item in &contacts {
-            let mut prune_contacts = Vec::new();
-            prune_contacts.push(item.clone());
-            assert!(bootstrap_handler.update_contacts(Vec::<Endpoint>::new(), prune_contacts)
-                                     .is_ok());
-        }
-
-        // Retrieved contacts should be empty
-        assert!(bootstrap_handler.read_file().unwrap().is_empty());
-
-        // Re-add the contacts and check they can be retrieved OK
-        assert!(bootstrap_handler.update_contacts(contacts.clone(), Vec::<Endpoint>::new())
-                                 .is_ok());
-        let mut retrieved_contacts = bootstrap_handler.read_file().unwrap();
-        assert_eq!(retrieved_contacts, contacts);
-
-        // Create a new contact
-        let new_contact = random_global_endpoint();
-        let new_contacts = vec![new_contact.clone(); 1];
-
-        // Get the last contact in the list and prune it from the bootstrap file
-        let prune_contacts = vec![retrieved_contacts.last().unwrap().clone(); 1];
-
-        // Add the new contact while pruning the last
-        assert!(bootstrap_handler.update_contacts(new_contacts, prune_contacts).is_ok());
-
-        // Update the contact list with expected entries and check the retrieved contacts match
-        let _ = contacts.remove(number - 1);
-        contacts.insert(0usize, new_contact.clone());
-        retrieved_contacts = bootstrap_handler.read_file().unwrap();
-        assert_eq!(retrieved_contacts, contacts);
-    }
-
-    #[test]
-    fn max_contacts() {
-        let contacts = random_global_endpoints(super::BootstrapHandler::max_contacts());
-        assert_eq!(contacts.len(), super::BootstrapHandler::max_contacts());
-        let _test_file = TestFile::new().unwrap();
-
-        // Add contacts
-        let mut bootstrap_handler = super::BootstrapHandler::new();
-        assert!(bootstrap_handler.update_contacts(contacts.clone(), Vec::<Endpoint>::new())
-                                 .is_ok());
-        assert_eq!(bootstrap_handler.read_file().unwrap(), contacts);
-
-        // Create a new contact
-        let new_contact = random_global_endpoint();
-        let new_contacts = vec![new_contact.clone(); 1];
-
-        // Try inserting without also pruning - bootstrap contacts should remain unaltered
-        assert!(bootstrap_handler.insert_contacts(new_contacts.clone(), Vec::<Endpoint>::new())
-                                 .is_ok());
-        assert_eq!(bootstrap_handler.read_file().unwrap(), contacts);
-
-        // Get the last contact in the list and prune it from the bootstrap file
-        let mut retrieved_contacts = bootstrap_handler.read_file().unwrap();
-        let prune_contacts = vec![retrieved_contacts.last().unwrap().clone(); 1];
-
-        // Add the new contact while pruning the last - bootstrap contacts should now contain the
-        // new contact at the start of the list and not contain the pruned one
-        assert!(bootstrap_handler.update_contacts(new_contacts, prune_contacts.clone()).is_ok());
-        retrieved_contacts = bootstrap_handler.read_file().unwrap();
-        assert!(retrieved_contacts != contacts);
-        assert_eq!(retrieved_contacts.len(),
-                   super::BootstrapHandler::max_contacts());
-        assert_eq!(*retrieved_contacts.first().unwrap(), new_contact);
-        assert!(*retrieved_contacts.last().unwrap() != prune_contacts[0]);
-    }
-
+    // #[test]
+    // fn max_contacts() {
+    //     let contacts = random_global_endpoints(super::BootstrapHandler::max_contacts());
+    //     assert_eq!(contacts.len(), super::BootstrapHandler::max_contacts());
+    //     let _test_file = TestFile::new().unwrap();
+    //
+    //     // Add contacts
+    //     let mut bootstrap_handler = super::BootstrapHandler::new();
+    //     assert!(bootstrap_handler.update_contacts(contacts.clone(), Vec::<Endpoint>::new())
+    //                              .is_ok());
+    //     assert_eq!(bootstrap_handler.read_file().unwrap(), contacts);
+    //
+    //     // Create a new contact
+    //     let new_contact = random_global_endpoint();
+    //     let new_contacts = vec![new_contact.clone(); 1];
+    //
+    //     // Try inserting without also pruning - bootstrap contacts should remain unaltered
+    //     assert!(bootstrap_handler.insert_contacts(new_contacts.clone(), Vec::<Endpoint>::new())
+    //                              .is_ok());
+    //     assert_eq!(bootstrap_handler.read_file().unwrap(), contacts);
+    //
+    //     // Get the last contact in the list and prune it from the bootstrap file
+    //     let mut retrieved_contacts = bootstrap_handler.read_file().unwrap();
+    //     let prune_contacts = vec![retrieved_contacts.last().unwrap().clone(); 1];
+    //
+    //     // Add the new contact while pruning the last - bootstrap contacts should now contain the
+    //     // new contact at the start of the list and not contain the pruned one
+    //     assert!(bootstrap_handler.update_contacts(new_contacts, prune_contacts.clone()).is_ok());
+    //     retrieved_contacts = bootstrap_handler.read_file().unwrap();
+    //     assert!(retrieved_contacts != contacts);
+    //     assert_eq!(retrieved_contacts.len(),
+    //                super::BootstrapHandler::max_contacts());
+    //     assert_eq!(*retrieved_contacts.first().unwrap(), new_contact);
+    //     assert!(*retrieved_contacts.last().unwrap() != prune_contacts[0]);
+    // }
+    //
     #[test]
     fn serialise_and_parse() {
         let contacts = random_endpoints(5);
