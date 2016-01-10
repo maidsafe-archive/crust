@@ -25,7 +25,6 @@
 use endpoint::Endpoint;
 use file_handler::FileHandler;
 use std::io;
-use std::net::SocketAddr;
 use ip::IpAddr;
 
 pub struct BootstrapHandler {
@@ -117,7 +116,34 @@ fn get_file_name() -> ::std::path::PathBuf {
 
 #[cfg(test)]
 mod test {
-    use transport::Endpoint;
+    use endpoint::Endpoint;
+
+    pub fn random_global_endpoints(count: usize) -> Vec<Endpoint> {
+        let mut contacts = Vec::new();
+        for _ in 0..count {
+            contacts.push(random_global_endpoint());
+        }
+        contacts
+    }
+
+    pub fn random_endpoints(count: usize) -> Vec<Endpoint> {
+        let mut contacts = Vec::new();
+        for _ in 0..count {
+            contacts.push(::util::random_endpoint());
+        }
+        contacts
+    }
+
+    pub fn random_global_endpoint() -> Endpoint {
+        // TODO - randomise V4/V6 and TCP/UTP
+        let address =
+            ::std::net::SocketAddrV4::new(::std::net::Ipv4Addr::new(173, // ensure is a global addr
+                                                                    ::rand::random::<u8>(),
+                                                                    ::rand::random::<u8>(),
+                                                                    ::rand::random::<u8>()),
+                                          ::rand::random::<u16>());
+        Endpoint::Tcp(::std::net::SocketAddr::V4(address))
+    }
 
     struct TestFile {
         file_path: ::std::path::PathBuf,
@@ -153,7 +179,7 @@ mod test {
     #[test]
     fn duplicates() {
         let number = 10usize;
-        let contacts = ::util::random_global_endpoints(number);
+        let contacts = random_global_endpoints(number);
         assert_eq!(contacts.len(), number);
         let _test_file = TestFile::new().unwrap();
 
@@ -180,7 +206,7 @@ mod test {
     #[test]
     fn prune() {
         let number = 10usize;
-        let mut contacts = ::util::random_global_endpoints(number);
+        let mut contacts = random_global_endpoints(number);
         assert_eq!(contacts.len(), number);
         let _test_file = TestFile::new().unwrap();
 
@@ -208,7 +234,7 @@ mod test {
         assert_eq!(retrieved_contacts, contacts);
 
         // Create a new contact
-        let new_contact = ::util::random_global_endpoint();
+        let new_contact = random_global_endpoint();
         let new_contacts = vec![new_contact.clone(); 1];
 
         // Get the last contact in the list and prune it from the bootstrap file
@@ -226,7 +252,7 @@ mod test {
 
     #[test]
     fn max_contacts() {
-        let contacts = ::util::random_global_endpoints(super::BootstrapHandler::max_contacts());
+        let contacts = random_global_endpoints(super::BootstrapHandler::max_contacts());
         assert_eq!(contacts.len(), super::BootstrapHandler::max_contacts());
         let _test_file = TestFile::new().unwrap();
 
@@ -237,7 +263,7 @@ mod test {
         assert_eq!(bootstrap_handler.read_file().unwrap(), contacts);
 
         // Create a new contact
-        let new_contact = ::util::random_global_endpoint();
+        let new_contact = random_global_endpoint();
         let new_contacts = vec![new_contact.clone(); 1];
 
         // Try inserting without also pruning - bootstrap contacts should remain unaltered
@@ -262,7 +288,7 @@ mod test {
 
     #[test]
     fn serialise_and_parse() {
-        let contacts = ::util::random_endpoints(5);
+        let contacts = random_endpoints(5);
         let _test_file = TestFile::new().unwrap();
         let mut bootstrap_handler = super::BootstrapHandler::new();
         assert!(bootstrap_handler.update_contacts(contacts.clone(), Vec::<Endpoint>::new())

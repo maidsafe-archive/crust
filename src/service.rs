@@ -25,7 +25,7 @@ use std::str::FromStr;
 use std::net::{SocketAddr, SocketAddrV4, UdpSocket, Ipv4Addr};
 use beacon;
 use config_handler::{Config, read_config_file};
-use getifaddrs::{getifaddrs, filter_loopback};
+use get_if_addrs::{getifaddrs, filter_loopback};
 use transport;
 use transport::Handshake;
 use endpoint::{Endpoint, Port};
@@ -213,8 +213,6 @@ impl Service {
             // Connect to our listening ports, this should unblock
             // the threads.
             for port in &state.listening_ports {
-                let addr = ::util::loopback_v4(*port);
-
                 match *port {
                     Port::Tcp(_) => {
                         let _ = TcpStream::connect(SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1),
@@ -510,7 +508,7 @@ mod test {
     use rustc_serialize::{Decodable, Encodable};
     use cbor::{Decoder, Encoder};
     use connection::Connection;
-    use transport::{Endpoint, Port};
+    use endpoint::{Endpoint, Port};
     use config_handler::write_config_file;
     use event::Event;
     use util;

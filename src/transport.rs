@@ -15,12 +15,9 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::net::{SocketAddr, SocketAddrV4, SocketAddrV6, TcpStream, TcpListener, ToSocketAddrs,
-               UdpSocket};
-use ip::IpAddr;
+use std::net::{SocketAddr, TcpStream, TcpListener, UdpSocket};
 use tcp_connections;
 use utp_connections;
-use std::cmp::Ordering;
 use std::io;
 use std::io::Result as IoResult;
 use std::error::Error;
@@ -32,7 +29,6 @@ use utp::UtpListener;
 use std::fmt;
 use connection::Connection;
 use std::io::BufReader;
-use util::ip_from_socketaddr;
 use util;
 use endpoint::{Endpoint, Port, Protocol};
 
@@ -321,6 +317,7 @@ pub fn accept(acceptor: &Acceptor) -> IoResult<Transport> {
 #[cfg(test)]
 mod test {
     use super::*;
+    use endpoint::Endpoint;
     use std::net::{SocketAddr, SocketAddrV4, SocketAddrV6, Ipv4Addr, Ipv6Addr};
 
     fn v4(a: u8, b: u8, c: u8, d: u8, e: u16) -> Endpoint {

@@ -45,6 +45,10 @@ impl Connection {
             Protocol::Utp => Endpoint::Utp(self.peer_addr.0.clone()),
         }
     }
+    /// getter
+    pub fn peer_addr(&self) -> SocketAddrW {
+        self.peer_addr
+    }
 }
 
 impl fmt::Debug for Connection {

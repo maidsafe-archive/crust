@@ -18,7 +18,7 @@
 use endpoint::{Endpoint, Port};
 use igd;
 use std::io;
-use getifaddrs::{getifaddrs, filter_loopback};
+use get_if_addrs::{getifaddrs, filter_loopback};
 use std::net::SocketAddrV4;
 use ip::IpAddr;
 use std::thread;
@@ -40,17 +40,17 @@ pub fn async_map_external_port<Callback>(local_ep: Endpoint, callback: Callback)
 }
 
 pub fn sync_map_external_port(local_ep: &Endpoint) -> io::Result<Vec<(SocketAddrV4, Endpoint)>> {
-    let is_unspecified = ::util::is_unspecified(&local_ep.ip());
+    let is_unspecified = ::util::is_unspecified(&local_ep.get_address());
 
     let local_eps = if !is_unspecified {
-        let ip = match local_ep.ip() {
+        let ip = match local_ep.get_address() {
             IpAddr::V4(ip_addr) => ip_addr,
             IpAddr::V6(_) => {
                 return Err(io::Error::new(io::ErrorKind::Other,
                                           "Ip v6 not supported by the uPnP library"));
             }
         };
-        vec![SocketAddrV4::new(ip, local_ep.port().number())]
+        vec![SocketAddrV4::new(ip, local_ep.get_port().number())]
     } else {
         // TODO: Check if we really need to do this, perhaps uPnP can deal
         // with unspecified addresses itself? Also, it doesn't sound right
@@ -64,7 +64,7 @@ pub fn sync_map_external_port(local_ep: &Endpoint) -> io::Result<Vec<(SocketAddr
                     IpAddr::V6(_) => None,
                 }
             })
-            .map(|ip| SocketAddrV4::new(ip, local_ep.port().number()))
+            .map(|ip| SocketAddrV4::new(ip, local_ep.get_port().number()))
             .collect::<Vec<_>>()
     };
 
@@ -74,7 +74,7 @@ pub fn sync_map_external_port(local_ep: &Endpoint) -> io::Result<Vec<(SocketAddr
         return Err(io::Error::new(io::ErrorKind::Other, "No network interface found"));
     }
 
-    let local_port = local_ep.port();
+    let local_port = local_ep.get_port();
     let mut join_handles = Vec::with_capacity(eps_count);
     for local_ep in local_eps {
         join_handles.push(thread::Builder::new()
@@ -105,7 +105,7 @@ fn map_external_port(local_ep: SocketAddrV4, ext_port: Port) -> io::Result<Endpo
 
     let igd_protocol = match ext_port {
         Port::Tcp(_) => igd::PortMappingProtocol::TCP,
-        Port::Udp(_) => igd::PortMappingProtocol::UDP,
+        Port::Utp(_) => igd::PortMappingProtocol::UDP,
     };
 
     try!(to_io_result("AddPortError",
@@ -135,7 +135,7 @@ mod test {
         type R = io::Result<Vec<(SocketAddrV4, Endpoint)>>;
         let (sender, receiver) = mpsc::channel::<R>();
         let unspecified_ip = IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0));
-        let local_ep = Endpoint::new(unspecified_ip, Port::Udp(5484));
+        let local_ep = Endpoint::new(unspecified_ip, Port::Utp(5484));
         async_map_external_port(local_ep, move |result: R| {
             assert!(sender.send(result).is_ok());
         });

@@ -42,7 +42,6 @@ extern crate igd;
 extern crate itertools;
 #[macro_use]
 extern crate log;
-extern crate libc;
 extern crate net2;
 extern crate rand;
 extern crate rustc_serialize;
@@ -53,6 +52,7 @@ extern crate memmap;
 #[macro_use]
 extern crate maidsafe_utilities;
 extern crate ip;
+extern crate get_if_addrs;
 
 /// Module implementing the `Service` which provides an interface to manage peer-to-peer
 /// connections.
@@ -74,7 +74,7 @@ pub use file_handler::{FileHandler, current_bin_dir, user_app_dir, system_cache_
 pub use endpoint::{Endpoint, Port, Protocol};
 pub use connection::Connection;
 pub use util::{ifaddrs_if_unspecified, SocketAddrW};
-pub use getifaddrs::getifaddrs;
+pub use get_if_addrs::getifaddrs;
 
 #[cfg(test)]
 mod test {
@@ -92,7 +92,6 @@ mod bootstrap_handler;
 mod config_handler;
 mod util;
 mod endpoint;
-mod getifaddrs;
 mod connection;
 mod tcp_connections;
 mod transport;

@@ -18,9 +18,9 @@
 use std::net::{SocketAddr, SocketAddrV4, SocketAddrV6, Ipv4Addr, Ipv6Addr};
 use ip::IpAddr;
 use std::cmp::Ordering;
-use getifaddrs::{getifaddrs, IfAddr};
+use get_if_addrs::{getifaddrs, IfAddr};
 use rustc_serialize::{Encodable, Decodable, Decoder, Encoder};
-use endpoint::{Endpoint, Port};
+use endpoint::Endpoint;
 use std::str::FromStr;
 
 #[cfg(test)]
@@ -44,6 +44,7 @@ impl Ord for SocketAddrW {
         compare_ip_addrs(&self.0, &other.0)
     }
 }
+
 
 impl Encodable for SocketAddrW {
     fn encode<S: Encoder>(&self, s: &mut S) -> Result<(), S::Error> {
@@ -152,10 +153,10 @@ pub fn ip_from_socketaddr(addr: SocketAddr) -> IpAddr {
     }
 }
 
-pub fn loopback_v4(port: Port) -> Endpoint {
-    let ip = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
-    Endpoint::new(ip, port)
-}
+// pub fn loopback_v4(port: Port) -> Endpoint {
+//     let ip = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
+//     Endpoint::new(ip, port)
+// }
 
 pub fn is_v4(ip_addr: &IpAddr) -> bool {
     match *ip_addr {
@@ -378,35 +379,6 @@ pub fn random_endpoint() -> Endpoint {
     Endpoint::Tcp(::std::net::SocketAddr::V4(address))
 }
 
-#[cfg(test)]
-pub fn random_endpoints(count: usize) -> Vec<Endpoint> {
-    let mut contacts = Vec::new();
-    for _ in 0..count {
-        contacts.push(random_endpoint());
-    }
-    contacts
-}
-
-#[cfg(test)]
-pub fn random_global_endpoint() -> Endpoint {
-    // TODO - randomise V4/V6 and TCP/UTP
-    let address =
-        ::std::net::SocketAddrV4::new(::std::net::Ipv4Addr::new(173, // ensure is a global addr
-                                                                ::rand::random::<u8>(),
-                                                                ::rand::random::<u8>(),
-                                                                ::rand::random::<u8>()),
-                                      ::rand::random::<u16>());
-    Endpoint::Tcp(::std::net::SocketAddr::V4(address))
-}
-
-#[cfg(test)]
-pub fn random_global_endpoints(count: usize) -> Vec<Endpoint> {
-    let mut contacts = Vec::new();
-    for _ in 0..count {
-        contacts.push(random_global_endpoint());
-    }
-    contacts
-}
 
 #[cfg(test)]
 pub fn timed_recv<T>(receiver: &mpsc::Receiver<T>,
@@ -439,7 +411,7 @@ pub fn timed_recv<T>(receiver: &mpsc::Receiver<T>,
 mod test {
     #[test]
     fn test_heuristic_geo_cmp() {
-        use getifaddrs::getifaddrs;
+        use get_if_addrs::getifaddrs;
         use std::cmp::Ordering::{Less, Equal, Greater};
         use std::net::Ipv4Addr;
         use ip::IpAddr::V4;

@@ -15,8 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::net::{SocketAddr, SocketAddrV4, SocketAddrV6, TcpStream, TcpListener, ToSocketAddrs,
-               UdpSocket};
+use std::net::{SocketAddr, SocketAddrV4, SocketAddrV6, ToSocketAddrs};
 use ip::IpAddr;
 use util::ip_from_socketaddr;
 use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};

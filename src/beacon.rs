@@ -19,7 +19,7 @@ use rand::random;
 use std::error::Error;
 use std::io;
 use std::io::Result;
-use std::net::{SocketAddr, TcpStream, UdpSocket, SocketAddrV4, SocketAddrV6};
+use std::net::{SocketAddr, TcpStream, UdpSocket, SocketAddrV4};
 use std::str::FromStr;
 use std::sync::{Arc, mpsc, Mutex};
 use std::thread;
@@ -241,11 +241,13 @@ pub fn seek_peers(port: u16, guid_to_avoid: Option<GUID>) -> Result<Vec<SocketAd
                                                            SocketAddr::V4(a) => {
                                 SocketAddr::V4(SocketAddrV4::new(*a.ip(), port))
                             }
-                                                           SocketAddr::V6(a) => {
-                                SocketAddr::V6(SocketAddrV6::new(*a.ip(), port,
-                                                                 a.flowinfo(),
-                                                                 a.scope_id()))
-                            }
+                            // FIXME(dirvine) Hanlde ip6 :10/01/2016
+                            _ => unimplemented!(),
+                            //                                SocketAddr::V6(a) => {
+                            //     SocketAddr::V6(SocketAddrV6::new(*a.ip(), port,
+                            //                                      a.flowinfo(),
+                            //                                      a.scope_id()))
+                            // }
                                                        }
                                                    });
                                                }
@@ -296,7 +298,7 @@ pub fn seek_peers(port: u16, guid_to_avoid: Option<GUID>) -> Result<Vec<SocketAd
 mod test {
     use super::*;
     use std::thread;
-    use transport;
+    use endpoint::Endpoint;
     use transport::{Message, Handshake};
     use state::State;
 
@@ -314,8 +316,7 @@ mod test {
 
         let t2 = thread::Builder::new().name("test_beacon receiver".to_owned()).spawn(move || {
             let endpoint = seek_peers(acceptor_port, None).unwrap()[0];
-            let mut transport = State::connect(Handshake::default(),
-                                               transport::Endpoint::Tcp(endpoint))
+            let mut transport = State::connect(Handshake::default(), Endpoint::Tcp(endpoint))
                                     .unwrap()
                                     .1;
             let msg = String::from_utf8(match transport.receiver.receive().unwrap() {
@@ -356,8 +357,7 @@ mod test {
                      .spawn(move || {
                          thread::sleep(::std::time::Duration::from_millis(700));
                          let endpoint = seek_peers(acceptor_port, None).unwrap()[0];
-                         let _ = State::connect(Handshake::default(),
-                                                transport::Endpoint::Tcp(endpoint))
+                         let _ = State::connect(Handshake::default(), Endpoint::Tcp(endpoint))
                                      .unwrap();
                      });
 
