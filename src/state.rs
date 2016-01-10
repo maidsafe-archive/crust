@@ -27,7 +27,8 @@ use bootstrap_handler::BootstrapHandler;
 use config_handler::Config;
 use getifaddrs::{getifaddrs, filter_loopback};
 use transport;
-use transport::{Endpoint, Port, Message, Handshake};
+use transport::{Message, Handshake};
+use endpoint::{Endpoint, Port};
 use std::thread::JoinHandle;
 use std::net::{SocketAddr, Ipv4Addr, UdpSocket, SocketAddrV4, SocketAddrV6};
 use ip::IpAddr;
@@ -177,7 +178,7 @@ impl State {
                         -> io::Result<(Handshake, transport::Transport)> {
         let handshake_err = Err(io::Error::new(io::ErrorKind::Other, "handshake failed"));
 
-        handshake.remote_ip = util::SocketAddrW(trans.connection_id.peer_endpoint().get_address());
+        handshake.remote_ip = trans.connection_id.peer_endpoint().get_address();
         if let Err(_) = trans.sender.send_handshake(handshake) {
             return handshake_err;
         }
@@ -373,7 +374,7 @@ impl State {
 
     fn seek_peers(beacon_guid: Option<[u8; 16]>, beacon_port: u16) -> Vec<Endpoint> {
         match beacon::seek_peers(beacon_port, beacon_guid) {
-            Ok(peers) => peers.into_iter().map(transport::Endpoint::Tcp).collect(),
+            Ok(peers) => peers.into_iter().map(Endpoint::Tcp).collect(),
             Err(_) => Vec::new(),
         }
     }
@@ -488,7 +489,7 @@ impl State {
 
             let _ = event_sender.send(Event::OnUdpSocketMapped(MappedUdpSocket {
                 result_token: result_token,
-                result: result,
+                result: res,
             }));
         });
     }

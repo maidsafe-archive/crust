@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use transport::Endpoint;
+use endpoint::Endpoint;
 use connection::Connection;
 use std::net::{UdpSocket, SocketAddr};
 use std::collections::HashSet;

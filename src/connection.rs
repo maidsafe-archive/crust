@@ -16,7 +16,7 @@
 // relating to use of the SAFE Network Software.
 
 use std::fmt;
-use transport::{Endpoint, Protocol};
+use endpoint::{Endpoint, Protocol};
 use std::net::SocketAddr;
 use util::SocketAddrW;
 

@@ -22,10 +22,11 @@
 //! This means that none of the public functions of `BootstrapHandler` should be called concurrently
 //! with any other one.
 
-use transport::Endpoint;
+use endpoint::Endpoint;
 use file_handler::FileHandler;
 use std::io;
 use std::net::SocketAddr;
+use ip::IpAddr;
 
 pub struct BootstrapHandler {
     file_handler: FileHandler,
@@ -83,8 +84,8 @@ impl BootstrapHandler {
         // beacon and more often than not they would be obsolete very soon.
         contacts.retain(|contact| {
             match contact.get_address() {
-                SocketAddr::V4(a) => ::ip_info::v4::is_global(a.ip()),
-                SocketAddr::V6(a) => ::ip_info::v6::is_global(a.ip()),
+                IpAddr::V4(ref a) => ::ip_info::v4::is_global(a),
+                IpAddr::V6(ref a) => ::ip_info::v6::is_global(a),
             }
         });
 

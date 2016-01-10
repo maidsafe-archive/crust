@@ -22,9 +22,12 @@
 //! This means that `read_config_file()`, `create_default_config_file()`, and
 //! `write_config_file()` should not be called concurrently with one another.
 
+use endpoint::Endpoint;
+use file_handler::FileHandler;
+
 #[derive(PartialEq, Eq, Debug, RustcDecodable, RustcEncodable, Clone)]
 pub struct Config {
-    pub hard_coded_contacts: Vec<::transport::Endpoint>,
+    pub hard_coded_contacts: Vec<Endpoint>,
 }
 
 impl Config {
@@ -34,14 +37,14 @@ impl Config {
 }
 
 pub fn read_config_file() -> Result<Config, ::error::Error> {
-    let mut file_handler = ::file_handler::FileHandler::new(get_file_name());
+    let mut file_handler = FileHandler::new(get_file_name());
     let cfg = try!(file_handler.read_file::<Config>());
     Ok(cfg)
 }
 
 // This is a best-effort to create a config file - we don't care about the result.
 pub fn create_default_config_file() {
-    let mut file_handler = ::file_handler::FileHandler::new(get_file_name());
+    let mut file_handler = FileHandler::new(get_file_name());
     let _ = file_handler.write_file(&Config::make_default());
 }
 
@@ -52,7 +55,7 @@ pub fn create_default_config_file() {
 ///
 /// N.B. This method should only be used as a utility for test and examples.  In normal use cases,
 /// this file should be created by the installer for the dependent application.
-pub fn write_config_file(hard_coded_endpoints: Option<Vec<::transport::Endpoint>>)
+pub fn write_config_file(hard_coded_endpoints: Option<Vec<Endpoint>>)
                          -> Result<::std::path::PathBuf, ::error::Error> {
     use std::io::Write;
 

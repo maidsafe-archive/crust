@@ -71,7 +71,7 @@ pub use event::Event;
 pub use error::Error;
 pub use file_handler::{FileHandler, current_bin_dir, user_app_dir, system_cache_dir,
                        exe_file_stem, ScopedUserAppDirRemover};
-pub use transport::{Endpoint, Port, Protocol};
+pub use endpoint::{Endpoint, Port, Protocol};
 pub use connection::Connection;
 pub use util::{ifaddrs_if_unspecified, SocketAddrW};
 pub use getifaddrs::getifaddrs;
@@ -91,7 +91,7 @@ mod beacon;
 mod bootstrap_handler;
 mod config_handler;
 mod util;
-mod auxip;
+mod endpoint;
 mod getifaddrs;
 mod connection;
 mod tcp_connections;

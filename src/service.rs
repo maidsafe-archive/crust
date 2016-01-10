@@ -22,13 +22,13 @@ use std::thread::JoinHandle;
 use std::sync::{Arc, Mutex};
 use std::str::FromStr;
 
-use std::net::{SocketAddr, SocketAddrV4, UdpSocket};
+use std::net::{SocketAddr, SocketAddrV4, UdpSocket, Ipv4Addr};
 use beacon;
 use config_handler::{Config, read_config_file};
 use getifaddrs::{getifaddrs, filter_loopback};
 use transport;
-use transport::{Endpoint, Port, Handshake};
-use auxip;
+use transport::Handshake;
+use endpoint::{Endpoint, Port};
 use map_external_port::async_map_external_port;
 use connection::Connection;
 
@@ -213,14 +213,16 @@ impl Service {
             // Connect to our listening ports, this should unblock
             // the threads.
             for port in &state.listening_ports {
-                let addr = ::util::loopback_v4(*port).get_address();
+                let addr = ::util::loopback_v4(*port);
 
                 match *port {
                     Port::Tcp(_) => {
-                        let _ = TcpStream::connect(&addr);
+                        let _ = TcpStream::connect(SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1),
+                                                                     port.number()));
                     }
                     Port::Utp(_) => {
-                        let _ = UtpSocket::connect(&addr);
+                        let _ = UtpSocket::connect(SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1),
+                                                                     port.number()));
                     }
                 }
             }
@@ -392,7 +394,7 @@ impl Service {
     /// endpoints.
     pub fn get_external_endpoints(&self) {
         Self::post(&self.cmd_sender, move |state: &mut State| {
-            type T = (SocketAddrV4, auxip::Endpoint);
+            type T = (SocketAddrV4, Endpoint);
 
             struct Async {
                 remaining: usize,
@@ -418,14 +420,15 @@ impl Service {
                                                 for result in results {
                                                     let transport_port = match internal_ep {
                                                         Endpoint::Tcp(_) => {
-                                                            Port::Tcp(result.1.port().number())
+                                                            Port::Tcp(result.1.get_port().number())
                                                         }
                                                         Endpoint::Utp(_) => {
-                                                            Port::Utp(result.1.port().number())
+                                                            Port::Utp(result.1.get_port().number())
                                                         }
                                                     };
-                                                    let ext_ep = Endpoint::new(result.1.ip(),
-                                                                               transport_port);
+                                                    let ext_ep =
+                                                        Endpoint::new(result.1.get_address(),
+                                                                      transport_port);
                                                     async.results.push(ext_ep);
                                                 }
                                             }

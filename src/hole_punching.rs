@@ -5,7 +5,7 @@ use std::sync::mpsc::Sender;
 
 use periodic_sender::PeriodicSender;
 use socket_utils::RecvUntil;
-use auxip::Endpoint;
+use endpoint::Endpoint;
 use state::{Closure, State};
 use transport::Message;
 use util::{SocketAddrW, SocketAddrV4W};
