@@ -37,6 +37,11 @@
 #![allow(box_pointers, fat_ptr_transmutes, missing_copy_implementations,
          missing_debug_implementations)]
 
+
+// Uncomment to use Clippy
+// #![feature(plugin)]
+// #![plugin(clippy)]
+
 extern crate cbor;
 extern crate igd;
 extern crate itertools;
