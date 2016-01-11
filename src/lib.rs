@@ -37,12 +37,16 @@
 #![allow(box_pointers, fat_ptr_transmutes, missing_copy_implementations,
          missing_debug_implementations)]
 
+
+// Uncomment to use Clippy
+// #![feature(plugin)]
+// #![plugin(clippy)]
+
 extern crate cbor;
 extern crate igd;
 extern crate itertools;
 #[macro_use]
 extern crate log;
-extern crate libc;
 extern crate net2;
 extern crate rand;
 extern crate rustc_serialize;
@@ -53,6 +57,7 @@ extern crate memmap;
 #[macro_use]
 extern crate maidsafe_utilities;
 extern crate ip;
+extern crate get_if_addrs;
 
 /// Module implementing the `Service` which provides an interface to manage peer-to-peer
 /// connections.
@@ -69,12 +74,12 @@ pub use config_handler::write_config_file;
 pub use service::Service;
 pub use event::Event;
 pub use error::Error;
-pub use file_handler::{FileHandler, current_bin_dir, user_app_dir, system_cache_dir, exe_file_stem,
-                       ScopedUserAppDirRemover};
-pub use transport::{Endpoint, Port, Protocol};
+pub use file_handler::{FileHandler, current_bin_dir, user_app_dir, system_cache_dir,
+                       exe_file_stem, ScopedUserAppDirRemover};
+pub use endpoint::{Endpoint, Port, Protocol};
 pub use connection::Connection;
 pub use util::{ifaddrs_if_unspecified, SocketAddrW};
-pub use getifaddrs::getifaddrs;
+pub use get_if_addrs::getifaddrs;
 
 #[cfg(test)]
 mod test {
@@ -91,8 +96,7 @@ mod beacon;
 mod bootstrap_handler;
 mod config_handler;
 mod util;
-mod auxip;
-mod getifaddrs;
+mod endpoint;
 mod connection;
 mod tcp_connections;
 mod transport;

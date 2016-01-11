@@ -26,8 +26,7 @@ use std::sync::mpsc::Sender;
 pub fn connect_tcp(addr: SocketAddr) -> IoResult<(TcpStream, Sender<Vec<u8>>)> {
     let stream = try!(TcpStream::connect(&addr));
     if try!(stream.peer_addr()).port() == try!(stream.local_addr()).port() {
-        return Err(Error::new(ErrorKind::ConnectionRefused,
-                              "TCP simultaneous open"))
+        return Err(Error::new(ErrorKind::ConnectionRefused, "TCP simultaneous open"));
     }
 
     Ok(try!(upgrade_tcp(stream)))
@@ -37,8 +36,7 @@ pub fn connect_tcp(addr: SocketAddr) -> IoResult<(TcpStream, Sender<Vec<u8>>)> {
 /// Upgrades a TcpStream to a Sender-Receiver pair that you can use to send and
 /// receive objects automatically.  If there is an error decoding or encoding
 /// values, that respective part is shut down.
-pub fn upgrade_tcp(stream: TcpStream)
-                   -> IoResult<(TcpStream, Sender<Vec<u8>>)> {
+pub fn upgrade_tcp(stream: TcpStream) -> IoResult<(TcpStream, Sender<Vec<u8>>)> {
     let s1 = stream;
     let s2 = try!(s1.try_clone());
     Ok((s1, upgrade_writer(s2)))
@@ -46,15 +44,18 @@ pub fn upgrade_tcp(stream: TcpStream)
 
 fn upgrade_writer(mut stream: TcpStream) -> Sender<Vec<u8>> {
     let (tx, rx) = mpsc::channel::<Vec<u8>>();
-    let _ = thread::Builder::new().name("TCP writer".to_string()).spawn(move || {
-        while let Ok(v) = rx.recv() {
-            use std::io::Write;
-            if stream.write_all(&v).is_err() {
-                break;
-            }
-        }
-        stream.shutdown(Shutdown::Write)
-    }).unwrap();
+    let _ = thread::Builder::new()
+                .name("TCP writer".to_owned())
+                .spawn(move || {
+                    while let Ok(v) = rx.recv() {
+                        use std::io::Write;
+                        if stream.write_all(&v).is_err() {
+                            break;
+                        }
+                    }
+                    stream.shutdown(Shutdown::Write)
+                })
+                .unwrap();
     tx
 }
 
@@ -78,7 +79,7 @@ mod test {
         let port = listener.local_addr().unwrap().port();
         let (mut i, o) = connect_tcp(loopback(port)).unwrap();
 
-        for x in 0 .. 10 {
+        for x in 0..10 {
             let x = vec![x];
             o.send(x).unwrap()
         }
@@ -92,8 +93,8 @@ mod test {
             while len < 10 {
                 len += i.read(&mut buf[len..]).unwrap();
             }
-            for i in 0..buf.len() {
-                buf[i] += 1;
+            for item in &mut buf {
+                *item += 1;
             }
             o.send(buf.iter().cloned().collect()).unwrap();
         });
@@ -153,8 +154,8 @@ mod test {
                 while len < MSG_COUNT {
                     len += i.read(&mut buf[len..]).unwrap()
                 }
-                for i in 0..buf.len() {
-                    buf[i] += 1
+                for item in &mut buf {
+                    *item += 1
                 }
                 o.send(buf.iter().cloned().collect()).unwrap()
             });
@@ -175,7 +176,9 @@ mod test {
 
         const MSG_COUNT: u16 = 20;
 
-        fn encode<T>(value: &T) -> Vec<u8> where T: Encodable {
+        fn encode<T>(value: &T) -> Vec<u8>
+            where T: Encodable
+        {
             let mut enc = Encoder::from_memory();
             let _ = enc.encode(&[value]);
             enc.into_bytes()
@@ -192,17 +195,18 @@ mod test {
             let d = &mut cbor::Decoder::from_reader(&reader);
             let mut received = 0;
             reader.set_read_timeout(Some(Duration::new(5, 0))).unwrap();
-            'outer:
-            loop {
+            'outer: loop {
                 for m in d.decode::<String>() {
                     match m {
                         Ok(_m) => {
-                            //println!("received {:?}", m)
-                        },
+                            // println!("received {:?}", m)
+                        }
                         Err(what) => panic!(format!("Problem decoding message {}", what)),
                     }
                     received += 1;
-                    if received == MSG_COUNT { break 'outer }
+                    if received == MSG_COUNT {
+                        break 'outer;
+                    }
                 }
             }
         }
@@ -217,60 +221,60 @@ mod test {
         assert!(t.join().is_ok());
     }
 
- // #[test]
+    // #[test]
     // fn graceful_port_close() {
-        //use std::net::{TcpListener};
-        //use std::sync::mpsc;
-        //use std::thread::spawn;
+    // use std::net::{TcpListener};
+    // use std::sync::mpsc;
+    // use std::thread::spawn;
 
-        //let tcp_listener = TcpListener::bind((("0.0.0.0"), 0)).unwrap();
+    // let tcp_listener = TcpListener::bind((("0.0.0.0"), 0)).unwrap();
 
-        //let tcp_listener2 = tcp_listener.try_clone().unwrap();
-        //let t = spawn(move || {
-        //    loop {
-        //        match tcp_listener2.accept() {
-        //            Ok(_) => { }
-        //            Err(e) => { break; }
-        //        }
-        //    }
-        //});
+    // let tcp_listener2 = tcp_listener.try_clone().unwrap();
+    // let t = spawn(move || {
+    //    loop {
+    //        match tcp_listener2.accept() {
+    //            Ok(_) => { }
+    //            Err(e) => { break; }
+    //        }
+    //    }
+    // });
 
-        //drop(tcp_listener);
-        //assert!(t.join().is_ok());
-        ////let first_binding;
+    // drop(tcp_listener);
+    // assert!(t.join().is_ok());
+    // let first_binding;
 
-        ////{
-        ////    let (event_receiver, listener) = listen().unwrap();
-        ////    first_binding = listener.local_addr().unwrap();
-        ////}
-        ////{
-        ////    let (event_receiver, listener) = listen().unwrap();
-        ////    let second_binding = listener.local_addr().unwrap();
-        ////    assert_eq!(first_binding.port(), second_binding.port());
-        ////}
+    // {
+    //     let (event_receiver, listener) = listen().unwrap();
+    //     first_binding = listener.local_addr().unwrap();
+    // }
+    // {
+    //     let (event_receiver, listener) = listen().unwrap();
+    //     let second_binding = listener.local_addr().unwrap();
+    //     assert_eq!(first_binding.port(), second_binding.port());
+    // }
     // }
 
-// #[test]
-// fn test_stream_large_data() {
-//     // Has to be sent over several packets
-//     const LEN: usize = 1024 * 1024;
-//     let data: Vec<u8> = (0..LEN).map(|idx| idx as u8).collect();
-//     assert_eq!(LEN, data.len());
-//
-//     let d = data.clone(\;
-//     let receiver_addr = next_test_ip4();
-//     let mut receiver = UtpStream::bind(receiver_addr);
-//
-//     thread::spawn(move || {
-//         let mut sender = iotry!(UtpStream::connect(receiver_addr));
-//         iotry!(sender.write(&d[..]));
-//         iotry!(sender.close());
-//     });
-//
-//     let read = iotry!(receiver.read_to_end());
-//     assert!(!read.is_empty());
-//     assert_eq!(read.len(), data.len());
-//     assert_eq!(read, data);
-// }
+    // #[test]
+    // fn test_stream_large_data() {
+    //     // Has to be sent over several packets
+    //     const LEN: usize = 1024 * 1024;
+    //     let data: Vec<u8> = (0..LEN).map(|idx| idx as u8).collect();
+    //     assert_eq!(LEN, data.len());
+    //
+    //     let d = data.clone(\;
+    //     let receiver_addr = next_test_ip4();
+    //     let mut receiver = UtpStream::bind(receiver_addr);
+    //
+    //     thread::spawn(move || {
+    //         let mut sender = iotry!(UtpStream::connect(receiver_addr));
+    //         iotry!(sender.write(&d[..]));
+    //         iotry!(sender.close());
+    //     });
+    //
+    //     let read = iotry!(receiver.read_to_end());
+    //     assert!(!read.is_empty());
+    //     assert_eq!(read.len(), data.len());
+    //     assert_eq!(read, data);
+    // }
 
 }

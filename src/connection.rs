@@ -16,7 +16,7 @@
 // relating to use of the SAFE Network Software.
 
 use std::fmt;
-use transport::{Endpoint, Protocol};
+use endpoint::{Endpoint, Protocol};
 use std::net::SocketAddr;
 use util::SocketAddrW;
 
@@ -30,8 +30,7 @@ pub struct Connection {
 
 impl Connection {
     /// Constructor of struct Connection
-    pub fn new(proto: Protocol, local_addr: SocketAddr, peer_addr: SocketAddr)
-        -> Connection {
+    pub fn new(proto: Protocol, local_addr: SocketAddr, peer_addr: SocketAddr) -> Connection {
         Connection {
             transport_protocol: proto,
             peer_addr: SocketAddrW(peer_addr),
@@ -46,14 +45,17 @@ impl Connection {
             Protocol::Utp => Endpoint::Utp(self.peer_addr.0.clone()),
         }
     }
+    /// getter
+    pub fn peer_addr(&self) -> SocketAddrW {
+        self.peer_addr
+    }
 }
 
 impl fmt::Debug for Connection {
     fn fmt(&self, formatter: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         formatter.write_str(&format!("Connection({:?} {:?} -> {:?})",
-            self.transport_protocol,
-            self.local_addr.0,
-            self.peer_addr.0))
+                                     self.transport_protocol,
+                                     self.local_addr.0,
+                                     self.peer_addr.0))
     }
 }
-

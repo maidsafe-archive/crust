@@ -25,11 +25,12 @@ use std::str::FromStr;
 use beacon;
 use bootstrap_handler::BootstrapHandler;
 use config_handler::Config;
-use getifaddrs::{getifaddrs, filter_loopback};
+use get_if_addrs::{getifaddrs, filter_loopback};
 use transport;
-use transport::{Endpoint, Port, Message, Handshake};
+use transport::{Message, Handshake};
+use endpoint::{Endpoint, Port};
 use std::thread::JoinHandle;
-use std::net::{SocketAddr, Ipv4Addr, UdpSocket, SocketAddrV4, SocketAddrV6};
+use std::net::{SocketAddr, Ipv4Addr, UdpSocket, SocketAddrV4};
 use ip::IpAddr;
 
 use itertools::Itertools;
@@ -39,6 +40,7 @@ use sequence_number::SequenceNumber;
 use hole_punching::HolePunchServer;
 use util::ip_from_socketaddr;
 use util;
+use util::SocketAddrW;
 
 // Closure is a wapper around boxed closures that tries to work around the fact
 // that it is not possible to call Box<FnOnce> in the current stable rust.
@@ -177,7 +179,7 @@ impl State {
                         -> io::Result<(Handshake, transport::Transport)> {
         let handshake_err = Err(io::Error::new(io::ErrorKind::Other, "handshake failed"));
 
-        handshake.remote_ip = util::SocketAddrW(trans.connection_id.peer_endpoint().get_address());
+        handshake.remote_ip = trans.connection_id.peer_addr();
         if let Err(_) = trans.sender.send_handshake(handshake) {
             return handshake_err;
         }
@@ -272,15 +274,17 @@ impl State {
                                                             .peer_endpoint()
                                                             .get_address();
                                        match peer_addr {
-                                           SocketAddr::V4(a) => {
-                                               SocketAddr::V4(SocketAddrV4::new(*a.ip(), port))
+                                           IpAddr::V4(a) => {
+                                               SocketAddr::V4(SocketAddrV4::new(a, port))
                                            }
-                                           SocketAddr::V6(a) => {
-                                               SocketAddr::V6(SocketAddrV6::new(*a.ip(),
-                                                                                port,
-                                                                                a.flowinfo(),
-                                                                                a.scope_id()))
-                                           }
+                                           // FIXME(dirvine) Handle ip6 :10/01/2016
+                                           _ => unimplemented!(),
+                                           // IpAddr::V6(a) => {
+                                           //     SocketAddr::V6(SocketAddrV6::new(a,
+                                           //                                      port,
+                                           //                                      a.flowinfo(),
+                                           //                                      a.scope_id()))
+                                           // }
                                        }
                                    });
 
@@ -373,7 +377,7 @@ impl State {
 
     fn seek_peers(beacon_guid: Option<[u8; 16]>, beacon_port: u16) -> Vec<Endpoint> {
         match beacon::seek_peers(beacon_port, beacon_guid) {
-            Ok(peers) => peers.into_iter().map(|a| transport::Endpoint::Tcp(a)).collect(),
+            Ok(peers) => peers.into_iter().map(Endpoint::Tcp).collect(),
             Err(_) => Vec::new(),
         }
     }
@@ -402,7 +406,7 @@ impl State {
             let h = Handshake {
                 mapper_port: Some(mapper_port),
                 external_ip: external_ip.map(util::SocketAddrV4W),
-                remote_ip: util::SocketAddrW(SocketAddr::from_str("0.0.0.0:0").unwrap()),
+                remote_ip: SocketAddrW(SocketAddr::from_str("0.0.0.0:0").unwrap()),
             };
 
             let connect_result = Self::connect(h, head);
@@ -438,7 +442,7 @@ impl State {
               T: Send + 'static
     {
         thread::Builder::new()
-            .name("State::".to_string() + name)
+            .name("State::".to_owned() + name)
             .spawn(f)
     }
 
@@ -501,13 +505,14 @@ mod test {
     use std::net::{SocketAddr, SocketAddrV4, SocketAddrV6};
     use ip::IpAddr;
     use std::sync::mpsc::channel;
-    use transport::{Endpoint, Port, Acceptor, Handshake};
+    use transport::{Acceptor, Handshake};
+    use endpoint::{Endpoint, Port};
     use event::Event;
     use util;
 
     fn testable_endpoint(acceptor: &Acceptor) -> Endpoint {
-        let addr = match acceptor {
-            &Acceptor::Tcp(ref listener) => {
+        let addr = match *acceptor {
+            Acceptor::Tcp(ref listener) => {
                 listener.local_addr()
                         .unwrap()
             }

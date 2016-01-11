@@ -18,9 +18,9 @@
 use std::net::{SocketAddr, SocketAddrV4, SocketAddrV6, Ipv4Addr, Ipv6Addr};
 use ip::IpAddr;
 use std::cmp::Ordering;
-use getifaddrs::{getifaddrs, IfAddr};
+use get_if_addrs::{getifaddrs, IfAddr};
 use rustc_serialize::{Encodable, Decodable, Decoder, Encoder};
-use transport;
+use endpoint::Endpoint;
 use std::str::FromStr;
 
 #[cfg(test)]
@@ -44,6 +44,7 @@ impl Ord for SocketAddrW {
         compare_ip_addrs(&self.0, &other.0)
     }
 }
+
 
 impl Encodable for SocketAddrW {
     fn encode<S: Encoder>(&self, s: &mut S) -> Result<(), S::Error> {
@@ -152,10 +153,10 @@ pub fn ip_from_socketaddr(addr: SocketAddr) -> IpAddr {
     }
 }
 
-pub fn loopback_v4(port: transport::Port) -> transport::Endpoint {
-    let ip = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
-    transport::Endpoint::new(ip, port)
-}
+// pub fn loopback_v4(port: Port) -> Endpoint {
+//     let ip = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
+//     Endpoint::new(ip, port)
+// }
 
 pub fn is_v4(ip_addr: &IpAddr) -> bool {
     match *ip_addr {
@@ -245,7 +246,7 @@ pub fn on_same_subnet(ip_addr1: IpAddr, ip_addr2: IpAddr, netmask: IpAddr) -> bo
     }
 }
 
-pub fn is_local(ip_addr: &IpAddr, interfaces: &Vec<IfAddr>) -> bool {
+pub fn is_local(ip_addr: &IpAddr, interfaces: &[IfAddr]) -> bool {
     for i in interfaces.iter() {
         if on_same_subnet(i.addr, *ip_addr, i.netmask) {
             return true;
@@ -319,12 +320,21 @@ pub fn heuristic_geo_cmp(ip1: &IpAddr, ip2: &IpAddr) -> Ordering {
 /// This function should really take IpAddr as an argument
 /// but it is used outside of this library and IpAddr
 /// is currently considered experimental.
-pub fn ifaddrs_if_unspecified(ep: transport::Endpoint) -> Vec<transport::Endpoint> {
-    if !is_unspecified(&ip_from_socketaddr(ep.get_address())) {
-        return vec![ep];
+pub fn ifaddrs_if_unspecified(ep: Endpoint) -> Vec<Endpoint> {
+    match ep.get_address() {
+        IpAddr::V4(ref addr) => {
+            if !::ip_info::v4::is_unspecified(addr) {
+                return vec![ep];
+            }
+        }
+        IpAddr::V6(ref addr) => {
+            if !::ip_info::v6::is_unspecified(addr) {
+                return vec![ep];
+            }
+        }
     }
 
-    let ep_is_v4 = is_v4(&ip_from_socketaddr(ep.get_address()));
+    let ep_is_v4 = is_v4(&ep.get_address());
 
     getifaddrs()
         .into_iter()
@@ -332,7 +342,7 @@ pub fn ifaddrs_if_unspecified(ep: transport::Endpoint) -> Vec<transport::Endpoin
             if ep_is_v4 != is_v4(&iface.addr) {
                 return None;
             }
-            Some(transport::Endpoint::new(iface.addr, ep.get_port()))
+            Some(Endpoint::new(iface.addr, ep.get_port()))
         })
         .collect()
 }
@@ -358,7 +368,7 @@ pub fn loopback_if_unspecified(addr: IpAddr) -> IpAddr {
 }
 
 #[cfg(test)]
-pub fn random_endpoint() -> ::transport::Endpoint {
+pub fn random_endpoint() -> Endpoint {
     // TODO - randomise V4/V6 and TCP/UTP
     let address =
         ::std::net::SocketAddrV4::new(::std::net::Ipv4Addr::new(::rand::random::<u8>(),
@@ -366,38 +376,9 @@ pub fn random_endpoint() -> ::transport::Endpoint {
                                                                 ::rand::random::<u8>(),
                                                                 ::rand::random::<u8>()),
                                       ::rand::random::<u16>());
-    ::transport::Endpoint::Tcp(::std::net::SocketAddr::V4(address))
+    Endpoint::Tcp(::std::net::SocketAddr::V4(address))
 }
 
-#[cfg(test)]
-pub fn random_endpoints(count: usize) -> Vec<::transport::Endpoint> {
-    let mut contacts = Vec::new();
-    for _ in 0..count {
-        contacts.push(random_endpoint());
-    }
-    contacts
-}
-
-#[cfg(test)]
-pub fn random_global_endpoint() -> ::transport::Endpoint {
-    // TODO - randomise V4/V6 and TCP/UTP
-    let address =
-        ::std::net::SocketAddrV4::new(::std::net::Ipv4Addr::new(173, // ensure is a global addr
-                                                                ::rand::random::<u8>(),
-                                                                ::rand::random::<u8>(),
-                                                                ::rand::random::<u8>()),
-                                      ::rand::random::<u16>());
-    ::transport::Endpoint::Tcp(::std::net::SocketAddr::V4(address))
-}
-
-#[cfg(test)]
-pub fn random_global_endpoints(count: usize) -> Vec<::transport::Endpoint> {
-    let mut contacts = Vec::new();
-    for _ in 0..count {
-        contacts.push(random_global_endpoint());
-    }
-    contacts
-}
 
 #[cfg(test)]
 pub fn timed_recv<T>(receiver: &mpsc::Receiver<T>,
@@ -430,7 +411,7 @@ pub fn timed_recv<T>(receiver: &mpsc::Receiver<T>,
 mod test {
     #[test]
     fn test_heuristic_geo_cmp() {
-        use getifaddrs::getifaddrs;
+        use get_if_addrs::getifaddrs;
         use std::cmp::Ordering::{Less, Equal, Greater};
         use std::net::Ipv4Addr;
         use ip::IpAddr::V4;

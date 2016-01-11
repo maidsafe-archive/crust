@@ -5,7 +5,7 @@ use std::sync::mpsc::Sender;
 
 use periodic_sender::PeriodicSender;
 use socket_utils::RecvUntil;
-use auxip::Endpoint;
+use endpoint::Endpoint;
 use state::{Closure, State};
 use transport::Message;
 use util::{SocketAddrW, SocketAddrV4W};
@@ -41,9 +41,9 @@ pub struct SetExternalAddr {
 }
 
 pub fn blocking_get_mapped_udp_socket
-                                      (request_id: u32,
-                                       helper_nodes: Vec<SocketAddr>)
-                                       -> io::Result<(UdpSocket, Option<SocketAddr>, Vec<SocketAddr>)> {
+    (request_id: u32,
+     helper_nodes: Vec<SocketAddr>)
+     -> io::Result<(UdpSocket, Option<SocketAddr>, Vec<SocketAddr>)> {
     const MAX_DATAGRAM_SIZE: usize = 256;
 
     let udp_socket = try!(UdpSocket::bind("0.0.0.0:0"));
@@ -273,7 +273,7 @@ impl HolePunchServer {
 
         let external_ip = Arc::new(RwLock::new(None::<SocketAddrV4>));
         let external_ip_writer = external_ip.clone();
-        let local_ep = Endpoint::Udp(SocketAddr::V4(local_addr.clone()));
+        let local_ep = Endpoint::Utp(SocketAddr::V4(local_addr.clone()));
         let (upnp_tx, upnp_rx) = ::std::sync::mpsc::channel::<()>();
         let upnp_hole_puncher = try!(::std::thread::Builder::new().name(String::from("upnp hole puncher"))
                                                                   .spawn(move || {
@@ -288,7 +288,7 @@ impl HolePunchServer {
                         for (internal, external) in v {
                             if internal == local_addr {
                                 match external {
-                                    Endpoint::Udp(SocketAddr::V4(sa))   => {
+                                    Endpoint::Utp(SocketAddr::V4(sa))   => {
                                         {
                                             let mut ext_ip = external_ip_writer.write().unwrap();
                                             *ext_ip = Some(sa);
