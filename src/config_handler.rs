@@ -22,6 +22,7 @@
 //! This means that `read_config_file()`, `create_default_config_file()`, and
 //! `write_config_file()` should not be called concurrently with one another.
 
+use error::Error;
 use endpoint::Endpoint;
 use file_handler::FileHandler;
 
@@ -37,15 +38,14 @@ impl Config {
 }
 
 pub fn read_config_file() -> Result<Config, ::error::Error> {
-    let mut file_handler = FileHandler::new(get_file_name());
-    let cfg = try!(file_handler.read_file::<Config>());
-    Ok(cfg)
+    let mut file_handler = FileHandler::new(try!(get_file_name()));
+    Ok(try!(file_handler.read_file::<Config>()))
 }
 
 // This is a best-effort to create a config file - we don't care about the result.
-pub fn create_default_config_file() {
-    let mut file_handler = FileHandler::new(get_file_name());
-    let _ = file_handler.write_file(&Config::make_default());
+pub fn create_default_config_file() -> Result<(), Error> {
+    let mut file_handler = FileHandler::new(try!(get_file_name()));
+    Ok(try!(file_handler.write_file(&Config::make_default())))
 }
 
 /// Writes a Crust config file **for use by tests and examples**.
@@ -65,7 +65,7 @@ pub fn write_config_file(hard_coded_endpoints: Option<Vec<Endpoint>>)
         hard_coded_contacts: hard_coded_endpoints.unwrap_or(default.hard_coded_contacts),
     };
     let mut config_path = try!(::file_handler::current_bin_dir());
-    config_path.push(get_file_name());
+    config_path.push(try!(get_file_name()));
     let mut file = try!(::std::fs::File::create(&config_path));
     try!(write!(&mut file,
                 "{}",
@@ -74,40 +74,39 @@ pub fn write_config_file(hard_coded_endpoints: Option<Vec<Endpoint>>)
     Ok(config_path)
 }
 
-fn get_file_name() -> ::std::path::PathBuf {
-    let mut name = ::file_handler::exe_file_stem()
-                       .unwrap_or(::std::path::Path::new("unknown").to_path_buf());
+fn get_file_name() -> Result<::std::path::PathBuf, Error> {
+    let mut name = try!(::file_handler::exe_file_stem());
     name.set_extension("crust.config");
-    name
+    Ok(name)
 }
 
 #[cfg(test)]
 mod test {
-    // #[test]
-    // fn read_config_file_test() {
-    //     let mut hard_coded_endpoints = Vec::new();
-    //     let mut hard_coded_contacts = Vec::new();
-    //     for _ in 0..10 {
-    //         let random_contact = ::util::random_endpoint();
-    //         hard_coded_endpoints.push(random_contact.clone());
-    //         hard_coded_contacts.push(random_contact);
-    //     }
-    //     let config = super::Config { hard_coded_contacts: hard_coded_contacts };
-    //     let _ = super::write_config_file(Some(hard_coded_endpoints));
-    //     match super::read_config_file() {
-    //         Ok(recovered_config) => assert_eq!(config, recovered_config),
-    //         Err(_) => panic!("Failed to read config file."),
-    //     }
-    //
-    //     // Clean up
-    //     match ::file_handler::current_bin_dir() {
-    //         Ok(mut config_path) => {
-    //             config_path.push(super::get_file_name());
-    //             let _ = ::std::fs::remove_file(&config_path);
-    //         }
-    //         Err(_) => (),
-    //     };
-    // }
+    #[test]
+    fn read_config_file_test() {
+        let mut hard_coded_endpoints = Vec::new();
+        let mut hard_coded_contacts = Vec::new();
+        for _ in 0..10 {
+            let random_contact = ::util::random_endpoint();
+            hard_coded_endpoints.push(random_contact.clone());
+            hard_coded_contacts.push(random_contact);
+        }
+        let config = super::Config { hard_coded_contacts: hard_coded_contacts };
+        let path_buf = unwrap_result!(super::write_config_file(Some(hard_coded_endpoints)));
+        match super::read_config_file() {
+            Ok(recovered_config) => assert_eq!(config, recovered_config),
+            Err(_) => panic!("Failed to read config file."),
+        }
+
+        // Clean up
+        match ::file_handler::current_bin_dir() {
+            Ok(mut config_path) => {
+                config_path.push(path_buf);
+                let _ = ::std::fs::remove_file(&config_path);
+            }
+            Err(_) => (),
+        };
+    }
 
     #[test]
     fn parse_sample_config_file() {

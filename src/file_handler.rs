@@ -215,8 +215,8 @@ impl FileHandler {
     }
 
     fn die(message: String, code: i32) {
-        error!("die {}", message);
-        ::std::process::exit(code);
+        panic!("die with message :{} and exit code {}", message, code);
+        // ::std::process::exit(code);
     }
 
     #[cfg(target_os="windows")]
