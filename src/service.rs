@@ -812,8 +812,8 @@ mod test {
                                             cm.send(other_ep.clone(),
                                                     encode(&"hello world".to_owned()));
                                         }
-                                        Event::OnRendezvousConnect(Err(_), _) => {
-                                            panic!("Cannot establish rendezvous connection");
+                                        Event::OnRendezvousConnect(Err(error), _) => {
+                                            panic!("Cannot establish rendezvous connection: {:?}", error);
                                         }
                                         Event::NewMessage(_, _) => break,
                                         _ => (),
