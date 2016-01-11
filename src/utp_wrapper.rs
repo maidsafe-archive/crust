@@ -11,61 +11,60 @@ const CHECK_FOR_NEW_WRITES_INTERVAL_MS: u64 = 50;
 const BUFFER_SIZE: usize = 1000;
 
 pub struct UtpWrapper {
-    input          : Receiver<Vec<u8>>,
-    unread_bytes   : Vec<u8>,
-    peer_addr      : SocketAddr,
-    local_addr     : SocketAddr,
-    _thread_joiner : RaiiThreadJoiner,
+    input: Receiver<Vec<u8>>,
+    unread_bytes: Vec<u8>,
+    peer_addr: SocketAddr,
+    local_addr: SocketAddr,
+    _thread_joiner: RaiiThreadJoiner,
 }
 
 impl UtpWrapper {
-    pub fn wrap(socket: UtpSocket, output_rx: Receiver<Vec<u8>>)
-        -> io::Result<UtpWrapper>
-    {
+    pub fn wrap(socket: UtpSocket, output_rx: Receiver<Vec<u8>>) -> io::Result<UtpWrapper> {
         let (input_tx, input_rx) = mpsc::channel();
-        let peer_addr  = try!(socket.peer_addr());
+        let peer_addr = try!(socket.peer_addr());
         let local_addr = try!(socket.local_addr());
 
-        let thread_handle = thread::Builder::new()
-                                .name("rust-utp multiplexer".to_string())
-                                .spawn(move || {
-            let mut socket = socket;
-            socket.set_read_timeout(Some(CHECK_FOR_NEW_WRITES_INTERVAL_MS));
-            'outer:
-            loop {
-                let mut buf = [0; BUFFER_SIZE];
-                match socket.recv_from(&mut buf) {
-                    Ok((0, _src)) => break,
-                    Ok((amt, _src)) => {
-                        let buf = &buf[..amt];
-                        let _ = input_tx.send(Vec::from(buf));
-                    },
-                    Err(ref e) if e.kind() == ErrorKind::TimedOut => {
-                        // This extra loop ensures all pending messages are sent
-                        // before we try to read again.
-                        loop {
-                            match output_rx.try_recv() {
-                                Ok(v) => {
-                                    if socket.send_to(&v[..]).is_err() {
-                                        break 'outer;
-                                    }
-                                },
-                                Err(TryRecvError::Disconnected) => break 'outer,
-                                Err(TryRecvError::Empty) => break,
+        let thread_handle =
+            thread::Builder::new()
+                .name("rust-utp multiplexer".to_string())
+                .spawn(move || {
+                    let mut socket = socket;
+                    socket.set_read_timeout(Some(CHECK_FOR_NEW_WRITES_INTERVAL_MS));
+                    'outer: loop {
+                        let mut buf = [0; BUFFER_SIZE];
+                        match socket.recv_from(&mut buf) {
+                            Ok((0, _src)) => break,
+                            Ok((amt, _src)) => {
+                                let buf = &buf[..amt];
+                                let _ = input_tx.send(Vec::from(buf));
                             }
+                            Err(ref e) if e.kind() == ErrorKind::TimedOut => {
+                                // This extra loop ensures all pending messages are sent
+                                // before we try to read again.
+                                loop {
+                                    match output_rx.try_recv() {
+                                        Ok(v) => {
+                                            if socket.send_to(&v[..]).is_err() {
+                                                break 'outer;
+                                            }
+                                        }
+                                        Err(TryRecvError::Disconnected) => break 'outer,
+                                        Err(TryRecvError::Empty) => break,
+                                    }
+                                }
+                            }
+                            Err(_) => break,
                         }
-                    },
-                    Err(_) => break,
-                }
-            }
-        }).unwrap();
+                    }
+                })
+                .unwrap();
 
         Ok(UtpWrapper {
-            input          : input_rx,
-            unread_bytes   : Vec::new(),
-            peer_addr      : peer_addr,
-            local_addr     : local_addr,
-            _thread_joiner : RaiiThreadJoiner::new(thread_handle),
+            input: input_rx,
+            unread_bytes: Vec::new(),
+            peer_addr: peer_addr,
+            local_addr: local_addr,
+            _thread_joiner: RaiiThreadJoiner::new(thread_handle),
         })
     }
 
@@ -78,10 +77,8 @@ impl UtpWrapper {
     }
 }
 
-impl Read for UtpWrapper
-{
-    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize>
-    {
+impl Read for UtpWrapper {
+    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         let mut written = 0;
         for (idx, e) in self.unread_bytes.iter().take(buf.len()).enumerate() {
             buf[idx] = *e;
@@ -100,14 +97,13 @@ impl Read for UtpWrapper
         // application logic may require these bytes before it's possible to
         // get/generate the next ones.
         if written != 0 {
-            return Ok(written)
+            return Ok(written);
         }
 
         let mut buf = &mut buf[written..];
-        let recved = try!(self.input.recv()
-                          .or_else(|e| {
-                              Err(io::Error::new(ErrorKind::BrokenPipe, e))
-                          }));
+        let recved = try!(self.input
+                              .recv()
+                              .or_else(|e| Err(io::Error::new(ErrorKind::BrokenPipe, e))));
         for (idx, e) in recved.iter().take(buf.len()).enumerate() {
             buf[idx] = *e;
             written += 1;

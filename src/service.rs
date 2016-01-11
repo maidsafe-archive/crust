@@ -218,10 +218,10 @@ impl Service {
 
                 match *port {
                     Port::Tcp(_) => {
-                        let _ = TcpStream::connect(SocketAddrV4::new(addr, port.number()));
+                        let _ = TcpStream::connect(&addr);
                     }
                     Port::Utp(_) => {
-                        let _ = UtpSocket::connect(SocketAddrV4::new(addr, port.number()));
+                        let _ = UtpSocket::connect(&addr);
                     }
                 }
             }
@@ -454,13 +454,11 @@ impl Service {
               T: Send + 'static
     {
         thread::Builder::new()
-            .name("Service::".to_owned() + name)
+            .name(format!("Service::{}", name))
             .spawn(f)
     }
 
-    fn post<F>(sender: &Sender<Closure>, cmd: F)
-        where F: FnOnce(&mut State) + Send + 'static
-    {
+    fn post<F>(sender: &Sender<Closure>, cmd: F) where F: FnOnce(&mut State) + Send + 'static {
         assert!(sender.send(Closure::new(cmd)).is_ok());
     }
 
@@ -515,6 +513,7 @@ mod test {
     use util;
     use bootstrap_handler::BootstrapHandler;
     use maidsafe_utilities::event_sender::{MaidSafeEventCategory, MaidSafeObserver};
+    use maidsafe_utilities::thread::RaiiThreadJoiner;
 
     type CategoryRx = ::std::sync::mpsc::Receiver<MaidSafeEventCategory>;
 
@@ -581,22 +580,22 @@ mod test {
     }
 
     fn loopback_if_unspecified(eps: Vec<Endpoint>) -> Vec<Endpoint> {
-        eps.iter().map(|e|e.map_ip_addr(util::loopback_if_unspecified)).collect()
+        eps.iter().map(|e| e.map_ip_addr(util::loopback_if_unspecified)).collect()
     }
 
     fn try_recv_with_timeout<T>(receiver: &Receiver<T>,
-                                timeout: ::std::time::Duration) -> Option<T>
-    {
-        use ::std::sync::mpsc::TryRecvError;
+                                timeout: ::std::time::Duration)
+                                -> Option<T> {
+        use std::sync::mpsc::TryRecvError;
 
         let interval = ::std::time::Duration::from_millis(100);
         let mut elapsed = ::std::time::Duration::from_millis(0);
 
         loop {
             match receiver.try_recv() {
-                Ok(value)                       => return Some(value),
+                Ok(value) => return Some(value),
                 Err(TryRecvError::Disconnected) => break,
-                _                               => (),
+                _ => (),
             }
 
             thread::sleep(interval);
@@ -935,27 +934,25 @@ mod test {
                                 match token {
                                     0 => peer0_connection = Some(conn),
                                     1 => peer1_connection = Some(conn),
-                                    _ => unreachable!("Token {} should not have been sent", token)
+                                    _ => unreachable!("Token {} should not have been sent", token),
                                 }
 
-                                if peer0_connection.is_some() &&
-                                   peer1_connection.is_some()
-                                {
+                                if peer0_connection.is_some() && peer1_connection.is_some() {
                                     // Drop this service to cause lost connection.
                                     let _ = service1.take();
                                 }
-                            },
+                            }
 
                             Ok(Event::LostConnection(conn)) => {
                                 if Some(conn) == peer0_connection {
                                     peer0_received_lost_connection = true;
                                     break;
                                 }
-                            },
+                            }
 
                             event => println!("event: {:?}", event),
                         }
-                    },
+                    }
 
                     _ => unreachable!("This category should not have been fired - {:?}", category),
                 }
@@ -981,7 +978,7 @@ mod test {
                                 category_tx);
 
         let mut service0 = Service::new(event_sender0).unwrap();
-        let service1     = Service::new(event_sender1).unwrap();
+        let service1 = Service::new(event_sender1).unwrap();
 
         let endpoint0 = service0.start_accepting(Port::Tcp(0))
                                 .unwrap()
@@ -1003,23 +1000,23 @@ mod test {
                         match event_rx.try_recv() {
                             Ok(Event::OnAccept(_, conn)) => {
                                 peer0_connection = Some(conn);
-                            },
+                            }
 
                             Ok(Event::OnConnect(Ok(_), _)) => {
                                 // Drop this service.
                                 let _ = service1.take();
-                            },
+                            }
 
                             Ok(Event::LostConnection(conn)) => {
                                 if Some(conn) == peer0_connection {
                                     peer0_received_lost_connection = true;
                                     break;
                                 }
-                            },
+                            }
 
                             _ => (),
                         }
-                    },
+                    }
 
                     _ => unreachable!("This category should not have been fired - {:?}", category),
                 }
