@@ -68,7 +68,15 @@ impl Endpoint {
             None => panic!("Failed to parse valid IP address"),
         }
     }
+
     /// Returns SocketAddr.
+    pub fn get_sockaddr(&self) -> SocketAddr {
+        match *self {
+            Endpoint::Tcp(address) => address,
+            Endpoint::Utp(address) => address,
+        }
+    }
+    /// Returns IpAddr.
     pub fn get_address(&self) -> IpAddr {
         match *self {
             Endpoint::Tcp(address) => ip_from_socketaddr(address),
@@ -118,7 +126,7 @@ impl Encodable for Endpoint {
                 Endpoint::Tcp(_) => "tcp".to_owned(),
                 Endpoint::Utp(_) => "utp".to_owned(),
             },
-            address: self.get_address().to_string(),
+            address: self.get_sockaddr().to_string(),
         };
         try!(s.encode(e));
         Ok(())
