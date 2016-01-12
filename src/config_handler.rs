@@ -22,7 +22,6 @@
 //! This means that `read_config_file()`, `create_default_config_file()`, and
 //! `write_config_file()` should not be called concurrently with one another.
 
-use error::Error;
 use endpoint::Endpoint;
 use file_handler::FileHandler;
 
@@ -38,14 +37,16 @@ impl Config {
 }
 
 pub fn read_config_file() -> Result<Config, ::error::Error> {
-    let mut file_handler = FileHandler::new(try!(get_file_name()));
-    Ok(try!(file_handler.read_file::<Config>()))
+    let file_handler = try!(FileHandler::new(&try!(get_file_name())));
+    let cfg = try!(file_handler.read_file::<Config>());
+    Ok(cfg)
 }
 
 // This is a best-effort to create a config file - we don't care about the result.
-pub fn create_default_config_file() -> Result<(), Error> {
-    let mut file_handler = FileHandler::new(try!(get_file_name()));
-    Ok(try!(file_handler.write_file(&Config::make_default())))
+pub fn create_default_config_file() -> Result<(), ::error::Error> {
+    let file_handler = try!(FileHandler::new(&try!(get_file_name())));
+    try!(file_handler.write_file(&Config::make_default()));
+    Ok(())
 }
 
 /// Writes a Crust config file **for use by tests and examples**.
@@ -74,9 +75,9 @@ pub fn write_config_file(hard_coded_endpoints: Option<Vec<Endpoint>>)
     Ok(config_path)
 }
 
-fn get_file_name() -> Result<::std::path::PathBuf, Error> {
+fn get_file_name() -> Result<::std::ffi::OsString, ::error::Error> {
     let mut name = try!(::file_handler::exe_file_stem());
-    name.set_extension("crust.config");
+    name.push(".crust.config");
     Ok(name)
 }
 

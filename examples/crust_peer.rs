@@ -375,7 +375,7 @@ fn on_time_out(timeout: Duration, flag_speed: bool) -> Sender<bool> {
     tx
 }
 
-fn create_local_config() {
+fn create_local_config() -> Result<(), crust::error::Error> {
     let mut stdout = term::stdout();
     let mut config_path = match ::crust::current_bin_dir() {
         Ok(path) => path,
@@ -386,9 +386,8 @@ fn create_local_config() {
             std::process::exit(1);
         },
     };
-    let mut config_name = ::crust::exe_file_stem()
-                              .unwrap_or(::std::path::Path::new("unknown").to_path_buf());
-    config_name.set_extension("crust.config");
+    let mut config_name = try!(::crust::exe_file_stem());
+    config_name.push(".crust.config");
     config_path.push(config_name);
 
     match ::std::fs::metadata(&config_path) {
@@ -413,7 +412,8 @@ fn create_local_config() {
                 },
             }
         },
-    }
+    };
+    Ok(())
 }
 
 fn filter_ok<T>(vec: Vec<io::Result<T>>) -> Vec<T> {
@@ -428,7 +428,7 @@ fn main() {
                             .unwrap_or_else(|error| error.exit());
 
     if args.flag_create_local_config {
-        create_local_config()
+        unwrap_result!(create_local_config());
     }
 
     let mut stdout = term::stdout();
