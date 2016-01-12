@@ -24,7 +24,7 @@ use std::sync::{Arc, Mutex};
 use std::str::FromStr;
 use std::fmt::Display;
 
-use std::net::{UdpSocket, Ipv4Addr};
+use std::net::{UdpSocket, Ipv4Addr, TcpListener};
 use beacon;
 use config_handler::{Config, read_config_file};
 use get_if_addrs::{getifaddrs, filter_loopback};
@@ -102,8 +102,8 @@ impl Service {
     /// Starts accepting on a given port. If port number is 0, the OS
     /// will pick one randomly. The actual port used will be returned.
     pub fn start_accepting(&mut self, port: u16) -> io::Result<Endpoint> {
-        let acceptor = try!(transport::Acceptor::new(Protocol::Tcp, port));
-        let accept_addr = acceptor.local_addr();
+        let acceptor = try!(TcpListener::bind(("0, 0, 0, 0", port)));
+        let accept_addr = try!(acceptor.local_addr());
 
         Self::accept(self.cmd_sender.clone(), acceptor);
 
@@ -111,9 +111,7 @@ impl Service {
             let contacts = filter_loopback(getifaddrs())
                                .into_iter()
                                .map(|ip| {
-                                   Endpoint::new(Protocol::Utp,
-                                                 ip.addr.clone(),
-                                                 accept_addr.socket_addr().port())
+                                   Endpoint::new(Protocol::Utp, ip.addr.clone(), accept_addr.port())
                                })
                                .collect::<Vec<_>>();
 
@@ -124,7 +122,7 @@ impl Service {
 
         // FIXME: Instead of hardcoded wrapping in loopback V4, the
         // acceptor should tell us the address it is accepting on.
-        Ok(accept_addr)
+        Ok(Endpoint::from_socket_addr(Protocol::Tcp, accept_addr))
     }
 
     fn start_broadcast_acceptor(&mut self, beacon_port: u16) -> io::Result<u16> {
@@ -352,11 +350,11 @@ impl Service {
         }
     }
 
-    fn accept(cmd_sender: Sender<Closure>, acceptor: transport::Acceptor) {
+    fn accept(cmd_sender: Sender<Closure>, acceptor: TcpListener) {
         let cmd_sender2 = cmd_sender.clone();
 
         Self::post(&cmd_sender, move |state: &mut State| {
-            let port = acceptor.local_port();
+            let port = acceptor.local_addr().unwrap().port();
             state.listening_ports.insert(port);
 
             let handshake = Handshake {
@@ -397,7 +395,7 @@ impl Service {
     /// endpoints.
     pub fn get_external_endpoints(&self) {
         Self::post(&self.cmd_sender, move |state: &mut State| {
-            type T = (net::SocketAddrV4, Endpoint);
+            type T = (SocketAddrV4, Endpoint);
 
             struct Async {
                 remaining: usize,
@@ -421,12 +419,11 @@ impl Service {
                     if let Ok(results) = results {
                         for result in results {
                             let transport_port = internal_ep.socket_addr().port();
-                            let ext_ep =
-                                Endpoint::from_socket_addr(result.1.protocol().clone(),
-                                                           net::SocketAddr::new(result.1
-                                                                                 .socket_addr()
-                                                                                 .ip(),
-                                                                           transport_port));
+                            let ext_ep = Endpoint::from_socket_addr(result.1.protocol().clone(),
+                                                                    (result.1
+                                                                           .socket_addr()
+                                                                           .ip(),
+                                                                     transport_port));
                             async.results.push(ext_ep);
                         }
                     }

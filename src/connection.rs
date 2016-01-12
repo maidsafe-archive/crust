@@ -17,7 +17,6 @@
 
 use std::fmt;
 use endpoint::{Endpoint, Protocol};
-//use std::net::SocketAddr;
 use socket_addr::SocketAddr;
 
 /// Information hold for the connection between a pair of nodes
@@ -33,16 +32,16 @@ impl Connection {
     pub fn new(proto: Protocol, local_addr: SocketAddr, peer_addr: SocketAddr) -> Connection {
         Connection {
             transport_protocol: proto,
-            peer_addr: SocketAddr(peer_addr),
-            local_addr: SocketAddr(local_addr),
+            peer_addr: SocketAddr(*peer_addr),
+            local_addr: SocketAddr(*local_addr),
         }
     }
 
     /// Getter returning peer's Endpoint info
     pub fn peer_endpoint(&self) -> Endpoint {
         match self.transport_protocol {
-            Protocol::Tcp => Endpoint::Tcp(self.peer_addr.0.clone()),
-            Protocol::Utp => Endpoint::Utp(self.peer_addr.0.clone()),
+            Protocol::Tcp => Endpoint::from_socket_addr(Protocol::Tcp, *self.peer_addr.clone()),
+            Protocol::Utp => Endpoint::from_socket_addr(Protocol::Utp, *self.peer_addr.clone()),
         }
     }
     /// getter

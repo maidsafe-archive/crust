@@ -19,7 +19,7 @@ use endpoint::{Protocol, Endpoint};
 use igd;
 use std::io;
 use get_if_addrs::{getifaddrs, filter_loopback};
-use std::net::SocketAddrV4;
+use socket_addr::SocketAddrV4;
 use ip::IpAddr;
 use std::thread;
 use std::time::Duration;

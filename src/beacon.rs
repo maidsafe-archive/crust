@@ -19,7 +19,8 @@ use rand::random;
 use std::error::Error;
 use std::io;
 use std::io::Result;
-use std::net::{SocketAddr, TcpStream, UdpSocket, SocketAddrV4};
+use std::net::{SocketAddr, TcpStream, UdpSocket, TcpListener};
+use socket_addr::SocketAddrV4;
 use std::str::FromStr;
 use std::sync::{Arc, mpsc, Mutex};
 use std::thread;
@@ -27,7 +28,7 @@ use std::time::Duration;
 
 use net2::UdpSocketExt;
 
-use transport::{Acceptor, Transport, Handshake};
+use transport::{Transport, Handshake};
 use endpoint::{Endpoint, Protocol};
 use state::State;
 
@@ -73,14 +74,14 @@ fn is_loopback(address: &SocketAddr) -> bool {
 pub struct BroadcastAcceptor {
     guid: GUID,
     socket: Arc<Mutex<UdpSocket>>,
-    acceptor: Arc<Mutex<Acceptor>>,
+    acceptor: Arc<Mutex<TcpListener>>,
     tcp_listener_port: u16,
 }
 
 impl BroadcastAcceptor {
     pub fn new(port: u16) -> Result<BroadcastAcceptor> {
         let socket = try!(UdpSocket::bind(("0.0.0.0", port)));
-        let acceptor = try!(Acceptor::new(Protocol::Tcp, 0));
+        let acceptor = try!(TcpListener::bind(0));
         let mut guid = [0; GUID_SIZE];
         for item in &mut guid {
             *item = random::<u8>();

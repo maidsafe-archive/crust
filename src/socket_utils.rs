@@ -16,7 +16,8 @@
 // relating to use of the SAFE Network Software.
 
 use std::io;
-use std::net::{UdpSocket, SocketAddr};
+use std::net::UdpSocket;
+use socket_addr::SocketAddr;
 use std::io::ErrorKind;
 
 /// A self interruptable receive trait that allows a timed-out period to be defined

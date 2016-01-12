@@ -1,4 +1,5 @@
-use std::net::{SocketAddr, UdpSocket};
+use std::net::UdpSocket;
+use socket_addr::SocketAddr;
 
 #[must_use]
 pub struct PeriodicSender<D> {

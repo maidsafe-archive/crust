@@ -31,7 +31,7 @@ use transport;
 use transport::{Message, Handshake};
 use endpoint::Endpoint;
 use std::thread::JoinHandle;
-use std::net::{Ipv4Addr, UdpSocket};
+use std::net::{Ipv4Addr, UdpSocket, TcpListener};
 use ip::IpAddr;
 
 use itertools::Itertools;
@@ -220,7 +220,7 @@ impl State {
     }
 
     pub fn accept(handshake: Handshake,
-                  acceptor: &transport::Acceptor)
+                  acceptor: &TcpListener)
                   -> io::Result<(Handshake, transport::Transport)> {
         Self::handle_handshake(handshake, try!(transport::accept(acceptor)))
     }
@@ -503,7 +503,7 @@ impl State {
 mod test {
     use super::*;
     use std::thread;
-    use std::net::{SocketAddrV6};
+    use std::net::SocketAddrV6;
     use ip::IpAddr;
     use std::sync::mpsc::channel;
     use transport::{Acceptor, Handshake};
@@ -524,7 +524,10 @@ mod test {
         let addr = match (ip, addr) {
             (IpAddr::V4(ip), _) => net::SocketAddr::V4(net::SocketAddrV4::new(ip, addr.port())),
             (IpAddr::V6(ip), net::SocketAddr::V6(addr)) => {
-                net::SocketAddr::V6(SocketAddrV6::new(ip, addr.port(), addr.flowinfo(), addr.scope_id()))
+                net::SocketAddr::V6(SocketAddrV6::new(ip,
+                                                      addr.port(),
+                                                      addr.flowinfo(),
+                                                      addr.scope_id()))
             }
             _ => panic!("Unreachable"),
         };

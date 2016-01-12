@@ -103,12 +103,12 @@ impl Endpoint {
 
     pub fn unspecified_to_loopback(&self) -> Endpoint {
         if util::is_unspecified(&self.ip()) {
-            let loop_back_ip = match self.ip() {
+            let loop_back_ip = match *self.ip() {
                 IpAddr::V4(_) => IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
                 IpAddr::V6(_) => IpAddr::V6(Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 1)),
             };
 
-            return Endpoint::new(self.protocol(), loop_back_ip, self.port());
+            return Endpoint::new(*self.protocol(), loop_back_ip, self.port());
         }
 
         self.clone()

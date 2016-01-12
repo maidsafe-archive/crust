@@ -15,7 +15,8 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::net::{TcpStream, SocketAddr, Shutdown};
+use std::net::{TcpStream, Shutdown};
+use socket_addr::SocketAddr;
 use std::io::{Error, ErrorKind};
 use std::io::Result as IoResult;
 use std::thread;

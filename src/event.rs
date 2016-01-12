@@ -17,7 +17,8 @@
 
 use endpoint::Endpoint;
 use connection::Connection;
-use std::net::{UdpSocket, SocketAddr};
+use std::net::UdpSocket;
+use socket_addr::SocketAddr;
 use std::collections::HashSet;
 use std::io;
 
