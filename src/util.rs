@@ -20,7 +20,7 @@ use ip::IpAddr;
 use std::cmp::Ordering;
 use get_if_addrs::{getifaddrs, IfAddr};
 use rustc_serialize::{Encodable, Decodable, Decoder, Encoder};
-use endpoint::Endpoint;
+use endpoint::{Endpoint, Port};
 use std::str::FromStr;
 
 #[cfg(test)]
@@ -153,10 +153,9 @@ pub fn ip_from_socketaddr(addr: SocketAddr) -> IpAddr {
     }
 }
 
-// pub fn loopback_v4(port: Port) -> Endpoint {
-//     let ip = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
-//     Endpoint::new(ip, port)
-// }
+pub fn loopback_v4(port: Port) -> SocketAddr {
+    SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), port.number()))
+}
 
 pub fn is_v4(ip_addr: &IpAddr) -> bool {
     match *ip_addr {
