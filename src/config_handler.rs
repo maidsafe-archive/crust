@@ -22,7 +22,6 @@
 //! This means that `read_config_file()`, `create_default_config_file()`, and
 //! `write_config_file()` should not be called concurrently with one another.
 
-use error::Error;
 use endpoint::Endpoint;
 use file_handler::FileHandler;
 

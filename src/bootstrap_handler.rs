@@ -183,7 +183,7 @@ mod test {
         let _test_file = TestFile::new().unwrap();
 
         // Add contacts
-        let mut bootstrap_handler = super::BootstrapHandler::new();
+        let mut bootstrap_handler = unwrap_result!(super::BootstrapHandler::new());
         assert!(bootstrap_handler.update_contacts(contacts.clone(), Vec::<Endpoint>::new())
                                  .is_ok());
 
@@ -210,7 +210,7 @@ mod test {
         let _test_file = TestFile::new().unwrap();
 
         // Add contacts
-        let mut bootstrap_handler = super::BootstrapHandler::new();
+        let mut bootstrap_handler = unwrap_result!(super::BootstrapHandler::new());
         assert!(bootstrap_handler.update_contacts(contacts.clone(), Vec::<Endpoint>::new())
                                  .is_ok());
         assert_eq!(bootstrap_handler.read_file().unwrap(), contacts);
@@ -256,7 +256,7 @@ mod test {
         let _test_file = TestFile::new().unwrap();
 
         // Add contacts
-        let mut bootstrap_handler = super::BootstrapHandler::new();
+        let mut bootstrap_handler = unwrap_result!(super::BootstrapHandler::new());
         assert!(bootstrap_handler.update_contacts(contacts.clone(), Vec::<Endpoint>::new())
                                  .is_ok());
         assert_eq!(bootstrap_handler.read_file().unwrap(), contacts);

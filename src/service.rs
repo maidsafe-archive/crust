@@ -35,7 +35,6 @@ use connection::Connection;
 use state::{Closure, State};
 use event::{Event, HolePunchResult};
 use util::{SocketAddrW, SocketAddrV4W};
-use config_handler;
 
 /// Type used to represent serialised data in a message.
 pub type Bytes = Vec<u8>;

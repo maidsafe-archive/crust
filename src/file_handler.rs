@@ -109,36 +109,6 @@ impl FileHandler {
         &self.path
     }
 
-    fn set_path(&mut self,
-                new_path: Result<::std::path::PathBuf, ::error::Error>)
-                -> Result<::std::path::PathBuf, ::error::Error> {
-        new_path.and_then(|path| {
-            // path.push(self.name.clone());
-            self.path = path.clone();
-            Ok(path)
-        })
-    }
-
-    fn die(message: String, code: i32) {
-        panic!("die with message :{} and exit code {}", message, code);
-        // ::std::process::exit(code);
-    }
-
-    #[cfg(target_os="windows")]
-    fn path_or_file_not_found(error: &::std::io::Error) -> bool {
-        let native_error = error.raw_os_error().unwrap_or(0);
-        native_error == 2 || native_error == 3
-    }
-
-    #[cfg(any(target_os="macos", target_os="ios", target_os="linux"))]
-    fn path_or_file_not_found(error: &::std::io::Error) -> bool {
-        error.kind() == ::std::io::ErrorKind::NotFound
-    }
-
-    fn permission_denied(error: &::std::io::Error) -> bool {
-        error.kind() == ::std::io::ErrorKind::PermissionDenied
-    }
-
     /// Read the contents of the file and decode it as JSON.
     #[allow(unsafe_code)]
     pub fn read_file<Contents: ::rustc_serialize::Decodable>
