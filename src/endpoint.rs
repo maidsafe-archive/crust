@@ -45,25 +45,42 @@ impl Endpoint {
             IpAddr::V6(a) => SocketAddr::V6(SocketAddrV6::new(a, port, 0, 0xe)),
         };
         match protocol {
-            Tcp => Endpoint::Tcp(socketaddr),
-            Utp => Endpoint::Utp(socketaddr),
+            Tcp => {
+                Endpoint {
+                    protocol: Protocol::Tcp,
+                    socket_addr: socketaddr,
+                }
+            }
+            Utp => {
+                Endpoint {
+                    protocol: Protocol::Utp,
+                    socket_addr: socketaddr,
+                }
+            }
         }
     }
 
     /// Construct a new Endpoint from socketaddr
     pub fn from_socket_addr(protocol: Protocol, addr: SocketAddr) -> Endpoint {
         match protocol {
-            Tcp => Endpoint::Tcp(addr),
-            Utp => Endpoint::Utp(addr),
+            Tcp => {
+                Endpoint {
+                    protocol: protocol,
+                    socket_addr: addr,
+                }
+            }
+            Utp => {
+                Endpoint {
+                    protocol: protocol,
+                    socket_addr: addr,
+                }
+            }
         }
     }
 
     /// Returns SocketAddr.
     pub fn socket_addr(&self) -> SocketAddr {
-        match *self {
-            Protocol::Tcp(address) |
-            Protocol::Utp(address) => address,
-        }
+        self.socket_addr
     }
 
     /// Get protocol
