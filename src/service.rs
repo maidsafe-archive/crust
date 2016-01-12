@@ -55,17 +55,22 @@ pub struct Service {
 impl Service {
     /// Constructs a service. User needs to create an asynchronous channel, and provide
     /// the sender half to this method. Receiver will receive all `Event`s from this library.
-    pub fn new(event_sender: ::CrustEventSender) -> io::Result<Service> {
-        let config = read_config_file().unwrap_or_else(|e| {
-            debug!("Crust failed to read config file; Error: {:?};", e);
-            ::config_handler::create_default_config_file();
-            Config::make_default()
-        });
+    pub fn new(event_sender: ::CrustEventSender) -> Result<Service, ::error::Error> {
+        let config = match read_config_file() {
+            Ok(cfg) => cfg,
+            Err(e) => {
+                debug!("Crust failed to read config file; Error: {:?};", e);
+                try!(::config_handler::create_default_config_file());
+                Config::make_default()
+            }
+        };
 
         Service::construct(event_sender, config)
     }
 
-    fn construct(event_sender: ::CrustEventSender, config: Config) -> io::Result<Service> {
+    fn construct(event_sender: ::CrustEventSender,
+                 config: Config)
+                 -> Result<Service, ::error::Error> {
         let mut state = try!(State::new(event_sender));
         let cmd_sender = state.cmd_sender.clone();
 

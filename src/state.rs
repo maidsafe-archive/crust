@@ -86,7 +86,7 @@ pub struct State {
 }
 
 impl State {
-    pub fn new(event_sender: ::CrustEventSender) -> io::Result<State> {
+    pub fn new(event_sender: ::CrustEventSender) -> Result<State, ::error::Error> {
         let (cmd_sender, cmd_receiver) = mpsc::channel::<Closure>();
         let mapper = try!(::hole_punching::HolePunchServer::start(cmd_sender.clone()));
 
@@ -96,7 +96,7 @@ impl State {
             cmd_receiver: cmd_receiver,
             connections: HashMap::new(),
             listening_ports: HashSet::new(),
-            bootstrap_handler: BootstrapHandler::new(),
+            bootstrap_handler: try!(BootstrapHandler::new()),
             stop_called: false,
             is_bootstrapping: false,
             next_punch_sequence: SequenceNumber::new(::rand::random()),

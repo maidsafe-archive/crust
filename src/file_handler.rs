@@ -15,7 +15,8 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::path::{Path, PathBuf};
+use std::path::Path;
+use std::ffi::{OsStr, OsString};
 use std::fs;
 use std::io;
 
@@ -44,84 +45,57 @@ use std::io;
 /// `FileHandler` is placed in each binary's [`current_bin_dir()`](fn.current_bin_dir.html).  In
 /// this way, each process should be the only one accessing that file.
 pub struct FileHandler {
-    name: ::std::path::PathBuf,
-    path: Option<::std::path::PathBuf>,
+    path: ::std::path::PathBuf,
 }
 
 impl FileHandler {
     /// Constructor taking the required file name (not the full path)
-    pub fn new(name: ::std::path::PathBuf) -> FileHandler {
-        FileHandler {
-            name: name,
-            path: None,
-        }
-    }
-
-    /// Reads the file and returns the JSON-decoded contents or an error.
     ///
-    /// It tries to read from the following locations in this order (see also [an example config
-    /// file flowchart]
+    /// This function tests whether it has write access to the file in the following locations in
+    /// this order (see also [an example config file flowchart]
     /// (https://github.com/maidsafe/crust/blob/master/docs/vault_config_file_flowchart.pdf)):
     ///
-    ///   1. The location of the most recent successful read or write attempt
-    ///   2. [`current_bin_dir()`](fn.current_bin_dir.html)
-    ///   3. [`user_app_dir()`](fn.user_app_dir.html)
-    ///   4. [`system_cache_dir()`](fn.system_cache_dir.html)
+    ///   1. [`current_bin_dir()`](fn.current_bin_dir.html)
+    ///   2. [`user_app_dir()`](fn.user_app_dir.html)
+    ///   3. [`system_cache_dir()`](fn.system_cache_dir.html)
     ///
     /// See [Thread- and Process-Safety](#thread--and-process-safety) for notes on thread- and
     /// process-safety.
-    ///
-    /// ## **NOTE**
-    ///
-    /// If a file (or directory) exists at the expected location when an attempt is made to read it,
-    /// and reading or decoding fails, this function **WILL TERMINATE THE APPLICATION.**  This means
-    /// that the only cause for an error to be returned from this function is the non-existence of
-    /// the file in all attempted locations.
-    pub fn read_file<Contents: ::rustc_serialize::Decodable>
-        (&mut self)
-         -> Result<Contents, ::error::Error> {
-        let mut last_error = ::error::Error::NotSet;
+    pub fn new<S: AsRef<OsStr> + ?Sized>(name: &S) -> Result<FileHandler, ::error::Error> {
+        let name = name.as_ref();
+        let mut path = try!(current_bin_dir());
+        path.push(name);
+        match fs::OpenOptions::new().write(true).create(true).open(&path) {
+            Ok(_) => return Ok(FileHandler { path: path }),
+            Err(_) => (),
+        };
 
-        let paths = vec![self.path().clone().ok_or(::error::Error::NotSet),
-                         current_bin_dir(),
-                         user_app_dir(),
-                         system_cache_dir()];
+        let mut path = try!(user_app_dir());
+        path.push(name);
+        match fs::OpenOptions::new().write(true).create(true).open(&path) {
+            Ok(_) => return Ok(FileHandler { path: path }),
+            Err(_) => (),
+        };
 
-        for path_result in paths {
-            match self.set_path(path_result) {
-                Ok(mut path) => {
-                    path.push(self.name.clone());
-                    match Self::read::<Contents>(path.clone()) {
-                        Ok(content) => {
-                            return Ok(content);
-                        }
-                        Err(error) => {
-                            last_error = error;
-                        }
-                    }
-                }
-                Err(error) => {
-                    last_error = error;
-                }
-            }
+        let mut path = try!(system_cache_dir());
+        path.push(name);
+        match fs::OpenOptions::new().write(true).create(true).open(&path) {
+            Ok(_) => Ok(FileHandler { path: path }),
+            Err(e) => Err(From::from(e)),
         }
-
-        self.path = None;
-        Err(last_error)
     }
 
     /// Remove the file from every location where it can be read.
-    pub fn cleanup(name: &PathBuf) -> io::Result<()> {
+    pub fn cleanup<S: AsRef<OsStr>>(name: &S) -> io::Result<()> {
+        let name = name.as_ref();
         let i1 = current_bin_dir().into_iter();
         let i2 = user_app_dir().into_iter();
         let i3 = system_cache_dir().into_iter();
 
         let dirs = i1.chain(i2.chain(i3));
 
-        for mut dir in dirs {
-            dir.push(name.clone());
-            let path = Path::new(&dir);
-
+        for mut path in dirs {
+            path.push(name);
             if path.exists() {
                 try!(fs::remove_file(path));
             }
@@ -130,157 +104,38 @@ impl FileHandler {
         Ok(())
     }
 
-    /// JSON-encodes then writes `contents` to the file.  Creates the file if it doesn't already
-    /// exist.
-    ///
-    /// If `contents` fails to encode or the file cannot be written, an error is returned.  The
-    /// process is (see also [an example config file flowchart]
-    /// (https://github.com/maidsafe/crust/blob/master/docs/vault_config_file_flowchart.pdf)):
-    ///
-    ///   1. If the file has previously been read (i.e. [`path()`](#method.path) is `Some(...)`), it
-    ///      tries to write the contents to this path.  If this fails, it jumps to step 3.
-    ///   2. It tries to create and write the file in
-    ///      [`system_cache_dir()`](fn.system_cache_dir.html).  It will not try and create this
-    ///      directory if it doesn't exist.
-    ///   3. It tries to create and write the file in [`user_app_dir()`](fn.user_app_dir.html).  It
-    ///      will try to create this directory and any parent components if they don't exist.
-    ///
-    /// See [Thread- and Process-Safety](#thread--and-process-safety) for notes on thread- and
-    /// process-safety.
-    pub fn write_file<Contents: ::rustc_serialize::Encodable>(&mut self,
-                                                              contents: &Contents)
-                                                              -> Result<(), ::error::Error> {
-        self.path()
-            .clone()
-            .ok_or(::error::Error::NotSet)
-            .and_then(|mut path| {
-                path.push(self.name.clone());
-                Self::write(path, contents)
-            })
-            .or_else(|error| {
-                // Only try to create in the sys dir if we've not previously read the file
-                match error {
-                    ::error::Error::NotSet => {
-                        self.set_path(system_cache_dir())
-                            .and_then(|mut path| {
-                                path.push(self.name.clone());
-                                Self::write(path, contents)
-                            })
-                    }
-                    _ => Err(error),
-                }
-            })
-            .or_else(|_| {
-                self.set_path(user_app_dir()).and_then(|mut path| {
-                    path.push(self.name.clone());
-                    Self::write(path, contents)
-                })
-            })
-            .or_else(|_| {
-                self.set_path(user_app_dir())
-                    .and_then(|path| {
-                        try!(::std::fs::create_dir_all(path.clone()));
-                        Ok(path)
-                    })
-                    .and_then(|mut path| {
-                        path.push(self.name.clone());
-                        Self::write(path, contents)
-                    })
-            })
-            .or_else(|error| {
-                self.path = None;
-                Err(error)
-            })
-    }
-
     /// Get the full path to the file.
-    ///
-    /// If no calls to [`read_file()`](#method.read_file) or [`write_file()`](#method.write_file)
-    /// have been made, or the last such attempt failed, then this will return `None`.
-    ///
-    /// See [Thread- and Process-Safety](#thread--and-process-safety) for notes on thread- and
-    /// process-safety.
-    pub fn path(&self) -> &Option<::std::path::PathBuf> {
+    pub fn path(&self) -> &Path {
         &self.path
     }
 
-    fn set_path(&mut self,
-                new_path: Result<::std::path::PathBuf, ::error::Error>)
-                -> Result<::std::path::PathBuf, ::error::Error> {
-        new_path.and_then(|path| {
-            // path.push(self.name.clone());
-            self.path = Some(path.clone());
-            Ok(path)
-        })
-    }
-
-    fn die(message: String, code: i32) {
-        error!("die {}", message);
-        ::std::process::exit(code);
-    }
-
-    #[cfg(target_os="windows")]
-    fn path_or_file_not_found(error: &::std::io::Error) -> bool {
-        let native_error = error.raw_os_error().unwrap_or(0);
-        native_error == 2 || native_error == 3
-    }
-
-    #[cfg(any(target_os="macos", target_os="ios", target_os="linux"))]
-    fn path_or_file_not_found(error: &::std::io::Error) -> bool {
-        error.kind() == ::std::io::ErrorKind::NotFound
-    }
-
-    fn permission_denied(error: &::std::io::Error) -> bool {
-        error.kind() == ::std::io::ErrorKind::PermissionDenied
-    }
-
+    /// Read the contents of the file and decode it as JSON.
     #[allow(unsafe_code)]
-    fn read<Contents: ::rustc_serialize::Decodable>(path: ::std::path::PathBuf)
-                                                    -> Result<Contents, ::error::Error> {
+    pub fn read_file<Contents: ::rustc_serialize::Decodable>
+        (&self)
+         -> Result<Contents, ::error::Error> {
         use rustc_serialize::json::{Json, Decoder};
         use memmap::{Mmap, Protection};
-        match ::std::fs::File::open(&path) {
-            Ok(file) => {
-                let file = match Mmap::open(&file, Protection::Read) {
-                    Ok(file) => file,
-                    Err(error) => {
-                        Self::die(format!("Failed to read {:?}: {}", path, error), 2);
-                        unreachable!()
-                    }
-                };
-                let bytes: &[u8] = unsafe { file.as_slice() };
-                let mut cursor = io::Cursor::new(bytes);
-                match Json::from_reader(&mut cursor)
-                          .map_err(|e| format!("{}", e))
-                          .and_then(|j| {
-                              Contents::decode(&mut Decoder::new(j)).map_err(|e| format!("{}", e))
-                          }) {
-                    Ok(contents) => Ok(contents),
-                    Err(error) => {
-                        Self::die(format!("Failed to decode {:?}: {}", path, error), 3);
-                        unreachable!();
-                    }
-                }
-            }
-            Err(error) => {
-                if !Self::path_or_file_not_found(&error) && !Self::permission_denied(&error) {
-                    Self::die(format!("Failed to open {:?}: {}", path, error), 1);
-                }
-                Err(::error::Error::IoError(error))
-            }
-        }
+        let file = try!(::std::fs::File::open(&self.path));
+        let file = try!(Mmap::open(&file, Protection::Read));
+        let bytes: &[u8] = unsafe { file.as_slice() };
+        let mut cursor = io::Cursor::new(bytes);
+        let json = try!(Json::from_reader(&mut cursor));
+        let contents = try!(Contents::decode(&mut Decoder::new(json)));
+        Ok(contents)
     }
 
+    /// Write `contents` to the file as JSON.
     #[allow(unsafe_code)]
-    fn write<Contents: ::rustc_serialize::Encodable>(path: ::std::path::PathBuf,
-                                                     contents: &Contents)
-                                                     -> Result<(), ::error::Error> {
+    pub fn write_file<Contents: ::rustc_serialize::Encodable>(&self,
+                                                              contents: &Contents)
+                                                              -> Result<(), ::error::Error> {
         use memmap::{Mmap, Protection};
         use rustc_serialize::json;
         use std::fs::OpenOptions;
         use std::io::Write;
         let contents = format!("{}", json::as_pretty_json(contents)).into_bytes();
-        let file = try!(OpenOptions::new().read(true).write(true).create(true).open(path));
+        let file = try!(OpenOptions::new().read(true).write(true).create(true).open(&self.path));
         try!(file.set_len(contents.len() as u64));
         let mut mmap = try!(Mmap::open(&file, Protection::ReadWrite));
         try!(unsafe { mmap.as_mut_slice() }.write_all(&contents[..]));
@@ -311,8 +166,10 @@ pub fn user_app_dir() -> Result<::std::path::PathBuf, ::error::Error> {
 /// (https://github.com/maidsafe/crust/blob/master/docs/vault_config_file_flowchart.pdf).
 #[cfg(any(target_os="macos", target_os="ios", target_os="linux"))]
 pub fn user_app_dir() -> Result<::std::path::PathBuf, ::error::Error> {
-    Ok(try!(join_exe_file_stem(&try!(::std::env::home_dir().ok_or(not_found_error()))
-                                    .join(".config"))))
+    let home_dir = try!(::std::env::home_dir().ok_or(io::Error::new(io::ErrorKind::NotFound,
+                                                                    "User home directory not \
+                                                                     found.")));
+    Ok(try!(join_exe_file_stem(&home_dir)).join(".config"))
 }
 
 /// The full path to a system cache directory available for all users.  See also [an example config
@@ -333,9 +190,10 @@ pub fn system_cache_dir() -> Result<::std::path::PathBuf, ::error::Error> {
 
 /// The file name of the currently-running binary without any suffix or extension.  For example, if
 /// the binary is "C:\\Abc.exe" this function will return `Ok("Abc")`.
-pub fn exe_file_stem() -> Result<::std::path::PathBuf, ::error::Error> {
+pub fn exe_file_stem() -> Result<OsString, ::error::Error> {
     let exe_path = try!(::std::env::current_exe());
-    Ok(::std::path::PathBuf::from(try!(exe_path.file_stem().ok_or(not_found_error()))))
+    let file_stem = exe_path.file_stem();
+    Ok(try!(file_stem.ok_or(not_found_error(&exe_path))).to_os_string())
 }
 
 /// RAII object which removes the [`user_app_dir()`](fn.user_app_dir.html) when an instance is
@@ -350,7 +208,7 @@ pub fn exe_file_stem() -> Result<::std::path::PathBuf, ::error::Error> {
 /// {
 ///     let _cleaner = ::crust::ScopedUserAppDirRemover;
 ///     let mut file_handler =
-///         ::crust::FileHandler::new(::std::path::Path::new("test.json").to_path_buf());
+///         ::crust::FileHandler::new("test.json").unwrap();
 ///     // User app dir is possibly created by this call.
 ///     let _ = file_handler.write_file(&111u64);
 /// }
@@ -372,8 +230,10 @@ impl Drop for ScopedUserAppDirRemover {
     }
 }
 
-fn not_found_error() -> ::std::io::Error {
-    ::std::io::Error::new(::std::io::ErrorKind::NotFound, "No file name component")
+fn not_found_error(file_name: &Path) -> ::std::io::Error {
+    let mut msg: String = From::from("No file name component: ");
+    msg.push_str(&file_name.to_string_lossy());
+    ::std::io::Error::new(::std::io::ErrorKind::NotFound, msg)
 }
 
 fn join_exe_file_stem(path: &::std::path::Path) -> Result<::std::path::PathBuf, ::error::Error> {
@@ -385,30 +245,11 @@ mod test {
     #[test]
     fn read_write_file_test() {
         let _cleaner = super::ScopedUserAppDirRemover;
-        let mut file_handler = super::FileHandler::new(::std::path::Path::new("file_handler_test\
-                                                                               .json")
-                                                           .to_path_buf());
+        let file_handler = unwrap_result!(super::FileHandler::new("file_handler_test.json"));
         let test_value = 123456789u64;
 
-        match file_handler.read_file::<u64>() {
-            Ok(result) => {
-                assert_eq!(result, test_value);
-                assert!(!file_handler.path().is_none());
-            }
-            Err(_) => assert!(file_handler.path().is_none()),
-        }
-
-        match file_handler.write_file(&test_value) {
-            Ok(_) => assert!(!file_handler.path().is_none()),
-            Err(_) => assert!(file_handler.path().is_none()),
-        }
-
-        match file_handler.read_file::<u64>() {
-            Ok(result) => {
-                assert_eq!(result, test_value);
-                assert!(!file_handler.path().is_none());
-            }
-            Err(_) => assert!(file_handler.path().is_none()),
-        }
+        unwrap_result!(file_handler.write_file::<u64>(&test_value));
+        let read_value = unwrap_result!(file_handler.read_file::<u64>());
+        assert_eq!(test_value, read_value);
     }
 }
