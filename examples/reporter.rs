@@ -45,7 +45,6 @@ use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
 use std::cmp::max;
 use std::collections::HashMap;
 use std::io;
-use std::path::Path;
 use std::sync::Arc;
 use std::sync::mpsc::channel;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -114,7 +113,7 @@ fn main() {
     let args: Args = Docopt::new(USAGE).and_then(|d| d.decode())
                                        .unwrap_or_else(|e| e.exit());
 
-    let mut file_handler = FileHandler::new(Path::new(&args.arg_config).to_path_buf());
+    let file_handler = unwrap_result!(FileHandler::new(&args.arg_config));
 
     let mut config = file_handler.read_file::<Config>().unwrap();
     config.sanitize();
@@ -133,7 +132,7 @@ fn main() {
             0, config.max_wait_before_restart_service_secs * 1000)));
     }
 
-    let mut file_handler = FileHandler::new(Path::new(&config.output_report_path).to_path_buf());
+    let file_handler = unwrap_result!(FileHandler::new(&config.output_report_path));
     file_handler.write_file(&report).unwrap();
 }
 

@@ -24,7 +24,6 @@
 
 use endpoint::Endpoint;
 use file_handler::FileHandler;
-use std::io;
 use ip::IpAddr;
 
 pub struct BootstrapHandler {
@@ -34,15 +33,16 @@ pub struct BootstrapHandler {
 
 impl BootstrapHandler {
     #[allow(dead_code)]
-    pub fn cleanup() -> io::Result<()> {
-        FileHandler::cleanup(&get_file_name())
+    pub fn cleanup() -> Result<(), ::error::Error> {
+        try!(FileHandler::cleanup(&try!(get_file_name())));
+        Ok(())
     }
 
-    pub fn new() -> BootstrapHandler {
-        BootstrapHandler {
-            file_handler: FileHandler::new(get_file_name()),
+    pub fn new() -> Result<BootstrapHandler, ::error::Error> {
+        Ok(BootstrapHandler {
+            file_handler: try!(FileHandler::new(&try!(get_file_name()))),
             last_updated: ::time::now(),
-        }
+        })
     }
 
     pub fn update_contacts(&mut self,
@@ -107,11 +107,10 @@ impl BootstrapHandler {
     }
 }
 
-fn get_file_name() -> ::std::path::PathBuf {
-    let mut name = ::file_handler::exe_file_stem()
-                       .unwrap_or(::std::path::Path::new("unknown").to_path_buf());
-    name.set_extension("bootstrap.cache");
-    name
+fn get_file_name() -> Result<::std::ffi::OsString, ::error::Error> {
+    let mut name = try!(::file_handler::exe_file_stem());
+    name.push(".bootstrap.cache");
+    Ok(name)
 }
 
 #[cfg(test)]
@@ -156,7 +155,7 @@ mod test {
         pub fn new() -> Result<TestFile, ::error::Error> {
             use std::io::Write;
             let mut path = try!(::file_handler::current_bin_dir());
-            path.push(super::get_file_name());
+            path.push(try!(super::get_file_name()));
             let mut file = try!(::std::fs::File::create(&path));
             try!(write!(&mut file,
                         "{}",
@@ -289,7 +288,7 @@ mod test {
     fn serialise_and_parse() {
         let contacts = random_endpoints(5);
         let _test_file = TestFile::new().unwrap();
-        let mut bootstrap_handler = super::BootstrapHandler::new();
+        let mut bootstrap_handler = unwrap_result!(super::BootstrapHandler::new());
         assert!(bootstrap_handler.update_contacts(contacts.clone(), Vec::<Endpoint>::new())
                                  .is_ok());
     }
