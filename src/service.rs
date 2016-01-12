@@ -21,6 +21,7 @@ use std::thread;
 use std::thread::JoinHandle;
 use std::sync::{Arc, Mutex};
 use std::str::FromStr;
+use std::fmt::Display;
 
 use std::net::{SocketAddr, SocketAddrV4, UdpSocket, Ipv4Addr};
 use beacon;
@@ -28,7 +29,7 @@ use config_handler::{Config, read_config_file};
 use get_if_addrs::{getifaddrs, filter_loopback};
 use transport;
 use transport::Handshake;
-use endpoint::{Endpoint, Port};
+use endpoint::{Endpoint, Port, Protocol};
 use map_external_port::async_map_external_port;
 use connection::Connection;
 
@@ -97,7 +98,7 @@ impl Service {
     /// Starts accepting on a given port. If port number is 0, the OS
     /// will pick one randomly. The actual port used will be returned.
     pub fn start_accepting(&mut self, port: Port) -> io::Result<Endpoint> {
-        let acceptor = try!(transport::Acceptor::new(port));
+        let acceptor = try!(transport::Acceptor::new(Protocol::Utp, port));
         let accept_addr = acceptor.local_addr();
 
         Self::accept(self.cmd_sender.clone(), acceptor);
@@ -105,7 +106,11 @@ impl Service {
         if self.beacon_guid_and_port.is_some() {
             let contacts = filter_loopback(getifaddrs())
                                .into_iter()
-                               .map(|ip| Endpoint::new(ip.addr.clone(), accept_addr.get_port()))
+                               .map(|ip| {
+                                   Endpoint::new(Protocol::Utp,
+                                                 ip.addr.clone(),
+                                                 accept_addr.socket_addr().port())
+                               })
                                .collect::<Vec<_>>();
 
             Self::post(&self.cmd_sender, move |state: &mut State| {
@@ -215,16 +220,10 @@ impl Service {
             // Connect to our listening ports, this should unblock
             // the threads.
             for port in &state.listening_ports {
-                match *port {
-                    Port::Tcp(_) => {
-                        let _ = TcpStream::connect(SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1),
-                                                                     port.number()));
-                    }
-                    Port::Utp(_) => {
-                        let _ = UtpSocket::connect(SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1),
-                                                                     port.number()));
-                    }
-                }
+                let _ = TcpStream::connect(SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1),
+                                                             port.clone()));
+                let _ = UtpSocket::connect(SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1),
+                                                             port.clone()));
             }
         }));
 
@@ -412,32 +411,27 @@ impl Service {
                 let async = async.clone();
                 let event_sender = state.event_sender.clone();
 
-                async_map_external_port(internal_ep.to_ip().clone(),
-                                        move |results: io::Result<Vec<T>>| {
-                                            let mut async = async.lock().unwrap();
-                                            async.remaining -= 1;
-                                            if let Ok(results) = results {
-                                                for result in results {
-                                                    let transport_port = match internal_ep {
-                                                        Endpoint::Tcp(_) => {
-                                                            Port::Tcp(result.1.get_port().number())
-                                                        }
-                                                        Endpoint::Utp(_) => {
-                                                            Port::Utp(result.1.get_port().number())
-                                                        }
-                                                    };
-                                                    let ext_ep =
-                                                        Endpoint::new(result.1.get_address(),
-                                                                      transport_port);
-                                                    async.results.push(ext_ep);
-                                                }
-                                            }
-                                            if async.remaining == 0 {
-                                                let event = Event::ExternalEndpoints(async.results
-                                                                                          .clone());
-                                                let _ = event_sender.send(event);
-                                            }
-                                        });
+                async_map_external_port(internal_ep.clone(), move |results: io::Result<Vec<T>>| {
+                    let mut async = async.lock().unwrap();
+                    async.remaining -= 1;
+                    if let Ok(results) = results {
+                        for result in results {
+                            let transport_port = internal_ep.socket_addr().port();
+                            let ext_ep =
+                                Endpoint::from_socket_addr(result.1.protocol(),
+                                                           SocketAddr::new(result.1
+                                                                                 .socket_addr()
+                                                                                 .ip(),
+                                                                           transport_port));
+                            async.results.push(ext_ep);
+                        }
+                    }
+                    if async.remaining == 0 {
+                        let event = Event::ExternalEndpoints(async.results
+                                                                  .clone());
+                        let _ = event_sender.send(event);
+                    }
+                });
             }
         });
     }

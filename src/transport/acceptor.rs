@@ -18,7 +18,7 @@
 use std::io;
 use utp::UtpListener;
 use std::net::TcpListener;
-use endpoint::{Endpoint, Port};
+use endpoint::{Endpoint, Port, Protocol};
 
 pub enum Acceptor {
     // TCP listener
@@ -28,9 +28,9 @@ pub enum Acceptor {
 }
 
 impl Acceptor {
-    pub fn new(port: Port) -> io::Result<Acceptor> {
-        match port {
-            Port::Tcp(port) => {
+    pub fn new(protocol : Protocol, port: Port) -> io::Result<Acceptor> {
+        match protocol {
+            Tcp => {
                 let listener = {
                     if let Ok(listener) = TcpListener::bind(("0.0.0.0", port)) {
                         listener
@@ -41,7 +41,7 @@ impl Acceptor {
 
                 Ok(Acceptor::Tcp(listener))
             }
-            Port::Utp(port) => {
+            Utp => {
                 let listener = try!(UtpListener::bind(("0.0.0.0", port)));
                 Ok(Acceptor::Utp(listener))
             }

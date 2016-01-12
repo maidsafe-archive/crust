@@ -28,7 +28,7 @@ use std::time::Duration;
 use net2::UdpSocketExt;
 
 use transport::{Acceptor, Transport, Handshake};
-use endpoint::Port;
+use endpoint::{Endpoint, Port, Protocol};
 use state::State;
 
 const GUID_SIZE: usize = 16;
@@ -80,12 +80,12 @@ pub struct BroadcastAcceptor {
 impl BroadcastAcceptor {
     pub fn new(port: u16) -> Result<BroadcastAcceptor> {
         let socket = try!(UdpSocket::bind(("0.0.0.0", port)));
-        let acceptor = try!(Acceptor::new(Port::Tcp(0)));
+        let acceptor = try!(Acceptor::new(Protocol::Tcp, 0));
         let mut guid = [0; GUID_SIZE];
         for item in &mut guid {
             *item = random::<u8>();
         }
-        let tcp_listener_port = acceptor.local_port().number();
+        let tcp_listener_port = acceptor.local_port();
         Ok(BroadcastAcceptor {
             guid: guid,
             socket: Arc::new(Mutex::new(socket)),
