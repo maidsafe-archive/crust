@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use endpoint::{Endpoint, Port};
+use endpoint::{Protocol, Endpoint};
 use igd;
 use std::io;
 use get_if_addrs::{getifaddrs, filter_loopback};
@@ -97,23 +97,22 @@ fn to_io_result<T, E: ::std::fmt::Debug>(error_name: &str, r: Result<T, E>) -> i
     r.map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{}: {:?}", error_name, e)))
 }
 
-fn map_external_port(local_ep: SocketAddrV4, ext_port: Port) -> io::Result<Endpoint> {
+fn map_external_port(local_ep: SocketAddrV4, ext_port: u16) -> io::Result<Endpoint> {
     let gateway = try!(to_io_result("SearchError",
                                     igd::search_gateway_from_timeout(
                                         local_ep.ip().clone(),
                                         Duration::from_secs(IGD_SEARCH_TIMEOUT_SECS))));
 
-    let igd_protocol = match ext_port {
-        Port::Tcp(_) => igd::PortMappingProtocol::TCP,
-        Port::Utp(_) => igd::PortMappingProtocol::UDP,
-    };
-
     try!(to_io_result("AddPortError",
-                      gateway.add_port(igd_protocol, ext_port.number(), local_ep, 0, "crust")));
+                      gateway.add_port(igd::PortMappingProtocol::TCP,
+                                       ext_port.number(),
+                                       local_ep,
+                                       0,
+                                       "crust")));
 
     let ext_ip = try!(to_io_result("GetExternalIpError", gateway.get_external_ip()));
 
-    Ok(Endpoint::new(IpAddr::V4(ext_ip), ext_port))
+    Ok(Endpoint::new(Protocol::Tcp, IpAddr::V4(ext_ip), ext_port))
 }
 
 // --- Tests -------------------------------------------------------------------
@@ -123,7 +122,7 @@ mod test {
     use std::net::{Ipv4Addr, SocketAddrV4};
     use ip::IpAddr;
     use std::sync::mpsc;
-    use endpoint::{Endpoint, Port};
+    use endpoint::Endpoint;
     use std::io;
     use util::timed_recv;
 
@@ -135,7 +134,7 @@ mod test {
         type R = io::Result<Vec<(SocketAddrV4, Endpoint)>>;
         let (sender, receiver) = mpsc::channel::<R>();
         let unspecified_ip = IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0));
-        let local_ep = Endpoint::new(unspecified_ip, Port::Utp(5484));
+        let local_ep = Endpoint::new(unspecified_ip, 5484);
         async_map_external_port(local_ep, move |result: R| {
             assert!(sender.send(result).is_ok());
         });

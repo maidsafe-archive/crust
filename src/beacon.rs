@@ -28,7 +28,7 @@ use std::time::Duration;
 use net2::UdpSocketExt;
 
 use transport::{Acceptor, Transport, Handshake};
-use endpoint::{Endpoint, Port, Protocol};
+use endpoint::{Endpoint, Protocol};
 use state::State;
 
 const GUID_SIZE: usize = 16;

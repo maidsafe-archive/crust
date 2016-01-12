@@ -29,123 +29,6 @@ use std::sync::mpsc;
 use std::thread;
 
 /// /////////////////////////////////////////////////////////////////////////////
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
-/// Utility struct of SocketAddr for hole punching
-pub struct SocketAddrW(pub SocketAddr);
-
-impl PartialOrd for SocketAddrW {
-    fn partial_cmp(&self, other: &SocketAddrW) -> Option<Ordering> {
-        Some(self.cmp(&other))
-    }
-}
-
-impl Ord for SocketAddrW {
-    fn cmp(&self, other: &SocketAddrW) -> Ordering {
-        compare_ip_addrs(&self.0, &other.0)
-    }
-}
-
-
-impl Encodable for SocketAddrW {
-    fn encode<S: Encoder>(&self, s: &mut S) -> Result<(), S::Error> {
-        let as_string = format!("{}", self.0);
-        try!(s.emit_str(&as_string[..]));
-        Ok(())
-    }
-}
-
-impl Decodable for SocketAddrW {
-    fn decode<D: Decoder>(d: &mut D) -> Result<SocketAddrW, D::Error> {
-        let as_string = try!(d.read_str());
-        match SocketAddr::from_str(&as_string[..]) {
-            Ok(sa) => Ok(SocketAddrW(sa)),
-            Err(e) => {
-                let err = format!("Failed to decode SocketAddrW: {}", e);
-                Err(d.error(&err[..]))
-            }
-        }
-    }
-}
-
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
-/// Utility struct of SocketAddrV4 for hole punching
-pub struct SocketAddrV4W(pub SocketAddrV4);
-
-impl PartialOrd for SocketAddrV4W {
-    fn partial_cmp(&self, other: &SocketAddrV4W) -> Option<Ordering> {
-        Some(self.cmp(&other))
-    }
-}
-
-impl Ord for SocketAddrV4W {
-    fn cmp(&self, other: &SocketAddrV4W) -> Ordering {
-        compare_ipv4_addrs(&self.0, &other.0)
-    }
-}
-
-impl Encodable for SocketAddrV4W {
-    fn encode<S: Encoder>(&self, s: &mut S) -> Result<(), S::Error> {
-        let as_string = format!("{}", self.0);
-        try!(s.emit_str(&as_string[..]));
-        Ok(())
-    }
-}
-
-impl Decodable for SocketAddrV4W {
-    fn decode<D: Decoder>(d: &mut D) -> Result<SocketAddrV4W, D::Error> {
-        let as_string = try!(d.read_str());
-        // TODO: use this code once `impl FromStr for SocketAddrV4` makes it into libstd
-        // match SocketAddrV4::from_str(&as_string[..]) {
-        //    Ok(sa)  => Ok(SocketAddrV4W(sa)),
-        //    Err(e)  => {
-        //        let err = format!("Failed to decode SocketAddrV4W: {}", e);
-        //        Err(d.error(&err[..]))
-        //    }
-        // }
-        match SocketAddr::from_str(&as_string[..]) {
-            Ok(SocketAddr::V4(sa)) => Ok(SocketAddrV4W(sa)),
-            Ok(SocketAddr::V6(_sa)) => {
-                let err = format!("Failed to decode SocketAddrV4W - Ipv6 address received where \
-                                   ipv4 address expected");
-                Err(d.error(&err[..]))
-            }
-            Err(e) => {
-                let err = format!("Failed to decode SocketAddrV4W: {}", e);
-                Err(d.error(&err[..]))
-            }
-        }
-    }
-}
-
-/// /////////////////////////////////////////////////////////////////////////////
-pub fn compare_ip_addrs(a1: &SocketAddr, a2: &SocketAddr) -> Ordering {
-    use std::net::SocketAddr::{V4, V6};
-    match *a1 {
-        V4(ref a1) => {
-            match *a2 {
-                V4(ref a2) => compare_ipv4_addrs(a1, a2),
-                V6(_) => Ordering::Less,
-            }
-        }
-        V6(ref a1) => {
-            match *a2 {
-                V4(_) => Ordering::Greater,
-                V6(ref a2) => compare_ipv6_addrs(a1, a2),
-            }
-        }
-    }
-}
-
-pub fn compare_ipv4_addrs(a1: &SocketAddrV4, a2: &SocketAddrV4) -> Ordering {
-    (a1.ip(), a1.port()).cmp(&(a2.ip(), a2.port()))
-}
-
-pub fn compare_ipv6_addrs(a1: &SocketAddrV6, a2: &SocketAddrV6) -> Ordering {
-    (a1.ip(), a1.port(), a1.flowinfo(), a1.scope_id())
-        .cmp(&(a2.ip(), a2.port(), a2.flowinfo(), a2.scope_id()))
-}
-
-/// /////////////////////////////////////////////////////////////////////////////
 pub fn ip_from_socketaddr(addr: SocketAddr) -> IpAddr {
     match addr {
         SocketAddr::V4(a) => IpAddr::V4(*a.ip()),
@@ -162,6 +45,13 @@ pub fn is_v4(ip_addr: &IpAddr) -> bool {
     match *ip_addr {
         IpAddr::V4(_) => true,
         IpAddr::V6(_) => false,
+    }
+}
+
+pub fn is_global(ip: &IpAddr) -> bool {
+    match *ip {
+        IpAddr::V4(ref ipv4) => ipv4.is_global(),
+        IpAddr::V6(ref ipv6) => ipv6.is_global(),
     }
 }
 
@@ -317,24 +207,24 @@ pub fn heuristic_geo_cmp(ip1: &IpAddr, ip2: &IpAddr) -> Ordering {
     }
 }
 
-/// This function should really take IpAddr as an argument
+/// TODO This function should really take IpAddr as an argument
 /// but it is used outside of this library and IpAddr
 /// is currently considered experimental.
-pub fn ifaddrs_if_unspecified(ep: Endpoint) -> Vec<Endpoint> {
-    match ep.get_address() {
+pub fn ifaddrs_if_unspecified(ep: &Endpoint) -> Vec<Endpoint> {
+    match *ep.ip() {
         IpAddr::V4(ref addr) => {
             if !::ip_info::v4::is_unspecified(addr) {
-                return vec![ep];
+                return vec![ep.clone()];
             }
         }
         IpAddr::V6(ref addr) => {
             if !::ip_info::v6::is_unspecified(addr) {
-                return vec![ep];
+                return vec![ep.clone()];
             }
         }
     }
 
-    let ep_is_v4 = is_v4(&ep.get_address());
+    let ep_is_v4 = is_v4(ep.ip());
 
     getifaddrs()
         .into_iter()
@@ -342,7 +232,7 @@ pub fn ifaddrs_if_unspecified(ep: Endpoint) -> Vec<Endpoint> {
             if ep_is_v4 != is_v4(&iface.addr) {
                 return None;
             }
-            Some(Endpoint::new(iface.addr, ep.get_port()))
+            Some(Endpoint::new(ep.protocol().clone(), iface.addr, ep.port()))
         })
         .collect()
 }

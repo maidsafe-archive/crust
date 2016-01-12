@@ -28,7 +28,7 @@ use config_handler::Config;
 use get_if_addrs::{getifaddrs, filter_loopback};
 use transport;
 use transport::{Message, Handshake};
-use endpoint::{Endpoint, Port};
+use endpoint::Endpoint;
 use std::thread::JoinHandle;
 use std::net::{SocketAddr, Ipv4Addr, UdpSocket, SocketAddrV4};
 use ip::IpAddr;
@@ -77,7 +77,7 @@ pub struct State {
     pub cmd_sender: Sender<Closure>,
     pub cmd_receiver: Receiver<Closure>,
     pub connections: HashMap<Connection, ConnectionData>,
-    pub listening_ports: HashSet<Port>,
+    pub listening_ports: HashSet<u16>,
     pub bootstrap_handler: BootstrapHandler,
     pub stop_called: bool,
     pub is_bootstrapping: bool,
@@ -163,7 +163,7 @@ impl State {
     }
 
     fn get_listening_endpoint(&self) -> Vec<Endpoint> {
-        let listening_ports = self.listening_ports.iter().cloned().collect::<Vec<Port>>();
+        let listening_ports = self.listening_ports.iter().cloned().collect::<Vec<u16>>();
 
         let mut endpoints = Vec::<Endpoint>::new();
         for port in listening_ports {
@@ -506,7 +506,7 @@ mod test {
     use ip::IpAddr;
     use std::sync::mpsc::channel;
     use transport::{Acceptor, Handshake};
-    use endpoint::{Endpoint, Port};
+    use endpoint::Endpoint;
     use event::Event;
     use util;
 
@@ -532,7 +532,7 @@ mod test {
 
     fn test_bootstrap_off_list(n: u16) {
         let acceptors = (0..n)
-                            .map(|_| Acceptor::new(Port::Tcp(0)).unwrap())
+                            .map(|_| Acceptor::new(0).unwrap())
                             .collect::<Vec<_>>();
 
         let eps = acceptors.iter()

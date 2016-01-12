@@ -18,7 +18,7 @@
 use std::io;
 use utp::UtpListener;
 use std::net::TcpListener;
-use endpoint::{Endpoint, Port, Protocol};
+use endpoint::{Endpoint, Protocol};
 
 pub enum Acceptor {
     // TCP listener
@@ -28,7 +28,7 @@ pub enum Acceptor {
 }
 
 impl Acceptor {
-    pub fn new(protocol : Protocol, port: Port) -> io::Result<Acceptor> {
+    pub fn new(protocol: Protocol, port: u16) -> io::Result<Acceptor> {
         match protocol {
             Tcp => {
                 let listener = {
@@ -48,7 +48,7 @@ impl Acceptor {
         }
     }
 
-    pub fn local_port(&self) -> Port {
+    pub fn local_port(&self) -> u16 {
         self.local_addr().get_port()
     }
 

@@ -29,7 +29,7 @@ use config_handler::{Config, read_config_file};
 use get_if_addrs::{getifaddrs, filter_loopback};
 use transport;
 use transport::Handshake;
-use endpoint::{Endpoint, Port, Protocol};
+use endpoint::{Endpoint, Protocol};
 use map_external_port::async_map_external_port;
 use connection::Connection;
 
@@ -100,8 +100,8 @@ impl Service {
 
     /// Starts accepting on a given port. If port number is 0, the OS
     /// will pick one randomly. The actual port used will be returned.
-    pub fn start_accepting(&mut self, port: Port) -> io::Result<Endpoint> {
-        let acceptor = try!(transport::Acceptor::new(Protocol::Utp, port));
+    pub fn start_accepting(&mut self, port: u16) -> io::Result<Endpoint> {
+        let acceptor = try!(transport::Acceptor::new(Protocol::Tcp, port));
         let accept_addr = acceptor.local_addr();
 
         Self::accept(self.cmd_sender.clone(), acceptor);
@@ -421,7 +421,7 @@ impl Service {
                         for result in results {
                             let transport_port = internal_ep.socket_addr().port();
                             let ext_ep =
-                                Endpoint::from_socket_addr(result.1.protocol(),
+                                Endpoint::from_socket_addr(result.1.protocol().clone(),
                                                            SocketAddr::new(result.1
                                                                                  .socket_addr()
                                                                                  .ip(),
@@ -507,7 +507,7 @@ mod test {
     use rustc_serialize::{Decodable, Encodable};
     use cbor::{Decoder, Encoder};
     use connection::Connection;
-    use endpoint::{Endpoint, Port};
+    use endpoint::Endpoint;
     use config_handler::write_config_file;
     use event::Event;
     use util;
@@ -578,8 +578,8 @@ mod test {
         vec.into_iter().filter_map(|a| a.ok()).collect()
     }
 
-    fn loopback_if_unspecified(eps: Vec<Endpoint>) -> Vec<Endpoint> {
-        eps.iter().map(|e| e.map_ip_addr(util::loopback_if_unspecified)).collect()
+    fn unspecified_to_loopback(eps: &[Endpoint]) -> Vec<Endpoint> {
+        eps.iter().map(|elt| elt.unspecified_to_loopback()).collect()
     }
 
     #[test]
@@ -597,7 +597,7 @@ mod test {
                                                   category_tx.clone());
 
         let mut cm1 = Service::new(event_sender1).unwrap();
-        let cm1_ports = filter_ok(vec![cm1.start_accepting(Port::Tcp(0))]);
+        let cm1_ports = filter_ok(vec![cm1.start_accepting(0)]);
         let beacon_port = cm1.start_beacon(0).unwrap();
         assert_eq!(cm1_ports.len(), 1);
         assert_eq!(Some(beacon_port), cm1.get_beacon_acceptor_port());
@@ -660,7 +660,7 @@ mod test {
     //     let mut service0 = Service::new(event_sender0).unwrap();
     //     let mut service1 = Service::new(event_sender1).unwrap();
     //
-    //     let endpoints = loopback_if_unspecified(vec![service0.start_accepting(Port::Tcp(0))
+    //     let endpoints = unspecified_to_loopback(vec![service0.start_accepting(Port::Tcp(0))
     //                                                          .unwrap(),
     //                                                  service1.start_accepting(Port::Tcp(0))
     //                                                          .unwrap()]);
@@ -741,7 +741,7 @@ mod test {
         let crust_event_category = MaidSafeEventCategory::CrustEvent;
         let event_sender1 = MaidSafeObserver::new(cm1_i, crust_event_category.clone(), category_tx);
         let mut cm1 = Service::new(event_sender1).unwrap();
-        let cm1_eps = filter_ok(vec![cm1.start_accepting(Port::Tcp(0))]);
+        let cm1_eps = filter_ok(vec![cm1.start_accepting(0)]);
         assert!(cm1_eps.len() >= 1);
 
         temp_configs.push(make_temp_config());
@@ -750,11 +750,11 @@ mod test {
         let (category_tx, category_rx1) = channel();
         let event_sender2 = MaidSafeObserver::new(cm2_i, crust_event_category, category_tx);
         let mut cm2 = Service::new(event_sender2).unwrap();
-        let cm2_eps = filter_ok(vec![cm2.start_accepting(Port::Tcp(0))]);
+        let cm2_eps = filter_ok(vec![cm2.start_accepting(0)]);
         assert!(cm2_eps.len() >= 1);
 
-        cm2.connect(0, loopback_if_unspecified(cm1_eps));
-        cm1.connect(1, loopback_if_unspecified(cm2_eps));
+        cm2.connect(0, unspecified_to_loopback(&cm1_eps));
+        cm1.connect(1, unspecified_to_loopback(&cm2_eps));
 
         let runner1 = run_cm(cm1, cm1_o, category_rx0);
         let runner2 = run_cm(cm2, cm2_o, category_rx1);
@@ -940,10 +940,8 @@ mod test {
         let mut runners = Vec::new();
 
         let mut listening_eps = nodes.iter_mut()
-                                     .map(|node| {
-                                         node.service.start_accepting(Port::Tcp(0)).unwrap()
-                                     })
-                                     .map(|ep| ep.map_ip_addr(::util::loopback_if_unspecified))
+                                     .map(|node| node.service.start_accepting(0).unwrap())
+                                     .map(|ep| ep.unspecified_to_loopback())
                                      .collect::<::std::collections::VecDeque<_>>();
 
         for mut node in nodes {
@@ -988,7 +986,7 @@ mod test {
                                                                       category_tx);
         let mut cm = Service::new(event_sender).unwrap();
 
-        let cm_listen_ep = cm.start_accepting(Port::Tcp(0)).unwrap();
+        let cm_listen_ep = cm.start_accepting(0).unwrap();
 
         let thread = spawn(move || {
             for it in category_rx.iter() {
@@ -1017,7 +1015,7 @@ mod test {
             let cm_aux = Service::new(event_sender).unwrap();
         // setting the listening port to be greater than 4455 will make the test hanging
         // changing this to cm_beacon_addr will make the test hanging
-            cm_aux.connect(0, loopback_if_unspecified(vec![cm_listen_ep]));
+            cm_aux.connect(0, unspecified_to_loopback(&vec![cm_listen_ep]));
 
             for it in category_rx.iter() {
                 match it {
@@ -1056,8 +1054,8 @@ mod test {
                                                       category_tx.clone());
             let mut service = Service::new(event_sender1).unwrap();
             // random port assigned by os
-            tcp_port = service.start_accepting(Port::Tcp(0)).unwrap().get_port();
-            utp_port = service.start_accepting(Port::Utp(0)).unwrap().get_port();
+            tcp_port = service.start_accepting(0).unwrap().get_port();
+            utp_port = service.start_accepting(0).unwrap().get_port();
         }
 
         {

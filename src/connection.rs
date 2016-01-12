@@ -21,7 +21,7 @@ use std::net::SocketAddr;
 use util::SocketAddrW;
 
 /// Information hold for the connection between a pair of nodes
-#[derive(PartialOrd, Ord, PartialEq, Eq, Hash, Clone, Copy)]
+#[derive(PartialEq, Eq, Hash, Clone)]
 pub struct Connection {
     transport_protocol: Protocol,
     peer_addr: SocketAddrW,

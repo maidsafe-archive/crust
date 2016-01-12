@@ -25,6 +25,7 @@
 use endpoint::Endpoint;
 use file_handler::FileHandler;
 use ip::IpAddr;
+use util;
 
 pub struct BootstrapHandler {
     file_handler: FileHandler,
@@ -81,7 +82,7 @@ impl BootstrapHandler {
         // We wouldn't add any loopback addresses nor addresses from our local
         // LAN to the bootstrap cache. We can always find such addresses using
         // beacon and more often than not they would be obsolete very soon.
-        contacts.retain(|contact| contact.socket_addr().ip().is_global());
+        contacts.retain(|contact| util::is_global(contact.ip()));
 
         bootstrap_contacts.retain(|contact| !prune.contains(&contact));
         contacts.retain(|contact| !bootstrap_contacts.contains(&contact));

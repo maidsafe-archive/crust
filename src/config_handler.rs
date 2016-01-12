@@ -25,7 +25,7 @@
 use endpoint::Endpoint;
 use file_handler::FileHandler;
 
-#[derive(PartialEq, Eq, Debug, RustcDecodable, RustcEncodable, Clone)]
+#[derive(Debug, RustcDecodable, RustcEncodable, Clone)]
 pub struct Config {
     pub hard_coded_contacts: Vec<Endpoint>,
 }

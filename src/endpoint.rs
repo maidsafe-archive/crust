@@ -15,11 +15,16 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use util;
 use std::net::{SocketAddr, SocketAddrV4, SocketAddrV6};
 use ip::IpAddr;
+use ip::SocketAddrExt;
+use std::net::{Ipv4Addr, Ipv6Addr};
+use rustc_serialize::{Encodable, Decodable, Encoder, Decoder};
+use std::str::FromStr;
 
 /// Enum representing supported transport protocols
-#[derive(Debug, PartialOrd, Ord, PartialEq, Eq, Hash, Clone, Copy)]
+#[derive(Debug, Hash, Eq, PartialEq, Clone, RustcEncodable, RustcDecodable)]
 pub enum Protocol {
     /// TCP protocol
     Tcp,
@@ -27,19 +32,16 @@ pub enum Protocol {
     Utp,
 }
 
-/// Representation of a port (0 - 2^16)
-pub type Port = u16;
-
 /// Enum representing endpoint of supported protocols
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, RustcEncodable, RustcDecodable)]
+#[derive(Debug, Eq, PartialEq, Hash, Clone)]
 pub struct Endpoint {
     protocol: Protocol,
-    socket_addr: SocketAddr,
+    socket_addr: SocketAddrW,
 }
 
 impl Endpoint {
     /// Construct a new Endpoint
-    pub fn new(protocol: Protocol, addr: IpAddr, port: Port) -> Endpoint {
+    pub fn new(protocol: Protocol, addr: IpAddr, port: u16) -> Endpoint {
         let socketaddr = match addr {
             IpAddr::V4(a) => SocketAddr::V4(SocketAddrV4::new(a, port)),
             IpAddr::V6(a) => SocketAddr::V6(SocketAddrV6::new(a, port, 0, 0xe)),
@@ -78,13 +80,36 @@ impl Endpoint {
         }
     }
 
+    /// Returns IpAddr
+    pub fn ip(&self) -> &IpAddr {
+        &SocketAddrExt::ip(self.socket_addr())
+    }
+
+    /// Returns Port
+    pub fn port(&self) -> u16 {
+        self.socket_addr().port()
+    }
+
     /// Returns SocketAddr.
-    pub fn socket_addr(&self) -> SocketAddr {
-        self.socket_addr
+    pub fn socket_addr(&self) -> &SocketAddr {
+        &self.socket_addr
     }
 
     /// Get protocol
-    pub fn protocol(&self) -> Protocol {
-        self.protocol
+    pub fn protocol(&self) -> &Protocol {
+        &self.protocol
+    }
+
+    pub fn unspecified_to_loopback(&self) -> Endpoint {
+        if util::is_unspecified(&self.ip()) {
+            let loop_back_ip = match self.ip() {
+                IpAddr::V4(_) => IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
+                IpAddr::V6(_) => IpAddr::V6(Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 1)),
+            };
+
+            return Endpoint::new(self.protocol(), loop_back_ip, self.port());
+        }
+
+        self.clone()
     }
 }
