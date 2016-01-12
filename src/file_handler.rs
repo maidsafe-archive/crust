@@ -66,27 +66,21 @@ impl FileHandler {
         let mut path = try!(current_bin_dir());
         path.push(name);
         match fs::OpenOptions::new().write(true).create(true).open(&path) {
-            Ok(_) => return Ok(FileHandler {
-                path: path,
-            }),
+            Ok(_) => return Ok(FileHandler { path: path }),
             Err(_) => (),
         };
 
         let mut path = try!(user_app_dir());
         path.push(name);
         match fs::OpenOptions::new().write(true).create(true).open(&path) {
-            Ok(_) => return Ok(FileHandler {
-                path: path,
-            }),
+            Ok(_) => return Ok(FileHandler { path: path }),
             Err(_) => (),
         };
 
         let mut path = try!(system_cache_dir());
         path.push(name);
         match fs::OpenOptions::new().write(true).create(true).open(&path) {
-            Ok(_) => Ok(FileHandler {
-                path: path,
-            }),
+            Ok(_) => Ok(FileHandler { path: path }),
             Err(e) => Err(From::from(e)),
         }
     }
@@ -115,7 +109,21 @@ impl FileHandler {
         &self.path
     }
 
-    /*
+    fn set_path(&mut self,
+                new_path: Result<::std::path::PathBuf, ::error::Error>)
+                -> Result<::std::path::PathBuf, ::error::Error> {
+        new_path.and_then(|path| {
+            // path.push(self.name.clone());
+            self.path = path.clone();
+            Ok(path)
+        })
+    }
+
+    fn die(message: String, code: i32) {
+        panic!("die with message :{} and exit code {}", message, code);
+        // ::std::process::exit(code);
+    }
+
     #[cfg(target_os="windows")]
     fn path_or_file_not_found(error: &::std::io::Error) -> bool {
         let native_error = error.raw_os_error().unwrap_or(0);
@@ -130,13 +138,12 @@ impl FileHandler {
     fn permission_denied(error: &::std::io::Error) -> bool {
         error.kind() == ::std::io::ErrorKind::PermissionDenied
     }
-    */
 
     /// Read the contents of the file and decode it as JSON.
     #[allow(unsafe_code)]
-    pub fn read_file<Contents: ::rustc_serialize::Decodable>(&self)
-            -> Result<Contents, ::error::Error>
-    {
+    pub fn read_file<Contents: ::rustc_serialize::Decodable>
+        (&self)
+         -> Result<Contents, ::error::Error> {
         use rustc_serialize::json::{Json, Decoder};
         use memmap::{Mmap, Protection};
         let file = try!(::std::fs::File::open(&self.path));
@@ -150,9 +157,9 @@ impl FileHandler {
 
     /// Write `contents` to the file as JSON.
     #[allow(unsafe_code)]
-    pub fn write_file<Contents: ::rustc_serialize::Encodable>(&self, contents: &Contents)
-            -> Result<(), ::error::Error>
-    {
+    pub fn write_file<Contents: ::rustc_serialize::Encodable>(&self,
+                                                              contents: &Contents)
+                                                              -> Result<(), ::error::Error> {
         use memmap::{Mmap, Protection};
         use rustc_serialize::json;
         use std::fs::OpenOptions;
@@ -189,7 +196,9 @@ pub fn user_app_dir() -> Result<::std::path::PathBuf, ::error::Error> {
 /// (https://github.com/maidsafe/crust/blob/master/docs/vault_config_file_flowchart.pdf).
 #[cfg(any(target_os="macos", target_os="ios", target_os="linux"))]
 pub fn user_app_dir() -> Result<::std::path::PathBuf, ::error::Error> {
-    let home_dir = try!(::std::env::home_dir().ok_or(io::Error::new(io::ErrorKind::NotFound, "User home directory not found.")));
+    let home_dir = try!(::std::env::home_dir().ok_or(io::Error::new(io::ErrorKind::NotFound,
+                                                                    "User home directory not \
+                                                                     found.")));
     Ok(try!(join_exe_file_stem(&home_dir)).join(".config"))
 }
 
@@ -274,4 +283,3 @@ mod test {
         assert_eq!(test_value, read_value);
     }
 }
-

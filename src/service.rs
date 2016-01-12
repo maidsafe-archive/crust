@@ -35,6 +35,7 @@ use connection::Connection;
 use state::{Closure, State};
 use event::{Event, HolePunchResult};
 use util::{SocketAddrW, SocketAddrV4W};
+use config_handler;
 
 /// Type used to represent serialised data in a message.
 pub type Bytes = Vec<u8>;
@@ -62,13 +63,15 @@ impl Service {
                 debug!("Crust failed to read config file; Error: {:?};", e);
                 try!(::config_handler::create_default_config_file());
                 Config::make_default()
-            },
+            }
         };
 
         Service::construct(event_sender, config)
     }
 
-    fn construct(event_sender: ::CrustEventSender, config: Config) -> Result<Service, ::error::Error> {
+    fn construct(event_sender: ::CrustEventSender,
+                 config: Config)
+                 -> Result<Service, ::error::Error> {
         let mut state = try!(State::new(event_sender));
         let cmd_sender = state.cmd_sender.clone();
 
