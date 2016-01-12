@@ -78,7 +78,7 @@ pub use file_handler::{FileHandler, current_bin_dir, user_app_dir, system_cache_
                        exe_file_stem, ScopedUserAppDirRemover};
 pub use endpoint::Endpoint;
 pub use connection::Connection;
-pub use util::{ifaddrs_if_unspecified, SocketAddrW};
+pub use util::{ifaddrs_if_unspecified};
 pub use get_if_addrs::getifaddrs;
 
 #[cfg(test)]
@@ -109,3 +109,4 @@ mod hole_punching;
 mod periodic_sender;
 mod socket_utils;
 mod ip_info;
+mod socket_addr;

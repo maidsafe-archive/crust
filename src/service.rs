@@ -18,12 +18,13 @@
 use std::io;
 use std::sync::mpsc::Sender;
 use std::thread;
+use std::net;
 use std::thread::JoinHandle;
 use std::sync::{Arc, Mutex};
 use std::str::FromStr;
 use std::fmt::Display;
 
-use std::net::{SocketAddr, SocketAddrV4, UdpSocket, Ipv4Addr};
+use std::net::{UdpSocket, Ipv4Addr};
 use beacon;
 use config_handler::{Config, read_config_file};
 use get_if_addrs::{getifaddrs, filter_loopback};
@@ -35,7 +36,7 @@ use connection::Connection;
 
 use state::{Closure, State};
 use event::{Event, HolePunchResult};
-use util::{SocketAddrW, SocketAddrV4W};
+use socket_addr::{SocketAddr, SocketAddrV4};
 
 /// Type used to represent serialised data in a message.
 pub type Bytes = Vec<u8>;
@@ -223,10 +224,10 @@ impl Service {
             // Connect to our listening ports, this should unblock
             // the threads.
             for port in &state.listening_ports {
-                let _ = TcpStream::connect(SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1),
-                                                             port.clone()));
-                let _ = UtpSocket::connect(SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1),
-                                                             port.clone()));
+                let _ = TcpStream::connect(net::SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1),
+                                                                  port.clone()));
+                let _ = UtpSocket::connect(net::SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1),
+                                                                  port.clone()));
             }
         }));
 
@@ -250,8 +251,8 @@ impl Service {
 
             let handshake = Handshake {
                 mapper_port: Some(state.mapper.listening_addr().port()),
-                external_ip: state.mapper.external_address().map(SocketAddrV4W),
-                remote_ip: SocketAddrW(SocketAddr::from_str("0.0.0.0:0").unwrap()),
+                external_ip: state.mapper.external_address().map(SocketAddrV4),
+                remote_ip: SocketAddr(net::SocketAddr::from_str("0.0.0.0:0").unwrap()),
             };
 
             let _ = Self::new_thread("connect", move || {
@@ -305,8 +306,8 @@ impl Service {
 
             let handshake = Handshake {
                 mapper_port: Some(state.mapper.listening_addr().port()),
-                external_ip: state.mapper.external_address().map(::util::SocketAddrV4W),
-                remote_ip: SocketAddrW(SocketAddr::from_str("0.0.0.0:0").unwrap()),
+                external_ip: state.mapper.external_address().map(SocketAddrV4),
+                remote_ip: SocketAddr(net::SocketAddr::from_str("0.0.0.0:0").unwrap()),
             };
 
             let _ = Self::new_thread("rendezvous connect", move || {
@@ -360,8 +361,8 @@ impl Service {
 
             let handshake = Handshake {
                 mapper_port: Some(state.mapper.listening_addr().port()),
-                external_ip: state.mapper.external_address().map(SocketAddrV4W),
-                remote_ip: SocketAddrW(SocketAddr::from_str("0.0.0.0:0").unwrap()),
+                external_ip: state.mapper.external_address().map(SocketAddrV4),
+                remote_ip: SocketAddr(net::SocketAddr::from_str("0.0.0.0:0").unwrap()),
             };
 
             let _ = Self::new_thread("listen", move || {
@@ -396,7 +397,7 @@ impl Service {
     /// endpoints.
     pub fn get_external_endpoints(&self) {
         Self::post(&self.cmd_sender, move |state: &mut State| {
-            type T = (SocketAddrV4, Endpoint);
+            type T = (net::SocketAddrV4, Endpoint);
 
             struct Async {
                 remaining: usize,
@@ -422,7 +423,7 @@ impl Service {
                             let transport_port = internal_ep.socket_addr().port();
                             let ext_ep =
                                 Endpoint::from_socket_addr(result.1.protocol().clone(),
-                                                           SocketAddr::new(result.1
+                                                           net::SocketAddr::new(result.1
                                                                                  .socket_addr()
                                                                                  .ip(),
                                                                            transport_port));
@@ -467,7 +468,7 @@ impl Service {
                           result_token: u32,
                           udp_socket: UdpSocket,
                           secret: Option<[u8; 4]>,
-                          peer_addr: SocketAddr) {
+                          peer_addr: net::SocketAddr) {
         Self::post(&self.cmd_sender, move |state: &mut State| {
             let event_sender = state.event_sender.clone();
 
@@ -499,7 +500,7 @@ mod test {
     use super::*;
     use std::fs::remove_file;
     use std::io;
-    use std::net::{UdpSocket, Ipv4Addr, SocketAddrV4};
+    use std::net::{UdpSocket, Ipv4Addr};
     use std::path::PathBuf;
     use std::sync::mpsc::{Sender, Receiver, channel};
     use std::thread;
@@ -831,10 +832,10 @@ mod test {
         let peer2_udp_socket = UdpSocket::bind("0.0.0.0:0").unwrap();
 
         let peer1_port = peer1_udp_socket.local_addr().unwrap().port();
-        let peer1_addr = SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), peer1_port);
+        let peer1_addr = net::SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), peer1_port);
 
         let peer2_port = peer2_udp_socket.local_addr().unwrap().port();
-        let peer2_addr = SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), peer2_port);
+        let peer2_addr = net::SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), peer2_port);
 
         cm2.rendezvous_connect(peer1_udp_socket, 0, Endpoint::utp(peer2_addr));
         cm1.rendezvous_connect(peer2_udp_socket, 0, Endpoint::utp(peer1_addr));

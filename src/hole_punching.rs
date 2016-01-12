@@ -1,5 +1,6 @@
-use std::net::{SocketAddr, UdpSocket, SocketAddrV4};
+use std::net::{UdpSocket};
 use std::io;
+use std::net;
 use std::sync::{Arc, RwLock};
 use std::sync::mpsc::Sender;
 
@@ -8,7 +9,7 @@ use socket_utils::RecvUntil;
 use endpoint::Endpoint;
 use state::{Closure, State};
 use transport::Message;
-use util::{SocketAddrW, SocketAddrV4W};
+use socket_addr::{SocketAddr, SocketAddrV4};
 
 #[derive(Debug, RustcEncodable, RustcDecodable)]
 pub struct HolePunch {
@@ -37,13 +38,13 @@ impl GetExternalAddr {
 #[derive(Debug, RustcEncodable, RustcDecodable)]
 pub struct SetExternalAddr {
     pub request_id: u32,
-    pub addr: SocketAddrW,
+    pub addr: SocketAddr,
 }
 
 pub fn blocking_get_mapped_udp_socket
     (request_id: u32,
-     helper_nodes: Vec<SocketAddr>)
-     -> io::Result<(UdpSocket, Option<SocketAddr>, Vec<SocketAddr>)> {
+     helper_nodes: Vec<net::SocketAddr>)
+     -> io::Result<(UdpSocket, Option<net::SocketAddr>, Vec<net::SocketAddr>)> {
     const MAX_DATAGRAM_SIZE: usize = 256;
 
     let udp_socket = try!(UdpSocket::bind("0.0.0.0:0"));
@@ -56,7 +57,7 @@ pub fn blocking_get_mapped_udp_socket
         enc.into_bytes()
     };
 
-    let res = try!(::crossbeam::scope(|scope| -> io::Result<Option<(SocketAddr, usize)>> {
+    let res = try!(::crossbeam::scope(|scope| -> io::Result<Option<(net::SocketAddr, usize)>> {
         for helper in &helper_nodes {
             let sender = try!(udp_socket.try_clone());
             let _periodic_sender = PeriodicSender::start(sender,
@@ -65,7 +66,7 @@ pub fn blocking_get_mapped_udp_socket
                                                          &send_data[..],
                                                          ::std::time::Duration::from_millis(300));
             let deadline = ::time::SteadyTime::now() + ::time::Duration::seconds(2);
-            let res = try!((|| -> io::Result<Option<(SocketAddr, usize)>> {
+            let res = try!((|| -> io::Result<Option<(net::SocketAddr, usize)>> {
                 loop {
                     let mut recv_data = [0u8; MAX_DATAGRAM_SIZE];
                     let (read_size, recv_addr) = match try!(receiver.recv_until(&mut recv_data[..], deadline)) {
@@ -104,15 +105,15 @@ pub fn blocking_get_mapped_udp_socket
                 Some(our_addr),
                 helper_nodes.into_iter()
                             .skip(responder_index + 1)
-                            .collect::<Vec<SocketAddr>>()))
+                            .collect::<Vec<net::SocketAddr>>()))
         }
     }
 }
 
 pub fn blocking_udp_punch_hole(udp_socket: UdpSocket,
                                secret: Option<[u8; 4]>,
-                               peer_addr: SocketAddr)
-                               -> (UdpSocket, io::Result<SocketAddr>) {
+                               peer_addr: net::SocketAddr)
+                               -> (UdpSocket, io::Result<net::SocketAddr>) {
     // Cbor seems to serialize into bytes of different sizes and
     // it sometimes exceeded 16 bytes, let's be safe and use 128.
     const MAX_DATAGRAM_SIZE: usize = 128;
@@ -132,7 +133,7 @@ pub fn blocking_udp_punch_hole(udp_socket: UdpSocket,
                     send_data.len(),
                     MAX_DATAGRAM_SIZE));
 
-    let addr_res: io::Result<SocketAddr> = ::crossbeam::scope(|scope| {
+    let addr_res: io::Result<net::SocketAddr> = ::crossbeam::scope(|scope| {
         let sender = try!(udp_socket.try_clone());
         let receiver = try!(udp_socket.try_clone());
         let periodic_sender = PeriodicSender::start(sender,
@@ -141,10 +142,10 @@ pub fn blocking_udp_punch_hole(udp_socket: UdpSocket,
                                                     send_data,
                                                     ::std::time::Duration::from_millis(500));
 
-        let addr_res: io::Result<Option<SocketAddr>> =
+        let addr_res: io::Result<Option<net::SocketAddr>> =
             (|| {
                 let mut recv_data = [0u8; MAX_DATAGRAM_SIZE];
-                let mut peer_addr: Option<SocketAddr> = None;
+                let mut peer_addr: Option<net::SocketAddr> = None;
                 let deadline = ::time::SteadyTime::now() + ::time::Duration::seconds(2);
                 loop {
                     let (read_size, addr) = match try!(receiver.recv_until(&mut recv_data[..],
@@ -204,8 +205,8 @@ pub struct HolePunchServer {
     // have the same lifetime as the Server object. Can change this once rust has linear types.
     listener_handle: Option<::std::thread::JoinHandle<io::Result<()>>>,
     upnp_handle: Option<::std::thread::JoinHandle<()>>,
-    internal_addr: SocketAddrV4,
-    external_addr: Arc<RwLock<Option<SocketAddrV4>>>,
+    internal_addr: net::SocketAddrV4,
+    external_addr: Arc<RwLock<Option<net::SocketAddrV4>>>,
 }
 
 impl HolePunchServer {
@@ -220,8 +221,8 @@ impl HolePunchServer {
         let (listener_tx, listener_rx) = ::std::sync::mpsc::channel::<()>();
         let udp_socket = try!(UdpSocket::bind("0.0.0.0:0"));
         let local_addr = match try!(udp_socket.local_addr()) {
-            SocketAddr::V4(sa) => sa,
-            SocketAddr::V6(_) => {
+            net::SocketAddr::V4(sa) => sa,
+            net::SocketAddr::V6(_) => {
                 return Err(io::Error::new(io::ErrorKind::Other,
                                           "bind(\"0.0.0.0:0\") returned an ipv6 socket"))
             }
@@ -255,7 +256,7 @@ impl HolePunchServer {
                         let data_send = {
                             let sea = SetExternalAddr {
                                 request_id: gea.request_id,
-                                addr: SocketAddrW(addr),
+                                addr: SocketAddr(addr),
                             };
                             let mut enc = ::cbor::Encoder::from_memory();
                             enc.encode(::std::iter::once(&sea)).unwrap();
@@ -271,9 +272,9 @@ impl HolePunchServer {
             }
         }));
 
-        let external_ip = Arc::new(RwLock::new(None::<SocketAddrV4>));
+        let external_ip = Arc::new(RwLock::new(None::<net::SocketAddrV4>));
         let external_ip_writer = external_ip.clone();
-        let local_ep = Endpoint::Utp(SocketAddr::V4(local_addr.clone()));
+        let local_ep = Endpoint::Utp(net::SocketAddr::V4(local_addr.clone()));
         let (upnp_tx, upnp_rx) = ::std::sync::mpsc::channel::<()>();
         let upnp_hole_puncher = try!(::std::thread::Builder::new().name(String::from("upnp hole puncher"))
                                                                   .spawn(move || {
@@ -288,14 +289,14 @@ impl HolePunchServer {
                         for (internal, external) in v {
                             if internal == local_addr {
                                 match external {
-                                    Endpoint::Utp(SocketAddr::V4(sa))   => {
+                                    Endpoint::Utp(net::SocketAddr::V4(sa))   => {
                                         {
                                             let mut ext_ip = external_ip_writer.write().unwrap();
                                             *ext_ip = Some(sa);
                                         };
                                         let _ = cmd_sender.send(Closure::new(move |state: &mut State| {
                                             for cd in state.connections.values() {
-                                                let _ = cd.message_sender.send(Message::HolePunchAddress(SocketAddrV4W(sa)));
+                                                let _ = cd.message_sender.send(Message::HolePunchAddress(SocketAddrV4(sa)));
                                             }
                                         }));
                                     },
@@ -325,12 +326,12 @@ impl HolePunchServer {
     }
 
     /// Get the address that this server is listening on.
-    pub fn listening_addr(&self) -> SocketAddrV4 {
+    pub fn listening_addr(&self) -> net::SocketAddrV4 {
         self.internal_addr
     }
 
     /// Get the external address of the server (if it is known)
-    pub fn external_address(&self) -> Option<SocketAddrV4> {
+    pub fn external_address(&self) -> Option<net::SocketAddrV4> {
         let guard = self.external_addr.read().unwrap();
         *guard
     }
@@ -365,17 +366,17 @@ impl Drop for HolePunchServer {
 mod tests {
     use super::*;
     use std::io;
-    use std::net::{UdpSocket, SocketAddr, SocketAddrV4, Ipv4Addr};
+    use std::net::{UdpSocket, Ipv4Addr};
     use std::thread::spawn;
 
-    fn loopback_v4(port: u16) -> SocketAddr {
-        SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), port))
+    fn loopback_v4(port: u16) -> net::SocketAddr {
+        net::SocketAddr::V4(net::SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), port))
     }
 
     fn run_hole_punching(socket: UdpSocket,
-                         peer_addr: SocketAddr,
+                         peer_addr: net::SocketAddr,
                          secret: Option<[u8; 4]>)
-                         -> io::Result<SocketAddr> {
+                         -> io::Result<net::SocketAddr> {
         blocking_udp_punch_hole(socket, secret, peer_addr).1
     }
 

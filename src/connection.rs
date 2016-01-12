@@ -17,15 +17,15 @@
 
 use std::fmt;
 use endpoint::{Endpoint, Protocol};
-use std::net::SocketAddr;
-use util::SocketAddrW;
+//use std::net::SocketAddr;
+use socket_addr::SocketAddr;
 
 /// Information hold for the connection between a pair of nodes
 #[derive(PartialEq, Eq, Hash, Clone)]
 pub struct Connection {
     transport_protocol: Protocol,
-    peer_addr: SocketAddrW,
-    local_addr: SocketAddrW,
+    peer_addr: SocketAddr,
+    local_addr: SocketAddr,
 }
 
 impl Connection {
@@ -33,8 +33,8 @@ impl Connection {
     pub fn new(proto: Protocol, local_addr: SocketAddr, peer_addr: SocketAddr) -> Connection {
         Connection {
             transport_protocol: proto,
-            peer_addr: SocketAddrW(peer_addr),
-            local_addr: SocketAddrW(local_addr),
+            peer_addr: SocketAddr(peer_addr),
+            local_addr: SocketAddr(local_addr),
         }
     }
 
@@ -46,7 +46,7 @@ impl Connection {
         }
     }
     /// getter
-    pub fn peer_addr(&self) -> SocketAddrW {
+    pub fn peer_addr(&self) -> SocketAddr {
         self.peer_addr
     }
 }

@@ -16,11 +16,12 @@
 // relating to use of the SAFE Network Software.
 
 use util;
-use std::net::{SocketAddr, SocketAddrV4, SocketAddrV6};
+use std::net;
 use ip::IpAddr;
 use ip::SocketAddrExt;
 use std::net::{Ipv4Addr, Ipv6Addr};
 use rustc_serialize::{Encodable, Decodable, Encoder, Decoder};
+use socket_addr::SocketAddr;
 use std::str::FromStr;
 
 /// Enum representing supported transport protocols
@@ -33,48 +34,48 @@ pub enum Protocol {
 }
 
 /// Enum representing endpoint of supported protocols
-#[derive(Debug, Eq, PartialEq, Hash, Clone)]
+#[derive(Debug, Eq, PartialEq, Hash, Clone, RustcEncodable, RustcDecodable)]
 pub struct Endpoint {
     protocol: Protocol,
-    socket_addr: SocketAddrW,
+    socket_addr: SocketAddr,
 }
 
 impl Endpoint {
     /// Construct a new Endpoint
     pub fn new(protocol: Protocol, addr: IpAddr, port: u16) -> Endpoint {
         let socketaddr = match addr {
-            IpAddr::V4(a) => SocketAddr::V4(SocketAddrV4::new(a, port)),
-            IpAddr::V6(a) => SocketAddr::V6(SocketAddrV6::new(a, port, 0, 0xe)),
+            IpAddr::V4(a) => net::SocketAddr::V4(net::SocketAddrV4::new(a, port)),
+            IpAddr::V6(a) => net::SocketAddr::V6(net::SocketAddrV6::new(a, port, 0, 0xe)),
         };
         match protocol {
             Tcp => {
                 Endpoint {
                     protocol: Protocol::Tcp,
-                    socket_addr: socketaddr,
+                    socket_addr: SocketAddr(socketaddr),
                 }
             }
             Utp => {
                 Endpoint {
                     protocol: Protocol::Utp,
-                    socket_addr: socketaddr,
+                    socket_addr: SocketAddr(socketaddr),
                 }
             }
         }
     }
 
     /// Construct a new Endpoint from socketaddr
-    pub fn from_socket_addr(protocol: Protocol, addr: SocketAddr) -> Endpoint {
+    pub fn from_socket_addr(protocol: Protocol, addr: net::SocketAddr) -> Endpoint {
         match protocol {
             Tcp => {
                 Endpoint {
                     protocol: protocol,
-                    socket_addr: addr,
+                    socket_addr: SocketAddr(addr),
                 }
             }
             Utp => {
                 Endpoint {
                     protocol: protocol,
-                    socket_addr: addr,
+                    socket_addr: SocketAddr(addr),
                 }
             }
         }
@@ -90,8 +91,8 @@ impl Endpoint {
         self.socket_addr().port()
     }
 
-    /// Returns SocketAddr.
-    pub fn socket_addr(&self) -> &SocketAddr {
+    /// Returns net::SocketAddr.
+    pub fn socket_addr(&self) -> &net::SocketAddr {
         &self.socket_addr
     }
 
