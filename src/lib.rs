@@ -101,7 +101,7 @@ mod util;
 mod endpoint;
 mod connection;
 mod tcp_connections;
-// mod transport;
+mod transport;
 mod utp_connections;
 mod utp_wrapper;
 // mod state;

@@ -30,6 +30,7 @@ use std::fmt::{Formatter, Debug};
 use std::fmt;
 use connection::Connection;
 use endpoint::{Endpoint, Protocol};
+use socket_addr::SocketAddr;
 
 pub use self::message::Message;
 pub use self::handshake::Handshake;
@@ -49,14 +50,15 @@ impl Debug for Transport {
 
 // FIXME: There needs to be a way to break from this blocking command.
 pub fn connect(remote_ep: Endpoint) -> IoResult<Transport> {
-    match remote_ep {
-        Endpoint::Tcp(ep) => {
-            let (i, o) = try!(tcp_connections::connect_tcp(ep).map_err(|e| {
-                io::Error::new(io::ErrorKind::NotConnected, e.description())
-            }));
+    match *remote_ep.protocol() {
+        Protocol::Tcp => {
+            let (i, o) = try!(tcp_connections::connect_tcp(remote_ep.socket_addr().clone())
+                                  .map_err(|e| {
+                                      io::Error::new(io::ErrorKind::NotConnected, e.description())
+                                  }));
             let connection_id = Connection::new(Protocol::Tcp,
-                                                try!(i.local_addr()),
-                                                try!(i.peer_addr()));
+                                                SocketAddr(try!(i.local_addr())),
+                                                SocketAddr(try!(i.peer_addr())));
 
             Ok(Transport {
                 receiver: sender_receiver::Receiver::Tcp(cbor::Decoder::from_reader(i)),
@@ -64,12 +66,15 @@ pub fn connect(remote_ep: Endpoint) -> IoResult<Transport> {
                 connection_id: connection_id,
             })
         }
-        Endpoint::Utp(ep) => {
-            let (i, o) = try!(utp_connections::connect_utp(ep).map_err(|e| {
-                io::Error::new(io::ErrorKind::NotConnected, e.description())
-            }));
+        Protocol::Utp => {
+            let (i, o) = try!(utp_connections::connect_utp(remote_ep.socket_addr().clone())
+                                  .map_err(|e| {
+                                      io::Error::new(io::ErrorKind::NotConnected, e.description())
+                                  }));
 
-            let connection_id = Connection::new(Protocol::Utp, i.local_addr(), i.peer_addr());
+            let connection_id = Connection::new(Protocol::Utp,
+                                                SocketAddr(i.local_addr()),
+                                                SocketAddr(i.peer_addr()));
 
             Ok(Transport {
                 receiver: sender_receiver::Receiver::Utp(cbor::Decoder::from_reader(i)),
@@ -83,14 +88,18 @@ pub fn connect(remote_ep: Endpoint) -> IoResult<Transport> {
 pub fn rendezvous_connect(udp_socket: UdpSocket,
                           public_ep: Endpoint /* of B */)
                           -> IoResult<Transport> {
-    match public_ep {
-        Endpoint::Utp(ep) => {
-            let (i, o) = try!(utp_connections::rendezvous_connect_utp(udp_socket, ep)
+    match *public_ep.protocol() {
+        Protocol::Utp => {
+            let (i, o) = try!(utp_connections::rendezvous_connect_utp(udp_socket,
+                                                                      public_ep.socket_addr()
+                                                                               .clone())
                                   .map_err(|e| {
                                       io::Error::new(io::ErrorKind::NotConnected, e.description())
                                   }));
 
-            let connection_id = Connection::new(Protocol::Utp, i.local_addr(), i.peer_addr());
+            let connection_id = Connection::new(Protocol::Utp,
+                                                SocketAddr(i.local_addr()),
+                                                SocketAddr(i.peer_addr()));
 
             Ok(Transport {
                 receiver: sender_receiver::Receiver::Utp(cbor::Decoder::from_reader(i)),
@@ -116,7 +125,9 @@ pub fn accept(acceptor: &TcpListener) -> IoResult<Transport> {
 
     let (i, o) = try!(tcp_connections::upgrade_tcp(stream));
 
-    let connection_id = Connection::new(Protocol::Tcp, try!(i.local_addr()), try!(i.peer_addr()));
+    let connection_id = Connection::new(Protocol::Tcp,
+                                        SocketAddr(try!(i.local_addr())),
+                                        SocketAddr(try!(i.peer_addr())));
 
     Ok(Transport {
         receiver: sender_receiver::Receiver::Tcp(cbor::Decoder::from_reader(i)),
@@ -125,14 +136,18 @@ pub fn accept(acceptor: &TcpListener) -> IoResult<Transport> {
     })
 }
 
-#[cfg(test)]
+ #[cfg(test)]
 mod test {
     use super::*;
-    use endpoint::Endpoint;
-    use std::net::{SocketAddr, SocketAddrV4, SocketAddrV6, Ipv4Addr, Ipv6Addr};
+    use endpoint::{Endpoint, Protocol};
+    use std::net::{Ipv4Addr, Ipv6Addr};
+    use std::net;
+    use socket_addr::{SocketAddr, SocketAddrV4, SocketAddrV6};
 
     fn v4(a: u8, b: u8, c: u8, d: u8, e: u16) -> Endpoint {
-        Endpoint::Tcp(SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(a, b, c, d), e)))
+        Endpoint::from_socket_addr(Protocol::Tcp,
+                                   SocketAddr(net::SocketAddr::V4(net::SocketAddrV4::new(Ipv4Addr::new(a, b, c, d),
+                                                                       e))))
     }
 
     fn v6(a: u16,
@@ -147,16 +162,10 @@ mod test {
           j: u32,
           k: u32)
           -> Endpoint {
-        Endpoint::Tcp(SocketAddr::V6(SocketAddrV6::new(Ipv6Addr::new(a, b, c, d, e, f, g, h),
-                                                       i,
-                                                       j,
-                                                       k)))
-    }
-
-    fn test(smaller: Endpoint, bigger: Endpoint) {
-        assert!(smaller < bigger);
-        assert!(bigger > smaller);
-        assert!(smaller != bigger);
+        Endpoint::from_socket_addr(Protocol::Tcp, SocketAddr(net::SocketAddr::V6(net::SocketAddrV6::new(Ipv6Addr::new(a, b, c, d, e, f, g, h),
+                                                          i,
+                                                          j,
+                                                          k))))
     }
 
     #[test]
@@ -200,64 +209,5 @@ mod test {
             }
             _ => panic!(""),
         }
-    }
-
-    #[test]
-    fn test_ord() {
-        test(v4(1, 2, 3, 4, 5), v4(2, 2, 3, 4, 5));
-        test(v4(1, 2, 3, 4, 5), v4(1, 3, 3, 4, 5));
-        test(v4(1, 2, 3, 4, 5), v4(1, 2, 4, 4, 5));
-        test(v4(1, 2, 3, 4, 5), v4(1, 2, 3, 5, 5));
-        test(v4(1, 2, 3, 4, 5), v4(1, 2, 3, 4, 6));
-
-        test(v4(1, 2, 3, 4, 5), v6(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0));
-        test(v4(1, 2, 3, 4, 5), v6(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11));
-        test(v4(1, 2, 3, 4, 5), v6(2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12));
-
-        test(v6(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-             v6(1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0));
-        test(v6(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-             v6(0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0));
-        test(v6(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-             v6(0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0));
-        test(v6(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-             v6(0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0));
-        test(v6(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-             v6(0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0));
-        test(v6(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-             v6(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0));
-        test(v6(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-             v6(0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0));
-        test(v6(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-             v6(0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0));
-        test(v6(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-             v6(0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0));
-        test(v6(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-             v6(0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0));
-        test(v6(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-             v6(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1));
-
-        test(v6(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
-             v6(2, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11));
-        test(v6(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
-             v6(1, 3, 3, 4, 5, 6, 7, 8, 9, 10, 11));
-        test(v6(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
-             v6(1, 2, 4, 4, 5, 6, 7, 8, 9, 10, 11));
-        test(v6(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
-             v6(1, 2, 3, 5, 5, 6, 7, 8, 9, 10, 11));
-        test(v6(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
-             v6(1, 2, 3, 4, 6, 6, 7, 8, 9, 10, 11));
-        test(v6(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
-             v6(1, 2, 3, 4, 5, 7, 7, 8, 9, 10, 11));
-        test(v6(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
-             v6(1, 2, 3, 4, 5, 6, 8, 8, 9, 10, 11));
-        test(v6(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
-             v6(1, 2, 3, 4, 5, 6, 7, 9, 9, 10, 11));
-        test(v6(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
-             v6(1, 2, 3, 4, 5, 6, 7, 8, 10, 10, 11));
-        test(v6(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
-             v6(1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 11));
-        test(v6(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
-             v6(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12));
     }
 }
