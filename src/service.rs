@@ -100,11 +100,12 @@ impl Service {
     /// Starts accepting on a given port. If port number is 0, the OS
     /// will pick one randomly. The actual port used will be returned.
     pub fn start_accepting(&mut self, port: u16) -> io::Result<Endpoint> {
-        let acceptor = try!(TcpListener::bind(("0, 0, 0, 0", port)));
+        let acceptor = try!(TcpListener::bind(("0.0.0.0", port)));
         let accept_addr = try!(acceptor.local_addr());
 
         Self::accept(self.cmd_sender.clone(), acceptor);
 
+        // TODO Take this out after evaluating
         if self.beacon_guid_and_port.is_some() {
             let contacts = filter_loopback(getifaddrs())
                                .into_iter()
@@ -826,13 +827,21 @@ mod test {
         let peer2_udp_socket = UdpSocket::bind("0.0.0.0:0").unwrap();
 
         let peer1_port = peer1_udp_socket.local_addr().unwrap().port();
-        let peer1_addr = SocketAddr(net::SocketAddr::V4(net::SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), peer1_port)));
+        let peer1_addr =
+            SocketAddr(net::SocketAddr::V4(net::SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1),
+                                                                  peer1_port)));
 
         let peer2_port = peer2_udp_socket.local_addr().unwrap().port();
-        let peer2_addr = SocketAddr(net::SocketAddr::V4(net::SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), peer2_port)));
+        let peer2_addr =
+            SocketAddr(net::SocketAddr::V4(net::SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1),
+                                                                  peer2_port)));
 
-        cm2.rendezvous_connect(peer1_udp_socket, 0, Endpoint::from_socket_addr(Protocol::Utp, peer2_addr));
-        cm1.rendezvous_connect(peer2_udp_socket, 0, Endpoint::from_socket_addr(Protocol::Utp, peer1_addr));
+        cm2.rendezvous_connect(peer1_udp_socket,
+                               0,
+                               Endpoint::from_socket_addr(Protocol::Utp, peer2_addr));
+        cm1.rendezvous_connect(peer2_udp_socket,
+                               0,
+                               Endpoint::from_socket_addr(Protocol::Utp, peer1_addr));
 
         let (ready_tx1, ready_rx1) = channel();
         let (shut_tx1, shut_rx1) = channel();
