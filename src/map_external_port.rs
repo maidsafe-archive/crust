@@ -15,11 +15,12 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use endpoint::{Endpoint, Port};
+use endpoint::{Protocol, Endpoint};
 use igd;
 use std::io;
 use get_if_addrs::{getifaddrs, filter_loopback};
-use std::net::SocketAddrV4;
+use socket_addr::SocketAddrV4;
+use std::net;
 use ip::IpAddr;
 use std::thread;
 use std::time::Duration;
@@ -40,17 +41,17 @@ pub fn async_map_external_port<Callback>(local_ep: Endpoint, callback: Callback)
 }
 
 pub fn sync_map_external_port(local_ep: &Endpoint) -> io::Result<Vec<(SocketAddrV4, Endpoint)>> {
-    let is_unspecified = ::util::is_unspecified(&local_ep.get_address());
+    let is_unspecified = ::util::is_unspecified(&local_ep.ip());
 
     let local_eps = if !is_unspecified {
-        let ip = match local_ep.get_address() {
+        let ip = match local_ep.ip() {
             IpAddr::V4(ip_addr) => ip_addr,
             IpAddr::V6(_) => {
                 return Err(io::Error::new(io::ErrorKind::Other,
                                           "Ip v6 not supported by the uPnP library"));
             }
         };
-        vec![SocketAddrV4::new(ip, local_ep.get_port().number())]
+        vec![SocketAddrV4(net::SocketAddrV4::new(ip, local_ep.port()))]
     } else {
         // TODO: Check if we really need to do this, perhaps uPnP can deal
         // with unspecified addresses itself? Also, it doesn't sound right
@@ -64,7 +65,7 @@ pub fn sync_map_external_port(local_ep: &Endpoint) -> io::Result<Vec<(SocketAddr
                     IpAddr::V6(_) => None,
                 }
             })
-            .map(|ip| SocketAddrV4::new(ip, local_ep.get_port().number()))
+            .map(|ip| SocketAddrV4(net::SocketAddrV4::new(ip, local_ep.port())))
             .collect::<Vec<_>>()
     };
 
@@ -74,7 +75,7 @@ pub fn sync_map_external_port(local_ep: &Endpoint) -> io::Result<Vec<(SocketAddr
         return Err(io::Error::new(io::ErrorKind::Other, "No network interface found"));
     }
 
-    let local_port = local_ep.get_port();
+    let local_port = local_ep.port();
     let mut join_handles = Vec::with_capacity(eps_count);
     for local_ep in local_eps {
         join_handles.push(thread::Builder::new()
@@ -97,33 +98,33 @@ fn to_io_result<T, E: ::std::fmt::Debug>(error_name: &str, r: Result<T, E>) -> i
     r.map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{}: {:?}", error_name, e)))
 }
 
-fn map_external_port(local_ep: SocketAddrV4, ext_port: Port) -> io::Result<Endpoint> {
+fn map_external_port(local_addr: SocketAddrV4, ext_port: u16) -> io::Result<Endpoint> {
     let gateway = try!(to_io_result("SearchError",
                                     igd::search_gateway_from_timeout(
-                                        local_ep.ip().clone(),
+                                        local_addr.ip().clone(),
                                         Duration::from_secs(IGD_SEARCH_TIMEOUT_SECS))));
 
-    let igd_protocol = match ext_port {
-        Port::Tcp(_) => igd::PortMappingProtocol::TCP,
-        Port::Utp(_) => igd::PortMappingProtocol::UDP,
-    };
-
     try!(to_io_result("AddPortError",
-                      gateway.add_port(igd_protocol, ext_port.number(), local_ep, 0, "crust")));
+                      gateway.add_port(igd::PortMappingProtocol::TCP,
+                                       ext_port,
+                                       (*local_addr).clone(),
+                                       0,
+                                       "crust")));
 
     let ext_ip = try!(to_io_result("GetExternalIpError", gateway.get_external_ip()));
 
-    Ok(Endpoint::new(IpAddr::V4(ext_ip), ext_port))
+    Ok(Endpoint::new(Protocol::Tcp, IpAddr::V4(ext_ip), ext_port))
 }
 
 // --- Tests -------------------------------------------------------------------
 #[cfg(test)]
 mod test {
     use super::*;
-    use std::net::{Ipv4Addr, SocketAddrV4};
+    use std::net::Ipv4Addr;
     use ip::IpAddr;
     use std::sync::mpsc;
-    use endpoint::{Endpoint, Port};
+    use endpoint::{Protocol, Endpoint};
+    use socket_addr::SocketAddrV4;
     use std::io;
     use util::timed_recv;
 
@@ -135,7 +136,7 @@ mod test {
         type R = io::Result<Vec<(SocketAddrV4, Endpoint)>>;
         let (sender, receiver) = mpsc::channel::<R>();
         let unspecified_ip = IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0));
-        let local_ep = Endpoint::new(unspecified_ip, Port::Utp(5484));
+        let local_ep = Endpoint::new(Protocol::Tcp, unspecified_ip, 5484);
         async_map_external_port(local_ep, move |result: R| {
             assert!(sender.send(result).is_ok());
         });

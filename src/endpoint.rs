@@ -15,16 +15,16 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::net::{SocketAddr, SocketAddrV4, SocketAddrV6, ToSocketAddrs};
-use ip::IpAddr;
-use util::ip_from_socketaddr;
-use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
-use std::cmp::Ordering;
-use std::str::FromStr;
 use util;
+use std::net;
+use ip::IpAddr;
+use ip::SocketAddrExt;
+use std::net::{Ipv4Addr, Ipv6Addr};
+use rustc_serialize::{Encodable, Encoder, Decoder};
+use socket_addr::SocketAddr;
 
 /// Enum representing supported transport protocols
-#[derive(Debug, PartialOrd, Ord, PartialEq, Eq, Hash, Clone, Copy)]
+#[derive(Copy, Debug, Hash, Eq, PartialEq, Clone, RustcEncodable, RustcDecodable)]
 pub enum Protocol {
     /// TCP protocol
     Tcp,
@@ -33,169 +33,85 @@ pub enum Protocol {
 }
 
 /// Enum representing endpoint of supported protocols
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
-pub enum Endpoint {
-    /// TCP endpoint
-    Tcp(SocketAddr),
-    /// UTP endpoint
-    Utp(SocketAddr),
+#[derive(Debug, Eq, PartialEq, Hash, Clone, RustcEncodable, RustcDecodable)]
+pub struct Endpoint {
+    protocol: Protocol,
+    socket_addr: SocketAddr,
 }
 
 impl Endpoint {
     /// Construct a new Endpoint
-    pub fn new(addr: IpAddr, port: Port) -> Endpoint {
+    pub fn new(protocol: Protocol, addr: IpAddr, port: u16) -> Endpoint {
         let socketaddr = match addr {
-            IpAddr::V4(a) => SocketAddr::V4(SocketAddrV4::new(a, port.number())),
-            IpAddr::V6(a) => SocketAddr::V6(SocketAddrV6::new(a, port.number(), 0, 0xe)),
+            IpAddr::V4(a) => net::SocketAddr::V4(net::SocketAddrV4::new(a, port)),
+            IpAddr::V6(a) => net::SocketAddr::V6(net::SocketAddrV6::new(a, port, 0, 0xe)),
         };
-        match port {
-            Port::Tcp(_) => Endpoint::Tcp(socketaddr),
-            Port::Utp(_) => Endpoint::Utp(socketaddr),
-        }
-    }
-
-    /// Creates a Tcp(SocketAddr)
-    pub fn tcp<A: ToSocketAddrs>(addr: A) -> Endpoint {
-        match addr.to_socket_addrs().unwrap().next() {
-            Some(a) => Endpoint::Tcp(a),
-            None => panic!("Failed to parse valid IP address"),
-        }
-    }
-    /// Creates a Utp(SocketAddr)
-    pub fn utp<A: ToSocketAddrs>(addr: A) -> Endpoint {
-        match addr.to_socket_addrs().unwrap().next() {
-            Some(a) => Endpoint::Utp(a),
-            None => panic!("Failed to parse valid IP address"),
-        }
-    }
-
-    /// Returns SocketAddr.
-    pub fn get_sockaddr(&self) -> SocketAddr {
-        match *self {
-            Endpoint::Tcp(address) => address,
-            Endpoint::Utp(address) => address,
-        }
-    }
-    /// Returns IpAddr.
-    pub fn get_address(&self) -> IpAddr {
-        match *self {
-            Endpoint::Tcp(address) => ip_from_socketaddr(address),
-            Endpoint::Utp(address) => ip_from_socketaddr(address),
-        }
-    }
-
-    /// Returns port
-    pub fn get_port(&self) -> Port {
-        match *self {
-            Endpoint::Tcp(addr) => Port::Tcp(addr.port()),
-            Endpoint::Utp(addr) => Port::Utp(addr.port()),
-        }
-    }
-
-    /// Convert address format from Port to Endpoint
-    pub fn to_ip(&self) -> Endpoint {
-        let port = match self.get_port() {
-            Port::Tcp(n) => Port::Tcp(n),
-            Port::Utp(n) => Port::Utp(n),
-        };
-        Endpoint::new(self.get_address(), port)
-    }
-
-    /// Check whether the current address is specified
-    /// returns true if address is un-specified, and false when specified
-    pub fn has_unspecified_ip(&self) -> bool {
-        util::is_unspecified(&self.get_address())
-    }
-
-    /// Convert address's format from ::std::net::IpAddr to Endpoint
-    pub fn map_ip_addr<F: Fn(IpAddr) -> IpAddr>(&self, f: F) -> Endpoint {
-        Endpoint::new(f(self.to_ip().get_address()), self.get_port())
-    }
-}
-
-#[derive(Debug, RustcDecodable, RustcEncodable)]
-struct EndpointSerialiser {
-    pub protocol: String,
-    pub address: String,
-}
-
-impl Encodable for Endpoint {
-    fn encode<E: Encoder>(&self, e: &mut E) -> Result<(), E::Error> {
-        let s = EndpointSerialiser {
-            protocol: match *self {
-                Endpoint::Tcp(_) => "tcp".to_owned(),
-                Endpoint::Utp(_) => "utp".to_owned(),
-            },
-            address: self.get_sockaddr().to_string(),
-        };
-        try!(s.encode(e));
-        Ok(())
-    }
-}
-
-impl Decodable for Endpoint {
-    fn decode<D: Decoder>(d: &mut D) -> Result<Endpoint, D::Error> {
-        let decoded: EndpointSerialiser = try!(Decodable::decode(d));
-        match SocketAddr::from_str(&decoded.address) {
-            Ok(address) => {
-                if decoded.protocol == "tcp" {
-                    Ok(Endpoint::Tcp(address))
-                } else if decoded.protocol == "utp" {
-                    Ok(Endpoint::Utp(address))
-                } else {
-                    Err(d.error(&(format!("Unknown Protocol {}", decoded.protocol))))
+        match protocol {
+            Protocol::Tcp => {
+                Endpoint {
+                    protocol: Protocol::Tcp,
+                    socket_addr: SocketAddr(socketaddr),
                 }
             }
-            _ => {
-                Err(d.error(&(format!("Expecting Protocol and SocketAddr string, but found : \
-                                       {:?}",
-                                      decoded))))
-            }
-        }
-    }
-}
-
-impl PartialOrd for Endpoint {
-    fn partial_cmp(&self, other: &Endpoint) -> Option<Ordering> {
-        Some(self.cmp(&other))
-    }
-}
-
-impl Ord for Endpoint {
-    fn cmp(&self, other: &Endpoint) -> Ordering {
-        use Endpoint::{Tcp, Utp};
-        match *self {
-            Tcp(ref a1) => {
-                match *other {
-                    Tcp(ref a2) => util::compare_ip_addrs(a1, a2),
-                    Utp(_) => Ordering::Greater,
-                }
-            }
-            Utp(ref a1) => {
-                match *other {
-                    Tcp(_) => Ordering::Less,
-                    Utp(ref a2) => util::compare_ip_addrs(a1, a2),
+            Protocol::Utp => {
+                Endpoint {
+                    protocol: Protocol::Utp,
+                    socket_addr: SocketAddr(socketaddr),
                 }
             }
         }
     }
-}
 
-/// Enum representing port of supported protocols
-#[derive(Debug, PartialEq, Eq, Hash, Clone, RustcDecodable, RustcEncodable, Copy)]
-pub enum Port {
-    /// TCP port
-    Tcp(u16),
-    /// UTP port
-    Utp(u16),
-}
-
-impl Port {
-    /// Return the port
-    pub fn number(&self) -> u16 {
-        match *self {
-            Port::Tcp(p) => p,
-            Port::Utp(p) => p,
+    /// Construct a new Endpoint from socketaddr
+    pub fn from_socket_addr(protocol: Protocol, addr: SocketAddr) -> Endpoint {
+        match protocol {
+            Protocol::Tcp => {
+                Endpoint {
+                    protocol: protocol,
+                    socket_addr: addr,
+                }
+            }
+            Protocol::Utp => {
+                Endpoint {
+                    protocol: protocol,
+                    socket_addr: addr,
+                }
+            }
         }
+    }
+
+    /// Returns IpAddr
+    pub fn ip(&self) -> IpAddr {
+        <net::SocketAddr as SocketAddrExt>::ip(self.socket_addr())
+    }
+
+    /// Returns Port
+    pub fn port(&self) -> u16 {
+        self.socket_addr().port()
+    }
+
+    /// Returns net::SocketAddr.
+    pub fn socket_addr(&self) -> &SocketAddr {
+        &self.socket_addr
+    }
+
+    /// Get protocol
+    pub fn protocol(&self) -> &Protocol {
+        &self.protocol
+    }
+
+    /// If the endpoint IP address is unspecified return a copy of the endpoint with the IP address
+    /// set to the loopback address. Otherwise return a copy of the endpoint.
+    pub fn unspecified_to_loopback(&self) -> Endpoint {
+        if util::is_unspecified(&self.ip()) {
+            let loop_back_ip = match self.ip() {
+                IpAddr::V4(_) => IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
+                IpAddr::V6(_) => IpAddr::V6(Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 1)),
+            };
+
+            return Endpoint::new(self.protocol().clone(), loop_back_ip, self.port());
+        }
+
+        self.clone()
     }
 }

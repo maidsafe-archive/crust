@@ -45,14 +45,16 @@ use std::cmp;
 use std::sync::mpsc::channel;
 use std::sync::mpsc::Sender;
 use std::io;
-use std::net::{UdpSocket, SocketAddr};
+use std::net;
+use std::net::UdpSocket;
 use std::collections::HashSet;
 use std::str::FromStr;
 use std::thread;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use crust::{Service, Endpoint, Connection, Port};
+use crust::SocketAddr;
+use crust::{Service, Protocol, Endpoint, Connection};
 
 static USAGE: &'static str = "
 Usage:
@@ -97,13 +99,6 @@ fn generate_random_vec_u8(size: usize) -> Vec<u8> {
     let mut vec: Vec<u8> = Vec::with_capacity(size);
     for _ in 0..size { vec.push(random::<u8>()); }
     vec
-}
-
-fn node_user_repr(node: &Endpoint) -> String {
-    match *node {
-        Endpoint::Tcp(addr) => format!("Tcp({})", addr),
-        Endpoint::Utp(addr) => format!("Utp({})", addr),
-    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -179,7 +174,7 @@ impl UdpData {
 
     pub fn send_to(&self, destination: SocketAddr) {
         let buf = [0u8; 256];
-        assert!(self.socket.send_to(&buf, destination).is_ok());
+        assert!(self.socket.send_to(&buf, &*destination).is_ok());
     }
 }
 
@@ -444,7 +439,7 @@ fn main() {
                                                                                  crust_event_category,
                                                                                  category_tx);
     let mut service = Service::new(event_sender).unwrap();
-    let listening_ports = filter_ok(vec![service.start_accepting(Port::Tcp(0))]);
+    let listening_ports = filter_ok(vec![service.start_accepting(0)]);
     assert!(listening_ports.len() >= 1);
     let _ = service.start_beacon(BEACON_PORT);
 
@@ -477,8 +472,8 @@ fn main() {
                                 let message_length = bytes.len();
                                 let mut network = network2.lock().unwrap();
                                 network.record_received(message_length);
-                                println!("\nReceived from {} message: {}",
-                                         node_user_repr(&connection.peer_endpoint()),
+                                println!("\nReceived from {:?} message: {}",
+                                         connection.peer_endpoint(),
                                          String::from_utf8(bytes)
                                          .unwrap_or(format!("non-UTF-8 message of {} bytes",
                                                             message_length)));
@@ -488,18 +483,18 @@ fn main() {
                                 stdout_copy = cyan_foreground(stdout_copy);
                                 println!("\nConnected to peer at {:?}", connection.peer_endpoint());
                                 let mut network = network2.lock().unwrap();
-                                network.add_node(CrustNode::new(connection, true));
+                                network.add_node(CrustNode::new(connection.clone(), true));
                                 network.print_connected_nodes();
                                 if !bootstrapped {
                                     bootstrapped = true;
-                                    let _ = bs_sender.send(connection);
+                                    let _ = bs_sender.send(connection.clone());
                                 }
                             },
                             crust::Event::OnAccept(_, connection) => {
                                 stdout_copy = cyan_foreground(stdout_copy);
                                 println!("\nAccepted peer at {:?}", connection);
                                 let mut network = network2.lock().unwrap();
-                                network.add_node(CrustNode::new(connection, true));
+                                network.add_node(CrustNode::new(connection.clone(), true));
                                 network.print_connected_nodes();
                                 if !bootstrapped {
                                     bootstrapped = true;
@@ -621,7 +616,7 @@ fn main() {
                 UserCommand::Send(peer, message) => {
                     let network = network.lock().unwrap();
                     match network.get(peer) {
-                        Some(ref node) => service.send(node.connection_id,
+                        Some(ref node) => service.send(node.connection_id.clone(),
                                                        message.into_bytes()),
                         None => println!("Invalid connection #"),
                     }
@@ -636,7 +631,7 @@ fn main() {
                 UserCommand::SendAll(message) => {
                     let network = network.lock().unwrap();
                     for node in network.get_all() {
-                        service.send(node.connection_id, message.clone().into_bytes());
+                        service.send(node.connection_id.clone(), message.clone().into_bytes());
                     }
                 },
                 UserCommand::Punch(peer, dst) => {
@@ -737,7 +732,7 @@ struct CliArgs {
     cmd_stop:               bool,
     cmd_help:               bool,
     arg_endpoint:           Option<PeerEndpoint>,
-    arg_destination:        Option<::crust::SocketAddrW>,
+    arg_destination:        Option<::crust::SocketAddr>,
     arg_peer:               Option<usize>,
     arg_message:            Vec<String>,
 }
@@ -790,7 +785,7 @@ fn parse_user_command(cmd : String) -> Option<UserCommand> {
         Some(UserCommand::Send(peer, msg))
     } else if args.cmd_send_udp {
         let peer = args.arg_peer.unwrap();
-        let dst  = args.arg_destination.unwrap().0;
+        let dst  = args.arg_destination.unwrap();
         let msg  = args.arg_message.join(" ");
         Some(UserCommand::SendUdp(peer, dst, msg))
     } else if args.cmd_send_all {
@@ -800,7 +795,7 @@ fn parse_user_command(cmd : String) -> Option<UserCommand> {
         Some(UserCommand::Map)
     } else if args.cmd_punch {
         let peer = args.arg_peer.unwrap();
-        let dst  = args.arg_destination.unwrap().0;
+        let dst  = args.arg_destination.unwrap();
         Some(UserCommand::Punch(peer, dst))
     } else if args.cmd_list {
         Some(UserCommand::List)
@@ -834,17 +829,17 @@ impl Decodable for PeerEndpoint {
         if !str.ends_with(')') {
             return Err(decoder.error("Protocol missing"))
         }
-        let address = match SocketAddr::from_str(&str[4 .. str.len() - 1]) {
-            Ok(addr) => addr,
+        let address = match net::SocketAddr::from_str(&str[4 .. str.len() - 1]) {
+            Ok(addr) => SocketAddr(addr),
             Err(_) => {
                 return Err(decoder.error(&format!(
                     "Could not decode {} as valid IPv4 or IPv6 address.", str)));
             },
         };
         if str.starts_with("Tcp(") {
-            Ok(PeerEndpoint { addr: Endpoint::tcp(address) })
+            Ok(PeerEndpoint { addr: Endpoint::from_socket_addr(Protocol::Tcp, address) })
         } else if str.starts_with("Utp(") {
-            Ok(PeerEndpoint { addr: Endpoint::utp(address) })
+            Ok(PeerEndpoint { addr: Endpoint::from_socket_addr(Protocol::Utp, address) })
         } else {
             Err(decoder.error("Unrecognized protocol"))
         }

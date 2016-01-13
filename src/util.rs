@@ -15,153 +15,38 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::net::{SocketAddr, SocketAddrV4, SocketAddrV6, Ipv4Addr, Ipv6Addr};
 use ip::IpAddr;
 use std::cmp::Ordering;
 use get_if_addrs::{getifaddrs, IfAddr};
-use rustc_serialize::{Encodable, Decodable, Decoder, Encoder};
 use endpoint::Endpoint;
-use std::str::FromStr;
+use std::net;
+use ip_info;
 
 #[cfg(test)]
 use std::sync::mpsc;
 #[cfg(test)]
 use std::thread;
+#[cfg(test)]
+use endpoint::Protocol;
+#[cfg(test)]
+use socket_addr::SocketAddr;
 
 /// /////////////////////////////////////////////////////////////////////////////
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
-/// Utility struct of SocketAddr for hole punching
-pub struct SocketAddrW(pub SocketAddr);
-
-impl PartialOrd for SocketAddrW {
-    fn partial_cmp(&self, other: &SocketAddrW) -> Option<Ordering> {
-        Some(self.cmp(&other))
-    }
-}
-
-impl Ord for SocketAddrW {
-    fn cmp(&self, other: &SocketAddrW) -> Ordering {
-        compare_ip_addrs(&self.0, &other.0)
-    }
-}
-
-
-impl Encodable for SocketAddrW {
-    fn encode<S: Encoder>(&self, s: &mut S) -> Result<(), S::Error> {
-        let as_string = format!("{}", self.0);
-        try!(s.emit_str(&as_string[..]));
-        Ok(())
-    }
-}
-
-impl Decodable for SocketAddrW {
-    fn decode<D: Decoder>(d: &mut D) -> Result<SocketAddrW, D::Error> {
-        let as_string = try!(d.read_str());
-        match SocketAddr::from_str(&as_string[..]) {
-            Ok(sa) => Ok(SocketAddrW(sa)),
-            Err(e) => {
-                let err = format!("Failed to decode SocketAddrW: {}", e);
-                Err(d.error(&err[..]))
-            }
-        }
-    }
-}
-
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
-/// Utility struct of SocketAddrV4 for hole punching
-pub struct SocketAddrV4W(pub SocketAddrV4);
-
-impl PartialOrd for SocketAddrV4W {
-    fn partial_cmp(&self, other: &SocketAddrV4W) -> Option<Ordering> {
-        Some(self.cmp(&other))
-    }
-}
-
-impl Ord for SocketAddrV4W {
-    fn cmp(&self, other: &SocketAddrV4W) -> Ordering {
-        compare_ipv4_addrs(&self.0, &other.0)
-    }
-}
-
-impl Encodable for SocketAddrV4W {
-    fn encode<S: Encoder>(&self, s: &mut S) -> Result<(), S::Error> {
-        let as_string = format!("{}", self.0);
-        try!(s.emit_str(&as_string[..]));
-        Ok(())
-    }
-}
-
-impl Decodable for SocketAddrV4W {
-    fn decode<D: Decoder>(d: &mut D) -> Result<SocketAddrV4W, D::Error> {
-        let as_string = try!(d.read_str());
-        // TODO: use this code once `impl FromStr for SocketAddrV4` makes it into libstd
-        // match SocketAddrV4::from_str(&as_string[..]) {
-        //    Ok(sa)  => Ok(SocketAddrV4W(sa)),
-        //    Err(e)  => {
-        //        let err = format!("Failed to decode SocketAddrV4W: {}", e);
-        //        Err(d.error(&err[..]))
-        //    }
-        // }
-        match SocketAddr::from_str(&as_string[..]) {
-            Ok(SocketAddr::V4(sa)) => Ok(SocketAddrV4W(sa)),
-            Ok(SocketAddr::V6(_sa)) => {
-                let err = format!("Failed to decode SocketAddrV4W - Ipv6 address received where \
-                                   ipv4 address expected");
-                Err(d.error(&err[..]))
-            }
-            Err(e) => {
-                let err = format!("Failed to decode SocketAddrV4W: {}", e);
-                Err(d.error(&err[..]))
-            }
-        }
-    }
-}
-
-/// /////////////////////////////////////////////////////////////////////////////
-pub fn compare_ip_addrs(a1: &SocketAddr, a2: &SocketAddr) -> Ordering {
-    use std::net::SocketAddr::{V4, V6};
-    match *a1 {
-        V4(ref a1) => {
-            match *a2 {
-                V4(ref a2) => compare_ipv4_addrs(a1, a2),
-                V6(_) => Ordering::Less,
-            }
-        }
-        V6(ref a1) => {
-            match *a2 {
-                V4(_) => Ordering::Greater,
-                V6(ref a2) => compare_ipv6_addrs(a1, a2),
-            }
-        }
-    }
-}
-
-pub fn compare_ipv4_addrs(a1: &SocketAddrV4, a2: &SocketAddrV4) -> Ordering {
-    (a1.ip(), a1.port()).cmp(&(a2.ip(), a2.port()))
-}
-
-pub fn compare_ipv6_addrs(a1: &SocketAddrV6, a2: &SocketAddrV6) -> Ordering {
-    (a1.ip(), a1.port(), a1.flowinfo(), a1.scope_id())
-        .cmp(&(a2.ip(), a2.port(), a2.flowinfo(), a2.scope_id()))
-}
-
-/// /////////////////////////////////////////////////////////////////////////////
-pub fn ip_from_socketaddr(addr: SocketAddr) -> IpAddr {
-    match addr {
-        SocketAddr::V4(a) => IpAddr::V4(*a.ip()),
-        SocketAddr::V6(a) => IpAddr::V6(*a.ip()),
-    }
-}
-
-// pub fn loopback_v4(port: Port) -> Endpoint {
-//     let ip = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
-//     Endpoint::new(ip, port)
-// }
+// pub fn loopback_v4(port: Port) -> IpAddrV4 {
+//    net::Ipv4Addr::new(127, 0, 0, 1)
+//}
 
 pub fn is_v4(ip_addr: &IpAddr) -> bool {
     match *ip_addr {
         IpAddr::V4(_) => true,
         IpAddr::V6(_) => false,
+    }
+}
+
+pub fn is_global(ip: &IpAddr) -> bool {
+    match *ip {
+        IpAddr::V4(ref ipv4) => ip_info::v4::is_global(ipv4),
+        IpAddr::V6(ref ipv6) => ip_info::v6::is_global(ipv6),
     }
 }
 
@@ -207,7 +92,10 @@ pub fn is_unique_local(ip_addr: &IpAddr) -> bool {
     }
 }
 
-pub fn on_same_subnet_v4(ip_addr1: Ipv4Addr, ip_addr2: Ipv4Addr, netmask: Ipv4Addr) -> bool {
+pub fn on_same_subnet_v4(ip_addr1: net::Ipv4Addr,
+                         ip_addr2: net::Ipv4Addr,
+                         netmask: net::Ipv4Addr)
+                         -> bool {
     let o1 = ip_addr1.octets();
     let o2 = ip_addr2.octets();
     let m = netmask.octets();
@@ -221,7 +109,10 @@ pub fn on_same_subnet_v4(ip_addr1: Ipv4Addr, ip_addr2: Ipv4Addr, netmask: Ipv4Ad
     true
 }
 
-pub fn on_same_subnet_v6(ip_addr1: Ipv6Addr, ip_addr2: Ipv6Addr, netmask: Ipv6Addr) -> bool {
+pub fn on_same_subnet_v6(ip_addr1: net::Ipv6Addr,
+                         ip_addr2: net::Ipv6Addr,
+                         netmask: net::Ipv6Addr)
+                         -> bool {
     let s1 = ip_addr1.segments();
     let s2 = ip_addr2.segments();
     let m = netmask.segments();
@@ -317,24 +208,24 @@ pub fn heuristic_geo_cmp(ip1: &IpAddr, ip2: &IpAddr) -> Ordering {
     }
 }
 
-/// This function should really take IpAddr as an argument
+/// TODO This function should really take IpAddr as an argument
 /// but it is used outside of this library and IpAddr
 /// is currently considered experimental.
-pub fn ifaddrs_if_unspecified(ep: Endpoint) -> Vec<Endpoint> {
-    match ep.get_address() {
+pub fn ifaddrs_if_unspecified(ep: &Endpoint) -> Vec<Endpoint> {
+    match ep.ip() {
         IpAddr::V4(ref addr) => {
             if !::ip_info::v4::is_unspecified(addr) {
-                return vec![ep];
+                return vec![ep.clone()];
             }
         }
         IpAddr::V6(ref addr) => {
             if !::ip_info::v6::is_unspecified(addr) {
-                return vec![ep];
+                return vec![ep.clone()];
             }
         }
     }
 
-    let ep_is_v4 = is_v4(&ep.get_address());
+    let ep_is_v4 = is_v4(&ep.ip());
 
     getifaddrs()
         .into_iter()
@@ -342,7 +233,7 @@ pub fn ifaddrs_if_unspecified(ep: Endpoint) -> Vec<Endpoint> {
             if ep_is_v4 != is_v4(&iface.addr) {
                 return None;
             }
-            Some(Endpoint::new(iface.addr, ep.get_port()))
+            Some(Endpoint::new(ep.protocol().clone(), iface.addr, ep.port()))
         })
         .collect()
 }
@@ -352,7 +243,7 @@ pub fn loopback_if_unspecified(addr: IpAddr) -> IpAddr {
     match addr {
         IpAddr::V4(addr) => {
             IpAddr::V4(if ::ip_info::v4::is_unspecified(&addr) {
-                Ipv4Addr::new(127, 0, 0, 1)
+                net::Ipv4Addr::new(127, 0, 0, 1)
             } else {
                 addr
             })
@@ -370,13 +261,12 @@ pub fn loopback_if_unspecified(addr: IpAddr) -> IpAddr {
 #[cfg(test)]
 pub fn random_endpoint() -> Endpoint {
     // TODO - randomise V4/V6 and TCP/UTP
-    let address =
-        ::std::net::SocketAddrV4::new(::std::net::Ipv4Addr::new(::rand::random::<u8>(),
-                                                                ::rand::random::<u8>(),
-                                                                ::rand::random::<u8>(),
-                                                                ::rand::random::<u8>()),
-                                      ::rand::random::<u16>());
-    Endpoint::Tcp(::std::net::SocketAddr::V4(address))
+    let address = net::SocketAddrV4::new(net::Ipv4Addr::new(::rand::random::<u8>(),
+                                                            ::rand::random::<u8>(),
+                                                            ::rand::random::<u8>(),
+                                                            ::rand::random::<u8>()),
+                                         ::rand::random::<u16>());
+    Endpoint::from_socket_addr(Protocol::Tcp, SocketAddr(net::SocketAddr::V4(address)))
 }
 
 
@@ -413,11 +303,10 @@ mod test {
     fn test_heuristic_geo_cmp() {
         use get_if_addrs::getifaddrs;
         use std::cmp::Ordering::{Less, Equal, Greater};
-        use std::net::Ipv4Addr;
         use ip::IpAddr::V4;
 
-        let g = V4(Ipv4Addr::new(173, 194, 116, 137));
-        let l = V4(Ipv4Addr::new(127, 0, 0, 1));
+        let g = V4(::std::net::Ipv4Addr::new(173, 194, 116, 137));
+        let l = V4(::std::net::Ipv4Addr::new(127, 0, 0, 1));
 
         assert_eq!(super::heuristic_geo_cmp(&l, &l), Equal);
         assert_eq!(super::heuristic_geo_cmp(&l, &l), Equal);

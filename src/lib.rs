@@ -37,7 +37,6 @@
 #![allow(box_pointers, fat_ptr_transmutes, missing_copy_implementations,
          missing_debug_implementations)]
 
-
 // Uncomment to use Clippy
 // #![feature(plugin)]
 // #![plugin(clippy)]
@@ -62,6 +61,7 @@ extern crate get_if_addrs;
 /// Module implementing the `Service` which provides an interface to manage peer-to-peer
 /// connections.
 pub mod service;
+
 /// Defines errors.
 pub mod error;
 /// Provides a struct and free functions for working with config files.
@@ -76,10 +76,11 @@ pub use event::Event;
 pub use error::Error;
 pub use file_handler::{FileHandler, current_bin_dir, user_app_dir, system_cache_dir,
                        exe_file_stem, ScopedUserAppDirRemover};
-pub use endpoint::{Endpoint, Port, Protocol};
+pub use endpoint::{Endpoint, Protocol};
 pub use connection::Connection;
-pub use util::{ifaddrs_if_unspecified, SocketAddrW};
+pub use util::ifaddrs_if_unspecified;
 pub use get_if_addrs::getifaddrs;
+pub use socket_addr::SocketAddr;
 
 #[cfg(test)]
 mod test {
@@ -109,3 +110,4 @@ mod hole_punching;
 mod periodic_sender;
 mod socket_utils;
 mod ip_info;
+mod socket_addr;

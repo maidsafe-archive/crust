@@ -24,7 +24,7 @@
 
 use endpoint::Endpoint;
 use file_handler::FileHandler;
-use ip::IpAddr;
+use util;
 
 pub struct BootstrapHandler {
     file_handler: FileHandler,
@@ -81,12 +81,7 @@ impl BootstrapHandler {
         // We wouldn't add any loopback addresses nor addresses from our local
         // LAN to the bootstrap cache. We can always find such addresses using
         // beacon and more often than not they would be obsolete very soon.
-        contacts.retain(|contact| {
-            match contact.get_address() {
-                IpAddr::V4(ref a) => ::ip_info::v4::is_global(a),
-                IpAddr::V6(ref a) => ::ip_info::v6::is_global(a),
-            }
-        });
+        contacts.retain(|contact| util::is_global(&contact.ip()));
 
         bootstrap_contacts.retain(|contact| !prune.contains(&contact));
         contacts.retain(|contact| !bootstrap_contacts.contains(&contact));
@@ -115,7 +110,9 @@ fn get_file_name() -> Result<::std::ffi::OsString, ::error::Error> {
 
 #[cfg(test)]
 mod test {
-    use endpoint::Endpoint;
+    use std::net;
+    use endpoint::{Endpoint, Protocol};
+    use socket_addr::SocketAddr;
 
     pub fn random_global_endpoints(count: usize) -> Vec<Endpoint> {
         let mut contacts = Vec::new();
@@ -141,7 +138,7 @@ mod test {
                                                                     ::rand::random::<u8>(),
                                                                     ::rand::random::<u8>()),
                                           ::rand::random::<u16>());
-        Endpoint::Tcp(::std::net::SocketAddr::V4(address))
+        Endpoint::from_socket_addr(Protocol::Tcp, SocketAddr(net::SocketAddr::V4(address)))
     }
 
     struct TestFile {

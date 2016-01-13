@@ -37,8 +37,9 @@ extern crate log;
 extern crate rand;
 extern crate rustc_serialize;
 extern crate time;
+extern crate ip;
 
-use crust::{Endpoint, Event, FileHandler,  Port, Service};
+use crust::{Endpoint, Protocol, Event, FileHandler, Service};
 use docopt::Docopt;
 use rand::{thread_rng, Rng};
 use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
@@ -49,7 +50,10 @@ use std::sync::Arc;
 use std::sync::mpsc::channel;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
+use std::net;
 use time::{Duration, Tm};
+use ip::SocketAddrExt;
+use crust::SocketAddr;
 
 static USAGE: &'static str = r#"
 Usage:
@@ -159,50 +163,11 @@ impl Config {
     fn sanitize(&mut self) {
         if let Some(port) = self.listening_port {
             for addr in self.ips.iter_mut() {
-                addr.ensure_port(port);
+                if addr.port() == 0 {
+                    *addr = SocketAddr(<net::SocketAddr as SocketAddrExt>::new(SocketAddrExt::ip(&**addr), port))
+                }
             }
         }
-    }
-}
-
-// This is a wrapper for std::net::SocketAdds so we can implement Decodable
-// for it.
-#[derive(Clone, Debug)]
-struct SocketAddr(std::net::SocketAddr);
-
-impl SocketAddr {
-    // Set the port of the address to the given port if it is zero, otherwise
-    // leave it unchanged.
-    fn ensure_port(&mut self, port: u16) {
-        use std::net::SocketAddr::{V4, V6};
-        use std::net::{SocketAddrV4, SocketAddrV6};
-
-        if self.0.port() != 0 { return; }
-
-        self.0 = match self.0 {
-            V4(addr) => V4(SocketAddrV4::new(*addr.ip(), port)),
-            V6(addr) => V6(SocketAddrV6::new(*addr.ip(), port, addr.flowinfo(), addr.scope_id()))
-        }
-    }
-}
-
-impl Decodable for SocketAddr {
-    fn decode<D: Decoder>(decoder: &mut D) -> Result<Self, D::Error> {
-        let encoded = try!(decoder.read_str());
-
-        // Try to parse first as address:port pair, if that fails, parse it as
-        // IPv4 address only. If even that fails, parse it as IPv6 address only.
-        encoded.parse::<std::net::SocketAddr>().or_else(|_| {
-            encoded.parse::<std::net::Ipv4Addr>().map(|ip| {
-                std::net::SocketAddr::V4(std::net::SocketAddrV4::new(ip, 0))
-            })
-        }).or_else(|_| {
-            encoded.parse::<std::net::Ipv6Addr>().map(|ip| {
-                std::net::SocketAddr::V6(std::net::SocketAddrV6::new(ip, 0, 0, 0))
-            })
-        }).map(|addr| SocketAddr(addr)).map_err(|_| {
-            decoder.error("Invalid socket address")
-        })
     }
 }
 
@@ -399,17 +364,15 @@ fn run(connected: Arc<AtomicBool>, config: &Config) -> Report {
 
 fn connect_to_all(service: &mut Service, addrs: &[SocketAddr]) {
     for addr in addrs {
-        let addr = addr.0;
-
         debug!("Connecting to {}", addr);
 
-        service.connect(0, vec![Endpoint::Tcp(addr)]);
-        service.connect(0, vec![Endpoint::Utp(addr)]);
+        service.connect(0, vec![Endpoint::from_socket_addr(Protocol::Tcp, *addr)]);
+        service.connect(0, vec![Endpoint::from_socket_addr(Protocol::Utp, *addr)]);
     }
 }
 
 fn start_accepting(service: &mut Service, port: u16) -> io::Result<()> {
-    if let Err(e) = service.start_accepting(Port::Tcp(port)) { return Err(e); }
+    if let Err(e) = service.start_accepting(port) { return Err(e); }
 
     // FIXME: this panics on the second run, with "Address already in use"
     //        error. Seems like Service is not cleaning up it's stuff properly

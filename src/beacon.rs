@@ -19,17 +19,20 @@ use rand::random;
 use std::error::Error;
 use std::io;
 use std::io::Result;
-use std::net::{SocketAddr, TcpStream, UdpSocket, SocketAddrV4};
+use std::net::{TcpStream, UdpSocket, TcpListener};
+use std::net;
+use socket_addr::SocketAddr;
 use std::str::FromStr;
 use std::sync::{Arc, mpsc, Mutex};
 use std::thread;
 use std::time::Duration;
+use ip::SocketAddrExt;
 
 use net2::UdpSocketExt;
 
-use transport::{Acceptor, Transport, Handshake};
-use endpoint::Port;
+use transport::{Transport, Handshake};
 use state::State;
+use util;
 
 const GUID_SIZE: usize = 16;
 const MAGIC_SIZE: usize = 4;
@@ -63,42 +66,35 @@ fn parse_shutdown_value(data: &[u8]) -> u64 {
     ((data[6] as u64) << 48) + ((data[7] as u64) << 56)
 }
 
-fn is_loopback(address: &SocketAddr) -> bool {
-    match *address {
-        SocketAddr::V4(a) => ::ip_info::v4::is_loopback(a.ip()),
-        SocketAddr::V6(a) => ::ip_info::v6::is_loopback(a.ip()),
-    }
-}
-
 pub struct BroadcastAcceptor {
     guid: GUID,
     socket: Arc<Mutex<UdpSocket>>,
-    acceptor: Arc<Mutex<Acceptor>>,
+    listener: Arc<Mutex<TcpListener>>,
     tcp_listener_port: u16,
 }
 
 impl BroadcastAcceptor {
     pub fn new(port: u16) -> Result<BroadcastAcceptor> {
         let socket = try!(UdpSocket::bind(("0.0.0.0", port)));
-        let acceptor = try!(Acceptor::new(Port::Tcp(0)));
+        let listener = try!(TcpListener::bind("0.0.0.0:0"));
         let mut guid = [0; GUID_SIZE];
         for item in &mut guid {
             *item = random::<u8>();
         }
-        let tcp_listener_port = acceptor.local_port().number();
+        let tcp_listener_port = unwrap_result!(listener.local_addr()).port();
         Ok(BroadcastAcceptor {
             guid: guid,
             socket: Arc::new(Mutex::new(socket)),
-            acceptor: Arc::new(Mutex::new(acceptor)),
+            listener: Arc::new(Mutex::new(listener)),
             tcp_listener_port: tcp_listener_port,
         })
     }
 
     pub fn accept(&self) -> Result<(Handshake, Transport)> {
         let (transport_sender, transport_receiver) = mpsc::channel();
-        let protected_tcp_acceptor = self.acceptor.clone();
+        let protected_tcp_acceptor = self.listener.clone();
         let tcp_acceptor_thread = try!(thread::Builder::new()
-                                           .name("Beacon accept TCP acceptor".to_owned())
+                                           .name("Beacon accept TCP listener".to_owned())
                                            .spawn(move || -> Result<()> {
                                                let tcp_acceptor = protected_tcp_acceptor.lock()
                                                                                         .unwrap();
@@ -130,8 +126,8 @@ impl BroadcastAcceptor {
                     break;
                 } else if buffer[0..MAGIC_SIZE] == STOP {  // Request to stop
                     if buffer[MAGIC_SIZE..(MAGIC_SIZE + GUID_SIZE)] == guid &&
-                            is_loopback(&source) {  // The request is from ourself - stop.
-                        let _ = socket_sender.send(source);
+                            util::is_loopback(&SocketAddrExt::ip(&source)) {  // The request is from ourself - stop.
+                        let _ = socket_sender.send(SocketAddr(source));
                         return Err(io::Error::new(io::ErrorKind::ConnectionAborted,
                                                   "Stopped beacon listener"));
                     } else {
@@ -154,7 +150,7 @@ impl BroadcastAcceptor {
                 let sent_size = try!(self.socket
                                          .lock()
                                          .unwrap()
-                                         .send_to(&[1u8; 1], requester));
+                                         .send_to(&[1u8; 1], &*requester));
                 debug_assert!(sent_size == 1);
             }
             return Err(e);
@@ -178,7 +174,7 @@ impl BroadcastAcceptor {
         };
         let _ = udp_listener_killer.set_read_timeout(Some(Duration::new(10, 0)));
         // Safe to use unwrap here - this will always parse as a SocketAddr.
-        let udp_listener_address = SocketAddr::from_str(&format!("127.0.0.1:{}", guid_and_port.1))
+        let udp_listener_address = net::SocketAddr::from_str(&format!("127.0.0.1:{}", guid_and_port.1))
                                        .unwrap();
         let _ = udp_listener_killer.send_to(&send_buffer[..], udp_listener_address);
         // Wait for acknowledgement ping.
@@ -238,16 +234,16 @@ pub fn seek_peers(port: u16, guid_to_avoid: Option<GUID>) -> Result<Vec<SocketAd
                                                    let _ = tx.send({
                                                        let port = parse_port(&buffer);
                                                        match source {
-                                                           SocketAddr::V4(a) => {
-                                SocketAddr::V4(SocketAddrV4::new(*a.ip(), port))
-                            }
-                            // FIXME(dirvine) Hanlde ip6 :10/01/2016
-                            _ => unimplemented!(),
-                            //                                SocketAddr::V6(a) => {
-                            //     SocketAddr::V6(SocketAddrV6::new(*a.ip(), port,
-                            //                                      a.flowinfo(),
-                            //                                      a.scope_id()))
-                            // }
+                                                            net::SocketAddr::V4(a) => {
+                                                                SocketAddr(net::SocketAddr::V4(net::SocketAddrV4::new(*a.ip(), port)))
+                                                            }
+                                                            // FIXME(dirvine) Hanlde ip6 :10/01/2016
+                                                            _ => unimplemented!(),
+                                                            //                                SocketAddr::V6(a) => {
+                                                            //     SocketAddr::V6(SocketAddrV6::new(*a.ip(), port,
+                                                            //                                      a.flowinfo(),
+                                                            //                                      a.scope_id()))
+                                                            // }
                                                        }
                                                    });
                                                }
@@ -255,7 +251,7 @@ pub fn seek_peers(port: u16, guid_to_avoid: Option<GUID>) -> Result<Vec<SocketAd
                                                    // The response is a shutdown signal
                                                    if parse_shutdown_value(&buffer) ==
                                                       shutdown_value &&
-                                                      is_loopback(&source) {
+                                                      util::is_loopback(&SocketAddrExt::ip(&source)) {
                                                        break;
                                                    } else {
                                                        continue;
@@ -298,7 +294,7 @@ pub fn seek_peers(port: u16, guid_to_avoid: Option<GUID>) -> Result<Vec<SocketAd
 mod test {
     use super::*;
     use std::thread;
-    use endpoint::Endpoint;
+    use endpoint::{Protocol, Endpoint};
     use transport::{Message, Handshake};
     use state::State;
 
@@ -316,7 +312,7 @@ mod test {
 
         let t2 = thread::Builder::new().name("test_beacon receiver".to_owned()).spawn(move || {
             let endpoint = seek_peers(acceptor_port, None).unwrap()[0];
-            let mut transport = State::connect(Handshake::default(), Endpoint::Tcp(endpoint))
+            let mut transport = State::connect(Handshake::default(), Endpoint::from_socket_addr(Protocol::Tcp, endpoint))
                                     .unwrap()
                                     .1;
             let msg = String::from_utf8(match transport.receiver.receive().unwrap() {
@@ -357,7 +353,7 @@ mod test {
                      .spawn(move || {
                          thread::sleep(::std::time::Duration::from_millis(700));
                          let endpoint = seek_peers(acceptor_port, None).unwrap()[0];
-                         let _ = State::connect(Handshake::default(), Endpoint::Tcp(endpoint))
+                         let _ = State::connect(Handshake::default(), Endpoint::from_socket_addr(Protocol::Tcp, endpoint))
                                      .unwrap();
                      });
 

@@ -17,6 +17,7 @@
 
 use std::collections::{HashMap, HashSet};
 use std::io;
+use std::net;
 use std::sync::mpsc;
 use std::sync::mpsc::{Sender, Receiver};
 use std::thread;
@@ -28,19 +29,18 @@ use config_handler::Config;
 use get_if_addrs::{getifaddrs, filter_loopback};
 use transport;
 use transport::{Message, Handshake};
-use endpoint::{Endpoint, Port};
+use endpoint::{Protocol, Endpoint};
 use std::thread::JoinHandle;
-use std::net::{SocketAddr, Ipv4Addr, UdpSocket, SocketAddrV4};
-use ip::IpAddr;
+use std::net::{Ipv4Addr, UdpSocket, TcpListener};
+use ip::{IpAddr, SocketAddrExt};
 
 use itertools::Itertools;
 use event::{Event, MappedUdpSocket};
 use connection::Connection;
 use sequence_number::SequenceNumber;
 use hole_punching::HolePunchServer;
-use util::ip_from_socketaddr;
-use util;
-use util::SocketAddrW;
+use socket_addr::SocketAddr;
+
 
 // Closure is a wapper around boxed closures that tries to work around the fact
 // that it is not possible to call Box<FnOnce> in the current stable rust.
@@ -69,7 +69,7 @@ impl Closure {
 pub struct ConnectionData {
     pub message_sender: Sender<Message>,
     pub mapper_address: Option<SocketAddr>,
-    pub mapper_external_address: Option<SocketAddrV4>,
+    pub mapper_external_address: Option<SocketAddr>,
 }
 
 pub struct State {
@@ -77,7 +77,7 @@ pub struct State {
     pub cmd_sender: Sender<Closure>,
     pub cmd_receiver: Receiver<Closure>,
     pub connections: HashMap<Connection, ConnectionData>,
-    pub listening_ports: HashSet<Port>,
+    pub listening_ports: HashSet<u16>,
     pub bootstrap_handler: BootstrapHandler,
     pub stop_called: bool,
     pub is_bootstrapping: bool,
@@ -124,13 +124,13 @@ impl State {
     }
 
     pub fn get_accepting_endpoints(&self) -> Vec<Endpoint> {
-        // FIXME: We should get real endpoints from the acceptors
+        // FIXME: We should get real endpoints from the listeners
         // not use 'unspecified' ips.
         let unspecified_ip = IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0));
         self.listening_ports
             .iter()
             .cloned()
-            .map(|port| Endpoint::new(unspecified_ip, port))
+            .map(|port| Endpoint::new(Protocol::Tcp, unspecified_ip, port))
             .collect()
     }
 
@@ -163,12 +163,12 @@ impl State {
     }
 
     fn get_listening_endpoint(&self) -> Vec<Endpoint> {
-        let listening_ports = self.listening_ports.iter().cloned().collect::<Vec<Port>>();
+        let listening_ports = self.listening_ports.iter().cloned().collect::<Vec<u16>>();
 
         let mut endpoints = Vec::<Endpoint>::new();
         for port in listening_ports {
             for ifaddr in filter_loopback(getifaddrs()) {
-                endpoints.push(Endpoint::new(ifaddr.addr, port));
+                endpoints.push(Endpoint::new(Protocol::Tcp, ifaddr.addr, port));
             }
         }
         endpoints
@@ -179,7 +179,7 @@ impl State {
                         -> io::Result<(Handshake, transport::Transport)> {
         let handshake_err = Err(io::Error::new(io::ErrorKind::Other, "handshake failed"));
 
-        handshake.remote_ip = trans.connection_id.peer_addr();
+        handshake.remote_ip = trans.connection_id.peer_addr().clone();
         if let Err(_) = trans.sender.send_handshake(handshake) {
             return handshake_err;
         }
@@ -219,7 +219,7 @@ impl State {
     }
 
     pub fn accept(handshake: Handshake,
-                  acceptor: &transport::Acceptor)
+                  acceptor: &TcpListener)
                   -> io::Result<(Handshake, transport::Transport)> {
         Self::handle_handshake(handshake, try!(transport::accept(acceptor)))
     }
@@ -230,10 +230,8 @@ impl State {
                           trans: transport::Transport)
                           -> io::Result<Connection> {
         let c = trans.connection_id.clone();
-        let our_external_endpoint = match trans.connection_id.peer_endpoint() {
-            Endpoint::Utp(..) => Endpoint::Utp(handshake.remote_ip.0),
-            Endpoint::Tcp(..) => Endpoint::Tcp(handshake.remote_ip.0),
-        };
+        let our_external_endpoint = Endpoint::from_socket_addr(*trans.connection_id.peer_endpoint().protocol(),
+                                                               SocketAddr(*handshake.remote_ip));
         let event = Event::OnConnect(Ok((our_external_endpoint, c)), token);
 
         let connection = self.register_connection(handshake, trans, event);
@@ -250,10 +248,8 @@ impl State {
                                      trans: transport::Transport)
                                      -> io::Result<Connection> {
         let c = trans.connection_id.clone();
-        let our_external_endpoint = match trans.connection_id.peer_endpoint() {
-            Endpoint::Utp(..) => Endpoint::Utp(handshake.remote_ip.0),
-            Endpoint::Tcp(..) => Endpoint::Tcp(handshake.remote_ip.0),
-        };
+        let our_external_endpoint = Endpoint::from_socket_addr(*trans.connection_id.peer_endpoint().protocol(),
+                                                               SocketAddr(*handshake.remote_ip));
         let event = Event::OnRendezvousConnect(Ok((our_external_endpoint, c)), token);
         self.register_connection(handshake, trans, event)
     }
@@ -272,15 +268,15 @@ impl State {
                                    .map(|port| {
                                        let peer_addr = trans.connection_id
                                                             .peer_endpoint()
-                                                            .get_address();
+                                                            .ip();
                                        match peer_addr {
                                            IpAddr::V4(a) => {
-                                               SocketAddr::V4(SocketAddrV4::new(a, port))
+                                               SocketAddr(net::SocketAddr::V4(net::SocketAddrV4::new(a, port)))
                                            }
                                            // FIXME(dirvine) Handle ip6 :10/01/2016
                                            _ => unimplemented!(),
                                            // IpAddr::V6(a) => {
-                                           //     SocketAddr::V6(SocketAddrV6::new(a,
+                                           //     net::SocketAddr::V6(SocketAddrV6::new(a,
                                            //                                      port,
                                            //                                      a.flowinfo(),
                                            //                                      a.scope_id()))
@@ -291,14 +287,14 @@ impl State {
         let connection_data = ConnectionData {
             message_sender: tx,
             mapper_address: mapper_addr,
-            mapper_external_address: handshake.external_ip.map(|sa| sa.0),
+            mapper_external_address: handshake.external_ip,
         };
 
         // We need to insert the event into event_sender *before* the
         // reading thread starts. It is because the reading thread
         // also inserts events into the pipe and if done very quickly
         // they may be inserted in wrong order.
-        let _ = self.connections.insert(connection, connection_data);
+        let _ = self.connections.insert(connection.clone(), connection_data);
         let _ = self.event_sender.send(event_to_user);
 
         self.start_writing_thread(trans.sender, connection.clone(), rx);
@@ -340,9 +336,10 @@ impl State {
                         }
                     }
                     Message::HolePunchAddress(a) => {
+                        let connection = connection.clone();
                         let _ = cmd_sender.send(Closure::new(move |state: &mut State| {
-                            if let Some(cd) = state.connections.get_mut(&connection.clone()) {
-                                cd.mapper_external_address = Some(a.0);
+                            if let Some(cd) = state.connections.get_mut(&connection) {
+                                cd.mapper_external_address = Some(a);
                             }
                         }));
                     }
@@ -368,16 +365,14 @@ impl State {
                          trans: transport::Transport)
                          -> io::Result<Connection> {
         let c = trans.connection_id.clone();
-        let our_external_endpoint = match trans.connection_id.peer_endpoint() {
-            Endpoint::Utp(..) => Endpoint::Utp(handshake.remote_ip.0),
-            Endpoint::Tcp(..) => Endpoint::Tcp(handshake.remote_ip.0),
-        };
+        let our_external_endpoint = Endpoint::from_socket_addr(*trans.connection_id.peer_endpoint().protocol(),
+                                                               SocketAddr(*handshake.remote_ip));
         self.register_connection(handshake, trans, Event::OnAccept(our_external_endpoint, c))
     }
 
     fn seek_peers(beacon_guid: Option<[u8; 16]>, beacon_port: u16) -> Vec<Endpoint> {
         match beacon::seek_peers(beacon_port, beacon_guid) {
-            Ok(peers) => peers.into_iter().map(Endpoint::Tcp).collect(),
+            Ok(peers) => peers.into_iter().map(|a| Endpoint::from_socket_addr(Protocol::Tcp, a)).collect(),
             Err(_) => Vec::new(),
         }
     }
@@ -405,8 +400,8 @@ impl State {
         let _ = Self::new_thread("bootstrap_off_list", move || {
             let h = Handshake {
                 mapper_port: Some(mapper_port),
-                external_ip: external_ip.map(util::SocketAddrV4W),
-                remote_ip: SocketAddrW(SocketAddr::from_str("0.0.0.0:0").unwrap()),
+                external_ip: external_ip,
+                remote_ip: SocketAddr(net::SocketAddr::from_str("0.0.0.0:0").unwrap()),
             };
 
             let connect_result = Self::connect(h, head);
@@ -458,11 +453,11 @@ impl State {
     fn get_ordered_helping_nodes(&self) -> Vec<SocketAddr> {
         let mut addrs = self.connections
                             .iter()
-                            .filter_map(|pair| pair.1.mapper_address)
+                            .filter_map(|pair| pair.1.mapper_address.clone())
                             .collect::<Vec<_>>();
 
-        addrs.sort_by(|&addr1, &addr2| {
-            ::util::heuristic_geo_cmp(&ip_from_socketaddr(addr1), &ip_from_socketaddr(addr2))
+        addrs.sort_by(|addr1, addr2| {
+            ::util::heuristic_geo_cmp(&SocketAddrExt::ip(&**addr1), &SocketAddrExt::ip(&**addr2))
                 .reverse()
         });
 
@@ -502,40 +497,39 @@ impl State {
 mod test {
     use super::*;
     use std::thread;
-    use std::net::{SocketAddr, SocketAddrV4, SocketAddrV6};
-    use ip::IpAddr;
+    use std::net::{TcpListener, SocketAddrV6};
+    use std::net;
+    use ip::{SocketAddrExt, IpAddr};
     use std::sync::mpsc::channel;
-    use transport::{Acceptor, Handshake};
-    use endpoint::{Endpoint, Port};
+    use transport::Handshake;
+    use endpoint::{Protocol, Endpoint};
     use event::Event;
     use util;
+    use socket_addr::SocketAddr;
 
-    fn testable_endpoint(acceptor: &Acceptor) -> Endpoint {
-        let addr = match *acceptor {
-            Acceptor::Tcp(ref listener) => {
-                listener.local_addr()
-                        .unwrap()
-            }
-            _ => panic!("Unable to create a new connection"),
-        };
+    fn testable_endpoint(listener: &TcpListener) -> Endpoint {
+        let addr = unwrap_result!(listener.local_addr());
 
-        let ip = util::loopback_if_unspecified(util::ip_from_socketaddr(addr));
+        let ip = util::loopback_if_unspecified(SocketAddrExt::ip(&addr));
         let addr = match (ip, addr) {
-            (IpAddr::V4(ip), _) => SocketAddr::V4(SocketAddrV4::new(ip, addr.port())),
-            (IpAddr::V6(ip), SocketAddr::V6(addr)) => {
-                SocketAddr::V6(SocketAddrV6::new(ip, addr.port(), addr.flowinfo(), addr.scope_id()))
+            (IpAddr::V4(ip), _) => net::SocketAddr::V4(net::SocketAddrV4::new(ip, addr.port())),
+            (IpAddr::V6(ip), net::SocketAddr::V6(addr)) => {
+                net::SocketAddr::V6(SocketAddrV6::new(ip,
+                                                      addr.port(),
+                                                      addr.flowinfo(),
+                                                      addr.scope_id()))
             }
             _ => panic!("Unreachable"),
         };
-        Endpoint::Tcp(addr)
+        Endpoint::from_socket_addr(Protocol::Tcp, SocketAddr(addr))
     }
 
     fn test_bootstrap_off_list(n: u16) {
-        let acceptors = (0..n)
-                            .map(|_| Acceptor::new(Port::Tcp(0)).unwrap())
+        let listeners = (0..n)
+                            .map(|_| unwrap_result!(TcpListener::bind("0.0.0.0:0")))
                             .collect::<Vec<_>>();
 
-        let eps = acceptors.iter()
+        let eps = listeners.iter()
                            .map(|a| testable_endpoint(&a))
                            .collect();
 
@@ -558,7 +552,7 @@ mod test {
                   .unwrap();
 
         let accept_thread = thread::spawn(move || {
-            for a in acceptors {
+            for a in listeners {
                 let _ = State::accept(Handshake::default(), &a).unwrap();
             }
         });

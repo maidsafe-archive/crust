@@ -117,6 +117,7 @@ impl FileHandler {
         use rustc_serialize::json::{Json, Decoder};
         use memmap::{Mmap, Protection};
         let file = try!(::std::fs::File::open(&self.path));
+        // TODO Replace with facilitites from fs2
         let file = try!(Mmap::open(&file, Protection::Read));
         let bytes: &[u8] = unsafe { file.as_slice() };
         let mut cursor = io::Cursor::new(bytes);
@@ -138,6 +139,7 @@ impl FileHandler {
         let file = try!(OpenOptions::new().read(true).write(true).create(true).open(&self.path));
         try!(file.set_len(contents.len() as u64));
         let mut mmap = try!(Mmap::open(&file, Protection::ReadWrite));
+        // TODO Replace with facilitites from fs2
         try!(unsafe { mmap.as_mut_slice() }.write_all(&contents[..]));
         mmap.flush().map_err(::error::Error::IoError)
     }

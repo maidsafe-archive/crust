@@ -18,23 +18,23 @@
 use std::io;
 use std::sync::mpsc::Sender;
 use std::thread;
+use std::net;
 use std::thread::JoinHandle;
 use std::sync::{Arc, Mutex};
 use std::str::FromStr;
 
-use std::net::{SocketAddr, SocketAddrV4, UdpSocket, Ipv4Addr};
+use std::net::{UdpSocket, Ipv4Addr, TcpListener};
 use beacon;
 use config_handler::{Config, read_config_file};
 use get_if_addrs::{getifaddrs, filter_loopback};
-use transport;
 use transport::Handshake;
-use endpoint::{Endpoint, Port};
+use endpoint::{Endpoint, Protocol};
 use map_external_port::async_map_external_port;
 use connection::Connection;
 
 use state::{Closure, State};
 use event::{Event, HolePunchResult};
-use util::{SocketAddrW, SocketAddrV4W};
+use socket_addr::{SocketAddr, SocketAddrV4};
 
 /// Type used to represent serialised data in a message.
 pub type Bytes = Vec<u8>;
@@ -99,16 +99,19 @@ impl Service {
 
     /// Starts accepting on a given port. If port number is 0, the OS
     /// will pick one randomly. The actual port used will be returned.
-    pub fn start_accepting(&mut self, port: Port) -> io::Result<Endpoint> {
-        let acceptor = try!(transport::Acceptor::new(port));
-        let accept_addr = acceptor.local_addr();
+    pub fn start_accepting(&mut self, port: u16) -> io::Result<Endpoint> {
+        let acceptor = try!(TcpListener::bind(("0.0.0.0", port)));
+        let accept_addr = try!(acceptor.local_addr());
 
         Self::accept(self.cmd_sender.clone(), acceptor);
 
+        // TODO Take this out after evaluating
         if self.beacon_guid_and_port.is_some() {
             let contacts = filter_loopback(getifaddrs())
                                .into_iter()
-                               .map(|ip| Endpoint::new(ip.addr.clone(), accept_addr.get_port()))
+                               .map(|ip| {
+                                   Endpoint::new(Protocol::Utp, ip.addr.clone(), accept_addr.port())
+                               })
                                .collect::<Vec<_>>();
 
             Self::post(&self.cmd_sender, move |state: &mut State| {
@@ -118,7 +121,7 @@ impl Service {
 
         // FIXME: Instead of hardcoded wrapping in loopback V4, the
         // acceptor should tell us the address it is accepting on.
-        Ok(accept_addr)
+        Ok(Endpoint::from_socket_addr(Protocol::Tcp, SocketAddr(accept_addr)))
     }
 
     fn start_broadcast_acceptor(&mut self, beacon_port: u16) -> io::Result<u16> {
@@ -218,16 +221,10 @@ impl Service {
             // Connect to our listening ports, this should unblock
             // the threads.
             for port in &state.listening_ports {
-                match *port {
-                    Port::Tcp(_) => {
-                        let _ = TcpStream::connect(SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1),
-                                                                     port.number()));
-                    }
-                    Port::Utp(_) => {
-                        let _ = UtpSocket::connect(SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1),
-                                                                     port.number()));
-                    }
-                }
+                let _ = TcpStream::connect(net::SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1),
+                                                                  port.clone()));
+                let _ = UtpSocket::connect(net::SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1),
+                                                                  port.clone()));
             }
         }));
 
@@ -251,8 +248,8 @@ impl Service {
 
             let handshake = Handshake {
                 mapper_port: Some(state.mapper.listening_addr().port()),
-                external_ip: state.mapper.external_address().map(SocketAddrV4W),
-                remote_ip: SocketAddrW(SocketAddr::from_str("0.0.0.0:0").unwrap()),
+                external_ip: state.mapper.external_address(),
+                remote_ip: SocketAddr(net::SocketAddr::from_str("0.0.0.0:0").unwrap()),
             };
 
             let _ = Self::new_thread("connect", move || {
@@ -306,8 +303,8 @@ impl Service {
 
             let handshake = Handshake {
                 mapper_port: Some(state.mapper.listening_addr().port()),
-                external_ip: state.mapper.external_address().map(::util::SocketAddrV4W),
-                remote_ip: SocketAddrW(SocketAddr::from_str("0.0.0.0:0").unwrap()),
+                external_ip: state.mapper.external_address(),
+                remote_ip: SocketAddr(net::SocketAddr::from_str("0.0.0.0:0").unwrap()),
             };
 
             let _ = Self::new_thread("rendezvous connect", move || {
@@ -352,17 +349,17 @@ impl Service {
         }
     }
 
-    fn accept(cmd_sender: Sender<Closure>, acceptor: transport::Acceptor) {
+    fn accept(cmd_sender: Sender<Closure>, acceptor: TcpListener) {
         let cmd_sender2 = cmd_sender.clone();
 
         Self::post(&cmd_sender, move |state: &mut State| {
-            let port = acceptor.local_port();
+            let port = acceptor.local_addr().unwrap().port();
             state.listening_ports.insert(port);
 
             let handshake = Handshake {
                 mapper_port: Some(state.mapper.listening_addr().port()),
-                external_ip: state.mapper.external_address().map(SocketAddrV4W),
-                remote_ip: SocketAddrW(SocketAddr::from_str("0.0.0.0:0").unwrap()),
+                external_ip: state.mapper.external_address(),
+                remote_ip: SocketAddr(net::SocketAddr::from_str("0.0.0.0:0").unwrap()),
             };
 
             let _ = Self::new_thread("listen", move || {
@@ -415,32 +412,24 @@ impl Service {
                 let async = async.clone();
                 let event_sender = state.event_sender.clone();
 
-                async_map_external_port(internal_ep.to_ip().clone(),
-                                        move |results: io::Result<Vec<T>>| {
-                                            let mut async = async.lock().unwrap();
-                                            async.remaining -= 1;
-                                            if let Ok(results) = results {
-                                                for result in results {
-                                                    let transport_port = match internal_ep {
-                                                        Endpoint::Tcp(_) => {
-                                                            Port::Tcp(result.1.get_port().number())
-                                                        }
-                                                        Endpoint::Utp(_) => {
-                                                            Port::Utp(result.1.get_port().number())
-                                                        }
-                                                    };
-                                                    let ext_ep =
-                                                        Endpoint::new(result.1.get_address(),
-                                                                      transport_port);
-                                                    async.results.push(ext_ep);
-                                                }
-                                            }
-                                            if async.remaining == 0 {
-                                                let event = Event::ExternalEndpoints(async.results
-                                                                                          .clone());
-                                                let _ = event_sender.send(event);
-                                            }
-                                        });
+                async_map_external_port(internal_ep.clone(), move |results: io::Result<Vec<T>>| {
+                    let mut async = async.lock().unwrap();
+                    async.remaining -= 1;
+                    if let Ok(results) = results {
+                        for result in results {
+                            let transport_port = internal_ep.socket_addr().port();
+                            let ext_ep = Endpoint::new(result.1.protocol().clone(),
+                                                       result.1.ip().clone(),
+                                                       transport_port);
+                            async.results.push(ext_ep);
+                        }
+                    }
+                    if async.remaining == 0 {
+                        let event = Event::ExternalEndpoints(async.results
+                                                                  .clone());
+                        let _ = event_sender.send(event);
+                    }
+                });
             }
         });
     }
@@ -505,20 +494,21 @@ mod test {
     use super::*;
     use std::fs::remove_file;
     use std::io;
-    use std::net::{UdpSocket, Ipv4Addr, SocketAddrV4};
+    use std::net::{UdpSocket, Ipv4Addr};
     use std::path::PathBuf;
     use std::sync::mpsc::{Sender, Receiver, channel};
     use std::thread;
     use std::thread::spawn;
+    use std::net;
     use rustc_serialize::{Decodable, Encodable};
     use cbor::{Decoder, Encoder};
     use connection::Connection;
-    use endpoint::{Endpoint, Port};
+    use endpoint::{Protocol, Endpoint};
     use config_handler::write_config_file;
     use event::Event;
-    use util;
     use bootstrap_handler::BootstrapHandler;
     use maidsafe_utilities::event_sender::{MaidSafeEventCategory, MaidSafeObserver};
+    use socket_addr::SocketAddr;
 
     type CategoryRx = ::std::sync::mpsc::Receiver<MaidSafeEventCategory>;
 
@@ -584,8 +574,8 @@ mod test {
         vec.into_iter().filter_map(|a| a.ok()).collect()
     }
 
-    fn loopback_if_unspecified(eps: Vec<Endpoint>) -> Vec<Endpoint> {
-        eps.iter().map(|e| e.map_ip_addr(util::loopback_if_unspecified)).collect()
+    fn unspecified_to_loopback(eps: &[Endpoint]) -> Vec<Endpoint> {
+        eps.iter().map(|elt| elt.unspecified_to_loopback()).collect()
     }
 
     #[test]
@@ -603,7 +593,7 @@ mod test {
                                                   category_tx.clone());
 
         let mut cm1 = Service::new(event_sender1).unwrap();
-        let cm1_ports = filter_ok(vec![cm1.start_accepting(Port::Tcp(0))]);
+        let cm1_ports = filter_ok(vec![cm1.start_accepting(0)]);
         let beacon_port = cm1.start_beacon(0).unwrap();
         assert_eq!(cm1_ports.len(), 1);
         assert_eq!(Some(beacon_port), cm1.get_beacon_acceptor_port());
@@ -666,7 +656,7 @@ mod test {
     //     let mut service0 = Service::new(event_sender0).unwrap();
     //     let mut service1 = Service::new(event_sender1).unwrap();
     //
-    //     let endpoints = loopback_if_unspecified(vec![service0.start_accepting(Port::Tcp(0))
+    //     let endpoints = unspecified_to_loopback(vec![service0.start_accepting(Port::Tcp(0))
     //                                                          .unwrap(),
     //                                                  service1.start_accepting(Port::Tcp(0))
     //                                                          .unwrap()]);
@@ -747,7 +737,7 @@ mod test {
         let crust_event_category = MaidSafeEventCategory::CrustEvent;
         let event_sender1 = MaidSafeObserver::new(cm1_i, crust_event_category.clone(), category_tx);
         let mut cm1 = Service::new(event_sender1).unwrap();
-        let cm1_eps = filter_ok(vec![cm1.start_accepting(Port::Tcp(0))]);
+        let cm1_eps = filter_ok(vec![cm1.start_accepting(0)]);
         assert!(cm1_eps.len() >= 1);
 
         temp_configs.push(make_temp_config());
@@ -756,11 +746,11 @@ mod test {
         let (category_tx, category_rx1) = channel();
         let event_sender2 = MaidSafeObserver::new(cm2_i, crust_event_category, category_tx);
         let mut cm2 = Service::new(event_sender2).unwrap();
-        let cm2_eps = filter_ok(vec![cm2.start_accepting(Port::Tcp(0))]);
+        let cm2_eps = filter_ok(vec![cm2.start_accepting(0)]);
         assert!(cm2_eps.len() >= 1);
 
-        cm2.connect(0, loopback_if_unspecified(cm1_eps));
-        cm1.connect(1, loopback_if_unspecified(cm2_eps));
+        cm2.connect(0, unspecified_to_loopback(&cm1_eps));
+        cm1.connect(1, unspecified_to_loopback(&cm2_eps));
 
         let runner1 = run_cm(cm1, cm1_o, category_rx0);
         let runner2 = run_cm(cm2, cm2_o, category_rx1);
@@ -837,13 +827,21 @@ mod test {
         let peer2_udp_socket = UdpSocket::bind("0.0.0.0:0").unwrap();
 
         let peer1_port = peer1_udp_socket.local_addr().unwrap().port();
-        let peer1_addr = SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), peer1_port);
+        let peer1_addr =
+            SocketAddr(net::SocketAddr::V4(net::SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1),
+                                                                  peer1_port)));
 
         let peer2_port = peer2_udp_socket.local_addr().unwrap().port();
-        let peer2_addr = SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), peer2_port);
+        let peer2_addr =
+            SocketAddr(net::SocketAddr::V4(net::SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1),
+                                                                  peer2_port)));
 
-        cm2.rendezvous_connect(peer1_udp_socket, 0, Endpoint::utp(peer2_addr));
-        cm1.rendezvous_connect(peer2_udp_socket, 0, Endpoint::utp(peer1_addr));
+        cm2.rendezvous_connect(peer1_udp_socket,
+                               0,
+                               Endpoint::from_socket_addr(Protocol::Utp, peer2_addr));
+        cm1.rendezvous_connect(peer2_udp_socket,
+                               0,
+                               Endpoint::from_socket_addr(Protocol::Utp, peer1_addr));
 
         let (ready_tx1, ready_rx1) = channel();
         let (shut_tx1, shut_rx1) = channel();
@@ -934,7 +932,7 @@ mod test {
             fn send_data_to(&self, connection: Connection) {
                 for i in 0..MESSAGE_PER_NODE {
                     let msg = format!("MESSAGE {}", i);
-                    self.service.send(connection, encode(&msg));
+                    self.service.send(connection.clone(), encode(&msg));
                 }
             }
         }
@@ -946,10 +944,8 @@ mod test {
         let mut runners = Vec::new();
 
         let mut listening_eps = nodes.iter_mut()
-                                     .map(|node| {
-                                         node.service.start_accepting(Port::Tcp(0)).unwrap()
-                                     })
-                                     .map(|ep| ep.map_ip_addr(::util::loopback_if_unspecified))
+                                     .map(|node| node.service.start_accepting(0).unwrap())
+                                     .map(|ep| ep.unspecified_to_loopback())
                                      .collect::<::std::collections::VecDeque<_>>();
 
         for mut node in nodes {
@@ -994,7 +990,7 @@ mod test {
                                                                       category_tx);
         let mut cm = Service::new(event_sender).unwrap();
 
-        let cm_listen_ep = cm.start_accepting(Port::Tcp(0)).unwrap();
+        let cm_listen_ep = cm.start_accepting(0).unwrap();
 
         let thread = spawn(move || {
             for it in category_rx.iter() {
@@ -1023,7 +1019,7 @@ mod test {
             let cm_aux = Service::new(event_sender).unwrap();
         // setting the listening port to be greater than 4455 will make the test hanging
         // changing this to cm_beacon_addr will make the test hanging
-            cm_aux.connect(0, loopback_if_unspecified(vec![cm_listen_ep]));
+            cm_aux.connect(0, unspecified_to_loopback(&vec![cm_listen_ep]));
 
             for it in category_rx.iter() {
                 match it {
@@ -1062,8 +1058,8 @@ mod test {
                                                       category_tx.clone());
             let mut service = Service::new(event_sender1).unwrap();
             // random port assigned by os
-            tcp_port = service.start_accepting(Port::Tcp(0)).unwrap().get_port();
-            utp_port = service.start_accepting(Port::Utp(0)).unwrap().get_port();
+            tcp_port = unwrap_result!(service.start_accepting(0)).port();
+            utp_port = unwrap_result!(service.start_accepting(0)).port();
         }
 
         {

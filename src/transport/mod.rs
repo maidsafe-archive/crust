@@ -16,11 +16,10 @@
 // relating to use of the SAFE Network Software.
 
 mod message;
-mod acceptor;
 mod handshake;
 mod sender_receiver;
 
-use std::net::UdpSocket;
+use std::net::{UdpSocket, TcpListener};
 use tcp_connections;
 use utp_connections;
 use std::io;
@@ -31,9 +30,9 @@ use std::fmt::{Formatter, Debug};
 use std::fmt;
 use connection::Connection;
 use endpoint::{Endpoint, Protocol};
+use socket_addr::SocketAddr;
 
 pub use self::message::Message;
-pub use self::acceptor::Acceptor;
 pub use self::handshake::Handshake;
 pub use self::sender_receiver::{Sender, Receiver};
 
@@ -51,14 +50,15 @@ impl Debug for Transport {
 
 // FIXME: There needs to be a way to break from this blocking command.
 pub fn connect(remote_ep: Endpoint) -> IoResult<Transport> {
-    match remote_ep {
-        Endpoint::Tcp(ep) => {
-            let (i, o) = try!(tcp_connections::connect_tcp(ep).map_err(|e| {
-                io::Error::new(io::ErrorKind::NotConnected, e.description())
-            }));
+    match *remote_ep.protocol() {
+        Protocol::Tcp => {
+            let (i, o) = try!(tcp_connections::connect_tcp(remote_ep.socket_addr().clone())
+                                  .map_err(|e| {
+                                      io::Error::new(io::ErrorKind::NotConnected, e.description())
+                                  }));
             let connection_id = Connection::new(Protocol::Tcp,
-                                                try!(i.local_addr()),
-                                                try!(i.peer_addr()));
+                                                SocketAddr(try!(i.local_addr())),
+                                                SocketAddr(try!(i.peer_addr())));
 
             Ok(Transport {
                 receiver: sender_receiver::Receiver::Tcp(cbor::Decoder::from_reader(i)),
@@ -66,12 +66,15 @@ pub fn connect(remote_ep: Endpoint) -> IoResult<Transport> {
                 connection_id: connection_id,
             })
         }
-        Endpoint::Utp(ep) => {
-            let (i, o) = try!(utp_connections::connect_utp(ep).map_err(|e| {
-                io::Error::new(io::ErrorKind::NotConnected, e.description())
-            }));
+        Protocol::Utp => {
+            let (i, o) = try!(utp_connections::connect_utp(remote_ep.socket_addr().clone())
+                                  .map_err(|e| {
+                                      io::Error::new(io::ErrorKind::NotConnected, e.description())
+                                  }));
 
-            let connection_id = Connection::new(Protocol::Utp, i.local_addr(), i.peer_addr());
+            let connection_id = Connection::new(Protocol::Utp,
+                                                SocketAddr(i.local_addr()),
+                                                SocketAddr(i.peer_addr()));
 
             Ok(Transport {
                 receiver: sender_receiver::Receiver::Utp(cbor::Decoder::from_reader(i)),
@@ -85,14 +88,18 @@ pub fn connect(remote_ep: Endpoint) -> IoResult<Transport> {
 pub fn rendezvous_connect(udp_socket: UdpSocket,
                           public_ep: Endpoint /* of B */)
                           -> IoResult<Transport> {
-    match public_ep {
-        Endpoint::Utp(ep) => {
-            let (i, o) = try!(utp_connections::rendezvous_connect_utp(udp_socket, ep)
+    match *public_ep.protocol() {
+        Protocol::Utp => {
+            let (i, o) = try!(utp_connections::rendezvous_connect_utp(udp_socket,
+                                                                      public_ep.socket_addr()
+                                                                               .clone())
                                   .map_err(|e| {
                                       io::Error::new(io::ErrorKind::NotConnected, e.description())
                                   }));
 
-            let connection_id = Connection::new(Protocol::Utp, i.local_addr(), i.peer_addr());
+            let connection_id = Connection::new(Protocol::Utp,
+                                                SocketAddr(i.local_addr()),
+                                                SocketAddr(i.peer_addr()));
 
             Ok(Transport {
                 receiver: sender_receiver::Receiver::Utp(cbor::Decoder::from_reader(i)),
@@ -109,74 +116,29 @@ pub fn rendezvous_connect(udp_socket: UdpSocket,
 
 // FIXME: There needs to be a way to break from this blocking command.
 // (Though this seems to be impossible with the current Rust TCP API).
-pub fn accept(acceptor: &Acceptor) -> IoResult<Transport> {
-    match *acceptor {
-        Acceptor::Tcp(ref listener) => {
-            let (stream, _remote_endpoint) = try!(listener.accept()
-                .map_err(|e| io::Error::new(io::ErrorKind::NotConnected, e.description())));
+pub fn accept(acceptor: &TcpListener) -> IoResult<Transport> {
+    let (stream, _remote_endpoint) = try!(acceptor.accept()
+                                                  .map_err(|e| {
+                                                      io::Error::new(io::ErrorKind::NotConnected,
+                                                                     e.description())
+                                                  }));
 
-            let (i, o) = try!(tcp_connections::upgrade_tcp(stream));
+    let (i, o) = try!(tcp_connections::upgrade_tcp(stream));
 
-            let connection_id = Connection::new(Protocol::Tcp,
-                                                try!(i.local_addr()),
-                                                try!(i.peer_addr()));
+    let connection_id = Connection::new(Protocol::Tcp,
+                                        SocketAddr(try!(i.local_addr())),
+                                        SocketAddr(try!(i.peer_addr())));
 
-            Ok(Transport {
-                receiver: sender_receiver::Receiver::Tcp(cbor::Decoder::from_reader(i)),
-                sender: sender_receiver::Sender::Tcp(o),
-                connection_id: connection_id,
-            })
-        }
-        Acceptor::Utp(ref listener) => {
-            let (stream, _remote_endpoint) = try!(listener.accept()
-                .map_err(|e| io::Error::new(io::ErrorKind::NotConnected, e.description())));
-
-            let (i, o) = try!(utp_connections::upgrade_utp(stream));
-
-            let connection_id = Connection::new(Protocol::Utp, i.local_addr(), i.peer_addr());
-
-            Ok(Transport {
-                receiver: sender_receiver::Receiver::Utp(cbor::Decoder::from_reader(i)),
-                sender: sender_receiver::Sender::Utp(o),
-                connection_id: connection_id,
-            })
-        }
-    }
+    Ok(Transport {
+        receiver: sender_receiver::Receiver::Tcp(cbor::Decoder::from_reader(i)),
+        sender: sender_receiver::Sender::Tcp(o),
+        connection_id: connection_id,
+    })
 }
 
-#[cfg(test)]
+ #[cfg(test)]
 mod test {
     use super::*;
-    use endpoint::Endpoint;
-    use std::net::{SocketAddr, SocketAddrV4, SocketAddrV6, Ipv4Addr, Ipv6Addr};
-
-    fn v4(a: u8, b: u8, c: u8, d: u8, e: u16) -> Endpoint {
-        Endpoint::Tcp(SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(a, b, c, d), e)))
-    }
-
-    fn v6(a: u16,
-          b: u16,
-          c: u16,
-          d: u16,
-          e: u16,
-          f: u16,
-          g: u16,
-          h: u16,
-          i: u16,
-          j: u32,
-          k: u32)
-          -> Endpoint {
-        Endpoint::Tcp(SocketAddr::V6(SocketAddrV6::new(Ipv6Addr::new(a, b, c, d, e, f, g, h),
-                                                       i,
-                                                       j,
-                                                       k)))
-    }
-
-    fn test(smaller: Endpoint, bigger: Endpoint) {
-        assert!(smaller < bigger);
-        assert!(bigger > smaller);
-        assert!(smaller != bigger);
-    }
 
     #[test]
     fn test_cbor() {
@@ -219,64 +181,5 @@ mod test {
             }
             _ => panic!(""),
         }
-    }
-
-    #[test]
-    fn test_ord() {
-        test(v4(1, 2, 3, 4, 5), v4(2, 2, 3, 4, 5));
-        test(v4(1, 2, 3, 4, 5), v4(1, 3, 3, 4, 5));
-        test(v4(1, 2, 3, 4, 5), v4(1, 2, 4, 4, 5));
-        test(v4(1, 2, 3, 4, 5), v4(1, 2, 3, 5, 5));
-        test(v4(1, 2, 3, 4, 5), v4(1, 2, 3, 4, 6));
-
-        test(v4(1, 2, 3, 4, 5), v6(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0));
-        test(v4(1, 2, 3, 4, 5), v6(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11));
-        test(v4(1, 2, 3, 4, 5), v6(2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12));
-
-        test(v6(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-             v6(1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0));
-        test(v6(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-             v6(0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0));
-        test(v6(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-             v6(0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0));
-        test(v6(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-             v6(0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0));
-        test(v6(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-             v6(0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0));
-        test(v6(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-             v6(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0));
-        test(v6(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-             v6(0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0));
-        test(v6(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-             v6(0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0));
-        test(v6(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-             v6(0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0));
-        test(v6(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-             v6(0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0));
-        test(v6(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-             v6(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1));
-
-        test(v6(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
-             v6(2, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11));
-        test(v6(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
-             v6(1, 3, 3, 4, 5, 6, 7, 8, 9, 10, 11));
-        test(v6(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
-             v6(1, 2, 4, 4, 5, 6, 7, 8, 9, 10, 11));
-        test(v6(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
-             v6(1, 2, 3, 5, 5, 6, 7, 8, 9, 10, 11));
-        test(v6(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
-             v6(1, 2, 3, 4, 6, 6, 7, 8, 9, 10, 11));
-        test(v6(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
-             v6(1, 2, 3, 4, 5, 7, 7, 8, 9, 10, 11));
-        test(v6(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
-             v6(1, 2, 3, 4, 5, 6, 8, 8, 9, 10, 11));
-        test(v6(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
-             v6(1, 2, 3, 4, 5, 6, 7, 9, 9, 10, 11));
-        test(v6(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
-             v6(1, 2, 3, 4, 5, 6, 7, 8, 10, 10, 11));
-        test(v6(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
-             v6(1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 11));
-        test(v6(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
-             v6(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12));
     }
 }

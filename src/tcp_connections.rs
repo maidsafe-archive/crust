@@ -15,7 +15,8 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::net::{TcpStream, SocketAddr, Shutdown};
+use std::net::{TcpStream, Shutdown};
+use socket_addr::SocketAddr;
 use std::io::{Error, ErrorKind};
 use std::io::Result as IoResult;
 use std::thread;
@@ -24,7 +25,7 @@ use std::sync::mpsc::Sender;
 
 /// Connect to a peer and open a send-receive pair.  See `upgrade` for more details.
 pub fn connect_tcp(addr: SocketAddr) -> IoResult<(TcpStream, Sender<Vec<u8>>)> {
-    let stream = try!(TcpStream::connect(&addr));
+    let stream = try!(TcpStream::connect(&*addr));
     if try!(stream.peer_addr()).port() == try!(stream.local_addr()).port() {
         return Err(Error::new(ErrorKind::ConnectionRefused, "TCP simultaneous open"));
     }
@@ -63,14 +64,16 @@ fn upgrade_writer(mut stream: TcpStream) -> Sender<Vec<u8>> {
 mod test {
     use super::*;
     use std::thread;
-    use std::net::{SocketAddr, TcpListener};
+    use std::net;
+    use std::net::TcpListener;
     use std::str::FromStr;
     use std::time::Duration;
     use std::io::Read;
     use std::sync::mpsc;
+    use socket_addr::SocketAddr;
 
     fn loopback(port: u16) -> SocketAddr {
-        SocketAddr::from_str(&format!("127.0.0.1:{}", port)).unwrap()
+        SocketAddr(net::SocketAddr::from_str(&format!("127.0.0.1:{}", port)).unwrap())
     }
 
     #[test]

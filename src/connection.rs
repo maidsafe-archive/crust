@@ -17,44 +17,43 @@
 
 use std::fmt;
 use endpoint::{Endpoint, Protocol};
-use std::net::SocketAddr;
-use util::SocketAddrW;
+use socket_addr::SocketAddr;
 
 /// Information hold for the connection between a pair of nodes
-#[derive(PartialOrd, Ord, PartialEq, Eq, Hash, Clone, Copy)]
+#[derive(PartialEq, Eq, Hash, Clone)]
 pub struct Connection {
-    transport_protocol: Protocol,
-    peer_addr: SocketAddrW,
-    local_addr: SocketAddrW,
+    protocol: Protocol,
+    peer_addr: SocketAddr,
+    local_addr: SocketAddr,
 }
 
 impl Connection {
     /// Constructor of struct Connection
     pub fn new(proto: Protocol, local_addr: SocketAddr, peer_addr: SocketAddr) -> Connection {
         Connection {
-            transport_protocol: proto,
-            peer_addr: SocketAddrW(peer_addr),
-            local_addr: SocketAddrW(local_addr),
+            protocol: proto,
+            peer_addr: SocketAddr(*peer_addr),
+            local_addr: SocketAddr(*local_addr),
         }
     }
 
     /// Getter returning peer's Endpoint info
     pub fn peer_endpoint(&self) -> Endpoint {
-        match self.transport_protocol {
-            Protocol::Tcp => Endpoint::Tcp(self.peer_addr.0.clone()),
-            Protocol::Utp => Endpoint::Utp(self.peer_addr.0.clone()),
+        match self.protocol {
+            Protocol::Tcp => Endpoint::from_socket_addr(Protocol::Tcp, self.peer_addr.clone()),
+            Protocol::Utp => Endpoint::from_socket_addr(Protocol::Utp, self.peer_addr.clone()),
         }
     }
     /// getter
-    pub fn peer_addr(&self) -> SocketAddrW {
-        self.peer_addr
+    pub fn peer_addr(&self) -> &SocketAddr {
+        &self.peer_addr
     }
 }
 
 impl fmt::Debug for Connection {
     fn fmt(&self, formatter: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         formatter.write_str(&format!("Connection({:?} {:?} -> {:?})",
-                                     self.transport_protocol,
+                                     self.protocol,
                                      self.local_addr.0,
                                      self.peer_addr.0))
     }

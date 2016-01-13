@@ -1,14 +1,15 @@
-use std::net::{SocketAddr, UdpSocket, SocketAddrV4};
+use std::net::UdpSocket;
 use std::io;
+use std::net;
 use std::sync::{Arc, RwLock};
 use std::sync::mpsc::Sender;
 
 use periodic_sender::PeriodicSender;
 use socket_utils::RecvUntil;
-use endpoint::Endpoint;
+use endpoint::{Protocol, Endpoint};
 use state::{Closure, State};
 use transport::Message;
-use util::{SocketAddrW, SocketAddrV4W};
+use socket_addr::{SocketAddr, SocketAddrV4};
 
 #[derive(Debug, RustcEncodable, RustcDecodable)]
 pub struct HolePunch {
@@ -37,7 +38,7 @@ impl GetExternalAddr {
 #[derive(Debug, RustcEncodable, RustcDecodable)]
 pub struct SetExternalAddr {
     pub request_id: u32,
-    pub addr: SocketAddrW,
+    pub addr: SocketAddr,
 }
 
 pub fn blocking_get_mapped_udp_socket
@@ -80,7 +81,7 @@ pub fn blocking_get_mapped_udp_socket
                                 if sea.request_id != request_id {
                                     continue;
                                 }
-                                return Ok(Some((sea.addr.0, i)))
+                                return Ok(Some((sea.addr, i)))
                             }
                             x   => {
                                 info!("Received invalid reply from udp hole punch server: {:?}", x);
@@ -204,8 +205,8 @@ pub struct HolePunchServer {
     // have the same lifetime as the Server object. Can change this once rust has linear types.
     listener_handle: Option<::std::thread::JoinHandle<io::Result<()>>>,
     upnp_handle: Option<::std::thread::JoinHandle<()>>,
-    internal_addr: SocketAddrV4,
-    external_addr: Arc<RwLock<Option<SocketAddrV4>>>,
+    internal_addr: net::SocketAddrV4,
+    external_addr: Arc<RwLock<Option<SocketAddr>>>,
 }
 
 impl HolePunchServer {
@@ -220,8 +221,8 @@ impl HolePunchServer {
         let (listener_tx, listener_rx) = ::std::sync::mpsc::channel::<()>();
         let udp_socket = try!(UdpSocket::bind("0.0.0.0:0"));
         let local_addr = match try!(udp_socket.local_addr()) {
-            SocketAddr::V4(sa) => sa,
-            SocketAddr::V6(_) => {
+            net::SocketAddr::V4(sa) => sa,
+            net::SocketAddr::V6(_) => {
                 return Err(io::Error::new(io::ErrorKind::Other,
                                           "bind(\"0.0.0.0:0\") returned an ipv6 socket"))
             }
@@ -255,13 +256,13 @@ impl HolePunchServer {
                         let data_send = {
                             let sea = SetExternalAddr {
                                 request_id: gea.request_id,
-                                addr: SocketAddrW(addr),
+                                addr: addr,
                             };
                             let mut enc = ::cbor::Encoder::from_memory();
                             enc.encode(::std::iter::once(&sea)).unwrap();
                             enc.into_bytes()
                         };
-                        let send_size = try!(udp_socket.send_to(&data_send[..], addr));
+                        let send_size = try!(udp_socket.send_to(&data_send[..], &*addr));
                         if send_size != data_send.len() {
                             warn!("Failed to send entire SetExternalAddr message. {} < {}", send_size, data_send.len());
                         }
@@ -271,9 +272,9 @@ impl HolePunchServer {
             }
         }));
 
-        let external_ip = Arc::new(RwLock::new(None::<SocketAddrV4>));
+        let external_ip = Arc::new(RwLock::new(None::<SocketAddr>));
         let external_ip_writer = external_ip.clone();
-        let local_ep = Endpoint::Utp(SocketAddr::V4(local_addr.clone()));
+        let local_ep = Endpoint::from_socket_addr(Protocol::Utp, SocketAddr(net::SocketAddr::V4(local_addr.clone())));
         let (upnp_tx, upnp_rx) = ::std::sync::mpsc::channel::<()>();
         let upnp_hole_puncher = try!(::std::thread::Builder::new().name(String::from("upnp hole puncher"))
                                                                   .spawn(move || {
@@ -286,24 +287,19 @@ impl HolePunchServer {
                 match ::map_external_port::sync_map_external_port(&local_ep) {
                     Ok(v)   => {
                         for (internal, external) in v {
-                            if internal == local_addr {
-                                match external {
-                                    Endpoint::Utp(SocketAddr::V4(sa))   => {
-                                        {
-                                            let mut ext_ip = external_ip_writer.write().unwrap();
-                                            *ext_ip = Some(sa);
-                                        };
-                                        let _ = cmd_sender.send(Closure::new(move |state: &mut State| {
-                                            for cd in state.connections.values() {
-                                                let _ = cd.message_sender.send(Message::HolePunchAddress(SocketAddrV4W(sa)));
-                                            }
-                                        }));
-                                    },
-
-        // TODO (canndrew): improve the igd APIs to make this panic
-        // unnecessary.
-                                    _                                   => panic!(),
-                                }
+                            if internal == SocketAddrV4(local_addr) {
+                                // TODO (canndrew): improve the igd APIs to make this assert
+                                // unnecessary.
+                                assert_eq!(*external.protocol(), Protocol::Utp);
+                                {
+                                    let mut ext_ip = external_ip_writer.write().unwrap();
+                                    *ext_ip = Some(*external.socket_addr());
+                                };
+                                let _ = cmd_sender.send(Closure::new(move |state: &mut State| {
+                                    for cd in state.connections.values() {
+                                        let _ = cd.message_sender.send(Message::HolePunchAddress(*external.socket_addr()));
+                                    }
+                                }));
                             }
                         }
                     }
@@ -325,12 +321,12 @@ impl HolePunchServer {
     }
 
     /// Get the address that this server is listening on.
-    pub fn listening_addr(&self) -> SocketAddrV4 {
+    pub fn listening_addr(&self) -> net::SocketAddrV4 {
         self.internal_addr
     }
 
     /// Get the external address of the server (if it is known)
-    pub fn external_address(&self) -> Option<SocketAddrV4> {
+    pub fn external_address(&self) -> Option<SocketAddr> {
         let guard = self.external_addr.read().unwrap();
         *guard
     }
@@ -365,11 +361,13 @@ impl Drop for HolePunchServer {
 mod tests {
     use super::*;
     use std::io;
-    use std::net::{UdpSocket, SocketAddr, SocketAddrV4, Ipv4Addr};
+    use std::net;
+    use std::net::{UdpSocket, Ipv4Addr};
     use std::thread::spawn;
+    use socket_addr::SocketAddr;
 
     fn loopback_v4(port: u16) -> SocketAddr {
-        SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), port))
+        SocketAddr(net::SocketAddr::V4(net::SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), port)))
     }
 
     fn run_hole_punching(socket: UdpSocket,
@@ -394,7 +392,7 @@ mod tests {
     // https://users.rust-lang.org/t/on-windows-udpsocket-set-read-timeout-x-waits-x-500ms/3334
     fn read_timeout_error() -> ::time::Duration {
         let mut buf = [0u8; 32];
-        let s = UdpSocket::bind(loopback_v4(0)).unwrap();
+        let s = UdpSocket::bind(&*loopback_v4(0)).unwrap();
 
         ::time::Duration::span(|| {
             let timeout = ::std::time::Duration::from_millis(1);
@@ -410,8 +408,8 @@ mod tests {
     fn test_udp_hole_punching_0_time_out() {
         let timeout = ::time::Duration::seconds(2);
 
-        let s1 = UdpSocket::bind(loopback_v4(0)).unwrap();
-        let s2 = UdpSocket::bind(loopback_v4(0)).unwrap();
+        let s1 = UdpSocket::bind(&*loopback_v4(0)).unwrap();
+        let s2 = UdpSocket::bind(&*loopback_v4(0)).unwrap();
 
         let s2_addr = loopback_v4(s2.local_addr().unwrap().port());
         let start = ::time::SteadyTime::now();
@@ -438,8 +436,8 @@ mod tests {
 
     #[test]
     fn test_udp_hole_punching_1_terminates_no_secret() {
-        let s1 = UdpSocket::bind(loopback_v4(0)).unwrap();
-        let s2 = UdpSocket::bind(loopback_v4(0)).unwrap();
+        let s1 = UdpSocket::bind(&*loopback_v4(0)).unwrap();
+        let s2 = UdpSocket::bind(&*loopback_v4(0)).unwrap();
 
         let s1_addr = loopback_v4(s1.local_addr().unwrap().port());
         let s2_addr = loopback_v4(s2.local_addr().unwrap().port());
@@ -456,8 +454,8 @@ mod tests {
 
     #[test]
     fn test_udp_hole_punching_2_terminates_with_secret() {
-        let s1 = UdpSocket::bind(loopback_v4(0)).unwrap();
-        let s2 = UdpSocket::bind(loopback_v4(0)).unwrap();
+        let s1 = UdpSocket::bind(&*loopback_v4(0)).unwrap();
+        let s2 = UdpSocket::bind(&*loopback_v4(0)).unwrap();
 
         let s1_addr = loopback_v4(s1.local_addr().unwrap().port());
         let s2_addr = loopback_v4(s2.local_addr().unwrap().port());
