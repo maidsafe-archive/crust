@@ -15,6 +15,8 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+// TODO Get rid of this file ??
+
 use std::cmp::Ordering;
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]

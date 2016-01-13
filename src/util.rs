@@ -15,13 +15,15 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::net::{SocketAddr, SocketAddrV4, SocketAddrV6, Ipv4Addr, Ipv6Addr};
 use ip::IpAddr;
 use std::cmp::Ordering;
 use get_if_addrs::{getifaddrs, IfAddr};
 use rustc_serialize::{Encodable, Decodable, Decoder, Encoder};
-use endpoint::Endpoint;
+use endpoint::{Endpoint, Protocol};
+use socket_addr::SocketAddr;
 use std::str::FromStr;
+use std::net;
+use ip_info;
 
 #[cfg(test)]
 use std::sync::mpsc;
@@ -29,15 +31,15 @@ use std::sync::mpsc;
 use std::thread;
 
 /// /////////////////////////////////////////////////////////////////////////////
-pub fn ip_from_socketaddr(addr: SocketAddr) -> IpAddr {
+pub fn ip_from_socketaddr(addr: net::SocketAddr) -> IpAddr {
     match addr {
-        SocketAddr::V4(a) => IpAddr::V4(*a.ip()),
-        SocketAddr::V6(a) => IpAddr::V6(*a.ip()),
+        net::SocketAddr::V4(a) => IpAddr::V4(*a.ip()),
+        net::SocketAddr::V6(a) => IpAddr::V6(*a.ip()),
     }
 }
 
 // pub fn loopback_v4(port: Port) -> Endpoint {
-//     let ip = IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
+//     let ip = IpAddr::V4(net::Ipv4Addr::new(127, 0, 0, 1));
 //     Endpoint::new(ip, port)
 // }
 
@@ -50,8 +52,8 @@ pub fn is_v4(ip_addr: &IpAddr) -> bool {
 
 pub fn is_global(ip: &IpAddr) -> bool {
     match *ip {
-        IpAddr::V4(ref ipv4) => ipv4.is_global(),
-        IpAddr::V6(ref ipv6) => ipv6.is_global(),
+        IpAddr::V4(ref ipv4) => ip_info::v4::is_global(ipv4),
+        IpAddr::V6(ref ipv6) => ip_info::v6::is_global(ipv6),
     }
 }
 
@@ -97,7 +99,10 @@ pub fn is_unique_local(ip_addr: &IpAddr) -> bool {
     }
 }
 
-pub fn on_same_subnet_v4(ip_addr1: Ipv4Addr, ip_addr2: Ipv4Addr, netmask: Ipv4Addr) -> bool {
+pub fn on_same_subnet_v4(ip_addr1: net::Ipv4Addr,
+                         ip_addr2: net::Ipv4Addr,
+                         netmask: net::Ipv4Addr)
+                         -> bool {
     let o1 = ip_addr1.octets();
     let o2 = ip_addr2.octets();
     let m = netmask.octets();
@@ -111,7 +116,10 @@ pub fn on_same_subnet_v4(ip_addr1: Ipv4Addr, ip_addr2: Ipv4Addr, netmask: Ipv4Ad
     true
 }
 
-pub fn on_same_subnet_v6(ip_addr1: Ipv6Addr, ip_addr2: Ipv6Addr, netmask: Ipv6Addr) -> bool {
+pub fn on_same_subnet_v6(ip_addr1: net::Ipv6Addr,
+                         ip_addr2: net::Ipv6Addr,
+                         netmask: net::Ipv6Addr)
+                         -> bool {
     let s1 = ip_addr1.segments();
     let s2 = ip_addr2.segments();
     let m = netmask.segments();
@@ -211,7 +219,7 @@ pub fn heuristic_geo_cmp(ip1: &IpAddr, ip2: &IpAddr) -> Ordering {
 /// but it is used outside of this library and IpAddr
 /// is currently considered experimental.
 pub fn ifaddrs_if_unspecified(ep: &Endpoint) -> Vec<Endpoint> {
-    match *ep.ip() {
+    match ep.ip() {
         IpAddr::V4(ref addr) => {
             if !::ip_info::v4::is_unspecified(addr) {
                 return vec![ep.clone()];
@@ -224,7 +232,7 @@ pub fn ifaddrs_if_unspecified(ep: &Endpoint) -> Vec<Endpoint> {
         }
     }
 
-    let ep_is_v4 = is_v4(ep.ip());
+    let ep_is_v4 = is_v4(&ep.ip());
 
     getifaddrs()
         .into_iter()
@@ -242,7 +250,7 @@ pub fn loopback_if_unspecified(addr: IpAddr) -> IpAddr {
     match addr {
         IpAddr::V4(addr) => {
             IpAddr::V4(if ::ip_info::v4::is_unspecified(&addr) {
-                Ipv4Addr::new(127, 0, 0, 1)
+                net::Ipv4Addr::new(127, 0, 0, 1)
             } else {
                 addr
             })
@@ -260,13 +268,12 @@ pub fn loopback_if_unspecified(addr: IpAddr) -> IpAddr {
 #[cfg(test)]
 pub fn random_endpoint() -> Endpoint {
     // TODO - randomise V4/V6 and TCP/UTP
-    let address =
-        ::std::net::SocketAddrV4::new(::std::net::Ipv4Addr::new(::rand::random::<u8>(),
-                                                                ::rand::random::<u8>(),
-                                                                ::rand::random::<u8>(),
-                                                                ::rand::random::<u8>()),
-                                      ::rand::random::<u16>());
-    Endpoint::Tcp(::std::net::SocketAddr::V4(address))
+    let address = net::SocketAddrV4::new(net::Ipv4Addr::new(::rand::random::<u8>(),
+                                                            ::rand::random::<u8>(),
+                                                            ::rand::random::<u8>(),
+                                                            ::rand::random::<u8>()),
+                                         ::rand::random::<u16>());
+    Endpoint::from_socket_addr(Protocol::Tcp, SocketAddr(net::SocketAddr::V4(address)))
 }
 
 
@@ -303,11 +310,10 @@ mod test {
     fn test_heuristic_geo_cmp() {
         use get_if_addrs::getifaddrs;
         use std::cmp::Ordering::{Less, Equal, Greater};
-        use std::net::Ipv4Addr;
         use ip::IpAddr::V4;
 
-        let g = V4(Ipv4Addr::new(173, 194, 116, 137));
-        let l = V4(Ipv4Addr::new(127, 0, 0, 1));
+        let g = V4(::std::net::Ipv4Addr::new(173, 194, 116, 137));
+        let l = V4(::std::net::Ipv4Addr::new(127, 0, 0, 1));
 
         assert_eq!(super::heuristic_geo_cmp(&l, &l), Equal);
         assert_eq!(super::heuristic_geo_cmp(&l, &l), Equal);

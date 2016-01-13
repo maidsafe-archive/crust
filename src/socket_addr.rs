@@ -21,7 +21,7 @@ use std::str::FromStr;
 use rustc_serialize::{Encodable, Decodable, Encoder, Decoder};
 
 #[derive(Clone, Debug, Hash, Eq, PartialEq)]
-pub struct SocketAddr(net::SocketAddr);
+pub struct SocketAddr(pub net::SocketAddr);
 
 impl Deref for SocketAddr {
     type Target = net::SocketAddr;
@@ -33,7 +33,7 @@ impl Deref for SocketAddr {
 
 impl Encodable for SocketAddr {
     fn encode<S: Encoder>(&self, s: &mut S) -> Result<(), S::Error> {
-        let as_string = self.0.to_string();
+        let as_string = format!("{}", self.0);
         s.emit_str(&as_string[..])
     }
 }
@@ -41,10 +41,74 @@ impl Encodable for SocketAddr {
 impl Decodable for SocketAddr {
     fn decode<D: Decoder>(d: &mut D) -> Result<SocketAddr, D::Error> {
         let as_string = try!(d.read_str());
-        match SocketAddr::from_str(&as_string[..]) {
+        match net::SocketAddr::from_str(&as_string[..]) {
             Ok(sa) => Ok(SocketAddr(sa)),
             Err(e) => {
                 let err = format!("Failed to decode SocketAddr: {}", e);
+                Err(d.error(&err[..]))
+            }
+        }
+    }
+}
+
+/// Utility struct of SocketAddrV4 for hole punching
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct SocketAddrV4(pub net::SocketAddrV4);
+
+impl Deref for SocketAddrV4 {
+    type Target = net::SocketAddrV4;
+
+    fn deref(&self) -> &net::SocketAddrV4 {
+        &self.0
+    }
+}
+
+impl Encodable for SocketAddrV4 {
+    fn encode<S: Encoder>(&self, s: &mut S) -> Result<(), S::Error> {
+        let as_string = format!("{}", self.0);
+        s.emit_str(&as_string[..])
+    }
+}
+
+impl Decodable for SocketAddrV4 {
+    fn decode<D: Decoder>(d: &mut D) -> Result<SocketAddrV4, D::Error> {
+        let as_string = try!(d.read_str());
+        match net::SocketAddrV4::from_str(&as_string[..]) {
+            Ok(sa) => Ok(SocketAddrV4(sa)),
+            Err(e) => {
+                let err = format!("Failed to decode SocketAddrV4: {}", e);
+                Err(d.error(&err[..]))
+            }
+        }
+    }
+}
+
+/// Utility struct of SocketAddrV6 for hole punching
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct SocketAddrV6(pub net::SocketAddrV6);
+
+impl Deref for SocketAddrV6 {
+    type Target = net::SocketAddrV6;
+
+    fn deref(&self) -> &net::SocketAddrV6 {
+        &self.0
+    }
+}
+
+impl Encodable for SocketAddrV6 {
+    fn encode<S: Encoder>(&self, s: &mut S) -> Result<(), S::Error> {
+        let as_string = format!("{}", self.0);
+        s.emit_str(&as_string[..])
+    }
+}
+
+impl Decodable for SocketAddrV6 {
+    fn decode<D: Decoder>(d: &mut D) -> Result<SocketAddrV6, D::Error> {
+        let as_string = try!(d.read_str());
+        match net::SocketAddrV6::from_str(&as_string[..]) {
+            Ok(sa) => Ok(SocketAddrV6(sa)),
+            Err(e) => {
+                let err = format!("Failed to decode SocketAddrV6: {}", e);
                 Err(d.error(&err[..]))
             }
         }

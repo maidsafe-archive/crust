@@ -17,6 +17,7 @@
 
 use std::collections::{HashMap, HashSet};
 use std::io;
+use std::net;
 use std::sync::mpsc;
 use std::sync::mpsc::{Sender, Receiver};
 use std::thread;
@@ -30,7 +31,7 @@ use transport;
 use transport::{Message, Handshake};
 use endpoint::Endpoint;
 use std::thread::JoinHandle;
-use std::net::{SocketAddr, Ipv4Addr, UdpSocket, SocketAddrV4};
+use std::net::{Ipv4Addr, UdpSocket, TcpListener};
 use ip::IpAddr;
 
 use itertools::Itertools;
@@ -40,7 +41,7 @@ use sequence_number::SequenceNumber;
 use hole_punching::HolePunchServer;
 use util::ip_from_socketaddr;
 use util;
-use util::SocketAddrW;
+use socket_addr::SocketAddr;
 
 // Closure is a wapper around boxed closures that tries to work around the fact
 // that it is not possible to call Box<FnOnce> in the current stable rust.
@@ -68,8 +69,8 @@ impl Closure {
 
 pub struct ConnectionData {
     pub message_sender: Sender<Message>,
-    pub mapper_address: Option<SocketAddr>,
-    pub mapper_external_address: Option<SocketAddrV4>,
+    pub mapper_address: Option<net::SocketAddr>,
+    pub mapper_external_address: Option<net::SocketAddrV4>,
 }
 
 pub struct State {
@@ -124,7 +125,7 @@ impl State {
     }
 
     pub fn get_accepting_endpoints(&self) -> Vec<Endpoint> {
-        // FIXME: We should get real endpoints from the acceptors
+        // FIXME: We should get real endpoints from the listeners
         // not use 'unspecified' ips.
         let unspecified_ip = IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0));
         self.listening_ports
@@ -219,7 +220,7 @@ impl State {
     }
 
     pub fn accept(handshake: Handshake,
-                  acceptor: &transport::Acceptor)
+                  acceptor: &TcpListener)
                   -> io::Result<(Handshake, transport::Transport)> {
         Self::handle_handshake(handshake, try!(transport::accept(acceptor)))
     }
@@ -275,12 +276,12 @@ impl State {
                                                             .get_address();
                                        match peer_addr {
                                            IpAddr::V4(a) => {
-                                               SocketAddr::V4(SocketAddrV4::new(a, port))
+                                               net::SocketAddr::V4(net::SocketAddrV4::new(a, port))
                                            }
                                            // FIXME(dirvine) Handle ip6 :10/01/2016
                                            _ => unimplemented!(),
                                            // IpAddr::V6(a) => {
-                                           //     SocketAddr::V6(SocketAddrV6::new(a,
+                                           //     net::SocketAddr::V6(SocketAddrV6::new(a,
                                            //                                      port,
                                            //                                      a.flowinfo(),
                                            //                                      a.scope_id()))
@@ -405,8 +406,8 @@ impl State {
         let _ = Self::new_thread("bootstrap_off_list", move || {
             let h = Handshake {
                 mapper_port: Some(mapper_port),
-                external_ip: external_ip.map(util::SocketAddrV4W),
-                remote_ip: SocketAddrW(SocketAddr::from_str("0.0.0.0:0").unwrap()),
+                external_ip: external_ip.map(::socket_addr::SocketAddrV4),
+                remote_ip: SocketAddr(net::SocketAddr::from_str("0.0.0.0:0").unwrap()),
             };
 
             let connect_result = Self::connect(h, head);
@@ -455,7 +456,7 @@ impl State {
         false
     }
 
-    fn get_ordered_helping_nodes(&self) -> Vec<SocketAddr> {
+    fn get_ordered_helping_nodes(&self) -> Vec<net::SocketAddr> {
         let mut addrs = self.connections
                             .iter()
                             .filter_map(|pair| pair.1.mapper_address)
@@ -502,28 +503,26 @@ impl State {
 mod test {
     use super::*;
     use std::thread;
-    use std::net::{SocketAddr, SocketAddrV4, SocketAddrV6};
+    use std::net::{TcpListener, SocketAddrV6};
+    use std::net;
     use ip::IpAddr;
     use std::sync::mpsc::channel;
-    use transport::{Acceptor, Handshake};
+    use transport::Handshake;
     use endpoint::Endpoint;
     use event::Event;
     use util;
 
-    fn testable_endpoint(acceptor: &Acceptor) -> Endpoint {
-        let addr = match *acceptor {
-            Acceptor::Tcp(ref listener) => {
-                listener.local_addr()
-                        .unwrap()
-            }
-            _ => panic!("Unable to create a new connection"),
-        };
+    fn testable_endpoint(listener: &TcpListener) -> Endpoint {
+        let addr = unwrap_result!(listener.local_addr());
 
         let ip = util::loopback_if_unspecified(util::ip_from_socketaddr(addr));
         let addr = match (ip, addr) {
-            (IpAddr::V4(ip), _) => SocketAddr::V4(SocketAddrV4::new(ip, addr.port())),
-            (IpAddr::V6(ip), SocketAddr::V6(addr)) => {
-                SocketAddr::V6(SocketAddrV6::new(ip, addr.port(), addr.flowinfo(), addr.scope_id()))
+            (IpAddr::V4(ip), _) => net::SocketAddr::V4(net::SocketAddrV4::new(ip, addr.port())),
+            (IpAddr::V6(ip), net::SocketAddr::V6(addr)) => {
+                net::SocketAddr::V6(SocketAddrV6::new(ip,
+                                                      addr.port(),
+                                                      addr.flowinfo(),
+                                                      addr.scope_id()))
             }
             _ => panic!("Unreachable"),
         };
@@ -531,11 +530,11 @@ mod test {
     }
 
     fn test_bootstrap_off_list(n: u16) {
-        let acceptors = (0..n)
-                            .map(|_| Acceptor::new(0).unwrap())
+        let listeners = (0..n)
+                            .map(|_| unwrap_result!(TcpListener::bind("0.0.0.0:0")))
                             .collect::<Vec<_>>();
 
-        let eps = acceptors.iter()
+        let eps = listeners.iter()
                            .map(|a| testable_endpoint(&a))
                            .collect();
 
@@ -558,7 +557,7 @@ mod test {
                   .unwrap();
 
         let accept_thread = thread::spawn(move || {
-            for a in acceptors {
+            for a in listeners {
                 let _ = State::accept(Handshake::default(), &a).unwrap();
             }
         });

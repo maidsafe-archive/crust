@@ -17,19 +17,20 @@
 
 use utp::UtpSocket;
 pub use utp_wrapper::UtpWrapper;
-use std::net::{SocketAddr, UdpSocket};
+use std::net::UdpSocket;
+use socket_addr::SocketAddr;
 use std::io::Result as IoResult;
 use std::sync::mpsc::Sender;
 
 /// Connect to a peer and open a send-receive pair.  See `upgrade` for more details.
 pub fn connect_utp(addr: SocketAddr) -> IoResult<(UtpWrapper, Sender<Vec<u8>>)> {
-    upgrade_utp(try!(UtpSocket::connect(addr)))
+    upgrade_utp(try!(UtpSocket::connect(&*addr)))
 }
 
 pub fn rendezvous_connect_utp(udp_socket: UdpSocket,
                               addr: SocketAddr)
                               -> IoResult<(UtpWrapper, Sender<Vec<u8>>)> {
-    upgrade_utp(try!(UtpSocket::rendezvous_connect(udp_socket, addr)))
+    upgrade_utp(try!(UtpSocket::rendezvous_connect(udp_socket, &*addr)))
 }
 
 /// Upgrades a newly connected UtpSocket to a Sender-Receiver pair that you can use to send and
@@ -45,7 +46,9 @@ pub fn upgrade_utp(newconnection: UtpSocket) -> IoResult<(UtpWrapper, Sender<Vec
 mod test {
     use super::*;
     use std::thread;
-    use std::net::{SocketAddr, SocketAddrV4, Ipv4Addr, UdpSocket};
+    use socket_addr::{SocketAddr, SocketAddrV4};
+    use std::net::{Ipv4Addr, UdpSocket};
+    use std::net;
     use std::io::{Read, Result};
     use utp::UtpListener;
 
@@ -56,16 +59,19 @@ mod test {
     #[test]
     fn cannot_establish_connection() {
         let listener = UdpSocket::bind({
-                           SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), 0)
+                           net::SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), 0)
                        })
                            .unwrap();
         let port = listener.local_addr().unwrap().port();
         drop(listener);
-        let _err = connect_utp(SocketAddr::V4({
-                       SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), port)
-                   }))
-                       .err()
-                       .unwrap();
+        let _err =
+            connect_utp(SocketAddr(net::SocketAddr::V4(net::SocketAddrV4::new(Ipv4Addr::new(127,
+                                                                                       0,
+                                                                                       0,
+                                                                                       1),
+                                                                         port))))
+                .err()
+                .unwrap();
     }
 
     #[test]
@@ -75,9 +81,11 @@ mod test {
 
         let handle = thread::spawn(move || listener.accept().unwrap());
 
-        let _ = connect_utp(SocketAddr::V4({
-                    SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), port)
-                }))
+        let _ = connect_utp(SocketAddr(net::SocketAddr::V4(net::SocketAddrV4::new(Ipv4Addr::new(127,
+                                                                                           0,
+                                                                                           0,
+                                                                                           1),
+                                                                             port))))
                     .unwrap();
 
         let _ = handle.join().unwrap();
@@ -97,10 +105,13 @@ mod test {
             o.send(vec![43]);
         });
 
-        let (mut i, o) = connect_utp(SocketAddr::V4({
-                             SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), port)
-                         }))
-                             .unwrap();
+        let (mut i, o) =
+            connect_utp(SocketAddr(net::SocketAddr::V4(net::SocketAddrV4::new(Ipv4Addr::new(127,
+                                                                                       0,
+                                                                                       0,
+                                                                                       1),
+                                                                         port))))
+                .unwrap();
 
         let th1 = thread::spawn(move || {
             o.send(vec![42]);

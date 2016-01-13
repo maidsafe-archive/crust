@@ -16,8 +16,8 @@
 // relating to use of the SAFE Network Software.
 
 use std::str::FromStr;
-use std::net::SocketAddr;
-use util::{SocketAddrV4W, SocketAddrW};
+use std::net;
+use socket_addr::{SocketAddrV4, SocketAddr};
 
 /// After a connection is established, peers should exchange a handshake.
 ///
@@ -26,9 +26,9 @@ use util::{SocketAddrV4W, SocketAddrW};
 #[derive(Debug, Clone, RustcDecodable, RustcEncodable)]
 pub struct Handshake {
     pub mapper_port: Option<u16>,
-    pub external_ip: Option<SocketAddrV4W>,
+    pub external_ip: Option<SocketAddrV4>,
     // used to tell the remote peer their ip (as seen by us)
-    pub remote_ip: SocketAddrW,
+    pub remote_ip: SocketAddr,
 }
 
 impl Default for Handshake {
@@ -36,7 +36,7 @@ impl Default for Handshake {
         Handshake {
             mapper_port: None,
             external_ip: None,
-            remote_ip: SocketAddrW(SocketAddr::from_str("0.0.0.0:0").unwrap()),
+            remote_ip: SocketAddr(net::SocketAddr::from_str("0.0.0.0:0").unwrap()),
         }
     }
 }

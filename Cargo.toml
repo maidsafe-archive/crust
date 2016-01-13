@@ -34,28 +34,28 @@ env_logger = "~0.3.2"
 bench = false
 name = "simple_sender"
 path = "examples/simple_sender.rs"
-test = true
+test = false
 
 [[example]]
 bench = false
 name = "simple_receiver"
 path = "examples/simple_receiver.rs"
-test = true
+test = false
 
 [[example]]
 bench = false
 name = "crust_peer"
 path = "examples/crust_peer.rs"
-test = true
+test = false
 
 [[example]]
 bench = false
 name = "reporter"
 path = "examples/reporter.rs"
-test = true
+test = false
 
 [[example]]
 bench = false
 name = "simple_benchmark"
 path = "examples/simple_benchmark.rs"
-test = true
+test = false

@@ -16,11 +16,10 @@
 // relating to use of the SAFE Network Software.
 
 mod message;
-mod acceptor;
 mod handshake;
 mod sender_receiver;
 
-use std::net::UdpSocket;
+use std::net::{UdpSocket, TcpListener};
 use tcp_connections;
 use utp_connections;
 use std::io;
@@ -33,7 +32,6 @@ use connection::Connection;
 use endpoint::{Endpoint, Protocol};
 
 pub use self::message::Message;
-pub use self::acceptor::Acceptor;
 pub use self::handshake::Handshake;
 pub use self::sender_receiver::{Sender, Receiver};
 
@@ -109,39 +107,22 @@ pub fn rendezvous_connect(udp_socket: UdpSocket,
 
 // FIXME: There needs to be a way to break from this blocking command.
 // (Though this seems to be impossible with the current Rust TCP API).
-pub fn accept(acceptor: &Acceptor) -> IoResult<Transport> {
-    match *acceptor {
-        Acceptor::Tcp(ref listener) => {
-            let (stream, _remote_endpoint) = try!(listener.accept()
-                .map_err(|e| io::Error::new(io::ErrorKind::NotConnected, e.description())));
+pub fn accept(acceptor: &TcpListener) -> IoResult<Transport> {
+    let (stream, _remote_endpoint) = try!(acceptor.accept()
+                                                  .map_err(|e| {
+                                                      io::Error::new(io::ErrorKind::NotConnected,
+                                                                     e.description())
+                                                  }));
 
-            let (i, o) = try!(tcp_connections::upgrade_tcp(stream));
+    let (i, o) = try!(tcp_connections::upgrade_tcp(stream));
 
-            let connection_id = Connection::new(Protocol::Tcp,
-                                                try!(i.local_addr()),
-                                                try!(i.peer_addr()));
+    let connection_id = Connection::new(Protocol::Tcp, try!(i.local_addr()), try!(i.peer_addr()));
 
-            Ok(Transport {
-                receiver: sender_receiver::Receiver::Tcp(cbor::Decoder::from_reader(i)),
-                sender: sender_receiver::Sender::Tcp(o),
-                connection_id: connection_id,
-            })
-        }
-        Acceptor::Utp(ref listener) => {
-            let (stream, _remote_endpoint) = try!(listener.accept()
-                .map_err(|e| io::Error::new(io::ErrorKind::NotConnected, e.description())));
-
-            let (i, o) = try!(utp_connections::upgrade_utp(stream));
-
-            let connection_id = Connection::new(Protocol::Utp, i.local_addr(), i.peer_addr());
-
-            Ok(Transport {
-                receiver: sender_receiver::Receiver::Utp(cbor::Decoder::from_reader(i)),
-                sender: sender_receiver::Sender::Utp(o),
-                connection_id: connection_id,
-            })
-        }
-    }
+    Ok(Transport {
+        receiver: sender_receiver::Receiver::Tcp(cbor::Decoder::from_reader(i)),
+        sender: sender_receiver::Sender::Tcp(o),
+        connection_id: connection_id,
+    })
 }
 
 #[cfg(test)]

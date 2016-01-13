@@ -16,7 +16,8 @@
 // relating to use of the SAFE Network Software.
 
 use std::io;
-use std::net::{UdpSocket, SocketAddr};
+use std::net::UdpSocket;
+use socket_addr::SocketAddr;
 use std::io::ErrorKind;
 
 /// A self interruptable receive trait that allows a timed-out period to be defined
@@ -46,7 +47,7 @@ impl RecvUntil for UdpSocket {
             try!(self.set_read_timeout(Some(timeout)));
 
             match self.recv_from(buf) {
-                Ok(x) => return Ok(Some(x)),
+                Ok((bytes_len, addr)) => return Ok(Some((bytes_len, SocketAddr(addr)))),
                 Err(e) => {
                     match e.kind() {
                         ErrorKind::TimedOut | ErrorKind::WouldBlock => return Ok(None),
