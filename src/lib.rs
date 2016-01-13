@@ -37,8 +37,6 @@
 #![allow(box_pointers, fat_ptr_transmutes, missing_copy_implementations,
          missing_debug_implementations)]
 
-#![allow(unused, unused_extern_crates)]
-
 // Uncomment to use Clippy
 // #![feature(plugin)]
 // #![plugin(clippy)]
@@ -72,16 +70,16 @@ pub mod file_handler;
 /// Crust Observers will be informed of crust events on this
 pub type CrustEventSender = ::maidsafe_utilities::event_sender::MaidSafeObserver<Event>;
 
-// pub use config_handler::write_config_file;
-// pub use service::Service;
+pub use config_handler::write_config_file;
+pub use service::Service;
 pub use event::Event;
-// pub use error::Error;
-// pub use file_handler::{FileHandler, current_bin_dir, user_app_dir, system_cache_dir,
-//                        exe_file_stem, ScopedUserAppDirRemover};
-// pub use endpoint::Endpoint;
-// pub use connection::Connection;
-// pub use util::{ifaddrs_if_unspecified};
-// pub use get_if_addrs::getifaddrs;
+pub use error::Error;
+pub use file_handler::{FileHandler, current_bin_dir, user_app_dir, system_cache_dir,
+                       exe_file_stem, ScopedUserAppDirRemover};
+pub use endpoint::Endpoint;
+pub use connection::Connection;
+pub use util::ifaddrs_if_unspecified;
+pub use get_if_addrs::getifaddrs;
 
 #[cfg(test)]
 mod test {

@@ -39,8 +39,7 @@ use event::{Event, MappedUdpSocket};
 use connection::Connection;
 use sequence_number::SequenceNumber;
 use hole_punching::HolePunchServer;
-use util;
-use socket_addr::{SocketAddr, SocketAddrV4};
+use socket_addr::SocketAddr;
 
 
 // Closure is a wapper around boxed closures that tries to work around the fact

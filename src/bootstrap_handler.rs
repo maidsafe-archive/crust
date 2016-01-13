@@ -24,7 +24,6 @@
 
 use endpoint::Endpoint;
 use file_handler::FileHandler;
-use ip::IpAddr;
 use util;
 
 pub struct BootstrapHandler {

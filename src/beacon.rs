@@ -21,7 +21,7 @@ use std::io;
 use std::io::Result;
 use std::net::{TcpStream, UdpSocket, TcpListener};
 use std::net;
-use socket_addr::{SocketAddr, SocketAddrV4};
+use socket_addr::SocketAddr;
 use std::str::FromStr;
 use std::sync::{Arc, mpsc, Mutex};
 use std::thread;
@@ -31,7 +31,6 @@ use ip::SocketAddrExt;
 use net2::UdpSocketExt;
 
 use transport::{Transport, Handshake};
-use endpoint::{Endpoint, Protocol};
 use state::State;
 use util;
 

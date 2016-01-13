@@ -139,34 +139,6 @@ pub fn accept(acceptor: &TcpListener) -> IoResult<Transport> {
  #[cfg(test)]
 mod test {
     use super::*;
-    use endpoint::{Endpoint, Protocol};
-    use std::net::{Ipv4Addr, Ipv6Addr};
-    use std::net;
-    use socket_addr::{SocketAddr, SocketAddrV4, SocketAddrV6};
-
-    fn v4(a: u8, b: u8, c: u8, d: u8, e: u16) -> Endpoint {
-        Endpoint::from_socket_addr(Protocol::Tcp,
-                                   SocketAddr(net::SocketAddr::V4(net::SocketAddrV4::new(Ipv4Addr::new(a, b, c, d),
-                                                                       e))))
-    }
-
-    fn v6(a: u16,
-          b: u16,
-          c: u16,
-          d: u16,
-          e: u16,
-          f: u16,
-          g: u16,
-          h: u16,
-          i: u16,
-          j: u32,
-          k: u32)
-          -> Endpoint {
-        Endpoint::from_socket_addr(Protocol::Tcp, SocketAddr(net::SocketAddr::V6(net::SocketAddrV6::new(Ipv6Addr::new(a, b, c, d, e, f, g, h),
-                                                          i,
-                                                          j,
-                                                          k))))
-    }
 
     #[test]
     fn test_cbor() {

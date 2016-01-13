@@ -18,10 +18,7 @@
 use ip::IpAddr;
 use std::cmp::Ordering;
 use get_if_addrs::{getifaddrs, IfAddr};
-use rustc_serialize::{Encodable, Decodable, Decoder, Encoder};
-use endpoint::{Endpoint, Protocol};
-use socket_addr::SocketAddr;
-use std::str::FromStr;
+use endpoint::Endpoint;
 use std::net;
 use ip_info;
 
@@ -29,6 +26,10 @@ use ip_info;
 use std::sync::mpsc;
 #[cfg(test)]
 use std::thread;
+#[cfg(test)]
+use endpoint::Protocol;
+#[cfg(test)]
+use socket_addr::SocketAddr;
 
 /// /////////////////////////////////////////////////////////////////////////////
 // pub fn loopback_v4(port: Port) -> IpAddrV4 {

@@ -22,13 +22,11 @@ use std::net;
 use std::thread::JoinHandle;
 use std::sync::{Arc, Mutex};
 use std::str::FromStr;
-use std::fmt::Display;
 
 use std::net::{UdpSocket, Ipv4Addr, TcpListener};
 use beacon;
 use config_handler::{Config, read_config_file};
 use get_if_addrs::{getifaddrs, filter_loopback};
-use transport;
 use transport::Handshake;
 use endpoint::{Endpoint, Protocol};
 use map_external_port::async_map_external_port;
@@ -507,7 +505,6 @@ mod test {
     use endpoint::{Protocol, Endpoint};
     use config_handler::write_config_file;
     use event::Event;
-    use util;
     use bootstrap_handler::BootstrapHandler;
     use maidsafe_utilities::event_sender::{MaidSafeEventCategory, MaidSafeObserver};
     use socket_addr::SocketAddr;

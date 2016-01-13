@@ -17,7 +17,7 @@
 
 use std::str::FromStr;
 use std::net;
-use socket_addr::{SocketAddrV4, SocketAddr};
+use socket_addr::SocketAddr;
 
 /// After a connection is established, peers should exchange a handshake.
 ///

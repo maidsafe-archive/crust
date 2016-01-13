@@ -20,9 +20,8 @@ use std::net;
 use ip::IpAddr;
 use ip::SocketAddrExt;
 use std::net::{Ipv4Addr, Ipv6Addr};
-use rustc_serialize::{Encodable, Decodable, Encoder, Decoder};
+use rustc_serialize::{Encodable, Encoder, Decoder};
 use socket_addr::SocketAddr;
-use std::str::FromStr;
 
 /// Enum representing supported transport protocols
 #[derive(Copy, Debug, Hash, Eq, PartialEq, Clone, RustcEncodable, RustcDecodable)]
@@ -101,6 +100,8 @@ impl Endpoint {
         &self.protocol
     }
 
+    /// If the endpoint IP address is unspecified return a copy of the endpoint with the IP address
+    /// set to the loopback address. Otherwise return a copy of the endpoint.
     pub fn unspecified_to_loopback(&self) -> Endpoint {
         if util::is_unspecified(&self.ip()) {
             let loop_back_ip = match self.ip() {
