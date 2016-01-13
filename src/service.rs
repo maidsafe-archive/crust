@@ -122,7 +122,7 @@ impl Service {
 
         // FIXME: Instead of hardcoded wrapping in loopback V4, the
         // acceptor should tell us the address it is accepting on.
-        Ok(Endpoint::from_socket_addr(Protocol::Tcp, accept_addr))
+        Ok(Endpoint::from_socket_addr(Protocol::Tcp, SocketAddr(accept_addr)))
     }
 
     fn start_broadcast_acceptor(&mut self, beacon_port: u16) -> io::Result<u16> {
@@ -249,7 +249,7 @@ impl Service {
 
             let handshake = Handshake {
                 mapper_port: Some(state.mapper.listening_addr().port()),
-                external_ip: state.mapper.external_address().map(SocketAddrV4),
+                external_ip: state.mapper.external_address(),
                 remote_ip: SocketAddr(net::SocketAddr::from_str("0.0.0.0:0").unwrap()),
             };
 
@@ -304,7 +304,7 @@ impl Service {
 
             let handshake = Handshake {
                 mapper_port: Some(state.mapper.listening_addr().port()),
-                external_ip: state.mapper.external_address().map(SocketAddrV4),
+                external_ip: state.mapper.external_address(),
                 remote_ip: SocketAddr(net::SocketAddr::from_str("0.0.0.0:0").unwrap()),
             };
 
@@ -359,7 +359,7 @@ impl Service {
 
             let handshake = Handshake {
                 mapper_port: Some(state.mapper.listening_addr().port()),
-                external_ip: state.mapper.external_address().map(SocketAddrV4),
+                external_ip: state.mapper.external_address(),
                 remote_ip: SocketAddr(net::SocketAddr::from_str("0.0.0.0:0").unwrap()),
             };
 
@@ -463,7 +463,7 @@ impl Service {
                           result_token: u32,
                           udp_socket: UdpSocket,
                           secret: Option<[u8; 4]>,
-                          peer_addr: net::SocketAddr) {
+                          peer_addr: SocketAddr) {
         Self::post(&self.cmd_sender, move |state: &mut State| {
             let event_sender = state.event_sender.clone();
 
@@ -476,7 +476,7 @@ impl Service {
                 let _ = event_sender.send(Event::OnHolePunched(HolePunchResult {
                     result_token: result_token,
                     udp_socket: udp_socket,
-                    peer_addr: result_addr.map(SocketAddr),
+                    peer_addr: result_addr,
                 }));
             });
         });
@@ -504,12 +504,13 @@ mod test {
     use rustc_serialize::{Decodable, Encodable};
     use cbor::{Decoder, Encoder};
     use connection::Connection;
-    use endpoint::Endpoint;
+    use endpoint::{Protocol, Endpoint};
     use config_handler::write_config_file;
     use event::Event;
     use util;
     use bootstrap_handler::BootstrapHandler;
     use maidsafe_utilities::event_sender::{MaidSafeEventCategory, MaidSafeObserver};
+    use socket_addr::SocketAddr;
 
     type CategoryRx = ::std::sync::mpsc::Receiver<MaidSafeEventCategory>;
 
@@ -828,13 +829,13 @@ mod test {
         let peer2_udp_socket = UdpSocket::bind("0.0.0.0:0").unwrap();
 
         let peer1_port = peer1_udp_socket.local_addr().unwrap().port();
-        let peer1_addr = net::SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), peer1_port);
+        let peer1_addr = SocketAddr(net::SocketAddr::V4(net::SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), peer1_port)));
 
         let peer2_port = peer2_udp_socket.local_addr().unwrap().port();
-        let peer2_addr = net::SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), peer2_port);
+        let peer2_addr = SocketAddr(net::SocketAddr::V4(net::SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), peer2_port)));
 
-        cm2.rendezvous_connect(peer1_udp_socket, 0, Endpoint::utp(peer2_addr));
-        cm1.rendezvous_connect(peer2_udp_socket, 0, Endpoint::utp(peer1_addr));
+        cm2.rendezvous_connect(peer1_udp_socket, 0, Endpoint::from_socket_addr(Protocol::Utp, peer2_addr));
+        cm1.rendezvous_connect(peer2_udp_socket, 0, Endpoint::from_socket_addr(Protocol::Utp, peer1_addr));
 
         let (ready_tx1, ready_rx1) = channel();
         let (shut_tx1, shut_rx1) = channel();
@@ -925,7 +926,7 @@ mod test {
             fn send_data_to(&self, connection: Connection) {
                 for i in 0..MESSAGE_PER_NODE {
                     let msg = format!("MESSAGE {}", i);
-                    self.service.send(connection, encode(&msg));
+                    self.service.send(connection.clone(), encode(&msg));
                 }
             }
         }
@@ -1051,8 +1052,8 @@ mod test {
                                                       category_tx.clone());
             let mut service = Service::new(event_sender1).unwrap();
             // random port assigned by os
-            tcp_port = service.start_accepting(0).unwrap().get_port();
-            utp_port = service.start_accepting(0).unwrap().get_port();
+            tcp_port = unwrap_result!(service.start_accepting(0)).port();
+            utp_port = unwrap_result!(service.start_accepting(0)).port();
         }
 
         {

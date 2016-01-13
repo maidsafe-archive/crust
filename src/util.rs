@@ -31,17 +31,9 @@ use std::sync::mpsc;
 use std::thread;
 
 /// /////////////////////////////////////////////////////////////////////////////
-pub fn ip_from_socketaddr(addr: net::SocketAddr) -> IpAddr {
-    match addr {
-        net::SocketAddr::V4(a) => IpAddr::V4(*a.ip()),
-        net::SocketAddr::V6(a) => IpAddr::V6(*a.ip()),
-    }
-}
-
-// pub fn loopback_v4(port: Port) -> Endpoint {
-//     let ip = IpAddr::V4(net::Ipv4Addr::new(127, 0, 0, 1));
-//     Endpoint::new(ip, port)
-// }
+// pub fn loopback_v4(port: Port) -> IpAddrV4 {
+//    net::Ipv4Addr::new(127, 0, 0, 1)
+//}
 
 pub fn is_v4(ip_addr: &IpAddr) -> bool {
     match *ip_addr {

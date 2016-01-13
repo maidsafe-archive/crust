@@ -6,7 +6,7 @@ use std::sync::mpsc::Sender;
 
 use periodic_sender::PeriodicSender;
 use socket_utils::RecvUntil;
-use endpoint::Endpoint;
+use endpoint::{Protocol, Endpoint};
 use state::{Closure, State};
 use transport::Message;
 use socket_addr::{SocketAddr, SocketAddrV4};
@@ -43,8 +43,8 @@ pub struct SetExternalAddr {
 
 pub fn blocking_get_mapped_udp_socket
     (request_id: u32,
-     helper_nodes: Vec<net::SocketAddr>)
-     -> io::Result<(UdpSocket, Option<net::SocketAddr>, Vec<net::SocketAddr>)> {
+     helper_nodes: Vec<SocketAddr>)
+     -> io::Result<(UdpSocket, Option<SocketAddr>, Vec<SocketAddr>)> {
     const MAX_DATAGRAM_SIZE: usize = 256;
 
     let udp_socket = try!(UdpSocket::bind("0.0.0.0:0"));
@@ -57,7 +57,7 @@ pub fn blocking_get_mapped_udp_socket
         enc.into_bytes()
     };
 
-    let res = try!(::crossbeam::scope(|scope| -> io::Result<Option<(net::SocketAddr, usize)>> {
+    let res = try!(::crossbeam::scope(|scope| -> io::Result<Option<(SocketAddr, usize)>> {
         for helper in &helper_nodes {
             let sender = try!(udp_socket.try_clone());
             let _periodic_sender = PeriodicSender::start(sender,
@@ -66,7 +66,7 @@ pub fn blocking_get_mapped_udp_socket
                                                          &send_data[..],
                                                          ::std::time::Duration::from_millis(300));
             let deadline = ::time::SteadyTime::now() + ::time::Duration::seconds(2);
-            let res = try!((|| -> io::Result<Option<(net::SocketAddr, usize)>> {
+            let res = try!((|| -> io::Result<Option<(SocketAddr, usize)>> {
                 loop {
                     let mut recv_data = [0u8; MAX_DATAGRAM_SIZE];
                     let (read_size, recv_addr) = match try!(receiver.recv_until(&mut recv_data[..], deadline)) {
@@ -81,7 +81,7 @@ pub fn blocking_get_mapped_udp_socket
                                 if sea.request_id != request_id {
                                     continue;
                                 }
-                                return Ok(Some((sea.addr.0, i)))
+                                return Ok(Some((sea.addr, i)))
                             }
                             x   => {
                                 info!("Received invalid reply from udp hole punch server: {:?}", x);
@@ -105,15 +105,15 @@ pub fn blocking_get_mapped_udp_socket
                 Some(our_addr),
                 helper_nodes.into_iter()
                             .skip(responder_index + 1)
-                            .collect::<Vec<net::SocketAddr>>()))
+                            .collect::<Vec<SocketAddr>>()))
         }
     }
 }
 
 pub fn blocking_udp_punch_hole(udp_socket: UdpSocket,
                                secret: Option<[u8; 4]>,
-                               peer_addr: net::SocketAddr)
-                               -> (UdpSocket, io::Result<net::SocketAddr>) {
+                               peer_addr: SocketAddr)
+                               -> (UdpSocket, io::Result<SocketAddr>) {
     // Cbor seems to serialize into bytes of different sizes and
     // it sometimes exceeded 16 bytes, let's be safe and use 128.
     const MAX_DATAGRAM_SIZE: usize = 128;
@@ -133,7 +133,7 @@ pub fn blocking_udp_punch_hole(udp_socket: UdpSocket,
                     send_data.len(),
                     MAX_DATAGRAM_SIZE));
 
-    let addr_res: io::Result<net::SocketAddr> = ::crossbeam::scope(|scope| {
+    let addr_res: io::Result<SocketAddr> = ::crossbeam::scope(|scope| {
         let sender = try!(udp_socket.try_clone());
         let receiver = try!(udp_socket.try_clone());
         let periodic_sender = PeriodicSender::start(sender,
@@ -142,10 +142,10 @@ pub fn blocking_udp_punch_hole(udp_socket: UdpSocket,
                                                     send_data,
                                                     ::std::time::Duration::from_millis(500));
 
-        let addr_res: io::Result<Option<net::SocketAddr>> =
+        let addr_res: io::Result<Option<SocketAddr>> =
             (|| {
                 let mut recv_data = [0u8; MAX_DATAGRAM_SIZE];
-                let mut peer_addr: Option<net::SocketAddr> = None;
+                let mut peer_addr: Option<SocketAddr> = None;
                 let deadline = ::time::SteadyTime::now() + ::time::Duration::seconds(2);
                 loop {
                     let (read_size, addr) = match try!(receiver.recv_until(&mut recv_data[..],
@@ -206,7 +206,7 @@ pub struct HolePunchServer {
     listener_handle: Option<::std::thread::JoinHandle<io::Result<()>>>,
     upnp_handle: Option<::std::thread::JoinHandle<()>>,
     internal_addr: net::SocketAddrV4,
-    external_addr: Arc<RwLock<Option<net::SocketAddrV4>>>,
+    external_addr: Arc<RwLock<Option<SocketAddr>>>,
 }
 
 impl HolePunchServer {
@@ -256,13 +256,13 @@ impl HolePunchServer {
                         let data_send = {
                             let sea = SetExternalAddr {
                                 request_id: gea.request_id,
-                                addr: SocketAddr(addr),
+                                addr: addr,
                             };
                             let mut enc = ::cbor::Encoder::from_memory();
                             enc.encode(::std::iter::once(&sea)).unwrap();
                             enc.into_bytes()
                         };
-                        let send_size = try!(udp_socket.send_to(&data_send[..], addr));
+                        let send_size = try!(udp_socket.send_to(&data_send[..], &*addr));
                         if send_size != data_send.len() {
                             warn!("Failed to send entire SetExternalAddr message. {} < {}", send_size, data_send.len());
                         }
@@ -272,9 +272,9 @@ impl HolePunchServer {
             }
         }));
 
-        let external_ip = Arc::new(RwLock::new(None::<net::SocketAddrV4>));
+        let external_ip = Arc::new(RwLock::new(None::<SocketAddr>));
         let external_ip_writer = external_ip.clone();
-        let local_ep = Endpoint::Utp(net::SocketAddr::V4(local_addr.clone()));
+        let local_ep = Endpoint::from_socket_addr(Protocol::Utp, SocketAddr(net::SocketAddr::V4(local_addr.clone())));
         let (upnp_tx, upnp_rx) = ::std::sync::mpsc::channel::<()>();
         let upnp_hole_puncher = try!(::std::thread::Builder::new().name(String::from("upnp hole puncher"))
                                                                   .spawn(move || {
@@ -287,24 +287,19 @@ impl HolePunchServer {
                 match ::map_external_port::sync_map_external_port(&local_ep) {
                     Ok(v)   => {
                         for (internal, external) in v {
-                            if internal == local_addr {
-                                match external {
-                                    Endpoint::Utp(net::SocketAddr::V4(sa))   => {
-                                        {
-                                            let mut ext_ip = external_ip_writer.write().unwrap();
-                                            *ext_ip = Some(sa);
-                                        };
-                                        let _ = cmd_sender.send(Closure::new(move |state: &mut State| {
-                                            for cd in state.connections.values() {
-                                                let _ = cd.message_sender.send(Message::HolePunchAddress(SocketAddrV4(sa)));
-                                            }
-                                        }));
-                                    },
-
-        // TODO (canndrew): improve the igd APIs to make this panic
-        // unnecessary.
-                                    _                                   => panic!(),
-                                }
+                            if internal == SocketAddrV4(local_addr) {
+                                // TODO (canndrew): improve the igd APIs to make this assert
+                                // unnecessary.
+                                assert_eq!(*external.protocol(), Protocol::Utp);
+                                {
+                                    let mut ext_ip = external_ip_writer.write().unwrap();
+                                    *ext_ip = Some(*external.socket_addr());
+                                };
+                                let _ = cmd_sender.send(Closure::new(move |state: &mut State| {
+                                    for cd in state.connections.values() {
+                                        let _ = cd.message_sender.send(Message::HolePunchAddress(*external.socket_addr()));
+                                    }
+                                }));
                             }
                         }
                     }
@@ -331,7 +326,7 @@ impl HolePunchServer {
     }
 
     /// Get the external address of the server (if it is known)
-    pub fn external_address(&self) -> Option<net::SocketAddrV4> {
+    pub fn external_address(&self) -> Option<SocketAddr> {
         let guard = self.external_addr.read().unwrap();
         *guard
     }
@@ -369,15 +364,16 @@ mod tests {
     use std::net;
     use std::net::{UdpSocket, Ipv4Addr};
     use std::thread::spawn;
+    use socket_addr::SocketAddr;
 
-    fn loopback_v4(port: u16) -> net::SocketAddr {
-        net::SocketAddr::V4(net::SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), port))
+    fn loopback_v4(port: u16) -> SocketAddr {
+        SocketAddr(net::SocketAddr::V4(net::SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), port)))
     }
 
     fn run_hole_punching(socket: UdpSocket,
-                         peer_addr: net::SocketAddr,
+                         peer_addr: SocketAddr,
                          secret: Option<[u8; 4]>)
-                         -> io::Result<net::SocketAddr> {
+                         -> io::Result<SocketAddr> {
         blocking_udp_punch_hole(socket, secret, peer_addr).1
     }
 
@@ -396,7 +392,7 @@ mod tests {
     // https://users.rust-lang.org/t/on-windows-udpsocket-set-read-timeout-x-waits-x-500ms/3334
     fn read_timeout_error() -> ::time::Duration {
         let mut buf = [0u8; 32];
-        let s = UdpSocket::bind(loopback_v4(0)).unwrap();
+        let s = UdpSocket::bind(&*loopback_v4(0)).unwrap();
 
         ::time::Duration::span(|| {
             let timeout = ::std::time::Duration::from_millis(1);
@@ -412,8 +408,8 @@ mod tests {
     fn test_udp_hole_punching_0_time_out() {
         let timeout = ::time::Duration::seconds(2);
 
-        let s1 = UdpSocket::bind(loopback_v4(0)).unwrap();
-        let s2 = UdpSocket::bind(loopback_v4(0)).unwrap();
+        let s1 = UdpSocket::bind(&*loopback_v4(0)).unwrap();
+        let s2 = UdpSocket::bind(&*loopback_v4(0)).unwrap();
 
         let s2_addr = loopback_v4(s2.local_addr().unwrap().port());
         let start = ::time::SteadyTime::now();
@@ -440,8 +436,8 @@ mod tests {
 
     #[test]
     fn test_udp_hole_punching_1_terminates_no_secret() {
-        let s1 = UdpSocket::bind(loopback_v4(0)).unwrap();
-        let s2 = UdpSocket::bind(loopback_v4(0)).unwrap();
+        let s1 = UdpSocket::bind(&*loopback_v4(0)).unwrap();
+        let s2 = UdpSocket::bind(&*loopback_v4(0)).unwrap();
 
         let s1_addr = loopback_v4(s1.local_addr().unwrap().port());
         let s2_addr = loopback_v4(s2.local_addr().unwrap().port());
@@ -458,8 +454,8 @@ mod tests {
 
     #[test]
     fn test_udp_hole_punching_2_terminates_with_secret() {
-        let s1 = UdpSocket::bind(loopback_v4(0)).unwrap();
-        let s2 = UdpSocket::bind(loopback_v4(0)).unwrap();
+        let s1 = UdpSocket::bind(&*loopback_v4(0)).unwrap();
+        let s2 = UdpSocket::bind(&*loopback_v4(0)).unwrap();
 
         let s1_addr = loopback_v4(s1.local_addr().unwrap().port());
         let s2_addr = loopback_v4(s2.local_addr().unwrap().port());

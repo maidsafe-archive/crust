@@ -60,9 +60,9 @@ extern crate maidsafe_utilities;
 extern crate ip;
 extern crate get_if_addrs;
 
-// /// Module implementing the `Service` which provides an interface to manage peer-to-peer
-// /// connections.
-// pub mod service;
+/// Module implementing the `Service` which provides an interface to manage peer-to-peer
+/// connections.
+pub mod service;
 
 /// Defines errors.
 pub mod error;
@@ -94,7 +94,7 @@ mod test {
     }
 }
 mod sequence_number;
-// mod beacon;
+mod beacon;
 mod bootstrap_handler;
 mod config_handler;
 mod util;
@@ -104,10 +104,10 @@ mod tcp_connections;
 mod transport;
 mod utp_connections;
 mod utp_wrapper;
-// mod state;
+mod state;
 mod event;
 mod map_external_port;
-// mod hole_punching;
+mod hole_punching;
 mod periodic_sender;
 mod socket_utils;
 mod ip_info;

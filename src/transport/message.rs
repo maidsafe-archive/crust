@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use socket_addr::SocketAddrV4;
+use socket_addr::SocketAddr;
 
 #[derive(Debug, Clone, RustcDecodable, RustcEncodable)]
 pub enum Message {
@@ -23,5 +23,5 @@ pub enum Message {
     UserBlob(Vec<u8>),
     /// We have an external (non-NATed) address+port that other nodes can use as a hole-punching
     /// server.
-    HolePunchAddress(SocketAddrV4),
+    HolePunchAddress(SocketAddr),
 }

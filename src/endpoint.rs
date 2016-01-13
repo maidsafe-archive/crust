@@ -25,7 +25,7 @@ use socket_addr::SocketAddr;
 use std::str::FromStr;
 
 /// Enum representing supported transport protocols
-#[derive(Debug, Hash, Eq, PartialEq, Clone, RustcEncodable, RustcDecodable)]
+#[derive(Copy, Debug, Hash, Eq, PartialEq, Clone, RustcEncodable, RustcDecodable)]
 pub enum Protocol {
     /// TCP protocol
     Tcp,

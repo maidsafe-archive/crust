@@ -20,7 +20,7 @@ use std::ops::Deref;
 use std::str::FromStr;
 use rustc_serialize::{Encodable, Decodable, Encoder, Decoder};
 
-#[derive(Clone, Debug, Hash, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
 pub struct SocketAddr(pub net::SocketAddr);
 
 impl Deref for SocketAddr {

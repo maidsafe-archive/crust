@@ -26,7 +26,7 @@ use socket_addr::{SocketAddrV4, SocketAddr};
 #[derive(Debug, Clone, RustcDecodable, RustcEncodable)]
 pub struct Handshake {
     pub mapper_port: Option<u16>,
-    pub external_ip: Option<SocketAddrV4>,
+    pub external_ip: Option<SocketAddr>,
     // used to tell the remote peer their ip (as seen by us)
     pub remote_ip: SocketAddr,
 }
