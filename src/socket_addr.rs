@@ -18,9 +18,11 @@
 use std::net;
 use std::ops::Deref;
 use std::str::FromStr;
+use std::fmt;
 use rustc_serialize::{Encodable, Decodable, Encoder, Decoder};
 
 #[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
+/// Wrapper around `std::net::SocketAddr` to enable it to encoded and decoded.
 pub struct SocketAddr(pub net::SocketAddr);
 
 impl Deref for SocketAddr {
@@ -28,6 +30,12 @@ impl Deref for SocketAddr {
 
     fn deref(&self) -> &net::SocketAddr {
         &self.0
+    }
+}
+
+impl fmt::Display for SocketAddr {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 

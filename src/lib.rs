@@ -76,10 +76,11 @@ pub use event::Event;
 pub use error::Error;
 pub use file_handler::{FileHandler, current_bin_dir, user_app_dir, system_cache_dir,
                        exe_file_stem, ScopedUserAppDirRemover};
-pub use endpoint::Endpoint;
+pub use endpoint::{Endpoint, Protocol};
 pub use connection::Connection;
 pub use util::ifaddrs_if_unspecified;
 pub use get_if_addrs::getifaddrs;
+pub use socket_addr::SocketAddr;
 
 #[cfg(test)]
 mod test {
