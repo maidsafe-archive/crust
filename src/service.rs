@@ -36,9 +36,6 @@ use state::{Closure, State};
 use event::{Event, HolePunchResult};
 use socket_addr::{SocketAddr, SocketAddrV4};
 
-/// Type used to represent serialised data in a message.
-pub type Bytes = Vec<u8>;
-
 /// A structure representing a connection manager.
 ///
 /// This abstraction has a hidden dependency on a config file. Refer to [the docs for `FileHandler`]
@@ -326,7 +323,7 @@ impl Service {
     }
 
     /// Sends a message over a specified connection.
-    pub fn send(&self, connection: Connection, message: Bytes) {
+    pub fn send(&self, connection: Connection, message: Vec<u8>) {
         Self::post(&self.cmd_sender, move |state: &mut State| {
             state.send(connection, message);
         })
@@ -512,7 +509,7 @@ mod test {
 
     type CategoryRx = ::std::sync::mpsc::Receiver<MaidSafeEventCategory>;
 
-    fn encode<T>(value: &T) -> Bytes
+    fn encode<T>(value: &T) -> Vec<u8>
         where T: Encodable
     {
         let mut enc = Encoder::from_memory();
