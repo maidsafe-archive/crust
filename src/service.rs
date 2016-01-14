@@ -22,8 +22,13 @@ use std::net;
 use std::thread::JoinHandle;
 use std::sync::{Arc, Mutex};
 use std::str::FromStr;
+use std::collections::HashSet;
 
 use std::net::{UdpSocket, Ipv4Addr, TcpListener};
+use ip::IpAddr;
+
+use itertools::Itertools;
+use acceptor::Acceptor;
 use beacon;
 use config_handler::{Config, read_config_file};
 use get_if_addrs::{getifaddrs, filter_loopback};
@@ -35,6 +40,8 @@ use connection::Connection;
 use state::{Closure, State};
 use event::{Event, HolePunchResult};
 use socket_addr::{SocketAddr, SocketAddrV4};
+use bootstrap_handler::BootstrapHandler;
+use hole_punching::HolePunchServer;
 
 /// A structure representing a connection manager.
 ///
@@ -47,6 +54,9 @@ pub struct Service {
     config: Config,
     cmd_sender: Sender<Closure>,
     state_thread_handle: Option<JoinHandle<()>>,
+    bootstrap_handler: BootstrapHandler,
+    acceptors: Vec<Acceptor>,
+    mapper: Arc<HolePunchServer>,
 }
 
 impl Service {
@@ -71,6 +81,8 @@ impl Service {
         let mut state = try!(State::new(event_sender));
         let cmd_sender = state.cmd_sender.clone();
 
+        let mapper = Arc::new(try!(::hole_punching::HolePunchServer::start(cmd_sender.clone())));
+
         let handle = try!(Self::new_thread("run loop", move || {
             state.run();
         }));
@@ -80,9 +92,16 @@ impl Service {
             config: config,
             cmd_sender: cmd_sender,
             state_thread_handle: Some(handle),
+            bootstrap_handler: try!(BootstrapHandler::new()),
+            acceptors: Vec::new(),
+            mapper: mapper,
         };
 
         Ok(service)
+    }
+
+    pub fn get_local_endpoints(&self) -> Vec<Endpoint> {
+        self.acceptors.iter().map(|a| Endpoint::from_socket_addr(Protocol::Tcp, a.local_address())).collect()
     }
 
     /// Start the beaconing on port `udp_port`. If port number is 0, the OS will
@@ -97,10 +116,12 @@ impl Service {
     /// Starts accepting on a given port. If port number is 0, the OS
     /// will pick one randomly. The actual port used will be returned.
     pub fn start_accepting(&mut self, port: u16) -> io::Result<Endpoint> {
-        let acceptor = try!(TcpListener::bind(("0.0.0.0", port)));
-        let accept_addr = try!(acceptor.local_addr());
+        let listener = try!(TcpListener::bind(("0.0.0.0", port)));
+        let accept_addr = try!(listener.local_addr());
 
-        Self::accept(self.cmd_sender.clone(), acceptor);
+        let hole_punch_server = self.mapper.clone();
+        let acceptor = try!(Acceptor::new(listener, hole_punch_server, self.cmd_sender.clone()));
+        self.acceptors.push(acceptor);
 
         // TODO Take this out after evaluating
         if self.beacon_guid_and_port.is_some() {
@@ -111,14 +132,47 @@ impl Service {
                                })
                                .collect::<Vec<_>>();
 
-            Self::post(&self.cmd_sender, move |state: &mut State| {
-                state.update_bootstrap_contacts(contacts, vec![]);
-            });
+            self.update_bootstrap_contacts(contacts, vec![]);
         }
 
         // FIXME: Instead of hardcoded wrapping in loopback V4, the
         // acceptor should tell us the address it is accepting on.
         Ok(Endpoint::from_socket_addr(Protocol::Tcp, SocketAddr(accept_addr)))
+    }
+
+    pub fn populate_bootstrap_contacts(&mut self,
+                                       config: &Config,
+                                       beacon_port: Option<u16>,
+                                       own_beacon_guid_and_port: &Option<([u8; 16], u16)>)
+                                       -> Vec<Endpoint> {
+        let cached_contacts = self.bootstrap_handler.read_file().unwrap_or(vec![]);
+
+        let beacon_guid = own_beacon_guid_and_port.map(|(guid, _)| guid);
+
+        let beacon_discovery = match beacon_port {
+            Some(port) => Self::seek_peers(beacon_guid, port),
+            None => vec![],
+        };
+
+        let mut combined_contacts = beacon_discovery.into_iter()
+                                                    .chain(config.hard_coded_contacts
+                                                                 .iter()
+                                                                 .cloned())
+                                                    .chain(cached_contacts.into_iter())
+                                                    .unique()
+                                                    .collect::<Vec<_>>();
+
+        // remove own endpoints
+        let own_listening_endpoint = self.get_known_external_endpoints();
+        combined_contacts.retain(|c| !own_listening_endpoint.contains(&c));
+        combined_contacts
+    }
+
+    fn seek_peers(beacon_guid: Option<[u8; 16]>, beacon_port: u16) -> Vec<Endpoint> {
+        match beacon::seek_peers(beacon_port, beacon_guid) {
+            Ok(peers) => peers.into_iter().map(|a| Endpoint::from_socket_addr(Protocol::Tcp, a)).collect(),
+            Err(_) => Vec::new(),
+        }
     }
 
     fn start_broadcast_acceptor(&mut self, beacon_port: u16) -> io::Result<u16> {
@@ -177,15 +231,21 @@ impl Service {
         let beacon_guid_and_port = self.beacon_guid_and_port.clone();
         let blist = blacklist.to_vec();
 
+        let mut contacts = self.populate_bootstrap_contacts(&config,
+                                                            beacon_port,
+                                                            &beacon_guid_and_port);
         Self::post(&self.cmd_sender, move |state: &mut State| {
-            let mut contacts = state.populate_bootstrap_contacts(&config,
-                                                                 beacon_port,
-                                                                 &beacon_guid_and_port);
 
             contacts.retain(|endpoint| !blist.contains(&endpoint));
 
             state.bootstrap_off_list(token, contacts.clone());
         });
+    }
+
+    pub fn update_bootstrap_contacts(&mut self,
+                                     contacts_to_add: Vec<Endpoint>,
+                                     contacts_to_remove: Vec<Endpoint>) {
+        self.bootstrap_handler.update_contacts(contacts_to_add, contacts_to_remove);
     }
 
     /// Stop the bootstraping procedure
@@ -197,9 +257,9 @@ impl Service {
 
     /// Remove endpoint from the bootstrap cache.
     pub fn remove_bootstrap_contact(&mut self, endpoint: Endpoint) {
-        Self::post(&self.cmd_sender, move |state: &mut State| {
-            state.update_bootstrap_contacts(vec![], vec![endpoint]);
-        });
+        // TODO (canndrew): This should probably happen asynchronously
+        // because it uses (possibly slow) filesystem operations.
+        self.update_bootstrap_contacts(vec![], vec![endpoint]);
     }
 
     // This should be called before destroying an instance of a Service to allow the
@@ -214,15 +274,6 @@ impl Service {
 
         let _ = self.cmd_sender.send(Closure::new(move |state: &mut State| {
             state.stop();
-
-            // Connect to our listening ports, this should unblock
-            // the threads.
-            for port in &state.listening_ports {
-                let _ = TcpStream::connect(net::SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1),
-                                                                  port.clone()));
-                let _ = UtpSocket::connect(net::SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1),
-                                                                  port.clone()));
-            }
         }));
 
         if let Some(handle) = self.state_thread_handle.take() {
@@ -240,12 +291,14 @@ impl Service {
     /// (https://github.com/maidsafe/crust/blob/master/docs/connect.md) for details on handling of
     /// connect in different protocols.
     pub fn connect(&self, token: u32, endpoints: Vec<Endpoint>) {
+        let mapper_external_addr = self.mapper.external_address();
+        let mapper_internal_port = self.mapper.listening_addr().port();
         Self::post(&self.cmd_sender, move |state: &mut State| {
             let cmd_sender = state.cmd_sender.clone();
 
             let handshake = Handshake {
-                mapper_port: Some(state.mapper.listening_addr().port()),
-                external_ip: state.mapper.external_address(),
+                mapper_port: Some(mapper_internal_port),
+                external_ip: mapper_external_addr,
                 remote_ip: SocketAddr(net::SocketAddr::from_str("0.0.0.0:0").unwrap()),
             };
 
@@ -295,12 +348,14 @@ impl Service {
                               udp_socket: UdpSocket,
                               token: u32,
                               public_endpoint: Endpoint /* of B */) {
+        let mapper_external_addr = self.mapper.external_address();
+        let mapper_internal_port = self.mapper.listening_addr().port();
         Self::post(&self.cmd_sender, move |state: &mut State| {
             let cmd_sender = state.cmd_sender.clone();
 
             let handshake = Handshake {
-                mapper_port: Some(state.mapper.listening_addr().port()),
-                external_ip: state.mapper.external_address(),
+                mapper_port: Some(mapper_internal_port),
+                external_ip: mapper_external_addr,
                 remote_ip: SocketAddr(net::SocketAddr::from_str("0.0.0.0:0").unwrap()),
             };
 
@@ -346,50 +401,37 @@ impl Service {
         }
     }
 
-    fn accept(cmd_sender: Sender<Closure>, acceptor: TcpListener) {
-        let cmd_sender2 = cmd_sender.clone();
-
-        Self::post(&cmd_sender, move |state: &mut State| {
-            let port = acceptor.local_addr().unwrap().port();
-            state.listening_ports.insert(port);
-
-            let handshake = Handshake {
-                mapper_port: Some(state.mapper.listening_addr().port()),
-                external_ip: state.mapper.external_address(),
-                remote_ip: SocketAddr(net::SocketAddr::from_str("0.0.0.0:0").unwrap()),
-            };
-
-            let _ = Self::new_thread("listen", move || {
-                let accept_result = State::accept(handshake, &acceptor);
-                let cmd_sender3 = cmd_sender2.clone();
-
-                let _ = cmd_sender2.send(Closure::new(move |state: &mut State| {
-                    state.listening_ports.remove(&port);
-
-                    if state.stop_called {
-                        return;
-                    }
-
-                    match accept_result {
-                        Ok((handshake, transport)) => {
-                            let _ = state.handle_accept(handshake, transport);
-                        }
-                        Err(_) => {
-                            // TODO: What now? Stop? Start again?
-                            panic!();
-                        }
-                    }
-
-                    Self::accept(cmd_sender3, acceptor);
-                }));
-            });
-        })
+    pub fn get_known_external_endpoints(&self) -> Vec<Endpoint> {
+        let mut ret = Vec::new();
+        for acceptor in &self.acceptors {
+            ret.extend(acceptor.mapped_addresses());
+        }
+        ret.iter().map(|a| Endpoint::from_socket_addr(Protocol::Tcp, *a)).collect()
     }
+
+    /*
+    pub fn bootstrap_off_list(&mut self, token: u32, mut bootstrap_list: Vec<Endpoint>) {
+        match self.bootstrap_thread {
+            Some(_) => (),
+            None => {
+                let joiner = RaiiThreadJoiner::new(thread!("bootstrap", move || {
+                    for peer_endpoint in bootstrap_list {
+                        if 
+                    }
+
+                }));
+                self.bootstrap_thread = Some(joiner);
+            }
+        }
+    }
+    */
 
     /// Initiates uPnP port mapping of the currently used accepting endpoints.
     /// On success ExternalEndpoint event is generated containg our external
     /// endpoints.
     pub fn get_external_endpoints(&self) {
+        let internal_eps = self.get_local_endpoints();
+
         Self::post(&self.cmd_sender, move |state: &mut State| {
             type T = (SocketAddrV4, Endpoint);
 
@@ -397,8 +439,6 @@ impl Service {
                 remaining: usize,
                 results: Vec<Endpoint>,
             }
-
-            let internal_eps = state.get_accepting_endpoints();
 
             let async = Arc::new(Mutex::new(Async {
                 remaining: internal_eps.len(),
