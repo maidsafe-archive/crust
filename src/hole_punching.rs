@@ -296,6 +296,10 @@ impl HolePunchServer {
                                        SocketAddr(net::SocketAddr::V4(local_addr.clone())));
         let upnp_joiner = RaiiThreadJoiner::new(thread!("upnp hole puncher", move || {
             loop {
+                // TODO UPNP is currently disabled
+                if true {
+                    break;
+                }
                 if upnp_shutdown_cloned.load(Ordering::SeqCst) {
                     break;
                 }
