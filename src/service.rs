@@ -509,6 +509,7 @@ mod test {
     use bootstrap_handler::BootstrapHandler;
     use maidsafe_utilities::event_sender::{MaidSafeEventCategory, MaidSafeObserver};
     use socket_addr::SocketAddr;
+    use maidsafe_utilities::thread::RaiiThreadJoiner;
 
     type CategoryRx = ::std::sync::mpsc::Receiver<MaidSafeEventCategory>;
 
@@ -576,6 +577,32 @@ mod test {
 
     fn unspecified_to_loopback(eps: &[Endpoint]) -> Vec<Endpoint> {
         eps.iter().map(|elt| elt.unspecified_to_loopback()).collect()
+    }
+
+    fn try_recv_with_timeout<T>(receiver: &Receiver<T>,
+                                timeout: ::std::time::Duration) -> Option<T>
+    {
+        use ::std::sync::mpsc::TryRecvError;
+
+        let interval = ::std::time::Duration::from_millis(100);
+        let mut elapsed = ::std::time::Duration::from_millis(0);
+
+        loop {
+            match receiver.try_recv() {
+                Ok(value)                       => return Some(value),
+                Err(TryRecvError::Disconnected) => break,
+                _                               => (),
+            }
+
+            thread::sleep(interval);
+            elapsed = elapsed + interval;
+
+            if elapsed > timeout {
+                break;
+            }
+        }
+
+        None
     }
 
     #[test]
@@ -781,8 +808,8 @@ mod test {
                                             cm.send(other_ep.clone(),
                                                     encode(&"hello world".to_owned()));
                                         }
-                                        Event::OnRendezvousConnect(Err(_), _) => {
-                                            panic!("Cannot establish rendezvous connection");
+                                        Event::OnRendezvousConnect(Err(error), _) => {
+                                            panic!("Cannot establish rendezvous connection: {:?}", error);
                                         }
                                         Event::NewMessage(_, _) => break,
                                         _ => (),
@@ -858,6 +885,154 @@ mod test {
 
         assert!(runner1.join().is_ok());
         assert!(runner2.join().is_ok());
+    }
+
+    #[test]
+    fn lost_rendezvous_connection() {
+        let (category_tx, category_rx) = channel();
+        let (event_tx, event_rx) = channel();
+
+        let event_sender0 = MaidSafeObserver::new(
+                                event_tx.clone(),
+                                MaidSafeEventCategory::CrustEvent,
+                                category_tx.clone());
+
+        let event_sender1 = MaidSafeObserver::new(
+                                event_tx,
+                                MaidSafeEventCategory::CrustEvent,
+                                category_tx);
+
+        let service0 = Service::new(event_sender0).unwrap();
+        let service1 = Service::new(event_sender1).unwrap();
+
+        let socket0 = UdpSocket::bind("0.0.0.0:0").unwrap();
+        let socket1 = UdpSocket::bind("0.0.0.0:0").unwrap();
+
+        let loopback = ::ip::IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1));
+
+        let port0 = socket0.local_addr().unwrap().port();
+
+        let port1 = socket1.local_addr().unwrap().port();
+
+        let token0 = 0;
+        let token1 = 1;
+
+        service0.rendezvous_connect(socket0, token0, Endpoint::new(Protocol::Utp, loopback, port1));
+        service1.rendezvous_connect(socket1, token1, Endpoint::new(Protocol::Utp, loopback, port0));
+
+        let _joiner = RaiiThreadJoiner::new(spawn(move || {
+            let mut service1 = Some(service1);
+
+            let mut peer0_connection = None;
+            let mut peer1_connection = None;
+
+            let mut peer0_received_lost_connection = false;
+
+            let timeout = ::std::time::Duration::from_secs(10);
+
+            while let Some(category) = try_recv_with_timeout(&category_rx, timeout) {
+                match category {
+                    MaidSafeEventCategory::CrustEvent => {
+                        match event_rx.try_recv() {
+                            Ok(Event::OnRendezvousConnect(Ok((_, conn)), token)) => {
+                                match token {
+                                    0 => peer0_connection = Some(conn),
+                                    1 => peer1_connection = Some(conn),
+                                    _ => unreachable!("Token {} should not have been sent", token)
+                                }
+
+                                if peer0_connection.is_some() &&
+                                   peer1_connection.is_some()
+                                {
+                                    // Drop this service to cause lost connection.
+                                    let _ = service1.take();
+                                }
+                            },
+
+                            Ok(Event::LostConnection(conn)) => {
+                                if Some(conn) == peer0_connection {
+                                    peer0_received_lost_connection = true;
+                                    break;
+                                }
+                            },
+
+                            event => println!("event: {:?}", event),
+                        }
+                    },
+
+                    _ => unreachable!("This category should not have been fired - {:?}", category),
+                }
+            }
+
+            assert!(peer0_received_lost_connection);
+        }));
+    }
+
+    #[test]
+    fn lost_tcp_connection() {
+        let (category_tx, category_rx) = channel();
+        let (event_tx, event_rx) = channel();
+
+        let event_sender0 = MaidSafeObserver::new(
+                                event_tx.clone(),
+                                MaidSafeEventCategory::CrustEvent,
+                                category_tx.clone());
+
+        let event_sender1 = MaidSafeObserver::new(
+                                event_tx,
+                                MaidSafeEventCategory::CrustEvent,
+                                category_tx);
+
+        let mut service0 = Service::new(event_sender0).unwrap();
+        let service1     = Service::new(event_sender1).unwrap();
+
+        let endpoint0 = service0.start_accepting(0)
+                                .unwrap()
+                                .port();
+        let endpoint0 = Endpoint::new(Protocol::Tcp,
+                                      ::ip::IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
+                                      endpoint0);
+
+        service1.connect(0, vec![endpoint0]);
+
+        let _joiner = RaiiThreadJoiner::new(spawn(move || {
+            let mut peer0_connection = None;
+            let mut peer0_received_lost_connection = false;
+
+            let mut service1 = Some(service1);
+
+            let timeout = ::std::time::Duration::from_secs(10);
+
+            while let Some(category) = try_recv_with_timeout(&category_rx, timeout) {
+                match category {
+                    MaidSafeEventCategory::CrustEvent => {
+                        match event_rx.try_recv() {
+                            Ok(Event::OnAccept(_, conn)) => {
+                                peer0_connection = Some(conn);
+                            },
+
+                            Ok(Event::OnConnect(Ok(_), _)) => {
+                                // Drop this service.
+                                let _ = service1.take();
+                            },
+
+                            Ok(Event::LostConnection(conn)) => {
+                                if Some(conn) == peer0_connection {
+                                    peer0_received_lost_connection = true;
+                                    break;
+                                }
+                            },
+
+                            _ => (),
+                        }
+                    },
+
+                    _ => unreachable!("This category should not have been fired - {:?}", category),
+                }
+            }
+
+            assert!(peer0_received_lost_connection);
+        }));
     }
 
     #[test]

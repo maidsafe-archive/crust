@@ -664,7 +664,6 @@ fn main() {
     }
 
     drop(service);
-
     assert!(handler.join().is_ok());
 }
 
