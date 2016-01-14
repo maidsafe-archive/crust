@@ -20,6 +20,7 @@ use std::ops::Deref;
 use std::str::FromStr;
 use std::fmt;
 use rustc_serialize::{Encodable, Decodable, Encoder, Decoder};
+use ip::{IpAddr, SocketAddrExt};
 
 #[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
 /// Wrapper around `std::net::SocketAddr` to enable it to encoded and decoded.
@@ -56,6 +57,13 @@ impl Decodable for SocketAddr {
                 Err(d.error(&err[..]))
             }
         }
+    }
+}
+
+impl SocketAddr {
+    /// Construct new from ip::IpAddr and port
+    pub fn new(ip: IpAddr, port: u16) -> Self {
+        SocketAddr(<net::SocketAddr as SocketAddrExt>::new(ip, port))
     }
 }
 

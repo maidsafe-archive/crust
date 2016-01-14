@@ -45,7 +45,7 @@ use rand::{thread_rng, Rng};
 use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
 use std::cmp::max;
 use std::collections::HashMap;
-use std::io;
+use crust::error::Error;
 use std::sync::Arc;
 use std::sync::mpsc::channel;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -114,8 +114,9 @@ const MAX_RUN_TIME_MS: u64 = 2500;
 fn main() {
     ::maidsafe_utilities::log::init(true);
 
-    let args: Args = Docopt::new(USAGE).and_then(|d| d.decode())
-                                       .unwrap_or_else(|e| e.exit());
+    let args: Args = Docopt::new(USAGE)
+                         .and_then(|d| d.decode())
+                         .unwrap_or_else(|e| e.exit());
 
     let file_handler = unwrap_result!(FileHandler::new(&args.arg_config));
 
@@ -143,18 +144,18 @@ fn main() {
 #[derive(RustcDecodable)]
 struct Args {
     arg_config: String,
-    flag_connect_immediately: bool
+    flag_connect_immediately: bool,
 }
 
 #[derive(Debug, RustcDecodable)]
 struct Config {
-    ips:                                  Vec<SocketAddr>,
-    msg_to_send:                          String,
-    listening_port:                       Option<u16>,
-    service_runs:                         u64,
-    output_report_path:                   String,
+    ips: Vec<SocketAddr>,
+    msg_to_send: String,
+    listening_port: Option<u16>,
+    service_runs: u64,
+    output_report_path: String,
     max_wait_before_restart_service_secs: u64,
-    max_msgs_per_sec:                     Option<u32>,
+    max_msgs_per_sec: Option<u32>,
 }
 
 impl Config {
@@ -175,7 +176,7 @@ impl Config {
 struct Report {
     id: String,
     msgs_recvd: HashMap<String, u64>,
-    events: Vec<Option<EventEntry>>
+    events: Vec<Option<EventEntry>>,
 }
 
 impl Report {
@@ -183,7 +184,7 @@ impl Report {
         Report {
             id: String::new(),
             msgs_recvd: HashMap::new(),
-            events: Vec::new()
+            events: Vec::new(),
         }
     }
 
@@ -194,8 +195,8 @@ impl Report {
 
     fn record_event(&mut self, event: &Event) {
         self.events.push(Some(EventEntry {
-            timestamp:   time::now(),
-            description: format_event(event)
+            timestamp: time::now(),
+            description: format_event(event),
         }));
     }
 
@@ -216,7 +217,7 @@ impl Report {
 #[derive(Debug)]
 struct EventEntry {
     timestamp: Tm,
-    description: String
+    description: String,
 }
 
 impl Encodable for EventEntry {
@@ -229,10 +230,11 @@ impl Encodable for EventEntry {
 fn format_event(event: &Event) -> String {
     match *event {
         Event::NewMessage(ref connection, ref data) => {
-            format!("NewMessage({:?}, \"{}\")", connection,
+            format!("NewMessage({:?}, \"{}\")",
+                    connection,
                     String::from_utf8_lossy(&data))
-        },
-        _ => format!("{:?}", event)
+        }
+        _ => format!("{:?}", event),
     }
 }
 
@@ -240,17 +242,18 @@ fn run(connected: Arc<AtomicBool>, config: &Config) -> Report {
     let (event_tx, event_receiver) = channel();
 
     let (category_tx, category_rx) = ::std::sync::mpsc::channel();
-    let crust_event_category = ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
+    let crust_event_category =
+        ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
     let (message_sender0, message_receiver) = channel();
     let message_sender1 = message_sender0.clone();
 
     // This channel is used to wait until someone connects to us.
     let (wait_sender, wait_receiver) = channel();
 
-    let event_sender = ::maidsafe_utilities::event_sender
-                       ::MaidSafeObserver::new(event_tx,
-                                               crust_event_category.clone(),
-                                               category_tx);
+    let event_sender =
+        ::maidsafe_utilities::event_sender::MaidSafeObserver::new(event_tx,
+                                                                  crust_event_category.clone(),
+                                                                  category_tx);
 
     let mut service = Service::new(event_sender).unwrap();
 
@@ -283,12 +286,12 @@ fn run(connected: Arc<AtomicBool>, config: &Config) -> Report {
                             Event::OnAccept(_, connection) => {
                                 debug!("OnAccept {:?}", connection);
                                 let _ = message_sender0.send(Some(connection));
-                            },
+                            }
 
                             Event::OnConnect(Ok((_, connection)), _) => {
                                 debug!("OnConnect {:?}", connection);
                                 let _ = message_sender0.send(Some(connection));
-                            },
+                            }
 
                             Event::NewMessage(connection, bytes) => {
                                 debug!("NewMessage {:?}", connection);
@@ -297,11 +300,11 @@ fn run(connected: Arc<AtomicBool>, config: &Config) -> Report {
                                     report.record_message(&string);
                                     let _ = message_sender0.send(Some(connection));
                                 }
-                            },
+                            }
                             _ => (),
                         }
                     }
-                },
+                }
                 _ => unreachable!("This category should not have been fired - {:?}", it),
             }
         }
@@ -337,7 +340,7 @@ fn run(connected: Arc<AtomicBool>, config: &Config) -> Report {
                         connect_to_all(&mut service, &ips);
                         wait_sender.send(()).unwrap();
                     }
-                },
+                }
                 None => {
                     drop(service);
                     break;
@@ -349,7 +352,8 @@ fn run(connected: Arc<AtomicBool>, config: &Config) -> Report {
     // Wait until someone connects to us.
     let _ = wait_receiver.recv();
 
-    thread::sleep(::std::time::Duration::from_millis(thread_rng().gen_range(MIN_RUN_TIME_MS, MAX_RUN_TIME_MS)));
+    thread::sleep(::std::time::Duration::from_millis(thread_rng().gen_range(MIN_RUN_TIME_MS,
+                                                                            MAX_RUN_TIME_MS)));
 
     message_sender1.send(None).unwrap();
     message_thread_handle.join().unwrap();
@@ -371,8 +375,10 @@ fn connect_to_all(service: &mut Service, addrs: &[SocketAddr]) {
     }
 }
 
-fn start_accepting(service: &mut Service, port: u16) -> io::Result<()> {
-    if let Err(e) = service.start_accepting(port) { return Err(e); }
+fn start_accepting(service: &mut Service, port: u16) -> Result<(), Error> {
+    if let Err(e) = service.start_accepting(port) {
+        return Err(e);
+    }
 
     // FIXME: this panics on the second run, with "Address already in use"
     //        error. Seems like Service is not cleaning up it's stuff properly

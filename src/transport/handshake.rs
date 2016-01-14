@@ -26,17 +26,19 @@ use socket_addr::SocketAddr;
 #[derive(Debug, Clone, RustcDecodable, RustcEncodable)]
 pub struct Handshake {
     pub mapper_port: Option<u16>,
-    pub external_ip: Option<SocketAddr>,
+    pub external_addr: Option<SocketAddr>,
     // used to tell the remote peer their ip (as seen by us)
-    pub remote_ip: SocketAddr,
+    // TODO see if we can use None instead on ivalid address (for remote) as default
+    // Or dont allow a default construction - should always be constructed with a valid value
+    pub remote_addr: SocketAddr,
 }
 
 impl Default for Handshake {
     fn default() -> Self {
         Handshake {
             mapper_port: None,
-            external_ip: None,
-            remote_ip: SocketAddr(net::SocketAddr::from_str("0.0.0.0:0").unwrap()),
+            external_addr: None,
+            remote_addr: SocketAddr(net::SocketAddr::from_str("0.0.0.0:0").unwrap()),
         }
     }
 }

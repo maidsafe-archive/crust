@@ -45,6 +45,7 @@ use std::cmp;
 use std::sync::mpsc::channel;
 use std::sync::mpsc::Sender;
 use std::io;
+use crust::error::Error;
 use std::net;
 use std::net::UdpSocket;
 use std::collections::HashSet;
@@ -60,30 +61,50 @@ static USAGE: &'static str = "
 Usage:
   crust_peer [options]
 
-The crust peer will run, using any config file it can find to try and bootstrap
-off any provided peers.  Locations for the config file are specified at
-http://maidsafe.net/crust/master/crust/file_handler/struct.FileHandler.html#method.read_file
+The crust peer will run, using any \
+                              config file it can find to try and bootstrap
+off any provided \
+                              peers.  Locations for the config file are specified at
+\
+                              http://maidsafe.net/crust/master/crust/file_handler/struct.\
+                              FileHandler.html#method.read_file
 
-An example of a config file can be found at
-https://github.com/maidsafe/crust/blob/master/installer/sample.config
-This could be copied to the \"target/debug/examples\" directory of this project
-for example (assuming a debug build) and modified to suit.
+An example of a config file can \
+                              be found at
+\
+                              https://github.com/maidsafe/crust/blob/master/installer/sample.\
+                              config
+This could be copied to the \"target/debug/examples\" \
+                              directory of this project
+for example (assuming a debug build) and \
+                              modified to suit.
 
-If a config file can't be located or it contains no contacts, or if connecting
-to all of the peers fails, the UDP beacon will be used.
+If a config file can't be located or it contains \
+                              no contacts, or if connecting
+to all of the peers fails, the UDP \
+                              beacon will be used.
 
-If no beacon port is specified in the config file, port 5484 will be chosen.
+If no beacon port is specified in the config \
+                              file, port 5484 will be chosen.
 
-If no listening ports are supplied, a random port for each supported protocol
+If no listening ports are \
+                              supplied, a random port for each supported protocol
 will be chosen.
 
-Options:
-  -c, --create-local-config  Tries to create a default config file in the same
-                             directory as this executable.  Won't overwrite an
-                             existing file.
-  -s RATE, --speed=RATE      Keep sending random data at a maximum speed of RATE
-                             bytes/second to the first connected peer.
-  -h, --help                 Display this help message.
+\
+                              Options:
+  -c, --create-local-config  Tries to create a default \
+                              config file in the same
+                             directory as \
+                              this executable.  Won't overwrite an
+                             \
+                              existing file.
+  -s RATE, --speed=RATE      Keep sending random \
+                              data at a maximum speed of RATE
+                             \
+                              bytes/second to the first connected peer.
+  -h, --help                 \
+                              Display this help message.
 ";
 
 const BEACON_PORT: u16 = 5484;
@@ -97,49 +118,51 @@ struct Args {
 
 fn generate_random_vec_u8(size: usize) -> Vec<u8> {
     let mut vec: Vec<u8> = Vec::with_capacity(size);
-    for _ in 0..size { vec.push(random::<u8>()); }
+    for _ in 0..size {
+        vec.push(random::<u8>());
+    }
     vec
 }
 
-////////////////////////////////////////////////////////////////////////////////
-//
-// CrustNode
-//
-////////////////////////////////////////////////////////////////////////////////
+/// /////////////////////////////////////////////////////////////////////////////
+///
+/// CrustNode
+///
+/// /////////////////////////////////////////////////////////////////////////////
 #[derive(Clone)]
 struct CrustNode {
     pub connection_id: Connection,
-    pub connected: bool
+    pub connected: bool,
 }
 
 impl CrustNode {
     pub fn new(connection_id: Connection, connected: bool) -> CrustNode {
-        CrustNode{
+        CrustNode {
             connection_id: connection_id,
-            connected: connected
+            connected: connected,
         }
     }
 }
 
-////////////////////////////////////////////////////////////////////////////////
-//
-// UdpData
-//
-////////////////////////////////////////////////////////////////////////////////
+/// /////////////////////////////////////////////////////////////////////////////
+///
+/// UdpData
+///
+/// /////////////////////////////////////////////////////////////////////////////
 struct UdpData {
-    stopped:            Arc<Mutex<bool>>,
-    socket:             UdpSocket,
+    stopped: Arc<Mutex<bool>>,
+    socket: UdpSocket,
     external_endpoints: HashSet<SocketAddr>,
     receiver_join_handle: Option<thread::JoinHandle<()>>,
 }
 
 impl UdpData {
     pub fn new(socket: UdpSocket, ext_eps: HashSet<SocketAddr>) -> UdpData {
-        use ::std::io::ErrorKind::{TimedOut, WouldBlock, Interrupted};
+        use std::io::ErrorKind::{TimedOut, WouldBlock, Interrupted};
 
         let stopped = Arc::new(Mutex::new(false));
         let stopped_copy = stopped.clone();
-        let socket_copy  = socket.try_clone().unwrap();
+        let socket_copy = socket.try_clone().unwrap();
 
         let join_handle = thread::spawn(move || {
             let mut buf = [0u8; 256];
@@ -148,18 +171,22 @@ impl UdpData {
             loop {
                 {
                     let stopped = stopped.lock().unwrap();
-                    if *stopped { break; }
+                    if *stopped {
+                        break;
+                    }
                 }
 
                 match socket.recv_from(&mut buf) {
-                    Ok(_x)   => {
+                    Ok(_x) => {
                         println!("UdpSocket received data");
-                    },
-                    Err(e)  => match e.kind() {
-                        TimedOut | WouldBlock => continue,
-                        Interrupted => (),
-                        _   => break,
-                    },
+                    }
+                    Err(e) => {
+                        match e.kind() {
+                            TimedOut | WouldBlock => continue,
+                            Interrupted => (),
+                            _ => break,
+                        }
+                    }
                 }
             }
         });
@@ -189,42 +216,45 @@ impl Drop for UdpData {
     }
 }
 
-////////////////////////////////////////////////////////////////////////////////
-//
-// Network
-//
-////////////////////////////////////////////////////////////////////////////////
+/// /////////////////////////////////////////////////////////////////////////////
+///
+/// Network
+///
+/// /////////////////////////////////////////////////////////////////////////////
 struct Network {
-    crust_nodes:          Vec<CrustNode>,
-    udp_data:             Vec<UdpData>,
-    performance_start:    time::SteadyTime,
+    crust_nodes: Vec<CrustNode>,
+    udp_data: Vec<UdpData>,
+    performance_start: time::SteadyTime,
     performance_interval: time::Duration,
-    received_msgs:        u32,
-    received_bytes:       usize
+    received_msgs: u32,
+    received_bytes: usize,
 }
 
 // simple "routing table" without any structure
 impl Network {
     pub fn new() -> Network {
         Network {
-            crust_nodes:          Vec::new(),
-            udp_data:             Vec::new(),
-            performance_start:    time::SteadyTime::now(),
+            crust_nodes: Vec::new(),
+            udp_data: Vec::new(),
+            performance_start: time::SteadyTime::now(),
             performance_interval: time::Duration::seconds(10),
-            received_msgs:        0,
-            received_bytes:       0
+            received_msgs: 0,
+            received_bytes: 0,
         }
     }
 
     // Will add node if not duplicated.  Returns true when added.
     pub fn add_node(&mut self, new_node: CrustNode) -> bool {
-        if self.crust_nodes.iter()
-                           .filter(|node| node.connection_id == new_node.connection_id)
-                           .count() == 0 {
+        if self.crust_nodes
+               .iter()
+               .filter(|node| node.connection_id == new_node.connection_id)
+               .count() == 0 {
             self.crust_nodes.push(new_node);
             return true;
         }
-        for node in self.crust_nodes.iter_mut().filter(|node| node.connection_id == new_node.connection_id) {
+        for node in self.crust_nodes
+                        .iter_mut()
+                        .filter(|node| node.connection_id == new_node.connection_id) {
             node.connected = true;
         }
         return false;
@@ -249,8 +279,11 @@ impl Network {
         println!("Node count: {}", self.crust_nodes.len());
         let mut i = 0;
         for node in self.crust_nodes.iter() {
-            let status = if node.connected { "Connected   " }
-                                      else { "Disconnected" };
+            let status = if node.connected {
+                "Connected   "
+            } else {
+                "Disconnected"
+            };
 
             println!("    [{}] {} {:?}", i, status, node.connection_id);
             i += 1;
@@ -270,7 +303,7 @@ impl Network {
     }
 
     pub fn remove_disconnected_nodes(&mut self) {
-        self.crust_nodes.retain(|node|node.connected);
+        self.crust_nodes.retain(|node| node.connected);
     }
 
     pub fn get(&self, n: usize) -> Option<&CrustNode> {
@@ -293,51 +326,49 @@ impl Network {
         }
         if self.performance_start + self.performance_interval < time::SteadyTime::now() {
             println!("\nReceived {} messages with total size of {} bytes in last {} seconds.",
-                     self.received_msgs, self.received_bytes, self.performance_interval.num_seconds());
+                     self.received_msgs,
+                     self.received_bytes,
+                     self.performance_interval.num_seconds());
             self.received_msgs = 0;
             self.received_bytes = 0;
         }
     }
 }
 
-fn foreground(stdout: Option<Box<term::StdoutTerminal>>, colour: u16) ->
-        Option<Box<term::StdoutTerminal>> {
+fn foreground(stdout: Option<Box<term::StdoutTerminal>>,
+              colour: u16)
+              -> Option<Box<term::StdoutTerminal>> {
     match stdout {
         Some(mut term) => {
             let _ = term.fg(colour);
             Some(term)
-        },
+        }
         None => stdout,
     }
 }
 
-fn green_foreground(stdout: Option<Box<term::StdoutTerminal>>) ->
-        Option<Box<term::StdoutTerminal>> {
+fn green_foreground(stdout: Option<Box<term::StdoutTerminal>>) -> Option<Box<term::StdoutTerminal>> {
     foreground(stdout, term::color::BRIGHT_GREEN)
 }
 
-fn yellow_foreground(stdout: Option<Box<term::StdoutTerminal>>) ->
-        Option<Box<term::StdoutTerminal>> {
+fn yellow_foreground(stdout: Option<Box<term::StdoutTerminal>>) -> Option<Box<term::StdoutTerminal>> {
     foreground(stdout, term::color::BRIGHT_YELLOW)
 }
 
-fn red_foreground(stdout: Option<Box<term::StdoutTerminal>>) ->
-        Option<Box<term::StdoutTerminal>> {
+fn red_foreground(stdout: Option<Box<term::StdoutTerminal>>) -> Option<Box<term::StdoutTerminal>> {
     foreground(stdout, term::color::BRIGHT_RED)
 }
 
-fn cyan_foreground(stdout: Option<Box<term::StdoutTerminal>>) ->
-        Option<Box<term::StdoutTerminal>> {
+fn cyan_foreground(stdout: Option<Box<term::StdoutTerminal>>) -> Option<Box<term::StdoutTerminal>> {
     foreground(stdout, term::color::BRIGHT_CYAN)
 }
 
-fn reset_foreground(stdout: Option<Box<term::StdoutTerminal>>) ->
-        Option<Box<term::StdoutTerminal>> {
+fn reset_foreground(stdout: Option<Box<term::StdoutTerminal>>) -> Option<Box<term::StdoutTerminal>> {
     match stdout {
         Some(mut term) => {
             let _ = term.reset();
             Some(term)
-        },
+        }
         None => stdout,
     }
 }
@@ -350,7 +381,7 @@ fn on_time_out(timeout: Duration, flag_speed: bool) -> Sender<bool> {
     let _ = std::thread::spawn(move || {
         std::thread::sleep(timeout);
         match rx.try_recv() {
-            Ok(true) => {},
+            Ok(true) => {}
             _ => {
                 let mut stdout = term::stdout();
                 if flag_speed {
@@ -361,16 +392,16 @@ fn on_time_out(timeout: Duration, flag_speed: bool) -> Sender<bool> {
                 }
                 stdout = yellow_foreground(stdout);
                 println!("Didn't bootstrap to an existing network - this may be the first node \
-                             of a new network.");
+                          of a new network.");
                 let _ = reset_foreground(stdout);
-            },
+            }
         }
     });
 
     tx
 }
 
-fn create_local_config() -> Result<(), crust::error::Error> {
+fn create_local_config() -> Result<(), Error> {
     let mut stdout = term::stdout();
     let mut config_path = match ::crust::current_bin_dir() {
         Ok(path) => path,
@@ -379,7 +410,7 @@ fn create_local_config() -> Result<(), crust::error::Error> {
             println!("Failed to get config file path: {:?}", error);
             let _ = reset_foreground(stdout);
             std::process::exit(1);
-        },
+        }
     };
     let mut config_name = try!(::crust::exe_file_stem());
     config_name.push(".crust.config");
@@ -388,39 +419,41 @@ fn create_local_config() -> Result<(), crust::error::Error> {
     match ::std::fs::metadata(&config_path) {
         Ok(_) => {
             stdout = red_foreground(stdout);
-            println!("Failed to create {:?} since it already exists.", config_path);
+            println!("Failed to create {:?} since it already exists.",
+                     config_path);
             let _ = reset_foreground(stdout);
-        },
-        Err(_) => {  // Continue if the file doesn't exist
+        }
+        Err(_) => {
+            // Continue if the file doesn't exist
             // This test helper function will use defaults for each `None` value.
             match ::crust::write_config_file(None) {
                 Ok(file_path) => {
                     stdout = green_foreground(stdout);
                     println!("Created default config file at {:?}.", file_path);
                     let _ = reset_foreground(stdout);
-                },
+                }
                 Err(error) => {
                     stdout = red_foreground(stdout);
                     println!("Failed to write default config file: {:?}", error);
                     let _ = reset_foreground(stdout);
                     std::process::exit(2);
-                },
+                }
             }
-        },
+        }
     };
     Ok(())
 }
 
-fn filter_ok<T>(vec: Vec<io::Result<T>>) -> Vec<T> {
-    vec.into_iter().filter_map(|a|a.ok()).collect()
+fn filter_ok<T>(vec: Vec<Result<T, Error>>) -> Vec<T> {
+    vec.into_iter().filter_map(|a| a.ok()).collect()
 }
 
 fn main() {
     ::maidsafe_utilities::log::init(true);
 
     let args: Args = Docopt::new(USAGE)
-                            .and_then(|docopt| docopt.decode())
-                            .unwrap_or_else(|error| error.exit());
+                         .and_then(|docopt| docopt.decode())
+                         .unwrap_or_else(|error| error.exit());
 
     if args.flag_create_local_config {
         unwrap_result!(create_local_config());
@@ -434,10 +467,12 @@ fn main() {
     let (category_tx, category_rx) = channel();
 
     let (bs_sender, bs_receiver) = channel();
-    let crust_event_category = ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
-    let event_sender = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(channel_sender,
-                                                                                 crust_event_category,
-                                                                                 category_tx);
+    let crust_event_category =
+        ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
+    let event_sender =
+        ::maidsafe_utilities::event_sender::MaidSafeObserver::new(channel_sender,
+                                                                  crust_event_category,
+                                                                  category_tx);
     let mut service = Service::new(event_sender).unwrap();
     let listening_ports = filter_ok(vec![service.start_accepting(0)]);
     assert!(listening_ports.len() >= 1);
@@ -447,7 +482,7 @@ fn main() {
     print!("Listening on ports");
     for port in &listening_ports {
         print!(" {:?}", *port);
-    };
+    }
     println!("");
 
     stdout = reset_foreground(stdout);
@@ -548,7 +583,8 @@ fn main() {
         },
     };
 
-    if running_speed_test {  // Processing interaction till receiving ctrl+C
+    if running_speed_test {
+        // Processing interaction till receiving ctrl+C
         let tx = on_time_out(Duration::from_secs(5), running_speed_test);
 
         // Block until we get one bootstrap connection
@@ -575,7 +611,9 @@ fn main() {
             let sleep_time = cmp::max(1, 1000 / times);
             for _ in 0..times {
                 service.send(peer.clone(), generate_random_vec_u8(length as usize));
-                debug!("Sent a message with length of {} bytes to {:?}", length, peer);
+                debug!("Sent a message with length of {} bytes to {:?}",
+                       length,
+                       peer);
                 std::thread::sleep(Duration::from_millis(sleep_time));
             }
         }
@@ -583,7 +621,7 @@ fn main() {
         print_usage();
 
         loop {
-            use ::std::io::Write; // For flush().
+            use std::io::Write; // For flush().
 
             print!("> ");
             assert!(io::stdout().flush().is_ok());
@@ -600,7 +638,7 @@ fn main() {
                 UserCommand::Connect(ep) => {
                     println!("Connecting to {:?}", ep);
                     service.connect(0, vec![ep]);
-                },
+                }
                 UserCommand::ConnectRendezvous(udp_id, endpoint) => {
                     let mut network = network.lock().unwrap();
                     let socket = match network.release_udp_socket(udp_id) {
@@ -612,53 +650,54 @@ fn main() {
                     };
                     println!("ConnectingRendezvous with {} to {:?}", udp_id, endpoint);
                     service.rendezvous_connect(socket, 0, endpoint);
-                },
+                }
                 UserCommand::Send(peer, message) => {
                     let network = network.lock().unwrap();
                     match network.get(peer) {
-                        Some(ref node) => service.send(node.connection_id.clone(),
-                                                       message.into_bytes()),
+                        Some(ref node) => {
+                            service.send(node.connection_id.clone(), message.into_bytes())
+                        }
                         None => println!("Invalid connection #"),
                     }
-                },
+                }
                 UserCommand::SendUdp(peer, dst, _message) => {
                     let network = network.lock().unwrap();
                     match network.get_udp(peer) {
                         Some(ref udp) => udp.send_to(dst),
                         None => println!("Invalid udp #"),
                     }
-                },
+                }
                 UserCommand::SendAll(message) => {
                     let network = network.lock().unwrap();
                     for node in network.get_all() {
                         service.send(node.connection_id.clone(), message.clone().into_bytes());
                     }
-                },
+                }
                 UserCommand::Punch(peer, dst) => {
                     let network = network.lock().unwrap();
                     match network.get_udp(peer) {
                         Some(ref udp) => {
                             let socket = udp.socket.try_clone().unwrap();
                             service.udp_punch_hole(0, socket, None, dst);
-                        },
+                        }
                         None => println!("Invalid udp #"),
                     }
-                },
+                }
                 UserCommand::Map => {
                     service.get_mapped_udp_socket(0);
-                },
+                }
                 UserCommand::List => {
                     let network = network.lock().unwrap();
                     network.print_connected_nodes();
-                },
+                }
                 UserCommand::Clean => {
                     let mut network = network.lock().unwrap();
                     network.remove_disconnected_nodes();
                     network.print_connected_nodes();
-                },
+                }
                 UserCommand::Stop => {
                     break;
-                },
+                }
             }
         }
     }
@@ -667,24 +706,28 @@ fn main() {
     assert!(handler.join().is_ok());
 }
 
-////////////////////////////////////////////////////////////////////////////////
-//
-//  Paring user commands.
-//
-////////////////////////////////////////////////////////////////////////////////
-// We'll use docopt to help parse the ongoing CLI commands entered by the user.
+/// /////////////////////////////////////////////////////////////////////////////
+///
+///  Paring user commands.
+///
+/// /////////////////////////////////////////////////////////////////////////////
+/// We'll use docopt to help parse the ongoing CLI commands entered by the user.
 static CLI_USAGE: &'static str = "
 Usage:
   cli connect <endpoint>
-  cli connect-rendezvous <peer> <endpoint>
+  cli connect-rendezvous \
+                                  <peer> <endpoint>
   cli send <peer> <message>...
-  cli send-udp <peer> <destination> <message>...
+  cli send-udp \
+                                  <peer> <destination> <message>...
   cli send-all <message>...
-  cli map
+  \
+                                  cli map
   cli punch <peer> <destination>
   cli list
   cli clean
-  cli stop
+  \
+                                  cli stop
   cli help
 
 ";
@@ -719,21 +762,21 @@ fn print_usage() {
 
 #[derive(RustcDecodable, Debug)]
 struct CliArgs {
-    cmd_connect:            bool,
+    cmd_connect: bool,
     cmd_connect_rendezvous: bool,
-    cmd_send:               bool,
-    cmd_send_udp:           bool,
-    cmd_send_all:           bool,
-    cmd_map:                bool,
-    cmd_punch:              bool,
-    cmd_list:               bool,
-    cmd_clean:              bool,
-    cmd_stop:               bool,
-    cmd_help:               bool,
-    arg_endpoint:           Option<PeerEndpoint>,
-    arg_destination:        Option<::crust::SocketAddr>,
-    arg_peer:               Option<usize>,
-    arg_message:            Vec<String>,
+    cmd_send: bool,
+    cmd_send_udp: bool,
+    cmd_send_all: bool,
+    cmd_map: bool,
+    cmd_punch: bool,
+    cmd_list: bool,
+    cmd_clean: bool,
+    cmd_stop: bool,
+    cmd_help: bool,
+    arg_endpoint: Option<PeerEndpoint>,
+    arg_destination: Option<::crust::SocketAddr>,
+    arg_peer: Option<usize>,
+    arg_message: Vec<String>,
 }
 
 #[derive(PartialEq, Eq, Debug, Clone)]
@@ -750,9 +793,8 @@ enum UserCommand {
     Map,
 }
 
-fn parse_user_command(cmd : String) -> Option<UserCommand> {
-    let docopt: Docopt = Docopt::new(CLI_USAGE)
-                         .unwrap_or_else(|error| error.exit());
+fn parse_user_command(cmd: String) -> Option<UserCommand> {
+    let docopt: Docopt = Docopt::new(CLI_USAGE).unwrap_or_else(|error| error.exit());
 
     let mut cmds = cmd.trim_right_matches(|c| c == '\r' || c == '\n')
                       .split(' ')
@@ -768,7 +810,7 @@ fn parse_user_command(cmd : String) -> Option<UserCommand> {
                 _ => println!("Invalid command."),
             };
             return None;
-        },
+        }
     };
 
     if args.cmd_connect {
@@ -780,21 +822,21 @@ fn parse_user_command(cmd : String) -> Option<UserCommand> {
         Some(UserCommand::ConnectRendezvous(peer, endpoint))
     } else if args.cmd_send {
         let peer = args.arg_peer.unwrap();
-        let msg  = args.arg_message.join(" ");
+        let msg = args.arg_message.join(" ");
         Some(UserCommand::Send(peer, msg))
     } else if args.cmd_send_udp {
         let peer = args.arg_peer.unwrap();
-        let dst  = args.arg_destination.unwrap();
-        let msg  = args.arg_message.join(" ");
+        let dst = args.arg_destination.unwrap();
+        let msg = args.arg_message.join(" ");
         Some(UserCommand::SendUdp(peer, dst, msg))
     } else if args.cmd_send_all {
-        let msg  = args.arg_message.join(" ");
+        let msg = args.arg_message.join(" ");
         Some(UserCommand::SendAll(msg))
     } else if args.cmd_map {
         Some(UserCommand::Map)
     } else if args.cmd_punch {
         let peer = args.arg_peer.unwrap();
-        let dst  = args.arg_destination.unwrap();
+        let dst = args.arg_destination.unwrap();
         Some(UserCommand::Punch(peer, dst))
     } else if args.cmd_list {
         Some(UserCommand::List)
@@ -805,35 +847,34 @@ fn parse_user_command(cmd : String) -> Option<UserCommand> {
     } else if args.cmd_help {
         print_usage();
         None
-    }
-    else {
+    } else {
         None
     }
 }
 
-////////////////////////////////////////////////////////////////////////////////
-//
-// Parse transport::Endpoint
-//
-////////////////////////////////////////////////////////////////////////////////
-
+/// /////////////////////////////////////////////////////////////////////////////
+///
+/// Parse transport::Endpoint
+///
+/// /////////////////////////////////////////////////////////////////////////////
 #[derive(Debug)]
 struct PeerEndpoint {
     pub addr: Endpoint,
 }
 
 impl Decodable for PeerEndpoint {
-    fn decode<D: Decoder>(decoder: &mut D)->Result<PeerEndpoint, D::Error> {
+    fn decode<D: Decoder>(decoder: &mut D) -> Result<PeerEndpoint, D::Error> {
         let str = try!(decoder.read_str());
         if !str.ends_with(')') {
-            return Err(decoder.error("Protocol missing"))
+            return Err(decoder.error("Protocol missing"));
         }
-        let address = match net::SocketAddr::from_str(&str[4 .. str.len() - 1]) {
+        let address = match net::SocketAddr::from_str(&str[4..str.len() - 1]) {
             Ok(addr) => SocketAddr(addr),
             Err(_) => {
-                return Err(decoder.error(&format!(
-                    "Could not decode {} as valid IPv4 or IPv6 address.", str)));
-            },
+                return Err(decoder.error(&format!("Could not decode {} as valid IPv4 or IPv6 \
+                                                   address.",
+                                                  str)));
+            }
         };
         if str.starts_with("Tcp(") {
             Ok(PeerEndpoint { addr: Endpoint::from_socket_addr(Protocol::Tcp, address) })
@@ -845,4 +886,4 @@ impl Decodable for PeerEndpoint {
     }
 }
 
-////////////////////////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////////////////////

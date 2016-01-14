@@ -20,7 +20,6 @@ use std::net;
 use std::sync::atomic::{Ordering, AtomicBool};
 use std::net::{TcpStream, TcpListener};
 use std::sync::mpsc::Sender;
-use std::sync::RwLock;
 use std::io;
 
 use get_if_addrs::{getifaddrs, filter_loopback};
@@ -29,28 +28,35 @@ use socket_addr::SocketAddr;
 use state::{State, Closure};
 use transport::Handshake;
 use hole_punching::HolePunchServer;
+use std::str::FromStr;
 
-struct Acceptor {
-    joiner: RaiiThreadJoiner,
+pub struct Acceptor {
+    _joiner: RaiiThreadJoiner,
     running: Arc<AtomicBool>,
     addr: net::SocketAddr,
     mapped_addrs: Vec<SocketAddr>,
 }
 
 impl Acceptor {
-    pub fn new(listener: TcpListener, hole_punch_server: Arc<HolePunchServer>, cmd_sender: Sender<Closure>) -> io::Result<Acceptor> {
+    pub fn new(listener: TcpListener,
+               hole_punch_server: Arc<HolePunchServer>,
+               cmd_sender: Sender<Closure>)
+               -> io::Result<Acceptor> {
         let running = Arc::new(AtomicBool::new(true));
         let running_cloned = running.clone();
         let addr = try!(listener.local_addr());
-        let mapped_addrs = filter_loopback(getifaddrs()).map(|iface| SocketAddr(net::SocketAddr::new(iface.addr, addr.port()))).collect();
+        let mapped_addrs = filter_loopback(getifaddrs())
+                               .into_iter()
+                               .map(|iface| SocketAddr::new(iface.addr, addr.port()))
+                               .collect();
         let joiner = RaiiThreadJoiner::new(thread!("acceptor", move || {
             loop {
                 let mapper_external_addr = hole_punch_server.external_address();
                 let mapper_internal_port = hole_punch_server.listening_addr().port();
                 let handshake = Handshake {
                     mapper_port: Some(mapper_internal_port),
-                    external_ip: *unwrap_result!(mapper_external_addr.read()),
-                    remote_ip: SocketAddr(net::SocketAddr::from_str("0.0.0.0:0").unwrap()),
+                    external_addr: mapper_external_addr,
+                    remote_addr: SocketAddr(net::SocketAddr::from_str("0.0.0.0:0").unwrap()),
                 };
                 let accept_res = State::accept(handshake, &listener);
                 if !running_cloned.load(Ordering::SeqCst) {
@@ -58,22 +64,24 @@ impl Acceptor {
                 }
                 match accept_res {
                     Ok((handshake, transport)) => {
-                        cmd_sender.send(Closure::new(move |state: &mut State| {
+                        let _ = cmd_sender.send(Closure::new(move |state: &mut State| {
                             let _ = state.handle_accept(handshake, transport);
                         }));
-                    },
+                    }
                     Err(e) => {
                         warn!("Acceptor got an error: {} {:?}", e, e);
                         break;
-                    },
+                    }
                 };
             }
         }));
-        Acceptor {
-            joiner: joiner,
+
+        Ok(Acceptor {
+            _joiner: joiner,
             running: running,
             addr: addr,
-        }
+            mapped_addrs: mapped_addrs,
+        })
     }
 
     pub fn local_address(&self) -> SocketAddr {
@@ -91,4 +99,3 @@ impl Drop for Acceptor {
         let _ = TcpStream::connect(self.addr);
     }
 }
-
