@@ -54,6 +54,7 @@ impl Sender {
     }
 }
 
+#[allow(variant_size_differences)]
 pub enum Receiver {
     Tcp(cbor::Decoder<BufReader<TcpStream>>),
     Utp(cbor::Decoder<BufReader<UtpWrapper>>),

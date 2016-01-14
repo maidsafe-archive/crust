@@ -56,6 +56,7 @@ extern crate memmap;
 #[macro_use]
 extern crate maidsafe_utilities;
 extern crate ip;
+// TODO (canndrew): Update get_if_addrs to version >= 0.2.0
 extern crate get_if_addrs;
 
 /// Module implementing the `Service` which provides an interface to manage peer-to-peer
@@ -111,3 +112,5 @@ mod periodic_sender;
 mod socket_utils;
 mod ip_info;
 mod socket_addr;
+mod acceptor;
+
