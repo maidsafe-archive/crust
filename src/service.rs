@@ -705,6 +705,7 @@ mod test {
     }
 
     #[test]
+    #[ignore]
     fn bootstrap() {
         BootstrapHandler::cleanup().unwrap();
 
@@ -825,6 +826,7 @@ mod test {
     // }
 
     #[test]
+    #[ignore]
     fn connection_manager() {
         BootstrapHandler::cleanup().unwrap();
 
@@ -1113,6 +1115,7 @@ mod test {
     }
 
     #[test]
+    #[ignore]
     fn lost_tcp_connection() {
         let (category_tx, category_rx) = channel();
         let (event_tx, event_rx) = channel();
@@ -1182,6 +1185,7 @@ mod test {
     }
 
     #[test]
+    #[ignore]
     fn network() {
         BootstrapHandler::cleanup().unwrap();
 
@@ -1296,6 +1300,7 @@ mod test {
     }
 
     #[test]
+    #[ignore]
     fn connection_manager_start() {
         unwrap_result!(BootstrapHandler::cleanup());
 
@@ -1370,6 +1375,7 @@ mod test {
     }
 
     #[test]
+    #[ignore]
     fn reaccept() {
         BootstrapHandler::cleanup().unwrap();
 
