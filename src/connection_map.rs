@@ -139,8 +139,6 @@ impl ConnectionMapInner {
         let _ = self.connections.insert(connection.clone(), connection_data);
         let _ = self.event_sender.send(event_to_user);
 
-
-
         // start the reading thread
         let event_sender = self.event_sender.clone();
         let _ = Self::new_thread("reader", move || {

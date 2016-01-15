@@ -301,8 +301,8 @@ pub fn seek_peers(port: u16, guid_to_avoid: Option<GUID>) -> Result<Vec<SocketAd
 mod test {
     use super::*;
     use std::thread;
-    use state::State;
     use endpoint::{Protocol, Endpoint};
+    use transport;
     use transport::{Message, Handshake};
 
     #[test]
@@ -319,10 +319,9 @@ mod test {
 
         let t2 = thread::Builder::new().name("test_beacon receiver".to_owned()).spawn(move || {
             let endpoint = seek_peers(acceptor_port, None).unwrap()[0];
-            let mut transport = State::connect(Handshake::default(),
-                                               Endpoint::from_socket_addr(Protocol::Tcp, endpoint))
-                                    .unwrap()
-                                    .1;
+            let mut transport = transport::connect(Endpoint::from_socket_addr(Protocol::Tcp, endpoint))
+                .unwrap();
+
             let msg = String::from_utf8(match transport.receiver.receive().unwrap() {
                           Message::UserBlob(msg) => msg,
                           _ => panic!("Wrong message type"),
@@ -361,7 +360,7 @@ mod test {
                      .spawn(move || {
                          thread::sleep(::std::time::Duration::from_millis(700));
                          let endpoint = seek_peers(acceptor_port, None).unwrap()[0];
-                         let _ = Service::handle_handshake(Handshake::default(), try!(transport::connect(Endpoint::from_socket_addr(Protocol::Tcp, endpoint)))).unwrap();
+                         let _ = transport::connect(Endpoint::from_socket_addr(Protocol::Tcp, endpoint)).unwrap();
                      });
 
         assert!(t1.is_ok());

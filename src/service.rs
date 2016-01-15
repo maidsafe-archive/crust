@@ -106,7 +106,8 @@ impl Service {
             event_sender: event_sender,
             connection_map: connection_map,
             stop_called: false,
-            is_bootstrapping: false,
+            is_bootstrapping: Arc::new(AtomicBool::new(false)),
+            bootstrap_thread: None,
         };
 
         Ok(service)
@@ -397,20 +398,20 @@ impl Service {
         let is_bootstrapping = self.is_bootstrapping.clone();
         let bootstrap_thread = self.bootstrap_thread.take();
         match bootstrap_thread {
-            Some(handle) => handle.join(),
+            Some(handle) => drop(handle),
             None => (),
         };
 
         let connection_map = self.connection_map.clone();
         let event_sender = self.event_sender.clone();
-        let hole_punch_server = self.hole_punch_server.clone();
+
         let handle = RaiiThreadJoiner::new(thread!("bootstrap thread", move || {
             for endpoint in bootstrap_list {
                 // Bootstrapping got cancelled.
                 if !is_bootstrapping.load(Ordering::SeqCst) {
                     return;
                 }
-                if connection_map.is_connected_to(endpoint) {
+                if connection_map.is_connected_to(&endpoint) {
                     continue;
                 }
 
@@ -445,10 +446,10 @@ impl Service {
 
     /// Stop the bootstraping procedure
     pub fn stop_bootstrap(&mut self) {
-        self.is_bootstrapping = false;
+        self.is_bootstrapping.store(false, Ordering::SeqCst);
     }
 
-    pub fn handle_rendezvous_connect(&mut self,
+    pub fn handle_rendezvous_connect(connection_map: Arc<ConnectionMap>,
                                      token: u32,
                                      handshake: Handshake,
                                      trans: Transport)
@@ -459,7 +460,7 @@ impl Service {
                                                                      .protocol(),
                                                                SocketAddr(*handshake.remote_addr));
         let event = Event::OnRendezvousConnect(Ok((our_external_endpoint, c)), token);
-        self.connection_map.register_connection(handshake, trans, event)
+        connection_map.register_connection(handshake, trans, event)
     }
 
     pub fn accept(handshake: Handshake,
@@ -497,30 +498,40 @@ impl Service {
                               public_endpoint: Endpoint /* of B */) {
         let mapper_external_addr = self.mapper.external_address();
         let mapper_internal_port = self.mapper.listening_addr().port();
+
         let handshake = Handshake {
             mapper_port: Some(mapper_internal_port),
             external_addr: mapper_external_addr,
             remote_addr: SocketAddr(net::SocketAddr::from_str("0.0.0.0:0").unwrap()),
         };
 
+        let event_sender = self.event_sender.clone();
+        let connection_map = self.connection_map.clone();
+
         let _ = Self::new_thread("rendezvous connect", move || {
-            let res = Self::handle_handshake(handshake,
-                                             try!(transport::rendezvous_connect(udp_socket,
-                                                                                public_endpoint)));
-            match res {
+            let res = transport::rendezvous_connect(udp_socket, public_endpoint)
+                .and_then(move |t| Self::handle_handshake(handshake, t));
+
+            let (his_handshake, transport) = match res {
                 Ok((h, t)) => {
-                    let _ = self.handle_rendezvous_connect(token, h, t);
+                    (h, t)
                 }
                 Err(e) => {
-                    let _ = self.event_sender.send(Event::OnRendezvousConnect(Err(e), token));
+                    let _ = event_sender.send(Event::OnRendezvousConnect(Err(e), token));
+                    return ()
                 }
-            }
+            };
+
+            let _ = Service::handle_rendezvous_connect(connection_map,
+                                                       token,
+                                                       his_handshake,
+                                                       transport);
         });
     }
 
     /// Closes a connection.
     pub fn drop_node(&self, connection: Connection) {
-        let _ = self.connections.remove(&connection);
+        self.connection_map.unregister_connection(connection);
     }
 
     /// Returns beacon acceptor port if beacon acceptor is accepting, otherwise returns `None`

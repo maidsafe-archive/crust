@@ -313,7 +313,7 @@ impl HolePunchServer {
                                     let mut ext_ip = external_ip_writer.write().unwrap();
                                     *ext_ip = Some(*external.socket_addr());
                                 };
-                                upnp_external_addr_update.send(*external.socket_addr())
+                                let _ = upnp_external_addr_update.send(*external.socket_addr());
                             }
                         }
                     }
@@ -472,8 +472,10 @@ mod tests {
 
     #[test]
     fn test_get_mapped_socket_from_self() {
-        let (category_tx, _) = ::std::sync::mpsc::channel();
-        let (tx, _rx) = ::std::sync::mpsc::channel();
+        use std::sync::mpsc;
+
+        let (category_tx, _) = mpsc::channel();
+        let (tx, _rx) = mpsc::channel();
 
         let crust_event_category =
             ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
@@ -481,9 +483,10 @@ mod tests {
             ::maidsafe_utilities::event_sender::MaidSafeObserver::new(tx,
                                                                       crust_event_category,
                                                                       category_tx);
-        let mut state = ::state::State::new(event_sender).unwrap();
-        let hole_punch_server = Arc::new(unwrap_result!(HolePunchServer::start(state.cmd_sender
-                                                                                    .clone())));
+        // Hole punch server tries to contact uPnP devices and find out
+        // our external SocketAddr, we currently get it through a channel.
+        let (_rx, tx) = mpsc::channel();
+        let hole_punch_server = Arc::new(unwrap_result!(HolePunchServer::start(tx)));
         let (socket, our_addr, remaining) =
             blocking_get_mapped_udp_socket(::rand::random(),
                                            vec![loopback_v4(hole_punch_server.listening_addr()
@@ -494,6 +497,5 @@ mod tests {
         let socket_addr = socket.local_addr().unwrap();
         assert_eq!(loopback_v4(socket_addr.port()), received_addr);
         assert!(remaining.is_empty());
-        state.stop();
     }
 }
