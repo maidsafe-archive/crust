@@ -37,10 +37,11 @@ use connection::Connection;
 use error::Error;
 
 use state::{Closure, State};
-use event::{Event, HolePunchResult};
+use event::{Event, HolePunchResult, MappedUdpSocket};
 use socket_addr::{SocketAddr, SocketAddrV4};
 use bootstrap_handler::BootstrapHandler;
 use hole_punching::HolePunchServer;
+use sequence_number::SequenceNumber;
 
 /// A structure representing a connection manager.
 ///
@@ -56,6 +57,7 @@ pub struct Service {
     bootstrap_handler: BootstrapHandler,
     acceptors: Vec<Acceptor>,
     mapper: Arc<HolePunchServer>,
+    next_punch_sequence: SequenceNumber,
 }
 
 impl Service {
@@ -94,6 +96,7 @@ impl Service {
             bootstrap_handler: try!(BootstrapHandler::new()),
             acceptors: Vec::new(),
             mapper: mapper,
+            next_punch_sequence: SequenceNumber::new(::rand::random()),
         };
 
         Ok(service)
@@ -466,13 +469,6 @@ impl Service {
         });
     }
 
-    /// Lookup a mapped udp socket based on result_token
-    pub fn get_mapped_udp_socket(&self, result_token: u32) {
-        Self::post(&self.cmd_sender, move |state: &mut State| {
-            state.get_mapped_udp_socket(result_token);
-        });
-    }
-
     fn new_thread<F, T>(name: &str, f: F) -> io::Result<JoinHandle<T>>
         where F: FnOnce() -> T,
               F: Send + 'static,
@@ -511,6 +507,38 @@ impl Service {
                 }));
             });
         });
+    }
+
+    /// Lookup a mapped udp socket based on result_token
+    pub fn get_mapped_udp_socket(&mut self, result_token: u32) {
+        use hole_punching::blocking_get_mapped_udp_socket;
+
+        let seq_id = self.next_punch_sequence.number();
+        self.next_punch_sequence.increment();
+
+        Self::post(&self.cmd_sender, move |state: &mut State| {
+            let helping_nodes = state.get_ordered_helping_nodes();
+            let event_sender = state.event_sender.clone();
+
+
+            let _result_handle = Self::new_thread("map_udp", move || {
+                let result = blocking_get_mapped_udp_socket(seq_id, helping_nodes);
+
+                let res = match result {
+                    // TODO (peterj) use _rest
+                    Ok((socket, opt_mapped_addr, _rest)) => {
+                        let addrs = opt_mapped_addr.into_iter().collect();
+                        Ok((socket, addrs))
+                    }
+                    Err(what) => Err(what),
+                };
+
+                let _ = event_sender.send(Event::OnUdpSocketMapped(MappedUdpSocket {
+                    result_token: result_token,
+                    result: res,
+                }));
+            });
+        })
     }
 }
 

@@ -30,9 +30,8 @@ use std::thread::JoinHandle;
 use std::net::{UdpSocket, TcpListener};
 use ip::{SocketAddrExt, IpAddr};
 
-use event::{Event, MappedUdpSocket};
+use event::Event;
 use connection::Connection;
-use sequence_number::SequenceNumber;
 use hole_punching::HolePunchServer;
 use socket_addr::SocketAddr;
 
@@ -74,7 +73,6 @@ pub struct State {
     pub connections: HashMap<Connection, ConnectionData>,
     pub stop_called: bool,
     pub is_bootstrapping: bool,
-    pub next_punch_sequence: SequenceNumber,
 }
 
 impl State {
@@ -88,7 +86,6 @@ impl State {
             connections: HashMap::new(),
             stop_called: false,
             is_bootstrapping: false,
-            next_punch_sequence: SequenceNumber::new(::rand::random()),
         })
     }
 
@@ -380,7 +377,7 @@ impl State {
         false
     }
 
-    fn get_ordered_helping_nodes(&self) -> Vec<SocketAddr> {
+    pub fn get_ordered_helping_nodes(&self) -> Vec<SocketAddr> {
         let mut addrs = self.connections
                             .iter()
                             .filter_map(|pair| pair.1.mapper_address.clone())
@@ -394,33 +391,6 @@ impl State {
         addrs
     }
 
-    pub fn get_mapped_udp_socket(&mut self, result_token: u32) {
-        use hole_punching::blocking_get_mapped_udp_socket;
-
-        let seq_id = self.next_punch_sequence.number();
-        self.next_punch_sequence.increment();
-
-        let event_sender = self.event_sender.clone();
-        let helping_nodes = self.get_ordered_helping_nodes();
-
-        let _result_handle = Self::new_thread("map_udp", move || {
-            let result = blocking_get_mapped_udp_socket(seq_id, helping_nodes);
-
-            let res = match result {
-                // TODO (peterj) use _rest
-                Ok((socket, opt_mapped_addr, _rest)) => {
-                    let addrs = opt_mapped_addr.into_iter().collect();
-                    Ok((socket, addrs))
-                }
-                Err(what) => Err(what),
-            };
-
-            let _ = event_sender.send(Event::OnUdpSocketMapped(MappedUdpSocket {
-                result_token: result_token,
-                result: res,
-            }));
-        });
-    }
 }
 
 #[cfg(test)]
