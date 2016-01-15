@@ -26,6 +26,7 @@ use socket_addr::SocketAddr;
 #[derive(Debug, Clone, RustcDecodable, RustcEncodable)]
 pub struct Handshake {
     pub mapper_port: Option<u16>,
+    // TODO Rename to ours and theirs
     pub external_addr: Option<SocketAddr>,
     // used to tell the remote peer their ip (as seen by us)
     // TODO see if we can use None instead on ivalid address (for remote) as default

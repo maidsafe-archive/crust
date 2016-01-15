@@ -100,7 +100,7 @@ impl BroadcastAcceptor {
                                                                                         .unwrap();
                                                let transport =
                                                    try!(Service::accept(Handshake::default(),
-                                                                      &tcp_acceptor));
+                                                                        &tcp_acceptor));
                                                let _ = transport_sender.send(transport);
                                                Ok(())
                                            }));
@@ -110,35 +110,41 @@ impl BroadcastAcceptor {
         let tcp_port = self.tcp_listener_port;
         let (socket_sender, socket_receiver) = mpsc::channel::<SocketAddr>();
         let udp_listener_thread = try!(thread::Builder::new()
-                .name("Beacon accept UDP listener".to_owned())
-                .spawn(move || -> Result<()> {
-            let socket = protected_socket.lock().unwrap();
-            let mut buffer = vec![0u8; MAGIC_SIZE + GUID_SIZE];
-            loop {
-                let (size, source) = try!(socket.recv_from(&mut buffer[..]));
-                if size != MAGIC_SIZE + GUID_SIZE { continue; }
-                if buffer[0..MAGIC_SIZE] == MAGIC {  // Request for our port
-                    if buffer[MAGIC_SIZE..(MAGIC_SIZE + GUID_SIZE)] == guid {
-                        continue;  // The request is from ourself - don't respond.
-                    }
-                    let sent_size = try!(socket.send_to(&serialise_port(tcp_port), source));
-                    debug_assert!(sent_size == 2);
-                    break;
-                } else if buffer[0..MAGIC_SIZE] == STOP {  // Request to stop
-                    if buffer[MAGIC_SIZE..(MAGIC_SIZE + GUID_SIZE)] == guid &&
-                            util::is_loopback(&SocketAddrExt::ip(&source)) {  // The request is from ourself - stop.
-                        let _ = socket_sender.send(SocketAddr(source));
-                        return Err(io::Error::new(io::ErrorKind::ConnectionAborted,
-                                                  "Stopped beacon listener"));
-                    } else {
-                        continue;
-                    }
-                } else {
-                    continue;
-                }
-            }
-            Ok(())
-        }));
+                     .name("Beacon accept UDP listener".to_owned())
+                     .spawn(move || -> Result<()> {
+                         let socket = protected_socket.lock().unwrap();
+                         let mut buffer = vec![0u8; MAGIC_SIZE + GUID_SIZE];
+                         loop {
+                             let (size, source) = try!(socket.recv_from(&mut buffer[..]));
+                             if size != MAGIC_SIZE + GUID_SIZE {
+                                 continue;
+                             }
+                             if buffer[0..MAGIC_SIZE] == MAGIC {
+                                 // Request for our port
+                                 if buffer[MAGIC_SIZE..(MAGIC_SIZE + GUID_SIZE)] == guid {
+                                     continue;  // The request is from ourself - don't respond.
+                                 }
+                                 let sent_size = try!(socket.send_to(&serialise_port(tcp_port),
+                                                                     source));
+                                 debug_assert!(sent_size == 2);
+                                 break;
+                             } else if buffer[0..MAGIC_SIZE] == STOP {
+                                 // Request to stop
+                                 if buffer[MAGIC_SIZE..(MAGIC_SIZE + GUID_SIZE)] == guid &&
+                                    util::is_loopback(&SocketAddrExt::ip(&source)) {
+                                     // The request is from ourself - stop.
+                                     let _ = socket_sender.send(SocketAddr(source));
+                                     return Err(io::Error::new(io::ErrorKind::ConnectionAborted,
+                                                               "Stopped beacon listener"));
+                                 } else {
+                                     continue;
+                                 }
+                             } else {
+                                 continue;
+                             }
+                         }
+                         Ok(())
+                     }));
 
         let result = udp_listener_thread.join().unwrap();
         if let Err(e) = result {
@@ -174,7 +180,8 @@ impl BroadcastAcceptor {
         };
         let _ = udp_listener_killer.set_read_timeout(Some(Duration::new(10, 0)));
         // Safe to use unwrap here - this will always parse as a SocketAddr.
-        let udp_listener_address = net::SocketAddr::from_str(&format!("127.0.0.1:{}", guid_and_port.1))
+        let udp_listener_address = net::SocketAddr::from_str(&format!("127.0.0.1:{}",
+                                                                      guid_and_port.1))
                                        .unwrap();
         let _ = udp_listener_killer.send_to(&send_buffer[..], udp_listener_address);
         // Wait for acknowledgement ping.
@@ -294,6 +301,7 @@ pub fn seek_peers(port: u16, guid_to_avoid: Option<GUID>) -> Result<Vec<SocketAd
 mod test {
     use super::*;
     use std::thread;
+    use state::State;
     use endpoint::{Protocol, Endpoint};
     use transport::{Message, Handshake};
 
@@ -311,7 +319,8 @@ mod test {
 
         let t2 = thread::Builder::new().name("test_beacon receiver".to_owned()).spawn(move || {
             let endpoint = seek_peers(acceptor_port, None).unwrap()[0];
-            let mut transport = State::connect(Handshake::default(), Endpoint::from_socket_addr(Protocol::Tcp, endpoint))
+            let mut transport = State::connect(Handshake::default(),
+                                               Endpoint::from_socket_addr(Protocol::Tcp, endpoint))
                                     .unwrap()
                                     .1;
             let msg = String::from_utf8(match transport.receiver.receive().unwrap() {
