@@ -1407,6 +1407,19 @@ mod test {
         }
     }
 
+    #[test]
+    fn vinitest() {
+        let (category_tx, _) = channel();
+        let crust_event_category = MaidSafeEventCategory::CrustEvent;
+
+        let (sender, _) = channel();
+        let event_sender1 = MaidSafeObserver::new(sender,
+                                                  crust_event_category.clone(),
+                                                  category_tx.clone());
+        let mut service = Service::new(event_sender1).unwrap();
+        let _ = unwrap_result!(service.start_accepting(0)).port();
+    }
+
     // #[test]
     // fn remove_bootstrap_contact() {
     //     let endpoint0 = Endpoint::tcp("250.0.0.1:55555");
