@@ -31,8 +31,8 @@ use ip::SocketAddrExt;
 use net2::UdpSocketExt;
 
 use transport::{Transport, Handshake};
-use state::State;
 use util;
+use service::Service;
 
 const GUID_SIZE: usize = 16;
 const MAGIC_SIZE: usize = 4;
@@ -99,7 +99,7 @@ impl BroadcastAcceptor {
                                                let tcp_acceptor = protected_tcp_acceptor.lock()
                                                                                         .unwrap();
                                                let transport =
-                                                   try!(State::accept(Handshake::default(),
+                                                   try!(Service::accept(Handshake::default(),
                                                                       &tcp_acceptor));
                                                let _ = transport_sender.send(transport);
                                                Ok(())
@@ -296,7 +296,6 @@ mod test {
     use std::thread;
     use endpoint::{Protocol, Endpoint};
     use transport::{Message, Handshake};
-    use state::State;
 
     #[test]
     fn test_beacon() {
@@ -353,8 +352,7 @@ mod test {
                      .spawn(move || {
                          thread::sleep(::std::time::Duration::from_millis(700));
                          let endpoint = seek_peers(acceptor_port, None).unwrap()[0];
-                         let _ = State::connect(Handshake::default(), Endpoint::from_socket_addr(Protocol::Tcp, endpoint))
-                                     .unwrap();
+                         let _ = Service::handle_handshake(Handshake::default(), try!(transport::connect(Endpoint::from_socket_addr(Protocol::Tcp, endpoint)))).unwrap();
                      });
 
         assert!(t1.is_ok());

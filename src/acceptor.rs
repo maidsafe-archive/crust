@@ -21,26 +21,30 @@ use std::sync::atomic::{Ordering, AtomicBool};
 use std::net::{TcpStream, TcpListener};
 use std::sync::mpsc::Sender;
 use std::io;
+use std::str::FromStr;
 
 use get_if_addrs::get_if_addrs;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 use socket_addr::SocketAddr;
-use state::{State, Closure};
 use transport::Handshake;
 use hole_punching::HolePunchServer;
-use std::str::FromStr;
+use service::Service;
+use connection_map::ConnectionMap;
+use Endpoint;
+use event::Event;
 
 pub struct Acceptor {
     _joiner: RaiiThreadJoiner,
     running: Arc<AtomicBool>,
     addr: net::SocketAddr,
     mapped_addrs: Vec<SocketAddr>,
+    connection_map: Arc<ConnectionMap>,
 }
 
 impl Acceptor {
     pub fn new(listener: TcpListener,
                hole_punch_server: Arc<HolePunchServer>,
-               cmd_sender: Sender<Closure>)
+               connection_map: Arc<ConnectionMap>)
                -> io::Result<Acceptor> {
         let running = Arc::new(AtomicBool::new(true));
         let running_cloned = running.clone();
@@ -59,15 +63,18 @@ impl Acceptor {
                     external_addr: mapper_external_addr,
                     remote_addr: SocketAddr(net::SocketAddr::from_str("0.0.0.0:0").unwrap()),
                 };
-                let accept_res = State::accept(handshake, &listener);
+                let accept_res = Service::accept(handshake, &listener);
                 if !running_cloned.load(Ordering::SeqCst) {
                     break;
                 }
                 match accept_res {
                     Ok((handshake, transport)) => {
-                        let _ = cmd_sender.send(Closure::new(move |state: &mut State| {
-                            let _ = state.handle_accept(handshake, transport);
-                        }));
+                        let c = transport.connection_id.clone();
+                        let protocol = *c.peer_endpoint()
+                                         .protocol();
+                        let remote_addr = SocketAddr(*handshake.remote_addr);
+                        let our_external_endpoint = Endpoint::from_socket_addr(protocol, remote_addr);
+                        connection_map.register_connection(handshake, transport, Event::OnAccept(our_external_endpoint, c))
                     }
                     Err(e) => {
                         warn!("Acceptor got an error: {} {:?}", e, e);

@@ -102,7 +102,6 @@ mod tcp_connections;
 mod transport;
 mod utp_connections;
 mod utp_wrapper;
-mod state;
 mod event;
 mod map_external_port;
 mod hole_punching;
@@ -111,4 +110,5 @@ mod socket_utils;
 mod ip_info;
 mod socket_addr;
 mod acceptor;
+mod connection_map;
 

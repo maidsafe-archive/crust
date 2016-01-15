@@ -8,7 +8,6 @@ use std::sync::atomic::{Ordering, AtomicBool};
 use periodic_sender::PeriodicSender;
 use socket_utils::RecvUntil;
 use endpoint::{Protocol, Endpoint};
-use state::{Closure, State};
 use transport::Message;
 use socket_addr::{SocketAddr, SocketAddrV4};
 use maidsafe_utilities::thread::RaiiThreadJoiner;
@@ -211,7 +210,7 @@ pub struct HolePunchServer {
 
 impl HolePunchServer {
     /// Create a new hole punching server.
-    pub fn start(cmd_sender: Sender<Closure>) -> io::Result<HolePunchServer> {
+    pub fn start(upnp_external_addr_update: Sender<SocketAddr>) -> io::Result<HolePunchServer> {
         const MAX_DATAGRAM_SIZE: usize = 256;
 
         // Refresh the hole punched for our server socket every hour.
@@ -314,11 +313,7 @@ impl HolePunchServer {
                                     let mut ext_ip = external_ip_writer.write().unwrap();
                                     *ext_ip = Some(*external.socket_addr());
                                 };
-                                let _ = cmd_sender.send(Closure::new(move |state: &mut State| {
-                                    for cd in state.connections.values() {
-                                        let _ = cd.message_sender.send(Message::HolePunchAddress(*external.socket_addr()));
-                                    }
-                                }));
+                                upnp_external_addr_update.send(*external.socket_addr())
                             }
                         }
                     }
