@@ -56,7 +56,6 @@ extern crate memmap;
 #[macro_use]
 extern crate maidsafe_utilities;
 extern crate ip;
-// TODO (canndrew): Update get_if_addrs to version >= 0.2.0
 extern crate get_if_addrs;
 
 /// Module implementing the `Service` which provides an interface to manage peer-to-peer
@@ -80,7 +79,6 @@ pub use file_handler::{FileHandler, current_bin_dir, user_app_dir, system_cache_
 pub use endpoint::{Endpoint, Protocol};
 pub use connection::Connection;
 pub use util::ifaddrs_if_unspecified;
-pub use get_if_addrs::getifaddrs;
 pub use socket_addr::SocketAddr;
 
 #[cfg(test)]

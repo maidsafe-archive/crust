@@ -18,7 +18,7 @@
 use endpoint::{Protocol, Endpoint};
 use igd;
 use std::io;
-use get_if_addrs::{getifaddrs, filter_loopback};
+use get_if_addrs::get_if_addrs;
 use socket_addr::SocketAddrV4;
 use std::net;
 use ip::IpAddr;
@@ -57,16 +57,15 @@ pub fn sync_map_external_port(local_ep: &Endpoint) -> io::Result<Vec<(SocketAddr
         // with unspecified addresses itself? Also, it doesn't sound right
         // that we want to map one external port to multiple internal
         // endpoints...
-        filter_loopback(getifaddrs())
+        try!(get_if_addrs())
             .into_iter()
-            .filter_map(|e| {
-                match e.addr {
-                    IpAddr::V4(ip) => Some(ip),
-                    IpAddr::V6(_) => None,
-                }
+            .filter(|iface| !iface.is_loopback())
+            .filter_map(|iface| match iface.ip() {
+                IpAddr::V4(ip) => Some(ip),
+                IpAddr::V6(_) => None,
             })
             .map(|ip| SocketAddrV4(net::SocketAddrV4::new(ip, local_ep.port())))
-            .collect::<Vec<_>>()
+            .collect()
     };
 
     let eps_count = local_eps.len();

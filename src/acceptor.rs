@@ -22,7 +22,7 @@ use std::net::{TcpStream, TcpListener};
 use std::sync::mpsc::Sender;
 use std::io;
 
-use get_if_addrs::{getifaddrs, filter_loopback};
+use get_if_addrs::get_if_addrs;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 use socket_addr::SocketAddr;
 use state::{State, Closure};
@@ -45,10 +45,11 @@ impl Acceptor {
         let running = Arc::new(AtomicBool::new(true));
         let running_cloned = running.clone();
         let addr = try!(listener.local_addr());
-        let mapped_addrs = filter_loopback(getifaddrs())
-                               .into_iter()
-                               .map(|iface| SocketAddr::new(iface.addr, addr.port()))
-                               .collect();
+        let mapped_addrs = try!(get_if_addrs())
+                                .into_iter()
+                                .filter(|i| !i.is_loopback())
+                                .map(|i| SocketAddr::new(i.ip(), addr.port()))
+                                .collect();
         let joiner = RaiiThreadJoiner::new(thread!("acceptor", move || {
             loop {
                 let mapper_external_addr = hole_punch_server.external_address();

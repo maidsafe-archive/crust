@@ -29,7 +29,7 @@ use itertools::Itertools;
 use acceptor::Acceptor;
 use beacon;
 use config_handler::{Config, read_config_file};
-use get_if_addrs::{getifaddrs, filter_loopback};
+use get_if_addrs::get_if_addrs;
 use transport::Handshake;
 use endpoint::{Endpoint, Protocol};
 use map_external_port::async_map_external_port;
@@ -127,12 +127,11 @@ impl Service {
 
         // TODO Take this out after evaluating
         if self.beacon_guid_and_port.is_some() {
-            let contacts = filter_loopback(getifaddrs())
-                               .into_iter()
-                               .map(|ip| {
-                                   Endpoint::new(Protocol::Utp, ip.addr.clone(), accept_addr.port())
-                               })
-                               .collect::<Vec<_>>();
+            let contacts = try!(get_if_addrs())
+                                .into_iter()
+                                .filter(|i| !i.is_loopback())
+                                .map(|i| Endpoint::new(Protocol::Utp, i.ip(), accept_addr.port()))
+                                .collect();
 
             try!(self.bootstrap_handler.update_contacts(contacts, vec![]));
         }
