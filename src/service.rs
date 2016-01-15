@@ -32,7 +32,6 @@ use itertools::Itertools;
 use acceptor::Acceptor;
 use beacon;
 use config_handler::{Config, read_config_file};
-use get_if_addrs::get_if_addrs;
 use transport::Handshake;
 use transport;
 use endpoint::{Endpoint, Protocol};
@@ -146,17 +145,6 @@ impl Service {
                                           hole_punch_server,
                                           self.connection_map.clone()));
         self.acceptors.push(acceptor);
-
-        // TODO Take this out after evaluating
-        if self.beacon_guid_and_port.is_some() {
-            let contacts = try!(get_if_addrs())
-                               .into_iter()
-                               .filter(|i| !i.is_loopback())
-                               .map(|i| Endpoint::new(Protocol::Utp, i.ip(), accept_addr.port()))
-                               .collect();
-
-            try!(self.bootstrap_handler.update_contacts(contacts, vec![]));
-        }
 
         // FIXME: Instead of hardcoded wrapping in loopback V4, the
         // acceptor should tell us the address it is accepting on.
