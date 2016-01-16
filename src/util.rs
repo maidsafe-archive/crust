@@ -17,7 +17,7 @@
 
 use ip::IpAddr;
 use std::cmp::Ordering;
-use get_if_addrs::{getifaddrs, IfAddr};
+use get_if_addrs::{get_if_addrs, Interface, IfAddr};
 use endpoint::Endpoint;
 use std::net;
 use ip_info;
@@ -126,6 +126,7 @@ pub fn on_same_subnet_v6(ip_addr1: net::Ipv6Addr,
     true
 }
 
+/*
 pub fn on_same_subnet(ip_addr1: IpAddr, ip_addr2: IpAddr, netmask: IpAddr) -> bool {
     use ip::IpAddr::V4;
     use ip::IpAddr::V6;
@@ -136,11 +137,22 @@ pub fn on_same_subnet(ip_addr1: IpAddr, ip_addr2: IpAddr, netmask: IpAddr) -> bo
         _ => false,
     }
 }
+*/
 
-pub fn is_local(ip_addr: &IpAddr, interfaces: &[IfAddr]) -> bool {
+pub fn is_local(ip_addr: &IpAddr, interfaces: &[Interface]) -> bool {
     for i in interfaces.iter() {
-        if on_same_subnet(i.addr, *ip_addr, i.netmask) {
-            return true;
+        match (*ip_addr, &i.addr) {
+            (IpAddr::V4(ipv4_addr), &IfAddr::V4(ref ifv4_addr)) => {
+                if on_same_subnet_v4(ipv4_addr, ifv4_addr.ip, ifv4_addr.netmask) {
+                    return true;
+                }
+            },
+            (IpAddr::V6(ipv6_addr), &IfAddr::V6(ref ifv6_addr)) => {
+                if on_same_subnet_v6(ipv6_addr, ifv6_addr.ip, ifv6_addr.netmask) {
+                    return true;
+                }
+            },
+            _ => (),
         }
     }
     false
@@ -198,7 +210,10 @@ pub fn heuristic_geo_cmp(ip1: &IpAddr, ip2: &IpAddr) -> Ordering {
         _ => (),
     }
 
-    let interfaces = getifaddrs();
+    let interfaces = match get_if_addrs() {
+        Ok(interfaces) => interfaces,
+        Err(_) => return Equal,
+    };
 
     match (is_local(ip1, &interfaces), is_local(ip2, &interfaces)) {
         (true, true) => Equal,
@@ -227,13 +242,14 @@ pub fn ifaddrs_if_unspecified(ep: &Endpoint) -> Vec<Endpoint> {
 
     let ep_is_v4 = is_v4(&ep.ip());
 
-    getifaddrs()
+    get_if_addrs()
+        .unwrap_or(Vec::new())
         .into_iter()
         .filter_map(|iface| {
-            if ep_is_v4 != is_v4(&iface.addr) {
-                return None;
+            match ep_is_v4 == is_v4(&iface.ip()) {
+                true => Some(Endpoint::new(*ep.protocol(), iface.ip(), ep.port())),
+                false => None,
             }
-            Some(Endpoint::new(ep.protocol().clone(), iface.addr, ep.port()))
         })
         .collect()
 }
@@ -299,9 +315,10 @@ pub fn timed_recv<T>(receiver: &mpsc::Receiver<T>,
 
 #[cfg(test)]
 mod test {
+    use get_if_addrs::get_if_addrs;
+
     #[test]
     fn test_heuristic_geo_cmp() {
-        use get_if_addrs::getifaddrs;
         use std::cmp::Ordering::{Less, Equal, Greater};
         use ip::IpAddr::V4;
 
@@ -314,10 +331,10 @@ mod test {
         assert_eq!(super::heuristic_geo_cmp(&l, &g), Less);
         assert_eq!(super::heuristic_geo_cmp(&g, &l), Greater);
 
-        let ifs = getifaddrs()
+        let ifs = unwrap_result!(get_if_addrs())
                       .into_iter()
-                      .map(|interface| interface.addr)
-                      .filter(|addr| !super::is_loopback(&addr))
+                      .filter(|iface| !iface.is_loopback())
+                      .map(|iface| iface.ip())
                       .collect::<Vec<_>>();
 
         for i in ifs {
@@ -326,3 +343,4 @@ mod test {
         }
     }
 }
+

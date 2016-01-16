@@ -16,31 +16,38 @@
 // relating to use of the SAFE Network Software.
 
 use std::io;
-use std::sync::mpsc::Sender;
+use std::sync::mpsc::{Sender, Receiver};
+use std::sync::mpsc;
+use std::sync::atomic::{Ordering, AtomicBool};
 use std::thread;
 use std::net;
 use std::thread::JoinHandle;
 use std::sync::{Arc, Mutex};
 use std::str::FromStr;
+use std::collections::HashMap;
 
 use std::net::{UdpSocket, TcpListener};
 
+use maidsafe_utilities::thread::RaiiThreadJoiner;
 use itertools::Itertools;
 use acceptor::Acceptor;
 use beacon;
 use config_handler::{Config, read_config_file};
-use get_if_addrs::{getifaddrs, filter_loopback};
-use transport::Handshake;
+use get_if_addrs::get_if_addrs;
+use transport::{Transport, Message, Handshake};
+use transport;
 use endpoint::{Endpoint, Protocol};
 use map_external_port::async_map_external_port;
 use connection::Connection;
+use connection_map::ConnectionMap;
 use error::Error;
+use ip::{IpAddr, SocketAddrExt};
 
-use state::{Closure, State};
-use event::{Event, HolePunchResult};
+use event::{Event, HolePunchResult, MappedUdpSocket};
 use socket_addr::{SocketAddr, SocketAddrV4};
 use bootstrap_handler::BootstrapHandler;
 use hole_punching::HolePunchServer;
+use sequence_number::SequenceNumber;
 
 /// A structure representing a connection manager.
 ///
@@ -51,11 +58,15 @@ use hole_punching::HolePunchServer;
 pub struct Service {
     beacon_guid_and_port: Option<(beacon::GUID, u16)>,
     config: Config,
-    cmd_sender: Sender<Closure>,
-    state_thread_handle: Option<JoinHandle<()>>,
     bootstrap_handler: BootstrapHandler,
     acceptors: Vec<Acceptor>,
     mapper: Arc<HolePunchServer>,
+    next_punch_sequence: SequenceNumber,
+    event_sender: ::CrustEventSender,
+    connection_map: Arc<ConnectionMap>,
+    stop_called: bool,
+    is_bootstrapping: Arc<AtomicBool>,
+    bootstrap_thread: Option<RaiiThreadJoiner>,
 }
 
 impl Service {
@@ -77,23 +88,26 @@ impl Service {
     fn construct(event_sender: ::CrustEventSender,
                  config: Config)
                  -> Result<Service, ::error::Error> {
-        let mut state = try!(State::new(event_sender));
-        let cmd_sender = state.cmd_sender.clone();
+        let (upnp_addr_tx, _upnp_addr_rx) = mpsc::channel();
+        let mapper = Arc::new(try!(::hole_punching::HolePunchServer::start(upnp_addr_tx)));
 
-        let mapper = Arc::new(try!(::hole_punching::HolePunchServer::start(cmd_sender.clone())));
-
-        let handle = try!(Self::new_thread("run loop", move || {
-            state.run();
-        }));
+        // TODO (canndrew): Handle HolePunchServer external address updates by notifying all
+        // connected clients.
+        // let upnp_updater_handle = RaiiThreadJoiner::new(thread!("upnp j
+        let connection_map = Arc::new(ConnectionMap::new(event_sender.clone()));
 
         let service = Service {
             beacon_guid_and_port: None,
             config: config,
-            cmd_sender: cmd_sender,
-            state_thread_handle: Some(handle),
             bootstrap_handler: try!(BootstrapHandler::new()),
             acceptors: Vec::new(),
             mapper: mapper,
+            next_punch_sequence: SequenceNumber::new(::rand::random()),
+            event_sender: event_sender,
+            connection_map: connection_map,
+            stop_called: false,
+            is_bootstrapping: Arc::new(AtomicBool::new(false)),
+            bootstrap_thread: None,
         };
 
         Ok(service)
@@ -104,6 +118,39 @@ impl Service {
             .iter()
             .map(|a| Endpoint::from_socket_addr(Protocol::Tcp, a.local_address()))
             .collect()
+    }
+
+    pub fn handle_handshake(mut handshake: Handshake,
+                            mut trans: Transport)
+                            -> io::Result<(Handshake, Transport)> {
+        let handshake_err = Err(io::Error::new(io::ErrorKind::Other, "handshake failed"));
+
+        handshake.remote_addr = trans.connection_id.peer_addr().clone();
+        if let Err(_) = trans.sender.send_handshake(handshake) {
+            return handshake_err;
+        }
+
+        trans.receiver
+             .receive_handshake()
+             .and_then(|handshake| Ok((handshake, trans)))
+             .or(handshake_err)
+    }
+
+    /// Sends a message over a specified connection.
+    pub fn send(&mut self, connection: Connection, bytes: Vec<u8>) {
+        match self.connection_map.get(&connection) {
+            Some(connection_data) => {
+                let writer = &connection_data.message_sender;
+                if let Err(_what) = writer.send(&Message::UserBlob(bytes)) {
+                    self.connection_map.unregister_connection(connection);
+                }
+            }
+            None => {
+                // Connection already destroyed or never existed.
+                return;
+            }
+        };
+
     }
 
     /// Start the beaconing on port `udp_port`. If port number is 0, the OS will
@@ -122,17 +169,18 @@ impl Service {
         let accept_addr = try!(listener.local_addr());
 
         let hole_punch_server = self.mapper.clone();
-        let acceptor = try!(Acceptor::new(listener, hole_punch_server, self.cmd_sender.clone()));
+        let acceptor = try!(Acceptor::new(listener,
+                                          hole_punch_server,
+                                          self.connection_map.clone()));
         self.acceptors.push(acceptor);
 
         // TODO Take this out after evaluating
         if self.beacon_guid_and_port.is_some() {
-            let contacts = filter_loopback(getifaddrs())
+            let contacts = try!(get_if_addrs())
                                .into_iter()
-                               .map(|ip| {
-                                   Endpoint::new(Protocol::Utp, ip.addr.clone(), accept_addr.port())
-                               })
-                               .collect::<Vec<_>>();
+                               .filter(|i| !i.is_loopback())
+                               .map(|i| Endpoint::new(Protocol::Utp, i.ip(), accept_addr.port()))
+                               .collect();
 
             try!(self.bootstrap_handler.update_contacts(contacts, vec![]));
         }
@@ -187,13 +235,18 @@ impl Service {
         assert!(self.beacon_guid_and_port.is_none());
         self.beacon_guid_and_port = Some((acceptor.beacon_guid(), b_port));
 
-        let sender = self.cmd_sender.clone();
-
+        let connection_map = self.connection_map.clone();
         let thread_result = Self::new_thread("beacon acceptor", move || {
             while let Ok((h, t)) = acceptor.accept() {
-                let _ = sender.send(Closure::new(move |state: &mut State| {
-                    let _ = state.handle_accept(h, t);
-                }));
+                let c = t.connection_id.clone();
+                let our_external_endpoint = Endpoint::from_socket_addr(*t.connection_id
+                                                                         .peer_endpoint()
+                                                                         .protocol(),
+                                                                       SocketAddr(*h.remote_addr));
+                let _ = connection_map.register_connection(h,
+                                                           t,
+                                                           Event::OnAccept(our_external_endpoint,
+                                                                           c));
             }
         });
 
@@ -239,19 +292,8 @@ impl Service {
                                                             beacon_port,
                                                             &beacon_guid_and_port);
         let mapper_cloned = self.mapper.clone();
-        Self::post(&self.cmd_sender, move |state: &mut State| {
-
-            contacts.retain(|endpoint| !blist.contains(&endpoint));
-
-            state.bootstrap_off_list(token, contacts.clone(), mapper_cloned)
-        });
-    }
-
-    /// Stop the bootstraping procedure
-    pub fn stop_bootstrap(&mut self) {
-        Self::post(&self.cmd_sender, move |state: &mut State| {
-            state.stop_bootstrap();
-        });
+        contacts.retain(|endpoint| !blist.contains(&endpoint));
+        self.bootstrap_off_list(token, contacts.clone(), mapper_cloned)
     }
 
     /// Remove endpoint from the bootstrap cache.
@@ -268,13 +310,7 @@ impl Service {
             beacon::BroadcastAcceptor::stop(&beacon_guid_and_port);
         }
 
-        let _ = self.cmd_sender.send(Closure::new(move |state: &mut State| {
-            state.stop();
-        }));
-
-        if let Some(handle) = self.state_thread_handle.take() {
-            let _ = handle.join();
-        }
+        self.stop_called = true;
     }
 
     /// Opens a connection to a remote peer. `endpoints` is a vector of addresses of the remote
@@ -289,32 +325,148 @@ impl Service {
     pub fn connect(&self, token: u32, endpoints: Vec<Endpoint>) {
         let mapper_external_addr = self.mapper.external_address();
         let mapper_internal_port = self.mapper.listening_addr().port();
-        Self::post(&self.cmd_sender, move |state: &mut State| {
-            let cmd_sender = state.cmd_sender.clone();
 
-            let handshake = Handshake {
-                mapper_port: Some(mapper_internal_port),
-                external_addr: mapper_external_addr,
-                remote_addr: SocketAddr(net::SocketAddr::from_str("0.0.0.0:0").unwrap()),
-            };
+        let handshake = Handshake {
+            mapper_port: Some(mapper_internal_port),
+            external_addr: mapper_external_addr,
+            remote_addr: SocketAddr(net::SocketAddr::from_str("0.0.0.0:0").unwrap()),
+        };
 
-            let _ = Self::new_thread("connect", move || {
-                for endpoint in endpoints {
-                    match State::connect(handshake.clone(), endpoint) {
-                        Ok((h, t)) => {
-                            let _ = cmd_sender.send(Closure::new(move |state: &mut State| {
-                                let _ = state.handle_connect(token, h, t);
-                            }));
-                        }
-                        Err(e) => {
-                            let _ = cmd_sender.send(Closure::new(move |state: &mut State| {
-                                let _ = state.event_sender.send(Event::OnConnect(Err(e), token));
-                            }));
-                        }
+        let event_sender = self.event_sender.clone();
+
+        let connection_map = self.connection_map.clone();
+        let _ = Self::new_thread("connect", move || {
+            for endpoint in endpoints {
+                let transport = match transport::connect(endpoint) {
+                    Ok(transport) => transport,
+                    Err(_) => continue,
+                };
+                match Self::handle_handshake(handshake, transport) {
+                    Ok((h, t)) => {
+                        let c = t.connection_id.clone();
+                        let our_external_endpoint =
+                            Endpoint::from_socket_addr(*t.connection_id
+                                                         .peer_endpoint()
+                                                         .protocol(),
+                                                       SocketAddr(*h.remote_addr));
+                        let event = Event::OnConnect(Ok((our_external_endpoint, c)), token);
+
+                        let _ = connection_map.register_connection(h, t, event);
+                    }
+                    Err(e) => {
+                        let _ = event_sender.send(Event::OnConnect(Err(e), token));
                     }
                 }
-            });
+            }
         });
+    }
+
+    // TODO (canndrew): merge this with handle_rendezvous_connect
+    // rename this method and the associated event to handle_bootstrap_connect
+    pub fn handle_connect(&mut self,
+                          token: u32,
+                          handshake: Handshake,
+                          trans: Transport)
+                          -> io::Result<Connection> {
+    }
+
+    fn is_connected_to(&self, endpoint: &Endpoint) -> bool {
+        self.connection_map.is_connected_to(endpoint)
+    }
+
+    pub fn get_ordered_helping_nodes(&self) -> Vec<SocketAddr> {
+        self.connection_map.get_ordered_helping_nodes()
+    }
+
+    // pushing events out to event_sender
+    fn start_reading_thread(&self, mut receiver: transport::Receiver, connection: Connection) {}
+
+    pub fn handle_accept(&mut self,
+                         handshake: Handshake,
+                         trans: Transport)
+                         -> io::Result<Connection> {
+    }
+
+    pub fn bootstrap_off_list(&mut self,
+                              token: u32,
+                              bootstrap_list: Vec<Endpoint>,
+                              hole_punch_server: Arc<HolePunchServer>) {
+        if self.is_bootstrapping.compare_and_swap(false, true, Ordering::SeqCst) {
+            return;
+        }
+
+        let is_bootstrapping = self.is_bootstrapping.clone();
+        let bootstrap_thread = self.bootstrap_thread.take();
+        match bootstrap_thread {
+            Some(handle) => drop(handle),
+            None => (),
+        };
+
+        let connection_map = self.connection_map.clone();
+        let event_sender = self.event_sender.clone();
+
+        let handle = RaiiThreadJoiner::new(thread!("bootstrap thread", move || {
+            for endpoint in bootstrap_list {
+                // Bootstrapping got cancelled.
+                if !is_bootstrapping.load(Ordering::SeqCst) {
+                    return;
+                }
+                if connection_map.is_connected_to(&endpoint) {
+                    continue;
+                }
+
+                let mapper_port = hole_punch_server.listening_addr().port();
+                let external_addr = hole_punch_server.external_address();
+
+                let h = Handshake {
+                    mapper_port: Some(mapper_port),
+                    external_addr: external_addr,
+                    remote_addr: SocketAddr(net::SocketAddr::from_str("0.0.0.0:0").unwrap()),
+                };
+                let connect_result = transport::connect(endpoint)
+                                         .and_then(|t| Self::handle_handshake(h, t));
+                if !is_bootstrapping.load(Ordering::SeqCst) {
+                    return;
+                }
+                if let Ok((handshake, trans)) = connect_result {
+                    let c = trans.connection_id.clone();
+                    let our_external_endpoint =
+                        Endpoint::from_socket_addr(*trans.connection_id
+                                                         .peer_endpoint()
+                                                         .protocol(),
+                                                   SocketAddr(*handshake.remote_addr));
+                    let event = Event::OnConnect(Ok((our_external_endpoint, c)), token);
+
+                    let _ = connection_map.register_connection(handshake, trans, event);
+                }
+            }
+            let _ = event_sender.send(Event::BootstrapFinished);
+        }));
+    }
+
+    /// Stop the bootstraping procedure
+    pub fn stop_bootstrap(&mut self) {
+        self.is_bootstrapping.store(false, Ordering::SeqCst);
+    }
+
+    pub fn handle_rendezvous_connect(connection_map: Arc<ConnectionMap>,
+                                     token: u32,
+                                     handshake: Handshake,
+                                     trans: Transport)
+                                     -> io::Result<Connection> {
+        let c = trans.connection_id.clone();
+        let our_external_endpoint = Endpoint::from_socket_addr(*trans.connection_id
+                                                                     .peer_endpoint()
+                                                                     .protocol(),
+                                                               SocketAddr(*handshake.remote_addr));
+        let event = Event::OnRendezvousConnect(Ok((our_external_endpoint, c)), token);
+        connection_map.register_connection(handshake, trans, event)
+    }
+
+    pub fn accept(handshake: Handshake,
+                  acceptor: &TcpListener)
+                  -> io::Result<(Handshake, Transport)> {
+        Self::handle_handshake(handshake, try!(transport::accept(acceptor)))
     }
 
     /// Opens a connection to a remote peer. `public_endpoint` is the endpoint
@@ -346,45 +498,40 @@ impl Service {
                               public_endpoint: Endpoint /* of B */) {
         let mapper_external_addr = self.mapper.external_address();
         let mapper_internal_port = self.mapper.listening_addr().port();
-        Self::post(&self.cmd_sender, move |state: &mut State| {
-            let cmd_sender = state.cmd_sender.clone();
 
-            let handshake = Handshake {
-                mapper_port: Some(mapper_internal_port),
-                external_addr: mapper_external_addr,
-                remote_addr: SocketAddr(net::SocketAddr::from_str("0.0.0.0:0").unwrap()),
+        let handshake = Handshake {
+            mapper_port: Some(mapper_internal_port),
+            external_addr: mapper_external_addr,
+            remote_addr: SocketAddr(net::SocketAddr::from_str("0.0.0.0:0").unwrap()),
+        };
+
+        let event_sender = self.event_sender.clone();
+        let connection_map = self.connection_map.clone();
+
+        let _ = Self::new_thread("rendezvous connect", move || {
+            let res = transport::rendezvous_connect(udp_socket, public_endpoint)
+                .and_then(move |t| Self::handle_handshake(handshake, t));
+
+            let (his_handshake, transport) = match res {
+                Ok((h, t)) => {
+                    (h, t)
+                }
+                Err(e) => {
+                    let _ = event_sender.send(Event::OnRendezvousConnect(Err(e), token));
+                    return ()
+                }
             };
 
-            let _ = Self::new_thread("rendezvous connect", move || {
-                match State::rendezvous_connect(handshake.clone(), udp_socket, public_endpoint) {
-                    Ok((h, t)) => {
-                        let _ = cmd_sender.send(Closure::new(move |state: &mut State| {
-                            let _ = state.handle_rendezvous_connect(token, h, t);
-                        }));
-                    }
-                    Err(e) => {
-                        let _ = cmd_sender.send(Closure::new(move |state: &mut State| {
-                            let _ = state.event_sender
-                                         .send(Event::OnRendezvousConnect(Err(e), token));
-                        }));
-                    }
-                }
-            });
+            let _ = Service::handle_rendezvous_connect(connection_map,
+                                                       token,
+                                                       his_handshake,
+                                                       transport);
         });
-    }
-
-    /// Sends a message over a specified connection.
-    pub fn send(&self, connection: Connection, message: Vec<u8>) {
-        Self::post(&self.cmd_sender, move |state: &mut State| {
-            state.send(connection, message);
-        })
     }
 
     /// Closes a connection.
     pub fn drop_node(&self, connection: Connection) {
-        Self::post(&self.cmd_sender, move |state: &mut State| {
-            let _ = state.connections.remove(&connection);
-        })
+        self.connection_map.unregister_connection(connection);
     }
 
     /// Returns beacon acceptor port if beacon acceptor is accepting, otherwise returns `None`
@@ -428,50 +575,41 @@ impl Service {
     pub fn get_external_endpoints(&self) {
         let internal_eps = self.get_local_endpoints();
 
-        Self::post(&self.cmd_sender, move |state: &mut State| {
-            type T = (SocketAddrV4, Endpoint);
+        type T = (SocketAddrV4, Endpoint);
 
-            struct Async {
-                remaining: usize,
-                results: Vec<Endpoint>,
-            }
+        struct Async {
+            remaining: usize,
+            results: Vec<Endpoint>,
+        }
 
-            let async = Arc::new(Mutex::new(Async {
-                remaining: internal_eps.len(),
-                results: Vec::new(),
-            }));
+        let async = Arc::new(Mutex::new(Async {
+            remaining: internal_eps.len(),
+            results: Vec::new(),
+        }));
 
-            for internal_ep in internal_eps {
-                let async = async.clone();
-                let event_sender = state.event_sender.clone();
+        for internal_ep in internal_eps {
+            let async = async.clone();
+            let event_sender = self.event_sender.clone();
 
-                async_map_external_port(internal_ep.clone(), move |results: io::Result<Vec<T>>| {
-                    let mut async = async.lock().unwrap();
-                    async.remaining -= 1;
-                    if let Ok(results) = results {
-                        for result in results {
-                            let transport_port = internal_ep.socket_addr().port();
-                            let ext_ep = Endpoint::new(result.1.protocol().clone(),
-                                                       result.1.ip().clone(),
-                                                       transport_port);
-                            async.results.push(ext_ep);
-                        }
+            async_map_external_port(internal_ep.clone(), move |results: io::Result<Vec<T>>| {
+                let mut async = async.lock().unwrap();
+                async.remaining -= 1;
+                if let Ok(results) = results {
+                    for result in results {
+                        let transport_port = internal_ep.socket_addr().port();
+                        let ext_ep = Endpoint::new(result.1.protocol().clone(),
+                                                   result.1.ip().clone(),
+                                                   transport_port);
+                        async.results.push(ext_ep);
                     }
-                    if async.remaining == 0 {
-                        let event = Event::ExternalEndpoints(async.results
-                                                                  .clone());
-                        let _ = event_sender.send(event);
-                    }
-                });
-            }
-        });
-    }
-
-    /// Lookup a mapped udp socket based on result_token
-    pub fn get_mapped_udp_socket(&self, result_token: u32) {
-        Self::post(&self.cmd_sender, move |state: &mut State| {
-            state.get_mapped_udp_socket(result_token);
-        });
+                }
+                if async.remaining == 0 {
+                    let event = Event::ExternalEndpoints(async.results
+                                                              .clone());
+                    let _ = event_sender.send(event);
+                }
+            });
+        }
     }
 
     fn new_thread<F, T>(name: &str, f: F) -> io::Result<JoinHandle<T>>
@@ -484,33 +622,56 @@ impl Service {
             .spawn(f)
     }
 
-    fn post<F>(sender: &Sender<Closure>, cmd: F)
-        where F: FnOnce(&mut State) + Send + 'static
-    {
-        assert!(sender.send(Closure::new(cmd)).is_ok());
-    }
-
     /// Udp hole punching process
     pub fn udp_punch_hole(&self,
                           result_token: u32,
                           udp_socket: UdpSocket,
                           secret: Option<[u8; 4]>,
                           peer_addr: SocketAddr) {
-        Self::post(&self.cmd_sender, move |state: &mut State| {
-            let event_sender = state.event_sender.clone();
+        let event_sender = self.event_sender.clone();
+
+        // TODO (canndrew): we currently have no means to handle this error
+        let _ = Self::new_thread("udp_punch_hole", move || {
+            let (udp_socket, result_addr) = ::hole_punching::blocking_udp_punch_hole(udp_socket,
+                                                                                     secret,
+                                                                                     peer_addr);
 
             // TODO (canndrew): we currently have no means to handle this error
-            let _ = Self::new_thread("udp_punch_hole", move || {
-                let (udp_socket, result_addr) =
-                    ::hole_punching::blocking_udp_punch_hole(udp_socket, secret, peer_addr);
+            let _ = event_sender.send(Event::OnHolePunched(HolePunchResult {
+                result_token: result_token,
+                udp_socket: udp_socket,
+                peer_addr: result_addr,
+            }));
+        });
+    }
 
-                // TODO (canndrew): we currently have no means to handle this error
-                let _ = event_sender.send(Event::OnHolePunched(HolePunchResult {
-                    result_token: result_token,
-                    udp_socket: udp_socket,
-                    peer_addr: result_addr,
-                }));
-            });
+    /// Lookup a mapped udp socket based on result_token
+    pub fn get_mapped_udp_socket(&mut self, result_token: u32) {
+        use hole_punching::blocking_get_mapped_udp_socket;
+
+        let seq_id = self.next_punch_sequence.number();
+        self.next_punch_sequence.increment();
+
+        let helping_nodes = self.get_ordered_helping_nodes();
+        let event_sender = self.event_sender.clone();
+
+
+        let _result_handle = Self::new_thread("map_udp", move || {
+            let result = blocking_get_mapped_udp_socket(seq_id, helping_nodes);
+
+            let res = match result {
+                // TODO (peterj) use _rest
+                Ok((socket, opt_mapped_addr, _rest)) => {
+                    let addrs = opt_mapped_addr.into_iter().collect();
+                    Ok((socket, addrs))
+                }
+                Err(what) => Err(what),
+            };
+
+            let _ = event_sender.send(Event::OnUdpSocketMapped(MappedUdpSocket {
+                result_token: result_token,
+                result: res,
+            }));
         });
     }
 }
