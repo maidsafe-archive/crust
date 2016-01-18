@@ -303,7 +303,7 @@ mod test {
     use std::thread;
     use endpoint::{Protocol, Endpoint};
     use transport;
-    use transport::{Message, Handshake};
+    use transport::Message;
 
     #[test]
     fn test_beacon() {

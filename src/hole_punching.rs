@@ -473,6 +473,7 @@ mod tests {
     fn test_get_mapped_socket_from_self() {
         use std::sync::mpsc;
 
+        /*
         let (category_tx, _) = mpsc::channel();
         let (tx, _rx) = mpsc::channel();
 
@@ -482,9 +483,11 @@ mod tests {
             ::maidsafe_utilities::event_sender::MaidSafeObserver::new(tx,
                                                                       crust_event_category,
                                                                       category_tx);
+        */
+
         // Hole punch server tries to contact uPnP devices and find out
         // our external SocketAddr, we currently get it through a channel.
-        let (_rx, tx) = mpsc::channel();
+        let (tx, _rx) = mpsc::channel();
         let hole_punch_server = Arc::new(unwrap_result!(HolePunchServer::start(tx)));
         let (socket, our_addr, remaining) =
             blocking_get_mapped_udp_socket(::rand::random(),

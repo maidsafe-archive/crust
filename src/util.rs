@@ -254,6 +254,7 @@ pub fn ifaddrs_if_unspecified(ep: &Endpoint) -> Vec<Endpoint> {
         .collect()
 }
 
+/*
 #[cfg(test)]
 pub fn loopback_if_unspecified(addr: IpAddr) -> IpAddr {
     match addr {
@@ -273,6 +274,7 @@ pub fn loopback_if_unspecified(addr: IpAddr) -> IpAddr {
         }
     }
 }
+*/
 
 #[cfg(test)]
 pub fn random_endpoint() -> Endpoint {

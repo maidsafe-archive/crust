@@ -136,7 +136,7 @@ impl Service {
     }
 
     /// Sends a message over a specified connection.
-    pub fn send(&mut self, connection: Connection, bytes: Vec<u8>) {
+    pub fn send(&self, connection: Connection, bytes: Vec<u8>) {
         self.connection_map.send(connection, bytes)
     }
 
