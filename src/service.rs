@@ -16,7 +16,6 @@
 // relating to use of the SAFE Network Software.
 
 use std::io;
-use std::sync::mpsc::{Sender, Receiver};
 use std::sync::mpsc;
 use std::sync::atomic::{Ordering, AtomicBool};
 use std::thread;
@@ -24,7 +23,6 @@ use std::net;
 use std::thread::JoinHandle;
 use std::sync::{Arc, Mutex};
 use std::str::FromStr;
-use std::collections::HashMap;
 
 use std::net::{UdpSocket, TcpListener};
 
@@ -34,14 +32,14 @@ use acceptor::Acceptor;
 use beacon;
 use config_handler::{Config, read_config_file};
 use get_if_addrs::get_if_addrs;
-use transport::{Transport, Message, Handshake};
+use transport::{Transport, Handshake};
 use transport;
 use endpoint::{Endpoint, Protocol};
 use map_external_port::async_map_external_port;
 use connection::Connection;
 use connection_map::ConnectionMap;
 use error::Error;
-use ip::{IpAddr, SocketAddrExt};
+use ip::SocketAddrExt;
 
 use event::{Event, HolePunchResult, MappedUdpSocket};
 use socket_addr::{SocketAddr, SocketAddrV4};
@@ -120,6 +118,7 @@ impl Service {
             .collect()
     }
 
+    /// Send and recieve handshake on the transport
     pub fn handle_handshake(mut handshake: Handshake,
                             mut trans: Transport)
                             -> io::Result<(Handshake, Transport)> {
@@ -138,19 +137,7 @@ impl Service {
 
     /// Sends a message over a specified connection.
     pub fn send(&mut self, connection: Connection, bytes: Vec<u8>) {
-        match self.connection_map.get(&connection) {
-            Some(connection_data) => {
-                let writer = &connection_data.message_sender;
-                if let Err(_what) = writer.send(&Message::UserBlob(bytes)) {
-                    self.connection_map.unregister_connection(connection);
-                }
-            }
-            None => {
-                // Connection already destroyed or never existed.
-                return;
-            }
-        };
-
+        self.connection_map.send(connection, bytes)
     }
 
     /// Start the beaconing on port `udp_port`. If port number is 0, the OS will
@@ -329,6 +316,8 @@ impl Service {
         let handshake = Handshake {
             mapper_port: Some(mapper_internal_port),
             external_addr: mapper_external_addr,
+            // TODO (canndrew): this is a dummy value that gets overwritten further on in the code
+            // before the handshake is sent.
             remote_addr: SocketAddr(net::SocketAddr::from_str("0.0.0.0:0").unwrap()),
         };
 
@@ -341,7 +330,7 @@ impl Service {
                     Ok(transport) => transport,
                     Err(_) => continue,
                 };
-                match Self::handle_handshake(handshake, transport) {
+                match Self::handle_handshake(handshake.clone(), transport) {
                     Ok((h, t)) => {
                         let c = t.connection_id.clone();
                         let our_external_endpoint =
@@ -361,32 +350,19 @@ impl Service {
         });
     }
 
-    // TODO (canndrew): merge this with handle_rendezvous_connect
-    // rename this method and the associated event to handle_bootstrap_connect
-    pub fn handle_connect(&mut self,
-                          token: u32,
-                          handshake: Handshake,
-                          trans: Transport)
-                          -> io::Result<Connection> {
-    }
-
-    fn is_connected_to(&self, endpoint: &Endpoint) -> bool {
+    // TODO (canndrew): do we even need this method?
+    /// Check whether we're connected to an endpoint.
+    pub fn is_connected_to(&self, endpoint: &Endpoint) -> bool {
         self.connection_map.is_connected_to(endpoint)
     }
 
+    /// Get the hole punch servers addresses of nodes that we're connected to ordered by how likely
+    /// they are to be on a seperate network.
     pub fn get_ordered_helping_nodes(&self) -> Vec<SocketAddr> {
         self.connection_map.get_ordered_helping_nodes()
     }
 
-    // pushing events out to event_sender
-    fn start_reading_thread(&self, mut receiver: transport::Receiver, connection: Connection) {}
-
-    pub fn handle_accept(&mut self,
-                         handshake: Handshake,
-                         trans: Transport)
-                         -> io::Result<Connection> {
-    }
-
+    /// Bootstrap to the network using the provided list of peers.
     pub fn bootstrap_off_list(&mut self,
                               token: u32,
                               bootstrap_list: Vec<Endpoint>,
@@ -440,8 +416,10 @@ impl Service {
                     let _ = connection_map.register_connection(handshake, trans, event);
                 }
             }
+            is_bootstrapping.store(false, Ordering::SeqCst);
             let _ = event_sender.send(Event::BootstrapFinished);
         }));
+        self.bootstrap_thread = Some(handle);
     }
 
     /// Stop the bootstraping procedure
@@ -449,20 +427,7 @@ impl Service {
         self.is_bootstrapping.store(false, Ordering::SeqCst);
     }
 
-    pub fn handle_rendezvous_connect(connection_map: Arc<ConnectionMap>,
-                                     token: u32,
-                                     handshake: Handshake,
-                                     trans: Transport)
-                                     -> io::Result<Connection> {
-        let c = trans.connection_id.clone();
-        let our_external_endpoint = Endpoint::from_socket_addr(*trans.connection_id
-                                                                     .peer_endpoint()
-                                                                     .protocol(),
-                                                               SocketAddr(*handshake.remote_addr));
-        let event = Event::OnRendezvousConnect(Ok((our_external_endpoint, c)), token);
-        connection_map.register_connection(handshake, trans, event)
-    }
-
+    /// Accept a connection on the provided TcpListener and perform a handshake on it.
     pub fn accept(handshake: Handshake,
                   acceptor: &TcpListener)
                   -> io::Result<(Handshake, Transport)> {
@@ -522,10 +487,13 @@ impl Service {
                 }
             };
 
-            let _ = Service::handle_rendezvous_connect(connection_map,
-                                                       token,
-                                                       his_handshake,
-                                                       transport);
+            let c = transport.connection_id.clone();
+            let our_external_endpoint = Endpoint::from_socket_addr(*transport.connection_id
+                                                                             .peer_endpoint()
+                                                                             .protocol(),
+                                                                   SocketAddr(*his_handshake.remote_addr));
+            let event = Event::OnRendezvousConnect(Ok((our_external_endpoint, c)), token);
+            let _ = connection_map.register_connection(his_handshake, transport, event);
         });
     }
 
@@ -612,6 +580,7 @@ impl Service {
         }
     }
 
+    // TODO (canndrew): Remove this (replace with thread! macro)
     fn new_thread<F, T>(name: &str, f: F) -> io::Result<JoinHandle<T>>
         where F: FnOnce() -> T,
               F: Send + 'static,

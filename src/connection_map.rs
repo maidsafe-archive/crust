@@ -1,17 +1,16 @@
 use std::sync::{Arc, Mutex};
-use std::sync::mpsc::Sender;
-use std::sync::mpsc;
 use std::collections::HashMap;
 use std::io;
 use std::net;
 
 use ip::{IpAddr, SocketAddrExt};
+//use maidsafe_utilities::thread::RaiiThreadJoiner;
 
 use socket_addr::SocketAddr;
 use transport;
 use event::Event;
 use connection::Connection;
-use transport::handshake::Handshake;
+use transport::Handshake;
 use transport::{Transport, Message};
 use Endpoint;
 
@@ -19,6 +18,7 @@ pub struct ConnectionData {
     pub message_sender: transport::Sender,
     pub mapper_address: Option<SocketAddr>,
     pub mapper_external_address: Option<SocketAddr>,
+    //pub reader_thread: RaiiThreadJoiner,
 }
 
 pub struct ConnectionMap {
@@ -38,18 +38,25 @@ impl ConnectionMap {
     }
 
     pub fn get_ordered_helping_nodes(&self) -> Vec<SocketAddr> {
-        let mut inner = unwrap_result!(self.inner.lock());
+        let inner = unwrap_result!(self.inner.lock());
         inner.get_ordered_helping_nodes()
     }
 
     pub fn is_connected_to(&self, endpoint: &Endpoint) -> bool {
-        let mut inner = unwrap_result!(self.inner.lock());
+        let inner = unwrap_result!(self.inner.lock());
         inner.is_connected_to(endpoint)
     }
 
+    /*
     pub fn get(&self, connection: &Connection) -> Option<ConnectionData> {
         let inner = unwrap_result!(self.inner.lock());
         inner.get(connection)
+    }
+    */
+    
+    pub fn send(&self, connection: Connection, bytes: Vec<u8>) {
+        let mut inner = unwrap_result!(self.inner.lock());
+        inner.send(connection, bytes)
     }
 
     pub fn register_connection(&self,
@@ -59,7 +66,7 @@ impl ConnectionMap {
                                -> io::Result<Connection> {
         let me = self.inner.clone();
         let mut inner = unwrap_result!(self.inner.lock());
-        inner.register_connection(handshake, transport, event_to_user)
+        inner.register_connection(handshake, transport, event_to_user, me)
     }
 
     pub fn unregister_connection(&self, connection: Connection) {
@@ -92,75 +99,106 @@ impl ConnectionMapInner {
 
     pub fn is_connected_to(&self, endpoint: &Endpoint) -> bool {
         for connection in self.connections.keys() {
-            if connection.peer_endpoint() == endpoint {
+            if connection.peer_endpoint() == *endpoint {
                 return true;
             }
         }
         false
     }
 
+    /*
     pub fn get(&self, connection: &Connection) -> Option<ConnectionData> {
-        self.connections.get(connection)
+        self.connections.get(connection).map(|c| c.clone())
+    }
+    */
+
+    pub fn send(&mut self, connection: Connection, bytes: Vec<u8>) {
+        let dropped = match self.connections.get_mut(&connection) {
+            Some(mut connection_data) => {
+                let writer = &mut connection_data.message_sender;
+                if let Err(_what) = writer.send(&Message::UserBlob(bytes)) {
+                    true
+                }
+                else {
+                    false
+                }
+            }
+            None => {
+                // Connection already destroyed or never existed.
+                false
+            }
+        };
+        if dropped {
+            self.unregister_connection(connection);
+        };
     }
 
     pub fn register_connection(&mut self,
                                handshake: Handshake,
                                transport: Transport,
                                event_to_user: Event,
-                               me: Arc<Mutex<ConnectionMap>>)
+                               me: Arc<Mutex<ConnectionMapInner>>)
                                -> io::Result<Connection> {
-        let connection = transport.connection_id.clone();
-        debug_assert!(!self.connections.contains_key(&connection));
+        let connection_id = transport.connection_id.clone();
+        let mut receiver = transport.receiver;
+        let sender = transport.sender;
 
-        let (tx, rx) = mpsc::channel();
+        debug_assert!(!self.connections.contains_key(&connection_id));
+
         let mapper_addr = match handshake.mapper_port {
             Some(port) => {
-                let peer_addr = transport.connection_id
-                                         .peer_endpoint()
-                                         .ip();
+                let peer_addr = connection_id.peer_endpoint()
+                                             .ip();
                 match peer_addr {
                     IpAddr::V4(a) => {
-                        SocketAddr(net::SocketAddr::V4(net::SocketAddrV4::new(a, port)))
+                        Some(SocketAddr(net::SocketAddr::V4(net::SocketAddrV4::new(a, port))))
                     },
                     // FIXME(dirvine) Handle ip6 :10/01/2016
-                    IpAddr::V6(a) => unimplemented!(),
+                    IpAddr::V6(_) => unimplemented!(),
                 }
             },
-        };
-        let connection_data = ConnectionData {
-            message_sender: transport.sender,
-            mapper_address: mapper_addr,
-            mapper_external_address: handshake.external_addr,
+            None => None,
         };
         // We need to insert the event into event_sender *before* the
         // reading thread starts. It is because the reading thread
         // also inserts events into the pipe and if done very quickly
         // they may be inserted in wrong order.
-        let _ = self.connections.insert(connection.clone(), connection_data);
         let _ = self.event_sender.send(event_to_user);
 
+        let connection_id_mv = connection_id.clone();
         // start the reading thread
         let event_sender = self.event_sender.clone();
-        let _ = Self::new_thread("reader", move || {
-            while let Ok(msg) = transport.receiver.receive() {
+        //let reader_thread = RaiiThreadJoiner::new(thread!("reader", move || {
+        // TODO (canndrew): We risk leaking this thread if we don't keep a handle to it.
+        let _ = thread!("reader", move || {
+            while let Ok(msg) = receiver.receive() {
                 match msg {
                     Message::UserBlob(msg) => {
-                        if event_sender.send(Event::NewMessage(connection.clone(), msg)).is_err() {
+                        if event_sender.send(Event::NewMessage(connection_id_mv.clone(), msg)).is_err() {
                             break;
                         }
                     }
                     Message::HolePunchAddress(a) => {
-                        let connection = connection.clone();
-                        if let Some(cd) = self.connections.get_mut(&connection) {
+                        let connection = connection_id_mv.clone();
+                        let mut inner = unwrap_result!(me.lock());
+                        if let Some(cd) = inner.connections.get_mut(&connection) {
                             cd.mapper_external_address = Some(a);
                         }
                     }
                 }
             }
-            me.unregister_connection(connection);
+            let mut inner = unwrap_result!(me.lock());
+            inner.unregister_connection(connection_id_mv);
         });
+        let connection_data = ConnectionData {
+            message_sender: sender,
+            mapper_address: mapper_addr,
+            mapper_external_address: handshake.external_addr,
+            //reader_thread: reader_thread,
+        };
+        let _ = self.connections.insert(connection_id.clone(), connection_data);
 
-        Ok(transport.connection_id)
+        Ok(connection_id)
     }
 
     pub fn unregister_connection(&mut self, connection: Connection) {

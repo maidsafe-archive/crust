@@ -8,7 +8,6 @@ use std::sync::atomic::{Ordering, AtomicBool};
 use periodic_sender::PeriodicSender;
 use socket_utils::RecvUntil;
 use endpoint::{Protocol, Endpoint};
-use transport::Message;
 use socket_addr::{SocketAddr, SocketAddrV4};
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 

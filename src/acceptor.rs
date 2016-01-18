@@ -19,7 +19,6 @@ use std::sync::Arc;
 use std::net;
 use std::sync::atomic::{Ordering, AtomicBool};
 use std::net::{TcpStream, TcpListener};
-use std::sync::mpsc::Sender;
 use std::io;
 use std::str::FromStr;
 
@@ -38,7 +37,6 @@ pub struct Acceptor {
     running: Arc<AtomicBool>,
     addr: net::SocketAddr,
     mapped_addrs: Vec<SocketAddr>,
-    connection_map: Arc<ConnectionMap>,
 }
 
 impl Acceptor {
@@ -67,7 +65,8 @@ impl Acceptor {
                 if !running_cloned.load(Ordering::SeqCst) {
                     break;
                 }
-                match accept_res {
+                // TODO (canndrew): What to do with this error?
+                let _ = match accept_res {
                     Ok((handshake, transport)) => {
                         let c = transport.connection_id.clone();
                         let protocol = *c.peer_endpoint()
