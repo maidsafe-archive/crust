@@ -647,7 +647,6 @@ impl Service {
 
 impl Drop for Service {
     fn drop(&mut self) {
-        println!("dropping Service: {} acceptors", self.acceptors.len());
         self.stop();
     }
 }
@@ -1330,7 +1329,6 @@ mod test {
 
         let cm_listen_ep = unwrap_result!(cm.start_accepting(0));
 
-        println!("in connection_manager_start 000");
         let thread = spawn(move || {
             for it in category_rx.iter() {
                 match it {
@@ -1375,10 +1373,8 @@ mod test {
                 }
             }
         });
-        println!("in connection_manager_start 111");
         let _ = t.join();
         thread::sleep(::std::time::Duration::from_millis(100));
-        println!("in connection_manager_start 222");
 
         let _ = thread.join();
     }

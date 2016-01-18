@@ -44,13 +44,11 @@ impl Sender {
     }
 
     pub fn send_handshake(&mut self, handshake: Handshake) -> io::Result<()> {
-        println!("sending handshake: {:?}", handshake);
         // TODO this was previously wrapped in a vector - is it necessary ?
         self.send_bytes(unwrap_result!(serialise(&handshake)))
     }
 
     pub fn send(&mut self, message: &Message) -> io::Result<()> {
-        println!("sending: {:?}", message);
         // TODO this was previously wrapped in a vector - is it necessary ?
         self.send_bytes(unwrap_result!(serialise(message)))
     }
@@ -68,7 +66,6 @@ impl Receiver {
             Receiver::Tcp(ref mut decoder) => decoder.decode::<D>().next(),
             Receiver::Utp(ref mut decoder) => decoder.decode::<D>().next(),
         };
-        println!("Got message: {:?}", msg);
         match msg {
             Some(a) => {
                 a.or(Err(io::Error::new(io::ErrorKind::InvalidData, "Failed to decode CBOR")))

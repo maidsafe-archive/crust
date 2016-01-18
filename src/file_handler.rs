@@ -209,7 +209,7 @@ pub fn exe_file_stem() -> Result<OsString, ::error::Error> {
 /// ```
 /// {
 ///     let _cleaner = ::crust::ScopedUserAppDirRemover;
-///     let mut file_handler =
+///     let file_handler =
 ///         ::crust::FileHandler::new("test.json").unwrap();
 ///     // User app dir is possibly created by this call.
 ///     let _ = file_handler.write_file(&111u64);

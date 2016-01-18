@@ -312,27 +312,14 @@ mod test {
         let acceptor = unwrap_result!(BroadcastAcceptor::new(0));
         let acceptor_port = acceptor.beacon_port();
 
-        
-        let foo = Message::UserBlob("hello beacon".to_owned().into_bytes());
-        let foo = unwrap_result!(::maidsafe_utilities::serialisation::serialise(&foo));
-        let mut decoder = ::cbor::Decoder::from_reader(&foo[..]);
-        let decoded = decoder.decode::<Message>().next();
-        println!("decoded == {:?}", decoded);
-
-
-
-
         let t1 = thread::Builder::new().name("test_beacon sender".to_owned()).spawn(move || {
             let mut transport = acceptor.accept().unwrap().1;
-            println!("In t1 got transport");
             unwrap_result!(transport.sender
                                     .send(&Message::UserBlob("hello beacon".to_owned().into_bytes())));
-            println!("In t1 sent");
         });
 
         let t2 = thread::Builder::new().name("test_beacon receiver".to_owned()).spawn(move || {
             let endpoint = unwrap_result!(seek_peers(acceptor_port, None))[0];
-            println!("In t2 got endpoint");
             let transport = unwrap_result!(transport::connect(Endpoint::from_socket_addr(Protocol::Tcp, endpoint)));
             let dummy_handshake = Handshake {
                 mapper_port: None,
@@ -340,14 +327,12 @@ mod test {
                 remote_addr: SocketAddr(net::SocketAddr::from_str("0.0.0.0:0").unwrap()),
             };
             let (_, mut transport) = unwrap_result!(Service::handle_handshake(dummy_handshake, transport));
-            println!("In t2 got transport");
 
             let msg = unwrap_result!(transport.receiver.receive());
             let msg = unwrap_result!(String::from_utf8(match msg {
                           Message::UserBlob(msg) => msg,
                           _ => panic!("Wrong message type"),
                       }));
-            println!("In t2 got msg");
             assert_eq!(msg, "hello beacon");
         });
 

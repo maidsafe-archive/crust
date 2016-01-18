@@ -32,7 +32,11 @@ struct ConnectionMapInner {
 
 impl Drop for ConnectionMap {
     fn drop(&mut self) {
-        println!("Dropping ConnectionMap");
+        let mut inner = unwrap_result!(self.inner.lock());
+        let connections: Vec<Connection> = inner.connections.keys().cloned().collect();
+        for c in connections {
+            inner.unregister_connection(c);
+        }
     }
 }
 
@@ -145,7 +149,6 @@ impl ConnectionMapInner {
                                event_to_user: Event,
                                me: Arc<Mutex<ConnectionMapInner>>)
                                -> io::Result<Connection> {
-        println!("registering connection: {:?}", handshake);
         let connection_id = transport.connection_id.clone();
         let mut receiver = transport.receiver;
         let sender = transport.sender;
@@ -178,9 +181,7 @@ impl ConnectionMapInner {
         //let reader_thread = RaiiThreadJoiner::new(thread!("reader", move || {
         // TODO (canndrew): We risk leaking this thread if we don't keep a handle to it.
         let _ = thread!("reader", move || {
-            println!("In reader thread");
             while let Ok(msg) = receiver.receive() {
-                println!("reader thread got message: {:?}", msg);
                 match msg {
                     Message::UserBlob(msg) => {
                         if event_sender.send(Event::NewMessage(connection_id_mv.clone(), msg)).is_err() {
@@ -196,7 +197,6 @@ impl ConnectionMapInner {
                     }
                 }
             }
-            println!("reader thread exiting");
             let mut inner = unwrap_result!(me.lock());
             inner.unregister_connection(connection_id_mv);
         });
@@ -206,21 +206,19 @@ impl ConnectionMapInner {
             mapper_external_address: handshake.external_addr,
             //reader_thread: reader_thread,
         };
-        println!("really registered");
         let _ = self.connections.insert(connection_id.clone(), connection_data);
 
         Ok(connection_id)
     }
 
     pub fn unregister_connection(&mut self, connection: Connection) {
-        println!("unregistering connection");
         // Avoid sending duplicate LostConnection event.
         if self.connections.remove(&connection).is_none() {
-            println!("zoom");
             return;
         }
 
         let _ = self.event_sender.send(Event::LostConnection(connection));
     }
 }
+
 
