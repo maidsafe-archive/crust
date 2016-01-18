@@ -47,8 +47,6 @@ use std::sync::mpsc::Sender;
 use std::io;
 use crust::error::Error;
 use std::net;
-use std::net::UdpSocket;
-use std::collections::HashSet;
 use std::str::FromStr;
 use std::thread;
 use std::sync::{Arc, Mutex};
@@ -56,6 +54,7 @@ use std::time::Duration;
 
 use crust::SocketAddr;
 use crust::{Service, Protocol, Endpoint, Connection};
+use crust::{OurContactInfo, TheirContactInfo};
 
 static USAGE: &'static str = "
 Usage:
@@ -144,6 +143,7 @@ impl CrustNode {
     }
 }
 
+/*
 /// /////////////////////////////////////////////////////////////////////////////
 ///
 /// UdpData
@@ -215,6 +215,7 @@ impl Drop for UdpData {
         assert!(join_handle.unwrap().join().is_ok());
     }
 }
+*/
 
 /// /////////////////////////////////////////////////////////////////////////////
 ///
@@ -223,7 +224,7 @@ impl Drop for UdpData {
 /// /////////////////////////////////////////////////////////////////////////////
 struct Network {
     crust_nodes: Vec<CrustNode>,
-    udp_data: Vec<UdpData>,
+    our_contact_infos: Vec<OurContactInfo>,
     performance_start: time::SteadyTime,
     performance_interval: time::Duration,
     received_msgs: u32,
@@ -235,7 +236,7 @@ impl Network {
     pub fn new() -> Network {
         Network {
             crust_nodes: Vec::new(),
-            udp_data: Vec::new(),
+            our_contact_infos: Vec::new(),
             performance_start: time::SteadyTime::now(),
             performance_interval: time::Duration::seconds(10),
             received_msgs: 0,
@@ -260,13 +261,11 @@ impl Network {
         return false;
     }
 
-    pub fn release_udp_socket(&mut self, id: usize) -> Option<UdpSocket> {
-        if id >= self.udp_data.len() {
+    pub fn release_our_contact_info(&mut self, id: usize) -> Option<OurContactInfo> {
+        if id >= self.our_contact_infos.len() {
             return None;
         }
-        let d = self.udp_data.remove(id);
-        d.socket.try_clone().ok()
-
+        Some(self.our_contact_infos.remove(id))
     }
 
     pub fn drop_node(&mut self, lost_node: Connection) {
@@ -277,8 +276,7 @@ impl Network {
 
     pub fn print_connected_nodes(&self) {
         println!("Node count: {}", self.crust_nodes.len());
-        let mut i = 0;
-        for node in self.crust_nodes.iter() {
+        for (i, node) in self.crust_nodes.iter().enumerate() {
             let status = if node.connected {
                 "Connected   "
             } else {
@@ -286,17 +284,15 @@ impl Network {
             };
 
             println!("    [{}] {} {:?}", i, status, node.connection_id);
-            i += 1;
         }
 
-        println!("\nUdp socket count: {}", self.udp_data.len());
-        let mut i = 0;
-        for data in &self.udp_data {
-            println!("    [{}] {:?} {:?}",
+        println!("\nOur contact infocount: {}", self.our_contact_infos.len());
+        for (i, contact_info) in self.our_contact_infos.iter().enumerate() {
+            println!("    [{}] {:?} (static: {:?}) (rendezvous: {:?})",
                      i,
-                     data.socket.local_addr().unwrap(),
-                     data.external_endpoints);
-            i += 1;
+                     contact_info.socket.local_addr().unwrap(),
+                     contact_info.static_addrs,
+                     contact_info.rendezvous_addrs);
         }
 
         println!("");
@@ -308,10 +304,6 @@ impl Network {
 
     pub fn get(&self, n: usize) -> Option<&CrustNode> {
         self.crust_nodes.get(n)
-    }
-
-    pub fn get_udp(&self, n: usize) -> Option<&UdpData> {
-        self.udp_data.get(n)
     }
 
     pub fn get_all(&self) -> &Vec<CrustNode> {
@@ -544,18 +536,16 @@ fn main() {
                                 network.drop_node(c);
                                 network.print_connected_nodes();
                             },
-                            crust::Event::OnUdpSocketMapped(content) => {
+                            crust::Event::ContactInfoPrepared(content) => {
                                 match content.result {
-                                    Ok((socket, ext_endpoints)) => {
-                                        println!("UdpSocket mapped: {} {:?}",
-                                                 content.result_token, ext_endpoints);
-
+                                    Ok(contact_info) => {
+                                        println!("Received our contact info: {:?}", contact_info);
                                         let mut network = network2.lock().unwrap();
-                                        network.udp_data.push(UdpData::new(socket, ext_endpoints));
+                                        network.our_contact_infos.push(contact_info);
                                         network.print_connected_nodes();
                                     },
                                     Err(what) => {
-                                        println!("UdpSocket mapping failed: {} {:?}",
+                                        println!("Preparing contact info failed: {} {:?}",
                                                  content.result_token, what);
                                     },
                                 }
@@ -636,20 +626,24 @@ fn main() {
 
             match cmd {
                 UserCommand::Connect(ep) => {
-                    println!("Connecting to {:?}", ep);
-                    service.connect(0, vec![ep]);
+                    println!("Bootstrap connecting to {:?}", ep);
+                    service.bootstrap_connect(0, vec![ep]);
                 }
                 UserCommand::ConnectRendezvous(udp_id, endpoint) => {
                     let mut network = network.lock().unwrap();
-                    let socket = match network.release_udp_socket(udp_id) {
-                        Some(socket) => socket,
+                    let our_contact_info = match network.release_our_contact_info(udp_id) {
+                        Some(ci) => ci,
                         None => {
-                            println!("No such UDP socket #{}", udp_id);
+                            println!("No such contact info #{}", udp_id);
                             continue;
                         }
                     };
                     println!("ConnectingRendezvous with {} to {:?}", udp_id, endpoint);
-                    service.rendezvous_connect(socket, 0, endpoint);
+                    let their_contact_info = TheirContactInfo {
+                        static_addrs: vec![],
+                        rendezvous_addrs: vec![endpoint.socket_addr().clone()],
+                    };
+                    service.connect(our_contact_info, their_contact_info, 0);
                 }
                 UserCommand::Send(peer, message) => {
                     let network = network.lock().unwrap();
@@ -660,19 +654,22 @@ fn main() {
                         None => println!("Invalid connection #"),
                     }
                 }
+                /*
                 UserCommand::SendUdp(peer, dst, _message) => {
                     let network = network.lock().unwrap();
-                    match network.get_udp(peer) {
-                        Some(ref udp) => udp.send_to(dst),
+                    match network.get_our_contact_info(peer) {
+                        Some(ref ci) => ci.socket.send_to(dst),
                         None => println!("Invalid udp #"),
                     }
                 }
+                */
                 UserCommand::SendAll(message) => {
                     let network = network.lock().unwrap();
                     for node in network.get_all() {
                         service.send(node.connection_id.clone(), message.clone().into_bytes());
                     }
                 }
+                /*
                 UserCommand::Punch(peer, dst) => {
                     let network = network.lock().unwrap();
                     match network.get_udp(peer) {
@@ -683,8 +680,9 @@ fn main() {
                         None => println!("Invalid udp #"),
                     }
                 }
+                */
                 UserCommand::Map => {
-                    service.get_mapped_udp_socket(0);
+                    service.prepare_contact_info(0);
                 }
                 UserCommand::List => {
                     let network = network.lock().unwrap();
@@ -785,9 +783,9 @@ enum UserCommand {
     Connect(Endpoint),
     ConnectRendezvous(usize, Endpoint),
     Send(usize, String),
-    SendUdp(usize, SocketAddr, String),
+    //SendUdp(usize, SocketAddr, String),
     SendAll(String),
-    Punch(usize, SocketAddr),
+    //Punch(usize, SocketAddr),
     List,
     Clean,
     Map,
@@ -824,21 +822,21 @@ fn parse_user_command(cmd: String) -> Option<UserCommand> {
         let peer = args.arg_peer.unwrap();
         let msg = args.arg_message.join(" ");
         Some(UserCommand::Send(peer, msg))
-    } else if args.cmd_send_udp {
+    } /* else if args.cmd_send_udp {
         let peer = args.arg_peer.unwrap();
         let dst = args.arg_destination.unwrap();
         let msg = args.arg_message.join(" ");
         Some(UserCommand::SendUdp(peer, dst, msg))
-    } else if args.cmd_send_all {
+    } */ else if args.cmd_send_all {
         let msg = args.arg_message.join(" ");
         Some(UserCommand::SendAll(msg))
     } else if args.cmd_map {
         Some(UserCommand::Map)
-    } else if args.cmd_punch {
+    } /* else if args.cmd_punch {
         let peer = args.arg_peer.unwrap();
         let dst = args.arg_destination.unwrap();
         Some(UserCommand::Punch(peer, dst))
-    } else if args.cmd_list {
+    } */ else if args.cmd_list {
         Some(UserCommand::List)
     } else if args.cmd_clean {
         Some(UserCommand::Clean)

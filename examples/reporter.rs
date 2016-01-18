@@ -370,8 +370,8 @@ fn connect_to_all(service: &mut Service, addrs: &[SocketAddr]) {
     for addr in addrs {
         debug!("Connecting to {}", addr);
 
-        service.connect(0, vec![Endpoint::from_socket_addr(Protocol::Tcp, *addr)]);
-        service.connect(0, vec![Endpoint::from_socket_addr(Protocol::Utp, *addr)]);
+        service.bootstrap_connect(0, vec![Endpoint::from_socket_addr(Protocol::Tcp, *addr)]);
+        service.bootstrap_connect(0, vec![Endpoint::from_socket_addr(Protocol::Utp, *addr)]);
     }
 }
 

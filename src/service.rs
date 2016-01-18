@@ -24,8 +24,9 @@ use std::thread::JoinHandle;
 use std::sync::{Arc, Mutex};
 use std::str::FromStr;
 
-use std::net::{UdpSocket, TcpListener};
+use std::net::TcpListener;
 
+use rand;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 use itertools::Itertools;
 use acceptor::Acceptor;
@@ -41,7 +42,7 @@ use connection_map::ConnectionMap;
 use error::Error;
 use ip::SocketAddrExt;
 
-use event::{Event, HolePunchResult, MappedUdpSocket};
+use event::{Event, OurContactInfo, TheirContactInfo, ContactInfoResult};
 use socket_addr::{SocketAddr, SocketAddrV4};
 use bootstrap_handler::BootstrapHandler;
 use hole_punching::HolePunchServer;
@@ -309,7 +310,7 @@ impl Service {
     /// corresponding `Event::NewConnection` isn't received.  See also [Process for Connecting]
     /// (https://github.com/maidsafe/crust/blob/master/docs/connect.md) for details on handling of
     /// connect in different protocols.
-    pub fn connect(&self, token: u32, endpoints: Vec<Endpoint>) {
+    pub fn bootstrap_connect(&self, token: u32, endpoints: Vec<Endpoint>) {
         let mapper_external_addr = self.mapper.external_address();
         let mapper_internal_port = self.mapper.listening_addr().port();
 
@@ -457,10 +458,11 @@ impl Service {
     /// Connecting]
     /// (https://github.com/maidsafe/crust/blob/master/docs/connect.md) for
     /// details on handling of connect in different protocols.
-    pub fn rendezvous_connect(&self,
-                              udp_socket: UdpSocket,
-                              token: u32,
-                              public_endpoint: Endpoint /* of B */) {
+    pub fn connect(&self,
+                   our_contact_info: OurContactInfo,
+                   their_contact_info: TheirContactInfo,
+                   token: u32)
+    {
         let mapper_external_addr = self.mapper.external_address();
         let mapper_internal_port = self.mapper.listening_addr().port();
 
@@ -473,8 +475,31 @@ impl Service {
         let event_sender = self.event_sender.clone();
         let connection_map = self.connection_map.clone();
 
+        let rendezvous_addr = match their_contact_info.rendezvous_addrs.get(0) {
+            Some(addr) => addr.clone(),
+            None => {
+                let err = io::Error::new(io::ErrorKind::Other, "No rendezvous address supplied. Direct connections not yet supported.");
+                let _ = event_sender.send(Event::OnRendezvousConnect(Err(err), token));
+                return;
+            },
+        };
+
         let _ = Self::new_thread("rendezvous connect", move || {
-            let res = transport::rendezvous_connect(udp_socket, public_endpoint)
+            let secret = rand::random();
+            let (udp_socket, result_addr) = ::hole_punching::blocking_udp_punch_hole(our_contact_info.socket,
+                                                                                     secret,
+                                                                                     rendezvous_addr);
+
+            let public_endpoint = match result_addr {
+                Ok(addr) => addr,
+                Err(e) => {
+                    let _ = event_sender.send(Event::OnRendezvousConnect(Err(e), token));
+                    return;
+                },
+            };
+
+            let peer_endpoint = Endpoint::from_socket_addr(Protocol::Utp, public_endpoint);
+            let res = transport::rendezvous_connect(udp_socket, peer_endpoint)
                 .and_then(move |t| Self::handle_handshake(handshake, t));
 
             let (his_handshake, transport) = match res {
@@ -591,31 +616,8 @@ impl Service {
             .spawn(f)
     }
 
-    /// Udp hole punching process
-    pub fn udp_punch_hole(&self,
-                          result_token: u32,
-                          udp_socket: UdpSocket,
-                          secret: Option<[u8; 4]>,
-                          peer_addr: SocketAddr) {
-        let event_sender = self.event_sender.clone();
-
-        // TODO (canndrew): we currently have no means to handle this error
-        let _ = Self::new_thread("udp_punch_hole", move || {
-            let (udp_socket, result_addr) = ::hole_punching::blocking_udp_punch_hole(udp_socket,
-                                                                                     secret,
-                                                                                     peer_addr);
-
-            // TODO (canndrew): we currently have no means to handle this error
-            let _ = event_sender.send(Event::OnHolePunched(HolePunchResult {
-                result_token: result_token,
-                udp_socket: udp_socket,
-                peer_addr: result_addr,
-            }));
-        });
-    }
-
     /// Lookup a mapped udp socket based on result_token
-    pub fn get_mapped_udp_socket(&mut self, result_token: u32) {
+    pub fn prepare_contact_info(&mut self, result_token: u32) {
         use hole_punching::blocking_get_mapped_udp_socket;
 
         let seq_id = self.next_punch_sequence.number();
@@ -624,6 +626,7 @@ impl Service {
         let helping_nodes = self.get_ordered_helping_nodes();
         let event_sender = self.event_sender.clone();
 
+        let static_addrs = self.get_known_external_endpoints();
 
         let _result_handle = Self::new_thread("map_udp", move || {
             let result = blocking_get_mapped_udp_socket(seq_id, helping_nodes);
@@ -632,12 +635,16 @@ impl Service {
                 // TODO (peterj) use _rest
                 Ok((socket, opt_mapped_addr, _rest)) => {
                     let addrs = opt_mapped_addr.into_iter().collect();
-                    Ok((socket, addrs))
+                    Ok(OurContactInfo {
+                        socket: socket,
+                        static_addrs: static_addrs,
+                        rendezvous_addrs: addrs,
+                    })
                 }
                 Err(what) => Err(what),
             };
 
-            let _ = event_sender.send(Event::OnUdpSocketMapped(MappedUdpSocket {
+            let _ = event_sender.send(Event::ContactInfoPrepared(ContactInfoResult { 
                 result_token: result_token,
                 result: res,
             }));
@@ -673,6 +680,7 @@ mod test {
     use socket_addr::SocketAddr;
     use maidsafe_utilities::thread::RaiiThreadJoiner;
     use error::Error;
+    use event::{OurContactInfo, TheirContactInfo};
 
     type CategoryRx = ::std::sync::mpsc::Receiver<MaidSafeEventCategory>;
 
@@ -939,8 +947,8 @@ mod test {
         let cm2_eps = filter_ok(vec![cm2.start_accepting(0)]);
         assert!(cm2_eps.len() >= 1);
 
-        cm2.connect(0, unspecified_to_loopback(&cm1_eps));
-        cm1.connect(1, unspecified_to_loopback(&cm2_eps));
+        cm2.bootstrap_connect(0, unspecified_to_loopback(&cm1_eps));
+        cm1.bootstrap_connect(1, unspecified_to_loopback(&cm2_eps));
 
         let runner1 = run_cm(cm1, cm1_o, category_rx0);
         let runner2 = run_cm(cm2, cm2_o, category_rx1);
@@ -1027,12 +1035,27 @@ mod test {
             SocketAddr(net::SocketAddr::V4(net::SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1),
                                                                   peer2_port)));
 
-        cm2.rendezvous_connect(peer1_udp_socket,
-                               0,
-                               Endpoint::from_socket_addr(Protocol::Utp, peer2_addr));
-        cm1.rendezvous_connect(peer2_udp_socket,
-                               0,
-                               Endpoint::from_socket_addr(Protocol::Utp, peer1_addr));
+        let peer1_our_ci = OurContactInfo {
+            socket: peer1_udp_socket,
+            static_addrs: Vec::new(),
+            rendezvous_addrs: vec![peer1_addr],
+        };
+        let peer2_our_ci = OurContactInfo {
+            socket: peer2_udp_socket,
+            static_addrs: Vec::new(),
+            rendezvous_addrs: vec![peer2_addr],
+        };
+        let peer1_their_ci = TheirContactInfo {
+            static_addrs: Vec::new(),
+            rendezvous_addrs: vec![peer2_addr],
+        };
+        let peer2_their_ci = TheirContactInfo {
+            static_addrs: Vec::new(),
+            rendezvous_addrs: vec![peer1_addr],
+        };
+
+        cm2.connect(peer1_our_ci, peer1_their_ci, 0);
+        cm1.connect(peer2_our_ci, peer2_their_ci, 0);
 
         let (ready_tx1, ready_rx1) = channel();
         let (shut_tx1, shut_rx1) = channel();
@@ -1079,12 +1102,28 @@ mod test {
         let token0 = 0;
         let token1 = 1;
 
-        service0.rendezvous_connect(socket0,
-                                    token0,
-                                    Endpoint::new(Protocol::Utp, loopback, port1));
-        service1.rendezvous_connect(socket1,
-                                    token1,
-                                    Endpoint::new(Protocol::Utp, loopback, port0));
+        let our_ci0 = OurContactInfo {
+            socket: socket0,
+            static_addrs: vec![],
+            rendezvous_addrs: vec![SocketAddr::new(loopback, port0)],
+        };
+        let our_ci1 = OurContactInfo {
+            socket: socket1,
+            static_addrs: vec![],
+            rendezvous_addrs: vec![SocketAddr::new(loopback, port1)],
+        };
+
+        let their_ci0 = TheirContactInfo {
+            static_addrs: vec![],
+            rendezvous_addrs: vec![SocketAddr::new(loopback, port1)],
+        };
+        let their_ci1 = TheirContactInfo {
+            static_addrs: vec![],
+            rendezvous_addrs: vec![SocketAddr::new(loopback, port0)],
+        };
+
+        service0.connect(our_ci0, their_ci0, token0);
+        service1.connect(our_ci1, their_ci1, token1);
 
         let _joiner = RaiiThreadJoiner::new(spawn(move || {
             let mut service1 = Some(service1);
@@ -1155,7 +1194,7 @@ mod test {
                                       ::ip::IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
                                       endpoint0);
 
-        service1.connect(0, vec![endpoint0]);
+        service1.bootstrap_connect(0, vec![endpoint0]);
 
         let _joiner = RaiiThreadJoiner::new(spawn(move || {
             let mut peer0_connection = None;
@@ -1289,7 +1328,7 @@ mod test {
             assert!(listening_eps.pop_front().is_some());
 
             for ep in &listening_eps {
-                node.service.connect(0, vec![ep.clone()]);
+                node.service.bootstrap_connect(0, vec![ep.clone()]);
             }
 
             runners.push(spawn(move || node.run()));
@@ -1356,7 +1395,7 @@ mod test {
             let cm_aux = unwrap_result!(Service::new(event_sender));
             // setting the listening port to be greater than 4455 will make the test hanging
             // changing this to cm_beacon_addr will make the test hanging
-            cm_aux.connect(0, unspecified_to_loopback(&vec![cm_listen_ep]));
+            cm_aux.bootstrap_connect(0, unspecified_to_loopback(&vec![cm_listen_ep]));
 
             for it in category_rx.iter() {
                 match it {
