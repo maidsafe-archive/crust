@@ -61,8 +61,11 @@ impl Acceptor {
                     external_addr: mapper_external_addr,
                     remote_addr: SocketAddr(net::SocketAddr::from_str("0.0.0.0:0").unwrap()),
                 };
+                println!("Acceptor accepting");
                 let accept_res = Service::accept(handshake, &listener);
+                println!("Acceptor accepted");
                 if !running_cloned.load(Ordering::SeqCst) {
+                    println!("Exiting Acceptor thread and unrefing connection_map");
                     break;
                 }
                 // TODO (canndrew): What to do with this error?
@@ -103,6 +106,8 @@ impl Acceptor {
 impl Drop for Acceptor {
     fn drop(&mut self) {
         self.running.store(false, Ordering::SeqCst);
-        let _ = TcpStream::connect(self.addr);
+        println!("Acceptor connecting to self");
+        let res = TcpStream::connect(self.addr);
+        println!("Acceptor connected to self: {:?}", res);
     }
 }

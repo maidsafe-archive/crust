@@ -647,6 +647,7 @@ impl Service {
 
 impl Drop for Service {
     fn drop(&mut self) {
+        println!("dropping Service: {} acceptors", self.acceptors.len());
         self.stop();
     }
 }
@@ -1310,7 +1311,7 @@ mod test {
 
     #[test]
     fn connection_manager_start() {
-        BootstrapHandler::cleanup().unwrap();
+        unwrap_result!(BootstrapHandler::cleanup());
 
         let _temp_config = make_temp_config();
 
@@ -1325,10 +1326,11 @@ mod test {
             ::maidsafe_utilities::event_sender::MaidSafeObserver::new(cm_tx,
                                                                       crust_event_category,
                                                                       category_tx);
-        let mut cm = Service::new(event_sender).unwrap();
+        let mut cm = unwrap_result!(Service::new(event_sender));
 
-        let cm_listen_ep = cm.start_accepting(0).unwrap();
+        let cm_listen_ep = unwrap_result!(cm.start_accepting(0));
 
+        println!("in connection_manager_start 000");
         let thread = spawn(move || {
             for it in category_rx.iter() {
                 match it {
@@ -1346,16 +1348,16 @@ mod test {
             }
         });
 
-        let _ = spawn(move || {
+        let t = spawn(move || {
             let _temp_config = make_temp_config();
             let (category_tx, category_rx) = channel();
             let (cm_aux_tx, cm_aux_rx) = channel();
             let event_sender = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(cm_aux_tx,
                                                                                          cloned_crust_event_category,
                                                                                          category_tx);
-            let cm_aux = Service::new(event_sender).unwrap();
-        // setting the listening port to be greater than 4455 will make the test hanging
-        // changing this to cm_beacon_addr will make the test hanging
+            let cm_aux = unwrap_result!(Service::new(event_sender));
+            // setting the listening port to be greater than 4455 will make the test hanging
+            // changing this to cm_beacon_addr will make the test hanging
             cm_aux.connect(0, unspecified_to_loopback(&vec![cm_listen_ep]));
 
             for it in category_rx.iter() {
@@ -1372,8 +1374,11 @@ mod test {
                     _ => unreachable!("This category should not have been fired - {:?}", it),
                 }
             }
-        }).join();
+        });
+        println!("in connection_manager_start 111");
+        let _ = t.join();
         thread::sleep(::std::time::Duration::from_millis(100));
+        println!("in connection_manager_start 222");
 
         let _ = thread.join();
     }

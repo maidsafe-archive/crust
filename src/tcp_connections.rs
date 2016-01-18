@@ -54,6 +54,7 @@ fn upgrade_writer(mut stream: TcpStream) -> Sender<Vec<u8>> {
                             break;
                         }
                     }
+                    println!("Dropping tcp stream: {:?}", stream.local_addr());
                     stream.shutdown(Shutdown::Write)
                 })
                 .unwrap();
