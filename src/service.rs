@@ -63,7 +63,6 @@ pub struct Service {
     next_punch_sequence: SequenceNumber,
     event_sender: ::CrustEventSender,
     connection_map: Arc<ConnectionMap>,
-    stop_called: bool,
     is_bootstrapping: Arc<AtomicBool>,
     bootstrap_thread: Option<RaiiThreadJoiner>,
 }
@@ -105,7 +104,6 @@ impl Service {
             next_punch_sequence: SequenceNumber::new(::rand::random()),
             event_sender: event_sender,
             connection_map: connection_map,
-            stop_called: false,
             is_bootstrapping: Arc::new(AtomicBool::new(false)),
             bootstrap_thread: None,
         };
@@ -271,7 +269,6 @@ impl Service {
             beacon::BroadcastAcceptor::stop(&beacon_guid_and_port);
         }
 
-        self.stop_called = true;
     }
 
     // TODO (canndrew): do we even need this method?
@@ -579,7 +576,7 @@ impl Service {
                 Err(what) => Err(what),
             };
 
-            let _ = event_sender.send(Event::ContactInfoPrepared(ContactInfoResult { 
+            let _ = event_sender.send(Event::ContactInfoPrepared(ContactInfoResult {
                 result_token: result_token,
                 result: res,
             }));
