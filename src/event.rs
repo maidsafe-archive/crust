@@ -66,12 +66,12 @@ pub enum Event {
     NewMessage(Connection, Vec<u8>),
     /// Invoked when the new connection request finishes.
     /// Passes the peer's endpoint and the token used in the request.
-    OnConnect(io::Result<(Endpoint, Connection)>, u32 /* token */),
+    OnBootstrapConnect(io::Result<(Endpoint, Connection)>, u32 /* token */),
     /// Invoked when the new rendezvous connection request finishes.
     /// Passes the peer's endpoint and the token used in the request.
-    OnRendezvousConnect(io::Result<(Endpoint, Connection)>, u32 /* token */),
+    OnConnect(io::Result<(Endpoint, Connection)>, u32 /* token */),
     /// Invoked when a new connection is accepted. Passes the peer's endpoint.
-    OnAccept(Endpoint, Connection),
+    OnBootstrapAccept(Endpoint, Connection),
     /// Invoked when a connection to a peer is lost.  Passes the peer's endpoint.
     LostConnection(Connection),
     /// Invoked when a new bootstrap connection to a peer is established.

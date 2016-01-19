@@ -73,7 +73,7 @@ impl Acceptor {
                                          .protocol();
                         let remote_addr = SocketAddr(*handshake.remote_addr);
                         let our_external_endpoint = Endpoint::from_socket_addr(protocol, remote_addr);
-                        connection_map.register_connection(handshake, transport, Event::OnAccept(our_external_endpoint, c))
+                        connection_map.register_connection(handshake, transport, Event::OnBootstrapAccept(our_external_endpoint, c))
                     }
                     Err(e) => {
                         warn!("Acceptor got an error: {} {:?}", e, e);

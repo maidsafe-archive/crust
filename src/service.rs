@@ -233,8 +233,8 @@ impl Service {
                                                                        SocketAddr(*h.remote_addr));
                 let _ = connection_map.register_connection(h,
                                                            t,
-                                                           Event::OnAccept(our_external_endpoint,
-                                                                           c));
+                                                           Event::OnBootstrapAccept(our_external_endpoint,
+                                                                                    c));
             }
         });
 
@@ -339,12 +339,12 @@ impl Service {
                                                          .peer_endpoint()
                                                          .protocol(),
                                                        SocketAddr(*h.remote_addr));
-                        let event = Event::OnConnect(Ok((our_external_endpoint, c)), token);
+                        let event = Event::OnBootstrapConnect(Ok((our_external_endpoint, c)), token);
 
                         let _ = connection_map.register_connection(h, t, event);
                     }
                     Err(e) => {
-                        let _ = event_sender.send(Event::OnConnect(Err(e), token));
+                        let _ = event_sender.send(Event::OnBootstrapConnect(Err(e), token));
                     }
                 }
             }
@@ -412,7 +412,7 @@ impl Service {
                                                          .peer_endpoint()
                                                          .protocol(),
                                                    SocketAddr(*handshake.remote_addr));
-                    let event = Event::OnConnect(Ok((our_external_endpoint, c)), token);
+                    let event = Event::OnBootstrapConnect(Ok((our_external_endpoint, c)), token);
 
                     let _ = connection_map.register_connection(handshake, trans, event);
                 }
@@ -449,12 +449,12 @@ impl Service {
     /// Only UDP-based protocols are supported. This means that you must use a
     /// uTP endpoint or nothing will happen.
     ///
-    /// On success `Event::OnRendezvousConnect` with connected `Endpoint` will
+    /// On success `Event::OnConnect` with connected `Endpoint` will
     /// be sent to the event channel. On failure, nothing is reported. Failed
     /// attempts are not notified back up to the caller. If the caller wants to
     /// know of a failed attempt, it must maintain a record of the attempt
     /// itself which times out if a corresponding
-    /// `Event::OnRendezvousConnection` isn't received. See also [Process for
+    /// `Event::OnConnect` isn't received. See also [Process for
     /// Connecting]
     /// (https://github.com/maidsafe/crust/blob/master/docs/connect.md) for
     /// details on handling of connect in different protocols.
@@ -477,7 +477,7 @@ impl Service {
 
         if our_contact_info.secret != their_contact_info.secret {
                 let err = io::Error::new(io::ErrorKind::Other, "Cannot connect. our_contact_info and their_contact_info are not associated with the same connection.");
-                let _ = event_sender.send(Event::OnRendezvousConnect(Err(err), token));
+                let _ = event_sender.send(Event::OnConnect(Err(err), token));
                 return;
         }
 
@@ -485,7 +485,7 @@ impl Service {
             Some(addr) => addr.clone(),
             None => {
                 let err = io::Error::new(io::ErrorKind::Other, "No rendezvous address supplied. Direct connections not yet supported.");
-                let _ = event_sender.send(Event::OnRendezvousConnect(Err(err), token));
+                let _ = event_sender.send(Event::OnConnect(Err(err), token));
                 return;
             },
         };
@@ -497,7 +497,7 @@ impl Service {
             let public_endpoint = match result_addr {
                 Ok(addr) => addr,
                 Err(e) => {
-                    let _ = event_sender.send(Event::OnRendezvousConnect(Err(e), token));
+                    let _ = event_sender.send(Event::OnConnect(Err(e), token));
                     return;
                 },
             };
@@ -511,7 +511,7 @@ impl Service {
                     (h, t)
                 }
                 Err(e) => {
-                    let _ = event_sender.send(Event::OnRendezvousConnect(Err(e), token));
+                    let _ = event_sender.send(Event::OnConnect(Err(e), token));
                     return ()
                 }
             };
@@ -521,7 +521,7 @@ impl Service {
                                                                              .peer_endpoint()
                                                                              .protocol(),
                                                                    SocketAddr(*his_handshake.remote_addr));
-            let event = Event::OnRendezvousConnect(Ok((our_external_endpoint, c)), token);
+            let event = Event::OnConnect(Ok((our_external_endpoint, c)), token);
             let _ = connection_map.register_connection(his_handshake, transport, event);
         });
     }
@@ -819,11 +819,11 @@ mod test {
             ::std::thread::sleep(::std::time::Duration::from_millis(100));
         }
         match result {
-            Ok(Event::OnConnect(conn, _)) => {
-                debug!("OnConnect {:?}", conn);
+            Ok(Event::OnBootstrapConnect(conn, _)) => {
+                debug!("OnBootstrapConnect {:?}", conn);
             }
-            Ok(Event::OnAccept(addr, ep)) => {
-                debug!("OnAccept {:?} {:?}", addr, ep);
+            Ok(Event::OnBootstrapAccept(addr, ep)) => {
+                debug!("OnBootstrapAccept {:?} {:?}", addr, ep);
             }
             _ => assert!(false, "Failed to receive NewConnection event"),
         }
@@ -882,7 +882,7 @@ mod test {
     //             MaidSafeEventCategory::CrustEvent => {
     //                 match event_rx.try_recv() {
     //                     Ok(Event::BootstrapFinished) => break,
-    //                     Ok(Event::OnConnect(Ok((_, conn)), _)) => {
+    //                     Ok(Event::OnBootstrapConnect(Ok((_, conn)), _)) => {
     //                         connected_endpoints.push(conn.peer_endpoint());
     //                     }
     //                     event => println!("event: {:?}", event),
@@ -913,11 +913,11 @@ mod test {
                         MaidSafeEventCategory::CrustEvent => {
                             if let Ok(event) = o.try_recv() {
                                 match event {
-                                    Event::OnConnect(Ok((_, other_ep)), _) => {
+                                    Event::OnBootstrapConnect(Ok((_, other_ep)), _) => {
                                         cm.send(other_ep.clone(),
                                                 encode(&"hello world".to_owned()));
                                     }
-                                    Event::OnAccept(_, other_ep) => {
+                                    Event::OnBootstrapAccept(_, other_ep) => {
                                         cm.send(other_ep.clone(),
                                                 encode(&"hello world".to_owned()));
                                     }
@@ -981,11 +981,11 @@ mod test {
                             match o.try_recv() {
                                 Ok(event) => {
                                     match event {
-                                        Event::OnRendezvousConnect(Ok((_, other_ep)), _) => {
+                                        Event::OnConnect(Ok((_, other_ep)), _) => {
                                             cm.send(other_ep.clone(),
                                                     encode(&"hello world".to_owned()));
                                         }
-                                        Event::OnRendezvousConnect(Err(error), _) => {
+                                        Event::OnConnect(Err(error), _) => {
                                             panic!("Cannot establish rendezvous connection: {:?}",
                                                    error);
                                         }
@@ -1155,7 +1155,7 @@ mod test {
                 match category {
                     MaidSafeEventCategory::CrustEvent => {
                         match event_rx.try_recv() {
-                            Ok(Event::OnRendezvousConnect(Ok((_, conn)), token)) => {
+                            Ok(Event::OnConnect(Ok((_, conn)), token)) => {
                                 match token {
                                     0 => peer0_connection = Some(conn),
                                     1 => peer1_connection = Some(conn),
@@ -1224,11 +1224,11 @@ mod test {
                 match category {
                     MaidSafeEventCategory::CrustEvent => {
                         match event_rx.try_recv() {
-                            Ok(Event::OnAccept(_, conn)) => {
+                            Ok(Event::OnBootstrapAccept(_, conn)) => {
                                 peer0_connection = Some(conn);
                             }
 
-                            Ok(Event::OnConnect(Ok(_), _)) => {
+                            Ok(Event::OnBootstrapConnect(Ok(_), _)) => {
                                 // Drop this service.
                                 let _ = service1.take();
                             }
@@ -1293,11 +1293,11 @@ mod test {
                         ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent => {
                             if let Ok(event) = self.reader.try_recv() {
                                 match event {
-                                    Event::OnConnect(Ok((_, connection)), _) => {
+                                    Event::OnBootstrapConnect(Ok((_, connection)), _) => {
                                         stats.connect_count += 1;
                                         self.send_data_to(connection);
                                     }
-                                    Event::OnAccept(_, connection) => {
+                                    Event::OnBootstrapAccept(_, connection) => {
                                         stats.accept_count += 1;
                                         self.send_data_to(connection);
                                     }
@@ -1417,7 +1417,7 @@ mod test {
                 match it {
                     ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent => {
                         if let Ok(event) = cm_aux_rx.try_recv() {
-                            if let Event::OnConnect(_, _) = event {
+                            if let Event::OnBootstrapConnect(_, _) = event {
                                 break;
                             }
                         } else {

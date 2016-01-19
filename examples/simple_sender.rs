@@ -67,11 +67,11 @@ fn main() {
                                     },
                                 }
                             },
-                            crust::Event::OnConnect(Ok((_, endpoint)), _) => {
+                            crust::Event::OnBootstrapConnect(Ok((_, endpoint)), _) => {
                                 println!("Connected to {:?}", endpoint);
                                 let _ = bs_sender.send(endpoint);
                             },
-                            crust::Event::OnAccept(_, endpoint) => {
+                            crust::Event::OnBootstrapAccept(_, endpoint) => {
                                 println!("Accepted {:?}", endpoint);
                                 let _ = bs_sender.send(endpoint);
                             },
