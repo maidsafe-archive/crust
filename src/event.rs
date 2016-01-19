@@ -51,6 +51,18 @@ pub struct TheirContactInfo {
     pub rendezvous_addrs: Vec<SocketAddr>,
 }
 
+impl OurContactInfo {
+    /// Takes an `OurContactInfo` and turns it into a `TheirContactInfo`. This `TheirContactInfo`
+    /// can then be sent out-of-band to another peer so that they can use it to connect to us.
+    pub fn make_their_info(&self) -> TheirContactInfo {
+        TheirContactInfo {
+            secret: self.secret.clone(),
+            static_addrs: self.static_addrs.clone(),
+            rendezvous_addrs: self.rendezvous_addrs.clone(),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct HolePunchResult {
     pub result_token: u32,
