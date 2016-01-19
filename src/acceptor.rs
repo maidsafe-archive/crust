@@ -25,9 +25,9 @@ use std::str::FromStr;
 use get_if_addrs::get_if_addrs;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 use socket_addr::SocketAddr;
+use transport;
 use transport::Handshake;
 use hole_punching::HolePunchServer;
-use service::Service;
 use connection_map::ConnectionMap;
 use Endpoint;
 use event::Event;
@@ -61,7 +61,9 @@ impl Acceptor {
                     external_addr: mapper_external_addr,
                     remote_addr: SocketAddr(net::SocketAddr::from_str("0.0.0.0:0").unwrap()),
                 };
-                let accept_res = Service::accept(handshake, &listener);
+                let accept_res = transport::accept(&listener).and_then(|t| {
+                    transport::exchange_handshakes(handshake, t)
+                });
                 if !running_cloned.load(Ordering::SeqCst) {
                     break;
                 }

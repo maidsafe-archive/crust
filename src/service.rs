@@ -33,7 +33,7 @@ use acceptor::Acceptor;
 use beacon;
 use config_handler::{Config, read_config_file};
 use get_if_addrs::get_if_addrs;
-use transport::{Transport, Handshake};
+use transport::Handshake;
 use transport;
 use endpoint::{Endpoint, Protocol};
 use map_external_port::async_map_external_port;
@@ -119,23 +119,6 @@ impl Service {
             .iter()
             .map(|a| Endpoint::from_socket_addr(Protocol::Tcp, a.local_address()))
             .collect()
-    }
-
-    /// Send and recieve handshake on the transport
-    pub fn handle_handshake(mut handshake: Handshake,
-                            mut trans: Transport)
-                            -> io::Result<(Handshake, Transport)> {
-        let handshake_err = Err(io::Error::new(io::ErrorKind::Other, "handshake failed"));
-
-        handshake.remote_addr = trans.connection_id.peer_addr().clone();
-        if let Err(_) = trans.sender.send_handshake(handshake) {
-            return handshake_err;
-        }
-
-        trans.receiver
-             .receive_handshake()
-             .and_then(|handshake| Ok((handshake, trans)))
-             .or(handshake_err)
     }
 
     /// Sends a message over a specified connection.
@@ -358,7 +341,7 @@ impl Service {
                     remote_addr: SocketAddr(net::SocketAddr::from_str("0.0.0.0:0").unwrap()),
                 };
                 let connect_result = transport::connect(endpoint)
-                                         .and_then(|t| Self::handle_handshake(h, t));
+                                         .and_then(|t| transport::exchange_handshakes(h, t));
                 if !is_bootstrapping.load(Ordering::SeqCst) {
                     return;
                 }
@@ -385,12 +368,14 @@ impl Service {
         self.is_bootstrapping.store(false, Ordering::SeqCst);
     }
 
+    /*
     /// Accept a connection on the provided TcpListener and perform a handshake on it.
     pub fn accept(handshake: Handshake,
                   acceptor: &TcpListener)
                   -> io::Result<(Handshake, Transport)> {
-        Self::handle_handshake(handshake, try!(transport::accept(acceptor)))
+        transport::exchange_handshakes(handshake, try!(transport::accept(acceptor)))
     }
+    */
 
     /// Opens a connection to a remote peer. `public_endpoint` is the endpoint
     /// of the remote peer. `udp_socket` is a socket whose public address will
@@ -461,7 +446,7 @@ impl Service {
 
             let peer_endpoint = Endpoint::from_socket_addr(Protocol::Utp, public_endpoint);
             let res = transport::rendezvous_connect(udp_socket, peer_endpoint);
-            let res = res.and_then(move |t| Self::handle_handshake(handshake, t));
+            let res = res.and_then(move |t| transport::exchange_handshakes(handshake, t));
 
             let (his_handshake, transport) = match res {
                 Ok((h, t)) => {
