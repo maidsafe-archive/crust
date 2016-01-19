@@ -56,7 +56,6 @@ extern crate memmap;
 #[macro_use]
 extern crate maidsafe_utilities;
 extern crate ip;
-// TODO (canndrew): Update get_if_addrs to version >= 0.2.0
 extern crate get_if_addrs;
 
 /// Module implementing the `Service` which provides an interface to manage peer-to-peer
@@ -73,14 +72,13 @@ pub type CrustEventSender = ::maidsafe_utilities::event_sender::MaidSafeObserver
 
 pub use config_handler::write_config_file;
 pub use service::Service;
-pub use event::Event;
+pub use event::{Event, OurContactInfo, TheirContactInfo};
 pub use error::Error;
 pub use file_handler::{FileHandler, current_bin_dir, user_app_dir, system_cache_dir,
                        exe_file_stem, ScopedUserAppDirRemover};
 pub use endpoint::{Endpoint, Protocol};
 pub use connection::Connection;
 pub use util::ifaddrs_if_unspecified;
-pub use get_if_addrs::getifaddrs;
 pub use socket_addr::SocketAddr;
 
 #[cfg(test)]
@@ -104,7 +102,6 @@ mod tcp_connections;
 mod transport;
 mod utp_connections;
 mod utp_wrapper;
-mod state;
 mod event;
 mod map_external_port;
 mod hole_punching;
@@ -113,4 +110,5 @@ mod socket_utils;
 mod ip_info;
 mod socket_addr;
 mod acceptor;
+mod connection_map;
 

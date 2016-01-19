@@ -122,9 +122,7 @@ pub fn accept(acceptor: &TcpListener) -> IoResult<Transport> {
                                                       io::Error::new(io::ErrorKind::NotConnected,
                                                                      e.description())
                                                   }));
-
     let (i, o) = try!(tcp_connections::upgrade_tcp(stream));
-
     let connection_id = Connection::new(Protocol::Tcp,
                                         SocketAddr(try!(i.local_addr())),
                                         SocketAddr(try!(i.peer_addr())));

@@ -61,13 +61,12 @@ pub enum Receiver {
 }
 
 impl Receiver {
-    fn basic_receive<D: Decodable>(&mut self) -> io::Result<D> {
-        match {
-            match *self {
-                Receiver::Tcp(ref mut decoder) => decoder.decode::<D>().next(),
-                Receiver::Utp(ref mut decoder) => decoder.decode::<D>().next(),
-            }
-        } {
+    fn basic_receive<D: Decodable + ::std::fmt::Debug>(&mut self) -> io::Result<D> {
+        let msg = match *self {
+            Receiver::Tcp(ref mut decoder) => decoder.decode::<D>().next(),
+            Receiver::Utp(ref mut decoder) => decoder.decode::<D>().next(),
+        };
+        match msg {
             Some(a) => {
                 a.or(Err(io::Error::new(io::ErrorKind::InvalidData, "Failed to decode CBOR")))
             }

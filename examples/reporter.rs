@@ -283,13 +283,13 @@ fn run(connected: Arc<AtomicBool>, config: &Config) -> Report {
                         report.record_event(&event);
 
                         match event {
-                            Event::OnAccept(_, connection) => {
-                                debug!("OnAccept {:?}", connection);
+                            Event::OnBootstrapAccept(_, connection) => {
+                                debug!("OnBootstrapAccept {:?}", connection);
                                 let _ = message_sender0.send(Some(connection));
                             }
 
-                            Event::OnConnect(Ok((_, connection)), _) => {
-                                debug!("OnConnect {:?}", connection);
+                            Event::OnBootstrapConnect(Ok((_, connection)), _) => {
+                                debug!("OnBootstrapConnect {:?}", connection);
                                 let _ = message_sender0.send(Some(connection));
                             }
 
@@ -370,8 +370,8 @@ fn connect_to_all(service: &mut Service, addrs: &[SocketAddr]) {
     for addr in addrs {
         debug!("Connecting to {}", addr);
 
-        service.connect(0, vec![Endpoint::from_socket_addr(Protocol::Tcp, *addr)]);
-        service.connect(0, vec![Endpoint::from_socket_addr(Protocol::Utp, *addr)]);
+        service.bootstrap_connect(0, vec![Endpoint::from_socket_addr(Protocol::Tcp, *addr)]);
+        service.bootstrap_connect(0, vec![Endpoint::from_socket_addr(Protocol::Utp, *addr)]);
     }
 }
 

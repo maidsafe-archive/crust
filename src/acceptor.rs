@@ -19,16 +19,18 @@ use std::sync::Arc;
 use std::net;
 use std::sync::atomic::{Ordering, AtomicBool};
 use std::net::{TcpStream, TcpListener};
-use std::sync::mpsc::Sender;
 use std::io;
+use std::str::FromStr;
 
-use get_if_addrs::{getifaddrs, filter_loopback};
+use get_if_addrs::get_if_addrs;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 use socket_addr::SocketAddr;
-use state::{State, Closure};
 use transport::Handshake;
 use hole_punching::HolePunchServer;
-use std::str::FromStr;
+use service::Service;
+use connection_map::ConnectionMap;
+use Endpoint;
+use event::Event;
 
 pub struct Acceptor {
     _joiner: RaiiThreadJoiner,
@@ -40,15 +42,16 @@ pub struct Acceptor {
 impl Acceptor {
     pub fn new(listener: TcpListener,
                hole_punch_server: Arc<HolePunchServer>,
-               cmd_sender: Sender<Closure>)
+               connection_map: Arc<ConnectionMap>)
                -> io::Result<Acceptor> {
         let running = Arc::new(AtomicBool::new(true));
         let running_cloned = running.clone();
         let addr = try!(listener.local_addr());
-        let mapped_addrs = filter_loopback(getifaddrs())
-                               .into_iter()
-                               .map(|iface| SocketAddr::new(iface.addr, addr.port()))
-                               .collect();
+        let mapped_addrs = try!(get_if_addrs())
+                                .into_iter()
+                                .filter(|i| !i.is_loopback())
+                                .map(|i| SocketAddr::new(i.ip(), addr.port()))
+                                .collect();
         let joiner = RaiiThreadJoiner::new(thread!("acceptor", move || {
             loop {
                 let mapper_external_addr = hole_punch_server.external_address();
@@ -58,15 +61,19 @@ impl Acceptor {
                     external_addr: mapper_external_addr,
                     remote_addr: SocketAddr(net::SocketAddr::from_str("0.0.0.0:0").unwrap()),
                 };
-                let accept_res = State::accept(handshake, &listener);
+                let accept_res = Service::accept(handshake, &listener);
                 if !running_cloned.load(Ordering::SeqCst) {
                     break;
                 }
-                match accept_res {
+                // TODO (canndrew): What to do with this error?
+                let _ = match accept_res {
                     Ok((handshake, transport)) => {
-                        let _ = cmd_sender.send(Closure::new(move |state: &mut State| {
-                            let _ = state.handle_accept(handshake, transport);
-                        }));
+                        let c = transport.connection_id.clone();
+                        let protocol = *c.peer_endpoint()
+                                         .protocol();
+                        let remote_addr = SocketAddr(*handshake.remote_addr);
+                        let our_external_endpoint = Endpoint::from_socket_addr(protocol, remote_addr);
+                        connection_map.register_connection(handshake, transport, Event::OnBootstrapAccept(our_external_endpoint, c))
                     }
                     Err(e) => {
                         warn!("Acceptor got an error: {} {:?}", e, e);
