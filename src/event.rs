@@ -32,6 +32,8 @@ pub struct ContactInfoResult {
 pub struct OurContactInfo {
     /// The mapped udp socket that may be used for this connection.
     pub socket: UdpSocket,
+    /// Secret data used for rendezvous connect.
+    pub secret: Option<[u8; 4]>,
     /// Our tcp listening addresses.
     pub static_addrs: Vec<Endpoint>,
     /// The mapped addresses of our udp socket.
@@ -41,6 +43,8 @@ pub struct OurContactInfo {
 /// Contact info used to connect to another peer.
 #[derive(Debug)]
 pub struct TheirContactInfo {
+    /// Secret data used for rendezvous connect.
+    pub secret: Option<[u8; 4]>,
     /// Their tcp listening addresses.
     pub static_addrs: Vec<Endpoint>,
     /// Their mapped addresses for udp rendezvous connect.

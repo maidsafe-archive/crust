@@ -152,7 +152,9 @@ pub fn blocking_udp_punch_hole(udp_socket: UdpSocket,
                     let (read_size, addr) = match try!(receiver.recv_until(&mut recv_data[..],
                                                                            deadline)) {
                         Some(x) => x,
-                        None => return Ok(peer_addr),
+                        None => {
+                            return Ok(peer_addr);
+                        }
                     };
 
                     match ::cbor::Decoder::from_reader(&recv_data[..read_size])
@@ -180,7 +182,9 @@ pub fn blocking_udp_punch_hole(udp_socket: UdpSocket,
                                 info!("udp_hole_punch non matching secret");
                             }
                         }
-                        x => info!("udp_hole_punch received invalid data: {:?}", x),
+                        x => {
+                            info!("udp_hole_punch received invalid data: {:?}", x);
+                        },
                     };
                 }
             })();

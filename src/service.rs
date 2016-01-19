@@ -475,6 +475,12 @@ impl Service {
         let event_sender = self.event_sender.clone();
         let connection_map = self.connection_map.clone();
 
+        if our_contact_info.secret != their_contact_info.secret {
+                let err = io::Error::new(io::ErrorKind::Other, "Cannot connect. our_contact_info and their_contact_info are not associated with the same connection.");
+                let _ = event_sender.send(Event::OnRendezvousConnect(Err(err), token));
+                return;
+        }
+
         let rendezvous_addr = match their_contact_info.rendezvous_addrs.get(0) {
             Some(addr) => addr.clone(),
             None => {
@@ -485,11 +491,9 @@ impl Service {
         };
 
         let _ = Self::new_thread("rendezvous connect", move || {
-            let secret = rand::random();
             let (udp_socket, result_addr) = ::hole_punching::blocking_udp_punch_hole(our_contact_info.socket,
-                                                                                     secret,
+                                                                                     our_contact_info.secret,
                                                                                      rendezvous_addr);
-
             let public_endpoint = match result_addr {
                 Ok(addr) => addr,
                 Err(e) => {
@@ -499,8 +503,8 @@ impl Service {
             };
 
             let peer_endpoint = Endpoint::from_socket_addr(Protocol::Utp, public_endpoint);
-            let res = transport::rendezvous_connect(udp_socket, peer_endpoint)
-                .and_then(move |t| Self::handle_handshake(handshake, t));
+            let res = transport::rendezvous_connect(udp_socket, peer_endpoint);
+            let res = res.and_then(move |t| Self::handle_handshake(handshake, t));
 
             let (his_handshake, transport) = match res {
                 Ok((h, t)) => {
@@ -637,6 +641,7 @@ impl Service {
                     let addrs = opt_mapped_addr.into_iter().collect();
                     Ok(OurContactInfo {
                         socket: socket,
+                        secret: Some(rand::random()),
                         static_addrs: static_addrs,
                         rendezvous_addrs: addrs,
                     })
@@ -669,6 +674,7 @@ mod test {
     use std::thread;
     use std::thread::spawn;
     use std::net;
+    use rand;
     use rustc_serialize::{Decodable, Encodable};
     use cbor::{Decoder, Encoder};
     use connection::Connection;
@@ -1035,21 +1041,26 @@ mod test {
             SocketAddr(net::SocketAddr::V4(net::SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1),
                                                                   peer2_port)));
 
+        let secret = Some(rand::random());
         let peer1_our_ci = OurContactInfo {
             socket: peer1_udp_socket,
+            secret: secret,
             static_addrs: Vec::new(),
             rendezvous_addrs: vec![peer1_addr],
         };
         let peer2_our_ci = OurContactInfo {
             socket: peer2_udp_socket,
+            secret: secret,
             static_addrs: Vec::new(),
             rendezvous_addrs: vec![peer2_addr],
         };
         let peer1_their_ci = TheirContactInfo {
+            secret: secret,
             static_addrs: Vec::new(),
             rendezvous_addrs: vec![peer2_addr],
         };
         let peer2_their_ci = TheirContactInfo {
+            secret: secret,
             static_addrs: Vec::new(),
             rendezvous_addrs: vec![peer1_addr],
         };
@@ -1102,22 +1113,27 @@ mod test {
         let token0 = 0;
         let token1 = 1;
 
+        let secret = Some(rand::random());
         let our_ci0 = OurContactInfo {
             socket: socket0,
+            secret: secret,
             static_addrs: vec![],
             rendezvous_addrs: vec![SocketAddr::new(loopback, port0)],
         };
         let our_ci1 = OurContactInfo {
             socket: socket1,
+            secret: secret,
             static_addrs: vec![],
             rendezvous_addrs: vec![SocketAddr::new(loopback, port1)],
         };
 
         let their_ci0 = TheirContactInfo {
+            secret: secret,
             static_addrs: vec![],
             rendezvous_addrs: vec![SocketAddr::new(loopback, port1)],
         };
         let their_ci1 = TheirContactInfo {
+            secret: secret,
             static_addrs: vec![],
             rendezvous_addrs: vec![SocketAddr::new(loopback, port0)],
         };

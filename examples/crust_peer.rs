@@ -640,6 +640,7 @@ fn main() {
                     };
                     println!("ConnectingRendezvous with {} to {:?}", udp_id, endpoint);
                     let their_contact_info = TheirContactInfo {
+                        secret: our_contact_info.secret,
                         static_addrs: vec![],
                         rendezvous_addrs: vec![endpoint.socket_addr().clone()],
                     };
