@@ -80,6 +80,7 @@ pub use endpoint::{Endpoint, Protocol};
 pub use connection::Connection;
 pub use util::ifaddrs_if_unspecified;
 pub use socket_addr::SocketAddr;
+pub use hole_punching::HolePunchServer;
 
 #[cfg(test)]
 mod test {

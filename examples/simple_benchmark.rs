@@ -37,6 +37,7 @@ extern crate time;
 use rand::random;
 use docopt::Docopt;
 use std::sync::mpsc::{channel, Receiver};
+use std::sync::Arc;
 use crust::*;
 
 fn timed<F>(f: F) -> f64 where F: FnOnce() {
@@ -117,9 +118,11 @@ fn main() {
     let event_sender1 = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(tx,
                                                                                   crust_event_category,
                                                                                   category_tx);
-    let s2 = Service::new(event_sender1).unwrap();
+    let mut s2 = Service::new(event_sender1).unwrap();
 
-    s2.bootstrap_connect(0, vec![s1_ep]);
+    let (tx, _rx) = channel();
+    let hole_punch_server = Arc::new(unwrap_result!(HolePunchServer::start(tx)));
+    s2.bootstrap_off_list(0, vec![s1_ep], hole_punch_server);
 
     let s2_ep = wait_for_connection(&s1_rx, &category_rx);
     let _s1_ep = wait_for_connection(&s2_rx, &category_rx);
