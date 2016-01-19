@@ -17,6 +17,8 @@
 
 use std::str::FromStr;
 use std::net;
+use std::io;
+use super::Transport;
 use socket_addr::SocketAddr;
 
 /// After a connection is established, peers should exchange a handshake.
@@ -43,3 +45,21 @@ impl Default for Handshake {
         }
     }
 }
+
+/// Send and recieve handshake on the transport
+pub fn exchange_handshakes(mut handshake: Handshake,
+                           mut trans: Transport)
+                           -> io::Result<(Handshake, Transport)> {
+    let handshake_err = Err(io::Error::new(io::ErrorKind::Other, "handshake failed"));
+
+    handshake.remote_addr = trans.connection_id.peer_addr().clone();
+    if let Err(_) = trans.sender.send_handshake(handshake) {
+        return handshake_err;
+    }
+
+    trans.receiver
+         .receive_handshake()
+         .and_then(|handshake| Ok((handshake, trans)))
+         .or(handshake_err)
+}
+

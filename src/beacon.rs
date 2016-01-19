@@ -29,9 +29,9 @@ use ip::SocketAddrExt;
 
 use net2::UdpSocketExt;
 
+use transport;
 use transport::{Transport, Handshake};
 use util;
-use service::Service;
 
 const GUID_SIZE: usize = 16;
 const MAGIC_SIZE: usize = 4;
@@ -97,10 +97,16 @@ impl BroadcastAcceptor {
                                            .spawn(move || {
                                                let tcp_acceptor = protected_tcp_acceptor.lock()
                                                                                         .unwrap();
-                                               let transport_res =
-                                                   Service::accept(Handshake::default(),
-                                                                        &tcp_acceptor);
-                                               let _ = transport_sender.send(transport_res);
+                                               match transport::accept(&tcp_acceptor) {
+                                                   Ok(transport) => {
+                                                       let transport = transport::exchange_handshakes(Handshake::default(), transport);
+
+                                                       let _ = transport_sender.send(transport);
+                                                   }
+                                                   Err(e) => {
+                                                        let _ = transport_sender.send(Err(e));
+                                                   }
+                                               };
                                            }));
 
         let protected_socket = self.socket.clone();
@@ -305,7 +311,6 @@ mod test {
     use transport;
     use transport::{Message, Handshake};
     use socket_addr::SocketAddr;
-    use service::Service;
 
     #[test]
     fn test_beacon() {
@@ -326,7 +331,7 @@ mod test {
                 external_addr: None,
                 remote_addr: SocketAddr(net::SocketAddr::from_str("0.0.0.0:0").unwrap()),
             };
-            let (_, mut transport) = unwrap_result!(Service::handle_handshake(dummy_handshake, transport));
+            let (_, mut transport) = unwrap_result!(transport::exchange_handshakes(dummy_handshake, transport));
 
             let msg = unwrap_result!(transport.receiver.receive());
             let msg = unwrap_result!(String::from_utf8(match msg {
@@ -372,7 +377,7 @@ mod test {
                              external_addr: None,
                              remote_addr: SocketAddr(net::SocketAddr::from_str("0.0.0.0:0").unwrap()),
                          };
-                         let _ = unwrap_result!(Service::handle_handshake(dummy_handshake, transport));
+                         let _ = unwrap_result!(transport::exchange_handshakes(dummy_handshake, transport));
                      });
 
         let t1 = unwrap_result!(t1);

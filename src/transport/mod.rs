@@ -33,7 +33,7 @@ use endpoint::{Endpoint, Protocol};
 use socket_addr::SocketAddr;
 
 pub use self::message::Message;
-pub use self::handshake::Handshake;
+pub use self::handshake::{Handshake, exchange_handshakes};
 pub use self::sender_receiver::{Sender, Receiver};
 
 pub struct Transport {
