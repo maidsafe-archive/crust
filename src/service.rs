@@ -299,10 +299,7 @@ impl Service {
 
         let is_bootstrapping = self.is_bootstrapping.clone();
         let bootstrap_thread = self.bootstrap_thread.take();
-        match bootstrap_thread {
-            Some(handle) => drop(handle),
-            None => (),
-        };
+        if let Some(handle) = bootstrap_thread { drop(handle) };
 
         let connection_map = self.connection_map.clone();
         let event_sender = self.event_sender.clone();

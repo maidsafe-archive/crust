@@ -27,7 +27,7 @@ impl UtpWrapper {
         let local_addr = try!(socket.local_addr());
 
         let thread_handle = thread::Builder::new()
-                                .name("rust-utp multiplexer".to_string())
+                                .name("rust-utp multiplexer".to_owned())
                                 .spawn(move || {
             let mut socket = socket;
             socket.set_read_timeout(Some(CHECK_FOR_NEW_WRITES_INTERVAL_MS));
@@ -100,15 +100,15 @@ impl Read for UtpWrapper {
             return Ok(written);
         }
 
-        let mut buf = &mut buf[written..];
+        let mut buf_mut = &mut buf[written..];
         let recved = try!(self.input
                               .recv()
                               .or_else(|e| Err(io::Error::new(ErrorKind::BrokenPipe, e))));
-        for (idx, e) in recved.iter().take(buf.len()).enumerate() {
-            buf[idx] = *e;
+        for (idx, e) in recved.iter().take(buf_mut.len()).enumerate() {
+            buf_mut[idx] = *e;
             written += 1;
         }
-        self.unread_bytes.extend(recved.into_iter().skip(buf.len()));
+        self.unread_bytes.extend(recved.into_iter().skip(buf_mut.len()));
         Ok(written)
     }
 }
