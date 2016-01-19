@@ -52,8 +52,7 @@ use std::thread;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use crust::SocketAddr;
-use crust::{Service, Protocol, Endpoint, Connection};
+use crust::{Service, Protocol, Endpoint, Connection, SocketAddr};
 use crust::{HolePunchServer, OurContactInfo, TheirContactInfo};
 
 static USAGE: &'static str = "

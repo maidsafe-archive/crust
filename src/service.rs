@@ -681,10 +681,6 @@ mod test {
         vec.into_iter().filter_map(|a| a.ok()).collect()
     }
 
-    fn unspecified_to_loopback(eps: &[Endpoint]) -> Vec<Endpoint> {
-        eps.iter().map(|elt| elt.unspecified_to_loopback()).collect()
-    }
-
     fn try_recv_with_timeout<T>(receiver: &Receiver<T>,
                                 timeout: ::std::time::Duration)
                                 -> Option<T> {
@@ -885,8 +881,8 @@ mod test {
         let (tx, _rx) = channel();
         let hole_punch_server = Arc::new(unwrap_result!(HolePunchServer::start(tx)));
 
-        cm2.bootstrap_off_list(0, unspecified_to_loopback(&cm1_eps), hole_punch_server.clone());
-        cm1.bootstrap_off_list(1, unspecified_to_loopback(&cm2_eps), hole_punch_server.clone());
+        cm2.bootstrap_off_list(0, cm1_eps, hole_punch_server.clone());
+        cm1.bootstrap_off_list(1, cm2_eps, hole_punch_server.clone());
 
         let runner1 = run_cm(cm1, cm1_o, category_rx0);
         let runner2 = run_cm(cm2, cm2_o, category_rx1);
@@ -1273,7 +1269,7 @@ mod test {
 
         let mut listening_eps = nodes.iter_mut()
                                      .map(|node| node.service.start_accepting(0).unwrap())
-                                     .map(|ep| ep.unspecified_to_loopback())
+                                     .map(|ep| ep)
                                      .collect::<::std::collections::VecDeque<_>>();
 
         let (tx, _rx) = channel();
@@ -1353,7 +1349,7 @@ mod test {
             let (tx, _rx) = channel();
             let hole_punch_server = Arc::new(unwrap_result!(HolePunchServer::start(tx)));
 
-            cm_aux.bootstrap_off_list(0, unspecified_to_loopback(&vec![cm_listen_ep]), hole_punch_server);
+            cm_aux.bootstrap_off_list(0, vec![cm_listen_ep], hole_punch_server);
 
             for it in category_rx.iter() {
                 match it {

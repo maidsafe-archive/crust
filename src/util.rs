@@ -18,7 +18,6 @@
 use ip::IpAddr;
 use std::cmp::Ordering;
 use get_if_addrs::{get_if_addrs, Interface, IfAddr};
-use endpoint::Endpoint;
 use std::net;
 use ip_info;
 
@@ -27,22 +26,11 @@ use std::sync::mpsc;
 #[cfg(test)]
 use std::thread;
 #[cfg(test)]
-use endpoint::Protocol;
+use endpoint::{Protocol, Endpoint};
 #[cfg(test)]
 use socket_addr::SocketAddr;
 
 /// /////////////////////////////////////////////////////////////////////////////
-// pub fn loopback_v4(port: Port) -> IpAddrV4 {
-//    net::Ipv4Addr::new(127, 0, 0, 1)
-//}
-
-pub fn is_v4(ip_addr: &IpAddr) -> bool {
-    match *ip_addr {
-        IpAddr::V4(_) => true,
-        IpAddr::V6(_) => false,
-    }
-}
-
 pub fn is_global(ip: &IpAddr) -> bool {
     match *ip {
         IpAddr::V4(ref ipv4) => ip_info::v4::is_global(ipv4),
@@ -125,19 +113,6 @@ pub fn on_same_subnet_v6(ip_addr1: net::Ipv6Addr,
 
     true
 }
-
-/*
-pub fn on_same_subnet(ip_addr1: IpAddr, ip_addr2: IpAddr, netmask: IpAddr) -> bool {
-    use ip::IpAddr::V4;
-    use ip::IpAddr::V6;
-
-    match (ip_addr1, ip_addr2, netmask) {
-        (V4(ip1), V4(ip2), V4(m)) => on_same_subnet_v4(ip1, ip2, m),
-        (V6(ip1), V6(ip2), V6(m)) => on_same_subnet_v6(ip1, ip2, m),
-        _ => false,
-    }
-}
-*/
 
 pub fn is_local(ip_addr: &IpAddr, interfaces: &[Interface]) -> bool {
     for i in interfaces.iter() {
@@ -223,58 +198,6 @@ pub fn heuristic_geo_cmp(ip1: &IpAddr, ip2: &IpAddr) -> Ordering {
     }
 }
 
-/// TODO This function should really take IpAddr as an argument
-/// but it is used outside of this library and IpAddr
-/// is currently considered experimental.
-pub fn ifaddrs_if_unspecified(ep: &Endpoint) -> Vec<Endpoint> {
-    match ep.ip() {
-        IpAddr::V4(ref addr) => {
-            if !::ip_info::v4::is_unspecified(addr) {
-                return vec![ep.clone()];
-            }
-        }
-        IpAddr::V6(ref addr) => {
-            if !::ip_info::v6::is_unspecified(addr) {
-                return vec![ep.clone()];
-            }
-        }
-    }
-
-    let ep_is_v4 = is_v4(&ep.ip());
-
-    get_if_addrs()
-        .unwrap_or(Vec::new())
-        .into_iter()
-        .filter_map(|iface| {
-            match ep_is_v4 == is_v4(&iface.ip()) {
-                true => Some(Endpoint::new(*ep.protocol(), iface.ip(), ep.port())),
-                false => None,
-            }
-        })
-        .collect()
-}
-
-/*
-#[cfg(test)]
-pub fn loopback_if_unspecified(addr: IpAddr) -> IpAddr {
-    match addr {
-        IpAddr::V4(addr) => {
-            IpAddr::V4(if ::ip_info::v4::is_unspecified(&addr) {
-                net::Ipv4Addr::new(127, 0, 0, 1)
-            } else {
-                addr
-            })
-        }
-        IpAddr::V6(addr) => {
-            IpAddr::V6(if ::ip_info::v6::is_unspecified(&addr) {
-                "::1".parse().unwrap()
-            } else {
-                addr
-            })
-        }
-    }
-}
-*/
 
 #[cfg(test)]
 pub fn random_endpoint() -> Endpoint {

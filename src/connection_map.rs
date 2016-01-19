@@ -12,7 +12,7 @@ use event::Event;
 use connection::Connection;
 use transport::Handshake;
 use transport::{Transport, Message};
-use Endpoint;
+use endpoint::Endpoint;
 
 pub struct ConnectionData {
     pub message_sender: transport::Sender,
@@ -63,7 +63,7 @@ impl ConnectionMap {
         inner.get(connection)
     }
     */
-    
+
     pub fn send(&self, connection: Connection, bytes: Vec<u8>) {
         let mut inner = unwrap_result!(self.inner.lock());
         inner.send(connection, bytes)

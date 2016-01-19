@@ -38,7 +38,7 @@ use rand::random;
 use docopt::Docopt;
 use std::sync::mpsc::{channel, Receiver};
 use std::sync::Arc;
-use crust::*;
+use crust::{Connection, Service, HolePunchServer, Event};
 
 fn timed<F>(f: F) -> f64 where F: FnOnce() {
     let start = time::precise_time_s();

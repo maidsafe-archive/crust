@@ -28,6 +28,7 @@
 extern crate maidsafe_utilities;
 extern crate crust;
 
+
 fn fibonacci_number(n: u64) -> u64 {
     match n {
         0 => 0,
@@ -47,7 +48,7 @@ fn main() {
     // `FileHandler::write_file()`).  This object will try to clean up this directory when it goes
     // out of scope.  Normally apps would not do this - this directory will hold the peristent cache
     // files.
-    let _cleaner = ::crust::ScopedUserAppDirRemover;
+    let _cleaner = crust::file_handler::ScopedUserAppDirRemover;
 
     // We receive events (e.g. new connection, message received) from the Service via an
     // asynchronous channel.
@@ -57,7 +58,7 @@ fn main() {
     let event_sender = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(channel_sender,
                                                                                  crust_event_category,
                                                                                  category_tx);
-    let mut service = unwrap_result!(::crust::Service::new(event_sender));
+    let mut service = unwrap_result!(crust::service::Service::new(event_sender));
     match service.start_beacon(5484) {
         Ok(_)  => (),
         Err(e) => println!("Warning: Couldn't start beacon: {}. (perhaps another crust instance is using the port?)", e),
