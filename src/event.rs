@@ -41,7 +41,7 @@ pub struct OurContactInfo {
 }
 
 /// Contact info used to connect to another peer.
-#[derive(Debug)]
+#[derive(Debug, RustcEncodable, RustcDecodable)]
 pub struct TheirContactInfo {
     /// Secret data used for rendezvous connect.
     pub secret: Option<[u8; 4]>,
