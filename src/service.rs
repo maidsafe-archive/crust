@@ -269,6 +269,7 @@ impl Service {
             beacon::BroadcastAcceptor::stop(&beacon_guid_and_port);
         }
 
+        self.acceptors.clear();
     }
 
     // TODO (canndrew): do we even need this method?
