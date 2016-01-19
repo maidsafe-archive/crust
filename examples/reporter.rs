@@ -39,7 +39,7 @@ extern crate rustc_serialize;
 extern crate time;
 extern crate ip;
 
-use crust::{Endpoint, Protocol, Event, FileHandler, Service};
+use crust::{HolePunchServer, Endpoint, Protocol, Event, FileHandler, Service};
 use docopt::Docopt;
 use rand::{thread_rng, Rng};
 use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
@@ -239,6 +239,9 @@ fn format_event(event: &Event) -> String {
 }
 
 fn run(connected: Arc<AtomicBool>, config: &Config) -> Report {
+    let (tx, _rx) = channel();
+    let hole_punch_server = Arc::new(unwrap_result!(HolePunchServer::start(tx)));
+
     let (event_tx, event_receiver) = channel();
 
     let (category_tx, category_rx) = ::std::sync::mpsc::channel();
@@ -259,7 +262,7 @@ fn run(connected: Arc<AtomicBool>, config: &Config) -> Report {
 
     if connected.load(Ordering::Relaxed) {
         if !config.ips.is_empty() {
-            connect_to_all(&mut service, &config.ips);
+            connect_to_all(&mut service, &config.ips, hole_punch_server.clone());
         }
 
         wait_sender.send(()).unwrap();
@@ -322,6 +325,7 @@ fn run(connected: Arc<AtomicBool>, config: &Config) -> Report {
         Duration::zero()
     };
 
+    let hole_punch_server_cloned = hole_punch_server.clone();
     let message_thread_handle = thread::spawn(move || {
         let mut sent_at = time::now() - msg_time;
 
@@ -337,7 +341,7 @@ fn run(connected: Arc<AtomicBool>, config: &Config) -> Report {
                     sent_at = time::now();
 
                     if !connected2.swap(true, Ordering::Relaxed) {
-                        connect_to_all(&mut service, &ips);
+                        connect_to_all(&mut service, &ips, hole_punch_server_cloned.clone());
                         wait_sender.send(()).unwrap();
                     }
                 }
@@ -366,13 +370,9 @@ fn run(connected: Arc<AtomicBool>, config: &Config) -> Report {
     }
 }
 
-fn connect_to_all(service: &mut Service, addrs: &[SocketAddr]) {
-    for addr in addrs {
-        debug!("Connecting to {}", addr);
-
-        service.bootstrap_connect(0, vec![Endpoint::from_socket_addr(Protocol::Tcp, *addr)]);
-        service.bootstrap_connect(0, vec![Endpoint::from_socket_addr(Protocol::Utp, *addr)]);
-    }
+fn connect_to_all(service: &mut Service, addrs: &[SocketAddr], hole_punch_server: Arc<HolePunchServer>) {
+    let addrs = addrs.iter().map(|a| Endpoint::from_socket_addr(Protocol::Tcp, a.clone())).collect();
+    service.bootstrap_off_list(0, addrs, hole_punch_server);
 }
 
 fn start_accepting(service: &mut Service, port: u16) -> Result<(), Error> {

@@ -57,6 +57,7 @@ use sequence_number::SequenceNumber;
 pub struct Service {
     beacon_guid_and_port: Option<(beacon::GUID, u16)>,
     config: Config,
+    bootstrap_peers: Option<mpsc::Sender<Vec<Endpoint>>>,
     bootstrap_handler: BootstrapHandler,
     acceptors: Vec<Acceptor>,
     mapper: Arc<HolePunchServer>,
@@ -98,6 +99,7 @@ impl Service {
         let service = Service {
             beacon_guid_and_port: None,
             config: config,
+            bootstrap_peers: None,
             bootstrap_handler: try!(BootstrapHandler::new()),
             acceptors: Vec::new(),
             mapper: mapper,
@@ -301,56 +303,6 @@ impl Service {
         self.stop_called = true;
     }
 
-    /// Opens a connection to a remote peer. `endpoints` is a vector of addresses of the remote
-    /// peer. All the endpoints will be tried. As soon as a connection is established, it will drop
-    /// all other ongoing attempts. On success `Event::NewConnection` with connected `Endpoint` will
-    /// be sent to the event channel. On failure, nothing is reported.
-    /// Failed attempts are not notified back up to the caller. If the caller wants to know of a
-    /// failed attempt, it must maintain a record of the attempt itself which times out if a
-    /// corresponding `Event::NewConnection` isn't received.  See also [Process for Connecting]
-    /// (https://github.com/maidsafe/crust/blob/master/docs/connect.md) for details on handling of
-    /// connect in different protocols.
-    pub fn bootstrap_connect(&self, token: u32, endpoints: Vec<Endpoint>) {
-        let mapper_external_addr = self.mapper.external_address();
-        let mapper_internal_port = self.mapper.listening_addr().port();
-
-        let handshake = Handshake {
-            mapper_port: Some(mapper_internal_port),
-            external_addr: mapper_external_addr,
-            // TODO (canndrew): this is a dummy value that gets overwritten further on in the code
-            // before the handshake is sent.
-            remote_addr: SocketAddr(net::SocketAddr::from_str("0.0.0.0:0").unwrap()),
-        };
-
-        let event_sender = self.event_sender.clone();
-
-        let connection_map = self.connection_map.clone();
-        let _ = Self::new_thread("connect", move || {
-            for endpoint in endpoints {
-                let transport = match transport::connect(endpoint) {
-                    Ok(transport) => transport,
-                    Err(_) => continue,
-                };
-                match Self::handle_handshake(handshake.clone(), transport) {
-                    Ok((h, t)) => {
-                        let c = t.connection_id.clone();
-                        let our_external_endpoint =
-                            Endpoint::from_socket_addr(*t.connection_id
-                                                         .peer_endpoint()
-                                                         .protocol(),
-                                                       SocketAddr(*h.remote_addr));
-                        let event = Event::OnBootstrapConnect(Ok((our_external_endpoint, c)), token);
-
-                        let _ = connection_map.register_connection(h, t, event);
-                    }
-                    Err(e) => {
-                        let _ = event_sender.send(Event::OnBootstrapConnect(Err(e), token));
-                    }
-                }
-            }
-        });
-    }
-
     // TODO (canndrew): do we even need this method?
     /// Check whether we're connected to an endpoint.
     pub fn is_connected_to(&self, endpoint: &Endpoint) -> bool {
@@ -369,8 +321,13 @@ impl Service {
                               bootstrap_list: Vec<Endpoint>,
                               hole_punch_server: Arc<HolePunchServer>) {
         if self.is_bootstrapping.compare_and_swap(false, true, Ordering::SeqCst) {
+            let _ = unwrap_option!(self.bootstrap_peers.as_ref(), "bootstrap_peers cannot be None!").send(bootstrap_list);
             return;
         }
+
+        let (tx, rx) = mpsc::channel();
+        let _ = tx.send(bootstrap_list);
+        self.bootstrap_peers = Some(tx);
 
         let is_bootstrapping = self.is_bootstrapping.clone();
         let bootstrap_thread = self.bootstrap_thread.take();
@@ -383,7 +340,7 @@ impl Service {
         let event_sender = self.event_sender.clone();
 
         let handle = RaiiThreadJoiner::new(thread!("bootstrap thread", move || {
-            for endpoint in bootstrap_list {
+            for endpoint in rx.iter().flat_map(|v| v.into_iter()) {
                 // Bootstrapping got cancelled.
                 if !is_bootstrapping.load(Ordering::SeqCst) {
                     return;
@@ -671,6 +628,7 @@ mod test {
     use std::net::{UdpSocket, Ipv4Addr};
     use std::path::PathBuf;
     use std::sync::mpsc::{Sender, Receiver, channel};
+    use std::sync::Arc;
     use std::thread;
     use std::thread::spawn;
     use std::net;
@@ -681,6 +639,7 @@ mod test {
     use endpoint::{Protocol, Endpoint};
     use config_handler::write_config_file;
     use event::Event;
+    use hole_punching::HolePunchServer;
     use bootstrap_handler::BootstrapHandler;
     use maidsafe_utilities::event_sender::{MaidSafeEventCategory, MaidSafeObserver};
     use socket_addr::SocketAddr;
@@ -953,8 +912,11 @@ mod test {
         let cm2_eps = filter_ok(vec![cm2.start_accepting(0)]);
         assert!(cm2_eps.len() >= 1);
 
-        cm2.bootstrap_connect(0, unspecified_to_loopback(&cm1_eps));
-        cm1.bootstrap_connect(1, unspecified_to_loopback(&cm2_eps));
+        let (tx, _rx) = channel();
+        let hole_punch_server = Arc::new(unwrap_result!(HolePunchServer::start(tx)));
+
+        cm2.bootstrap_off_list(0, unspecified_to_loopback(&cm1_eps), hole_punch_server.clone());
+        cm1.bootstrap_off_list(1, unspecified_to_loopback(&cm2_eps), hole_punch_server.clone());
 
         let runner1 = run_cm(cm1, cm1_o, category_rx0);
         let runner2 = run_cm(cm2, cm2_o, category_rx1);
@@ -1201,7 +1163,7 @@ mod test {
                                                   category_tx);
 
         let mut service0 = Service::new(event_sender0).unwrap();
-        let service1 = Service::new(event_sender1).unwrap();
+        let mut service1 = Service::new(event_sender1).unwrap();
 
         let endpoint0 = service0.start_accepting(0)
                                 .unwrap()
@@ -1210,7 +1172,11 @@ mod test {
                                       ::ip::IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
                                       endpoint0);
 
-        service1.bootstrap_connect(0, vec![endpoint0]);
+
+        let (tx, _rx) = channel();
+        let hole_punch_server = Arc::new(unwrap_result!(HolePunchServer::start(tx)));
+
+        service1.bootstrap_off_list(0, vec![endpoint0], hole_punch_server);
 
         let _joiner = RaiiThreadJoiner::new(spawn(move || {
             let mut peer0_connection = None;
@@ -1340,11 +1306,14 @@ mod test {
                                      .map(|ep| ep.unspecified_to_loopback())
                                      .collect::<::std::collections::VecDeque<_>>();
 
+        let (tx, _rx) = channel();
+        let hole_punch_server = Arc::new(unwrap_result!(HolePunchServer::start(tx)));
+
         for mut node in nodes {
             assert!(listening_eps.pop_front().is_some());
 
             for ep in &listening_eps {
-                node.service.bootstrap_connect(0, vec![ep.clone()]);
+                node.service.bootstrap_off_list(0, vec![ep.clone()], hole_punch_server.clone());
             }
 
             runners.push(spawn(move || node.run()));
@@ -1408,10 +1377,13 @@ mod test {
             let event_sender = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(cm_aux_tx,
                                                                                          cloned_crust_event_category,
                                                                                          category_tx);
-            let cm_aux = unwrap_result!(Service::new(event_sender));
+            let mut cm_aux = unwrap_result!(Service::new(event_sender));
             // setting the listening port to be greater than 4455 will make the test hanging
             // changing this to cm_beacon_addr will make the test hanging
-            cm_aux.bootstrap_connect(0, unspecified_to_loopback(&vec![cm_listen_ep]));
+            let (tx, _rx) = channel();
+            let hole_punch_server = Arc::new(unwrap_result!(HolePunchServer::start(tx)));
+
+            cm_aux.bootstrap_off_list(0, unspecified_to_loopback(&vec![cm_listen_ep]), hole_punch_server);
 
             for it in category_rx.iter() {
                 match it {

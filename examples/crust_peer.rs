@@ -54,7 +54,7 @@ use std::time::Duration;
 
 use crust::SocketAddr;
 use crust::{Service, Protocol, Endpoint, Connection};
-use crust::{OurContactInfo, TheirContactInfo};
+use crust::{HolePunchServer, OurContactInfo, TheirContactInfo};
 
 static USAGE: &'static str = "
 Usage:
@@ -451,6 +451,9 @@ fn main() {
         unwrap_result!(create_local_config());
     }
 
+    let (tx, _rx) = channel();
+    let hole_punch_server = Arc::new(unwrap_result!(HolePunchServer::start(tx)));
+
     let mut stdout = term::stdout();
     let mut stdout_copy = term::stdout();
 
@@ -627,7 +630,7 @@ fn main() {
             match cmd {
                 UserCommand::Connect(ep) => {
                     println!("Bootstrap connecting to {:?}", ep);
-                    service.bootstrap_connect(0, vec![ep]);
+                    service.bootstrap_off_list(0, vec![ep], hole_punch_server.clone());
                 }
                 UserCommand::ConnectRendezvous(udp_id, endpoint) => {
                     let mut network = network.lock().unwrap();
