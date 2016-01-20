@@ -61,10 +61,13 @@ impl Acceptor {
                     external_addr: mapper_external_addr,
                     remote_addr: SocketAddr(net::SocketAddr::from_str("0.0.0.0:0").unwrap()),
                 };
+                println!("TRANSPORT: About to accept a new connection");
                 let accept_res = transport::accept(&listener).and_then(|t| {
                     transport::exchange_handshakes(handshake, t)
                 });
+                println!("TRANSPORT: Accepted a new connection");
                 if !running_cloned.load(Ordering::SeqCst) {
+                    println!("TRANSPORT: About to quit `acceptor` thread");
                     break;
                 }
                 // TODO (canndrew): What to do with this error?
@@ -105,6 +108,7 @@ impl Acceptor {
 impl Drop for Acceptor {
     fn drop(&mut self) {
         self.running.store(false, Ordering::SeqCst);
+        println!("ACCEPTOR: trying to shut down with addr {}", self.addr);
         let _ = TcpStream::connect(self.addr);
     }
 }

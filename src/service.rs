@@ -266,10 +266,14 @@ impl Service {
     // listener threads to join.  Once called, the Service should be destroyed.
     fn stop(&mut self) {
         if let Some(beacon_guid_and_port) = self.beacon_guid_and_port.take() {
+            println!("About to stop broadcast acceptor");
             beacon::BroadcastAcceptor::stop(&beacon_guid_and_port);
+            println!("Broadcast acceptor stopped");
         }
 
+        println!("About to stop acceptors");
         self.acceptors.clear();
+        println!("Acceptors stopped");
     }
 
     // TODO (canndrew): do we even need this method?
