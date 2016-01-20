@@ -28,6 +28,8 @@
 extern crate maidsafe_utilities;
 extern crate crust;
 
+use crust::service::Service;
+
 fn main() {
     ::maidsafe_utilities::log::init(true);
 
@@ -35,7 +37,7 @@ fn main() {
     // `FileHandler::write_file()`).  This object will try to clean up this directory when it goes
     // out of scope.  Normally apps would not do this - this directory will hold the peristent cache
     // files.
-    let _cleaner = ::crust::ScopedUserAppDirRemover;
+    let _cleaner = crust::file_handler::ScopedUserAppDirRemover;
 
     // We receive events (e.g. new connection, message received) from the Service via an
     // asynchronous channel.
@@ -47,7 +49,7 @@ fn main() {
                                                                                  crust_event_category,
                                                                                  category_tx);
 
-    let mut service = unwrap_result!(::crust::Service::new(event_sender));
+    let mut service = unwrap_result!(Service::new(event_sender));
 
     let (bs_sender, bs_receiver) = ::std::sync::mpsc::channel();
     // Start a thread running a loop which will receive and display responses from the peer.

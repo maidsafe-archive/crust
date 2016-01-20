@@ -69,16 +69,13 @@ pub mod file_handler;
 
 /// Crust Observers will be informed of crust events on this
 pub type CrustEventSender = ::maidsafe_utilities::event_sender::MaidSafeObserver<Event>;
-
 pub use config_handler::write_config_file;
 pub use service::Service;
 pub use event::{Event, OurContactInfo, TheirContactInfo};
-pub use error::Error;
 pub use file_handler::{FileHandler, current_bin_dir, user_app_dir, system_cache_dir,
                        exe_file_stem, ScopedUserAppDirRemover};
 pub use endpoint::{Endpoint, Protocol};
 pub use connection::Connection;
-pub use util::ifaddrs_if_unspecified;
 pub use socket_addr::SocketAddr;
 pub use hole_punching::HolePunchServer;
 
@@ -93,12 +90,12 @@ mod test {
     }
 }
 mod sequence_number;
+mod connection;
 mod beacon;
+mod endpoint;
 mod bootstrap_handler;
 mod config_handler;
 mod util;
-mod endpoint;
-mod connection;
 mod tcp_connections;
 mod transport;
 mod utp_connections;
@@ -108,8 +105,8 @@ mod map_external_port;
 mod hole_punching;
 mod periodic_sender;
 mod socket_utils;
-mod ip_info;
 mod socket_addr;
+mod ip_info;
 mod acceptor;
 mod connection_map;
 

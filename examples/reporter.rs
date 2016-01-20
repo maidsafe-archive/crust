@@ -39,7 +39,7 @@ extern crate rustc_serialize;
 extern crate time;
 extern crate ip;
 
-use crust::{HolePunchServer, Endpoint, Protocol, Event, FileHandler, Service};
+use crust::{Endpoint, Protocol, HolePunchServer, Event, FileHandler, Service, SocketAddr};
 use docopt::Docopt;
 use rand::{thread_rng, Rng};
 use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
@@ -53,7 +53,6 @@ use std::thread;
 use std::net;
 use time::{Duration, Tm};
 use ip::SocketAddrExt;
-use crust::SocketAddr;
 
 static USAGE: &'static str = r#"
 Usage:

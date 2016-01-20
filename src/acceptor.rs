@@ -29,7 +29,7 @@ use transport;
 use transport::Handshake;
 use hole_punching::HolePunchServer;
 use connection_map::ConnectionMap;
-use Endpoint;
+use endpoint::Endpoint;
 use event::Event;
 
 pub struct Acceptor {
