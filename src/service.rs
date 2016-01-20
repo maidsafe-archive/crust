@@ -270,10 +270,6 @@ impl Service {
             beacon::BroadcastAcceptor::stop(&beacon_guid_and_port);
             println!("Broadcast acceptor stopped");
         }
-
-        println!("About to stop acceptors");
-        self.acceptors.clear();
-        println!("Acceptors stopped");
     }
 
     // TODO (canndrew): do we even need this method?
