@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `UtpListener` struct in crate `utp`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, UtpListener">
+
+    <title>utp::UtpListener - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <section class="sidebar">
+        
+        <p class='location'><a href='index.html'>utp</a></p><script>window.sidebarCurrent = {name: 'UtpListener', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </section>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press 'S' to search, '?' for more options..."
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content struct">
+<h1 class='fqn'><span class='in-band'>Struct <a href='index.html'>utp</a>::<wbr><a class='struct' href=''>UtpListener</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-9720' class='srclink' href='../src/utp/socket.rs.html#983-986' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct UtpListener {
+    // some fields omitted
+}</pre><div class='docblock'><p>A structure representing a socket server.</p>
+
+<h1 id="examples" class='section-header'><a
+                           href="#examples">Examples</a></h1><pre class='rust rust-example-rendered'>
+<span class='kw'>use</span> <span class='ident'>utp</span>::{<span class='ident'>UtpListener</span>, <span class='ident'>UtpSocket</span>};
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>thread</span>;
+
+<span class='kw'>fn</span> <span class='ident'>handle_client</span>(<span class='ident'>socket</span>: <span class='ident'>UtpSocket</span>) {
+    <span class='comment'>// ...</span>
+}
+
+<span class='kw'>fn</span> <span class='ident'>main</span>() {
+    <span class='comment'>// Create a listener</span>
+    <span class='kw'>let</span> <span class='ident'>addr</span> <span class='op'>=</span> <span class='string'>&quot;127.0.0.1:8080&quot;</span>;
+    <span class='kw'>let</span> <span class='ident'>listener</span> <span class='op'>=</span> <span class='ident'>UtpListener</span>::<span class='ident'>bind</span>(<span class='ident'>addr</span>).<span class='ident'>unwrap</span>();
+
+    <span class='kw'>for</span> <span class='ident'>connection</span> <span class='kw'>in</span> <span class='ident'>listener</span>.<span class='ident'>incoming</span>() {
+        <span class='comment'>// Spawn a new handler for each new connection</span>
+        <span class='kw'>match</span> <span class='ident'>connection</span> {
+            <span class='prelude-val'>Ok</span>((<span class='ident'>socket</span>, <span class='ident'>_src</span>)) <span class='op'>=&gt;</span> { <span class='ident'>thread</span>::<span class='ident'>spawn</span>(<span class='kw'>move</span> <span class='op'>||</span> { <span class='ident'>handle_client</span>(<span class='ident'>socket</span>) }); },
+            _ <span class='op'>=&gt;</span> ()
+        }
+    }
+}
+</pre>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../utp/struct.UtpListener.html' title='utp::UtpListener'>UtpListener</a></code></h3><div class='impl-items'><h4 id='method.bind' class='method'><code>fn <a href='#method.bind' class='fnname'>bind</a>&lt;A: <a class='trait' href='http://doc.rust-lang.org/nightly/std/net/addr/trait.ToSocketAddrs.html' title='std::net::addr::ToSocketAddrs'>ToSocketAddrs</a>&gt;(addr: A) -&gt; <a class='type' href='http://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='struct' href='../utp/struct.UtpListener.html' title='utp::UtpListener'>UtpListener</a>&gt;</code></h4>
+<div class='docblock'><p>Creates a new <code>UtpListener</code> bound to a specific address.</p>
+
+<p>The resulting listener is ready for accepting connections.</p>
+
+<p>The address type can be any implementor of the <code>ToSocketAddr</code> trait. See its documentation
+for concrete examples.</p>
+
+<p>If more than one valid address is specified, only the first will be used.</p>
+</div><h4 id='method.accept' class='method'><code>fn <a href='#method.accept' class='fnname'>accept</a>(&amp;self) -&gt; <a class='type' href='http://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a href='http://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(<a class='struct' href='../utp/struct.UtpSocket.html' title='utp::UtpSocket'>UtpSocket</a>, <a class='enum' href='http://doc.rust-lang.org/nightly/std/net/addr/enum.SocketAddr.html' title='std::net::addr::SocketAddr'>SocketAddr</a>)</a>&gt;</code></h4>
+<div class='docblock'><p>Accepts a new incoming connection from this listener.</p>
+
+<p>This function will block the caller until a new uTP connection is established. When
+established, the corresponding <code>UtpSocket</code> and the peer&#39;s remote address will be returned.</p>
+
+<p>Notice that the resulting <code>UtpSocket</code> is bound to a different local port than the public
+listening port (which <code>UtpListener</code> holds). This may confuse the remote peer!</p>
+</div><h4 id='method.incoming' class='method'><code>fn <a href='#method.incoming' class='fnname'>incoming</a>(&amp;self) -&gt; Incoming</code></h4>
+<div class='docblock'><p>Returns an iterator over the connections being received by this listener.</p>
+
+<p>The returned iterator will never return <code>None</code>.</p>
+</div><h4 id='method.local_addr' class='method'><code>fn <a href='#method.local_addr' class='fnname'>local_addr</a>(&amp;self) -&gt; <a class='type' href='http://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='enum' href='http://doc.rust-lang.org/nightly/std/net/addr/enum.SocketAddr.html' title='std::net::addr::SocketAddr'>SocketAddr</a>&gt;</code></h4>
+<div class='docblock'><p>Returns the local socket address of this listener.</p>
+</div></div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <div id="help" class="hidden">
+        <div class="shortcuts">
+            <h1>Keyboard shortcuts</h1>
+            <dl>
+                <dt>?</dt>
+                <dd>Show this help dialog</dd>
+                <dt>S</dt>
+                <dd>Focus the search field</dd>
+                <dt>&larrb;</dt>
+                <dd>Move up in search results</dd>
+                <dt>&rarrb;</dt>
+                <dd>Move down in search results</dd>
+                <dt>&#9166;</dt>
+                <dd>Go to active search result</dd>
+            </dl>
+        </div>
+        <div class="infos">
+            <h1>Search tricks</h1>
+            <p>
+                Prefix searches with a type followed by a colon (e.g.
+                <code>fn:</code>) to restrict the search to a given type.
+            </p>
+            <p>
+                Accepted types are: <code>fn</code>, <code>mod</code>,
+                <code>struct</code>, <code>enum</code>,
+                <code>trait</code>, <code>typedef</code> (or
+                <code>tdef</code>).
+            </p>
+            <p>
+                Search functions by type signature (e.g.
+                <code>vec -> usize</code>)
+            </p>
+        </div>
+    </div>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "utp";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script async src="../search-index.js"></script>
+</body>
+</html>

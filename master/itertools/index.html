@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `itertools` crate.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, itertools">
+
+    <title>itertools - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'></p><script>window.sidebarCurrent = {name: 'itertools', ty: 'mod', relpath: '../'};</script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content mod">
+<h1 class='fqn'><span class='in-band'>Crate <a class='mod' href=''>itertools</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-0' class='srclink' href='../src/itertools/lib.rs.html#1-1385' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p>Itertools — extra iterator adaptors, functions and macros.</p>
+
+<p>To use the iterator methods in this crate, import the <a href="./trait.Itertools.html"><code>Itertools</code> trait</a>:</p>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>use</span> <span class='ident'>itertools</span>::<span class='ident'>Itertools</span>;</pre>
+
+<p>Some iterators or adaptors are used directly like regular structs, for example
+<a href="./struct.PutBack.html"><code>PutBack</code></a>, <a href="./struct.Unfold.html"><code>Unfold</code></a>,
+<a href="./struct.Zip.html"><code>Zip</code></a>, <a href="./struct.Stride.html"><code>Stride</code></a></p>
+
+<p>To enable the macros in this crate, use the <code>#[macro_use]</code> attribute:</p>
+<pre class='rust rust-example-rendered'>
+<span class='attribute'>#[<span class='ident'>macro_use</span>]</span> <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>itertools</span>;</pre>
+
+<h2 id='license' class='section-header'><a href='#license'>License</a></h2>
+<p>Dual-licensed to be compatible with the Rust project.</p>
+
+<p>Licensed under the Apache License, Version 2.0
+<a href="http://www.apache.org/licenses/LICENSE-2.0">http://www.apache.org/licenses/LICENSE-2.0</a> or the MIT license
+<a href="http://opensource.org/licenses/MIT">http://opensource.org/licenses/MIT</a>, at your
+option. This file may not be copied, modified, or distributed
+except according to those terms.</p>
+</div><h2 id='reexports' class='section-header'><a href="#reexports">Reexports</a></h2>
+<table><tr><td><code>pub use free::{<a class='fn' href='../itertools/free/fn.enumerate.html' title='itertools::free::enumerate'>enumerate</a>, <a class='fn' href='../itertools/free/fn.rev.html' title='itertools::free::rev'>rev</a>};</code></td></tr></table><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='mod' href='free/index.html'
+                               title='itertools::free'>free</a></td>
+                        <td class='docblock short'>
+                             <p>Free functions that create iterator adaptors or call iterator methods.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='mod' href='misc/index.html'
+                               title='itertools::misc'>misc</a></td>
+                        <td class='docblock short'>
+                             <p>A module of helper traits and iterators that are not intended to be used
+directly.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='mod' href='size_hint/index.html'
+                               title='itertools::size_hint'>size_hint</a></td>
+                        <td class='docblock short'>
+                             <p>Arithmetic on <strong>Iterator</strong> <em>.size_hint()</em> values.</p>
+
+                        </td>
+                    </tr>
+                </table><h2 id='macros' class='section-header'><a href="#macros">Macros</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='macro' href='macro.iproduct!.html'
+                               title='itertools::iproduct!'>iproduct!</a></td>
+                        <td class='docblock short'>
+                             <p>Create an iterator over the “cartesian product” of iterators.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='macro' href='macro.izip!.html'
+                               title='itertools::izip!'>izip!</a></td>
+                        <td class='docblock short'>
+                             <p>Create an iterator running multiple iterators in lockstep.</p>
+
+                        </td>
+                    </tr>
+                </table><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Batching.html'
+                               title='itertools::Batching'>Batching</a></td>
+                        <td class='docblock short'>
+                             <p>A “meta iterator adaptor”. Its closure recives a reference to the iterator
+and may pick off as many elements as it likes, to produce the next iterator element.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Chunk.html'
+                               title='itertools::Chunk'>Chunk</a></td>
+                        <td class='docblock short'>
+                             <p>An iterator for the elements in a single chunk.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Chunks.html'
+                               title='itertools::Chunks'>Chunks</a></td>
+                        <td class='docblock short'>
+                             <p>An iterator that yields the Chunk iterators.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.ChunksLazy.html'
+                               title='itertools::ChunksLazy'>ChunksLazy</a></td>
+                        <td class='docblock short'>
+                             <p><code>ChunkLazy</code> is the storage for a lazy chunking operation.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Coalesce.html'
+                               title='itertools::Coalesce'>Coalesce</a></td>
+                        <td class='docblock short'>
+                             <p>An iterator adaptor that may join together adjacent elements.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Combinations.html'
+                               title='itertools::Combinations'>Combinations</a></td>
+                        <td class='docblock short'>
+                             <p>An iterator to iterate through all the combinations of pairs in a <code>Clone</code>-able iterator.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Dedup.html'
+                               title='itertools::Dedup'>Dedup</a></td>
+                        <td class='docblock short'>
+                             <p>An iterator adaptor that removes repeated duplicates.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Flatten.html'
+                               title='itertools::Flatten'>Flatten</a></td>
+                        <td class='docblock short'>
+                             <p>An iterator adapter to simply flatten a structure.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Format.html'
+                               title='itertools::Format'>Format</a></td>
+                        <td class='docblock short'>
+                             <p>Format all iterator elements lazily, separated by <code>sep</code>.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Group.html'
+                               title='itertools::Group'>Group</a></td>
+                        <td class='docblock short'>
+                             <p>An iterator for the elements in a single group.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.GroupBy.html'
+                               title='itertools::GroupBy'>GroupBy</a></td>
+                        <td class='docblock short'>
+                             <p>An iterator adaptor that groups iterator elements. Consecutive elements
+that map to the same key (“runs”), are returned as the iterator elements.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.GroupByLazy.html'
+                               title='itertools::GroupByLazy'>GroupByLazy</a></td>
+                        <td class='docblock short'>
+                             <p><code>GroupByLazy</code> is the storage for the lazy grouping operation.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Groups.html'
+                               title='itertools::Groups'>Groups</a></td>
+                        <td class='docblock short'>
+                             <p>An iterator that yields the Group iterators.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.ISlice.html'
+                               title='itertools::ISlice'>ISlice</a></td>
+                        <td class='docblock short'>
+                             <p>An iterator adaptor that yields a subset (a slice) of the base iterator.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Interleave.html'
+                               title='itertools::Interleave'>Interleave</a></td>
+                        <td class='docblock short'>
+                             <p>An iterator adaptor that alternates elements from two iterators until both
+run out.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.InterleaveShortest.html'
+                               title='itertools::InterleaveShortest'>InterleaveShortest</a></td>
+                        <td class='docblock short'>
+                             <p>An iterator adaptor that alternates elements from the two iterators until
+one of them runs out.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Intersperse.html'
+                               title='itertools::Intersperse'>Intersperse</a></td>
+                        <td class='docblock short'>
+                             <p>An iterator adaptor to insert a particular value
+between each element of the adapted iterator.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Linspace.html'
+                               title='itertools::Linspace'>Linspace</a></td>
+                        <td class='docblock short'>
+                             <p>An iterator of a sequence of evenly spaced floats.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.MendSlices.html'
+                               title='itertools::MendSlices'>MendSlices</a></td>
+                        <td class='docblock short'>
+                             <p>An iterator adaptor that glues together adjacent contiguous slices.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Merge.html'
+                               title='itertools::Merge'>Merge</a></td>
+                        <td class='docblock short'>
+                             <p>An iterator adaptor that merges the two base iterators in ascending order.
+If both base iterators are sorted (ascending), the result is sorted.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.MergeBy.html'
+                               title='itertools::MergeBy'>MergeBy</a></td>
+                        <td class='docblock short'>
+                             <p>An iterator adaptor that merges the two base iterators in ascending order.
+If both base iterators are sorted (ascending), the result is sorted.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.MultiPeek.html'
+                               title='itertools::MultiPeek'>MultiPeek</a></td>
+                        <td class='docblock short'>
+                             <p>An iterator adaptor that allows the user to peek at multiple <em>.next()</em>
+values without advancing itself.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.PadUsing.html'
+                               title='itertools::PadUsing'>PadUsing</a></td>
+                        <td class='docblock short'>
+                             <p>An iterator adaptor that pads a sequence to a minimum length by filling
+missing elements using a closure.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Product.html'
+                               title='itertools::Product'>Product</a></td>
+                        <td class='docblock short'>
+                             <p>An iterator adaptor that iterates over the cartesian product of
+the element sets of two iterators <code>I</code> and <code>J</code>.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.PutBack.html'
+                               title='itertools::PutBack'>PutBack</a></td>
+                        <td class='docblock short'>
+                             <p>An iterator adaptor that allows putting back a single
+item to the front of the iterator.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.PutBackN.html'
+                               title='itertools::PutBackN'>PutBackN</a></td>
+                        <td class='docblock short'>
+                             <p>An iterator adaptor that allows putting multiple
+items in front of the iterator.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.RcIter.html'
+                               title='itertools::RcIter'>RcIter</a></td>
+                        <td class='docblock short'>
+                             <p>A wrapper for <code>Rc&lt;RefCell&lt;I&gt;&gt;</code>, that implements the <code>Iterator</code> trait.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.RepeatCall.html'
+                               title='itertools::RepeatCall'>RepeatCall</a></td>
+                        <td class='docblock short'>
+                             <p>An iterator source that produces elements indefinitely by calling
+a given closure.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.RepeatN.html'
+                               title='itertools::RepeatN'>RepeatN</a></td>
+                        <td class='docblock short'>
+                             <p>An iterator that repeats an element exactly <em>n</em> times.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Step.html'
+                               title='itertools::Step'>Step</a></td>
+                        <td class='docblock short'>
+                             <p>An iterator adaptor that steps a number elements in the base iterator
+for each iteration.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Stride.html'
+                               title='itertools::Stride'>Stride</a></td>
+                        <td class='docblock short'>
+                             <p>An iterator similar to the slice iterator, but with a certain number of steps
+(the stride) skipped per iteration.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.StrideMut.html'
+                               title='itertools::StrideMut'>StrideMut</a></td>
+                        <td class='docblock short'>
+                             <p>The mutable equivalent of Stride.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.TakeWhileRef.html'
+                               title='itertools::TakeWhileRef'>TakeWhileRef</a></td>
+                        <td class='docblock short'>
+                             <p>An iterator adaptor that borrows from a <code>Clone</code>-able iterator
+to only pick off elements while the predicate returns <code>true</code>.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Tee.html'
+                               title='itertools::Tee'>Tee</a></td>
+                        <td class='docblock short'>
+                             <p>One half of an iterator pair where both return the same elements.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Unfold.html'
+                               title='itertools::Unfold'>Unfold</a></td>
+                        <td class='docblock short'>
+                             <p><code>Unfold</code> is a general iterator builder: it has a mutable state value,
+and a closure with access to the state that produces the next value.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Unique.html'
+                               title='itertools::Unique'>Unique</a></td>
+                        <td class='docblock short'>
+                             <p>An iterator adapter to filter out duplicate elements.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.UniqueBy.html'
+                               title='itertools::UniqueBy'>UniqueBy</a></td>
+                        <td class='docblock short'>
+                             <p>An iterator adapter to filter out duplicate elements.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.WhileSome.html'
+                               title='itertools::WhileSome'>WhileSome</a></td>
+                        <td class='docblock short'>
+                             <p>An iterator adaptor that filters <code>Option&lt;A&gt;</code> iterator elements
+and produces <code>A</code>. Stops on the first <code>None</code> encountered.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Zip.html'
+                               title='itertools::Zip'>Zip</a></td>
+                        <td class='docblock short'>
+                             <p>An iterator that generalizes <em>.zip()</em> and allows running multiple iterators in lockstep.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.ZipLongest.html'
+                               title='itertools::ZipLongest'>ZipLongest</a></td>
+                        <td class='docblock short'>
+                             <p>An iterator which iterates two other iterators simultaneously</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.ZipSlices.html'
+                               title='itertools::ZipSlices'>ZipSlices</a></td>
+                        <td class='docblock short'>
+                             <p>An iterator which iterates two slices simultaneously.</p>
+
+                        </td>
+                    </tr>
+                </table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='enum' href='enum.EitherOrBoth.html'
+                               title='itertools::EitherOrBoth'>EitherOrBoth</a></td>
+                        <td class='docblock short'>
+                             <p>A value yielded by <code>ZipLongest</code>.
+Contains one or two values, depending on which of the input iterators are exhausted.</p>
+
+                        </td>
+                    </tr>
+                </table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='trait' href='trait.Itertools.html'
+                               title='itertools::Itertools'>Itertools</a></td>
+                        <td class='docblock short'>
+                             <p>The trait <code>Itertools</code>: extra iterator adaptors and methods for iterators.</p>
+
+                        </td>
+                    </tr>
+                </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.assert_equal.html'
+                               title='itertools::assert_equal'>assert_equal</a></td>
+                        <td class='docblock short'>
+                             <p>Assert that two iterators produce equal sequences, with the same
+semantics as <em>equal(a, b)</em>.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.equal.html'
+                               title='itertools::equal'>equal</a></td>
+                        <td class='docblock short'>
+                             <p>Return <code>true</code> if both iterators produce equal sequences
+(elements pairwise equal and sequences of the same length),
+<code>false</code> otherwise.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.linspace.html'
+                               title='itertools::linspace'>linspace</a></td>
+                        <td class='docblock short'>
+                             <p>Return an iterator of evenly spaced floats.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.partition.html'
+                               title='itertools::partition'>partition</a></td>
+                        <td class='docblock short'>
+                             <p>Partition a sequence using predicate <code>pred</code> so that elements
+that map to <code>true</code> are placed before elements which map to <code>false</code>.</p>
+
+                        </td>
+                    </tr>
+                </table><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='type' href='type.MapFn.html'
+                               title='itertools::MapFn'>MapFn</a></td>
+                        <td class='docblock short'>
+                             <p>The function pointer map iterator created with <code>.map_fn()</code>.</p>
+
+                        </td>
+                    </tr>
+                </table></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "itertools";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script async src="../search-index.js"></script>
+</body>
+</html>

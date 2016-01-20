@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Event","Enum representing different events that will be sent over the asynchronous channel to the user of this module."]],"struct":[["ConnectionManager","A structure representing a connection manager"]],"type":[["Bytes","Type used to represent serialised data in a message."]]});

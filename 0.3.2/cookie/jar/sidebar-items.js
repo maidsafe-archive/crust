@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["CookieJar","A jar of cookies for managing a session"]]});

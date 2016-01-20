@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `LanguageTag` struct in crate `language_tags`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, LanguageTag">
+
+    <title>language_tags::LanguageTag - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <section class="sidebar">
+        
+        <p class='location'><a href='index.html'>language_tags</a></p><script>window.sidebarCurrent = {name: 'LanguageTag', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </section>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content struct">
+<h1 class='fqn'><span class='in-band'>Struct <a href='index.html'>language_tags</a>::<wbr><a class='struct' href=''>LanguageTag</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-567' class='srclink' href='../src/language_tags/lib.rs.html#160-193' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct LanguageTag {
+    pub language: <a class='enum' href='http://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='http://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;,
+    pub extlang: <a class='enum' href='http://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='http://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;,
+    pub script: <a class='enum' href='http://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='http://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;,
+    pub region: <a class='enum' href='http://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='http://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;,
+    pub variants: <a class='struct' href='http://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='http://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;,
+    pub extensions: <a class='struct' href='http://doc.rust-lang.org/nightly/collections/btree/map/struct.BTreeMap.html' title='collections::btree::map::BTreeMap'>BTreeMap</a>&lt;<a href='http://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>, <a class='struct' href='http://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='http://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;&gt;,
+    pub privateuse: <a class='struct' href='http://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='http://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;,
+}</pre><div class='docblock'><p>A language tag as described in <a href="http://tools.ietf.org/html/bcp47">BCP47</a>.</p>
+
+<p>Language tags are used to help identify languages, whether spoken,
+written, signed, or otherwise signaled, for the purpose of
+communication.  This includes constructed and artificial languages
+but excludes languages not intended primarily for human
+communication, such as programming languages.</p>
+</div><h2 class='fields'>Fields</h2>
+<table><tr class='stab '>
+                                  <td id='structfield.language'><code>language</code></td><td><div class='docblock'><p>Language subtags are used to indicate the language, ignoring all
+other aspects such as script, region or spefic invariants.</p>
+</div></td></tr><tr class='stab '>
+                                  <td id='structfield.extlang'><code>extlang</code></td><td><div class='docblock'><p>Extended language subtags are used to identify certain specially
+selected languages that, for various historical and compatibility
+reasons, are closely identified with or tagged using an existing
+primary language subtag.</p>
+</div></td></tr><tr class='stab '>
+                                  <td id='structfield.script'><code>script</code></td><td><div class='docblock'><p>Script subtags are used to indicate the script or writing system
+variations that distinguish the written forms of a language or its
+dialects.</p>
+</div></td></tr><tr class='stab '>
+                                  <td id='structfield.region'><code>region</code></td><td><div class='docblock'><p>Region subtags are used to indicate linguistic variations associated
+with or appropriate to a specific country, territory, or region.
+Typically, a region subtag is used to indicate variations such as
+regional dialects or usage, or region-specific spelling conventions.
+It can also be used to indicate that content is expressed in a way
+that is appropriate for use throughout a region, for instance,
+Spanish content tailored to be useful throughout Latin America.</p>
+</div></td></tr><tr class='stab '>
+                                  <td id='structfield.variants'><code>variants</code></td><td><div class='docblock'><p>Variant subtags are used to indicate additional, well-recognized
+variations that define a language or its dialects that are not
+covered by other available subtags.</p>
+</div></td></tr><tr class='stab '>
+                                  <td id='structfield.extensions'><code>extensions</code></td><td><div class='docblock'><p>Extensions provide a mechanism for extending language tags for use in
+various applications.  They are intended to identify information that
+is commonly used in association with languages or language tags but
+that is not part of language identification.</p>
+</div></td></tr><tr class='stab '>
+                                  <td id='structfield.privateuse'><code>privateuse</code></td><td><div class='docblock'><p>Private use subtags are used to indicate distinctions in language
+that are important in a given context by private agreement.</p>
+</div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../language_tags/struct.LanguageTag.html' title='language_tags::LanguageTag'>LanguageTag</a></code></h3><div class='impl-items'><h4 id='method.matches' class='method'><code>fn <a href='#method.matches' class='fnname'>matches</a>(&amp;self, other: &amp;<a class='struct' href='../language_tags/struct.LanguageTag.html' title='language_tags::LanguageTag'>LanguageTag</a>) -&gt; <a href='http://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+<div class='docblock'><p>Matches language tags like described in
+<a href="https://tools.ietf.org/html/rfc4647#section-3.3.2">RFC4647#Extended filtering</a></p>
+
+<p>For example <code>en-GB</code> matches only <code>en-GB</code> and <code>en-Arab-GB</code> but not <code>en</code>. While <code>en</code> matches
+all of <code>en</code>, <code>en-GB</code> ,<code>en-Arab</code> and <code>en-Arab-GB</code>.</p>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='http://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a> for <a class='struct' href='../language_tags/struct.LanguageTag.html' title='language_tags::LanguageTag'>LanguageTag</a></code></h3><div class='impl-items'><h4 id='method.eq' class='method'><code>fn <a href='http://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.eq' class='fnname'>eq</a>(&amp;self, other: &amp;<a class='struct' href='../language_tags/struct.LanguageTag.html' title='language_tags::LanguageTag'>LanguageTag</a>) -&gt; <a href='http://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+<h4 id='method.ne' class='method'><code>fn <a href='http://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.ne' class='fnname'>ne</a>(&amp;self, other: &amp;Rhs) -&gt; <a href='http://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='http://doc.rust-lang.org/nightly/core/default/trait.Default.html' title='core::default::Default'>Default</a> for <a class='struct' href='../language_tags/struct.LanguageTag.html' title='language_tags::LanguageTag'>LanguageTag</a></code></h3><div class='impl-items'><h4 id='method.default' class='method'><code>fn <a href='http://doc.rust-lang.org/nightly/core/default/trait.Default.html#method.default' class='fnname'>default</a>() -&gt; <a class='struct' href='../language_tags/struct.LanguageTag.html' title='language_tags::LanguageTag'>LanguageTag</a></code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='http://doc.rust-lang.org/nightly/core/str/trait.FromStr.html' title='core::str::FromStr'>FromStr</a> for <a class='struct' href='../language_tags/struct.LanguageTag.html' title='language_tags::LanguageTag'>LanguageTag</a></code></h3><div class='impl-items'><h4 id='assoc_type.Err' class='type'><code>type Err = <a class='enum' href='../language_tags/enum.Error.html' title='language_tags::Error'>Error</a></code></h4>
+<h4 id='method.from_str' class='method'><code>fn <a href='http://doc.rust-lang.org/nightly/core/str/trait.FromStr.html#method.from_str' class='fnname'>from_str</a>(s: &amp;<a href='http://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='type' href='../language_tags/type.Result.html' title='language_tags::Result'>Result</a>&lt;Self&gt;</code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='http://doc.rust-lang.org/nightly/core/fmt/trait.Display.html' title='core::fmt::Display'>Display</a> for <a class='struct' href='../language_tags/struct.LanguageTag.html' title='language_tags::LanguageTag'>LanguageTag</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='http://doc.rust-lang.org/nightly/core/fmt/trait.Display.html#method.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class='struct' href='http://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='http://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+</div><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='http://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='struct' href='../language_tags/struct.LanguageTag.html' title='language_tags::LanguageTag'>LanguageTag</a></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='http://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='struct' href='../language_tags/struct.LanguageTag.html' title='language_tags::LanguageTag'>LanguageTag</a></code></h4>
+<h4 id='method.clone_from' class='method'><code>fn <a href='http://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='http://doc.rust-lang.org/nightly/core/cmp/trait.Eq.html' title='core::cmp::Eq'>Eq</a> for <a class='struct' href='../language_tags/struct.LanguageTag.html' title='language_tags::LanguageTag'>LanguageTag</a></code></h3><div class='impl-items'></div><h3 class='impl'><code>impl <a class='trait' href='http://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='struct' href='../language_tags/struct.LanguageTag.html' title='language_tags::LanguageTag'>LanguageTag</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='http://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#method.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='http://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='http://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+</div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <div id="help" class="hidden">
+        <div>
+            <div class="shortcuts">
+                <h1>Keyboard Shortcuts</h1>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h1>Search Tricks</h1>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>typedef</code> (or
+                    <code>tdef</code>).
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code>)
+                </p>
+            </div>
+        </div>
+    </div>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "language_tags";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script async src="../search-index.js"></script>
+</body>
+</html>

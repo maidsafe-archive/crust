@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["StrictTransportSecurity","`StrictTransportSecurity` header, defined in RFC6797"]]});

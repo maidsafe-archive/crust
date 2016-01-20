@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `Cbor` enum in crate `cbor`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, Cbor">
+
+    <title>cbor::Cbor - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='index.html'>cbor</a></p><script>window.sidebarCurrent = {name: 'Cbor', ty: 'enum', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content enum">
+<h1 class='fqn'><span class='in-band'>Enum <a href='index.html'>cbor</a>::<wbr><a class='enum' href=''>Cbor</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-81' class='srclink' href='../src/cbor/lib.rs.html#233-258' title='goto source code'>[src]</a></span></h1>
+<pre class='rust enum'>pub enum Cbor {
+    Break,
+    Undefined,
+    Null,
+    Bool(<a href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>),
+    Unsigned(<a class='enum' href='../cbor/enum.CborUnsigned.html' title='cbor::CborUnsigned'>CborUnsigned</a>),
+    Signed(<a class='enum' href='../cbor/enum.CborSigned.html' title='cbor::CborSigned'>CborSigned</a>),
+    Float(<a class='enum' href='../cbor/enum.CborFloat.html' title='cbor::CborFloat'>CborFloat</a>),
+    Bytes(<a class='struct' href='../cbor/struct.CborBytes.html' title='cbor::CborBytes'>CborBytes</a>),
+    Unicode(<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>),
+    Array(<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='enum' href='../cbor/enum.Cbor.html' title='cbor::Cbor'>Cbor</a>&gt;),
+    Map(<a class='struct' href='https://doc.rust-lang.org/nightly/std/collections/hash/map/struct.HashMap.html' title='std::collections::hash::map::HashMap'>HashMap</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>, <a class='enum' href='../cbor/enum.Cbor.html' title='cbor::Cbor'>Cbor</a>&gt;),
+    Tag(<a class='struct' href='../cbor/struct.CborTag.html' title='cbor::CborTag'>CborTag</a>),
+}</pre><div class='docblock'><p>CBOR abstract syntax.</p>
+
+<p>This type can represent any data item described in the CBOR specification
+with some restrictions. Namely, CBOR maps are limited to Unicode string
+keys.</p>
+
+<p>Note that this representation distinguishes the size of an encoded number.</p>
+</div><h2 class='variants'>Variants</h2>
+<table><tr><td id='variant.Break'><code>Break</code></td><td><div class='docblock'><p>A code used to signify the end of an indefinite length data item.</p>
+</div></td></tr><tr><td id='variant.Undefined'><code>Undefined</code></td><td><div class='docblock'><p>An undefined data item (major type 7, value 23).</p>
+</div></td></tr><tr><td id='variant.Null'><code>Null</code></td><td><div class='docblock'><p>A null data item (major type 7, value 22).</p>
+</div></td></tr><tr><td id='variant.Bool'><code>Bool</code></td><td><div class='docblock'><p>A boolean data item (major type 7, values 20 or 21).</p>
+</div></td></tr><tr><td id='variant.Unsigned'><code>Unsigned</code></td><td><div class='docblock'><p>An unsigned integer (major type 0).</p>
+</div></td></tr><tr><td id='variant.Signed'><code>Signed</code></td><td><div class='docblock'><p>A negative integer (major type 1).</p>
+</div></td></tr><tr><td id='variant.Float'><code>Float</code></td><td><div class='docblock'><p>An IEEE 754 floating point number (major type 7).</p>
+</div></td></tr><tr><td id='variant.Bytes'><code>Bytes</code></td><td><div class='docblock'><p>A byte string (major type 2).</p>
+</div></td></tr><tr><td id='variant.Unicode'><code>Unicode</code></td><td><div class='docblock'><p>A Unicode string (major type 3).</p>
+</div></td></tr><tr><td id='variant.Array'><code>Array</code></td><td><div class='docblock'><p>An array (major type 4).</p>
+</div></td></tr><tr><td id='variant.Map'><code>Map</code></td><td><div class='docblock'><p>A map (major type 5).</p>
+</div></td></tr><tr><td id='variant.Tag'><code>Tag</code></td><td><div class='docblock'><p>A tag (major type 6).</p>
+</div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='enum' href='../cbor/enum.Cbor.html' title='cbor::Cbor'>Cbor</a></code></h3><div class='impl-items'><h4 id='method.decode' class='method'><code>fn <a href='#method.decode' class='fnname'>decode</a>&lt;D: <a class='trait' href='../rustc_serialize/serialize/trait.Decodable.html' title='rustc_serialize::serialize::Decodable'>Decodable</a>&gt;(self) -&gt; <a class='type' href='../cbor/type.CborResult.html' title='cbor::CborResult'>CborResult</a>&lt;D&gt;</code></h4>
+<div class='docblock'><p>Decode a single CBOR value.</p>
+</div><h4 id='method.tag' class='method'><code>fn <a href='#method.tag' class='fnname'>tag</a>(&amp;self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a>&gt;</code></h4>
+<div class='docblock'><p>If this is a CBOR tag, return the tag number.</p>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='../rustc_serialize/json/trait.ToJson.html' title='rustc_serialize::json::ToJson'>ToJson</a> for <a class='enum' href='../cbor/enum.Cbor.html' title='cbor::Cbor'>Cbor</a></code></h3><div class='impl-items'><h4 id='method.to_json' class='method'><code>fn <a href='../rustc_serialize/json/trait.ToJson.html#method.to_json' class='fnname'>to_json</a>(&amp;self) -&gt; <a class='enum' href='../rustc_serialize/json/enum.Json.html' title='rustc_serialize::json::Json'>Json</a></code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='../rustc_serialize/serialize/trait.Encodable.html' title='rustc_serialize::serialize::Encodable'>Encodable</a> for <a class='enum' href='../cbor/enum.Cbor.html' title='cbor::Cbor'>Cbor</a></code></h3><div class='impl-items'><h4 id='method.encode' class='method'><code>fn <a href='../rustc_serialize/serialize/trait.Encodable.html#method.encode' class='fnname'>encode</a>&lt;E: <a class='trait' href='../rustc_serialize/serialize/trait.Encoder.html' title='rustc_serialize::serialize::Encoder'>RustcEncoder</a>&gt;(&amp;self, e: &amp;mut E) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, E::Error&gt;</code></h4>
+</div><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a> for <a class='enum' href='../cbor/enum.Cbor.html' title='cbor::Cbor'>Cbor</a></code></h3><div class='impl-items'><h4 id='method.eq' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.eq' class='fnname'>eq</a>(&amp;self, __arg_0: &amp;<a class='enum' href='../cbor/enum.Cbor.html' title='cbor::Cbor'>Cbor</a>) -&gt; <a href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+<h4 id='method.ne' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.ne' class='fnname'>ne</a>(&amp;self, __arg_0: &amp;<a class='enum' href='../cbor/enum.Cbor.html' title='cbor::Cbor'>Cbor</a>) -&gt; <a href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='enum' href='../cbor/enum.Cbor.html' title='cbor::Cbor'>Cbor</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#method.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='enum' href='../cbor/enum.Cbor.html' title='cbor::Cbor'>Cbor</a></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='enum' href='../cbor/enum.Cbor.html' title='cbor::Cbor'>Cbor</a></code></h4>
+<h4 id='method.clone_from' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
+</div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "cbor";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script async src="../search-index.js"></script>
+</body>
+</html>

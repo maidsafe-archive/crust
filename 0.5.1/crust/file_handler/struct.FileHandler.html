@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `FileHandler` struct in crate `crust`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, FileHandler">
+
+    <title>crust::file_handler::FileHandler - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+
+    <link rel="shortcut icon" href="http://maidsafe.net/img/favicon.ico">
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        <a href='../../crust/index.html'><img src='https://raw.githubusercontent.com/maidsafe/QA/master/Images/maidsafe_logo.png' alt='' width='100'></a>
+        <p class='location'><a href='../index.html'>crust</a>::<wbr><a href='index.html'>file_handler</a></p><script>window.sidebarCurrent = {name: 'FileHandler', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content struct">
+<h1 class='fqn'><span class='in-band'>Struct <a href='../index.html'>crust</a>::<wbr><a href='index.html'>file_handler</a>::<wbr><a class='struct' href=''>FileHandler</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-306' class='srclink' href='../../src/crust/file_handler.rs.html#46-49' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct FileHandler {
+    // some fields omitted
+}</pre><div class='docblock'><p>Struct for reading and writing config files.</p>
+
+<h1 id='thread--and-process-safety' class='section-header'><a href='#thread--and-process-safety'>Thread- and Process-Safety</a></h1>
+<p>Since all instances of <code>FileHandler</code> initialised with the same value for <code>name</code> within a single
+process will likely refer to the same file on disk, it is not safe to access any such instance
+concurrently with that same <em>or any other</em> such instance (with the exception of the
+<a href="#method.path"><code>path()</code></a> function which is the only non-mutating member function).</p>
+
+<p>For instances initialised with different values for <code>name</code>, it is safe to access separate
+instances concurrently.</p>
+
+<p>It is possibly unsafe to call <a href="#method.write_file"><code>write_file()</code></a> concurrently with a different
+process calling <a href="#method.read_file"><code>read_file()</code></a> or <a href="#method.write_file"><code>write_file()</code></a> where
+both processes have the same name and their instances of <code>FileHandler</code> are using the same name,
+since these may be accessing the same file on disk.  However, it is safe to call
+<a href="#method.read_file"><code>read_file()</code></a> concurrently across multiple such processes, since this
+function doesn&#39;t modify the file.</p>
+
+<p>Perhaps the easiest way to make multi-process access safe is to ensure each process is a single
+execution of a binary, and that each binary is located in a directory which is
+mutually-exclusive to all other such binaries, and that each config file to be managed by
+<code>FileHandler</code> is placed in each binary&#39;s <a href="fn.current_bin_dir.html"><code>current_bin_dir()</code></a>.  In
+this way, each process should be the only one accessing that file.</p>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../crust/file_handler/struct.FileHandler.html' title='crust::file_handler::FileHandler'>FileHandler</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(name: <a class='struct' href='https://doc.rust-lang.org/nightly/std/path/struct.PathBuf.html' title='std::path::PathBuf'>PathBuf</a>) -&gt; <a class='struct' href='../../crust/file_handler/struct.FileHandler.html' title='crust::file_handler::FileHandler'>FileHandler</a></code></h4>
+<div class='docblock'><p>Constructor taking the required file name (not the full path)</p>
+</div><h4 id='method.read_file' class='method'><code>fn <a href='#method.read_file' class='fnname'>read_file</a>&lt;Contents: <a class='trait' href='../../rustc_serialize/serialize/trait.Decodable.html' title='rustc_serialize::serialize::Decodable'>Decodable</a>&gt;(&amp;mut self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;Contents, <a class='enum' href='../../crust/error/enum.Error.html' title='crust::error::Error'>Error</a>&gt;</code></h4>
+<div class='docblock'><p>Reads the file and returns the JSON-decoded contents or an error.</p>
+
+<p>It tries to read from the following locations in this order (see also <a href="https://github.com/maidsafe/crust/blob/master/docs/vault_config_file_flowchart.pdf">an example config
+file flowchart</a>):</p>
+
+<ol>
+<li>The location of the most recent successful read or write attempt</li>
+<li><a href="fn.current_bin_dir.html"><code>current_bin_dir()</code></a></li>
+<li><a href="fn.user_app_dir.html"><code>user_app_dir()</code></a></li>
+<li><a href="fn.system_cache_dir.html"><code>system_cache_dir()</code></a></li>
+</ol>
+
+<p>See <a href="#thread--and-process-safety">Thread- and Process-Safety</a> for notes on thread- and
+process-safety.</p>
+
+<h2 id='note' class='section-header'><a href='#note'><strong>NOTE</strong></a></h2>
+<p>If a file (or directory) exists at the expected location when an attempt is made to read it,
+and reading or decoding fails, this function <strong>WILL TERMINATE THE APPLICATION.</strong>  This means
+that the only cause for an error to be returned from this function is the non-existence of
+the file in all attempted locations.</p>
+</div><h4 id='method.cleanup' class='method'><code>fn <a href='#method.cleanup' class='fnname'>cleanup</a>(name: &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/std/path/struct.PathBuf.html' title='std::path::PathBuf'>PathBuf</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
+<div class='docblock'><p>Remove the file from every location where it can be read.</p>
+</div><h4 id='method.write_file' class='method'><code>fn <a href='#method.write_file' class='fnname'>write_file</a>&lt;Contents: <a class='trait' href='../../rustc_serialize/serialize/trait.Encodable.html' title='rustc_serialize::serialize::Encodable'>Encodable</a>&gt;(&amp;mut self, contents: &amp;Contents) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, <a class='enum' href='../../crust/error/enum.Error.html' title='crust::error::Error'>Error</a>&gt;</code></h4>
+<div class='docblock'><p>JSON-encodes then writes <code>contents</code> to the file.  Creates the file if it doesn&#39;t already
+exist.</p>
+
+<p>If <code>contents</code> fails to encode or the file cannot be written, an error is returned.  The
+process is (see also <a href="https://github.com/maidsafe/crust/blob/master/docs/vault_config_file_flowchart.pdf">an example config file flowchart</a>):</p>
+
+<ol>
+<li>If the file has previously been read (i.e. <a href="#method.path"><code>path()</code></a> is <code>Some(...)</code>), it
+ tries to write the contents to this path.  If this fails, it jumps to step 3.</li>
+<li>It tries to create and write the file in
+ <a href="fn.system_cache_dir.html"><code>system_cache_dir()</code></a>.  It will not try and create this
+ directory if it doesn&#39;t exist.</li>
+<li>It tries to create and write the file in <a href="fn.user_app_dir.html"><code>user_app_dir()</code></a>.  It
+ will try to create this directory and any parent components if they don&#39;t exist.</li>
+</ol>
+
+<p>See <a href="#thread--and-process-safety">Thread- and Process-Safety</a> for notes on thread- and
+process-safety.</p>
+</div><h4 id='method.path' class='method'><code>fn <a href='#method.path' class='fnname'>path</a>(&amp;self) -&gt; &amp;<a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/std/path/struct.PathBuf.html' title='std::path::PathBuf'>PathBuf</a>&gt;</code></h4>
+<div class='docblock'><p>Get the full path to the file.</p>
+
+<p>If no calls to <a href="#method.read_file"><code>read_file()</code></a> or <a href="#method.write_file"><code>write_file()</code></a>
+have been made, or the last such attempt failed, then this will return <code>None</code>.</p>
+
+<p>See <a href="#thread--and-process-safety">Thread- and Process-Safety</a> for notes on thread- and
+process-safety.</p>
+</div></div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "crust";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../../jquery.js"></script>
+    <script src="../../main.js"></script>
+    
+    <script async src="../../search-index.js"></script>
+</body>
+</html>

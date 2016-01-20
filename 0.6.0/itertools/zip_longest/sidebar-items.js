@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["EitherOrBoth","A value yielded by `ZipLongest`. Contains one or two values, depending on which of the input iterators are exhausted."]],"struct":[["ZipLongest","An iterator which iterates two other iterators simultaneously"]]});

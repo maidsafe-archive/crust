@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Service","A structure representing a connection manager."]]});

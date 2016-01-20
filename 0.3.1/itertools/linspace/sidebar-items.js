@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["linspace","Return an iterator of evenly spaced floats."]],"struct":[["Linspace","An iterator of a sequence of evenly spaced floats."]]});

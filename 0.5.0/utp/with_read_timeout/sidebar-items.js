@@ -1,0 +1,1 @@
+initSidebarItems({"trait":[["WithReadTimeout","A trait to make time-limited reads from socket-like objects."]]});

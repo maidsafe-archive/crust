@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="Source to the Rust file `src/lib.rs`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang">
+
+    <title>lib.rs.html -- source</title>
+
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+
+    <link rel="shortcut icon" href="http://maidsafe.net/img/favicon.ico">
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <section class="sidebar">
+        <a href='../../crust/index.html'><img src='http://maidsafe.net/img/Resources/branding/maidsafe_logo.fab2.png' alt='' width='100'></a>
+        
+    </section>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press 'S' to search, '?' for more options..."
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content source"><pre class="line-numbers"><span id="1"> 1</span>
+<span id="2"> 2</span>
+<span id="3"> 3</span>
+<span id="4"> 4</span>
+<span id="5"> 5</span>
+<span id="6"> 6</span>
+<span id="7"> 7</span>
+<span id="8"> 8</span>
+<span id="9"> 9</span>
+<span id="10">10</span>
+<span id="11">11</span>
+<span id="12">12</span>
+<span id="13">13</span>
+<span id="14">14</span>
+<span id="15">15</span>
+<span id="16">16</span>
+<span id="17">17</span>
+<span id="18">18</span>
+<span id="19">19</span>
+<span id="20">20</span>
+<span id="21">21</span>
+<span id="22">22</span>
+<span id="23">23</span>
+<span id="24">24</span>
+<span id="25">25</span>
+<span id="26">26</span>
+<span id="27">27</span>
+<span id="28">28</span>
+<span id="29">29</span>
+<span id="30">30</span>
+<span id="31">31</span>
+<span id="32">32</span>
+<span id="33">33</span>
+<span id="34">34</span>
+<span id="35">35</span>
+<span id="36">36</span>
+<span id="37">37</span>
+<span id="38">38</span>
+<span id="39">39</span>
+<span id="40">40</span>
+<span id="41">41</span>
+<span id="42">42</span>
+<span id="43">43</span>
+<span id="44">44</span>
+<span id="45">45</span>
+<span id="46">46</span>
+<span id="47">47</span>
+<span id="48">48</span>
+<span id="49">49</span>
+<span id="50">50</span>
+<span id="51">51</span>
+<span id="52">52</span>
+<span id="53">53</span>
+<span id="54">54</span>
+<span id="55">55</span>
+<span id="56">56</span>
+<span id="57">57</span>
+<span id="58">58</span>
+<span id="59">59</span>
+<span id="60">60</span>
+<span id="61">61</span>
+<span id="62">62</span>
+<span id="63">63</span>
+<span id="64">64</span>
+<span id="65">65</span>
+<span id="66">66</span>
+<span id="67">67</span>
+<span id="68">68</span>
+<span id="69">69</span>
+</pre><pre class='rust '>
+<span class='comment'>// Copyright 2015 MaidSafe.net limited.</span>
+<span class='comment'>//</span>
+<span class='comment'>// This SAFE Network Software is licensed to you under (1) the MaidSafe.net Commercial License,</span>
+<span class='comment'>// version 1.0 or later, or (2) The General Public License (GPL), version 3, depending on which</span>
+<span class='comment'>// licence you accepted on initial access to the Software (the &quot;Licences&quot;).</span>
+<span class='comment'>//</span>
+<span class='comment'>// By contributing code to the SAFE Network Software, or to this project generally, you agree to be</span>
+<span class='comment'>// bound by the terms of the MaidSafe Contributor Agreement, version 1.0.  This, along with the</span>
+<span class='comment'>// Licenses can be found in the root directory of this project at LICENSE, COPYING and CONTRIBUTOR.</span>
+<span class='comment'>//</span>
+<span class='comment'>// Unless required by applicable law or agreed to in writing, the SAFE Network Software distributed</span>
+<span class='comment'>// under the GPL Licence is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY</span>
+<span class='comment'>// KIND, either express or implied.</span>
+<span class='comment'>//</span>
+<span class='comment'>// Please review the Licences for the specific language governing permissions and limitations</span>
+<span class='comment'>// relating to use of the SAFE Network Software.</span>
+
+<span class='doccomment'>//! #crust</span>
+<span class='doccomment'>//! Reliable p2p network connections in Rust with NAT traversal.</span>
+<span class='doccomment'>//! One of the most needed libraries for any server-less / decentralised projects</span>
+
+<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>forbid</span>(<span class='ident'>missing_docs</span>, <span class='ident'>warnings</span>)]</span>
+<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>deny</span>(<span class='ident'>bad_style</span>, <span class='ident'>deprecated</span>, <span class='ident'>drop_with_repr_extern</span>, <span class='ident'>improper_ctypes</span>, <span class='ident'>non_shorthand_field_patterns</span>,
+        <span class='ident'>overflowing_literals</span>, <span class='ident'>plugin_as_library</span>, <span class='ident'>private_no_mangle_fns</span>, <span class='ident'>private_no_mangle_statics</span>,
+        <span class='ident'>raw_pointer_derive</span>, <span class='ident'>stable_features</span>, <span class='ident'>unconditional_recursion</span>, <span class='ident'>unknown_lints</span>,
+        <span class='ident'>unsafe_code</span>, <span class='ident'>unsigned_negation</span>, <span class='ident'>unused_allocation</span>, <span class='ident'>unused_attributes</span>,
+        <span class='ident'>unused_comparisons</span>, <span class='ident'>unused_features</span>, <span class='ident'>unused_parens</span>, <span class='ident'>while_true</span>)]</span>
+<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>warn</span>(<span class='ident'>trivial_casts</span>, <span class='ident'>trivial_numeric_casts</span>, <span class='ident'>unused</span>, <span class='ident'>unused_extern_crates</span>, <span class='ident'>unused_import_braces</span>,
+        <span class='ident'>unused_qualifications</span>, <span class='ident'>unused_results</span>, <span class='ident'>variant_size_differences</span>)]</span>
+<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>doc</span>(<span class='ident'>html_logo_url</span> <span class='op'>=</span> <span class='string'>&quot;http://maidsafe.net/img/Resources/branding/maidsafe_logo.fab2.png&quot;</span>,
+       <span class='ident'>html_favicon_url</span> <span class='op'>=</span> <span class='string'>&quot;http://maidsafe.net/img/favicon.ico&quot;</span>,
+       <span class='ident'>html_root_url</span> <span class='op'>=</span> <span class='string'>&quot;http:///dirvine.github.io/crust/crust/&quot;</span>)]</span>
+<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>feature</span>(<span class='ident'>ip_addr</span>, <span class='ident'>ip</span>, <span class='ident'>udp</span>, <span class='ident'>arc_weak</span>)]</span>
+
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>cbor</span>;
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>rand</span>;
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>rustc_serialize</span>;
+<span class='comment'>//extern crate sodiumoxide;</span>
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>time</span>;
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>asynchronous</span>;
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>libc</span>;
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>utp</span>;
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>itertools</span>;
+
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
+<span class='kw'>mod</span> <span class='ident'>test</span> {
+    <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>env</span>;
+
+    <span class='attribute'>#[<span class='ident'>test</span>]</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>check_rust_unit_testing_is_not_parallel</span>() {
+        <span class='kw'>match</span> <span class='ident'>env</span>::<span class='ident'>var_os</span>(<span class='string'>&quot;RUST_TEST_THREADS&quot;</span>) {
+            <span class='prelude-val'>Some</span>(<span class='ident'>val</span>) <span class='op'>=&gt;</span> <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>val</span>.<span class='ident'>into_string</span>().<span class='ident'>unwrap</span>() <span class='op'>==</span> <span class='string'>&quot;1&quot;</span>),
+            <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;RUST_TEST_THREADS needs to be 1 for the crust unit tests to work&quot;</span>),
+        }
+    }
+}
+<span class='kw'>mod</span> <span class='ident'>beacon</span>;
+<span class='kw'>mod</span> <span class='ident'>bootstrap_handler</span>;
+<span class='kw'>mod</span> <span class='ident'>getifaddrs</span>;
+<span class='kw'>mod</span> <span class='ident'>tcp_connections</span>;
+<span class='kw'>mod</span> <span class='ident'>utp_connections</span>;
+<span class='kw'>mod</span> <span class='ident'>transport</span>;
+
+<span class='doccomment'>/// Module implementing the `ConnectionManager` which provides an interface to manage peer-to-peer</span>
+<span class='doccomment'>/// connections.</span>
+<span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>connection_manager</span>;
+
+<span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>connection_manager</span>::{<span class='ident'>Event</span>, <span class='ident'>ConnectionManager</span>};
+<span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>transport</span>::{<span class='ident'>Endpoint</span>, <span class='ident'>Port</span>};
+</pre>
+</section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <div id="help" class="hidden">
+        <div class="shortcuts">
+            <h1>Keyboard shortcuts</h1>
+            <dl>
+                <dt>?</dt>
+                <dd>Show this help dialog</dd>
+                <dt>S</dt>
+                <dd>Focus the search field</dd>
+                <dt>&larrb;</dt>
+                <dd>Move up in search results</dd>
+                <dt>&rarrb;</dt>
+                <dd>Move down in search results</dd>
+                <dt>&#9166;</dt>
+                <dd>Go to active search result</dd>
+            </dl>
+        </div>
+        <div class="infos">
+            <h1>Search tricks</h1>
+            <p>
+                Prefix searches with a type followed by a colon (e.g.
+                <code>fn:</code>) to restrict the search to a given type.
+            </p>
+            <p>
+                Accepted types are: <code>fn</code>, <code>mod</code>,
+                <code>struct</code>, <code>enum</code>,
+                <code>trait</code>, <code>typedef</code> (or
+                <code>tdef</code>).
+            </p>
+            <p>
+                Search functions by type signature (e.g.
+                <code>vec -> usize</code>)
+            </p>
+        </div>
+    </div>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "crust";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../../jquery.js"></script>
+    <script src="../../main.js"></script>
+    
+    <script async src="../../search-index.js"></script>
+</body>
+</html>

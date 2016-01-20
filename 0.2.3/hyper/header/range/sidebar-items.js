@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["ByteRangeSpec","Each Range::Bytes header can contain one or more ByteRangeSpecs. Each ByteRangeSpec defines a range of bytes to fetch"],["Range","`Range` header, defined in RFC7233"]]});

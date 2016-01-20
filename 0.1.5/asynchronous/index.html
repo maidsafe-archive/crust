@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `asynchronous` crate.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, asynchronous">
+
+    <title>asynchronous - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <section class="sidebar">
+        
+        <p class='location'></p><script>window.sidebarCurrent = {name: 'asynchronous', ty: 'mod', relpath: '../'};</script>
+    </section>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press 'S' to search, '?' for more options..."
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content mod">
+<h1 class='fqn'><span class='in-band'>Crate <a class='mod' href=''>asynchronous</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-0' class='srclink' href='../src/asynchronous/lib.rs.html#1-1067' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p>A <strong>promise</strong> based asynchronous library</p>
+
+<p>This library provides an usefull way to invoke functions (clousures) in a <strong>Promise Style</strong> using separated threads. A Promise 
+is a Struct that represents the return value or the error that the funcion produces. </p>
+
+<p>It also allows the execution of tasks in Parallel or Series in deferred, joining the result in a Promise.</p>
+
+<p>It includes methods to manage Event Loops, where there are tasks that &quot;emit&quot; events in background, and they are collected by a promise.</p>
+
+<p><a href="https://github.com/bcndanos/asynchronous">Project github page</a></p>
+
+<p>This project is based on the <a href="https://github.com/kriskowal/q">Q Promise</a> library for Node JS and <a href="https://github.com/caolan/async">Async.js</a></p>
+
+<h1 id="license" class='section-header'><a
+                           href="#license">License</a></h1>
+<p>Dual-licensed to be compatible with the Rust project.</p>
+
+<p>Licensed under the Apache License, Version 2.0
+<a href="http://www.apache.org/licenses/LICENSE-2.0">http://www.apache.org/licenses/LICENSE-2.0</a> or the MIT license
+<a href="http://opensource.org/licenses/MIT">http://opensource.org/licenses/MIT</a>, at your
+option. This file may not be copied, modified, or distributed
+except according to those terms.</p>
+
+<h1 id="examples" class='section-header'><a
+                           href="#examples">Examples</a></h1>
+<p>This is a simple setup for a promise based execution:</p>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>use</span> <span class='ident'>asynchronous</span>::<span class='ident'>Promise</span>;
+ 
+<span class='ident'>Promise</span>::<span class='ident'>new</span>(<span class='op'>||</span> {
+  <span class='comment'>// Do something  </span>
+  <span class='kw'>let</span> <span class='ident'>ret</span> <span class='op'>=</span> <span class='number'>10.0</span> <span class='op'>/</span> <span class='number'>3.0</span>;
+  <span class='kw'>if</span> <span class='ident'>ret</span> <span class='op'>&gt;</span> <span class='number'>0.0</span> { <span class='prelude-val'>Ok</span>(<span class='ident'>ret</span>) } <span class='kw'>else</span> { <span class='prelude-val'>Err</span>(<span class='string'>&quot;Incorrect Value&quot;</span>) }
+}).<span class='ident'>success</span>(<span class='op'>|</span><span class='ident'>res</span><span class='op'>|</span> {            <span class='comment'>// res has type f64</span>
+  <span class='comment'>// Do something if the previous result is correct</span>
+  <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>res</span>, <span class='number'>10.0</span> <span class='op'>/</span> <span class='number'>3.0</span>);
+  <span class='kw'>let</span> <span class='ident'>res_int</span> <span class='op'>=</span> <span class='ident'>res</span> <span class='kw'>as</span> <span class='ident'>u32</span> <span class='op'>*</span> <span class='number'>2</span>;
+  <span class='prelude-val'>Ok</span>(<span class='ident'>res_int</span>)
+}).<span class='ident'>finally_sync</span>(<span class='op'>|</span><span class='ident'>res</span><span class='op'>|</span> {       <span class='comment'>// res has type Result&lt;u32,&amp;str&gt;</span>
+  <span class='comment'>// Executed always at the end</span>
+  <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>res</span>.<span class='ident'>unwrap</span>(), <span class='number'>6u32</span>);
+});
+</pre>
+
+<p>Deferred execution:</p>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>use</span> <span class='ident'>asynchronous</span>::{<span class='ident'>Promise</span>,<span class='ident'>Deferred</span>,<span class='ident'>ControlFlow</span>};
+
+<span class='kw'>let</span> <span class='ident'>d_a</span> <span class='op'>=</span> <span class='ident'>Deferred</span>::<span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='ident'>str</span>, <span class='kw-2'>&amp;</span><span class='ident'>str</span><span class='op'>&gt;</span>::<span class='ident'>new</span>(<span class='op'>||</span> { <span class='prelude-val'>Ok</span>(<span class='string'>&quot;a&quot;</span>) });
+<span class='kw'>let</span> <span class='ident'>p_b</span> <span class='op'>=</span> <span class='ident'>Promise</span>::<span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='ident'>str</span>, <span class='kw-2'>&amp;</span><span class='ident'>str</span><span class='op'>&gt;</span>::<span class='ident'>new</span>(<span class='op'>||</span> { <span class='prelude-val'>Ok</span>(<span class='string'>&quot;b&quot;</span>) });  <span class='comment'>// Executed right now</span>
+<span class='kw'>let</span> <span class='ident'>d1</span> <span class='op'>=</span> <span class='ident'>Deferred</span>::<span class='op'>&lt;</span><span class='ident'>u32</span>, <span class='kw-2'>&amp;</span><span class='ident'>str</span><span class='op'>&gt;</span>::<span class='ident'>new</span>(<span class='op'>||</span> { <span class='prelude-val'>Ok</span>(<span class='number'>1u32</span>) });
+<span class='kw'>let</span> <span class='ident'>d2</span> <span class='op'>=</span> <span class='ident'>Deferred</span>::<span class='op'>&lt;</span><span class='ident'>u32</span>, <span class='kw-2'>&amp;</span><span class='ident'>str</span><span class='op'>&gt;</span>::<span class='ident'>new</span>(<span class='op'>||</span> { <span class='prelude-val'>Err</span>(<span class='string'>&quot;Mock Error&quot;</span>) });
+<span class='kw'>let</span> <span class='ident'>d3</span> <span class='op'>=</span> <span class='ident'>Deferred</span>::<span class='op'>&lt;</span><span class='ident'>u32</span>, <span class='kw-2'>&amp;</span><span class='ident'>str</span><span class='op'>&gt;</span>::<span class='ident'>new</span>(<span class='op'>||</span> { <span class='prelude-val'>Ok</span>(<span class='number'>3u32</span>) });
+<span class='kw'>let</span> <span class='ident'>d4</span> <span class='op'>=</span> <span class='ident'>Deferred</span>::<span class='op'>&lt;</span><span class='ident'>u32</span>, <span class='kw-2'>&amp;</span><span class='ident'>str</span><span class='op'>&gt;</span>::<span class='ident'>new</span>(<span class='op'>||</span> { <span class='prelude-val'>Ok</span>(<span class='number'>4u32</span>) });
+<span class='kw'>let</span> <span class='ident'>d5</span> <span class='op'>=</span> <span class='ident'>Deferred</span>::<span class='op'>&lt;</span><span class='ident'>u32</span>, <span class='kw-2'>&amp;</span><span class='ident'>str</span><span class='op'>&gt;</span>::<span class='ident'>new</span>(<span class='op'>||</span> { <span class='prelude-val'>Ok</span>(<span class='number'>5u32</span>) });
+
+<span class='kw'>let</span> <span class='ident'>promise</span> <span class='op'>=</span> <span class='ident'>Deferred</span>::<span class='ident'>vec_to_promise</span>(<span class='macro'>vec</span><span class='macro'>!</span>[<span class='ident'>d1</span>,<span class='ident'>d2</span>,<span class='ident'>d3</span>], <span class='ident'>ControlFlow</span>::<span class='ident'>Parallel</span>);
+<span class='comment'>// Only d1, d2 and d3 are being executed at this time.</span>
+
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='string'>&quot;ab&quot;</span>, <span class='ident'>d_a</span>.<span class='ident'>to_promise</span>().<span class='ident'>success</span>(<span class='op'>|</span><span class='ident'>res_a</span><span class='op'>|</span> {
+    <span class='ident'>p_b</span>.<span class='ident'>success</span>(<span class='kw'>move</span> <span class='op'>|</span><span class='ident'>res_b</span><span class='op'>|</span> {
+        <span class='prelude-val'>Ok</span>(<span class='ident'>res_a</span>.<span class='ident'>to_string</span>() <span class='op'>+</span> <span class='ident'>res_b</span>)
+    }).<span class='ident'>sync</span>()
+}).<span class='ident'>sync</span>().<span class='ident'>unwrap</span>());
+
+<span class='ident'>promise</span>.<span class='ident'>success</span>(<span class='op'>|</span><span class='ident'>res</span><span class='op'>|</span> {
+    <span class='comment'>// Catch the result. In this case, tasks d4 and d5 never will be executed</span>
+    <span class='prelude-val'>Ok</span>(<span class='ident'>res</span>)
+}).<span class='ident'>fail</span>(<span class='op'>|</span><span class='ident'>error</span><span class='op'>|</span> {
+    <span class='comment'>// Catch the error and execute another Promise</span>
+    <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>error</span>, <span class='macro'>vec</span><span class='macro'>!</span>[<span class='prelude-val'>Ok</span>(<span class='number'>1u32</span>), <span class='prelude-val'>Err</span>(<span class='string'>&quot;Mock Error&quot;</span>), <span class='prelude-val'>Ok</span>(<span class='number'>3u32</span>)]);    
+    <span class='ident'>Deferred</span>::<span class='ident'>vec_to_promise</span>(<span class='macro'>vec</span><span class='macro'>!</span>[<span class='ident'>d4</span>,<span class='ident'>d5</span>], <span class='ident'>ControlFlow</span>::<span class='ident'>Series</span>).<span class='ident'>sync</span>()
+}).<span class='ident'>finally_sync</span>(<span class='op'>|</span><span class='ident'>res</span><span class='op'>|</span> {   <span class='comment'>// res : Result&lt;Vec&lt;u32&gt;,&amp;str&gt;</span>
+    <span class='comment'>// Do something here    </span>
+    <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>res</span>.<span class='ident'>unwrap</span>(), <span class='macro'>vec</span><span class='macro'>!</span>[<span class='number'>4u32</span>, <span class='number'>5u32</span>]);
+});
+</pre>
+
+<p>Simple event loop:</p>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>use</span> <span class='ident'>asynchronous</span>::<span class='ident'>EventLoop</span>;
+
+<span class='kw'>let</span> <span class='ident'>el</span> <span class='op'>=</span> <span class='ident'>EventLoop</span>::<span class='ident'>new</span>().<span class='ident'>finish_in_ms</span>(<span class='number'>100</span>);
+<span class='ident'>el</span>.<span class='ident'>emit</span>(<span class='string'>&quot;Event1&quot;</span>);
+<span class='ident'>el</span>.<span class='ident'>emit</span>(<span class='string'>&quot;Event2&quot;</span>);
+<span class='comment'>// Do something here</span>
+<span class='ident'>el</span>.<span class='ident'>to_promise</span>().<span class='ident'>finally_sync</span>(<span class='op'>|</span><span class='ident'>res</span><span class='op'>|</span> {  <span class='comment'>// res: Result&lt;Vec&lt;Ev&gt;,()&gt;</span>
+    <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>res</span>.<span class='ident'>unwrap</span>(), <span class='macro'>vec</span><span class='macro'>!</span>[<span class='string'>&quot;Event1&quot;</span>, <span class='string'>&quot;Event2&quot;</span>]);
+});
+</pre>
+</div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Deferred.html'
+                               title='asynchronous::Deferred'>Deferred</a></td>
+                        <td class='docblock short'>
+                             <p>Stores a function and delays its execution until it&#39;s transform to a promise.
+T : Type of value returned
+E : Type of error returned</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.EventLoop.html'
+                               title='asynchronous::EventLoop'>EventLoop</a></td>
+                        <td class='docblock short'>
+                             <p>Executes a task in background collecting events from other threads</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.EventLoopHandler.html'
+                               title='asynchronous::EventLoopHandler'>EventLoopHandler</a></td>
+                        <td class='docblock short'>
+                             <p>Event Loop wrapper that can be cloned to pass through threads</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Promise.html'
+                               title='asynchronous::Promise'>Promise</a></td>
+                        <td class='docblock short'>
+                             <p>Stores a result of previous execution tasks.
+T : Type of value returned
+E : Type of error returned</p>
+
+                        </td>
+                    </tr>
+                </table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='enum' href='enum.ControlFlow.html'
+                               title='asynchronous::ControlFlow'>ControlFlow</a></td>
+                        <td class='docblock short'>
+                             <p>Different possibilities for asynchronous treatment of vectors</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='enum' href='enum.Emit.html'
+                               title='asynchronous::Emit'>Emit</a></td>
+                        <td class='docblock short'>
+                             <p>Enum representing type of Emit in loops</p>
+
+                        </td>
+                    </tr>
+                </table></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <div id="help" class="hidden">
+        <div class="shortcuts">
+            <h1>Keyboard shortcuts</h1>
+            <dl>
+                <dt>?</dt>
+                <dd>Show this help dialog</dd>
+                <dt>S</dt>
+                <dd>Focus the search field</dd>
+                <dt>&larrb;</dt>
+                <dd>Move up in search results</dd>
+                <dt>&rarrb;</dt>
+                <dd>Move down in search results</dd>
+                <dt>&#9166;</dt>
+                <dd>Go to active search result</dd>
+            </dl>
+        </div>
+        <div class="infos">
+            <h1>Search tricks</h1>
+            <p>
+                Prefix searches with a type followed by a colon (e.g.
+                <code>fn:</code>) to restrict the search to a given type.
+            </p>
+            <p>
+                Accepted types are: <code>fn</code>, <code>mod</code>,
+                <code>struct</code>, <code>enum</code>,
+                <code>trait</code>, <code>typedef</code> (or
+                <code>tdef</code>).
+            </p>
+            <p>
+                Search functions by type signature (e.g.
+                <code>vec -> usize</code>)
+            </p>
+        </div>
+    </div>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "asynchronous";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script async src="../search-index.js"></script>
+</body>
+</html>

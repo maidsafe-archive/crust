@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Authorization","`Authorization` header, defined in RFC7235"],["Basic","Credential holder for Basic Authentication"],["Bearer","Token holder for Bearer Authentication, most often seen with oauth"]],"trait":[["Scheme","An Authorization scheme to be used in the header."]]});

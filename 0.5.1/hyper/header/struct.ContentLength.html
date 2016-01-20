@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `ContentLength` struct in crate `hyper`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, ContentLength">
+
+    <title>hyper::header::ContentLength - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='../index.html'>hyper</a>::<wbr><a href='index.html'>header</a></p><script>window.sidebarCurrent = {name: 'ContentLength', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content struct">
+<h1 class='fqn'><span class='in-band'>Struct <a href='../index.html'>hyper</a>::<wbr><a href='index.html'>header</a>::<wbr><a class='struct' href=''>ContentLength</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-2228' class='srclink' href='../../src/hyper/header/common/content_length.rs.html#33' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct ContentLength(pub <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a>);</pre><div class='docblock'><p><code>Content-Length</code> header, defined in
+<a href="http://tools.ietf.org/html/rfc7230#section-3.3.2">RFC7230</a></p>
+
+<p>When a message does not have a <code>Transfer-Encoding</code> header field, a
+Content-Length header field can provide the anticipated size, as a
+decimal number of octets, for a potential payload body.  For messages
+that do include a payload body, the Content-Length field-value
+provides the framing information necessary for determining where the
+body (and message) ends.  For messages that do not include a payload
+body, the Content-Length indicates the size of the selected
+representation.</p>
+
+<h1 id='abnf' class='section-header'><a href='#abnf'>ABNF</a></h1>
+<pre><code class="language-plain">Content-Length = 1*DIGIT
+</code></pre>
+
+<h1 id='example-values' class='section-header'><a href='#example-values'>Example values</a></h1>
+<ul>
+<li><code>3495</code></li>
+</ul>
+
+<h1 id='example' class='section-header'><a href='#example'>Example</a></h1><pre class='rust rust-example-rendered'>
+<span class='kw'>use</span> <span class='ident'>hyper</span>::<span class='ident'>header</span>::{<span class='ident'>Headers</span>, <span class='ident'>ContentLength</span>};
+
+<span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>headers</span> <span class='op'>=</span> <span class='ident'>Headers</span>::<span class='ident'>new</span>();
+<span class='ident'>headers</span>.<span class='ident'>set</span>(<span class='ident'>ContentLength</span>(<span class='number'>1024u64</span>));</pre>
+</div><h2 id='deref-methods'>Methods from <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Deref.html' title='core::ops::Deref'>Deref</a>&lt;Target=<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a>&gt;</h2><div class='impl-items'><h4 id='method.count_ones' class='method'><code>fn <a href='#method.count_ones' class='fnname'>count_ones</a>(self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a></code></h4>
+<div class='docblock'><p>Returns the number of ones in the binary representation of <code>self</code>.</p>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<p>Basic usage:</p>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>let</span> <span class='ident'>n</span> <span class='op'>=</span> <span class='number'>0b01001100u8</span>;
+
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>n</span>.<span class='ident'>count_ones</span>(), <span class='number'>3</span>);</pre>
+</div><h4 id='method.count_zeros' class='method'><code>fn <a href='#method.count_zeros' class='fnname'>count_zeros</a>(self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a></code></h4>
+<div class='docblock'><p>Returns the number of zeros in the binary representation of <code>self</code>.</p>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<p>Basic usage:</p>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>let</span> <span class='ident'>n</span> <span class='op'>=</span> <span class='number'>0b01001100u8</span>;
+
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>n</span>.<span class='ident'>count_zeros</span>(), <span class='number'>5</span>);</pre>
+</div><h4 id='method.leading_zeros' class='method'><code>fn <a href='#method.leading_zeros' class='fnname'>leading_zeros</a>(self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a></code></h4>
+<div class='docblock'><p>Returns the number of leading zeros in the binary representation
+of <code>self</code>.</p>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<p>Basic usage:</p>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>let</span> <span class='ident'>n</span> <span class='op'>=</span> <span class='number'>0b0101000u16</span>;
+
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>n</span>.<span class='ident'>leading_zeros</span>(), <span class='number'>10</span>);</pre>
+</div><h4 id='method.trailing_zeros' class='method'><code>fn <a href='#method.trailing_zeros' class='fnname'>trailing_zeros</a>(self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a></code></h4>
+<div class='docblock'><p>Returns the number of trailing zeros in the binary representation
+of <code>self</code>.</p>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<p>Basic usage:</p>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>let</span> <span class='ident'>n</span> <span class='op'>=</span> <span class='number'>0b0101000u16</span>;
+
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>n</span>.<span class='ident'>trailing_zeros</span>(), <span class='number'>3</span>);</pre>
+</div><h4 id='method.rotate_left' class='method'><code>fn <a href='#method.rotate_left' class='fnname'>rotate_left</a>(self, n: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a></code></h4>
+<div class='docblock'><p>Shifts the bits to the left by a specified amount, <code>n</code>,
+wrapping the truncated bits to the end of the resulting integer.</p>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<p>Basic usage:</p>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>let</span> <span class='ident'>n</span> <span class='op'>=</span> <span class='number'>0x0123456789ABCDEFu64</span>;
+<span class='kw'>let</span> <span class='ident'>m</span> <span class='op'>=</span> <span class='number'>0x3456789ABCDEF012u64</span>;
+
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>n</span>.<span class='ident'>rotate_left</span>(<span class='number'>12</span>), <span class='ident'>m</span>);</pre>
+</div><h4 id='method.rotate_right' class='method'><code>fn <a href='#method.rotate_right' class='fnname'>rotate_right</a>(self, n: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a></code></h4>
+<div class='docblock'><p>Shifts the bits to the right by a specified amount, <code>n</code>,
+wrapping the truncated bits to the beginning of the resulting
+integer.</p>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<p>Basic usage:</p>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>let</span> <span class='ident'>n</span> <span class='op'>=</span> <span class='number'>0x0123456789ABCDEFu64</span>;
+<span class='kw'>let</span> <span class='ident'>m</span> <span class='op'>=</span> <span class='number'>0xDEF0123456789ABCu64</span>;
+
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>n</span>.<span class='ident'>rotate_right</span>(<span class='number'>12</span>), <span class='ident'>m</span>);</pre>
+</div><h4 id='method.swap_bytes' class='method'><code>fn <a href='#method.swap_bytes' class='fnname'>swap_bytes</a>(self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a></code></h4>
+<div class='docblock'><p>Reverses the byte order of the integer.</p>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<p>Basic usage:</p>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>let</span> <span class='ident'>n</span> <span class='op'>=</span> <span class='number'>0x0123456789ABCDEFu64</span>;
+<span class='kw'>let</span> <span class='ident'>m</span> <span class='op'>=</span> <span class='number'>0xEFCDAB8967452301u64</span>;
+
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>n</span>.<span class='ident'>swap_bytes</span>(), <span class='ident'>m</span>);</pre>
+</div><h4 id='method.to_be' class='method'><code>fn <a href='#method.to_be' class='fnname'>to_be</a>(self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a></code></h4>
+<div class='docblock'><p>Converts <code>self</code> to big endian from the target&#39;s endianness.</p>
+
+<p>On big endian this is a no-op. On little endian the bytes are
+swapped.</p>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<p>Basic usage:</p>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>let</span> <span class='ident'>n</span> <span class='op'>=</span> <span class='number'>0x0123456789ABCDEFu64</span>;
+
+<span class='kw'>if</span> <span class='macro'>cfg</span><span class='macro'>!</span>(<span class='ident'>target_endian</span> <span class='op'>=</span> <span class='string'>&quot;big&quot;</span>) {
+    <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>n</span>.<span class='ident'>to_be</span>(), <span class='ident'>n</span>)
+} <span class='kw'>else</span> {
+    <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>n</span>.<span class='ident'>to_be</span>(), <span class='ident'>n</span>.<span class='ident'>swap_bytes</span>())
+}</pre>
+</div><h4 id='method.to_le' class='method'><code>fn <a href='#method.to_le' class='fnname'>to_le</a>(self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a></code></h4>
+<div class='docblock'><p>Converts <code>self</code> to little endian from the target&#39;s endianness.</p>
+
+<p>On little endian this is a no-op. On big endian the bytes are
+swapped.</p>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<p>Basic usage:</p>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>let</span> <span class='ident'>n</span> <span class='op'>=</span> <span class='number'>0x0123456789ABCDEFu64</span>;
+
+<span class='kw'>if</span> <span class='macro'>cfg</span><span class='macro'>!</span>(<span class='ident'>target_endian</span> <span class='op'>=</span> <span class='string'>&quot;little&quot;</span>) {
+    <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>n</span>.<span class='ident'>to_le</span>(), <span class='ident'>n</span>)
+} <span class='kw'>else</span> {
+    <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>n</span>.<span class='ident'>to_le</span>(), <span class='ident'>n</span>.<span class='ident'>swap_bytes</span>())
+}</pre>
+</div><h4 id='method.checked_add' class='method'><code>fn <a href='#method.checked_add' class='fnname'>checked_add</a>(self, other: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a>&gt;</code></h4>
+<div class='docblock'><p>Checked integer addition. Computes <code>self + other</code>, returning <code>None</code>
+if overflow occurred.</p>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<p>Basic usage:</p>
+<pre class='rust rust-example-rendered'>
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='number'>5u16</span>.<span class='ident'>checked_add</span>(<span class='number'>65530</span>), <span class='prelude-val'>Some</span>(<span class='number'>65535</span>));
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='number'>6u16</span>.<span class='ident'>checked_add</span>(<span class='number'>65530</span>), <span class='prelude-val'>None</span>);</pre>
+</div><h4 id='method.checked_sub' class='method'><code>fn <a href='#method.checked_sub' class='fnname'>checked_sub</a>(self, other: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a>&gt;</code></h4>
+<div class='docblock'><p>Checked integer subtraction. Computes <code>self - other</code>, returning
+<code>None</code> if underflow occurred.</p>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<p>Basic usage:</p>
+<pre class='rust rust-example-rendered'>
+<span class='macro'>assert_eq</span><span class='macro'>!</span>((<span class='op'>-</span><span class='number'>127i8</span>).<span class='ident'>checked_sub</span>(<span class='number'>1</span>), <span class='prelude-val'>Some</span>(<span class='op'>-</span><span class='number'>128</span>));
+<span class='macro'>assert_eq</span><span class='macro'>!</span>((<span class='op'>-</span><span class='number'>128i8</span>).<span class='ident'>checked_sub</span>(<span class='number'>1</span>), <span class='prelude-val'>None</span>);</pre>
+</div><h4 id='method.checked_mul' class='method'><code>fn <a href='#method.checked_mul' class='fnname'>checked_mul</a>(self, other: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a>&gt;</code></h4>
+<div class='docblock'><p>Checked integer multiplication. Computes <code>self * other</code>, returning
+<code>None</code> if underflow or overflow occurred.</p>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<p>Basic usage:</p>
+<pre class='rust rust-example-rendered'>
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='number'>5u8</span>.<span class='ident'>checked_mul</span>(<span class='number'>51</span>), <span class='prelude-val'>Some</span>(<span class='number'>255</span>));
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='number'>5u8</span>.<span class='ident'>checked_mul</span>(<span class='number'>52</span>), <span class='prelude-val'>None</span>);</pre>
+</div><h4 id='method.checked_div' class='method'><code>fn <a href='#method.checked_div' class='fnname'>checked_div</a>(self, other: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a>&gt;</code></h4>
+<div class='docblock'><p>Checked integer division. Computes <code>self / other</code>, returning <code>None</code>
+if <code>other == 0</code> or the operation results in underflow or overflow.</p>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<p>Basic usage:</p>
+<pre class='rust rust-example-rendered'>
+<span class='macro'>assert_eq</span><span class='macro'>!</span>((<span class='op'>-</span><span class='number'>127i8</span>).<span class='ident'>checked_div</span>(<span class='op'>-</span><span class='number'>1</span>), <span class='prelude-val'>Some</span>(<span class='number'>127</span>));
+<span class='macro'>assert_eq</span><span class='macro'>!</span>((<span class='op'>-</span><span class='number'>128i8</span>).<span class='ident'>checked_div</span>(<span class='op'>-</span><span class='number'>1</span>), <span class='prelude-val'>None</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>((<span class='number'>1i8</span>).<span class='ident'>checked_div</span>(<span class='number'>0</span>), <span class='prelude-val'>None</span>);</pre>
+</div><h4 id='method.saturating_add' class='method'><code>fn <a href='#method.saturating_add' class='fnname'>saturating_add</a>(self, other: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a></code></h4>
+<div class='docblock'><p>Saturating integer addition. Computes <code>self + other</code>, saturating at
+the numeric bounds instead of overflowing.</p>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<p>Basic usage:</p>
+<pre class='rust rust-example-rendered'>
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='number'>100i8</span>.<span class='ident'>saturating_add</span>(<span class='number'>1</span>), <span class='number'>101</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='number'>100i8</span>.<span class='ident'>saturating_add</span>(<span class='number'>127</span>), <span class='number'>127</span>);</pre>
+</div><h4 id='method.saturating_sub' class='method'><code>fn <a href='#method.saturating_sub' class='fnname'>saturating_sub</a>(self, other: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a></code></h4>
+<div class='docblock'><p>Saturating integer subtraction. Computes <code>self - other</code>, saturating
+at the numeric bounds instead of overflowing.</p>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<p>Basic usage:</p>
+<pre class='rust rust-example-rendered'>
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='number'>100i8</span>.<span class='ident'>saturating_sub</span>(<span class='number'>127</span>), <span class='op'>-</span><span class='number'>27</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>((<span class='op'>-</span><span class='number'>100i8</span>).<span class='ident'>saturating_sub</span>(<span class='number'>127</span>), <span class='op'>-</span><span class='number'>128</span>);</pre>
+</div><h4 id='method.wrapping_add' class='method'><code>fn <a href='#method.wrapping_add' class='fnname'>wrapping_add</a>(self, rhs: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a></code></h4>
+<div class='docblock'><p>Wrapping (modular) addition. Computes <code>self + other</code>,
+wrapping around at the boundary of the type.</p>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<p>Basic usage:</p>
+<pre class='rust rust-example-rendered'>
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='number'>100i8</span>.<span class='ident'>wrapping_add</span>(<span class='number'>27</span>), <span class='number'>127</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='number'>100i8</span>.<span class='ident'>wrapping_add</span>(<span class='number'>127</span>), <span class='op'>-</span><span class='number'>29</span>);</pre>
+</div><h4 id='method.wrapping_sub' class='method'><code>fn <a href='#method.wrapping_sub' class='fnname'>wrapping_sub</a>(self, rhs: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a></code></h4>
+<div class='docblock'><p>Wrapping (modular) subtraction. Computes <code>self - other</code>,
+wrapping around at the boundary of the type.</p>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<p>Basic usage:</p>
+<pre class='rust rust-example-rendered'>
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='number'>0i8</span>.<span class='ident'>wrapping_sub</span>(<span class='number'>127</span>), <span class='op'>-</span><span class='number'>127</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>((<span class='op'>-</span><span class='number'>2i8</span>).<span class='ident'>wrapping_sub</span>(<span class='number'>127</span>), <span class='number'>127</span>);</pre>
+</div><h4 id='method.wrapping_mul' class='method'><code>fn <a href='#method.wrapping_mul' class='fnname'>wrapping_mul</a>(self, rhs: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a></code></h4>
+<div class='docblock'><p>Wrapping (modular) multiplication. Computes <code>self * other</code>, wrapping around at the boundary of the type.</p>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<p>Basic usage:</p>
+<pre class='rust rust-example-rendered'>
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='number'>10i8</span>.<span class='ident'>wrapping_mul</span>(<span class='number'>12</span>), <span class='number'>120</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='number'>11i8</span>.<span class='ident'>wrapping_mul</span>(<span class='number'>12</span>), <span class='op'>-</span><span class='number'>124</span>);</pre>
+</div><h4 id='method.wrapping_div' class='method'><code>fn <a href='#method.wrapping_div' class='fnname'>wrapping_div</a>(self, rhs: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a></code></h4>
+<div class='docblock'><p>Wrapping (modular) division. Computes <code>self / other</code>,
+wrapping around at the boundary of the type.</p>
+
+<p>The only case where such wrapping can occur is when one
+divides <code>MIN / -1</code> on a signed type (where <code>MIN</code> is the
+negative minimal value for the type); this is equivalent
+to <code>-MIN</code>, a positive value that is too large to represent
+in the type. In such a case, this function returns <code>MIN</code>
+itself.</p>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<p>Basic usage:</p>
+<pre class='rust rust-example-rendered'>
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='number'>100u8</span>.<span class='ident'>wrapping_div</span>(<span class='number'>10</span>), <span class='number'>10</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>((<span class='op'>-</span><span class='number'>128i8</span>).<span class='ident'>wrapping_div</span>(<span class='op'>-</span><span class='number'>1</span>), <span class='op'>-</span><span class='number'>128</span>);</pre>
+</div><h4 id='method.wrapping_rem' class='method'><code>fn <a href='#method.wrapping_rem' class='fnname'>wrapping_rem</a>(self, rhs: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a></code></h4>
+<div class='docblock'><p>Wrapping (modular) remainder. Computes <code>self % other</code>,
+wrapping around at the boundary of the type.</p>
+
+<p>Such wrap-around never actually occurs mathematically;
+implementation artifacts make <code>x % y</code> invalid for <code>MIN / -1</code> on a signed type (where <code>MIN</code> is the negative
+minimal value). In such a case, this function returns <code>0</code>.</p>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<p>Basic usage:</p>
+<pre class='rust rust-example-rendered'>
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='number'>100i8</span>.<span class='ident'>wrapping_rem</span>(<span class='number'>10</span>), <span class='number'>0</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>((<span class='op'>-</span><span class='number'>128i8</span>).<span class='ident'>wrapping_rem</span>(<span class='op'>-</span><span class='number'>1</span>), <span class='number'>0</span>);</pre>
+</div><h4 id='method.wrapping_neg' class='method'><code>fn <a href='#method.wrapping_neg' class='fnname'>wrapping_neg</a>(self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a></code></h4>
+<div class='docblock'><p>Wrapping (modular) negation. Computes <code>-self</code>,
+wrapping around at the boundary of the type.</p>
+
+<p>The only case where such wrapping can occur is when one
+negates <code>MIN</code> on a signed type (where <code>MIN</code> is the
+negative minimal value for the type); this is a positive
+value that is too large to represent in the type. In such
+a case, this function returns <code>MIN</code> itself.</p>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<p>Basic usage:</p>
+<pre class='rust rust-example-rendered'>
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='number'>100i8</span>.<span class='ident'>wrapping_neg</span>(), <span class='op'>-</span><span class='number'>100</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>((<span class='op'>-</span><span class='number'>128i8</span>).<span class='ident'>wrapping_neg</span>(), <span class='op'>-</span><span class='number'>128</span>);</pre>
+</div><h4 id='method.wrapping_shl' class='method'><code>fn <a href='#method.wrapping_shl' class='fnname'>wrapping_shl</a>(self, rhs: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a></code></h4>
+<div class='docblock'><p>Panic-free bitwise shift-left; yields <code>self &lt;&lt; mask(rhs)</code>,
+where <code>mask</code> removes any high-order bits of <code>rhs</code> that
+would cause the shift to exceed the bitwidth of the type.</p>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<p>Basic usage:</p>
+<pre class='rust rust-example-rendered'>
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='number'>1u8</span>.<span class='ident'>wrapping_shl</span>(<span class='number'>7</span>), <span class='number'>128</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='number'>1u8</span>.<span class='ident'>wrapping_shl</span>(<span class='number'>8</span>), <span class='number'>1</span>);</pre>
+</div><h4 id='method.wrapping_shr' class='method'><code>fn <a href='#method.wrapping_shr' class='fnname'>wrapping_shr</a>(self, rhs: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a></code></h4>
+<div class='docblock'><p>Panic-free bitwise shift-left; yields <code>self &gt;&gt; mask(rhs)</code>,
+where <code>mask</code> removes any high-order bits of <code>rhs</code> that
+would cause the shift to exceed the bitwidth of the type.</p>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<p>Basic usage:</p>
+<pre class='rust rust-example-rendered'>
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='number'>128u8</span>.<span class='ident'>wrapping_shr</span>(<span class='number'>7</span>), <span class='number'>1</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='number'>128u8</span>.<span class='ident'>wrapping_shr</span>(<span class='number'>8</span>), <span class='number'>128</span>);</pre>
+</div><h4 id='method.pow' class='method'><code>fn <a href='#method.pow' class='fnname'>pow</a>(self, exp: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a></code></h4>
+<div class='docblock'><p>Raises self to the power of <code>exp</code>, using exponentiation by squaring.</p>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<p>Basic usage:</p>
+<pre class='rust rust-example-rendered'>
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='number'>2i32</span>.<span class='ident'>pow</span>(<span class='number'>4</span>), <span class='number'>16</span>);</pre>
+</div><h4 id='method.is_power_of_two' class='method'><code>fn <a href='#method.is_power_of_two' class='fnname'>is_power_of_two</a>(self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+<div class='docblock'><p>Returns <code>true</code> if and only if <code>self == 2^k</code> for some <code>k</code>.</p>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<p>Basic usage:</p>
+<pre class='rust rust-example-rendered'>
+<span class='macro'>assert</span><span class='macro'>!</span>(<span class='number'>16u8</span>.<span class='ident'>is_power_of_two</span>());
+<span class='macro'>assert</span><span class='macro'>!</span>(<span class='op'>!</span><span class='number'>10u8</span>.<span class='ident'>is_power_of_two</span>());</pre>
+</div><h4 id='method.next_power_of_two' class='method'><code>fn <a href='#method.next_power_of_two' class='fnname'>next_power_of_two</a>(self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a></code></h4>
+<div class='docblock'><p>Returns the smallest power of two greater than or equal to <code>self</code>.
+Unspecified behavior on overflow.</p>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<p>Basic usage:</p>
+<pre class='rust rust-example-rendered'>
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='number'>2u8</span>.<span class='ident'>next_power_of_two</span>(), <span class='number'>2</span>);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='number'>3u8</span>.<span class='ident'>next_power_of_two</span>(), <span class='number'>4</span>);</pre>
+</div><h4 id='method.checked_next_power_of_two' class='method'><code>fn <a href='#method.checked_next_power_of_two' class='fnname'>checked_next_power_of_two</a>(self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a>&gt;</code></h4>
+<div class='docblock'><p>Returns the smallest power of two greater than or equal to <code>n</code>. If
+the next power of two is greater than the type&#39;s maximum value,
+<code>None</code> is returned, otherwise the power of two is wrapped in <code>Some</code>.</p>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<p>Basic usage:</p>
+<pre class='rust rust-example-rendered'>
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='number'>2u8</span>.<span class='ident'>checked_next_power_of_two</span>(), <span class='prelude-val'>Some</span>(<span class='number'>2</span>));
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='number'>3u8</span>.<span class='ident'>checked_next_power_of_two</span>(), <span class='prelude-val'>Some</span>(<span class='number'>4</span>));
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='number'>200u8</span>.<span class='ident'>checked_next_power_of_two</span>(), <span class='prelude-val'>None</span>);</pre>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='../../hyper/header/trait.Header.html' title='hyper::header::Header'>Header</a> for <a class='struct' href='../../hyper/header/struct.ContentLength.html' title='hyper::header::ContentLength'>ContentLength</a></code></h3><div class='impl-items'><h4 id='method.header_name' class='method'><code>fn <a href='../../hyper/header/trait.Header.html#method.header_name' class='fnname'>header_name</a>() -&gt; &amp;'static <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a></code></h4>
+<h4 id='method.parse_header' class='method'><code>fn <a href='../../hyper/header/trait.Header.html#method.parse_header' class='fnname'>parse_header</a>(raw: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a><a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>) -&gt; <a class='type' href='../../hyper/error/type.Result.html' title='hyper::error::Result'>Result</a>&lt;<a class='struct' href='../../hyper/header/struct.ContentLength.html' title='hyper::header::ContentLength'>ContentLength</a>&gt;</code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='../../hyper/header/trait.HeaderFormat.html' title='hyper::header::HeaderFormat'>HeaderFormat</a> for <a class='struct' href='../../hyper/header/struct.ContentLength.html' title='hyper::header::ContentLength'>ContentLength</a></code></h3><div class='impl-items'><h4 id='method.fmt_header' class='method'><code>fn <a href='../../hyper/header/trait.HeaderFormat.html#method.fmt_header' class='fnname'>fmt_header</a>(&amp;self, f: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html' title='core::fmt::Display'>Display</a> for <a class='struct' href='../../hyper/header/struct.ContentLength.html' title='hyper::header::ContentLength'>ContentLength</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html#method.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Deref.html' title='core::ops::Deref'>Deref</a> for <a class='struct' href='../../hyper/header/struct.ContentLength.html' title='hyper::header::ContentLength'>ContentLength</a></code></h3><div class='impl-items'><h4 id='assoc_type.Target' class='type'><code>type Target = <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a></code></h4>
+<h4 id='method.deref' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/ops/trait.Deref.html#method.deref' class='fnname'>deref</a>&lt;'a&gt;(&amp;'a self) -&gt; &amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a></code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.DerefMut.html' title='core::ops::DerefMut'>DerefMut</a> for <a class='struct' href='../../hyper/header/struct.ContentLength.html' title='hyper::header::ContentLength'>ContentLength</a></code></h3><div class='impl-items'><h4 id='method.deref_mut' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/ops/trait.DerefMut.html#method.deref_mut' class='fnname'>deref_mut</a>&lt;'a&gt;(&amp;'a mut self) -&gt; &amp;'a mut <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a></code></h4>
+</div><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a> for <a class='struct' href='../../hyper/header/struct.ContentLength.html' title='hyper::header::ContentLength'>ContentLength</a></code></h3><div class='impl-items'><h4 id='method.eq' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.eq' class='fnname'>eq</a>(&amp;self, __arg_0: &amp;<a class='struct' href='../../hyper/header/struct.ContentLength.html' title='hyper::header::ContentLength'>ContentLength</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+<h4 id='method.ne' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.ne' class='fnname'>ne</a>(&amp;self, __arg_0: &amp;<a class='struct' href='../../hyper/header/struct.ContentLength.html' title='hyper::header::ContentLength'>ContentLength</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='struct' href='../../hyper/header/struct.ContentLength.html' title='hyper::header::ContentLength'>ContentLength</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#method.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Copy.html' title='core::marker::Copy'>Copy</a> for <a class='struct' href='../../hyper/header/struct.ContentLength.html' title='hyper::header::ContentLength'>ContentLength</a></code></h3><div class='impl-items'></div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='struct' href='../../hyper/header/struct.ContentLength.html' title='hyper::header::ContentLength'>ContentLength</a></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='struct' href='../../hyper/header/struct.ContentLength.html' title='hyper::header::ContentLength'>ContentLength</a></code></h4>
+<h4 id='method.clone_from' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
+</div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "hyper";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../../jquery.js"></script>
+    <script src="../../main.js"></script>
+    
+    <script async src="../../search-index.js"></script>
+</body>
+</html>

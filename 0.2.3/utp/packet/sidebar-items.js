@@ -1,0 +1,1 @@
+initSidebarItems({"trait":[["Decodable","A trait for objects that can be decoded from slices of bytes."],["Encodable","A trait for objects that can be represented as a vector of bytes."]]});

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `XmlEvent` enum in crate `xml`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, XmlEvent">
+
+    <title>xml::writer::events::XmlEvent - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='../../index.html'>xml</a>::<wbr><a href='../index.html'>writer</a>::<wbr><a href='index.html'>events</a></p><script>window.sidebarCurrent = {name: 'XmlEvent', ty: 'enum', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content enum">
+<h1 class='fqn'><span class='in-band'>Enum <a href='../../index.html'>xml</a>::<wbr><a href='../index.html'>writer</a>::<wbr><a href='index.html'>events</a>::<wbr><a class='enum' href=''>XmlEvent</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-17587' class='srclink' href='../../../src/xml/writer/events.rs.html#10-91' title='goto source code'>[src]</a></span></h1>
+<pre class='rust enum'>pub enum XmlEvent&lt;'a&gt; {
+    StartDocument {
+        version: <a class='enum' href='../../../xml/common/enum.XmlVersion.html' title='xml::common::XmlVersion'>XmlVersion</a>,
+        encoding: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;&amp;'a <a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;,
+        standalone: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>&gt;,
+    },
+    ProcessingInstruction {
+        name: &amp;'a <a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>,
+        data: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;&amp;'a <a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;,
+    },
+    StartElement {
+        name: <a class='struct' href='../../../xml/name/struct.Name.html' title='xml::name::Name'>Name</a>&lt;'a&gt;,
+        attributes: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../../xml/attribute/struct.Attribute.html' title='xml::attribute::Attribute'>Attribute</a>&lt;'a&gt;&gt;,
+        namespace: &amp;'a <a class='struct' href='../../../xml/namespace/struct.Namespace.html' title='xml::namespace::Namespace'>Namespace</a>,
+    },
+    EndElement {
+        name: <a class='struct' href='../../../xml/name/struct.Name.html' title='xml::name::Name'>Name</a>&lt;'a&gt;,
+    },
+    CData(&amp;'a <a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>),
+    Comment(&amp;'a <a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>),
+    Characters(&amp;'a <a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>),
+}</pre><div class='docblock'><p>An element of an XML output stream.</p>
+
+<p>Items of this enum are consumed by <code>writer::EventWriter</code>. They correspond to different
+elements of an XML document.</p>
+</div><h2 class='variants'>Variants</h2>
+<table><tr><td id='variant.StartDocument'><code>StartDocument</code></td><td><div class='docblock'><p>Corresponds to XML document declaration.</p>
+
+<p>This event should always be written before any other event. If it is not written
+at all, default XML declaration will be outputted.</p>
+</div><h3 class='fields'>Fields</h3>
+
+                                              <table><tr><td id='variant.StartDocument.field.version'><code>version</code></td><td><div class='docblock'><p>XML version.</p>
+
+<p>If XML declaration is not present, defaults to <code>Version10</code>.</p>
+</div></td></tr><tr><td id='variant.StartDocument.field.encoding'><code>encoding</code></td><td><div class='docblock'><p>XML document encoding.</p>
+</div></td></tr><tr><td id='variant.StartDocument.field.standalone'><code>standalone</code></td><td><div class='docblock'><p>XML standalone declaration.</p>
+</div></td></tr></table></td></tr><tr><td id='variant.ProcessingInstruction'><code>ProcessingInstruction</code></td><td><div class='docblock'><p>Denotes an XML processing instruction.</p>
+
+<p>This event contains a processing instruction target (<code>name</code>) and opaque <code>data</code>. It
+is up to the application to process them.</p>
+</div><h3 class='fields'>Fields</h3>
+
+                                              <table><tr><td id='variant.ProcessingInstruction.field.name'><code>name</code></td><td><div class='docblock'><p>Processing instruction target.</p>
+</div></td></tr><tr><td id='variant.ProcessingInstruction.field.data'><code>data</code></td><td><div class='docblock'><p>Processing instruction content.</p>
+</div></td></tr></table></td></tr><tr><td id='variant.StartElement'><code>StartElement</code></td><td><div class='docblock'><p>Denotes a beginning of an XML element.</p>
+
+<p>This event is emitted after parsing opening tags or after parsing bodiless tags. In the
+latter case <code>EndElement</code> event immediately follows.</p>
+
+<p>TODO: ideally names and attributes should be entirely references,
+including internal strings.</p>
+</div><h3 class='fields'>Fields</h3>
+
+                                              <table><tr><td id='variant.StartElement.field.name'><code>name</code></td><td><div class='docblock'><p>Qualified name of the element.</p>
+</div></td></tr><tr><td id='variant.StartElement.field.attributes'><code>attributes</code></td><td><div class='docblock'><p>A list of attributes associated with the element.</p>
+
+<p>Currently attributes are not checked for duplicates (TODO).</p>
+</div></td></tr><tr><td id='variant.StartElement.field.namespace'><code>namespace</code></td><td><div class='docblock'><p>Contents of the namespace mapping at this point of the document.</p>
+</div></td></tr></table></td></tr><tr><td id='variant.EndElement'><code>EndElement</code></td><td><div class='docblock'><p>Denotes an end of an XML document.</p>
+
+<p>This event is emitted after parsing closing tags or after parsing bodiless tags. In the
+latter case it is emitted immediately after corresponding <code>StartElement</code> event.</p>
+</div><h3 class='fields'>Fields</h3>
+
+                                              <table><tr><td id='variant.EndElement.field.name'><code>name</code></td><td><div class='docblock'><p>Qualified name of the element.</p>
+</div></td></tr></table></td></tr><tr><td id='variant.CData'><code>CData</code></td><td><div class='docblock'><p>Denotes CDATA content.</p>
+
+<p>This event contains unparsed data. No unescaping will be performed.</p>
+
+<p>It is possible to configure a parser to emit <code>Characters</code> event instead of <code>CData</code>. See
+<code>reader::ParserConfiguration</code> structure for more information.</p>
+</div></td></tr><tr><td id='variant.Comment'><code>Comment</code></td><td><div class='docblock'><p>Denotes a comment.</p>
+
+<p>It is possible to configure a parser to ignore comments, so this event will never be emitted.
+See <code>reader::ParserConfiguration</code> structure for more information.</p>
+</div></td></tr><tr><td id='variant.Characters'><code>Characters</code></td><td><div class='docblock'><p>Denotes character data outside of tags.</p>
+
+<p>Contents of this event will always be unescaped, so no entities like <code>&amp;lt;</code> or <code>&amp;amp;</code> or <code>&amp;#123;</code>
+will appear in it.</p>
+
+<p>It is possible to configure a parser to trim leading and trailing whitespace for this event.
+See <code>reaer::ParserConfiguration</code> structure for more information.</p>
+</div></td></tr></table></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../../";
+        window.currentCrate = "xml";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../../../jquery.js"></script>
+    <script src="../../../main.js"></script>
+    
+    <script async src="../../../search-index.js"></script>
+</body>
+</html>

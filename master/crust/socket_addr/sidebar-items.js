@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["SocketAddr","Wrapper around `std::net::SocketAddr` to enable it to encoded and decoded."]]});

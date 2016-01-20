@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Connection","Information hold for the connection between a pair of nodes"]]});

@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["RepeatCall","An iterator source that produces elements indefinitely by calling a given closure."],["Unfold","`Unfold` is a general iterator builder: it has a mutable state value, and a closure with access to the state that produces the next value."]]});

@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["ifaddrs_if_unspecified","This function should really take IpAddr as an argument but it is used outside of this library and IpAddr is currently considered experimental."]],"struct":[["SocketAddrW","Utility struct of SocketAddr for hole punching"]]});

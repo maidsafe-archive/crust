@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `EmitterConfig` struct in crate `xml`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, EmitterConfig">
+
+    <title>xml::writer::config::EmitterConfig - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='../../index.html'>xml</a>::<wbr><a href='../index.html'>writer</a>::<wbr><a href='index.html'>config</a></p><script>window.sidebarCurrent = {name: 'EmitterConfig', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content struct">
+<h1 class='fqn'><span class='in-band'>Struct <a href='../../index.html'>xml</a>::<wbr><a href='../index.html'>writer</a>::<wbr><a href='index.html'>config</a>::<wbr><a class='struct' href=''>EmitterConfig</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-2284' class='srclink' href='../../../src/xml/writer/config.rs.html#8-46' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct EmitterConfig {
+    pub line_separator: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>,
+    pub indent_string: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>,
+    pub perform_indent: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>,
+    pub write_document_declaration: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>,
+    pub normalize_empty_elements: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>,
+    pub cdata_to_characters: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>,
+}</pre><div class='docblock'><p>Emitter configuration structure.</p>
+
+<p>This structure contains various options which control XML document emitter behavior.</p>
+</div><h2 class='fields'>Fields</h2>
+<table><tr class='stab '>
+                                  <td id='structfield.line_separator'><code>line_separator</code></td><td><div class='docblock'><p>Line separator used to separate lines in formatted output. Default is <code>&quot;\n&quot;</code>.</p>
+</div></td></tr><tr class='stab '>
+                                  <td id='structfield.indent_string'><code>indent_string</code></td><td><div class='docblock'><p>A string which will be used for a single level of indentation. Default is <code>&quot; &quot;</code>
+(two spaces).</p>
+</div></td></tr><tr class='stab '>
+                                  <td id='structfield.perform_indent'><code>perform_indent</code></td><td><div class='docblock'><p>Whether or not the emitted document should be indented. Default is false.</p>
+
+<p>The emitter is capable to perform automatic indentation of the emitted XML document.
+It is done in stream-like fashion and does not require the knowledge of the whole
+document in advance.</p>
+
+<p>Sometimes, however, automatic indentation is undesirable, e.g. when you want to keep
+existing layout when processing an existing XML document. Also the indentiation algorithm
+is not thoroughly tested. Hence by default it is disabled.</p>
+</div></td></tr><tr class='stab '>
+                                  <td id='structfield.write_document_declaration'><code>write_document_declaration</code></td><td><div class='docblock'><p>Whether or not to write XML document declaration at the beginning of a document.
+Default is true.</p>
+
+<p>This option controls whether the document declaration should be emitted automatically
+before a root element is written if it was not emitted explicitly by the user.</p>
+</div></td></tr><tr class='stab '>
+                                  <td id='structfield.normalize_empty_elements'><code>normalize_empty_elements</code></td><td><div class='docblock'><p>Whether or not to convert elements with empty content to empty elements. Default is true.</p>
+
+<p>This option allows turning elements like <code>&lt;a&gt;&lt;/a&gt;</code> (an element with empty content)
+into <code>&lt;a /&gt;</code> (an empty element).</p>
+</div></td></tr><tr class='stab '>
+                                  <td id='structfield.cdata_to_characters'><code>cdata_to_characters</code></td><td><div class='docblock'><p>Whether or not to emit CDATA events as plain characters. Default is false.</p>
+
+<p>This option forces the emitter to convert CDATA events into regular character events,
+performing all the necessary escaping beforehand. This may be occasionally useful
+for feeding the document into incorrect parsers which do not support CDATA.</p>
+</div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../../xml/writer/config/struct.EmitterConfig.html' title='xml::writer::config::EmitterConfig'>EmitterConfig</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>() -&gt; <a class='struct' href='../../../xml/writer/config/struct.EmitterConfig.html' title='xml::writer::config::EmitterConfig'>EmitterConfig</a></code></h4>
+<div class='docblock'><p>Creates an emitter configuration with default values.</p>
+
+<p>You can tweak default options with builder-like pattern:
+<code>rust let config = EmitterConfig::new() .line_separator(&quot;\r\n&quot;.to_owned()) .perform_indent(true) .normalize_empty_elements(false);</code></p>
+</div></div><h3 class='impl'><code>impl <a class='struct' href='../../../xml/writer/config/struct.EmitterConfig.html' title='xml::writer::config::EmitterConfig'>EmitterConfig</a></code></h3><div class='impl-items'><h4 id='method.line_separator' class='method'><code>fn <a href='#method.line_separator' class='fnname'>line_separator</a>(self, value: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>) -&gt; <a class='struct' href='../../../xml/writer/config/struct.EmitterConfig.html' title='xml::writer::config::EmitterConfig'>EmitterConfig</a></code></h4>
+<div class='docblock'><p>Sets the field to the provided value and returns updated config object.</p>
+</div></div><h3 class='impl'><code>impl <a class='struct' href='../../../xml/writer/config/struct.EmitterConfig.html' title='xml::writer::config::EmitterConfig'>EmitterConfig</a></code></h3><div class='impl-items'><h4 id='method.indent_string' class='method'><code>fn <a href='#method.indent_string' class='fnname'>indent_string</a>(self, value: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>) -&gt; <a class='struct' href='../../../xml/writer/config/struct.EmitterConfig.html' title='xml::writer::config::EmitterConfig'>EmitterConfig</a></code></h4>
+<div class='docblock'><p>Sets the field to the provided value and returns updated config object.</p>
+</div></div><h3 class='impl'><code>impl <a class='struct' href='../../../xml/writer/config/struct.EmitterConfig.html' title='xml::writer::config::EmitterConfig'>EmitterConfig</a></code></h3><div class='impl-items'><h4 id='method.perform_indent' class='method'><code>fn <a href='#method.perform_indent' class='fnname'>perform_indent</a>(self, value: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>) -&gt; <a class='struct' href='../../../xml/writer/config/struct.EmitterConfig.html' title='xml::writer::config::EmitterConfig'>EmitterConfig</a></code></h4>
+<div class='docblock'><p>Sets the field to the provided value and returns updated config object.</p>
+</div></div><h3 class='impl'><code>impl <a class='struct' href='../../../xml/writer/config/struct.EmitterConfig.html' title='xml::writer::config::EmitterConfig'>EmitterConfig</a></code></h3><div class='impl-items'><h4 id='method.write_document_declaration' class='method'><code>fn <a href='#method.write_document_declaration' class='fnname'>write_document_declaration</a>(self, value: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>) -&gt; <a class='struct' href='../../../xml/writer/config/struct.EmitterConfig.html' title='xml::writer::config::EmitterConfig'>EmitterConfig</a></code></h4>
+<div class='docblock'><p>Sets the field to the provided value and returns updated config object.</p>
+</div></div><h3 class='impl'><code>impl <a class='struct' href='../../../xml/writer/config/struct.EmitterConfig.html' title='xml::writer::config::EmitterConfig'>EmitterConfig</a></code></h3><div class='impl-items'><h4 id='method.normalize_empty_elements' class='method'><code>fn <a href='#method.normalize_empty_elements' class='fnname'>normalize_empty_elements</a>(self, value: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>) -&gt; <a class='struct' href='../../../xml/writer/config/struct.EmitterConfig.html' title='xml::writer::config::EmitterConfig'>EmitterConfig</a></code></h4>
+<div class='docblock'><p>Sets the field to the provided value and returns updated config object.</p>
+</div></div><h3 class='impl'><code>impl <a class='struct' href='../../../xml/writer/config/struct.EmitterConfig.html' title='xml::writer::config::EmitterConfig'>EmitterConfig</a></code></h3><div class='impl-items'><h4 id='method.cdata_to_characters' class='method'><code>fn <a href='#method.cdata_to_characters' class='fnname'>cdata_to_characters</a>(self, value: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>) -&gt; <a class='struct' href='../../../xml/writer/config/struct.EmitterConfig.html' title='xml::writer::config::EmitterConfig'>EmitterConfig</a></code></h4>
+<div class='docblock'><p>Sets the field to the provided value and returns updated config object.</p>
+</div></div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../../";
+        window.currentCrate = "xml";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../../../jquery.js"></script>
+    <script src="../../../main.js"></script>
+    
+    <script async src="../../../search-index.js"></script>
+</body>
+</html>

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `Service` struct in crate `crust`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, Service">
+
+    <title>crust::service::Service - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+
+    <link rel="shortcut icon" href="http://maidsafe.net/img/favicon.ico">
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        <a href='../../crust/index.html'><img src='https://raw.githubusercontent.com/maidsafe/QA/master/Images/maidsafe_logo.png' alt='' width='100'></a>
+        <p class='location'><a href='../index.html'>crust</a>::<wbr><a href='index.html'>service</a></p><script>window.sidebarCurrent = {name: 'Service', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content struct">
+<h1 class='fqn'><span class='in-band'>Struct <a href='../index.html'>crust</a>::<wbr><a href='index.html'>service</a>::<wbr><a class='struct' href=''>Service</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-37' class='srclink' href='../../src/crust/service.rs.html#49-53' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct Service {
+    // some fields omitted
+}</pre><div class='docblock'><p>A structure representing a connection manager.</p>
+
+<p>This abstraction has a hidden dependency on a config file. Refer to <a href="../file_handler/struct.FileHandler.html">the docs for <code>FileHandler</code></a> and <a href="https://github.com/maidsafe/crust/blob/master/docs/vault_config_file_flowchart.pdf">an example config file flowchart</a> for more
+information.</p>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../crust/service/struct.Service.html' title='crust::service::Service'>Service</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(event_sender: <a class='struct' href='https://doc.rust-lang.org/nightly/std/sync/mpsc/struct.Sender.html' title='std::sync::mpsc::Sender'>Sender</a>&lt;<a class='enum' href='../../crust/enum.Event.html' title='crust::Event'>Event</a>&gt;) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='struct' href='../../crust/service/struct.Service.html' title='crust::service::Service'>Service</a>&gt;</code></h4>
+<div class='docblock'><p>Constructs a service. User needs to create an asynchronous channel, and provide
+the sender half to this method. Receiver will receive all <code>Event</code>s from this library.</p>
+</div><h4 id='method.new_inactive' class='method'><code>fn <a href='#method.new_inactive' class='fnname'>new_inactive</a>(event_sender: <a class='struct' href='https://doc.rust-lang.org/nightly/std/sync/mpsc/struct.Sender.html' title='std::sync::mpsc::Sender'>Sender</a>&lt;<a class='enum' href='../../crust/enum.Event.html' title='crust::Event'>Event</a>&gt;) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='struct' href='../../crust/service/struct.Service.html' title='crust::service::Service'>Service</a>&gt;</code></h4>
+<div class='docblock'><p>Construct a service. As with the <code>Service::new</code> function, but will not
+implicitly start any network activity. This construtor is intended
+only for testing purposes.</p>
+</div><h4 id='method.start_default_acceptors' class='method'><code>fn <a href='#method.start_default_acceptors' class='fnname'>start_default_acceptors</a>(&amp;mut self) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='enum' href='../../crust/enum.Endpoint.html' title='crust::Endpoint'>Endpoint</a>&gt;&gt;</code></h4>
+<div class='docblock'><p>Start accepting on ports defined in the config file. Returns
+a vector of Ok(endpoint) for endpoints where the accetation
+started successfully.</p>
+</div><h4 id='method.start_accepting' class='method'><code>fn <a href='#method.start_accepting' class='fnname'>start_accepting</a>(&amp;mut self, port: <a class='enum' href='../../crust/enum.Port.html' title='crust::Port'>Port</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='enum' href='../../crust/enum.Endpoint.html' title='crust::Endpoint'>Endpoint</a>&gt;</code></h4>
+<div class='docblock'><p>Starts accepting on a given port. If port number is 0, the OS
+will pick one randomly. The actual port used will be returned.</p>
+</div><h4 id='method.bootstrap' class='method'><code>fn <a href='#method.bootstrap' class='fnname'>bootstrap</a>(&amp;mut self)</code></h4>
+<div class='docblock'><p>This method tries to connect (bootstrap to existing network) to the default or provided
+override list of bootstrap nodes (via config file named <current executable>.config).</p>
+
+<p>If <code>override_default_bootstrap_methods</code> is not set in the config file, it will attempt to read
+a local cached file named <current executable>.bootstrap.cache to populate the list endpoints
+to use for bootstrapping. It will also try <code>hard_coded_contacts</code> from config file.
+In addition, it will try to use the beacon port (provided via config file) to connect to a peer
+on the same LAN.
+For more details on bootstrap cache file refer
+<a href="https://github.com/maidsafe/crust/blob/master/docs/bootstrap.md">https://github.com/maidsafe/crust/blob/master/docs/bootstrap.md</a></p>
+
+<p>If <code>override_default_bootstrap_methods</code> is set in config file, it will only try to connect to
+the endpoints in the override list (<code>hard_coded_contacts</code>).
+All connections (if any) will be dropped before bootstrap attempt is made.
+This method returns immediately after dropping any active connections.endpoints
+New bootstrap connections will be notified by <code>NewBootstrapConnection</code> event.
+Its upper layer&#39;s responsibility to maintain or drop these connections.</p>
+</div><h4 id='method.stop_bootstrap' class='method'><code>fn <a href='#method.stop_bootstrap' class='fnname'>stop_bootstrap</a>(&amp;mut self)</code></h4>
+<h4 id='method.stop' class='method'><code>fn <a href='#method.stop' class='fnname'>stop</a>(&amp;mut self)</code></h4>
+<div class='docblock'><p>This should be called before destroying an instance of a Service to allow the
+listener threads to join.  Once called, the Service should be destroyed.</p>
+</div><h4 id='method.connect' class='method'><code>fn <a href='#method.connect' class='fnname'>connect</a>(&amp;self, endpoints: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='enum' href='../../crust/enum.Endpoint.html' title='crust::Endpoint'>Endpoint</a>&gt;)</code></h4>
+<div class='docblock'><p>Opens a connection to a remote peer. <code>endpoints</code> is a vector of addresses of the remote
+peer. All the endpoints will be tried. As soon as a connection is established, it will drop
+all other ongoing attempts. On success <code>Event::NewConnection</code> with connected <code>Endpoint</code> will
+be sent to the event channel. On failure, nothing is reported.
+Failed attempts are not notified back up to the caller. If the caller wants to know of a
+failed attempt, it must maintain a record of the attempt itself which times out if a
+corresponding <code>Event::NewConnection</code> isn&#39;t received.  See also <a href="https://github.com/maidsafe/crust/blob/master/docs/connect.md">Process for Connecting</a> for details on handling of
+connect in different protocols.</p>
+</div><h4 id='method.send' class='method'><code>fn <a href='#method.send' class='fnname'>send</a>(&amp;self, connection: <a class='struct' href='../../crust/struct.Connection.html' title='crust::Connection'>Connection</a>, message: <a class='type' href='../../crust/service/type.Bytes.html' title='crust::service::Bytes'>Bytes</a>)</code></h4>
+<div class='docblock'><p>Sends a message over a specified connection.</p>
+</div><h4 id='method.drop_node' class='method'><code>fn <a href='#method.drop_node' class='fnname'>drop_node</a>(&amp;self, connection: <a class='struct' href='../../crust/struct.Connection.html' title='crust::Connection'>Connection</a>)</code></h4>
+<div class='docblock'><p>Closes a connection.</p>
+</div><h4 id='method.get_external_endpoints' class='method'><code>fn <a href='#method.get_external_endpoints' class='fnname'>get_external_endpoints</a>(&amp;self)</code></h4>
+<div class='docblock'><p>Initiates uPnP port mapping of the currently used accepting endpoints.
+On success ExternalEndpoint event is generated containg our external
+endpoints.</p>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Drop.html' title='core::ops::Drop'>Drop</a> for <a class='struct' href='../../crust/service/struct.Service.html' title='crust::service::Service'>Service</a></code></h3><div class='impl-items'><h4 id='method.drop' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/ops/trait.Drop.html#method.drop' class='fnname'>drop</a>(&amp;mut self)</code></h4>
+</div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "crust";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../../jquery.js"></script>
+    <script src="../../main.js"></script>
+    
+    <script async src="../../search-index.js"></script>
+</body>
+</html>

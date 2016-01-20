@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Encoding","A value to represent an encoding used in `Transfer-Encoding` or `Accept-Encoding` header."]]});

@@ -1,0 +1,1 @@
+initSidebarItems({"mod":[["attribute",""],["common","Contains several types used throughout the library."],["escape",""],["macros","Contains several macros used in this crate."],["name",""],["namespace",""],["reader","Contains high-level interface for a pull-based XML parser."],["util",""],["writer",""]]});

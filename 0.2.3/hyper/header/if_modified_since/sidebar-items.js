@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["IfModifiedSince","`If-Modified-Since` header, defined in RFC7232"]]});

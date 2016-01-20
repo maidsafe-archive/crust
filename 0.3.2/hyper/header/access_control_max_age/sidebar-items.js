@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["AccessControlMaxAge","`Access-Control-Max-Age` header, part of CORS"]]});

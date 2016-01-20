@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["IpAddr","An IP address, either an IPv4 or IPv6 address."]],"trait":[["SocketAddrExt","Methods to convert between `IpAddr` and `std::net::SocketAddr`"]]});

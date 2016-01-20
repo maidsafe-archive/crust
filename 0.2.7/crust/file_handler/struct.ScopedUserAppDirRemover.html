@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `ScopedUserAppDirRemover` struct in crate `crust`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, ScopedUserAppDirRemover">
+
+    <title>crust::file_handler::ScopedUserAppDirRemover - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+
+    <link rel="shortcut icon" href="http://maidsafe.net/img/favicon.ico">
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <section class="sidebar">
+        <a href='../../crust/index.html'><img src='http://maidsafe.net/img/Resources/branding/maidsafe_logo.fab2.png' alt='' width='100'></a>
+        <p class='location'><a href='../index.html'>crust</a>::<wbr><a href='index.html'>file_handler</a></p><script>window.sidebarCurrent = {name: 'ScopedUserAppDirRemover', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </section>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content struct">
+<h1 class='fqn'><span class='in-band'>Struct <a href='../index.html'>crust</a>::<wbr><a href='index.html'>file_handler</a>::<wbr><a class='struct' href=''>ScopedUserAppDirRemover</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-4412' class='srclink' href='../../src/crust/file_handler.rs.html#188' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct ScopedUserAppDirRemover;</pre><div class='docblock'><p>RAII object which removes the <a href="fn.user_app_dir.html"><code>user_app_dir()</code></a> when an instance is
+dropped.</p>
+
+<p>Since the <code>user_app_dir</code> is frequently created by tests or examples which use Crust, this is a
+convenience object which tries to remove the directory when it is destroyed.</p>
+
+<h1 id="examples" class='section-header'><a
+                           href="#examples">Examples</a></h1><pre class='rust rust-example-rendered'>
+{
+    <span class='kw'>let</span> <span class='ident'>_cleaner</span> <span class='op'>=</span> ::<span class='ident'>crust</span>::<span class='ident'>ScopedUserAppDirRemover</span>;
+    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>file_handler</span> <span class='op'>=</span>
+        ::<span class='ident'>crust</span>::<span class='ident'>FileHandler</span>::<span class='ident'>new</span>(::<span class='ident'>std</span>::<span class='ident'>path</span>::<span class='ident'>Path</span>::<span class='ident'>new</span>(<span class='string'>&quot;test.json&quot;</span>).<span class='ident'>to_path_buf</span>());
+    <span class='comment'>// User app dir is possibly created by this call.</span>
+    <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>file_handler</span>.<span class='ident'>write_file</span>(<span class='kw-2'>&amp;</span><span class='number'>111u64</span>);
+    <span class='comment'>// User app dir is now removed since &#39;_cleaner&#39; goes out of scope.</span>
+}</pre>
+</div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Drop.html' title='core::ops::Drop'>Drop</a> for <a class='struct' href='../../crust/file_handler/struct.ScopedUserAppDirRemover.html' title='crust::file_handler::ScopedUserAppDirRemover'>ScopedUserAppDirRemover</a></code></h3><div class='impl-items'><h4 id='method.drop' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/ops/trait.Drop.html#method.drop' class='fnname'>drop</a>(&amp;mut self)</code></h4>
+</div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <div id="help" class="hidden">
+        <div>
+            <div class="shortcuts">
+                <h1>Keyboard Shortcuts</h1>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h1>Search Tricks</h1>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code>)
+                </p>
+            </div>
+        </div>
+    </div>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "crust";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../../jquery.js"></script>
+    <script src="../../main.js"></script>
+    
+    <script async src="../../search-index.js"></script>
+</body>
+</html>
