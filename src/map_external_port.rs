@@ -15,11 +15,11 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use endpoint::{Protocol, Endpoint};
+use config_file_handler::endpoint::{Protocol, Endpoint};
 use igd;
 use std::io;
 use get_if_addrs::get_if_addrs;
-use socket_addr::SocketAddrV4;
+use config_file_handler::socket_addr::SocketAddrV4;
 use std::net;
 use ip::IpAddr;
 use std::thread;
@@ -122,8 +122,8 @@ mod test {
     use std::net::Ipv4Addr;
     use ip::IpAddr;
     use std::sync::mpsc;
-    use endpoint::{Protocol, Endpoint};
-    use socket_addr::SocketAddrV4;
+    use config_file_handler::endpoint::{Protocol, Endpoint};
+    use config_file_handler::socket_addr::SocketAddrV4;
     use std::io;
     use util::timed_recv;
 

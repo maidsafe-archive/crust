@@ -19,7 +19,7 @@ use std::str::FromStr;
 use std::net;
 use std::io;
 use super::Transport;
-use socket_addr::SocketAddr;
+use config_file_handler::socket_addr::SocketAddr;
 
 /// After a connection is established, peers should exchange a handshake.
 ///

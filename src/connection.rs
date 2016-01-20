@@ -16,8 +16,8 @@
 // relating to use of the SAFE Network Software.
 
 use std::fmt;
-use endpoint::{Endpoint, Protocol};
-use socket_addr::SocketAddr;
+use config_file_handler::endpoint::{Endpoint, Protocol};
+use config_file_handler::socket_addr::SocketAddr;
 
 /// Information hold for the connection between a pair of nodes
 #[derive(PartialEq, Eq, Hash, Clone)]

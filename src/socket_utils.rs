@@ -17,7 +17,7 @@
 
 use std::io;
 use std::net::UdpSocket;
-use socket_addr::SocketAddr;
+use config_file_handler::socket_addr::SocketAddr;
 use std::io::ErrorKind;
 
 /// A self interruptable receive trait that allows a timed-out period to be defined

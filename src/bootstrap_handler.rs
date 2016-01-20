@@ -22,8 +22,9 @@
 //! This means that none of the public functions of `BootstrapHandler` should be called concurrently
 //! with any other one.
 
-use endpoint::Endpoint;
-use file_handler::FileHandler;
+use config_file_handler::endpoint::Endpoint;
+use config_file_handler::error::Error;
+use config_file_handler::file_handler::{self, FileHandler};
 use util;
 
 pub struct BootstrapHandler {
@@ -33,12 +34,12 @@ pub struct BootstrapHandler {
 
 impl BootstrapHandler {
     #[allow(dead_code)]
-    pub fn cleanup() -> Result<(), ::error::Error> {
+    pub fn cleanup() -> Result<(), Error> {
         try!(FileHandler::cleanup(&try!(get_file_name())));
         Ok(())
     }
 
-    pub fn new() -> Result<BootstrapHandler, ::error::Error> {
+    pub fn new() -> Result<BootstrapHandler, Error> {
         Ok(BootstrapHandler {
             file_handler: try!(FileHandler::new(&try!(get_file_name()))),
             last_updated: ::time::now(),
@@ -48,7 +49,7 @@ impl BootstrapHandler {
     pub fn update_contacts(&mut self,
                            contacts: Vec<Endpoint>,
                            prune: Vec<Endpoint>)
-                           -> Result<(), ::error::Error> {
+                           -> Result<(), Error> {
         try!(self.insert_contacts(contacts, prune));
         // TODO(Team) this implementation is missing and should be considered in next planning
         if ::time::now() > self.last_updated + Self::duration_between_updates() {
@@ -57,7 +58,7 @@ impl BootstrapHandler {
         Ok(())
     }
 
-    pub fn read_file(&mut self) -> Result<Vec<Endpoint>, ::error::Error> {
+    pub fn read_file(&mut self) -> Result<Vec<Endpoint>, Error> {
         self.file_handler.read_file::<Vec<Endpoint>>()
     }
 
@@ -72,7 +73,7 @@ impl BootstrapHandler {
     fn insert_contacts(&mut self,
                        mut contacts: Vec<Endpoint>,
                        prune: Vec<Endpoint>)
-                       -> Result<(), ::error::Error> {
+                       -> Result<(), Error> {
         let mut bootstrap_contacts = self.read_file().unwrap_or_else(|e| {
             debug!("Error reading Bootstrap file: {:?}.", e);
             Vec::new()
@@ -102,8 +103,8 @@ impl BootstrapHandler {
     }
 }
 
-fn get_file_name() -> Result<::std::ffi::OsString, ::error::Error> {
-    let mut name = try!(::file_handler::exe_file_stem());
+fn get_file_name() -> Result<::std::ffi::OsString, Error> {
+    let mut name = try!(file_handler::exe_file_stem());
     name.push(".bootstrap.cache");
     Ok(name)
 }
@@ -111,8 +112,9 @@ fn get_file_name() -> Result<::std::ffi::OsString, ::error::Error> {
 #[cfg(test)]
 mod test {
     use std::net;
-    use endpoint::{Endpoint, Protocol};
-    use socket_addr::SocketAddr;
+    use config_file_handler::endpoint::{Endpoint, Protocol};
+    use config_file_handler::file_handler;
+    use config_file_handler::socket_addr::SocketAddr;
 
     pub fn random_global_endpoints(count: usize) -> Vec<Endpoint> {
         let mut contacts = Vec::new();
@@ -151,7 +153,7 @@ mod test {
         // is deleted - i.e the file is managed by RAII.
         pub fn new() -> Result<TestFile, ::error::Error> {
             use std::io::Write;
-            let mut path = try!(::file_handler::current_bin_dir());
+            let mut path = try!(file_handler::current_bin_dir());
             path.push(try!(super::get_file_name()));
             let mut file = try!(::std::fs::File::create(&path));
             try!(write!(&mut file,

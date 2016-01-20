@@ -26,9 +26,9 @@ use std::sync::mpsc;
 #[cfg(test)]
 use std::thread;
 #[cfg(test)]
-use endpoint::{Protocol, Endpoint};
+use config_file_handler::endpoint::{Protocol, Endpoint};
 #[cfg(test)]
-use socket_addr::SocketAddr;
+use config_file_handler::socket_addr::SocketAddr;
 
 /// /////////////////////////////////////////////////////////////////////////////
 pub fn is_global(ip: &IpAddr) -> bool {

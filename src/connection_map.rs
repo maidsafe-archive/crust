@@ -6,13 +6,13 @@ use std::net;
 use ip::{IpAddr, SocketAddrExt};
 //use maidsafe_utilities::thread::RaiiThreadJoiner;
 
-use socket_addr::SocketAddr;
+use config_file_handler::socket_addr::SocketAddr;
 use transport;
 use event::Event;
 use connection::Connection;
 use transport::Handshake;
 use transport::{Transport, Message};
-use endpoint::Endpoint;
+use config_file_handler::endpoint::Endpoint;
 
 pub struct ConnectionData {
     pub message_sender: transport::Sender,

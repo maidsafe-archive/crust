@@ -24,12 +24,12 @@ use std::str::FromStr;
 
 use get_if_addrs::get_if_addrs;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
-use socket_addr::SocketAddr;
+use config_file_handler::socket_addr::SocketAddr;
 use transport;
 use transport::Handshake;
 use hole_punching::HolePunchServer;
 use connection_map::ConnectionMap;
-use endpoint::Endpoint;
+use config_file_handler::endpoint::Endpoint;
 use event::Event;
 
 pub struct Acceptor {

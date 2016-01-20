@@ -18,9 +18,8 @@
 use rand::random;
 use std::error::Error;
 use std::io;
-use std::net::{TcpStream, UdpSocket, TcpListener};
-use std::net;
-use socket_addr::SocketAddr;
+use std::net::{self, TcpStream, UdpSocket, TcpListener};
+use config_file_handler::socket_addr::SocketAddr;
 use std::str::FromStr;
 use std::sync::{Arc, mpsc, Mutex};
 use std::thread;
@@ -307,10 +306,10 @@ mod test {
     use std::thread;
     use std::net;
     use std::str::FromStr;
-    use endpoint::{Protocol, Endpoint};
+    use config_file_handler::endpoint::{Protocol, Endpoint};
     use transport;
     use transport::{Message, Handshake};
-    use socket_addr::SocketAddr;
+    use config_file_handler::socket_addr::SocketAddr;
 
     #[test]
     fn test_beacon() {

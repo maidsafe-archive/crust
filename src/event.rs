@@ -15,10 +15,10 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use endpoint::Endpoint;
+use config_file_handler::endpoint::Endpoint;
 use connection::Connection;
 use std::net::UdpSocket;
-use socket_addr::SocketAddr;
+use config_file_handler::socket_addr::SocketAddr;
 use std::io;
 
 #[derive(Debug)]

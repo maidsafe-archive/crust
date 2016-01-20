@@ -52,32 +52,31 @@ extern crate rustc_serialize;
 extern crate time;
 extern crate utp;
 extern crate crossbeam;
-extern crate memmap;
 #[macro_use]
 extern crate maidsafe_utilities;
 extern crate ip;
 extern crate get_if_addrs;
+extern crate config_file_handler;
 
 /// Module implementing the `Service` which provides an interface to manage peer-to-peer
 /// connections.
 pub mod service;
 
-/// Defines errors.
-pub mod error;
-/// Provides a struct and free functions for working with config files.
-pub mod file_handler;
-
 /// Crust Observers will be informed of crust events on this
 pub type CrustEventSender = ::maidsafe_utilities::event_sender::MaidSafeObserver<Event>;
-pub use config_handler::write_config_file;
+pub use config_file_handler::config_handler::write_config_file;
 pub use service::Service;
 pub use event::{Event, OurContactInfo, TheirContactInfo};
-pub use file_handler::{FileHandler, current_bin_dir, user_app_dir, system_cache_dir,
-                       exe_file_stem, ScopedUserAppDirRemover};
-pub use endpoint::{Endpoint, Protocol};
+pub use config_file_handler::file_handler::{FileHandler, current_bin_dir, user_app_dir,
+        system_cache_dir, exe_file_stem, ScopedUserAppDirRemover};
+pub use config_file_handler::endpoint::{Endpoint, Protocol};
+pub use config_file_handler::error;
+pub use config_file_handler::file_handler;
 pub use connection::Connection;
-pub use socket_addr::SocketAddr;
+pub use config_file_handler::socket_addr::SocketAddr;
 pub use hole_punching::HolePunchServer;
+
+
 
 #[cfg(test)]
 mod test {
@@ -92,9 +91,7 @@ mod test {
 mod sequence_number;
 mod connection;
 mod beacon;
-mod endpoint;
 mod bootstrap_handler;
-mod config_handler;
 mod util;
 mod tcp_connections;
 mod transport;
@@ -105,7 +102,6 @@ mod map_external_port;
 mod hole_punching;
 mod periodic_sender;
 mod socket_utils;
-mod socket_addr;
 mod ip_info;
 mod acceptor;
 mod connection_map;

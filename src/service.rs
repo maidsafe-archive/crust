@@ -19,30 +19,29 @@ use std::io;
 use std::sync::mpsc;
 use std::sync::atomic::{Ordering, AtomicBool};
 use std::thread;
-use std::net;
+use std::net::{self, TcpListener};
 use std::thread::JoinHandle;
 use std::sync::{Arc, Mutex};
 use std::str::FromStr;
 
-use std::net::TcpListener;
+use config_file_handler::config_handler::{self, Config, read_config_file};
+use config_file_handler::error::Error;
+use config_file_handler::socket_addr::{SocketAddr, SocketAddrV4};
 
 use rand;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 use itertools::Itertools;
 use acceptor::Acceptor;
 use beacon;
-use config_handler::{Config, read_config_file};
 use transport::Handshake;
 use transport;
-use endpoint::{Endpoint, Protocol};
+use config_file_handler::endpoint::{Endpoint, Protocol};
 use map_external_port::async_map_external_port;
 use connection::Connection;
 use connection_map::ConnectionMap;
-use error::Error;
 use ip::SocketAddrExt;
 
 use event::{Event, OurContactInfo, TheirContactInfo, ContactInfoResult};
-use socket_addr::{SocketAddr, SocketAddrV4};
 use bootstrap_handler::BootstrapHandler;
 use hole_punching::HolePunchServer;
 use sequence_number::SequenceNumber;
@@ -70,12 +69,12 @@ pub struct Service {
 impl Service {
     /// Constructs a service. User needs to create an asynchronous channel, and provide
     /// the sender half to this method. Receiver will receive all `Event`s from this library.
-    pub fn new(event_sender: ::CrustEventSender) -> Result<Service, ::error::Error> {
+    pub fn new(event_sender: ::CrustEventSender) -> Result<Service, Error> {
         let config = match read_config_file() {
             Ok(cfg) => cfg,
             Err(e) => {
                 debug!("Crust failed to read config file; Error: {:?};", e);
-                try!(::config_handler::create_default_config_file());
+                try!(config_handler::create_default_config_file());
                 Config::make_default()
             }
         };
@@ -83,9 +82,7 @@ impl Service {
         Service::construct(event_sender, config)
     }
 
-    fn construct(event_sender: ::CrustEventSender,
-                 config: Config)
-                 -> Result<Service, ::error::Error> {
+    fn construct(event_sender: ::CrustEventSender, config: Config) -> Result<Service, Error> {
         let (upnp_addr_tx, _upnp_addr_rx) = mpsc::channel();
         let mapper = Arc::new(try!(::hole_punching::HolePunchServer::start(upnp_addr_tx)));
 
@@ -603,15 +600,16 @@ mod test {
     use rustc_serialize::{Decodable, Encodable};
     use cbor::{Decoder, Encoder};
     use connection::Connection;
-    use endpoint::{Protocol, Endpoint};
-    use config_handler::write_config_file;
+    use config_file_handler::endpoint::{Protocol, Endpoint};
+    use config_file_handler::config_handler::write_config_file;
+    use config_file_handler::file_handler;
     use event::Event;
     use hole_punching::HolePunchServer;
     use bootstrap_handler::BootstrapHandler;
     use maidsafe_utilities::event_sender::{MaidSafeEventCategory, MaidSafeObserver};
-    use socket_addr::SocketAddr;
+    use config_file_handler::socket_addr::SocketAddr;
     use maidsafe_utilities::thread::RaiiThreadJoiner;
-    use error::Error;
+    use config_file_handler::error::Error;
     use event::{OurContactInfo, TheirContactInfo};
 
     type CategoryRx = ::std::sync::mpsc::Receiver<MaidSafeEventCategory>;
@@ -708,7 +706,7 @@ mod test {
     fn bootstrap() {
         BootstrapHandler::cleanup().unwrap();
 
-        let _cleaner = ::file_handler::ScopedUserAppDirRemover;
+        let _cleaner = file_handler::ScopedUserAppDirRemover;
         let (category_tx, _) = channel();
         let (cm1_i, _) = channel();
         let _config_file = make_temp_config();

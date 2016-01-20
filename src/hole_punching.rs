@@ -7,8 +7,8 @@ use std::sync::atomic::{Ordering, AtomicBool};
 
 use periodic_sender::PeriodicSender;
 use socket_utils::RecvUntil;
-use endpoint::{Protocol, Endpoint};
-use socket_addr::{SocketAddr, SocketAddrV4};
+use config_file_handler::endpoint::{Protocol, Endpoint};
+use config_file_handler::socket_addr::{SocketAddr, SocketAddrV4};
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 
 #[derive(Debug, RustcEncodable, RustcDecodable)]
@@ -362,10 +362,9 @@ impl Drop for HolePunchServer {
 mod tests {
     use super::*;
     use std::io;
-    use std::net;
-    use std::net::{UdpSocket, Ipv4Addr};
+    use std::net::{self, UdpSocket, Ipv4Addr};
     use std::thread::spawn;
-    use socket_addr::SocketAddr;
+    use config_file_handler::socket_addr::SocketAddr;
     use std::sync::Arc;
 
     fn loopback_v4(port: u16) -> SocketAddr {

@@ -16,7 +16,7 @@
 // relating to use of the SAFE Network Software.
 
 use std::net::{TcpStream, Shutdown};
-use socket_addr::SocketAddr;
+use config_file_handler::socket_addr::SocketAddr;
 use std::io::{Error, ErrorKind};
 use std::io::Result as IoResult;
 use std::thread;
@@ -70,7 +70,7 @@ mod test {
     use std::time::Duration;
     use std::io::Read;
     use std::sync::mpsc;
-    use socket_addr::SocketAddr;
+    use config_file_handler::socket_addr::SocketAddr;
 
     fn loopback(port: u16) -> SocketAddr {
         SocketAddr(net::SocketAddr::from_str(&format!("127.0.0.1:{}", port)).unwrap())

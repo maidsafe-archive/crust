@@ -29,8 +29,8 @@ use cbor;
 use std::fmt::{Formatter, Debug};
 use std::fmt;
 use connection::Connection;
-use endpoint::{Endpoint, Protocol};
-use socket_addr::SocketAddr;
+use config_file_handler::endpoint::{Endpoint, Protocol};
+use config_file_handler::socket_addr::SocketAddr;
 
 pub use self::message::Message;
 pub use self::handshake::{Handshake, exchange_handshakes};

@@ -16,7 +16,7 @@
 // relating to use of the SAFE Network Software.
 
 use std::net::UdpSocket;
-use socket_addr::SocketAddr;
+use config_file_handler::socket_addr::SocketAddr;
 
 #[must_use]
 pub struct PeriodicSender<D> {

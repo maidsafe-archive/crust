@@ -18,7 +18,7 @@
 use utp::UtpSocket;
 pub use utp_wrapper::UtpWrapper;
 use std::net::UdpSocket;
-use socket_addr::SocketAddr;
+use config_file_handler::socket_addr::SocketAddr;
 use std::io::Result as IoResult;
 use std::sync::mpsc;
 use std::sync::mpsc::Sender;
@@ -48,7 +48,7 @@ pub fn upgrade_utp(newconnection: UtpSocket) -> IoResult<(UtpWrapper, Sender<Vec
 mod test {
     use super::*;
     use std::thread;
-    use socket_addr::{SocketAddr, SocketAddrV4};
+    use config_file_handler::socket_addr::{SocketAddr, SocketAddrV4};
     use std::net::{Ipv4Addr, UdpSocket};
     use std::net;
     use std::io::{Read, Result};
