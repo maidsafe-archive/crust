@@ -21,9 +21,12 @@ use std::net::UdpSocket;
 use socket_addr::SocketAddr;
 use std::io;
 
+/// The result of a `Service::prepare_contact_info` call.
 #[derive(Debug)]
 pub struct ContactInfoResult {
+    /// The token that was passed to `prepare_contact_info`.
     pub result_token: u32,
+    /// The new contact info, if successful.
     pub result: io::Result<OurContactInfo>,
 }
 
@@ -85,6 +88,6 @@ pub enum Event {
     /// Invoked when a new bootstrap connection to a peer is established.
     /// Passes the peer's endpoint.
     ExternalEndpoints(Vec<Endpoint>),
-    /// Invoked as a result to the call of Service::prepare_contact_info.
+    /// Invoked as a result to the call of `Service::prepare_contact_info`.
     ContactInfoPrepared(ContactInfoResult),
 }
