@@ -133,6 +133,36 @@ pub fn is_local(ip_addr: &IpAddr, interfaces: &[Interface]) -> bool {
     false
 }
 
+fn ip(addr: &net::SocketAddr) -> IpAddr {
+    match *addr {
+        net::SocketAddr::V4(ref addr) => IpAddr::V4(*addr.ip()),
+        net::SocketAddr::V6(ref addr) => IpAddr::V6(*addr.ip()),
+    }
+}
+
+/// If the endpoint IP address is unspecified return a copy of the endpoint with the IP address
+/// set to the loopback address. Otherwise return a copy of the endpoint.
+pub fn unspecified_to_loopback(addr: &net::SocketAddr) -> net::SocketAddr {
+    if is_unspecified(&ip(addr)) {
+        match *addr {
+            net::SocketAddr::V4(ref addr) => {
+                let ip_addr = net::Ipv4Addr::new(127, 0, 0, 1);
+                net::SocketAddr::V4(net::SocketAddrV4::new(ip_addr,
+                                                           addr.port()))
+            }
+            net::SocketAddr::V6(ref addr) => {
+                let ip_addr = net::Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 1);
+                net::SocketAddr::V6(net::SocketAddrV6::new(ip_addr,
+                                                           addr.port(),
+                                                           addr.flowinfo(),
+                                                           addr.scope_id()))
+            }
+        }
+    } else {
+        *addr
+    }
+}
+
 /// Use heuristic to determine which IP is closer to us
 /// geographically. That is, ip1 is closer to us than ip2 => ip1 < ip2.
 #[allow(dead_code)]
