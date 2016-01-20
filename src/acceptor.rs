@@ -42,16 +42,17 @@ pub struct Acceptor {
 impl Acceptor {
     pub fn new(listener: TcpListener,
                hole_punch_server: Arc<HolePunchServer>,
-               connection_map: Arc<ConnectionMap>)
+               connection_map: Arc<ConnectionMap>,
+               event_sender: ::CrustEventSender)
                -> io::Result<Acceptor> {
         let running = Arc::new(AtomicBool::new(true));
         let running_cloned = running.clone();
         let addr = try!(listener.local_addr());
         let mapped_addrs = try!(get_if_addrs())
-                                .into_iter()
-                                .filter(|i| !i.is_loopback())
-                                .map(|i| SocketAddr::new(i.ip(), addr.port()))
-                                .collect();
+                               .into_iter()
+                               .filter(|i| !i.is_loopback())
+                               .map(|i| SocketAddr::new(i.ip(), addr.port()))
+                               .collect();
         let joiner = RaiiThreadJoiner::new(thread!("acceptor", move || {
             loop {
                 let mapper_external_addr = hole_punch_server.external_address();
@@ -61,9 +62,8 @@ impl Acceptor {
                     external_addr: mapper_external_addr,
                     remote_addr: SocketAddr(net::SocketAddr::from_str("0.0.0.0:0").unwrap()),
                 };
-                let accept_res = transport::accept(&listener).and_then(|t| {
-                    transport::exchange_handshakes(handshake, t)
-                });
+                let accept_res = transport::accept(&listener)
+                                     .and_then(|t| transport::exchange_handshakes(handshake, t));
                 if !running_cloned.load(Ordering::SeqCst) {
                     break;
                 }
@@ -74,8 +74,11 @@ impl Acceptor {
                         let protocol = *c.peer_endpoint()
                                          .protocol();
                         let remote_addr = SocketAddr(*handshake.remote_addr);
-                        let our_external_endpoint = Endpoint::from_socket_addr(protocol, remote_addr);
-                        connection_map.register_connection(handshake, transport, Event::OnBootstrapAccept(our_external_endpoint, c))
+                        let our_external_endpoint = Endpoint::from_socket_addr(protocol,
+                                                                               remote_addr);
+                        let _ = event_sender.send(Event::OnBootstrapAccept(our_external_endpoint,
+                                                                           c));
+                        let _ = connection_map.register_connection(handshake, transport);
                     }
                     Err(e) => {
                         warn!("Acceptor got an error: {} {:?}", e, e);

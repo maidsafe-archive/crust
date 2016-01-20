@@ -4,7 +4,7 @@ use std::io;
 use std::net;
 
 use ip::{IpAddr, SocketAddrExt};
-//use maidsafe_utilities::thread::RaiiThreadJoiner;
+// use maidsafe_utilities::thread::RaiiThreadJoiner;
 
 use socket_addr::SocketAddr;
 use transport;
@@ -17,8 +17,7 @@ use endpoint::Endpoint;
 pub struct ConnectionData {
     pub message_sender: transport::Sender,
     pub mapper_address: Option<SocketAddr>,
-    pub mapper_external_address: Option<SocketAddr>,
-    //pub reader_thread: RaiiThreadJoiner,
+    pub mapper_external_address: Option<SocketAddr>, // pub reader_thread: RaiiThreadJoiner,
 }
 
 pub struct ConnectionMap {
@@ -42,9 +41,7 @@ impl Drop for ConnectionMap {
 
 impl ConnectionMap {
     pub fn new(event_sender: ::CrustEventSender) -> ConnectionMap {
-        ConnectionMap {
-            inner: Arc::new(Mutex::new(ConnectionMapInner::new(event_sender))),
-        }
+        ConnectionMap { inner: Arc::new(Mutex::new(ConnectionMapInner::new(event_sender))) }
     }
 
     pub fn get_ordered_helping_nodes(&self) -> Vec<SocketAddr> {
@@ -57,12 +54,11 @@ impl ConnectionMap {
         inner.is_connected_to(endpoint)
     }
 
-    /*
-    pub fn get(&self, connection: &Connection) -> Option<ConnectionData> {
-        let inner = unwrap_result!(self.inner.lock());
-        inner.get(connection)
-    }
-    */
+    // pub fn get(&self, connection: &Connection) -> Option<ConnectionData> {
+    // let inner = unwrap_result!(self.inner.lock());
+    // inner.get(connection)
+    // }
+    //
 
     pub fn send(&self, connection: Connection, bytes: Vec<u8>) {
         let mut inner = unwrap_result!(self.inner.lock());
@@ -71,12 +67,11 @@ impl ConnectionMap {
 
     pub fn register_connection(&self,
                                handshake: Handshake,
-                               transport: Transport,
-                               event_to_user: Event)
+                               transport: Transport)
                                -> io::Result<Connection> {
         let me = self.inner.clone();
         let mut inner = unwrap_result!(self.inner.lock());
-        inner.register_connection(handshake, transport, event_to_user, me)
+        inner.register_connection(handshake, transport, me)
     }
 
     pub fn unregister_connection(&self, connection: Connection) {
@@ -116,11 +111,10 @@ impl ConnectionMapInner {
         false
     }
 
-    /*
-    pub fn get(&self, connection: &Connection) -> Option<ConnectionData> {
-        self.connections.get(connection).map(|c| c.clone())
-    }
-    */
+    // pub fn get(&self, connection: &Connection) -> Option<ConnectionData> {
+    // self.connections.get(connection).map(|c| c.clone())
+    // }
+    //
 
     pub fn send(&mut self, connection: Connection, bytes: Vec<u8>) {
         let dropped = match self.connections.get_mut(&connection) {
@@ -128,8 +122,7 @@ impl ConnectionMapInner {
                 let writer = &mut connection_data.message_sender;
                 if let Err(_what) = writer.send(&Message::UserBlob(bytes)) {
                     true
-                }
-                else {
+                } else {
                     false
                 }
             }
@@ -146,7 +139,6 @@ impl ConnectionMapInner {
     pub fn register_connection(&mut self,
                                handshake: Handshake,
                                transport: Transport,
-                               event_to_user: Event,
                                me: Arc<Mutex<ConnectionMapInner>>)
                                -> io::Result<Connection> {
         let connection_id = transport.connection_id.clone();
@@ -162,29 +154,25 @@ impl ConnectionMapInner {
                 match peer_addr {
                     IpAddr::V4(a) => {
                         Some(SocketAddr(net::SocketAddr::V4(net::SocketAddrV4::new(a, port))))
-                    },
+                    }
                     // FIXME(dirvine) Handle ip6 :10/01/2016
                     IpAddr::V6(_) => unimplemented!(),
                 }
-            },
+            }
             None => None,
         };
-        // We need to insert the event into event_sender *before* the
-        // reading thread starts. It is because the reading thread
-        // also inserts events into the pipe and if done very quickly
-        // they may be inserted in wrong order.
-        let _ = self.event_sender.send(event_to_user);
 
         let connection_id_mv = connection_id.clone();
         // start the reading thread
         let event_sender = self.event_sender.clone();
-        //let reader_thread = RaiiThreadJoiner::new(thread!("reader", move || {
+        // let reader_thread = RaiiThreadJoiner::new(thread!("reader", move || {
         // TODO (canndrew): We risk leaking this thread if we don't keep a handle to it.
         let _ = thread!("reader", move || {
             while let Ok(msg) = receiver.receive() {
                 match msg {
                     Message::UserBlob(msg) => {
-                        if event_sender.send(Event::NewMessage(connection_id_mv.clone(), msg)).is_err() {
+                        if event_sender.send(Event::NewMessage(connection_id_mv.clone(), msg))
+                                       .is_err() {
                             break;
                         }
                     }
@@ -203,8 +191,7 @@ impl ConnectionMapInner {
         let connection_data = ConnectionData {
             message_sender: sender,
             mapper_address: mapper_addr,
-            mapper_external_address: handshake.external_addr,
-            //reader_thread: reader_thread,
+            mapper_external_address: handshake.external_addr, // reader_thread: reader_thread,
         };
         let _ = self.connections.insert(connection_id.clone(), connection_data);
 
@@ -220,5 +207,3 @@ impl ConnectionMapInner {
         let _ = self.event_sender.send(Event::LostConnection(connection));
     }
 }
-
-

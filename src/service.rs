@@ -141,7 +141,8 @@ impl Service {
         let hole_punch_server = self.mapper.clone();
         let acceptor = try!(Acceptor::new(listener,
                                           hole_punch_server,
-                                          self.connection_map.clone()));
+                                          self.connection_map.clone(),
+                                          self.event_sender.clone()));
         self.acceptors.push(acceptor);
 
         // FIXME: Instead of hardcoded wrapping in loopback V4, the
@@ -195,6 +196,7 @@ impl Service {
         self.beacon_guid_and_port = Some((acceptor.beacon_guid(), b_port));
 
         let connection_map = self.connection_map.clone();
+        let event_sender = self.event_sender.clone();
         let thread_result = Self::new_thread("beacon acceptor", move || {
             while let Ok((h, t)) = acceptor.accept() {
                 let c = t.connection_id.clone();
@@ -202,10 +204,8 @@ impl Service {
                                                                          .peer_endpoint()
                                                                          .protocol(),
                                                                        SocketAddr(*h.remote_addr));
-                let _ = connection_map.register_connection(h,
-                                                           t,
-                                                           Event::OnBootstrapAccept(our_external_endpoint,
-                                                                                    c));
+                let _ = event_sender.send(Event::OnBootstrapAccept(our_external_endpoint, c));
+                let _ = connection_map.register_connection(h, t);
             }
         });
 
@@ -289,7 +289,9 @@ impl Service {
                               bootstrap_list: Vec<Endpoint>,
                               hole_punch_server: Arc<HolePunchServer>) {
         if self.is_bootstrapping.compare_and_swap(false, true, Ordering::SeqCst) {
-            let _ = unwrap_option!(self.bootstrap_peers.as_ref(), "bootstrap_peers cannot be None!").send(bootstrap_list);
+            let _ = unwrap_option!(self.bootstrap_peers.as_ref(),
+                                   "bootstrap_peers cannot be None!")
+                        .send(bootstrap_list);
             return;
         }
 
@@ -299,7 +301,9 @@ impl Service {
 
         let is_bootstrapping = self.is_bootstrapping.clone();
         let bootstrap_thread = self.bootstrap_thread.take();
-        if let Some(handle) = bootstrap_thread { drop(handle) };
+        if let Some(handle) = bootstrap_thread {
+            drop(handle)
+        };
 
         let connection_map = self.connection_map.clone();
         let event_sender = self.event_sender.clone();
@@ -334,9 +338,10 @@ impl Service {
                                                          .peer_endpoint()
                                                          .protocol(),
                                                    SocketAddr(*handshake.remote_addr));
-                    let event = Event::OnBootstrapConnect(Ok((our_external_endpoint, c)), token);
-
-                    let _ = connection_map.register_connection(handshake, trans, event);
+                    let _ = event_sender.send(Event::OnBootstrapConnect(Ok((our_external_endpoint,
+                                                                            c)),
+                                                                        token));
+                    let _ = connection_map.register_connection(handshake, trans);
                 }
             }
             is_bootstrapping.store(false, Ordering::SeqCst);
@@ -350,14 +355,13 @@ impl Service {
         self.is_bootstrapping.store(false, Ordering::SeqCst);
     }
 
-    /*
-    /// Accept a connection on the provided TcpListener and perform a handshake on it.
-    pub fn accept(handshake: Handshake,
-                  acceptor: &TcpListener)
-                  -> io::Result<(Handshake, Transport)> {
-        transport::exchange_handshakes(handshake, try!(transport::accept(acceptor)))
-    }
-    */
+    // Accept a connection on the provided TcpListener and perform a handshake on it.
+    // pub fn accept(handshake: Handshake,
+    // acceptor: &TcpListener)
+    // -> io::Result<(Handshake, Transport)> {
+    // transport::exchange_handshakes(handshake, try!(transport::accept(acceptor)))
+    // }
+    //
 
     /// Opens a connection to a remote peer. `public_endpoint` is the endpoint
     /// of the remote peer. `udp_socket` is a socket whose public address will
@@ -385,8 +389,7 @@ impl Service {
     pub fn connect(&self,
                    our_contact_info: OurContactInfo,
                    their_contact_info: TheirContactInfo,
-                   token: u32)
-    {
+                   token: u32) {
         let mapper_external_addr = self.mapper.external_address();
         let mapper_internal_port = self.mapper.listening_addr().port();
 
@@ -400,30 +403,35 @@ impl Service {
         let connection_map = self.connection_map.clone();
 
         if our_contact_info.secret != their_contact_info.secret {
-                let err = io::Error::new(io::ErrorKind::Other, "Cannot connect. our_contact_info and their_contact_info are not associated with the same connection.");
-                let _ = event_sender.send(Event::OnConnect(Err(err), token));
-                return;
+            let err = io::Error::new(io::ErrorKind::Other,
+                                     "Cannot connect. our_contact_info and their_contact_info \
+                                      are not associated with the same connection.");
+            let _ = event_sender.send(Event::OnConnect(Err(err), token));
+            return;
         }
 
         let rendezvous_addr = match their_contact_info.rendezvous_addrs.get(0) {
             Some(addr) => addr.clone(),
             None => {
-                let err = io::Error::new(io::ErrorKind::Other, "No rendezvous address supplied. Direct connections not yet supported.");
+                let err = io::Error::new(io::ErrorKind::Other,
+                                         "No rendezvous address supplied. Direct connections not \
+                                          yet supported.");
                 let _ = event_sender.send(Event::OnConnect(Err(err), token));
                 return;
-            },
+            }
         };
 
         let _ = Self::new_thread("rendezvous connect", move || {
-            let (udp_socket, result_addr) = ::hole_punching::blocking_udp_punch_hole(our_contact_info.socket,
-                                                                                     our_contact_info.secret,
-                                                                                     rendezvous_addr);
+            let (udp_socket, result_addr) =
+                ::hole_punching::blocking_udp_punch_hole(our_contact_info.socket,
+                                                         our_contact_info.secret,
+                                                         rendezvous_addr);
             let public_endpoint = match result_addr {
                 Ok(addr) => addr,
                 Err(e) => {
                     let _ = event_sender.send(Event::OnConnect(Err(e), token));
                     return;
-                },
+                }
             };
 
             let peer_endpoint = Endpoint::from_socket_addr(Protocol::Utp, public_endpoint);
@@ -431,22 +439,21 @@ impl Service {
             let res = res.and_then(move |t| transport::exchange_handshakes(handshake, t));
 
             let (his_handshake, transport) = match res {
-                Ok((h, t)) => {
-                    (h, t)
-                }
+                Ok((h, t)) => (h, t),
                 Err(e) => {
                     let _ = event_sender.send(Event::OnConnect(Err(e), token));
-                    return ()
+                    return ();
                 }
             };
 
             let c = transport.connection_id.clone();
-            let our_external_endpoint = Endpoint::from_socket_addr(*transport.connection_id
-                                                                             .peer_endpoint()
-                                                                             .protocol(),
-                                                                   SocketAddr(*his_handshake.remote_addr));
-            let event = Event::OnConnect(Ok((our_external_endpoint, c)), token);
-            let _ = connection_map.register_connection(his_handshake, transport, event);
+            let our_external_endpoint =
+                Endpoint::from_socket_addr(*transport.connection_id
+                                                     .peer_endpoint()
+                                                     .protocol(),
+                                           SocketAddr(*his_handshake.remote_addr));
+            let _ = event_sender.send(Event::OnConnect(Ok((our_external_endpoint, c)), token));
+            let _ = connection_map.register_connection(his_handshake, transport);
         });
     }
 
@@ -1358,7 +1365,7 @@ mod test {
                         } else {
                             break;
                         }
-                    },
+                    }
                     _ => unreachable!("This category should not have been fired - {:?}", it),
                 }
             }
