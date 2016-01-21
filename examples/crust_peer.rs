@@ -30,6 +30,7 @@
 extern crate log;
 #[macro_use]
 extern crate maidsafe_utilities;
+extern crate config_file_handler;
 extern crate crust;
 extern crate rustc_serialize;
 extern crate docopt;
@@ -45,7 +46,7 @@ use std::cmp;
 use std::sync::mpsc::channel;
 use std::sync::mpsc::Sender;
 use std::io;
-use crust::error::Error;
+use config_file_handler::error::Error;
 use std::net;
 use std::str::FromStr;
 use std::thread;

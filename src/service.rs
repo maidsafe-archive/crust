@@ -38,7 +38,7 @@ use endpoint::{Endpoint, Protocol};
 use map_external_port::async_map_external_port;
 use connection::Connection;
 use connection_map::ConnectionMap;
-use error::Error;
+use config_file_handler::error::Error;
 use ip::SocketAddrExt;
 
 use event::{Event, OurContactInfo, TheirContactInfo, ContactInfoResult};
@@ -70,7 +70,7 @@ pub struct Service {
 impl Service {
     /// Constructs a service. User needs to create an asynchronous channel, and provide
     /// the sender half to this method. Receiver will receive all `Event`s from this library.
-    pub fn new(event_sender: ::CrustEventSender) -> Result<Service, ::error::Error> {
+    pub fn new(event_sender: ::CrustEventSender) -> Result<Service, Error> {
         let config = match read_config_file() {
             Ok(cfg) => cfg,
             Err(e) => {
@@ -85,7 +85,7 @@ impl Service {
 
     fn construct(event_sender: ::CrustEventSender,
                  config: Config)
-                 -> Result<Service, ::error::Error> {
+                 -> Result<Service, Error> {
         let (upnp_addr_tx, _upnp_addr_rx) = mpsc::channel();
         let mapper = Arc::new(try!(::hole_punching::HolePunchServer::start(upnp_addr_tx)));
 
@@ -611,7 +611,8 @@ mod test {
     use maidsafe_utilities::event_sender::{MaidSafeEventCategory, MaidSafeObserver};
     use socket_addr::SocketAddr;
     use maidsafe_utilities::thread::RaiiThreadJoiner;
-    use error::Error;
+    use config_file_handler::error::Error;
+    use config_file_handler::file_handler;
     use event::{OurContactInfo, TheirContactInfo};
 
     type CategoryRx = ::std::sync::mpsc::Receiver<MaidSafeEventCategory>;
@@ -712,7 +713,7 @@ mod test {
     fn bootstrap() {
         BootstrapHandler::cleanup().unwrap();
 
-        let _cleaner = ::file_handler::ScopedUserAppDirRemover;
+        let _cleaner = file_handler::ScopedUserAppDirRemover;
         let (category_tx, _) = channel();
         let (cm1_i, _) = channel();
         let _config_file = make_temp_config();

@@ -28,6 +28,7 @@
 
 #[macro_use]
 extern crate maidsafe_utilities;
+extern crate config_file_handler;
 extern crate crust;
 extern crate docopt;
 
@@ -45,7 +46,7 @@ use rand::{thread_rng, Rng};
 use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
 use std::cmp::max;
 use std::collections::HashMap;
-use crust::error::Error;
+use config_file_handler::error::Error;
 use std::sync::Arc;
 use std::sync::mpsc::channel;
 use std::sync::atomic::{AtomicBool, Ordering};
