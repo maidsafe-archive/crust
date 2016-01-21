@@ -31,6 +31,7 @@ use hole_punching::HolePunchServer;
 use connection_map::ConnectionMap;
 use endpoint::Endpoint;
 use event::Event;
+use util;
 
 pub struct Acceptor {
     _joiner: RaiiThreadJoiner,
@@ -108,6 +109,6 @@ impl Acceptor {
 impl Drop for Acceptor {
     fn drop(&mut self) {
         self.running.store(false, Ordering::SeqCst);
-        let _ = TcpStream::connect(self.addr);
+        let _ = TcpStream::connect(util::unspecified_to_loopback(&self.addr));
     }
 }

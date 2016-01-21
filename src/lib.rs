@@ -71,7 +71,7 @@ pub mod file_handler;
 pub type CrustEventSender = ::maidsafe_utilities::event_sender::MaidSafeObserver<Event>;
 pub use config_handler::write_config_file;
 pub use service::Service;
-pub use event::{Event, OurContactInfo, TheirContactInfo};
+pub use event::{ContactInfoResult, Event, OurContactInfo, TheirContactInfo};
 pub use file_handler::{FileHandler, current_bin_dir, user_app_dir, system_cache_dir,
                        exe_file_stem, ScopedUserAppDirRemover};
 pub use endpoint::{Endpoint, Protocol};
