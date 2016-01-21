@@ -54,10 +54,10 @@ use sequence_number::SequenceNumber;
 /// (https://github.com/maidsafe/crust/blob/master/docs/vault_config_file_flowchart.pdf) for more
 /// information.
 pub struct Service {
+    beacon_guid: u32,
     beacon_guid_and_port: Option<(beacon::GUID, u16)>,
     config: Config,
     bootstrap_peers: Option<mpsc::Sender<Vec<Endpoint>>>,
-    bootstrap_handler: BootstrapHandler,
     acceptors: Vec<Acceptor>,
     mapper: Arc<HolePunchServer>,
     next_punch_sequence: SequenceNumber,
@@ -70,21 +70,22 @@ pub struct Service {
 impl Service {
     /// Constructs a service. User needs to create an asynchronous channel, and provide
     /// the sender half to this method. Receiver will receive all `Event`s from this library.
-    pub fn new(event_sender: ::CrustEventSender) -> Result<Service, ::error::Error> {
-        let config = match read_config_file() {
-            Ok(cfg) => cfg,
-            Err(e) => {
-                debug!("Crust failed to read config file; Error: {:?};", e);
-                try!(::config_handler::create_default_config_file());
-                Config::make_default()
-            }
-        };
+    pub fn new(event_sender: ::CrustEventSender,
+               lan_listener_port: Option<u16>)
+               -> Result<Service, ::error::Error> {
+        Service::construct(event_sender, lan_listener_port, None)
+    }
 
-        Service::construct(event_sender, config)
+    pub fn with_bootstrap_list(event_tx: ::CrustEventSender,
+                               lan_listener_port: Option<u16>,
+                               list: Vec<Endpoint>)
+                               -> Result<Service, Error> {
+        Service::construct(event_sender, lan_listener_port, Some(list))
     }
 
     fn construct(event_sender: ::CrustEventSender,
-                 config: Config)
+                 lan_listener_port: Option<u16>,
+                 bootstrap_list: Option<Vec<Endpoint>>)
                  -> Result<Service, ::error::Error> {
         let (upnp_addr_tx, _upnp_addr_rx) = mpsc::channel();
         let mapper = Arc::new(try!(::hole_punching::HolePunchServer::start(upnp_addr_tx)));
@@ -94,11 +95,21 @@ impl Service {
         // let upnp_updater_handle = RaiiThreadJoiner::new(thread!("upnp j
         let connection_map = Arc::new(ConnectionMap::new(event_sender.clone()));
 
+        let beacon_guid = rand::random();
+        match bootstrap_list {
+            Some(list) => {
+                if !list.is_empty() {
+                    self.bootstrap(lan_listener_port, Some(list), beacon_guid);
+                }
+            }
+            None => self.bootstrap(lan_listener_port, None, beacon_guid),
+        }
+
         let service = Service {
+            beacon_guid: beacon_guid,
             beacon_guid_and_port: None,
             config: config,
             bootstrap_peers: None,
-            bootstrap_handler: try!(BootstrapHandler::new()),
             acceptors: Vec::new(),
             mapper: mapper,
             next_punch_sequence: SequenceNumber::new(::rand::random()),
@@ -141,40 +152,13 @@ impl Service {
         let hole_punch_server = self.mapper.clone();
         let acceptor = try!(Acceptor::new(listener,
                                           hole_punch_server,
-                                          self.connection_map.clone()));
+                                          self.connection_map.clone(),
+                                          self.event_sender.clone()));
         self.acceptors.push(acceptor);
 
         // FIXME: Instead of hardcoded wrapping in loopback V4, the
         // acceptor should tell us the address it is accepting on.
         Ok(Endpoint::from_socket_addr(Protocol::Tcp, SocketAddr(accept_addr)))
-    }
-
-    fn populate_bootstrap_contacts(&mut self,
-                                   config: &Config,
-                                   beacon_port: Option<u16>,
-                                   own_beacon_guid_and_port: &Option<([u8; 16], u16)>)
-                                   -> Vec<Endpoint> {
-        let cached_contacts = self.bootstrap_handler.read_file().unwrap_or(vec![]);
-
-        let beacon_guid = own_beacon_guid_and_port.map(|(guid, _)| guid);
-
-        let beacon_discovery = match beacon_port {
-            Some(port) => Self::seek_peers(beacon_guid, port),
-            None => vec![],
-        };
-
-        let mut combined_contacts = beacon_discovery.into_iter()
-                                                    .chain(config.hard_coded_contacts
-                                                                 .iter()
-                                                                 .cloned())
-                                                    .chain(cached_contacts.into_iter())
-                                                    .unique()
-                                                    .collect::<Vec<_>>();
-
-        // remove own endpoints
-        let own_listening_endpoint = self.get_known_external_endpoints();
-        combined_contacts.retain(|c| !own_listening_endpoint.contains(&c));
-        combined_contacts
     }
 
     fn seek_peers(beacon_guid: Option<[u8; 16]>, beacon_port: u16) -> Vec<Endpoint> {
@@ -195,6 +179,7 @@ impl Service {
         self.beacon_guid_and_port = Some((acceptor.beacon_guid(), b_port));
 
         let connection_map = self.connection_map.clone();
+        let event_sender = self.event_sender.clone();
         let thread_result = Self::new_thread("beacon acceptor", move || {
             while let Ok((h, t)) = acceptor.accept() {
                 let c = t.connection_id.clone();
@@ -202,10 +187,8 @@ impl Service {
                                                                          .peer_endpoint()
                                                                          .protocol(),
                                                                        SocketAddr(*h.remote_addr));
-                let _ = connection_map.register_connection(h,
-                                                           t,
-                                                           Event::OnBootstrapAccept(our_external_endpoint,
-                                                                                    c));
+                let _ = event_sender.send(Event::OnBootstrapAccept(our_external_endpoint, c));
+                let _ = connection_map.register_connection(h, t);
             }
         });
 
@@ -233,63 +216,77 @@ impl Service {
     /// This method returns immediately after dropping any active connections.endpoints
     /// New bootstrap connections will be notified by `NewBootstrapConnection` event.
     /// Its upper layer's responsibility to maintain or drop these connections.
-    pub fn bootstrap(&mut self, token: u32, beacon_port: Option<u16>) {
-        self.bootstrap_with_blacklist(token, beacon_port, &[])
-    }
+    fn bootstrap(&mut self,
+                 lan_listener_port: Option<u16>,
+                 list: Option<Vec<Endpoint>>,
+                 beacon_guid: u32) {
+        let final_list = match list {
+            Some(list) => {
+                if list.is_empty() {
+                    return;
+                }
+                list
+            }
+            None => {
+                let config = match read_config_file() {
+                    Ok(cfg) => cfg,
+                    Err(e) => {
+                        debug!("Crust failed to read config file; Error: {:?};", e);
+                        try!(::config_handler::create_default_config_file());
+                        Config::make_default()
+                    }
+                };
 
-    /// Same as bootstrap, but allows to specify a blacklist of endpoints
-    /// this service should never connect to.
-    pub fn bootstrap_with_blacklist(&mut self,
-                                    token: u32,
-                                    beacon_port: Option<u16>,
-                                    blacklist: &[Endpoint]) {
-        let config = self.config.clone();
-        let beacon_guid_and_port = self.beacon_guid_and_port.clone();
-        let blist = blacklist.to_vec();
+                try!(populate_bootstrap_contacts(&config, lan_listener_port, beacon_guid))
+                    .into_iter()
+                    .filter(|endpoint| !black_listed_eps.contains(&endpoint))
+                    .collect()
+            }
+        };
 
-        let mut contacts = self.populate_bootstrap_contacts(&config,
-                                                            beacon_port,
-                                                            &beacon_guid_and_port);
-        let mapper_cloned = self.mapper.clone();
-        contacts.retain(|endpoint| !blist.contains(&endpoint));
+        // let mapper_cloned = self.mapper.clone();
         self.bootstrap_off_list(token, contacts.clone(), mapper_cloned)
     }
 
-    /// Remove endpoint from the bootstrap cache.
-    pub fn remove_bootstrap_contact(&mut self, endpoint: Endpoint) -> Result<(), Error> {
-        // TODO (canndrew): This should probably happen asynchronously
-        // because it uses (possibly slow) filesystem operations.
-        self.bootstrap_handler.update_contacts(vec![], vec![endpoint])
-    }
+    fn populate_bootstrap_contacts(config: &Config,
+                                   lan_listener_port: Option<u16>,
+                                   our_guid: u32)
+                                   -> Vec<Endpoint> {
+        let cached_contacts = try!(BootstrapHandler::new()).read_file().unwrap_or(vec![]);
 
-    // This should be called before destroying an instance of a Service to allow the
-    // listener threads to join.  Once called, the Service should be destroyed.
-    fn stop(&mut self) {
-        if let Some(beacon_guid_and_port) = self.beacon_guid_and_port.take() {
-            beacon::BroadcastAcceptor::stop(&beacon_guid_and_port);
-        }
+        let discovered_eps = match lan_listener_port {
+            Some(port) => Self::seek_peers(our_guid, port),
+            None => vec![],
+        };
 
-    }
+        let mut combined_contacts = discovered_eps.into_iter()
+                                                  .chain(config.hard_coded_contacts
+                                                               .iter()
+                                                               .cloned())
+                                                  .chain(cached_contacts.into_iter())
+                                                  .unique()
+                                                  .collect::<Vec<_>>();
 
-    // TODO (canndrew): do we even need this method?
-    /// Check whether we're connected to an endpoint.
-    pub fn is_connected_to(&self, endpoint: &Endpoint) -> bool {
-        self.connection_map.is_connected_to(endpoint)
-    }
-
-    /// Get the hole punch servers addresses of nodes that we're connected to ordered by how likely
-    /// they are to be on a seperate network.
-    pub fn get_ordered_helping_nodes(&self) -> Vec<SocketAddr> {
-        self.connection_map.get_ordered_helping_nodes()
+        // remove own endpoints
+        // Node A is on EP Ea. Node B starts up finds A and populates its bootstrap.cache with Ea.
+        // Now A dies and C starts after that on exactly Ea. Since they all share the same
+        // bootstrap.cache file (if all Crusts start from same path), C will have EP Ea and also
+        // have Ea in the bootstrap.cache so it will try to bootstrap to itself. The following code
+        // prevents that.
+        let own_listening_endpoint = self.get_known_external_endpoints();
+        combined_contacts.retain(|c| !own_listening_endpoint.contains(&c));
+        combined_contacts
     }
 
     /// Bootstrap to the network using the provided list of peers.
-    pub fn bootstrap_off_list(&mut self,
-                              token: u32,
-                              bootstrap_list: Vec<Endpoint>,
-                              hole_punch_server: Arc<HolePunchServer>) {
+    fn bootstrap_off_list(&mut self,
+                          token: u32,
+                          bootstrap_list: Vec<Endpoint>,
+                          hole_punch_server: Arc<HolePunchServer>) {
         if self.is_bootstrapping.compare_and_swap(false, true, Ordering::SeqCst) {
-            let _ = unwrap_option!(self.bootstrap_peers.as_ref(), "bootstrap_peers cannot be None!").send(bootstrap_list);
+            let _ = unwrap_option!(self.bootstrap_peers.as_ref(),
+                                   "bootstrap_peers cannot be None!")
+                        .send(bootstrap_list);
             return;
         }
 
@@ -299,7 +296,9 @@ impl Service {
 
         let is_bootstrapping = self.is_bootstrapping.clone();
         let bootstrap_thread = self.bootstrap_thread.take();
-        if let Some(handle) = bootstrap_thread { drop(handle) };
+        if let Some(handle) = bootstrap_thread {
+            drop(handle)
+        };
 
         let connection_map = self.connection_map.clone();
         let event_sender = self.event_sender.clone();
@@ -334,9 +333,10 @@ impl Service {
                                                          .peer_endpoint()
                                                          .protocol(),
                                                    SocketAddr(*handshake.remote_addr));
-                    let event = Event::OnBootstrapConnect(Ok((our_external_endpoint, c)), token);
-
-                    let _ = connection_map.register_connection(handshake, trans, event);
+                    let _ = event_sender.send(Event::OnBootstrapConnect(Ok((our_external_endpoint,
+                                                                            c)),
+                                                                        token));
+                    let _ = connection_map.register_connection(handshake, trans);
                 }
             }
             is_bootstrapping.store(false, Ordering::SeqCst);
@@ -345,19 +345,47 @@ impl Service {
         self.bootstrap_thread = Some(handle);
     }
 
+    // TODO see when and how to handle this later now that we simply bootstrap during construction
+    // /// Remove endpoint from the bootstrap cache.
+    // pub fn remove_bootstrap_contact(&mut self, endpoint: Endpoint) -> Result<(), Error> {
+    //     // TODO (canndrew): This should probably happen asynchronously
+    //     // because it uses (possibly slow) filesystem operations.
+    //     self.bootstrap_handler.update_contacts(vec![], vec![endpoint])
+    // }
+
+    // This should be called before destroying an instance of a Service to allow the
+    // listener threads to join.  Once called, the Service should be destroyed.
+    fn stop(&mut self) {
+        if let Some(beacon_guid_and_port) = self.beacon_guid_and_port.take() {
+            beacon::BroadcastAcceptor::stop(&beacon_guid_and_port);
+        }
+
+    }
+
+    // TODO (canndrew): do we even need this method?
+    /// Check whether we're connected to an endpoint.
+    pub fn is_connected_to(&self, endpoint: &Endpoint) -> bool {
+        self.connection_map.is_connected_to(endpoint)
+    }
+
+    /// Get the hole punch servers addresses of nodes that we're connected to ordered by how likely
+    /// they are to be on a seperate network.
+    pub fn get_ordered_helping_nodes(&self) -> Vec<SocketAddr> {
+        self.connection_map.get_ordered_helping_nodes()
+    }
+
     /// Stop the bootstraping procedure
     pub fn stop_bootstrap(&mut self) {
         self.is_bootstrapping.store(false, Ordering::SeqCst);
     }
 
-    /*
-    /// Accept a connection on the provided TcpListener and perform a handshake on it.
-    pub fn accept(handshake: Handshake,
-                  acceptor: &TcpListener)
-                  -> io::Result<(Handshake, Transport)> {
-        transport::exchange_handshakes(handshake, try!(transport::accept(acceptor)))
-    }
-    */
+    // Accept a connection on the provided TcpListener and perform a handshake on it.
+    // pub fn accept(handshake: Handshake,
+    // acceptor: &TcpListener)
+    // -> io::Result<(Handshake, Transport)> {
+    // transport::exchange_handshakes(handshake, try!(transport::accept(acceptor)))
+    // }
+    //
 
     /// Opens a connection to a remote peer. `public_endpoint` is the endpoint
     /// of the remote peer. `udp_socket` is a socket whose public address will
@@ -385,8 +413,7 @@ impl Service {
     pub fn connect(&self,
                    our_contact_info: OurContactInfo,
                    their_contact_info: TheirContactInfo,
-                   token: u32)
-    {
+                   token: u32) {
         let mapper_external_addr = self.mapper.external_address();
         let mapper_internal_port = self.mapper.listening_addr().port();
 
@@ -400,30 +427,35 @@ impl Service {
         let connection_map = self.connection_map.clone();
 
         if our_contact_info.secret != their_contact_info.secret {
-                let err = io::Error::new(io::ErrorKind::Other, "Cannot connect. our_contact_info and their_contact_info are not associated with the same connection.");
-                let _ = event_sender.send(Event::OnConnect(Err(err), token));
-                return;
+            let err = io::Error::new(io::ErrorKind::Other,
+                                     "Cannot connect. our_contact_info and their_contact_info \
+                                      are not associated with the same connection.");
+            let _ = event_sender.send(Event::OnConnect(Err(err), token));
+            return;
         }
 
         let rendezvous_addr = match their_contact_info.rendezvous_addrs.get(0) {
             Some(addr) => addr.clone(),
             None => {
-                let err = io::Error::new(io::ErrorKind::Other, "No rendezvous address supplied. Direct connections not yet supported.");
+                let err = io::Error::new(io::ErrorKind::Other,
+                                         "No rendezvous address supplied. Direct connections not \
+                                          yet supported.");
                 let _ = event_sender.send(Event::OnConnect(Err(err), token));
                 return;
-            },
+            }
         };
 
         let _ = Self::new_thread("rendezvous connect", move || {
-            let (udp_socket, result_addr) = ::hole_punching::blocking_udp_punch_hole(our_contact_info.socket,
-                                                                                     our_contact_info.secret,
-                                                                                     rendezvous_addr);
+            let (udp_socket, result_addr) =
+                ::hole_punching::blocking_udp_punch_hole(our_contact_info.socket,
+                                                         our_contact_info.secret,
+                                                         rendezvous_addr);
             let public_endpoint = match result_addr {
                 Ok(addr) => addr,
                 Err(e) => {
                     let _ = event_sender.send(Event::OnConnect(Err(e), token));
                     return;
-                },
+                }
             };
 
             let peer_endpoint = Endpoint::from_socket_addr(Protocol::Utp, public_endpoint);
@@ -431,22 +463,21 @@ impl Service {
             let res = res.and_then(move |t| transport::exchange_handshakes(handshake, t));
 
             let (his_handshake, transport) = match res {
-                Ok((h, t)) => {
-                    (h, t)
-                }
+                Ok((h, t)) => (h, t),
                 Err(e) => {
                     let _ = event_sender.send(Event::OnConnect(Err(e), token));
-                    return ()
+                    return ();
                 }
             };
 
             let c = transport.connection_id.clone();
-            let our_external_endpoint = Endpoint::from_socket_addr(*transport.connection_id
-                                                                             .peer_endpoint()
-                                                                             .protocol(),
-                                                                   SocketAddr(*his_handshake.remote_addr));
-            let event = Event::OnConnect(Ok((our_external_endpoint, c)), token);
-            let _ = connection_map.register_connection(his_handshake, transport, event);
+            let our_external_endpoint =
+                Endpoint::from_socket_addr(*transport.connection_id
+                                                     .peer_endpoint()
+                                                     .protocol(),
+                                           SocketAddr(*his_handshake.remote_addr));
+            let _ = event_sender.send(Event::OnConnect(Ok((our_external_endpoint, c)), token));
+            let _ = connection_map.register_connection(his_handshake, transport);
         });
     }
 
@@ -882,8 +913,12 @@ mod test {
         let (tx, _rx) = channel();
         let hole_punch_server = Arc::new(unwrap_result!(HolePunchServer::start(tx)));
 
-        cm2.bootstrap_off_list(0, unspecified_to_loopback(&cm1_eps), hole_punch_server.clone());
-        cm1.bootstrap_off_list(1, unspecified_to_loopback(&cm2_eps), hole_punch_server.clone());
+        cm2.bootstrap_off_list(0,
+                               unspecified_to_loopback(&cm1_eps),
+                               hole_punch_server.clone());
+        cm1.bootstrap_off_list(1,
+                               unspecified_to_loopback(&cm2_eps),
+                               hole_punch_server.clone());
 
         let runner1 = run_cm(cm1, cm1_o, category_rx0);
         let runner2 = run_cm(cm2, cm2_o, category_rx1);
@@ -1350,7 +1385,9 @@ mod test {
             let (tx, _rx) = channel();
             let hole_punch_server = Arc::new(unwrap_result!(HolePunchServer::start(tx)));
 
-            cm_aux.bootstrap_off_list(0, unspecified_to_loopback(&vec![cm_listen_ep]), hole_punch_server);
+            cm_aux.bootstrap_off_list(0,
+                                      unspecified_to_loopback(&vec![cm_listen_ep]),
+                                      hole_punch_server);
 
             for it in category_rx.iter() {
                 match it {
@@ -1362,7 +1399,7 @@ mod test {
                         } else {
                             break;
                         }
-                    },
+                    }
                     _ => unreachable!("This category should not have been fired - {:?}", it),
                 }
             }

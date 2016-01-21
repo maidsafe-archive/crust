@@ -41,6 +41,8 @@
 // #![feature(plugin)]
 // #![plugin(clippy)]
 
+#![allow(unused, unused_extern_crates)]
+
 extern crate cbor;
 extern crate igd;
 extern crate itertools;
@@ -57,10 +59,11 @@ extern crate memmap;
 extern crate maidsafe_utilities;
 extern crate ip;
 extern crate get_if_addrs;
+extern crate sodiumoxide;
 
-/// Module implementing the `Service` which provides an interface to manage peer-to-peer
-/// connections.
-pub mod service;
+// /// Module implementing the `Service` which provides an interface to manage peer-to-peer
+// /// connections.
+// pub mod service;
 
 /// Defines errors.
 pub mod error;
@@ -70,7 +73,7 @@ pub mod file_handler;
 /// Crust Observers will be informed of crust events on this
 pub type CrustEventSender = ::maidsafe_utilities::event_sender::MaidSafeObserver<Event>;
 pub use config_handler::write_config_file;
-pub use service::Service;
+// pub use service::Service;
 pub use event::{ContactInfoResult, Event, OurContactInfo, TheirContactInfo};
 pub use file_handler::{FileHandler, current_bin_dir, user_app_dir, system_cache_dir,
                        exe_file_stem, ScopedUserAppDirRemover};
@@ -108,5 +111,3 @@ mod socket_utils;
 mod socket_addr;
 mod ip_info;
 mod acceptor;
-mod connection_map;
-

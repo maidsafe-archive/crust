@@ -104,7 +104,7 @@ pub fn blocking_get_mapped_udp_socket
             Ok((udp_socket,
                 Some(our_addr),
                 helper_nodes.into_iter()
-                            .skip(responder_index + 1)
+                            .skip(responder_index)
                             .collect::<Vec<SocketAddr>>()))
         }
     }
@@ -176,6 +176,11 @@ pub fn blocking_udp_punch_hole(udp_socket: UdpSocket,
                                     };
                                     periodic_sender.set_payload(send_data);
                                     periodic_sender.set_destination(addr);
+                                    // TODO Do not do this. The only thing we should do is make
+                                    // sure the supplied peer_addr to this function is == to this
+                                    // addr (which can be spoofed anyway so additionally verify the
+                                    // secret above), otherwise it would mean we are connecting to
+                                    // someone who we are not sending HolePunch struct to
                                     peer_addr = Some(addr);
                                 }
                             } else {
@@ -184,7 +189,7 @@ pub fn blocking_udp_punch_hole(udp_socket: UdpSocket,
                         }
                         x => {
                             info!("udp_hole_punch received invalid data: {:?}", x);
-                        },
+                        }
                     };
                 }
             })();
@@ -306,6 +311,12 @@ impl HolePunchServer {
                 if upnp_shutdown_cloned.load(Ordering::SeqCst) {
                     break;
                 }
+                // TODO rather than map (which will keep the previous ports mapped and map new port
+                // again) we should just ask if it is already mapped - map only if it is not
+                // already mapped.
+                // 1st do a upnp mapping. Then next time check via echo-server using the same addr
+                // if the external addr has changed or not. If it has ask UPnP to remove the mapping
+                // and create a new one.
                 match ::map_external_port::sync_map_external_port(&local_ep) {
                     Ok(v) => {
                         for (internal, external) in v {
@@ -478,17 +489,16 @@ mod tests {
     fn test_get_mapped_socket_from_self() {
         use std::sync::mpsc;
 
-        /*
-        let (category_tx, _) = mpsc::channel();
-        let (tx, _rx) = mpsc::channel();
-
-        let crust_event_category =
-            ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
-        let event_sender =
-            ::maidsafe_utilities::event_sender::MaidSafeObserver::new(tx,
-                                                                      crust_event_category,
-                                                                      category_tx);
-        */
+        // let (category_tx, _) = mpsc::channel();
+        // let (tx, _rx) = mpsc::channel();
+        //
+        // let crust_event_category =
+        // ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
+        // let event_sender =
+        // ::maidsafe_utilities::event_sender::MaidSafeObserver::new(tx,
+        // crust_event_category,
+        // category_tx);
+        //
 
         // Hole punch server tries to contact uPnP devices and find out
         // our external SocketAddr, we currently get it through a channel.

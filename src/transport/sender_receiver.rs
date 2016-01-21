@@ -48,9 +48,8 @@ impl Sender {
         self.send_bytes(unwrap_result!(serialise(&handshake)))
     }
 
-    pub fn send(&mut self, message: &Message) -> io::Result<()> {
-        // TODO this was previously wrapped in a vector - is it necessary ?
-        self.send_bytes(unwrap_result!(serialise(message)))
+    pub fn send(&mut self, msg: &[u8]) -> io::Result<()> {
+        self.send_bytes(unwrap_result!(serialise(msg)))
     }
 }
 
@@ -80,7 +79,7 @@ impl Receiver {
         self.basic_receive()
     }
 
-    pub fn receive(&mut self) -> io::Result<Message> {
+    pub fn receive(&mut self) -> io::Result<Vec<u8>> {
         self.basic_receive()
     }
 }

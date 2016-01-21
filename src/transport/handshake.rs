@@ -62,4 +62,3 @@ pub fn exchange_handshakes(mut handshake: Handshake,
          .and_then(|handshake| Ok((handshake, trans)))
          .or(handshake_err)
 }
-

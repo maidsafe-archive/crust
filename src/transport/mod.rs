@@ -19,120 +19,120 @@ mod message;
 mod handshake;
 mod sender_receiver;
 
-use std::net::{UdpSocket, TcpListener};
-use tcp_connections;
-use utp_connections;
-use std::io;
-use std::error::Error;
-use std::io::Result as IoResult;
-use cbor;
-use std::fmt::{Formatter, Debug};
-use std::fmt;
-use connection::Connection;
-use endpoint::{Endpoint, Protocol};
-use socket_addr::SocketAddr;
+// use std::net::{UdpSocket, TcpListener};
+// use tcp_connections;
+// use utp_connections;
+// use std::io;
+// use std::error::Error;
+// use std::io::Result as IoResult;
+// use cbor;
+// use std::fmt::{Formatter, Debug};
+// use std::fmt;
+// use connection::Connection;
+// use endpoint::{Endpoint, Protocol};
+// use socket_addr::SocketAddr;
 
 pub use self::message::Message;
 pub use self::handshake::{Handshake, exchange_handshakes};
 pub use self::sender_receiver::{Sender, Receiver};
 
-pub struct Transport {
-    pub receiver: Receiver,
-    pub sender: Sender,
-    pub connection_id: Connection,
-}
+// pub struct Transport {
+//     pub receiver: Receiver,
+//     pub sender: Sender,
+//     pub connection_id: Connection,
+// }
 
-impl Debug for Transport {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        write!(f, "Transport {:?}", self.connection_id)
-    }
-}
+// impl Debug for Transport {
+//     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+//         write!(f, "Transport {:?}", self.connection_id)
+//     }
+// }
 
 // FIXME: There needs to be a way to break from this blocking command.
-pub fn connect(remote_ep: Endpoint) -> IoResult<Transport> {
-    match *remote_ep.protocol() {
-        Protocol::Tcp => {
-            let (i, o) = try!(tcp_connections::connect_tcp(remote_ep.socket_addr().clone())
-                                  .map_err(|e| {
-                                      io::Error::new(io::ErrorKind::NotConnected, e.description())
-                                  }));
-            let connection_id = Connection::new(Protocol::Tcp,
-                                                SocketAddr(try!(i.local_addr())),
-                                                SocketAddr(try!(i.peer_addr())));
+// pub fn connect(remote_ep: Endpoint) -> IoResult<Transport> {
+//     match *remote_ep.protocol() {
+//         Protocol::Tcp => {
+//             let (i, o) = try!(tcp_connections::connect_tcp(remote_ep.socket_addr().clone())
+//                                   .map_err(|e| {
+//                                       io::Error::new(io::ErrorKind::NotConnected, e.description())
+//                                   }));
+//             let connection_id = Connection::new(Protocol::Tcp,
+//                                                 SocketAddr(try!(i.local_addr())),
+//                                                 SocketAddr(try!(i.peer_addr())));
+//
+//             Ok(Transport {
+//                 receiver: sender_receiver::Receiver::Tcp(cbor::Decoder::from_reader(i)),
+//                 sender: sender_receiver::Sender::Tcp(o),
+//                 connection_id: connection_id,
+//             })
+//         }
+//         Protocol::Utp => {
+//             let (i, o) = try!(utp_connections::connect_utp(remote_ep.socket_addr().clone())
+//                                   .map_err(|e| {
+//                                       io::Error::new(io::ErrorKind::NotConnected, e.description())
+//                                   }));
+//
+//             let connection_id = Connection::new(Protocol::Utp,
+//                                                 SocketAddr(i.local_addr()),
+//                                                 SocketAddr(i.peer_addr()));
+//
+//             Ok(Transport {
+//                 receiver: sender_receiver::Receiver::Utp(cbor::Decoder::from_reader(i)),
+//                 sender: sender_receiver::Sender::Utp(o),
+//                 connection_id: connection_id,
+//             })
+//         }
+//     }
+// }
 
-            Ok(Transport {
-                receiver: sender_receiver::Receiver::Tcp(cbor::Decoder::from_reader(i)),
-                sender: sender_receiver::Sender::Tcp(o),
-                connection_id: connection_id,
-            })
-        }
-        Protocol::Utp => {
-            let (i, o) = try!(utp_connections::connect_utp(remote_ep.socket_addr().clone())
-                                  .map_err(|e| {
-                                      io::Error::new(io::ErrorKind::NotConnected, e.description())
-                                  }));
-
-            let connection_id = Connection::new(Protocol::Utp,
-                                                SocketAddr(i.local_addr()),
-                                                SocketAddr(i.peer_addr()));
-
-            Ok(Transport {
-                receiver: sender_receiver::Receiver::Utp(cbor::Decoder::from_reader(i)),
-                sender: sender_receiver::Sender::Utp(o),
-                connection_id: connection_id,
-            })
-        }
-    }
-}
-
-pub fn rendezvous_connect(udp_socket: UdpSocket,
-                          public_ep: Endpoint /* of B */)
-                          -> IoResult<Transport> {
-    match *public_ep.protocol() {
-        Protocol::Utp => {
-            let (i, o) = try!(utp_connections::rendezvous_connect_utp(udp_socket,
-                                                                      public_ep.socket_addr()
-                                                                               .clone())
-                                  .map_err(|e| {
-                                      io::Error::new(io::ErrorKind::NotConnected, e.description())
-                                  }));
-
-            let connection_id = Connection::new(Protocol::Utp,
-                                                SocketAddr(i.local_addr()),
-                                                SocketAddr(i.peer_addr()));
-
-            Ok(Transport {
-                receiver: sender_receiver::Receiver::Utp(cbor::Decoder::from_reader(i)),
-                sender: sender_receiver::Sender::Utp(o),
-                connection_id: connection_id,
-            })
-        }
-        _ => {
-            Err(io::Error::new(io::ErrorKind::InvalidInput,
-                               "TCP rendezvous connect not supported"))
-        }
-    }
-}
+// pub fn rendezvous_connect(udp_socket: UdpSocket,
+//                           public_ep: Endpoint /* of B */)
+//                           -> IoResult<Transport> {
+//     match *public_ep.protocol() {
+//         Protocol::Utp => {
+//             let (i, o) = try!(utp_connections::rendezvous_connect_utp(udp_socket,
+//                                                                       public_ep.socket_addr()
+//                                                                                .clone())
+//                                   .map_err(|e| {
+//                                       io::Error::new(io::ErrorKind::NotConnected, e.description())
+//                                   }));
+//
+//             let connection_id = Connection::new(Protocol::Utp,
+//                                                 SocketAddr(i.local_addr()),
+//                                                 SocketAddr(i.peer_addr()));
+//
+//             Ok(Transport {
+//                 receiver: sender_receiver::Receiver::Utp(cbor::Decoder::from_reader(i)),
+//                 sender: sender_receiver::Sender::Utp(o),
+//                 connection_id: connection_id,
+//             })
+//         }
+//         _ => {
+//             Err(io::Error::new(io::ErrorKind::InvalidInput,
+//                                "TCP rendezvous connect not supported"))
+//         }
+//     }
+// }
 
 // FIXME: There needs to be a way to break from this blocking command.
 // (Though this seems to be impossible with the current Rust TCP API).
-pub fn accept(acceptor: &TcpListener) -> IoResult<Transport> {
-    let (stream, _remote_endpoint) = try!(acceptor.accept()
-                                                  .map_err(|e| {
-                                                      io::Error::new(io::ErrorKind::NotConnected,
-                                                                     e.description())
-                                                  }));
-    let (i, o) = try!(tcp_connections::upgrade_tcp(stream));
-    let connection_id = Connection::new(Protocol::Tcp,
-                                        SocketAddr(try!(i.local_addr())),
-                                        SocketAddr(try!(i.peer_addr())));
-
-    Ok(Transport {
-        receiver: sender_receiver::Receiver::Tcp(cbor::Decoder::from_reader(i)),
-        sender: sender_receiver::Sender::Tcp(o),
-        connection_id: connection_id,
-    })
-}
+// pub fn accept(acceptor: &TcpListener) -> IoResult<Transport> {
+//     let (stream, _remote_endpoint) = try!(acceptor.accept()
+//                                                   .map_err(|e| {
+//                                                       io::Error::new(io::ErrorKind::NotConnected,
+//                                                                      e.description())
+//                                                   }));
+//     let (i, o) = try!(tcp_connections::upgrade_tcp(stream));
+//     let connection_id = Connection::new(Protocol::Tcp,
+//                                         SocketAddr(try!(i.local_addr())),
+//                                         SocketAddr(try!(i.peer_addr())));
+//
+//     Ok(Transport {
+//         receiver: sender_receiver::Receiver::Tcp(cbor::Decoder::from_reader(i)),
+//         sender: sender_receiver::Sender::Tcp(o),
+//         connection_id: connection_id,
+//     })
+// }
 
  #[cfg(test)]
 mod test {
