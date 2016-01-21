@@ -45,6 +45,8 @@ impl SequenceNumber {
     }
 }
 
+// This special ordering makes sure that the next sequence number is always seen as greater than
+// the previous one
 impl Ord for SequenceNumber {
     fn cmp(&self, other: &SequenceNumber) -> Ordering {
         const MIDDLE: u32 = ::std::u32::MAX / 2;
