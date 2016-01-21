@@ -350,15 +350,6 @@ impl Service {
         self.is_bootstrapping.store(false, Ordering::SeqCst);
     }
 
-    /*
-    /// Accept a connection on the provided TcpListener and perform a handshake on it.
-    pub fn accept(handshake: Handshake,
-                  acceptor: &TcpListener)
-                  -> io::Result<(Handshake, Transport)> {
-        transport::exchange_handshakes(handshake, try!(transport::accept(acceptor)))
-    }
-    */
-
     /// Opens a connection to a remote peer. `public_endpoint` is the endpoint
     /// of the remote peer. `udp_socket` is a socket whose public address will
     /// be used by the other peer.
@@ -473,22 +464,6 @@ impl Service {
         }
         ret.iter().map(|a| Endpoint::from_socket_addr(Protocol::Tcp, *a)).collect()
     }
-
-    // pub fn bootstrap_off_list(&mut self, token: u32, mut bootstrap_list: Vec<Endpoint>) {
-    // match self.bootstrap_thread {
-    // Some(_) => (),
-    // None => {
-    // let joiner = RaiiThreadJoiner::new(thread!("bootstrap", move || {
-    // for peer_endpoint in bootstrap_list {
-    // if
-    // }
-    //
-    // }));
-    // self.bootstrap_thread = Some(joiner);
-    // }
-    // }
-    // }
-    //
 
     /// Initiates uPnP port mapping of the currently used accepting endpoints.
     /// On success ExternalEndpoint event is generated containg our external
