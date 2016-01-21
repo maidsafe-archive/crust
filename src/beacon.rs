@@ -99,12 +99,14 @@ impl BroadcastAcceptor {
                                                                                         .unwrap();
                                                match transport::accept(&tcp_acceptor) {
                                                    Ok(transport) => {
-                                                       let transport = transport::exchange_handshakes(Handshake::default(), transport);
+                                                       let transport =
+                                     transport::exchange_handshakes(Handshake::default(),
+                                                                    transport);
 
                                                        let _ = transport_sender.send(transport);
                                                    }
                                                    Err(e) => {
-                                                        let _ = transport_sender.send(Err(e));
+                                                       let _ = transport_sender.send(Err(e));
                                                    }
                                                };
                                            }));
@@ -240,6 +242,7 @@ pub fn seek_peers(port: u16, guid_to_avoid: Option<GUID>) -> io::Result<Vec<Sock
                                            let mut buffer = [0u8; 8];
                                            let (size, source) = try!(socket.recv_from(&mut buffer));
                                            match size {
+                                               // FIXME Use better ways
                                                2usize => {
                                                    // The response is a serialised port
                                                    let _ = tx.send({
@@ -320,24 +323,29 @@ mod test {
         let t1 = thread::Builder::new().name("test_beacon sender".to_owned()).spawn(move || {
             let mut transport = acceptor.accept().unwrap().1;
             unwrap_result!(transport.sender
-                                    .send(&Message::UserBlob("hello beacon".to_owned().into_bytes())));
+                                    .send(&Message::UserBlob("hello beacon"
+                                                                 .to_owned()
+                                                                 .into_bytes())));
         });
 
         let t2 = thread::Builder::new().name("test_beacon receiver".to_owned()).spawn(move || {
             let endpoint = unwrap_result!(seek_peers(acceptor_port, None))[0];
-            let transport = unwrap_result!(transport::connect(Endpoint::from_socket_addr(Protocol::Tcp, endpoint)));
+            let transport =
+                unwrap_result!(transport::connect(Endpoint::from_socket_addr(Protocol::Tcp,
+                                                                             endpoint)));
             let dummy_handshake = Handshake {
                 mapper_port: None,
                 external_addr: None,
                 remote_addr: SocketAddr(net::SocketAddr::from_str("0.0.0.0:0").unwrap()),
             };
-            let (_, mut transport) = unwrap_result!(transport::exchange_handshakes(dummy_handshake, transport));
+            let (_, mut transport) =
+                unwrap_result!(transport::exchange_handshakes(dummy_handshake, transport));
 
             let msg = unwrap_result!(transport.receiver.receive());
             let msg = unwrap_result!(String::from_utf8(match msg {
-                          Message::UserBlob(msg) => msg,
-                          _ => panic!("Wrong message type"),
-                      }));
+                Message::UserBlob(msg) => msg,
+                _ => panic!("Wrong message type"),
+            }));
             assert_eq!(msg, "hello beacon");
         });
 
@@ -362,7 +370,8 @@ mod test {
         let t2 = thread::Builder::new()
                      .name("test_avoid_beacon seek_peers 1".to_owned())
                      .spawn(move || {
-                         assert!(unwrap_result!(seek_peers(acceptor_port, Some(my_guid))).is_empty());
+                         assert!(unwrap_result!(seek_peers(acceptor_port, Some(my_guid)))
+                                     .is_empty());
                      });
 
         // This one is just so that the first thread breaks.
@@ -388,4 +397,3 @@ mod test {
         unwrap_result!(t3.join());
     }
 }
-

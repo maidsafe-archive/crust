@@ -18,6 +18,8 @@
 /// Error types.
 #[derive(Debug)]
 pub enum Error {
+    /// Failed sending over a channel
+    ChannelSendError(String),
     /// Wrapper for a `::std::env::VarError`
     EnvError(::std::env::VarError),
     /// Wrapper for a `::std::io::Error`

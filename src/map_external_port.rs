@@ -60,9 +60,11 @@ pub fn sync_map_external_port(local_ep: &Endpoint) -> io::Result<Vec<(SocketAddr
         try!(get_if_addrs())
             .into_iter()
             .filter(|iface| !iface.is_loopback())
-            .filter_map(|iface| match iface.ip() {
-                IpAddr::V4(ip) => Some(ip),
-                IpAddr::V6(_) => None,
+            .filter_map(|iface| {
+                match iface.ip() {
+                    IpAddr::V4(ip) => Some(ip),
+                    IpAddr::V6(_) => None,
+                }
             })
             .map(|ip| SocketAddrV4(net::SocketAddrV4::new(ip, local_ep.port())))
             .collect()
