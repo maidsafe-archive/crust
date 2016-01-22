@@ -148,19 +148,8 @@ impl Service {
 
     /// Starts accepting on a given port. If port number is 0, the OS
     /// will pick one randomly. The actual port used will be returned.
-    pub fn start_tcp_accept(&mut self, port: u16) -> Result<(), Error> {
-        let accept_addr = try!(listener.local_addr());
-
-        let hole_punch_server = self.mapper.clone();
-        let acceptor = try!(Acceptor::new(listener,
-                                          hole_punch_server,
-                                          self.connection_map.clone(),
-                                          self.event_sender.clone()));
-        self.acceptors.push(acceptor);
-
-        // FIXME: Instead of hardcoded wrapping in loopback V4, the
-        // acceptor should tell us the address it is accepting on.
-        Ok(Endpoint::from_socket_addr(Protocol::Tcp, SocketAddr(accept_addr)))
+    pub fn start_tcp_accept(&mut self) -> Result<(), Error> {
+        acceptor::
     }
 
     fn seek_peers(beacon_guid: Option<[u8; 16]>, beacon_port: u16) -> Vec<Endpoint> {
