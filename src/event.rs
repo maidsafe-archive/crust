@@ -77,12 +77,15 @@ pub enum Event {
     OnBootstrapConnect(io::Result<(Endpoint, Connection)>, u32 /* token */),
     /// Invoked when the new rendezvous connection request finishes.
     /// Passes the peer's endpoint and the token used in the request.
-    OnConnect(io::Result<(Endpoint, Connection)>, u32 /* token */),
+    OnConnect {
+        connection: io::Result<Connection>,
+        their_pub_key: PublicKey,
+    }
     /// Invoked when a new connection is accepted. Passes the peer's endpoint.
     OnBootstrapAccept(Endpoint, Connection),
     /// Invoked when a connection to a peer is lost.  Passes the peer's endpoint.
     LostConnection(Connection),
-    /// Invoked when a new bootstrap connection to a peer is established.
+    /// TODO THIS IS WRONG - Invoked when a new bootstrap connection to a peer is established.
     /// Passes the peer's endpoint.
     BootstrapFinished,
     /// Invoked when a new bootstrap connection to a peer is established.
