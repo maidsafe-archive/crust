@@ -38,7 +38,7 @@ use endpoint::{Endpoint, Protocol};
 use map_external_port::async_map_external_port;
 use connection::Connection;
 use connection_map::ConnectionMap;
-use config_file_handler::error::Error;
+use config_file_handler::Error;
 use ip::SocketAddrExt;
 
 use event::{Event, OurContactInfo, TheirContactInfo, ContactInfoResult};
@@ -611,8 +611,7 @@ mod test {
     use maidsafe_utilities::event_sender::{MaidSafeEventCategory, MaidSafeObserver};
     use socket_addr::SocketAddr;
     use maidsafe_utilities::thread::RaiiThreadJoiner;
-    use config_file_handler::error::Error;
-    use config_file_handler::file_handler;
+    use config_file_handler::{self, Error};
     use event::{OurContactInfo, TheirContactInfo};
 
     type CategoryRx = ::std::sync::mpsc::Receiver<MaidSafeEventCategory>;
@@ -713,7 +712,7 @@ mod test {
     fn bootstrap() {
         BootstrapHandler::cleanup().unwrap();
 
-        let _cleaner = file_handler::ScopedUserAppDirRemover;
+        let _cleaner = config_file_handler::ScopedUserAppDirRemover;
         let (category_tx, _) = channel();
         let (cm1_i, _) = channel();
         let _config_file = make_temp_config();

@@ -67,8 +67,6 @@ pub type CrustEventSender = ::maidsafe_utilities::event_sender::MaidSafeObserver
 pub use config_handler::write_config_file;
 pub use service::Service;
 pub use event::{ContactInfoResult, Event, OurContactInfo, TheirContactInfo};
-pub use config_file_handler::file_handler::{FileHandler, current_bin_dir, user_app_dir,
-                      system_cache_dir, exe_file_stem, ScopedUserAppDirRemover};
 pub use endpoint::{Endpoint, Protocol};
 pub use connection::Connection;
 pub use socket_addr::SocketAddr;

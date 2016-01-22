@@ -23,8 +23,7 @@
 //! with any other one.
 
 use endpoint::Endpoint;
-use config_file_handler::file_handler::{self, FileHandler};
-use config_file_handler::error::Error;
+use config_file_handler::{self, Error, FileHandler};
 use util;
 
 pub struct BootstrapHandler {
@@ -104,7 +103,7 @@ impl BootstrapHandler {
 }
 
 fn get_file_name() -> Result<::std::ffi::OsString, Error> {
-    let mut name = try!(file_handler::exe_file_stem());
+    let mut name = try!(config_file_handler::exe_file_stem());
     name.push(".bootstrap.cache");
     Ok(name)
 }
@@ -114,8 +113,7 @@ mod test {
     use std::net;
     use endpoint::{Endpoint, Protocol};
     use socket_addr::SocketAddr;
-    use config_file_handler::error::Error;
-    use config_file_handler::file_handler;
+    use config_file_handler::{self, Error};
 
     pub fn random_global_endpoints(count: usize) -> Vec<Endpoint> {
         let mut contacts = Vec::new();
@@ -154,7 +152,7 @@ mod test {
         // is deleted - i.e the file is managed by RAII.
         pub fn new() -> Result<TestFile, Error> {
             use std::io::Write;
-            let mut path = try!(file_handler::current_bin_dir());
+            let mut path = try!(config_file_handler::current_bin_dir());
             path.push(try!(super::get_file_name()));
             let mut file = try!(::std::fs::File::create(&path));
             try!(write!(&mut file,
