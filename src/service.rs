@@ -148,8 +148,7 @@ impl Service {
 
     /// Starts accepting on a given port. If port number is 0, the OS
     /// will pick one randomly. The actual port used will be returned.
-    pub fn start_accepting(&mut self, port: u16) -> Result<Endpoint, Error> {
-        let listener = try!(TcpListener::bind(("0.0.0.0", port)));
+    pub fn start_tcp_accept(&mut self, port: u16) -> Result<(), Error> {
         let accept_addr = try!(listener.local_addr());
 
         let hole_punch_server = self.mapper.clone();

@@ -70,6 +70,64 @@ impl Connection {
     //     }
     // }
 
+    pub fn start_tcp_accept(port: u16,
+                            our_contact_info: Arc<Mutex<ContactInfo>>,
+                            event_tx: ::CrustEventSender)
+                            -> io::Result<Self> {
+        let listener = try!(TcpListener::bind(("0.0.0.0", port)));
+        let stop_flag = Arc::new(AtomicBool::new(false));
+        let cloned_stop_flag = stop_flag.clone();
+
+        let if_addrs = try!(get_if_addrs())
+                           .into_iter()
+                           .filter(|i| !i.is_loopback())
+                           .map(|i| SocketAddr::new(i.ip(), addr.port()))
+                           .collect();
+
+        unwrap_result!(contact_info.lock()).tcp_acceptors.extend(if_addrs);
+
+        let joiner = RaiiThreadJoiner::new(thread!("TcpAcceptorThread", move || {
+            loop {
+                let (stream, _remote_endpoint) = try!(listener.accept());
+
+                if cloned_stop_flag.load(Ordering::SeqCst) {
+                    let _ = stream.shutdown(Shutdown::Both);
+                    break;
+                }
+
+                let (network_input, writer) = try!(tcp_connections::upgrade_tcp(stream));
+
+                let our_addr = SocketAddr(network_input.local_addr());
+                let their_addr = SocketAddr(network_input.peer_addr());
+
+                let network_rx = Receiver::Tcp(cbor::Decoder::from_reader(network_input));
+                let joiner = RaiiThreadJoiner::new(thread!("TcpNetworkReader", move || {
+                    Connection::start_rx(network_rx, their_pub_key, event_tx);
+                }));
+
+                let connection = Connection {
+                    protocol: Protocol::Tcp,
+                    our_addr: our_addr,
+                    their_addr: their_addr,
+                    network_tx: Sender::Tcp(writer),
+                    _network_read_joiner: joiner,
+                };
+
+                if event_tx.send(NewConnection {
+                    their_pub_key: ,
+                    connection: Ok(Connection),
+                }).is_err() {
+                    break;
+                }
+            }
+        }));
+
+        Ok(TcpAcceptor {
+            port: port,
+            stop_flag: stop_flag,
+        }
+    }
+
     pub fn udp_rendezvous_connect(udp_socket: UdpSocket,
                                   their_addr: SocketAddr,
                                   pub_key: PublicKey)
@@ -80,17 +138,17 @@ impl Connection {
         let their_addr = SocketAddr(network_input.peer_addr());
 
         let network_rx = Receiver::Utp(cbor::Decoder::from_reader(network_input));
-        let joiner = RaiiThreadJoiner::new(thread!("NetworkReader", move || {
+        let joiner = RaiiThreadJoiner::new(thread!("UtpNetworkReader", move || {
             Connection::start_rx(network_rx, their_pub_key, event_tx);
         }));
 
-        Connection {
+        Ok(Connection {
             protocol: Protocol::Utp,
             our_addr: our_addr,
             their_addr: their_addr,
             network_tx: Sender::Utp(writer),
             _network_read_joiner: joiner,
-        }
+        })
     }
 
     pub fn send(&self, data: &[u8]) -> io::Result<()> {

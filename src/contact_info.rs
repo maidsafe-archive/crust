@@ -19,6 +19,7 @@ use socket_addr::SocketAddr;
 use sodiumoxide::crypto::sign::PublicKey;
 
 /// This struct contains information needed to Bootstrap and for echo-server services
+#[derive(RustcEncodable, RustcDecodable, Debug, Clone)]
 pub struct ContactInfo {
     pub pub_key: PublicKey,
     /// This will contain both local and global addresses. Local addresses will be useful on LAN
