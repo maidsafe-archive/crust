@@ -22,17 +22,11 @@ use socket_addr::SocketAddr;
 use event::Event;
 use sodiumoxide::crypto::sign::PublicKey;
 
-/// Exchange echo_server addresses and public keys
-pub struct Handshake {
-    pub_key: PublicKey,
-    echo_server_addr: Option<SocketAddr>,
-}
-
 pub struct Connection {
     protocol: Protocol,
     our_addr: SocketAddr,
     their_addr: SocketAddr,
-    msg_sender: Sender, /* _writer_joiner: RaiiThreadJoiner,
+    network_tx: Sender, /* _writer_joiner: RaiiThreadJoiner,
                          * _reader_joiner: RaiiThreadJoiner, */
 }
 
@@ -76,53 +70,29 @@ impl Connection {
     //     }
     // }
 
-    pub fn udp_rendezvous_connect(udp_socket: UdpSocket,
-                                  pub_key: PublicKey,
-                                  our_echo_server_addr: SocketAddr)
-                                  -> IoResult<Self> {
+    pub fn udp_rendezvous_connect(udp_socket: UdpSocket, pub_key: PublicKey) -> io::Result<Self> {
         let (network_input, writer) = try!(utp_connections::rendezvous_connect_utp(udp_socket,
                                                                   public_ep.socket_addr()
                                                                            .clone()));
         let our_addr = SocketAddr(network_input.local_addr());
         let their_addr = SocketAddr(network_input.peer_addr());
 
+        let network_rx = Receiver::Utp(cbor::Decoder::from_reader(network_input));
         let joiner = RaiiThreadJoiner::new(thread!("NetworkReader", move || {
-            Connection::start_rx(network_input, their_pub_key, event_tx);
+            Connection::start_rx(network_rx, their_pub_key, event_tx);
         }));
-
-        let our_handshake = Handshake {
-            pub_key: pub_key,
-            echo_server_addr: our_echo_server_addr,
-        };
-
-        let their_handshake = try!(Connection::exchange_handshakes(our_handshake));
 
         Connection {
             protocol: Protocol::Utp,
             our_addr: our_addr,
             their_addr: their_addr,
-            msg_sender: Sender::Utp(writer),
+            network_tx: Sender::Utp(writer),
             _network_read_joiner: joiner,
         }
     }
 
-    pub fn exchange_handshakes(mut handshake: Handshake,
-                               mut trans: Transport)
-                               -> io::Result<(Handshake, Transport)> {
-        let handshake_err = Err(io::Error::new(io::ErrorKind::Other, "handshake failed"));
-
-        handshake.remote_addr = trans.connection_id.peer_addr().clone();
-        if let Err(_) = trans.sender.send_handshake(handshake) {
-            return handshake_err;
-        }
-
-        trans.receiver
-             .receive_handshake()
-             .and_then(|handshake| Ok((handshake, trans)))
-             .or(handshake_err)
-    }
     pub fn send(&self, data: &[u8]) -> io::Result<()> {
-        try!(self.msg_sender.send(data))
+        try!(self.network_tx.send(data))
     }
 
     fn start_rx(network_rx: Receiver, their_pub_key: PublicKey, event_tx: ::CrustEventSender) {

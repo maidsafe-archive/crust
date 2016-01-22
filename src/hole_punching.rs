@@ -110,6 +110,7 @@ pub fn blocking_get_mapped_udp_socket
     }
 }
 
+// TODO All this function should be returning is either an Ok(()) or Err(..)
 /// Returns the socket along with the peer's SocketAddr
 pub fn blocking_udp_punch_hole(udp_socket: UdpSocket,
                                secret: Option<[u8; 4]>,
