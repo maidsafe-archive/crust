@@ -29,8 +29,6 @@ use ip::SocketAddrExt;
 
 use net2::UdpSocketExt;
 
-use transport;
-use transport::{Transport, Handshake};
 use util;
 
 const GUID_SIZE: usize = 16;

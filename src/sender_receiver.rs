@@ -22,8 +22,6 @@ use std::io::BufReader;
 use std::net::TcpStream;
 use rustc_serialize::Decodable;
 use utp_connections::UtpWrapper;
-use transport::message::Message;
-use transport::handshake::Handshake;
 use maidsafe_utilities::serialisation::serialise;
 
 pub enum Sender {

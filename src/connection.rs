@@ -15,12 +15,24 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use transport::{Sender, Receiver};
+use std::sync::{Arc, Mutex};
+use std::sync::atomic::AtomicBool;
+use std::net::{Shutdown, TcpListener};
+use std::cmp::Ordering;
 use std::io;
+use cbor;
+use maidsafe_utilities::thread::RaiiThreadJoiner;
+use maidsafe_utilities::serialisation::serialise;
+use get_if_addrs::get_if_addrs;
+use contact_info::ContactInfo;
+use tcp_connections;
+use utp_connections;
+use sender_receiver::{Sender, Receiver};
 use ip::{IpAddr, SocketAddrExt};
 use socket_addr::SocketAddr;
 use event::Event;
 use sodiumoxide::crypto::sign::PublicKey;
+use endpoint::{Endpoint,Protocol};
 
 pub struct Connection {
     protocol: Protocol,
@@ -94,10 +106,10 @@ impl Connection {
         let if_addrs = try!(get_if_addrs())
                            .into_iter()
                            .filter(|i| !i.is_loopback())
-                           .map(|i| SocketAddr::new(i.ip(), addr.port()))
+                           .map(|addr| SocketAddr::new(addr.ip(), addr.port()))
                            .collect();
 
-        unwrap_result!(contact_info.lock()).tcp_acceptors.extend(if_addrs);
+        unwrap_result!(our_contact_info.lock()).tcp_acceptors.extend(if_addrs);
 
         let joiner = RaiiThreadJoiner::new(thread!("TcpAcceptorThread", move || {
             loop {

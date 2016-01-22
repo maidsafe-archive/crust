@@ -80,7 +80,7 @@ pub enum Event {
     OnConnect {
         connection: io::Result<Connection>,
         their_pub_key: PublicKey,
-    }
+    },
     /// Invoked when a new connection is accepted. Passes the peer's endpoint.
     OnBootstrapAccept(Endpoint, Connection),
     /// Invoked when a connection to a peer is lost.  Passes the peer's endpoint.
