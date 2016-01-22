@@ -41,13 +41,8 @@ impl Sender {
         })
     }
 
-    pub fn send_handshake(&mut self, handshake: Handshake) -> io::Result<()> {
-        // TODO this was previously wrapped in a vector - is it necessary ?
-        self.send_bytes(unwrap_result!(serialise(&handshake)))
-    }
-
     pub fn send(&mut self, msg: &[u8]) -> io::Result<()> {
-        self.send_bytes(unwrap_result!(serialise(msg)))
+        self.send_bytes(unwrap_result!(msg))
     }
 }
 
@@ -71,10 +66,6 @@ impl Receiver {
                 Err(io::Error::new(io::ErrorKind::NotConnected, "Decoder reached end of stream"))
             }
         }
-    }
-
-    pub fn receive_handshake(&mut self) -> io::Result<Handshake> {
-        self.basic_receive()
     }
 
     pub fn receive(&mut self) -> io::Result<Vec<u8>> {
