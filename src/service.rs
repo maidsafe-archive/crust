@@ -26,6 +26,7 @@ use std::str::FromStr;
 
 use std::net::TcpListener;
 
+use contact_info::ContactInfo;
 use rand;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 use itertools::Itertools;
@@ -47,6 +48,7 @@ use bootstrap_handler::BootstrapHandler;
 use hole_punching::HolePunchServer;
 use sequence_number::SequenceNumber;
 
+
 /// A structure representing a connection manager.
 ///
 /// This abstraction has a hidden dependency on a config file. Refer to [the docs for `FileHandler`]
@@ -54,16 +56,12 @@ use sequence_number::SequenceNumber;
 /// (https://github.com/maidsafe/crust/blob/master/docs/vault_config_file_flowchart.pdf) for more
 /// information.
 pub struct Service {
-    pub_key: PublicKey,
-    beacon_guid: u32,
-    beacon_guid_and_port: Option<(beacon::GUID, u16)>,
+    contact_info: ContactInfo,
     config: Config,
-    bootstrap_peers: Option<mpsc::Sender<Vec<Endpoint>>>,
     acceptors: Vec<Acceptor>,
     mapper: Arc<HolePunchServer>,
     next_punch_sequence: SequenceNumber,
     event_sender: ::CrustEventSender,
-    connection_map: Arc<ConnectionMap>,
     is_bootstrapping: Arc<AtomicBool>,
     bootstrap_thread: Option<RaiiThreadJoiner>,
 }
