@@ -70,10 +70,12 @@ impl Connection {
     //     }
     // }
 
-    pub fn udp_rendezvous_connect(udp_socket: UdpSocket, pub_key: PublicKey) -> io::Result<Self> {
+    pub fn udp_rendezvous_connect(udp_socket: UdpSocket,
+                                  their_addr: SocketAddr,
+                                  pub_key: PublicKey)
+                                  -> io::Result<Self> {
         let (network_input, writer) = try!(utp_connections::rendezvous_connect_utp(udp_socket,
-                                                                  public_ep.socket_addr()
-                                                                           .clone()));
+                                                                                   their_addr));
         let our_addr = SocketAddr(network_input.local_addr());
         let their_addr = SocketAddr(network_input.peer_addr());
 
