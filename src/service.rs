@@ -439,7 +439,7 @@ impl Service {
             let _ = event_sender.send(Event::OnConnect {
                 connection: Connection::rendezvous_connect(udp_socket, our_pub_key),
                 pub_key: their_contact_info.pub_key,
-                })
+            })
         });
     }
 

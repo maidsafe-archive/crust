@@ -16,8 +16,8 @@
 // relating to use of the SAFE Network Software.
 
 use std::sync::Arc;
-use std::net::Shutdown;
-use std::sync::atomic::AtomicBool;
+use std::net::{Shutdown, TcpStream};
+use std::sync::atomic::{AtomicBool, Ordering};
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 
 pub struct TcpAcceptor {
