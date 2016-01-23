@@ -159,7 +159,7 @@ pub fn udp_rendezvous_connect(udp_socket: UdpSocket,
                               their_addr: SocketAddr,
                               their_pub_key: PublicKey,
                               event_tx: ::CrustEventSender)
-                              -> io::Result<Self> {
+                              -> io::Result<Connection> {
     let (network_input, writer) = try!(utp_connections::rendezvous_connect_utp(udp_socket,
                                                                                their_addr));
     let our_addr = SocketAddr(network_input.local_addr());
