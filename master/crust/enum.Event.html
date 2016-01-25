@@ -9,6 +9,7 @@
 
     <title>crust::Event - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../main.css">
 
     <link rel="shortcut icon" href="http://maidsafe.net/img/favicon.ico">
@@ -45,11 +46,11 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-1617' class='srclink' href='../src/crust/event.rs.html#72-93' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-1634' class='srclink' href='../src/crust/event.rs.html#72-93' title='goto source code'>[src]</a></span></h1>
 <pre class='rust enum'>pub enum Event {
-    NewMessage(<a class='struct' href='../crust/struct.Connection.html' title='crust::Connection'>Connection</a>, <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;),
-    OnBootstrapConnect(<a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(<a class='struct' href='../crust/struct.Endpoint.html' title='crust::Endpoint'>Endpoint</a>, <a class='struct' href='../crust/struct.Connection.html' title='crust::Connection'>Connection</a>)</a>&gt;, <a href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>),
-    OnConnect(<a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(<a class='struct' href='../crust/struct.Endpoint.html' title='crust::Endpoint'>Endpoint</a>, <a class='struct' href='../crust/struct.Connection.html' title='crust::Connection'>Connection</a>)</a>&gt;, <a href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>),
+    NewMessage(<a class='struct' href='../crust/struct.Connection.html' title='crust::Connection'>Connection</a>, <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;),
+    OnBootstrapConnect(<a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(<a class='struct' href='../crust/struct.Endpoint.html' title='crust::Endpoint'>Endpoint</a>, <a class='struct' href='../crust/struct.Connection.html' title='crust::Connection'>Connection</a>)</a>&gt;, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>),
+    OnConnect(<a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(<a class='struct' href='../crust/struct.Endpoint.html' title='crust::Endpoint'>Endpoint</a>, <a class='struct' href='../crust/struct.Connection.html' title='crust::Connection'>Connection</a>)</a>&gt;, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>),
     OnBootstrapAccept(<a class='struct' href='../crust/struct.Endpoint.html' title='crust::Endpoint'>Endpoint</a>, <a class='struct' href='../crust/struct.Connection.html' title='crust::Connection'>Connection</a>),
     LostConnection(<a class='struct' href='../crust/struct.Connection.html' title='crust::Connection'>Connection</a>),
     BootstrapFinished,
@@ -130,6 +131,6 @@ Passes the peer&#39;s endpoint.</p>
     <script src="../jquery.js"></script>
     <script src="../main.js"></script>
     
-    <script async src="../search-index.js"></script>
+    <script defer src="../search-index.js"></script>
 </body>
 </html>

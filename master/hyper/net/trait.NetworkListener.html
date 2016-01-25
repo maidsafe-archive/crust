@@ -9,6 +9,7 @@
 
     <title>hyper::net::NetworkListener - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
 
     
@@ -45,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-5863' class='srclink' href='../../src/hyper/net.rs.html#24-38' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-6027' class='srclink' href='../../src/hyper/net.rs.html#24-38' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait NetworkListener: <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> {
     type Stream: <a class='trait' href='../../hyper/net/trait.NetworkStream.html' title='hyper::net::NetworkStream'>NetworkStream</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Send.html' title='core::marker::Send'>Send</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a>;
     fn <a href='#tymethod.accept' class='fnname'>accept</a>(&amp;mut self) -&gt; <a class='type' href='../../hyper/error/type.Result.html' title='hyper::error::Result'>Result</a>&lt;Self::<a class='trait' href='../../hyper/net/trait.NetworkListener.html' title='hyper::net::NetworkListener'>Stream</a>&gt;;
@@ -132,6 +133,6 @@
     <script src="../../jquery.js"></script>
     <script src="../../main.js"></script>
     
-    <script async src="../../search-index.js"></script>
+    <script defer src="../../search-index.js"></script>
 </body>
 </html>

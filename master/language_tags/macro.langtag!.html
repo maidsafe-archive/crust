@@ -9,6 +9,7 @@
 
     <title>language_tags::langtag! - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../main.css">
 
     
@@ -45,97 +46,17 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-206' class='srclink' href='../src/language_tags/lib.rs.html#405-494' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-215' class='srclink' href='../src/language_tags/lib.rs.html#405-494' title='goto source code'>[src]</a></span></h1>
 <pre class='rust macro'>
 <span class='macro'>macro_rules</span><span class='macro'>!</span> <span class='ident'>langtag</span> {
-    ( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>language</span>:<span class='ident'>expr</span> ) <span class='op'>=&gt;</span> {
-        <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>crate</span>::<span class='ident'>LanguageTag</span> {
-            <span class='ident'>language</span>: <span class='prelude-val'>Some</span>(<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>language</span>).<span class='ident'>to_owned</span>()),
-            <span class='ident'>extlang</span>: <span class='prelude-val'>None</span>,
-            <span class='ident'>script</span>: <span class='prelude-val'>None</span>,
-            <span class='ident'>region</span>: <span class='prelude-val'>None</span>,
-            <span class='ident'>variants</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
-            <span class='ident'>extensions</span>: ::<span class='ident'>std</span>::<span class='ident'>collections</span>::<span class='ident'>BTreeMap</span>::<span class='ident'>new</span>(),
-            <span class='ident'>privateuse</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
-        }
-    };
-    ( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>language</span>:<span class='ident'>expr</span>;;;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>region</span>:<span class='ident'>expr</span> ) <span class='op'>=&gt;</span> {
-        <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>crate</span>::<span class='ident'>LanguageTag</span> {
-            <span class='ident'>language</span>: <span class='prelude-val'>Some</span>(<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>language</span>).<span class='ident'>to_owned</span>()),
-            <span class='ident'>extlang</span>: <span class='prelude-val'>None</span>,
-            <span class='ident'>script</span>: <span class='prelude-val'>None</span>,
-            <span class='ident'>region</span>: <span class='prelude-val'>Some</span>(<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>region</span>).<span class='ident'>to_owned</span>()),
-            <span class='ident'>variants</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
-            <span class='ident'>extensions</span>: ::<span class='ident'>std</span>::<span class='ident'>collections</span>::<span class='ident'>BTreeMap</span>::<span class='ident'>new</span>(),
-            <span class='ident'>privateuse</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
-        }
-    };
-    ( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>language</span>:<span class='ident'>expr</span>;;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>script</span>:<span class='ident'>expr</span> ) <span class='op'>=&gt;</span> {
-        <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>crate</span>::<span class='ident'>LanguageTag</span> {
-            <span class='ident'>language</span>: <span class='prelude-val'>Some</span>(<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>language</span>).<span class='ident'>to_owned</span>()),
-            <span class='ident'>extlang</span>: <span class='prelude-val'>None</span>,
-            <span class='ident'>script</span>: <span class='prelude-val'>Some</span>(<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>script</span>).<span class='ident'>to_owned</span>()),
-            <span class='ident'>region</span>: <span class='prelude-val'>None</span>,
-            <span class='ident'>variants</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
-            <span class='ident'>extensions</span>: ::<span class='ident'>std</span>::<span class='ident'>collections</span>::<span class='ident'>BTreeMap</span>::<span class='ident'>new</span>(),
-            <span class='ident'>privateuse</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
-        }
-    };
-    ( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>language</span>:<span class='ident'>expr</span>;;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>script</span>:<span class='ident'>expr</span>;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>region</span>:<span class='ident'>expr</span> ) <span class='op'>=&gt;</span> {
-        <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>crate</span>::<span class='ident'>LanguageTag</span> {
-            <span class='ident'>language</span>: <span class='prelude-val'>Some</span>(<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>language</span>).<span class='ident'>to_owned</span>()),
-            <span class='ident'>extlang</span>: <span class='prelude-val'>None</span>,
-            <span class='ident'>script</span>: <span class='prelude-val'>Some</span>(<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>script</span>).<span class='ident'>to_owned</span>()),
-            <span class='ident'>region</span>: <span class='prelude-val'>Some</span>(<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>region</span>).<span class='ident'>to_owned</span>()),
-            <span class='ident'>variants</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
-            <span class='ident'>extensions</span>: ::<span class='ident'>std</span>::<span class='ident'>collections</span>::<span class='ident'>BTreeMap</span>::<span class='ident'>new</span>(),
-            <span class='ident'>privateuse</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
-        }
-    };
-    ( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>language</span>:<span class='ident'>expr</span>;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>extlang</span>:<span class='ident'>expr</span>) <span class='op'>=&gt;</span> {
-        <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>crate</span>::<span class='ident'>LanguageTag</span> {
-            <span class='ident'>language</span>: <span class='prelude-val'>Some</span>(<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>language</span>).<span class='ident'>to_owned</span>()),
-            <span class='ident'>extlang</span>: <span class='prelude-val'>Some</span>(<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>extlang</span>).<span class='ident'>to_owned</span>()),
-            <span class='ident'>script</span>: <span class='prelude-val'>None</span>,
-            <span class='ident'>region</span>: <span class='prelude-val'>None</span>,
-            <span class='ident'>variants</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
-            <span class='ident'>extensions</span>: ::<span class='ident'>std</span>::<span class='ident'>collections</span>::<span class='ident'>BTreeMap</span>::<span class='ident'>new</span>(),
-            <span class='ident'>privateuse</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
-        }
-    };
-    ( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>language</span>:<span class='ident'>expr</span>;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>extlang</span>:<span class='ident'>expr</span>;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>script</span>:<span class='ident'>expr</span>) <span class='op'>=&gt;</span> {
-        <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>crate</span>::<span class='ident'>LanguageTag</span> {
-            <span class='ident'>language</span>: <span class='prelude-val'>Some</span>(<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>language</span>).<span class='ident'>to_owned</span>()),
-            <span class='ident'>extlang</span>: <span class='prelude-val'>Some</span>(<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>extlang</span>).<span class='ident'>to_owned</span>()),
-            <span class='ident'>script</span>: <span class='prelude-val'>Some</span>(<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>script</span>).<span class='ident'>to_owned</span>()),
-            <span class='ident'>region</span>: <span class='prelude-val'>None</span>,
-            <span class='ident'>variants</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
-            <span class='ident'>extensions</span>: ::<span class='ident'>std</span>::<span class='ident'>collections</span>::<span class='ident'>BTreeMap</span>::<span class='ident'>new</span>(),
-            <span class='ident'>privateuse</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
-        }
-    };
-    ( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>language</span>:<span class='ident'>expr</span>;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>extlang</span>:<span class='ident'>expr</span>;;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>region</span>:<span class='ident'>expr</span> ) <span class='op'>=&gt;</span> {
-        <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>crate</span>::<span class='ident'>LanguageTag</span> {
-            <span class='ident'>language</span>: <span class='prelude-val'>Some</span>(<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>language</span>).<span class='ident'>to_owned</span>()),
-            <span class='ident'>extlang</span>: <span class='prelude-val'>Some</span>(<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>extlang</span>).<span class='ident'>to_owned</span>()),
-            <span class='ident'>script</span>: <span class='prelude-val'>None</span>,
-            <span class='ident'>region</span>: <span class='prelude-val'>Some</span>(<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>region</span>).<span class='ident'>to_owned</span>()),
-            <span class='ident'>variants</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
-            <span class='ident'>extensions</span>: ::<span class='ident'>std</span>::<span class='ident'>collections</span>::<span class='ident'>BTreeMap</span>::<span class='ident'>new</span>(),
-            <span class='ident'>privateuse</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
-        }
-    };
-    ( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>language</span>:<span class='ident'>expr</span>;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>extlang</span>:<span class='ident'>expr</span>;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>script</span>:<span class='ident'>expr</span>;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>region</span>:<span class='ident'>expr</span> ) <span class='op'>=&gt;</span> {
-        <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>crate</span>::<span class='ident'>LanguageTag</span> {
-            <span class='ident'>language</span>: <span class='prelude-val'>Some</span>(<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>language</span>).<span class='ident'>to_owned</span>()),
-            <span class='ident'>extlang</span>: <span class='prelude-val'>Some</span>(<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>extlang</span>).<span class='ident'>to_owned</span>()),
-            <span class='ident'>script</span>: <span class='prelude-val'>Some</span>(<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>script</span>).<span class='ident'>to_owned</span>()),
-            <span class='ident'>region</span>: <span class='prelude-val'>Some</span>(<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>region</span>).<span class='ident'>to_owned</span>()),
-            <span class='ident'>variants</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
-            <span class='ident'>extensions</span>: ::<span class='ident'>std</span>::<span class='ident'>collections</span>::<span class='ident'>BTreeMap</span>::<span class='ident'>new</span>(),
-            <span class='ident'>privateuse</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
-        }
-    };
+    ( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>language</span>:<span class='ident'>expr</span> ) <span class='op'>=&gt;</span> { ... };
+    ( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>language</span>:<span class='ident'>expr</span>;;;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>region</span>:<span class='ident'>expr</span> ) <span class='op'>=&gt;</span> { ... };
+    ( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>language</span>:<span class='ident'>expr</span>;;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>script</span>:<span class='ident'>expr</span> ) <span class='op'>=&gt;</span> { ... };
+    ( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>language</span>:<span class='ident'>expr</span>;;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>script</span>:<span class='ident'>expr</span>;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>region</span>:<span class='ident'>expr</span> ) <span class='op'>=&gt;</span> { ... };
+    ( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>language</span>:<span class='ident'>expr</span>;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>extlang</span>:<span class='ident'>expr</span>) <span class='op'>=&gt;</span> { ... };
+    ( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>language</span>:<span class='ident'>expr</span>;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>extlang</span>:<span class='ident'>expr</span>;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>script</span>:<span class='ident'>expr</span>) <span class='op'>=&gt;</span> { ... };
+    ( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>language</span>:<span class='ident'>expr</span>;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>extlang</span>:<span class='ident'>expr</span>;;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>region</span>:<span class='ident'>expr</span> ) <span class='op'>=&gt;</span> { ... };
+    ( <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>language</span>:<span class='ident'>expr</span>;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>extlang</span>:<span class='ident'>expr</span>;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>script</span>:<span class='ident'>expr</span>;<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>region</span>:<span class='ident'>expr</span> ) <span class='op'>=&gt;</span> { ... };
 }</pre>
 <div class='docblock'><p>Utility for creating simple language tags.</p>
 
@@ -209,6 +130,6 @@ they are separated by semicolons, omitted parts are denoted with mulitple semico
     <script src="../jquery.js"></script>
     <script src="../main.js"></script>
     
-    <script async src="../search-index.js"></script>
+    <script defer src="../search-index.js"></script>
 </body>
 </html>

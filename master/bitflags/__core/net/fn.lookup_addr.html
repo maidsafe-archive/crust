@@ -9,6 +9,7 @@
 
     <title>bitflags::__core::net::lookup_addr - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -45,13 +46,26 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-6323' class='srclink' href='https://doc.rust-lang.org/nightly/std/net/fn.lookup_addr.html?gotosrc=6323' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub fn lookup_addr(addr: &amp;<a class='enum' href='../../../bitflags/__core/net/enum.IpAddr.html' title='bitflags::__core::net::IpAddr'>IpAddr</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='struct' href='../../../bitflags/__core/string/struct.String.html' title='bitflags::__core::string::String'>String</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;</pre><div class='stability'><em class='stab unstable'>Unstable (<code>lookup_addr</code>)<p>: recent addition</p>
+        </span><a id='src-6407' class='srclink' href='https://doc.rust-lang.org/nightly/std/net/fn.lookup_addr.html?gotosrc=6407' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub fn lookup_addr(addr: &amp;<a class='enum' href='../../../bitflags/__core/net/enum.IpAddr.html' title='bitflags::__core::net::IpAddr'>IpAddr</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='struct' href='../../../bitflags/__core/string/struct.String.html' title='bitflags::__core::string::String'>String</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;</pre><div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.6.0<p>: ipaddr type is being deprecated</p>
 </em></div><div class='docblock'><p>Resolve the given address to a hostname.</p>
 
 <p>This function may perform a DNS query to resolve <code>addr</code> and may also inspect
 system configuration to resolve the specified address. If the address
 cannot be resolved, it is returned in string format.</p>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1><pre class='rust rust-example-rendered'>
+<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>feature</span>(<span class='ident'>lookup_addr</span>)]</span>
+<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>feature</span>(<span class='ident'>ip_addr</span>)]</span>
+
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>net</span>::{<span class='self'>self</span>, <span class='ident'>Ipv4Addr</span>, <span class='ident'>IpAddr</span>};
+
+<span class='kw'>let</span> <span class='ident'>ip_addr</span> <span class='op'>=</span> <span class='string'>&quot;8.8.8.8&quot;</span>;
+<span class='kw'>let</span> <span class='ident'>addr</span>: <span class='ident'>Ipv4Addr</span> <span class='op'>=</span> <span class='ident'>ip_addr</span>.<span class='ident'>parse</span>().<span class='ident'>unwrap</span>();
+<span class='kw'>let</span> <span class='ident'>hostname</span> <span class='op'>=</span> <span class='ident'>net</span>::<span class='ident'>lookup_addr</span>(<span class='kw-2'>&amp;</span><span class='ident'>IpAddr</span>::<span class='ident'>V4</span>(<span class='ident'>addr</span>)).<span class='ident'>unwrap</span>();
+
+<span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;{} --&gt; {}&quot;</span>, <span class='ident'>ip_addr</span>, <span class='ident'>hostname</span>);
+<span class='comment'>// Output: 8.8.8.8 --&gt; google-public-dns-a.google.com</span></pre>
 </div></section>
     <section id='search' class="content hidden"></section>
 
@@ -111,6 +125,6 @@ cannot be resolved, it is returned in string format.</p>
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

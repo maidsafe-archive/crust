@@ -9,6 +9,7 @@
 
     <title>solicit::http::connection::HttpConnection - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -45,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-719' class='srclink' href='../../../src/solicit/http/connection.rs.html#109-120' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-743' class='srclink' href='../../../src/solicit/http/connection.rs.html#109-120' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct HttpConnection&lt;S, R&gt; <span class='where'>where S: <a class='trait' href='../../../solicit/http/connection/trait.SendFrame.html' title='solicit::http::connection::SendFrame'>SendFrame</a>, R: <a class='trait' href='../../../solicit/http/connection/trait.ReceiveFrame.html' title='solicit::http::connection::ReceiveFrame'>ReceiveFrame</a></span> {
     pub receiver: R,
     pub sender: S,
@@ -80,7 +81,7 @@ underlying transport layer.</p>
 HTTP/2 connection should be based on the <code>TransportStream</code> interface.</p>
 
 <p>The scheme of the connection is also provided.</p>
-</div><h4 id='method.send_headers' class='method'><code>fn <a href='#method.send_headers' class='fnname'>send_headers</a>&lt;H: <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.Into.html' title='core::convert::Into'>Into</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='type' href='../../../solicit/http/type.Header.html' title='solicit::http::Header'>Header</a>&gt;&gt;&gt;(&amp;mut self, headers: H, stream_id: <a class='type' href='../../../solicit/http/type.StreamId.html' title='solicit::http::StreamId'>StreamId</a>, end_stream: <a class='enum' href='../../../solicit/http/connection/enum.EndStream.html' title='solicit::http::connection::EndStream'>EndStream</a>) -&gt; <a class='type' href='../../../solicit/http/type.HttpResult.html' title='solicit::http::HttpResult'>HttpResult</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
+</div><h4 id='method.send_headers' class='method'><code>fn <a href='#method.send_headers' class='fnname'>send_headers</a>&lt;H: <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.Into.html' title='core::convert::Into'>Into</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='type' href='../../../solicit/http/type.Header.html' title='solicit::http::Header'>Header</a>&gt;&gt;&gt;(&amp;mut self, headers: H, stream_id: <a class='type' href='../../../solicit/http/type.StreamId.html' title='solicit::http::StreamId'>StreamId</a>, end_stream: <a class='enum' href='../../../solicit/http/connection/enum.EndStream.html' title='solicit::http::connection::EndStream'>EndStream</a>) -&gt; <a class='type' href='../../../solicit/http/type.HttpResult.html' title='solicit::http::HttpResult'>HttpResult</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
 <div class='docblock'><p>A helper function that inserts the frames required to send the given headers onto the
 <code>SendFrame</code> stream.</p>
 
@@ -95,14 +96,14 @@ performs no checks as to whether the stream is a valid identifier.</li>
 <li><code>end_stream</code> - whether the stream should be closed from the peer&#39;s side immediately
 after sending the headers</li>
 </ul>
-</div><h4 id='method.send_data' class='method'><code>fn <a href='#method.send_data' class='fnname'>send_data</a>&lt;'a&gt;(&amp;mut self, chunk: <a class='struct' href='../../../solicit/http/connection/struct.DataChunk.html' title='solicit::http::connection::DataChunk'>DataChunk</a>&lt;'a&gt;) -&gt; <a class='type' href='../../../solicit/http/type.HttpResult.html' title='solicit::http::HttpResult'>HttpResult</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
+</div><h4 id='method.send_data' class='method'><code>fn <a href='#method.send_data' class='fnname'>send_data</a>&lt;'a&gt;(&amp;mut self, chunk: <a class='struct' href='../../../solicit/http/connection/struct.DataChunk.html' title='solicit::http::connection::DataChunk'>DataChunk</a>&lt;'a&gt;) -&gt; <a class='type' href='../../../solicit/http/type.HttpResult.html' title='solicit::http::HttpResult'>HttpResult</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
 <div class='docblock'><p>A helper function that inserts a frame representing the given data into the <code>SendFrame</code>
 stream.</p>
 
 <p>The <code>HttpConnection</code> itself does not track the flow control window and will happily send
 data that exceeds a particular stream&#39;s or the connection&#39;s flow control window size.</p>
 
-<h1 id='parameters' class='section-header'><a href='#parameters'>Parameters</a></h1>
+<h1 id='parameters-1' class='section-header'><a href='#parameters-1'>Parameters</a></h1>
 <ul>
 <li><code>data</code> - the data that should be sent on the connection</li>
 <li><code>stream_id</code> - the ID of the stream on which the data will be sent</li>
@@ -116,7 +117,7 @@ sending the data (i.e. the last data frame closes the stream).</li>
 <p>Returns the status of the operation. If the provider does not currently have any data that
 could be sent, returns <code>SendStatus::Nothing</code>. If any data is sent, returns
 <code>SendStatus::Sent</code>.</p>
-</div><h4 id='method.expect_settings' class='method'><code>fn <a href='#method.expect_settings' class='fnname'>expect_settings</a>&lt;Sess: <a class='trait' href='../../../solicit/http/session/trait.Session.html' title='solicit::http::session::Session'>Session</a>&gt;(&amp;mut self, session: &amp;mut Sess) -&gt; <a class='type' href='../../../solicit/http/type.HttpResult.html' title='solicit::http::HttpResult'>HttpResult</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
+</div><h4 id='method.expect_settings' class='method'><code>fn <a href='#method.expect_settings' class='fnname'>expect_settings</a>&lt;Sess: <a class='trait' href='../../../solicit/http/session/trait.Session.html' title='solicit::http::session::Session'>Session</a>&gt;(&amp;mut self, session: &amp;mut Sess) -&gt; <a class='type' href='../../../solicit/http/type.HttpResult.html' title='solicit::http::HttpResult'>HttpResult</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
 <div class='docblock'><p>The method processes the next incoming frame, expecting it to be a SETTINGS frame.
 Additionally, the frame cannot be an ACK settings frame, but rather it should contain the
 peer&#39;s settings.</p>
@@ -125,7 +126,7 @@ peer&#39;s settings.</p>
 
 <p>If the received frame is not a SETTINGS frame, an <code>HttpError::UnableToConnect</code> variant is
 returned. (TODO: Change this variant&#39;s name, as it is a byproduct of this method&#39;s legacy)</p>
-</div><h4 id='method.handle_next_frame' class='method'><code>fn <a href='#method.handle_next_frame' class='fnname'>handle_next_frame</a>&lt;Sess: <a class='trait' href='../../../solicit/http/session/trait.Session.html' title='solicit::http::session::Session'>Session</a>&gt;(&amp;mut self, session: &amp;mut Sess) -&gt; <a class='type' href='../../../solicit/http/type.HttpResult.html' title='solicit::http::HttpResult'>HttpResult</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
+</div><h4 id='method.handle_next_frame' class='method'><code>fn <a href='#method.handle_next_frame' class='fnname'>handle_next_frame</a>&lt;Sess: <a class='trait' href='../../../solicit/http/session/trait.Session.html' title='solicit::http::session::Session'>Session</a>&gt;(&amp;mut self, session: &amp;mut Sess) -&gt; <a class='type' href='../../../solicit/http/type.HttpResult.html' title='solicit::http::HttpResult'>HttpResult</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
 <div class='docblock'><p>Handles the next frame incoming on the <code>ReceiveFrame</code> instance.</p>
 
 <p>The <code>HttpConnection</code> takes care of parsing the frame and extracting the semantics behind it
@@ -194,6 +195,6 @@ propagated.</p>
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

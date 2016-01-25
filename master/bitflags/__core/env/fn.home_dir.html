@@ -9,6 +9,7 @@
 
     <title>bitflags::__core::env::home_dir - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -45,12 +46,14 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-2958' class='srclink' href='https://doc.rust-lang.org/nightly/std/env/fn.home_dir.html?gotosrc=2958' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub fn home_dir() -&gt; <a class='enum' href='../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;<a class='struct' href='../../../bitflags/__core/path/struct.PathBuf.html' title='bitflags::__core::path::PathBuf'>PathBuf</a>&gt;</pre><div class='docblock'><p>Optionally returns the path to the current user&#39;s home directory if known.</p>
+        </span><a id='src-2983' class='srclink' href='https://doc.rust-lang.org/nightly/std/env/fn.home_dir.html?gotosrc=2983' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub fn home_dir() -&gt; <a class='enum' href='../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;<a class='struct' href='../../../bitflags/__core/path/struct.PathBuf.html' title='bitflags::__core::path::PathBuf'>PathBuf</a>&gt;</pre><div class='docblock'><p>Returns the path to the current user&#39;s home directory if known.</p>
 
 <h1 id='unix' class='section-header'><a href='#unix'>Unix</a></h1>
 <p>Returns the value of the &#39;HOME&#39; environment variable if it is set
-and not equal to the empty string.</p>
+and not equal to the empty string. Otherwise, it tries to determine the
+home directory by invoking the <code>getpwuid_r</code> function on the UID of the
+current user.</p>
 
 <h1 id='windows' class='section-header'><a href='#windows'>Windows</a></h1>
 <p>Returns the value of the &#39;HOME&#39; environment variable if it is
@@ -125,6 +128,6 @@ return the appropriate path.</p>
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

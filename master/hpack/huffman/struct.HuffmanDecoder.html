@@ -9,6 +9,7 @@
 
     <title>hpack::huffman::HuffmanDecoder - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
 
     
@@ -45,14 +46,14 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-326' class='srclink' href='../../src/hpack/huffman.rs.html#48-53' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-339' class='srclink' href='../../src/hpack/huffman.rs.html#48-53' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct HuffmanDecoder {
     // some fields omitted
 }</pre><div class='docblock'><p>A simple implementation of a Huffman code decoder.</p>
 </div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../hpack/huffman/struct.HuffmanDecoder.html' title='hpack::huffman::HuffmanDecoder'>HuffmanDecoder</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>() -&gt; <a class='struct' href='../../hpack/huffman/struct.HuffmanDecoder.html' title='hpack::huffman::HuffmanDecoder'>HuffmanDecoder</a></code></h4>
 <div class='docblock'><p>Constructs a new HuffmanDecoder with the default Huffman code table, as
 defined in the HPACK-draft-10, Appendix B.</p>
-</div><h4 id='method.decode' class='method'><code>fn <a href='#method.decode' class='fnname'>decode</a>(&amp;mut self, buf: <a href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a><a href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>) -&gt; <a class='type' href='../../hpack/huffman/type.HuffmanDecoderResult.html' title='hpack::huffman::HuffmanDecoderResult'>HuffmanDecoderResult</a></code></h4>
+</div><h4 id='method.decode' class='method'><code>fn <a href='#method.decode' class='fnname'>decode</a>(&amp;mut self, buf: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>) -&gt; <a class='type' href='../../hpack/huffman/type.HuffmanDecoderResult.html' title='hpack::huffman::HuffmanDecoderResult'>HuffmanDecoderResult</a></code></h4>
 <div class='docblock'><p>Decodes the buffer <code>buf</code> into a newly allocated <code>Vec</code>.</p>
 
 <p>It assumes that the entire buffer should be considered as the Huffman
@@ -117,6 +118,6 @@ accordingly.</p>
     <script src="../../jquery.js"></script>
     <script src="../../main.js"></script>
     
-    <script async src="../../search-index.js"></script>
+    <script defer src="../../search-index.js"></script>
 </body>
 </html>

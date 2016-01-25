@@ -9,6 +9,7 @@
 
     <title>bitflags::__core::sync::mpsc::Receiver - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../../main.css">
 
     
@@ -45,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-8741' class='srclink' href='https://doc.rust-lang.org/nightly/std/sync/mpsc/struct.Receiver.html?gotosrc=8741' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-8925' class='srclink' href='https://doc.rust-lang.org/nightly/std/sync/mpsc/struct.Receiver.html?gotosrc=8925' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Receiver&lt;T&gt; {
     // some fields omitted
 }</pre><div class='docblock'><p>The receiving-half of Rust&#39;s channel type. This half can only be owned by
@@ -114,9 +115,9 @@ will still be properly received.</p>
 </div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl&lt;T&gt; <a class='trait' href='../../../../bitflags/__core/marker/trait.Send.html' title='bitflags::__core::marker::Send'>Send</a> for <a class='struct' href='../../../../bitflags/__core/sync/mpsc/struct.Receiver.html' title='bitflags::__core::sync::mpsc::Receiver'>Receiver</a>&lt;T&gt; <span class='where'>where T: <a class='trait' href='../../../../bitflags/__core/marker/trait.Send.html' title='bitflags::__core::marker::Send'>Send</a></span></code></h3><div class='impl-items'></div><h3 class='impl'><code>impl&lt;'a, T&gt; <a class='trait' href='../../../../bitflags/__core/iter/trait.IntoIterator.html' title='bitflags::__core::iter::IntoIterator'>IntoIterator</a> for &amp;'a <a class='struct' href='../../../../bitflags/__core/sync/mpsc/struct.Receiver.html' title='bitflags::__core::sync::mpsc::Receiver'>Receiver</a>&lt;T&gt;</code></h3><div class='impl-items'><h4 id='assoc_type.Item' class='type'><code>type Item = T</code></h4>
 <h4 id='assoc_type.IntoIter' class='type'><code>type IntoIter = <a class='struct' href='../../../../bitflags/__core/sync/mpsc/struct.Iter.html' title='bitflags::__core::sync::mpsc::Iter'>Iter</a>&lt;'a, T&gt;</code></h4>
 <h4 id='method.into_iter' class='method'><code>fn <a href='../../../../bitflags/__core/iter/trait.IntoIterator.html#method.into_iter' class='fnname'>into_iter</a>(self) -&gt; <a class='struct' href='../../../../bitflags/__core/sync/mpsc/struct.Iter.html' title='bitflags::__core::sync::mpsc::Iter'>Iter</a>&lt;'a, T&gt;</code></h4>
-</div><h3 class='impl'><code>impl&lt;T&gt; <a class='trait' href='../../../../bitflags/__core/iter/trait.IntoIterator.html' title='bitflags::__core::iter::IntoIterator'>IntoIterator</a> for <a class='struct' href='../../../../bitflags/__core/sync/mpsc/struct.Receiver.html' title='bitflags::__core::sync::mpsc::Receiver'>Receiver</a>&lt;T&gt;</code></h3><div class='impl-items'><h4 id='assoc_type.Item' class='type'><code>type Item = T</code></h4>
-<h4 id='assoc_type.IntoIter' class='type'><code>type IntoIter = <a class='struct' href='../../../../bitflags/__core/sync/mpsc/struct.IntoIter.html' title='bitflags::__core::sync::mpsc::IntoIter'>IntoIter</a>&lt;T&gt;</code></h4>
-<h4 id='method.into_iter' class='method'><code>fn <a href='../../../../bitflags/__core/iter/trait.IntoIterator.html#method.into_iter' class='fnname'>into_iter</a>(self) -&gt; <a class='struct' href='../../../../bitflags/__core/sync/mpsc/struct.IntoIter.html' title='bitflags::__core::sync::mpsc::IntoIter'>IntoIter</a>&lt;T&gt;</code></h4>
+</div><h3 class='impl'><code>impl&lt;T&gt; <a class='trait' href='../../../../bitflags/__core/iter/trait.IntoIterator.html' title='bitflags::__core::iter::IntoIterator'>IntoIterator</a> for <a class='struct' href='../../../../bitflags/__core/sync/mpsc/struct.Receiver.html' title='bitflags::__core::sync::mpsc::Receiver'>Receiver</a>&lt;T&gt;</code></h3><div class='impl-items'><h4 id='assoc_type.Item-1' class='type'><code>type Item = T</code></h4>
+<h4 id='assoc_type.IntoIter-1' class='type'><code>type IntoIter = <a class='struct' href='../../../../bitflags/__core/sync/mpsc/struct.IntoIter.html' title='bitflags::__core::sync::mpsc::IntoIter'>IntoIter</a>&lt;T&gt;</code></h4>
+<h4 id='method.into_iter-1' class='method'><code>fn <a href='../../../../bitflags/__core/iter/trait.IntoIterator.html#method.into_iter' class='fnname'>into_iter</a>(self) -&gt; <a class='struct' href='../../../../bitflags/__core/sync/mpsc/struct.IntoIter.html' title='bitflags::__core::sync::mpsc::IntoIter'>IntoIter</a>&lt;T&gt;</code></h4>
 </div><h3 class='impl'><code>impl&lt;T&gt; <a class='trait' href='../../../../bitflags/__core/ops/trait.Drop.html' title='bitflags::__core::ops::Drop'>Drop</a> for <a class='struct' href='../../../../bitflags/__core/sync/mpsc/struct.Receiver.html' title='bitflags::__core::sync::mpsc::Receiver'>Receiver</a>&lt;T&gt;</code></h3><div class='impl-items'><h4 id='method.drop' class='method'><code>fn <a href='../../../../bitflags/__core/ops/trait.Drop.html#method.drop' class='fnname'>drop</a>(&amp;mut self)</code></h4>
 </div></section>
     <section id='search' class="content hidden"></section>
@@ -177,6 +178,6 @@ will still be properly received.</p>
     <script src="../../../../jquery.js"></script>
     <script src="../../../../main.js"></script>
     
-    <script async src="../../../../search-index.js"></script>
+    <script defer src="../../../../search-index.js"></script>
 </body>
 </html>

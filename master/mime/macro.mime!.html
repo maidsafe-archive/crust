@@ -9,6 +9,7 @@
 
     <title>mime::mime! - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../main.css">
 
     
@@ -45,20 +46,11 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-530' class='srclink' href='../src/mime/lib.rs.html#93-105' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-562' class='srclink' href='../src/mime/lib.rs.html#93-105' title='goto source code'>[src]</a></span></h1>
 <pre class='rust macro'>
 <span class='macro'>macro_rules</span><span class='macro'>!</span> <span class='ident'>mime</span> {
-    (<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>top</span>:<span class='ident'>tt</span> <span class='op'>/</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>sub</span>:<span class='ident'>tt</span>) <span class='op'>=&gt;</span> (
-        <span class='macro'>mime</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>top</span> <span class='op'>/</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>sub</span>;)
-    );
-
-    (<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>top</span>:<span class='ident'>tt</span> <span class='op'>/</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>sub</span>:<span class='ident'>tt</span> ; $(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>attr</span>:<span class='ident'>tt</span> <span class='op'>=</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>val</span>:<span class='ident'>tt</span>),<span class='op'>*</span>) <span class='op'>=&gt;</span> (
-        <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>crate</span>::<span class='ident'>Mime</span>(
-            <span class='macro'>__mime__ident_or_ext</span><span class='macro'>!</span>(<span class='ident'>TopLevel</span>::<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>top</span>),
-            <span class='macro'>__mime__ident_or_ext</span><span class='macro'>!</span>(<span class='ident'>SubLevel</span>::<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>sub</span>),
-            <span class='macro'>vec</span><span class='macro'>!</span>[ $((<span class='macro'>__mime__ident_or_ext</span><span class='macro'>!</span>(<span class='ident'>Attr</span>::<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>attr</span>), <span class='macro'>__mime__ident_or_ext</span><span class='macro'>!</span>(<span class='ident'>Value</span>::<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>val</span>))),<span class='op'>*</span> ]
-        )
-    );
+    (<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>top</span>:<span class='ident'>tt</span> <span class='op'>/</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>sub</span>:<span class='ident'>tt</span>) <span class='op'>=&gt;</span> { ... };
+    (<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>top</span>:<span class='ident'>tt</span> <span class='op'>/</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>sub</span>:<span class='ident'>tt</span> ; $(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>attr</span>:<span class='ident'>tt</span> <span class='op'>=</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>val</span>:<span class='ident'>tt</span>),<span class='op'>*</span>) <span class='op'>=&gt;</span> { ... };
 }</pre>
 <div class='docblock'><p>Easily create a Mime without having to import so many enums.</p>
 
@@ -127,6 +119,6 @@
     <script src="../jquery.js"></script>
     <script src="../main.js"></script>
     
-    <script async src="../search-index.js"></script>
+    <script defer src="../search-index.js"></script>
 </body>
 </html>

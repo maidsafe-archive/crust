@@ -9,6 +9,7 @@
 
     <title>bitflags::__core::char::decode_utf16 - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -46,11 +47,13 @@
                 [<span class='inner'>&#x2212;</span>]
             </a>
         </span><a id='src-357' class='srclink' href='https://doc.rust-lang.org/nightly/rustc_unicode/char/fn.decode_utf16.html?gotosrc=357' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub fn decode_utf16&lt;I&gt;(iterable: I) -&gt; <a class='struct' href='../../../bitflags/__core/char/struct.DecodeUtf16.html' title='bitflags::__core::char::DecodeUtf16'>DecodeUtf16</a>&lt;I::<a class='trait' href='../../../bitflags/__core/iter/trait.IntoIterator.html' title='bitflags::__core::iter::IntoIterator'>IntoIter</a>&gt; <span class='where'>where I: <a class='trait' href='../../../bitflags/__core/iter/trait.IntoIterator.html' title='bitflags::__core::iter::IntoIterator'>IntoIterator</a>&lt;Item=<a href='https://doc.rust-lang.org/nightly/bitflags/primitive.u16.html'>u16</a>&gt;</span></pre><div class='stability'><em class='stab unstable'>Unstable (<code>decode_utf16</code>)<p>: recently exposed</p>
+<pre class='rust fn'>pub fn decode_utf16&lt;I&gt;(iterable: I) -&gt; <a class='struct' href='../../../bitflags/__core/char/struct.DecodeUtf16.html' title='bitflags::__core::char::DecodeUtf16'>DecodeUtf16</a>&lt;I::<a class='trait' href='../../../bitflags/__core/iter/trait.IntoIterator.html' title='bitflags::__core::iter::IntoIterator'>IntoIter</a>&gt; <span class='where'>where I: <a class='trait' href='../../../bitflags/__core/iter/trait.IntoIterator.html' title='bitflags::__core::iter::IntoIterator'>IntoIterator</a>&lt;Item=<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u16.html'>u16</a>&gt;</span></pre><div class='stability'><em class='stab unstable'>Unstable (<code>decode_utf16</code>)<p>: recently exposed</p>
 </em></div><div class='docblock'><p>Create an iterator over the UTF-16 encoded code points in <code>iterable</code>,
 returning unpaired surrogates as <code>Err</code>s.</p>
 
-<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<p>Basic usage:</p>
+<pre class='rust rust-example-rendered'>
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>feature</span>(<span class='ident'>decode_utf16</span>)]</span>
 
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>char</span>::<span class='ident'>decode_utf16</span>;
@@ -145,6 +148,6 @@ returning unpaired surrogates as <code>Err</code>s.</p>
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

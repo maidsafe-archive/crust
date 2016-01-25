@@ -9,6 +9,7 @@
 
     <title>url::UrlParser - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../main.css">
 
     
@@ -45,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-1489' class='srclink' href='../src/url/lib.rs.html#320-325' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-1523' class='srclink' href='../src/url/lib.rs.html#320-325' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct UrlParser&lt;'a&gt; {
     // some fields omitted
 }</pre><div class='docblock'><p>A set of optional parameters for URL parsing.</p>
@@ -64,7 +65,7 @@ An error handler can be used, for example, to log these errors in the console
 of a browser’s developer tools.</p>
 
 <p>The error handler can choose to make the error fatal by returning <code>Err(..)</code></p>
-</div><h4 id='method.scheme_type_mapper' class='method'><code>fn <a href='#method.scheme_type_mapper' class='fnname'>scheme_type_mapper</a>&lt;'b&gt;(&amp;'b mut self, value: fn(scheme: &amp;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='enum' href='../url/enum.SchemeType.html' title='url::SchemeType'>SchemeType</a>) -&gt; &amp;'b mut <a class='struct' href='../url/struct.UrlParser.html' title='url::UrlParser'>UrlParser</a>&lt;'a&gt;</code></h4>
+</div><h4 id='method.scheme_type_mapper' class='method'><code>fn <a href='#method.scheme_type_mapper' class='fnname'>scheme_type_mapper</a>&lt;'b&gt;(&amp;'b mut self, value: fn(scheme: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='enum' href='../url/enum.SchemeType.html' title='url::SchemeType'>SchemeType</a>) -&gt; &amp;'b mut <a class='struct' href='../url/struct.UrlParser.html' title='url::UrlParser'>UrlParser</a>&lt;'a&gt;</code></h4>
 <div class='docblock'><p>Set a <em>scheme type mapper</em>, and return the <code>UrlParser</code>.</p>
 
 <p>The URL parser behaves differently based on the <code>SchemeType</code> of the URL.
@@ -91,9 +92,9 @@ as found in the <code>scheme</code> field of an <code>Url</code> struct.</p>
 <p>Note that unknown schemes default to non-relative.
 Overriding the scheme type mapper can allow, for example,
 parsing URLs in the <code>git</code> or <code>irc</code> scheme as relative.</p>
-</div><h4 id='method.parse' class='method'><code>fn <a href='#method.parse' class='fnname'>parse</a>(&amp;self, input: &amp;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='type' href='../url/type.ParseResult.html' title='url::ParseResult'>ParseResult</a>&lt;<a class='struct' href='../url/struct.Url.html' title='url::Url'>Url</a>&gt;</code></h4>
+</div><h4 id='method.parse' class='method'><code>fn <a href='#method.parse' class='fnname'>parse</a>(&amp;self, input: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='type' href='../url/type.ParseResult.html' title='url::ParseResult'>ParseResult</a>&lt;<a class='struct' href='../url/struct.Url.html' title='url::Url'>Url</a>&gt;</code></h4>
 <div class='docblock'><p>Parse <code>input</code> as an URL, with all the parameters previously set in the <code>UrlParser</code>.</p>
-</div><h4 id='method.parse_path' class='method'><code>fn <a href='#method.parse_path' class='fnname'>parse_path</a>(&amp;self, input: &amp;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='type' href='../url/type.ParseResult.html' title='url::ParseResult'>ParseResult</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;, <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;, <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;)</a>&gt;</code></h4>
+</div><h4 id='method.parse_path' class='method'><code>fn <a href='#method.parse_path' class='fnname'>parse_path</a>(&amp;self, input: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='type' href='../url/type.ParseResult.html' title='url::ParseResult'>ParseResult</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;, <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;, <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;)</a>&gt;</code></h4>
 <div class='docblock'><p>Parse <code>input</code> as a “standalone” URL path,
 with an optional query string and fragment identifier.</p>
 
@@ -163,6 +164,6 @@ servers typically parse it and ignore it
     <script src="../jquery.js"></script>
     <script src="../main.js"></script>
     
-    <script async src="../search-index.js"></script>
+    <script defer src="../search-index.js"></script>
 </body>
 </html>

@@ -9,6 +9,7 @@
 
     <title>xml::reader::EventReader - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
 
     
@@ -45,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-1791' class='srclink' href='../../src/xml/reader/mod.rs.html#20-23' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-1815' class='srclink' href='../../src/xml/reader/mod.rs.html#20-23' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct EventReader&lt;B: <a class='trait' href='https://doc.rust-lang.org/nightly/std/io/trait.Read.html' title='std::io::Read'>Read</a>&gt; {
     // some fields omitted
 }</pre><div class='docblock'><p>Simple wrapper around an <code>std::io::BufReader</code> which provides pull-based XML parsing.</p>
@@ -63,7 +64,7 @@ further calls to this method will return this event again.</p>
 
 <p>When the next event is <code>xml::event::Error</code> or <code>xml::event::EndDocument</code>, then
 it will be returned by the iterator once, and then it will stop producing events.</p>
-</div></div><h3 class='impl'><code>impl&lt;'r&gt; <a class='struct' href='../../xml/reader/struct.EventReader.html' title='xml::reader::EventReader'>EventReader</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;'r [</a><a href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>&gt;</code></h3><div class='impl-items'><h4 id='method.from_str' class='method'><code>fn <a href='#method.from_str' class='fnname'>from_str</a>(source: &amp;'r <a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='struct' href='../../xml/reader/struct.EventReader.html' title='xml::reader::EventReader'>EventReader</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;'r [</a><a href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>&gt;</code></h4>
+</div></div><h3 class='impl'><code>impl&lt;'r&gt; <a class='struct' href='../../xml/reader/struct.EventReader.html' title='xml::reader::EventReader'>EventReader</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;'r [</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>&gt;</code></h3><div class='impl-items'><h4 id='method.from_str' class='method'><code>fn <a href='#method.from_str' class='fnname'>from_str</a>(source: &amp;'r <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='struct' href='../../xml/reader/struct.EventReader.html' title='xml::reader::EventReader'>EventReader</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;'r [</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>&gt;</code></h4>
 <div class='docblock'><p>Convenience method to create a reader from a string slice.</p>
 </div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl&lt;B: <a class='trait' href='https://doc.rust-lang.org/nightly/std/io/trait.Read.html' title='std::io::Read'>Read</a>&gt; <a class='trait' href='../../xml/common/trait.Position.html' title='xml::common::Position'>Position</a> for <a class='struct' href='../../xml/reader/struct.EventReader.html' title='xml::reader::EventReader'>EventReader</a>&lt;B&gt;</code></h3><div class='impl-items'><h4 id='method.position' class='method'><code>fn <a href='../../xml/common/trait.Position.html#method.position' class='fnname'>position</a>(&amp;self) -&gt; <a class='struct' href='../../xml/common/struct.TextPosition.html' title='xml::common::TextPosition'>TextPosition</a></code></h4>
 </div></section>
@@ -125,6 +126,6 @@ it will be returned by the iterator once, and then it will stop producing events
     <script src="../../jquery.js"></script>
     <script src="../../main.js"></script>
     
-    <script async src="../../search-index.js"></script>
+    <script defer src="../../search-index.js"></script>
 </body>
 </html>

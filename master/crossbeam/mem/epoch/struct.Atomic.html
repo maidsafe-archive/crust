@@ -9,6 +9,7 @@
 
     <title>crossbeam::mem::epoch::Atomic - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -71,7 +72,7 @@ lifetime tied to the guard.</p>
 <p>Transfers ownership of the given <code>Owned</code> pointer, if any. Since no
 lifetime information is acquired, no <code>Guard</code> value is needed.</p>
 
-<h1 id='panics' class='section-header'><a href='#panics'>Panics</a></h1>
+<h1 id='panics-1' class='section-header'><a href='#panics-1'>Panics</a></h1>
 <p>Panics if <code>ord</code> is <code>Acquire</code> or <code>AcqRel</code>.</p>
 </div><h4 id='method.store_and_ref' class='method'><code>fn <a href='#method.store_and_ref' class='fnname'>store_and_ref</a>&lt;'a&gt;(&amp;self, val: <a class='struct' href='../../../crossbeam/mem/epoch/struct.Owned.html' title='crossbeam::mem::epoch::Owned'>Owned</a>&lt;T&gt;, ord: <a class='enum' href='https://doc.rust-lang.org/nightly/core/sync/atomic/enum.Ordering.html' title='core::sync::atomic::Ordering'>Ordering</a>, _: &amp;'a <a class='struct' href='../../../crossbeam/mem/epoch/struct.Guard.html' title='crossbeam::mem::epoch::Guard'>Guard</a>) -&gt; <a class='struct' href='../../../crossbeam/mem/epoch/struct.Shared.html' title='crossbeam::mem::epoch::Shared'>Shared</a>&lt;'a, T&gt;</code></h4>
 <div class='docblock'><p>Do an atomic store with the given memory ordering, immediately yielding
@@ -81,7 +82,7 @@ a shared reference to the pointer that was stored.</p>
 reference to it. Since the reference is valid only for the curent epoch,
 it&#39;s lifetime is tied to a <code>Guard</code> value.</p>
 
-<h1 id='panics' class='section-header'><a href='#panics'>Panics</a></h1>
+<h1 id='panics-2' class='section-header'><a href='#panics-2'>Panics</a></h1>
 <p>Panics if <code>ord</code> is <code>Acquire</code> or <code>AcqRel</code>.</p>
 </div><h4 id='method.store_shared' class='method'><code>fn <a href='#method.store_shared' class='fnname'>store_shared</a>(&amp;self, val: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='../../../crossbeam/mem/epoch/struct.Shared.html' title='crossbeam::mem::epoch::Shared'>Shared</a>&lt;T&gt;&gt;, ord: <a class='enum' href='https://doc.rust-lang.org/nightly/core/sync/atomic/enum.Ordering.html' title='core::sync::atomic::Ordering'>Ordering</a>)</code></h4>
 <div class='docblock'><p>Do an atomic store of a <code>Shared</code> pointer with the given memory ordering.</p>
@@ -89,9 +90,9 @@ it&#39;s lifetime is tied to a <code>Guard</code> value.</p>
 <p>This operation does not require a guard, because it does not yield any
 new information about the lifetime of a pointer.</p>
 
-<h1 id='panics' class='section-header'><a href='#panics'>Panics</a></h1>
+<h1 id='panics-3' class='section-header'><a href='#panics-3'>Panics</a></h1>
 <p>Panics if <code>ord</code> is <code>Acquire</code> or <code>AcqRel</code>.</p>
-</div><h4 id='method.cas' class='method'><code>fn <a href='#method.cas' class='fnname'>cas</a>(&amp;self, old: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='../../../crossbeam/mem/epoch/struct.Shared.html' title='crossbeam::mem::epoch::Shared'>Shared</a>&lt;T&gt;&gt;, new: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='../../../crossbeam/mem/epoch/struct.Owned.html' title='crossbeam::mem::epoch::Owned'>Owned</a>&lt;T&gt;&gt;, ord: <a class='enum' href='https://doc.rust-lang.org/nightly/core/sync/atomic/enum.Ordering.html' title='core::sync::atomic::Ordering'>Ordering</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='../../../crossbeam/mem/epoch/struct.Owned.html' title='crossbeam::mem::epoch::Owned'>Owned</a>&lt;T&gt;&gt;&gt;</code></h4>
+</div><h4 id='method.cas' class='method'><code>fn <a href='#method.cas' class='fnname'>cas</a>(&amp;self, old: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='../../../crossbeam/mem/epoch/struct.Shared.html' title='crossbeam::mem::epoch::Shared'>Shared</a>&lt;T&gt;&gt;, new: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='../../../crossbeam/mem/epoch/struct.Owned.html' title='crossbeam::mem::epoch::Owned'>Owned</a>&lt;T&gt;&gt;, ord: <a class='enum' href='https://doc.rust-lang.org/nightly/core/sync/atomic/enum.Ordering.html' title='core::sync::atomic::Ordering'>Ordering</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='../../../crossbeam/mem/epoch/struct.Owned.html' title='crossbeam::mem::epoch::Owned'>Owned</a>&lt;T&gt;&gt;&gt;</code></h4>
 <div class='docblock'><p>Do a compare-and-set from a <code>Shared</code> to an <code>Owned</code> pointer with the
 given memory ordering.</p>
 
@@ -104,7 +105,7 @@ given memory ordering, immediatley acquiring a new <code>Shared</code> reference
 the previously-owned pointer if successful.</p>
 
 <p>This operation is analogous to <code>store_and_ref</code>.</p>
-</div><h4 id='method.cas_shared' class='method'><code>fn <a href='#method.cas_shared' class='fnname'>cas_shared</a>(&amp;self, old: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='../../../crossbeam/mem/epoch/struct.Shared.html' title='crossbeam::mem::epoch::Shared'>Shared</a>&lt;T&gt;&gt;, new: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='../../../crossbeam/mem/epoch/struct.Shared.html' title='crossbeam::mem::epoch::Shared'>Shared</a>&lt;T&gt;&gt;, ord: <a class='enum' href='https://doc.rust-lang.org/nightly/core/sync/atomic/enum.Ordering.html' title='core::sync::atomic::Ordering'>Ordering</a>) -&gt; <a href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+</div><h4 id='method.cas_shared' class='method'><code>fn <a href='#method.cas_shared' class='fnname'>cas_shared</a>(&amp;self, old: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='../../../crossbeam/mem/epoch/struct.Shared.html' title='crossbeam::mem::epoch::Shared'>Shared</a>&lt;T&gt;&gt;, new: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='../../../crossbeam/mem/epoch/struct.Shared.html' title='crossbeam::mem::epoch::Shared'>Shared</a>&lt;T&gt;&gt;, ord: <a class='enum' href='https://doc.rust-lang.org/nightly/core/sync/atomic/enum.Ordering.html' title='core::sync::atomic::Ordering'>Ordering</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
 <div class='docblock'><p>Do a compare-and-set from a <code>Shared</code> to another <code>Shared</code> pointer with
 the given memory ordering.</p>
 
@@ -172,6 +173,6 @@ the given memory ordering.</p>
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

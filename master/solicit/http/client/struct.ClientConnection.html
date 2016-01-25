@@ -9,6 +9,7 @@
 
     <title>solicit::http::client::ClientConnection - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -45,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-1322' class='srclink' href='../../../src/solicit/http/client/mod.rs.html#176-184' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-1361' class='srclink' href='../../../src/solicit/http/client/mod.rs.html#176-184' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct ClientConnection&lt;S, R, State = <a class='struct' href='../../../solicit/http/session/struct.DefaultSessionState.html' title='solicit::http::session::DefaultSessionState'>DefaultSessionState</a>&lt;<a class='struct' href='../../../solicit/http/session/struct.DefaultStream.html' title='solicit::http::session::DefaultStream'>DefaultStream</a>&gt;&gt; <span class='where'>where S: <a class='trait' href='../../../solicit/http/connection/trait.SendFrame.html' title='solicit::http::connection::SendFrame'>SendFrame</a>, R: <a class='trait' href='../../../solicit/http/connection/trait.ReceiveFrame.html' title='solicit::http::connection::ReceiveFrame'>ReceiveFrame</a>, State: <a class='trait' href='../../../solicit/http/session/trait.SessionState.html' title='solicit::http::session::SessionState'>SessionState</a></span> {
     pub state: State,
     // some fields omitted
@@ -62,16 +63,16 @@ for all its underlying HTTP/2 communication.</p>
 <p>The given <code>state</code> instance will handle the maintenance of the session&#39;s state.</p>
 </div><h4 id='method.scheme' class='method'><code>fn <a href='#method.scheme' class='fnname'>scheme</a>(&amp;self) -&gt; <a class='enum' href='../../../solicit/http/enum.HttpScheme.html' title='solicit::http::HttpScheme'>HttpScheme</a></code></h4>
 <div class='docblock'><p>Returns the scheme of the underlying <code>HttpConnection</code>.</p>
-</div><h4 id='method.init' class='method'><code>fn <a href='#method.init' class='fnname'>init</a>(&amp;mut self) -&gt; <a class='type' href='../../../solicit/http/type.HttpResult.html' title='solicit::http::HttpResult'>HttpResult</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
+</div><h4 id='method.init' class='method'><code>fn <a href='#method.init' class='fnname'>init</a>(&amp;mut self) -&gt; <a class='type' href='../../../solicit/http/type.HttpResult.html' title='solicit::http::HttpResult'>HttpResult</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
 <div class='docblock'><p>Performs the initialization of the <code>ClientConnection</code>.</p>
 
 <p>This means that it expects the next frame that it receives to be the server preface -- i.e.
 a <code>SETTINGS</code> frame. Returns an <code>HttpError</code> if this is not the case.</p>
-</div><h4 id='method.start_request' class='method'><code>fn <a href='#method.start_request' class='fnname'>start_request</a>(&amp;mut self, req: <a class='struct' href='../../../solicit/http/client/struct.RequestStream.html' title='solicit::http::client::RequestStream'>RequestStream</a>&lt;State::Stream&gt;) -&gt; <a class='type' href='../../../solicit/http/type.HttpResult.html' title='solicit::http::HttpResult'>HttpResult</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
+</div><h4 id='method.start_request' class='method'><code>fn <a href='#method.start_request' class='fnname'>start_request</a>(&amp;mut self, req: <a class='struct' href='../../../solicit/http/client/struct.RequestStream.html' title='solicit::http::client::RequestStream'>RequestStream</a>&lt;State::Stream&gt;) -&gt; <a class='type' href='../../../solicit/http/type.HttpResult.html' title='solicit::http::HttpResult'>HttpResult</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
 <div class='docblock'><p>Starts a new request based on the given <code>RequestStream</code>.</p>
 
 <p>For now it does not perform any validation whether the given <code>RequestStream</code> is valid.</p>
-</div><h4 id='method.handle_next_frame' class='method'><code>fn <a href='#method.handle_next_frame' class='fnname'>handle_next_frame</a>(&amp;mut self) -&gt; <a class='type' href='../../../solicit/http/type.HttpResult.html' title='solicit::http::HttpResult'>HttpResult</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
+</div><h4 id='method.handle_next_frame' class='method'><code>fn <a href='#method.handle_next_frame' class='fnname'>handle_next_frame</a>(&amp;mut self) -&gt; <a class='type' href='../../../solicit/http/type.HttpResult.html' title='solicit::http::HttpResult'>HttpResult</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
 <div class='docblock'><p>Fully handles the next incoming frame. Events are passed on to the internal <code>session</code>
 instance.</p>
 </div><h4 id='method.send_next_data' class='method'><code>fn <a href='#method.send_next_data' class='fnname'>send_next_data</a>(&amp;mut self) -&gt; <a class='type' href='../../../solicit/http/type.HttpResult.html' title='solicit::http::HttpResult'>HttpResult</a>&lt;<a class='enum' href='../../../solicit/http/connection/enum.SendStatus.html' title='solicit::http::connection::SendStatus'>SendStatus</a>&gt;</code></h4>
@@ -138,6 +139,6 @@ queued cannot be relied on.</p>
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

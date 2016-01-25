@@ -9,6 +9,7 @@
 
     <title>maidsafe_utilities::thread::RaiiThreadJoiner - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
 
     <link rel="shortcut icon" href="http://maidsafe.net/img/favicon.ico">
@@ -50,7 +51,7 @@
     // some fields omitted
 }</pre><div class='docblock'><p>A RAII style thread joiner. The destruction of an instance of this type will block until
 the thread it is managing has joined.</p>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../maidsafe_utilities/thread/struct.RaiiThreadJoiner.html' title='maidsafe_utilities::thread::RaiiThreadJoiner'>RaiiThreadJoiner</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(joiner: <a class='struct' href='https://doc.rust-lang.org/nightly/std/thread/struct.JoinHandle.html' title='std::thread::JoinHandle'>JoinHandle</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;) -&gt; <a class='struct' href='../../maidsafe_utilities/thread/struct.RaiiThreadJoiner.html' title='maidsafe_utilities::thread::RaiiThreadJoiner'>RaiiThreadJoiner</a></code></h4>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../maidsafe_utilities/thread/struct.RaiiThreadJoiner.html' title='maidsafe_utilities::thread::RaiiThreadJoiner'>RaiiThreadJoiner</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(joiner: <a class='struct' href='https://doc.rust-lang.org/nightly/std/thread/struct.JoinHandle.html' title='std::thread::JoinHandle'>JoinHandle</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;) -&gt; <a class='struct' href='../../maidsafe_utilities/thread/struct.RaiiThreadJoiner.html' title='maidsafe_utilities::thread::RaiiThreadJoiner'>RaiiThreadJoiner</a></code></h4>
 <div class='docblock'><p>Create a new instance of self-managing thread joiner</p>
 </div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Drop.html' title='core::ops::Drop'>Drop</a> for <a class='struct' href='../../maidsafe_utilities/thread/struct.RaiiThreadJoiner.html' title='maidsafe_utilities::thread::RaiiThreadJoiner'>RaiiThreadJoiner</a></code></h3><div class='impl-items'><h4 id='method.drop' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/ops/trait.Drop.html#method.drop' class='fnname'>drop</a>(&amp;mut self)</code></h4>
 </div></section>
@@ -112,6 +113,6 @@ the thread it is managing has joined.</p>
     <script src="../../jquery.js"></script>
     <script src="../../main.js"></script>
     
-    <script async src="../../search-index.js"></script>
+    <script defer src="../../search-index.js"></script>
 </body>
 </html>

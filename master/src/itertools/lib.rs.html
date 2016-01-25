@@ -4,11 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-0a35038f75765ae4/itertools-0.4.6/src/lib.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/itertools-0.4.7/src/lib.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>lib.rs.html -- source</title>
 
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
 
     
@@ -1426,6 +1427,32 @@
 <span id="1384">1384</span>
 <span id="1385">1385</span>
 <span id="1386">1386</span>
+<span id="1387">1387</span>
+<span id="1388">1388</span>
+<span id="1389">1389</span>
+<span id="1390">1390</span>
+<span id="1391">1391</span>
+<span id="1392">1392</span>
+<span id="1393">1393</span>
+<span id="1394">1394</span>
+<span id="1395">1395</span>
+<span id="1396">1396</span>
+<span id="1397">1397</span>
+<span id="1398">1398</span>
+<span id="1399">1399</span>
+<span id="1400">1400</span>
+<span id="1401">1401</span>
+<span id="1402">1402</span>
+<span id="1403">1403</span>
+<span id="1404">1404</span>
+<span id="1405">1405</span>
+<span id="1406">1406</span>
+<span id="1407">1407</span>
+<span id="1408">1408</span>
+<span id="1409">1409</span>
+<span id="1410">1410</span>
+<span id="1411">1411</span>
+<span id="1412">1412</span>
 </pre><pre class='rust '>
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>warn</span>(<span class='ident'>missing_docs</span>)]</span>
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>cfg_attr</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;unstable&quot;</span>,
@@ -1488,12 +1515,14 @@
     <span class='ident'>Coalesce</span>,
     <span class='ident'>MendSlices</span>,
     <span class='ident'>Combinations</span>,
+    <span class='ident'>CombinationsN</span>,
     <span class='ident'>Unique</span>,
     <span class='ident'>UniqueBy</span>,
     <span class='ident'>Flatten</span>,
 };
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;unstable&quot;</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>adaptors</span>::<span class='ident'>EnumerateFrom</span>;
+<span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>diff</span>::{<span class='ident'>diff_with</span>, <span class='ident'>Diff</span>};
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>free</span>::{<span class='ident'>enumerate</span>, <span class='ident'>rev</span>};
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>format</span>::<span class='ident'>Format</span>;
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>groupbylazy</span>::{<span class='ident'>ChunksLazy</span>, <span class='ident'>Chunk</span>, <span class='ident'>Chunks</span>, <span class='ident'>GroupByLazy</span>, <span class='ident'>Group</span>, <span class='ident'>Groups</span>};
@@ -1521,6 +1550,7 @@
 <span class='kw'>mod</span> <span class='ident'>groupbylazy</span>;
 <span class='kw'>mod</span> <span class='ident'>intersperse</span>;
 <span class='kw'>mod</span> <span class='ident'>islice</span>;
+<span class='kw'>mod</span> <span class='ident'>diff</span>;
 <span class='kw'>mod</span> <span class='ident'>linspace</span>;
 <span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>misc</span>;
 <span class='kw'>mod</span> <span class='ident'>pad_tail</span>;
@@ -2225,6 +2255,29 @@
         <span class='ident'>Combinations</span>::<span class='ident'>new</span>(<span class='self'>self</span>)
     }
 
+    <span class='doccomment'>/// Return an iterator adaptor that iterates over the `n`-length combinations of</span>
+    <span class='doccomment'>/// the elements from an iterator.</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// Iterator element type is `Vec&lt;Self::Item&gt;`. The iterator produces a new Vec per iteration,</span>
+    <span class='doccomment'>/// and clones the iterator elements.</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// ```</span>
+    <span class='doccomment'>/// use itertools::Itertools;</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// let it = (1..5).combinations_n(3);</span>
+    <span class='doccomment'>/// itertools::assert_equal(it, vec![</span>
+    <span class='doccomment'>///     vec![1, 2, 3],</span>
+    <span class='doccomment'>///     vec![1, 2, 4],</span>
+    <span class='doccomment'>///     vec![1, 3, 4],</span>
+    <span class='doccomment'>///     vec![2, 3, 4],</span>
+    <span class='doccomment'>///     ]);</span>
+    <span class='doccomment'>/// ```</span>
+    <span class='kw'>fn</span> <span class='ident'>combinations_n</span>(<span class='self'>self</span>, <span class='ident'>n</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>CombinationsN</span><span class='op'>&lt;</span><span class='kw'>Self</span><span class='op'>&gt;</span> <span class='kw'>where</span>
+        <span class='kw'>Self</span>: <span class='ident'>Sized</span>, <span class='ident'>Self</span>::<span class='ident'>Item</span>: <span class='ident'>Clone</span>
+    {
+        <span class='ident'>CombinationsN</span>::<span class='ident'>new</span>(<span class='self'>self</span>, <span class='ident'>n</span>)
+    }
+
     <span class='doccomment'>/// Return an iterator adaptor that pads the sequence to a minimum length of</span>
     <span class='doccomment'>/// `min` by filling missing elements using a closure `f`.</span>
     <span class='doccomment'>///</span>
@@ -2873,6 +2926,6 @@
     <script src="../../jquery.js"></script>
     <script src="../../main.js"></script>
     
-    <script async src="../../search-index.js"></script>
+    <script defer src="../../search-index.js"></script>
 </body>
 </html>

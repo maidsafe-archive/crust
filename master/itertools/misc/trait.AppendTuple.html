@@ -9,6 +9,7 @@
 
     <title>itertools::misc::AppendTuple - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
 
     
@@ -45,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-1140' class='srclink' href='../../src/itertools/misc.rs.html#26-31' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-1241' class='srclink' href='../../src/itertools/misc.rs.html#26-31' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait AppendTuple&lt;X&gt; {
     type Result;
     fn <a href='#tymethod.append' class='fnname'>append</a>(self, x: X) -&gt; Self::<a class='trait' href='../../itertools/misc/trait.AppendTuple.html' title='itertools::misc::AppendTuple'>Result</a>;
@@ -62,19 +63,19 @@ used for implementing <code>iproduct!</code>.</p>
 </div></div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
-    <li><code>impl&lt;T&gt; <a class='trait' href='../../itertools/misc/trait.AppendTuple.html' title='itertools::misc::AppendTuple'>AppendTuple</a>&lt;T&gt; for <a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a></code></li>
-<li><code>impl&lt;L, T&gt; <a class='trait' href='../../itertools/misc/trait.AppendTuple.html' title='itertools::misc::AppendTuple'>AppendTuple</a>&lt;T&gt; for <a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(L,)</a></code></li>
-<li><code>impl&lt;K, L, T&gt; <a class='trait' href='../../itertools/misc/trait.AppendTuple.html' title='itertools::misc::AppendTuple'>AppendTuple</a>&lt;T&gt; for <a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(K, L)</a></code></li>
-<li><code>impl&lt;J, K, L, T&gt; <a class='trait' href='../../itertools/misc/trait.AppendTuple.html' title='itertools::misc::AppendTuple'>AppendTuple</a>&lt;T&gt; for <a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(J, K, L)</a></code></li>
-<li><code>impl&lt;I, J, K, L, T&gt; <a class='trait' href='../../itertools/misc/trait.AppendTuple.html' title='itertools::misc::AppendTuple'>AppendTuple</a>&lt;T&gt; for <a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(I, J, K, L)</a></code></li>
-<li><code>impl&lt;H, I, J, K, L, T&gt; <a class='trait' href='../../itertools/misc/trait.AppendTuple.html' title='itertools::misc::AppendTuple'>AppendTuple</a>&lt;T&gt; for <a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(H, I, J, K, L)</a></code></li>
-<li><code>impl&lt;G, H, I, J, K, L, T&gt; <a class='trait' href='../../itertools/misc/trait.AppendTuple.html' title='itertools::misc::AppendTuple'>AppendTuple</a>&lt;T&gt; for <a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(G, H, I, J, K, L)</a></code></li>
-<li><code>impl&lt;F, G, H, I, J, K, L, T&gt; <a class='trait' href='../../itertools/misc/trait.AppendTuple.html' title='itertools::misc::AppendTuple'>AppendTuple</a>&lt;T&gt; for <a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(F, G, H, I, J, K, L)</a></code></li>
-<li><code>impl&lt;E, F, G, H, I, J, K, L, T&gt; <a class='trait' href='../../itertools/misc/trait.AppendTuple.html' title='itertools::misc::AppendTuple'>AppendTuple</a>&lt;T&gt; for <a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(E, F, G, H, I, J, K, L)</a></code></li>
-<li><code>impl&lt;D, E, F, G, H, I, J, K, L, T&gt; <a class='trait' href='../../itertools/misc/trait.AppendTuple.html' title='itertools::misc::AppendTuple'>AppendTuple</a>&lt;T&gt; for <a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(D, E, F, G, H, I, J, K, L)</a></code></li>
-<li><code>impl&lt;C, D, E, F, G, H, I, J, K, L, T&gt; <a class='trait' href='../../itertools/misc/trait.AppendTuple.html' title='itertools::misc::AppendTuple'>AppendTuple</a>&lt;T&gt; for <a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(C, D, E, F, G, H, I, J, K, L)</a></code></li>
-<li><code>impl&lt;B, C, D, E, F, G, H, I, J, K, L, T&gt; <a class='trait' href='../../itertools/misc/trait.AppendTuple.html' title='itertools::misc::AppendTuple'>AppendTuple</a>&lt;T&gt; for <a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(B, C, D, E, F, G, H, I, J, K, L)</a></code></li>
-<li><code>impl&lt;A, B, C, D, E, F, G, H, I, J, K, L, T&gt; <a class='trait' href='../../itertools/misc/trait.AppendTuple.html' title='itertools::misc::AppendTuple'>AppendTuple</a>&lt;T&gt; for <a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(A, B, C, D, E, F, G, H, I, J, K, L)</a></code></li>
+    <li><code>impl&lt;T&gt; <a class='trait' href='../../itertools/misc/trait.AppendTuple.html' title='itertools::misc::AppendTuple'>AppendTuple</a>&lt;T&gt; for <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a></code></li>
+<li><code>impl&lt;L, T&gt; <a class='trait' href='../../itertools/misc/trait.AppendTuple.html' title='itertools::misc::AppendTuple'>AppendTuple</a>&lt;T&gt; for <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(L,)</a></code></li>
+<li><code>impl&lt;K, L, T&gt; <a class='trait' href='../../itertools/misc/trait.AppendTuple.html' title='itertools::misc::AppendTuple'>AppendTuple</a>&lt;T&gt; for <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(K, L)</a></code></li>
+<li><code>impl&lt;J, K, L, T&gt; <a class='trait' href='../../itertools/misc/trait.AppendTuple.html' title='itertools::misc::AppendTuple'>AppendTuple</a>&lt;T&gt; for <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(J, K, L)</a></code></li>
+<li><code>impl&lt;I, J, K, L, T&gt; <a class='trait' href='../../itertools/misc/trait.AppendTuple.html' title='itertools::misc::AppendTuple'>AppendTuple</a>&lt;T&gt; for <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(I, J, K, L)</a></code></li>
+<li><code>impl&lt;H, I, J, K, L, T&gt; <a class='trait' href='../../itertools/misc/trait.AppendTuple.html' title='itertools::misc::AppendTuple'>AppendTuple</a>&lt;T&gt; for <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(H, I, J, K, L)</a></code></li>
+<li><code>impl&lt;G, H, I, J, K, L, T&gt; <a class='trait' href='../../itertools/misc/trait.AppendTuple.html' title='itertools::misc::AppendTuple'>AppendTuple</a>&lt;T&gt; for <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(G, H, I, J, K, L)</a></code></li>
+<li><code>impl&lt;F, G, H, I, J, K, L, T&gt; <a class='trait' href='../../itertools/misc/trait.AppendTuple.html' title='itertools::misc::AppendTuple'>AppendTuple</a>&lt;T&gt; for <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(F, G, H, I, J, K, L)</a></code></li>
+<li><code>impl&lt;E, F, G, H, I, J, K, L, T&gt; <a class='trait' href='../../itertools/misc/trait.AppendTuple.html' title='itertools::misc::AppendTuple'>AppendTuple</a>&lt;T&gt; for <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(E, F, G, H, I, J, K, L)</a></code></li>
+<li><code>impl&lt;D, E, F, G, H, I, J, K, L, T&gt; <a class='trait' href='../../itertools/misc/trait.AppendTuple.html' title='itertools::misc::AppendTuple'>AppendTuple</a>&lt;T&gt; for <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(D, E, F, G, H, I, J, K, L)</a></code></li>
+<li><code>impl&lt;C, D, E, F, G, H, I, J, K, L, T&gt; <a class='trait' href='../../itertools/misc/trait.AppendTuple.html' title='itertools::misc::AppendTuple'>AppendTuple</a>&lt;T&gt; for <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(C, D, E, F, G, H, I, J, K, L)</a></code></li>
+<li><code>impl&lt;B, C, D, E, F, G, H, I, J, K, L, T&gt; <a class='trait' href='../../itertools/misc/trait.AppendTuple.html' title='itertools::misc::AppendTuple'>AppendTuple</a>&lt;T&gt; for <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(B, C, D, E, F, G, H, I, J, K, L)</a></code></li>
+<li><code>impl&lt;A, B, C, D, E, F, G, H, I, J, K, L, T&gt; <a class='trait' href='../../itertools/misc/trait.AppendTuple.html' title='itertools::misc::AppendTuple'>AppendTuple</a>&lt;T&gt; for <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(A, B, C, D, E, F, G, H, I, J, K, L)</a></code></li>
 </ul><script type="text/javascript" async
                               src="../../implementors/itertools/misc/trait.AppendTuple.js">
                       </script></section>
@@ -136,6 +137,6 @@ used for implementing <code>iproduct!</code>.</p>
     <script src="../../jquery.js"></script>
     <script src="../../main.js"></script>
     
-    <script async src="../../search-index.js"></script>
+    <script defer src="../../search-index.js"></script>
 </body>
 </html>

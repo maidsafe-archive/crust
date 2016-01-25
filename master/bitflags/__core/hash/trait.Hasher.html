@@ -9,6 +9,7 @@
 
     <title>bitflags::__core::hash::Hasher - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -45,40 +46,40 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-33185' class='srclink' href='https://doc.rust-lang.org/nightly/core/hash/trait.Hasher.html?gotosrc=33185' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-33104' class='srclink' href='https://doc.rust-lang.org/nightly/core/hash/trait.Hasher.html?gotosrc=33104' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait Hasher {
-    fn <a href='#tymethod.finish' class='fnname'>finish</a>(&amp;self) -&gt; <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.u64.html'>u64</a>;
-    fn <a href='#tymethod.write' class='fnname'>write</a>(&amp;mut self, bytes: <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>&amp;[</a><a href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a><a href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>]</a>);
+    fn <a href='#tymethod.finish' class='fnname'>finish</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u64.html'>u64</a>;
+    fn <a href='#tymethod.write' class='fnname'>write</a>(&amp;mut self, bytes: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>&amp;[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>]</a>);
 
-    fn <a href='#method.write_u8' class='fnname'>write_u8</a>(&amp;mut self, i: <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a>) { ... }
-    fn <a href='#method.write_u16' class='fnname'>write_u16</a>(&amp;mut self, i: <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.u16.html'>u16</a>) { ... }
-    fn <a href='#method.write_u32' class='fnname'>write_u32</a>(&amp;mut self, i: <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.u32.html'>u32</a>) { ... }
-    fn <a href='#method.write_u64' class='fnname'>write_u64</a>(&amp;mut self, i: <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.u64.html'>u64</a>) { ... }
-    fn <a href='#method.write_usize' class='fnname'>write_usize</a>(&amp;mut self, i: <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>) { ... }
-    fn <a href='#method.write_i8' class='fnname'>write_i8</a>(&amp;mut self, i: <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.i8.html'>i8</a>) { ... }
-    fn <a href='#method.write_i16' class='fnname'>write_i16</a>(&amp;mut self, i: <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.i16.html'>i16</a>) { ... }
-    fn <a href='#method.write_i32' class='fnname'>write_i32</a>(&amp;mut self, i: <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.i32.html'>i32</a>) { ... }
-    fn <a href='#method.write_i64' class='fnname'>write_i64</a>(&amp;mut self, i: <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.i64.html'>i64</a>) { ... }
-    fn <a href='#method.write_isize' class='fnname'>write_isize</a>(&amp;mut self, i: <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.isize.html'>isize</a>) { ... }
+    fn <a href='#method.write_u8' class='fnname'>write_u8</a>(&amp;mut self, i: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a>) { ... }
+    fn <a href='#method.write_u16' class='fnname'>write_u16</a>(&amp;mut self, i: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u16.html'>u16</a>) { ... }
+    fn <a href='#method.write_u32' class='fnname'>write_u32</a>(&amp;mut self, i: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u32.html'>u32</a>) { ... }
+    fn <a href='#method.write_u64' class='fnname'>write_u64</a>(&amp;mut self, i: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u64.html'>u64</a>) { ... }
+    fn <a href='#method.write_usize' class='fnname'>write_usize</a>(&amp;mut self, i: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>) { ... }
+    fn <a href='#method.write_i8' class='fnname'>write_i8</a>(&amp;mut self, i: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.i8.html'>i8</a>) { ... }
+    fn <a href='#method.write_i16' class='fnname'>write_i16</a>(&amp;mut self, i: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.i16.html'>i16</a>) { ... }
+    fn <a href='#method.write_i32' class='fnname'>write_i32</a>(&amp;mut self, i: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.i32.html'>i32</a>) { ... }
+    fn <a href='#method.write_i64' class='fnname'>write_i64</a>(&amp;mut self, i: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.i64.html'>i64</a>) { ... }
+    fn <a href='#method.write_isize' class='fnname'>write_isize</a>(&amp;mut self, i: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.isize.html'>isize</a>) { ... }
 }</pre><div class='docblock'><p>A trait which represents the ability to hash an arbitrary stream of bytes.</p>
 </div>
             <h2 id='required-methods'>Required Methods</h2>
             <div class='methods'>
-        <h3 id='tymethod.finish' class='method stab '><code>fn <a href='#tymethod.finish' class='fnname'>finish</a>(&amp;self) -&gt; <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.u64.html'>u64</a></code></h3><div class='docblock'><p>Completes a round of hashing, producing the output hash generated.</p>
-</div><h3 id='tymethod.write' class='method stab '><code>fn <a href='#tymethod.write' class='fnname'>write</a>(&amp;mut self, bytes: <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>&amp;[</a><a href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a><a href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>]</a>)</code></h3><div class='docblock'><p>Writes some data into this <code>Hasher</code></p>
+        <h3 id='tymethod.finish' class='method stab '><code>fn <a href='#tymethod.finish' class='fnname'>finish</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u64.html'>u64</a></code></h3><div class='docblock'><p>Completes a round of hashing, producing the output hash generated.</p>
+</div><h3 id='tymethod.write' class='method stab '><code>fn <a href='#tymethod.write' class='fnname'>write</a>(&amp;mut self, bytes: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>&amp;[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>]</a>)</code></h3><div class='docblock'><p>Writes some data into this <code>Hasher</code></p>
 </div></div>
             <h2 id='provided-methods'>Provided Methods</h2>
             <div class='methods'>
-        <h3 id='method.write_u8' class='method stab '><code>fn <a href='#method.write_u8' class='fnname'>write_u8</a>(&amp;mut self, i: <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a>)</code></h3><div class='docblock'><p>Write a single <code>u8</code> into this hasher</p>
-</div><h3 id='method.write_u16' class='method stab '><code>fn <a href='#method.write_u16' class='fnname'>write_u16</a>(&amp;mut self, i: <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.u16.html'>u16</a>)</code></h3><div class='docblock'><p>Write a single <code>u16</code> into this hasher.</p>
-</div><h3 id='method.write_u32' class='method stab '><code>fn <a href='#method.write_u32' class='fnname'>write_u32</a>(&amp;mut self, i: <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.u32.html'>u32</a>)</code></h3><div class='docblock'><p>Write a single <code>u32</code> into this hasher.</p>
-</div><h3 id='method.write_u64' class='method stab '><code>fn <a href='#method.write_u64' class='fnname'>write_u64</a>(&amp;mut self, i: <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.u64.html'>u64</a>)</code></h3><div class='docblock'><p>Write a single <code>u64</code> into this hasher.</p>
-</div><h3 id='method.write_usize' class='method stab '><code>fn <a href='#method.write_usize' class='fnname'>write_usize</a>(&amp;mut self, i: <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>)</code></h3><div class='docblock'><p>Write a single <code>usize</code> into this hasher.</p>
-</div><h3 id='method.write_i8' class='method stab '><code>fn <a href='#method.write_i8' class='fnname'>write_i8</a>(&amp;mut self, i: <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.i8.html'>i8</a>)</code></h3><div class='docblock'><p>Write a single <code>i8</code> into this hasher.</p>
-</div><h3 id='method.write_i16' class='method stab '><code>fn <a href='#method.write_i16' class='fnname'>write_i16</a>(&amp;mut self, i: <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.i16.html'>i16</a>)</code></h3><div class='docblock'><p>Write a single <code>i16</code> into this hasher.</p>
-</div><h3 id='method.write_i32' class='method stab '><code>fn <a href='#method.write_i32' class='fnname'>write_i32</a>(&amp;mut self, i: <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.i32.html'>i32</a>)</code></h3><div class='docblock'><p>Write a single <code>i32</code> into this hasher.</p>
-</div><h3 id='method.write_i64' class='method stab '><code>fn <a href='#method.write_i64' class='fnname'>write_i64</a>(&amp;mut self, i: <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.i64.html'>i64</a>)</code></h3><div class='docblock'><p>Write a single <code>i64</code> into this hasher.</p>
-</div><h3 id='method.write_isize' class='method stab '><code>fn <a href='#method.write_isize' class='fnname'>write_isize</a>(&amp;mut self, i: <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.isize.html'>isize</a>)</code></h3><div class='docblock'><p>Write a single <code>isize</code> into this hasher.</p>
+        <h3 id='method.write_u8' class='method stab '><code>fn <a href='#method.write_u8' class='fnname'>write_u8</a>(&amp;mut self, i: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a>)</code></h3><div class='docblock'><p>Write a single <code>u8</code> into this hasher</p>
+</div><h3 id='method.write_u16' class='method stab '><code>fn <a href='#method.write_u16' class='fnname'>write_u16</a>(&amp;mut self, i: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u16.html'>u16</a>)</code></h3><div class='docblock'><p>Write a single <code>u16</code> into this hasher.</p>
+</div><h3 id='method.write_u32' class='method stab '><code>fn <a href='#method.write_u32' class='fnname'>write_u32</a>(&amp;mut self, i: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u32.html'>u32</a>)</code></h3><div class='docblock'><p>Write a single <code>u32</code> into this hasher.</p>
+</div><h3 id='method.write_u64' class='method stab '><code>fn <a href='#method.write_u64' class='fnname'>write_u64</a>(&amp;mut self, i: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u64.html'>u64</a>)</code></h3><div class='docblock'><p>Write a single <code>u64</code> into this hasher.</p>
+</div><h3 id='method.write_usize' class='method stab '><code>fn <a href='#method.write_usize' class='fnname'>write_usize</a>(&amp;mut self, i: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>)</code></h3><div class='docblock'><p>Write a single <code>usize</code> into this hasher.</p>
+</div><h3 id='method.write_i8' class='method stab '><code>fn <a href='#method.write_i8' class='fnname'>write_i8</a>(&amp;mut self, i: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.i8.html'>i8</a>)</code></h3><div class='docblock'><p>Write a single <code>i8</code> into this hasher.</p>
+</div><h3 id='method.write_i16' class='method stab '><code>fn <a href='#method.write_i16' class='fnname'>write_i16</a>(&amp;mut self, i: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.i16.html'>i16</a>)</code></h3><div class='docblock'><p>Write a single <code>i16</code> into this hasher.</p>
+</div><h3 id='method.write_i32' class='method stab '><code>fn <a href='#method.write_i32' class='fnname'>write_i32</a>(&amp;mut self, i: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.i32.html'>i32</a>)</code></h3><div class='docblock'><p>Write a single <code>i32</code> into this hasher.</p>
+</div><h3 id='method.write_i64' class='method stab '><code>fn <a href='#method.write_i64' class='fnname'>write_i64</a>(&amp;mut self, i: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.i64.html'>i64</a>)</code></h3><div class='docblock'><p>Write a single <code>i64</code> into this hasher.</p>
+</div><h3 id='method.write_isize' class='method stab '><code>fn <a href='#method.write_isize' class='fnname'>write_isize</a>(&amp;mut self, i: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.isize.html'>isize</a>)</code></h3><div class='docblock'><p>Write a single <code>isize</code> into this hasher.</p>
 </div></div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
@@ -144,6 +145,6 @@
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

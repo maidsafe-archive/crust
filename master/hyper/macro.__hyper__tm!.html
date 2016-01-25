@@ -9,6 +9,7 @@
 
     <title>hyper::__hyper__tm! - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../main.css">
 
     
@@ -45,23 +46,10 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-7070' class='srclink' href='../src/hyper/header/common/mod.rs.html#106-121' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-7314' class='srclink' href='../src/hyper/header/common/mod.rs.html#106-121' title='goto source code'>[src]</a></span></h1>
 <pre class='rust macro'>
 <span class='macro'>macro_rules</span><span class='macro'>!</span> <span class='ident'>__hyper__tm</span> {
-    (<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>id</span>:<span class='ident'>ident</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>tm</span>:<span class='ident'>ident</span>{$(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>tf</span>:<span class='ident'>item</span>)<span class='op'>*</span>}) <span class='op'>=&gt;</span> {
-        <span class='attribute'>#[<span class='ident'>allow</span>(<span class='ident'>unused_imports</span>)]</span>
-        <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
-        <span class='kw'>mod</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>tm</span>{
-            <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>str</span>;
-            <span class='kw'>use</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>crate</span>::<span class='ident'>header</span>::<span class='op'>*</span>;
-            <span class='kw'>use</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>crate</span>::<span class='ident'>mime</span>::<span class='op'>*</span>;
-            <span class='kw'>use</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>crate</span>::<span class='ident'>language_tags</span>::<span class='op'>*</span>;
-            <span class='kw'>use</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>crate</span>::<span class='ident'>method</span>::<span class='ident'>Method</span>;
-            <span class='kw'>use</span> <span class='ident'>super</span>::<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>id</span> <span class='kw'>as</span> <span class='ident'>HeaderField</span>;
-            $(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>tf</span>)<span class='op'>*</span>
-        }
-
-    }
+    (<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>id</span>:<span class='ident'>ident</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>tm</span>:<span class='ident'>ident</span>{$(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>tf</span>:<span class='ident'>item</span>)<span class='op'>*</span>}) <span class='op'>=&gt;</span> { ... };
 }</pre>
 </section>
     <section id='search' class="content hidden"></section>
@@ -122,6 +110,6 @@
     <script src="../jquery.js"></script>
     <script src="../main.js"></script>
     
-    <script async src="../search-index.js"></script>
+    <script defer src="../search-index.js"></script>
 </body>
 </html>

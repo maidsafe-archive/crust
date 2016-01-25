@@ -9,6 +9,7 @@
 
     <title>hyper - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../main.css">
 
     
@@ -66,7 +67,7 @@ possible, and should not irrevocably hide any information from its users.</p>
 can be found in <code>src</code> directly - this includes <code>NetworkStream</code>s, <code>Method</code>s,
 <code>StatusCode</code>, and so on.</p>
 
-<h4 id='methods' class='section-header'><a href='#methods'>Methods</a></h4>
+<h4 id='methods-1' class='section-header'><a href='#methods-1'>Methods</a></h4>
 <p>Methods are represented as a single <code>enum</code> to remain as simple as possible.
 Extension Methods are represented as raw <code>String</code>s. A method&#39;s safety and
 idempotence can be accessed using the <code>safe</code> and <code>idempotent</code> methods.</p>
@@ -384,6 +385,6 @@ implement <code>Reader</code> and can be read to get the data out of a <code>Res
     <script src="../jquery.js"></script>
     <script src="../main.js"></script>
     
-    <script async src="../search-index.js"></script>
+    <script defer src="../search-index.js"></script>
 </body>
 </html>

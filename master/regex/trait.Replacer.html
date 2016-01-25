@@ -9,6 +9,7 @@
 
     <title>regex::Replacer - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../main.css">
 
     <link rel="shortcut icon" href="https://www.rust-lang.org/favicon.ico">
@@ -45,16 +46,16 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-1527' class='srclink' href='../src/regex/re.rs.html#713-723' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-1574' class='srclink' href='../src/regex/re.rs.html#713-723' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait Replacer {
-    fn <a href='#tymethod.reg_replace' class='fnname'>reg_replace</a>(&amp;mut self, caps: &amp;<a class='struct' href='../regex/struct.Captures.html' title='regex::Captures'>Captures</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/collections/borrow/enum.Cow.html' title='collections::borrow::Cow'>Cow</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;;
+    fn <a href='#tymethod.reg_replace' class='fnname'>reg_replace</a>(&amp;mut self, caps: &amp;<a class='struct' href='../regex/struct.Captures.html' title='regex::Captures'>Captures</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/collections/borrow/enum.Cow.html' title='collections::borrow::Cow'>Cow</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;;
 
-    fn <a href='#method.no_expand' class='fnname'>no_expand</a>(&amp;mut self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/collections/borrow/enum.Cow.html' title='collections::borrow::Cow'>Cow</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;&gt; { ... }
+    fn <a href='#method.no_expand' class='fnname'>no_expand</a>(&amp;mut self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/collections/borrow/enum.Cow.html' title='collections::borrow::Cow'>Cow</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;&gt; { ... }
 }</pre><div class='docblock'><p>Replacer describes types that can be used to replace matches in a string.</p>
 </div>
             <h2 id='required-methods'>Required Methods</h2>
             <div class='methods'>
-        <h3 id='tymethod.reg_replace' class='method stab '><code>fn <a href='#tymethod.reg_replace' class='fnname'>reg_replace</a>(&amp;mut self, caps: &amp;<a class='struct' href='../regex/struct.Captures.html' title='regex::Captures'>Captures</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/collections/borrow/enum.Cow.html' title='collections::borrow::Cow'>Cow</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;</code></h3><div class='docblock'><p>Returns a possibly owned string that is used to replace the match
+        <h3 id='tymethod.reg_replace' class='method stab '><code>fn <a href='#tymethod.reg_replace' class='fnname'>reg_replace</a>(&amp;mut self, caps: &amp;<a class='struct' href='../regex/struct.Captures.html' title='regex::Captures'>Captures</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/collections/borrow/enum.Cow.html' title='collections::borrow::Cow'>Cow</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;</code></h3><div class='docblock'><p>Returns a possibly owned string that is used to replace the match
 corresponding to the <code>caps</code> capture group.</p>
 
 <p>The <code>&#39;a</code> lifetime refers to the lifetime of a borrowed string when
@@ -62,12 +63,12 @@ a new owned string isn&#39;t needed (e.g., for <code>NoExpand</code>).</p>
 </div></div>
             <h2 id='provided-methods'>Provided Methods</h2>
             <div class='methods'>
-        <h3 id='method.no_expand' class='method stab '><code>fn <a href='#method.no_expand' class='fnname'>no_expand</a>(&amp;mut self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/collections/borrow/enum.Cow.html' title='collections::borrow::Cow'>Cow</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;&gt;</code></h3><div class='docblock'><p>Returns a possibly owned string that never needs expansion.</p>
+        <h3 id='method.no_expand' class='method stab '><code>fn <a href='#method.no_expand' class='fnname'>no_expand</a>(&amp;mut self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/collections/borrow/enum.Cow.html' title='collections::borrow::Cow'>Cow</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;&gt;</code></h3><div class='docblock'><p>Returns a possibly owned string that never needs expansion.</p>
 </div></div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
     <li><code>impl&lt;'t&gt; <a class='trait' href='../regex/trait.Replacer.html' title='regex::Replacer'>Replacer</a> for <a class='struct' href='../regex/struct.NoExpand.html' title='regex::NoExpand'>NoExpand</a>&lt;'t&gt;</code></li>
-<li><code>impl&lt;'t&gt; <a class='trait' href='../regex/trait.Replacer.html' title='regex::Replacer'>Replacer</a> for &amp;'t <a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a></code></li>
+<li><code>impl&lt;'t&gt; <a class='trait' href='../regex/trait.Replacer.html' title='regex::Replacer'>Replacer</a> for &amp;'t <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a></code></li>
 </ul><script type="text/javascript" async
                               src="../implementors/regex/trait.Replacer.js">
                       </script></section>
@@ -129,6 +130,6 @@ a new owned string isn&#39;t needed (e.g., for <code>NoExpand</code>).</p>
     <script src="../jquery.js"></script>
     <script src="../main.js"></script>
     
-    <script async src="../search-index.js"></script>
+    <script defer src="../search-index.js"></script>
 </body>
 </html>

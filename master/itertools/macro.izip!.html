@@ -9,6 +9,7 @@
 
     <title>itertools::izip! - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../main.css">
 
     
@@ -45,17 +46,11 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-3015' class='srclink' href='../src/itertools/lib.rs.html#172-181' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-3122' class='srclink' href='../src/itertools/lib.rs.html#175-184' title='goto source code'>[src]</a></span></h1>
 <pre class='rust macro'>
 <span class='macro'>macro_rules</span><span class='macro'>!</span> <span class='ident'>izip</span> {
-    (<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>I</span>:<span class='ident'>expr</span>) <span class='op'>=&gt;</span> (
-        (::<span class='ident'>std</span>::<span class='ident'>iter</span>::<span class='ident'>IntoIterator</span>::<span class='ident'>into_iter</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>I</span>))
-    );
-    ($(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>I</span>:<span class='ident'>expr</span>),<span class='op'>*</span>) <span class='op'>=&gt;</span> (
-        {
-            <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>crate</span>::<span class='ident'>Zip</span>::<span class='ident'>new</span>(($(<span class='macro'>izip</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>I</span>)),<span class='op'>*</span>))
-        }
-    );
+    (<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>I</span>:<span class='ident'>expr</span>) <span class='op'>=&gt;</span> { ... };
+    ($(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>I</span>:<span class='ident'>expr</span>),<span class='op'>*</span>) <span class='op'>=&gt;</span> { ... };
 }</pre>
 <div class='docblock'><p>Create an iterator running multiple iterators in lockstep.</p>
 
@@ -136,6 +131,6 @@ from iterators <code>(I, J, ..., M)</code> implementing <code>I: Iterator&lt;A&g
     <script src="../jquery.js"></script>
     <script src="../main.js"></script>
     
-    <script async src="../search-index.js"></script>
+    <script defer src="../search-index.js"></script>
 </body>
 </html>

@@ -9,6 +9,7 @@
 
     <title>bitflags::__core::intrinsics::copy_nonoverlapping - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -45,8 +46,8 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-4802' class='srclink' href='https://doc.rust-lang.org/nightly/core/intrinsics/fn.copy_nonoverlapping.html?gotosrc=4802' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub unsafe extern "rust-intrinsic" fn copy_nonoverlapping&lt;T&gt;(src: <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*const T</a>, dst: <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut T</a>, count: <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>)</pre><div class='docblock'><p>Copies <code>count * size_of&lt;T&gt;</code> bytes from <code>src</code> to <code>dst</code>. The source
+        </span><a id='src-4840' class='srclink' href='https://doc.rust-lang.org/nightly/core/intrinsics/fn.copy_nonoverlapping.html?gotosrc=4840' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub unsafe extern "rust-intrinsic" fn copy_nonoverlapping&lt;T&gt;(src: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*const T</a>, dst: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut T</a>, count: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>)</pre><div class='docblock'><p>Copies <code>count * size_of&lt;T&gt;</code> bytes from <code>src</code> to <code>dst</code>. The source
 and destination may <em>not</em> overlap.</p>
 
 <p><code>copy_nonoverlapping</code> is semantically equivalent to C&#39;s <code>memcpy</code>.</p>
@@ -139,6 +140,6 @@ of <code>src</code> from being dropped or used.</p>
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

@@ -9,6 +9,7 @@
 
     <title>bitflags::__core::char - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -46,32 +47,27 @@
                 [<span class='inner'>&#x2212;</span>]
             </a>
         </span><a id='src-253' class='srclink' href='https://doc.rust-lang.org/nightly/rustc_unicode/char/index.html?gotosrc=253' title='goto source code'>[src]</a></span></h1>
-<div class='docblock'><p>A Unicode scalar value</p>
+<div class='docblock'><p>A character type.</p>
 
-<p>This module provides the <code>CharExt</code> trait, as well as its
-implementation for the primitive <code>char</code> type, in order to allow
-basic character manipulation.</p>
+<p>The <code>char</code> type represents a single character. More specifically, since
+&#39;character&#39; isn&#39;t a well-defined concept in Unicode, <code>char</code> is a &#39;<a href="http://www.unicode.org/glossary/#unicode_scalar_value">Unicode
+scalar value</a>&#39;, which is similar to, but not the same as, a &#39;<a href="http://www.unicode.org/glossary/#code_point">Unicode code
+point</a>&#39;.</p>
 
-<p>A <code>char</code> represents a
-<em><a href="http://www.unicode.org/glossary/#unicode_scalar_value">Unicode scalar
-value</a></em>, as it can
-contain any Unicode code point except high-surrogate and low-surrogate code
-points.</p>
+<p>This module exists for technical reasons, the primary documentation for
+<code>char</code> is directly on <a href="../primitive.char.html">the <code>char</code> primitive type</a>
+itself.</p>
 
-<p>As such, only values in the ranges [0x0,0xD7FF] and [0xE000,0x10FFFF]
-(inclusive) are allowed. A <code>char</code> can always be safely cast to a <code>u32</code>;
-however the converse is not always true due to the above range limits
-and, as such, should be performed via the <code>from_u32</code> function.</p>
-
-<p><em><a href="../primitive.char.html">See also the <code>char</code> primitive type</a>.</em></p>
+<p>This module is the home of the iterator implementations for the iterators
+implemented on <code>char</code>, as well as some useful constants and conversion
+functions that convert various types to <code>char</code>.</p>
 </div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
                     <tr class=' module-item'>
                         <td><a class='struct' href='struct.EscapeDefault.html'
                                title='bitflags::__core::char::EscapeDefault'>EscapeDefault</a></td>
                         <td class='docblock short'>
-                             <p>An iterator over the characters that represent a <code>char</code>, escaped
-for maximum portability.</p>
+                             <p>An iterator that yields the literal escape code of a <code>char</code>.</p>
 
                         </td>
                     </tr>
@@ -80,8 +76,8 @@ for maximum portability.</p>
                         <td><a class='struct' href='struct.EscapeUnicode.html'
                                title='bitflags::__core::char::EscapeUnicode'>EscapeUnicode</a></td>
                         <td class='docblock short'>
-                             <p>An iterator over the characters that represent a <code>char</code>, as escaped by
-Rust&#39;s unicode escaping rules.</p>
+                             <p>Returns an iterator that yields the hexadecimal Unicode escape of a
+character, as <code>char</code>s.</p>
 
                         </td>
                     </tr>
@@ -90,9 +86,7 @@ Rust&#39;s unicode escaping rules.</p>
                         <td><a class='struct' href='struct.ToLowercase.html'
                                title='bitflags::__core::char::ToLowercase'>ToLowercase</a></td>
                         <td class='docblock short'>
-                             <p>An iterator over the lowercase mapping of a given character, returned from
-the <a href="../primitive.char.html#method.to_lowercase"><code>to_lowercase</code> method</a> on
-characters.</p>
+                             <p>Returns an iterator that yields the lowercase equivalent of a <code>char</code>.</p>
 
                         </td>
                     </tr>
@@ -101,9 +95,7 @@ characters.</p>
                         <td><a class='struct' href='struct.ToUppercase.html'
                                title='bitflags::__core::char::ToUppercase'>ToUppercase</a></td>
                         <td class='docblock short'>
-                             <p>An iterator over the uppercase mapping of a given character, returned from
-the <a href="../primitive.char.html#method.to_uppercase"><code>to_uppercase</code> method</a> on
-characters.</p>
+                             <p>Returns an iterator that yields the uppercase equivalent of a <code>char</code>.</p>
 
                         </td>
                     </tr>
@@ -122,7 +114,7 @@ characters.</p>
                         <td><a class='constant' href='constant.MAX.html'
                                title='bitflags::__core::char::MAX'>MAX</a></td>
                         <td class='docblock short'>
-                             <p>The highest valid code point</p>
+                             <p>The highest valid code point a <code>char</code> can have.</p>
 
                         </td>
                     </tr>
@@ -153,7 +145,7 @@ that the unicode parts of <code>CharExt</code> and <code>UnicodeStrPrelude</code
                         <td><a class='fn' href='fn.from_digit.html'
                                title='bitflags::__core::char::from_digit'>from_digit</a></td>
                         <td class='docblock short'>
-                             <p>Converts a number to the character representing it.</p>
+                             <p>Converts a digit in the given radix to a <code>char</code>.</p>
 
                         </td>
                     </tr>
@@ -162,7 +154,7 @@ that the unicode parts of <code>CharExt</code> and <code>UnicodeStrPrelude</code
                         <td><a class='fn' href='fn.from_u32.html'
                                title='bitflags::__core::char::from_u32'>from_u32</a></td>
                         <td class='docblock short'>
-                             <p>Converts a <code>u32</code> to an <code>Option&lt;char&gt;</code>.</p>
+                             <p>Converts a <code>u32</code> to a <code>char</code>.</p>
 
                         </td>
                     </tr>
@@ -171,8 +163,7 @@ that the unicode parts of <code>CharExt</code> and <code>UnicodeStrPrelude</code
                         <td><a class='fn' href='fn.from_u32_unchecked.html'
                                title='bitflags::__core::char::from_u32_unchecked'>from_u32_unchecked</a></td>
                         <td class='docblock short'>
-                             <p>Converts a <code>u32</code> to an <code>char</code>, not checking whether it is a valid unicode
-codepoint.</p>
+                             <p>Converts a <code>u32</code> to a <code>char</code>, ignoring validity.</p>
 
                         </td>
                     </tr>
@@ -245,6 +236,6 @@ returning unpaired surrogates as <code>Err</code>s.</p>
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

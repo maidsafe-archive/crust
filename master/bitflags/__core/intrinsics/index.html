@@ -9,6 +9,7 @@
 
     <title>bitflags::__core::intrinsics - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -45,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-4469' class='srclink' href='https://doc.rust-lang.org/nightly/core/intrinsics/index.html?gotosrc=4469' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-4506' class='srclink' href='https://doc.rust-lang.org/nightly/core/intrinsics/index.html?gotosrc=4506' title='goto source code'>[src]</a></span></h1>
 <div class='stability'><em class='stab unstable'>Unstable (<code>core_intrinsics</code>)<p>: intrinsics are unlikely to ever be stabilized, instead they should be used through stabilized interfaces in the rest of the standard library</p>
 </em></div><div class='docblock'><p>rustc compiler intrinsics.</p>
 
@@ -109,7 +110,7 @@ and destination may <em>not</em> overlap.</p>
                                title='bitflags::__core::intrinsics::write_bytes'>write_bytes</a></td>
                         <td class='docblock short'>
                              <p>Invokes memset on the specified pointer, setting <code>count * size_of::&lt;T&gt;()</code>
-bytes of memory starting at <code>dst</code> to <code>c</code>.</p>
+bytes of memory starting at <code>dst</code> to <code>val</code>.</p>
 
                         </td>
                     </tr>
@@ -119,6 +120,15 @@ bytes of memory starting at <code>dst</code> to <code>c</code>.</p>
                                title='bitflags::__core::intrinsics::abort'>abort</a></td>
                         <td class='docblock short'>
                             [<em class='stab unstable'>Unstable</em>] <p>Aborts the execution of the process.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class='unstable module-item'>
+                        <td><a class='fn' href='fn.add_with_overflow.html'
+                               title='bitflags::__core::intrinsics::add_with_overflow'>add_with_overflow</a></td>
+                        <td class='docblock short'>
+                            [<em class='stab unstable'>Unstable</em>] <p>Performs checked integer addition.</p>
 
                         </td>
                     </tr>
@@ -761,28 +771,10 @@ If the condition is false, the behavior is undefined.</p>
                     </tr>
                 
                     <tr class='unstable module-item'>
-                        <td><a class='fn' href='fn.bswap16.html'
-                               title='bitflags::__core::intrinsics::bswap16'>bswap16</a></td>
+                        <td><a class='fn' href='fn.bswap.html'
+                               title='bitflags::__core::intrinsics::bswap'>bswap</a></td>
                         <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Reverses the bytes in a <code>u16</code>.</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
-                        <td><a class='fn' href='fn.bswap32.html'
-                               title='bitflags::__core::intrinsics::bswap32'>bswap32</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Reverses the bytes in a <code>u32</code>.</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
-                        <td><a class='fn' href='fn.bswap64.html'
-                               title='bitflags::__core::intrinsics::bswap64'>bswap64</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Reverses the bytes in a <code>u64</code>.</p>
+                            [<em class='stab unstable'>Unstable</em>] <p>Reverses the bytes in an integer type <code>T</code>.</p>
 
                         </td>
                     </tr>
@@ -842,109 +834,28 @@ If the condition is false, the behavior is undefined.</p>
                     </tr>
                 
                     <tr class='unstable module-item'>
-                        <td><a class='fn' href='fn.ctlz16.html'
-                               title='bitflags::__core::intrinsics::ctlz16'>ctlz16</a></td>
+                        <td><a class='fn' href='fn.ctlz.html'
+                               title='bitflags::__core::intrinsics::ctlz'>ctlz</a></td>
                         <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Returns the number of leading bits unset in a <code>u16</code>.</p>
+                            [<em class='stab unstable'>Unstable</em>] <p>Returns the number of leading bits unset in an integer type <code>T</code></p>
 
                         </td>
                     </tr>
                 
                     <tr class='unstable module-item'>
-                        <td><a class='fn' href='fn.ctlz32.html'
-                               title='bitflags::__core::intrinsics::ctlz32'>ctlz32</a></td>
+                        <td><a class='fn' href='fn.ctpop.html'
+                               title='bitflags::__core::intrinsics::ctpop'>ctpop</a></td>
                         <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Returns the number of leading bits unset in a <code>u32</code>.</p>
+                            [<em class='stab unstable'>Unstable</em>] <p>Returns the number of bits set in an integer type <code>T</code></p>
 
                         </td>
                     </tr>
                 
                     <tr class='unstable module-item'>
-                        <td><a class='fn' href='fn.ctlz64.html'
-                               title='bitflags::__core::intrinsics::ctlz64'>ctlz64</a></td>
+                        <td><a class='fn' href='fn.cttz.html'
+                               title='bitflags::__core::intrinsics::cttz'>cttz</a></td>
                         <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Returns the number of leading bits unset in a <code>u64</code>.</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
-                        <td><a class='fn' href='fn.ctlz8.html'
-                               title='bitflags::__core::intrinsics::ctlz8'>ctlz8</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Returns the number of leading bits unset in a <code>u8</code>.</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
-                        <td><a class='fn' href='fn.ctpop16.html'
-                               title='bitflags::__core::intrinsics::ctpop16'>ctpop16</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Returns the number of bits set in a <code>u16</code>.</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
-                        <td><a class='fn' href='fn.ctpop32.html'
-                               title='bitflags::__core::intrinsics::ctpop32'>ctpop32</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Returns the number of bits set in a <code>u32</code>.</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
-                        <td><a class='fn' href='fn.ctpop64.html'
-                               title='bitflags::__core::intrinsics::ctpop64'>ctpop64</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Returns the number of bits set in a <code>u64</code>.</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
-                        <td><a class='fn' href='fn.ctpop8.html'
-                               title='bitflags::__core::intrinsics::ctpop8'>ctpop8</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Returns the number of bits set in a <code>u8</code>.</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
-                        <td><a class='fn' href='fn.cttz16.html'
-                               title='bitflags::__core::intrinsics::cttz16'>cttz16</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Returns the number of trailing bits unset in a <code>u16</code>.</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
-                        <td><a class='fn' href='fn.cttz32.html'
-                               title='bitflags::__core::intrinsics::cttz32'>cttz32</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Returns the number of trailing bits unset in a <code>u32</code>.</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
-                        <td><a class='fn' href='fn.cttz64.html'
-                               title='bitflags::__core::intrinsics::cttz64'>cttz64</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Returns the number of trailing bits unset in a <code>u64</code>.</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
-                        <td><a class='fn' href='fn.cttz8.html'
-                               title='bitflags::__core::intrinsics::cttz8'>cttz8</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Returns the number of trailing bits unset in a <code>u8</code>.</p>
+                            [<em class='stab unstable'>Unstable</em>] <p>Returns the number of trailing bits unset in an integer type <code>T</code></p>
 
                         </td>
                     </tr>
@@ -963,7 +874,8 @@ cast to a <code>u64</code>; if <code>T</code> has no discriminant, returns 0.</p
                         <td><a class='fn' href='fn.drop_in_place.html'
                                title='bitflags::__core::intrinsics::drop_in_place'>drop_in_place</a></td>
                         <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] 
+                            [<em class='stab unstable'>Unstable</em>] <p>Executes the destructor (if any) of the pointed-to value.</p>
+
                         </td>
                     </tr>
                 
@@ -1067,114 +979,6 @@ cast to a <code>u64</code>; if <code>T</code> has no discriminant, returns 0.</p
                     </tr>
                 
                     <tr class='unstable module-item'>
-                        <td><a class='fn' href='fn.i16_add_with_overflow.html'
-                               title='bitflags::__core::intrinsics::i16_add_with_overflow'>i16_add_with_overflow</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Performs checked <code>i16</code> addition.</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
-                        <td><a class='fn' href='fn.i16_mul_with_overflow.html'
-                               title='bitflags::__core::intrinsics::i16_mul_with_overflow'>i16_mul_with_overflow</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Performs checked <code>i16</code> multiplication.</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
-                        <td><a class='fn' href='fn.i16_sub_with_overflow.html'
-                               title='bitflags::__core::intrinsics::i16_sub_with_overflow'>i16_sub_with_overflow</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Performs checked <code>i16</code> subtraction.</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
-                        <td><a class='fn' href='fn.i32_add_with_overflow.html'
-                               title='bitflags::__core::intrinsics::i32_add_with_overflow'>i32_add_with_overflow</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Performs checked <code>i32</code> addition.</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
-                        <td><a class='fn' href='fn.i32_mul_with_overflow.html'
-                               title='bitflags::__core::intrinsics::i32_mul_with_overflow'>i32_mul_with_overflow</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Performs checked <code>i32</code> multiplication.</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
-                        <td><a class='fn' href='fn.i32_sub_with_overflow.html'
-                               title='bitflags::__core::intrinsics::i32_sub_with_overflow'>i32_sub_with_overflow</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Performs checked <code>i32</code> subtraction.</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
-                        <td><a class='fn' href='fn.i64_add_with_overflow.html'
-                               title='bitflags::__core::intrinsics::i64_add_with_overflow'>i64_add_with_overflow</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Performs checked <code>i64</code> addition.</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
-                        <td><a class='fn' href='fn.i64_mul_with_overflow.html'
-                               title='bitflags::__core::intrinsics::i64_mul_with_overflow'>i64_mul_with_overflow</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Performs checked <code>i64</code> multiplication.</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
-                        <td><a class='fn' href='fn.i64_sub_with_overflow.html'
-                               title='bitflags::__core::intrinsics::i64_sub_with_overflow'>i64_sub_with_overflow</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Performs checked <code>i64</code> subtraction.</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
-                        <td><a class='fn' href='fn.i8_add_with_overflow.html'
-                               title='bitflags::__core::intrinsics::i8_add_with_overflow'>i8_add_with_overflow</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Performs checked <code>i8</code> addition.</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
-                        <td><a class='fn' href='fn.i8_mul_with_overflow.html'
-                               title='bitflags::__core::intrinsics::i8_mul_with_overflow'>i8_mul_with_overflow</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Performs checked <code>i8</code> multiplication.</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
-                        <td><a class='fn' href='fn.i8_sub_with_overflow.html'
-                               title='bitflags::__core::intrinsics::i8_sub_with_overflow'>i8_sub_with_overflow</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Performs checked <code>i8</code> subtraction.</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
                         <td><a class='fn' href='fn.init.html'
                                title='bitflags::__core::intrinsics::init'>init</a></td>
                         <td class='docblock short'>
@@ -1273,6 +1077,15 @@ if any, says that it has been dropped.</p>
                     </tr>
                 
                     <tr class='unstable module-item'>
+                        <td><a class='fn' href='fn.mul_with_overflow.html'
+                               title='bitflags::__core::intrinsics::mul_with_overflow'>mul_with_overflow</a></td>
+                        <td class='docblock short'>
+                            [<em class='stab unstable'>Unstable</em>] <p>Performs checked integer multiplication</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class='unstable module-item'>
                         <td><a class='fn' href='fn.nearbyintf32.html'
                                title='bitflags::__core::intrinsics::nearbyintf32'>nearbyintf32</a></td>
                         <td class='docblock short'>
@@ -1314,7 +1127,7 @@ implements <code>Copy</code>.</p>
                         <td><a class='fn' href='fn.overflowing_add.html'
                                title='bitflags::__core::intrinsics::overflowing_add'>overflowing_add</a></td>
                         <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Returns (a + b) mod 2<sup>N,</sup> where N is the width of N in bits.</p>
+                            [<em class='stab unstable'>Unstable</em>] <p>Returns (a + b) mod 2<sup>N,</sup> where N is the width of T in bits.</p>
 
                         </td>
                     </tr>
@@ -1323,7 +1136,7 @@ implements <code>Copy</code>.</p>
                         <td><a class='fn' href='fn.overflowing_mul.html'
                                title='bitflags::__core::intrinsics::overflowing_mul'>overflowing_mul</a></td>
                         <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Returns (a * b) mod 2<sup>N,</sup> where N is the width of N in bits.</p>
+                            [<em class='stab unstable'>Unstable</em>] <p>Returns (a * b) mod 2<sup>N,</sup> where N is the width of T in bits.</p>
 
                         </td>
                     </tr>
@@ -1332,7 +1145,7 @@ implements <code>Copy</code>.</p>
                         <td><a class='fn' href='fn.overflowing_sub.html'
                                title='bitflags::__core::intrinsics::overflowing_sub'>overflowing_sub</a></td>
                         <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Returns (a - b) mod 2<sup>N,</sup> where N is the width of N in bits.</p>
+                            [<em class='stab unstable'>Unstable</em>] <p>Returns (a - b) mod 2<sup>N,</sup> where N is the width of T in bits.</p>
 
                         </td>
                     </tr>
@@ -1482,6 +1295,15 @@ if the argument is not an integer.</p>
                     </tr>
                 
                     <tr class='unstable module-item'>
+                        <td><a class='fn' href='fn.sub_with_overflow.html'
+                               title='bitflags::__core::intrinsics::sub_with_overflow'>sub_with_overflow</a></td>
+                        <td class='docblock short'>
+                            [<em class='stab unstable'>Unstable</em>] <p>Performs checked integer subtraction</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class='unstable module-item'>
                         <td><a class='fn' href='fn.truncf32.html'
                                title='bitflags::__core::intrinsics::truncf32'>truncf32</a></td>
                         <td class='docblock short'>
@@ -1531,149 +1353,21 @@ crate it is invoked in.</p>
                     </tr>
                 
                     <tr class='unstable module-item'>
-                        <td><a class='fn' href='fn.u16_add_with_overflow.html'
-                               title='bitflags::__core::intrinsics::u16_add_with_overflow'>u16_add_with_overflow</a></td>
+                        <td><a class='fn' href='fn.unchecked_div.html'
+                               title='bitflags::__core::intrinsics::unchecked_div'>unchecked_div</a></td>
                         <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Performs checked <code>u16</code> addition.</p>
+                            [<em class='stab unstable'>Unstable</em>] <p>Performs an unchecked division, resulting in undefined behavior
+where y = 0 or x = <code>T::min_value()</code> and y = -1</p>
 
                         </td>
                     </tr>
                 
                     <tr class='unstable module-item'>
-                        <td><a class='fn' href='fn.u16_mul_with_overflow.html'
-                               title='bitflags::__core::intrinsics::u16_mul_with_overflow'>u16_mul_with_overflow</a></td>
+                        <td><a class='fn' href='fn.unchecked_rem.html'
+                               title='bitflags::__core::intrinsics::unchecked_rem'>unchecked_rem</a></td>
                         <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Performs checked <code>u16</code> multiplication.</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
-                        <td><a class='fn' href='fn.u16_sub_with_overflow.html'
-                               title='bitflags::__core::intrinsics::u16_sub_with_overflow'>u16_sub_with_overflow</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Performs checked <code>u16</code> subtraction.</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
-                        <td><a class='fn' href='fn.u32_add_with_overflow.html'
-                               title='bitflags::__core::intrinsics::u32_add_with_overflow'>u32_add_with_overflow</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Performs checked <code>u32</code> addition.</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
-                        <td><a class='fn' href='fn.u32_mul_with_overflow.html'
-                               title='bitflags::__core::intrinsics::u32_mul_with_overflow'>u32_mul_with_overflow</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Performs checked <code>u32</code> multiplication.</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
-                        <td><a class='fn' href='fn.u32_sub_with_overflow.html'
-                               title='bitflags::__core::intrinsics::u32_sub_with_overflow'>u32_sub_with_overflow</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Performs checked <code>u32</code> subtraction.</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
-                        <td><a class='fn' href='fn.u64_add_with_overflow.html'
-                               title='bitflags::__core::intrinsics::u64_add_with_overflow'>u64_add_with_overflow</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Performs checked <code>u64</code> addition.</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
-                        <td><a class='fn' href='fn.u64_mul_with_overflow.html'
-                               title='bitflags::__core::intrinsics::u64_mul_with_overflow'>u64_mul_with_overflow</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Performs checked <code>u64</code> multiplication.</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
-                        <td><a class='fn' href='fn.u64_sub_with_overflow.html'
-                               title='bitflags::__core::intrinsics::u64_sub_with_overflow'>u64_sub_with_overflow</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Performs checked <code>u64</code> subtraction.</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
-                        <td><a class='fn' href='fn.u8_add_with_overflow.html'
-                               title='bitflags::__core::intrinsics::u8_add_with_overflow'>u8_add_with_overflow</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Performs checked <code>u8</code> addition.</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
-                        <td><a class='fn' href='fn.u8_mul_with_overflow.html'
-                               title='bitflags::__core::intrinsics::u8_mul_with_overflow'>u8_mul_with_overflow</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Performs checked <code>u8</code> multiplication.</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
-                        <td><a class='fn' href='fn.u8_sub_with_overflow.html'
-                               title='bitflags::__core::intrinsics::u8_sub_with_overflow'>u8_sub_with_overflow</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Performs checked <code>u8</code> subtraction.</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
-                        <td><a class='fn' href='fn.unchecked_sdiv.html'
-                               title='bitflags::__core::intrinsics::unchecked_sdiv'>unchecked_sdiv</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Performs an unchecked signed division, which results in undefined behavior,
-in cases where y == 0, or x == isize::MIN and y == -1</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
-                        <td><a class='fn' href='fn.unchecked_srem.html'
-                               title='bitflags::__core::intrinsics::unchecked_srem'>unchecked_srem</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Returns the remainder of an unchecked signed division, which results in
-undefined behavior, in cases where y == 0, or x == isize::MIN and y == -1</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
-                        <td><a class='fn' href='fn.unchecked_udiv.html'
-                               title='bitflags::__core::intrinsics::unchecked_udiv'>unchecked_udiv</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Performs an unchecked unsigned division, which results in undefined behavior,
-in cases where y == 0</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
-                        <td><a class='fn' href='fn.unchecked_urem.html'
-                               title='bitflags::__core::intrinsics::unchecked_urem'>unchecked_urem</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Returns the remainder of an unchecked unsigned division, which results in
-undefined behavior, in cases where y == 0</p>
+                            [<em class='stab unstable'>Unstable</em>] <p>Returns the remainder of an unchecked division, resulting in
+undefined behavior where y = 0 or x = <code>T::min_value()</code> and y = -1</p>
 
                         </td>
                     </tr>
@@ -1806,6 +1500,6 @@ size of <code>count</code> * <code>size_of::&lt;T&gt;()</code> and an alignment 
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

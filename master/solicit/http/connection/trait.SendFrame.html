@@ -9,6 +9,7 @@
 
     <title>solicit::http::connection::SendFrame - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -45,21 +46,21 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-727' class='srclink' href='../../../src/solicit/http/connection.rs.html#124-133' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-751' class='srclink' href='../../../src/solicit/http/connection.rs.html#124-133' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait SendFrame {
-    fn <a href='#tymethod.send_raw_frame' class='fnname'>send_raw_frame</a>(&amp;mut self, frame: <a class='struct' href='../../../solicit/http/frame/struct.RawFrame.html' title='solicit::http::frame::RawFrame'>RawFrame</a>) -&gt; <a class='type' href='../../../solicit/http/type.HttpResult.html' title='solicit::http::HttpResult'>HttpResult</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;;
+    fn <a href='#tymethod.send_raw_frame' class='fnname'>send_raw_frame</a>(&amp;mut self, frame: <a class='struct' href='../../../solicit/http/frame/struct.RawFrame.html' title='solicit::http::frame::RawFrame'>RawFrame</a>) -&gt; <a class='type' href='../../../solicit/http/type.HttpResult.html' title='solicit::http::HttpResult'>HttpResult</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;;
 
-    fn <a href='#method.send_frame' class='fnname'>send_frame</a>&lt;F: <a class='trait' href='../../../solicit/http/frame/trait.Frame.html' title='solicit::http::frame::Frame'>Frame</a>&gt;(&amp;mut self, frame: F) -&gt; <a class='type' href='../../../solicit/http/type.HttpResult.html' title='solicit::http::HttpResult'>HttpResult</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt; { ... }
+    fn <a href='#method.send_frame' class='fnname'>send_frame</a>&lt;F: <a class='trait' href='../../../solicit/http/frame/trait.Frame.html' title='solicit::http::frame::Frame'>Frame</a>&gt;(&amp;mut self, frame: F) -&gt; <a class='type' href='../../../solicit/http/type.HttpResult.html' title='solicit::http::HttpResult'>HttpResult</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt; { ... }
 }</pre><div class='docblock'><p>A trait that should be implemented by types that can provide the functionality
 of sending HTTP/2 frames.</p>
 </div>
             <h2 id='required-methods'>Required Methods</h2>
             <div class='methods'>
-        <h3 id='tymethod.send_raw_frame' class='method stab '><code>fn <a href='#tymethod.send_raw_frame' class='fnname'>send_raw_frame</a>(&amp;mut self, frame: <a class='struct' href='../../../solicit/http/frame/struct.RawFrame.html' title='solicit::http::frame::RawFrame'>RawFrame</a>) -&gt; <a class='type' href='../../../solicit/http/type.HttpResult.html' title='solicit::http::HttpResult'>HttpResult</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h3><div class='docblock'><p>Sends the given raw frame.</p>
+        <h3 id='tymethod.send_raw_frame' class='method stab '><code>fn <a href='#tymethod.send_raw_frame' class='fnname'>send_raw_frame</a>(&amp;mut self, frame: <a class='struct' href='../../../solicit/http/frame/struct.RawFrame.html' title='solicit::http::frame::RawFrame'>RawFrame</a>) -&gt; <a class='type' href='../../../solicit/http/type.HttpResult.html' title='solicit::http::HttpResult'>HttpResult</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h3><div class='docblock'><p>Sends the given raw frame.</p>
 </div></div>
             <h2 id='provided-methods'>Provided Methods</h2>
             <div class='methods'>
-        <h3 id='method.send_frame' class='method stab '><code>fn <a href='#method.send_frame' class='fnname'>send_frame</a>&lt;F: <a class='trait' href='../../../solicit/http/frame/trait.Frame.html' title='solicit::http::frame::Frame'>Frame</a>&gt;(&amp;mut self, frame: F) -&gt; <a class='type' href='../../../solicit/http/type.HttpResult.html' title='solicit::http::HttpResult'>HttpResult</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h3><div class='docblock'><p>Sends the given concrete frame.</p>
+        <h3 id='method.send_frame' class='method stab '><code>fn <a href='#method.send_frame' class='fnname'>send_frame</a>&lt;F: <a class='trait' href='../../../solicit/http/frame/trait.Frame.html' title='solicit::http::frame::Frame'>Frame</a>&gt;(&amp;mut self, frame: F) -&gt; <a class='type' href='../../../solicit/http/type.HttpResult.html' title='solicit::http::HttpResult'>HttpResult</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h3><div class='docblock'><p>Sends the given concrete frame.</p>
 
 <p>A default implementation based on the <code>send_raw_frame</code> method is provided.</p>
 </div></div>
@@ -126,6 +127,6 @@ of sending HTTP/2 frames.</p>
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

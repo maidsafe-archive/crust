@@ -9,6 +9,7 @@
 
     <title>maidsafe_utilities::unwrap_option! - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../main.css">
 
     <link rel="shortcut icon" href="http://maidsafe.net/img/favicon.ico">
@@ -45,22 +46,10 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-154' class='srclink' href='../src/maidsafe_utilities/unwrap.rs.html#69-83' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-160' class='srclink' href='../src/maidsafe_utilities/unwrap.rs.html#69-83' title='goto source code'>[src]</a></span></h1>
 <pre class='rust macro'>
 <span class='macro'>macro_rules</span><span class='macro'>!</span> <span class='ident'>unwrap_option</span> {
-    (<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>option</span>:<span class='ident'>expr</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>user_string</span>:<span class='ident'>expr</span>) <span class='op'>=&gt;</span> {
-        <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>option</span>.<span class='ident'>unwrap_or_else</span>(<span class='op'>||</span> {
-            <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>error</span> <span class='op'>=</span> <span class='string'>&quot;Option evaluated to None&quot;</span>.<span class='ident'>to_owned</span>();
-            <span class='kw'>if</span> <span class='op'>!</span><span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>user_string</span>.<span class='ident'>is_empty</span>() {
-                <span class='ident'>error</span>.<span class='ident'>push_str</span>(<span class='string'>&quot;: \&quot;&quot;</span>);
-                <span class='ident'>error</span>.<span class='ident'>push_str</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>user_string</span>);
-                <span class='ident'>error</span>.<span class='ident'>push_str</span>(<span class='string'>&quot;\&quot;&quot;</span>);
-            }
-            <span class='kw'>let</span> <span class='ident'>decorator_length</span> <span class='op'>=</span> ::<span class='ident'>std</span>::<span class='ident'>cmp</span>::<span class='ident'>min</span>(<span class='ident'>error</span>.<span class='ident'>len</span>() <span class='op'>+</span> <span class='number'>2</span>, <span class='number'>100</span>);
-            <span class='kw'>let</span> <span class='ident'>decorator</span> <span class='op'>=</span> (<span class='number'>0</span>..<span class='ident'>decorator_length</span>).<span class='ident'>map</span>(<span class='op'>|</span>_<span class='op'>|</span> <span class='string'>&quot;=&quot;</span>).<span class='ident'>collect</span>::<span class='op'>&lt;</span><span class='ident'>String</span><span class='op'>&gt;</span>();
-            <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;\n\n {}\n| {} |\n {}\n\n&quot;</span>, <span class='ident'>decorator</span>, <span class='ident'>error</span>, <span class='ident'>decorator</span>)
-        })
-    }
+    (<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>option</span>:<span class='ident'>expr</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>user_string</span>:<span class='ident'>expr</span>) <span class='op'>=&gt;</span> { ... };
 }</pre>
 <div class='docblock'><p>A replacement for calling <code>unwrap()</code> on an <code>Option</code>.</p>
 
@@ -132,6 +121,6 @@ provides a precise point of failure and decorates the failure for easy viewing.<
     <script src="../jquery.js"></script>
     <script src="../main.js"></script>
     
-    <script async src="../search-index.js"></script>
+    <script defer src="../search-index.js"></script>
 </body>
 </html>

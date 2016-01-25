@@ -9,6 +9,7 @@
 
     <title>httparse::parse_headers - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../main.css">
 
     
@@ -45,8 +46,8 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-362' class='srclink' href='../src/httparse/lib.rs.html#419-424' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub fn parse_headers&lt;'b, 'h&gt;(src: <a href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;'b [</a><a href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>, dst: <a href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;'h mut [</a><a class='struct' href='../httparse/struct.Header.html' title='httparse::Header'>Header</a>&lt;'b&gt;<a href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>) -&gt; <a class='type' href='../httparse/type.Result.html' title='httparse::Result'>Result</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(<a href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, <a href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;'h [</a><a class='struct' href='../httparse/struct.Header.html' title='httparse::Header'>Header</a>&lt;'b&gt;<a href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>)</a>&gt;</pre><div class='docblock'><p>Parse a buffer of bytes as headers.</p>
+        </span><a id='src-373' class='srclink' href='../src/httparse/lib.rs.html#419-424' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub fn parse_headers&lt;'b, 'h&gt;(src: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;'b [</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>, dst: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;'h mut [</a><a class='struct' href='../httparse/struct.Header.html' title='httparse::Header'>Header</a>&lt;'b&gt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>) -&gt; <a class='type' href='../httparse/type.Result.html' title='httparse::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;'h [</a><a class='struct' href='../httparse/struct.Header.html' title='httparse::Header'>Header</a>&lt;'b&gt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>)</a>&gt;</pre><div class='docblock'><p>Parse a buffer of bytes as headers.</p>
 
 <p>The return value, if complete and successful, includes the index of the
 buffer that parsing stopped at, and a sliced reference to the parsed
@@ -120,6 +121,6 @@ parsed headers.</p>
     <script src="../jquery.js"></script>
     <script src="../main.js"></script>
     
-    <script async src="../search-index.js"></script>
+    <script defer src="../search-index.js"></script>
 </body>
 </html>

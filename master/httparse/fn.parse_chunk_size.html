@@ -9,6 +9,7 @@
 
     <title>httparse::parse_chunk_size - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../main.css">
 
     
@@ -45,8 +46,8 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-402' class='srclink' href='../src/httparse/lib.rs.html#559-609' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub fn parse_chunk_size(buf: <a href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a><a href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='enum' href='../httparse/enum.Status.html' title='httparse::Status'>Status</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(<a href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, <a href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a>)</a>&gt;, <a class='struct' href='../httparse/struct.InvalidChunkSize.html' title='httparse::InvalidChunkSize'>InvalidChunkSize</a>&gt;</pre><div class='docblock'><p>Parse a buffer of bytes as a chunk size.</p>
+        </span><a id='src-413' class='srclink' href='../src/httparse/lib.rs.html#559-609' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub fn parse_chunk_size(buf: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='enum' href='../httparse/enum.Status.html' title='httparse::Status'>Status</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a>)</a>&gt;, <a class='struct' href='../httparse/struct.InvalidChunkSize.html' title='httparse::InvalidChunkSize'>InvalidChunkSize</a>&gt;</pre><div class='docblock'><p>Parse a buffer of bytes as a chunk size.</p>
 
 <p>The return value, if complete and successful, includes the index of the
 buffer that parsing stopped at, and the size of the following chunk.</p>
@@ -114,6 +115,6 @@ buffer that parsing stopped at, and the size of the following chunk.</p>
     <script src="../jquery.js"></script>
     <script src="../main.js"></script>
     
-    <script async src="../search-index.js"></script>
+    <script defer src="../search-index.js"></script>
 </body>
 </html>

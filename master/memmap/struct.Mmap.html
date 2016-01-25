@@ -9,6 +9,7 @@
 
     <title>memmap::Mmap - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../main.css">
 
     
@@ -45,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-141' class='srclink' href='../src/memmap/lib.rs.html#95-97' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-145' class='srclink' href='../src/memmap/lib.rs.html#95-97' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Mmap {
     // some fields omitted
 }</pre><div class='docblock'><p>A memory-mapped buffer.</p>
@@ -78,33 +79,33 @@ the supplied protection is <code>ReadWrite</code>. The file must not be empty.</
 <div class='docblock'><p>Opens a file-backed memory map.</p>
 
 <p>The file must not be empty.</p>
-</div><h4 id='method.open_with_offset' class='method'><code>fn <a href='#method.open_with_offset' class='fnname'>open_with_offset</a>(file: &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/std/fs/struct.File.html' title='std::fs::File'>File</a>, prot: <a class='enum' href='../memmap/enum.Protection.html' title='memmap::Protection'>Protection</a>, offset: <a href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, len: <a href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='struct' href='../memmap/struct.Mmap.html' title='memmap::Mmap'>Mmap</a>&gt;</code></h4>
+</div><h4 id='method.open_with_offset' class='method'><code>fn <a href='#method.open_with_offset' class='fnname'>open_with_offset</a>(file: &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/std/fs/struct.File.html' title='std::fs::File'>File</a>, prot: <a class='enum' href='../memmap/enum.Protection.html' title='memmap::Protection'>Protection</a>, offset: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, len: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='struct' href='../memmap/struct.Mmap.html' title='memmap::Mmap'>Mmap</a>&gt;</code></h4>
 <div class='docblock'><p>Opens a file-backed memory map with the specified offset and length.</p>
 
 <p>The file must be opened with read permissions, and write permissions if
 the supplied protection is <code>ReadWrite</code>. The file must not be empty. The
 length must be greater than zero.</p>
-</div><h4 id='method.anonymous' class='method'><code>fn <a href='#method.anonymous' class='fnname'>anonymous</a>(len: <a href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, prot: <a class='enum' href='../memmap/enum.Protection.html' title='memmap::Protection'>Protection</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='struct' href='../memmap/struct.Mmap.html' title='memmap::Mmap'>Mmap</a>&gt;</code></h4>
+</div><h4 id='method.anonymous' class='method'><code>fn <a href='#method.anonymous' class='fnname'>anonymous</a>(len: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, prot: <a class='enum' href='../memmap/enum.Protection.html' title='memmap::Protection'>Protection</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='struct' href='../memmap/struct.Mmap.html' title='memmap::Mmap'>Mmap</a>&gt;</code></h4>
 <div class='docblock'><p>Opens an anonymous memory map.</p>
 
 <p>The length must be greater than zero.</p>
-</div><h4 id='method.anonymous_with_options' class='method'><code>fn <a href='#method.anonymous_with_options' class='fnname'>anonymous_with_options</a>(len: <a href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, prot: <a class='enum' href='../memmap/enum.Protection.html' title='memmap::Protection'>Protection</a>, options: <a class='struct' href='../memmap/struct.MmapOptions.html' title='memmap::MmapOptions'>MmapOptions</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='struct' href='../memmap/struct.Mmap.html' title='memmap::Mmap'>Mmap</a>&gt;</code></h4>
+</div><h4 id='method.anonymous_with_options' class='method'><code>fn <a href='#method.anonymous_with_options' class='fnname'>anonymous_with_options</a>(len: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, prot: <a class='enum' href='../memmap/enum.Protection.html' title='memmap::Protection'>Protection</a>, options: <a class='struct' href='../memmap/struct.MmapOptions.html' title='memmap::MmapOptions'>MmapOptions</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='struct' href='../memmap/struct.Mmap.html' title='memmap::Mmap'>Mmap</a>&gt;</code></h4>
 <div class='docblock'><p>Opens an anonymous memory map with the provided options.</p>
 
 <p>The length must be greater than zero.</p>
-</div><h4 id='method.flush' class='method'><code>fn <a href='#method.flush' class='fnname'>flush</a>(&amp;mut self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
+</div><h4 id='method.flush' class='method'><code>fn <a href='#method.flush' class='fnname'>flush</a>(&amp;mut self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
 <div class='docblock'><p>Flushes outstanding memory map modifications to disk.</p>
 
 <p>When this returns with a non-error result, all outstanding changes to a
 file-backed memory map are guaranteed to be durably stored. The file&#39;s
 metadata (including last modification timestamp) may not be updated.</p>
-</div><h4 id='method.flush_async' class='method'><code>fn <a href='#method.flush_async' class='fnname'>flush_async</a>(&amp;mut self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
+</div><h4 id='method.flush_async' class='method'><code>fn <a href='#method.flush_async' class='fnname'>flush_async</a>(&amp;mut self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
 <div class='docblock'><p>Asynchronously flushes outstanding memory map modifications to disk.</p>
 
 <p>This method initiates flushing modified pages to durable storage, but it
 will not wait for the operation to complete before returning. The file&#39;s
 metadata (including last modification timestamp) may not be updated.</p>
-</div><h4 id='method.flush_range' class='method'><code>fn <a href='#method.flush_range' class='fnname'>flush_range</a>(&amp;mut self, offset: <a href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, len: <a href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
+</div><h4 id='method.flush_range' class='method'><code>fn <a href='#method.flush_range' class='fnname'>flush_range</a>(&amp;mut self, offset: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, len: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
 <div class='docblock'><p>Flushes outstanding memory map modifications in the range to disk.</p>
 
 <p>The offset and length must be in the bounds of the mmap.</p>
@@ -115,7 +116,7 @@ file&#39;s metadata (including last modification timestamp) may not be
 updated. It is not guaranteed the only the changes in the specified
 range are flushed; other outstanding changes to the mmap may be flushed
 as well.</p>
-</div><h4 id='method.flush_async_range' class='method'><code>fn <a href='#method.flush_async_range' class='fnname'>flush_async_range</a>(&amp;mut self, offset: <a href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, len: <a href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
+</div><h4 id='method.flush_async_range' class='method'><code>fn <a href='#method.flush_async_range' class='fnname'>flush_async_range</a>(&amp;mut self, offset: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, len: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
 <div class='docblock'><p>Asynchronously flushes outstanding memory map modifications in the range
 to disk.</p>
 
@@ -127,27 +128,27 @@ metadata (including last modification timestamp) may not be updated. It
 is not guaranteed that the only changes flushed are those in the
 specified range; other outstanding changes to the mmap may be flushed as
 well.</p>
-</div><h4 id='method.len' class='method'><code>fn <a href='#method.len' class='fnname'>len</a>(&amp;self) -&gt; <a href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a></code></h4>
+</div><h4 id='method.len' class='method'><code>fn <a href='#method.len' class='fnname'>len</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a></code></h4>
 <div class='docblock'><p>Returns the length of the memory map.</p>
-</div><h4 id='method.ptr' class='method'><code>fn <a href='#method.ptr' class='fnname'>ptr</a>(&amp;self) -&gt; <a href='https://doc.rust-lang.org/nightly/std/primitive.pointer.html'>*const <a href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a></a></code></h4>
+</div><h4 id='method.ptr' class='method'><code>fn <a href='#method.ptr' class='fnname'>ptr</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.pointer.html'>*const <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a></a></code></h4>
 <div class='docblock'><p>Returns a pointer to the mapped memory.</p>
 
 <p>See <code>Mmap::as_slice</code> for invariants that must hold when dereferencing
 the pointer.</p>
-</div><h4 id='method.mut_ptr' class='method'><code>fn <a href='#method.mut_ptr' class='fnname'>mut_ptr</a>(&amp;mut self) -&gt; <a href='https://doc.rust-lang.org/nightly/std/primitive.pointer.html'>*mut <a href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a></a></code></h4>
+</div><h4 id='method.mut_ptr' class='method'><code>fn <a href='#method.mut_ptr' class='fnname'>mut_ptr</a>(&amp;mut self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.pointer.html'>*mut <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a></a></code></h4>
 <div class='docblock'><p>Returns a pointer to the mapped memory.</p>
 
 <p>See <code>Mmap::as_mut_slice</code> for invariants that must hold when
 dereferencing the pointer.</p>
-</div><h4 id='method.as_slice' class='method'><code>unsafe fn <a href='#method.as_slice' class='fnname'>as_slice</a>(&amp;self) -&gt; <a href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a><a href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a></code></h4>
+</div><h4 id='method.as_slice' class='method'><code>unsafe fn <a href='#method.as_slice' class='fnname'>as_slice</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a></code></h4>
 <div class='docblock'><p>Returns the memory mapped file as an immutable slice.</p>
 
 <h2 id='unsafety' class='section-header'><a href='#unsafety'>Unsafety</a></h2>
 <p>The caller must ensure that the file is not concurrently modified.</p>
-</div><h4 id='method.as_mut_slice' class='method'><code>unsafe fn <a href='#method.as_mut_slice' class='fnname'>as_mut_slice</a>(&amp;mut self) -&gt; <a href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;mut [</a><a href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a></code></h4>
+</div><h4 id='method.as_mut_slice' class='method'><code>unsafe fn <a href='#method.as_mut_slice' class='fnname'>as_mut_slice</a>(&amp;mut self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;mut [</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a></code></h4>
 <div class='docblock'><p>Returns the memory mapped file as a mutable slice.</p>
 
-<h2 id='unsafety' class='section-header'><a href='#unsafety'>Unsafety</a></h2>
+<h2 id='unsafety-1' class='section-header'><a href='#unsafety-1'>Unsafety</a></h2>
 <p>The caller must ensure that the file is not concurrently accessed.</p>
 </div><h4 id='method.into_view' class='method'><code>fn <a href='#method.into_view' class='fnname'>into_view</a>(self) -&gt; <a class='struct' href='../memmap/struct.MmapView.html' title='memmap::MmapView'>MmapView</a></code></h4>
 <div class='docblock'><p>Creates a splittable mmap view from the mmap.</p>
@@ -212,6 +213,6 @@ dereferencing the pointer.</p>
     <script src="../jquery.js"></script>
     <script src="../main.js"></script>
     
-    <script async src="../search-index.js"></script>
+    <script defer src="../search-index.js"></script>
 </body>
 </html>

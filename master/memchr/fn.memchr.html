@@ -9,6 +9,7 @@
 
     <title>memchr::memchr - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../main.css">
 
     
@@ -46,7 +47,7 @@
                 [<span class='inner'>&#x2212;</span>]
             </a>
         </span><a id='src-7' class='srclink' href='../src/memchr/lib.rs.html#33-63' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub fn memchr(needle: <a href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>, haystack: <a href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a><a href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>&gt;</pre><div class='docblock'><p>A safe interface to <code>memchr</code>.</p>
+<pre class='rust fn'>pub fn memchr(needle: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>, haystack: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>&gt;</pre><div class='docblock'><p>A safe interface to <code>memchr</code>.</p>
 
 <p>Returns the index corresponding to the first occurrence of <code>needle</code> in
 <code>haystack</code>, or <code>None</code> if one is not found.</p>
@@ -121,6 +122,6 @@ magnitude faster than <code>haystack.iter().position(|&amp;b| b == needle)</code
     <script src="../jquery.js"></script>
     <script src="../main.js"></script>
     
-    <script async src="../search-index.js"></script>
+    <script defer src="../search-index.js"></script>
 </body>
 </html>

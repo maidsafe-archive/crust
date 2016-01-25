@@ -9,6 +9,7 @@
 
     <title>bitflags::__core::io::BufRead - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -45,14 +46,14 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-4960' class='srclink' href='https://doc.rust-lang.org/nightly/std/io/trait.BufRead.html?gotosrc=4960' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-5015' class='srclink' href='https://doc.rust-lang.org/nightly/std/io/trait.BufRead.html?gotosrc=5015' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait BufRead: <a class='trait' href='../../../bitflags/__core/io/trait.Read.html' title='bitflags::__core::io::Read'>Read</a> {
-    fn <a href='#tymethod.fill_buf' class='fnname'>fill_buf</a>(&amp;mut self) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>&amp;[</a><a href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a><a href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>]</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;;
-    fn <a href='#tymethod.consume' class='fnname'>consume</a>(&amp;mut self, amt: <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>);
+    fn <a href='#tymethod.fill_buf' class='fnname'>fill_buf</a>(&amp;mut self) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>&amp;[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>]</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;;
+    fn <a href='#tymethod.consume' class='fnname'>consume</a>(&amp;mut self, amt: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>);
 
-    fn <a href='#method.read_until' class='fnname'>read_until</a>(&amp;mut self, byte: <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a>, buf: &amp;mut <a class='struct' href='../../../bitflags/__core/vec/struct.Vec.html' title='bitflags::__core::vec::Vec'>Vec</a>&lt;<a href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a>&gt;) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt; { ... }
-    fn <a href='#method.read_line' class='fnname'>read_line</a>(&amp;mut self, buf: &amp;mut <a class='struct' href='../../../bitflags/__core/string/struct.String.html' title='bitflags::__core::string::String'>String</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt; { ... }
-    fn <a href='#method.split' class='fnname'>split</a>(self, byte: <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a>) -&gt; <a class='struct' href='../../../bitflags/__core/io/struct.Split.html' title='bitflags::__core::io::Split'>Split</a>&lt;Self&gt; { ... }
+    fn <a href='#method.read_until' class='fnname'>read_until</a>(&amp;mut self, byte: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a>, buf: &amp;mut <a class='struct' href='../../../bitflags/__core/vec/struct.Vec.html' title='bitflags::__core::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a>&gt;) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt; { ... }
+    fn <a href='#method.read_line' class='fnname'>read_line</a>(&amp;mut self, buf: &amp;mut <a class='struct' href='../../../bitflags/__core/string/struct.String.html' title='bitflags::__core::string::String'>String</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt; { ... }
+    fn <a href='#method.split' class='fnname'>split</a>(self, byte: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a>) -&gt; <a class='struct' href='../../../bitflags/__core/io/struct.Split.html' title='bitflags::__core::io::Split'>Split</a>&lt;Self&gt; { ... }
     fn <a href='#method.lines' class='fnname'>lines</a>(self) -&gt; <a class='struct' href='../../../bitflags/__core/io/struct.Lines.html' title='bitflags::__core::io::Lines'>Lines</a>&lt;Self&gt; { ... }
 }</pre><div class='docblock'><p>A <code>BufRead</code> is a type of <code>Read</code>er which has an internal buffer, allowing it
 to perform extra ways of reading.</p>
@@ -92,7 +93,7 @@ type</a> to turn it into a <code>BufRead</code>.</p>
 </div>
             <h2 id='required-methods'>Required Methods</h2>
             <div class='methods'>
-        <h3 id='tymethod.fill_buf' class='method stab '><code>fn <a href='#tymethod.fill_buf' class='fnname'>fill_buf</a>(&amp;mut self) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>&amp;[</a><a href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a><a href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>]</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;</code></h3><div class='docblock'><p>Fills the internal buffer of this object, returning the buffer contents.</p>
+        <h3 id='tymethod.fill_buf' class='method stab '><code>fn <a href='#tymethod.fill_buf' class='fnname'>fill_buf</a>(&amp;mut self) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>&amp;[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>]</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;</code></h3><div class='docblock'><p>Fills the internal buffer of this object, returning the buffer contents.</p>
 
 <p>This function is a lower-level call. It needs to be paired with the
 <a href="#tymethod.consume"><code>consume</code></a> method to function properly. When calling this
@@ -107,7 +108,7 @@ ensure that the bytes are never returned twice.</p>
 <p>This function will return an I/O error if the underlying reader was
 read, but returned an error.</p>
 
-<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<h1 id='examples-1' class='section-header'><a href='#examples-1'>Examples</a></h1>
 <p>A locked standard input implements <code>BufRead</code>:</p>
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>;
@@ -129,7 +130,7 @@ read, but returned an error.</p>
 
 <span class='comment'>// ensure the bytes we worked with aren&#39;t returned again later</span>
 <span class='ident'>stdin</span>.<span class='ident'>consume</span>(<span class='ident'>length</span>);</pre>
-</div><h3 id='tymethod.consume' class='method stab '><code>fn <a href='#tymethod.consume' class='fnname'>consume</a>(&amp;mut self, amt: <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>)</code></h3><div class='docblock'><p>Tells this buffer that <code>amt</code> bytes have been consumed from the buffer,
+</div><h3 id='tymethod.consume' class='method stab '><code>fn <a href='#tymethod.consume' class='fnname'>consume</a>(&amp;mut self, amt: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>)</code></h3><div class='docblock'><p>Tells this buffer that <code>amt</code> bytes have been consumed from the buffer,
 so they should no longer be returned in calls to <code>read</code>.</p>
 
 <p>This function is a lower-level call. It needs to be paired with the
@@ -142,13 +143,13 @@ longer be returned. As such, this function may do odd things if
 <p>The <code>amt</code> must be <code>&lt;=</code> the number of bytes in the buffer returned by
 <code>fill_buf</code>.</p>
 
-<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<h1 id='examples-2' class='section-header'><a href='#examples-2'>Examples</a></h1>
 <p>Since <code>consume()</code> is meant to be used with <a href="#tymethod.fill_buff"><code>fill_buf()</code></a>,
 that method&#39;s example includes an example of <code>consume()</code>.</p>
 </div></div>
             <h2 id='provided-methods'>Provided Methods</h2>
             <div class='methods'>
-        <h3 id='method.read_until' class='method stab '><code>fn <a href='#method.read_until' class='fnname'>read_until</a>(&amp;mut self, byte: <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a>, buf: &amp;mut <a class='struct' href='../../../bitflags/__core/vec/struct.Vec.html' title='bitflags::__core::vec::Vec'>Vec</a>&lt;<a href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a>&gt;) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;</code></h3><div class='docblock'><p>Read all bytes into <code>buf</code> until the delimiter <code>byte</code> is reached.</p>
+        <h3 id='method.read_until' class='method stab '><code>fn <a href='#method.read_until' class='fnname'>read_until</a>(&amp;mut self, byte: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a>, buf: &amp;mut <a class='struct' href='../../../bitflags/__core/vec/struct.Vec.html' title='bitflags::__core::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a>&gt;) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;</code></h3><div class='docblock'><p>Read all bytes into <code>buf</code> until the delimiter <code>byte</code> is reached.</p>
 
 <p>This function will read bytes from the underlying stream until the
 delimiter or EOF is found. Once found, all bytes up to, and including,
@@ -158,14 +159,14 @@ the delimiter (if found) will be appended to <code>buf</code>.</p>
 <code>buf</code> and will return <code>Ok(n)</code> where <code>n</code> is the number of bytes which
 were read.</p>
 
-<h1 id='errors' class='section-header'><a href='#errors'>Errors</a></h1>
+<h1 id='errors-1' class='section-header'><a href='#errors-1'>Errors</a></h1>
 <p>This function will ignore all instances of <code>ErrorKind::Interrupted</code> and
 will otherwise return any errors returned by <code>fill_buf</code>.</p>
 
 <p>If an I/O error is encountered then all bytes read so far will be
 present in <code>buf</code> and its length will have been adjusted appropriately.</p>
 
-<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<h1 id='examples-3' class='section-header'><a href='#examples-3'>Examples</a></h1>
 <p>A locked standard input implements <code>BufRead</code>. In this example, we&#39;ll
 read from standard input until we see an <code>a</code> byte.</p>
 <pre class='rust rust-example-rendered'>
@@ -180,7 +181,7 @@ read from standard input until we see an <code>a</code> byte.</p>
 <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>stdin</span>.<span class='ident'>read_until</span>(<span class='string'>b&#39;a&#39;</span>, <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>buffer</span>));
 
 <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;{:?}&quot;</span>, <span class='ident'>buffer</span>);</pre>
-</div><h3 id='method.read_line' class='method stab '><code>fn <a href='#method.read_line' class='fnname'>read_line</a>(&amp;mut self, buf: &amp;mut <a class='struct' href='../../../bitflags/__core/string/struct.String.html' title='bitflags::__core::string::String'>String</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;</code></h3><div class='docblock'><p>Read all bytes until a newline (the 0xA byte) is reached, and append
+</div><h3 id='method.read_line' class='method stab '><code>fn <a href='#method.read_line' class='fnname'>read_line</a>(&amp;mut self, buf: &amp;mut <a class='struct' href='../../../bitflags/__core/string/struct.String.html' title='bitflags::__core::string::String'>String</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;</code></h3><div class='docblock'><p>Read all bytes until a newline (the 0xA byte) is reached, and append
 them to the provided buffer.</p>
 
 <p>This function will read bytes from the underlying stream until the
@@ -192,13 +193,13 @@ up to, and including, the delimiter (if found) will be appended to
 <code>buf</code> and will return <code>Ok(n)</code> where <code>n</code> is the number of bytes which
 were read.</p>
 
-<h1 id='errors' class='section-header'><a href='#errors'>Errors</a></h1>
+<h1 id='errors-2' class='section-header'><a href='#errors-2'>Errors</a></h1>
 <p>This function has the same error semantics as <code>read_until</code> and will also
 return an error if the read bytes are not valid UTF-8. If an I/O error
 is encountered then <code>buf</code> may contain some bytes already read in the
 event that all data read so far was valid UTF-8.</p>
 
-<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<h1 id='examples-4' class='section-header'><a href='#examples-4'>Examples</a></h1>
 <p>A locked standard input implements <code>BufRead</code>. In this example, we&#39;ll
 read all of the lines from standard input. If we were to do this in
 an actual project, the <a href="#method.lines"><code>lines()</code></a> method would be easier, of
@@ -217,7 +218,7 @@ course.</p>
 
     <span class='ident'>buffer</span>.<span class='ident'>clear</span>();
 }</pre>
-</div><h3 id='method.split' class='method stab '><code>fn <a href='#method.split' class='fnname'>split</a>(self, byte: <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a>) -&gt; <a class='struct' href='../../../bitflags/__core/io/struct.Split.html' title='bitflags::__core::io::Split'>Split</a>&lt;Self&gt;</code></h3><div class='docblock'><p>Returns an iterator over the contents of this reader split on the byte
+</div><h3 id='method.split' class='method stab '><code>fn <a href='#method.split' class='fnname'>split</a>(self, byte: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a>) -&gt; <a class='struct' href='../../../bitflags/__core/io/struct.Split.html' title='bitflags::__core::io::Split'>Split</a>&lt;Self&gt;</code></h3><div class='docblock'><p>Returns an iterator over the contents of this reader split on the byte
 <code>byte</code>.</p>
 
 <p>The iterator returned from this function will return instances of
@@ -227,7 +228,7 @@ delimiter byte at the end.</p>
 <p>This function will yield errors whenever <code>read_until</code> would have also
 yielded an error.</p>
 
-<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<h1 id='examples-5' class='section-header'><a href='#examples-5'>Examples</a></h1>
 <p>A locked standard input implements <code>BufRead</code>. In this example, we&#39;ll
 read some input from standard input, splitting on commas.</p>
 <pre class='rust rust-example-rendered'>
@@ -245,7 +246,7 @@ read some input from standard input, splitting on commas.</p>
 <code>io::Result&lt;String&gt;</code>. Each string returned will <em>not</em> have a newline
 byte (the 0xA byte) or CRLF (0xD, 0xA bytes) at the end.</p>
 
-<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<h1 id='examples-6' class='section-header'><a href='#examples-6'>Examples</a></h1>
 <p>A locked standard input implements <code>BufRead</code>:</p>
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>;
@@ -260,10 +261,10 @@ byte (the 0xA byte) or CRLF (0xD, 0xA bytes) at the end.</p>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
     <li><code>impl&lt;R&gt; <a class='trait' href='../../../bitflags/__core/io/trait.BufRead.html' title='bitflags::__core::io::BufRead'>BufRead</a> for <a class='struct' href='../../../bitflags/__core/io/struct.BufReader.html' title='bitflags::__core::io::BufReader'>BufReader</a>&lt;R&gt; <span class='where'>where R: <a class='trait' href='../../../bitflags/__core/io/trait.Read.html' title='bitflags::__core::io::Read'>Read</a></span></code></li>
-<li><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/io/trait.BufRead.html' title='bitflags::__core::io::BufRead'>BufRead</a> for <a class='struct' href='../../../bitflags/__core/io/struct.Cursor.html' title='bitflags::__core::io::Cursor'>Cursor</a>&lt;T&gt; <span class='where'>where T: <a class='trait' href='../../../bitflags/__core/convert/trait.AsRef.html' title='bitflags::__core::convert::AsRef'>AsRef</a>&lt;<a href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>[<a href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a>]</a>&gt;</span></code></li>
+<li><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/io/trait.BufRead.html' title='bitflags::__core::io::BufRead'>BufRead</a> for <a class='struct' href='../../../bitflags/__core/io/struct.Cursor.html' title='bitflags::__core::io::Cursor'>Cursor</a>&lt;T&gt; <span class='where'>where T: <a class='trait' href='../../../bitflags/__core/convert/trait.AsRef.html' title='bitflags::__core::convert::AsRef'>AsRef</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>[<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a>]</a>&gt;</span></code></li>
 <li><code>impl&lt;'a, B&gt; <a class='trait' href='../../../bitflags/__core/io/trait.BufRead.html' title='bitflags::__core::io::BufRead'>BufRead</a> for &amp;'a mut B <span class='where'>where B: <a class='trait' href='../../../bitflags/__core/io/trait.BufRead.html' title='bitflags::__core::io::BufRead'>BufRead</a> + ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></li>
 <li><code>impl&lt;B&gt; <a class='trait' href='../../../bitflags/__core/io/trait.BufRead.html' title='bitflags::__core::io::BufRead'>BufRead</a> for <a class='struct' href='../../../bitflags/__core/boxed/struct.Box.html' title='bitflags::__core::boxed::Box'>Box</a>&lt;B&gt; <span class='where'>where B: <a class='trait' href='../../../bitflags/__core/io/trait.BufRead.html' title='bitflags::__core::io::BufRead'>BufRead</a> + ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></li>
-<li><code>impl&lt;'a&gt; <a class='trait' href='../../../bitflags/__core/io/trait.BufRead.html' title='bitflags::__core::io::BufRead'>BufRead</a> for <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>&amp;'a [</a><a href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a><a href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>]</a></code></li>
+<li><code>impl&lt;'a&gt; <a class='trait' href='../../../bitflags/__core/io/trait.BufRead.html' title='bitflags::__core::io::BufRead'>BufRead</a> for <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>&amp;'a [</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>]</a></code></li>
 <li><code>impl <a class='trait' href='../../../bitflags/__core/io/trait.BufRead.html' title='bitflags::__core::io::BufRead'>BufRead</a> for <a class='struct' href='../../../bitflags/__core/io/struct.Empty.html' title='bitflags::__core::io::Empty'>Empty</a></code></li>
 <li><code>impl&lt;'a&gt; <a class='trait' href='../../../bitflags/__core/io/trait.BufRead.html' title='bitflags::__core::io::BufRead'>BufRead</a> for <a class='struct' href='../../../bitflags/__core/io/struct.StdinLock.html' title='bitflags::__core::io::StdinLock'>StdinLock</a>&lt;'a&gt;</code></li>
 <li><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/io/trait.BufRead.html' title='bitflags::__core::io::BufRead'>BufRead</a> for <a class='struct' href='../../../bitflags/__core/io/struct.Take.html' title='bitflags::__core::io::Take'>Take</a>&lt;T&gt; <span class='where'>where T: <a class='trait' href='../../../bitflags/__core/io/trait.BufRead.html' title='bitflags::__core::io::BufRead'>BufRead</a></span></code></li>
@@ -328,6 +329,6 @@ byte (the 0xA byte) or CRLF (0xD, 0xA bytes) at the end.</p>
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

@@ -9,6 +9,7 @@
 
     <title>bitflags::__core::char::MAX - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -45,8 +46,12 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-27500' class='srclink' href='https://doc.rust-lang.org/nightly/core/char/constant.MAX.html?gotosrc=27500' title='goto source code'>[src]</a></span></h1>
-<pre class='rust const'>pub const MAX: <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.char.html'>char</a><code> = </code><code>'\u{10ffff}'</code></pre><div class='docblock'><p>The highest valid code point</p>
+        </span><a id='src-27468' class='srclink' href='https://doc.rust-lang.org/nightly/core/char/constant.MAX.html?gotosrc=27468' title='goto source code'>[src]</a></span></h1>
+<pre class='rust const'>pub const MAX: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.char.html'>char</a><code> = </code><code>'\u{10ffff}'</code></pre><div class='docblock'><p>The highest valid code point a <code>char</code> can have.</p>
+
+<p>A <a href="primitive.char.html"><code>char</code></a> is a <a href="http://www.unicode.org/glossary/#unicode_scalar_value">Unicode Scalar Value</a>, which means that it is a <a href="http://www.unicode.org/glossary/#code_point">Code
+Point</a>, but only ones within a certain range. <code>MAX</code> is the highest valid
+code point that&#39;s a valid <a href="http://www.unicode.org/glossary/#unicode_scalar_value">Unicode Scalar Value</a>.</p>
 </div></section>
     <section id='search' class="content hidden"></section>
 
@@ -106,6 +111,6 @@
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

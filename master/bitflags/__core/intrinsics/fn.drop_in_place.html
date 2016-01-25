@@ -9,6 +9,7 @@
 
     <title>bitflags::__core::intrinsics::drop_in_place - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -45,9 +46,26 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-4773' class='srclink' href='https://doc.rust-lang.org/nightly/core/intrinsics/fn.drop_in_place.html?gotosrc=4773' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub unsafe extern "rust-intrinsic" fn drop_in_place&lt;T&gt;(<a href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut T</a>) <span class='where'>where T: ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></pre><div class='stability'><em class='stab unstable'>Unstable (<code>core_intrinsics</code>)<p>: intrinsics are unlikely to ever be stabilized, instead they should be used through stabilized interfaces in the rest of the standard library</p>
-</em></div></section>
+        </span><a id='src-4810' class='srclink' href='https://doc.rust-lang.org/nightly/core/intrinsics/fn.drop_in_place.html?gotosrc=4810' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub unsafe extern "rust-intrinsic" fn drop_in_place&lt;T&gt;(to_drop: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut T</a>) <span class='where'>where T: ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></pre><div class='stability'><em class='stab unstable'>Unstable (<code>drop_in_place</code>)<p>: just exposed, needs FCP</p>
+</em></div><div class='docblock'><p>Executes the destructor (if any) of the pointed-to value.</p>
+
+<p>This has two use cases:</p>
+
+<ul>
+<li><p>It is <em>required</em> to use <code>drop_in_place</code> to drop unsized types like
+trait objects, because they can&#39;t be read out onto the stack and
+dropped normally.</p></li>
+<li><p>It is friendlier to the optimizer to do this over <code>ptr::read</code> when
+dropping manually allocated memory (e.g. when writing Box/Rc/Vec),
+as the compiler doesn&#39;t need to prove that it&#39;s sound to elide the
+copy.</p></li>
+</ul>
+
+<h1 id='undefined-behavior' class='section-header'><a href='#undefined-behavior'>Undefined Behavior</a></h1>
+<p>This has all the same safety problems as <code>ptr::read</code> with respect to
+invalid pointers, types, and double drops.</p>
+</div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
@@ -106,6 +124,6 @@
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

@@ -9,6 +9,7 @@
 
     <title>bitflags::__core::fs::PathExt - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -45,16 +46,16 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-3816' class='srclink' href='https://doc.rust-lang.org/nightly/std/fs/trait.PathExt.html?gotosrc=3816' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-3845' class='srclink' href='https://doc.rust-lang.org/nightly/std/fs/trait.PathExt.html?gotosrc=3845' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait PathExt {
     fn <a href='#tymethod.metadata' class='fnname'>metadata</a>(&amp;self) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='struct' href='../../../bitflags/__core/fs/struct.Metadata.html' title='bitflags::__core::fs::Metadata'>Metadata</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;;
     fn <a href='#tymethod.symlink_metadata' class='fnname'>symlink_metadata</a>(&amp;self) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='struct' href='../../../bitflags/__core/fs/struct.Metadata.html' title='bitflags::__core::fs::Metadata'>Metadata</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;;
     fn <a href='#tymethod.canonicalize' class='fnname'>canonicalize</a>(&amp;self) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='struct' href='../../../bitflags/__core/path/struct.PathBuf.html' title='bitflags::__core::path::PathBuf'>PathBuf</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;;
     fn <a href='#tymethod.read_link' class='fnname'>read_link</a>(&amp;self) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='struct' href='../../../bitflags/__core/path/struct.PathBuf.html' title='bitflags::__core::path::PathBuf'>PathBuf</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;;
     fn <a href='#tymethod.read_dir' class='fnname'>read_dir</a>(&amp;self) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='struct' href='../../../bitflags/__core/fs/struct.ReadDir.html' title='bitflags::__core::fs::ReadDir'>ReadDir</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;;
-    fn <a href='#tymethod.exists' class='fnname'>exists</a>(&amp;self) -&gt; <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a>;
-    fn <a href='#tymethod.is_file' class='fnname'>is_file</a>(&amp;self) -&gt; <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a>;
-    fn <a href='#tymethod.is_dir' class='fnname'>is_dir</a>(&amp;self) -&gt; <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a>;
+    fn <a href='#tymethod.exists' class='fnname'>exists</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a>;
+    fn <a href='#tymethod.is_file' class='fnname'>is_file</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a>;
+    fn <a href='#tymethod.is_dir' class='fnname'>is_dir</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a>;
 }</pre><div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.5.0<p>: replaced with inherent methods</p>
 </em></div><div class='docblock'><p>Utility methods for paths.</p>
 </div>
@@ -88,15 +89,16 @@ eliminate all symlinks.</p>
 </em></div><div class='docblock'><p>Reads the directory at this path.</p>
 
 <p>For more information see <code>fs::read_dir</code>.</p>
-</div><h3 id='tymethod.exists' class='method stab unstable deprecated'><code>fn <a href='#tymethod.exists' class='fnname'>exists</a>(&amp;self) -&gt; <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a></code></h3><div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.5.0<p>: replaced with inherent methods</p>
+</div><h3 id='tymethod.exists' class='method stab unstable deprecated'><code>fn <a href='#tymethod.exists' class='fnname'>exists</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a></code></h3><div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.5.0<p>: replaced with inherent methods</p>
 </em></div><div class='docblock'><p>Boolean value indicator whether the underlying file exists on the local
-filesystem. Returns false in exactly the cases where <code>fs::stat</code> fails.</p>
-</div><h3 id='tymethod.is_file' class='method stab unstable deprecated'><code>fn <a href='#tymethod.is_file' class='fnname'>is_file</a>(&amp;self) -&gt; <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a></code></h3><div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.5.0<p>: replaced with inherent methods</p>
+filesystem. Returns false in exactly the cases where <code>fs::metadata</code>
+fails.</p>
+</div><h3 id='tymethod.is_file' class='method stab unstable deprecated'><code>fn <a href='#tymethod.is_file' class='fnname'>is_file</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a></code></h3><div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.5.0<p>: replaced with inherent methods</p>
 </em></div><div class='docblock'><p>Whether the underlying implementation (be it a file path, or something
 else) points at a &quot;regular file&quot; on the FS. Will return false for paths
 to non-existent locations or directories or other non-regular files
 (named pipes, etc). Follows links when making this determination.</p>
-</div><h3 id='tymethod.is_dir' class='method stab unstable deprecated'><code>fn <a href='#tymethod.is_dir' class='fnname'>is_dir</a>(&amp;self) -&gt; <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a></code></h3><div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.5.0<p>: replaced with inherent methods</p>
+</div><h3 id='tymethod.is_dir' class='method stab unstable deprecated'><code>fn <a href='#tymethod.is_dir' class='fnname'>is_dir</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a></code></h3><div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.5.0<p>: replaced with inherent methods</p>
 </em></div><div class='docblock'><p>Whether the underlying implementation (be it a file path, or something
 else) is pointing at a directory in the underlying FS. Will return
 false for paths to non-existent locations or if the item is not a
@@ -167,6 +169,6 @@ determination.</p>
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

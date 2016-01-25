@@ -9,6 +9,7 @@
 
     <title>bitflags::__core::time - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -45,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-9631' class='srclink' href='https://doc.rust-lang.org/nightly/std/time/index.html?gotosrc=9631' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-9817' class='srclink' href='https://doc.rust-lang.org/nightly/std/time/index.html?gotosrc=9817' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Temporal quantification.</p>
 </div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
@@ -55,6 +56,46 @@
                         <td class='docblock short'>
                              <p>A duration type to represent a span of time, typically used for system
 timeouts.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class='unstable module-item'>
+                        <td><a class='struct' href='struct.Instant.html'
+                               title='bitflags::__core::time::Instant'>Instant</a></td>
+                        <td class='docblock short'>
+                            [<em class='stab unstable'>Unstable</em>] <p>A measurement of a monotonically increasing clock.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class='unstable module-item'>
+                        <td><a class='struct' href='struct.SystemTime.html'
+                               title='bitflags::__core::time::SystemTime'>SystemTime</a></td>
+                        <td class='docblock short'>
+                            [<em class='stab unstable'>Unstable</em>] <p>A measurement of the system clock appropriate for timestamps such as those
+on files on the filesystem.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class='unstable module-item'>
+                        <td><a class='struct' href='struct.SystemTimeError.html'
+                               title='bitflags::__core::time::SystemTimeError'>SystemTimeError</a></td>
+                        <td class='docblock short'>
+                            [<em class='stab unstable'>Unstable</em>] <p>An error returned from the <code>duration_from_earlier</code> method on <code>SystemTime</code>,
+used to learn about why how far in the opposite direction a timestamp lies.</p>
+
+                        </td>
+                    </tr>
+                </table><h2 id='constants' class='section-header'><a href="#constants">Constants</a></h2>
+<table>
+                    <tr class='unstable module-item'>
+                        <td><a class='constant' href='constant.UNIX_EPOCH.html'
+                               title='bitflags::__core::time::UNIX_EPOCH'>UNIX_EPOCH</a></td>
+                        <td class='docblock short'>
+                            [<em class='stab unstable'>Unstable</em>] <p>An anchor in time which can be used to create new <code>SystemTime</code> instances or
+learn about where in time a <code>SystemTime</code> lies.</p>
 
                         </td>
                     </tr>
@@ -117,6 +158,6 @@ timeouts.</p>
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

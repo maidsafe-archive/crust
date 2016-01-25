@@ -9,6 +9,7 @@
 
     <title>bitflags::__core::sync::mpsc::Select - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../../main.css">
 
     
@@ -45,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-7956' class='srclink' href='https://doc.rust-lang.org/nightly/std/sync/mpsc/select/struct.Select.html?gotosrc=7956' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-8138' class='srclink' href='https://doc.rust-lang.org/nightly/std/sync/mpsc/select/struct.Select.html?gotosrc=8138' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Select {
     // some fields omitted
 }</pre><div class='stability'><em class='stab unstable'>Unstable (<code>mpsc_select</code>)<p>: This implementation, while likely sufficient, is unsafe and likely to be error prone. At some point in the future this module will likely be replaced, and it is currently unknown how much API breakage that will cause. The ability to select over a number of channels will remain forever, but no guarantees beyond this are being made</p>
@@ -69,7 +70,7 @@ the <code>select!</code> macro.</p>
 </em></div><div class='docblock'><p>Creates a new handle into this receiver set for a new receiver. Note
 that this does <em>not</em> add the receiver to the receiver set, for that you
 must call the <code>add</code> method on the handle itself.</p>
-</div><h4 id='method.wait' class='method'><code>fn <a href='#method.wait' class='fnname'>wait</a>(&amp;self) -&gt; <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a></code></h4>
+</div><h4 id='method.wait' class='method'><code>fn <a href='#method.wait' class='fnname'>wait</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a></code></h4>
 <div class='stability'><em class='stab unstable'>Unstable (<code>mpsc_select</code>)<p>: This implementation, while likely sufficient, is unsafe and likely to be error prone. At some point in the future this module will likely be replaced, and it is currently unknown how much API breakage that will cause. The ability to select over a number of channels will remain forever, but no guarantees beyond this are being made</p>
 </em></div><div class='docblock'><p>Waits for an event on this receiver set. The returned value is <em>not</em> an
 index, but rather an id. This id can be queried against any active
@@ -137,6 +138,6 @@ channel has been closed.</p>
     <script src="../../../../jquery.js"></script>
     <script src="../../../../main.js"></script>
     
-    <script async src="../../../../search-index.js"></script>
+    <script defer src="../../../../search-index.js"></script>
 </body>
 </html>

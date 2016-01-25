@@ -9,6 +9,7 @@
 
     <title>bitflags::__core::ops::Drop - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -45,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-12389' class='srclink' href='https://doc.rust-lang.org/nightly/core/ops/trait.Drop.html?gotosrc=12389' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-12350' class='srclink' href='https://doc.rust-lang.org/nightly/core/ops/trait.Drop.html?gotosrc=12350' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait Drop {
     fn <a href='#tymethod.drop' class='fnname'>drop</a>(&amp;mut self);
 }</pre><div class='docblock'><p>The <code>Drop</code> trait is used to run some code when a value goes out of scope.
@@ -73,13 +74,7 @@ goes out of scope, and therefore <code>main</code> prints <code>Dropping!</code>
 </div></div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
-    <li><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/ops/trait.Drop.html' title='bitflags::__core::ops::Drop'>Drop</a> for <a class='struct' href='../../../bitflags/__core/boxed/struct.IntermediateBox.html' title='bitflags::__core::boxed::IntermediateBox'>IntermediateBox</a>&lt;T&gt; <span class='where'>where T: ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></li>
-<li><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/ops/trait.Drop.html' title='bitflags::__core::ops::Drop'>Drop</a> for <a class='struct' href='../../../bitflags/__core/sync/struct.Arc.html' title='bitflags::__core::sync::Arc'>Arc</a>&lt;T&gt; <span class='where'>where T: ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></li>
-<li><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/ops/trait.Drop.html' title='bitflags::__core::ops::Drop'>Drop</a> for <a class='struct' href='../../../bitflags/__core/sync/struct.Weak.html' title='bitflags::__core::sync::Weak'>Weak</a>&lt;T&gt; <span class='where'>where T: ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></li>
-<li><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/ops/trait.Drop.html' title='bitflags::__core::ops::Drop'>Drop</a> for <a class='struct' href='../../../bitflags/__core/rc/struct.Rc.html' title='bitflags::__core::rc::Rc'>Rc</a>&lt;T&gt; <span class='where'>where T: ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></li>
-<li><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/ops/trait.Drop.html' title='bitflags::__core::ops::Drop'>Drop</a> for <a class='struct' href='../../../bitflags/__core/rc/struct.Weak.html' title='bitflags::__core::rc::Weak'>Weak</a>&lt;T&gt; <span class='where'>where T: ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></li>
-<li><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/ops/trait.Drop.html' title='bitflags::__core::ops::Drop'>Drop</a> for <a class='struct' href='https://doc.rust-lang.org/nightly/alloc/raw_vec/struct.RawVec.html' title='alloc::raw_vec::RawVec'>RawVec</a>&lt;T&gt;</code></li>
-<li><code>impl&lt;'b&gt; <a class='trait' href='../../../bitflags/__core/ops/trait.Drop.html' title='bitflags::__core::ops::Drop'>Drop</a> for <a class='struct' href='https://doc.rust-lang.org/nightly/core/cell/struct.BorrowRef.html' title='core::cell::BorrowRef'>BorrowRef</a>&lt;'b&gt;</code></li>
+    <li><code>impl&lt;'b&gt; <a class='trait' href='../../../bitflags/__core/ops/trait.Drop.html' title='bitflags::__core::ops::Drop'>Drop</a> for <a class='struct' href='https://doc.rust-lang.org/nightly/core/cell/struct.BorrowRef.html' title='core::cell::BorrowRef'>BorrowRef</a>&lt;'b&gt;</code></li>
 <li><code>impl&lt;'b&gt; <a class='trait' href='../../../bitflags/__core/ops/trait.Drop.html' title='bitflags::__core::ops::Drop'>Drop</a> for <a class='struct' href='https://doc.rust-lang.org/nightly/core/cell/struct.BorrowRefMut.html' title='core::cell::BorrowRefMut'>BorrowRefMut</a>&lt;'b&gt;</code></li>
 <li><code>impl&lt;'a, T&gt; <a class='trait' href='../../../bitflags/__core/ops/trait.Drop.html' title='bitflags::__core::ops::Drop'>Drop</a> for <a class='struct' href='https://doc.rust-lang.org/nightly/collections/binary_heap/struct.Hole.html' title='collections::binary_heap::Hole'>Hole</a>&lt;'a, T&gt;</code></li>
 <li><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/ops/trait.Drop.html' title='bitflags::__core::ops::Drop'>Drop</a> for <a class='struct' href='https://doc.rust-lang.org/nightly/collections/btree/node/struct.RawItems.html' title='collections::btree::node::RawItems'>RawItems</a>&lt;T&gt;</code></li>
@@ -92,6 +87,12 @@ goes out of scope, and therefore <code>main</code> prints <code>Dropping!</code>
 <li><code>impl&lt;'a, T&gt; <a class='trait' href='../../../bitflags/__core/ops/trait.Drop.html' title='bitflags::__core::ops::Drop'>Drop</a> for <a class='struct' href='../../../bitflags/__core/vec/struct.Drain.html' title='bitflags::__core::vec::Drain'>Drain</a>&lt;'a, T&gt;</code></li>
 <li><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/ops/trait.Drop.html' title='bitflags::__core::ops::Drop'>Drop</a> for <a class='struct' href='../../../bitflags/__core/collections/struct.VecDeque.html' title='bitflags::__core::collections::VecDeque'>VecDeque</a>&lt;T&gt;</code></li>
 <li><code>impl&lt;'a, T&gt; <a class='trait' href='../../../bitflags/__core/ops/trait.Drop.html' title='bitflags::__core::ops::Drop'>Drop</a> for <a class='struct' href='../../../bitflags/__core/collections/vec_deque/struct.Drain.html' title='bitflags::__core::collections::vec_deque::Drain'>Drain</a>&lt;'a, T&gt; <span class='where'>where T: 'a</span></code></li>
+<li><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/ops/trait.Drop.html' title='bitflags::__core::ops::Drop'>Drop</a> for <a class='struct' href='../../../bitflags/__core/boxed/struct.IntermediateBox.html' title='bitflags::__core::boxed::IntermediateBox'>IntermediateBox</a>&lt;T&gt; <span class='where'>where T: ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></li>
+<li><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/ops/trait.Drop.html' title='bitflags::__core::ops::Drop'>Drop</a> for <a class='struct' href='../../../bitflags/__core/sync/struct.Arc.html' title='bitflags::__core::sync::Arc'>Arc</a>&lt;T&gt; <span class='where'>where T: ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></li>
+<li><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/ops/trait.Drop.html' title='bitflags::__core::ops::Drop'>Drop</a> for <a class='struct' href='../../../bitflags/__core/sync/struct.Weak.html' title='bitflags::__core::sync::Weak'>Weak</a>&lt;T&gt; <span class='where'>where T: ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></li>
+<li><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/ops/trait.Drop.html' title='bitflags::__core::ops::Drop'>Drop</a> for <a class='struct' href='../../../bitflags/__core/rc/struct.Rc.html' title='bitflags::__core::rc::Rc'>Rc</a>&lt;T&gt; <span class='where'>where T: ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></li>
+<li><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/ops/trait.Drop.html' title='bitflags::__core::ops::Drop'>Drop</a> for <a class='struct' href='../../../bitflags/__core/rc/struct.Weak.html' title='bitflags::__core::rc::Weak'>Weak</a>&lt;T&gt; <span class='where'>where T: ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></li>
+<li><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/ops/trait.Drop.html' title='bitflags::__core::ops::Drop'>Drop</a> for <a class='struct' href='https://doc.rust-lang.org/nightly/alloc/raw_vec/struct.RawVec.html' title='alloc::raw_vec::RawVec'>RawVec</a>&lt;T&gt;</code></li>
 <li><code>impl&lt;'a, K, V&gt; <a class='trait' href='../../../bitflags/__core/ops/trait.Drop.html' title='bitflags::__core::ops::Drop'>Drop</a> for <a class='struct' href='https://doc.rust-lang.org/nightly/std/collections/hash/table/struct.Drain.html' title='std::collections::hash::table::Drain'>Drain</a>&lt;'a, K, V&gt; <span class='where'>where K: 'a, V: 'a</span></code></li>
 <li><code>impl&lt;K, V&gt; <a class='trait' href='../../../bitflags/__core/ops/trait.Drop.html' title='bitflags::__core::ops::Drop'>Drop</a> for <a class='struct' href='https://doc.rust-lang.org/nightly/std/collections/hash/table/struct.RawTable.html' title='std::collections::hash::table::RawTable'>RawTable</a>&lt;K, V&gt;</code></li>
 <li><code>impl <a class='trait' href='../../../bitflags/__core/ops/trait.Drop.html' title='bitflags::__core::ops::Drop'>Drop</a> for <a class='struct' href='../../../bitflags/__core/dynamic_lib/struct.DynamicLibrary.html' title='bitflags::__core::dynamic_lib::DynamicLibrary'>DynamicLibrary</a></code></li>
@@ -183,6 +184,6 @@ goes out of scope, and therefore <code>main</code> prints <code>Dropping!</code>
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

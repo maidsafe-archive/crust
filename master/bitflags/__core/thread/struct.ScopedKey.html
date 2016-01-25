@@ -9,6 +9,7 @@
 
     <title>bitflags::__core::thread::ScopedKey - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -45,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-892' class='srclink' href='https://doc.rust-lang.org/nightly/std/thread/scoped_tls/struct.ScopedKey.html?gotosrc=892' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-903' class='srclink' href='https://doc.rust-lang.org/nightly/std/thread/scoped_tls/struct.ScopedKey.html?gotosrc=903' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct ScopedKey&lt;T&gt; <span class='where'>where T: 'static</span> {
     // some fields omitted
 }</pre><div class='stability'><em class='stab unstable'>Unstable (<code>scoped_tls</code>)<p>: scoped TLS has yet to have wide enough use to fully consider stabilizing its interface</p>
@@ -95,7 +96,7 @@ variable.</p>
 <h1 id='panics' class='section-header'><a href='#panics'>Panics</a></h1>
 <p>This function will panic if <code>set</code> has not previously been called.</p>
 
-<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='examples-1' class='section-header'><a href='#examples-1'>Examples</a></h1><pre class='rust rust-example-rendered'>
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>feature</span>(<span class='ident'>scoped_tls</span>)]</span>
 
 <span class='macro'>scoped_thread_local</span><span class='macro'>!</span>(<span class='kw'>static</span> <span class='ident'>FOO</span>: <span class='ident'>u32</span>);
@@ -103,7 +104,7 @@ variable.</p>
 <span class='ident'>FOO</span>.<span class='ident'>with</span>(<span class='op'>|</span><span class='ident'>slot</span><span class='op'>|</span> {
     <span class='comment'>// work with `slot`</span>
 });</pre>
-</div><h4 id='method.is_set' class='method'><code>fn <a href='#method.is_set' class='fnname'>is_set</a>(&amp;'static self) -&gt; <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a></code></h4>
+</div><h4 id='method.is_set' class='method'><code>fn <a href='#method.is_set' class='fnname'>is_set</a>(&amp;'static self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a></code></h4>
 <div class='stability'><em class='stab unstable'>Unstable (<code>scoped_tls</code>)<p>: scoped TLS has yet to have wide enough use to fully consider stabilizing its interface</p>
 </em></div><div class='docblock'><p>Test whether this TLS key has been <code>set</code> for the current thread.</p>
 </div></div></section>
@@ -165,6 +166,6 @@ variable.</p>
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

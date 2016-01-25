@@ -9,6 +9,7 @@
 
     <title>bitflags::__core::prelude - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -45,111 +46,77 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-168' class='srclink' href='https://doc.rust-lang.org/nightly/std/prelude/index.html?gotosrc=168' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-178' class='srclink' href='https://doc.rust-lang.org/nightly/std/prelude/index.html?gotosrc=178' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>The Rust Prelude</p>
 
-<p>Because <code>std</code> is required by most serious Rust software, it is
-imported at the topmost level of every crate by default, as if
-each crate contains the following:</p>
+<p>Rust comes with a variety of things in its standard library. However, if
+you had to manually import every single thing that you used, it would be
+very verbose. But importing a lot of things that a program never uses isn&#39;t
+good either. A balance needs to be struck.</p>
+
+<p>The <em>prelude</em> is the list of things that Rust automatically imports into
+every Rust program. It&#39;s kept as small as possible, and is focused on
+things, particuarly traits, which are used in almost every single Rust
+program.</p>
+
+<p>On a technical level, Rust inserts</p>
 <pre class='rust rust-example-rendered'>
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>std</span>;</pre>
 
-<p>This means that the contents of std can be accessed from any context
-with the <code>std::</code> path prefix, as in <code>use std::vec</code>, <code>use std::thread::spawn</code>,
-etc.</p>
-
-<p>Additionally, <code>std</code> contains a versioned <em>prelude</em> that reexports many of the
-most common traits, types, and functions. <em>The contents of the prelude are
-imported into every module by default</em>.  Implicitly, all modules behave as if
-they contained the following <a href="../../book/crates-and-modules.html#importing-modules-with-use"><code>use</code> statement</a>:</p>
+<p>into the crate root of every crate, and</p>
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>prelude</span>::<span class='ident'>v1</span>::<span class='op'>*</span>;</pre>
 
-<p>The prelude is primarily concerned with exporting <em>traits</em> that
-are so pervasive that they would be onerous to import for every use,
-particularly those that are commonly mentioned in <a href="../../book/traits.html">generic type
-bounds</a>.</p>
+<p>into every module.</p>
 
+<h1 id='other-preludes' class='section-header'><a href='#other-preludes'>Other preludes</a></h1>
+<p>Preludes can be seen as a pattern to make using multiple types more
+convenient. As such, you&#39;ll find other preludes in the standard library,
+such as <a href="../io/prelude/index.html"><code>std::io::prelude</code></a>. Various libraries in the Rust ecosystem may
+also define their own preludes.</p>
+
+<p>The differece between &#39;the prelude&#39; and these other preludes is that they
+are not automatically <code>use</code>&#39;d, and must be imported manually. This is still
+easier than importing all of their consitutent components.</p>
+
+<h1 id='prelude-contents' class='section-header'><a href='#prelude-contents'>Prelude contents</a></h1>
 <p>The current version of the prelude (version 1) lives in
 <a href="v1/index.html"><code>std::prelude::v1</code></a>, and reexports the following.</p>
 
 <ul>
-<li><code>std::marker::</code>{
-<a href="../marker/trait.Copy.html"><code>Copy</code></a>,
-<a href="../marker/trait.Send.html"><code>Send</code></a>,
-<a href="../marker/trait.Sized.html"><code>Sized</code></a>,
-<a href="../marker/trait.Sync.html"><code>Sync</code></a>
-}.
-The marker traits indicate fundamental properties of types.</li>
-<li><code>std::ops::</code>{
-<a href="../ops/trait.Drop.html"><code>Drop</code></a>,
-<a href="../ops/trait.Fn.html"><code>Fn</code></a>,
-<a href="../ops/trait.FnMut.html"><code>FnMut</code></a>,
-<a href="../ops/trait.FnOnce.html"><code>FnOnce</code></a>
-}.
-The <a href="../../book/drop.html">destructor</a> trait and the
-<a href="../../book/closures.html">closure</a> traits, reexported from the same
-<a href="../ops/index.html">module that also defines overloaded
-operators</a>.</li>
-<li><code>std::mem::</code><a href="../mem/fn.drop.html"><code>drop</code></a>.
-A convenience function for explicitly dropping a value.</li>
-<li><code>std::boxed::</code><a href="../boxed/struct.Box.html"><code>Box</code></a>.
-The owned heap pointer.</li>
-<li><code>std::borrow::</code><a href="../borrow/trait.ToOwned.html"><code>ToOwned</code></a>.
-The conversion trait that defines <code>to_owned</code>, the generic method
-for creating an owned type from a borrowed type.</li>
-<li><code>std::clone::</code><a href="../clone/trait.Clone.html"><code>Clone</code></a>.
-The ubiquitous trait that defines <code>clone</code>, the method for
-producing copies of values that are consider expensive to copy.</li>
-<li><code>std::cmp::</code>{
-<a href="../cmp/trait.PartialEq.html"><code>PartialEq</code></a>,
-<a href="../cmp/trait.PartialOrd.html"><code>PartialOrd</code></a>,
-<a href="../cmp/trait.Eq.html"><code>Eq</code></a>,
-<a href="../cmp/trait.Ord.html"><code>Ord</code></a>
-}.
-The comparison traits, which implement the comparison operators
-and are often seen in trait bounds.</li>
-<li><code>std::convert::</code>{
-<a href="../convert/trait.AsRef.html"><code>AsRef</code></a>,
-<a href="../convert/trait.AsMut.html"><code>AsMut</code></a>,
-<a href="../convert/trait.Into.html"><code>Into</code></a>,
-<a href="../convert/trait.From.html"><code>From</code></a>
-}.
-Generic conversions, used by savvy API authors to create
-overloaded methods.</li>
-<li><code>std::default::</code><a href="../default/trait.Default.html"><code>Default</code></a>.
-Types that have default values.</li>
-<li><code>std::iter::</code>{
-<a href="../iter/trait.Iterator.html"><code>Iterator</code></a>,
-<a href="../iter/trait.Extend.html"><code>Extend</code></a>,
-<a href="../iter/trait.IntoIterator.html"><code>IntoIterator</code></a>,
-<a href="../iter/trait.DoubleEndedIterator.html"><code>DoubleEndedIterator</code></a>,
-<a href="../iter/trait.ExactSizeIterator.html"><code>ExactSizeIterator</code></a>
-}.
-<a href="../../book/iterators.html">Iterators</a>.</li>
-<li><code>std::option::Option::</code>{
-<a href="../option/enum.Option.html"><code>self</code></a>,
-<a href="../option/enum.Option.html"><code>Some</code></a>,
-<a href="../option/enum.Option.html"><code>None</code></a>
-}.
-The ubiquitous <code>Option</code> type and its two <a href="../../book/enums.html">variants</a>,
-<code>Some</code> and <code>None</code>.</li>
-<li><code>std::result::Result::</code>{
-<a href="../result/enum.Result.html"><code>self</code></a>,
-<a href="../result/enum.Result.html"><code>Ok</code></a>,
-<a href="../result/enum.Result.html"><code>Err</code></a>
-}.
-The ubiquitous <code>Result</code> type and its two <a href="../../book/enums.html">variants</a>,
-<code>Ok</code> and <code>Err</code>.</li>
-<li><code>std::slice::</code><a href="../slice/trait.SliceConcatExt.html"><code>SliceConcatExt</code></a>.
-An unstable extension to slices that shouldn&#39;t have to exist.</li>
-<li><code>std::string::</code>{
-<a href="../string/struct.String.html"><code>String</code></a>,
-<a href="../string/trait.ToString.html"><code>ToString</code></a>
-}.
-Heap allocated strings.</li>
-<li><code>std::vec::</code><a href="../vec/struct.Vec.html"><code>Vec</code></a>.
-Heap allocated vectors.</li>
+<li><a href="../marker/index.html"><code>std::marker</code></a>::{<a href="../marker/trait.Copy.html"><code>Copy</code></a>, <a href="../marker/trait.Send.html"><code>Send</code></a>, <a href="../marker/trait.Sized.html"><code>Sized</code></a>, <a href="../marker/trait.Sync.html"><code>Sync</code></a>}. The marker
+traits indicate fundamental properties of types.</li>
+<li><a href="../ops/index.html"><code>std::ops</code></a>::{<a href="../mem/fn.drop.html"><code>Drop</code></a>, <a href="../ops/trait.Fn.html"><code>Fn</code></a>, <a href="../ops/trait.FnMut.html"><code>FnMut</code></a>, <a href="../ops/trait.FnOnce.html"><code>FnOnce</code></a>}. Various
+operations for both destuctors and overloading <code>()</code>.</li>
+<li><a href="../mem/index.html"><code>std::mem</code></a>::<a href="../mem/fn.drop.html"><code>drop</code></a>, a convenience function for explicitly dropping a
+value.</li>
+<li><a href="../boxed/index.html"><code>std::boxed</code></a>::<a href="../boxed/struct.Box.html"><code>Box</code></a>, a way to allocate values on the heap.</li>
+<li><a href="../borrow/index.html"><code>std::borrow</code></a>::<a href="../borrow/trait.ToOwned.html"><code>ToOwned</code></a>, The conversion trait that defines
+<a href="../borrow/trait.ToOwned.html#tymethod.to_owned"><code>to_owned()</code></a>, the generic method for creating an owned type from a
+borrowed type.</li>
+<li><a href="../clone/index.html"><code>std::clone</code></a>::<a href="../clone/trait.Clone.html"><code>Clone</code></a>, the ubiquitous trait that defines <a href="../clone/trait.Clone.html#tymethod.clone"><code>clone()</code></a>,
+the method for producing a copy of a value.</li>
+<li><a href="../cmp/index.html"><code>std::cmp</code></a>::{<a href="../cmp/trait.PartialEq.html"><code>PartialEq</code></a>, <a href="../cmp/trait.PartialOrd.html"><code>PartialOrd</code></a>, <a href="../cmp/trait.Eq.html"><code>Eq</code></a>, <a href="../cmp/trait.Ord.html"><code>Ord</code></a> }. The
+comparison traits, which implement the comparison operators and are often
+seen in trait bounds.</li>
+<li><a href="../convert/index.html"><code>std::convert</code></a>::{<a href="../convert/trait.AsRef.html"><code>AsRef</code></a>, <a href="../convert/trait.AsMut.html"><code>AsMut</code></a>, <a href="../convert/trait.Into.html"><code>Into</code></a>, <a href="../convert/trait.From.html"><code>From</code></a>}. Generic
+conversions, used by savvy API authors to create overloaded methods.</li>
+<li><a href="../default/index.html"><code>std::default</code></a>::<a href="../default/trait.Default.html"><code>Default</code></a>, types that have default values.</li>
+<li><a href="../iter/index.html"><code>std::iter</code></a>::{<a href="../iter/trait.Iterator.html"><code>Iterator</code></a>, <a href="../iter/trait.Extend.html"><code>Extend</code></a>, <a href="../iter/trait.IntoIterator.html"><code>IntoIterator</code></a>,
+<a href="../iter/trait.DoubleEndedIterator.html"><code>DoubleEndedIterator</code></a>, <a href="../iter/trait.ExactSizeIterator.html"><code>ExactSizeIterator</code></a>}. Iterators of various
+kinds.</li>
+<li><a href="../option/index.html"><code>std::option</code></a>::<a href="../option/enum.Option.html"><code>Option</code></a>::{<code>self</code>, <code>Some</code>, <code>None</code>}. A type which
+expresses the presence or absence of a value. This type is so commonly
+used, its variants are also exported.</li>
+<li><a href="../result/index.html"><code>std::result</code></a>::<a href="../result/enum.Result.html"><code>Result</code></a>::{<code>self</code>, <code>Ok</code>, <code>Err</code>}. A type for functions
+that may succeed or fail. Like <a href="../option/enum.Option.html"><code>Option</code></a>, its variants are exported as
+well.</li>
+<li><a href="../slice/index.html"><code>std::slice</code></a>::<a href="../slice/trait.SliceConcatExt.html"><code>SliceConcatExt</code></a>, a trait that exists for technical
+reasons, but shouldn&#39;t have to exist. It provides a few useful methods on
+slices.</li>
+<li><a href="../string/index.html"><code>std::string</code></a>::{<a href="../string/struct.String.html"><code>String</code></a>, <a href="../string/trait.ToString.html"><code>ToString</code></a>}, heap allocated strings.</li>
+<li><a href="../vec/index.html"><code>std::vec</code></a>::<a href="../vec/struct.Vec.html"><code>Vec</code></a>, a growable, heap-allocated
+vector.</li>
 </ul>
 </div><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
 <table>
@@ -220,6 +187,6 @@ Heap allocated vectors.</li>
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

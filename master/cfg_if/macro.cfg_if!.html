@@ -9,6 +9,7 @@
 
     <title>cfg_if::cfg_if! - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../main.css">
 
     
@@ -52,13 +53,7 @@
         <span class='kw'>if</span> <span class='attribute'>#[<span class='ident'>cfg</span>($(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>meta</span>:<span class='ident'>meta</span>),<span class='op'>*</span>)]</span> { $(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>it</span>:<span class='ident'>item</span>)<span class='op'>*</span> }
     ) <span class='kw'>else</span> <span class='op'>*</span> <span class='kw'>else</span> {
         $(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>it2</span>:<span class='ident'>item</span>)<span class='op'>*</span>
-    }) <span class='op'>=&gt;</span> {
-        <span class='macro'>__cfg_if_items</span><span class='macro'>!</span> {
-            () ;
-            $( ( ($(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>meta</span>),<span class='op'>*</span>) ($(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>it</span>)<span class='op'>*</span>) ), )<span class='op'>*</span>
-            ( () ($(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>it2</span>)<span class='op'>*</span>) ),
-        }
-    }
+    }) <span class='op'>=&gt;</span> { ... };
 }</pre>
 </section>
     <section id='search' class="content hidden"></section>
@@ -119,6 +114,6 @@
     <script src="../jquery.js"></script>
     <script src="../main.js"></script>
     
-    <script async src="../search-index.js"></script>
+    <script defer src="../search-index.js"></script>
 </body>
 </html>

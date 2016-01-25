@@ -9,6 +9,7 @@
 
     <title>hyper::header::Header - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
 
     
@@ -45,10 +46,10 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-4535' class='srclink' href='../../src/hyper/header/mod.rs.html#116-130' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-4686' class='srclink' href='../../src/hyper/header/mod.rs.html#116-130' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait Header: <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/any/trait.Any.html' title='core::any::Any'>Any</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Send.html' title='core::marker::Send'>Send</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sync.html' title='core::marker::Sync'>Sync</a> {
-    fn <a href='#tymethod.header_name' class='fnname'>header_name</a>() -&gt; &amp;'static <a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>;
-    fn <a href='#tymethod.parse_header' class='fnname'>parse_header</a>(raw: <a href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a><a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;<a href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>) -&gt; <a class='type' href='../../hyper/error/type.Result.html' title='hyper::error::Result'>Result</a>&lt;Self&gt;;
+    fn <a href='#tymethod.header_name' class='fnname'>header_name</a>() -&gt; &amp;'static <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>;
+    fn <a href='#tymethod.parse_header' class='fnname'>parse_header</a>(raw: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a><a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>) -&gt; <a class='type' href='../../hyper/error/type.Result.html' title='hyper::error::Result'>Result</a>&lt;Self&gt;;
 }</pre><div class='docblock'><p>A trait for any object that will represent a header field and value.</p>
 
 <p>This trait represents the construction and identification of headers,
@@ -56,10 +57,10 @@ and contains trait-object unsafe methods.</p>
 </div>
             <h2 id='required-methods'>Required Methods</h2>
             <div class='methods'>
-        <h3 id='tymethod.header_name' class='method stab '><code>fn <a href='#tymethod.header_name' class='fnname'>header_name</a>() -&gt; &amp;'static <a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a></code></h3><div class='docblock'><p>Returns the name of the header field this belongs to.</p>
+        <h3 id='tymethod.header_name' class='method stab '><code>fn <a href='#tymethod.header_name' class='fnname'>header_name</a>() -&gt; &amp;'static <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a></code></h3><div class='docblock'><p>Returns the name of the header field this belongs to.</p>
 
 <p>This will become an associated constant once available.</p>
-</div><h3 id='tymethod.parse_header' class='method stab '><code>fn <a href='#tymethod.parse_header' class='fnname'>parse_header</a>(raw: <a href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a><a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;<a href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>) -&gt; <a class='type' href='../../hyper/error/type.Result.html' title='hyper::error::Result'>Result</a>&lt;Self&gt;</code></h3><div class='docblock'><p>Parse a header from a raw stream of bytes.</p>
+</div><h3 id='tymethod.parse_header' class='method stab '><code>fn <a href='#tymethod.parse_header' class='fnname'>parse_header</a>(raw: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a><a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>) -&gt; <a class='type' href='../../hyper/error/type.Result.html' title='hyper::error::Result'>Result</a>&lt;Self&gt;</code></h3><div class='docblock'><p>Parse a header from a raw stream of bytes.</p>
 
 <p>It&#39;s possible that a request can include a header field more than once,
 and in that case, the slice will have a length greater than 1. However,
@@ -175,6 +176,6 @@ if <code>raw.len() &gt; 1</code>.</p>
     <script src="../../jquery.js"></script>
     <script src="../../main.js"></script>
     
-    <script async src="../../search-index.js"></script>
+    <script defer src="../../search-index.js"></script>
 </body>
 </html>

@@ -9,6 +9,7 @@
 
     <title>hyper::http::message::Protocol - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -45,15 +46,15 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-5734' class='srclink' href='../../../src/hyper/http/message.rs.html#26-29' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-5895' class='srclink' href='../../../src/hyper/http/message.rs.html#26-29' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait Protocol {
-    fn <a href='#tymethod.new_message' class='fnname'>new_message</a>(&amp;self, host: &amp;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, port: <a href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a>, scheme: &amp;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='type' href='../../../hyper/error/type.Result.html' title='hyper::error::Result'>Result</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html' title='alloc::boxed::Box'>Box</a>&lt;<a class='trait' href='../../../hyper/http/message/trait.HttpMessage.html' title='hyper::http::message::HttpMessage'>HttpMessage</a>&gt;&gt;;
+    fn <a href='#tymethod.new_message' class='fnname'>new_message</a>(&amp;self, host: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, port: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a>, scheme: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='type' href='../../../hyper/error/type.Result.html' title='hyper::error::Result'>Result</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html' title='alloc::boxed::Box'>Box</a>&lt;<a class='trait' href='../../../hyper/http/message/trait.HttpMessage.html' title='hyper::http::message::HttpMessage'>HttpMessage</a>&gt;&gt;;
 }</pre><div class='docblock'><p>The trait provides an API for creating new <code>HttpMessage</code>s depending on the underlying HTTP
 protocol.</p>
 </div>
             <h2 id='required-methods'>Required Methods</h2>
             <div class='methods'>
-        <h3 id='tymethod.new_message' class='method stab '><code>fn <a href='#tymethod.new_message' class='fnname'>new_message</a>(&amp;self, host: &amp;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, port: <a href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a>, scheme: &amp;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='type' href='../../../hyper/error/type.Result.html' title='hyper::error::Result'>Result</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html' title='alloc::boxed::Box'>Box</a>&lt;<a class='trait' href='../../../hyper/http/message/trait.HttpMessage.html' title='hyper::http::message::HttpMessage'>HttpMessage</a>&gt;&gt;</code></h3><div class='docblock'><p>Creates a fresh <code>HttpMessage</code> bound to the given host, based on the given protocol scheme.</p>
+        <h3 id='tymethod.new_message' class='method stab '><code>fn <a href='#tymethod.new_message' class='fnname'>new_message</a>(&amp;self, host: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, port: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a>, scheme: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='type' href='../../../hyper/error/type.Result.html' title='hyper::error::Result'>Result</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html' title='alloc::boxed::Box'>Box</a>&lt;<a class='trait' href='../../../hyper/http/message/trait.HttpMessage.html' title='hyper::http::message::HttpMessage'>HttpMessage</a>&gt;&gt;</code></h3><div class='docblock'><p>Creates a fresh <code>HttpMessage</code> bound to the given host, based on the given protocol scheme.</p>
 </div></div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
@@ -120,6 +121,6 @@ protocol.</p>
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

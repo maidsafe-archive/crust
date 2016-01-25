@@ -9,6 +9,7 @@
 
     <title>net2::TcpListenerExt - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../main.css">
 
     <link rel="shortcut icon" href="https://doc.rust-lang.org/favicon.ico">
@@ -47,28 +48,28 @@
             </a>
         </span><a id='src-277' class='srclink' href='../src/net2/ext.rs.html#265-311' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait TcpListenerExt {
-    fn <a href='#tymethod.set_ttl' class='fnname'>set_ttl</a>(&amp;self, ttl: <a href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;;
-    fn <a href='#tymethod.ttl' class='fnname'>ttl</a>(&amp;self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>&gt;;
-    fn <a href='#tymethod.set_only_v6' class='fnname'>set_only_v6</a>(&amp;self, only_v6: <a href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;;
-    fn <a href='#tymethod.only_v6' class='fnname'>only_v6</a>(&amp;self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>&gt;;
+    fn <a href='#tymethod.set_ttl' class='fnname'>set_ttl</a>(&amp;self, ttl: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;;
+    fn <a href='#tymethod.ttl' class='fnname'>ttl</a>(&amp;self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>&gt;;
+    fn <a href='#tymethod.set_only_v6' class='fnname'>set_only_v6</a>(&amp;self, only_v6: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;;
+    fn <a href='#tymethod.only_v6' class='fnname'>only_v6</a>(&amp;self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>&gt;;
     fn <a href='#tymethod.take_error' class='fnname'>take_error</a>(&amp;self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/std/io/error/struct.Error.html' title='std::io::error::Error'>Error</a>&gt;&gt;;
-    fn <a href='#tymethod.set_nonblocking' class='fnname'>set_nonblocking</a>(&amp;self, nonblocking: <a href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;;
+    fn <a href='#tymethod.set_nonblocking' class='fnname'>set_nonblocking</a>(&amp;self, nonblocking: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;;
 }</pre><div class='docblock'><p>Extension methods for the standard <a href="https://doc.rust-lang.org/std/net/struct.TcpListener.html"><code>TcpListener</code> type</a> in <code>std::net</code>.</p>
 </div>
             <h2 id='required-methods'>Required Methods</h2>
             <div class='methods'>
-        <h3 id='tymethod.set_ttl' class='method stab '><code>fn <a href='#tymethod.set_ttl' class='fnname'>set_ttl</a>(&amp;self, ttl: <a href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h3><div class='docblock'><p>Sets the value for the <code>IP_TTL</code> option on this socket.</p>
+        <h3 id='tymethod.set_ttl' class='method stab '><code>fn <a href='#tymethod.set_ttl' class='fnname'>set_ttl</a>(&amp;self, ttl: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h3><div class='docblock'><p>Sets the value for the <code>IP_TTL</code> option on this socket.</p>
 
 <p>This is the same as <a href="trait.TcpStreamExt.html#tymethod.set_ttl"><code>TcpStreamExt::set_ttl</code></a>.</p>
-</div><h3 id='tymethod.ttl' class='method stab '><code>fn <a href='#tymethod.ttl' class='fnname'>ttl</a>(&amp;self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>&gt;</code></h3><div class='docblock'><p>Gets the value of the <code>IP_TTL</code> option for this socket.</p>
+</div><h3 id='tymethod.ttl' class='method stab '><code>fn <a href='#tymethod.ttl' class='fnname'>ttl</a>(&amp;self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>&gt;</code></h3><div class='docblock'><p>Gets the value of the <code>IP_TTL</code> option for this socket.</p>
 
 <p>For more information about this option, see
 <a href="trait.TcpStreamExt.html#tymethod.set_ttl"><code>TcpStreamExt::set_ttl</code></a>.</p>
-</div><h3 id='tymethod.set_only_v6' class='method stab '><code>fn <a href='#tymethod.set_only_v6' class='fnname'>set_only_v6</a>(&amp;self, only_v6: <a href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h3><div class='docblock'><p>Sets the value for the <code>IPV6_V6ONLY</code> option on this socket.</p>
+</div><h3 id='tymethod.set_only_v6' class='method stab '><code>fn <a href='#tymethod.set_only_v6' class='fnname'>set_only_v6</a>(&amp;self, only_v6: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h3><div class='docblock'><p>Sets the value for the <code>IPV6_V6ONLY</code> option on this socket.</p>
 
 <p>For more information about this option, see
 <a href="trait.TcpStreamExt.html#tymethod.set_only_v6"><code>TcpStreamExt::set_only_v6</code></a>.</p>
-</div><h3 id='tymethod.only_v6' class='method stab '><code>fn <a href='#tymethod.only_v6' class='fnname'>only_v6</a>(&amp;self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>&gt;</code></h3><div class='docblock'><p>Gets the value of the <code>IPV6_V6ONLY</code> option for this socket.</p>
+</div><h3 id='tymethod.only_v6' class='method stab '><code>fn <a href='#tymethod.only_v6' class='fnname'>only_v6</a>(&amp;self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>&gt;</code></h3><div class='docblock'><p>Gets the value of the <code>IPV6_V6ONLY</code> option for this socket.</p>
 
 <p>For more information about this option, see
 <a href="trait.TcpStreamExt.html#tymethod.set_only_v6"><code>TcpStreamExt::set_only_v6</code></a>.</p>
@@ -77,7 +78,7 @@
 <p>This will retrieve the stored error in the underlying socket, clearing
 the field in the process. This can be useful for checking errors between
 calls.</p>
-</div><h3 id='tymethod.set_nonblocking' class='method stab '><code>fn <a href='#tymethod.set_nonblocking' class='fnname'>set_nonblocking</a>(&amp;self, nonblocking: <a href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h3><div class='docblock'><p>Moves this TCP listener into or out of nonblocking mode.</p>
+</div><h3 id='tymethod.set_nonblocking' class='method stab '><code>fn <a href='#tymethod.set_nonblocking' class='fnname'>set_nonblocking</a>(&amp;self, nonblocking: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h3><div class='docblock'><p>Moves this TCP listener into or out of nonblocking mode.</p>
 
 <p>For more information about this option, see
 <a href="trait.TcpStreamExt.html#tymethod.set_nonblocking"><code>TcpStreamExt::set_nonblocking</code></a>.</p>
@@ -146,6 +147,6 @@ calls.</p>
     <script src="../jquery.js"></script>
     <script src="../main.js"></script>
     
-    <script async src="../search-index.js"></script>
+    <script defer src="../search-index.js"></script>
 </body>
 </html>

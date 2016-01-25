@@ -9,6 +9,7 @@
 
     <title>hyper::net::HttpConnector - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
 
     
@@ -45,10 +46,10 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-6019' class='srclink' href='../../src/hyper/net.rs.html#369' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-6183' class='srclink' href='../../src/hyper/net.rs.html#369' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct HttpConnector;</pre><div class='docblock'><p>A connector that will produce HttpStreams.</p>
 </div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='../../hyper/net/trait.NetworkConnector.html' title='hyper::net::NetworkConnector'>NetworkConnector</a> for <a class='struct' href='../../hyper/net/struct.HttpConnector.html' title='hyper::net::HttpConnector'>HttpConnector</a></code></h3><div class='impl-items'><h4 id='assoc_type.Stream' class='type'><code>type Stream = <a class='struct' href='../../hyper/net/struct.HttpStream.html' title='hyper::net::HttpStream'>HttpStream</a></code></h4>
-<h4 id='method.connect' class='method'><code>fn <a href='../../hyper/net/trait.NetworkConnector.html#method.connect' class='fnname'>connect</a>(&amp;self, host: &amp;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, port: <a href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a>, scheme: &amp;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='type' href='../../hyper/error/type.Result.html' title='hyper::error::Result'>Result</a>&lt;<a class='struct' href='../../hyper/net/struct.HttpStream.html' title='hyper::net::HttpStream'>HttpStream</a>&gt;</code></h4>
+<h4 id='method.connect' class='method'><code>fn <a href='../../hyper/net/trait.NetworkConnector.html#method.connect' class='fnname'>connect</a>(&amp;self, host: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, port: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a>, scheme: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='type' href='../../hyper/error/type.Result.html' title='hyper::error::Result'>Result</a>&lt;<a class='struct' href='../../hyper/net/struct.HttpStream.html' title='hyper::net::HttpStream'>HttpStream</a>&gt;</code></h4>
 </div><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/default/trait.Default.html' title='core::default::Default'>Default</a> for <a class='struct' href='../../hyper/net/struct.HttpConnector.html' title='hyper::net::HttpConnector'>HttpConnector</a></code></h3><div class='impl-items'><h4 id='method.default' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/default/trait.Default.html#method.default' class='fnname'>default</a>() -&gt; <a class='struct' href='../../hyper/net/struct.HttpConnector.html' title='hyper::net::HttpConnector'>HttpConnector</a></code></h4>
 </div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='struct' href='../../hyper/net/struct.HttpConnector.html' title='hyper::net::HttpConnector'>HttpConnector</a></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='struct' href='../../hyper/net/struct.HttpConnector.html' title='hyper::net::HttpConnector'>HttpConnector</a></code></h4>
 <h4 id='method.clone_from' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
@@ -112,6 +113,6 @@
     <script src="../../jquery.js"></script>
     <script src="../../main.js"></script>
     
-    <script async src="../../search-index.js"></script>
+    <script defer src="../../search-index.js"></script>
 </body>
 </html>

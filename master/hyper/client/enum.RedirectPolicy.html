@@ -9,6 +9,7 @@
 
     <title>hyper::client::RedirectPolicy - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
 
     
@@ -45,11 +46,11 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-656' class='srclink' href='../../src/hyper/client/mod.rs.html#425-432' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-663' class='srclink' href='../../src/hyper/client/mod.rs.html#425-432' title='goto source code'>[src]</a></span></h1>
 <pre class='rust enum'>pub enum RedirectPolicy {
     FollowNone,
     FollowAll,
-    FollowIf(fn(&amp;<a class='struct' href='../../hyper/struct.Url.html' title='hyper::Url'>Url</a>) -&gt; <a href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>),
+    FollowIf(fn(&amp;<a class='struct' href='../../hyper/struct.Url.html' title='hyper::Url'>Url</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>),
 }</pre><div class='docblock'><p>Behavior regarding how to handle redirects within a Client.</p>
 </div><h2 class='variants'>Variants</h2>
 <table><tr><td id='variant.FollowNone'><code>FollowNone</code></td><td><div class='docblock'><p>Don&#39;t follow any redirects.</p>
@@ -117,6 +118,6 @@
     <script src="../../jquery.js"></script>
     <script src="../../main.js"></script>
     
-    <script async src="../../search-index.js"></script>
+    <script defer src="../../search-index.js"></script>
 </body>
 </html>

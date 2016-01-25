@@ -9,6 +9,7 @@
 
     <title>solicit::http::server::ServerSession - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -45,12 +46,12 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-1421' class='srclink' href='../../../src/solicit/http/server.rs.html#26-28' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-1460' class='srclink' href='../../../src/solicit/http/server.rs.html#26-28' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct ServerSession&lt;'a, State&gt; <span class='where'>where State: <a class='trait' href='../../../solicit/http/session/trait.SessionState.html' title='solicit::http::session::SessionState'>SessionState</a> + 'a</span> {
     // some fields omitted
 }</pre><div class='docblock'><p>An implementation of the <code>Session</code> trait for a server-side HTTP/2 connection.</p>
 </div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;'a, State&gt; <a class='struct' href='../../../solicit/http/server/struct.ServerSession.html' title='solicit::http::server::ServerSession'>ServerSession</a>&lt;'a, State&gt; <span class='where'>where State: <a class='trait' href='../../../solicit/http/session/trait.SessionState.html' title='solicit::http::session::SessionState'>SessionState</a> + 'a</span></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(state: &amp;'a mut State) -&gt; <a class='struct' href='../../../solicit/http/server/struct.ServerSession.html' title='solicit::http::server::ServerSession'>ServerSession</a>&lt;State&gt;</code></h4>
-</div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl&lt;'a, State&gt; <a class='trait' href='../../../solicit/http/session/trait.Session.html' title='solicit::http::session::Session'>Session</a> for <a class='struct' href='../../../solicit/http/server/struct.ServerSession.html' title='solicit::http::server::ServerSession'>ServerSession</a>&lt;'a, State&gt; <span class='where'>where State: <a class='trait' href='../../../solicit/http/session/trait.SessionState.html' title='solicit::http::session::SessionState'>SessionState</a> + 'a</span></code></h3><div class='impl-items'><h4 id='method.new_data_chunk' class='method'><code>fn <a href='../../../solicit/http/session/trait.Session.html#method.new_data_chunk' class='fnname'>new_data_chunk</a>(&amp;mut self, stream_id: <a class='type' href='../../../solicit/http/type.StreamId.html' title='solicit::http::StreamId'>StreamId</a>, data: <a href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a><a href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>)</code></h4>
+</div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl&lt;'a, State&gt; <a class='trait' href='../../../solicit/http/session/trait.Session.html' title='solicit::http::session::Session'>Session</a> for <a class='struct' href='../../../solicit/http/server/struct.ServerSession.html' title='solicit::http::server::ServerSession'>ServerSession</a>&lt;'a, State&gt; <span class='where'>where State: <a class='trait' href='../../../solicit/http/session/trait.SessionState.html' title='solicit::http::session::SessionState'>SessionState</a> + 'a</span></code></h3><div class='impl-items'><h4 id='method.new_data_chunk' class='method'><code>fn <a href='../../../solicit/http/session/trait.Session.html#method.new_data_chunk' class='fnname'>new_data_chunk</a>(&amp;mut self, stream_id: <a class='type' href='../../../solicit/http/type.StreamId.html' title='solicit::http::StreamId'>StreamId</a>, data: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>)</code></h4>
 <h4 id='method.new_headers' class='method'><code>fn <a href='../../../solicit/http/session/trait.Session.html#method.new_headers' class='fnname'>new_headers</a>(&amp;mut self, stream_id: <a class='type' href='../../../solicit/http/type.StreamId.html' title='solicit::http::StreamId'>StreamId</a>, headers: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='type' href='../../../solicit/http/type.Header.html' title='solicit::http::Header'>Header</a>&gt;)</code></h4>
 <h4 id='method.end_of_stream' class='method'><code>fn <a href='../../../solicit/http/session/trait.Session.html#method.end_of_stream' class='fnname'>end_of_stream</a>(&amp;mut self, stream_id: <a class='type' href='../../../solicit/http/type.StreamId.html' title='solicit::http::StreamId'>StreamId</a>)</code></h4>
 </div></section>
@@ -112,6 +113,6 @@
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

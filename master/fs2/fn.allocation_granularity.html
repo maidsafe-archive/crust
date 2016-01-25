@@ -9,6 +9,7 @@
 
     <title>fs2::allocation_granularity - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../main.css">
 
     
@@ -46,7 +47,7 @@
                 [<span class='inner'>&#x2212;</span>]
             </a>
         </span><a id='src-118' class='srclink' href='../src/fs2/lib.rs.html#144-146' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub fn allocation_granularity&lt;P&gt;(path: P) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a>&gt; <span class='where'>where P: <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.AsRef.html' title='core::convert::AsRef'>AsRef</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/std/path/struct.Path.html' title='std::path::Path'>Path</a>&gt;</span></pre><div class='docblock'><p>Returns the filesystem&#39;s disk space allocation granularity in bytes.
+<pre class='rust fn'>pub fn allocation_granularity&lt;P&gt;(path: P) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a>&gt; <span class='where'>where P: <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.AsRef.html' title='core::convert::AsRef'>AsRef</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/std/path/struct.Path.html' title='std::path::Path'>Path</a>&gt;</span></pre><div class='docblock'><p>Returns the filesystem&#39;s disk space allocation granularity in bytes.
 The provided path may be for any file in the filesystem.</p>
 
 <p>On Posix, this is equivalent to the filesystem&#39;s block size.
@@ -110,6 +111,6 @@ On Windows, this is equivalent to the filesystem&#39;s cluster size.</p>
     <script src="../jquery.js"></script>
     <script src="../main.js"></script>
     
-    <script async src="../search-index.js"></script>
+    <script defer src="../search-index.js"></script>
 </body>
 </html>

@@ -9,6 +9,7 @@
 
     <title>env_logger::LogBuilder - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../main.css">
 
     <link rel="shortcut icon" href="http://www.rust-lang.org/favicon.ico">
@@ -80,7 +81,7 @@ to provide the logging directives and also set the default log level filter.</p>
 }</pre>
 </div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../env_logger/struct.LogBuilder.html' title='env_logger::LogBuilder'>LogBuilder</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>() -&gt; <a class='struct' href='../env_logger/struct.LogBuilder.html' title='env_logger::LogBuilder'>LogBuilder</a></code></h4>
 <div class='docblock'><p>Initializes the log builder with defaults</p>
-</div><h4 id='method.filter' class='method'><code>fn <a href='#method.filter' class='fnname'>filter</a>(&amp;mut self, module: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;&amp;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;, level: <a class='enum' href='../log/enum.LogLevelFilter.html' title='log::LogLevelFilter'>LogLevelFilter</a>) -&gt; &amp;mut Self</code></h4>
+</div><h4 id='method.filter' class='method'><code>fn <a href='#method.filter' class='fnname'>filter</a>(&amp;mut self, module: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;&amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;, level: <a class='enum' href='../log/enum.LogLevelFilter.html' title='log::LogLevelFilter'>LogLevelFilter</a>) -&gt; &amp;mut Self</code></h4>
 <div class='docblock'><p>Adds filters to the logger</p>
 
 <p>The given module (if any) will log at most the specified level provided.
@@ -90,12 +91,12 @@ If no module is provided then the filter will apply to all log messages.</p>
 
 <p>This function is called on each record logged to produce a string which
 is actually printed out.</p>
-</div><h4 id='method.parse' class='method'><code>fn <a href='#method.parse' class='fnname'>parse</a>(&amp;mut self, filters: &amp;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; &amp;mut Self</code></h4>
+</div><h4 id='method.parse' class='method'><code>fn <a href='#method.parse' class='fnname'>parse</a>(&amp;mut self, filters: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; &amp;mut Self</code></h4>
 <div class='docblock'><p>Parses the directives string in the same form as the RUST_LOG
 environment variable.</p>
 
 <p>See the module documentation for more details.</p>
-</div><h4 id='method.init' class='method'><code>fn <a href='#method.init' class='fnname'>init</a>(&amp;mut self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, <a class='struct' href='../log/struct.SetLoggerError.html' title='log::SetLoggerError'>SetLoggerError</a>&gt;</code></h4>
+</div><h4 id='method.init' class='method'><code>fn <a href='#method.init' class='fnname'>init</a>(&amp;mut self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, <a class='struct' href='../log/struct.SetLoggerError.html' title='log::SetLoggerError'>SetLoggerError</a>&gt;</code></h4>
 <div class='docblock'><p>Initializes the global logger with an env logger.</p>
 
 <p>This should be called early in the execution of a Rust program, and the
@@ -160,6 +161,6 @@ attempts will return an error.</p>
     <script src="../jquery.js"></script>
     <script src="../main.js"></script>
     
-    <script async src="../search-index.js"></script>
+    <script defer src="../search-index.js"></script>
 </body>
 </html>

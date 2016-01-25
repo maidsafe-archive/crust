@@ -9,6 +9,7 @@
 
     <title>bitflags::__core::sync::mpsc::Sender - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../../main.css">
 
     
@@ -45,12 +46,12 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-8753' class='srclink' href='https://doc.rust-lang.org/nightly/std/sync/mpsc/struct.Sender.html?gotosrc=8753' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-8937' class='srclink' href='https://doc.rust-lang.org/nightly/std/sync/mpsc/struct.Sender.html?gotosrc=8937' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Sender&lt;T&gt; {
     // some fields omitted
 }</pre><div class='docblock'><p>The sending-half of Rust&#39;s asynchronous channel type. This half can only be
 owned by one thread, but it can be cloned to send to other threads.</p>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;T&gt; <a class='struct' href='../../../../bitflags/__core/sync/mpsc/struct.Sender.html' title='bitflags::__core::sync::mpsc::Sender'>Sender</a>&lt;T&gt;</code></h3><div class='impl-items'><h4 id='method.send' class='method'><code>fn <a href='#method.send' class='fnname'>send</a>(&amp;self, t: T) -&gt; <a class='enum' href='../../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../../bitflags/__core/sync/mpsc/struct.SendError.html' title='bitflags::__core::sync::mpsc::SendError'>SendError</a>&lt;T&gt;&gt;</code></h4>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;T&gt; <a class='struct' href='../../../../bitflags/__core/sync/mpsc/struct.Sender.html' title='bitflags::__core::sync::mpsc::Sender'>Sender</a>&lt;T&gt;</code></h3><div class='impl-items'><h4 id='method.send' class='method'><code>fn <a href='#method.send' class='fnname'>send</a>(&amp;self, t: T) -&gt; <a class='enum' href='../../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../../bitflags/__core/sync/mpsc/struct.SendError.html' title='bitflags::__core::sync::mpsc::SendError'>SendError</a>&lt;T&gt;&gt;</code></h4>
 <div class='docblock'><p>Attempts to send a value on this channel, returning it back if it could
 not be sent.</p>
 
@@ -137,6 +138,6 @@ hang up immediately after this function returns <code>Ok</code>.</p>
     <script src="../../../../jquery.js"></script>
     <script src="../../../../main.js"></script>
     
-    <script async src="../../../../search-index.js"></script>
+    <script defer src="../../../../search-index.js"></script>
 </body>
 </html>

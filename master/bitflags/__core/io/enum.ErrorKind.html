@@ -9,6 +9,7 @@
 
     <title>bitflags::__core::io::ErrorKind - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -45,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-4257' class='srclink' href='https://doc.rust-lang.org/nightly/std/io/error/enum.ErrorKind.html?gotosrc=4257' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-4289' class='srclink' href='https://doc.rust-lang.org/nightly/std/io/error/enum.ErrorKind.html?gotosrc=4289' title='goto source code'>[src]</a></span></h1>
 <pre class='rust enum'>pub enum ErrorKind {
     NotFound,
     PermissionDenied,
@@ -65,6 +66,7 @@
     Interrupted,
     Other,
     UnexpectedEOF,
+    UnexpectedEof,
     // some variants omitted
 }</pre><div class='docblock'><p>A list specifying general categories of I/O error.</p>
 
@@ -105,18 +107,18 @@ written.</p>
 
 <p>Interrupted operations can typically be retried.</p>
 </div></td></tr><tr><td id='variant.Other'><code>Other</code></td><td><div class='docblock'><p>Any I/O error not part of this list.</p>
-</div></td></tr><tr><td id='variant.UnexpectedEOF'><code>UnexpectedEOF</code></td><td><div class='stability'><em class='stab unstable'>Unstable (<code>read_exact</code>)<p>: recently added</p>
-</em></div><div class='docblock'><p>An error returned when an operation could not be completed because an
+</div></td></tr><tr><td id='variant.UnexpectedEOF'><code>UnexpectedEOF</code></td><td><div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.6.0<p>: renamed to UnexpectedEof</p>
+</em></div></td></tr><tr><td id='variant.UnexpectedEof'><code>UnexpectedEof</code></td><td><div class='docblock'><p>An error returned when an operation could not be completed because an
 &quot;end of file&quot; was reached prematurely.</p>
 
 <p>This typically means that an operation could only succeed if it read a
 particular number of bytes but only a smaller number of bytes could be
 read.</p>
-</div></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Debug.html' title='bitflags::__core::fmt::Debug'>Debug</a> for <a class='enum' href='../../../bitflags/__core/io/enum.ErrorKind.html' title='bitflags::__core::io::ErrorKind'>ErrorKind</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='../../../bitflags/__core/fmt/trait.Debug.html#method.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h4>
+</div></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Debug.html' title='bitflags::__core::fmt::Debug'>Debug</a> for <a class='enum' href='../../../bitflags/__core/io/enum.ErrorKind.html' title='bitflags::__core::io::ErrorKind'>ErrorKind</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='../../../bitflags/__core/fmt/trait.Debug.html#method.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h4>
 </div><h3 class='impl'><code>impl <a class='trait' href='../../../bitflags/__core/clone/trait.Clone.html' title='bitflags::__core::clone::Clone'>Clone</a> for <a class='enum' href='../../../bitflags/__core/io/enum.ErrorKind.html' title='bitflags::__core::io::ErrorKind'>ErrorKind</a></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='../../../bitflags/__core/clone/trait.Clone.html#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='enum' href='../../../bitflags/__core/io/enum.ErrorKind.html' title='bitflags::__core::io::ErrorKind'>ErrorKind</a></code></h4>
 <h4 id='method.clone_from' class='method'><code>fn <a href='../../../bitflags/__core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
-</div><h3 class='impl'><code>impl <a class='trait' href='../../../bitflags/__core/cmp/trait.Eq.html' title='bitflags::__core::cmp::Eq'>Eq</a> for <a class='enum' href='../../../bitflags/__core/io/enum.ErrorKind.html' title='bitflags::__core::io::ErrorKind'>ErrorKind</a></code></h3><div class='impl-items'></div><h3 class='impl'><code>impl <a class='trait' href='../../../bitflags/__core/cmp/trait.PartialEq.html' title='bitflags::__core::cmp::PartialEq'>PartialEq</a>&lt;<a class='enum' href='../../../bitflags/__core/io/enum.ErrorKind.html' title='bitflags::__core::io::ErrorKind'>ErrorKind</a>&gt; for <a class='enum' href='../../../bitflags/__core/io/enum.ErrorKind.html' title='bitflags::__core::io::ErrorKind'>ErrorKind</a></code></h3><div class='impl-items'><h4 id='method.eq' class='method'><code>fn <a href='../../../bitflags/__core/cmp/trait.PartialEq.html#method.eq' class='fnname'>eq</a>(&amp;self, __arg_0: &amp;<a class='enum' href='../../../bitflags/__core/io/enum.ErrorKind.html' title='bitflags::__core::io::ErrorKind'>ErrorKind</a>) -&gt; <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a></code></h4>
-<h4 id='method.ne' class='method'><code>fn <a href='../../../bitflags/__core/cmp/trait.PartialEq.html#method.ne' class='fnname'>ne</a>(&amp;self, __arg_0: &amp;<a class='enum' href='../../../bitflags/__core/io/enum.ErrorKind.html' title='bitflags::__core::io::ErrorKind'>ErrorKind</a>) -&gt; <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a></code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='../../../bitflags/__core/cmp/trait.Eq.html' title='bitflags::__core::cmp::Eq'>Eq</a> for <a class='enum' href='../../../bitflags/__core/io/enum.ErrorKind.html' title='bitflags::__core::io::ErrorKind'>ErrorKind</a></code></h3><div class='impl-items'></div><h3 class='impl'><code>impl <a class='trait' href='../../../bitflags/__core/cmp/trait.PartialEq.html' title='bitflags::__core::cmp::PartialEq'>PartialEq</a>&lt;<a class='enum' href='../../../bitflags/__core/io/enum.ErrorKind.html' title='bitflags::__core::io::ErrorKind'>ErrorKind</a>&gt; for <a class='enum' href='../../../bitflags/__core/io/enum.ErrorKind.html' title='bitflags::__core::io::ErrorKind'>ErrorKind</a></code></h3><div class='impl-items'><h4 id='method.eq' class='method'><code>fn <a href='../../../bitflags/__core/cmp/trait.PartialEq.html#method.eq' class='fnname'>eq</a>(&amp;self, __arg_0: &amp;<a class='enum' href='../../../bitflags/__core/io/enum.ErrorKind.html' title='bitflags::__core::io::ErrorKind'>ErrorKind</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a></code></h4>
+<h4 id='method.ne' class='method'><code>fn <a href='../../../bitflags/__core/cmp/trait.PartialEq.html#method.ne' class='fnname'>ne</a>(&amp;self, __arg_0: &amp;<a class='enum' href='../../../bitflags/__core/io/enum.ErrorKind.html' title='bitflags::__core::io::ErrorKind'>ErrorKind</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a></code></h4>
 </div><h3 class='impl'><code>impl <a class='trait' href='../../../bitflags/__core/marker/trait.Copy.html' title='bitflags::__core::marker::Copy'>Copy</a> for <a class='enum' href='../../../bitflags/__core/io/enum.ErrorKind.html' title='bitflags::__core::io::ErrorKind'>ErrorKind</a></code></h3><div class='impl-items'></div></section>
     <section id='search' class="content hidden"></section>
 
@@ -176,6 +178,6 @@ read.</p>
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

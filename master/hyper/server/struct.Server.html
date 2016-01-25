@@ -9,6 +9,7 @@
 
     <title>hyper::server::Server - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
 
     
@@ -45,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-6497' class='srclink' href='../../src/hyper/server/mod.rs.html#145-148' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-6666' class='srclink' href='../../src/hyper/server/mod.rs.html#145-148' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Server&lt;L = <a class='struct' href='../../hyper/net/struct.HttpListener.html' title='hyper::net::HttpListener'>HttpListener</a>&gt; {
     // some fields omitted
 }</pre><div class='docblock'><p>A server can listen on a TCP socket.</p>
@@ -70,7 +71,7 @@ is enabled for hyper, and rustc is 1.4 or greater.</p>
 <p>You can use any SSL implementation, as long as implements <code>hyper::net::Ssl</code>.</p>
 </div></div><h3 class='impl'><code>impl&lt;L: <a class='trait' href='../../hyper/net/trait.NetworkListener.html' title='hyper::net::NetworkListener'>NetworkListener</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Send.html' title='core::marker::Send'>Send</a> + 'static&gt; <a class='struct' href='../../hyper/server/struct.Server.html' title='hyper::server::Server'>Server</a>&lt;L&gt;</code></h3><div class='impl-items'><h4 id='method.handle' class='method'><code>fn <a href='#method.handle' class='fnname'>handle</a>&lt;H: <a class='trait' href='../../hyper/server/trait.Handler.html' title='hyper::server::Handler'>Handler</a> + 'static&gt;(self, handler: H) -&gt; <a class='type' href='../../hyper/error/type.Result.html' title='hyper::error::Result'>Result</a>&lt;<a class='struct' href='../../hyper/server/struct.Listening.html' title='hyper::server::Listening'>Listening</a>&gt;</code></h4>
 <div class='docblock'><p>Binds to a socket and starts handling connections.</p>
-</div><h4 id='method.handle_threads' class='method'><code>fn <a href='#method.handle_threads' class='fnname'>handle_threads</a>&lt;H: <a class='trait' href='../../hyper/server/trait.Handler.html' title='hyper::server::Handler'>Handler</a> + 'static&gt;(self, handler: H, threads: <a href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>) -&gt; <a class='type' href='../../hyper/error/type.Result.html' title='hyper::error::Result'>Result</a>&lt;<a class='struct' href='../../hyper/server/struct.Listening.html' title='hyper::server::Listening'>Listening</a>&gt;</code></h4>
+</div><h4 id='method.handle_threads' class='method'><code>fn <a href='#method.handle_threads' class='fnname'>handle_threads</a>&lt;H: <a class='trait' href='../../hyper/server/trait.Handler.html' title='hyper::server::Handler'>Handler</a> + 'static&gt;(self, handler: H, threads: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>) -&gt; <a class='type' href='../../hyper/error/type.Result.html' title='hyper::error::Result'>Result</a>&lt;<a class='struct' href='../../hyper/server/struct.Listening.html' title='hyper::server::Listening'>Listening</a>&gt;</code></h4>
 <div class='docblock'><p>Binds to a socket and starts handling connections with the provided
 number of threads.</p>
 </div></div><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl&lt;L: <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a>&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='struct' href='../../hyper/server/struct.Server.html' title='hyper::server::Server'>Server</a>&lt;L&gt;</code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#method.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
@@ -133,6 +134,6 @@ number of threads.</p>
     <script src="../../jquery.js"></script>
     <script src="../../main.js"></script>
     
-    <script async src="../../search-index.js"></script>
+    <script defer src="../../search-index.js"></script>
 </body>
 </html>

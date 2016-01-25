@@ -9,6 +9,7 @@
 
     <title>aho_corasick::Transitions - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../main.css">
 
     
@@ -45,11 +46,11 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-549' class='srclink' href='../src/aho_corasick/lib.rs.html#392-399' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-554' class='srclink' href='../src/aho_corasick/lib.rs.html#392-399' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait Transitions {
-    fn <a href='#tymethod.new' class='fnname'>new</a>(depth: <a href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>) -&gt; Self;
-    fn <a href='#tymethod.goto' class='fnname'>goto</a>(&amp;self, alpha: <a href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>) -&gt; <a class='type' href='../aho_corasick/type.StateIdx.html' title='aho_corasick::StateIdx'>StateIdx</a>;
-    fn <a href='#tymethod.set_goto' class='fnname'>set_goto</a>(&amp;mut self, alpha: <a href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>, si: <a class='type' href='../aho_corasick/type.StateIdx.html' title='aho_corasick::StateIdx'>StateIdx</a>);
+    fn <a href='#tymethod.new' class='fnname'>new</a>(depth: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>) -&gt; Self;
+    fn <a href='#tymethod.goto' class='fnname'>goto</a>(&amp;self, alpha: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>) -&gt; <a class='type' href='../aho_corasick/type.StateIdx.html' title='aho_corasick::StateIdx'>StateIdx</a>;
+    fn <a href='#tymethod.set_goto' class='fnname'>set_goto</a>(&amp;mut self, alpha: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>, si: <a class='type' href='../aho_corasick/type.StateIdx.html' title='aho_corasick::StateIdx'>StateIdx</a>);
 }</pre><div class='docblock'><p>An abstraction over state transition strategies.</p>
 
 <p>This is an attempt to let the caller choose the space/time trade offs
@@ -60,9 +61,9 @@ implementations in this crate.)</p>
 </div>
             <h2 id='required-methods'>Required Methods</h2>
             <div class='methods'>
-        <h3 id='tymethod.new' class='method stab '><code>fn <a href='#tymethod.new' class='fnname'>new</a>(depth: <a href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>) -&gt; Self</code></h3><div class='docblock'><p>Return a new state at the given depth.</p>
-</div><h3 id='tymethod.goto' class='method stab '><code>fn <a href='#tymethod.goto' class='fnname'>goto</a>(&amp;self, alpha: <a href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>) -&gt; <a class='type' href='../aho_corasick/type.StateIdx.html' title='aho_corasick::StateIdx'>StateIdx</a></code></h3><div class='docblock'><p>Return the next state index given the next character.</p>
-</div><h3 id='tymethod.set_goto' class='method stab '><code>fn <a href='#tymethod.set_goto' class='fnname'>set_goto</a>(&amp;mut self, alpha: <a href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>, si: <a class='type' href='../aho_corasick/type.StateIdx.html' title='aho_corasick::StateIdx'>StateIdx</a>)</code></h3><div class='docblock'><p>Set the next state index for the character given.</p>
+        <h3 id='tymethod.new' class='method stab '><code>fn <a href='#tymethod.new' class='fnname'>new</a>(depth: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>) -&gt; Self</code></h3><div class='docblock'><p>Return a new state at the given depth.</p>
+</div><h3 id='tymethod.goto' class='method stab '><code>fn <a href='#tymethod.goto' class='fnname'>goto</a>(&amp;self, alpha: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>) -&gt; <a class='type' href='../aho_corasick/type.StateIdx.html' title='aho_corasick::StateIdx'>StateIdx</a></code></h3><div class='docblock'><p>Return the next state index given the next character.</p>
+</div><h3 id='tymethod.set_goto' class='method stab '><code>fn <a href='#tymethod.set_goto' class='fnname'>set_goto</a>(&amp;mut self, alpha: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>, si: <a class='type' href='../aho_corasick/type.StateIdx.html' title='aho_corasick::StateIdx'>StateIdx</a>)</code></h3><div class='docblock'><p>Set the next state index for the character given.</p>
 </div></div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
@@ -129,6 +130,6 @@ implementations in this crate.)</p>
     <script src="../jquery.js"></script>
     <script src="../main.js"></script>
     
-    <script async src="../search-index.js"></script>
+    <script defer src="../search-index.js"></script>
 </body>
 </html>

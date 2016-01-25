@@ -9,6 +9,7 @@
 
     <title>bitflags::__core::fmt::Pointer - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -45,9 +46,9 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-34870' class='srclink' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Pointer.html?gotosrc=34870' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-34788' class='srclink' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Pointer.html?gotosrc=34788' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait Pointer {
-    fn <a href='#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, &amp;mut <a class='struct' href='../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;;
+    fn <a href='#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, &amp;mut <a class='struct' href='../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;;
 }</pre><div class='docblock'><p>Format trait for the <code>p</code> character.</p>
 
 <p>The <code>Pointer</code> trait should format its output as a memory location. This is commonly presented
@@ -82,14 +83,11 @@ as hexadecimal.</p>
 </div>
             <h2 id='required-methods'>Required Methods</h2>
             <div class='methods'>
-        <h3 id='tymethod.fmt' class='method stab '><code>fn <a href='#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, &amp;mut <a class='struct' href='../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h3><div class='docblock'><p>Formats the value using the given formatter.</p>
+        <h3 id='tymethod.fmt' class='method stab '><code>fn <a href='#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, &amp;mut <a class='struct' href='../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h3><div class='docblock'><p>Formats the value using the given formatter.</p>
 </div></div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
-    <li><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/fmt/trait.Pointer.html' title='bitflags::__core::fmt::Pointer'>Pointer</a> for <a class='struct' href='../../../bitflags/__core/boxed/struct.Box.html' title='bitflags::__core::boxed::Box'>Box</a>&lt;T&gt;</code></li>
-<li><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/fmt/trait.Pointer.html' title='bitflags::__core::fmt::Pointer'>Pointer</a> for <a class='struct' href='../../../bitflags/__core/sync/struct.Arc.html' title='bitflags::__core::sync::Arc'>Arc</a>&lt;T&gt;</code></li>
-<li><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/fmt/trait.Pointer.html' title='bitflags::__core::fmt::Pointer'>Pointer</a> for <a class='struct' href='../../../bitflags/__core/rc/struct.Rc.html' title='bitflags::__core::rc::Rc'>Rc</a>&lt;T&gt;</code></li>
-<li><code>impl&lt;Ret&gt; <a class='trait' href='../../../bitflags/__core/fmt/trait.Pointer.html' title='bitflags::__core::fmt::Pointer'>Pointer</a> for fn() -&gt; Ret</code></li>
+    <li><code>impl&lt;Ret&gt; <a class='trait' href='../../../bitflags/__core/fmt/trait.Pointer.html' title='bitflags::__core::fmt::Pointer'>Pointer</a> for fn() -&gt; Ret</code></li>
 <li><code>impl&lt;Ret&gt; <a class='trait' href='../../../bitflags/__core/fmt/trait.Pointer.html' title='bitflags::__core::fmt::Pointer'>Pointer</a> for  extern "C" fn() -&gt; Ret</code></li>
 <li><code>impl&lt;Ret&gt; <a class='trait' href='../../../bitflags/__core/fmt/trait.Pointer.html' title='bitflags::__core::fmt::Pointer'>Pointer</a> for unsafe fn() -&gt; Ret</code></li>
 <li><code>impl&lt;Ret&gt; <a class='trait' href='../../../bitflags/__core/fmt/trait.Pointer.html' title='bitflags::__core::fmt::Pointer'>Pointer</a> for unsafe  extern "C" fn() -&gt; Ret</code></li>
@@ -143,10 +141,13 @@ as hexadecimal.</p>
 <li><code>impl&lt;Ret, A, B, C, D, E, F, G, H, I, J, K, L&gt; <a class='trait' href='../../../bitflags/__core/fmt/trait.Pointer.html' title='bitflags::__core::fmt::Pointer'>Pointer</a> for unsafe  extern "C" fn(A, B, C, D, E, F, G, H, I, J, K, L) -&gt; Ret</code></li>
 <li><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/fmt/trait.Pointer.html' title='bitflags::__core::fmt::Pointer'>Pointer</a> for <a class='struct' href='../../../bitflags/__core/ptr/struct.Unique.html' title='bitflags::__core::ptr::Unique'>Unique</a>&lt;T&gt;</code></li>
 <li><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/fmt/trait.Pointer.html' title='bitflags::__core::fmt::Pointer'>Pointer</a> for <a class='struct' href='../../../bitflags/__core/ptr/struct.Shared.html' title='bitflags::__core::ptr::Shared'>Shared</a>&lt;T&gt;</code></li>
-<li><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/fmt/trait.Pointer.html' title='bitflags::__core::fmt::Pointer'>Pointer</a> for <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*const T</a></code></li>
-<li><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/fmt/trait.Pointer.html' title='bitflags::__core::fmt::Pointer'>Pointer</a> for <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut T</a></code></li>
+<li><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/fmt/trait.Pointer.html' title='bitflags::__core::fmt::Pointer'>Pointer</a> for <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*const T</a></code></li>
+<li><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/fmt/trait.Pointer.html' title='bitflags::__core::fmt::Pointer'>Pointer</a> for <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut T</a></code></li>
 <li><code>impl&lt;'a, T&gt; <a class='trait' href='../../../bitflags/__core/fmt/trait.Pointer.html' title='bitflags::__core::fmt::Pointer'>Pointer</a> for &amp;'a T</code></li>
 <li><code>impl&lt;'a, T&gt; <a class='trait' href='../../../bitflags/__core/fmt/trait.Pointer.html' title='bitflags::__core::fmt::Pointer'>Pointer</a> for &amp;'a mut T</code></li>
+<li><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/fmt/trait.Pointer.html' title='bitflags::__core::fmt::Pointer'>Pointer</a> for <a class='struct' href='../../../bitflags/__core/boxed/struct.Box.html' title='bitflags::__core::boxed::Box'>Box</a>&lt;T&gt;</code></li>
+<li><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/fmt/trait.Pointer.html' title='bitflags::__core::fmt::Pointer'>Pointer</a> for <a class='struct' href='../../../bitflags/__core/sync/struct.Arc.html' title='bitflags::__core::sync::Arc'>Arc</a>&lt;T&gt;</code></li>
+<li><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/fmt/trait.Pointer.html' title='bitflags::__core::fmt::Pointer'>Pointer</a> for <a class='struct' href='../../../bitflags/__core/rc/struct.Rc.html' title='bitflags::__core::rc::Rc'>Rc</a>&lt;T&gt;</code></li>
 </ul><script type="text/javascript" async
                               src="../../../implementors/core/fmt/trait.Pointer.js">
                       </script></section>
@@ -208,6 +209,6 @@ as hexadecimal.</p>
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

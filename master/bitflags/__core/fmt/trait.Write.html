@@ -9,6 +9,7 @@
 
     <title>bitflags::__core::fmt::Write - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -45,12 +46,12 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-34727' class='srclink' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Write.html?gotosrc=34727' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-34645' class='srclink' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Write.html?gotosrc=34645' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait Write {
-    fn <a href='#tymethod.write_str' class='fnname'>write_str</a>(&amp;mut self, s: &amp;<a href='https://doc.rust-lang.org/nightly/bitflags/primitive.str.html'>str</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;;
+    fn <a href='#tymethod.write_str' class='fnname'>write_str</a>(&amp;mut self, s: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.str.html'>str</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;;
 
-    fn <a href='#method.write_char' class='fnname'>write_char</a>(&amp;mut self, c: <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.char.html'>char</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt; { ... }
-    fn <a href='#method.write_fmt' class='fnname'>write_fmt</a>(&amp;mut self, args: <a class='struct' href='../../../bitflags/__core/fmt/struct.Arguments.html' title='bitflags::__core::fmt::Arguments'>Arguments</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt; { ... }
+    fn <a href='#method.write_char' class='fnname'>write_char</a>(&amp;mut self, c: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.char.html'>char</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt; { ... }
+    fn <a href='#method.write_fmt' class='fnname'>write_fmt</a>(&amp;mut self, args: <a class='struct' href='../../../bitflags/__core/fmt/struct.Arguments.html' title='bitflags::__core::fmt::Arguments'>Arguments</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt; { ... }
 }</pre><div class='docblock'><p>A collection of methods that are required to format a message into a stream.</p>
 
 <p>This trait is the type which this modules requires when formatting
@@ -63,7 +64,7 @@ library. The <code>write!</code> macro accepts an instance of <code>io::Write</c
 </div>
             <h2 id='required-methods'>Required Methods</h2>
             <div class='methods'>
-        <h3 id='tymethod.write_str' class='method stab '><code>fn <a href='#tymethod.write_str' class='fnname'>write_str</a>(&amp;mut self, s: &amp;<a href='https://doc.rust-lang.org/nightly/bitflags/primitive.str.html'>str</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h3><div class='docblock'><p>Writes a slice of bytes into this writer, returning whether the write
+        <h3 id='tymethod.write_str' class='method stab '><code>fn <a href='#tymethod.write_str' class='fnname'>write_str</a>(&amp;mut self, s: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.str.html'>str</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h3><div class='docblock'><p>Writes a slice of bytes into this writer, returning whether the write
 succeeded.</p>
 
 <p>This method can only succeed if the entire byte slice was successfully
@@ -75,16 +76,16 @@ written or an error occurs.</p>
 </div></div>
             <h2 id='provided-methods'>Provided Methods</h2>
             <div class='methods'>
-        <h3 id='method.write_char' class='method stab '><code>fn <a href='#method.write_char' class='fnname'>write_char</a>(&amp;mut self, c: <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.char.html'>char</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h3><div class='docblock'><p>Writes a <code>char</code> into this writer, returning whether the write succeeded.</p>
+        <h3 id='method.write_char' class='method stab '><code>fn <a href='#method.write_char' class='fnname'>write_char</a>(&amp;mut self, c: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.char.html'>char</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h3><div class='docblock'><p>Writes a <code>char</code> into this writer, returning whether the write succeeded.</p>
 
 <p>A single <code>char</code> may be encoded as more than one byte.
 This method can only succeed if the entire byte sequence was successfully
 written, and this method will not return until all data has been
 written or an error occurs.</p>
 
-<h1 id='errors' class='section-header'><a href='#errors'>Errors</a></h1>
+<h1 id='errors-1' class='section-header'><a href='#errors-1'>Errors</a></h1>
 <p>This function will return an instance of <code>Error</code> on error.</p>
-</div><h3 id='method.write_fmt' class='method stab '><code>fn <a href='#method.write_fmt' class='fnname'>write_fmt</a>(&amp;mut self, args: <a class='struct' href='../../../bitflags/__core/fmt/struct.Arguments.html' title='bitflags::__core::fmt::Arguments'>Arguments</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h3><div class='docblock'><p>Glue for usage of the <code>write!</code> macro with implementors of this trait.</p>
+</div><h3 id='method.write_fmt' class='method stab '><code>fn <a href='#method.write_fmt' class='fnname'>write_fmt</a>(&amp;mut self, args: <a class='struct' href='../../../bitflags/__core/fmt/struct.Arguments.html' title='bitflags::__core::fmt::Arguments'>Arguments</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h3><div class='docblock'><p>Glue for usage of the <code>write!</code> macro with implementors of this trait.</p>
 
 <p>This method should generally not be invoked manually, but rather through
 the <code>write!</code> macro itself.</p>
@@ -156,6 +157,6 @@ the <code>write!</code> macro itself.</p>
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

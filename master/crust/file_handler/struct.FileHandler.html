@@ -9,6 +9,7 @@
 
     <title>crust::file_handler::FileHandler - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
 
     <link rel="shortcut icon" href="http://maidsafe.net/img/favicon.ico">
@@ -45,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-370' class='srclink' href='../../src/crust/file_handler.rs.html#47-49' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-376' class='srclink' href='../../src/crust/file_handler.rs.html#47-49' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct FileHandler {
     // some fields omitted
 }</pre><div class='docblock'><p>Struct for reading and writing config files.</p>
@@ -85,13 +86,13 @@ this order (see also <a href="https://github.com/maidsafe/crust/blob/master/docs
 
 <p>See <a href="#thread--and-process-safety">Thread- and Process-Safety</a> for notes on thread- and
 process-safety.</p>
-</div><h4 id='method.cleanup' class='method'><code>fn <a href='#method.cleanup' class='fnname'>cleanup</a>&lt;S: <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.AsRef.html' title='core::convert::AsRef'>AsRef</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/std/ffi/os_str/struct.OsStr.html' title='std::ffi::os_str::OsStr'>OsStr</a>&gt;&gt;(name: &amp;S) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
+</div><h4 id='method.cleanup' class='method'><code>fn <a href='#method.cleanup' class='fnname'>cleanup</a>&lt;S: <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.AsRef.html' title='core::convert::AsRef'>AsRef</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/std/ffi/os_str/struct.OsStr.html' title='std::ffi::os_str::OsStr'>OsStr</a>&gt;&gt;(name: &amp;S) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
 <div class='docblock'><p>Remove the file from every location where it can be read.</p>
 </div><h4 id='method.path' class='method'><code>fn <a href='#method.path' class='fnname'>path</a>(&amp;self) -&gt; &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/std/path/struct.Path.html' title='std::path::Path'>Path</a></code></h4>
 <div class='docblock'><p>Get the full path to the file.</p>
 </div><h4 id='method.read_file' class='method'><code>fn <a href='#method.read_file' class='fnname'>read_file</a>&lt;Contents: <a class='trait' href='../../rustc_serialize/serialize/trait.Decodable.html' title='rustc_serialize::serialize::Decodable'>Decodable</a>&gt;(&amp;self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;Contents, <a class='enum' href='../../crust/error/enum.Error.html' title='crust::error::Error'>Error</a>&gt;</code></h4>
 <div class='docblock'><p>Read the contents of the file and decode it as JSON.</p>
-</div><h4 id='method.write_file' class='method'><code>fn <a href='#method.write_file' class='fnname'>write_file</a>&lt;Contents: <a class='trait' href='../../rustc_serialize/serialize/trait.Encodable.html' title='rustc_serialize::serialize::Encodable'>Encodable</a>&gt;(&amp;self, contents: &amp;Contents) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, <a class='enum' href='../../crust/error/enum.Error.html' title='crust::error::Error'>Error</a>&gt;</code></h4>
+</div><h4 id='method.write_file' class='method'><code>fn <a href='#method.write_file' class='fnname'>write_file</a>&lt;Contents: <a class='trait' href='../../rustc_serialize/serialize/trait.Encodable.html' title='rustc_serialize::serialize::Encodable'>Encodable</a>&gt;(&amp;self, contents: &amp;Contents) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, <a class='enum' href='../../crust/error/enum.Error.html' title='crust::error::Error'>Error</a>&gt;</code></h4>
 <div class='docblock'><p>Write <code>contents</code> to the file as JSON.</p>
 </div></div></section>
     <section id='search' class="content hidden"></section>
@@ -152,6 +153,6 @@ process-safety.</p>
     <script src="../../jquery.js"></script>
     <script src="../../main.js"></script>
     
-    <script async src="../../search-index.js"></script>
+    <script defer src="../../search-index.js"></script>
 </body>
 </html>

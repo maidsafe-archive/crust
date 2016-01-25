@@ -9,6 +9,7 @@
 
     <title>bitflags::__core::ptr::Unique - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -45,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-12266' class='srclink' href='https://doc.rust-lang.org/nightly/core/ptr/struct.Unique.html?gotosrc=12266' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-12220' class='srclink' href='https://doc.rust-lang.org/nightly/core/ptr/struct.Unique.html?gotosrc=12220' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Unique&lt;T&gt; <span class='where'>where T: ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span> {
     // some fields omitted
 }</pre><div class='stability'><em class='stab unstable'>Unstable (<code>unique</code>)<p>: needs an RFC to flesh out design</p>
@@ -57,13 +58,13 @@ also implies that the referent of the pointer should not be
 modified without a unique path to the <code>Unique</code> reference. Useful
 for building abstractions like <code>Vec&lt;T&gt;</code> or <code>Box&lt;T&gt;</code>, which
 internally use raw pointers to manage the memory that they own.</p>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;T&gt; <a class='struct' href='../../../bitflags/__core/ptr/struct.Unique.html' title='bitflags::__core::ptr::Unique'>Unique</a>&lt;T&gt; <span class='where'>where T: ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>unsafe fn <a href='#method.new' class='fnname'>new</a>(ptr: <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut T</a>) -&gt; <a class='struct' href='../../../bitflags/__core/ptr/struct.Unique.html' title='bitflags::__core::ptr::Unique'>Unique</a>&lt;T&gt;</code></h4>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;T&gt; <a class='struct' href='../../../bitflags/__core/ptr/struct.Unique.html' title='bitflags::__core::ptr::Unique'>Unique</a>&lt;T&gt; <span class='where'>where T: ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>const unsafe fn <a href='#method.new' class='fnname'>new</a>(ptr: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut T</a>) -&gt; <a class='struct' href='../../../bitflags/__core/ptr/struct.Unique.html' title='bitflags::__core::ptr::Unique'>Unique</a>&lt;T&gt;</code></h4>
 <div class='stability'><em class='stab unstable'>Unstable (<code>unique</code>)</em></div><div class='docblock'><p>Creates a new <code>Unique</code>.</p>
 </div><h4 id='method.get' class='method'><code>unsafe fn <a href='#method.get' class='fnname'>get</a>(&amp;self) -&gt; &amp;T</code></h4>
 <div class='stability'><em class='stab unstable'>Unstable (<code>unique</code>)</em></div><div class='docblock'><p>Dereferences the content.</p>
 </div><h4 id='method.get_mut' class='method'><code>unsafe fn <a href='#method.get_mut' class='fnname'>get_mut</a>(&amp;mut self) -&gt; &amp;mut T</code></h4>
 <div class='stability'><em class='stab unstable'>Unstable (<code>unique</code>)</em></div><div class='docblock'><p>Mutably dereferences the content.</p>
-</div></div><h2 id='deref-methods'>Methods from <a class='trait' href='../../../bitflags/__core/ops/trait.Deref.html' title='bitflags::__core::ops::Deref'>Deref</a>&lt;Target=<a href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut T</a>&gt;</h2><div class='impl-items'><h4 id='method.is_null' class='method'><code>fn <a href='#method.is_null' class='fnname'>is_null</a>(self) -&gt; <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a></code></h4>
+</div></div><h2 id='deref-methods'>Methods from <a class='trait' href='../../../bitflags/__core/ops/trait.Deref.html' title='bitflags::__core::ops::Deref'>Deref</a>&lt;Target=<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut T</a>&gt;</h2><div class='impl-items'><h4 id='method.is_null' class='method'><code>fn <a href='#method.is_null' class='fnname'>is_null</a>(self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a></code></h4>
 <div class='docblock'><p>Returns true if the pointer is null.</p>
 </div><h4 id='method.as_ref' class='method'><code>unsafe fn <a href='#method.as_ref' class='fnname'>as_ref</a>(&amp;self) -&gt; <a class='enum' href='../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;&amp;'a T&gt;</code></h4>
 <div class='stability'><em class='stab unstable'>Unstable (<code>ptr_as_ref</code>)<p>: Option is not clearly the right return type, and we may want to tie the return lifetime to a borrow of the raw pointer</p>
@@ -75,32 +76,32 @@ the value wrapped in <code>Some</code>.</p>
 null-safety, it is important to note that this is still an unsafe
 operation because the returned value could be pointing to invalid
 memory.</p>
-</div><h4 id='method.offset' class='method'><code>unsafe fn <a href='#method.offset' class='fnname'>offset</a>(self, count: <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.isize.html'>isize</a>) -&gt; <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*const T</a></code></h4>
+</div><h4 id='method.offset' class='method'><code>unsafe fn <a href='#method.offset' class='fnname'>offset</a>(self, count: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.isize.html'>isize</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*const T</a></code></h4>
 <div class='docblock'><p>Calculates the offset from a pointer. <code>count</code> is in units of T; e.g. a
 <code>count</code> of 3 represents a pointer offset of <code>3 * sizeof::&lt;T&gt;()</code> bytes.</p>
 
-<h1 id='safety' class='section-header'><a href='#safety'>Safety</a></h1>
+<h1 id='safety-1' class='section-header'><a href='#safety-1'>Safety</a></h1>
 <p>Both the starting and resulting pointer must be either in bounds or one
 byte past the end of an allocated object. If either pointer is out of
 bounds or arithmetic overflow occurs then
 any further use of the returned value will result in undefined behavior.</p>
-</div></div><div class='impl-items'><h4 id='method.is_null' class='method'><code>fn <a href='#method.is_null' class='fnname'>is_null</a>(self) -&gt; <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a></code></h4>
+</div></div><div class='impl-items'><h4 id='method.is_null-1' class='method'><code>fn <a href='#method.is_null' class='fnname'>is_null</a>(self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a></code></h4>
 <div class='docblock'><p>Returns true if the pointer is null.</p>
-</div><h4 id='method.as_ref' class='method'><code>unsafe fn <a href='#method.as_ref' class='fnname'>as_ref</a>(&amp;self) -&gt; <a class='enum' href='../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;&amp;'a T&gt;</code></h4>
+</div><h4 id='method.as_ref-1' class='method'><code>unsafe fn <a href='#method.as_ref' class='fnname'>as_ref</a>(&amp;self) -&gt; <a class='enum' href='../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;&amp;'a T&gt;</code></h4>
 <div class='stability'><em class='stab unstable'>Unstable (<code>ptr_as_ref</code>)<p>: Option is not clearly the right return type, and we may want to tie the return lifetime to a borrow of the raw pointer</p>
 </em></div><div class='docblock'><p>Returns <code>None</code> if the pointer is null, or else returns a reference to
 the value wrapped in <code>Some</code>.</p>
 
-<h1 id='safety' class='section-header'><a href='#safety'>Safety</a></h1>
+<h1 id='safety-2' class='section-header'><a href='#safety-2'>Safety</a></h1>
 <p>While this method and its mutable counterpart are useful for
 null-safety, it is important to note that this is still an unsafe
 operation because the returned value could be pointing to invalid
 memory.</p>
-</div><h4 id='method.offset' class='method'><code>unsafe fn <a href='#method.offset' class='fnname'>offset</a>(self, count: <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.isize.html'>isize</a>) -&gt; <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut T</a></code></h4>
+</div><h4 id='method.offset-1' class='method'><code>unsafe fn <a href='#method.offset' class='fnname'>offset</a>(self, count: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.isize.html'>isize</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut T</a></code></h4>
 <div class='docblock'><p>Calculates the offset from a pointer. <code>count</code> is in units of T; e.g. a
 <code>count</code> of 3 represents a pointer offset of <code>3 * sizeof::&lt;T&gt;()</code> bytes.</p>
 
-<h1 id='safety' class='section-header'><a href='#safety'>Safety</a></h1>
+<h1 id='safety-3' class='section-header'><a href='#safety-3'>Safety</a></h1>
 <p>The offset must be in-bounds of the object, or one-byte-past-the-end.
 Otherwise <code>offset</code> invokes Undefined Behavior, regardless of whether
 the pointer is used.</p>
@@ -109,7 +110,7 @@ the pointer is used.</p>
 </em></div><div class='docblock'><p>Returns <code>None</code> if the pointer is null, or else returns a mutable
 reference to the value wrapped in <code>Some</code>.</p>
 
-<h1 id='safety' class='section-header'><a href='#safety'>Safety</a></h1>
+<h1 id='safety-4' class='section-header'><a href='#safety-4'>Safety</a></h1>
 <p>As with <code>as_ref</code>, this is unsafe because it cannot verify the validity
 of the returned pointer.</p>
 </div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/marker/trait.Send.html' title='bitflags::__core::marker::Send'>Send</a> for <a class='struct' href='../../../bitflags/__core/ptr/struct.Unique.html' title='bitflags::__core::ptr::Unique'>Unique</a>&lt;T&gt; <span class='where'>where T: <a class='trait' href='../../../bitflags/__core/marker/trait.Send.html' title='bitflags::__core::marker::Send'>Send</a> + ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></h3><div class='docblock'><p><code>Unique</code> pointers are <code>Send</code> if <code>T</code> is <code>Send</code> because the data they
@@ -120,9 +121,9 @@ unenforced by the type system; the abstraction using the
 reference is unaliased. Note that this aliasing invariant is
 unenforced by the type system; the abstraction using the
 <code>Unique</code> must enforce it.</p>
-</div><div class='impl-items'></div><h3 class='impl'><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/ops/trait.Deref.html' title='bitflags::__core::ops::Deref'>Deref</a> for <a class='struct' href='../../../bitflags/__core/ptr/struct.Unique.html' title='bitflags::__core::ptr::Unique'>Unique</a>&lt;T&gt; <span class='where'>where T: ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></h3><div class='impl-items'><h4 id='assoc_type.Target' class='type'><code>type Target = <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut T</a></code></h4>
-<h4 id='method.deref' class='method'><code>fn <a href='../../../bitflags/__core/ops/trait.Deref.html#method.deref' class='fnname'>deref</a>(&amp;self) -&gt; &amp;<a href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut T</a></code></h4>
-</div><h3 class='impl'><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/fmt/trait.Pointer.html' title='bitflags::__core::fmt::Pointer'>Pointer</a> for <a class='struct' href='../../../bitflags/__core/ptr/struct.Unique.html' title='bitflags::__core::ptr::Unique'>Unique</a>&lt;T&gt;</code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='../../../bitflags/__core/fmt/trait.Pointer.html#method.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class='struct' href='../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h4>
+</div><div class='impl-items'></div><h3 class='impl'><code>impl&lt;T, U&gt; <a class='trait' href='../../../bitflags/__core/ops/trait.CoerceUnsized.html' title='bitflags::__core::ops::CoerceUnsized'>CoerceUnsized</a>&lt;<a class='struct' href='../../../bitflags/__core/ptr/struct.Unique.html' title='bitflags::__core::ptr::Unique'>Unique</a>&lt;U&gt;&gt; for <a class='struct' href='../../../bitflags/__core/ptr/struct.Unique.html' title='bitflags::__core::ptr::Unique'>Unique</a>&lt;T&gt; <span class='where'>where U: ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a>, T: <a class='trait' href='../../../bitflags/__core/marker/trait.Unsize.html' title='bitflags::__core::marker::Unsize'>Unsize</a>&lt;U&gt; + ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></h3><div class='impl-items'></div><h3 class='impl'><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/ops/trait.Deref.html' title='bitflags::__core::ops::Deref'>Deref</a> for <a class='struct' href='../../../bitflags/__core/ptr/struct.Unique.html' title='bitflags::__core::ptr::Unique'>Unique</a>&lt;T&gt; <span class='where'>where T: ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></h3><div class='impl-items'><h4 id='assoc_type.Target' class='type'><code>type Target = <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut T</a></code></h4>
+<h4 id='method.deref' class='method'><code>fn <a href='../../../bitflags/__core/ops/trait.Deref.html#method.deref' class='fnname'>deref</a>(&amp;self) -&gt; &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut T</a></code></h4>
+</div><h3 class='impl'><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/fmt/trait.Pointer.html' title='bitflags::__core::fmt::Pointer'>Pointer</a> for <a class='struct' href='../../../bitflags/__core/ptr/struct.Unique.html' title='bitflags::__core::ptr::Unique'>Unique</a>&lt;T&gt;</code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='../../../bitflags/__core/fmt/trait.Pointer.html#method.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class='struct' href='../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h4>
 </div></section>
     <section id='search' class="content hidden"></section>
 
@@ -182,6 +183,6 @@ unenforced by the type system; the abstraction using the
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

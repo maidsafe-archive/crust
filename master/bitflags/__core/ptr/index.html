@@ -9,6 +9,7 @@
 
     <title>bitflags::__core::ptr - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -45,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-5221' class='srclink' href='https://doc.rust-lang.org/nightly/core/ptr/index.html?gotosrc=5221' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-5174' class='srclink' href='https://doc.rust-lang.org/nightly/core/ptr/index.html?gotosrc=5174' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Raw, unsafe pointers, <code>*const T</code>, and <code>*mut T</code></p>
 
 <p><em><a href="../primitive.pointer.html">See also the pointer primitive types</a>.</em></p>
@@ -164,7 +165,16 @@ dropping the old value.</p>
                                title='bitflags::__core::ptr::write_bytes'>write_bytes</a></td>
                         <td class='docblock short'>
                              <p>Invokes memset on the specified pointer, setting <code>count * size_of::&lt;T&gt;()</code>
-bytes of memory starting at <code>dst</code> to <code>c</code>.</p>
+bytes of memory starting at <code>dst</code> to <code>val</code>.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class='unstable module-item'>
+                        <td><a class='fn' href='fn.drop_in_place.html'
+                               title='bitflags::__core::ptr::drop_in_place'>drop_in_place</a></td>
+                        <td class='docblock short'>
+                            [<em class='stab unstable'>Unstable</em>] <p>Executes the destructor (if any) of the pointed-to value.</p>
 
                         </td>
                     </tr>
@@ -237,6 +247,6 @@ bytes of memory starting at <code>dst</code> to <code>c</code>.</p>
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

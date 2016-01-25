@@ -9,6 +9,7 @@
 
     <title>bitflags::__core::sync::Barrier - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -45,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-9135' class='srclink' href='https://doc.rust-lang.org/nightly/std/sync/barrier/struct.Barrier.html?gotosrc=9135' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-9322' class='srclink' href='https://doc.rust-lang.org/nightly/std/sync/barrier/struct.Barrier.html?gotosrc=9322' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Barrier {
     // some fields omitted
 }</pre><div class='docblock'><p>A barrier enables multiple threads to synchronize the beginning
@@ -65,7 +66,7 @@ of some computation.</p>
         <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;after wait&quot;</span>);
     });
 }</pre>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../../bitflags/__core/sync/struct.Barrier.html' title='bitflags::__core::sync::Barrier'>Barrier</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(n: <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>) -&gt; <a class='struct' href='../../../bitflags/__core/sync/struct.Barrier.html' title='bitflags::__core::sync::Barrier'>Barrier</a></code></h4>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../../bitflags/__core/sync/struct.Barrier.html' title='bitflags::__core::sync::Barrier'>Barrier</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(n: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>) -&gt; <a class='struct' href='../../../bitflags/__core/sync/struct.Barrier.html' title='bitflags::__core::sync::Barrier'>Barrier</a></code></h4>
 <div class='docblock'><p>Creates a new barrier that can block a given number of threads.</p>
 
 <p>A barrier will block <code>n</code>-1 threads which call <code>wait</code> and then wake up
@@ -139,6 +140,6 @@ all other threads will receive a result that will return <code>false</code> from
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

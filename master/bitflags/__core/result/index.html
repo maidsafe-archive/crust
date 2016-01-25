@@ -9,6 +9,7 @@
 
     <title>bitflags::__core::result - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -45,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-29418' class='srclink' href='https://doc.rust-lang.org/nightly/core/result/index.html?gotosrc=29418' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-29398' class='srclink' href='https://doc.rust-lang.org/nightly/core/result/index.html?gotosrc=29398' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Error handling with the <code>Result</code> type</p>
 
 <p><code>Result&lt;T, E&gt;</code> is the type used for returning and propagating
@@ -144,15 +145,14 @@ something like this:</p>
 warning (by default, controlled by the <code>unused_must_use</code> lint).</p>
 
 <p>You might instead, if you don&#39;t want to handle the error, simply
-panic, by converting to an <code>Option</code> with <code>ok</code>, then asserting
-success with <code>expect</code>. This will panic if the write fails, proving
-a marginally useful message indicating why:</p>
+assert success with <code>expect</code>. This will panic if the
+write fails, providing a marginally useful message indicating why:</p>
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fs</span>::<span class='ident'>File</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>prelude</span>::<span class='op'>*</span>;
 
 <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>file</span> <span class='op'>=</span> <span class='ident'>File</span>::<span class='ident'>create</span>(<span class='string'>&quot;valuable_data.txt&quot;</span>).<span class='ident'>unwrap</span>();
-<span class='ident'>file</span>.<span class='ident'>write_all</span>(<span class='string'>b&quot;important message&quot;</span>).<span class='ident'>ok</span>().<span class='ident'>expect</span>(<span class='string'>&quot;failed to write message&quot;</span>);</pre>
+<span class='ident'>file</span>.<span class='ident'>write_all</span>(<span class='string'>b&quot;important message&quot;</span>).<span class='ident'>expect</span>(<span class='string'>&quot;failed to write message&quot;</span>);</pre>
 
 <p>You might also simply assert success:</p>
 <pre class='rust rust-example-rendered'>
@@ -331,6 +331,6 @@ be used in functions that return <code>Result</code> because of the early return
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

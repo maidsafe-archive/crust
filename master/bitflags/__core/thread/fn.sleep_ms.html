@@ -9,6 +9,7 @@
 
     <title>bitflags::__core::thread::sleep_ms - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -45,8 +46,9 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-998' class='srclink' href='https://doc.rust-lang.org/nightly/std/thread/fn.sleep_ms.html?gotosrc=998' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub fn sleep_ms(ms: <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.u32.html'>u32</a>)</pre><div class='docblock'><p>Puts the current thread to sleep for the specified amount of time.</p>
+        </span><a id='src-1009' class='srclink' href='https://doc.rust-lang.org/nightly/std/thread/fn.sleep_ms.html?gotosrc=1009' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub fn sleep_ms(ms: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u32.html'>u32</a>)</pre><div class='stability'><em class='stab  deprecated'>Deprecated since 1.6.0<p>: replaced by <code>std::thread::sleep</code></p>
+</em></div><div class='docblock'><p>Puts the current thread to sleep for the specified amount of time.</p>
 
 <p>The thread may sleep longer than the duration specified due to scheduling
 specifics or platform-dependent functionality. Note that on unix platforms
@@ -111,6 +113,6 @@ spurious wakeup.</p>
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

@@ -9,6 +9,7 @@
 
     <title>bitflags::__core::env - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -45,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-2817' class='srclink' href='https://doc.rust-lang.org/nightly/std/env/index.html?gotosrc=2817' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-2826' class='srclink' href='https://doc.rust-lang.org/nightly/std/env/index.html?gotosrc=2826' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Inspection and manipulation of the process&#39;s environment.</p>
 
 <p>This module contains methods to inspect various aspects such as
@@ -97,7 +98,7 @@ joined.</p>
                         <td><a class='struct' href='struct.SplitPaths.html'
                                title='bitflags::__core::env::SplitPaths'>SplitPaths</a></td>
                         <td class='docblock short'>
-                             <p>An iterator over <code>Path</code> instances for parsing an environment variable
+                             <p>An iterator over <code>PathBuf</code> instances for parsing an environment variable
 according to platform-specific conventions.</p>
 
                         </td>
@@ -165,8 +166,8 @@ via the command line).</p>
                         <td><a class='fn' href='fn.current_exe.html'
                                title='bitflags::__core::env::current_exe'>current_exe</a></td>
                         <td class='docblock short'>
-                             <p>Optionally returns the filesystem path to the current executable which is
-running but with the executable name.</p>
+                             <p>Returns the filesystem path to the current executable which is running but
+with the executable name.</p>
 
                         </td>
                     </tr>
@@ -175,7 +176,7 @@ running but with the executable name.</p>
                         <td><a class='fn' href='fn.home_dir.html'
                                title='bitflags::__core::env::home_dir'>home_dir</a></td>
                         <td class='docblock short'>
-                             <p>Optionally returns the path to the current user&#39;s home directory if known.</p>
+                             <p>Returns the path to the current user&#39;s home directory if known.</p>
 
                         </td>
                     </tr>
@@ -335,6 +336,6 @@ environment variables of the current process.</p>
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

@@ -9,6 +9,7 @@
 
     <title>hyper::http::h1::Http11Protocol - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -45,14 +46,14 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-5072' class='srclink' href='../../../src/hyper/http/h1.rs.html#430-432' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-5228' class='srclink' href='../../../src/hyper/http/h1.rs.html#430-432' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Http11Protocol {
     // some fields omitted
 }</pre><div class='docblock'><p>The <code>Protocol</code> implementation provides HTTP/1.1 messages.</p>
 </div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../../hyper/http/h1/struct.Http11Protocol.html' title='hyper::http::h1::Http11Protocol'>Http11Protocol</a></code></h3><div class='impl-items'><h4 id='method.with_connector' class='method'><code>fn <a href='#method.with_connector' class='fnname'>with_connector</a>&lt;C, S&gt;(c: C) -&gt; <a class='struct' href='../../../hyper/http/h1/struct.Http11Protocol.html' title='hyper::http::h1::Http11Protocol'>Http11Protocol</a> <span class='where'>where C: <a class='trait' href='../../../hyper/net/trait.NetworkConnector.html' title='hyper::net::NetworkConnector'>NetworkConnector</a>&lt;Stream=S&gt; + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Send.html' title='core::marker::Send'>Send</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sync.html' title='core::marker::Sync'>Sync</a> + 'static, S: <a class='trait' href='../../../hyper/net/trait.NetworkStream.html' title='hyper::net::NetworkStream'>NetworkStream</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Send.html' title='core::marker::Send'>Send</a></span></code></h4>
 <div class='docblock'><p>Creates a new <code>Http11Protocol</code> instance that will use the given <code>NetworkConnector</code> for
 establishing HTTP connections.</p>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='../../../hyper/http/message/trait.Protocol.html' title='hyper::http::message::Protocol'>Protocol</a> for <a class='struct' href='../../../hyper/http/h1/struct.Http11Protocol.html' title='hyper::http::h1::Http11Protocol'>Http11Protocol</a></code></h3><div class='impl-items'><h4 id='method.new_message' class='method'><code>fn <a href='../../../hyper/http/message/trait.Protocol.html#method.new_message' class='fnname'>new_message</a>(&amp;self, host: &amp;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, port: <a href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a>, scheme: &amp;<a href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='type' href='../../../hyper/error/type.Result.html' title='hyper::error::Result'>Result</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html' title='alloc::boxed::Box'>Box</a>&lt;<a class='trait' href='../../../hyper/http/message/trait.HttpMessage.html' title='hyper::http::message::HttpMessage'>HttpMessage</a>&gt;&gt;</code></h4>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='../../../hyper/http/message/trait.Protocol.html' title='hyper::http::message::Protocol'>Protocol</a> for <a class='struct' href='../../../hyper/http/h1/struct.Http11Protocol.html' title='hyper::http::h1::Http11Protocol'>Http11Protocol</a></code></h3><div class='impl-items'><h4 id='method.new_message' class='method'><code>fn <a href='../../../hyper/http/message/trait.Protocol.html#method.new_message' class='fnname'>new_message</a>(&amp;self, host: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, port: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a>, scheme: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='type' href='../../../hyper/error/type.Result.html' title='hyper::error::Result'>Result</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html' title='alloc::boxed::Box'>Box</a>&lt;<a class='trait' href='../../../hyper/http/message/trait.HttpMessage.html' title='hyper::http::message::HttpMessage'>HttpMessage</a>&gt;&gt;</code></h4>
 </div></section>
     <section id='search' class="content hidden"></section>
 
@@ -112,6 +113,6 @@ establishing HTTP connections.</p>
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

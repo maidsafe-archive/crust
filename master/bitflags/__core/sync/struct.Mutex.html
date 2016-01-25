@@ -9,6 +9,7 @@
 
     <title>bitflags::__core::sync::Mutex - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -45,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-9329' class='srclink' href='https://doc.rust-lang.org/nightly/std/sync/mutex/struct.Mutex.html?gotosrc=9329' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-9515' class='srclink' href='https://doc.rust-lang.org/nightly/std/sync/mutex/struct.Mutex.html?gotosrc=9515' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Mutex&lt;T&gt; <span class='where'>where T: ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span> {
     // some fields omitted
 }</pre><div class='docblock'><p>A mutual exclusion primitive useful for protecting shared data</p>
@@ -92,7 +93,7 @@ allows access to the data, despite the lock being poisoned.</p>
 <span class='kw'>for</span> _ <span class='kw'>in</span> <span class='number'>0</span>..<span class='number'>10</span> {
     <span class='kw'>let</span> (<span class='ident'>data</span>, <span class='ident'>tx</span>) <span class='op'>=</span> (<span class='ident'>data</span>.<span class='ident'>clone</span>(), <span class='ident'>tx</span>.<span class='ident'>clone</span>());
     <span class='ident'>thread</span>::<span class='ident'>spawn</span>(<span class='kw'>move</span> <span class='op'>||</span> {
-        <span class='comment'>// The shared static can only be accessed once the lock is held.</span>
+        <span class='comment'>// The shared state can only be accessed once the lock is held.</span>
         <span class='comment'>// Our non-atomic increment is safe because we&#39;re the only thread</span>
         <span class='comment'>// which can access the shared state when the lock is held.</span>
         <span class='comment'>//</span>
@@ -157,35 +158,33 @@ guard is dropped.</p>
 
 <p>This function does not block.</p>
 
-<h1 id='failure' class='section-header'><a href='#failure'>Failure</a></h1>
+<h1 id='failure-1' class='section-header'><a href='#failure-1'>Failure</a></h1>
 <p>If another user of this mutex panicked while holding the mutex, then
 this call will return failure if the mutex would otherwise be
 acquired.</p>
-</div><h4 id='method.is_poisoned' class='method'><code>fn <a href='#method.is_poisoned' class='fnname'>is_poisoned</a>(&amp;self) -&gt; <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a></code></h4>
+</div><h4 id='method.is_poisoned' class='method'><code>fn <a href='#method.is_poisoned' class='fnname'>is_poisoned</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a></code></h4>
 <div class='docblock'><p>Determines whether the lock is poisoned.</p>
 
 <p>If another thread is active, the lock can still become poisoned at any
 time.  You should not trust a <code>false</code> value for program correctness
 without additional synchronization.</p>
 </div><h4 id='method.into_inner' class='method'><code>fn <a href='#method.into_inner' class='fnname'>into_inner</a>(self) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;T, <a class='struct' href='../../../bitflags/__core/sync/struct.PoisonError.html' title='bitflags::__core::sync::PoisonError'>PoisonError</a>&lt;T&gt;&gt;</code></h4>
-<div class='stability'><em class='stab unstable'>Unstable (<code>mutex_into_inner</code>)<p>: recently added</p>
-</em></div><div class='docblock'><p>Consumes this mutex, returning the underlying data.</p>
+<div class='docblock'><p>Consumes this mutex, returning the underlying data.</p>
 
-<h1 id='failure' class='section-header'><a href='#failure'>Failure</a></h1>
+<h1 id='failure-2' class='section-header'><a href='#failure-2'>Failure</a></h1>
 <p>If another user of this mutex panicked while holding the mutex, then
 this call will return an error instead.</p>
 </div><h4 id='method.get_mut' class='method'><code>fn <a href='#method.get_mut' class='fnname'>get_mut</a>(&amp;mut self) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;&amp;mut T, <a class='struct' href='../../../bitflags/__core/sync/struct.PoisonError.html' title='bitflags::__core::sync::PoisonError'>PoisonError</a>&lt;&amp;mut T&gt;&gt;</code></h4>
-<div class='stability'><em class='stab unstable'>Unstable (<code>mutex_get_mut</code>)<p>: recently added</p>
-</em></div><div class='docblock'><p>Returns a mutable reference to the underlying data.</p>
+<div class='docblock'><p>Returns a mutable reference to the underlying data.</p>
 
 <p>Since this call borrows the <code>Mutex</code> mutably, no actual locking needs to
 take place---the mutable borrow statically guarantees no locks exist.</p>
 
-<h1 id='failure' class='section-header'><a href='#failure'>Failure</a></h1>
+<h1 id='failure-3' class='section-header'><a href='#failure-3'>Failure</a></h1>
 <p>If another user of this mutex panicked while holding the mutex, then
 this call will return an error instead.</p>
 </div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/marker/trait.Send.html' title='bitflags::__core::marker::Send'>Send</a> for <a class='struct' href='../../../bitflags/__core/sync/struct.Mutex.html' title='bitflags::__core::sync::Mutex'>Mutex</a>&lt;T&gt; <span class='where'>where T: <a class='trait' href='../../../bitflags/__core/marker/trait.Send.html' title='bitflags::__core::marker::Send'>Send</a> + ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></h3><div class='impl-items'></div><h3 class='impl'><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/marker/trait.Sync.html' title='bitflags::__core::marker::Sync'>Sync</a> for <a class='struct' href='../../../bitflags/__core/sync/struct.Mutex.html' title='bitflags::__core::sync::Mutex'>Mutex</a>&lt;T&gt; <span class='where'>where T: <a class='trait' href='../../../bitflags/__core/marker/trait.Send.html' title='bitflags::__core::marker::Send'>Send</a> + ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></h3><div class='impl-items'></div><h3 class='impl'><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/ops/trait.Drop.html' title='bitflags::__core::ops::Drop'>Drop</a> for <a class='struct' href='../../../bitflags/__core/sync/struct.Mutex.html' title='bitflags::__core::sync::Mutex'>Mutex</a>&lt;T&gt; <span class='where'>where T: ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></h3><div class='impl-items'><h4 id='method.drop' class='method'><code>fn <a href='../../../bitflags/__core/ops/trait.Drop.html#method.drop' class='fnname'>drop</a>(&amp;mut self)</code></h4>
-</div><h3 class='impl'><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/fmt/trait.Debug.html' title='bitflags::__core::fmt::Debug'>Debug</a> for <a class='struct' href='../../../bitflags/__core/sync/struct.Mutex.html' title='bitflags::__core::sync::Mutex'>Mutex</a>&lt;T&gt; <span class='where'>where T: 'static + <a class='trait' href='../../../bitflags/__core/fmt/trait.Debug.html' title='bitflags::__core::fmt::Debug'>Debug</a> + ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='../../../bitflags/__core/fmt/trait.Debug.html#method.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class='struct' href='../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h4>
+</div><h3 class='impl'><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/fmt/trait.Debug.html' title='bitflags::__core::fmt::Debug'>Debug</a> for <a class='struct' href='../../../bitflags/__core/sync/struct.Mutex.html' title='bitflags::__core::sync::Mutex'>Mutex</a>&lt;T&gt; <span class='where'>where T: 'static + <a class='trait' href='../../../bitflags/__core/fmt/trait.Debug.html' title='bitflags::__core::fmt::Debug'>Debug</a> + ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='../../../bitflags/__core/fmt/trait.Debug.html#method.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class='struct' href='../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h4>
 </div></section>
     <section id='search' class="content hidden"></section>
 
@@ -245,6 +244,6 @@ this call will return an error instead.</p>
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

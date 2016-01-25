@@ -9,6 +9,7 @@
 
     <title>matches::matches! - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../main.css">
 
     
@@ -48,14 +49,7 @@
         </span><a id='src-4' class='srclink' href='../src/matches/lib.rs.html#2-11' title='goto source code'>[src]</a></span></h1>
 <pre class='rust macro'>
 <span class='macro'>macro_rules</span><span class='macro'>!</span> <span class='ident'>matches</span> {
-    (<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>expression</span>: <span class='ident'>expr</span>, $(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>pattern</span>:<span class='ident'>tt</span>)<span class='op'>+</span>) <span class='op'>=&gt;</span> {
-        <span class='macro'>_tt_as_expr_hack</span><span class='macro'>!</span> {
-            <span class='kw'>match</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>expression</span> {
-                $(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>pattern</span>)<span class='op'>+</span> <span class='op'>=&gt;</span> <span class='boolval'>true</span>,
-                _ <span class='op'>=&gt;</span> <span class='boolval'>false</span>
-            }
-        }
-    }
+    (<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>expression</span>: <span class='ident'>expr</span>, $(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>pattern</span>:<span class='ident'>tt</span>)<span class='op'>+</span>) <span class='op'>=&gt;</span> { ... };
 }</pre>
 </section>
     <section id='search' class="content hidden"></section>
@@ -116,6 +110,6 @@
     <script src="../jquery.js"></script>
     <script src="../main.js"></script>
     
-    <script async src="../search-index.js"></script>
+    <script defer src="../search-index.js"></script>
 </body>
 </html>

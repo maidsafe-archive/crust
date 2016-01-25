@@ -9,6 +9,7 @@
 
     <title>c_linked_list::CLinkedListConst - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../main.css">
 
     
@@ -46,10 +47,10 @@
                 [<span class='inner'>&#x2212;</span>]
             </a>
         </span><a id='src-34' class='srclink' href='../src/c_linked_list/lib.rs.html#90-93' title='goto source code'>[src]</a></span></h1>
-<pre class='rust struct'>pub struct CLinkedListConst&lt;T, N: <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.FnMut.html' title='core::ops::FnMut'>FnMut</a>(&amp;T) -&gt; <a href='https://doc.rust-lang.org/nightly/std/primitive.pointer.html'>*const T</a>&gt; {
+<pre class='rust struct'>pub struct CLinkedListConst&lt;T, N: <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.FnMut.html' title='core::ops::FnMut'>FnMut</a>(&amp;T) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.pointer.html'>*const T</a>&gt; {
     // some fields omitted
 }</pre><div class='docblock'><p>Wraps a C linked list comprised of const pointers between nodes.</p>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;'a, T: 'a, N: <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.FnMut.html' title='core::ops::FnMut'>FnMut</a>(&amp;T) -&gt; <a href='https://doc.rust-lang.org/nightly/std/primitive.pointer.html'>*const T</a> + 'a&gt; <a class='struct' href='../c_linked_list/struct.CLinkedListConst.html' title='c_linked_list::CLinkedListConst'>CLinkedListConst</a>&lt;T, N&gt;</code></h3><div class='impl-items'><h4 id='method.from_ptr' class='method'><code>fn <a href='#method.from_ptr' class='fnname'>from_ptr</a>(head: <a href='https://doc.rust-lang.org/nightly/std/primitive.pointer.html'>*const T</a>, next: N) -&gt; <a class='struct' href='../c_linked_list/struct.CLinkedListConst.html' title='c_linked_list::CLinkedListConst'>CLinkedListConst</a>&lt;T, N&gt;</code></h4>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;'a, T: 'a, N: <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.FnMut.html' title='core::ops::FnMut'>FnMut</a>(&amp;T) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.pointer.html'>*const T</a> + 'a&gt; <a class='struct' href='../c_linked_list/struct.CLinkedListConst.html' title='c_linked_list::CLinkedListConst'>CLinkedListConst</a>&lt;T, N&gt;</code></h3><div class='impl-items'><h4 id='method.from_ptr' class='method'><code>fn <a href='#method.from_ptr' class='fnname'>from_ptr</a>(head: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.pointer.html'>*const T</a>, next: N) -&gt; <a class='struct' href='../c_linked_list/struct.CLinkedListConst.html' title='c_linked_list::CLinkedListConst'>CLinkedListConst</a>&lt;T, N&gt;</code></h4>
 <div class='docblock'><p>Construct a <code>CLinkedListConst</code> by wrapping a C linked list. <code>head</code> points to the head element
 of the list and can be NULL for a list of length 0. <code>next</code> is a function that takes a node
 and returns a pointer to the next element.</p>
@@ -125,6 +126,6 @@ and returns a pointer to the next element.</p>
     <script src="../jquery.js"></script>
     <script src="../main.js"></script>
     
-    <script async src="../search-index.js"></script>
+    <script defer src="../search-index.js"></script>
 </body>
 </html>

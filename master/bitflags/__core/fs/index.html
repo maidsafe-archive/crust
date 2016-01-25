@@ -9,6 +9,7 @@
 
     <title>bitflags::__core::fs - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -45,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-3488' class='srclink' href='https://doc.rust-lang.org/nightly/std/fs/index.html?gotosrc=3488' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-3516' class='srclink' href='https://doc.rust-lang.org/nightly/std/fs/index.html?gotosrc=3516' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Filesystem manipulation operations</p>
 
 <p>This module contains basic methods to manipulate the contents of the local
@@ -54,6 +55,15 @@ operations. Extra platform-specific functionality can be found in the
 extension traits of <code>std::os::$platform</code>.</p>
 </div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.DirBuilder.html'
+                               title='bitflags::__core::fs::DirBuilder'>DirBuilder</a></td>
+                        <td class='docblock short'>
+                             <p>A builder used to create directories in various manners.</p>
+
+                        </td>
+                    </tr>
+                
                     <tr class=' module-item'>
                         <td><a class='struct' href='struct.DirEntry.html'
                                title='bitflags::__core::fs::DirEntry'>DirEntry</a></td>
@@ -117,20 +127,11 @@ extension traits of <code>std::os::$platform</code>.</p>
                         </td>
                     </tr>
                 
-                    <tr class='unstable module-item'>
-                        <td><a class='struct' href='struct.DirBuilder.html'
-                               title='bitflags::__core::fs::DirBuilder'>DirBuilder</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>A builder used to create directories in various manners.</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
+                    <tr class='unstable deprecated module-item'>
                         <td><a class='struct' href='struct.WalkDir.html'
                                title='bitflags::__core::fs::WalkDir'>WalkDir</a></td>
                         <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>An iterator that recursively walks over the contents of a directory.</p>
+                            [<em class='stab unstable deprecated'>Deprecated</em>] <p>An iterator that recursively walks over the contents of a directory.</p>
 
                         </td>
                     </tr>
@@ -286,11 +287,11 @@ carefully!</p>
                         </td>
                     </tr>
                 
-                    <tr class='unstable module-item'>
+                    <tr class='unstable deprecated module-item'>
                         <td><a class='fn' href='fn.walk_dir.html'
                                title='bitflags::__core::fs::walk_dir'>walk_dir</a></td>
                         <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Returns an iterator that will recursively walk the directory structure
+                            [<em class='stab unstable deprecated'>Deprecated</em>] <p>Returns an iterator that will recursively walk the directory structure
 rooted at <code>path</code>.</p>
 
                         </td>
@@ -354,6 +355,6 @@ rooted at <code>path</code>.</p>
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

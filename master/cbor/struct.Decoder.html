@@ -9,6 +9,7 @@
 
     <title>cbor::Decoder - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../main.css">
 
     
@@ -45,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-1106' class='srclink' href='../src/cbor/decoder.rs.html#17-19' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-1167' class='srclink' href='../src/cbor/decoder.rs.html#17-19' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Decoder&lt;R&gt; {
     // some fields omitted
 }</pre><div class='docblock'><p>Read CBOR data items into Rust values from the underlying reader <code>R</code>.</p>
@@ -79,7 +80,7 @@ abstract syntax. (Using the <code>decode</code> iterator is probably much more
 convenient, but this is useful when you need to do more sophisticated
 analysis on the CBOR data.)</p>
 
-<h1 id='example' class='section-header'><a href='#example'>Example</a></h1>
+<h1 id='example-1' class='section-header'><a href='#example-1'>Example</a></h1>
 <p>This shows how to encode and decode a sequence of data items:</p>
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>cbor</span>::{<span class='ident'>Cbor</span>, <span class='ident'>CborUnsigned</span>, <span class='ident'>Decoder</span>, <span class='ident'>Encoder</span>};
@@ -104,7 +105,7 @@ analysis on the CBOR data.)</p>
         <span class='ident'>Cbor</span>::<span class='ident'>Unsigned</span>(<span class='ident'>CborUnsigned</span>::<span class='ident'>UInt8</span>(<span class='number'>3</span>)),
     ]),
 ]);</pre>
-</div></div><h3 class='impl'><code>impl <a class='struct' href='../cbor/struct.Decoder.html' title='cbor::Decoder'>Decoder</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/std/io/cursor/struct.Cursor.html' title='std::io::cursor::Cursor'>Cursor</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;&gt;&gt;</code></h3><div class='impl-items'><h4 id='method.from_bytes' class='method'><code>fn <a href='#method.from_bytes' class='fnname'>from_bytes</a>&lt;T&gt;(bytes: T) -&gt; <a class='struct' href='../cbor/struct.Decoder.html' title='cbor::Decoder'>Decoder</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/std/io/cursor/struct.Cursor.html' title='std::io::cursor::Cursor'>Cursor</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;&gt;&gt; <span class='where'>where T: <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.Into.html' title='core::convert::Into'>Into</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;&gt;</span></code></h4>
+</div></div><h3 class='impl'><code>impl <a class='struct' href='../cbor/struct.Decoder.html' title='cbor::Decoder'>Decoder</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/std/io/cursor/struct.Cursor.html' title='std::io::cursor::Cursor'>Cursor</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;&gt;&gt;</code></h3><div class='impl-items'><h4 id='method.from_bytes' class='method'><code>fn <a href='#method.from_bytes' class='fnname'>from_bytes</a>&lt;T&gt;(bytes: T) -&gt; <a class='struct' href='../cbor/struct.Decoder.html' title='cbor::Decoder'>Decoder</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/std/io/cursor/struct.Cursor.html' title='std::io::cursor::Cursor'>Cursor</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;&gt;&gt; <span class='where'>where T: <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.Into.html' title='core::convert::Into'>Into</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;&gt;</span></code></h4>
 <div class='docblock'><p>Create a new CBOR decoder that reads from the buffer given.</p>
 
 <p>The buffer is usually given as either a <code>Vec&lt;u8&gt;</code> or a <code>&amp;[u8]</code>.</p>
@@ -167,6 +168,6 @@ analysis on the CBOR data.)</p>
     <script src="../jquery.js"></script>
     <script src="../main.js"></script>
     
-    <script async src="../search-index.js"></script>
+    <script defer src="../search-index.js"></script>
 </body>
 </html>

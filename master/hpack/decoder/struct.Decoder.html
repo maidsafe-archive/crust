@@ -9,6 +9,7 @@
 
     <title>hpack::decoder::Decoder - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
 
     
@@ -45,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-203' class='srclink' href='../../src/hpack/decoder.rs.html#228-231' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-213' class='srclink' href='../../src/hpack/decoder.rs.html#228-231' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Decoder&lt;'a&gt; {
     // some fields omitted
 }</pre><div class='docblock'><p>Decodes headers encoded using HPACK.</p>
@@ -57,9 +58,9 @@ decoder, rather than processing it piece-by-piece.</p>
 necessary to correctly decode subsequent HPACK blocks.</p>
 </div><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>() -&gt; <a class='struct' href='../../hpack/decoder/struct.Decoder.html' title='hpack::decoder::Decoder'>Decoder</a>&lt;'a&gt;</code></h4>
 <div class='docblock'><p>Creates a new <code>Decoder</code> with all settings set to default values.</p>
-</div><h4 id='method.set_max_table_size' class='method'><code>fn <a href='#method.set_max_table_size' class='fnname'>set_max_table_size</a>(&amp;mut self, new_max_size: <a href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>)</code></h4>
+</div><h4 id='method.set_max_table_size' class='method'><code>fn <a href='#method.set_max_table_size' class='fnname'>set_max_table_size</a>(&amp;mut self, new_max_size: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>)</code></h4>
 <div class='docblock'><p>Sets a new maximum dynamic table size for the decoder.</p>
-</div><h4 id='method.decode' class='method'><code>fn <a href='#method.decode' class='fnname'>decode</a>(&amp;mut self, buf: <a href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a><a href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>) -&gt; <a class='type' href='../../hpack/decoder/type.DecoderResult.html' title='hpack::decoder::DecoderResult'>DecoderResult</a></code></h4>
+</div><h4 id='method.decode' class='method'><code>fn <a href='#method.decode' class='fnname'>decode</a>(&amp;mut self, buf: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>) -&gt; <a class='type' href='../../hpack/decoder/type.DecoderResult.html' title='hpack::decoder::DecoderResult'>DecoderResult</a></code></h4>
 <div class='docblock'><p>Decode the header block found in the given buffer.</p>
 
 <p>The buffer should represent the entire block that should be decoded.
@@ -124,6 +125,6 @@ to a single buffer before passing them to the decoder.</p>
     <script src="../../jquery.js"></script>
     <script src="../../main.js"></script>
     
-    <script async src="../../search-index.js"></script>
+    <script defer src="../../search-index.js"></script>
 </body>
 </html>

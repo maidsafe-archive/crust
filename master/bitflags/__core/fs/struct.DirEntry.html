@@ -9,6 +9,7 @@
 
     <title>bitflags::__core::fs::DirEntry - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -45,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-3510' class='srclink' href='https://doc.rust-lang.org/nightly/std/fs/struct.DirEntry.html?gotosrc=3510' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-3538' class='srclink' href='https://doc.rust-lang.org/nightly/std/fs/struct.DirEntry.html?gotosrc=3538' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct DirEntry(_);</pre><div class='docblock'><p>Entries returned by the <code>ReadDir</code> iterator.</p>
 
 <p>An instance of <code>DirEntry</code> represents an entry inside of a directory on the
@@ -88,14 +89,14 @@ calling <code>symlink_metadata</code> on the path.</p>
 <p>This function will not traverse symlinks if this entry points at a
 symlink.</p>
 
-<h1 id='platform-behavior' class='section-header'><a href='#platform-behavior'>Platform behavior</a></h1>
+<h1 id='platform-behavior-1' class='section-header'><a href='#platform-behavior-1'>Platform behavior</a></h1>
 <p>On Windows and most Unix platforms this function is free (no extra
 system calls needed), but some Unix platforms may require the equivalent
 call to <code>symlink_metadata</code> to learn about the target file type.</p>
 </div><h4 id='method.file_name' class='method'><code>fn <a href='#method.file_name' class='fnname'>file_name</a>(&amp;self) -&gt; <a class='struct' href='../../../bitflags/__core/ffi/struct.OsString.html' title='bitflags::__core::ffi::OsString'>OsString</a></code></h4>
 <div class='docblock'><p>Returns the bare file name of this directory entry without any other
 leading path component.</p>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='../../../bitflags/__core/os/ext/prelude/trait.DirEntryExt.html' title='bitflags::__core::os::ext::prelude::DirEntryExt'>DirEntryExt</a> for <a class='struct' href='../../../bitflags/__core/fs/struct.DirEntry.html' title='bitflags::__core::fs::DirEntry'>DirEntry</a></code></h3><div class='impl-items'><h4 id='method.ino' class='method'><code>fn <a href='../../../bitflags/__core/os/ext/prelude/trait.DirEntryExt.html#method.ino' class='fnname'>ino</a>(&amp;self) -&gt; <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.u64.html'>u64</a></code></h4>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='../../../bitflags/__core/os/ext/prelude/trait.DirEntryExt.html' title='bitflags::__core::os::ext::prelude::DirEntryExt'>DirEntryExt</a> for <a class='struct' href='../../../bitflags/__core/fs/struct.DirEntry.html' title='bitflags::__core::fs::DirEntry'>DirEntry</a></code></h3><div class='impl-items'><h4 id='method.ino' class='method'><code>fn <a href='../../../bitflags/__core/os/ext/prelude/trait.DirEntryExt.html#method.ino' class='fnname'>ino</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u64.html'>u64</a></code></h4>
 </div></section>
     <section id='search' class="content hidden"></section>
 
@@ -155,6 +156,6 @@ leading path component.</p>
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

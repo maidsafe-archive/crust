@@ -9,6 +9,7 @@
 
     <title>bitflags::__core::process::Child - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -45,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-7451' class='srclink' href='https://doc.rust-lang.org/nightly/std/process/struct.Child.html?gotosrc=7451' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-7632' class='srclink' href='https://doc.rust-lang.org/nightly/std/process/struct.Child.html?gotosrc=7632' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Child {
     pub stdin: <a class='enum' href='../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;<a class='struct' href='../../../bitflags/__core/process/struct.ChildStdin.html' title='bitflags::__core::process::ChildStdin'>ChildStdin</a>&gt;,
     pub stdout: <a class='enum' href='../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;<a class='struct' href='../../../bitflags/__core/process/struct.ChildStdout.html' title='bitflags::__core::process::ChildStdout'>ChildStdout</a>&gt;,
@@ -76,10 +77,10 @@ process and can itself be constructed using a builder-style interface.</p>
                                   <td id='structfield.stdout'><code>stdout</code></td><td><div class='docblock'><p>The handle for reading from the child&#39;s stdout, if it has been captured</p>
 </div></td></tr><tr class='stab '>
                                   <td id='structfield.stderr'><code>stderr</code></td><td><div class='docblock'><p>The handle for reading from the child&#39;s stderr, if it has been captured</p>
-</div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../../bitflags/__core/process/struct.Child.html' title='bitflags::__core::process::Child'>Child</a></code></h3><div class='impl-items'><h4 id='method.kill' class='method'><code>fn <a href='#method.kill' class='fnname'>kill</a>(&amp;mut self) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;</code></h4>
+</div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../../bitflags/__core/process/struct.Child.html' title='bitflags::__core::process::Child'>Child</a></code></h3><div class='impl-items'><h4 id='method.kill' class='method'><code>fn <a href='#method.kill' class='fnname'>kill</a>(&amp;mut self) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;</code></h4>
 <div class='docblock'><p>Forces the child to exit. This is equivalent to sending a
 SIGKILL on unix platforms.</p>
-</div><h4 id='method.id' class='method'><code>fn <a href='#method.id' class='fnname'>id</a>(&amp;self) -&gt; <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.u32.html'>u32</a></code></h4>
+</div><h4 id='method.id' class='method'><code>fn <a href='#method.id' class='fnname'>id</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u32.html'>u32</a></code></h4>
 <div class='docblock'><p>Returns the OS-assigned process identifier associated with this child.</p>
 </div><h4 id='method.wait' class='method'><code>fn <a href='#method.wait' class='fnname'>wait</a>(&amp;mut self) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='struct' href='../../../bitflags/__core/process/struct.ExitStatus.html' title='bitflags::__core::process::ExitStatus'>ExitStatus</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;</code></h4>
 <div class='docblock'><p>Waits for the child to exit completely, returning the status that it
@@ -92,7 +93,7 @@ child does not block waiting for input from the parent, while
 the parent waits for the child to exit.</p>
 </div><h4 id='method.wait_with_output' class='method'><code>fn <a href='#method.wait_with_output' class='fnname'>wait_with_output</a>(self) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='struct' href='../../../bitflags/__core/process/struct.Output.html' title='bitflags::__core::process::Output'>Output</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;</code></h4>
 <div class='docblock'><p>Simultaneously waits for the child to exit and collect all remaining
-output on the stdout/stderr handles, returning a <code>Output</code>
+output on the stdout/stderr handles, returning an <code>Output</code>
 instance.</p>
 
 <p>The stdin handle to the child process, if any, will be closed
@@ -158,6 +159,6 @@ the parent waits for the child to exit.</p>
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

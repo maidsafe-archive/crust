@@ -9,6 +9,7 @@
 
     <title>crossbeam::spawn_unsafe - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../main.css">
 
     
@@ -46,7 +47,7 @@
                 [<span class='inner'>&#x2212;</span>]
             </a>
         </span><a id='src-681' class='srclink' href='../src/crossbeam/lib.rs.html#48-54' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub unsafe fn spawn_unsafe&lt;'a, F&gt;(f: F) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/std/thread/struct.JoinHandle.html' title='std::thread::JoinHandle'>JoinHandle</a>&lt;<a href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt; <span class='where'>where F: <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.FnOnce.html' title='core::ops::FnOnce'>FnOnce</a>() + 'a</span></pre><div class='docblock'><p>Like <code>std::thread::spawn</code>, but without the closure bounds.</p>
+<pre class='rust fn'>pub unsafe fn spawn_unsafe&lt;'a, F&gt;(f: F) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/std/thread/struct.JoinHandle.html' title='std::thread::JoinHandle'>JoinHandle</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt; <span class='where'>where F: <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.FnOnce.html' title='core::ops::FnOnce'>FnOnce</a>() + 'a</span></pre><div class='docblock'><p>Like <code>std::thread::spawn</code>, but without the closure bounds.</p>
 </div></section>
     <section id='search' class="content hidden"></section>
 
@@ -106,6 +107,6 @@
     <script src="../jquery.js"></script>
     <script src="../main.js"></script>
     
-    <script async src="../search-index.js"></script>
+    <script defer src="../search-index.js"></script>
 </body>
 </html>

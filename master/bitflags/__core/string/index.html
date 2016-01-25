@@ -9,6 +9,7 @@
 
     <title>bitflags::__core::string - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -45,15 +46,28 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-3563' class='srclink' href='https://doc.rust-lang.org/nightly/collections/string/index.html?gotosrc=3563' title='goto source code'>[src]</a></span></h1>
-<div class='docblock'><p>An owned, growable string that enforces that its contents are valid UTF-8.</p>
+        </span><a id='src-3572' class='srclink' href='https://doc.rust-lang.org/nightly/collections/string/index.html?gotosrc=3572' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p>A UTF-8 encoded, growable string.</p>
+
+<p>This module contains the <a href="struct.String.html"><code>String</code></a> type, a trait for converting
+<a href="trait.ToString.html"><code>ToString</code></a>s, and several error types that may result from working with
+<a href="struct.String.html"><code>String</code></a>s.</p>
 </div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Drain.html'
+                               title='bitflags::__core::string::Drain'>Drain</a></td>
+                        <td class='docblock short'>
+                             <p>A draining iterator for <code>String</code>.</p>
+
+                        </td>
+                    </tr>
+                
                     <tr class=' module-item'>
                         <td><a class='struct' href='struct.FromUtf16Error.html'
                                title='bitflags::__core::string::FromUtf16Error'>FromUtf16Error</a></td>
                         <td class='docblock short'>
-                             <p>A possible error value from the <code>String::from_utf16</code> function.</p>
+                             <p>A possible error value when converting a <code>String</code> from a UTF-16 byte slice.</p>
 
                         </td>
                     </tr>
@@ -62,7 +76,7 @@
                         <td><a class='struct' href='struct.FromUtf8Error.html'
                                title='bitflags::__core::string::FromUtf8Error'>FromUtf8Error</a></td>
                         <td class='docblock short'>
-                             <p>A possible error value from the <code>String::from_utf8</code> function.</p>
+                             <p>A possible error value when converting a <code>String</code> from a UTF-8 byte vector.</p>
 
                         </td>
                     </tr>
@@ -71,16 +85,7 @@
                         <td><a class='struct' href='struct.String.html'
                                title='bitflags::__core::string::String'>String</a></td>
                         <td class='docblock short'>
-                             <p>A growable string stored as a UTF-8 encoded buffer.</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
-                        <td><a class='struct' href='struct.Drain.html'
-                               title='bitflags::__core::string::Drain'>Drain</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>A draining iterator for <code>String</code>.</p>
+                             <p>A UTF-8 encoded, growable string.</p>
 
                         </td>
                     </tr>
@@ -90,7 +95,7 @@
                         <td><a class='enum' href='enum.ParseError.html'
                                title='bitflags::__core::string::ParseError'>ParseError</a></td>
                         <td class='docblock short'>
-                             <p>Error returned from <code>String::from</code></p>
+                             <p>An error when parsing a <code>String</code>.</p>
 
                         </td>
                     </tr>
@@ -100,7 +105,7 @@
                         <td><a class='trait' href='trait.ToString.html'
                                title='bitflags::__core::string::ToString'>ToString</a></td>
                         <td class='docblock short'>
-                             <p>A generic trait for converting a value to a string</p>
+                             <p>A trait for converting a value to a <code>String</code>.</p>
 
                         </td>
                     </tr>
@@ -163,6 +168,6 @@
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

@@ -9,6 +9,7 @@
 
     <title>itertools::partition - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../main.css">
 
     
@@ -45,8 +46,8 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-3002' class='srclink' href='../src/itertools/lib.rs.html#1363-1385' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub fn partition&lt;'a, A: 'a, I, F&gt;(iter: I, pred: F) -&gt; <a href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a> <span class='where'>where I: <a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/trait.IntoIterator.html' title='core::iter::IntoIterator'>IntoIterator</a>&lt;Item=&amp;'a mut A&gt;, I::IntoIter: <a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/trait.DoubleEndedIterator.html' title='core::iter::DoubleEndedIterator'>DoubleEndedIterator</a>, F: <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.FnMut.html' title='core::ops::FnMut'>FnMut</a>(&amp;A) -&gt; <a href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></span></pre><div class='docblock'><p>Partition a sequence using predicate <code>pred</code> so that elements
+        </span><a id='src-3109' class='srclink' href='../src/itertools/lib.rs.html#1389-1411' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub fn partition&lt;'a, A: 'a, I, F&gt;(iter: I, pred: F) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a> <span class='where'>where I: <a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/trait.IntoIterator.html' title='core::iter::IntoIterator'>IntoIterator</a>&lt;Item=&amp;'a mut A&gt;, I::IntoIter: <a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/trait.DoubleEndedIterator.html' title='core::iter::DoubleEndedIterator'>DoubleEndedIterator</a>, F: <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.FnMut.html' title='core::ops::FnMut'>FnMut</a>(&amp;A) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></span></pre><div class='docblock'><p>Partition a sequence using predicate <code>pred</code> so that elements
 that map to <code>true</code> are placed before elements which map to <code>false</code>.</p>
 
 <p>The order within the partitions is arbitrary.</p>
@@ -119,6 +120,6 @@ that map to <code>true</code> are placed before elements which map to <code>fals
     <script src="../jquery.js"></script>
     <script src="../main.js"></script>
     
-    <script async src="../search-index.js"></script>
+    <script defer src="../search-index.js"></script>
 </body>
 </html>

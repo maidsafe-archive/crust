@@ -9,6 +9,7 @@
 
     <title>service.rs.html -- source</title>
 
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
 
     <link rel="shortcut icon" href="http://maidsafe.net/img/favicon.ico">
@@ -1449,31 +1450,6 @@
 <span id="1407">1407</span>
 <span id="1408">1408</span>
 <span id="1409">1409</span>
-<span id="1410">1410</span>
-<span id="1411">1411</span>
-<span id="1412">1412</span>
-<span id="1413">1413</span>
-<span id="1414">1414</span>
-<span id="1415">1415</span>
-<span id="1416">1416</span>
-<span id="1417">1417</span>
-<span id="1418">1418</span>
-<span id="1419">1419</span>
-<span id="1420">1420</span>
-<span id="1421">1421</span>
-<span id="1422">1422</span>
-<span id="1423">1423</span>
-<span id="1424">1424</span>
-<span id="1425">1425</span>
-<span id="1426">1426</span>
-<span id="1427">1427</span>
-<span id="1428">1428</span>
-<span id="1429">1429</span>
-<span id="1430">1430</span>
-<span id="1431">1431</span>
-<span id="1432">1432</span>
-<span id="1433">1433</span>
-<span id="1434">1434</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -1827,15 +1803,6 @@
         <span class='self'>self</span>.<span class='ident'>is_bootstrapping</span>.<span class='ident'>store</span>(<span class='boolval'>false</span>, <span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>);
     }
 
-    <span class='comment'>/*
-    /// Accept a connection on the provided TcpListener and perform a handshake on it.
-    pub fn accept(handshake: Handshake,
-                  acceptor: &amp;TcpListener)
-                  -&gt; io::Result&lt;(Handshake, Transport)&gt; {
-        transport::exchange_handshakes(handshake, try!(transport::accept(acceptor)))
-    }
-    */</span>
-
     <span class='doccomment'>/// Opens a connection to a remote peer. `public_endpoint` is the endpoint</span>
     <span class='doccomment'>/// of the remote peer. `udp_socket` is a socket whose public address will</span>
     <span class='doccomment'>/// be used by the other peer.</span>
@@ -1950,22 +1917,6 @@
         }
         <span class='ident'>ret</span>.<span class='ident'>iter</span>().<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>a</span><span class='op'>|</span> <span class='ident'>Endpoint</span>::<span class='ident'>from_socket_addr</span>(<span class='ident'>Protocol</span>::<span class='ident'>Tcp</span>, <span class='op'>*</span><span class='ident'>a</span>)).<span class='ident'>collect</span>()
     }
-
-    <span class='comment'>// pub fn bootstrap_off_list(&amp;mut self, token: u32, mut bootstrap_list: Vec&lt;Endpoint&gt;) {</span>
-    <span class='comment'>// match self.bootstrap_thread {</span>
-    <span class='comment'>// Some(_) =&gt; (),</span>
-    <span class='comment'>// None =&gt; {</span>
-    <span class='comment'>// let joiner = RaiiThreadJoiner::new(thread!(&quot;bootstrap&quot;, move || {</span>
-    <span class='comment'>// for peer_endpoint in bootstrap_list {</span>
-    <span class='comment'>// if</span>
-    <span class='comment'>// }</span>
-    <span class='comment'>//</span>
-    <span class='comment'>// }));</span>
-    <span class='comment'>// self.bootstrap_thread = Some(joiner);</span>
-    <span class='comment'>// }</span>
-    <span class='comment'>// }</span>
-    <span class='comment'>// }</span>
-    <span class='comment'>//</span>
 
     <span class='doccomment'>/// Initiates uPnP port mapping of the currently used accepting endpoints.</span>
     <span class='doccomment'>/// On success ExternalEndpoint event is generated containg our external</span>
@@ -2969,6 +2920,6 @@
     <script src="../../jquery.js"></script>
     <script src="../../main.js"></script>
     
-    <script async src="../../search-index.js"></script>
+    <script defer src="../../search-index.js"></script>
 </body>
 </html>

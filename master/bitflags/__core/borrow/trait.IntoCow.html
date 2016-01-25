@@ -9,6 +9,7 @@
 
     <title>bitflags::__core::borrow::IntoCow - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -45,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-2392' class='srclink' href='https://doc.rust-lang.org/nightly/collections/borrow/trait.IntoCow.html?gotosrc=2392' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-2391' class='srclink' href='https://doc.rust-lang.org/nightly/collections/borrow/trait.IntoCow.html?gotosrc=2391' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait IntoCow&lt;'a, B&gt; <span class='where'>where B: <a class='trait' href='../../../bitflags/__core/borrow/trait.ToOwned.html' title='bitflags::__core::borrow::ToOwned'>ToOwned</a> + ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span> {
     fn <a href='#tymethod.into_cow' class='fnname'>into_cow</a>(self) -&gt; <a class='enum' href='../../../bitflags/__core/borrow/enum.Cow.html' title='bitflags::__core::borrow::Cow'>Cow</a>&lt;'a, B&gt;;
 }</pre><div class='stability'><em class='stab unstable'>Unstable (<code>into_cow</code>)<p>: may be replaced by <code>convert::Into</code></p>
@@ -59,10 +60,10 @@
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
     <li><code>impl&lt;'a, B&gt; <a class='trait' href='../../../bitflags/__core/borrow/trait.IntoCow.html' title='bitflags::__core::borrow::IntoCow'>IntoCow</a>&lt;'a, B&gt; for <a class='enum' href='../../../bitflags/__core/borrow/enum.Cow.html' title='bitflags::__core::borrow::Cow'>Cow</a>&lt;'a, B&gt; <span class='where'>where B: <a class='trait' href='../../../bitflags/__core/borrow/trait.ToOwned.html' title='bitflags::__core::borrow::ToOwned'>ToOwned</a> + ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></li>
-<li><code>impl <a class='trait' href='../../../bitflags/__core/borrow/trait.IntoCow.html' title='bitflags::__core::borrow::IntoCow'>IntoCow</a>&lt;'static, <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.str.html'>str</a>&gt; for <a class='struct' href='../../../bitflags/__core/string/struct.String.html' title='bitflags::__core::string::String'>String</a></code></li>
-<li><code>impl&lt;'a&gt; <a class='trait' href='../../../bitflags/__core/borrow/trait.IntoCow.html' title='bitflags::__core::borrow::IntoCow'>IntoCow</a>&lt;'a, <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.str.html'>str</a>&gt; for &amp;'a <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.str.html'>str</a></code></li>
-<li><code>impl&lt;'a, T&gt; <a class='trait' href='../../../bitflags/__core/borrow/trait.IntoCow.html' title='bitflags::__core::borrow::IntoCow'>IntoCow</a>&lt;'a, <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>[T]</a>&gt; for <a class='struct' href='../../../bitflags/__core/vec/struct.Vec.html' title='bitflags::__core::vec::Vec'>Vec</a>&lt;T&gt; <span class='where'>where T: 'a + <a class='trait' href='../../../bitflags/__core/clone/trait.Clone.html' title='bitflags::__core::clone::Clone'>Clone</a></span></code></li>
-<li><code>impl&lt;'a, T&gt; <a class='trait' href='../../../bitflags/__core/borrow/trait.IntoCow.html' title='bitflags::__core::borrow::IntoCow'>IntoCow</a>&lt;'a, <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>[T]</a>&gt; for <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>&amp;'a [T]</a> <span class='where'>where T: <a class='trait' href='../../../bitflags/__core/clone/trait.Clone.html' title='bitflags::__core::clone::Clone'>Clone</a></span></code></li>
+<li><code>impl <a class='trait' href='../../../bitflags/__core/borrow/trait.IntoCow.html' title='bitflags::__core::borrow::IntoCow'>IntoCow</a>&lt;'static, <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.str.html'>str</a>&gt; for <a class='struct' href='../../../bitflags/__core/string/struct.String.html' title='bitflags::__core::string::String'>String</a></code></li>
+<li><code>impl&lt;'a&gt; <a class='trait' href='../../../bitflags/__core/borrow/trait.IntoCow.html' title='bitflags::__core::borrow::IntoCow'>IntoCow</a>&lt;'a, <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.str.html'>str</a>&gt; for &amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.str.html'>str</a></code></li>
+<li><code>impl&lt;'a, T&gt; <a class='trait' href='../../../bitflags/__core/borrow/trait.IntoCow.html' title='bitflags::__core::borrow::IntoCow'>IntoCow</a>&lt;'a, <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>[T]</a>&gt; for <a class='struct' href='../../../bitflags/__core/vec/struct.Vec.html' title='bitflags::__core::vec::Vec'>Vec</a>&lt;T&gt; <span class='where'>where T: 'a + <a class='trait' href='../../../bitflags/__core/clone/trait.Clone.html' title='bitflags::__core::clone::Clone'>Clone</a></span></code></li>
+<li><code>impl&lt;'a, T&gt; <a class='trait' href='../../../bitflags/__core/borrow/trait.IntoCow.html' title='bitflags::__core::borrow::IntoCow'>IntoCow</a>&lt;'a, <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>[T]</a>&gt; for <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>&amp;'a [T]</a> <span class='where'>where T: <a class='trait' href='../../../bitflags/__core/clone/trait.Clone.html' title='bitflags::__core::clone::Clone'>Clone</a></span></code></li>
 <li><code>impl <a class='trait' href='../../../bitflags/__core/borrow/trait.IntoCow.html' title='bitflags::__core::borrow::IntoCow'>IntoCow</a>&lt;'static, <a class='struct' href='../../../bitflags/__core/path/struct.Path.html' title='bitflags::__core::path::Path'>Path</a>&gt; for <a class='struct' href='../../../bitflags/__core/path/struct.PathBuf.html' title='bitflags::__core::path::PathBuf'>PathBuf</a></code></li>
 <li><code>impl&lt;'a&gt; <a class='trait' href='../../../bitflags/__core/borrow/trait.IntoCow.html' title='bitflags::__core::borrow::IntoCow'>IntoCow</a>&lt;'a, <a class='struct' href='../../../bitflags/__core/path/struct.Path.html' title='bitflags::__core::path::Path'>Path</a>&gt; for &amp;'a <a class='struct' href='../../../bitflags/__core/path/struct.Path.html' title='bitflags::__core::path::Path'>Path</a></code></li>
 </ul><script type="text/javascript" async
@@ -126,6 +127,6 @@
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

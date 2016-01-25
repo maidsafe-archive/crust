@@ -9,6 +9,7 @@
 
     <title>itertools - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../main.css">
 
     
@@ -45,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-0' class='srclink' href='../src/itertools/lib.rs.html#1-1385' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-0' class='srclink' href='../src/itertools/lib.rs.html#1-1411' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Itertools — extra iterator adaptors, functions and macros.</p>
 
 <p>To use the iterator methods in this crate, import the <a href="./trait.Itertools.html"><code>Itertools</code> trait</a>:</p>
@@ -170,6 +171,15 @@ and may pick off as many elements as it likes, to produce the next iterator elem
                                title='itertools::Combinations'>Combinations</a></td>
                         <td class='docblock short'>
                              <p>An iterator to iterate through all the combinations of pairs in a <code>Clone</code>-able iterator.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.CombinationsN.html'
+                               title='itertools::CombinationsN'>CombinationsN</a></td>
+                        <td class='docblock short'>
+                             <p>An iterator to iterate through all the <code>n</code>-length combinations in an iterator.</p>
 
                         </td>
                     </tr>
@@ -508,6 +518,15 @@ and produces <code>A</code>. Stops on the first <code>None</code> encountered.</
                 </table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
 <table>
                     <tr class=' module-item'>
+                        <td><a class='enum' href='enum.Diff.html'
+                               title='itertools::Diff'>Diff</a></td>
+                        <td class='docblock short'>
+                             <p>A type returned by the <a href="./fn.diff_with.html"><code>diff_with</code></a> function.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
                         <td><a class='enum' href='enum.EitherOrBoth.html'
                                title='itertools::EitherOrBoth'>EitherOrBoth</a></td>
                         <td class='docblock short'>
@@ -534,6 +553,16 @@ Contains one or two values, depending on which of the input iterators are exhaus
                         <td class='docblock short'>
                              <p>Assert that two iterators produce equal sequences, with the same
 semantics as <em>equal(a, b)</em>.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.diff_with.html'
+                               title='itertools::diff_with'>diff_with</a></td>
+                        <td class='docblock short'>
+                             <p>Compares every element yielded by both <code>i</code> and <code>j</code> with the given function in lock-step and
+returns a <code>Diff</code> which describes how <code>j</code> differs from <code>i</code>.</p>
 
                         </td>
                     </tr>
@@ -636,6 +665,6 @@ that map to <code>true</code> are placed before elements which map to <code>fals
     <script src="../jquery.js"></script>
     <script src="../main.js"></script>
     
-    <script async src="../search-index.js"></script>
+    <script defer src="../search-index.js"></script>
 </body>
 </html>

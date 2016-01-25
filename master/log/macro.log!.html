@@ -9,6 +9,7 @@
 
     <title>log::log! - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../main.css">
 
     <link rel="shortcut icon" href="https://www.rust-lang.org/favicon.ico">
@@ -45,21 +46,11 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-310' class='srclink' href='../src/log/macros.rs.html#18-31' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-324' class='srclink' href='../src/log/macros.rs.html#18-31' title='goto source code'>[src]</a></span></h1>
 <pre class='rust macro'>
 <span class='macro'>macro_rules</span><span class='macro'>!</span> <span class='ident'>log</span> {
-    (<span class='ident'>target</span>: <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>target</span>:<span class='ident'>expr</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>lvl</span>:<span class='ident'>expr</span>, $(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>arg</span>:<span class='ident'>tt</span>)<span class='op'>+</span>) <span class='op'>=&gt;</span> ({
-        <span class='kw'>static</span> <span class='ident'>_LOC</span>: <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>crate</span>::<span class='ident'>LogLocation</span> <span class='op'>=</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>crate</span>::<span class='ident'>LogLocation</span> {
-            <span class='ident'>__line</span>: <span class='macro'>line</span><span class='macro'>!</span>(),
-            <span class='ident'>__file</span>: <span class='macro'>file</span><span class='macro'>!</span>(),
-            <span class='ident'>__module_path</span>: <span class='macro'>module_path</span><span class='macro'>!</span>(),
-        };
-        <span class='kw'>let</span> <span class='ident'>lvl</span> <span class='op'>=</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>lvl</span>;
-        <span class='kw'>if</span> <span class='ident'>lvl</span> <span class='op'>&lt;=</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>crate</span>::<span class='ident'>__static_max_level</span>() <span class='op'>&amp;&amp;</span> <span class='ident'>lvl</span> <span class='op'>&lt;=</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>crate</span>::<span class='ident'>max_log_level</span>() {
-            <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>crate</span>::<span class='ident'>__log</span>(<span class='ident'>lvl</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>target</span>, <span class='kw-2'>&amp;</span><span class='ident'>_LOC</span>, <span class='macro'>format_args</span><span class='macro'>!</span>($(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>arg</span>)<span class='op'>+</span>))
-        }
-    });
-    (<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>lvl</span>:<span class='ident'>expr</span>, $(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>arg</span>:<span class='ident'>tt</span>)<span class='op'>+</span>) <span class='op'>=&gt;</span> (<span class='macro'>log</span><span class='macro'>!</span>(<span class='ident'>target</span>: <span class='macro'>module_path</span><span class='macro'>!</span>(), <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>lvl</span>, $(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>arg</span>)<span class='op'>+</span>))
+    (<span class='ident'>target</span>: <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>target</span>:<span class='ident'>expr</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>lvl</span>:<span class='ident'>expr</span>, $(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>arg</span>:<span class='ident'>tt</span>)<span class='op'>+</span>) <span class='op'>=&gt;</span> { ... };
+    (<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>lvl</span>:<span class='ident'>expr</span>, $(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>arg</span>:<span class='ident'>tt</span>)<span class='op'>+</span>) <span class='op'>=&gt;</span> { ... };
 }</pre>
 <div class='docblock'><p>The standard logging macro.</p>
 
@@ -127,6 +118,6 @@ various levels.</p>
     <script src="../jquery.js"></script>
     <script src="../main.js"></script>
     
-    <script async src="../search-index.js"></script>
+    <script defer src="../search-index.js"></script>
 </body>
 </html>

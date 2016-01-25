@@ -9,6 +9,7 @@
 
     <title>bitflags::__core::fs::walk_dir - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -45,8 +46,8 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-3796' class='srclink' href='https://doc.rust-lang.org/nightly/std/fs/fn.walk_dir.html?gotosrc=3796' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub fn walk_dir&lt;P&gt;(path: P) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='struct' href='../../../bitflags/__core/fs/struct.WalkDir.html' title='bitflags::__core::fs::WalkDir'>WalkDir</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt; <span class='where'>where P: <a class='trait' href='../../../bitflags/__core/convert/trait.AsRef.html' title='bitflags::__core::convert::AsRef'>AsRef</a>&lt;<a class='struct' href='../../../bitflags/__core/path/struct.Path.html' title='bitflags::__core::path::Path'>Path</a>&gt;</span></pre><div class='stability'><em class='stab unstable'>Unstable (<code>fs_walk</code>)<p>: the precise semantics and defaults for a recursive walk may change and this may end up accounting for files such as symlinks differently</p>
+        </span><a id='src-3825' class='srclink' href='https://doc.rust-lang.org/nightly/std/fs/fn.walk_dir.html?gotosrc=3825' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub fn walk_dir&lt;P&gt;(path: P) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='struct' href='../../../bitflags/__core/fs/struct.WalkDir.html' title='bitflags::__core::fs::WalkDir'>WalkDir</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt; <span class='where'>where P: <a class='trait' href='../../../bitflags/__core/convert/trait.AsRef.html' title='bitflags::__core::convert::AsRef'>AsRef</a>&lt;<a class='struct' href='../../../bitflags/__core/path/struct.Path.html' title='bitflags::__core::path::Path'>Path</a>&gt;</span></pre><div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.6.0<p>: superceded by the walkdir crate</p>
 </em></div><div class='docblock'><p>Returns an iterator that will recursively walk the directory structure
 rooted at <code>path</code>.</p>
 
@@ -114,6 +115,6 @@ be encountered after an iterator is initially constructed.</p>
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

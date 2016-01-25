@@ -9,6 +9,7 @@
 
     <title>bitflags::__core::ops::Place - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -45,9 +46,9 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-21138' class='srclink' href='https://doc.rust-lang.org/nightly/core/ops/trait.Place.html?gotosrc=21138' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-21099' class='srclink' href='https://doc.rust-lang.org/nightly/core/ops/trait.Place.html?gotosrc=21099' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait Place&lt;Data&gt; <span class='where'>where Data: ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span> {
-    fn <a href='#tymethod.pointer' class='fnname'>pointer</a>(&amp;mut self) -&gt; <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut Data</a>;
+    fn <a href='#tymethod.pointer' class='fnname'>pointer</a>(&amp;mut self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut Data</a>;
 }</pre><div class='stability'><em class='stab unstable'>Unstable (<code>placement_new_protocol</code>)</em></div><div class='docblock'><p>Both <code>in (PLACE) EXPR</code> and <code>box EXPR</code> desugar into expressions
 that allocate an intermediate &quot;place&quot; that holds uninitialized
 state.  The desugaring evaluates EXPR, and writes the result at
@@ -69,7 +70,7 @@ implementation of Place to clean up any intermediate state
 </div>
             <h2 id='required-methods'>Required Methods</h2>
             <div class='methods'>
-        <h3 id='tymethod.pointer' class='method stab unstable'><code>fn <a href='#tymethod.pointer' class='fnname'>pointer</a>(&amp;mut self) -&gt; <a href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut Data</a></code></h3><div class='stability'><em class='stab unstable'>Unstable (<code>placement_new_protocol</code>)</em></div><div class='docblock'><p>Returns the address where the input value will be written.
+        <h3 id='tymethod.pointer' class='method stab unstable'><code>fn <a href='#tymethod.pointer' class='fnname'>pointer</a>(&amp;mut self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut Data</a></code></h3><div class='stability'><em class='stab unstable'>Unstable (<code>placement_new_protocol</code>)</em></div><div class='docblock'><p>Returns the address where the input value will be written.
 Note that the data at this address is generally uninitialized,
 and thus one should use <code>ptr::write</code> for initializing it.</p>
 </div></div>
@@ -137,6 +138,6 @@ and thus one should use <code>ptr::write</code> for initializing it.</p>
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>
