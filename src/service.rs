@@ -26,6 +26,7 @@ use std::str::FromStr;
 
 use std::net::TcpListener;
 
+use contact_info::ContactInfo;
 use rand;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 use itertools::Itertools;
@@ -47,6 +48,7 @@ use bootstrap_handler::BootstrapHandler;
 use hole_punching::HolePunchServer;
 use sequence_number::SequenceNumber;
 
+
 /// A structure representing a connection manager.
 ///
 /// This abstraction has a hidden dependency on a config file. Refer to [the docs for `FileHandler`]
@@ -54,15 +56,12 @@ use sequence_number::SequenceNumber;
 /// (https://github.com/maidsafe/crust/blob/master/docs/vault_config_file_flowchart.pdf) for more
 /// information.
 pub struct Service {
-    beacon_guid: u32,
-    beacon_guid_and_port: Option<(beacon::GUID, u16)>,
+    contact_info: ContactInfo,
     config: Config,
-    bootstrap_peers: Option<mpsc::Sender<Vec<Endpoint>>>,
     acceptors: Vec<Acceptor>,
     mapper: Arc<HolePunchServer>,
     next_punch_sequence: SequenceNumber,
     event_sender: ::CrustEventSender,
-    connection_map: Arc<ConnectionMap>,
     is_bootstrapping: Arc<AtomicBool>,
     bootstrap_thread: Option<RaiiThreadJoiner>,
 }
@@ -70,20 +69,23 @@ pub struct Service {
 impl Service {
     /// Constructs a service. User needs to create an asynchronous channel, and provide
     /// the sender half to this method. Receiver will receive all `Event`s from this library.
-    pub fn new(event_sender: ::CrustEventSender,
+    pub fn new(our_pub_key: PublicKey,
+               event_tx: ::CrustEventSender,
                lan_listener_port: Option<u16>)
                -> Result<Service, ::error::Error> {
-        Service::construct(event_sender, lan_listener_port, None)
+        Service::construct(our_pub_key, event_tx, lan_listener_port, None)
     }
 
-    pub fn with_bootstrap_list(event_tx: ::CrustEventSender,
+    pub fn with_bootstrap_list(our_pub_key: PublicKey,
+                               event_tx: ::CrustEventSender,
                                lan_listener_port: Option<u16>,
                                list: Vec<Endpoint>)
                                -> Result<Service, Error> {
-        Service::construct(event_sender, lan_listener_port, Some(list))
+        Service::construct(event_tx, lan_listener_port, Some(list))
     }
 
-    fn construct(event_sender: ::CrustEventSender,
+    fn construct(our_pub_key: PublicKey,
+                 event_tx: ::CrustEventSender,
                  lan_listener_port: Option<u16>,
                  bootstrap_list: Option<Vec<Endpoint>>)
                  -> Result<Service, ::error::Error> {
@@ -106,6 +108,7 @@ impl Service {
         }
 
         let service = Service {
+            pub_key: our_pub_key,
             beacon_guid: beacon_guid,
             beacon_guid_and_port: None,
             config: config,
@@ -113,7 +116,7 @@ impl Service {
             acceptors: Vec::new(),
             mapper: mapper,
             next_punch_sequence: SequenceNumber::new(::rand::random()),
-            event_sender: event_sender,
+            event_tx: event_tx,
             connection_map: connection_map,
             is_bootstrapping: Arc::new(AtomicBool::new(false)),
             bootstrap_thread: None,
@@ -145,20 +148,8 @@ impl Service {
 
     /// Starts accepting on a given port. If port number is 0, the OS
     /// will pick one randomly. The actual port used will be returned.
-    pub fn start_accepting(&mut self, port: u16) -> Result<Endpoint, Error> {
-        let listener = try!(TcpListener::bind(("0.0.0.0", port)));
-        let accept_addr = try!(listener.local_addr());
-
-        let hole_punch_server = self.mapper.clone();
-        let acceptor = try!(Acceptor::new(listener,
-                                          hole_punch_server,
-                                          self.connection_map.clone(),
-                                          self.event_sender.clone()));
-        self.acceptors.push(acceptor);
-
-        // FIXME: Instead of hardcoded wrapping in loopback V4, the
-        // acceptor should tell us the address it is accepting on.
-        Ok(Endpoint::from_socket_addr(Protocol::Tcp, SocketAddr(accept_addr)))
+    pub fn start_tcp_accept(&mut self) -> Result<(), Error> {
+        acceptor::
     }
 
     fn seek_peers(beacon_guid: Option<[u8; 16]>, beacon_port: u16) -> Vec<Endpoint> {
@@ -410,46 +401,33 @@ impl Service {
     /// Connecting]
     /// (https://github.com/maidsafe/crust/blob/master/docs/connect.md) for
     /// details on handling of connect in different protocols.
-    pub fn connect(&self,
-                   our_contact_info: OurContactInfo,
-                   their_contact_info: TheirContactInfo,
-                   token: u32) {
-        let mapper_external_addr = self.mapper.external_address();
-        let mapper_internal_port = self.mapper.listening_addr().port();
-
-        let handshake = Handshake {
-            mapper_port: Some(mapper_internal_port),
-            external_addr: mapper_external_addr,
-            remote_addr: SocketAddr(net::SocketAddr::from_str("0.0.0.0:0").unwrap()),
-        };
-
-        let event_sender = self.event_sender.clone();
-        let connection_map = self.connection_map.clone();
-
+    pub fn connect(&self, our_contact_info: OurContactInfo, their_contact_info: TheirContactInfo) {
         if our_contact_info.secret != their_contact_info.secret {
             let err = io::Error::new(io::ErrorKind::Other,
                                      "Cannot connect. our_contact_info and their_contact_info \
                                       are not associated with the same connection.");
-            let _ = event_sender.send(Event::OnConnect(Err(err), token));
+            let _ = self.event_sender.send(Event::OnConnect(Err(err), token));
             return;
         }
 
-        let rendezvous_addr = match their_contact_info.rendezvous_addrs.get(0) {
-            Some(addr) => addr.clone(),
-            None => {
-                let err = io::Error::new(io::ErrorKind::Other,
-                                         "No rendezvous address supplied. Direct connections not \
-                                          yet supported.");
-                let _ = event_sender.send(Event::OnConnect(Err(err), token));
-                return;
-            }
-        };
+        if their_contact_info.rendezvous_addrs.is_empty() {
+            let err = io::Error::new(io::ErrorKind::Other,
+                                     "No rendezvous address supplied. Direct connections not yet \
+                                      supported.");
+            let _ = self.event_sender.send(Event::OnConnect(Err(err), token));
+            return;
+        }
 
-        let _ = Self::new_thread("rendezvous connect", move || {
+        let event_sender = self.event_sender.clone();
+        let our_pub_key = self.pub_key.clone();
+
+        // TODO connect to all the socket addresses of peer in parallel
+        let _joiner = thread!("PeerConnectionThread", move || {
             let (udp_socket, result_addr) =
                 ::hole_punching::blocking_udp_punch_hole(our_contact_info.socket,
                                                          our_contact_info.secret,
-                                                         rendezvous_addr);
+                                                         their_contact_info.rendezvous_addrs[0]
+                                                             .clone());
             let public_endpoint = match result_addr {
                 Ok(addr) => addr,
                 Err(e) => {
@@ -458,28 +436,106 @@ impl Service {
                 }
             };
 
-            let peer_endpoint = Endpoint::from_socket_addr(Protocol::Utp, public_endpoint);
-            let res = transport::rendezvous_connect(udp_socket, peer_endpoint);
-            let res = res.and_then(move |t| transport::exchange_handshakes(handshake, t));
-
-            let (his_handshake, transport) = match res {
-                Ok((h, t)) => (h, t),
-                Err(e) => {
-                    let _ = event_sender.send(Event::OnConnect(Err(e), token));
-                    return ();
-                }
-            };
-
-            let c = transport.connection_id.clone();
-            let our_external_endpoint =
-                Endpoint::from_socket_addr(*transport.connection_id
-                                                     .peer_endpoint()
-                                                     .protocol(),
-                                           SocketAddr(*his_handshake.remote_addr));
-            let _ = event_sender.send(Event::OnConnect(Ok((our_external_endpoint, c)), token));
-            let _ = connection_map.register_connection(his_handshake, transport);
+            let _ = event_sender.send(Event::OnConnect {
+                connection: Connection::rendezvous_connect(udp_socket, our_pub_key),
+                pub_key: their_contact_info.pub_key,
+            })
         });
     }
+
+    //    /// Opens a connection to a remote peer. `public_endpoint` is the endpoint
+    //    /// of the remote peer. `udp_socket` is a socket whose public address will
+    //    /// be used by the other peer.
+    //    ///
+    //    /// A rendezvous connection setup is different to the traditional BSD socket
+    //    /// setup in which there is no client or server side. Both ends create a
+    //    /// socket and send somehow its public address to the other peer. Once both
+    //    /// ends know each other address, both must call this function passing the
+    //    /// socket which possess the address used by the other peer and passing the
+    //    /// other peer's address.
+    //    ///
+    //    /// Only UDP-based protocols are supported. This means that you must use a
+    //    /// uTP endpoint or nothing will happen.
+    //    ///
+    //    /// On success `Event::OnConnect` with connected `Endpoint` will
+    //    /// be sent to the event channel. On failure, nothing is reported. Failed
+    //    /// attempts are not notified back up to the caller. If the caller wants to
+    //    /// know of a failed attempt, it must maintain a record of the attempt
+    //    /// itself which times out if a corresponding
+    //    /// `Event::OnConnect` isn't received. See also [Process for
+    //    /// Connecting]
+    //    /// (https://github.com/maidsafe/crust/blob/master/docs/connect.md) for
+    //    /// details on handling of connect in different protocols.
+    //    pub fn connect(&self,
+    //                   our_contact_info: OurContactInfo,
+    //                   their_contact_info: TheirContactInfo,
+    //                   token: u32) {
+    //        let mapper_external_addr = self.mapper.external_address();
+    //        let mapper_internal_port = self.mapper.listening_addr().port();
+    //
+    //        let handshake = Handshake {
+    //            mapper_port: Some(mapper_internal_port),
+    //            external_addr: mapper_external_addr,
+    //            remote_addr: SocketAddr(net::SocketAddr::from_str("0.0.0.0:0").unwrap()),
+    //        };
+    //
+    //        let event_sender = self.event_sender.clone();
+    //        let connection_map = self.connection_map.clone();
+    //
+    //        if our_contact_info.secret != their_contact_info.secret {
+    //            let err = io::Error::new(io::ErrorKind::Other,
+    //                                     "Cannot connect. our_contact_info and their_contact_info \
+    //                                      are not associated with the same connection.");
+    //            let _ = event_sender.send(Event::OnConnect(Err(err), token));
+    //            return;
+    //        }
+    //
+    //        let rendezvous_addr = match their_contact_info.rendezvous_addrs.get(0) {
+    //            Some(addr) => addr.clone(),
+    //            None => {
+    //                let err = io::Error::new(io::ErrorKind::Other,
+    //                                         "No rendezvous address supplied. Direct connections not \
+    //                                          yet supported.");
+    //                let _ = event_sender.send(Event::OnConnect(Err(err), token));
+    //                return;
+    //            }
+    //        };
+    //
+    //        let _ = Self::new_thread("rendezvous connect", move || {
+    //            let (udp_socket, result_addr) =
+    //                ::hole_punching::blocking_udp_punch_hole(our_contact_info.socket,
+    //                                                         our_contact_info.secret,
+    //                                                         rendezvous_addr);
+    //            let public_endpoint = match result_addr {
+    //                Ok(addr) => addr,
+    //                Err(e) => {
+    //                    let _ = event_sender.send(Event::OnConnect(Err(e), token));
+    //                    return;
+    //                }
+    //            };
+    //
+    //            let peer_endpoint = Endpoint::from_socket_addr(Protocol::Utp, public_endpoint);
+    //            let res = transport::rendezvous_connect(udp_socket, peer_endpoint);
+    //            let res = res.and_then(move |t| transport::exchange_handshakes(handshake, t));
+    //
+    //            let (his_handshake, transport) = match res {
+    //                Ok((h, t)) => (h, t),
+    //                Err(e) => {
+    //                    let _ = event_sender.send(Event::OnConnect(Err(e), token));
+    //                    return ();
+    //                }
+    //            };
+    //
+    //            let c = transport.connection_id.clone();
+    //            let our_external_endpoint =
+    //                Endpoint::from_socket_addr(*transport.connection_id
+    //                                                     .peer_endpoint()
+    //                                                     .protocol(),
+    //                                           SocketAddr(*his_handshake.remote_addr));
+    //            let _ = event_sender.send(Event::OnConnect(Ok((our_external_endpoint, c)), token));
+    //            let _ = connection_map.register_connection(his_handshake, transport);
+    //        });
+    //    }
 
     /// Closes a connection.
     pub fn drop_node(&self, connection: Connection) {

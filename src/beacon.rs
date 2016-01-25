@@ -29,9 +29,9 @@ use ip::SocketAddrExt;
 
 use net2::UdpSocketExt;
 
-use transport;
-use transport::{Transport, Handshake};
 use util;
+use connection::Connection;
+use connection;
 
 const GUID_SIZE: usize = 16;
 const MAGIC_SIZE: usize = 4;
@@ -68,28 +68,28 @@ fn parse_shutdown_value(data: &[u8]) -> u64 {
 pub struct BroadcastAcceptor {
     guid: GUID,
     socket: Arc<Mutex<UdpSocket>>,
-    listener: Arc<Mutex<TcpListener>>,
-    tcp_listener_port: u16,
+    listener: Arc<Mutex<UdpSocket>>,
+    listener_port: u16,
 }
 
 impl BroadcastAcceptor {
     pub fn new(port: u16) -> io::Result<BroadcastAcceptor> {
         let socket = try!(UdpSocket::bind(("0.0.0.0", port)));
-        let listener = try!(TcpListener::bind("0.0.0.0:0"));
+        let listener = try!(UdpSocket::bind("0.0.0.0:0"));
         let mut guid = [0; GUID_SIZE];
         for item in &mut guid {
             *item = random::<u8>();
         }
-        let tcp_listener_port = unwrap_result!(listener.local_addr()).port();
+        let listener_port = unwrap_result!(listener.local_addr()).port();
         Ok(BroadcastAcceptor {
             guid: guid,
             socket: Arc::new(Mutex::new(socket)),
             listener: Arc::new(Mutex::new(listener)),
-            tcp_listener_port: tcp_listener_port,
+            listener_port: listener_port,
         })
     }
 
-    pub fn accept(&self) -> io::Result<(Handshake, Transport)> {
+    pub fn accept(&self) -> io::Result<Connection> {
         let (transport_sender, transport_receiver) = mpsc::channel();
         let protected_tcp_acceptor = self.listener.clone();
         let tcp_acceptor_thread = try!(thread::Builder::new()
@@ -97,11 +97,8 @@ impl BroadcastAcceptor {
                                            .spawn(move || {
                                                let tcp_acceptor = protected_tcp_acceptor.lock()
                                                                                         .unwrap();
-                                               match transport::accept(&tcp_acceptor) {
+                                               match connection::start_tcp_accept(&tcp_acceptor) {
                                                    Ok(transport) => {
-                                                       let transport =
-                                     transport::exchange_handshakes(Handshake::default(),
-                                                                    transport);
 
                                                        let _ = transport_sender.send(transport);
                                                    }

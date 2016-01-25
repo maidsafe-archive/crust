@@ -15,328 +15,210 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use transport::{Sender, Receiver};
+use std::fmt;
+use std::sync::{Arc, Mutex};
+use std::sync::atomic::AtomicBool;
+use std::net::{Shutdown, TcpListener, UdpSocket};
+use std::sync::atomic::Ordering;
 use std::io;
+use cbor;
+use maidsafe_utilities::thread::RaiiThreadJoiner;
+use maidsafe_utilities::serialisation::{deserialise, serialise};
+use get_if_addrs::get_if_addrs;
+use acceptor::TcpAcceptor;
+use contact_info::ContactInfo;
+use tcp_connections;
+use utp_connections;
+use sender_receiver::{Sender, Receiver};
 use ip::{IpAddr, SocketAddrExt};
 use socket_addr::SocketAddr;
 use event::Event;
 use sodiumoxide::crypto::sign::PublicKey;
+use endpoint::{Endpoint, Protocol};
 
-/// Exchange echo_server addresses and public keys
-pub struct Handshake {
-    pub_key: PublicKey,
-    echo_server_addr: Option<SocketAddr>,
+
+pub fn connect(remote_ep: Endpoint,
+               their_pub_key: PublicKey,
+               our_contact_info: Arc<Mutex<ContactInfo>>,
+               event_tx: ::CrustEventSender)
+               -> io::Result<Connection> {
+    match *remote_ep.protocol() {
+        Protocol::Tcp => {
+            let (network_input, writer) =
+                try!(tcp_connections::connect_tcp(remote_ep.socket_addr().clone()));
+
+            let our_addr = SocketAddr(unwrap_result!(network_input.local_addr()));
+            let their_addr = SocketAddr(unwrap_result!(network_input.peer_addr()));
+
+            let network_rx = Receiver::Tcp(cbor::Decoder::from_reader(network_input));
+            let joiner = RaiiThreadJoiner::new(thread!("TcpNetworkReader", move || {
+                start_rx(network_rx, their_pub_key, event_tx);
+            }));
+
+            let connection = Connection {
+                protocol: Protocol::Tcp,
+                our_addr: our_addr,
+                their_addr: their_addr,
+                network_tx: Sender::Tcp(writer),
+                _network_read_joiner: joiner,
+            };
+
+            let serialised_info =
+                unwrap_result!(serialise(&*unwrap_result!(our_contact_info.lock())));
+            try!(connection.send(&serialised_info[..]));
+
+            Ok(connection)
+        }
+        Protocol::Utp => {
+            let (network_input, writer) =
+                try!(utp_connections::connect_utp(remote_ep.socket_addr().clone()));
+            let our_addr = SocketAddr(network_input.local_addr());
+            let their_addr = SocketAddr(network_input.peer_addr());
+
+            let network_rx = Receiver::Utp(cbor::Decoder::from_reader(network_input));
+            let joiner = RaiiThreadJoiner::new(thread!("UtpNetworkReader", move || {
+                start_rx(network_rx, their_pub_key, event_tx);
+            }));
+
+            Ok(Connection {
+                protocol: Protocol::Utp,
+                our_addr: our_addr,
+                their_addr: their_addr,
+                network_tx: Sender::Utp(writer),
+                _network_read_joiner: joiner,
+            })
+        }
+    }
 }
 
+pub fn start_tcp_accept(port: u16,
+                        our_contact_info: Arc<Mutex<ContactInfo>>,
+                        event_tx: ::CrustEventSender)
+                        -> io::Result<TcpAcceptor> {
+    let listener = try!(TcpListener::bind(("0.0.0.0", port)));
+    let stop_flag = Arc::new(AtomicBool::new(false));
+    let cloned_stop_flag = stop_flag.clone();
+
+    let if_addrs = try!(get_if_addrs())
+                       .into_iter()
+                       .filter(|i| !i.is_loopback())
+                       .map(|addr| SocketAddr::new(addr.ip(), port))
+                       .collect();
+
+    unwrap_result!(our_contact_info.lock()).tcp_acceptors.extend(if_addrs);
+
+    let joiner = RaiiThreadJoiner::new(thread!("TcpAcceptorThread", move || {
+        for stream in listener.incoming().filter_map(Result::ok) {
+            if cloned_stop_flag.load(Ordering::SeqCst) {
+                let _ = stream.shutdown(Shutdown::Both);
+                break;
+            }
+
+            let (network_input, writer) = unwrap_result!(tcp_connections::upgrade_tcp(stream));
+
+            let our_addr = SocketAddr(unwrap_result!(network_input.local_addr()));
+            let their_addr = SocketAddr(unwrap_result!(network_input.peer_addr()));
+
+            let network_rx = Receiver::Tcp(cbor::Decoder::from_reader(network_input));
+
+            let their_contact_info: ContactInfo =
+                unwrap_result!(deserialise(&unwrap_result!(network_rx.receive())[..]));
+            let their_pub_key = their_contact_info.pub_key.clone();
+
+            let joiner = RaiiThreadJoiner::new(thread!("TcpNetworkReader", move || {
+                start_rx(network_rx, their_pub_key, event_tx);
+            }));
+
+            let connection = Connection {
+                protocol: Protocol::Tcp,
+                our_addr: our_addr,
+                their_addr: their_addr,
+                network_tx: Sender::Tcp(writer),
+                _network_read_joiner: joiner,
+            };
+
+            let event = Event::NewConnection {
+               their_pub_key: their_contact_info.pub_key,
+               connection: Ok(connection),
+            };
+
+            if event_tx.send(event).is_err() {
+                break;
+            }
+        }
+    }));
+
+    Ok(TcpAcceptor {
+        port: port,
+        stop_flag: stop_flag,
+        _raii_joiner: joiner,
+    })
+}
+
+pub fn udp_rendezvous_connect(udp_socket: UdpSocket,
+                              their_addr: SocketAddr,
+                              their_pub_key: PublicKey,
+                              event_tx: ::CrustEventSender)
+                              -> io::Result<Connection> {
+    let (network_input, writer) = try!(utp_connections::rendezvous_connect_utp(udp_socket,
+                                                                               their_addr));
+    let our_addr = SocketAddr(network_input.local_addr());
+    let their_addr = SocketAddr(network_input.peer_addr());
+
+    let network_rx = Receiver::Utp(cbor::Decoder::from_reader(network_input));
+    let joiner = RaiiThreadJoiner::new(thread!("UtpNetworkReader", move || {
+        start_rx(network_rx, their_pub_key, event_tx);
+    }));
+
+    Ok(Connection {
+        protocol: Protocol::Utp,
+        our_addr: our_addr,
+        their_addr: their_addr,
+        network_tx: Sender::Utp(writer),
+        _network_read_joiner: joiner,
+    })
+}
+
+fn start_rx(network_rx: Receiver, their_pub_key: PublicKey, event_tx: ::CrustEventSender) {
+    while let Ok(msg) = network_rx.receive() {
+        if event_tx.send(Event::NewMessage(their_pub_key, msg)).is_err() {
+            break;
+        }
+    }
+    let _ = event_tx.send(Event::LostConnection(their_pub_key));
+}
+
+/// An open connection that can be used to send messages to a peer.
+///
+/// Messages *from* the peer are received as Crust events, together with the peer's public key.
+///
+/// The connection is closed when this is dropped.
 pub struct Connection {
     protocol: Protocol,
     our_addr: SocketAddr,
     their_addr: SocketAddr,
-    msg_sender: Sender, /* _writer_joiner: RaiiThreadJoiner,
-                         * _reader_joiner: RaiiThreadJoiner, */
+    network_tx: Sender,
+    // _network_write_joiner: RaiiThreadJoiner,
+    _network_read_joiner: RaiiThreadJoiner,
 }
 
 impl Connection {
-    // // FIXME: There needs to be a way to break from this blocking command.
-    // pub fn connect(remote_ep: Endpoint) -> IoResult<Transport> {
-    //     match *remote_ep.protocol() {
-    //         Protocol::Tcp => {
-    //             let (i, o) = try!(tcp_connections::connect_tcp(remote_ep.socket_addr().clone())
-    //                                   .map_err(|e| {
-    //                                       io::Error::new(io::ErrorKind::NotConnected,
-    //                                                      e.description())
-    //                                   }));
-    //             let connection_id = Connection::new(Protocol::Tcp,
-    //                                                 SocketAddr(try!(i.local_addr())),
-    //                                                 SocketAddr(try!(i.peer_addr())));
-
-    //             Ok(Transport {
-    //                 receiver: sender_receiver::Receiver::Tcp(cbor::Decoder::from_reader(i)),
-    //                 sender: sender_receiver::Sender::Tcp(o),
-    //                 connection_id: connection_id,
-    //             })
-    //         }
-    //         Protocol::Utp => {
-    //             let (i, o) = try!(utp_connections::connect_utp(remote_ep.socket_addr().clone())
-    //                                   .map_err(|e| {
-    //                                       io::Error::new(io::ErrorKind::NotConnected,
-    //                                                      e.description())
-    //                                   }));
-
-    //             let connection_id = Connection::new(Protocol::Utp,
-    //                                                 SocketAddr(i.local_addr()),
-    //                                                 SocketAddr(i.peer_addr()));
-
-    //             Ok(Transport {
-    //                 receiver: sender_receiver::Receiver::Utp(cbor::Decoder::from_reader(i)),
-    //                 sender: sender_receiver::Sender::Utp(o),
-    //                 connection_id: connection_id,
-    //             })
-    //         }
-    //     }
-    // }
-
-    pub fn udp_rendezvous_connect(udp_socket: UdpSocket,
-                                  pub_key: PublicKey,
-                                  our_echo_server_addr: SocketAddr)
-                                  -> IoResult<Self> {
-        let (network_input, writer) = try!(utp_connections::rendezvous_connect_utp(udp_socket,
-                                                                  public_ep.socket_addr()
-                                                                           .clone()));
-        let our_addr = SocketAddr(network_input.local_addr());
-        let their_addr = SocketAddr(network_input.peer_addr());
-
-        let joiner = RaiiThreadJoiner::new(thread!("NetworkReader", move || {
-            Connection::start_rx(network_input, their_pub_key, event_tx);
-        }));
-
-        let our_handshake = Handshake {
-            pub_key: pub_key,
-            echo_server_addr: our_echo_server_addr,
-        };
-
-        let their_handshake = try!(Connection::exchange_handshakes(our_handshake));
-
-        Connection {
-            protocol: Protocol::Utp,
-            our_addr: our_addr,
-            their_addr: their_addr,
-            msg_sender: Sender::Utp(writer),
-            _network_read_joiner: joiner,
-        }
-    }
-
-    pub fn exchange_handshakes(mut handshake: Handshake,
-                               mut trans: Transport)
-                               -> io::Result<(Handshake, Transport)> {
-        let handshake_err = Err(io::Error::new(io::ErrorKind::Other, "handshake failed"));
-
-        handshake.remote_addr = trans.connection_id.peer_addr().clone();
-        if let Err(_) = trans.sender.send_handshake(handshake) {
-            return handshake_err;
-        }
-
-        trans.receiver
-             .receive_handshake()
-             .and_then(|handshake| Ok((handshake, trans)))
-             .or(handshake_err)
-    }
+    /// Send the `data` to a peer via this connection.
     pub fn send(&self, data: &[u8]) -> io::Result<()> {
-        try!(self.msg_sender.send(data))
+        self.network_tx.send(data)
     }
+}
 
-    fn start_rx(network_rx: Receiver, their_pub_key: PublicKey, event_tx: ::CrustEventSender) {
-        while let Ok(msg) = receiver.receive() {
-            if event_sender.send(Event::NewMessage(their_pub_key, msg)).is_err() {
-                break;
-            }
-        }
-        let _ = event_tx.send(Event::LostConnection(their_pub_key));
+impl fmt::Debug for Connection {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Connection {{ protocol: {:?}, our_addr: {:?}, their_addr: {:?} }}",
+               self.protocol, self.our_addr, self.their_addr)
     }
 }
 
 // TODO see how to gracefully exit threads
 // impl Drop for Connection {
 //     fn drop(&mut self) {
-//         let _ = self.tx.send(WriterEvent::Terminate);
+//         let _ = self.network_tx.send(WriterEvent::Terminate);
 //     }
-// }
-
-// enum WriterEvent {
-//     SendMsg(Vec<u8>),
-//     Terminate,
-// }
-
-// pub struct ConnectionData {
-//     pub message_sender: transport::Sender,
-//     pub mapper_address: Option<SocketAddr>,
-//     pub mapper_external_address: Option<SocketAddr>, // pub reader_thread: RaiiThreadJoiner,
-// }
-//
-// pub struct ConnectionMap {
-//     inner: Arc<Mutex<ConnectionMapInner>>,
-// }
-//
-// struct ConnectionMapInner {
-//     connections: HashMap<Connection, ConnectionData>,
-//     event_sender: ::CrustEventSender,
-// }
-//
-// impl Drop for ConnectionMap {
-//     fn drop(&mut self) {
-//         let mut inner = unwrap_result!(self.inner.lock());
-//         let connections: Vec<Connection> = inner.connections.keys().cloned().collect();
-//         for c in connections {
-//             inner.unregister_connection(c);
-//         }
-//     }
-// }
-
-// impl ConnectionMap {
-//     pub fn new(event_sender: ::CrustEventSender) -> ConnectionMap {
-//         ConnectionMap { inner: Arc::new(Mutex::new(ConnectionMapInner::new(event_sender))) }
-//     }
-//
-//     pub fn get_ordered_helping_nodes(&self) -> Vec<SocketAddr> {
-//         let inner = unwrap_result!(self.inner.lock());
-//         inner.get_ordered_helping_nodes()
-//     }
-//
-//     pub fn is_connected_to(&self, endpoint: &Endpoint) -> bool {
-//         let inner = unwrap_result!(self.inner.lock());
-//         inner.is_connected_to(endpoint)
-//     }
-//
-//     // pub fn get(&self, connection: &Connection) -> Option<ConnectionData> {
-//     // let inner = unwrap_result!(self.inner.lock());
-//     // inner.get(connection)
-//     // }
-//     //
-//
-//     pub fn send(&self, connection: Connection, bytes: Vec<u8>) {
-//         let mut inner = unwrap_result!(self.inner.lock());
-//         inner.send(connection, bytes)
-//     }
-//
-//     pub fn register_connection(&self,
-//                                handshake: Handshake,
-//                                transport: Transport)
-//                                -> io::Result<Connection> {
-//         let me = self.inner.clone();
-//         let mut inner = unwrap_result!(self.inner.lock());
-//         inner.register_connection(handshake, transport, me)
-//     }
-//
-//     pub fn unregister_connection(&self, connection: Connection) {
-//         let mut inner = unwrap_result!(self.inner.lock());
-//         inner.unregister_connection(connection)
-//     }
-// }
-
-// impl ConnectionMapInner {
-//     pub fn new(event_sender: ::CrustEventSender) -> ConnectionMapInner {
-//         ConnectionMapInner {
-//             connections: HashMap::new(),
-//             event_sender: event_sender,
-//         }
-//     }
-//
-//     pub fn get_ordered_helping_nodes(&self) -> Vec<SocketAddr> {
-//         let mut addrs = self.connections
-//                             .iter()
-//                             .filter_map(|pair| pair.1.mapper_address.clone())
-//                             .collect::<Vec<_>>();
-//
-//         addrs.sort_by(|addr1, addr2| {
-//             ::util::heuristic_geo_cmp(&SocketAddrExt::ip(&**addr1), &SocketAddrExt::ip(&**addr2))
-//                 .reverse()
-//         });
-//
-//         addrs
-//     }
-//
-//     pub fn is_connected_to(&self, endpoint: &Endpoint) -> bool {
-//         for connection in self.connections.keys() {
-//             if connection.peer_endpoint() == *endpoint {
-//                 return true;
-//             }
-//         }
-//         false
-//     }
-
-// pub fn get(&self, connection: &Connection) -> Option<ConnectionData> {
-// self.connections.get(connection).map(|c| c.clone())
-// }
-//
-
-//    pub fn send(&mut self, connection: Connection, bytes: Vec<u8>) {
-//        let dropped = match self.connections.get_mut(&connection) {
-//            Some(mut connection_data) => {
-//                let writer = &mut connection_data.message_sender;
-//                if let Err(_what) = writer.send(&Message::UserBlob(bytes)) {
-//                    true
-//                } else {
-//                    false
-//                }
-//            }
-//            None => {
-//                // Connection already destroyed or never existed.
-//                false
-//            }
-//        };
-//        if dropped {
-//            self.unregister_connection(connection);
-//        };
-//    }
-
-//    pub fn register_connection(&mut self,
-//                               handshake: Handshake,
-//                               transport: Transport,
-//                               me: Arc<Mutex<ConnectionMapInner>>)
-//                               -> io::Result<Connection> {
-//        let connection_id = transport.connection_id.clone();
-//        let mut receiver = transport.receiver;
-//        let sender = transport.sender;
-//
-//        debug_assert!(!self.connections.contains_key(&connection_id));
-//
-//        let mapper_addr = match handshake.mapper_port {
-//            Some(port) => {
-//                let peer_addr = connection_id.peer_endpoint()
-//                                             .ip();
-//                match peer_addr {
-//                    IpAddr::V4(a) => {
-//                        Some(SocketAddr(net::SocketAddr::V4(net::SocketAddrV4::new(a, port))))
-//                    }
-//                    // FIXME(dirvine) Handle ip6 :10/01/2016
-//                    IpAddr::V6(_) => unimplemented!(),
-//                }
-//            }
-//            None => None,
-//        };
-//
-//        let connection_id_mv = connection_id.clone();
-//        // start the reading thread
-//        let event_sender = self.event_sender.clone();
-//        // let reader_thread = RaiiThreadJoiner::new(thread!("reader", move || {
-//        // TODO (canndrew): We risk leaking this thread if we don't keep a handle to it.
-//        let _ = thread!("reader", move || {
-//            while let Ok(msg) = receiver.receive() {
-//                match msg {
-//                    Message::UserBlob(msg) => {
-//                        if event_sender.send(Event::NewMessage(connection_id_mv.clone(), msg))
-//                                       .is_err() {
-//                            break;
-//                        }
-//                    }
-//                    Message::HolePunchAddress(a) => {
-//                        let connection = connection_id_mv.clone();
-//                        let mut inner = unwrap_result!(me.lock());
-//                        if let Some(cd) = inner.connections.get_mut(&connection) {
-//                            cd.mapper_external_address = Some(a);
-//                        }
-//                    }
-//                }
-//            }
-//            let mut inner = unwrap_result!(me.lock());
-//            inner.unregister_connection(connection_id_mv);
-//        });
-//        let connection_data = ConnectionData {
-//            message_sender: sender,
-//            mapper_address: mapper_addr,
-//            mapper_external_address: handshake.external_addr, // reader_thread: reader_thread,
-//        };
-//        let _ = self.connections.insert(connection_id.clone(), connection_data);
-//
-//        Ok(connection_id)
-//    }
-
-//    pub fn unregister_connection(&mut self, connection: Connection) {
-//        // Avoid sending duplicate LostConnection event.
-//        if self.connections.remove(&connection).is_none() {
-//            return;
-//        }
-//
-//        let _ = self.event_sender.send(Event::LostConnection(connection));
-//    }
 // }
