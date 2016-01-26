@@ -27,6 +27,7 @@
 #[macro_use]
 extern crate maidsafe_utilities;
 extern crate crust;
+extern crate config_file_handler;
 
 use crust::service::Service;
 
@@ -37,7 +38,7 @@ fn main() {
     // `FileHandler::write_file()`).  This object will try to clean up this directory when it goes
     // out of scope.  Normally apps would not do this - this directory will hold the peristent cache
     // files.
-    let _cleaner = crust::file_handler::ScopedUserAppDirRemover;
+    let _cleaner = config_file_handler::ScopedUserAppDirRemover;
 
     // We receive events (e.g. new connection, message received) from the Service via an
     // asynchronous channel.

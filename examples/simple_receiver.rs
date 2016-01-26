@@ -27,7 +27,7 @@
 #[macro_use]
 extern crate maidsafe_utilities;
 extern crate crust;
-
+extern crate config_file_handler;
 
 fn fibonacci_number(n: u64) -> u64 {
     match n {
@@ -42,13 +42,14 @@ fn fibonacci_number(n: u64) -> u64 {
 // ScopedUserAppDirRemover to remove the user app dir.
 fn main() {
     use std::str::FromStr;
+    use config_file_handler;
     ::maidsafe_utilities::log::init(true);
 
     // The Service will probably create a "user app directory" (see the docs for
     // `FileHandler::write_file()`).  This object will try to clean up this directory when it goes
     // out of scope.  Normally apps would not do this - this directory will hold the peristent cache
     // files.
-    let _cleaner = crust::file_handler::ScopedUserAppDirRemover;
+    let _cleaner = config_file_handler::ScopedUserAppDirRemover;
 
     // We receive events (e.g. new connection, message received) from the Service via an
     // asynchronous channel.

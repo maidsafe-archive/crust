@@ -28,6 +28,7 @@
 
 #[macro_use]
 extern crate maidsafe_utilities;
+extern crate config_file_handler;
 extern crate crust;
 extern crate docopt;
 
@@ -39,13 +40,13 @@ extern crate rustc_serialize;
 extern crate time;
 extern crate ip;
 
-use crust::{Endpoint, Protocol, HolePunchServer, Event, FileHandler, Service, SocketAddr};
+use config_file_handler::{Error, FileHandler};
+use crust::{Endpoint, Protocol, HolePunchServer, Event, Service, SocketAddr};
 use docopt::Docopt;
 use rand::{thread_rng, Rng};
 use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
 use std::cmp::max;
 use std::collections::HashMap;
-use crust::error::Error;
 use std::sync::Arc;
 use std::sync::mpsc::channel;
 use std::sync::atomic::{AtomicBool, Ordering};

@@ -23,7 +23,7 @@
 //! `write_config_file()` should not be called concurrently with one another.
 
 use endpoint::Endpoint;
-use file_handler::FileHandler;
+use config_file_handler::{self, Error, FileHandler};
 
 #[derive(PartialEq, Eq, Debug, RustcDecodable, RustcEncodable, Clone)]
 pub struct Config {
@@ -36,14 +36,14 @@ impl Config {
     }
 }
 
-pub fn read_config_file() -> Result<Config, ::error::Error> {
+pub fn read_config_file() -> Result<Config, Error> {
     let file_handler = try!(FileHandler::new(&try!(get_file_name())));
     let cfg = try!(file_handler.read_file::<Config>());
     Ok(cfg)
 }
 
 // This is a best-effort to create a config file - we don't care about the result.
-pub fn create_default_config_file() -> Result<(), ::error::Error> {
+pub fn create_default_config_file() -> Result<(), Error> {
     let file_handler = try!(FileHandler::new(&try!(get_file_name())));
     try!(file_handler.write_file(&Config::make_default()));
     Ok(())
@@ -57,7 +57,7 @@ pub fn create_default_config_file() -> Result<(), ::error::Error> {
 /// N.B. This method should only be used as a utility for test and examples.  In normal use cases,
 /// this file should be created by the installer for the dependent application.
 pub fn write_config_file(hard_coded_endpoints: Option<Vec<Endpoint>>)
-                         -> Result<::std::path::PathBuf, ::error::Error> {
+                         -> Result<::std::path::PathBuf, Error> {
     use std::io::Write;
 
     let default = Config::make_default();
@@ -65,7 +65,7 @@ pub fn write_config_file(hard_coded_endpoints: Option<Vec<Endpoint>>)
     let config = Config {
         hard_coded_contacts: hard_coded_endpoints.unwrap_or(default.hard_coded_contacts),
     };
-    let mut config_path = try!(::file_handler::current_bin_dir());
+    let mut config_path = try!(config_file_handler::current_bin_dir());
     config_path.push(try!(get_file_name()));
     let mut file = try!(::std::fs::File::create(&config_path));
     try!(write!(&mut file,
@@ -75,14 +75,16 @@ pub fn write_config_file(hard_coded_endpoints: Option<Vec<Endpoint>>)
     Ok(config_path)
 }
 
-fn get_file_name() -> Result<::std::ffi::OsString, ::error::Error> {
-    let mut name = try!(::file_handler::exe_file_stem());
+fn get_file_name() -> Result<::std::ffi::OsString, Error> {
+    let mut name = try!(config_file_handler::exe_file_stem());
     name.push(".crust.config");
     Ok(name)
 }
 
 #[cfg(test)]
 mod test {
+    use config_file_handler;
+
     #[test]
     fn read_config_file_test() {
         let mut hard_coded_endpoints = Vec::new();
@@ -100,7 +102,7 @@ mod test {
         }
 
         // Clean up
-        match ::file_handler::current_bin_dir() {
+        match config_file_handler::current_bin_dir() {
             Ok(mut config_path) => {
                 config_path.push(path_buf);
                 let _ = ::std::fs::remove_file(&config_path);

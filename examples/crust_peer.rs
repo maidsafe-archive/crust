@@ -30,6 +30,7 @@
 extern crate log;
 #[macro_use]
 extern crate maidsafe_utilities;
+extern crate config_file_handler;
 extern crate crust;
 extern crate rustc_serialize;
 extern crate docopt;
@@ -45,7 +46,7 @@ use std::cmp;
 use std::sync::mpsc::channel;
 use std::sync::mpsc::Sender;
 use std::io;
-use crust::error::Error;
+use config_file_handler::Error;
 use std::net;
 use std::str::FromStr;
 use std::thread;
@@ -394,7 +395,7 @@ fn on_time_out(timeout: Duration, flag_speed: bool) -> Sender<bool> {
 
 fn create_local_config() -> Result<(), Error> {
     let mut stdout = term::stdout();
-    let mut config_path = match ::crust::current_bin_dir() {
+    let mut config_path = match config_file_handler::current_bin_dir() {
         Ok(path) => path,
         Err(error) => {
             stdout = red_foreground(stdout);
@@ -403,7 +404,7 @@ fn create_local_config() -> Result<(), Error> {
             std::process::exit(1);
         }
     };
-    let mut config_name = try!(::crust::exe_file_stem());
+    let mut config_name = try!(config_file_handler::exe_file_stem());
     config_name.push(".crust.config");
     config_path.push(config_name);
 
