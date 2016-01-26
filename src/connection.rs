@@ -17,15 +17,14 @@
 
 use std::fmt;
 use std::sync::{Arc, Mutex};
-use std::sync::atomic::{Orderign, AtomicBool};
+use std::sync::atomic::{Ordering, AtomicBool};
 use std::net::{Shutdown, TcpListener, TcpStream, UdpSocket};
-use std::sync::atomic::Ordering;
 use std::io;
 use cbor;
+use itertools::Itertools;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 use maidsafe_utilities::serialisation::{deserialise, serialise};
 use get_if_addrs::get_if_addrs;
-use acceptor::TcpAcceptor;
 use contact_info::ContactInfo;
 use tcp_connections;
 use utp_connections;
@@ -52,8 +51,8 @@ pub struct Connection {
 
 impl Connection {
     /// Send the `data` to a peer via this connection.
-    pub fn send(&self, data: &[u8]) -> io::Result<()> {
-        self.network_tx.send(data)
+    pub fn send(&mut self, data: &[u8]) -> io::Result<()> {
+        self.network_tx.send(data.clone())
     }
 }
 
@@ -107,7 +106,7 @@ pub fn connect(remote_ep: Endpoint,
                 start_rx(network_rx, their_pub_key, event_tx);
             }));
 
-            let connection = Connection {
+            let mut connection = Connection {
                 protocol: Protocol::Tcp,
                 our_addr: our_addr,
                 their_addr: their_addr,
@@ -153,11 +152,9 @@ pub fn start_tcp_accept(port: u16,
     let stop_flag = Arc::new(AtomicBool::new(false));
     let cloned_stop_flag = stop_flag.clone();
 
-    let if_addrs = try!(get_if_addrs())
-                       .into_iter()
-                       .filter(|i| !i.is_loopback())
-                       .map(|addr| SocketAddr::new(addr.ip(), port))
-                       .collect();
+    let if_addrs = try!(get_if_addrs()).into_iter()
+                       .map(|i| SocketAddr::new(i.addr.ip(), port))
+                       .collect_vec();
 
     unwrap_result!(our_contact_info.lock()).tcp_acceptors.extend(if_addrs);
 
@@ -173,7 +170,7 @@ pub fn start_tcp_accept(port: u16,
             let our_addr = SocketAddr(unwrap_result!(network_input.local_addr()));
             let their_addr = SocketAddr(unwrap_result!(network_input.peer_addr()));
 
-            let network_rx = Receiver::Tcp(cbor::Decoder::from_reader(network_input));
+            let mut network_rx = Receiver::Tcp(cbor::Decoder::from_reader(network_input));
 
             let their_contact_info: ContactInfo =
                 unwrap_result!(deserialise(&unwrap_result!(network_rx.receive())[..]));

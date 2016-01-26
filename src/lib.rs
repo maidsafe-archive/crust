@@ -82,16 +82,6 @@ pub use connection::Connection;
 pub use socket_addr::SocketAddr;
 pub use hole_punching::HolePunchServer;
 
-#[cfg(test)]
-mod test {
-    #[test]
-    pub fn check_rust_unit_testing_is_not_parallel() {
-        match ::std::env::var_os("RUST_TEST_THREADS") {
-            Some(val) => assert!(val.into_string().unwrap() == "1"),
-            None => panic!("RUST_TEST_THREADS needs to be 1 for the crust unit tests to work"),
-        }
-    }
-}
 mod sequence_number;
 mod connection;
 // mod beacon;
@@ -111,4 +101,3 @@ mod periodic_sender;
 mod socket_utils;
 mod socket_addr;
 mod ip_info;
-mod acceptor;
