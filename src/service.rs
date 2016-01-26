@@ -73,22 +73,6 @@ impl Service {
                event_tx: ::CrustEventSender,
                service_discovery_port: u16)
                -> Result<Service, ::error::Error> {
-        Service::construct(our_pub_key, event_tx, service_discovery_port, None)
-    }
-
-    pub fn with_bootstrap_list(our_pub_key: PublicKey,
-                               event_tx: ::CrustEventSender,
-                               service_discovery_port: u16,
-                               list: Vec<Endpoint>)
-                               -> Result<Service, Error> {
-        Service::construct(our_pub_key, event_tx, service_discovery_port, Some(list))
-    }
-
-    fn construct(our_pub_key: PublicKey,
-                 event_tx: ::CrustEventSender,
-                 service_discovery_port: u16,
-                 bootstrap_list: Option<Vec<Endpoint>>)
-                 -> Result<Service, ::error::Error> {
         // Form our initial contact info
         let our_contact_info = Arc::new(Mutex::new(ContactInfo {
             pub_key: our_pub_key,
@@ -97,7 +81,8 @@ impl Service {
         }));
 
         // Start the TCP Acceptor
-        connection::start_tcp_accept(0, 
+        connection::start_tcp_accept(0, our_contact_info.clone());
+
         let (upnp_addr_tx, _upnp_addr_rx) = mpsc::channel();
         let mapper = Arc::new(try!(::hole_punching::HolePunchServer::start(upnp_addr_tx)));
 
