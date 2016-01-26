@@ -94,6 +94,60 @@ impl Acceptor {
         })
     }
 
+    #[cfg(test)]
+    pub fn with_utp(listener: ::utp::UtpListener,
+                    hole_punch_server: Arc<HolePunchServer>,
+                    connection_map: Arc<ConnectionMap>)
+        -> io::Result<Acceptor> {
+        let running = Arc::new(AtomicBool::new(true));
+        let running_cloned = running.clone();
+        let addr = try!(listener.local_addr());
+        let mapped_addrs = try!(get_if_addrs())
+                                .into_iter()
+                                .filter(|i| !i.is_loopback())
+                                .map(|i| SocketAddr::new(i.ip(), addr.port()))
+                                .collect();
+        let joiner = RaiiThreadJoiner::new(thread!("acceptor-utp", move || {
+            loop {
+                let mapper_external_addr = hole_punch_server.external_address();
+                let mapper_internal_port = hole_punch_server.listening_addr().port();
+                let handshake = Handshake {
+                    mapper_port: Some(mapper_internal_port),
+                    external_addr: mapper_external_addr,
+                    remote_addr: SocketAddr(net::SocketAddr::from_str("0.0.0.0:0").unwrap()),
+                };
+                let accept_res = transport::accept_utp(&listener).and_then(|t| {
+                    transport::exchange_handshakes(handshake, t)
+                });
+                if !running_cloned.load(Ordering::SeqCst) {
+                    break;
+                }
+                // TODO (canndrew): What to do with this error?
+                let _ = match accept_res {
+                    Ok((handshake, transport)) => {
+                        let c = transport.connection_id.clone();
+                        let protocol = *c.peer_endpoint()
+                                         .protocol();
+                        let remote_addr = SocketAddr(*handshake.remote_addr);
+                        let our_external_endpoint = Endpoint::from_socket_addr(protocol, remote_addr);
+                        connection_map.register_connection(handshake, transport, Event::OnBootstrapAccept(our_external_endpoint, c))
+                    }
+                    Err(e) => {
+                        warn!("Acceptor got an error: {} {:?}", e, e);
+                        break;
+                    }
+                };
+            }
+        }));
+
+        Ok(Acceptor {
+            _joiner: joiner,
+            running: running,
+            addr: addr,
+            mapped_addrs: mapped_addrs,
+        })
+    }
+
     pub fn local_address(&self) -> SocketAddr {
         SocketAddr(self.addr)
     }
@@ -104,8 +158,16 @@ impl Acceptor {
 }
 
 impl Drop for Acceptor {
+    #[cfg(not(test))]
     fn drop(&mut self) {
         self.running.store(false, Ordering::SeqCst);
         let _ = TcpStream::connect(util::unspecified_to_loopback(&self.addr));
+    }
+
+    #[cfg(test)]
+    fn drop(&mut self) {
+        self.running.store(false, Ordering::SeqCst);
+        let _ = TcpStream::connect(util::unspecified_to_loopback(&self.addr));
+        let _ = ::utp::UtpSocket::connect(util::unspecified_to_loopback(&self.addr));
     }
 }
