@@ -17,8 +17,8 @@
 
 use std::fmt;
 use std::sync::{Arc, Mutex};
-use std::sync::atomic::AtomicBool;
-use std::net::{Shutdown, TcpListener, UdpSocket};
+use std::sync::atomic::{Orderign, AtomicBool};
+use std::net::{Shutdown, TcpListener, TcpStream, UdpSocket};
 use std::sync::atomic::Ordering;
 use std::io;
 use cbor;
@@ -36,6 +36,58 @@ use event::Event;
 use sodiumoxide::crypto::sign::PublicKey;
 use endpoint::{Endpoint, Protocol};
 
+/// An open connection that can be used to send messages to a peer.
+///
+/// Messages *from* the peer are received as Crust events, together with the peer's public key.
+///
+/// The connection is closed when this is dropped.
+pub struct Connection {
+    protocol: Protocol,
+    our_addr: SocketAddr,
+    their_addr: SocketAddr,
+    network_tx: Sender,
+    // _network_write_joiner: RaiiThreadJoiner,
+    _network_read_joiner: RaiiThreadJoiner,
+}
+
+impl Connection {
+    /// Send the `data` to a peer via this connection.
+    pub fn send(&self, data: &[u8]) -> io::Result<()> {
+        self.network_tx.send(data)
+    }
+}
+
+impl fmt::Debug for Connection {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f,
+               "Connection {{ protocol: {:?}, our_addr: {:?}, their_addr: {:?} }}",
+               self.protocol,
+               self.our_addr,
+               self.their_addr)
+    }
+}
+
+// TODO see how to gracefully exit threads
+// impl Drop for Connection {
+//     fn drop(&mut self) {
+//         let _ = self.network_tx.send(WriterEvent::Terminate);
+//     }
+// }
+
+pub struct RaiiTcpAcceptor {
+    pub port: u16,
+    pub stop_flag: Arc<AtomicBool>,
+    pub _raii_joiner: RaiiThreadJoiner,
+}
+
+impl Drop for RaiiTcpAcceptor {
+    fn drop(&mut self) {
+        self.stop_flag.store(false, Ordering::SeqCst);
+        if let Ok(stream) = TcpStream::connect(&format!("127.0.0.1:{}", self.port)[..]) {
+            let _ = stream.shutdown(Shutdown::Both);
+        }
+    }
+}
 
 pub fn connect(remote_ep: Endpoint,
                their_pub_key: PublicKey,
@@ -94,8 +146,10 @@ pub fn connect(remote_ep: Endpoint,
 pub fn start_tcp_accept(port: u16,
                         our_contact_info: Arc<Mutex<ContactInfo>>,
                         event_tx: ::CrustEventSender)
-                        -> io::Result<TcpAcceptor> {
+                        -> io::Result<RaiiTcpAcceptor> {
     let listener = try!(TcpListener::bind(("0.0.0.0", port)));
+    let port = try!(listener.local_addr()).port(); // Useful if supplied port was 0
+
     let stop_flag = Arc::new(AtomicBool::new(false));
     let cloned_stop_flag = stop_flag.clone();
 
@@ -138,8 +192,8 @@ pub fn start_tcp_accept(port: u16,
             };
 
             let event = Event::NewConnection {
-               their_pub_key: their_contact_info.pub_key,
-               connection: Ok(connection),
+                their_pub_key: their_contact_info.pub_key,
+                connection: Ok(connection),
             };
 
             if event_tx.send(event).is_err() {
@@ -148,7 +202,7 @@ pub fn start_tcp_accept(port: u16,
         }
     }));
 
-    Ok(TcpAcceptor {
+    Ok(RaiiTcpAcceptor {
         port: port,
         stop_flag: stop_flag,
         _raii_joiner: joiner,
@@ -187,38 +241,3 @@ fn start_rx(network_rx: Receiver, their_pub_key: PublicKey, event_tx: ::CrustEve
     }
     let _ = event_tx.send(Event::LostConnection(their_pub_key));
 }
-
-/// An open connection that can be used to send messages to a peer.
-///
-/// Messages *from* the peer are received as Crust events, together with the peer's public key.
-///
-/// The connection is closed when this is dropped.
-pub struct Connection {
-    protocol: Protocol,
-    our_addr: SocketAddr,
-    their_addr: SocketAddr,
-    network_tx: Sender,
-    // _network_write_joiner: RaiiThreadJoiner,
-    _network_read_joiner: RaiiThreadJoiner,
-}
-
-impl Connection {
-    /// Send the `data` to a peer via this connection.
-    pub fn send(&self, data: &[u8]) -> io::Result<()> {
-        self.network_tx.send(data)
-    }
-}
-
-impl fmt::Debug for Connection {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Connection {{ protocol: {:?}, our_addr: {:?}, their_addr: {:?} }}",
-               self.protocol, self.our_addr, self.their_addr)
-    }
-}
-
-// TODO see how to gracefully exit threads
-// impl Drop for Connection {
-//     fn drop(&mut self) {
-//         let _ = self.network_tx.send(WriterEvent::Terminate);
-//     }
-// }

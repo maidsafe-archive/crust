@@ -94,7 +94,7 @@ mod test {
 }
 mod sequence_number;
 mod connection;
-mod beacon;
+// mod beacon;
 mod endpoint;
 mod bootstrap_handler;
 mod config_handler;

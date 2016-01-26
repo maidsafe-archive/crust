@@ -23,6 +23,7 @@ use std::net;
 use std::thread::JoinHandle;
 use std::sync::{Arc, Mutex};
 use std::str::FromStr;
+use service_discovery::ServiceDiscovery;
 
 use std::net::TcpListener;
 
@@ -31,7 +32,6 @@ use rand;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 use itertools::Itertools;
 use acceptor::Acceptor;
-use beacon;
 use config_handler::{Config, read_config_file};
 use transport::Handshake;
 use transport;
@@ -48,7 +48,6 @@ use bootstrap_handler::BootstrapHandler;
 use hole_punching::HolePunchServer;
 use sequence_number::SequenceNumber;
 
-
 /// A structure representing a connection manager.
 ///
 /// This abstraction has a hidden dependency on a config file. Refer to [the docs for `FileHandler`]
@@ -56,9 +55,10 @@ use sequence_number::SequenceNumber;
 /// (https://github.com/maidsafe/crust/blob/master/docs/vault_config_file_flowchart.pdf) for more
 /// information.
 pub struct Service {
-    contact_info: ContactInfo,
+    service_discovery: ServiceDiscovery,
+    our_contact_info: Arc<Mutex<ContactInfo>>,
+    _raii_tcp_acceptor: TcpAcceptor,
     config: Config,
-    acceptors: Vec<Acceptor>,
     mapper: Arc<HolePunchServer>,
     next_punch_sequence: SequenceNumber,
     event_sender: ::CrustEventSender,
@@ -71,24 +71,33 @@ impl Service {
     /// the sender half to this method. Receiver will receive all `Event`s from this library.
     pub fn new(our_pub_key: PublicKey,
                event_tx: ::CrustEventSender,
-               lan_listener_port: Option<u16>)
+               service_discovery_port: u16)
                -> Result<Service, ::error::Error> {
-        Service::construct(our_pub_key, event_tx, lan_listener_port, None)
+        Service::construct(our_pub_key, event_tx, service_discovery_port, None)
     }
 
     pub fn with_bootstrap_list(our_pub_key: PublicKey,
                                event_tx: ::CrustEventSender,
-                               lan_listener_port: Option<u16>,
+                               service_discovery_port: u16,
                                list: Vec<Endpoint>)
                                -> Result<Service, Error> {
-        Service::construct(event_tx, lan_listener_port, Some(list))
+        Service::construct(our_pub_key, event_tx, service_discovery_port, Some(list))
     }
 
     fn construct(our_pub_key: PublicKey,
                  event_tx: ::CrustEventSender,
-                 lan_listener_port: Option<u16>,
+                 service_discovery_port: u16,
                  bootstrap_list: Option<Vec<Endpoint>>)
                  -> Result<Service, ::error::Error> {
+        // Form our initial contact info
+        let our_contact_info = Arc::new(Mutex::new(ContactInfo {
+            pub_key: our_pub_key,
+            tcp_acceptors: Vec::new(),
+            udp_listeners: Vec::new(),
+        }));
+
+        // Start the TCP Acceptor
+        connection::start_tcp_accept(0, 
         let (upnp_addr_tx, _upnp_addr_rx) = mpsc::channel();
         let mapper = Arc::new(try!(::hole_punching::HolePunchServer::start(upnp_addr_tx)));
 
@@ -149,7 +158,7 @@ impl Service {
     /// Starts accepting on a given port. If port number is 0, the OS
     /// will pick one randomly. The actual port used will be returned.
     pub fn start_tcp_accept(&mut self) -> Result<(), Error> {
-        acceptor::
+        unimplemented!()
     }
 
     fn seek_peers(beacon_guid: Option<[u8; 16]>, beacon_port: u16) -> Vec<Endpoint> {
