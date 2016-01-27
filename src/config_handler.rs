@@ -101,7 +101,7 @@ mod test {
         }
 
         // Clean up
-        match ::file_handler::current_bin_dir() {
+        match ::config_file_handler::current_bin_dir() {
             Ok(mut config_path) => {
                 config_path.push(path_buf);
                 let _ = ::std::fs::remove_file(&config_path);

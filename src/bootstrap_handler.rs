@@ -153,7 +153,7 @@ mod test {
         // is deleted - i.e the file is managed by RAII.
         pub fn new() -> Result<TestFile, ::error::Error> {
             use std::io::Write;
-            let mut path = try!(::file_handler::current_bin_dir());
+            let mut path = try!(::config_file_handler::current_bin_dir());
             path.push(try!(super::get_file_name()));
             let mut file = try!(::std::fs::File::create(&path));
             try!(write!(&mut file,

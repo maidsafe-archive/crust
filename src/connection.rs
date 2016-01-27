@@ -74,9 +74,9 @@ impl fmt::Debug for Connection {
 // }
 
 pub struct RaiiTcpAcceptor {
-    pub port: u16,
-    pub stop_flag: Arc<AtomicBool>,
-    pub _raii_joiner: RaiiThreadJoiner,
+    port: u16,
+    stop_flag: Arc<AtomicBool>,
+    _raii_joiner: RaiiThreadJoiner,
 }
 
 impl Drop for RaiiTcpAcceptor {
