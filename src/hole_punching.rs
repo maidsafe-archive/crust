@@ -303,43 +303,6 @@ impl HolePunchServer {
         let local_ep =
             Endpoint::from_socket_addr(Protocol::Utp,
                                        SocketAddr(net::SocketAddr::V4(local_addr.clone())));
-        let upnp_joiner = RaiiThreadJoiner::new(thread!("upnp hole puncher", move || {
-            loop {
-                // TODO UPNP is currently disabled
-                if true {
-                    break;
-                }
-                if upnp_shutdown_cloned.load(Ordering::SeqCst) {
-                    break;
-                }
-                // TODO rather than map (which will keep the previous ports mapped and map new port
-                // again) we should just ask if it is already mapped - map only if it is not
-                // already mapped.
-                // 1st do a upnp mapping. Then next time check via echo-server using the same addr
-                // if the external addr has changed or not. If it has ask UPnP to remove the mapping
-                // and create a new one.
-                match ::map_external_port::sync_map_external_port(&local_ep) {
-                    Ok(v) => {
-                        for (internal, external) in v {
-                            if internal == SocketAddrV4(local_addr) {
-                                // TODO (canndrew): improve the igd APIs to make this assert
-                                // unnecessary.
-                                assert_eq!(*external.protocol(), Protocol::Utp);
-                                {
-                                    let mut ext_ip = external_ip_writer.write().unwrap();
-                                    *ext_ip = Some(*external.socket_addr());
-                                };
-                                let _ = upnp_external_addr_update.send(*external.socket_addr());
-                            }
-                        }
-                    }
-                    Err(e) => info!("Failed to get external IP using upnp: {:?}", e),
-                }
-                // TODO (canndrew): What is a sensible time to wait between refreshes of our
-                // external ip?
-                ::std::thread::park_timeout(::std::time::Duration::from_millis(UPNP_REFRESH_PERIOD_MS));
-            }
-        }));
 
         Ok(HolePunchServer {
             listener_shutdown: listener_shutdown,

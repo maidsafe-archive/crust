@@ -93,7 +93,6 @@ mod sender_receiver;
 mod contact_info;
 mod utp_wrapper;
 mod event;
-mod map_external_port;
 mod hole_punching;
 mod periodic_sender;
 mod socket_utils;

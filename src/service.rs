@@ -72,7 +72,8 @@ impl Service {
                service_discovery_port: u16)
                -> Result<Service, ::error::Error> {
         sodiumoxide::init();
-        let (pub_key, _priv_key) = sign::gen_keypair();
+        let (pub_key, _priv_key) = sign::gen_keypair(); // TODO Use private key once crate is stable
+
         // Form our initial contact info
         let our_contact_info = Arc::new(Mutex::new(ContactInfo {
             pub_key: pub_key,
@@ -81,18 +82,19 @@ impl Service {
         }));
 
         // Start the TCP Acceptor
-        let tcp_acceptor = try!(connection::start_tcp_accept(0, our_contact_info.clone()));
+        let raii_tcp_acceptor = try!(connection::start_tcp_accept(0, our_contact_info.clone()));
 
         let (upnp_addr_tx, _upnp_addr_rx) = mpsc::channel();
         let mapper = Arc::new(try!(::hole_punching::HolePunchServer::start(upnp_addr_tx)));
 
-        let service_discovery = ServiceDiscovery::new(service_discovery_port, our_contact_info.clone());
+        let service_discovery = ServiceDiscovery::new(service_discovery_port,
+                                                      our_contact_info.clone());
 
         let service = Service {
             pub_key: pub_key,
             service_discovery: service_discovery,
             bootstrap_peers: None,
-            _tcp_acceptor: tcp_acceptor,
+            _raii_tcp_acceptor: raii_tcp_acceptor,
             mapper: mapper,
             next_punch_sequence: SequenceNumber::new(::rand::random()),
             event_tx: event_tx,
@@ -134,7 +136,7 @@ impl Service {
                     ret.push(contact_info);
                 }
                 ret
-            },
+            }
         }
     }
 
@@ -179,12 +181,12 @@ impl Service {
 
         let mut contacts = self.seek_peers();
         for contact in &config.hard_coded_contacts {
-            if ! contacts.contains(contact) {
+            if !contacts.contains(contact) {
                 contacts.push(contact);
             }
         }
         for contact in &cached_contacts {
-            if ! contacts.contains(contact) {
+            if !contacts.contains(contact) {
                 contacts.push(contact);
             }
         }
@@ -507,49 +509,6 @@ impl Service {
     // }
     // }
     //
-
-    /// Initiates uPnP port mapping of the currently used accepting endpoints.
-    /// On success ExternalEndpoint event is generated containg our external
-    /// endpoints.
-    pub fn get_external_endpoints(&self) {
-        let internal_eps = self.get_local_endpoints();
-
-        type T = (SocketAddrV4, Endpoint);
-
-        struct Async {
-            remaining: usize,
-            results: Vec<Endpoint>,
-        }
-
-        let async = Arc::new(Mutex::new(Async {
-            remaining: internal_eps.len(),
-            results: Vec::new(),
-        }));
-
-        for internal_ep in internal_eps {
-            let async = async.clone();
-            let event_sender = self.event_sender.clone();
-
-            async_map_external_port(internal_ep.clone(), move |results: io::Result<Vec<T>>| {
-                let mut async = async.lock().unwrap();
-                async.remaining -= 1;
-                if let Ok(results) = results {
-                    for result in results {
-                        let transport_port = internal_ep.socket_addr().port();
-                        let ext_ep = Endpoint::new(result.1.protocol().clone(),
-                                                   result.1.ip().clone(),
-                                                   transport_port);
-                        async.results.push(ext_ep);
-                    }
-                }
-                if async.remaining == 0 {
-                    let event = Event::ExternalEndpoints(async.results
-                                                              .clone());
-                    let _ = event_sender.send(event);
-                }
-            });
-        }
-    }
 
     // TODO (canndrew): Remove this (replace with thread! macro)
     fn new_thread<F, T>(name: &str, f: F) -> io::Result<JoinHandle<T>>

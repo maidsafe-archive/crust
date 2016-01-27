@@ -152,7 +152,8 @@ pub fn start_tcp_accept(port: u16,
     let stop_flag = Arc::new(AtomicBool::new(false));
     let cloned_stop_flag = stop_flag.clone();
 
-    let if_addrs = try!(get_if_addrs()).into_iter()
+    let if_addrs = try!(get_if_addrs())
+                       .into_iter()
                        .map(|i| SocketAddr::new(i.addr.ip(), port))
                        .collect_vec();
 
