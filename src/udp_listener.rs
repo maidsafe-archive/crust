@@ -19,17 +19,19 @@ use soket_addr::SocketAddr;
 
 const UDP_READ_TIMEOUT_SECS: u64 = 2;
 
+pub struct EchoExternalAddrResp {
+    external_addr: SocketAddr,
+}
+
+pub struct ConnectResponse {
+    connect_on: Vec<SocketAddr>,
+    secret: [u8; 4],
+    pub_key: PublicKey,
+}
+
 enum UdpListenerMsg {
     EchoExternalAddr,
-    EchoExternalAddrResp {
-        external_addr: SocketAddr,
-    },
     ConnectRequest {
-        connect_on: Vec<SocketAddr>,
-        secret: [u8; 4],
-    },
-    ConnectResponse {
-        connect_on: Vec<SocketAddr>,
         secret: [u8; 4],
         pub_key: PublicKey,
     },
@@ -92,12 +94,7 @@ impl UdpListener {
 
                         let _ = udp_socket.send_to(&unwrap_result!(serialise(&resp)), peer_addr);
                     }
-                    UdpListenerMsg::EchoExternalAddrResp { external_addr, } => {
-                        if update_contact_info_tx.send(AppendUdpListener(external_addr)).is_err() {
-                            break;
-                        }
-                    }
-                    UdpListenerMsg::ConnectRequest { secret, contact_info } => {
+                    UdpListenerMsg::ConnectRequest { secret, pub_key } => {
                         // TODO blocking_get_mapped_udp_socket() should return the external address
                         // of the socket that it freshly spawned or (if it cannot because of say
                         // Zero-state etc.) Vector of all interface addresses. This should never be
@@ -126,7 +123,7 @@ impl UdpListener {
                                 };
 
                                 let event = Event::NewConnection {
-                                    their_pub_key: contact_info.pub_key,
+                                    their_pub_key: pub_key,
                                     connection: Ok(connection),
                                 };
 
