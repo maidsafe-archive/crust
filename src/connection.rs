@@ -157,6 +157,7 @@ pub fn start_tcp_accept(port: u16,
                        .collect_vec();
 
     unwrap_result!(our_contact_info.lock()).tcp_acceptors.extend(if_addrs);
+    let event_tx_to_acceptor = event_tx.clone();
 
     let joiner = RaiiThreadJoiner::new(thread!("TcpAcceptorThread", move || {
         for stream in listener.incoming().filter_map(Result::ok) {
@@ -176,8 +177,9 @@ pub fn start_tcp_accept(port: u16,
                 unwrap_result!(deserialise(&unwrap_result!(network_rx.receive())[..]));
             let their_pub_key = their_contact_info.pub_key.clone();
 
+            let event_tx_to_reader = event_tx.clone();
             let joiner = RaiiThreadJoiner::new(thread!("TcpNetworkReader", move || {
-                start_rx(network_rx, their_pub_key, event_tx);
+                start_rx(network_rx, their_pub_key, event_tx_to_reader);
             }));
 
             let connection = Connection {
@@ -193,7 +195,7 @@ pub fn start_tcp_accept(port: u16,
                 connection: Ok(connection),
             };
 
-            if event_tx.send(event).is_err() {
+            if event_tx_to_acceptor.send(event).is_err() {
                 break;
             }
         }
@@ -230,7 +232,7 @@ pub fn udp_rendezvous_connect(udp_socket: UdpSocket,
     })
 }
 
-fn start_rx(network_rx: Receiver, their_pub_key: PublicKey, event_tx: ::CrustEventSender) {
+fn start_rx(mut network_rx: Receiver, their_pub_key: PublicKey, event_tx: ::CrustEventSender) {
     while let Ok(msg) = network_rx.receive() {
         if event_tx.send(Event::NewMessage(their_pub_key, msg)).is_err() {
             break;
