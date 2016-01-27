@@ -22,8 +22,10 @@
 //! This means that none of the public functions of `BootstrapHandler` should be called concurrently
 //! with any other one.
 
+use error::Error;
 use endpoint::Endpoint;
-use file_handler::FileHandler;
+use config_file_handler::FileHandler;
+use config_file_handler;
 use util;
 
 pub struct BootstrapHandler {
@@ -48,7 +50,7 @@ impl BootstrapHandler {
     pub fn update_contacts(&mut self,
                            contacts: Vec<Endpoint>,
                            prune: Vec<Endpoint>)
-                           -> Result<(), ::error::Error> {
+                           -> Result<(), Error> {
         try!(self.insert_contacts(contacts, prune));
         // TODO(Team) this implementation is missing and should be considered in next planning
         if ::time::now() > self.last_updated + Self::duration_between_updates() {
@@ -57,8 +59,8 @@ impl BootstrapHandler {
         Ok(())
     }
 
-    pub fn read_file(&mut self) -> Result<Vec<Endpoint>, ::error::Error> {
-        self.file_handler.read_file::<Vec<Endpoint>>()
+    pub fn read_file(&mut self) -> Result<Vec<Endpoint>, Error> {
+        Ok(try!(self.file_handler.read_file::<Vec<Endpoint>>()))
     }
 
     fn duration_between_updates() -> ::time::Duration {
@@ -72,7 +74,7 @@ impl BootstrapHandler {
     fn insert_contacts(&mut self,
                        mut contacts: Vec<Endpoint>,
                        prune: Vec<Endpoint>)
-                       -> Result<(), ::error::Error> {
+                       -> Result<(), Error> {
         let mut bootstrap_contacts = self.read_file().unwrap_or_else(|e| {
             debug!("Error reading Bootstrap file: {:?}.", e);
             Vec::new()
@@ -98,12 +100,12 @@ impl BootstrapHandler {
             }
         }
 
-        self.file_handler.write_file(&bootstrap_contacts)
+        Ok(try!(self.file_handler.write_file(&bootstrap_contacts)))
     }
 }
 
-fn get_file_name() -> Result<::std::ffi::OsString, ::error::Error> {
-    let mut name = try!(::file_handler::exe_file_stem());
+fn get_file_name() -> Result<::std::ffi::OsString, Error> {
+    let mut name = try!(config_file_handler::exe_file_stem());
     name.push(".bootstrap.cache");
     Ok(name)
 }

@@ -23,7 +23,8 @@
 //! `write_config_file()` should not be called concurrently with one another.
 
 use endpoint::Endpoint;
-use file_handler::FileHandler;
+use config_file_handler::FileHandler;
+use config_file_handler;
 
 #[derive(PartialEq, Eq, Debug, RustcDecodable, RustcEncodable, Clone)]
 pub struct Config {
@@ -65,7 +66,7 @@ pub fn write_config_file(hard_coded_endpoints: Option<Vec<Endpoint>>)
     let config = Config {
         hard_coded_contacts: hard_coded_endpoints.unwrap_or(default.hard_coded_contacts),
     };
-    let mut config_path = try!(::file_handler::current_bin_dir());
+    let mut config_path = try!(config_file_handler::current_bin_dir());
     config_path.push(try!(get_file_name()));
     let mut file = try!(::std::fs::File::create(&config_path));
     try!(write!(&mut file,
@@ -76,7 +77,7 @@ pub fn write_config_file(hard_coded_endpoints: Option<Vec<Endpoint>>)
 }
 
 fn get_file_name() -> Result<::std::ffi::OsString, ::error::Error> {
-    let mut name = try!(::file_handler::exe_file_stem());
+    let mut name = try!(config_file_handler::exe_file_stem());
     name.push(".crust.config");
     Ok(name)
 }
