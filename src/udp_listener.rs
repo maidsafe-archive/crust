@@ -130,7 +130,7 @@ impl UdpListener {
                                     connection: Ok(connection),
                                 };
 
-                                if event_tx_to_acceptor.send(event).is_err() {
+                                if event_tx.send(event).is_err() {
                                     break;
                                 }
                             }
@@ -159,7 +159,7 @@ impl UdpListener {
                                     connection: Ok(connection),
                                 };
 
-                                if event_tx_to_acceptor.send(event).is_err() {
+                                if event_tx.send(event).is_err() {
                                     break;
                                 }
                             }
