@@ -53,6 +53,8 @@ pub struct TheirContactInfo {
     pub static_addrs: Vec<Endpoint>,
     /// Their mapped addresses for UDP rendezvous connect.
     pub rendezvous_addrs: Vec<SocketAddr>,
+    /// TODO: documentation
+    pub pub_key: PublicKey,
 }
 
 impl OurContactInfo {
@@ -73,9 +75,14 @@ impl OurContactInfo {
 pub enum Event {
     /// Invoked when a new message is received.  Passes the peer's public key and the message.
     NewMessage(PublicKey, Vec<u8>),
-    /// Invoked when the new connection request finishes.
-    /// Passes the peer's endpoint and the token used in the request.
-    OnBootstrapConnect(io::Result<(Endpoint, Connection)>, u32 /* token */),
+    /// Invoked when we get a new bootstrap connection.
+    /// Passes the new connection and the peer's public key.
+    NewBootstrapConnection{
+        /// TODO Doc
+        connection: io::Result<Connection>,
+        /// TODO Doc
+        their_pub_key: PublicKey,
+    },
     /// Invoked when the new rendezvous connection request finishes.
     /// Passes the new connection and the peer's public key.
     NewConnection {
@@ -84,8 +91,6 @@ pub enum Event {
         /// TODO Doc
         their_pub_key: PublicKey,
     },
-    /// Invoked when a new connection is accepted. Passes the peer's endpoint.
-    OnBootstrapAccept(Endpoint, Connection),
     /// Invoked when a connection to a peer is lost.  Passes the peer's public key.
     LostConnection(PublicKey),
     /// TODO THIS IS WRONG - Invoked when a new bootstrap connection to a peer is established.

@@ -1,15 +1,19 @@
 use std::net::UdpSocket;
 use std::io;
+use std::io::{Error, ErrorKind};
 use std::net;
 use std::sync::{Arc, RwLock};
 use std::sync::mpsc::Sender;
 use std::sync::atomic::{Ordering, AtomicBool};
+use std::time::Duration;
 
 use periodic_sender::PeriodicSender;
 use socket_utils::RecvUntil;
 use endpoint::{Protocol, Endpoint};
 use socket_addr::{SocketAddr, SocketAddrV4};
 use maidsafe_utilities::thread::RaiiThreadJoiner;
+use maidsafe_utilities::serialisation::{deserialise, serialise};
+use udp_listener::{EchoExternalAddrResp, UdpListenerMsg};
 
 #[derive(Debug, RustcEncodable, RustcDecodable)]
 pub struct HolePunch {
@@ -41,7 +45,7 @@ pub fn external_udp_socket(request_id: u32,
             let (read_size, recv_addr) = match udp_socket.recv_from(&mut recv_data[..]) {
                 Ok(res) => res,
                 Err(_) => continue,
-            }
+            };
 
             if let Ok(EchoExternalAddrResp { external_addr }) =
                    deserialise::<EchoExternalAddrResp>(&recv_data[..read_size]) {

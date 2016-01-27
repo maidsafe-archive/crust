@@ -15,7 +15,23 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use soket_addr::SocketAddr;
+use std::io;
+use std::net::UdpSocket;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::mpsc::Sender;
+use std::time::Duration;
+
+use maidsafe_utilities::serialisation::{deserialise, serialise};
+use maidsafe_utilities::thread::RaiiThreadJoiner;
+use rand;
+use sodiumoxide::crypto::sign::PublicKey;
+
+use connection::udp_rendezvous_connect;
+use contact_info::ContactInfo;
+use event::Event;
+use hole_punching::{blocking_udp_punch_hole, external_udp_socket};
+use socket_addr::SocketAddr;
 
 const UDP_READ_TIMEOUT_SECS: u64 = 2;
 
@@ -42,10 +58,11 @@ pub struct UdpListener {
 }
 
 impl UdpListener {
-    pub fn new(update_contact_info_tx: Sender<ASDFG>,
-               event_tx: ::CrustEventSender,
+    pub fn new(event_tx: ::CrustEventSender,
                their_contact_infos: Vec<ContactInfo>)
                -> io::Result<UdpListener> {
+        // TODO: update_contact_info_tx use should be replaced by updating
+        // contacts directly by creating a new `BootstrapHandler`
         let udp_socket = try!(UdpSocket::bind("0.0.0.0:0"));
         let stop_flag = Arc::new(AtomicBool::new(false));
         let cloned_stop_flag = stop_flag.clone();
@@ -64,7 +81,7 @@ impl UdpListener {
         }
 
         let raii_joiner = RaiiThreadJoiner::new(thread!("UdpListener", move || {
-            run(udp_socket, event_tx, cloned_stop_flag);
+            Self::run(udp_socket, event_tx, their_contact_infos, cloned_stop_flag);
         }));
 
         Ok(UdpListener {
@@ -74,9 +91,11 @@ impl UdpListener {
     }
 
     fn run(udp_socket: UdpSocket,
-           update_contact_info_tx: Sender<ASDFG>,
            event_tx: ::CrustEventSender,
-           stop_flag: Acr<AtomicBool>) {
+           their_contact_infos: Vec<ContactInfo>,
+           stop_flag: Arc<AtomicBool>) {
+        // TODO: update_contact_info_tx use should be replaced by updating
+        // contacts directly by creating a new `BootstrapHandler`
         let mut read_buf = [0; 1024];
 
         while !stop_flag.load(Ordering::SeqCst) {
@@ -88,23 +107,23 @@ impl UdpListener {
 
                 match msg {
                     UdpListenerMsg::EchoExternalAddr => {
-                        let resp = UdpListenerMsg::EchoExternalAddrResp {
+                        let resp = EchoExternalAddrResp {
                             external_addr: SocketAddr(peer_addr.clone()),
                         };
 
                         let _ = udp_socket.send_to(&unwrap_result!(serialise(&resp)), peer_addr);
                     }
                     UdpListenerMsg::ConnectRequest { secret, pub_key } => {
-                        // TODO blocking_get_mapped_udp_socket() should return the external address
+                        // TODO external_udp_socket() should return the external address
                         // of the socket that it freshly spawned or (if it cannot because of say
                         // Zero-state etc.) Vector of all interface addresses. This should never be
                         // an option because then it is pretty useless.
                         if let Ok(res) =
-                               blocking_get_mapped_udp_socket(rand::random(),
-                                                              their_contact_infos.clone()) {
-                            let connect_resp = UdpListenerMsg::ConnectResponse {
+                               external_udp_socket(rand::random(), their_contact_infos.clone()) {
+                            let connect_resp = ConnectResponse {
                                 connect_on: res.1,
                                 secret: secret,
+                                pub_key: pub_key,
                             };
 
                             if udp_socket.send_to(&unwrap_result!(&serialise(&connect_resp)),
@@ -133,10 +152,9 @@ impl UdpListener {
                             }
                         }
                     }
-                    UdpListenerMsg::ConnectResponse { connect_on, secret, pub_key, } => {
+                    ConnectResponse { connect_on, secret, pub_key, } => {
                         if let Ok(res) =
-                               blocking_get_mapped_udp_socket(rand::random(),
-                                                              their_contact_infos.clone()) {
+                               external_udp_socket(rand::random(), their_contact_infos.clone()) {
                             for peer_addr in connect_on {
                                 let (socket, peer_addr) =
                                     match blocking_udp_punch_hole(res.0, secret, peer_addr) {
@@ -152,7 +170,7 @@ impl UdpListener {
                                 };
 
                                 let event = Event::NewConnection {
-                                    their_pub_key: contact_info.pub_key,
+                                    their_pub_key: pub_key,
                                     connection: Ok(connection),
                                 };
 

@@ -44,7 +44,6 @@
 #![allow(unused, unused_extern_crates)]
 
 extern crate cbor;
-extern crate igd;
 extern crate itertools;
 #[macro_use]
 extern crate log;
@@ -78,7 +77,6 @@ pub use event::{ContactInfoResult, Event, OurContactInfo, TheirContactInfo};
 pub use endpoint::{Endpoint, Protocol};
 pub use connection::Connection;
 pub use socket_addr::SocketAddr;
-pub use hole_punching::HolePunchServer;
 
 mod sequence_number;
 mod connection;
@@ -98,3 +96,4 @@ mod periodic_sender;
 mod socket_utils;
 mod socket_addr;
 mod ip_info;
+mod udp_listener;
