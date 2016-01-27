@@ -42,7 +42,7 @@ impl Sender {
     }
 
     pub fn send(&mut self, msg: &[u8]) -> io::Result<()> {
-        self.send_bytes(unwrap_result!(msg))
+        self.send_bytes(msg.to_owned())
     }
 }
 

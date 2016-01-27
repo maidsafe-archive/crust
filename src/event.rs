@@ -79,7 +79,9 @@ pub enum Event {
     /// Invoked when the new rendezvous connection request finishes.
     /// Passes the new connection and the peer's public key.
     NewConnection {
+        /// TODO Doc
         connection: io::Result<Connection>,
+        /// TODO Doc
         their_pub_key: PublicKey,
     },
     /// Invoked when a new connection is accepted. Passes the peer's endpoint.

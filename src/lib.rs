@@ -60,6 +60,7 @@ extern crate maidsafe_utilities;
 extern crate ip;
 extern crate get_if_addrs;
 extern crate sodiumoxide;
+extern crate config_file_handler;
 
 // /// Module implementing the `Service` which provides an interface to manage peer-to-peer
 // /// connections.
@@ -67,34 +68,20 @@ extern crate sodiumoxide;
 
 /// Defines errors.
 pub mod error;
-/// Provides a struct and free functions for working with config files.
-pub mod file_handler;
 
 /// Crust Observers will be informed of crust events on this
 pub type CrustEventSender = ::maidsafe_utilities::event_sender::MaidSafeObserver<Event>;
 pub use config_handler::write_config_file;
 // pub use service::Service;
 pub use event::{ContactInfoResult, Event, OurContactInfo, TheirContactInfo};
-pub use file_handler::{FileHandler, current_bin_dir, user_app_dir, system_cache_dir,
-                       exe_file_stem, ScopedUserAppDirRemover};
 pub use endpoint::{Endpoint, Protocol};
 pub use connection::Connection;
 pub use socket_addr::SocketAddr;
 pub use hole_punching::HolePunchServer;
 
-#[cfg(test)]
-mod test {
-    #[test]
-    pub fn check_rust_unit_testing_is_not_parallel() {
-        match ::std::env::var_os("RUST_TEST_THREADS") {
-            Some(val) => assert!(val.into_string().unwrap() == "1"),
-            None => panic!("RUST_TEST_THREADS needs to be 1 for the crust unit tests to work"),
-        }
-    }
-}
 mod sequence_number;
 mod connection;
-mod beacon;
+// mod beacon;
 mod endpoint;
 mod bootstrap_handler;
 mod config_handler;
@@ -111,4 +98,3 @@ mod periodic_sender;
 mod socket_utils;
 mod socket_addr;
 mod ip_info;
-mod acceptor;
