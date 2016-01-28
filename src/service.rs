@@ -56,6 +56,7 @@ use sequence_number::SequenceNumber;
 pub struct Service {
     our_contact_info: Arc<Mutex<ContactInfo>>,
     service_discovery: ServiceDiscovery<ContactInfo>,
+    bootstrap: Bootstrap,
     _raii_tcp_acceptor: RaiiTcpAcceptor,
     event_tx: ::CrustEventSender,
 }
@@ -82,122 +83,25 @@ impl Service {
                                                                   event_tx.clone()));
 
         let cloned_contact_info = contact_info.clone();
+        let generator = move || unwrap_result!(cloned_contact_info.lock()).clone();
         let service_discovery = try!(ServiceDiscovery::new_with_generator(service_discovery_port,
-                                                                          move || {
-                                                                              cloned_contact_info.lock().clone()
-                                                                          }));
+                                                                          generator));
+
+        let bootstrap = Bootstrap::new(&service_discovery, contact_info.clone(), event_tx.clone());
 
         let service = Service {
             our_contact_info: contact_info,
             service_discovery: service_discovery,
+            bootstrap: bootstrap,
             _raii_tcp_acceptor: raii_tcp_acceptor,
             event_tx: event_tx,
         };
 
-        let bootstrap_contacts = try!(service.get_bootstrap_contacts());
-        try!(service.bootstrap());
-
         Ok(service)
     }
 
-    fn get_bootstrap_contacts(&self) -> Result<Vec<ContactInfo>, Error> {
-        // Get contacts from service discovery
-        let mut contacts = self.seek_peers();
-
-        // Get further contacts from bootstrap cache
-        contacts.extend(try!(BootstrapHandler::new()).read_file().unwrap_or(vec![]));
-
-        // Get further contacts from config file - contains seed nodes
-        let config = match read_config_file() {
-            Ok(cfg) => cfg,
-            Err(e) => {
-                debug!("Crust failed to read config file; Error: {:?};", e);
-                try!(::config_handler::create_default_config_file());
-                Config::make_default()
-            }
-        };
-        contacts.extend(config.hard_coded_contacts);
-
-        contacts = contacts.unique().collect_vec();
-
-        // remove own endpoints
-        // Node A is on EP Ea. Node B starts up finds A and populates its bootstrap.cache with Ea.
-        // Now A dies and C starts after that on exactly Ea. Since they all share the same
-        // bootstrap.cache file (if all Crusts start from same path), C will have EP Ea and also
-        // have Ea in the bootstrap.cache so it will try to bootstrap to itself. The following code
-        // prevents that.
-        // let own_listening_endpoint = self.get_known_external_endpoints();
-        // contacts.retain(|c| !own_listening_endpoint.contains(&c));
-        contacts.retain(|contact| contact.pub_key != self.our_contact_info.lock().pub_key());
-
-        Ok((contacts))
-    }
-
-    fn bootstrap(&mut self, bootstrap_contacts: Vec<ContactInfo>) {
-        let bootstrap_peer_tx = self.bootstrap_peer_tx.clone();
-        let bpt = unwrap_result!(bootstrap_peer_tx.lock());
-        if let Some(ref tx) = *bpt {
-            tx.send(bootstrap_contacts);
-        };
-
-        let (tx, rx) = mpsc::channel();
-        let _ = tx.send(bootstrap_contacts);
-        *bpt = Some(tx);
-
-        let bh = BootstrapHandler::new().expect("Disk problem. Cannot access bootstrap");
-        let contact_info_handle = self.contact_info_handle.clone();
-
-        let shutting_down = self.shutting_down.clone();
-        let bootstrap_thread = self.bootstrap_thread.take();
-        if let Some(handle) = bootstrap_thread {
-            drop(handle)
-        };
-
-        let event_tx = self.event_tx.clone();
-
-        let handle = RaiiThreadJoiner::new(thread!("bootstrap thread", move || {
-            for contact in rx.iter().flat_map(|v| v.into_iter()) {
-                // Bootstrapping got cancelled.
-                if shutting_down.load(Ordering::SeqCst) {
-                    return;
-                }
-
-                let connect_result = connection::connect(contact,
-                                                         contact_info_handle.clone(),
-                                                         event_tx);
-                if shutting_down.load(Ordering::SeqCst) {
-                    return;
-                }
-                if let Ok(connection) = connect_result {
-                    let event = Event::NewBootstrapConnection {
-                        connection: connection,
-                        their_pub_key: contact.pub_key,
-                    };
-                    let _ = event_tx.send(event);
-                    bh.update_contacts(vec![contact], vec![]);
-                }
-            }
-            // TODO(canndrew): race condition here. Someone might send something down the channel
-            // just before we close it.
-            let bpt = unwrap_result!(bootstrap_peer_tx.lock());
-            bpt.take();
-            let _ = event_tx.send(Event::BootstrapFinished);
-        }));
-        self.bootstrap_thread = Some(handle);
-    }
-
-    fn seek_peers(&self) -> Vec<ContactInfo> {
-        let (tx, rx) = mpsc::channel();
-        self.service_discovery.register_seek_peer_observer(tx);
-        let mut contact_infos = Vec::new();
-
-        if self.service_discovery.seek_peers() {
-            thread::sleep(Duration::from_secs(1));
-            while let Ok(contact_info) = rx.try_recv() {
-                contact_infos.push(contact_info);
-            }
-        }
-        contact_infos
+    pub fn stop_bootstrap(&mut self) {
+        self.bootstrap.stop();
     }
 
     // TODO see when and how to handle this later now that we simply bootstrap during construction
