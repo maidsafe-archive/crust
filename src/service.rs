@@ -54,14 +54,9 @@ use sequence_number::SequenceNumber;
 /// (https://github.com/maidsafe/crust/blob/master/docs/vault_config_file_flowchart.pdf) for more
 /// information.
 pub struct Service {
+    our_contact_info: Arc<Mutex<ContactInfo>>,
     service_discovery: ServiceDiscovery<ContactInfo>,
-    bootstrap_peer_tx: Arc<Mutex<Option<mpsc::Sender<Vec<ContactInfo>>>>>,
-    contact_info_handle: ContactInfoHandle,
     _raii_tcp_acceptor: RaiiTcpAcceptor,
-    next_punch_sequence: SequenceNumber,
-    shutting_down: Arc<AtomicBool>,
-    bootstrap_thread: Option<RaiiThreadJoiner>,
-    pub_key: sign::PublicKey,
     event_tx: ::CrustEventSender,
 }
 
@@ -70,124 +65,60 @@ impl Service {
     /// the sender half to this method. Receiver will receive all `Event`s from this library.
     pub fn new(event_tx: ::CrustEventSender,
                service_discovery_port: u16)
-               -> Result<Service, ::error::Error> {
+               -> Result<Service, Error> {
         sodiumoxide::init();
         let (pub_key, _priv_key) = sign::gen_keypair(); // TODO Use private key once crate is stable
 
         // Form our initial contact info
-        let contact_info_handle = ContactInfoHandle::new(ContactInfo {
+        let contact_info = Arc::new(Mutex::new(ContactInfo {
             pub_key: pub_key,
             tcp_acceptors: Vec::new(),
             udp_listeners: Vec::new(),
-        });
+        }));
 
         // Start the TCP Acceptor
-        let raii_tcp_acceptor = try!(connection::start_tcp_accept(0, contact_info_handle.clone(), event_tx.clone()));
+        let raii_tcp_acceptor = try!(connection::start_tcp_accept(0,
+                                                                  contact_info.clone(),
+                                                                  event_tx.clone()));
 
+        let cloned_contact_info = contact_info.clone();
         let service_discovery = try!(ServiceDiscovery::new_with_generator(service_discovery_port,
-                                            || {
-                                                let ci = contact_info_handle.lock();
-                                                ci.clone()
-                                            }));
+                                                                          move || {
+                                                                              cloned_contact_info.lock().clone()
+                                                                          }));
 
         let service = Service {
-            pub_key: pub_key,
+            our_contact_info: contact_info,
             service_discovery: service_discovery,
-            bootstrap_peer_tx: Arc::new(Mutex::new(None)),
             _raii_tcp_acceptor: raii_tcp_acceptor,
-            next_punch_sequence: SequenceNumber::new(::rand::random()),
             event_tx: event_tx,
-            bootstrap_thread: None,
-            contact_info_handle: contact_info_handle,
-            shutting_down: Arc::new(AtomicBool::new(false)),
         };
+
+        let bootstrap_contacts = try!(service.get_bootstrap_contacts());
         try!(service.bootstrap());
 
         Ok(service)
     }
 
-    /*
-    fn get_local_endpoints(&self) -> Vec<Endpoint> {
-        self.acceptors
-            .iter()
-            .map(|a| Endpoint::from_socket_addr(Protocol::Tcp, a.local_address()))
-            .collect()
-    }
-    */
-
-    /// Starts accepting on a given port. If port number is 0, the OS
-    /// will pick one randomly. The actual port used will be returned.
-    pub fn start_tcp_accept(&mut self) -> Result<(), Error> {
-        unimplemented!()
-    }
-
-    fn seek_peers(&self) -> Vec<ContactInfo> {
-        let (tx, rx) = mpsc::channel();
-        self.service_discovery.register_seek_peer_observer(tx);
-        match self.service_discovery.seek_peers() {
-            false => Vec::new(),
-            true => {
-                thread::sleep(::std::time::Duration::from_millis(100));
-                let mut ret = Vec::new();
-                while let Ok(contact_info) = rx.try_recv() {
-                    ret.push(contact_info);
-                }
-                ret
-            }
-        }
-    }
-
-    /// This method tries to connect (bootstrap to existing network) to the default or provided
-    /// override list of bootstrap nodes (via config file named <current executable>.config).
-    ///
-    /// If `override_default_bootstrap_methods` is not set in the config file, it will attempt to read
-    /// a local cached file named <current executable>.bootstrap.cache to populate the list endpoints
-    /// to use for bootstrapping. It will also try `hard_coded_contacts` from config file.
-    /// In addition, it will try to use the beacon port (provided via config file) to connect to a peer
-    /// on the same LAN.
-    /// For more details on bootstrap cache file refer
-    /// https://github.com/maidsafe/crust/blob/master/docs/bootstrap.md
-    ///
-    /// If `override_default_bootstrap_methods` is set in config file, it will only try to connect to
-    /// the endpoints in the override list (`hard_coded_contacts`).
-
-    /// All connections (if any) will be dropped before bootstrap attempt is made.
-    /// This method returns immediately after dropping any active connections.endpoints
-    /// New bootstrap connections will be notified by `NewBootstrapConnection` event.
-    /// Its upper layer's responsibility to maintain or drop these connections.
-    fn bootstrap(&mut self) -> Result<(), ::error::Error> {
-        let list = {
-            let config = match read_config_file() {
-                Ok(cfg) => cfg,
-                Err(e) => {
-                    debug!("Crust failed to read config file; Error: {:?};", e);
-                    try!(::config_handler::create_default_config_file());
-                    Config::make_default()
-                }
-            };
-
-            try!(self.populate_bootstrap_contacts(&config))
-        };
-
-        self.bootstrap_off_list(list);
-        Ok(())
-    }
-
-    fn populate_bootstrap_contacts(&self, config: &Config) -> Result<Vec<ContactInfo>, ::error::Error> {
-        let cached_contacts = try!(BootstrapHandler::new()).read_file().unwrap_or(vec![]);
-
+    fn get_bootstrap_contacts(&self) -> Result<Vec<ContactInfo>, Error> {
+        // Get contacts from service discovery
         let mut contacts = self.seek_peers();
-        for contact in &config.hard_coded_contacts {
-            if !contacts.contains(contact) {
-                contacts.push(contact.clone());
-            }
-        }
-        for contact in &cached_contacts {
-            if !contacts.contains(contact) {
-                contacts.push(contact.clone());
-            }
-        }
 
+        // Get further contacts from bootstrap cache
+        contacts.extend(try!(BootstrapHandler::new()).read_file().unwrap_or(vec![]));
+
+        // Get further contacts from config file - contains seed nodes
+        let config = match read_config_file() {
+            Ok(cfg) => cfg,
+            Err(e) => {
+                debug!("Crust failed to read config file; Error: {:?};", e);
+                try!(::config_handler::create_default_config_file());
+                Config::make_default()
+            }
+        };
+        contacts.extend(config.hard_coded_contacts);
+
+        contacts = contacts.unique().collect_vec();
 
         // remove own endpoints
         // Node A is on EP Ea. Node B starts up finds A and populates its bootstrap.cache with Ea.
@@ -195,26 +126,22 @@ impl Service {
         // bootstrap.cache file (if all Crusts start from same path), C will have EP Ea and also
         // have Ea in the bootstrap.cache so it will try to bootstrap to itself. The following code
         // prevents that.
-        //let own_listening_endpoint = self.get_known_external_endpoints();
-        //contacts.retain(|c| !own_listening_endpoint.contains(&c));
-        contacts.retain(|c| {
-            let ci = self.contact_info_handle.lock();
-            c != &*ci
-        });
-        Ok(contacts)
+        // let own_listening_endpoint = self.get_known_external_endpoints();
+        // contacts.retain(|c| !own_listening_endpoint.contains(&c));
+        contacts.retain(|contact| contact.pub_key != self.our_contact_info.lock().pub_key());
+
+        Ok((contacts))
     }
 
-    /// Bootstrap to the network using the provided list of peers.
-    fn bootstrap_off_list(&mut self,
-                          bootstrap_list: Vec<ContactInfo>) {
+    fn bootstrap(&mut self, bootstrap_contacts: Vec<ContactInfo>) {
         let bootstrap_peer_tx = self.bootstrap_peer_tx.clone();
         let bpt = unwrap_result!(bootstrap_peer_tx.lock());
         if let Some(ref tx) = *bpt {
-            tx.send(bootstrap_list);
+            tx.send(bootstrap_contacts);
         };
 
         let (tx, rx) = mpsc::channel();
-        let _ = tx.send(bootstrap_list);
+        let _ = tx.send(bootstrap_contacts);
         *bpt = Some(tx);
 
         let bh = BootstrapHandler::new().expect("Disk problem. Cannot access bootstrap");
@@ -235,7 +162,8 @@ impl Service {
                     return;
                 }
 
-                let connect_result = connection::connect(contact, contact_info_handle.clone(),
+                let connect_result = connection::connect(contact,
+                                                         contact_info_handle.clone(),
                                                          event_tx);
                 if shutting_down.load(Ordering::SeqCst) {
                     return;
@@ -256,6 +184,20 @@ impl Service {
             let _ = event_tx.send(Event::BootstrapFinished);
         }));
         self.bootstrap_thread = Some(handle);
+    }
+
+    fn seek_peers(&self) -> Vec<ContactInfo> {
+        let (tx, rx) = mpsc::channel();
+        self.service_discovery.register_seek_peer_observer(tx);
+        let mut contact_infos = Vec::new();
+
+        if self.service_discovery.seek_peers() {
+            thread::sleep(Duration::from_secs(1));
+            while let Ok(contact_info) = rx.try_recv() {
+                contact_infos.push(contact_info);
+            }
+        }
+        contact_infos
     }
 
     // TODO see when and how to handle this later now that we simply bootstrap during construction
@@ -314,11 +256,10 @@ impl Service {
     /// details on handling of connect in different protocols.
     pub fn connect(&self, our_contact_info: OurContactInfo, their_contact_info: TheirContactInfo) {
         if let Some(msg) = if our_contact_info.secret != their_contact_info.secret {
-            Some("Cannot connect. our_contact_info and their_contact_info are \
-                  not associated with the same connection.")
+            Some("Cannot connect. our_contact_info and their_contact_info are not associated with \
+                  the same connection.")
         } else if their_contact_info.rendezvous_addrs.is_empty() {
-            Some("No rendezvous address supplied. Direct connections not yet \
-                  supported.")
+            Some("No rendezvous address supplied. Direct connections not yet supported.")
         } else {
             None
         } {
@@ -476,33 +417,6 @@ impl Service {
             ret.extend(acceptor.mapped_addresses());
         }
         ret.iter().map(|a| Endpoint::from_socket_addr(Protocol::Tcp, *a)).collect()
-    }
-
-    // pub fn bootstrap_off_list(&mut self, token: u32, mut bootstrap_list: Vec<Endpoint>) {
-    // match self.bootstrap_thread {
-    // Some(_) => (),
-    // None => {
-    // let joiner = RaiiThreadJoiner::new(thread!("bootstrap", move || {
-    // for peer_endpoint in bootstrap_list {
-    // if
-    // }
-    //
-    // }));
-    // self.bootstrap_thread = Some(joiner);
-    // }
-    // }
-    // }
-    //
-
-    // TODO (canndrew): Remove this (replace with thread! macro)
-    fn new_thread<F, T>(name: &str, f: F) -> io::Result<JoinHandle<T>>
-        where F: FnOnce() -> T,
-              F: Send + 'static,
-              T: Send + 'static
-    {
-        thread::Builder::new()
-            .name("Service::".to_owned() + name)
-            .spawn(f)
     }
 
     /// Lookup a mapped udp socket based on result_token
