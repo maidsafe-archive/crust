@@ -31,7 +31,7 @@ use sodiumoxide::crypto::sign::PublicKey;
 use std::net::TcpListener;
 
 use connection::RaiiTcpAcceptor;
-use contact_info::ContactInfo;
+use contact_info::{ContactInfo, ContactInfoHandle};
 use rand;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 use itertools::Itertools;
@@ -55,12 +55,14 @@ use sequence_number::SequenceNumber;
 /// information.
 pub struct Service {
     service_discovery: ServiceDiscovery<ContactInfo>,
-    our_contact_info: Arc<Mutex<ContactInfo>>,
+    bootstrap_peer_tx: Arc<Mutex<Option<mpsc::Sender<Vec<ContactInfo>>>>>,
+    contact_info_handle: ContactInfoHandle,
     _raii_tcp_acceptor: RaiiTcpAcceptor,
     next_punch_sequence: SequenceNumber,
-    event_sender: ::CrustEventSender,
-    is_bootstrapping: Arc<AtomicBool>,
+    shutting_down: Arc<AtomicBool>,
     bootstrap_thread: Option<RaiiThreadJoiner>,
+    pub_key: sign::PublicKey,
+    event_tx: ::CrustEventSender,
 }
 
 impl Service {
@@ -73,41 +75,45 @@ impl Service {
         let (pub_key, _priv_key) = sign::gen_keypair(); // TODO Use private key once crate is stable
 
         // Form our initial contact info
-        let our_contact_info = Arc::new(Mutex::new(ContactInfo {
+        let contact_info_handle = ContactInfoHandle::new(ContactInfo {
             pub_key: pub_key,
             tcp_acceptors: Vec::new(),
             udp_listeners: Vec::new(),
-        }));
+        });
 
         // Start the TCP Acceptor
-        let raii_tcp_acceptor = try!(connection::start_tcp_accept(0, our_contact_info.clone(), event_tx.clone()));
+        let raii_tcp_acceptor = try!(connection::start_tcp_accept(0, contact_info_handle.clone(), event_tx.clone()));
 
-        let (upnp_addr_tx, _upnp_addr_rx) = mpsc::channel();
-
-        let service_discovery = ServiceDiscovery::new(service_discovery_port,
-                                                      our_contact_info.clone());
+        let service_discovery = try!(ServiceDiscovery::new_with_generator(service_discovery_port,
+                                            || {
+                                                let ci = contact_info_handle.lock();
+                                                ci.clone()
+                                            }));
 
         let service = Service {
             pub_key: pub_key,
             service_discovery: service_discovery,
-            bootstrap_peers: None,
+            bootstrap_peer_tx: Arc::new(Mutex::new(None)),
             _raii_tcp_acceptor: raii_tcp_acceptor,
             next_punch_sequence: SequenceNumber::new(::rand::random()),
             event_tx: event_tx,
-            is_bootstrapping: Arc::new(AtomicBool::new(false)),
             bootstrap_thread: None,
+            contact_info_handle: contact_info_handle,
+            shutting_down: Arc::new(AtomicBool::new(false)),
         };
-        service.bootstrap(service_discovery_port);
+        try!(service.bootstrap());
 
         Ok(service)
     }
 
+    /*
     fn get_local_endpoints(&self) -> Vec<Endpoint> {
         self.acceptors
             .iter()
             .map(|a| Endpoint::from_socket_addr(Protocol::Tcp, a.local_address()))
             .collect()
     }
+    */
 
     /// Starts accepting on a given port. If port number is 0, the OS
     /// will pick one randomly. The actual port used will be returned.
@@ -115,7 +121,7 @@ impl Service {
         unimplemented!()
     }
 
-    fn seek_peers(&self) -> Vec<Endpoint> {
+    fn seek_peers(&self) -> Vec<ContactInfo> {
         let (tx, rx) = mpsc::channel();
         self.service_discovery.register_seek_peer_observer(tx);
         match self.service_discovery.seek_peers() {
@@ -149,7 +155,7 @@ impl Service {
     /// This method returns immediately after dropping any active connections.endpoints
     /// New bootstrap connections will be notified by `NewBootstrapConnection` event.
     /// Its upper layer's responsibility to maintain or drop these connections.
-    fn bootstrap(&mut self) {
+    fn bootstrap(&mut self) -> Result<(), ::error::Error> {
         let list = {
             let config = match read_config_file() {
                 Ok(cfg) => cfg,
@@ -163,21 +169,22 @@ impl Service {
             try!(self.populate_bootstrap_contacts(&config))
         };
 
-        self.bootstrap_off_list(list)
+        self.bootstrap_off_list(list);
+        Ok(())
     }
 
-    fn populate_bootstrap_contacts(&self, config: &Config) -> Vec<(Endpoint, PublicKey)> {
+    fn populate_bootstrap_contacts(&self, config: &Config) -> Result<Vec<ContactInfo>, ::error::Error> {
         let cached_contacts = try!(BootstrapHandler::new()).read_file().unwrap_or(vec![]);
 
         let mut contacts = self.seek_peers();
         for contact in &config.hard_coded_contacts {
             if !contacts.contains(contact) {
-                contacts.push(contact);
+                contacts.push(contact.clone());
             }
         }
         for contact in &cached_contacts {
             if !contacts.contains(contact) {
-                contacts.push(contact);
+                contacts.push(contact.clone());
             }
         }
 
@@ -188,58 +195,65 @@ impl Service {
         // bootstrap.cache file (if all Crusts start from same path), C will have EP Ea and also
         // have Ea in the bootstrap.cache so it will try to bootstrap to itself. The following code
         // prevents that.
-        let own_listening_endpoint = self.get_known_external_endpoints();
-        contacts.retain(|c| !own_listening_endpoint.contains(&c));
-        contacts
+        //let own_listening_endpoint = self.get_known_external_endpoints();
+        //contacts.retain(|c| !own_listening_endpoint.contains(&c));
+        contacts.retain(|c| {
+            let ci = self.contact_info_handle.lock();
+            c != &*ci
+        });
+        Ok(contacts)
     }
 
     /// Bootstrap to the network using the provided list of peers.
     fn bootstrap_off_list(&mut self,
-                          bootstrap_list: Vec<(Endpoint,PublicKey)>) {
-        if self.is_bootstrapping.compare_and_swap(false, true, Ordering::SeqCst) {
-            let _ = unwrap_option!(self.bootstrap_peers.as_ref(),
-                                   "bootstrap_peers cannot be None!")
-                        .send(bootstrap_list);
-            return;
-        }
-
-        let bh = BootstrapHandler::new().expect("Disk problem. Cannot access bootstrap");
+                          bootstrap_list: Vec<ContactInfo>) {
+        let bootstrap_peer_tx = self.bootstrap_peer_tx.clone();
+        let bpt = unwrap_result!(bootstrap_peer_tx.lock());
+        if let Some(ref tx) = *bpt {
+            tx.send(bootstrap_list);
+        };
 
         let (tx, rx) = mpsc::channel();
         let _ = tx.send(bootstrap_list);
-        self.bootstrap_peers = Some(tx);
+        *bpt = Some(tx);
 
-        let is_bootstrapping = self.is_bootstrapping.clone();
+        let bh = BootstrapHandler::new().expect("Disk problem. Cannot access bootstrap");
+        let contact_info_handle = self.contact_info_handle.clone();
+
+        let shutting_down = self.shutting_down.clone();
         let bootstrap_thread = self.bootstrap_thread.take();
         if let Some(handle) = bootstrap_thread {
             drop(handle)
         };
 
-        let event_sender = self.event_sender.clone();
+        let event_tx = self.event_tx.clone();
 
         let handle = RaiiThreadJoiner::new(thread!("bootstrap thread", move || {
-            for (endpoint, ep_key) in rx.iter().flat_map(|v| v.into_iter()) {
+            for contact in rx.iter().flat_map(|v| v.into_iter()) {
                 // Bootstrapping got cancelled.
-                if !is_bootstrapping.load(Ordering::SeqCst) {
+                if shutting_down.load(Ordering::SeqCst) {
                     return;
                 }
 
-                let connect_result = Connection::connect(endpoint, ep_key, self.pub_key,
-                                                         self.event_tx);
-                if !is_bootstrapping.load(Ordering::SeqCst) {
+                let connect_result = connection::connect(contact, contact_info_handle.clone(),
+                                                         event_tx);
+                if shutting_down.load(Ordering::SeqCst) {
                     return;
                 }
                 if let Ok(connection) = connect_result {
                     let event = Event::NewBootstrapConnection {
                         connection: connection,
-                        their_pub_key: ep_key,
+                        their_pub_key: contact.pub_key,
                     };
-                    let _ = event_sender.send(event);
-                    bh.update_contact(vec![endpoint], vec![]);
+                    let _ = event_tx.send(event);
+                    bh.update_contacts(vec![contact], vec![]);
                 }
             }
-            is_bootstrapping.store(false, Ordering::SeqCst);
-            let _ = event_sender.send(Event::BootstrapFinished);
+            // TODO(canndrew): race condition here. Someone might send something down the channel
+            // just before we close it.
+            let bpt = unwrap_result!(bootstrap_peer_tx.lock());
+            bpt.take();
+            let _ = event_tx.send(Event::BootstrapFinished);
         }));
         self.bootstrap_thread = Some(handle);
     }
@@ -253,13 +267,7 @@ impl Service {
     // }
 
     fn stop(&mut self) {
-        // service_discovery.stop() (?)
-    }
-
-    // TODO (canndrew): do we even need this method?
-    /// Check whether we're connected to an endpoint.
-    pub fn is_connected_to(&self, endpoint: &Endpoint) -> bool {
-        self.connection_map.is_connected_to(endpoint)
+        self.shutting_down.store(true, Ordering::SeqCst);
     }
 
     /// Get the hole punch servers addresses of nodes that we're connected to ordered by how likely

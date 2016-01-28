@@ -25,7 +25,7 @@ use itertools::Itertools;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 use maidsafe_utilities::serialisation::{deserialise, serialise};
 use get_if_addrs::get_if_addrs;
-use contact_info::ContactInfo;
+use contact_info::{ContactInfo, ContactInfoHandle};
 use tcp_connections;
 use utp_connections;
 use sender_receiver::{Sender, Receiver};
@@ -88,62 +88,81 @@ impl Drop for RaiiTcpAcceptor {
     }
 }
 
-pub fn connect(remote_ep: Endpoint,
-               their_pub_key: PublicKey,
-               our_contact_info: Arc<Mutex<ContactInfo>>,
+pub fn connect(contact: ContactInfo,
+               our_contact_info: ContactInfoHandle,
                event_tx: ::CrustEventSender)
-               -> io::Result<Connection> {
-    match *remote_ep.protocol() {
-        Protocol::Tcp => {
-            let (network_input, writer) =
-                try!(tcp_connections::connect_tcp(remote_ep.socket_addr().clone()));
-
-            let our_addr = SocketAddr(unwrap_result!(network_input.local_addr()));
-            let their_addr = SocketAddr(unwrap_result!(network_input.peer_addr()));
-
-            let network_rx = Receiver::Tcp(cbor::Decoder::from_reader(network_input));
-            let joiner = RaiiThreadJoiner::new(thread!("TcpNetworkReader", move || {
-                start_rx(network_rx, their_pub_key, event_tx);
-            }));
-
-            let mut connection = Connection {
-                protocol: Protocol::Tcp,
-                our_addr: our_addr,
-                their_addr: their_addr,
-                network_tx: Sender::Tcp(writer),
-                _network_read_joiner: joiner,
-            };
-
-            let serialised_info =
-                unwrap_result!(serialise(&*unwrap_result!(our_contact_info.lock())));
-            try!(connection.send(&serialised_info[..]));
-
-            Ok(connection)
+            -> io::Result<Connection>
+{
+    let mut last_err = None;
+    for tcp_ep in contact.tcp_acceptors {
+        match connect_tcp_endpoint(tcp_ep, contact.pub_key, our_contact_info, event_tx) {
+            Ok(connection) => return Ok(connection),
+            Err(e) => last_err = Some(e),
         }
-        Protocol::Utp => {
-            let (network_input, writer) =
-                try!(utp_connections::connect_utp(remote_ep.socket_addr().clone()));
-            let our_addr = SocketAddr(network_input.local_addr());
-            let their_addr = SocketAddr(network_input.peer_addr());
-
-            let network_rx = Receiver::Utp(cbor::Decoder::from_reader(network_input));
-            let joiner = RaiiThreadJoiner::new(thread!("UtpNetworkReader", move || {
-                start_rx(network_rx, their_pub_key, event_tx);
-            }));
-
-            Ok(Connection {
-                protocol: Protocol::Utp,
-                our_addr: our_addr,
-                their_addr: their_addr,
-                network_tx: Sender::Utp(writer),
-                _network_read_joiner: joiner,
-            })
-        }
+    }
+    match last_err {
+        Some(e) => Err(e),
+        None => Err(io::Error::new(io::ErrorKind::Other, "Contact info does not contain any endpoint addresses")),
     }
 }
 
+fn connect_tcp_endpoint(remote_ep: SocketAddr,
+                        their_pub_key: PublicKey,
+                        our_contact_info: ContactInfoHandle,
+                        event_tx: ::CrustEventSender)
+               -> io::Result<Connection> {
+    let (network_input, writer) =
+        try!(tcp_connections::connect_tcp(remote_ep.clone()));
+
+    let our_addr = SocketAddr(unwrap_result!(network_input.local_addr()));
+    let their_addr = SocketAddr(unwrap_result!(network_input.peer_addr()));
+
+    let network_rx = Receiver::Tcp(cbor::Decoder::from_reader(network_input));
+    let joiner = RaiiThreadJoiner::new(thread!("TcpNetworkReader", move || {
+        start_rx(network_rx, their_pub_key, event_tx);
+    }));
+
+    let mut connection = Connection {
+        protocol: Protocol::Tcp,
+        our_addr: our_addr,
+        their_addr: their_addr,
+        network_tx: Sender::Tcp(writer),
+        _network_read_joiner: joiner,
+    };
+
+    let serialised_info =
+        unwrap_result!(serialise(&*unwrap_result!(our_contact_info.lock())));
+    try!(connection.send(&serialised_info[..]));
+
+    Ok(connection)
+}
+
+fn connect_utp_endpoint(remote_ep: SocketAddr,
+                        their_pub_key: PublicKey,
+                        our_contact_info: ContactInfoHandle,
+                        event_tx: ::CrustEventSender)
+               -> io::Result<Connection> {
+    let (network_input, writer) =
+        try!(utp_connections::connect_utp(remote_ep.clone()));
+    let our_addr = SocketAddr(network_input.local_addr());
+    let their_addr = SocketAddr(network_input.peer_addr());
+
+    let network_rx = Receiver::Utp(cbor::Decoder::from_reader(network_input));
+    let joiner = RaiiThreadJoiner::new(thread!("UtpNetworkReader", move || {
+        start_rx(network_rx, their_pub_key, event_tx);
+    }));
+
+    Ok(Connection {
+        protocol: Protocol::Utp,
+        our_addr: our_addr,
+        their_addr: their_addr,
+        network_tx: Sender::Utp(writer),
+        _network_read_joiner: joiner,
+    })
+}
+
 pub fn start_tcp_accept(port: u16,
-                        our_contact_info: Arc<Mutex<ContactInfo>>,
+                        our_contact_info: ContactInfoHandle,
                         event_tx: ::CrustEventSender)
                         -> io::Result<RaiiTcpAcceptor> {
     let listener = try!(TcpListener::bind(("0.0.0.0", port)));

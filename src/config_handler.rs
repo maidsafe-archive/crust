@@ -22,13 +22,13 @@
 //! This means that `read_config_file()`, `create_default_config_file()`, and
 //! `write_config_file()` should not be called concurrently with one another.
 
-use endpoint::Endpoint;
+use contact_info::ContactInfo;
 use config_file_handler::FileHandler;
 use config_file_handler;
 
 #[derive(PartialEq, Eq, Debug, RustcDecodable, RustcEncodable, Clone)]
 pub struct Config {
-    pub hard_coded_contacts: Vec<Endpoint>,
+    pub hard_coded_contacts: Vec<ContactInfo>,
 }
 
 impl Config {
@@ -57,7 +57,7 @@ pub fn create_default_config_file() -> Result<(), ::error::Error> {
 ///
 /// N.B. This method should only be used as a utility for test and examples.  In normal use cases,
 /// this file should be created by the installer for the dependent application.
-pub fn write_config_file(hard_coded_endpoints: Option<Vec<Endpoint>>)
+pub fn write_config_file(hard_coded_endpoints: Option<Vec<ContactInfo>>)
                          -> Result<::std::path::PathBuf, ::error::Error> {
     use std::io::Write;
 

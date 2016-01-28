@@ -23,7 +23,7 @@
 //! with any other one.
 
 use error::Error;
-use endpoint::Endpoint;
+use contact_info::ContactInfo;
 use config_file_handler::FileHandler;
 use config_file_handler;
 use util;
@@ -48,8 +48,8 @@ impl BootstrapHandler {
     }
 
     pub fn update_contacts(&mut self,
-                           contacts: Vec<Endpoint>,
-                           prune: Vec<Endpoint>)
+                           contacts: Vec<ContactInfo>,
+                           prune: Vec<ContactInfo>)
                            -> Result<(), Error> {
         try!(self.insert_contacts(contacts, prune));
         // TODO(Team) this implementation is missing and should be considered in next planning
@@ -59,8 +59,8 @@ impl BootstrapHandler {
         Ok(())
     }
 
-    pub fn read_file(&mut self) -> Result<Vec<Endpoint>, Error> {
-        Ok(try!(self.file_handler.read_file::<Vec<Endpoint>>()))
+    pub fn read_file(&mut self) -> Result<Vec<ContactInfo>, Error> {
+        Ok(try!(self.file_handler.read_file::<Vec<ContactInfo>>()))
     }
 
     fn duration_between_updates() -> ::time::Duration {
@@ -72,8 +72,8 @@ impl BootstrapHandler {
     }
 
     fn insert_contacts(&mut self,
-                       mut contacts: Vec<Endpoint>,
-                       prune: Vec<Endpoint>)
+                       mut contacts: Vec<ContactInfo>,
+                       prune: Vec<ContactInfo>)
                        -> Result<(), Error> {
         let mut bootstrap_contacts = self.read_file().unwrap_or_else(|e| {
             debug!("Error reading Bootstrap file: {:?}.", e);

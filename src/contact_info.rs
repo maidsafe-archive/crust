@@ -15,11 +15,13 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use std::sync::{Arc, Mutex, MutexGuard};
 use socket_addr::SocketAddr;
 use sodiumoxide::crypto::sign::PublicKey;
+use rustc_serialize::{Encodable, Encoder, Decodable, Decoder};
 
 /// This struct contains information needed to Bootstrap and for echo-server services
-#[derive(RustcEncodable, RustcDecodable, Debug, Clone)]
+#[derive(RustcEncodable, RustcDecodable, Debug, Clone, PartialEq, PartialOrd)]
 pub struct ContactInfo {
     pub pub_key: PublicKey,
     /// This will contain both local and global addresses. Local addresses will be useful on LAN
@@ -35,3 +37,37 @@ pub struct ContactInfo {
     /// global addresses populated for UDP.
     pub udp_listeners: Vec<SocketAddr>,
 }
+
+/// Allows mutltithreaded access to a `ContactInfo` and implements `Encodable` and `Decodable` for
+/// it.
+#[derive(Clone)]
+struct ContactInfoHandle {
+    pub inner: Arc<Mutex<ContactInfo>>,
+}
+
+impl ContactInfoHandle {
+    pub fn new(ci: ContactInfo) -> ContactInfoHandle {
+        ContactInfoHandle {
+            inner: Arc::new(Mutex::new(ci)),
+        }
+    }
+
+    pub fn lock<'a>(&'a self) -> MutexGuard<'a, ContactInfo> {
+        self.inner.lock()
+    }
+}
+
+impl Encodable for ContactInfoHandle {
+    fn encode<S: Encoder>(&self, s: &mut S) -> Result<(), S::Error> {
+        let ci = self.inner.lock();
+        ci.encode(s)
+    }
+}
+
+impl Decodable for ContactInfoHandle {
+    fn decode<D: Decoder>(d: &mut D) -> Result<ContactInfoHandle, D::Error> {
+        let ci = try!(Decodable::decode(d));
+        ContactInfoHandle::new(ci)
+    }
+}
+

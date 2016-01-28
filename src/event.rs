@@ -79,7 +79,7 @@ pub enum Event {
     /// Passes the new connection and the peer's public key.
     NewBootstrapConnection{
         /// TODO Doc
-        connection: io::Result<Connection>,
+        connection: Connection,
         /// TODO Doc
         their_pub_key: PublicKey,
     },
