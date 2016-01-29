@@ -12,7 +12,7 @@ use endpoint::{Protocol, Endpoint};
 use socket_addr::{SocketAddr, SocketAddrV4};
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 use maidsafe_utilities::serialisation::{deserialise, serialise};
-use udp_listener::{EchoExternalAddrResp, UdpListenerMsg};
+use udp_listener::{UdpListenerRequest, UdpListenerResponse};
 
 #[derive(Debug, RustcEncodable, RustcDecodable)]
 pub struct HolePunch {
@@ -31,7 +31,7 @@ pub fn external_udp_socket(request_id: u32,
     try!(udp_socket.set_read_timeout(Some(Duration::from_secs(2))));
     let cloned_udp_socket = try!(udp_socket.try_clone());
 
-    let send_data = unwrap_result!(serialise(&UdpListenerMsg::EchoExternalAddr));
+    let send_data = unwrap_result!(serialise(&UdpListenerRequest::EchoExternalAddr));
 
     let res = try!(::crossbeam::scope(|scope| -> io::Result<SocketAddr> {
         // TODO Instead of periodic sender just send the request to every body and start listening.
@@ -49,8 +49,8 @@ pub fn external_udp_socket(request_id: u32,
                 Err(_) => continue,
             };
 
-            if let Ok(EchoExternalAddrResp { external_addr }) =
-                   deserialise::<EchoExternalAddrResp>(&recv_data[..read_size]) {
+            if let Ok(UdpListenerResponse::EchoExternalAddr { external_addr }) =
+                   deserialise::<UdpListenerResponse>(&recv_data[..read_size]) {
                 return Ok(external_addr);
             }
         }

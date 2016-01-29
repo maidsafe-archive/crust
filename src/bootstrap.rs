@@ -17,6 +17,8 @@
 
 // TODO Have facilities to add and remove bootstrap contacts
 
+use itertools::Itertools;
+
 use std::sync::{Arc, Mutex, mpsc};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
@@ -40,6 +42,7 @@ pub struct Bootstrap {
 impl Bootstrap {
     pub fn new(service_discovery: &ServiceDiscovery<ContactInfo>,
                our_contact_info: Arc<Mutex<ContactInfo>>,
+               peer_contact_infos: Arc<Mutex<Vec<ContactInfo>>>,
                event_tx: ::CrustEventSender)
                -> Bootstrap {
         let stop_flag = Arc::new(AtomicBool::new(false));
@@ -54,6 +57,7 @@ impl Bootstrap {
             let contacts =
                 match Bootstrap::get_bootstrap_contacts(&unwrap_result!(our_contact_info.lock())
                                                              .pub_key,
+                                                        peer_contact_infos,
                                                         seek_peers_rx) {
                     Ok(contacts) => contacts,
                     Err(err) => {
@@ -76,14 +80,19 @@ impl Bootstrap {
     }
 
     fn get_bootstrap_contacts(our_pub_key: &PublicKey,
+                              peer_contact_infos: Arc<Mutex<Vec<ContactInfo>>>,
                               seek_peers_rx: mpsc::Receiver<ContactInfo>)
                               -> Result<Vec<ContactInfo>, ::error::Error> {
-        let mut contacts = HashSet::new();
+        let mut contacts = unwrap_result!(peer_contact_infos.lock()).clone();
+
+        // In production, we expect to have total contacts of atleast 1000 specially from
+        // bootstrap.cache alone.
+        contacts.reserve(1000);
 
         // Get contacts from service discovery
         thread::sleep(Duration::from_secs(1));
         while let Ok(contact_info) = seek_peers_rx.try_recv() {
-            contacts.insert(contact_info);
+            contacts.push(contact_info);
         }
 
         // Get further contacts from bootstrap cache
@@ -100,17 +109,20 @@ impl Bootstrap {
         };
         contacts.extend(config.hard_coded_contacts);
 
-        // remove own endpoints
+        // Please don't be tempted to use a HashSet here because we want to preserve the
+        // order in which we collect the contacts
+        contacts = contacts.into_iter().unique().collect();
+
+        // Remove own endpoints:
         // Node A is on EP Ea. Node B starts up finds A and populates its bootstrap.cache with Ea.
         // Now A dies and C starts after that on exactly Ea. Since they all share the same
         // bootstrap.cache file (if all Crusts start from same path), C will have EP Ea and also
         // have Ea in the bootstrap.cache so it will try to bootstrap to itself. The following code
         // prevents that.
-        // let own_listening_endpoint = self.get_known_external_endpoints();
-        // contacts.retain(|c| !own_listening_endpoint.contains(&c));
-        let contacts = contacts.into_iter()
-                               .filter(|contact| contact.pub_key != *our_pub_key)
-                               .collect();
+        contacts.retain(|contact| contact.pub_key != *our_pub_key);
+
+        // Re-assign our findings so that others can use an updated list
+        *unwrap_result!(peer_contact_infos.lock()) = contacts.clone();
 
         Ok((contacts))
     }
@@ -123,7 +135,7 @@ impl Bootstrap {
             // Bootstrapping got cancelled.
             // Later check the bootstrap contacts in the background to see if they are still valid
             if stop_flag.load(Ordering::SeqCst) {
-                return;
+                break;
             }
 
             let their_pub_key = contact.pub_key.clone();
@@ -134,7 +146,7 @@ impl Bootstrap {
                                                        our_contact_info.clone(),
                                                        event_tx.clone());
             if stop_flag.load(Ordering::SeqCst) {
-                return;
+                break;
             }
 
             if let Ok(connection) = connect_result {

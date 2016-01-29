@@ -51,24 +51,6 @@ use socket_addr::{SocketAddr, SocketAddrV4};
 use bootstrap_handler::BootstrapHandler;
 use sequence_number::SequenceNumber;
 
-#[derive(PartialEq, Eq)]
-struct EchoServerAddr {
-    pub addr: SocketAddr,
-}
-
-impl PartialOrd for EchoServerAddr {
-    fn partial_cmp(&self, other: &EchoServerAddr) -> Option<cmp::Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl Ord for EchoServerAddr {
-    fn cmp(&self, other: &EchoServerAddr) -> cmp::Ordering {
-        ::util::heuristic_geo_cmp(&SocketAddrExt::ip(&*other.addr),
-                                  &SocketAddrExt::ip(&*self.addr))
-    }
-}
-
 /// A structure representing a connection manager.
 ///
 /// This abstraction has a hidden dependency on a config file. Refer to [the docs for `FileHandler`]
@@ -77,13 +59,13 @@ impl Ord for EchoServerAddr {
 /// information.
 pub struct Service {
     our_contact_info: Arc<Mutex<ContactInfo>>,
+    peer_contact_infos: Arc<Mutex<Vec<ContactInfo>>>,
     service_discovery: ServiceDiscovery<ContactInfo>,
     bootstrap: Bootstrap,
     raii_tcp_acceptor: RaiiTcpAcceptor,
     udp_listener: UdpListener,
     event_tx: ::CrustEventSender,
-    echo_servers: BTreeSet<EchoServerAddr>,
-    next_punch_sequence: SequenceNumber,
+    external_udp_sock_seq_id: u32,
 }
 
 impl Service {
@@ -93,38 +75,48 @@ impl Service {
                service_discovery_port: u16)
                -> Result<Service, Error> {
         sodiumoxide::init();
-        let (pub_key, _priv_key) = sign::gen_keypair(); // TODO Use private key once crate is stable
+
+        // TODO Use private key once crate is stable
+        let (pub_key, _priv_key) = sign::gen_keypair();
 
         // Form our initial contact info
-        let contact_info = Arc::new(Mutex::new(ContactInfo {
+        let our_contact_info = Arc::new(Mutex::new(ContactInfo {
             pub_key: pub_key,
             tcp_acceptors: Vec::new(),
             udp_listeners: Vec::new(),
         }));
 
+        // Form initial peer contact infos - these will also contain echo-service addrs.
+        let peer_contact_infos = Arc::new(Mutex::new(Vec::new()));
+
         // Start the TCP Acceptor
         let raii_tcp_acceptor = try!(connection::start_tcp_accept(0,
-                                                                  contact_info.clone(),
+                                                                  our_contact_info.clone(),
                                                                   event_tx.clone()));
         // Start the UDP Listener
-        let udp_listener = try!(UdpListener::new(event_tx.clone(), Vec::new()));
+        let udp_listener = try!(UdpListener::new(our_contact_info.clone(),
+                                                 peer_contact_infos.clone(),
+                                                 event_tx.clone()));
 
-        let cloned_contact_info = contact_info.clone();
+        let cloned_contact_info = our_contact_info.clone();
         let generator = move || unwrap_result!(cloned_contact_info.lock()).clone();
         let service_discovery = try!(ServiceDiscovery::new_with_generator(service_discovery_port,
                                                                           generator));
 
-        let bootstrap = Bootstrap::new(&service_discovery, contact_info.clone(), event_tx.clone());
+        let bootstrap = Bootstrap::new(&service_discovery,
+                                       our_contact_info.clone(),
+                                       peer_contact_infos.clone(),
+                                       event_tx.clone());
 
         let service = Service {
-            our_contact_info: contact_info,
+            our_contact_info: our_contact_info,
+            peer_contact_infos: peer_contact_infos,
             service_discovery: service_discovery,
             bootstrap: bootstrap,
             raii_tcp_acceptor: raii_tcp_acceptor,
             udp_listener: udp_listener,
             event_tx: event_tx,
-            echo_servers: BTreeSet::new(),
-            next_punch_sequence: SequenceNumber::new(0),
+            external_udp_sock_seq_id: 0,
         };
 
         Ok(service)
@@ -135,29 +127,11 @@ impl Service {
         self.bootstrap.stop();
     }
 
-    // TODO see when and how to handle this later now that we simply bootstrap during construction
-    // /// Remove endpoint from the bootstrap cache.
-    // pub fn remove_bootstrap_contact(&mut self, endpoint: Endpoint) -> Result<(), Error> {
-    //     // TODO (canndrew): This should probably happen asynchronously
-    //     // because it uses (possibly slow) filesystem operations.
-    //     self.bootstrap_handler.update_contacts(vec![], vec![endpoint])
-    // }
-
-    fn stop(&mut self) {}
-
     /// Get the hole punch servers addresses of nodes that we're connected to ordered by how likely
     /// they are to be on a seperate network.
     pub fn get_ordered_helping_nodes(&self) -> Vec<SocketAddr> {
-        self.echo_servers.iter().map(|e| e.addr).collect()
+        unimplemented!()
     }
-
-    // Accept a connection on the provided TcpListener and perform a handshake on it.
-    // pub fn accept(handshake: Handshake,
-    // acceptor: &TcpListener)
-    // -> io::Result<(Handshake, Transport)> {
-    // transport::exchange_handshakes(handshake, try!(transport::accept(acceptor)))
-    // }
-    //
 
     /// Opens a connection to a remote peer. `public_endpoint` is the endpoint
     /// of the remote peer. `udp_socket` is a socket whose public address will
@@ -232,119 +206,27 @@ impl Service {
         });
     }
 
-    //    /// Opens a connection to a remote peer. `public_endpoint` is the endpoint
-    //    /// of the remote peer. `udp_socket` is a socket whose public address will
-    //    /// be used by the other peer.
-    //    ///
-    //    /// A rendezvous connection setup is different to the traditional BSD socket
-    //    /// setup in which there is no client or server side. Both ends create a
-    //    /// socket and send somehow its public address to the other peer. Once both
-    //    /// ends know each other address, both must call this function passing the
-    //    /// socket which possess the address used by the other peer and passing the
-    //    /// other peer's address.
-    //    ///
-    //    /// Only UDP-based protocols are supported. This means that you must use a
-    //    /// uTP endpoint or nothing will happen.
-    //    ///
-    //    /// On success `Event::OnConnect` with connected `Endpoint` will
-    //    /// be sent to the event channel. On failure, nothing is reported. Failed
-    //    /// attempts are not notified back up to the caller. If the caller wants to
-    //    /// know of a failed attempt, it must maintain a record of the attempt
-    //    /// itself which times out if a corresponding
-    //    /// `Event::OnConnect` isn't received. See also [Process for
-    //    /// Connecting]
-    //    /// (https://github.com/maidsafe/crust/blob/master/docs/connect.md) for
-    //    /// details on handling of connect in different protocols.
-    //    pub fn connect(&self,
-    //                   our_contact_info: OurContactInfo,
-    //                   their_contact_info: TheirContactInfo,
-    //                   token: u32) {
-    //        let mapper_external_addr = self.mapper.external_address();
-    //        let mapper_internal_port = self.mapper.listening_addr().port();
-    //
-    //        let handshake = Handshake {
-    //            mapper_port: Some(mapper_internal_port),
-    //            external_addr: mapper_external_addr,
-    //            remote_addr: SocketAddr(net::SocketAddr::from_str("0.0.0.0:0").unwrap()),
-    //        };
-    //
-    //        let event_sender = self.event_sender.clone();
-    //        let connection_map = self.connection_map.clone();
-    //
-    //        if our_contact_info.secret != their_contact_info.secret {
-    //            let err = io::Error::new(io::ErrorKind::Other,
-    //                                     "Cannot connect. our_contact_info and their_contact_info \
-    //                                      are not associated with the same connection.");
-    //            let _ = event_sender.send(Event::OnConnect(Err(err), token));
-    //            return;
-    //        }
-    //
-    //        let rendezvous_addr = match their_contact_info.rendezvous_addrs.get(0) {
-    //            Some(addr) => addr.clone(),
-    //            None => {
-    //                let err = io::Error::new(io::ErrorKind::Other,
-    //                                         "No rendezvous address supplied. Direct connections not \
-    //                                          yet supported.");
-    //                let _ = event_sender.send(Event::OnConnect(Err(err), token));
-    //                return;
-    //            }
-    //        };
-    //
-    //        let _ = Self::new_thread("rendezvous connect", move || {
-    //            let (udp_socket, result_addr) =
-    //                ::hole_punching::blocking_udp_punch_hole(our_contact_info.socket,
-    //                                                         our_contact_info.secret,
-    //                                                         rendezvous_addr);
-    //            let public_endpoint = match result_addr {
-    //                Ok(addr) => addr,
-    //                Err(e) => {
-    //                    let _ = event_sender.send(Event::OnConnect(Err(e), token));
-    //                    return;
-    //                }
-    //            };
-    //
-    //            let peer_endpoint = Endpoint::from_socket_addr(Protocol::Utp, public_endpoint);
-    //            let res = transport::rendezvous_connect(udp_socket, peer_endpoint);
-    //            let res = res.and_then(move |t| transport::exchange_handshakes(handshake, t));
-    //
-    //            let (his_handshake, transport) = match res {
-    //                Ok((h, t)) => (h, t),
-    //                Err(e) => {
-    //                    let _ = event_sender.send(Event::OnConnect(Err(e), token));
-    //                    return ();
-    //                }
-    //            };
-    //
-    //            let c = transport.connection_id.clone();
-    //            let our_external_endpoint =
-    //                Endpoint::from_socket_addr(*transport.connection_id
-    //                                                     .peer_endpoint()
-    //                                                     .protocol(),
-    //                                           SocketAddr(*his_handshake.remote_addr));
-    //            let _ = event_sender.send(Event::OnConnect(Ok((our_external_endpoint, c)), token));
-    //            let _ = connection_map.register_connection(his_handshake, transport);
-    //        });
-    //    }
-
     /// Get already known external endpoints without any upnp mapping
     pub fn get_known_external_endpoints(&self) -> Vec<Endpoint> {
-        unwrap_result!(self.our_contact_info.lock()).tcp_acceptors
-                                                    .iter()
-                                                    .map(|sa| Endpoint::from_socket_addr(Protocol::Tcp, *sa))
-                                                    .collect::<Vec<Endpoint>>()
+        unwrap_result!(self.our_contact_info.lock())
+            .tcp_acceptors
+            .iter()
+            .map(|sa| Endpoint::from_socket_addr(Protocol::Tcp, *sa))
+            .collect::<Vec<Endpoint>>()
     }
 
     /// Lookup a mapped udp socket based on result_token
     pub fn prepare_contact_info(&mut self, result_token: u32) {
         use hole_punching::external_udp_socket;
 
-        let seq_id = self.next_punch_sequence.next();
-
         let helping_nodes = self.get_ordered_helping_nodes();
         let event_tx = self.event_tx.clone();
 
         let static_addrs = self.get_known_external_endpoints();
         let our_pub_key = unwrap_result!(self.our_contact_info.lock()).pub_key;
+
+        let seq_id = self.external_udp_sock_seq_id;
+        self.external_udp_sock_seq_id += 1;
 
         let _result_handle = thread!("map_udp", move || {
             let result = external_udp_socket(seq_id, helping_nodes);
@@ -372,18 +254,23 @@ impl Service {
     }
 }
 
-impl Drop for Service {
-    fn drop(&mut self) {
-        self.stop();
-    }
-}
-
-
 #[cfg(test)]
 mod test {
+    use super::*;
+
+    use std::sync::mpsc;
+
+    use maidsafe_utilities::event_sender::{MaidSafeObserver, MaidSafeEventCategory};
+
     #[test]
-    fn start_and_stop_a_service() {
-        // Ensure that we can start a service and then stop it again.
+    fn start_stop_service() {
+        let (category_tx, category_rx) = mpsc::channel();
+        let event_category = MaidSafeEventCategory::CrustEvent;
+        let (event_tx, event_rx) = mpsc::channel();
+
+        let event_sender = MaidSafeObserver::new(event_tx, event_category, category_tx);
+
+        let _service = unwrap_result!(Service::new(event_sender, 44444));
     }
 
     #[test]
@@ -400,4 +287,3 @@ mod test {
         // messages in both directions.
     }
 }
-
