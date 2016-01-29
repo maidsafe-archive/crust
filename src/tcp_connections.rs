@@ -22,9 +22,10 @@ use std::io::Result as IoResult;
 use std::thread;
 use std::sync::mpsc;
 use std::sync::mpsc::Sender;
+use event::WriteEvent;
 
 /// Connect to a peer and open a send-receive pair.  See `upgrade` for more details.
-pub fn connect_tcp(addr: SocketAddr) -> IoResult<(TcpStream, Sender<Vec<u8>>)> {
+pub fn connect_tcp(addr: SocketAddr) -> IoResult<(TcpStream, Sender<WriteEvent>)> {
     let stream = try!(TcpStream::connect(&*addr));
     if try!(stream.peer_addr()).port() == try!(stream.local_addr()).port() {
         return Err(Error::new(ErrorKind::ConnectionRefused, "TCP simultaneous open"));
@@ -35,26 +36,30 @@ pub fn connect_tcp(addr: SocketAddr) -> IoResult<(TcpStream, Sender<Vec<u8>>)> {
 
 // Almost a straight copy of https://github.com/TyOverby/wire/blob/master/src/tcp.rs
 /// Upgrades a TcpStream to a Sender-Receiver pair that you can use to send and
-/// receive objects automatically.  If there is an error decoding or encoding
-/// values, that respective part is shut down.
-pub fn upgrade_tcp(stream: TcpStream) -> IoResult<(TcpStream, Sender<Vec<u8>>)> {
+/// receive objects automatically.
+pub fn upgrade_tcp(stream: TcpStream) -> IoResult<(TcpStream, Sender<WriteEvent>)> {
     let s1 = stream;
     let s2 = try!(s1.try_clone());
     Ok((s1, upgrade_writer(s2)))
 }
 
-fn upgrade_writer(mut stream: TcpStream) -> Sender<Vec<u8>> {
-    let (tx, rx) = mpsc::channel::<Vec<u8>>();
+fn upgrade_writer(mut stream: TcpStream) -> Sender<WriteEvent> {
+    let (tx, rx) = mpsc::channel();
     let _ = thread::Builder::new()
                 .name("TCP writer".to_owned())
                 .spawn(move || {
-                    while let Ok(v) = rx.recv() {
-                        use std::io::Write;
-                        if stream.write_all(&v).is_err() {
-                            break;
+                    while let Ok(event) = rx.recv() {
+                        match event {
+                            WriteEvent::Write(data) => {
+                                use std::io::Write;
+                                if stream.write_all(&data).is_err() {
+                                    break;
+                                }
+                            }
+                            WriteEvent::Shutdown => break,
                         }
                     }
-                    stream.shutdown(Shutdown::Write)
+                    stream.shutdown(Shutdown::Both)
                 })
                 .unwrap();
     tx
@@ -71,6 +76,7 @@ mod test {
     use std::io::Read;
     use std::sync::mpsc;
     use socket_addr::SocketAddr;
+    use event::WriteEvent;
 
     fn loopback(port: u16) -> SocketAddr {
         SocketAddr(net::SocketAddr::from_str(&format!("127.0.0.1:{}", port)).unwrap())
@@ -78,40 +84,40 @@ mod test {
 
     #[test]
     fn test_small_stream() {
-        let listener = TcpListener::bind(("0.0.0.0", 5483)).unwrap();
+        let listener = unwrap_result!(TcpListener::bind(("0.0.0.0", 5483)));
         let port = listener.local_addr().unwrap().port();
         let (mut i, o) = connect_tcp(loopback(port)).unwrap();
 
         for x in 0..10 {
             let x = vec![x];
-            o.send(x).unwrap()
+            o.send(WriteEvent::Write(x)).unwrap()
         }
-        drop(o);
         let t = thread::spawn(move || {
-            let connection = listener.accept().unwrap().0;
-            let (mut i, o) = upgrade_tcp(connection).unwrap();
-            i.set_read_timeout(Some(Duration::new(5, 0))).unwrap();
+            let connection = unwrap_result!(listener.accept()).0;
+            let (mut i, o) = unwrap_result!(upgrade_tcp(connection));
+            unwrap_result!(i.set_read_timeout(Some(Duration::new(5, 0))));
             let mut buf = [0u8; 10];
             let mut len = 0;
             while len < 10 {
-                len += i.read(&mut buf[len..]).unwrap();
+                len += unwrap_result!(i.read(&mut buf[len..]));
             }
             for item in &mut buf {
                 *item += 1;
             }
-            o.send(buf.iter().cloned().collect()).unwrap();
+            unwrap_result!(o.send(WriteEvent::Write(buf.iter().cloned().collect())));
         });
         // Collect everything that we get back.
-        i.set_read_timeout(Some(Duration::new(5, 0))).unwrap();
+        unwrap_result!(i.set_read_timeout(Some(Duration::new(5, 0))));
         let mut buf = [0u8; 10];
         let mut len = 0;
         while len < 10 {
-            len += i.read(&mut buf[len..]).unwrap();
+            len += unwrap_result!(i.read(&mut buf[len..]));
         }
         assert_eq!(buf.iter().cloned().collect::<Vec<_>>(),
                    vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
 
-        t.join().unwrap();
+        drop(o);
+        unwrap_result!(t.join());
     }
 
     // Downscaling node count only for mac for test to pass.
@@ -141,12 +147,12 @@ mod test {
                 for i in 0..MSG_COUNT as u8 {
                     buf.push(i)
                 }
-                o.send(buf.clone()).unwrap();
+                o.send(WriteEvent::Write(buf.clone())).unwrap();
                 let mut len = 0;
                 while len < MSG_COUNT {
                     len += i.read(&mut buf[len..]).unwrap();
                 }
-                tx2.send(buf)
+                tx2.send(WriteEvent::Write(buf))
             });
             let (connection, _) = listener.accept().unwrap();
             let _ = thread::spawn(move || {
@@ -160,13 +166,17 @@ mod test {
                 for item in &mut buf {
                     *item += 1
                 }
-                o.send(buf.iter().cloned().collect()).unwrap()
+                o.send(WriteEvent::Write(buf.iter().cloned().collect())).unwrap()
             });
         }
 
         let v = (0..MSG_COUNT as u8).map(|i| i + 1).collect::<Vec<u8>>();
         for _ in 0..node_count() {
-            assert_eq!(rx.recv().unwrap(), v);
+            let rxd = match rx.recv().unwrap() {
+                WriteEvent::Write(data) => data,
+                _ => panic!("Unexpected"),
+            };
+            assert_eq!(rxd, v);
         }
     }
 
@@ -218,7 +228,7 @@ mod test {
 
         for i in 0..MSG_COUNT {
             let msg = encode(&format!("MSG{}", i));
-            assert!(o1.send(msg.clone()).is_ok());
+            assert!(o1.send(WriteEvent::Write(msg.clone())).is_ok());
         }
 
         assert!(t.join().is_ok());

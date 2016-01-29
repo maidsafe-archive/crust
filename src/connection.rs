@@ -29,7 +29,7 @@ use get_if_addrs::get_if_addrs;
 use contact_info::ContactInfo;
 use tcp_connections;
 use utp_connections;
-use sender_receiver::{Sender, Receiver};
+use sender_receiver::{RaiiSender, Receiver};
 use ip::{IpAddr, SocketAddrExt};
 use socket_addr::SocketAddr;
 use event::Event;
@@ -46,16 +46,8 @@ pub struct Connection {
     protocol: Protocol,
     our_addr: SocketAddr,
     their_addr: SocketAddr,
-    network_tx: Sender,
-    // _network_write_joiner: RaiiThreadJoiner,
+    network_tx: RaiiSender,
     _network_read_joiner: RaiiThreadJoiner,
-}
-
-impl Connection {
-    /// Send the `data` to a peer via this connection.
-    pub fn send(&mut self, data: &[u8]) -> io::Result<()> {
-        self.network_tx.send(data.clone())
-    }
 }
 
 impl Hash for Connection {
@@ -76,12 +68,12 @@ impl fmt::Debug for Connection {
     }
 }
 
-// TODO see how to gracefully exit threads
-// impl Drop for Connection {
-//     fn drop(&mut self) {
-//         let _ = self.network_tx.send(WriterEvent::Terminate);
-//     }
-// }
+impl Connection {
+    /// Send the `data` to a peer via this connection.
+    pub fn send(&mut self, data: &[u8]) -> io::Result<()> {
+        self.network_tx.send(data)
+    }
+}
 
 pub struct RaiiTcpAcceptor {
     port: u16,
@@ -151,7 +143,7 @@ fn connect_tcp_endpoint(remote_addr: SocketAddr,
         protocol: Protocol::Tcp,
         our_addr: our_addr,
         their_addr: their_addr,
-        network_tx: Sender::Tcp(writer),
+        network_tx: RaiiSender(writer),
         _network_read_joiner: joiner,
     };
 
@@ -179,7 +171,7 @@ fn connect_utp_endpoint(remote_addr: SocketAddr,
         protocol: Protocol::Utp,
         our_addr: our_addr,
         their_addr: their_addr,
-        network_tx: Sender::Utp(writer),
+        network_tx: RaiiSender(writer),
         _network_read_joiner: joiner,
     })
 }
@@ -200,7 +192,6 @@ pub fn start_tcp_accept(port: u16,
                        .collect_vec();
 
     unwrap_result!(our_contact_info.lock()).tcp_acceptors.extend(if_addrs);
-    let event_tx_to_acceptor = event_tx.clone();
 
     let joiner = RaiiThreadJoiner::new(thread!("TcpAcceptorThread", move || {
         loop {
@@ -224,21 +215,38 @@ pub fn start_tcp_accept(port: u16,
 
             let mut network_rx = Receiver::Tcp(cbor::Decoder::from_reader(network_input));
 
-            // TODO this is not to be done this way - this is just a hack to get it to working now
-            // - Pls come up with a strategy and change
-            let their_contact_info = unwrap_result!(network_rx.receive_contact_info());
+            let their_contact_info: ContactInfo = {
+                let raw_data = match network_rx.receive() {
+                    Ok(data) => data,
+                    Err(err) => {
+                        error!("ContactInfo not shared by peer as expected. Connection will be \
+                                discarded - {:?}",
+                               err);
+                        continue;
+                    }
+                };
+                match deserialise(&raw_data) {
+                    Ok(contact_info) => contact_info,
+                    Err(err) => {
+                        error!("ContactInfo not shared by peer as expected. Connection will be \
+                                discarded - {:?}",
+                               err);
+                        continue;
+                    }
+                }
+            };
             let their_pub_key = their_contact_info.pub_key.clone();
 
-            let event_tx_to_reader = event_tx.clone();
+            let event_tx_cloned = event_tx.clone();
             let joiner = RaiiThreadJoiner::new(thread!("TcpNetworkReader", move || {
-                start_rx(network_rx, their_pub_key, event_tx_to_reader);
+                start_rx(network_rx, their_pub_key, event_tx_cloned);
             }));
 
             let connection = Connection {
                 protocol: Protocol::Tcp,
                 our_addr: our_addr,
                 their_addr: their_addr,
-                network_tx: Sender::Tcp(writer),
+                network_tx: RaiiSender(writer),
                 _network_read_joiner: joiner,
             };
 
@@ -247,7 +255,7 @@ pub fn start_tcp_accept(port: u16,
                 connection: Ok(connection),
             };
 
-            if event_tx_to_acceptor.send(event).is_err() {
+            if event_tx.send(event).is_err() {
                 break;
             }
         }
@@ -279,7 +287,7 @@ pub fn utp_rendezvous_connect(udp_socket: UdpSocket,
         protocol: Protocol::Utp,
         our_addr: our_addr,
         their_addr: their_addr,
-        network_tx: Sender::Utp(writer),
+        network_tx: RaiiSender(writer),
         _network_read_joiner: joiner,
     })
 }
@@ -301,7 +309,7 @@ mod test {
     use std::hash::{Hash, SipHasher, Hasher};
     use std::net;
 
-    use sender_receiver::Sender;
+    use sender_receiver::RaiiSender;
     use maidsafe_utilities::thread::RaiiThreadJoiner;
 
     use endpoint::Protocol;
@@ -326,7 +334,7 @@ mod test {
                                                                                30000"))),
                 their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.200:\
                                                                                  30000"))),
-                network_tx: Sender::Tcp(tx),
+                network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
             }
         };
@@ -342,7 +350,7 @@ mod test {
                                                                                30000"))),
                 their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.200:\
                                                                                  30000"))),
-                network_tx: Sender::Tcp(tx),
+                network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
             }
         };
@@ -361,7 +369,7 @@ mod test {
                                                                                30000"))),
                 their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.200:\
                                                                                  30000"))),
-                network_tx: Sender::Tcp(tx),
+                network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
             }
         };
@@ -380,7 +388,7 @@ mod test {
                                                                                30000"))),
                 their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.200:\
                                                                                  30000"))),
-                network_tx: Sender::Tcp(tx),
+                network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
             }
         };
@@ -399,7 +407,7 @@ mod test {
                                                                                30000"))),
                 their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.253.200:\
                                                                                  30000"))),
-                network_tx: Sender::Tcp(tx),
+                network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
             }
         };

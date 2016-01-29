@@ -72,6 +72,16 @@ impl OurContactInfo {
     }
 }
 
+// This is necessary to gracefully exit the threads. In current design, there is no control over
+// the network reader threads - they infinitely block. So this workaround will use the writer
+// thread to shutdown the stream so that the reader thread exits. Better design should be sought in
+// the future.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum WriteEvent {
+    Write(Vec<u8>),
+    Shutdown,
+}
+
 /// Enum representing different events that will be sent over the asynchronous channel to the user
 /// of this module.
 #[derive(Debug)]

@@ -34,17 +34,17 @@ use config_handler::Config;
 use contact_info::ContactInfo;
 use event::Event;
 
-pub struct Bootstrap {
+pub struct RaiiBootstrap {
     stop_flag: Arc<AtomicBool>,
     _raii_joiner: RaiiThreadJoiner,
 }
 
-impl Bootstrap {
+impl RaiiBootstrap {
     pub fn new(service_discovery: &ServiceDiscovery<ContactInfo>,
                our_contact_info: Arc<Mutex<ContactInfo>>,
                peer_contact_infos: Arc<Mutex<Vec<ContactInfo>>>,
                event_tx: ::CrustEventSender)
-               -> Bootstrap {
+               -> RaiiBootstrap {
         let stop_flag = Arc::new(AtomicBool::new(false));
         let cloned_stop_flag = stop_flag.clone();
 
@@ -53,23 +53,23 @@ impl Bootstrap {
             let _ = service_discovery.seek_peers();
         }
 
-        let raii_joiner = RaiiThreadJoiner::new(thread!("Bootstrap", move || {
+        let raii_joiner = RaiiThreadJoiner::new(thread!("RaiiBootstrap", move || {
             let contacts =
-                match Bootstrap::get_bootstrap_contacts(&unwrap_result!(our_contact_info.lock())
+                match RaiiBootstrap::get_bootstrap_contacts(&unwrap_result!(our_contact_info.lock())
                                                              .pub_key,
                                                         peer_contact_infos,
                                                         seek_peers_rx) {
                     Ok(contacts) => contacts,
                     Err(err) => {
-                        error!("Bootstrap failed: {:?}", err);
+                        error!("RaiiBootstrap failed: {:?}", err);
                         return;
                     }
                 };
 
-            Bootstrap::bootstrap(our_contact_info, contacts, cloned_stop_flag, event_tx);
+            RaiiBootstrap::bootstrap(our_contact_info, contacts, cloned_stop_flag, event_tx);
         }));
 
-        Bootstrap {
+        RaiiBootstrap {
             stop_flag: stop_flag,
             _raii_joiner: raii_joiner,
         }
@@ -162,7 +162,7 @@ impl Bootstrap {
     }
 }
 
-impl Drop for Bootstrap {
+impl Drop for RaiiBootstrap {
     fn drop(&mut self) {
         self.stop();
     }
