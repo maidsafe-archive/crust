@@ -15,7 +15,11 @@ branches:
     - master
 cache:
   directories:
+    - $HOME/libsodium
     - $HOME/elfutils
+install:
+  - curl -sSLO https://github.com/maidsafe/QA/raw/master/Bash%20Scripts/Travis/install_libsodium.sh
+  - . install_libsodium.sh
 script:
   - export RUST_TEST_THREADS=1
   - curl -sSL https://github.com/maidsafe/QA/raw/master/Bash%20Scripts/Travis/build_and_run_tests.sh | bash
