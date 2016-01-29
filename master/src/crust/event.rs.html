@@ -134,6 +134,12 @@
 <span id="91">91</span>
 <span id="92">92</span>
 <span id="93">93</span>
+<span id="94">94</span>
+<span id="95">95</span>
+<span id="96">96</span>
+<span id="97">97</span>
+<span id="98">98</span>
+<span id="99">99</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -158,12 +164,9 @@
 <span class='kw'>use</span> <span class='ident'>socket_addr</span>::<span class='ident'>SocketAddr</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>;
 
-<span class='doccomment'>/// The result of a `Service::prepare_contact_info` call.</span>
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>ContactInfoResult</span> {
-    <span class='doccomment'>/// The token that was passed to `prepare_contact_info`.</span>
     <span class='kw'>pub</span> <span class='ident'>result_token</span>: <span class='ident'>u32</span>,
-    <span class='doccomment'>/// The new contact info, if successful.</span>
     <span class='kw'>pub</span> <span class='ident'>result</span>: <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>OurContactInfo</span><span class='op'>&gt;</span>,
 }
 
@@ -203,6 +206,13 @@
     }
 }
 
+<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>)]</span>
+<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>HolePunchResult</span> {
+    <span class='kw'>pub</span> <span class='ident'>result_token</span>: <span class='ident'>u32</span>,
+    <span class='kw'>pub</span> <span class='ident'>udp_socket</span>: <span class='ident'>UdpSocket</span>,
+    <span class='kw'>pub</span> <span class='ident'>peer_addr</span>: <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>SocketAddr</span><span class='op'>&gt;</span>,
+}
+
 <span class='doccomment'>/// Enum representing different events that will be sent over the asynchronous channel to the user</span>
 <span class='doccomment'>/// of this module.</span>
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>)]</span>
@@ -225,8 +235,10 @@
     <span class='doccomment'>/// Invoked when a new bootstrap connection to a peer is established.</span>
     <span class='doccomment'>/// Passes the peer&#39;s endpoint.</span>
     <span class='ident'>ExternalEndpoints</span>(<span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>Endpoint</span><span class='op'>&gt;</span>),
-    <span class='doccomment'>/// Invoked as a result to the call of `Service::prepare_contact_info`.</span>
+    <span class='doccomment'>/// Invoked as a result to the call of Service::prepare_contact_info.</span>
     <span class='ident'>ContactInfoPrepared</span>(<span class='ident'>ContactInfoResult</span>),
+    <span class='doccomment'>/// Invoked as a result of the call to Service::udp_punch_hole.</span>
+    <span class='ident'>OnHolePunched</span>(<span class='ident'>HolePunchResult</span>),
 }
 </pre>
 </section>

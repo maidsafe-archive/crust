@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-1634' class='srclink' href='../src/crust/event.rs.html#72-93' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-1636' class='srclink' href='../src/crust/event.rs.html#76-99' title='goto source code'>[src]</a></span></h1>
 <pre class='rust enum'>pub enum Event {
     NewMessage(<a class='struct' href='../crust/struct.Connection.html' title='crust::Connection'>Connection</a>, <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;),
     OnBootstrapConnect(<a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(<a class='struct' href='../crust/struct.Endpoint.html' title='crust::Endpoint'>Endpoint</a>, <a class='struct' href='../crust/struct.Connection.html' title='crust::Connection'>Connection</a>)</a>&gt;, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>),
@@ -55,7 +55,8 @@
     LostConnection(<a class='struct' href='../crust/struct.Connection.html' title='crust::Connection'>Connection</a>),
     BootstrapFinished,
     ExternalEndpoints(<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../crust/struct.Endpoint.html' title='crust::Endpoint'>Endpoint</a>&gt;),
-    ContactInfoPrepared(<a class='struct' href='../crust/struct.ContactInfoResult.html' title='crust::ContactInfoResult'>ContactInfoResult</a>),
+    ContactInfoPrepared(ContactInfoResult),
+    OnHolePunched(HolePunchResult),
 }</pre><div class='docblock'><p>Enum representing different events that will be sent over the asynchronous channel to the user
 of this module.</p>
 </div><h2 class='variants'>Variants</h2>
@@ -70,7 +71,8 @@ Passes the peer&#39;s endpoint and the token used in the request.</p>
 Passes the peer&#39;s endpoint.</p>
 </div></td></tr><tr><td id='variant.ExternalEndpoints'><code>ExternalEndpoints</code></td><td><div class='docblock'><p>Invoked when a new bootstrap connection to a peer is established.
 Passes the peer&#39;s endpoint.</p>
-</div></td></tr><tr><td id='variant.ContactInfoPrepared'><code>ContactInfoPrepared</code></td><td><div class='docblock'><p>Invoked as a result to the call of <code>Service::prepare_contact_info</code>.</p>
+</div></td></tr><tr><td id='variant.ContactInfoPrepared'><code>ContactInfoPrepared</code></td><td><div class='docblock'><p>Invoked as a result to the call of Service::prepare_contact_info.</p>
+</div></td></tr><tr><td id='variant.OnHolePunched'><code>OnHolePunched</code></td><td><div class='docblock'><p>Invoked as a result of the call to Service::udp_punch_hole.</p>
 </div></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='enum' href='../crust/enum.Event.html' title='crust::Event'>Event</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#method.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
 </div></section>
     <section id='search' class="content hidden"></section>
