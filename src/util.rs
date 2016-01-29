@@ -121,12 +121,12 @@ pub fn is_local(ip_addr: &IpAddr, interfaces: &[Interface]) -> bool {
                 if on_same_subnet_v4(ipv4_addr, ifv4_addr.ip, ifv4_addr.netmask) {
                     return true;
                 }
-            },
+            }
             (IpAddr::V6(ipv6_addr), &IfAddr::V6(ref ifv6_addr)) => {
                 if on_same_subnet_v6(ipv6_addr, ifv6_addr.ip, ifv6_addr.netmask) {
                     return true;
                 }
-            },
+            }
             _ => (),
         }
     }
@@ -147,8 +147,7 @@ pub fn unspecified_to_loopback(addr: &net::SocketAddr) -> net::SocketAddr {
         match *addr {
             net::SocketAddr::V4(ref addr) => {
                 let ip_addr = net::Ipv4Addr::new(127, 0, 0, 1);
-                net::SocketAddr::V4(net::SocketAddrV4::new(ip_addr,
-                                                           addr.port()))
+                net::SocketAddr::V4(net::SocketAddrV4::new(ip_addr, addr.port()))
             }
             net::SocketAddr::V6(ref addr) => {
                 let ip_addr = net::Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 1);
@@ -298,4 +297,3 @@ mod test {
         }
     }
 }
-
