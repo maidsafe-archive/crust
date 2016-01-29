@@ -203,7 +203,15 @@ pub fn start_tcp_accept(port: u16,
     let event_tx_to_acceptor = event_tx.clone();
 
     let joiner = RaiiThreadJoiner::new(thread!("TcpAcceptorThread", move || {
-        for stream in listener.incoming().filter_map(Result::ok) {
+        loop {
+            let (stream, _) = match listener.accept() {
+                Ok(tuple) => tuple,
+                Err(err) => {
+                    error!("Error in TcpListener's accept - {:?}", err);
+                    break;
+                }
+            };
+
             if cloned_stop_flag.load(Ordering::SeqCst) {
                 let _ = stream.shutdown(Shutdown::Both);
                 break;
