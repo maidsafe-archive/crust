@@ -27,8 +27,6 @@
         unused_qualifications, unused_results, variant_size_differences)]
 
 #[macro_use]
-extern crate maidsafe_utilities;
-extern crate rustc_serialize;
 extern crate docopt;
 extern crate rand;
 extern crate crust;
@@ -36,9 +34,7 @@ extern crate time;
 
 use rand::random;
 use docopt::Docopt;
-use std::sync::mpsc::{channel, Receiver};
-use std::sync::Arc;
-use crust::{Connection, Service, HolePunchServer, Event};
+use crust::{Connection, Service, Event};
 
 fn timed<F>(f: F) -> f64
     where F: FnOnce()
@@ -51,6 +47,14 @@ fn timed<F>(f: F) -> f64
 
 fn generate_random_vec_u8(size: usize) -> Vec<u8> {
     (0..size).map(|_| random()).collect()
+}
+
+fn main() {
+    let (category_tx, category_rx) = mpsc::channel();
+    let crust_event_category = MaidSafeEventCategory::CrustEvent;
+    // Initialise the 0 state service
+    let (event_tx_0, event_rx_0) = mpsc::channel()
+    let service_0 = Service::new(event_tx, 49999);
 }
 
 fn wait_for_connection(receiver: &Receiver<Event>,
