@@ -16,9 +16,11 @@ install:
   - ps: |
         $url = "https://github.com/maidsafe/QA/raw/master/Powershell%20Scripts/AppVeyor"
         Start-FileDownload "$url/Install%20Rust.ps1" -FileName "Install Rust.ps1"
+        Start-FileDownload "$url/Install%20libsodium.ps1" -FileName "Install libsodium.ps1"
         Start-FileDownload "$url/Build.ps1" -FileName "Build.ps1"
         Start-FileDownload "$url/Run%20Tests.ps1" -FileName "Run Tests.ps1"
         . ".\Install Rust.ps1"
+        . ".\Install libsodium.ps1"
 
 platform:
   - x86
