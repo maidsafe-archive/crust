@@ -117,14 +117,14 @@ pub fn connect(contact: ContactInfo,
                -> io::Result<Connection> {
     let mut last_err = None;
     for tcp_addr in contact.tcp_acceptors {
-        match connect_tcp_endpoint(tcp_addr, contact.pub_key, our_contact_info, event_tx) {
+        match connect_tcp_endpoint(tcp_addr, contact.pub_key, our_contact_info.clone(), event_tx.clone()) {
             Ok(connection) => return Ok(connection),
             Err(e) => last_err = Some(e),
         }
     }
 
     for udp_addr in contact.udp_listeners {
-        match connect_utp_endpoint(udp_addr, contact.pub_key, our_contact_info, event_tx) {
+        match connect_utp_endpoint(udp_addr, contact.pub_key, our_contact_info.clone(), event_tx.clone()) {
             Ok(connection) => return Ok(connection),
             Err(e) => last_err = Some(e),
         }
@@ -307,7 +307,7 @@ mod test {
     fn connection_hash() {
         let connection_0 = {
             let (tx, _) = mpsc::channel();
-            let raii_joiner = RaiiThreadJoiner::new(thread!("DummyThread", move ||));
+            let raii_joiner = RaiiThreadJoiner::new(thread!("DummyThread", move || ()));
 
             Connection {
                 protocol: Protocol::Tcp,
@@ -323,7 +323,7 @@ mod test {
         // Same as connection_0
         let connection_1 = {
             let (tx, _) = mpsc::channel();
-            let raii_joiner = RaiiThreadJoiner::new(thread!("DummyThread", move ||));
+            let raii_joiner = RaiiThreadJoiner::new(thread!("DummyThread", move || ()));
 
             Connection {
                 protocol: Protocol::Tcp,
@@ -342,7 +342,7 @@ mod test {
         // Protocol different
         let connection_2 = {
             let (tx, _) = mpsc::channel();
-            let raii_joiner = RaiiThreadJoiner::new(thread!("DummyThread", move ||));
+            let raii_joiner = RaiiThreadJoiner::new(thread!("DummyThread", move || ()));
 
             Connection {
                 protocol: Protocol::Utp,
@@ -361,7 +361,7 @@ mod test {
         // our_addr different
         let connection_3 = {
             let (tx, _) = mpsc::channel();
-            let raii_joiner = RaiiThreadJoiner::new(thread!("DummyThread", move ||));
+            let raii_joiner = RaiiThreadJoiner::new(thread!("DummyThread", move || ()));
 
             Connection {
                 protocol: Protocol::Tcp,
@@ -380,7 +380,7 @@ mod test {
         // their_addr different
         let connection_4 = {
             let (tx, _) = mpsc::channel();
-            let raii_joiner = RaiiThreadJoiner::new(thread!("DummyThread", move ||));
+            let raii_joiner = RaiiThreadJoiner::new(thread!("DummyThread", move || ()));
 
             Connection {
                 protocol: Protocol::Tcp,

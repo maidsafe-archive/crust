@@ -62,8 +62,8 @@ extern crate sodiumoxide;
 extern crate config_file_handler;
 extern crate service_discovery;
 
-// /// Module implementing the `Service` which provides an interface to manage peer-to-peer
-// /// connections.
+/// Module implementing the `Service` which provides an interface to manage peer-to-peer
+/// connections.
 pub mod service;
 
 /// Defines errors.

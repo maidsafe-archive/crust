@@ -124,16 +124,18 @@ impl Bootstrap {
                 return;
             }
 
+            let their_pub_key = contact.pub_key.clone();
+
             // 1st try a TCP connect
             // 2nd try a UDP connection (and upgrade to UTP)
-            let connect_result = ::connection::connect(contact, our_contact_info.clone(), event_tx);
+            let connect_result = ::connection::connect(contact, our_contact_info.clone(), event_tx.clone());
             if stop_flag.load(Ordering::SeqCst) {
                 return;
             }
 
             if let Ok(connection) = connect_result {
                 let event = Event::NewConnection {
-                    their_pub_key: contact.pub_key,
+                    their_pub_key: their_pub_key,
                     connection: Ok(connection),
                 };
                 let _ = event_tx.send(event);

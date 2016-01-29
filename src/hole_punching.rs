@@ -1,6 +1,5 @@
 use std::net::UdpSocket;
 use std::io;
-use std::io::{Error, ErrorKind};
 use std::net;
 use std::sync::{Arc, RwLock};
 use std::sync::mpsc::Sender;
@@ -38,6 +37,7 @@ pub fn external_udp_socket(request_id: u32,
         // TODO Instead of periodic sender just send the request to every body and start listening.
         // If we get it back from even one, we collect the info and return.
         for udp_listener in &udp_listeners {
+            let cloned_udp_socket = try!(cloned_udp_socket.try_clone());
             let _periodic_sender = PeriodicSender::start(cloned_udp_socket,
                                                          *udp_listener,
                                                          scope,
@@ -54,7 +54,7 @@ pub fn external_udp_socket(request_id: u32,
                 return Ok(external_addr);
             }
         }
-        return Err(Error::new(ErrorKind::Other, "TODO - Improve this - Could Not find our external address"));
+        return Err(io::Error::new(io::ErrorKind::Other, "TODO - Improve this - Could Not find our external address"));
     }));
 
     Ok((udp_socket, res))

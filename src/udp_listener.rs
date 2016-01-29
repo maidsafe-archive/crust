@@ -37,12 +37,12 @@ const UDP_READ_TIMEOUT_SECS: u64 = 2;
 
 #[derive(RustcEncodable, RustcDecodable)]
 pub struct EchoExternalAddrResp {
-    external_addr: SocketAddr,
+    pub external_addr: SocketAddr,
 }
 
 
 #[derive(RustcEncodable, RustcDecodable)]
-enum UdpListenerMsg {
+pub enum UdpListenerMsg {
     EchoExternalAddr,
     ConnectRequest {
         secret: [u8; 4],
@@ -54,6 +54,7 @@ enum UdpListenerMsg {
         pub_key: PublicKey,
     }
 }
+
 pub struct UdpListener {
     stop_flag: Arc<AtomicBool>,
     _raii_joiner: RaiiThreadJoiner,
@@ -76,9 +77,9 @@ impl UdpListener {
         // Local addresses as they will be used by processes in LAN where TCP is disallowed.
         let echo_external_addr_request =
             unwrap_result!(serialise(&UdpListenerMsg::EchoExternalAddr));
-        for their_contact_info in their_contact_infos {
-            for udp_listener in their_contact_info.udp_listeners {
-                let _ = udp_socket.send_to(&echo_external_addr_request, &*udp_listener);
+        for their_contact_info in &their_contact_infos {
+            for udp_listener in &their_contact_info.udp_listeners {
+                let _ = udp_socket.send_to(&echo_external_addr_request, &**udp_listener);
             }
         }
 
@@ -129,17 +130,18 @@ impl UdpListener {
                                 pub_key: pub_key,
                             };
 
-                            if udp_socket.send_to(&unwrap_result!(&serialise(&connect_resp)),
+                            if udp_socket.send_to(&unwrap_result!(serialise(&connect_resp)),
                                                   peer_addr.clone())
                                          .is_err() {
                                 continue;
                             }
 
-                            if let Ok((socket, Ok(peer_addr))) =
+                            if let (socket, Ok(peer_addr)) =
                                    blocking_udp_punch_hole(res.0, Some(secret), SocketAddr(peer_addr)) {
                                 let connection = match utp_rendezvous_connect(socket,
                                                                               peer_addr,
-                                                                              pub_key.clone()) {
+                                                                              pub_key.clone(),
+                                                                              event_tx.clone()) {
                                     Ok(connection) => connection,
                                     Err(_) => continue,
                                 };
@@ -156,18 +158,24 @@ impl UdpListener {
                         }
                     }
                     UdpListenerMsg::ConnectResponse { connect_on, secret, pub_key, } => {
+                        let echo_servers = their_contact_infos.iter().flat_map(|tci| tci.udp_listeners.iter().cloned()).collect();
                         if let Ok(res) =
-                               external_udp_socket(rand::random(), their_contact_infos.clone()) {
+                               external_udp_socket(rand::random(), echo_servers) {
                             for peer_addr in connect_on {
+                                let s = match res.0.try_clone() {
+                                    Ok(socket) => socket,
+                                    Err(_) => continue,
+                                };
                                 let (socket, peer_addr) =
-                                    match blocking_udp_punch_hole(res.0, secret, peer_addr) {
-                                        Ok((socket, Ok(peer_addr))) => (socket, peer_addr),
-                                        _ => continue,
+                                    match blocking_udp_punch_hole(s, Some(secret), peer_addr) {
+                                        (socket, Ok(peer_addr)) => (socket, peer_addr),
+                                        (socket, Err(_)) => continue,
                                     };
 
                                 let connection = match utp_rendezvous_connect(socket,
                                                                               peer_addr,
-                                                                              pub_key.clone()) {
+                                                                              pub_key.clone(),
+                                                                              event_tx.clone()) {
                                     Ok(connection) => connection,
                                     Err(_) => continue,
                                 };
