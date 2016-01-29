@@ -134,28 +134,6 @@ pub fn accept(acceptor: &TcpListener) -> IoResult<Transport> {
     })
 }
 
-// FIXME: There needs to be a way to break from this blocking command.
-// (Though this seems to be impossible with the current Rust TCP API).
-#[cfg(test)]
-pub fn accept_utp(acceptor: &::utp::UtpListener) -> IoResult<Transport> {
-    let (stream, _remote_endpoint) = try!(acceptor.accept()
-                                          .map_err(|e| io::Error::new(io::ErrorKind::NotConnected, e.description())));
-
-    let (i, o) = try!(utp_connections::upgrade_utp(stream));
-
-    let connection_id = Connection::new(
-        Protocol::Utp,
-        SocketAddr(i.local_addr()),
-        SocketAddr(i.peer_addr()),
-        );
-
-    Ok(Transport{
-        receiver: sender_receiver::Receiver::Utp(cbor::Decoder::from_reader(i)),
-        sender: sender_receiver::Sender::Utp(o),
-        connection_id: connection_id,
-    })
-}
-
  #[cfg(test)]
 mod test {
     use super::*;

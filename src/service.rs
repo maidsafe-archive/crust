@@ -149,22 +149,6 @@ impl Service {
         Ok(Endpoint::from_socket_addr(Protocol::Tcp, SocketAddr(accept_addr)))
     }
 
-    #[cfg(test)]
-    pub fn start_accepting_utp(&mut self, port: u16) -> io::Result<Endpoint> {
-        use utp::UtpListener;
-        let listener = try!(UtpListener::bind(("0.0.0.0", port)));
-        let accept_addr = try!(listener.local_addr());
-
-        let hole_punch_server = self.mapper.clone();
-        let acceptor = try!(Acceptor::with_utp(listener, hole_punch_server,
-                                               self.connection_map.clone()));
-        self.acceptors.push(acceptor);
-
-        // FIXME: Instead of hardcoded wrapping in loopback V4, the
-        // listener should tell us the address it is accepting on.
-        Ok(Endpoint::from_socket_addr(Protocol::Utp, SocketAddr(accept_addr)))
-    }
-
     fn populate_bootstrap_contacts(&mut self,
                                    config: &Config,
                                    beacon_port: Option<u16>,
@@ -1176,7 +1160,8 @@ mod test {
         }));
     }
 
-    fn test_network(protocol: Protocol) {
+    #[test]
+    fn network() {
         BootstrapHandler::cleanup().unwrap();
 
         const NETWORK_SIZE: u32 = 10;
@@ -1210,21 +1195,15 @@ mod test {
 
             fn run(&mut self) -> Stats {
                 let mut stats = Stats::new();
-                let timeout = ::time::SteadyTime::now() + ::time::Duration::milliseconds(120000);
-                loop {
-                    match self.category_rx.try_recv() {
-                        Ok(::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent) => {
+
+                for it in self.category_rx.iter() {
+                    match it {
+                        ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent => {
                             if let Ok(event) = self.reader.try_recv() {
-                                debug!("node {:?} received event : {:?} current msg counting {:?} among {:?}",
-                                       self._id, event, stats.messages_count, TOTAL_MSG_TO_RECEIVE);
                                 match event {
                                     Event::OnBootstrapConnect(Ok((_, connection)), _) => {
                                         stats.connect_count += 1;
                                         self.send_data_to(connection);
-                                    }
-                                    Event::OnBootstrapConnect(Err(e), _) => {
-                                        thread::sleep(::std::time::Duration::from_secs(120));
-                                        panic!("Cannot establish all connections {:?}", e)
                                     }
                                     Event::OnBootstrapAccept(_, connection) => {
                                         stats.accept_count += 1;
@@ -1232,27 +1211,19 @@ mod test {
                                     }
                                     Event::NewMessage(_from, _bytes) => {
                                         stats.messages_count += 1;
+                                        // let msg = decode::<String>(&bytes);
                                         if stats.messages_count == TOTAL_MSG_TO_RECEIVE {
                                             break;
                                         }
                                     }
-                                    Event::LostConnection(_) => {
-                                        debug!("connection lost");
-                                    }
+                                    Event::LostConnection(_) => {}
                                     _ => {
-                                        println!("Received unknown event {:?}", event);
+                                        println!("Received event {:?}", event);
                                     }
                                 }
                             }
                         }
-                        Ok(_) => unreachable!("This category should not have been fired"),
-                        Err(_) => {}
-                    }
-                    if ::time::SteadyTime::now() < timeout {
-                        let duration = ::std::time::Duration::from_millis(1);
-                        ::std::thread::sleep(duration);
-                    } else {
-                        break;
+                        _ => unreachable!("This category should not have been fired - {:?}", it),
                     }
                 }
                 stats
@@ -1273,12 +1244,7 @@ mod test {
         let mut runners = Vec::new();
 
         let mut listening_eps = nodes.iter_mut()
-                                     .map(|node| {
-                                         match protocol {
-                                             Protocol::Tcp => node.service.start_accepting(0).unwrap(),
-                                             Protocol::Utp => node.service.start_accepting_utp(0).unwrap(),
-                                         }
-                                     })
+                                     .map(|node| node.service.start_accepting(0).unwrap())
                                      .map(|ep| ep.unspecified_to_loopback())
                                      .collect::<::std::collections::VecDeque<_>>();
 
@@ -1306,16 +1272,6 @@ mod test {
         assert_eq!(stats.accept_count, NETWORK_SIZE * (NETWORK_SIZE - 1) / 2);
         assert_eq!(stats.messages_count,
                    NETWORK_SIZE * (NETWORK_SIZE - 1) * MESSAGE_PER_NODE);
-    }
-
-    #[test]
-    fn test_network_tcp() {
-        test_network(Protocol::Tcp);
-    }
-
-    #[test]
-    fn test_network_utp() {
-        test_network(Protocol::Utp);
     }
 
     #[test]
