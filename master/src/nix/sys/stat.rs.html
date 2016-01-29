@@ -4,11 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-0a35038f75765ae4/nix-0.3.9/src/sys/stat.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/nix-0.4.2/src/sys/stat.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>stat.rs.html -- source</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -154,12 +155,6 @@
 <span id="112">112</span>
 <span id="113">113</span>
 <span id="114">114</span>
-<span id="115">115</span>
-<span id="116">116</span>
-<span id="117">117</span>
-<span id="118">118</span>
-<span id="119">119</span>
-<span id="120">120</span>
 </pre><pre class='rust '>
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>libc</span>::<span class='ident'>dev_t</span>;
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>libc</span>::<span class='ident'>stat</span> <span class='kw'>as</span> <span class='ident'>FileStat</span>;
@@ -167,7 +162,7 @@
 <span class='kw'>use</span> {<span class='ident'>Error</span>, <span class='prelude-ty'>Result</span>, <span class='ident'>NixPath</span>, <span class='ident'>from_ffi</span>};
 <span class='kw'>use</span> <span class='ident'>errno</span>::<span class='ident'>Errno</span>;
 <span class='kw'>use</span> <span class='ident'>libc</span>::<span class='ident'>mode_t</span>;
-<span class='kw'>use</span> <span class='ident'>std</span>::{<span class='ident'>fmt</span>, <span class='ident'>mem</span>};
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>mem</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>os</span>::<span class='ident'>unix</span>::<span class='ident'>io</span>::<span class='ident'>RawFd</span>;
 
 <span class='kw'>mod</span> <span class='ident'>ffi</span> {
@@ -210,12 +205,6 @@
         <span class='kw'>const</span> <span class='ident'>S_ISUID</span> <span class='op'>=</span> <span class='number'>0o4000</span>,
         <span class='kw'>const</span> <span class='ident'>S_ISGID</span> <span class='op'>=</span> <span class='number'>0o2000</span>,
         <span class='kw'>const</span> <span class='ident'>S_ISVTX</span> <span class='op'>=</span> <span class='number'>0o1000</span>,
-    }
-}
-
-<span class='kw'>impl</span> <span class='ident'>fmt</span>::<span class='ident'>Debug</span> <span class='kw'>for</span> <span class='ident'>SFlag</span> {
-    <span class='kw'>fn</span> <span class='ident'>fmt</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>fmt</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>fmt</span>::<span class='ident'>Formatter</span>) <span class='op'>-&gt;</span> <span class='ident'>fmt</span>::<span class='prelude-ty'>Result</span> {
-        <span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>fmt</span>, <span class='string'>&quot;SFlag {{ bits: {} }}&quot;</span>, <span class='self'>self</span>.<span class='ident'>bits</span>())
     }
 }
 
@@ -341,6 +330,6 @@
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

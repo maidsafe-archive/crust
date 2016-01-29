@@ -9,6 +9,7 @@
 
     <title>nix::sys::signal - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -45,10 +46,10 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-1791' class='srclink' href='../../../src/nix/sys/signal.rs.html#4-382' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-2821' class='srclink' href='../../../src/nix/sys/signal.rs.html#4-565' title='goto source code'>[src]</a></span></h1>
 <h2 id='reexports' class='section-header'><a href="#reexports">Reexports</a></h2>
 <table><tr><td><code>pub use self::signal::{SIGTRAP, SIGIOT, SIGBUS, SIGSYS, SIGURG, SIGSTOP, SIGTSTP, SIGCONT, SIGCHLD, SIGTTIN, SIGTTOU, SIGIO, SIGXCPU, SIGXFSZ, SIGVTALRM, SIGPROF, SIGWINCH, SIGUSR1, SIGUSR2};</code></td></tr><tr><td><code>pub use self::<a class='mod'
-                                            href='./signal/index.html'>signal</a>::<a class='struct' href='../../../nix/sys/signal/signal/struct.SockFlag.html' title='nix::sys::signal::signal::SockFlag'>SockFlag</a>;</code></td></tr><tr><td><code>pub use self::<a class='mod'
+                                            href='./signal/index.html'>signal</a>::<a class='struct' href='../../../nix/sys/signal/signal/struct.SockFlag.html' title='nix::sys::signal::signal::SockFlag'>SockFlag</a>;</code></td></tr><tr><td><code>pub use self::signal::{<a class='struct' href='../../../nix/sys/signal/signal/struct.HowFlag.html' title='nix::sys::signal::signal::HowFlag'>HowFlag</a>, SIG_BLOCK, SIG_UNBLOCK, SIG_SETMASK};</code></td></tr><tr><td><code>pub use self::<a class='mod'
                                             href='./signal/index.html'>signal</a>::<a class='struct' href='../../../nix/sys/signal/signal/struct.sigset_t.html' title='nix::sys::signal::signal::sigset_t'>sigset_t</a>;</code></td></tr></table><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
 <table>
                     <tr class=' module-item'>
@@ -183,6 +184,15 @@
                     </tr>
                 
                     <tr class=' module-item'>
+                        <td><a class='fn' href='fn.pthread_sigmask.html'
+                               title='nix::sys::signal::pthread_sigmask'>pthread_sigmask</a></td>
+                        <td class='docblock short'>
+                             <p>Manages the signal mask (set of blocked signals) for the calling thread.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
                         <td><a class='fn' href='fn.sigaction.html'
                                title='nix::sys::signal::sigaction'>sigaction</a></td>
                         <td class='docblock short'>
@@ -257,6 +267,6 @@
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

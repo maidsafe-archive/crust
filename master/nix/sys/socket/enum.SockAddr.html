@@ -9,6 +9,7 @@
 
     <title>nix::sys::socket::SockAddr - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -45,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-2284' class='srclink' href='../../../src/nix/sys/socket/addr.rs.html#403-406' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-3598' class='srclink' href='../../../src/nix/sys/socket/addr.rs.html#447-450' title='goto source code'>[src]</a></span></h1>
 <pre class='rust enum'>pub enum SockAddr {
     Inet(<a class='enum' href='../../../nix/sys/socket/enum.InetAddr.html' title='nix::sys::socket::InetAddr'>InetAddr</a>),
     Unix(<a class='struct' href='../../../nix/sys/socket/struct.UnixAddr.html' title='nix::sys::socket::UnixAddr'>UnixAddr</a>),
@@ -55,7 +56,7 @@
 <h4 id='method.new_unix' class='method'><code>fn <a href='#method.new_unix' class='fnname'>new_unix</a>&lt;P: ?<a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a> + <a class='trait' href='../../../nix/trait.NixPath.html' title='nix::NixPath'>NixPath</a>&gt;(path: &amp;P) -&gt; <a class='type' href='../../../nix/type.Result.html' title='nix::Result'>Result</a>&lt;<a class='enum' href='../../../nix/sys/socket/enum.SockAddr.html' title='nix::sys::socket::SockAddr'>SockAddr</a>&gt;</code></h4>
 <h4 id='method.family' class='method'><code>fn <a href='#method.family' class='fnname'>family</a>(&amp;self) -&gt; <a class='enum' href='../../../nix/sys/socket/enum.AddressFamily.html' title='nix::sys::socket::AddressFamily'>AddressFamily</a></code></h4>
 <h4 id='method.to_str' class='method'><code>fn <a href='#method.to_str' class='fnname'>to_str</a>(&amp;self) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a></code></h4>
-<h4 id='method.as_ffi_pair' class='method'><code>unsafe fn <a href='#method.as_ffi_pair' class='fnname'>as_ffi_pair</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(&amp;<a class='struct' href='../../../nix/sys/socket/struct.sockaddr.html' title='nix::sys::socket::sockaddr'>sockaddr</a>, <a class='type' href='../../../libc/types/os/common/bsd44/type.socklen_t.html' title='libc::types::os::common::bsd44::socklen_t'>socklen_t</a>)</a></code></h4>
+<h4 id='method.as_ffi_pair' class='method'><code>unsafe fn <a href='#method.as_ffi_pair' class='fnname'>as_ffi_pair</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(&amp;<a class='struct' href='../../../nix/sys/socket/struct.sockaddr.html' title='nix::sys::socket::sockaddr'>sockaddr</a>, <a class='type' href='../../../nix/sys/ioctl/libc/type.socklen_t.html' title='nix::sys::ioctl::libc::socklen_t'>socklen_t</a>)</a></code></h4>
 </div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a> for <a class='enum' href='../../../nix/sys/socket/enum.SockAddr.html' title='nix::sys::socket::SockAddr'>SockAddr</a></code></h3><div class='impl-items'><h4 id='method.eq' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.eq' class='fnname'>eq</a>(&amp;self, other: &amp;<a class='enum' href='../../../nix/sys/socket/enum.SockAddr.html' title='nix::sys::socket::SockAddr'>SockAddr</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
 <h4 id='method.ne' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.ne' class='fnname'>ne</a>(&amp;self, other: &amp;Rhs) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
 </div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.Eq.html' title='core::cmp::Eq'>Eq</a> for <a class='enum' href='../../../nix/sys/socket/enum.SockAddr.html' title='nix::sys::socket::SockAddr'>SockAddr</a></code></h3><div class='impl-items'></div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/hash/trait.Hash.html' title='core::hash::Hash'>Hash</a> for <a class='enum' href='../../../nix/sys/socket/enum.SockAddr.html' title='nix::sys::socket::SockAddr'>SockAddr</a></code></h3><div class='impl-items'><h4 id='method.hash' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/hash/trait.Hash.html#method.hash' class='fnname'>hash</a>&lt;H: <a class='trait' href='https://doc.rust-lang.org/nightly/core/hash/trait.Hasher.html' title='core::hash::Hasher'>Hasher</a>&gt;(&amp;self, s: &amp;mut H)</code></h4>
@@ -122,6 +123,6 @@
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

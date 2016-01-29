@@ -4,11 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-0a35038f75765ae4/nix-0.3.9/src/sys/socket/ffi.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/nix-0.4.2/src/sys/socket/ffi.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>ffi.rs.html -- source</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../../main.css">
 
     
@@ -58,9 +59,20 @@
 <span id="16">16</span>
 <span id="17">17</span>
 <span id="18">18</span>
+<span id="19">19</span>
+<span id="20">20</span>
+<span id="21">21</span>
+<span id="22">22</span>
+<span id="23">23</span>
+<span id="24">24</span>
+<span id="25">25</span>
 </pre><pre class='rust '>
-<span class='kw'>use</span> <span class='ident'>libc</span>::{<span class='ident'>c_int</span>, <span class='ident'>c_void</span>, <span class='ident'>socklen_t</span>};
+<span class='comment'>// Silence invalid warnings due to rust-lang/rust#16719</span>
+<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>allow</span>(<span class='ident'>improper_ctypes</span>)]</span>
+
+<span class='kw'>use</span> <span class='ident'>libc</span>::{<span class='ident'>c_int</span>, <span class='ident'>c_void</span>, <span class='ident'>socklen_t</span>, <span class='ident'>ssize_t</span>};
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>libc</span>::{<span class='ident'>socket</span>, <span class='ident'>listen</span>, <span class='ident'>bind</span>, <span class='ident'>accept</span>, <span class='ident'>connect</span>, <span class='ident'>setsockopt</span>, <span class='ident'>sendto</span>, <span class='ident'>recvfrom</span>, <span class='ident'>getsockname</span>, <span class='ident'>getpeername</span>, <span class='ident'>recv</span>, <span class='ident'>send</span>};
+<span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>msghdr</span>;
 
 <span class='kw'>extern</span> {
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>getsockopt</span>(
@@ -76,6 +88,9 @@
         <span class='ident'>protocol</span>:   <span class='ident'>c_int</span>,
         <span class='ident'>sv</span>:         <span class='op'>*</span><span class='kw-2'>mut</span> <span class='ident'>c_int</span>
     ) <span class='op'>-&gt;</span> <span class='ident'>c_int</span>;
+
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>sendmsg</span>(<span class='ident'>sockfd</span>: <span class='ident'>c_int</span>, <span class='ident'>msg</span>: <span class='op'>*</span><span class='kw'>const</span> <span class='ident'>msghdr</span>, <span class='ident'>flags</span>: <span class='ident'>c_int</span>) <span class='op'>-&gt;</span> <span class='ident'>ssize_t</span>;
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>recvmsg</span>(<span class='ident'>sockfd</span>: <span class='ident'>c_int</span>, <span class='ident'>msg</span>: <span class='op'>*</span><span class='kw-2'>mut</span> <span class='ident'>msghdr</span>, <span class='ident'>flags</span>: <span class='ident'>c_int</span>) <span class='op'>-&gt;</span> <span class='ident'>ssize_t</span>;
 }
 </pre>
 </section>
@@ -137,6 +152,6 @@
     <script src="../../../../jquery.js"></script>
     <script src="../../../../main.js"></script>
     
-    <script async src="../../../../search-index.js"></script>
+    <script defer src="../../../../search-index.js"></script>
 </body>
 </html>

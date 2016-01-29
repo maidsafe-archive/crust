@@ -46,60 +46,25 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-48' class='srclink' href='../../src/crust/service.rs.html#56-68' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-54' class='srclink' href='../../src/crust/service.rs.html#60-69' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Service {
     // some fields omitted
 }</pre><div class='docblock'><p>A structure representing a connection manager.</p>
 
 <p>This abstraction has a hidden dependency on a config file. Refer to <a href="../file_handler/struct.FileHandler.html">the docs for <code>FileHandler</code></a> and <a href="https://github.com/maidsafe/crust/blob/master/docs/vault_config_file_flowchart.pdf">an example config file flowchart</a> for more
 information.</p>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../crust/service/struct.Service.html' title='crust::service::Service'>Service</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(event_sender: <a class='type' href='../../crust/type.CrustEventSender.html' title='crust::CrustEventSender'>CrustEventSender</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='struct' href='../../crust/service/struct.Service.html' title='crust::service::Service'>Service</a>, <a class='enum' href='../../crust/error/enum.Error.html' title='crust::error::Error'>Error</a>&gt;</code></h4>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../crust/service/struct.Service.html' title='crust::service::Service'>Service</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(event_tx: <a class='type' href='../../crust/type.CrustEventSender.html' title='crust::CrustEventSender'>CrustEventSender</a>, service_discovery_port: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='struct' href='../../crust/service/struct.Service.html' title='crust::service::Service'>Service</a>, <a class='enum' href='../../crust/error/enum.Error.html' title='crust::error::Error'>Error</a>&gt;</code></h4>
 <div class='docblock'><p>Constructs a service. User needs to create an asynchronous channel, and provide
 the sender half to this method. Receiver will receive all <code>Event</code>s from this library.</p>
-</div><h4 id='method.send' class='method'><code>fn <a href='#method.send' class='fnname'>send</a>(&amp;self, connection: <a class='struct' href='../../crust/struct.Connection.html' title='crust::Connection'>Connection</a>, bytes: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;)</code></h4>
-<div class='docblock'><p>Sends a message over a specified connection.</p>
-</div><h4 id='method.start_beacon' class='method'><code>fn <a href='#method.start_beacon' class='fnname'>start_beacon</a>(&amp;mut self, udp_port: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a>&gt;</code></h4>
-<div class='docblock'><p>Start the beaconing on port <code>udp_port</code>. If port number is 0, the OS will
-pick one randomly. The actual port used will be returned.</p>
-
-<p>This function MUST NOT be called more than once. Currently crust has a
-limit of listenning at most once per process.</p>
-</div><h4 id='method.start_accepting' class='method'><code>fn <a href='#method.start_accepting' class='fnname'>start_accepting</a>(&amp;mut self, port: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='struct' href='../../crust/struct.Endpoint.html' title='crust::Endpoint'>Endpoint</a>, <a class='enum' href='../../crust/error/enum.Error.html' title='crust::error::Error'>Error</a>&gt;</code></h4>
-<div class='docblock'><p>Starts accepting on a given port. If port number is 0, the OS
-will pick one randomly. The actual port used will be returned.</p>
-</div><h4 id='method.bootstrap' class='method'><code>fn <a href='#method.bootstrap' class='fnname'>bootstrap</a>(&amp;mut self, token: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>, beacon_port: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a>&gt;)</code></h4>
-<div class='docblock'><p>This method tries to connect (bootstrap to existing network) to the default or provided
-override list of bootstrap nodes (via config file named <current executable>.config).</p>
-
-<p>If <code>override_default_bootstrap_methods</code> is not set in the config file, it will attempt to read
-a local cached file named <current executable>.bootstrap.cache to populate the list endpoints
-to use for bootstrapping. It will also try <code>hard_coded_contacts</code> from config file.
-In addition, it will try to use the beacon port (provided via config file) to connect to a peer
-on the same LAN.
-For more details on bootstrap cache file refer
-<a href="https://github.com/maidsafe/crust/blob/master/docs/bootstrap.md">https://github.com/maidsafe/crust/blob/master/docs/bootstrap.md</a></p>
-
-<p>If <code>override_default_bootstrap_methods</code> is set in config file, it will only try to connect to
-the endpoints in the override list (<code>hard_coded_contacts</code>).
-All connections (if any) will be dropped before bootstrap attempt is made.
-This method returns immediately after dropping any active connections.endpoints
-New bootstrap connections will be notified by <code>NewBootstrapConnection</code> event.
-Its upper layer&#39;s responsibility to maintain or drop these connections.</p>
-</div><h4 id='method.bootstrap_with_blacklist' class='method'><code>fn <a href='#method.bootstrap_with_blacklist' class='fnname'>bootstrap_with_blacklist</a>(&amp;mut self, token: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>, beacon_port: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a>&gt;, blacklist: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a><a class='struct' href='../../crust/struct.Endpoint.html' title='crust::Endpoint'>Endpoint</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>)</code></h4>
-<div class='docblock'><p>Same as bootstrap, but allows to specify a blacklist of endpoints
-this service should never connect to.</p>
-</div><h4 id='method.remove_bootstrap_contact' class='method'><code>fn <a href='#method.remove_bootstrap_contact' class='fnname'>remove_bootstrap_contact</a>(&amp;mut self, endpoint: <a class='struct' href='../../crust/struct.Endpoint.html' title='crust::Endpoint'>Endpoint</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, <a class='enum' href='../../crust/error/enum.Error.html' title='crust::error::Error'>Error</a>&gt;</code></h4>
-<div class='docblock'><p>Remove endpoint from the bootstrap cache.</p>
-</div><h4 id='method.is_connected_to' class='method'><code>fn <a href='#method.is_connected_to' class='fnname'>is_connected_to</a>(&amp;self, endpoint: &amp;<a class='struct' href='../../crust/struct.Endpoint.html' title='crust::Endpoint'>Endpoint</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
-<div class='docblock'><p>Check whether we&#39;re connected to an endpoint.</p>
+</div><h4 id='method.stop_bootstrap' class='method'><code>fn <a href='#method.stop_bootstrap' class='fnname'>stop_bootstrap</a>(&amp;mut self)</code></h4>
+<div class='docblock'><p>Stop the bootstraping procedure</p>
+</div><h4 id='method.set_listen_for_peers' class='method'><code>fn <a href='#method.set_listen_for_peers' class='fnname'>set_listen_for_peers</a>(&amp;self, listen: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+<div class='docblock'><p>Enable or Disable listening to peers trying to find us. The return value indicates
+successful registration of the request.</p>
 </div><h4 id='method.get_ordered_helping_nodes' class='method'><code>fn <a href='#method.get_ordered_helping_nodes' class='fnname'>get_ordered_helping_nodes</a>(&amp;self) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../crust/struct.SocketAddr.html' title='crust::SocketAddr'>SocketAddr</a>&gt;</code></h4>
 <div class='docblock'><p>Get the hole punch servers addresses of nodes that we&#39;re connected to ordered by how likely
 they are to be on a seperate network.</p>
-</div><h4 id='method.bootstrap_off_list' class='method'><code>fn <a href='#method.bootstrap_off_list' class='fnname'>bootstrap_off_list</a>(&amp;mut self, token: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>, bootstrap_list: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../crust/struct.Endpoint.html' title='crust::Endpoint'>Endpoint</a>&gt;, hole_punch_server: <a class='struct' href='https://doc.rust-lang.org/nightly/alloc/arc/struct.Arc.html' title='alloc::arc::Arc'>Arc</a>&lt;<a class='struct' href='../../crust/struct.HolePunchServer.html' title='crust::HolePunchServer'>HolePunchServer</a>&gt;)</code></h4>
-<div class='docblock'><p>Bootstrap to the network using the provided list of peers.</p>
-</div><h4 id='method.stop_bootstrap' class='method'><code>fn <a href='#method.stop_bootstrap' class='fnname'>stop_bootstrap</a>(&amp;mut self)</code></h4>
-<div class='docblock'><p>Stop the bootstraping procedure</p>
-</div><h4 id='method.connect' class='method'><code>fn <a href='#method.connect' class='fnname'>connect</a>(&amp;self, our_contact_info: <a class='struct' href='../../crust/struct.OurContactInfo.html' title='crust::OurContactInfo'>OurContactInfo</a>, their_contact_info: <a class='struct' href='../../crust/struct.TheirContactInfo.html' title='crust::TheirContactInfo'>TheirContactInfo</a>, token: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>)</code></h4>
+</div><h4 id='method.connect' class='method'><code>fn <a href='#method.connect' class='fnname'>connect</a>(&amp;self, our_contact_info: <a class='struct' href='../../crust/struct.OurContactInfo.html' title='crust::OurContactInfo'>OurContactInfo</a>, their_contact_info: <a class='struct' href='../../crust/struct.TheirContactInfo.html' title='crust::TheirContactInfo'>TheirContactInfo</a>)</code></h4>
 <div class='docblock'><p>Opens a connection to a remote peer. <code>public_endpoint</code> is the endpoint
 of the remote peer. <code>udp_socket</code> is a socket whose public address will
 be used by the other peer.</p>
@@ -122,18 +87,11 @@ itself which times out if a corresponding
 <code>Event::OnConnect</code> isn&#39;t received. See also <a href="https://github.com/maidsafe/crust/blob/master/docs/connect.md">Process for
 Connecting</a> for
 details on handling of connect in different protocols.</p>
-</div><h4 id='method.drop_node' class='method'><code>fn <a href='#method.drop_node' class='fnname'>drop_node</a>(&amp;self, connection: <a class='struct' href='../../crust/struct.Connection.html' title='crust::Connection'>Connection</a>)</code></h4>
-<div class='docblock'><p>Closes a connection.</p>
 </div><h4 id='method.get_known_external_endpoints' class='method'><code>fn <a href='#method.get_known_external_endpoints' class='fnname'>get_known_external_endpoints</a>(&amp;self) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../crust/struct.Endpoint.html' title='crust::Endpoint'>Endpoint</a>&gt;</code></h4>
 <div class='docblock'><p>Get already known external endpoints without any upnp mapping</p>
-</div><h4 id='method.get_external_endpoints' class='method'><code>fn <a href='#method.get_external_endpoints' class='fnname'>get_external_endpoints</a>(&amp;self)</code></h4>
-<div class='docblock'><p>Initiates uPnP port mapping of the currently used accepting endpoints.
-On success ExternalEndpoint event is generated containg our external
-endpoints.</p>
 </div><h4 id='method.prepare_contact_info' class='method'><code>fn <a href='#method.prepare_contact_info' class='fnname'>prepare_contact_info</a>(&amp;mut self, result_token: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>)</code></h4>
 <div class='docblock'><p>Lookup a mapped udp socket based on result_token</p>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Drop.html' title='core::ops::Drop'>Drop</a> for <a class='struct' href='../../crust/service/struct.Service.html' title='crust::service::Service'>Service</a></code></h3><div class='impl-items'><h4 id='method.drop' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/ops/trait.Drop.html#method.drop' class='fnname'>drop</a>(&amp;mut self)</code></h4>
-</div></section>
+</div></div></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

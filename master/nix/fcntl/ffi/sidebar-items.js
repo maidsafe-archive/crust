@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["fcntl",""],["open",""]],"struct":[["flock",""]]});
+initSidebarItems({"constant":[["LOCK_EX",""],["LOCK_NB",""],["LOCK_SH",""],["LOCK_UN",""]],"fn":[["fcntl",""],["libc_flock",""],["open",""]],"struct":[["flock",""]]});

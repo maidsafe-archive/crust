@@ -4,11 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-0a35038f75765ae4/nix-0.3.9/src/sys/socket/addr.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/nix-0.4.2/src/sys/socket/addr.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>addr.rs.html -- source</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../../main.css">
 
     
@@ -517,13 +518,57 @@
 <span id="475">475</span>
 <span id="476">476</span>
 <span id="477">477</span>
+<span id="478">478</span>
+<span id="479">479</span>
+<span id="480">480</span>
+<span id="481">481</span>
+<span id="482">482</span>
+<span id="483">483</span>
+<span id="484">484</span>
+<span id="485">485</span>
+<span id="486">486</span>
+<span id="487">487</span>
+<span id="488">488</span>
+<span id="489">489</span>
+<span id="490">490</span>
+<span id="491">491</span>
+<span id="492">492</span>
+<span id="493">493</span>
+<span id="494">494</span>
+<span id="495">495</span>
+<span id="496">496</span>
+<span id="497">497</span>
+<span id="498">498</span>
+<span id="499">499</span>
+<span id="500">500</span>
+<span id="501">501</span>
+<span id="502">502</span>
+<span id="503">503</span>
+<span id="504">504</span>
+<span id="505">505</span>
+<span id="506">506</span>
+<span id="507">507</span>
+<span id="508">508</span>
+<span id="509">509</span>
+<span id="510">510</span>
+<span id="511">511</span>
+<span id="512">512</span>
+<span id="513">513</span>
+<span id="514">514</span>
+<span id="515">515</span>
+<span id="516">516</span>
+<span id="517">517</span>
+<span id="518">518</span>
+<span id="519">519</span>
+<span id="520">520</span>
+<span id="521">521</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> {<span class='prelude-ty'>Result</span>, <span class='ident'>Error</span>, <span class='ident'>NixPath</span>};
 <span class='kw'>use</span> <span class='ident'>super</span>::{<span class='ident'>consts</span>, <span class='ident'>sa_family_t</span>};
 <span class='kw'>use</span> <span class='ident'>errno</span>::<span class='ident'>Errno</span>;
 <span class='kw'>use</span> <span class='ident'>libc</span>;
-<span class='kw'>use</span> <span class='ident'>std</span>::{<span class='ident'>fmt</span>, <span class='ident'>hash</span>, <span class='ident'>mem</span>, <span class='ident'>net</span>};
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>ffi</span>::{<span class='ident'>CStr</span>, <span class='ident'>OsStr</span>};
+<span class='kw'>use</span> <span class='ident'>std</span>::{<span class='ident'>fmt</span>, <span class='ident'>hash</span>, <span class='ident'>mem</span>, <span class='ident'>net</span>, <span class='ident'>ptr</span>};
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>ffi</span>::<span class='ident'>OsStr</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>path</span>::<span class='ident'>Path</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>os</span>::<span class='ident'>unix</span>::<span class='ident'>ffi</span>::<span class='ident'>OsStrExt</span>;
 
@@ -849,13 +894,16 @@
  *
  */</span>
 
+<span class='doccomment'>/// A wrapper around sockaddr_un. We track the length of sun_path,</span>
+<span class='doccomment'>/// because it may not be null-terminated (unconnected and abstract</span>
+<span class='doccomment'>/// sockets). Note that the actual sockaddr length is greater by</span>
+<span class='doccomment'>/// size_of::&lt;sa_family_t&gt;().</span>
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Copy</span>)]</span>
-<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>UnixAddr</span>(<span class='kw'>pub</span> <span class='ident'>libc</span>::<span class='ident'>sockaddr_un</span>);
+<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>UnixAddr</span>(<span class='kw'>pub</span> <span class='ident'>libc</span>::<span class='ident'>sockaddr_un</span>, <span class='kw'>pub</span> <span class='ident'>usize</span>);
 
 <span class='kw'>impl</span> <span class='ident'>UnixAddr</span> {
+    <span class='doccomment'>/// Create a new sockaddr_un representing a filesystem path.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span><span class='op'>&lt;</span><span class='ident'>P</span>: ?<span class='ident'>Sized</span> <span class='op'>+</span> <span class='ident'>NixPath</span><span class='op'>&gt;</span>(<span class='ident'>path</span>: <span class='kw-2'>&amp;</span><span class='ident'>P</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>UnixAddr</span><span class='op'>&gt;</span> {
-        <span class='kw'>use</span> <span class='ident'>libc</span>::<span class='ident'>strcpy</span>;
-
         <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>path</span>.<span class='ident'>with_nix_path</span>(<span class='op'>|</span><span class='ident'>cstr</span><span class='op'>|</span> {
             <span class='kw'>unsafe</span> {
                 <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>ret</span> <span class='op'>=</span> <span class='ident'>libc</span>::<span class='ident'>sockaddr_un</span> {
@@ -863,31 +911,65 @@
                     .. <span class='ident'>mem</span>::<span class='ident'>zeroed</span>()
                 };
 
-                <span class='comment'>// Must be smaller to account for the null byte</span>
-                <span class='kw'>if</span> <span class='ident'>path</span>.<span class='ident'>len</span>() <span class='op'>&gt;=</span> <span class='ident'>ret</span>.<span class='ident'>sun_path</span>.<span class='ident'>len</span>() {
+                <span class='kw'>let</span> <span class='ident'>bytes</span> <span class='op'>=</span> <span class='ident'>cstr</span>.<span class='ident'>to_bytes_with_nul</span>();
+
+                <span class='kw'>if</span> <span class='ident'>bytes</span>.<span class='ident'>len</span>() <span class='op'>&gt;</span> <span class='ident'>ret</span>.<span class='ident'>sun_path</span>.<span class='ident'>len</span>() {
                     <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>Sys</span>(<span class='ident'>Errno</span>::<span class='ident'>ENAMETOOLONG</span>));
                 }
 
-                <span class='ident'>strcpy</span>(<span class='ident'>ret</span>.<span class='ident'>sun_path</span>.<span class='ident'>as_mut_ptr</span>(), <span class='ident'>cstr</span>.<span class='ident'>as_ptr</span>());
+                <span class='ident'>ptr</span>::<span class='ident'>copy_nonoverlapping</span>(<span class='ident'>bytes</span>.<span class='ident'>as_ptr</span>(),
+                                         <span class='ident'>ret</span>.<span class='ident'>sun_path</span>.<span class='ident'>as_mut_ptr</span>() <span class='kw'>as</span> <span class='op'>*</span><span class='kw-2'>mut</span> <span class='ident'>u8</span>,
+                                         <span class='ident'>bytes</span>.<span class='ident'>len</span>());
 
-                <span class='prelude-val'>Ok</span>(<span class='ident'>UnixAddr</span>(<span class='ident'>ret</span>))
+                <span class='prelude-val'>Ok</span>(<span class='ident'>UnixAddr</span>(<span class='ident'>ret</span>, <span class='ident'>bytes</span>.<span class='ident'>len</span>()))
             }
         }))
     }
 
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>path</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='ident'>Path</span> {
+    <span class='doccomment'>/// Create a new sockaddr_un representing an address in the</span>
+    <span class='doccomment'>/// &quot;abstract namespace&quot;. This is a Linux-specific extension,</span>
+    <span class='doccomment'>/// primarily used to allow chrooted processes to communicate with</span>
+    <span class='doccomment'>/// specific daemons.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new_abstract</span>(<span class='ident'>path</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>]) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>UnixAddr</span><span class='op'>&gt;</span> {
         <span class='kw'>unsafe</span> {
-            <span class='kw'>let</span> <span class='ident'>bytes</span> <span class='op'>=</span> <span class='ident'>CStr</span>::<span class='ident'>from_ptr</span>(<span class='self'>self</span>.<span class='number'>0</span>.<span class='ident'>sun_path</span>.<span class='ident'>as_ptr</span>()).<span class='ident'>to_bytes</span>();
-            <span class='ident'>Path</span>::<span class='ident'>new</span>(<span class='op'>&lt;</span><span class='ident'>OsStr</span> <span class='kw'>as</span> <span class='ident'>OsStrExt</span><span class='op'>&gt;</span>::<span class='ident'>from_bytes</span>(<span class='ident'>bytes</span>))
+            <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>ret</span> <span class='op'>=</span> <span class='ident'>libc</span>::<span class='ident'>sockaddr_un</span> {
+                <span class='ident'>sun_family</span>: <span class='ident'>AddressFamily</span>::<span class='ident'>Unix</span> <span class='kw'>as</span> <span class='ident'>sa_family_t</span>,
+                .. <span class='ident'>mem</span>::<span class='ident'>zeroed</span>()
+            };
+
+            <span class='kw'>if</span> <span class='ident'>path</span>.<span class='ident'>len</span>() <span class='op'>&gt;</span> <span class='ident'>ret</span>.<span class='ident'>sun_path</span>.<span class='ident'>len</span>() {
+                <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>Sys</span>(<span class='ident'>Errno</span>::<span class='ident'>ENAMETOOLONG</span>));
+            }
+
+            <span class='comment'>// Abstract addresses are represented by sun_path[0] ==</span>
+            <span class='comment'>// b&#39;\0&#39;, so copy starting one byte in.</span>
+            <span class='ident'>ptr</span>::<span class='ident'>copy_nonoverlapping</span>(<span class='ident'>path</span>.<span class='ident'>as_ptr</span>(),
+                                     <span class='ident'>ret</span>.<span class='ident'>sun_path</span>.<span class='ident'>as_mut_ptr</span>().<span class='ident'>offset</span>(<span class='number'>1</span>) <span class='kw'>as</span> <span class='op'>*</span><span class='kw-2'>mut</span> <span class='ident'>u8</span>,
+                                     <span class='ident'>path</span>.<span class='ident'>len</span>());
+
+            <span class='prelude-val'>Ok</span>(<span class='ident'>UnixAddr</span>(<span class='ident'>ret</span>, <span class='ident'>path</span>.<span class='ident'>len</span>()))
+        }
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>sun_path</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>] {
+        <span class='kw'>unsafe</span> { <span class='ident'>mem</span>::<span class='ident'>transmute</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='number'>0</span>.<span class='ident'>sun_path</span>[..<span class='self'>self</span>.<span class='number'>1</span>]) }
+    }
+
+    <span class='doccomment'>/// If this address represents a filesystem path, return that path.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>path</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='ident'>Path</span><span class='op'>&gt;</span> {
+        <span class='kw'>if</span> <span class='self'>self</span>.<span class='number'>1</span> <span class='op'>==</span> <span class='number'>0</span> <span class='op'>||</span> <span class='self'>self</span>.<span class='number'>0</span>.<span class='ident'>sun_path</span>[<span class='number'>0</span>] <span class='op'>==</span> <span class='number'>0</span> {
+            <span class='comment'>// unbound or abstract</span>
+            <span class='prelude-val'>None</span>
+        } <span class='kw'>else</span> {
+            <span class='kw'>let</span> <span class='ident'>p</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>sun_path</span>();
+            <span class='prelude-val'>Some</span>(<span class='ident'>Path</span>::<span class='ident'>new</span>(<span class='op'>&lt;</span><span class='ident'>OsStr</span> <span class='kw'>as</span> <span class='ident'>OsStrExt</span><span class='op'>&gt;</span>::<span class='ident'>from_bytes</span>(<span class='kw-2'>&amp;</span><span class='ident'>p</span>[..<span class='ident'>p</span>.<span class='ident'>len</span>()<span class='op'>-</span><span class='number'>1</span>])))
         }
     }
 }
 
 <span class='kw'>impl</span> <span class='ident'>PartialEq</span> <span class='kw'>for</span> <span class='ident'>UnixAddr</span> {
     <span class='kw'>fn</span> <span class='ident'>eq</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>other</span>: <span class='kw-2'>&amp;</span><span class='ident'>UnixAddr</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
-        <span class='kw'>unsafe</span> {
-            <span class='number'>0</span> <span class='op'>==</span> <span class='ident'>libc</span>::<span class='ident'>strcmp</span>(<span class='self'>self</span>.<span class='number'>0</span>.<span class='ident'>sun_path</span>.<span class='ident'>as_ptr</span>(), <span class='ident'>other</span>.<span class='number'>0</span>.<span class='ident'>sun_path</span>.<span class='ident'>as_ptr</span>())
-        }
+        <span class='self'>self</span>.<span class='ident'>sun_path</span>() <span class='op'>==</span> <span class='ident'>other</span>.<span class='ident'>sun_path</span>()
     }
 }
 
@@ -896,7 +978,7 @@
 
 <span class='kw'>impl</span> <span class='ident'>hash</span>::<span class='ident'>Hash</span> <span class='kw'>for</span> <span class='ident'>UnixAddr</span> {
     <span class='kw'>fn</span> <span class='ident'>hash</span><span class='op'>&lt;</span><span class='ident'>H</span>: <span class='ident'>hash</span>::<span class='ident'>Hasher</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>s</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>H</span>) {
-        ( <span class='self'>self</span>.<span class='number'>0</span>.<span class='ident'>sun_family</span>, <span class='self'>self</span>.<span class='ident'>path</span>() ).<span class='ident'>hash</span>(<span class='ident'>s</span>)
+        ( <span class='self'>self</span>.<span class='number'>0</span>.<span class='ident'>sun_family</span>, <span class='self'>self</span>.<span class='ident'>sun_path</span>() ).<span class='ident'>hash</span>(<span class='ident'>s</span>)
     }
 }
 
@@ -908,7 +990,14 @@
 
 <span class='kw'>impl</span> <span class='ident'>fmt</span>::<span class='ident'>Display</span> <span class='kw'>for</span> <span class='ident'>UnixAddr</span> {
     <span class='kw'>fn</span> <span class='ident'>fmt</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>f</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>fmt</span>::<span class='ident'>Formatter</span>) <span class='op'>-&gt;</span> <span class='ident'>fmt</span>::<span class='prelude-ty'>Result</span> {
-        <span class='self'>self</span>.<span class='ident'>path</span>().<span class='ident'>display</span>().<span class='ident'>fmt</span>(<span class='ident'>f</span>)
+        <span class='kw'>if</span> <span class='self'>self</span>.<span class='number'>1</span> <span class='op'>==</span> <span class='number'>0</span> {
+            <span class='ident'>f</span>.<span class='ident'>write_str</span>(<span class='string'>&quot;&lt;unbound UNIX socket&gt;&quot;</span>)
+        } <span class='kw'>else</span> <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='ident'>path</span>) <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>path</span>() {
+            <span class='ident'>path</span>.<span class='ident'>display</span>().<span class='ident'>fmt</span>(<span class='ident'>f</span>)
+        } <span class='kw'>else</span> {
+            <span class='kw'>let</span> <span class='ident'>display</span> <span class='op'>=</span> <span class='ident'>String</span>::<span class='ident'>from_utf8_lossy</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>sun_path</span>()[<span class='number'>1</span>..]);
+            <span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>f</span>, <span class='string'>&quot;@{}&quot;</span>, <span class='ident'>display</span>)
+        }
     }
 }
 
@@ -950,7 +1039,7 @@
         <span class='kw'>match</span> <span class='op'>*</span><span class='self'>self</span> {
             <span class='ident'>SockAddr</span>::<span class='ident'>Inet</span>(<span class='ident'>InetAddr</span>::<span class='ident'>V4</span>(<span class='kw-2'>ref</span> <span class='ident'>addr</span>)) <span class='op'>=&gt;</span> (<span class='ident'>mem</span>::<span class='ident'>transmute</span>(<span class='ident'>addr</span>), <span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>libc</span>::<span class='ident'>sockaddr_in</span><span class='op'>&gt;</span>() <span class='kw'>as</span> <span class='ident'>libc</span>::<span class='ident'>socklen_t</span>),
             <span class='ident'>SockAddr</span>::<span class='ident'>Inet</span>(<span class='ident'>InetAddr</span>::<span class='ident'>V6</span>(<span class='kw-2'>ref</span> <span class='ident'>addr</span>)) <span class='op'>=&gt;</span> (<span class='ident'>mem</span>::<span class='ident'>transmute</span>(<span class='ident'>addr</span>), <span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>libc</span>::<span class='ident'>sockaddr_in6</span><span class='op'>&gt;</span>() <span class='kw'>as</span> <span class='ident'>libc</span>::<span class='ident'>socklen_t</span>),
-            <span class='ident'>SockAddr</span>::<span class='ident'>Unix</span>(<span class='ident'>UnixAddr</span>(<span class='kw-2'>ref</span> <span class='ident'>addr</span>)) <span class='op'>=&gt;</span> (<span class='ident'>mem</span>::<span class='ident'>transmute</span>(<span class='ident'>addr</span>), <span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>libc</span>::<span class='ident'>sockaddr_un</span><span class='op'>&gt;</span>() <span class='kw'>as</span> <span class='ident'>libc</span>::<span class='ident'>socklen_t</span>),
+            <span class='ident'>SockAddr</span>::<span class='ident'>Unix</span>(<span class='ident'>UnixAddr</span>(<span class='kw-2'>ref</span> <span class='ident'>addr</span>, <span class='ident'>len</span>)) <span class='op'>=&gt;</span> (<span class='ident'>mem</span>::<span class='ident'>transmute</span>(<span class='ident'>addr</span>), (<span class='ident'>len</span> <span class='op'>+</span> <span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>libc</span>::<span class='ident'>sa_family_t</span><span class='op'>&gt;</span>()) <span class='kw'>as</span> <span class='ident'>libc</span>::<span class='ident'>socklen_t</span>),
         }
     }
 }
@@ -1055,6 +1144,6 @@
     <script src="../../../../jquery.js"></script>
     <script src="../../../../main.js"></script>
     
-    <script async src="../../../../search-index.js"></script>
+    <script defer src="../../../../search-index.js"></script>
 </body>
 </html>

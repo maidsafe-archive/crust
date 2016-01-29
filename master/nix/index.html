@@ -9,6 +9,7 @@
 
     <title>nix - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../main.css">
 
     
@@ -45,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-0' class='srclink' href='../src/nix/lib.rs.html#1-140' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-0' class='srclink' href='../src/nix/lib.rs.html#1-176' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Rust friendly bindings to the various *nix system functions.</p>
 
 <p>Modules are structured according to the C header file that they would be
@@ -88,7 +89,8 @@ defined in.</p>
                         <td><a class='mod' href='mqueue/index.html'
                                title='nix::mqueue'>mqueue</a></td>
                         <td class='docblock short'>
-                             
+                             <p>Posix Message Queue functions</p>
+
                         </td>
                     </tr>
                 
@@ -113,6 +115,70 @@ defined in.</p>
                                title='nix::unistd'>unistd</a></td>
                         <td class='docblock short'>
                              <p>Standard symbolic constants and types</p>
+
+                        </td>
+                    </tr>
+                </table><h2 id='macros' class='section-header'><a href="#macros">Macros</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='macro' href='macro.convert_ioctl_res!.html'
+                               title='nix::convert_ioctl_res!'>convert_ioctl_res!</a></td>
+                        <td class='docblock short'>
+                             <p>Convert raw ioctl return value to a Nix result</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='macro' href='macro.io!.html'
+                               title='nix::io!'>io!</a></td>
+                        <td class='docblock short'>
+                             <p>Encode an ioctl command that has no associated data.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='macro' href='macro.ioc!.html'
+                               title='nix::ioc!'>ioc!</a></td>
+                        <td class='docblock short'>
+                             <p>Encode an ioctl command.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='macro' href='macro.ioctl!.html'
+                               title='nix::ioctl!'>ioctl!</a></td>
+                        <td class='docblock short'>
+                             <p>Declare a wrapper function around an ioctl.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='macro' href='macro.ior!.html'
+                               title='nix::ior!'>ior!</a></td>
+                        <td class='docblock short'>
+                             <p>Encode an ioctl command that reads.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='macro' href='macro.iorw!.html'
+                               title='nix::iorw!'>iorw!</a></td>
+                        <td class='docblock short'>
+                             <p>Encode an ioctl command that both reads and writes.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='macro' href='macro.iow!.html'
+                               title='nix::iow!'>iow!</a></td>
+                        <td class='docblock short'>
+                             <p>Encode an ioctl command that writes.</p>
 
                         </td>
                     </tr>
@@ -228,6 +294,6 @@ defined in.</p>
     <script src="../jquery.js"></script>
     <script src="../main.js"></script>
     
-    <script async src="../search-index.js"></script>
+    <script defer src="../search-index.js"></script>
 </body>
 </html>

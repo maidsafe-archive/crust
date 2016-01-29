@@ -1,1 +1,1 @@
-initSidebarItems({"static":[["SYSPIVOTROOT",""]],"type":[["Syscall",""]]});
+initSidebarItems({"static":[["MEMFD_CREATE",""],["SYSPIVOTROOT",""]],"type":[["Syscall",""]]});

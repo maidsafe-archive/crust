@@ -9,6 +9,7 @@
 
     <title>nix::mqueue - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
 
     
@@ -45,8 +46,11 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-992' class='srclink' href='../../src/nix/mqueue.rs.html#1-97' title='goto source code'>[src]</a></span></h1>
-<h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+        </span><a id='src-1749' class='srclink' href='../../src/nix/mqueue.rs.html#1-161' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p>Posix Message Queue functions</p>
+
+<p><a href="http://man7.org/linux/man-pages/man7/mq_overview.7.html">Further reading and details on the C API</a></p>
+</div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
                     <tr class=' module-item'>
                         <td><a class='struct' href='struct.FdFlag.html'
@@ -147,6 +151,14 @@
                     </tr>
                 
                     <tr class=' module-item'>
+                        <td><a class='fn' href='fn.mq_getattr.html'
+                               title='nix::mqueue::mq_getattr'>mq_getattr</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
                         <td><a class='fn' href='fn.mq_open.html'
                                title='nix::mqueue::mq_open'>mq_open</a></td>
                         <td class='docblock short'>
@@ -163,8 +175,49 @@
                     </tr>
                 
                     <tr class=' module-item'>
+                        <td><a class='fn' href='fn.mq_remove_nonblock.html'
+                               title='nix::mqueue::mq_remove_nonblock'>mq_remove_nonblock</a></td>
+                        <td class='docblock short'>
+                             <p>Convenience function.
+Removes O_NONBLOCK attribute for a given message queue descriptor
+Returns the old attributes</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
                         <td><a class='fn' href='fn.mq_send.html'
                                title='nix::mqueue::mq_send'>mq_send</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.mq_set_nonblock.html'
+                               title='nix::mqueue::mq_set_nonblock'>mq_set_nonblock</a></td>
+                        <td class='docblock short'>
+                             <p>Convenience function.
+Sets the O_NONBLOCK attribute for a given message queue descriptor
+Returns the old attributes</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.mq_setattr.html'
+                               title='nix::mqueue::mq_setattr'>mq_setattr</a></td>
+                        <td class='docblock short'>
+                             <p>Set the attributes of the message queue. Only O_NONBLOCK can be set, everything else will be ignored
+Returns the old attributes
+It is recommend to use the mq_set_nonblock() and mq_remove_nonblock() convenience functions as they are easier to use</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.mq_unlink.html'
+                               title='nix::mqueue::mq_unlink'>mq_unlink</a></td>
                         <td class='docblock short'>
                              
                         </td>
@@ -237,6 +290,6 @@
     <script src="../../jquery.js"></script>
     <script src="../../main.js"></script>
     
-    <script async src="../../search-index.js"></script>
+    <script defer src="../../search-index.js"></script>
 </body>
 </html>

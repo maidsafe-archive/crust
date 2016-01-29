@@ -141,18 +141,6 @@
 <span id="98"> 98</span>
 <span id="99"> 99</span>
 <span id="100">100</span>
-<span id="101">101</span>
-<span id="102">102</span>
-<span id="103">103</span>
-<span id="104">104</span>
-<span id="105">105</span>
-<span id="106">106</span>
-<span id="107">107</span>
-<span id="108">108</span>
-<span id="109">109</span>
-<span id="110">110</span>
-<span id="111">111</span>
-<span id="112">112</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -197,8 +185,9 @@
 <span class='comment'>// #![feature(plugin)]</span>
 <span class='comment'>// #![plugin(clippy)]</span>
 
+<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>allow</span>(<span class='ident'>unused</span>, <span class='ident'>unused_extern_crates</span>)]</span>
+
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>cbor</span>;
-<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>igd</span>;
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>itertools</span>;
 <span class='attribute'>#[<span class='ident'>macro_use</span>]</span>
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>log</span>;
@@ -213,6 +202,9 @@
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>maidsafe_utilities</span>;
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>ip</span>;
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>get_if_addrs</span>;
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>sodiumoxide</span>;
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>config_file_handler</span>;
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>service_discovery</span>;
 
 <span class='doccomment'>/// Module implementing the `Service` which provides an interface to manage peer-to-peer</span>
 <span class='doccomment'>/// connections.</span>
@@ -220,52 +212,36 @@
 
 <span class='doccomment'>/// Defines errors.</span>
 <span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>error</span>;
-<span class='doccomment'>/// Provides a struct and free functions for working with config files.</span>
-<span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>file_handler</span>;
 
 <span class='doccomment'>/// Crust Observers will be informed of crust events on this</span>
 <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>CrustEventSender</span> <span class='op'>=</span> ::<span class='ident'>maidsafe_utilities</span>::<span class='ident'>event_sender</span>::<span class='ident'>MaidSafeObserver</span><span class='op'>&lt;</span><span class='ident'>Event</span><span class='op'>&gt;</span>;
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>config_handler</span>::<span class='ident'>write_config_file</span>;
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>service</span>::<span class='ident'>Service</span>;
-<span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>event</span>::{<span class='ident'>Event</span>, <span class='ident'>OurContactInfo</span>, <span class='ident'>TheirContactInfo</span>};
-<span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>file_handler</span>::{<span class='ident'>FileHandler</span>, <span class='ident'>current_bin_dir</span>, <span class='ident'>user_app_dir</span>, <span class='ident'>system_cache_dir</span>,
-                       <span class='ident'>exe_file_stem</span>, <span class='ident'>ScopedUserAppDirRemover</span>};
+<span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>event</span>::{<span class='ident'>ContactInfoResult</span>, <span class='ident'>Event</span>, <span class='ident'>OurContactInfo</span>, <span class='ident'>TheirContactInfo</span>};
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>endpoint</span>::{<span class='ident'>Endpoint</span>, <span class='ident'>Protocol</span>};
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>connection</span>::<span class='ident'>Connection</span>;
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>socket_addr</span>::<span class='ident'>SocketAddr</span>;
-<span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>hole_punching</span>::<span class='ident'>HolePunchServer</span>;
 
-<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
-<span class='kw'>mod</span> <span class='ident'>test</span> {
-    <span class='attribute'>#[<span class='ident'>test</span>]</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>check_rust_unit_testing_is_not_parallel</span>() {
-        <span class='kw'>match</span> ::<span class='ident'>std</span>::<span class='ident'>env</span>::<span class='ident'>var_os</span>(<span class='string'>&quot;RUST_TEST_THREADS&quot;</span>) {
-            <span class='prelude-val'>Some</span>(<span class='ident'>val</span>) <span class='op'>=&gt;</span> <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>val</span>.<span class='ident'>into_string</span>().<span class='ident'>unwrap</span>() <span class='op'>==</span> <span class='string'>&quot;1&quot;</span>),
-            <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;RUST_TEST_THREADS needs to be 1 for the crust unit tests to work&quot;</span>),
-        }
-    }
-}
+<span class='kw'>mod</span> <span class='ident'>bootstrap</span>;
 <span class='kw'>mod</span> <span class='ident'>sequence_number</span>;
 <span class='kw'>mod</span> <span class='ident'>connection</span>;
-<span class='kw'>mod</span> <span class='ident'>beacon</span>;
+<span class='comment'>// mod beacon;</span>
 <span class='kw'>mod</span> <span class='ident'>endpoint</span>;
 <span class='kw'>mod</span> <span class='ident'>bootstrap_handler</span>;
 <span class='kw'>mod</span> <span class='ident'>config_handler</span>;
 <span class='kw'>mod</span> <span class='ident'>util</span>;
 <span class='kw'>mod</span> <span class='ident'>tcp_connections</span>;
-<span class='kw'>mod</span> <span class='ident'>transport</span>;
 <span class='kw'>mod</span> <span class='ident'>utp_connections</span>;
+<span class='kw'>mod</span> <span class='ident'>sender_receiver</span>;
+<span class='kw'>mod</span> <span class='ident'>contact_info</span>;
 <span class='kw'>mod</span> <span class='ident'>utp_wrapper</span>;
 <span class='kw'>mod</span> <span class='ident'>event</span>;
-<span class='kw'>mod</span> <span class='ident'>map_external_port</span>;
 <span class='kw'>mod</span> <span class='ident'>hole_punching</span>;
 <span class='kw'>mod</span> <span class='ident'>periodic_sender</span>;
 <span class='kw'>mod</span> <span class='ident'>socket_utils</span>;
 <span class='kw'>mod</span> <span class='ident'>socket_addr</span>;
 <span class='kw'>mod</span> <span class='ident'>ip_info</span>;
-<span class='kw'>mod</span> <span class='ident'>acceptor</span>;
-<span class='kw'>mod</span> <span class='ident'>connection_map</span>;
-
+<span class='kw'>mod</span> <span class='ident'>udp_listener</span>;
 </pre>
 </section>
     <section id='search' class="content hidden"></section>

@@ -1,5 +1,5 @@
 (function() {var implementors = {};
-implementors['bitflags'] = [];implementors['regex_syntax'] = [];implementors['hyper'] = [];implementors['igd'] = [];
+implementors['regex_syntax'] = [];
 
             if (window.register_implementors) {
                 window.register_implementors(implementors);

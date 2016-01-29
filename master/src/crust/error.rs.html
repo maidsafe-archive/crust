@@ -110,6 +110,16 @@
 <span id="67">67</span>
 <span id="68">68</span>
 <span id="69">69</span>
+<span id="70">70</span>
+<span id="71">71</span>
+<span id="72">72</span>
+<span id="73">73</span>
+<span id="74">74</span>
+<span id="75">75</span>
+<span id="76">76</span>
+<span id="77">77</span>
+<span id="78">78</span>
+<span id="79">79</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -127,10 +137,15 @@
 <span class='comment'>//</span>
 <span class='comment'>// Please review the Licences for the specific language governing permissions and limitations</span>
 <span class='comment'>// relating to use of the SAFE Network Software.</span>
+<span class='kw'>use</span> <span class='ident'>config_file_handler</span>;
 
 <span class='doccomment'>/// Error types.</span>
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>enum</span> <span class='ident'>Error</span> {
+    <span class='doccomment'>/// Failed sending over a channel</span>
+    <span class='ident'>ChannelSendError</span>(<span class='ident'>String</span>),
+    <span class='doccomment'>/// File handling errors</span>
+    <span class='ident'>FileHandler</span>(<span class='ident'>config_file_handler</span>::<span class='ident'>Error</span>),
     <span class='doccomment'>/// Wrapper for a `::std::env::VarError`</span>
     <span class='ident'>EnvError</span>(::<span class='ident'>std</span>::<span class='ident'>env</span>::<span class='ident'>VarError</span>),
     <span class='doccomment'>/// Wrapper for a `::std::io::Error`</span>
@@ -172,6 +187,11 @@
 <span class='kw'>impl</span> <span class='ident'>From</span><span class='op'>&lt;</span>::<span class='ident'>rustc_serialize</span>::<span class='ident'>json</span>::<span class='ident'>ParserError</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>Error</span> {
     <span class='kw'>fn</span> <span class='ident'>from</span>(<span class='ident'>error</span>: ::<span class='ident'>rustc_serialize</span>::<span class='ident'>json</span>::<span class='ident'>ParserError</span>) <span class='op'>-&gt;</span> <span class='kw'>Self</span> {
         <span class='ident'>Error</span>::<span class='ident'>JsonParserError</span>(<span class='ident'>error</span>)
+    }
+}
+<span class='kw'>impl</span> <span class='ident'>From</span><span class='op'>&lt;</span><span class='ident'>config_file_handler</span>::<span class='ident'>Error</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>Error</span> {
+    <span class='kw'>fn</span> <span class='ident'>from</span>(<span class='ident'>error</span>: <span class='ident'>config_file_handler</span>::<span class='ident'>Error</span>) <span class='op'>-&gt;</span> <span class='kw'>Self</span> {
+        <span class='ident'>Error</span>::<span class='ident'>FileHandler</span>(<span class='ident'>error</span>)
     }
 }
 

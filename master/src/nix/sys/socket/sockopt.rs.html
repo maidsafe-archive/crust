@@ -4,11 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-0a35038f75765ae4/nix-0.3.9/src/sys/socket/sockopt.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/nix-0.4.2/src/sys/socket/sockopt.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>sockopt.rs.html -- source</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../../main.css">
 
     
@@ -336,6 +337,12 @@
 <span id="294">294</span>
 <span id="295">295</span>
 <span id="296">296</span>
+<span id="297">297</span>
+<span id="298">298</span>
+<span id="299">299</span>
+<span id="300">300</span>
+<span id="301">301</span>
+<span id="302">302</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> {<span class='prelude-ty'>Result</span>, <span class='ident'>Error</span>, <span class='ident'>from_ffi</span>};
 <span class='kw'>use</span> <span class='ident'>super</span>::{<span class='ident'>ffi</span>, <span class='ident'>consts</span>, <span class='ident'>GetSockOpt</span>, <span class='ident'>SetSockOpt</span>};
@@ -460,8 +467,14 @@
 <span class='macro'>sockopt_impl</span><span class='macro'>!</span>(<span class='ident'>Both</span>, <span class='ident'>Linger</span>, <span class='ident'>consts</span>::<span class='ident'>SOL_SOCKET</span>, <span class='ident'>consts</span>::<span class='ident'>SO_LINGER</span>, <span class='ident'>super</span>::<span class='ident'>linger</span>);
 <span class='macro'>sockopt_impl</span><span class='macro'>!</span>(<span class='ident'>SetOnly</span>, <span class='ident'>IpAddMembership</span>, <span class='ident'>consts</span>::<span class='ident'>IPPROTO_IP</span>, <span class='ident'>consts</span>::<span class='ident'>IP_ADD_MEMBERSHIP</span>, <span class='ident'>super</span>::<span class='ident'>ip_mreq</span>);
 <span class='macro'>sockopt_impl</span><span class='macro'>!</span>(<span class='ident'>SetOnly</span>, <span class='ident'>IpDropMembership</span>, <span class='ident'>consts</span>::<span class='ident'>IPPROTO_IP</span>, <span class='ident'>consts</span>::<span class='ident'>IP_DROP_MEMBERSHIP</span>, <span class='ident'>super</span>::<span class='ident'>ip_mreq</span>);
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>not</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;netbsd&quot;</span>))]</span>
 <span class='macro'>sockopt_impl</span><span class='macro'>!</span>(<span class='ident'>SetOnly</span>, <span class='ident'>Ipv6AddMembership</span>, <span class='ident'>consts</span>::<span class='ident'>IPPROTO_IPV6</span>, <span class='ident'>consts</span>::<span class='ident'>IPV6_ADD_MEMBERSHIP</span>, <span class='ident'>super</span>::<span class='ident'>ipv6_mreq</span>);
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>not</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;netbsd&quot;</span>))]</span>
 <span class='macro'>sockopt_impl</span><span class='macro'>!</span>(<span class='ident'>SetOnly</span>, <span class='ident'>Ipv6DropMembership</span>, <span class='ident'>consts</span>::<span class='ident'>IPPROTO_IPV6</span>, <span class='ident'>consts</span>::<span class='ident'>IPV6_DROP_MEMBERSHIP</span>, <span class='ident'>super</span>::<span class='ident'>ipv6_mreq</span>);
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;netbsd&quot;</span>)]</span>
+<span class='macro'>sockopt_impl</span><span class='macro'>!</span>(<span class='ident'>SetOnly</span>, <span class='ident'>Ipv6AddMembership</span>, <span class='ident'>consts</span>::<span class='ident'>IPPROTO_IPV6</span>, <span class='ident'>consts</span>::<span class='ident'>IPV6_JOIN_GROUP</span>, <span class='ident'>super</span>::<span class='ident'>ipv6_mreq</span>);
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;netbsd&quot;</span>)]</span>
+<span class='macro'>sockopt_impl</span><span class='macro'>!</span>(<span class='ident'>SetOnly</span>, <span class='ident'>Ipv6DropMembership</span>, <span class='ident'>consts</span>::<span class='ident'>IPPROTO_IPV6</span>, <span class='ident'>consts</span>::<span class='ident'>IPV6_LEAVE_GROUP</span>, <span class='ident'>super</span>::<span class='ident'>ipv6_mreq</span>);
 <span class='macro'>sockopt_impl</span><span class='macro'>!</span>(<span class='ident'>Both</span>, <span class='ident'>IpMulticastTtl</span>, <span class='ident'>consts</span>::<span class='ident'>IPPROTO_IP</span>, <span class='ident'>consts</span>::<span class='ident'>IP_MULTICAST_TTL</span>, <span class='ident'>u8</span>);
 <span class='macro'>sockopt_impl</span><span class='macro'>!</span>(<span class='ident'>Both</span>, <span class='ident'>IpMulticastLoop</span>, <span class='ident'>consts</span>::<span class='ident'>IPPROTO_IP</span>, <span class='ident'>consts</span>::<span class='ident'>IP_MULTICAST_LOOP</span>, <span class='ident'>bool</span>);
 <span class='macro'>sockopt_impl</span><span class='macro'>!</span>(<span class='ident'>Both</span>, <span class='ident'>ReceiveTimeout</span>, <span class='ident'>consts</span>::<span class='ident'>SOL_SOCKET</span>, <span class='ident'>consts</span>::<span class='ident'>SO_RCVTIMEO</span>, <span class='ident'>TimeVal</span>);
@@ -693,6 +706,6 @@
     <script src="../../../../jquery.js"></script>
     <script src="../../../../main.js"></script>
     
-    <script async src="../../../../search-index.js"></script>
+    <script defer src="../../../../search-index.js"></script>
 </body>
 </html>

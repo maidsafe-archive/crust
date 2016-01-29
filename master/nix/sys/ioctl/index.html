@@ -9,6 +9,7 @@
 
     <title>nix::sys::ioctl - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../main.css">
 
     
@@ -45,15 +46,20 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-1604' class='srclink' href='../../../src/nix/sys/ioctl.rs.html#1-224' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-2781' class='srclink' href='../../../src/nix/sys/ioctl/mod.rs.html#1-147' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Provide helpers for making ioctl system calls</p>
 
-<h1 id='overview-of-ioctls' class='section-header'><a href='#overview-of-ioctls'>Overview of IOCTLs</a></h1>
-<p>The <code>ioctl</code> system call is a widely support system
-call on *nix systems providing access to functions
-and data that do not fit nicely into the standard
-read and write operations on a file itself.  It is
-common to see ioctls used for the following purposes:</p>
+<p>Currently supports Linux on all architectures. Other platforms welcome!</p>
+
+<p>This library is pretty low-level and messy. <code>ioctl</code> is not fun.</p>
+
+<h1 id='what-is-an-ioctl' class='section-header'><a href='#what-is-an-ioctl'>What is an <code>ioctl</code>?</a></h1>
+<p>The <code>ioctl</code> syscall is the grab-bag syscall on POSIX systems. Don&#39;t want
+to add a new syscall? Make it an <code>ioctl</code>! <code>ioctl</code> refers to both the syscall,
+and the commands that can be send with it. <code>ioctl</code> stands for &quot;IO control&quot;,
+and the commands are always sent to a file descriptor.</p>
+
+<p>It is common to see <code>ioctl</code>s used for the following purposes:</p>
 
 <ul>
 <li>Provide read/write access to out-of-band data related
@@ -67,64 +73,79 @@ to the CDROM device.</li>
 <li>Do whatever else the device driver creator thought made most sense.</li>
 </ul>
 
-<p>Ioctls are synchronous system calls and are similar to read and
+<p><code>ioctl</code>s are synchronous system calls and are similar to read and
 write calls in that regard.</p>
 
-<p>The prototype for the ioctl system call in libc is as follows:</p>
+<h1 id='what-does-this-module-support' class='section-header'><a href='#what-does-this-module-support'>What does this module support?</a></h1>
+<p>This library provides the <code>ioctl!</code> macro, for binding <code>ioctl</code>s.
+Here&#39;s a few examples of how that can work for SPI under Linux
+from <a href="https://github.com/posborne/rust-spidev">rust-spidev</a>.</p>
+<pre class='rust rust-example-rendered'>
+<span class='attribute'>#[<span class='ident'>macro_use</span>]</span> <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>nix</span>;
 
-<pre><code class="language-c">int ioctl(int fd, unsigned long request, ...);
-</code></pre>
+<span class='attribute'>#[<span class='ident'>allow</span>(<span class='ident'>non_camel_case_types</span>)]</span>
+<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>spi_ioc_transfer</span> {
+    <span class='kw'>pub</span> <span class='ident'>tx_buf</span>: <span class='ident'>u64</span>,
+    <span class='kw'>pub</span> <span class='ident'>rx_buf</span>: <span class='ident'>u64</span>,
+    <span class='kw'>pub</span> <span class='ident'>len</span>: <span class='ident'>u32</span>,
 
-<p>Typically, an ioctl takes 3 parameters as arguments:</p>
+    <span class='comment'>// optional overrides</span>
+    <span class='kw'>pub</span> <span class='ident'>speed_hz</span>: <span class='ident'>u32</span>,
+    <span class='kw'>pub</span> <span class='ident'>delay_usecs</span>: <span class='ident'>u16</span>,
+    <span class='kw'>pub</span> <span class='ident'>bits_per_word</span>: <span class='ident'>u8</span>,
+    <span class='kw'>pub</span> <span class='ident'>cs_change</span>: <span class='ident'>u8</span>,
+    <span class='kw'>pub</span> <span class='ident'>pad</span>: <span class='ident'>u32</span>,
+}
 
-<ol>
-<li>An open file descriptor, <code>fd</code>.</li>
-<li>An device-dependennt request code or operation.  This request
-code is referred to as <code>op</code> in this module.</li>
-<li>Either a pointer to a location in memory or an integer.  This
-number of pointer may either be used by the kernel or written
-to by the kernel depending on how the operation is documented
-to work.</li>
-</ol>
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>linux</span>)]</span>
+<span class='kw'>mod</span> <span class='ident'>ioctl</span> {
+    <span class='kw'>use</span> <span class='ident'>super</span>::<span class='op'>*</span>;
 
-<p>The <code>op</code> request code is essentially an arbitrary integer having
-a device-driver specific meaning.  Over time, it proved difficult
-for various driver implementors to use this field sanely, so a
-convention with macros was introduced to the Linux Kernel that
-is used by most newer drivers.  See
-<a href="https://github.com/torvalds/linux/blob/master/Documentation/ioctl/ioctl-number.txt">https://github.com/torvalds/linux/blob/master/Documentation/ioctl/ioctl-number.txt</a>
-for additional details.  The macros exposed by the kernel for
-consumers are implemented in this module and may be used to
-instead of calls like <code>_IOC</code>, <code>_IO</code>, <code>_IOR</code>, and <code>_IOW</code>.</p>
+    <span class='kw'>const</span> <span class='ident'>SPI_IOC_MAGIC</span>: <span class='ident'>u8</span> <span class='op'>=</span> <span class='string'>&#39;k&#39;</span> <span class='kw'>as</span> <span class='ident'>u8</span>;
+    <span class='kw'>const</span> <span class='ident'>SPI_IOC_NR_TRANSFER</span>: <span class='ident'>u8</span> <span class='op'>=</span> <span class='number'>0</span>;
+    <span class='kw'>const</span> <span class='ident'>SPI_IOC_NR_MODE</span>: <span class='ident'>u8</span> <span class='op'>=</span> <span class='number'>1</span>;
+    <span class='kw'>const</span> <span class='ident'>SPI_IOC_NR_LSB_FIRST</span>: <span class='ident'>u8</span> <span class='op'>=</span> <span class='number'>2</span>;
+    <span class='kw'>const</span> <span class='ident'>SPI_IOC_NR_BITS_PER_WORD</span>: <span class='ident'>u8</span> <span class='op'>=</span> <span class='number'>3</span>;
+    <span class='kw'>const</span> <span class='ident'>SPI_IOC_NR_MAX_SPEED_HZ</span>: <span class='ident'>u8</span> <span class='op'>=</span> <span class='number'>4</span>;
+    <span class='kw'>const</span> <span class='ident'>SPI_IOC_NR_MODE32</span>: <span class='ident'>u8</span> <span class='op'>=</span> <span class='number'>5</span>;
 
-<h1 id='interface-overview' class='section-header'><a href='#interface-overview'>Interface Overview</a></h1>
-<p>This ioctl module seeks to tame the ioctl beast by providing
-a set of safer (although not safe) functions
-implementing the most common ioctl access patterns.</p>
+    <span class='macro'>ioctl</span><span class='macro'>!</span>(<span class='ident'>read</span>  <span class='ident'>get_mode_u8</span> <span class='ident'>with</span> <span class='ident'>SPI_IOC_MAGIC</span>, <span class='ident'>SPI_IOC_NR_MODE</span>; <span class='ident'>u8</span>);
+    <span class='macro'>ioctl</span><span class='macro'>!</span>(<span class='ident'>read</span>  <span class='ident'>get_mode_u32</span> <span class='ident'>with</span> <span class='ident'>SPI_IOC_MAGIC</span>, <span class='ident'>SPI_IOC_NR_MODE</span>; <span class='ident'>u32</span>);
+    <span class='macro'>ioctl</span><span class='macro'>!</span>(<span class='ident'>write</span> <span class='ident'>set_mode_u8</span> <span class='ident'>with</span> <span class='ident'>SPI_IOC_MAGIC</span>, <span class='ident'>SPI_IOC_NR_MODE</span>; <span class='ident'>u8</span>);
+    <span class='macro'>ioctl</span><span class='macro'>!</span>(<span class='ident'>write</span> <span class='ident'>set_mode_u32</span> <span class='ident'>with</span> <span class='ident'>SPI_IOC_MAGIC</span>, <span class='ident'>SPI_IOC_NR_MODE32</span>; <span class='ident'>u32</span>);
+    <span class='macro'>ioctl</span><span class='macro'>!</span>(<span class='ident'>read</span>  <span class='ident'>get_lsb_first</span> <span class='ident'>with</span> <span class='ident'>SPI_IOC_MAGIC</span>, <span class='ident'>SPI_IOC_NR_LSB_FIRST</span>; <span class='ident'>u8</span>);
+    <span class='macro'>ioctl</span><span class='macro'>!</span>(<span class='ident'>write</span> <span class='ident'>set_lsb_first</span> <span class='ident'>with</span> <span class='ident'>SPI_IOC_MAGIC</span>, <span class='ident'>SPI_IOC_NR_LSB_FIRST</span>; <span class='ident'>u8</span>);
+    <span class='macro'>ioctl</span><span class='macro'>!</span>(<span class='ident'>read</span>  <span class='ident'>get_bits_per_word</span> <span class='ident'>with</span> <span class='ident'>SPI_IOC_MAGIC</span>, <span class='ident'>SPI_IOC_NR_BITS_PER_WORD</span>; <span class='ident'>u8</span>);
+    <span class='macro'>ioctl</span><span class='macro'>!</span>(<span class='ident'>write</span> <span class='ident'>set_bits_per_word</span> <span class='ident'>with</span> <span class='ident'>SPI_IOC_MAGIC</span>, <span class='ident'>SPI_IOC_NR_BITS_PER_WORD</span>; <span class='ident'>u8</span>);
+    <span class='macro'>ioctl</span><span class='macro'>!</span>(<span class='ident'>read</span>  <span class='ident'>get_max_speed_hz</span> <span class='ident'>with</span> <span class='ident'>SPI_IOC_MAGIC</span>, <span class='ident'>SPI_IOC_NR_MAX_SPEED_HZ</span>; <span class='ident'>u32</span>);
+    <span class='macro'>ioctl</span><span class='macro'>!</span>(<span class='ident'>write</span> <span class='ident'>set_max_speed_hz</span> <span class='ident'>with</span> <span class='ident'>SPI_IOC_MAGIC</span>, <span class='ident'>SPI_IOC_NR_MAX_SPEED_HZ</span>; <span class='ident'>u32</span>);
+    <span class='macro'>ioctl</span><span class='macro'>!</span>(<span class='ident'>write</span> <span class='ident'>spidev_transfer</span> <span class='ident'>with</span> <span class='ident'>SPI_IOC_MAGIC</span>, <span class='ident'>SPI_IOC_NR_TRANSFER</span>; <span class='ident'>spi_ioc_transfer</span>);
+    <span class='macro'>ioctl</span><span class='macro'>!</span>(<span class='ident'>write</span> <span class='ident'>buf</span> <span class='ident'>spidev_transfer_buf</span> <span class='ident'>with</span> <span class='ident'>SPI_IOC_MAGIC</span>, <span class='ident'>SPI_IOC_NR_TRANSFER</span>; <span class='ident'>spi_ioc_transfer</span>);
+}
 
-<p>The most common access patterns for ioctls are as follows:</p>
+<span class='comment'>// doctest workaround</span>
+<span class='kw'>fn</span> <span class='ident'>main</span>() {}</pre>
 
-<ol>
-<li><code>read</code>: A pointer is provided to the kernel which is populated
-with a value containing the &quot;result&quot; of the operation.  The
-result may be an integer or structure.  The kernel may also
-read values from the provided pointer (usually a structure).</li>
-<li><code>write</code>: A pointer is provided to the kernel containing values
-that the kernel will read in order to perform the operation.</li>
-<li><code>execute</code>: The operation is passed to the kernel but no
-additional pointer is passed.  The operation is enough
-and it either succeeds or results in an error.</li>
-</ol>
+<p>Spidev uses the <code>_IOC</code> macros that are encouraged (as far as
+<code>ioctl</code> can be encouraged at all) for newer drivers.  Many
+drivers, however, just use magic numbers with no attached
+semantics.  For those, the <code>ioctl!(bad ...)</code> variant should be
+used (the &quot;bad&quot; terminology is from the Linux kernel).</p>
 
-<p>Where appropriate, versions of these interface function are provided
-taking either refernces or pointers.  The pointer versions are
-necessary for cases (notably slices) where a reference cannot
-be generically cast to a pointer.</p>
-</div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<h1 id='how-do-i-get-the-magic-numbers' class='section-header'><a href='#how-do-i-get-the-magic-numbers'>How do I get the magic numbers?</a></h1>
+<p>For Linux, look at your system&#39;s headers. For example, <code>/usr/include/linxu/input.h</code> has a lot
+of lines defining macros which use <code>_IOR</code>, <code>_IOW</code>, <code>_IOC</code>, and <code>_IORW</code>.  These macros
+correspond to the <code>ior!</code>, <code>iow!</code>, <code>ioc!</code>, and <code>iorw!</code> macros defined in this crate.
+Additionally, there is the <code>ioctl!</code> macro for creating a wrapper around <code>ioctl</code> that is
+somewhat more type-safe.</p>
+
+<p>Most <code>ioctl</code>s have no or little documentation. You&#39;ll need to scrounge through
+the source to figure out what they do and how they should be used.</p>
+</div><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
 <table>
                     <tr class=' module-item'>
-                        <td><a class='struct' href='struct.IoctlDirFlags.html'
-                               title='nix::sys::ioctl::IoctlDirFlags'>IoctlDirFlags</a></td>
+                        <td><a class='mod' href='libc/index.html'
+                               title='nix::sys::ioctl::libc'>libc</a></td>
                         <td class='docblock short'>
                              
                         </td>
@@ -132,156 +153,191 @@ be generically cast to a pointer.</p>
                 </table><h2 id='constants' class='section-header'><a href="#constants">Constants</a></h2>
 <table>
                     <tr class=' module-item'>
-                        <td><a class='constant' href='constant.IOC_NONE.html'
-                               title='nix::sys::ioctl::IOC_NONE'>IOC_NONE</a></td>
+                        <td><a class='constant' href='constant.DIRBITS.html'
+                               title='nix::sys::ioctl::DIRBITS'>DIRBITS</a></td>
                         <td class='docblock short'>
-                             <p>Indicates that the ioctl data pointer is not used</p>
-
+                             
                         </td>
                     </tr>
                 
                     <tr class=' module-item'>
-                        <td><a class='constant' href='constant.IOC_READ.html'
-                               title='nix::sys::ioctl::IOC_READ'>IOC_READ</a></td>
+                        <td><a class='constant' href='constant.DIRMASK.html'
+                               title='nix::sys::ioctl::DIRMASK'>DIRMASK</a></td>
                         <td class='docblock short'>
-                             <p>Indicates tha the ioctl data pointer contains data that
-will be populated by the operating system to be consumed
-by userspace</p>
-
+                             
                         </td>
                     </tr>
                 
                     <tr class=' module-item'>
-                        <td><a class='constant' href='constant.IOC_WRITE.html'
-                               title='nix::sys::ioctl::IOC_WRITE'>IOC_WRITE</a></td>
+                        <td><a class='constant' href='constant.DIRSHIFT.html'
+                               title='nix::sys::ioctl::DIRSHIFT'>DIRSHIFT</a></td>
                         <td class='docblock short'>
-                             <p>Indicates that the ioctl data pointer contains data that
-will be consumed by the operating system</p>
-
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.IN.html'
+                               title='nix::sys::ioctl::IN'>IN</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.INOUT.html'
+                               title='nix::sys::ioctl::INOUT'>INOUT</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.NONE.html'
+                               title='nix::sys::ioctl::NONE'>NONE</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.NRBITS.html'
+                               title='nix::sys::ioctl::NRBITS'>NRBITS</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.NRMASK.html'
+                               title='nix::sys::ioctl::NRMASK'>NRMASK</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.NRSHIFT.html'
+                               title='nix::sys::ioctl::NRSHIFT'>NRSHIFT</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.OUT.html'
+                               title='nix::sys::ioctl::OUT'>OUT</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.READ.html'
+                               title='nix::sys::ioctl::READ'>READ</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.SIZEBITS.html'
+                               title='nix::sys::ioctl::SIZEBITS'>SIZEBITS</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.SIZEMASK.html'
+                               title='nix::sys::ioctl::SIZEMASK'>SIZEMASK</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.SIZESHIFT.html'
+                               title='nix::sys::ioctl::SIZESHIFT'>SIZESHIFT</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.SIZE_MASK.html'
+                               title='nix::sys::ioctl::SIZE_MASK'>SIZE_MASK</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.TYPEBITS.html'
+                               title='nix::sys::ioctl::TYPEBITS'>TYPEBITS</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.TYPEMASK.html'
+                               title='nix::sys::ioctl::TYPEMASK'>TYPEMASK</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.TYPESHIFT.html'
+                               title='nix::sys::ioctl::TYPESHIFT'>TYPESHIFT</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.WRITE.html'
+                               title='nix::sys::ioctl::WRITE'>WRITE</a></td>
+                        <td class='docblock short'>
+                             
                         </td>
                     </tr>
                 </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
 <table>
                     <tr class=' module-item'>
-                        <td><a class='fn' href='fn.execute.html'
-                               title='nix::sys::ioctl::execute'>execute</a></td>
+                        <td><a class='fn' href='fn.ioc_dir.html'
+                               title='nix::sys::ioctl::ioc_dir'>ioc_dir</a></td>
                         <td class='docblock short'>
-                             <p>Ioctl call for which no data pointer is provided to the kernel.
-That is, the kernel has sufficient information about what to
-do based on the op alone.</p>
+                             <p>Extracts the &quot;direction&quot; (read/write/none) from an encoded ioctl command.</p>
 
                         </td>
                     </tr>
                 
                     <tr class=' module-item'>
-                        <td><a class='fn' href='fn.op.html'
-                               title='nix::sys::ioctl::op'>op</a></td>
+                        <td><a class='fn' href='fn.ioc_nr.html'
+                               title='nix::sys::ioctl::ioc_nr'>ioc_nr</a></td>
                         <td class='docblock short'>
-                             <p>Build an ioctl op with the provide parameters.  This is a helper
-function for IOCTLs in the Linux kernel using the newer conventions
-for IOCTLs operations.  Many ioctls do not use this newer convention
-and the constants for those should just be used as-is.</p>
+                             <p>Extracts the ioctl number from an encoded ioctl command.</p>
 
                         </td>
                     </tr>
                 
                     <tr class=' module-item'>
-                        <td><a class='fn' href='fn.op_none.html'
-                               title='nix::sys::ioctl::op_none'>op_none</a></td>
+                        <td><a class='fn' href='fn.ioc_size.html'
+                               title='nix::sys::ioctl::ioc_size'>ioc_size</a></td>
                         <td class='docblock short'>
-                             <p>Build an op indicating that the data pointer is not used.
-That is, the command itself is sufficient.</p>
+                             <p>Extracts the size from an encoded ioctl command.</p>
 
                         </td>
                     </tr>
                 
                     <tr class=' module-item'>
-                        <td><a class='fn' href='fn.op_read.html'
-                               title='nix::sys::ioctl::op_read'>op_read</a></td>
+                        <td><a class='fn' href='fn.ioc_type.html'
+                               title='nix::sys::ioctl::ioc_type'>ioc_type</a></td>
                         <td class='docblock short'>
-                             <p>Build an op indicating that the data pointer will be populated
-with data from the kernel</p>
+                             <p>Extracts the type from an encoded ioctl command.</p>
 
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.op_read_write.html'
-                               title='nix::sys::ioctl::op_read_write'>op_read_write</a></td>
-                        <td class='docblock short'>
-                             <p>Build an op indicating that the data pointer both contains
-data to be consumed by the kernel and contains fields that
-will be populated by the kernel.</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.op_write.html'
-                               title='nix::sys::ioctl::op_write'>op_write</a></td>
-                        <td class='docblock short'>
-                             <p>Build an op indicating that the data pointer contains data
-to be consumed by the kernel (and not written to).</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.read.html'
-                               title='nix::sys::ioctl::read'>read</a></td>
-                        <td class='docblock short'>
-                             <p>Ioctl call that is expected to return a result
-but which does not take any additional arguments on the input side</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.read_into.html'
-                               title='nix::sys::ioctl::read_into'>read_into</a></td>
-                        <td class='docblock short'>
-                             <p>Ioctl where the result from the kernel will be written to the
-provided reference</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.read_into_ptr.html'
-                               title='nix::sys::ioctl::read_into_ptr'>read_into_ptr</a></td>
-                        <td class='docblock short'>
-                             <p>Ioctl where the result from the kernel will be written to the
-provided pointer</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.write.html'
-                               title='nix::sys::ioctl::write'>write</a></td>
-                        <td class='docblock short'>
-                             <p>Ioctl call that sends a value to the kernel but
-does not return anything (pure side effect).</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.write_ptr.html'
-                               title='nix::sys::ioctl::write_ptr'>write_ptr</a></td>
-                        <td class='docblock short'>
-                             <p>Ioctl call that sends a value to the kernel but
-does not return anything (pure side effect).</p>
-
-                        </td>
-                    </tr>
-                </table><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
-<table>
-                    <tr class=' module-item'>
-                        <td><a class='type' href='type.ioctl_op_t.html'
-                               title='nix::sys::ioctl::ioctl_op_t'>ioctl_op_t</a></td>
-                        <td class='docblock short'>
-                             
                         </td>
                     </tr>
                 </table></section>
@@ -343,6 +399,6 @@ does not return anything (pure side effect).</p>
     <script src="../../../jquery.js"></script>
     <script src="../../../main.js"></script>
     
-    <script async src="../../../search-index.js"></script>
+    <script defer src="../../../search-index.js"></script>
 </body>
 </html>

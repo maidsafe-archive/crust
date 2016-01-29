@@ -9,6 +9,7 @@
 
     <title>nix::sys::signal::signal::siginfo - Rust</title>
 
+    <link rel="stylesheet" type="text/css" href="../../../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../../../main.css">
 
     
@@ -45,14 +46,19 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-1949' class='srclink' href='../../../../src/nix/sys/signal.rs.html#100-107' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-3204' class='srclink' href='../../../../src/nix/sys/signal.rs.html#110-117' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct siginfo {
-    pub pid: <a class='type' href='../../../../libc/types/os/arch/posix88/type.pid_t.html' title='libc::types::os::arch::posix88::pid_t'>pid_t</a>,
-    pub uid: <a class='type' href='../../../../libc/types/os/arch/posix88/type.uid_t.html' title='libc::types::os::arch::posix88::uid_t'>uid_t</a>,
-    pub status: <a class='type' href='../../../../nix/type.c_int.html' title='nix::c_int'>c_int</a>,
-    // some fields omitted
+    pub si_signo: <a class='type' href='../../../../nix/sys/ioctl/libc/type.c_int.html' title='nix::sys::ioctl::libc::c_int'>c_int</a>,
+    pub si_errno: <a class='type' href='../../../../nix/sys/ioctl/libc/type.c_int.html' title='nix::sys::ioctl::libc::c_int'>c_int</a>,
+    pub si_code: <a class='type' href='../../../../nix/sys/ioctl/libc/type.c_int.html' title='nix::sys::ioctl::libc::c_int'>c_int</a>,
+    pub pid: <a class='type' href='../../../../nix/sys/ioctl/libc/type.pid_t.html' title='nix::sys::ioctl::libc::pid_t'>pid_t</a>,
+    pub uid: <a class='type' href='../../../../nix/sys/ioctl/libc/type.uid_t.html' title='nix::sys::ioctl::libc::uid_t'>uid_t</a>,
+    pub status: <a class='type' href='../../../../nix/sys/ioctl/libc/type.c_int.html' title='nix::sys::ioctl::libc::c_int'>c_int</a>,
 }</pre><h2 class='fields'>Fields</h2>
 <table><tr class='stab '>
+                                  <td id='structfield.si_signo'><code>si_signo</code></td><td></td></tr><tr class='stab '>
+                                  <td id='structfield.si_errno'><code>si_errno</code></td><td></td></tr><tr class='stab '>
+                                  <td id='structfield.si_code'><code>si_code</code></td><td></td></tr><tr class='stab '>
                                   <td id='structfield.pid'><code>pid</code></td><td></td></tr><tr class='stab '>
                                   <td id='structfield.uid'><code>uid</code></td><td></td></tr><tr class='stab '>
                                   <td id='structfield.status'><code>status</code></td><td></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Copy.html' title='core::marker::Copy'>Copy</a> for <a class='struct' href='../../../../nix/sys/signal/signal/struct.siginfo.html' title='nix::sys::signal::signal::siginfo'>siginfo</a></code></h3><div class='impl-items'></div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='struct' href='../../../../nix/sys/signal/signal/struct.siginfo.html' title='nix::sys::signal::signal::siginfo'>siginfo</a></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='struct' href='../../../../nix/sys/signal/signal/struct.siginfo.html' title='nix::sys::signal::signal::siginfo'>siginfo</a></code></h4>
@@ -116,6 +122,6 @@
     <script src="../../../../jquery.js"></script>
     <script src="../../../../main.js"></script>
     
-    <script async src="../../../../search-index.js"></script>
+    <script defer src="../../../../search-index.js"></script>
 </body>
 </html>

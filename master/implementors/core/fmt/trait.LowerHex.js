@@ -1,5 +1,5 @@
 (function() {var implementors = {};
-implementors['libc'] = [];implementors['hyper'] = [];implementors['igd'] = [];
+implementors['libc'] = [];
 
             if (window.register_implementors) {
                 window.register_implementors(implementors);
