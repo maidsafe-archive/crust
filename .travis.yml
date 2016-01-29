@@ -1,6 +1,8 @@
 env:
   global:
     - secure: SkbGQw5IEClmE2l6skYTFbWuXBn7LcX23cV6uwmDK5Ah0vJ+vXGN5AIV9hhPaMIytwIp4HsWOf7LKHlWlc3+ot0qFVDMRFHamg1f8zWEwbvSA8ozSGVjlcXihrWQ/y5DjBefd9kNdrXb7kq0NA/Pqy/loO91m1e7SggujOC1F2M=
+    - RUST_BACKTRACE=1
+    - RUST_TEST_THREADS=1
 os:
   - linux
   - osx
@@ -21,7 +23,6 @@ install:
   - curl -sSLO https://github.com/maidsafe/QA/raw/master/Bash%20Scripts/Travis/install_libsodium.sh
   - . install_libsodium.sh
 script:
-  - export RUST_TEST_THREADS=1
   - curl -sSL https://github.com/maidsafe/QA/raw/master/Bash%20Scripts/Travis/build_and_run_tests.sh | bash
 before_cache:
   - curl -sSLO https://github.com/maidsafe/QA/raw/master/Bash%20Scripts/Travis/install_elfutils.sh
