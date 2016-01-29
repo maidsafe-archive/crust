@@ -30,6 +30,12 @@ impl SequenceNumber {
         SequenceNumber { num: start }
     }
 
+    pub fn next(&mut self) -> u32 {
+        let ret = self.number();
+        self.increment();
+        ret
+    }
+
     #[allow(dead_code)]
     pub fn increment(&mut self) {
         if self.num != ::std::u32::MAX {

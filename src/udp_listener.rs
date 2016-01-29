@@ -27,7 +27,7 @@ use maidsafe_utilities::thread::RaiiThreadJoiner;
 use rand;
 use sodiumoxide::crypto::sign::PublicKey;
 
-use connection::udp_rendezvous_connect;
+use connection::utp_rendezvous_connect;
 use contact_info::ContactInfo;
 use event::Event;
 use hole_punching::{blocking_udp_punch_hole, external_udp_socket};
@@ -35,22 +35,24 @@ use socket_addr::SocketAddr;
 
 const UDP_READ_TIMEOUT_SECS: u64 = 2;
 
+#[derive(RustcEncodable, RustcDecodable)]
 pub struct EchoExternalAddrResp {
     external_addr: SocketAddr,
 }
 
-pub struct ConnectResponse {
-    connect_on: Vec<SocketAddr>,
-    secret: [u8; 4],
-    pub_key: PublicKey,
-}
 
+#[derive(RustcEncodable, RustcDecodable)]
 enum UdpListenerMsg {
     EchoExternalAddr,
     ConnectRequest {
         secret: [u8; 4],
         pub_key: PublicKey,
     },
+    ConnectResponse {
+        connect_on: Vec<SocketAddr>,
+        secret: [u8; 4],
+        pub_key: PublicKey,
+    }
 }
 pub struct UdpListener {
     stop_flag: Arc<AtomicBool>,
@@ -67,7 +69,7 @@ impl UdpListener {
         let stop_flag = Arc::new(AtomicBool::new(false));
         let cloned_stop_flag = stop_flag.clone();
 
-        try!(udp_socket.set_read_timeout(Duration::from_secs(UDP_READ_TIMEOUT_SECS)));
+        try!(udp_socket.set_read_timeout(Some(Duration::from_secs(UDP_READ_TIMEOUT_SECS))));
         let port = try!(udp_socket.local_addr()).port();
 
         // Ask others for our UDP external addresses as they see us. No need to filter out the
@@ -76,7 +78,7 @@ impl UdpListener {
             unwrap_result!(serialise(&UdpListenerMsg::EchoExternalAddr));
         for their_contact_info in their_contact_infos {
             for udp_listener in their_contact_info.udp_listeners {
-                let _ = udp_socket.send_to(&echo_external_addr_request, udp_listener);
+                let _ = udp_socket.send_to(&echo_external_addr_request, &*udp_listener);
             }
         }
 
@@ -118,10 +120,11 @@ impl UdpListener {
                         // of the socket that it freshly spawned or (if it cannot because of say
                         // Zero-state etc.) Vector of all interface addresses. This should never be
                         // an option because then it is pretty useless.
+                        let echo_servers = their_contact_infos.iter().flat_map(|tci| tci.udp_listeners.iter().cloned()).collect();
                         if let Ok(res) =
-                               external_udp_socket(rand::random(), their_contact_infos.clone()) {
-                            let connect_resp = ConnectResponse {
-                                connect_on: res.1,
+                               external_udp_socket(rand::random(), echo_servers) {
+                            let connect_resp = UdpListenerMsg::ConnectResponse {
+                                connect_on: vec![res.1],
                                 secret: secret,
                                 pub_key: pub_key,
                             };
@@ -133,8 +136,8 @@ impl UdpListener {
                             }
 
                             if let Ok((socket, Ok(peer_addr))) =
-                                   blocking_udp_punch_hole(res.0, secret, peer_addr) {
-                                let connection = match udp_rendezvous_connect(socket,
+                                   blocking_udp_punch_hole(res.0, Some(secret), SocketAddr(peer_addr)) {
+                                let connection = match utp_rendezvous_connect(socket,
                                                                               peer_addr,
                                                                               pub_key.clone()) {
                                     Ok(connection) => connection,
@@ -152,7 +155,7 @@ impl UdpListener {
                             }
                         }
                     }
-                    ConnectResponse { connect_on, secret, pub_key, } => {
+                    UdpListenerMsg::ConnectResponse { connect_on, secret, pub_key, } => {
                         if let Ok(res) =
                                external_udp_socket(rand::random(), their_contact_infos.clone()) {
                             for peer_addr in connect_on {
@@ -162,7 +165,7 @@ impl UdpListener {
                                         _ => continue,
                                     };
 
-                                let connection = match udp_rendezvous_connect(socket,
+                                let connection = match utp_rendezvous_connect(socket,
                                                                               peer_addr,
                                                                               pub_key.clone()) {
                                     Ok(connection) => connection,

@@ -42,6 +42,8 @@ pub struct OurContactInfo {
     pub static_addrs: Vec<Endpoint>,
     /// The mapped addresses of our UDP socket.
     pub rendezvous_addrs: Vec<SocketAddr>,
+    /// TODO: documentation
+    pub pub_key: PublicKey,
 }
 
 /// Contact info used to connect to another peer.
@@ -65,6 +67,7 @@ impl OurContactInfo {
             secret: self.secret.clone(),
             static_addrs: self.static_addrs.clone(),
             rendezvous_addrs: self.rendezvous_addrs.clone(),
+            pub_key: self.pub_key,
         }
     }
 }

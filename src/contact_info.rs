@@ -21,7 +21,7 @@ use sodiumoxide::crypto::sign::PublicKey;
 use rustc_serialize::{Encodable, Encoder, Decodable, Decoder};
 
 /// This struct contains information needed to Bootstrap and for echo-server services
-#[derive(RustcEncodable, RustcDecodable, Debug, Clone, PartialEq, PartialOrd)]
+#[derive(RustcEncodable, RustcDecodable, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ContactInfo {
     pub pub_key: PublicKey,
     /// This will contain both local and global addresses. Local addresses will be useful on LAN

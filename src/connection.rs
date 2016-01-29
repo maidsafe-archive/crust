@@ -26,7 +26,7 @@ use itertools::Itertools;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 use maidsafe_utilities::serialisation::{deserialise, serialise};
 use get_if_addrs::get_if_addrs;
-use contact_info::{ContactInfo, ContactInfoHandle};
+use contact_info::ContactInfo;
 use tcp_connections;
 use utp_connections;
 use sender_receiver::{Sender, Receiver};
@@ -93,6 +93,13 @@ pub struct RaiiTcpAcceptor {
     port: u16,
     stop_flag: Arc<AtomicBool>,
     _raii_joiner: RaiiThreadJoiner,
+    external_endpoints: Vec<SocketAddr>,
+}
+
+impl RaiiTcpAcceptor {
+    pub fn mapped_addresses(&self) -> &[SocketAddr] {
+        &self.external_endpoints[..]
+    }
 }
 
 impl Drop for RaiiTcpAcceptor {
@@ -105,7 +112,7 @@ impl Drop for RaiiTcpAcceptor {
 }
 
 pub fn connect(contact: ContactInfo,
-               our_contact_info: ContactInfoHandle,
+               our_contact_info: Arc<Mutex<ContactInfo>>,
                event_tx: ::CrustEventSender)
                -> io::Result<Connection> {
     let mut last_err = None;
@@ -134,7 +141,7 @@ pub fn connect(contact: ContactInfo,
 
 fn connect_tcp_endpoint(remote_addr: SocketAddr,
                         their_pub_key: PublicKey,
-                        our_contact_info: ContactInfoHandle,
+                        our_contact_info: Arc<Mutex<ContactInfo>>,
                         event_tx: ::CrustEventSender)
                         -> io::Result<Connection> {
     let (network_input, writer) = try!(tcp_connections::connect_tcp(remote_addr.clone()));
@@ -163,7 +170,7 @@ fn connect_tcp_endpoint(remote_addr: SocketAddr,
 
 fn connect_utp_endpoint(remote_addr: SocketAddr,
                         their_pub_key: PublicKey,
-                        our_contact_info: ContactInfoHandle,
+                        our_contact_info: Arc<Mutex<ContactInfo>>,
                         event_tx: ::CrustEventSender)
                         -> io::Result<Connection> {
     let (network_input, writer) = try!(utp_connections::connect_utp(remote_addr.clone()));
@@ -185,7 +192,7 @@ fn connect_utp_endpoint(remote_addr: SocketAddr,
 }
 
 pub fn start_tcp_accept(port: u16,
-                        our_contact_info: ContactInfoHandle,
+                        our_contact_info: Arc<Mutex<ContactInfo>>,
                         event_tx: ::CrustEventSender)
                         -> io::Result<RaiiTcpAcceptor> {
     let listener = try!(TcpListener::bind(("0.0.0.0", port)));
@@ -248,10 +255,11 @@ pub fn start_tcp_accept(port: u16,
         port: port,
         stop_flag: stop_flag,
         _raii_joiner: joiner,
+        external_endpoints: Vec::new(),
     })
 }
 
-pub fn udp_rendezvous_connect(udp_socket: UdpSocket,
+pub fn utp_rendezvous_connect(udp_socket: UdpSocket,
                               their_addr: SocketAddr,
                               their_pub_key: PublicKey,
                               event_tx: ::CrustEventSender)

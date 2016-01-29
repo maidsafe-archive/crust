@@ -21,13 +21,15 @@ pub struct HolePunch {
     pub ack: bool,
 }
 
+// TODO(canndrew): This should return a Vec of SocketAddrs rather than a single SocketAddr. The Vec
+// should contain all known addresses of the socket.
 pub fn external_udp_socket(request_id: u32,
                            udp_listeners: Vec<SocketAddr>)
                            -> io::Result<(UdpSocket, SocketAddr)> {
     const MAX_DATAGRAM_SIZE: usize = 256;
 
     let udp_socket = try!(UdpSocket::bind("0.0.0.0:0"));
-    try!(udp_socket.set_read_timeout(Duration::from_secs(2)));
+    try!(udp_socket.set_read_timeout(Some(Duration::from_secs(2))));
     let cloned_udp_socket = try!(udp_socket.try_clone());
 
     let send_data = unwrap_result!(serialise(&UdpListenerMsg::EchoExternalAddr));
@@ -52,10 +54,10 @@ pub fn external_udp_socket(request_id: u32,
                 return Ok(external_addr);
             }
         }
-        return Error::new(ErrorKind::Other, "TODO - Improve this - Could Not find our external address");
+        return Err(Error::new(ErrorKind::Other, "TODO - Improve this - Could Not find our external address"));
     }));
 
-    res.map(|our_external_addr| (udp_socket, our_external_addr))
+    Ok((udp_socket, res))
 }
 
 // TODO All this function should be returning is either an Ok(()) or Err(..)

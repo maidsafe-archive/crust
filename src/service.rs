@@ -23,6 +23,8 @@ use std::net;
 use std::thread::JoinHandle;
 use std::sync::{Arc, Mutex};
 use std::str::FromStr;
+use std::collections::BTreeSet;
+use std::cmp;
 use service_discovery::ServiceDiscovery;
 use sodiumoxide;
 use sodiumoxide::crypto::sign;
@@ -31,7 +33,7 @@ use sodiumoxide::crypto::sign::PublicKey;
 use std::net::TcpListener;
 
 use connection::RaiiTcpAcceptor;
-use contact_info::{ContactInfo, ContactInfoHandle};
+use contact_info::ContactInfo;
 use rand;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 use itertools::Itertools;
@@ -41,11 +43,29 @@ use connection::Connection;
 use error::Error;
 use ip::SocketAddrExt;
 use connection;
+use bootstrap::Bootstrap;
 
 use event::{Event, OurContactInfo, TheirContactInfo, ContactInfoResult};
 use socket_addr::{SocketAddr, SocketAddrV4};
 use bootstrap_handler::BootstrapHandler;
 use sequence_number::SequenceNumber;
+
+#[derive(PartialEq, Eq)]
+struct EchoServerAddr {
+    pub addr: SocketAddr,
+}
+
+impl PartialOrd for EchoServerAddr {
+    fn partial_cmp(&self, other: &EchoServerAddr) -> Option<cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for EchoServerAddr {
+    fn cmp(&self, other: &EchoServerAddr) -> cmp::Ordering {
+        ::util::heuristic_geo_cmp(&SocketAddrExt::ip(&*other.addr), &SocketAddrExt::ip(&*self.addr))
+    }
+}
 
 /// A structure representing a connection manager.
 ///
@@ -57,8 +77,10 @@ pub struct Service {
     our_contact_info: Arc<Mutex<ContactInfo>>,
     service_discovery: ServiceDiscovery<ContactInfo>,
     bootstrap: Bootstrap,
-    _raii_tcp_acceptor: RaiiTcpAcceptor,
+    raii_tcp_acceptor: RaiiTcpAcceptor,
     event_tx: ::CrustEventSender,
+    echo_servers: BTreeSet<EchoServerAddr>,
+    next_punch_sequence: SequenceNumber,
 }
 
 impl Service {
@@ -93,13 +115,16 @@ impl Service {
             our_contact_info: contact_info,
             service_discovery: service_discovery,
             bootstrap: bootstrap,
-            _raii_tcp_acceptor: raii_tcp_acceptor,
+            raii_tcp_acceptor: raii_tcp_acceptor,
             event_tx: event_tx,
+            echo_servers: BTreeSet::new(),
+            next_punch_sequence: SequenceNumber::new(0),
         };
 
         Ok(service)
     }
 
+    /// Stop the bootstraping procedure
     pub fn stop_bootstrap(&mut self) {
         self.bootstrap.stop();
     }
@@ -113,18 +138,12 @@ impl Service {
     // }
 
     fn stop(&mut self) {
-        self.shutting_down.store(true, Ordering::SeqCst);
     }
 
     /// Get the hole punch servers addresses of nodes that we're connected to ordered by how likely
     /// they are to be on a seperate network.
     pub fn get_ordered_helping_nodes(&self) -> Vec<SocketAddr> {
-        self.connection_map.get_ordered_helping_nodes()
-    }
-
-    /// Stop the bootstraping procedure
-    pub fn stop_bootstrap(&mut self) {
-        self.is_bootstrapping.store(false, Ordering::SeqCst);
+        self.echo_servers.iter().map(|e| e.addr).collect()
     }
 
     // Accept a connection on the provided TcpListener and perform a handshake on it.
@@ -172,12 +191,12 @@ impl Service {
                 connection: Err(err),
                 their_pub_key: their_contact_info.pub_key,
             };
-            let _ = self.event_sender.send(ev);
+            let _ = self.event_tx.send(ev);
             return;
         }
 
-        let event_sender = self.event_sender.clone();
-        let our_pub_key = self.pub_key.clone();
+        let event_tx = self.event_tx.clone();
+        let our_pub_key = unwrap_result!(self.our_contact_info.lock()).pub_key.clone();
 
         // TODO connect to all the socket addresses of peer in parallel
         let _joiner = thread!("PeerConnectionThread", move || {
@@ -193,13 +212,16 @@ impl Service {
                         connection: Err(e),
                         their_pub_key: their_contact_info.pub_key,
                     };
-                    let _ = self.event_sender.send(ev);
+                    let _ = event_tx.send(ev);
                     return;
                 }
             };
 
-            let _ = event_sender.send(Event::NewConnection {
-                connection: Connection::rendezvous_connect(udp_socket, our_pub_key),
+            let _ = event_tx.send(Event::NewConnection {
+                connection: connection::utp_rendezvous_connect(udp_socket,
+                                                               public_endpoint,
+                                                               their_contact_info.pub_key,
+                                                               event_tx.clone()),
                 their_pub_key: their_contact_info.pub_key,
             });
         });
@@ -299,11 +321,6 @@ impl Service {
     //        });
     //    }
 
-    /// Closes a connection.
-    pub fn drop_node(&self, connection: Connection) {
-        self.connection_map.unregister_connection(connection);
-    }
-
     /// Returns beacon acceptor port if beacon acceptor is accepting, otherwise returns `None`
     /// (beacon port may be taken by another process). Only useful for tests.
     #[cfg(test)]
@@ -316,10 +333,7 @@ impl Service {
 
     /// Get already known external endpoints without any upnp mapping
     pub fn get_known_external_endpoints(&self) -> Vec<Endpoint> {
-        let mut ret = Vec::new();
-        for acceptor in &self.acceptors {
-            ret.extend(acceptor.mapped_addresses());
-        }
+        let ret = self.raii_tcp_acceptor.mapped_addresses().to_owned();
         ret.iter().map(|a| Endpoint::from_socket_addr(Protocol::Tcp, *a)).collect()
     }
 
@@ -327,32 +341,33 @@ impl Service {
     pub fn prepare_contact_info(&mut self, result_token: u32) {
         use hole_punching::external_udp_socket;
 
-        let seq_id = self.next_punch_sequence.number();
-        self.next_punch_sequence.increment();
+        let seq_id = self.next_punch_sequence.next();
 
         let helping_nodes = self.get_ordered_helping_nodes();
-        let event_sender = self.event_sender.clone();
+        let event_tx = self.event_tx.clone();
 
         let static_addrs = self.get_known_external_endpoints();
+        let our_pub_key = unwrap_result!(self.our_contact_info.lock()).pub_key;
 
-        let _result_handle = Self::new_thread("map_udp", move || {
+        let _result_handle = thread!("map_udp", move || {
             let result = external_udp_socket(seq_id, helping_nodes);
 
             let res = match result {
                 // TODO (peterj) use _rest
-                Ok((socket, opt_mapped_addr, _rest)) => {
-                    let addrs = opt_mapped_addr.into_iter().collect();
+                Ok((socket, mapped_addr)) => {
+                    let addrs = vec![mapped_addr];
                     Ok(OurContactInfo {
                         socket: socket,
                         secret: Some(rand::random()),
                         static_addrs: static_addrs,
                         rendezvous_addrs: addrs,
+                        pub_key: our_pub_key,
                     })
                 }
                 Err(what) => Err(what),
             };
 
-            let _ = event_sender.send(Event::ContactInfoPrepared(ContactInfoResult {
+            let _ = event_tx.send(Event::ContactInfoPrepared(ContactInfoResult {
                 result_token: result_token,
                 result: res,
             }));
