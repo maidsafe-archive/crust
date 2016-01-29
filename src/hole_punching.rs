@@ -4,12 +4,15 @@ use std::net;
 use std::sync::{Arc, RwLock};
 use std::sync::mpsc::Sender;
 use std::sync::atomic::{Ordering, AtomicBool};
+use std::time::Duration;
 
 use periodic_sender::PeriodicSender;
 use socket_utils::RecvUntil;
 use endpoint::{Protocol, Endpoint};
 use socket_addr::{SocketAddr, SocketAddrV4};
 use maidsafe_utilities::thread::RaiiThreadJoiner;
+use maidsafe_utilities::serialisation::{deserialise, serialise};
+use udp_listener::{EchoExternalAddrResp, UdpListenerMsg};
 
 #[derive(Debug, RustcEncodable, RustcDecodable)]
 pub struct HolePunch {
@@ -17,99 +20,48 @@ pub struct HolePunch {
     pub ack: bool,
 }
 
-#[derive(Debug, RustcEncodable, RustcDecodable)]
-pub struct GetExternalAddr {
-    pub magic: u32,
-    pub request_id: u32,
-}
-
-// TODO (canndrew): this should be an associated constant once they're stabilised
-const GET_EXTERNAL_ADDR_MAGIC: u32 = 0x5d45cb20;
-
-impl GetExternalAddr {
-    fn new(request_id: u32) -> GetExternalAddr {
-        GetExternalAddr {
-            magic: GET_EXTERNAL_ADDR_MAGIC,
-            request_id: request_id,
-        }
-    }
-}
-
-#[derive(Debug, RustcEncodable, RustcDecodable)]
-pub struct SetExternalAddr {
-    pub request_id: u32,
-    pub addr: SocketAddr,
-}
-
-pub fn blocking_get_mapped_udp_socket
-    (request_id: u32,
-     helper_nodes: Vec<SocketAddr>)
-     -> io::Result<(UdpSocket, Option<SocketAddr>, Vec<SocketAddr>)> {
+// TODO(canndrew): This should return a Vec of SocketAddrs rather than a single SocketAddr. The Vec
+// should contain all known addresses of the socket.
+pub fn external_udp_socket(request_id: u32,
+                           udp_listeners: Vec<SocketAddr>)
+                           -> io::Result<(UdpSocket, SocketAddr)> {
     const MAX_DATAGRAM_SIZE: usize = 256;
 
     let udp_socket = try!(UdpSocket::bind("0.0.0.0:0"));
-    let receiver = try!(udp_socket.try_clone());
+    try!(udp_socket.set_read_timeout(Some(Duration::from_secs(2))));
+    let cloned_udp_socket = try!(udp_socket.try_clone());
 
-    let send_data = {
-        let gea = GetExternalAddr::new(request_id);
-        let mut enc = ::cbor::Encoder::from_memory();
-        enc.encode(::std::iter::once(&gea)).unwrap();
-        enc.into_bytes()
-    };
+    let send_data = unwrap_result!(serialise(&UdpListenerMsg::EchoExternalAddr));
 
-    let res = try!(::crossbeam::scope(|scope| -> io::Result<Option<(SocketAddr, usize)>> {
-        for helper in &helper_nodes {
-            let sender = try!(udp_socket.try_clone());
-            let _periodic_sender = PeriodicSender::start(sender,
-                                                         *helper,
+    let res = try!(::crossbeam::scope(|scope| -> io::Result<SocketAddr> {
+        // TODO Instead of periodic sender just send the request to every body and start listening.
+        // If we get it back from even one, we collect the info and return.
+        for udp_listener in &udp_listeners {
+            let cloned_udp_socket = try!(cloned_udp_socket.try_clone());
+            let _periodic_sender = PeriodicSender::start(cloned_udp_socket,
+                                                         *udp_listener,
                                                          scope,
                                                          &send_data[..],
                                                          ::std::time::Duration::from_millis(300));
-            let deadline = ::time::SteadyTime::now() + ::time::Duration::seconds(2);
-            let res = try!((|| -> io::Result<Option<(SocketAddr, usize)>> {
-                loop {
-                    let mut recv_data = [0u8; MAX_DATAGRAM_SIZE];
-                    let (read_size, recv_addr) = match try!(receiver.recv_until(&mut recv_data[..], deadline)) {
-                        Some(x) => x,
-                        None    => return Ok(None),
-                    };
-                    match helper_nodes.iter().position(|&a| a == recv_addr) {
-                        None    => continue,
-                        Some(i) => match ::cbor::Decoder::from_reader(&recv_data[..read_size])
-                                                         .decode::<SetExternalAddr>().next() {
-                            Some(Ok(sea)) => {
-                                if sea.request_id != request_id {
-                                    continue;
-                                }
-                                return Ok(Some((sea.addr, i)))
-                            }
-                            x   => {
-                                info!("Received invalid reply from udp hole punch server: {:?}", x);
-                                continue;
-                            }
-                        }
-                    }
-                }
-            })());
-            match res {
-                Some(x) => return Ok(Some(x)),
-                None => continue,
+            let mut recv_data = [0u8; MAX_DATAGRAM_SIZE];
+            let (read_size, recv_addr) = match udp_socket.recv_from(&mut recv_data[..]) {
+                Ok(res) => res,
+                Err(_) => continue,
+            };
+
+            if let Ok(EchoExternalAddrResp { external_addr }) =
+                   deserialise::<EchoExternalAddrResp>(&recv_data[..read_size]) {
+                return Ok(external_addr);
             }
         }
-        Ok(None)
+        return Err(io::Error::new(io::ErrorKind::Other,
+                                  "TODO - Improve this - Could Not find our external address"));
     }));
-    match res {
-        None => Ok((udp_socket, None, Vec::new())),
-        Some((our_addr, responder_index)) => {
-            Ok((udp_socket,
-                Some(our_addr),
-                helper_nodes.into_iter()
-                            .skip(responder_index + 1)
-                            .collect::<Vec<SocketAddr>>()))
-        }
-    }
+
+    Ok((udp_socket, res))
 }
 
+// TODO All this function should be returning is either an Ok(()) or Err(..)
 /// Returns the socket along with the peer's SocketAddr
 pub fn blocking_udp_punch_hole(udp_socket: UdpSocket,
                                secret: Option<[u8; 4]>,
@@ -176,6 +128,11 @@ pub fn blocking_udp_punch_hole(udp_socket: UdpSocket,
                                     };
                                     periodic_sender.set_payload(send_data);
                                     periodic_sender.set_destination(addr);
+                                    // TODO Do not do this. The only thing we should do is make
+                                    // sure the supplied peer_addr to this function is == to this
+                                    // addr (which can be spoofed anyway so additionally verify the
+                                    // secret above), otherwise it would mean we are connecting to
+                                    // someone who we are not sending HolePunch struct to
                                     peer_addr = Some(addr);
                                 }
                             } else {
@@ -184,7 +141,7 @@ pub fn blocking_udp_punch_hole(udp_socket: UdpSocket,
                         }
                         x => {
                             info!("udp_hole_punch received invalid data: {:?}", x);
-                        },
+                        }
                     };
                 }
             })();
@@ -199,163 +156,6 @@ pub fn blocking_udp_punch_hole(udp_socket: UdpSocket,
     });
 
     (udp_socket, addr_res)
-}
-
-/// RAII type for udp hole punching server.
-pub struct HolePunchServer {
-    listener_shutdown: Arc<AtomicBool>,
-    upnp_shutdown: Arc<AtomicBool>,
-
-    _listener_joiner: RaiiThreadJoiner,
-    _upnp_joiner: RaiiThreadJoiner,
-    internal_addr: net::SocketAddrV4,
-    external_addr: Arc<RwLock<Option<SocketAddr>>>,
-}
-
-impl HolePunchServer {
-    /// Create a new hole punching server.
-    pub fn start(upnp_external_addr_update: Sender<SocketAddr>) -> io::Result<HolePunchServer> {
-        const MAX_DATAGRAM_SIZE: usize = 256;
-
-        // Refresh the hole punched for our server socket every hour.
-        // TODO: make this a Duration once Duration has a const constructor
-        const UPNP_REFRESH_PERIOD_MS: u64 = 1000 * 60 * 60;
-
-        let listener_shutdown = Arc::new(AtomicBool::new(false));
-        let listener_shutdown_cloned = listener_shutdown.clone();
-
-        let upnp_shutdown = Arc::new(AtomicBool::new(false));
-        let upnp_shutdown_cloned = upnp_shutdown.clone();
-
-        let udp_socket = try!(UdpSocket::bind("0.0.0.0:0"));
-        let local_addr = match try!(udp_socket.local_addr()) {
-            net::SocketAddr::V4(sa) => sa,
-            net::SocketAddr::V6(_) => {
-                return Err(io::Error::new(io::ErrorKind::Other,
-                                          "bind(\"0.0.0.0:0\") returned an ipv6 socket"))
-            }
-        };
-        let listener_joiner = RaiiThreadJoiner::new(thread!("udp hole punch server", move || {
-            loop {
-                if listener_shutdown_cloned.load(Ordering::SeqCst) {
-                    break;
-                }
-                let mut data_recv = [0u8; MAX_DATAGRAM_SIZE];
-                // TODO (canndrew):
-                // Currently we set a read timeout so that the hole punch server thread continually wakes
-                // and checks to see if it's time to exit. This is a really crappy way of implementing
-                // this but currently rust doesn't have a good cross-platform select/epoll interface.
-                //
-                let deadline = ::time::SteadyTime::now() + ::time::Duration::seconds(1);
-                let (read_size, addr) = match udp_socket.recv_until(&mut data_recv[..], deadline) {
-                    Ok(Some(x)) => x,
-                    Ok(None) => continue,
-                    Err(err) => {
-                        warn!("{:?}", err);
-                        break;
-                    }
-                };
-                match ::cbor::Decoder::from_reader(&data_recv[..read_size])
-                          .decode::<GetExternalAddr>()
-                          .next() {
-                    Some(Ok(gea)) => {
-                        if gea.magic != GET_EXTERNAL_ADDR_MAGIC {
-                            continue;
-                        }
-                        let data_send = {
-                            let sea = SetExternalAddr {
-                                request_id: gea.request_id,
-                                addr: addr,
-                            };
-                            let mut enc = ::cbor::Encoder::from_memory();
-                            enc.encode(::std::iter::once(&sea)).unwrap();
-                            enc.into_bytes()
-                        };
-                        let send_size = match udp_socket.send_to(&data_send[..], &*addr) {
-                            Ok(size) => size,
-                            Err(err) => {
-                                warn!("{:?}", err);
-                                break;
-                            }
-                        };
-                        if send_size != data_send.len() {
-                            warn!("Failed to send entire SetExternalAddr message. {} < {}",
-                                  send_size,
-                                  data_send.len());
-                        }
-                    }
-                    x => {
-                        info!("Hole punch server received invalid GetExternalAddr: {:?}",
-                              x)
-                    }
-                };
-            }
-        }));
-
-        let external_ip = Arc::new(RwLock::new(None::<SocketAddr>));
-        let external_ip_writer = external_ip.clone();
-        let local_ep =
-            Endpoint::from_socket_addr(Protocol::Utp,
-                                       SocketAddr(net::SocketAddr::V4(local_addr.clone())));
-        let upnp_joiner = RaiiThreadJoiner::new(thread!("upnp hole puncher", move || {
-            loop {
-                // TODO UPNP is currently disabled
-                if true {
-                    break;
-                }
-                if upnp_shutdown_cloned.load(Ordering::SeqCst) {
-                    break;
-                }
-                match ::map_external_port::sync_map_external_port(&local_ep) {
-                    Ok(v) => {
-                        for (internal, external) in v {
-                            if internal == SocketAddrV4(local_addr) {
-                                // TODO (canndrew): improve the igd APIs to make this assert
-                                // unnecessary.
-                                assert_eq!(*external.protocol(), Protocol::Utp);
-                                {
-                                    let mut ext_ip = external_ip_writer.write().unwrap();
-                                    *ext_ip = Some(*external.socket_addr());
-                                };
-                                let _ = upnp_external_addr_update.send(*external.socket_addr());
-                            }
-                        }
-                    }
-                    Err(e) => info!("Failed to get external IP using upnp: {:?}", e),
-                }
-                // TODO (canndrew): What is a sensible time to wait between refreshes of our
-                // external ip?
-                ::std::thread::park_timeout(::std::time::Duration::from_millis(UPNP_REFRESH_PERIOD_MS));
-            }
-        }));
-
-        Ok(HolePunchServer {
-            listener_shutdown: listener_shutdown,
-            upnp_shutdown: upnp_shutdown,
-            _listener_joiner: listener_joiner,
-            _upnp_joiner: upnp_joiner,
-            internal_addr: local_addr,
-            external_addr: external_ip,
-        })
-    }
-
-    /// Get the address that this server is listening on.
-    pub fn listening_addr(&self) -> net::SocketAddrV4 {
-        self.internal_addr
-    }
-
-    /// Get the external address of the server (if it is known)
-    pub fn external_address(&self) -> Option<SocketAddr> {
-        let guard = self.external_addr.read().unwrap();
-        *guard
-    }
-}
-
-impl Drop for HolePunchServer {
-    fn drop(&mut self) {
-        let _ = self.listener_shutdown.store(true, Ordering::SeqCst);
-        let _ = self.upnp_shutdown.store(true, Ordering::SeqCst);
-    }
 }
 
 #[cfg(test)]
@@ -472,37 +272,5 @@ mod tests {
 
         let _ = r1.unwrap().unwrap();
         let _ = r2.unwrap().unwrap();
-    }
-
-    #[test]
-    fn test_get_mapped_socket_from_self() {
-        use std::sync::mpsc;
-
-        /*
-        let (category_tx, _) = mpsc::channel();
-        let (tx, _rx) = mpsc::channel();
-
-        let crust_event_category =
-            ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
-        let event_sender =
-            ::maidsafe_utilities::event_sender::MaidSafeObserver::new(tx,
-                                                                      crust_event_category,
-                                                                      category_tx);
-        */
-
-        // Hole punch server tries to contact uPnP devices and find out
-        // our external SocketAddr, we currently get it through a channel.
-        let (tx, _rx) = mpsc::channel();
-        let hole_punch_server = Arc::new(unwrap_result!(HolePunchServer::start(tx)));
-        let (socket, our_addr, remaining) =
-            blocking_get_mapped_udp_socket(::rand::random(),
-                                           vec![loopback_v4(hole_punch_server.listening_addr()
-                                                                             .port())])
-                .unwrap();
-
-        let received_addr = our_addr.unwrap();
-        let socket_addr = socket.local_addr().unwrap();
-        assert_eq!(loopback_v4(socket_addr.port()), received_addr);
-        assert!(remaining.is_empty());
     }
 }

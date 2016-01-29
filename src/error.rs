@@ -14,10 +14,15 @@
 //
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
+use config_file_handler;
 
 /// Error types.
 #[derive(Debug)]
 pub enum Error {
+    /// Failed sending over a channel
+    ChannelSendError(String),
+    /// File handling errors
+    FileHandler(config_file_handler::Error),
     /// Wrapper for a `::std::env::VarError`
     EnvError(::std::env::VarError),
     /// Wrapper for a `::std::io::Error`
@@ -59,6 +64,11 @@ impl From<::rustc_serialize::json::EncoderError> for Error {
 impl From<::rustc_serialize::json::ParserError> for Error {
     fn from(error: ::rustc_serialize::json::ParserError) -> Self {
         Error::JsonParserError(error)
+    }
+}
+impl From<config_file_handler::Error> for Error {
+    fn from(error: config_file_handler::Error) -> Self {
+        Error::FileHandler(error)
     }
 }
 

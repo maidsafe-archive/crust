@@ -30,6 +30,12 @@ impl SequenceNumber {
         SequenceNumber { num: start }
     }
 
+    pub fn next(&mut self) -> u32 {
+        let ret = self.number();
+        self.increment();
+        ret
+    }
+
     #[allow(dead_code)]
     pub fn increment(&mut self) {
         if self.num != ::std::u32::MAX {
@@ -45,6 +51,8 @@ impl SequenceNumber {
     }
 }
 
+// This special ordering makes sure that the next sequence number is always seen as greater than
+// the previous one
 impl Ord for SequenceNumber {
     fn cmp(&self, other: &SequenceNumber) -> Ordering {
         const MIDDLE: u32 = ::std::u32::MAX / 2;
