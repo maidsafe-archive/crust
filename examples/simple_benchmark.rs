@@ -40,7 +40,9 @@ use std::sync::mpsc::{channel, Receiver};
 use std::sync::Arc;
 use crust::{Connection, Service, HolePunchServer, Event};
 
-fn timed<F>(f: F) -> f64 where F: FnOnce() {
+fn timed<F>(f: F) -> f64
+    where F: FnOnce()
+{
     let start = time::precise_time_s();
     f();
     let end = time::precise_time_s();
@@ -48,11 +50,7 @@ fn timed<F>(f: F) -> f64 where F: FnOnce() {
 }
 
 fn generate_random_vec_u8(size: usize) -> Vec<u8> {
-    let mut vec: Vec<u8> = Vec::with_capacity(size);
-    for _ in 0..size {
-        vec.push(random::<u8>());
-    }
-    vec
+    (0..size).map(|_| random()).collect()
 }
 
 fn wait_for_connection(receiver: &Receiver<Event>,
@@ -65,13 +63,13 @@ fn wait_for_connection(receiver: &Receiver<Event>,
                     if let Ok(event) = receiver.try_recv() {
                         match event {
                             crust::Event::OnBootstrapConnect(Ok((_, c)), _) => return c,
-                            crust::Event::OnBootstrapAccept(_, c)  => return c,
+                            crust::Event::OnBootstrapAccept(_, c) => return c,
                             _ => panic!("Unexpected event"),
                         }
                     } else {
                         panic!("Could not connect");
                     }
-                },
+                }
                 _ => unreachable!("This event category should not have been fired - {:?}", it),
             }
         }
@@ -88,36 +86,45 @@ static USAGE: &'static str = "
 Usage:
   simple_benchmark [options]
 
-The benchmark will create two services and exchange messages using TCP into one
+The benchmark will create two \
+                              services and exchange messages using TCP into one
 direction.
 
-You can specify the number of messages exchanged and the length of each message.
+You \
+                              can specify the number of messages exchanged and the length of each \
+                              message.
 
 Options:
-  -s SIZE, --chunk-size=SIZE             The size of each message sent in bytes.
-  -n EXCHANGES, --n-exchanges=EXCHANGES  How many messages should be sent.
-  -h, --help                             Display this help message.
+  -s SIZE, --chunk-size=SIZE             The \
+                              size of each message sent in bytes.
+  -n EXCHANGES, \
+                              --n-exchanges=EXCHANGES  How many messages should be sent.
+  -h, \
+                              --help                             Display this help message.
 ";
 
 fn main() {
     let args: Args = Docopt::new(USAGE)
-        .and_then(|docopt| docopt.decode())
-        .unwrap();
+                         .and_then(|docopt| docopt.decode())
+                         .unwrap();
 
     let (category_tx, category_rx) = ::std::sync::mpsc::channel();
-    let crust_event_category = ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
+    let crust_event_category =
+        ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
     let (tx, s1_rx) = channel();
-    let event_sender0 = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(tx,
-                                                                                  crust_event_category.clone(),
-                                                                                  category_tx.clone());
+    let event_sender0 =
+        ::maidsafe_utilities::event_sender::MaidSafeObserver::new(tx,
+                                                                  crust_event_category.clone(),
+                                                                  category_tx.clone());
     let mut s1 = Service::new(event_sender0).unwrap();
 
     let s1_ep = s1.start_accepting(0).unwrap();
 
     let (tx, s2_rx) = channel();
-    let event_sender1 = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(tx,
-                                                                                  crust_event_category,
-                                                                                  category_tx);
+    let event_sender1 =
+        ::maidsafe_utilities::event_sender::MaidSafeObserver::new(tx,
+                                                                  crust_event_category,
+                                                                  category_tx);
     let mut s2 = Service::new(event_sender1).unwrap();
 
     let (tx, _rx) = channel();
@@ -127,7 +134,7 @@ fn main() {
     let s2_ep = wait_for_connection(&s1_rx, &category_rx);
     let _s1_ep = wait_for_connection(&s2_rx, &category_rx);
 
-    let chunk_size = args.flag_chunk_size.unwrap_or(1024*1024);
+    let chunk_size = args.flag_chunk_size.unwrap_or(1024 * 1024);
     let chunk = generate_random_vec_u8(chunk_size as usize);
     let n_exchanges = args.flag_n_exchanges.unwrap_or(3);
     let bytes = chunk_size * n_exchanges;

@@ -117,14 +117,20 @@ pub fn connect(contact: ContactInfo,
                -> io::Result<Connection> {
     let mut last_err = None;
     for tcp_addr in contact.tcp_acceptors {
-        match connect_tcp_endpoint(tcp_addr, contact.pub_key, our_contact_info.clone(), event_tx.clone()) {
+        match connect_tcp_endpoint(tcp_addr,
+                                   contact.pub_key,
+                                   our_contact_info.clone(),
+                                   event_tx.clone()) {
             Ok(connection) => return Ok(connection),
             Err(e) => last_err = Some(e),
         }
     }
 
     for udp_addr in contact.udp_listeners {
-        match connect_utp_endpoint(udp_addr, contact.pub_key, our_contact_info.clone(), event_tx.clone()) {
+        match connect_utp_endpoint(udp_addr,
+                                   contact.pub_key,
+                                   our_contact_info.clone(),
+                                   event_tx.clone()) {
             Ok(connection) => return Ok(connection),
             Err(e) => last_err = Some(e),
         }

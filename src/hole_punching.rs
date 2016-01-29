@@ -54,7 +54,8 @@ pub fn external_udp_socket(request_id: u32,
                 return Ok(external_addr);
             }
         }
-        return Err(io::Error::new(io::ErrorKind::Other, "TODO - Improve this - Could Not find our external address"));
+        return Err(io::Error::new(io::ErrorKind::Other,
+                                  "TODO - Improve this - Could Not find our external address"));
     }));
 
     Ok((udp_socket, res))

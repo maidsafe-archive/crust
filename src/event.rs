@@ -80,7 +80,7 @@ pub enum Event {
     NewMessage(PublicKey, Vec<u8>),
     /// Invoked when we get a new bootstrap connection.
     /// Passes the new connection and the peer's public key.
-    NewBootstrapConnection{
+    NewBootstrapConnection {
         /// TODO Doc
         connection: Connection,
         /// TODO Doc

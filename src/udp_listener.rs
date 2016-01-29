@@ -52,7 +52,7 @@ pub enum UdpListenerMsg {
         connect_on: Vec<SocketAddr>,
         secret: [u8; 4],
         pub_key: PublicKey,
-    }
+    },
 }
 
 pub struct UdpListener {
@@ -121,9 +121,12 @@ impl UdpListener {
                         // of the socket that it freshly spawned or (if it cannot because of say
                         // Zero-state etc.) Vector of all interface addresses. This should never be
                         // an option because then it is pretty useless.
-                        let echo_servers = their_contact_infos.iter().flat_map(|tci| tci.udp_listeners.iter().cloned()).collect();
-                        if let Ok(res) =
-                               external_udp_socket(rand::random(), echo_servers) {
+                        let echo_servers = their_contact_infos.iter()
+                                                              .flat_map(|tci| {
+                                                                  tci.udp_listeners.iter().cloned()
+                                                              })
+                                                              .collect();
+                        if let Ok(res) = external_udp_socket(rand::random(), echo_servers) {
                             let connect_resp = UdpListenerMsg::ConnectResponse {
                                 connect_on: vec![res.1],
                                 secret: secret,
@@ -137,7 +140,9 @@ impl UdpListener {
                             }
 
                             if let (socket, Ok(peer_addr)) =
-                                   blocking_udp_punch_hole(res.0, Some(secret), SocketAddr(peer_addr)) {
+                                   blocking_udp_punch_hole(res.0,
+                                                           Some(secret),
+                                                           SocketAddr(peer_addr)) {
                                 let connection = match utp_rendezvous_connect(socket,
                                                                               peer_addr,
                                                                               pub_key.clone(),
@@ -158,9 +163,12 @@ impl UdpListener {
                         }
                     }
                     UdpListenerMsg::ConnectResponse { connect_on, secret, pub_key, } => {
-                        let echo_servers = their_contact_infos.iter().flat_map(|tci| tci.udp_listeners.iter().cloned()).collect();
-                        if let Ok(res) =
-                               external_udp_socket(rand::random(), echo_servers) {
+                        let echo_servers = their_contact_infos.iter()
+                                                              .flat_map(|tci| {
+                                                                  tci.udp_listeners.iter().cloned()
+                                                              })
+                                                              .collect();
+                        if let Ok(res) = external_udp_socket(rand::random(), echo_servers) {
                             for peer_addr in connect_on {
                                 let s = match res.0.try_clone() {
                                     Ok(socket) => socket,

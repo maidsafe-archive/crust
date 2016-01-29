@@ -33,6 +33,7 @@ use sodiumoxide::crypto::sign::PublicKey;
 use std::net::TcpListener;
 
 use connection::RaiiTcpAcceptor;
+use udp_listener::UdpListener;
 use contact_info::ContactInfo;
 use rand;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
@@ -63,7 +64,8 @@ impl PartialOrd for EchoServerAddr {
 
 impl Ord for EchoServerAddr {
     fn cmp(&self, other: &EchoServerAddr) -> cmp::Ordering {
-        ::util::heuristic_geo_cmp(&SocketAddrExt::ip(&*other.addr), &SocketAddrExt::ip(&*self.addr))
+        ::util::heuristic_geo_cmp(&SocketAddrExt::ip(&*other.addr),
+                                  &SocketAddrExt::ip(&*self.addr))
     }
 }
 
@@ -78,6 +80,7 @@ pub struct Service {
     service_discovery: ServiceDiscovery<ContactInfo>,
     bootstrap: Bootstrap,
     raii_tcp_acceptor: RaiiTcpAcceptor,
+    udp_listener: UdpListener,
     event_tx: ::CrustEventSender,
     echo_servers: BTreeSet<EchoServerAddr>,
     next_punch_sequence: SequenceNumber,
@@ -103,6 +106,8 @@ impl Service {
         let raii_tcp_acceptor = try!(connection::start_tcp_accept(0,
                                                                   contact_info.clone(),
                                                                   event_tx.clone()));
+        // Start the UDP Listener
+        let udp_listener = try!(UdpListener::new(event_tx.clone(), Vec::new()));
 
         let cloned_contact_info = contact_info.clone();
         let generator = move || unwrap_result!(cloned_contact_info.lock()).clone();
@@ -116,6 +121,7 @@ impl Service {
             service_discovery: service_discovery,
             bootstrap: bootstrap,
             raii_tcp_acceptor: raii_tcp_acceptor,
+            udp_listener: udp_listener,
             event_tx: event_tx,
             echo_servers: BTreeSet::new(),
             next_punch_sequence: SequenceNumber::new(0),
@@ -137,8 +143,7 @@ impl Service {
     //     self.bootstrap_handler.update_contacts(vec![], vec![endpoint])
     // }
 
-    fn stop(&mut self) {
-    }
+    fn stop(&mut self) {}
 
     /// Get the hole punch servers addresses of nodes that we're connected to ordered by how likely
     /// they are to be on a seperate network.

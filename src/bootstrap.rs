@@ -108,7 +108,9 @@ impl Bootstrap {
         // prevents that.
         // let own_listening_endpoint = self.get_known_external_endpoints();
         // contacts.retain(|c| !own_listening_endpoint.contains(&c));
-        let contacts = contacts.into_iter().filter(|contact| contact.pub_key != *our_pub_key).collect();
+        let contacts = contacts.into_iter()
+                               .filter(|contact| contact.pub_key != *our_pub_key)
+                               .collect();
 
         Ok((contacts))
     }
@@ -128,7 +130,9 @@ impl Bootstrap {
 
             // 1st try a TCP connect
             // 2nd try a UDP connection (and upgrade to UTP)
-            let connect_result = ::connection::connect(contact, our_contact_info.clone(), event_tx.clone());
+            let connect_result = ::connection::connect(contact,
+                                                       our_contact_info.clone(),
+                                                       event_tx.clone());
             if stop_flag.load(Ordering::SeqCst) {
                 return;
             }
