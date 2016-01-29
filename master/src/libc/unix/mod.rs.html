@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/libc-0.2.5/src/unix/mod.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/libc-0.2.6/src/unix/mod.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>mod.rs.html -- source</title>
@@ -740,6 +740,9 @@
 <span id="697">697</span>
 <span id="698">698</span>
 <span id="699">699</span>
+<span id="700">700</span>
+<span id="701">701</span>
+<span id="702">702</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! Definitions found commonly among almost all Unix derivatives</span>
 <span class='doccomment'>//!</span>
@@ -871,6 +874,8 @@
 <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>POLLERR</span>: ::<span class='ident'>c_short</span> <span class='op'>=</span> <span class='number'>0x8</span>;
 <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>POLLHUP</span>: ::<span class='ident'>c_short</span> <span class='op'>=</span> <span class='number'>0x10</span>;
 <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>POLLNVAL</span>: ::<span class='ident'>c_short</span> <span class='op'>=</span> <span class='number'>0x20</span>;
+
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>IF_NAMESIZE</span>: ::<span class='ident'>size_t</span> <span class='op'>=</span> <span class='number'>16</span>;
 
 <span class='macro'>cfg_if</span><span class='macro'>!</span> {
     <span class='kw'>if</span> <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;default&quot;</span>)]</span> {
@@ -1106,6 +1111,7 @@
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>munmap</span>(<span class='ident'>addr</span>: <span class='op'>*</span><span class='kw-2'>mut</span> ::<span class='ident'>c_void</span>, <span class='ident'>len</span>: ::<span class='ident'>size_t</span>) <span class='op'>-&gt;</span> ::<span class='ident'>c_int</span>;
 
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>if_nametoindex</span>(<span class='ident'>ifname</span>: <span class='op'>*</span><span class='kw'>const</span> <span class='ident'>c_char</span>) <span class='op'>-&gt;</span> ::<span class='ident'>c_uint</span>;
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>if_indextoname</span>(<span class='ident'>ifindex</span>: ::<span class='ident'>c_uint</span>, <span class='ident'>ifname</span>: <span class='op'>*</span><span class='kw-2'>mut</span> ::<span class='ident'>c_char</span>) <span class='op'>-&gt;</span> <span class='op'>*</span><span class='kw-2'>mut</span> ::<span class='ident'>c_char</span>;
 
     <span class='attribute'>#[<span class='ident'>cfg_attr</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;macos&quot;</span>, <span class='ident'>link_name</span> <span class='op'>=</span> <span class='string'>&quot;lstat$INODE64&quot;</span>)]</span>
     <span class='attribute'>#[<span class='ident'>cfg_attr</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;netbsd&quot;</span>, <span class='ident'>link_name</span> <span class='op'>=</span> <span class='string'>&quot;__lstat50&quot;</span>)]</span>

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/libc-0.2.5/src/unix/notbsd/mod.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/libc-0.2.6/src/unix/notbsd/mod.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>mod.rs.html -- source</title>
@@ -673,6 +673,9 @@
 <span id="630">630</span>
 <span id="631">631</span>
 <span id="632">632</span>
+<span id="633">633</span>
+<span id="634">634</span>
+<span id="635">635</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>dox</span>::<span class='ident'>mem</span>;
 
@@ -850,6 +853,9 @@
 <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>O_RDWR</span>: ::<span class='ident'>c_int</span> <span class='op'>=</span> <span class='number'>2</span>;
 <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>O_TRUNC</span>: ::<span class='ident'>c_int</span> <span class='op'>=</span> <span class='number'>512</span>;
 <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>O_CLOEXEC</span>: ::<span class='ident'>c_int</span> <span class='op'>=</span> <span class='number'>0x80000</span>;
+
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>SOCK_CLOEXEC</span>: ::<span class='ident'>c_int</span> <span class='op'>=</span> <span class='ident'>O_CLOEXEC</span>; 
+
 <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>S_IFIFO</span>: ::<span class='ident'>mode_t</span> <span class='op'>=</span> <span class='number'>4096</span>;
 <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>S_IFCHR</span>: ::<span class='ident'>mode_t</span> <span class='op'>=</span> <span class='number'>8192</span>;
 <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>S_IFBLK</span>: ::<span class='ident'>mode_t</span> <span class='op'>=</span> <span class='number'>24576</span>;

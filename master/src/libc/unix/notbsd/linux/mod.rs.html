@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/libc-0.2.5/src/unix/notbsd/linux/mod.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/libc-0.2.6/src/unix/notbsd/linux/mod.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>mod.rs.html -- source</title>
@@ -958,12 +958,12 @@
 
 <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>NCCS</span>: <span class='ident'>usize</span> <span class='op'>=</span> <span class='number'>32</span>;
 
-<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>CLONE_NEWUTS</span>: ::<span class='ident'>c_uint</span> <span class='op'>=</span> <span class='number'>0x04000000</span>;
-<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>CLONE_NEWIPC</span>: ::<span class='ident'>c_uint</span> <span class='op'>=</span> <span class='number'>0x08000000</span>;
-<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>CLONE_NEWUSER</span>: ::<span class='ident'>c_uint</span> <span class='op'>=</span> <span class='number'>0x10000000</span>;
-<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>CLONE_NEWPID</span>: ::<span class='ident'>c_uint</span> <span class='op'>=</span> <span class='number'>0x20000000</span>;
-<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>CLONE_NEWNET</span>: ::<span class='ident'>c_uint</span> <span class='op'>=</span> <span class='number'>0x40000000</span>;
-<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>CLONE_IO</span>: ::<span class='ident'>c_uint</span> <span class='op'>=</span> <span class='number'>0x80000000</span>;
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>CLONE_NEWUTS</span>: ::<span class='ident'>c_int</span> <span class='op'>=</span> <span class='number'>0x04000000</span>;
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>CLONE_NEWIPC</span>: ::<span class='ident'>c_int</span> <span class='op'>=</span> <span class='number'>0x08000000</span>;
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>CLONE_NEWUSER</span>: ::<span class='ident'>c_int</span> <span class='op'>=</span> <span class='number'>0x10000000</span>;
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>CLONE_NEWPID</span>: ::<span class='ident'>c_int</span> <span class='op'>=</span> <span class='number'>0x20000000</span>;
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>CLONE_NEWNET</span>: ::<span class='ident'>c_int</span> <span class='op'>=</span> <span class='number'>0x40000000</span>;
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>CLONE_IO</span>: ::<span class='ident'>c_int</span> <span class='op'>=</span> <span class='number'>0x80000000</span>;
 
 <span class='kw'>extern</span> {
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>shm_open</span>(<span class='ident'>name</span>: <span class='op'>*</span><span class='kw'>const</span> <span class='ident'>c_char</span>, <span class='ident'>oflag</span>: ::<span class='ident'>c_int</span>,

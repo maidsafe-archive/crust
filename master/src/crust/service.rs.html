@@ -1450,50 +1450,6 @@
 <span id="1407">1407</span>
 <span id="1408">1408</span>
 <span id="1409">1409</span>
-<span id="1410">1410</span>
-<span id="1411">1411</span>
-<span id="1412">1412</span>
-<span id="1413">1413</span>
-<span id="1414">1414</span>
-<span id="1415">1415</span>
-<span id="1416">1416</span>
-<span id="1417">1417</span>
-<span id="1418">1418</span>
-<span id="1419">1419</span>
-<span id="1420">1420</span>
-<span id="1421">1421</span>
-<span id="1422">1422</span>
-<span id="1423">1423</span>
-<span id="1424">1424</span>
-<span id="1425">1425</span>
-<span id="1426">1426</span>
-<span id="1427">1427</span>
-<span id="1428">1428</span>
-<span id="1429">1429</span>
-<span id="1430">1430</span>
-<span id="1431">1431</span>
-<span id="1432">1432</span>
-<span id="1433">1433</span>
-<span id="1434">1434</span>
-<span id="1435">1435</span>
-<span id="1436">1436</span>
-<span id="1437">1437</span>
-<span id="1438">1438</span>
-<span id="1439">1439</span>
-<span id="1440">1440</span>
-<span id="1441">1441</span>
-<span id="1442">1442</span>
-<span id="1443">1443</span>
-<span id="1444">1444</span>
-<span id="1445">1445</span>
-<span id="1446">1446</span>
-<span id="1447">1447</span>
-<span id="1448">1448</span>
-<span id="1449">1449</span>
-<span id="1450">1450</span>
-<span id="1451">1451</span>
-<span id="1452">1452</span>
-<span id="1453">1453</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -1644,22 +1600,6 @@
         <span class='comment'>// FIXME: Instead of hardcoded wrapping in loopback V4, the</span>
         <span class='comment'>// acceptor should tell us the address it is accepting on.</span>
         <span class='prelude-val'>Ok</span>(<span class='ident'>Endpoint</span>::<span class='ident'>from_socket_addr</span>(<span class='ident'>Protocol</span>::<span class='ident'>Tcp</span>, <span class='ident'>SocketAddr</span>(<span class='ident'>accept_addr</span>)))
-    }
-
-    <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>start_accepting_utp</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>port</span>: <span class='ident'>u16</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>Endpoint</span><span class='op'>&gt;</span> {
-        <span class='kw'>use</span> <span class='ident'>utp</span>::<span class='ident'>UtpListener</span>;
-        <span class='kw'>let</span> <span class='ident'>listener</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>UtpListener</span>::<span class='ident'>bind</span>((<span class='string'>&quot;0.0.0.0&quot;</span>, <span class='ident'>port</span>)));
-        <span class='kw'>let</span> <span class='ident'>accept_addr</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>listener</span>.<span class='ident'>local_addr</span>());
-
-        <span class='kw'>let</span> <span class='ident'>hole_punch_server</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>mapper</span>.<span class='ident'>clone</span>();
-        <span class='kw'>let</span> <span class='ident'>acceptor</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>Acceptor</span>::<span class='ident'>with_utp</span>(<span class='ident'>listener</span>, <span class='ident'>hole_punch_server</span>,
-                                               <span class='self'>self</span>.<span class='ident'>connection_map</span>.<span class='ident'>clone</span>()));
-        <span class='self'>self</span>.<span class='ident'>acceptors</span>.<span class='ident'>push</span>(<span class='ident'>acceptor</span>);
-
-        <span class='comment'>// FIXME: Instead of hardcoded wrapping in loopback V4, the</span>
-        <span class='comment'>// listener should tell us the address it is accepting on.</span>
-        <span class='prelude-val'>Ok</span>(<span class='ident'>Endpoint</span>::<span class='ident'>from_socket_addr</span>(<span class='ident'>Protocol</span>::<span class='ident'>Utp</span>, <span class='ident'>SocketAddr</span>(<span class='ident'>accept_addr</span>)))
     }
 
     <span class='kw'>fn</span> <span class='ident'>populate_bootstrap_contacts</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>,
@@ -2673,7 +2613,8 @@
         }));
     }
 
-    <span class='kw'>fn</span> <span class='ident'>test_network</span>(<span class='ident'>protocol</span>: <span class='ident'>Protocol</span>) {
+    <span class='attribute'>#[<span class='ident'>test</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>network</span>() {
         <span class='ident'>BootstrapHandler</span>::<span class='ident'>cleanup</span>().<span class='ident'>unwrap</span>();
 
         <span class='kw'>const</span> <span class='ident'>NETWORK_SIZE</span>: <span class='ident'>u32</span> <span class='op'>=</span> <span class='number'>10</span>;
@@ -2707,21 +2648,15 @@
 
             <span class='kw'>fn</span> <span class='ident'>run</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Stats</span> {
                 <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>stats</span> <span class='op'>=</span> <span class='ident'>Stats</span>::<span class='ident'>new</span>();
-                <span class='kw'>let</span> <span class='ident'>timeout</span> <span class='op'>=</span> ::<span class='ident'>time</span>::<span class='ident'>SteadyTime</span>::<span class='ident'>now</span>() <span class='op'>+</span> ::<span class='ident'>time</span>::<span class='ident'>Duration</span>::<span class='ident'>milliseconds</span>(<span class='number'>120000</span>);
-                <span class='kw'>loop</span> {
-                    <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>category_rx</span>.<span class='ident'>try_recv</span>() {
-                        <span class='prelude-val'>Ok</span>(::<span class='ident'>maidsafe_utilities</span>::<span class='ident'>event_sender</span>::<span class='ident'>MaidSafeEventCategory</span>::<span class='ident'>CrustEvent</span>) <span class='op'>=&gt;</span> {
+
+                <span class='kw'>for</span> <span class='ident'>it</span> <span class='kw'>in</span> <span class='self'>self</span>.<span class='ident'>category_rx</span>.<span class='ident'>iter</span>() {
+                    <span class='kw'>match</span> <span class='ident'>it</span> {
+                        ::<span class='ident'>maidsafe_utilities</span>::<span class='ident'>event_sender</span>::<span class='ident'>MaidSafeEventCategory</span>::<span class='ident'>CrustEvent</span> <span class='op'>=&gt;</span> {
                             <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Ok</span>(<span class='ident'>event</span>) <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>reader</span>.<span class='ident'>try_recv</span>() {
-                                <span class='macro'>debug</span><span class='macro'>!</span>(<span class='string'>&quot;node {:?} received event : {:?} current msg counting {:?} among {:?}&quot;</span>,
-                                       <span class='self'>self</span>.<span class='ident'>_id</span>, <span class='ident'>event</span>, <span class='ident'>stats</span>.<span class='ident'>messages_count</span>, <span class='ident'>TOTAL_MSG_TO_RECEIVE</span>);
                                 <span class='kw'>match</span> <span class='ident'>event</span> {
                                     <span class='ident'>Event</span>::<span class='ident'>OnBootstrapConnect</span>(<span class='prelude-val'>Ok</span>((_, <span class='ident'>connection</span>)), _) <span class='op'>=&gt;</span> {
                                         <span class='ident'>stats</span>.<span class='ident'>connect_count</span> <span class='op'>+=</span> <span class='number'>1</span>;
                                         <span class='self'>self</span>.<span class='ident'>send_data_to</span>(<span class='ident'>connection</span>);
-                                    }
-                                    <span class='ident'>Event</span>::<span class='ident'>OnBootstrapConnect</span>(<span class='prelude-val'>Err</span>(<span class='ident'>e</span>), _) <span class='op'>=&gt;</span> {
-                                        <span class='ident'>thread</span>::<span class='ident'>sleep</span>(::<span class='ident'>std</span>::<span class='ident'>time</span>::<span class='ident'>Duration</span>::<span class='ident'>from_secs</span>(<span class='number'>120</span>));
-                                        <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Cannot establish all connections {:?}&quot;</span>, <span class='ident'>e</span>)
                                     }
                                     <span class='ident'>Event</span>::<span class='ident'>OnBootstrapAccept</span>(_, <span class='ident'>connection</span>) <span class='op'>=&gt;</span> {
                                         <span class='ident'>stats</span>.<span class='ident'>accept_count</span> <span class='op'>+=</span> <span class='number'>1</span>;
@@ -2729,27 +2664,19 @@
                                     }
                                     <span class='ident'>Event</span>::<span class='ident'>NewMessage</span>(<span class='ident'>_from</span>, <span class='ident'>_bytes</span>) <span class='op'>=&gt;</span> {
                                         <span class='ident'>stats</span>.<span class='ident'>messages_count</span> <span class='op'>+=</span> <span class='number'>1</span>;
+                                        <span class='comment'>// let msg = decode::&lt;String&gt;(&amp;bytes);</span>
                                         <span class='kw'>if</span> <span class='ident'>stats</span>.<span class='ident'>messages_count</span> <span class='op'>==</span> <span class='ident'>TOTAL_MSG_TO_RECEIVE</span> {
                                             <span class='kw'>break</span>;
                                         }
                                     }
-                                    <span class='ident'>Event</span>::<span class='ident'>LostConnection</span>(_) <span class='op'>=&gt;</span> {
-                                        <span class='macro'>debug</span><span class='macro'>!</span>(<span class='string'>&quot;connection lost&quot;</span>);
-                                    }
+                                    <span class='ident'>Event</span>::<span class='ident'>LostConnection</span>(_) <span class='op'>=&gt;</span> {}
                                     _ <span class='op'>=&gt;</span> {
-                                        <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;Received unknown event {:?}&quot;</span>, <span class='ident'>event</span>);
+                                        <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;Received event {:?}&quot;</span>, <span class='ident'>event</span>);
                                     }
                                 }
                             }
                         }
-                        <span class='prelude-val'>Ok</span>(_) <span class='op'>=&gt;</span> <span class='macro'>unreachable</span><span class='macro'>!</span>(<span class='string'>&quot;This category should not have been fired&quot;</span>),
-                        <span class='prelude-val'>Err</span>(_) <span class='op'>=&gt;</span> {}
-                    }
-                    <span class='kw'>if</span> ::<span class='ident'>time</span>::<span class='ident'>SteadyTime</span>::<span class='ident'>now</span>() <span class='op'>&lt;</span> <span class='ident'>timeout</span> {
-                        <span class='kw'>let</span> <span class='ident'>duration</span> <span class='op'>=</span> ::<span class='ident'>std</span>::<span class='ident'>time</span>::<span class='ident'>Duration</span>::<span class='ident'>from_millis</span>(<span class='number'>1</span>);
-                        ::<span class='ident'>std</span>::<span class='ident'>thread</span>::<span class='ident'>sleep</span>(<span class='ident'>duration</span>);
-                    } <span class='kw'>else</span> {
-                        <span class='kw'>break</span>;
+                        _ <span class='op'>=&gt;</span> <span class='macro'>unreachable</span><span class='macro'>!</span>(<span class='string'>&quot;This category should not have been fired - {:?}&quot;</span>, <span class='ident'>it</span>),
                     }
                 }
                 <span class='ident'>stats</span>
@@ -2770,12 +2697,7 @@
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>runners</span> <span class='op'>=</span> <span class='ident'>Vec</span>::<span class='ident'>new</span>();
 
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>listening_eps</span> <span class='op'>=</span> <span class='ident'>nodes</span>.<span class='ident'>iter_mut</span>()
-                                     .<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>node</span><span class='op'>|</span> {
-                                         <span class='kw'>match</span> <span class='ident'>protocol</span> {
-                                             <span class='ident'>Protocol</span>::<span class='ident'>Tcp</span> <span class='op'>=&gt;</span> <span class='ident'>node</span>.<span class='ident'>service</span>.<span class='ident'>start_accepting</span>(<span class='number'>0</span>).<span class='ident'>unwrap</span>(),
-                                             <span class='ident'>Protocol</span>::<span class='ident'>Utp</span> <span class='op'>=&gt;</span> <span class='ident'>node</span>.<span class='ident'>service</span>.<span class='ident'>start_accepting_utp</span>(<span class='number'>0</span>).<span class='ident'>unwrap</span>(),
-                                         }
-                                     })
+                                     .<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>node</span><span class='op'>|</span> <span class='ident'>node</span>.<span class='ident'>service</span>.<span class='ident'>start_accepting</span>(<span class='number'>0</span>).<span class='ident'>unwrap</span>())
                                      .<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>ep</span><span class='op'>|</span> <span class='ident'>ep</span>.<span class='ident'>unspecified_to_loopback</span>())
                                      .<span class='ident'>collect</span>::<span class='op'>&lt;</span>::<span class='ident'>std</span>::<span class='ident'>collections</span>::<span class='ident'>VecDeque</span><span class='op'>&lt;</span>_<span class='op'>&gt;&gt;</span>();
 
@@ -2803,16 +2725,6 @@
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>stats</span>.<span class='ident'>accept_count</span>, <span class='ident'>NETWORK_SIZE</span> <span class='op'>*</span> (<span class='ident'>NETWORK_SIZE</span> <span class='op'>-</span> <span class='number'>1</span>) <span class='op'>/</span> <span class='number'>2</span>);
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>stats</span>.<span class='ident'>messages_count</span>,
                    <span class='ident'>NETWORK_SIZE</span> <span class='op'>*</span> (<span class='ident'>NETWORK_SIZE</span> <span class='op'>-</span> <span class='number'>1</span>) <span class='op'>*</span> <span class='ident'>MESSAGE_PER_NODE</span>);
-    }
-
-    <span class='attribute'>#[<span class='ident'>test</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>test_network_tcp</span>() {
-        <span class='ident'>test_network</span>(<span class='ident'>Protocol</span>::<span class='ident'>Tcp</span>);
-    }
-
-    <span class='attribute'>#[<span class='ident'>test</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>test_network_utp</span>() {
-        <span class='ident'>test_network</span>(<span class='ident'>Protocol</span>::<span class='ident'>Utp</span>);
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>

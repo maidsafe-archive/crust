@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/libc-0.2.5/src/unix/notbsd/linux/other/mod.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/libc-0.2.6/src/unix/notbsd/linux/other/mod.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>mod.rs.html -- source</title>
@@ -522,6 +522,8 @@
 <span id="479">479</span>
 <span id="480">480</span>
 <span id="481">481</span>
+<span id="482">482</span>
+<span id="483">483</span>
 </pre><pre class='rust '>
 <span class='macro'>s</span><span class='macro'>!</span> {
     <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>sigaction</span> {
@@ -629,6 +631,8 @@
 <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>O_RSYNC</span>: ::<span class='ident'>c_int</span> <span class='op'>=</span> <span class='number'>1052672</span>;
 <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>O_DSYNC</span>: ::<span class='ident'>c_int</span> <span class='op'>=</span> <span class='number'>4096</span>;
 <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>O_FSYNC</span>: ::<span class='ident'>c_int</span> <span class='op'>=</span> <span class='number'>0x101000</span>;
+
+<span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>SOCK_NONBLOCK</span>: ::<span class='ident'>c_int</span> <span class='op'>=</span> <span class='ident'>O_NONBLOCK</span>;
 
 <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>MAP_ANON</span>: ::<span class='ident'>c_int</span> <span class='op'>=</span> <span class='number'>0x0020</span>;
 <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>MAP_ANONYMOUS</span>: ::<span class='ident'>c_int</span> <span class='op'>=</span> <span class='number'>0x0020</span>;
@@ -949,7 +953,7 @@
                        <span class='ident'>serv</span>: <span class='op'>*</span><span class='kw-2'>mut</span> ::<span class='ident'>c_char</span>,
                        <span class='ident'>sevlen</span>: ::<span class='ident'>socklen_t</span>,
                        <span class='ident'>flags</span>: ::<span class='ident'>c_int</span>) <span class='op'>-&gt;</span> ::<span class='ident'>c_int</span>;
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>eventfd</span>(<span class='ident'>init</span>: ::<span class='ident'>c_int</span>, <span class='ident'>flags</span>: ::<span class='ident'>c_int</span>) <span class='op'>-&gt;</span> ::<span class='ident'>c_int</span>;
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>eventfd</span>(<span class='ident'>init</span>: ::<span class='ident'>c_uint</span>, <span class='ident'>flags</span>: ::<span class='ident'>c_int</span>) <span class='op'>-&gt;</span> ::<span class='ident'>c_int</span>;
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>ptrace</span>(<span class='ident'>request</span>: ::<span class='ident'>c_uint</span>, ...) <span class='op'>-&gt;</span> ::<span class='ident'>c_long</span>;
 }
 
