@@ -17,6 +17,7 @@
 
 use std::fmt;
 use std::sync::{Arc, Mutex};
+use std::hash::{Hash, SipHasher, Hasher};
 use std::sync::atomic::{Ordering, AtomicBool};
 use std::net::{Shutdown, TcpListener, TcpStream, UdpSocket};
 use std::io;
@@ -34,6 +35,7 @@ use socket_addr::SocketAddr;
 use event::Event;
 use sodiumoxide::crypto::sign::PublicKey;
 use endpoint::{Endpoint, Protocol};
+use rand;
 
 /// An open connection that can be used to send messages to a peer.
 ///
@@ -54,6 +56,20 @@ impl Connection {
     pub fn send(&mut self, data: &[u8]) -> io::Result<()> {
         self.network_tx.send(data.clone())
     }
+}
+
+impl Hash for Connection {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.protocol.hash(state);
+        self.our_addr.hash(state);
+        self.their_addr.hash(state);
+    }
+}
+
+pub fn hash<T: Hash>(object_to_hash: &T) -> u64 {
+    let mut sip_hasher = SipHasher::new_with_keys(rand::random(), rand::random());
+    object_to_hash.hash(&mut sip_hasher);
+    sip_hasher.finish()
 }
 
 impl fmt::Debug for Connection {
@@ -266,4 +282,110 @@ fn start_rx(mut network_rx: Receiver, their_pub_key: PublicKey, event_tx: ::Crus
         }
     }
     let _ = event_tx.send(Event::LostConnection(their_pub_key));
+}
+
+mod test {
+    use super::*;
+
+    use std::sync::mpsc;
+    use std::str::FromStr;
+
+    use maidsafe_utilities::thread::RaiiThreadJoiner;
+
+    use endpoint::Protocol;
+    use socket_addr::SocketAddr;
+
+    #[test]
+    fn connection_hash() {
+        let connection_0 = {
+            let (tx, _) = mpsc::channel();
+            let raii_joiner = RaiiThreadJoiner::new(thread!("DummyThread", move ||));
+
+            Connection {
+                protocol: Protocol::Tcp,
+                our_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("10.199.254.200:\
+                                                                               30000"))),
+                their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.200:\
+                                                                                 30000"))),
+                network_tx: Sender(tx),
+                _network_read_joiner: raii_joiner,
+            }
+        };
+
+        // Same as connection_0
+        let connection_1 = {
+            let (tx, _) = mpsc::channel();
+            let raii_joiner = RaiiThreadJoiner::new(thread!("DummyThread", move ||));
+
+            Connection {
+                protocol: Protocol::Tcp,
+                our_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("10.199.254.200:\
+                                                                               30000"))),
+                their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.200:\
+                                                                                 30000"))),
+                network_tx: Sender(tx),
+                _network_read_joiner: raii_joiner,
+            }
+        };
+
+        assert_eq!(hash(connection_0), hash(connection_0));
+        assert_eq!(hash(connection_0), hash(connection_1));
+
+        // Protocol different
+        let connection_2 = {
+            let (tx, _) = mpsc::channel();
+            let raii_joiner = RaiiThreadJoiner::new(thread!("DummyThread", move ||));
+
+            Connection {
+                protocol: Protocol::Utp,
+                our_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("10.199.254.200:\
+                                                                               30000"))),
+                their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.200:\
+                                                                                 30000"))),
+                network_tx: Sender(tx),
+                _network_read_joiner: raii_joiner,
+            }
+        };
+
+        assert_eq!(hash(connection_2), hash(connection_2));
+        assert!(hash(connection_0) != hash(connection_2));
+
+        // our_addr different
+        let connection_3 = {
+            let (tx, _) = mpsc::channel();
+            let raii_joiner = RaiiThreadJoiner::new(thread!("DummyThread", move ||));
+
+            Connection {
+                protocol: Protocol::Tcp,
+                our_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("10.199.254.201:\
+                                                                               30000"))),
+                their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.200:\
+                                                                                 30000"))),
+                network_tx: Sender(tx),
+                _network_read_joiner: raii_joiner,
+            }
+        };
+
+        assert_eq!(hash(connection_3), hash(connection_3));
+        assert!(hash(connection_0) != hash(connection_3));
+
+        // their_addr different
+        let connection_4 = {
+            let (tx, _) = mpsc::channel();
+            let raii_joiner = RaiiThreadJoiner::new(thread!("DummyThread", move ||));
+
+            Connection {
+                protocol: Protocol::Tcp,
+                our_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("10.199.254.200:\
+                                                                               30000"))),
+                their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.253.200:\
+                                                                                 30000"))),
+                network_tx: Sender(tx),
+                _network_read_joiner: raii_joiner,
+            }
+        };
+
+        assert_eq!(hash(connection_4), hash(connection_4));
+        assert!(hash(connection_0) != hash(connection_4));
+    }
 }
