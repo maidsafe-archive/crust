@@ -66,12 +66,6 @@ impl Hash for Connection {
     }
 }
 
-pub fn hash<T: Hash>(object_to_hash: &T) -> u64 {
-    let mut sip_hasher = SipHasher::new_with_keys(rand::random(), rand::random());
-    object_to_hash.hash(&mut sip_hasher);
-    sip_hasher.finish()
-}
-
 impl fmt::Debug for Connection {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f,
@@ -93,13 +87,6 @@ pub struct RaiiTcpAcceptor {
     port: u16,
     stop_flag: Arc<AtomicBool>,
     _raii_joiner: RaiiThreadJoiner,
-    external_endpoints: Vec<SocketAddr>,
-}
-
-impl RaiiTcpAcceptor {
-    pub fn mapped_addresses(&self) -> &[SocketAddr] {
-        &self.external_endpoints[..]
-    }
 }
 
 impl Drop for RaiiTcpAcceptor {
@@ -261,7 +248,6 @@ pub fn start_tcp_accept(port: u16,
         port: port,
         stop_flag: stop_flag,
         _raii_joiner: joiner,
-        external_endpoints: Vec::new(),
     })
 }
 
@@ -303,11 +289,21 @@ mod test {
 
     use std::sync::mpsc;
     use std::str::FromStr;
+    use std::hash::{Hash, SipHasher, Hasher};
+    use std::net;
 
+    use sender_receiver::Sender;
     use maidsafe_utilities::thread::RaiiThreadJoiner;
 
     use endpoint::Protocol;
     use socket_addr::SocketAddr;
+
+    /// Hash `object_to_hash` using a `SipHasher`
+    fn hash<T: Hash>(object_to_hash: &T) -> u64 {
+        let mut sip_hasher = SipHasher::new();
+        object_to_hash.hash(&mut sip_hasher);
+        sip_hasher.finish()
+    }
 
     #[test]
     fn connection_hash() {
@@ -321,7 +317,7 @@ mod test {
                                                                                30000"))),
                 their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.200:\
                                                                                  30000"))),
-                network_tx: Sender(tx),
+                network_tx: Sender::Tcp(tx),
                 _network_read_joiner: raii_joiner,
             }
         };
@@ -337,13 +333,13 @@ mod test {
                                                                                30000"))),
                 their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.200:\
                                                                                  30000"))),
-                network_tx: Sender(tx),
+                network_tx: Sender::Tcp(tx),
                 _network_read_joiner: raii_joiner,
             }
         };
 
-        assert_eq!(hash(connection_0), hash(connection_0));
-        assert_eq!(hash(connection_0), hash(connection_1));
+        assert_eq!(hash(&connection_0), hash(&connection_0));
+        assert_eq!(hash(&connection_0), hash(&connection_1));
 
         // Protocol different
         let connection_2 = {
@@ -356,13 +352,13 @@ mod test {
                                                                                30000"))),
                 their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.200:\
                                                                                  30000"))),
-                network_tx: Sender(tx),
+                network_tx: Sender::Tcp(tx),
                 _network_read_joiner: raii_joiner,
             }
         };
 
-        assert_eq!(hash(connection_2), hash(connection_2));
-        assert!(hash(connection_0) != hash(connection_2));
+        assert_eq!(hash(&connection_2), hash(&connection_2));
+        assert!(hash(&connection_0) != hash(&connection_2));
 
         // our_addr different
         let connection_3 = {
@@ -375,13 +371,13 @@ mod test {
                                                                                30000"))),
                 their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.200:\
                                                                                  30000"))),
-                network_tx: Sender(tx),
+                network_tx: Sender::Tcp(tx),
                 _network_read_joiner: raii_joiner,
             }
         };
 
-        assert_eq!(hash(connection_3), hash(connection_3));
-        assert!(hash(connection_0) != hash(connection_3));
+        assert_eq!(hash(&connection_3), hash(&connection_3));
+        assert!(hash(&connection_0) != hash(&connection_3));
 
         // their_addr different
         let connection_4 = {
@@ -394,12 +390,12 @@ mod test {
                                                                                30000"))),
                 their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.253.200:\
                                                                                  30000"))),
-                network_tx: Sender(tx),
+                network_tx: Sender::Tcp(tx),
                 _network_read_joiner: raii_joiner,
             }
         };
 
-        assert_eq!(hash(connection_4), hash(connection_4));
-        assert!(hash(connection_0) != hash(connection_4));
+        assert_eq!(hash(&connection_4), hash(&connection_4));
+        assert!(hash(&connection_0) != hash(&connection_4));
     }
 }
