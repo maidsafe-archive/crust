@@ -91,7 +91,7 @@ pub struct RaiiTcpAcceptor {
 
 impl Drop for RaiiTcpAcceptor {
     fn drop(&mut self) {
-        self.stop_flag.store(false, Ordering::SeqCst);
+        self.stop_flag.store(true, Ordering::SeqCst);
         if let Ok(stream) = TcpStream::connect(&format!("127.0.0.1:{}", self.port)[..]) {
             let _ = stream.shutdown(Shutdown::Both);
         }
@@ -224,8 +224,9 @@ pub fn start_tcp_accept(port: u16,
 
             let mut network_rx = Receiver::Tcp(cbor::Decoder::from_reader(network_input));
 
-            let their_contact_info: ContactInfo =
-                unwrap_result!(deserialise(&unwrap_result!(network_rx.receive())[..]));
+            // TODO this is not to be done this way - this is just a hack to get it to working now
+            // - Pls come up with a strategy and change
+            let their_contact_info = unwrap_result!(network_rx.receive_contact_info());
             let their_pub_key = their_contact_info.pub_key.clone();
 
             let event_tx_to_reader = event_tx.clone();

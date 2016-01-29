@@ -127,6 +127,12 @@ impl Service {
         self.bootstrap.stop();
     }
 
+    /// Enable or Disable listening to peers trying to find us. The return value indicates
+    /// successful registration of the request.
+    pub fn set_listen_for_peers(&self, listen: bool) -> bool {
+        self.service_discovery.set_listen_for_peers(listen)
+    }
+
     /// Get the hole punch servers addresses of nodes that we're connected to ordered by how likely
     /// they are to be on a seperate network.
     pub fn get_ordered_helping_nodes(&self) -> Vec<SocketAddr> {
@@ -257,24 +263,66 @@ impl Service {
 #[cfg(test)]
 mod test {
     use super::*;
+    use event::Event;
 
     use std::sync::mpsc;
+    use std::sync::mpsc::Receiver;
 
     use maidsafe_utilities::event_sender::{MaidSafeObserver, MaidSafeEventCategory};
 
-    #[test]
-    fn start_stop_service() {
+    fn get_event_sender()
+        -> (::CrustEventSender,
+            Receiver<MaidSafeEventCategory>,
+            Receiver<Event>)
+    {
         let (category_tx, category_rx) = mpsc::channel();
         let event_category = MaidSafeEventCategory::CrustEvent;
         let (event_tx, event_rx) = mpsc::channel();
 
-        let event_sender = MaidSafeObserver::new(event_tx, event_category, category_tx);
+        (MaidSafeObserver::new(event_tx, event_category, category_tx),
+         category_rx,
+         event_rx)
+    }
 
+    #[test]
+    fn start_stop_service() {
+        let (event_sender, _, _) = get_event_sender();
         let _service = unwrap_result!(Service::new(event_sender, 44444));
     }
 
     #[test]
     fn start_two_services_tcp_connect() {
+        let (event_sender_0, category_rx_0, event_rx_0) = get_event_sender();
+        let (event_sender_1, category_rx_1, event_rx_1) = get_event_sender();
+
+        let service_0 = unwrap_result!(Service::new(event_sender_0, 5483));
+        {
+            let event_rxd = unwrap_result!(event_rx_0.recv());
+            match event_rxd {
+                Event::BootstrapFinished => (),
+                _ => panic!("Received unexpected event: {:?}", event_rxd),
+            }
+        }
+        assert!(service_0.set_listen_for_peers(true));
+
+        let service_1 = unwrap_result!(Service::new(event_sender_1, 5483));
+        let (connection_1_to_0, pub_key_0) = {
+            let event_rxd = unwrap_result!(event_rx_1.recv());
+            match event_rxd {
+                Event::NewConnection { connection: Ok(connection_obj), their_pub_key } => {
+                    (connection_obj, their_pub_key)
+                }
+                _ => panic!("Received unexpected event: {:?}", event_rxd),
+            }
+        };
+
+        let (connection_0_to_1, pub_key_1) = match unwrap_result!(event_rx_0.recv()) {
+            Event::NewConnection { connection: Ok(connection_obj), their_pub_key } => {
+                (connection_obj, their_pub_key)
+            }
+            _ => panic!("0 Should have got a new connection from 1."),
+        };
+
         // Start 2 services and get their OurContactInfos. Filter the contact infos to contain just
         // tcp static endpoints and ensure that the two services can connect and exchange messages
         // in both directions.

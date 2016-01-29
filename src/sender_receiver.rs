@@ -24,6 +24,8 @@ use rustc_serialize::Decodable;
 use utp_connections::UtpWrapper;
 use maidsafe_utilities::serialisation::serialise;
 
+use contact_info::ContactInfo;
+
 pub enum Sender {
     Tcp(mpsc::Sender<Vec<u8>>),
     Utp(mpsc::Sender<Vec<u8>>),
@@ -69,6 +71,12 @@ impl Receiver {
     }
 
     pub fn receive(&mut self) -> io::Result<Vec<u8>> {
+        self.basic_receive()
+    }
+
+    // TODO this is not to be done this way - this is just a hack to get it to working now
+    // - Pls come up with a strategy and change
+    pub fn receive_contact_info(&mut self) -> io::Result<ContactInfo> {
         self.basic_receive()
     }
 }
