@@ -6,6 +6,7 @@ use std::io::{Read, ErrorKind};
 use std::io;
 use std::net::SocketAddr;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
+use event::WriteEvent;
 
 const CHECK_FOR_NEW_WRITES_INTERVAL_MS: u64 = 50;
 const BUFFER_SIZE: usize = 1000;
@@ -19,7 +20,7 @@ pub struct UtpWrapper {
 }
 
 impl UtpWrapper {
-    pub fn wrap(socket: UtpSocket, output_rx: Receiver<Vec<u8>>) -> io::Result<UtpWrapper> {
+    pub fn wrap(socket: UtpSocket, output_rx: Receiver<WriteEvent>) -> io::Result<UtpWrapper> {
         let (input_tx, input_rx) = mpsc::channel();
         let peer_addr = try!(socket.peer_addr());
         let local_addr = try!(socket.local_addr());
@@ -43,11 +44,12 @@ impl UtpWrapper {
                                 // before we try to read again.
                                 loop {
                                     match output_rx.try_recv() {
-                                        Ok(v) => {
-                                            if socket.send_to(&v[..]).is_err() {
+                                        Ok(WriteEvent::Write(data)) => {
+                                            if socket.send_to(&data).is_err() {
                                                 break 'outer;
                                             }
                                         }
+                                        Ok(WriteEvent::Shutdown) => break 'outer,
                                         Err(TryRecvError::Disconnected) => break 'outer,
                                         Err(TryRecvError::Empty) => break,
                                     }

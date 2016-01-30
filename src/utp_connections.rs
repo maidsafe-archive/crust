@@ -22,22 +22,23 @@ use socket_addr::SocketAddr;
 use std::io::Result as IoResult;
 use std::sync::mpsc;
 use std::sync::mpsc::Sender;
+use event::WriteEvent;
 
 /// Connect to a peer and open a send-receive pair.  See `upgrade` for more details.
-pub fn connect_utp(addr: SocketAddr) -> IoResult<(UtpWrapper, Sender<Vec<u8>>)> {
+pub fn connect_utp(addr: SocketAddr) -> IoResult<(UtpWrapper, Sender<WriteEvent>)> {
     upgrade_utp(try!(UtpSocket::connect(&*addr)))
 }
 
 pub fn rendezvous_connect_utp(udp_socket: UdpSocket,
                               addr: SocketAddr)
-                              -> IoResult<(UtpWrapper, Sender<Vec<u8>>)> {
+                              -> IoResult<(UtpWrapper, Sender<WriteEvent>)> {
     upgrade_utp(try!(UtpSocket::rendezvous_connect(udp_socket, &*addr)))
 }
 
 /// Upgrades a newly connected UtpSocket to a Sender-Receiver pair that you can use to send and
 /// receive objects automatically.  If there is an error decoding or encoding
 /// values, that respective part is shut down.
-pub fn upgrade_utp(newconnection: UtpSocket) -> IoResult<(UtpWrapper, Sender<Vec<u8>>)> {
+pub fn upgrade_utp(newconnection: UtpSocket) -> IoResult<(UtpWrapper, Sender<WriteEvent>)> {
     let (output_tx, output_rx) = mpsc::channel();
     let wrapper = try!(UtpWrapper::wrap(newconnection, output_rx));
 
@@ -53,6 +54,7 @@ mod test {
     use std::net;
     use std::io::{Read, Result};
     use utp::UtpListener;
+    use event::WriteEvent;
 
     fn listen(port: u16) -> Result<UtpListener> {
         UtpListener::bind(("0.0.0.0", port))
@@ -110,7 +112,7 @@ mod test {
             let mut buf = [0u8; 1];
             let _ = i.read(&mut buf).unwrap();
             assert_eq!(buf[0], 42);
-            o.send(vec![43]);
+            o.send(WriteEvent::Write(vec![43]));
         });
 
         let (mut i, o) =
@@ -122,7 +124,7 @@ mod test {
                 .unwrap();
 
         let th1 = thread::spawn(move || {
-            o.send(vec![42]);
+            o.send(WriteEvent::Write(vec![42]));
             let mut buf = [0u8; 1];
             let _ = i.read(&mut buf).unwrap();
             assert_eq!(buf[0], 43);

@@ -44,7 +44,7 @@ use connection::Connection;
 use error::Error;
 use ip::SocketAddrExt;
 use connection;
-use bootstrap::Bootstrap;
+use bootstrap::RaiiBootstrap;
 
 use event::{Event, OurContactInfo, TheirContactInfo, ContactInfoResult};
 use socket_addr::{SocketAddr, SocketAddrV4};
@@ -61,11 +61,11 @@ pub struct Service {
     our_contact_info: Arc<Mutex<ContactInfo>>,
     peer_contact_infos: Arc<Mutex<Vec<ContactInfo>>>,
     service_discovery: ServiceDiscovery<ContactInfo>,
-    bootstrap: Bootstrap,
-    raii_tcp_acceptor: RaiiTcpAcceptor,
     udp_listener: UdpListener,
     event_tx: ::CrustEventSender,
     external_udp_sock_seq_id: u32,
+    bootstrap: RaiiBootstrap,
+    _raii_tcp_acceptor: RaiiTcpAcceptor,
 }
 
 impl Service {
@@ -103,20 +103,20 @@ impl Service {
         let service_discovery = try!(ServiceDiscovery::new_with_generator(service_discovery_port,
                                                                           generator));
 
-        let bootstrap = Bootstrap::new(&service_discovery,
-                                       our_contact_info.clone(),
-                                       peer_contact_infos.clone(),
-                                       event_tx.clone());
+        let bootstrap = RaiiBootstrap::new(&service_discovery,
+                                           our_contact_info.clone(),
+                                           peer_contact_infos.clone(),
+                                           event_tx.clone());
 
         let service = Service {
             our_contact_info: our_contact_info,
             peer_contact_infos: peer_contact_infos,
             service_discovery: service_discovery,
-            bootstrap: bootstrap,
-            raii_tcp_acceptor: raii_tcp_acceptor,
             udp_listener: udp_listener,
             event_tx: event_tx,
             external_udp_sock_seq_id: 0,
+            bootstrap: bootstrap,
+            _raii_tcp_acceptor: raii_tcp_acceptor,
         };
 
         Ok(service)
@@ -292,40 +292,87 @@ mod test {
 
     #[test]
     fn start_two_services_tcp_connect() {
-        // let (event_sender_0, category_rx_0, event_rx_0) = get_event_sender();
-        // let (event_sender_1, category_rx_1, event_rx_1) = get_event_sender();
-        //
-        // let service_0 = unwrap_result!(Service::new(event_sender_0, 5483));
-        // {
-        //     let event_rxd = unwrap_result!(event_rx_0.recv());
-        //     match event_rxd {
-        //         Event::BootstrapFinished => (),
-        //         _ => panic!("Received unexpected event: {:?}", event_rxd),
-        //     }
-        // }
-        // assert!(service_0.set_listen_for_peers(true));
-        //
-        // let service_1 = unwrap_result!(Service::new(event_sender_1, 5483));
-        // let (connection_1_to_0, pub_key_0) = {
-        //     let event_rxd = unwrap_result!(event_rx_1.recv());
-        //     match event_rxd {
-        //         Event::NewConnection { connection: Ok(connection_obj), their_pub_key } => {
-        //             (connection_obj, their_pub_key)
-        //         }
-        //         _ => panic!("Received unexpected event: {:?}", event_rxd),
-        //     }
-        // };
-        //
-        // let (connection_0_to_1, pub_key_1) = match unwrap_result!(event_rx_0.recv()) {
-        //     Event::NewConnection { connection: Ok(connection_obj), their_pub_key } => {
-        //         (connection_obj, their_pub_key)
-        //     }
-        //     _ => panic!("0 Should have got a new connection from 1."),
-        // };
-        //
-        // // Start 2 services and get their OurContactInfos. Filter the contact infos to contain just
-        // // tcp static endpoints and ensure that the two services can connect and exchange messages
-        // // in both directions.
+        let (event_sender_0, category_rx_0, event_rx_0) = get_event_sender();
+        let (event_sender_1, category_rx_1, event_rx_1) = get_event_sender();
+
+        let service_0 = unwrap_result!(Service::new(event_sender_0, 5483));
+        // let service_0 finish bootstrap - since it is the zero state, it should not find any peer
+        // to bootstrap
+        {
+            let event_rxd = unwrap_result!(event_rx_0.recv());
+            match event_rxd {
+                Event::BootstrapFinished => (),
+                _ => panic!("Received unexpected event: {:?}", event_rxd),
+            }
+        }
+        assert!(service_0.set_listen_for_peers(true));
+
+        let service_1 = unwrap_result!(Service::new(event_sender_1, 5483));
+        // let service_1 finish bootstrap - it should bootstrap off service_0
+        let (mut connection_1_to_0, pub_key_0) = {
+            let event_rxd = unwrap_result!(event_rx_1.recv());
+            match event_rxd {
+                Event::NewConnection { connection: Ok(connection_obj), their_pub_key } => {
+                    (connection_obj, their_pub_key)
+                }
+                _ => panic!("Received unexpected event: {:?}", event_rxd),
+            }
+        };
+
+        // now service_1 should get BootstrapFinished
+        {
+            let event_rxd = unwrap_result!(event_rx_1.recv());
+            match event_rxd {
+                Event::BootstrapFinished => (),
+                _ => panic!("Received unexpected event: {:?}", event_rxd),
+            }
+        }
+
+        // service_0 should have received service_1's connection bootstrap connection by now
+        let (mut connection_0_to_1, pub_key_1) = match unwrap_result!(event_rx_0.recv()) {
+            Event::NewConnection { connection: Ok(connection_obj), their_pub_key } => {
+                (connection_obj, their_pub_key)
+            }
+            _ => panic!("0 Should have got a new connection from 1."),
+        };
+
+        assert!(pub_key_0 != pub_key_1);
+
+        // send data from 0 to 1
+        {
+            let data_txd = vec![0, 1, 255, 254, 222, 1];
+            unwrap_result!(connection_0_to_1.send(&data_txd));
+
+            // 1 should rx data
+            let (data_rxd, peer_pub_key) = {
+                let event_rxd = unwrap_result!(event_rx_1.recv());
+                match event_rxd {
+                    Event::NewMessage(their_pub_key, msg) => (msg, their_pub_key),
+                    _ => panic!("Received unexpected event: {:?}", event_rxd),
+                }
+            };
+
+            assert_eq!(data_rxd, data_txd);
+            assert_eq!(peer_pub_key, pub_key_0);
+        }
+
+        // send data from 1 to 0
+        {
+            let data_txd = vec![10, 11, 155, 214, 202];
+            unwrap_result!(connection_1_to_0.send(&data_txd));
+
+            // 0 should rx data
+            let (data_rxd, peer_pub_key) = {
+                let event_rxd = unwrap_result!(event_rx_0.recv());
+                match event_rxd {
+                    Event::NewMessage(their_pub_key, msg) => (msg, their_pub_key),
+                    _ => panic!("Received unexpected event: {:?}", event_rxd),
+                }
+            };
+
+            assert_eq!(data_rxd, data_txd);
+            assert_eq!(peer_pub_key, pub_key_1);
+        }
     }
 
     #[test]

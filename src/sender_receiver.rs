@@ -15,6 +15,8 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use event::WriteEvent;
+
 use cbor;
 use std::io;
 use std::sync::mpsc;
@@ -24,27 +26,26 @@ use rustc_serialize::Decodable;
 use utp_connections::UtpWrapper;
 use maidsafe_utilities::serialisation::serialise;
 
-use contact_info::ContactInfo;
+pub struct RaiiSender(pub mpsc::Sender<WriteEvent>);
 
-pub enum Sender {
-    Tcp(mpsc::Sender<Vec<u8>>),
-    Utp(mpsc::Sender<Vec<u8>>),
-}
-
-impl Sender {
-    fn send_bytes(&mut self, bytes: Vec<u8>) -> io::Result<()> {
-        let sender = match *self {
-            Sender::Tcp(ref mut s) => s,
-            Sender::Utp(ref mut s) => s,
-        };
-        sender.send(bytes).map_err(|_| {
-            // FIXME: This can be done better.
-            io::Error::new(io::ErrorKind::NotConnected, "can't send")
-        })
+impl RaiiSender {
+    fn send_bytes(&self, bytes: Vec<u8>) -> io::Result<()> {
+        self.0
+            .send(WriteEvent::Write(bytes))
+            .map_err(|_| io::Error::new(io::ErrorKind::NotConnected, "can't send"))
     }
 
-    pub fn send(&mut self, msg: &[u8]) -> io::Result<()> {
-        self.send_bytes(msg.to_owned())
+    pub fn send(&self, msg: &[u8]) -> io::Result<()> {
+        let crust_msg = CrustMsg { raw_data: msg.to_owned() };
+        self.send_bytes(unwrap_result!(serialise(&crust_msg)))
+    }
+}
+
+impl Drop for RaiiSender {
+    fn drop(&mut self) {
+        let _ = self.0
+                    .send(WriteEvent::Shutdown)
+                    .map_err(|_| io::Error::new(io::ErrorKind::NotConnected, "can't send"));
     }
 }
 
@@ -71,12 +72,11 @@ impl Receiver {
     }
 
     pub fn receive(&mut self) -> io::Result<Vec<u8>> {
-        self.basic_receive()
+        Ok(try!(self.basic_receive::<CrustMsg>()).raw_data)
     }
+}
 
-    // TODO this is not to be done this way - this is just a hack to get it to working now
-    // - Pls come up with a strategy and change
-    pub fn receive_contact_info(&mut self) -> io::Result<ContactInfo> {
-        self.basic_receive()
-    }
+#[derive(Debug, RustcEncodable, RustcDecodable)]
+struct CrustMsg {
+    raw_data: Vec<u8>,
 }
