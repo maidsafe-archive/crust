@@ -451,6 +451,14 @@
 <span id="408">408</span>
 <span id="409">409</span>
 <span id="410">410</span>
+<span id="411">411</span>
+<span id="412">412</span>
+<span id="413">413</span>
+<span id="414">414</span>
+<span id="415">415</span>
+<span id="416">416</span>
+<span id="417">417</span>
+<span id="418">418</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -483,7 +491,7 @@
 <span class='kw'>use</span> <span class='ident'>contact_info</span>::<span class='ident'>ContactInfo</span>;
 <span class='kw'>use</span> <span class='ident'>tcp_connections</span>;
 <span class='kw'>use</span> <span class='ident'>utp_connections</span>;
-<span class='kw'>use</span> <span class='ident'>sender_receiver</span>::{<span class='ident'>Sender</span>, <span class='ident'>Receiver</span>};
+<span class='kw'>use</span> <span class='ident'>sender_receiver</span>::{<span class='ident'>RaiiSender</span>, <span class='ident'>Receiver</span>};
 <span class='kw'>use</span> <span class='ident'>ip</span>::{<span class='ident'>IpAddr</span>, <span class='ident'>SocketAddrExt</span>};
 <span class='kw'>use</span> <span class='ident'>socket_addr</span>::<span class='ident'>SocketAddr</span>;
 <span class='kw'>use</span> <span class='ident'>event</span>::<span class='ident'>Event</span>;
@@ -500,16 +508,8 @@
     <span class='ident'>protocol</span>: <span class='ident'>Protocol</span>,
     <span class='ident'>our_addr</span>: <span class='ident'>SocketAddr</span>,
     <span class='ident'>their_addr</span>: <span class='ident'>SocketAddr</span>,
-    <span class='ident'>network_tx</span>: <span class='ident'>Sender</span>,
-    <span class='comment'>// _network_write_joiner: RaiiThreadJoiner,</span>
+    <span class='ident'>network_tx</span>: <span class='ident'>RaiiSender</span>,
     <span class='ident'>_network_read_joiner</span>: <span class='ident'>RaiiThreadJoiner</span>,
-}
-
-<span class='kw'>impl</span> <span class='ident'>Connection</span> {
-    <span class='doccomment'>/// Send the `data` to a peer via this connection.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>send</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>data</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>]) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
-        <span class='self'>self</span>.<span class='ident'>network_tx</span>.<span class='ident'>send</span>(<span class='ident'>data</span>.<span class='ident'>clone</span>())
-    }
 }
 
 <span class='kw'>impl</span> <span class='ident'>Hash</span> <span class='kw'>for</span> <span class='ident'>Connection</span> {
@@ -530,12 +530,12 @@
     }
 }
 
-<span class='comment'>// TODO see how to gracefully exit threads</span>
-<span class='comment'>// impl Drop for Connection {</span>
-<span class='comment'>//     fn drop(&amp;mut self) {</span>
-<span class='comment'>//         let _ = self.network_tx.send(WriterEvent::Terminate);</span>
-<span class='comment'>//     }</span>
-<span class='comment'>// }</span>
+<span class='kw'>impl</span> <span class='ident'>Connection</span> {
+    <span class='doccomment'>/// Send the `data` to a peer via this connection.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>send</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>data</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>]) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+        <span class='self'>self</span>.<span class='ident'>network_tx</span>.<span class='ident'>send</span>(<span class='ident'>data</span>)
+    }
+}
 
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>RaiiTcpAcceptor</span> {
     <span class='ident'>port</span>: <span class='ident'>u16</span>,
@@ -605,7 +605,7 @@
         <span class='ident'>protocol</span>: <span class='ident'>Protocol</span>::<span class='ident'>Tcp</span>,
         <span class='ident'>our_addr</span>: <span class='ident'>our_addr</span>,
         <span class='ident'>their_addr</span>: <span class='ident'>their_addr</span>,
-        <span class='ident'>network_tx</span>: <span class='ident'>Sender</span>::<span class='ident'>Tcp</span>(<span class='ident'>writer</span>),
+        <span class='ident'>network_tx</span>: <span class='ident'>RaiiSender</span>(<span class='ident'>writer</span>),
         <span class='ident'>_network_read_joiner</span>: <span class='ident'>joiner</span>,
     };
 
@@ -633,7 +633,7 @@
         <span class='ident'>protocol</span>: <span class='ident'>Protocol</span>::<span class='ident'>Utp</span>,
         <span class='ident'>our_addr</span>: <span class='ident'>our_addr</span>,
         <span class='ident'>their_addr</span>: <span class='ident'>their_addr</span>,
-        <span class='ident'>network_tx</span>: <span class='ident'>Sender</span>::<span class='ident'>Utp</span>(<span class='ident'>writer</span>),
+        <span class='ident'>network_tx</span>: <span class='ident'>RaiiSender</span>(<span class='ident'>writer</span>),
         <span class='ident'>_network_read_joiner</span>: <span class='ident'>joiner</span>,
     })
 }
@@ -654,7 +654,6 @@
                        .<span class='ident'>collect_vec</span>();
 
     <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>our_contact_info</span>.<span class='ident'>lock</span>()).<span class='ident'>tcp_acceptors</span>.<span class='ident'>extend</span>(<span class='ident'>if_addrs</span>);
-    <span class='kw'>let</span> <span class='ident'>event_tx_to_acceptor</span> <span class='op'>=</span> <span class='ident'>event_tx</span>.<span class='ident'>clone</span>();
 
     <span class='kw'>let</span> <span class='ident'>joiner</span> <span class='op'>=</span> <span class='ident'>RaiiThreadJoiner</span>::<span class='ident'>new</span>(<span class='macro'>thread</span><span class='macro'>!</span>(<span class='string'>&quot;TcpAcceptorThread&quot;</span>, <span class='kw'>move</span> <span class='op'>||</span> {
         <span class='kw'>loop</span> {
@@ -678,21 +677,38 @@
 
             <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>network_rx</span> <span class='op'>=</span> <span class='ident'>Receiver</span>::<span class='ident'>Tcp</span>(<span class='ident'>cbor</span>::<span class='ident'>Decoder</span>::<span class='ident'>from_reader</span>(<span class='ident'>network_input</span>));
 
-            <span class='comment'>// TODO this is not to be done this way - this is just a hack to get it to working now</span>
-            <span class='comment'>// - Pls come up with a strategy and change</span>
-            <span class='kw'>let</span> <span class='ident'>their_contact_info</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>network_rx</span>.<span class='ident'>receive_contact_info</span>());
+            <span class='kw'>let</span> <span class='ident'>their_contact_info</span>: <span class='ident'>ContactInfo</span> <span class='op'>=</span> {
+                <span class='kw'>let</span> <span class='ident'>raw_data</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>network_rx</span>.<span class='ident'>receive</span>() {
+                    <span class='prelude-val'>Ok</span>(<span class='ident'>data</span>) <span class='op'>=&gt;</span> <span class='ident'>data</span>,
+                    <span class='prelude-val'>Err</span>(<span class='ident'>err</span>) <span class='op'>=&gt;</span> {
+                        <span class='macro'>error</span><span class='macro'>!</span>(<span class='string'>&quot;ContactInfo not shared by peer as expected. Connection will be \
+                                discarded - {:?}&quot;</span>,
+                               <span class='ident'>err</span>);
+                        <span class='kw'>continue</span>;
+                    }
+                };
+                <span class='kw'>match</span> <span class='ident'>deserialise</span>(<span class='kw-2'>&amp;</span><span class='ident'>raw_data</span>) {
+                    <span class='prelude-val'>Ok</span>(<span class='ident'>contact_info</span>) <span class='op'>=&gt;</span> <span class='ident'>contact_info</span>,
+                    <span class='prelude-val'>Err</span>(<span class='ident'>err</span>) <span class='op'>=&gt;</span> {
+                        <span class='macro'>error</span><span class='macro'>!</span>(<span class='string'>&quot;ContactInfo not shared by peer as expected. Connection will be \
+                                discarded - {:?}&quot;</span>,
+                               <span class='ident'>err</span>);
+                        <span class='kw'>continue</span>;
+                    }
+                }
+            };
             <span class='kw'>let</span> <span class='ident'>their_pub_key</span> <span class='op'>=</span> <span class='ident'>their_contact_info</span>.<span class='ident'>pub_key</span>.<span class='ident'>clone</span>();
 
-            <span class='kw'>let</span> <span class='ident'>event_tx_to_reader</span> <span class='op'>=</span> <span class='ident'>event_tx</span>.<span class='ident'>clone</span>();
+            <span class='kw'>let</span> <span class='ident'>event_tx_cloned</span> <span class='op'>=</span> <span class='ident'>event_tx</span>.<span class='ident'>clone</span>();
             <span class='kw'>let</span> <span class='ident'>joiner</span> <span class='op'>=</span> <span class='ident'>RaiiThreadJoiner</span>::<span class='ident'>new</span>(<span class='macro'>thread</span><span class='macro'>!</span>(<span class='string'>&quot;TcpNetworkReader&quot;</span>, <span class='kw'>move</span> <span class='op'>||</span> {
-                <span class='ident'>start_rx</span>(<span class='ident'>network_rx</span>, <span class='ident'>their_pub_key</span>, <span class='ident'>event_tx_to_reader</span>);
+                <span class='ident'>start_rx</span>(<span class='ident'>network_rx</span>, <span class='ident'>their_pub_key</span>, <span class='ident'>event_tx_cloned</span>);
             }));
 
             <span class='kw'>let</span> <span class='ident'>connection</span> <span class='op'>=</span> <span class='ident'>Connection</span> {
                 <span class='ident'>protocol</span>: <span class='ident'>Protocol</span>::<span class='ident'>Tcp</span>,
                 <span class='ident'>our_addr</span>: <span class='ident'>our_addr</span>,
                 <span class='ident'>their_addr</span>: <span class='ident'>their_addr</span>,
-                <span class='ident'>network_tx</span>: <span class='ident'>Sender</span>::<span class='ident'>Tcp</span>(<span class='ident'>writer</span>),
+                <span class='ident'>network_tx</span>: <span class='ident'>RaiiSender</span>(<span class='ident'>writer</span>),
                 <span class='ident'>_network_read_joiner</span>: <span class='ident'>joiner</span>,
             };
 
@@ -701,7 +717,7 @@
                 <span class='ident'>connection</span>: <span class='prelude-val'>Ok</span>(<span class='ident'>connection</span>),
             };
 
-            <span class='kw'>if</span> <span class='ident'>event_tx_to_acceptor</span>.<span class='ident'>send</span>(<span class='ident'>event</span>).<span class='ident'>is_err</span>() {
+            <span class='kw'>if</span> <span class='ident'>event_tx</span>.<span class='ident'>send</span>(<span class='ident'>event</span>).<span class='ident'>is_err</span>() {
                 <span class='kw'>break</span>;
             }
         }
@@ -733,7 +749,7 @@
         <span class='ident'>protocol</span>: <span class='ident'>Protocol</span>::<span class='ident'>Utp</span>,
         <span class='ident'>our_addr</span>: <span class='ident'>our_addr</span>,
         <span class='ident'>their_addr</span>: <span class='ident'>their_addr</span>,
-        <span class='ident'>network_tx</span>: <span class='ident'>Sender</span>::<span class='ident'>Utp</span>(<span class='ident'>writer</span>),
+        <span class='ident'>network_tx</span>: <span class='ident'>RaiiSender</span>(<span class='ident'>writer</span>),
         <span class='ident'>_network_read_joiner</span>: <span class='ident'>joiner</span>,
     })
 }
@@ -755,7 +771,7 @@
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>hash</span>::{<span class='ident'>Hash</span>, <span class='ident'>SipHasher</span>, <span class='ident'>Hasher</span>};
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>net</span>;
 
-    <span class='kw'>use</span> <span class='ident'>sender_receiver</span>::<span class='ident'>Sender</span>;
+    <span class='kw'>use</span> <span class='ident'>sender_receiver</span>::<span class='ident'>RaiiSender</span>;
     <span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>::<span class='ident'>thread</span>::<span class='ident'>RaiiThreadJoiner</span>;
 
     <span class='kw'>use</span> <span class='ident'>endpoint</span>::<span class='ident'>Protocol</span>;
@@ -780,7 +796,7 @@
                                                                                30000&quot;</span>))),
                 <span class='ident'>their_addr</span>: <span class='ident'>SocketAddr</span>(<span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>net</span>::<span class='ident'>SocketAddr</span>::<span class='ident'>from_str</span>(<span class='string'>&quot;11.199.254.200:\
                                                                                  30000&quot;</span>))),
-                <span class='ident'>network_tx</span>: <span class='ident'>Sender</span>::<span class='ident'>Tcp</span>(<span class='ident'>tx</span>),
+                <span class='ident'>network_tx</span>: <span class='ident'>RaiiSender</span>(<span class='ident'>tx</span>),
                 <span class='ident'>_network_read_joiner</span>: <span class='ident'>raii_joiner</span>,
             }
         };
@@ -796,7 +812,7 @@
                                                                                30000&quot;</span>))),
                 <span class='ident'>their_addr</span>: <span class='ident'>SocketAddr</span>(<span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>net</span>::<span class='ident'>SocketAddr</span>::<span class='ident'>from_str</span>(<span class='string'>&quot;11.199.254.200:\
                                                                                  30000&quot;</span>))),
-                <span class='ident'>network_tx</span>: <span class='ident'>Sender</span>::<span class='ident'>Tcp</span>(<span class='ident'>tx</span>),
+                <span class='ident'>network_tx</span>: <span class='ident'>RaiiSender</span>(<span class='ident'>tx</span>),
                 <span class='ident'>_network_read_joiner</span>: <span class='ident'>raii_joiner</span>,
             }
         };
@@ -815,7 +831,7 @@
                                                                                30000&quot;</span>))),
                 <span class='ident'>their_addr</span>: <span class='ident'>SocketAddr</span>(<span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>net</span>::<span class='ident'>SocketAddr</span>::<span class='ident'>from_str</span>(<span class='string'>&quot;11.199.254.200:\
                                                                                  30000&quot;</span>))),
-                <span class='ident'>network_tx</span>: <span class='ident'>Sender</span>::<span class='ident'>Tcp</span>(<span class='ident'>tx</span>),
+                <span class='ident'>network_tx</span>: <span class='ident'>RaiiSender</span>(<span class='ident'>tx</span>),
                 <span class='ident'>_network_read_joiner</span>: <span class='ident'>raii_joiner</span>,
             }
         };
@@ -834,7 +850,7 @@
                                                                                30000&quot;</span>))),
                 <span class='ident'>their_addr</span>: <span class='ident'>SocketAddr</span>(<span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>net</span>::<span class='ident'>SocketAddr</span>::<span class='ident'>from_str</span>(<span class='string'>&quot;11.199.254.200:\
                                                                                  30000&quot;</span>))),
-                <span class='ident'>network_tx</span>: <span class='ident'>Sender</span>::<span class='ident'>Tcp</span>(<span class='ident'>tx</span>),
+                <span class='ident'>network_tx</span>: <span class='ident'>RaiiSender</span>(<span class='ident'>tx</span>),
                 <span class='ident'>_network_read_joiner</span>: <span class='ident'>raii_joiner</span>,
             }
         };
@@ -853,7 +869,7 @@
                                                                                30000&quot;</span>))),
                 <span class='ident'>their_addr</span>: <span class='ident'>SocketAddr</span>(<span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>net</span>::<span class='ident'>SocketAddr</span>::<span class='ident'>from_str</span>(<span class='string'>&quot;11.199.253.200:\
                                                                                  30000&quot;</span>))),
-                <span class='ident'>network_tx</span>: <span class='ident'>Sender</span>::<span class='ident'>Tcp</span>(<span class='ident'>tx</span>),
+                <span class='ident'>network_tx</span>: <span class='ident'>RaiiSender</span>(<span class='ident'>tx</span>),
                 <span class='ident'>_network_read_joiner</span>: <span class='ident'>raii_joiner</span>,
             }
         };

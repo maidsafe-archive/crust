@@ -148,6 +148,16 @@
 <span id="105">105</span>
 <span id="106">106</span>
 <span id="107">107</span>
+<span id="108">108</span>
+<span id="109">109</span>
+<span id="110">110</span>
+<span id="111">111</span>
+<span id="112">112</span>
+<span id="113">113</span>
+<span id="114">114</span>
+<span id="115">115</span>
+<span id="116">116</span>
+<span id="117">117</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -221,6 +231,16 @@
             <span class='ident'>pub_key</span>: <span class='self'>self</span>.<span class='ident'>pub_key</span>,
         }
     }
+}
+
+<span class='comment'>// This is necessary to gracefully exit the threads. In current design, there is no control over</span>
+<span class='comment'>// the network reader threads - they infinitely block. So this workaround will use the writer</span>
+<span class='comment'>// thread to shutdown the stream so that the reader thread exits. Better design should be sought in</span>
+<span class='comment'>// the future.</span>
+<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Clone</span>, <span class='ident'>Debug</span>, <span class='ident'>Eq</span>, <span class='ident'>PartialEq</span>)]</span>
+<span class='kw'>pub</span> <span class='kw'>enum</span> <span class='ident'>WriteEvent</span> {
+    <span class='ident'>Write</span>(<span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span>),
+    <span class='ident'>Shutdown</span>,
 }
 
 <span class='doccomment'>/// Enum representing different events that will be sent over the asynchronous channel to the user</span>
