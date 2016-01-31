@@ -28,55 +28,85 @@
 extern crate maidsafe_utilities;
 extern crate crust;
 
-use crust::service::Service;
+use std::thread;
+use std::time::Duration;
+use std::sync::mpsc::{self, Receiver};
+use crust::{Connection, Event, Service};
+use maidsafe_utilities::{event_sender, log};
 
-fn main() {
-    ::maidsafe_utilities::log::init(true);
 
-    // The Service will probably create a "user app directory" (see the docs for
-    // `FileHandler::write_file()`).  This object will try to clean up this directory when it goes
-    // out of scope.  Normally apps would not do this - this directory will hold the peristent cache
-    // files.
-    let _cleaner = crust::file_handler::ScopedUserAppDirRemover;
-
-    // We receive events (e.g. new connection, message received) from the Service via an
-    // asynchronous channel.
-    let (category_tx, category_rx) = ::std::sync::mpsc::channel();
-    let (channel_sender, channel_receiver) = ::std::sync::mpsc::channel();
-
-    let crust_event_category = ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
-    let event_sender = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(channel_sender,
-                                                                                 crust_event_category,
-                                                                                 category_tx);
-
-    let mut service = unwrap_result!(Service::new(event_sender));
-
-    let (bs_sender, bs_receiver) = ::std::sync::mpsc::channel();
-    // Start a thread running a loop which will receive and display responses from the peer.
-    let _ = ::std::thread::Builder::new().name("SimpleSender event handler".to_string()).spawn(move || {
-        // Receive the next event
+fn wait_for_bootstrap_finished(receiver: &Receiver<Event>,
+                               category_rx: &Receiver<event_sender::MaidSafeEventCategory>) {
+    loop {
         for it in category_rx.iter() {
             match it {
-                ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent => {
-                    if let Ok(event) = channel_receiver.try_recv() {
+                event_sender::MaidSafeEventCategory::CrustEvent => {
+                    if let Ok(event) = receiver.recv() {
                         match event {
-                            crust::Event::NewMessage(endpoint, bytes) => {
+                            Event::BootstrapFinished => return,
+                            _ => panic!("Unexpected event."),
+                        }
+                    } else {
+                        panic!("Error occurred during bootstrap.");
+                    }
+                }
+                _ => unreachable!("This event category should not have been fired - {:?}.", it),
+            }
+        }
+    }
+}
+
+fn wait_for_connection(receiver: &Receiver<Event>,
+                       category_rx: &Receiver<event_sender::MaidSafeEventCategory>) -> Connection {
+    loop {
+        for it in category_rx.iter() {
+            match it {
+                event_sender::MaidSafeEventCategory::CrustEvent => {
+                    if let Ok(event) = receiver.recv() {
+                        match event {
+                            Event::NewConnection { connection: Ok(connection), .. } => {
+                                return connection
+                            }
+                            _ => panic!("Unexpected event"),
+                        }
+                    } else {
+                        panic!("Failed to connect");
+                    }
+                }
+                _ => unreachable!("This event category should not have been fired - {:?}", it),
+            }
+        }
+    }
+}
+
+fn main() {
+    log::init(true);
+
+    let (category_tx, category_rx) = mpsc::channel();
+    let event_category = event_sender::MaidSafeEventCategory::CrustEvent;
+    let (service_tx, service_rx) = mpsc::channel();
+    let event_sender = event_sender::MaidSafeObserver::new(service_tx, event_category.clone(), category_tx.clone());
+    let service = unwrap_result!(Service::new(event_sender, 5483));
+    let mut connection = wait_for_connection(&service_rx, &category_rx);
+
+    wait_for_bootstrap_finished(&service_rx, &category_rx);
+    let _ = service.set_listen_for_peers(true);
+
+    let _ = thread!("SimpleSenderThread", move || {
+        for it in category_rx.iter() {
+            match it {
+                event_sender::MaidSafeEventCategory::CrustEvent => {
+                    if let Ok(event) = service_rx.try_recv() {
+                        match event {
+                            Event::NewMessage(_pub_key, bytes) => {
                                 match String::from_utf8(bytes) {
-                                    Ok(reply) => println!("Peer on {:?} replied with \"{}\"", endpoint, reply),
+                                    Ok(reply) => println!("Peer replied with \"{}\"", reply),
                                     Err(why) => {
                                         println!("Error receiving message: {}", why);
                                         continue
                                     },
                                 }
-                            },
-                            crust::Event::OnBootstrapConnect(Ok((_, endpoint)), _) => {
-                                println!("Connected to {:?}", endpoint);
-                                let _ = bs_sender.send(endpoint);
-                            },
-                            crust::Event::OnBootstrapAccept(_, endpoint) => {
-                                println!("Accepted {:?}", endpoint);
-                                let _ = bs_sender.send(endpoint);
-                            },
+                            }
                             _ => (),
                         }
                     } else {
@@ -90,29 +120,12 @@ fn main() {
         println!("Stopped receiving.");
     });
 
-    let _ = service.start_beacon(5484);
-    service.bootstrap(0, Some(5484));
-
-    println!("Service trying to bootstrap off node listening on TCP port 8888 \
-              and UDP broadcast port 5484");
-
-    // Block until bootstrapped
-    let peer_endpoint = match bs_receiver.recv() {
-        Ok(endpoint) => endpoint,
-        Err(e) => {
-            println!("SimpleSender event handler closed; error : {}", e);
-            ::std::process::exit(1);
-        },
-    };
-
-    println!("New bootstrap connection made to {:?}", peer_endpoint);
-
-    // Send all the numbers from 0 to 12 inclusive.  Expect to receive replies containing the
-    // Fibonacci number for each value.
+    // Send all the numbers from 0 to 12 inclusive.
+    // Expect to receive replies containing the Fibonacci number for each value.
     for value in 0u8..13u8 {
-        service.send(peer_endpoint.clone(), value.to_string().into_bytes());
+        let _ = unwrap_result!(connection.send(&value.to_string().into_bytes()));
     }
 
     // Allow the peer time to process the requests and reply.
-    ::std::thread::sleep(::std::time::Duration::from_secs(2));
+    thread::sleep(Duration::from_secs(2));
 }
