@@ -31,10 +31,19 @@ extern crate docopt;
 extern crate rand;
 extern crate crust;
 extern crate time;
+extern crate sodiumoxide;
+extern crate rustc_serialize;
+#[macro_use]
+extern crate maidsafe_utilities;
 
-use rand::random;
+use rand::distributions::IndependentSample;
 use docopt::Docopt;
-use crust::{Connection, Service, Event};
+use std::sync::mpsc::{self, Receiver};
+use rustc_serialize::Decoder;
+use sodiumoxide::crypto::sign::PublicKey;
+use crust::{Connection, Event, Service};
+use maidsafe_utilities::event_sender;
+
 
 fn timed<F>(f: F) -> f64
     where F: FnOnce()
@@ -46,32 +55,51 @@ fn timed<F>(f: F) -> f64
 }
 
 fn generate_random_vec_u8(size: usize) -> Vec<u8> {
-    (0..size).map(|_| random()).collect()
+    (0..size).map(|_| rand::random()).collect()
 }
 
-fn main() {
-    let (category_tx, category_rx) = mpsc::channel();
-    let crust_event_category = MaidSafeEventCategory::CrustEvent;
-    // Initialise the 0 state service
-    let (event_tx_0, event_rx_0) = mpsc::channel()
-    let service_0 = Service::new(event_tx, 49999);
+fn generate_random_port() -> u16 {
+    let mut rng = rand::thread_rng();
+    let range = rand::distributions::Range::new(1024, 65535);
+    range.ind_sample(&mut rng)
 }
 
-fn wait_for_connection(receiver: &Receiver<Event>,
-                       category_rx: &::std::sync::mpsc::Receiver<::maidsafe_utilities
-                                                                 ::event_sender::MaidSafeEventCategory>) -> Connection {
+fn wait_for_bootstrap_finished(receiver: &Receiver<Event>,
+                               category_rx: &Receiver<event_sender::MaidSafeEventCategory>) {
     loop {
         for it in category_rx.iter() {
             match it {
-                ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent => {
+                event_sender::MaidSafeEventCategory::CrustEvent => {
                     if let Ok(event) = receiver.try_recv() {
                         match event {
-                            crust::Event::OnBootstrapConnect(Ok((_, c)), _) => return c,
-                            crust::Event::OnBootstrapAccept(_, c) => return c,
+                            Event::BootstrapFinished => return,
+                            _ => panic!("Unexpected event."),
+                        }
+                    } else {
+                        panic!("Error occurred during bootstrap.");
+                    }
+                }
+                _ => unreachable!("This event category should not have been fired - {:?}.", it),
+            }
+        }
+    }
+}
+
+fn wait_for_connection(receiver: &Receiver<Event>,
+                       category_rx: &Receiver<event_sender::MaidSafeEventCategory>) -> (Connection, PublicKey) {
+    loop {
+        for it in category_rx.iter() {
+            match it {
+                event_sender::MaidSafeEventCategory::CrustEvent => {
+                    if let Ok(event) = receiver.try_recv() {
+                        match event {
+                            Event::NewConnection { connection: Ok(connection), their_pub_key: pub_key } => {
+                                return (connection, pub_key)
+                            }
                             _ => panic!("Unexpected event"),
                         }
                     } else {
-                        panic!("Could not connect");
+                        panic!("Failed to connect");
                     }
                 }
                 _ => unreachable!("This event category should not have been fired - {:?}", it),
@@ -111,33 +139,25 @@ fn main() {
     let args: Args = Docopt::new(USAGE)
                          .and_then(|docopt| docopt.decode())
                          .unwrap();
+    let port = generate_random_port();
+    let (category_tx, category_rx) = mpsc::channel();
+    let crust_event_category = event_sender::MaidSafeEventCategory::CrustEvent;
+    let (s1_tx, s1_rx) = mpsc::channel();
+    let event_sender0 = event_sender::MaidSafeObserver::new(s1_tx, crust_event_category.clone(), category_tx.clone());
+    let s1 = unwrap_result!(Service::new(event_sender0, port));
 
-    let (category_tx, category_rx) = ::std::sync::mpsc::channel();
-    let crust_event_category =
-        ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
-    let (tx, s1_rx) = channel();
-    let event_sender0 =
-        ::maidsafe_utilities::event_sender::MaidSafeObserver::new(tx,
-                                                                  crust_event_category.clone(),
-                                                                  category_tx.clone());
-    let mut s1 = Service::new(event_sender0).unwrap();
+    wait_for_bootstrap_finished(&s1_rx, &category_rx);
 
-    let s1_ep = s1.start_accepting(0).unwrap();
+    assert!(s1.set_listen_for_peers(true));
 
-    let (tx, s2_rx) = channel();
-    let event_sender1 =
-        ::maidsafe_utilities::event_sender::MaidSafeObserver::new(tx,
-                                                                  crust_event_category,
-                                                                  category_tx);
-    let mut s2 = Service::new(event_sender1).unwrap();
+    let (s2_tx, s2_rx) = mpsc::channel();
+    let event_sender1 = event_sender::MaidSafeObserver::new(s2_tx, crust_event_category, category_tx);
+    let _s2 = unwrap_result!(Service::new(event_sender1, port));
+    let (mut s2_s1_connection, _s1_pub_key) = wait_for_connection(&s2_rx, &category_rx);
 
-    let (tx, _rx) = channel();
-    let hole_punch_server = Arc::new(unwrap_result!(HolePunchServer::start(tx)));
-    s2.bootstrap_off_list(0, vec![s1_ep], hole_punch_server);
+    wait_for_bootstrap_finished(&s2_rx, &category_rx);
 
-    let s2_ep = wait_for_connection(&s1_rx, &category_rx);
-    let _s1_ep = wait_for_connection(&s2_rx, &category_rx);
-
+    let (_s1_s2_connection, _s2_pub_key) = wait_for_connection(&s1_rx, &category_rx);
     let chunk_size = args.flag_chunk_size.unwrap_or(1024 * 1024);
     let chunk = generate_random_vec_u8(chunk_size as usize);
     let n_exchanges = args.flag_n_exchanges.unwrap_or(3);
@@ -146,10 +166,13 @@ fn main() {
     let elapsed = timed(move || {
         let mut i = 0;
         while i != n_exchanges {
-            s1.send(s2_ep.clone(), chunk.clone());
+            unwrap_result!(s2_s1_connection.send(&chunk.clone()[..]));
             loop {
-                match s2_rx.recv() {
-                    Ok(crust::Event::NewMessage(_, _)) => break,
+                match s1_rx.recv() {
+                    Ok(crust::Event::NewMessage(_pub_key, ref msg)) => {
+                        assert_eq!(*msg, chunk.clone());
+                        break;
+                    },
                     Ok(e) => panic!("Unexpected event: {:?}", e),
                     Err(_) => panic!("Channel closed"),
                 }
@@ -157,5 +180,6 @@ fn main() {
             i += 1;
         }
     });
+
     println!("Throughput: {} bytes/second", bytes as f64 / elapsed);
 }

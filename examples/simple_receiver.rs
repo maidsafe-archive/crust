@@ -28,6 +28,10 @@
 extern crate maidsafe_utilities;
 extern crate crust;
 
+use std::sync::mpsc;
+use crust::{Connection, Event, Service};
+use maidsafe_utilities::{event_sender, log};
+
 
 fn fibonacci_number(n: u64) -> u64 {
     match n {
@@ -37,67 +41,59 @@ fn fibonacci_number(n: u64) -> u64 {
     }
 }
 
-// TODO - Once Rust gets signal-handling (https://github.com/rust-lang/rust/issues/11203) we should
-// catch ctrl+C signals here to allow the server to exit gracefully.  This will allow the
-// ScopedUserAppDirRemover to remove the user app dir.
 fn main() {
     use std::str::FromStr;
-    ::maidsafe_utilities::log::init(true);
+    log::init(true);
 
-    // The Service will probably create a "user app directory" (see the docs for
-    // `FileHandler::write_file()`).  This object will try to clean up this directory when it goes
-    // out of scope.  Normally apps would not do this - this directory will hold the peristent cache
-    // files.
-    let _cleaner = crust::file_handler::ScopedUserAppDirRemover;
-
-    // We receive events (e.g. new connection, message received) from the Service via an
-    // asynchronous channel.
-    let (category_tx, category_rx) = ::std::sync::mpsc::channel();
-    let crust_event_category = ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
-    let (channel_sender, channel_receiver) = ::std::sync::mpsc::channel();
-    let event_sender = ::maidsafe_utilities::event_sender::MaidSafeObserver::new(channel_sender,
-                                                                                 crust_event_category,
-                                                                                 category_tx);
-    let mut service = unwrap_result!(crust::service::Service::new(event_sender));
-    match service.start_beacon(5484) {
-        Ok(_)  => (),
-        Err(e) => println!("Warning: Couldn't start beacon: {}. (perhaps another crust instance is using the port?)", e),
-    };
+    let (category_tx, category_rx) = mpsc::channel();
+    let event_category = event_sender::MaidSafeEventCategory::CrustEvent;
+    let (service_tx, service_rx) = mpsc::channel();
+    let event_sender = event_sender::MaidSafeObserver::new(service_tx, event_category.clone(), category_tx.clone());
+    let service = unwrap_result!(Service::new(event_sender, 5483));
+    let mut service_connection: Option<Connection> = None;
 
     println!("Run the simple_sender example in another terminal to send messages to this node.");
 
     // Receive the next event
     for it in category_rx.iter() {
         match it {
-            ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent => {
-                if let Ok(event) = channel_receiver.try_recv() {
+            event_sender::MaidSafeEventCategory::CrustEvent => {
+                if let Ok(event) = service_rx.try_recv() {
                     match event {
-                        crust::Event::NewMessage(connection, bytes) => {
-                            // For this example, we only expect to receive encoded `u8`s
-                            let requested_value = match String::from_utf8(bytes) {
-                                Ok(message) => {
-                                    match u8::from_str(&message) {
-                                        Ok(value) => value,
-                                        Err(why) => {
-                                            println!("Error parsing message: {}", why);
-                                            continue;
-                                        },
-                                    }
-                                },
-                                Err(why) => {
-                                    println!("Error receiving message: {}", why);
-                                    continue;
-                                },
-                            };
+                        Event::NewMessage(_pub_key, bytes) => {
+                            if let Some(ref mut connection) = service_connection {
+                                // For this example, we only expect to receive encoded `u8`s
+                                let requested_value = match String::from_utf8(bytes) {
+                                    Ok(message) => {
+                                        match u8::from_str(&message) {
+                                            Ok(value) => value,
+                                            Err(why) => {
+                                                println!("Error parsing message: {}", why);
+                                                continue;
+                                            },
+                                        }
+                                    },
+                                    Err(why) => {
+                                        println!("Error receiving message: {}", why);
+                                        continue;
+                                    },
+                                };
 
-                            // Calculate the Fibonacci number for the requested value and respond with that
-                            let fibonacci_result = fibonacci_number(requested_value as u64);
-                            println!("Received \"{}\" from {:?} - replying with \"{}\"", requested_value,
-                                     connection, fibonacci_result);
-                            let response =
-                                format!("The Fibonacci number for {} is {}", requested_value, fibonacci_result);
-                            service.send(connection.clone(), response.into_bytes());
-                        },
+                                // Calculate the Fibonacci number for the requested value and respond with that
+                                let fibonacci_result = fibonacci_number(requested_value as u64);
+                                println!("Received \"{}\" from {:?} - replying with \"{}\"", requested_value,
+                                         connection, fibonacci_result);
+                                let response =
+                                    format!("The Fibonacci number for {} is {}", requested_value, fibonacci_result);
+                                let _ = unwrap_result!((*connection).send(&response.into_bytes()[..]));
+                            }
+                        }
+                        Event::BootstrapFinished => {
+                            assert!(service.set_listen_for_peers(true));
+                        }
+                        Event::NewConnection { connection: Ok(connection), .. } => {
+                            service_connection = Some(connection);
+                        }
                         _ => {
                             println!("Received event {:?}", event);
                         }
