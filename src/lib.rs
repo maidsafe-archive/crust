@@ -81,7 +81,7 @@ pub use socket_addr::SocketAddr;
 mod bootstrap;
 mod sequence_number;
 mod connection;
-// mod beacon;
+mod listener_message;
 mod endpoint;
 mod bootstrap_handler;
 mod config_handler;
