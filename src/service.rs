@@ -49,7 +49,6 @@ use bootstrap::RaiiBootstrap;
 use event::{Event, OurContactInfo, TheirContactInfo, ContactInfoResult};
 use socket_addr::{SocketAddr, SocketAddrV4};
 use bootstrap_handler::BootstrapHandler;
-use sequence_number::SequenceNumber;
 
 /// A structure representing a connection manager.
 ///

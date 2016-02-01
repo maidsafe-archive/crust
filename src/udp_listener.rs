@@ -22,7 +22,9 @@ use std::time::Duration;
 use std::sync::mpsc::Sender;
 use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicBool, Ordering};
+use itertools::Itertools;
 
+use get_if_addrs;
 use maidsafe_utilities::serialisation::{deserialise, serialise};
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 use rand;
@@ -33,31 +35,10 @@ use contact_info::ContactInfo;
 use event::Event;
 use hole_punching::{blocking_udp_punch_hole, external_udp_socket};
 use socket_addr::SocketAddr;
-use get_if_addrs;
-use itertools::Itertools;
+use listener_message::{ListenerRequest, ListenerResponse};
 
 const UDP_READ_TIMEOUT_SECS: u64 = 2;
 
-#[derive(RustcEncodable, RustcDecodable)]
-pub enum UdpListenerResponse {
-    EchoExternalAddr {
-        external_addr: SocketAddr,
-    },
-    Connect {
-        connect_on: Vec<SocketAddr>,
-        secret: [u8; 4],
-        pub_key: PublicKey,
-    },
-}
-
-#[derive(RustcEncodable, RustcDecodable)]
-pub enum UdpListenerRequest {
-    EchoExternalAddr,
-    Connect {
-        secret: [u8; 4],
-        pub_key: PublicKey,
-    },
-}
 
 pub struct UdpListener {
     stop_flag: Arc<AtomicBool>,
@@ -113,13 +94,13 @@ impl UdpListener {
 
         while !stop_flag.load(Ordering::SeqCst) {
             if let Ok((bytes_read, peer_addr)) = udp_socket.recv_from(&mut read_buf) {
-                if let Ok(msg) = deserialise::<UdpListenerRequest>(&read_buf[..bytes_read]) {
+                if let Ok(msg) = deserialise::<ListenerRequest>(&read_buf[..bytes_read]) {
                     UdpListener::handle_request(msg,
                                                 &udp_socket,
                                                 peer_addr,
                                                 &event_tx,
                                                 &peer_contact_infos);
-                } else if let Ok(msg) = deserialise::<UdpListenerResponse>(&read_buf[..bytes_read]) {
+                } else if let Ok(msg) = deserialise::<ListenerResponse>(&read_buf[..bytes_read]) {
                     UdpListener::handle_response(msg,
                                                  &udp_socket,
                                                  peer_addr,
@@ -130,20 +111,20 @@ impl UdpListener {
         }
     }
 
-    fn handle_request(msg: UdpListenerRequest,
+    fn handle_request(msg: ListenerRequest,
                       udp_socket: &UdpSocket,
                       peer_addr: net::SocketAddr,
                       event_tx: &::CrustEventSender,
                       peer_contact_infos: &Arc<Mutex<Vec<ContactInfo>>>) {
         match msg {
-            UdpListenerRequest::EchoExternalAddr => {
-                let resp = UdpListenerResponse::EchoExternalAddr {
+            ListenerRequest::EchoExternalAddr => {
+                let resp = ListenerResponse::EchoExternalAddr {
                     external_addr: SocketAddr(peer_addr.clone()),
                 };
 
                 let _ = udp_socket.send_to(&unwrap_result!(serialise(&resp)), peer_addr);
             }
-            UdpListenerRequest::Connect { secret, pub_key } => {
+            ListenerRequest::Connect { secret, pub_key } => {
                 // TODO external_udp_socket() should return the external address
                 // of the socket that it freshly spawned or (if it cannot because of say
                 // Zero-state etc.) Vector of all interface addresses. This should never be
@@ -153,7 +134,7 @@ impl UdpListener {
                                        .flat_map(|tci| tci.udp_listeners.iter().cloned())
                                        .collect();
                 if let Ok(res) = external_udp_socket(rand::random(), echo_servers) {
-                    let connect_resp = UdpListenerResponse::Connect {
+                    let connect_resp = ListenerResponse::Connect {
                         connect_on: vec![res.1],
                         secret: secret,
                         pub_key: pub_key,
@@ -189,14 +170,14 @@ impl UdpListener {
         }
     }
 
-    fn handle_response(msg: UdpListenerResponse,
+    fn handle_response(msg: ListenerResponse,
                        udp_socket: &UdpSocket,
                        peer_addr: net::SocketAddr,
                        event_tx: &::CrustEventSender,
                        peer_contact_infos: &Arc<Mutex<Vec<ContactInfo>>>) {
         match msg {
-            UdpListenerResponse::EchoExternalAddr { external_addr, } => unimplemented!(),
-            UdpListenerResponse::Connect { connect_on, secret, pub_key, } => {
+            ListenerResponse::EchoExternalAddr { external_addr, } => unimplemented!(),
+            ListenerResponse::Connect { connect_on, secret, pub_key, } => {
                 let echo_servers = unwrap_result!(peer_contact_infos.lock())
                                        .iter()
                                        .flat_map(|tci| tci.udp_listeners.iter().cloned())
