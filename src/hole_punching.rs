@@ -1,6 +1,7 @@
 use std::net::UdpSocket;
 use std::io;
 use std::net;
+use std::net::TcpStream;
 use std::sync::{Arc, RwLock};
 use std::sync::mpsc::Sender;
 use std::sync::atomic::{Ordering, AtomicBool};
@@ -13,6 +14,8 @@ use socket_addr::{SocketAddr, SocketAddrV4};
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 use maidsafe_utilities::serialisation::{deserialise, serialise};
 use listener_message::{ListenerRequest, ListenerResponse};
+use tcp_connections;
+use event::WriteEvent;
 
 #[derive(Debug, RustcEncodable, RustcDecodable)]
 pub struct HolePunch {
@@ -59,6 +62,36 @@ pub fn external_udp_socket(request_id: u32,
     }));
 
     Ok((udp_socket, res))
+}
+
+/// Find our remote socketadddr
+pub fn external_tcp_addr(request_id: u32,
+                           tcp_listeners: Vec<SocketAddr>)
+                           -> io::Result<SocketAddr> {
+                               unimplemented!();
+                               // [TODO]: use NET2 and return reusable socket here *********** - 2016-02-01 01:48am
+    // let send_data = unwrap_result!(serialise(&ListenerRequest::EchoExternalAddr));
+    //
+    // let res = try!(::crossbeam::scope(|scope| -> io::Result<SocketAddr> {
+    //     for tcp_listener in &tcp_listeners {
+    //         let (mut tcp_stream, sender) = tcp_connections::connect_tcp(*tcp_listener);
+    //         tcp_stream.send(WriteEvent::Write(send_data));
+    //         let mut recv_data = [0u8; 1024];
+    //         let (read_size, recv_addr) = match tcp_listener.read(&mut recv_data[..]) {
+    //             Ok(res) => res,
+    //             Err(_) => continue,
+    //         };
+    //
+    //         if let Ok(ListenerResponse::EchoExternalAddr { external_addr }) =
+    //                deserialise::<ListenerResponse>(&recv_data[..read_size]) {
+    //             return Ok(external_addr);
+    //         }
+    //     }
+    //     return Err(io::Error::new(io::ErrorKind::Other,
+    //                               "TODO - Improve this - Could Not find our external address"));
+    // }));
+    //
+    // Ok(res)
 }
 
 // TODO All this function should be returning is either an Ok(()) or Err(..)
@@ -157,6 +190,13 @@ pub fn blocking_udp_punch_hole(udp_socket: UdpSocket,
 
     (udp_socket, addr_res)
 }
+/// Returns the stream along with the peer's SocketAddr
+pub fn blocking_tcp_punch_hole(udp_socket: UdpSocket,
+                               secret: Option<[u8; 4]>,
+                               peer_addr: SocketAddr)
+                               -> (TcpStream, io::Result<SocketAddr>) {
+                                   unimplemented!();
+                               }
 
 #[cfg(test)]
 mod tests {
