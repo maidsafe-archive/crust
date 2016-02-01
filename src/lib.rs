@@ -79,7 +79,6 @@ pub use connection::Connection;
 pub use socket_addr::SocketAddr;
 
 mod bootstrap;
-mod sequence_number;
 mod connection;
 mod listener_message;
 mod endpoint;
