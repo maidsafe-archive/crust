@@ -61,6 +61,7 @@ extern crate get_if_addrs;
 extern crate sodiumoxide;
 extern crate config_file_handler;
 extern crate service_discovery;
+extern crate libc;
 
 /// Module implementing the `Service` which provides an interface to manage peer-to-peer
 /// connections.
