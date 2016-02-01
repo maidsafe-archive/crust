@@ -185,10 +185,10 @@ impl Service {
         // TODO connect to all the socket addresses of peer in parallel
         let _joiner = thread!("PeerConnectionThread", move || {
             let (udp_socket, result_addr) =
-                ::hole_punching::blocking_udp_punch_hole(our_contact_info.socket,
-                                                         our_contact_info.secret,
-                                                         their_contact_info.rendezvous_addrs[0]
-                                                             .clone());
+                ::utp_connections::blocking_udp_punch_hole(our_contact_info.socket,
+                                                           our_contact_info.secret,
+                                                           their_contact_info.rendezvous_addrs[0]
+                                                               .clone());
             let public_endpoint = match result_addr {
                 Ok(addr) => addr,
                 Err(e) => {
@@ -222,7 +222,7 @@ impl Service {
 
     /// Lookup a mapped udp socket based on result_token
     pub fn prepare_contact_info(&mut self, result_token: u32) {
-        use hole_punching::external_udp_socket;
+        use utp_connections::external_udp_socket;
 
         let helping_nodes = self.get_ordered_helping_nodes();
         let event_tx = self.event_tx.clone();

@@ -33,7 +33,7 @@ use sodiumoxide::crypto::sign::PublicKey;
 use connection::utp_rendezvous_connect;
 use contact_info::ContactInfo;
 use event::Event;
-use hole_punching::{blocking_udp_punch_hole, external_udp_socket};
+use utp_connections::{blocking_udp_punch_hole, external_udp_socket};
 use socket_addr::SocketAddr;
 use listener_message::{ListenerRequest, ListenerResponse};
 
