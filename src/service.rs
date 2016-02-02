@@ -102,7 +102,8 @@ impl Service {
                                                                   peer_contact_infos.clone(),
                                                                   event_tx.clone()));
         // Start the UDP Listener
-        let udp_listener = try!(UdpListener::new(static_contact_info.clone(),
+        let udp_listener = try!(UdpListener::new(0,
+                                                 static_contact_info.clone(),
                                                  peer_contact_infos.clone(),
                                                  event_tx.clone()));
 

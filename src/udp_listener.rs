@@ -46,12 +46,11 @@ pub struct UdpListener {
 }
 
 impl UdpListener {
-    pub fn new(our_contact_info: Arc<Mutex<StaticContactInfo>>,
+    pub fn new(port: u16,
+               our_contact_info: Arc<Mutex<StaticContactInfo>>,
                peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
                event_tx: ::CrustEventSender)
                -> io::Result<UdpListener> {
-        // TODO: update_contact_info_tx use should be replaced by updating
-        // contacts directly by creating a new `BootstrapHandler`
         let udp_socket = try!(UdpSocket::bind("0.0.0.0:0"));
         let stop_flag = Arc::new(AtomicBool::new(false));
         let cloned_stop_flag = stop_flag.clone();
@@ -59,22 +58,40 @@ impl UdpListener {
         try!(udp_socket.set_read_timeout(Some(Duration::from_secs(UDP_READ_TIMEOUT_SECS))));
         let port = try!(udp_socket.local_addr()).port();
 
+        let mut our_external_addr = None;
+
+        const MAX_READ_SIZE: usize = 1024;
+
+        let mut read_buf = [0; MAX_READ_SIZE];
         // Ask others for our UDP external addresses as they see us. No need to filter out the
         // Local addresses as they will be used by processes in LAN where TCP is disallowed.
-        // let echo_external_addr_request =
-        //     unwrap_result!(serialise(&UdpListenerMsg::EchoExternalAddr));
-        // for peer_contact_info in &*unwrap_result!(peer_contact_infos.lock()) {
-        //     for udp_listener in &peer_contact_info.udp_listeners {
-        //         let _ = udp_socket.send_to(&echo_external_addr_request, &**udp_listener);
-        //     }
-        // }
+        let echo_external_addr_request =
+            unwrap_result!(serialise(&ListenerRequest::EchoExternalAddr));
+        for peer_contact_info in &*unwrap_result!(peer_contact_infos.lock()) {
+            for udp_listener in &peer_contact_info.udp_listeners {
+                let _ = udp_socket.send_to(&echo_external_addr_request, &**udp_listener);
+                if let Ok((bytes_read, peer_addr)) = udp_socket.recv_from(&mut read_buf) {
+                    if let Ok(msg) = deserialise::<ListenerResponse>(&read_buf[..bytes_read]) {
+                        if let ListenerResponse::EchoExternalAddr { external_addr, } = msg {
+                            our_external_addr = Some(external_addr);
+                        }
+                    }
+                }
+            }
+        }
+
+        let mut addrs = match our_external_addr {
+            Some(addr) => vec![addr],
+            None => Vec::new(),
+        };
 
         let if_addrs = try!(get_if_addrs::get_if_addrs())
                            .into_iter()
                            .map(|i| SocketAddr::new(i.addr.ip(), port))
                            .collect_vec();
+        addrs.extend(if_addrs);
 
-        unwrap_result!(our_contact_info.lock()).udp_listeners.extend(if_addrs);
+        unwrap_result!(our_contact_info.lock()).udp_listeners.extend(addrs);
 
         let raii_joiner = RaiiThreadJoiner::new(thread!("UdpListener", move || {
             Self::run(udp_socket, event_tx, peer_contact_infos, cloned_stop_flag);
