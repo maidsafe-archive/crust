@@ -17,18 +17,24 @@
 
 use std::net::{TcpStream, Shutdown};
 use socket_addr::SocketAddr;
-use std::io::{Error, ErrorKind};
-use std::io::Result as IoResult;
+use std::io;
 use std::thread;
 use std::sync::mpsc;
 use std::sync::mpsc::Sender;
+use std::io::{Read, Write};
+use net2::TcpBuilder;
+use crossbeam;
+
+use socket_utils::enable_so_reuseport;
 use event::WriteEvent;
+use listener_message::{ListenerRequest, ListenerResponse};
+use maidsafe_utilities::serialisation::{serialise, deserialise};
 
 /// Connect to a peer and open a send-receive pair.  See `upgrade` for more details.
-pub fn connect_tcp(addr: SocketAddr) -> IoResult<(TcpStream, Sender<WriteEvent>)> {
+pub fn connect_tcp(addr: SocketAddr) -> io::Result<(TcpStream, Sender<WriteEvent>)> {
     let stream = try!(TcpStream::connect(&*addr));
     if try!(stream.peer_addr()).port() == try!(stream.local_addr()).port() {
-        return Err(Error::new(ErrorKind::ConnectionRefused, "TCP simultaneous open"));
+        return Err(io::Error::new(io::ErrorKind::ConnectionRefused, "TCP simultaneous open"));
     }
 
     Ok(try!(upgrade_tcp(stream)))
@@ -37,7 +43,7 @@ pub fn connect_tcp(addr: SocketAddr) -> IoResult<(TcpStream, Sender<WriteEvent>)
 // Almost a straight copy of https://github.com/TyOverby/wire/blob/master/src/tcp.rs
 /// Upgrades a TcpStream to a Sender-Receiver pair that you can use to send and
 /// receive objects automatically.
-pub fn upgrade_tcp(stream: TcpStream) -> IoResult<(TcpStream, Sender<WriteEvent>)> {
+pub fn upgrade_tcp(stream: TcpStream) -> io::Result<(TcpStream, Sender<WriteEvent>)> {
     let s1 = stream;
     let s2 = try!(s1.try_clone());
     Ok((s1, upgrade_writer(s2)))
@@ -65,6 +71,94 @@ fn upgrade_writer(mut stream: TcpStream) -> Sender<WriteEvent> {
     tx
 }
 
+/// Find our remote socketadddr
+pub fn external_tcp_addr(tcp_listeners: Vec<SocketAddr>)
+                         -> io::Result<(SocketAddr, Vec<SocketAddr>)> {
+
+    const MAX_DATAGRAM_SIZE: usize = 256;
+
+    let send_data = unwrap_result!(serialise(&ListenerRequest::EchoExternalAddr));
+
+    for tcp_listener in &tcp_listeners {
+        // TODO(canndrew): handle ipv6
+        let sock = try!(TcpBuilder::new_v4());
+        sock.reuse_address(true);
+        let mut stream = match sock.connect(&**tcp_listener) {
+            Ok(stream) => stream,
+            Err(_) => continue,
+        };
+        let local_addr = try!(stream.local_addr());
+        match stream.write(&send_data[..]) {
+            Ok(n) => {
+                match n == send_data.len() {
+                    true => (),
+                    false => continue,
+                }
+            }
+            Err(_) => continue,
+        };
+        let mut recv_data = [0u8; MAX_DATAGRAM_SIZE];
+        let recv_size = match stream.read(&mut recv_data[..]) {
+            Ok(recv_size) => recv_size,
+            Err(_) => continue,
+        };
+        if let Ok(ListenerResponse::EchoExternalAddr { external_addr }) =
+               deserialise::<ListenerResponse>(&recv_data[..recv_size]) {
+            return Ok((SocketAddr(local_addr),
+                       vec![SocketAddr(local_addr), external_addr]));
+        }
+    }
+
+    return Err(io::Error::new(io::ErrorKind::Other,
+                              "TODO - Improve this - Could Not find our external address"));
+}
+
+/// Returns the stream along with the peer's SocketAddr
+pub fn blocking_tcp_punch_hole(local_addr: SocketAddr,
+                               // secret: Option<[u8; 4]>,
+                               peer_addrs: Vec<SocketAddr>)
+                               -> io::Result<TcpStream> {
+    // TODO(canndrew): Use secrets or public keys to make sure we have connected to the peer and
+    // not some random endpoint
+    let res: io::Result<TcpStream> = crossbeam::scope(|scope| {
+        let listen_thread = scope.spawn(|| -> io::Result<_> {
+            let listener = try!(TcpBuilder::new_v4());
+            let listener = try!(listener.reuse_address(true));
+            try!(enable_so_reuseport(&listener));
+            let listener = try!(listener.bind(&*local_addr));
+            let listener = try!(listener.listen(1));
+            let (stream, addr) = try!(listener.accept());
+            Ok((stream, addr))
+        });
+        let mut connect_threads = Vec::new();
+        for peer_addr in &peer_addrs {
+            let connect_thread = scope.spawn(move || -> io::Result<_> {
+                let connector = try!(TcpBuilder::new_v4());
+                let connector = try!(connector.reuse_address(true));
+                try!(enable_so_reuseport(&connector));
+                let connector = try!(connector.bind(&*local_addr));
+                let stream = try!(connector.connect(&**peer_addr));
+                Ok(stream)
+            });
+            connect_threads.push(connect_thread);
+        }
+        let ser: io::Result<TcpStream> = match listen_thread.join() {
+            Ok((stream, _)) => Ok(stream),
+            Err(_) => {
+                for connect_thread in connect_threads {
+                    match connect_thread.join() {
+                        Ok(stream) => return Ok(stream),
+                        Err(_) => continue,
+                    }
+                }
+                Err(io::Error::new(io::ErrorKind::Other, "Tcp rendezvous connect failed"))
+            }
+        };
+        ser
+    });
+    res
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -85,8 +179,8 @@ mod test {
     #[test]
     fn test_small_stream() {
         let listener = unwrap_result!(TcpListener::bind(("0.0.0.0", 5483)));
-        let port = listener.local_addr().unwrap().port();
-        let (mut i, o) = connect_tcp(loopback(port)).unwrap();
+        let port = unwrap_result!(listener.local_addr()).port();
+        let (mut i, o) = unwrap_result!(connect_tcp(loopback(port)));
 
         for x in 0..10 {
             let x = vec![x];

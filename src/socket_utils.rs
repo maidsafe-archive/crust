@@ -19,6 +19,7 @@ use std::io;
 use std::net::UdpSocket;
 use socket_addr::SocketAddr;
 use std::io::ErrorKind;
+use net2::TcpBuilder;
 
 /// A self interruptable receive trait that allows a timed-out period to be defined
 pub trait RecvUntil {
@@ -66,4 +67,31 @@ impl RecvUntil for UdpSocket {
             }
         }
     }
+}
+
+#[cfg(target_family = "unix")]
+#[allow(unsafe_code)]
+pub fn enable_so_reuseport(sock: &TcpBuilder) -> io::Result<()> {
+    use std::os::unix::io::AsRawFd;
+    use libc;
+    use std;
+
+    let one: libc::c_int = 1;
+    let raw_fd = sock.as_raw_fd();
+    let one_ptr: *const libc::c_int = &one;
+    unsafe {
+        if libc::setsockopt(raw_fd,
+                            libc::SOL_SOCKET,
+                            libc::SO_REUSEPORT,
+                            one_ptr as *const libc::c_void,
+                            std::mem::size_of::<libc::c_int>() as libc::socklen_t) < 0 {
+            return Err(io::Error::last_os_error());
+        };
+    }
+    Ok(())
+}
+
+#[cfg(not(target_family = "unix"))]
+pub fn enable_so_reuseport(sock: &TcpBuilder) -> io::Result<()> {
+    Ok(())
 }
