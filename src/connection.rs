@@ -37,6 +37,9 @@ use sodiumoxide::crypto::sign::PublicKey;
 use endpoint::{Endpoint, Protocol};
 use rand;
 use std::fmt::{Debug, Formatter};
+use net2::TcpBuilder;
+use socket_utils;
+use listener_message::{ListenerRequest, ListenerResponse};
 
 /// An open connection that can be used to send messages to a peer.
 ///
@@ -183,22 +186,77 @@ fn connect_utp_endpoint(remote_addr: SocketAddr,
     })
 }
 
+// TODO use peer_contact_infos to get the external addresses
 pub fn start_tcp_accept(port: u16,
                         our_contact_info: Arc<Mutex<StaticContactInfo>>,
+                        peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
                         event_tx: ::CrustEventSender)
                         -> io::Result<RaiiTcpAcceptor> {
-    let listener = try!(TcpListener::bind(("0.0.0.0", port)));
+    use std::io::Write;
+    use std::io::Read;
+    use std::net::ToSocketAddrs;
+
+    let tcp_builder_listener = try!(TcpBuilder::new_v4());
+    try!(socket_utils::enable_so_reuseport(try!(tcp_builder_listener.reuse_address(true))));
+    let _ = try!(tcp_builder_listener.bind(("0.0.0.0", port)));
+
+    let listener = try!(tcp_builder_listener.listen(1));
     let port = try!(listener.local_addr()).port(); // Useful if supplied port was 0
+
+    let mut our_external_addr = None;
+    let send_data = unwrap_result!(serialise(&ListenerRequest::EchoExternalAddr));
+    for peer_contact in &*unwrap_result!(peer_contact_infos.lock()) {
+        for tcp_acceptor_addr in &peer_contact.tcp_acceptors {
+            let tcp_builder_connect = try!(TcpBuilder::new_v4());
+            try!(socket_utils::enable_so_reuseport(try!(tcp_builder_connect.reuse_address(true))));
+            let _ = try!(tcp_builder_connect.bind(("0.0.0.0", port)));
+
+            match tcp_builder_connect.connect(*tcp_acceptor_addr.clone()) {
+                Ok(mut stream) => {
+                    match stream.write(&send_data[..]) {
+                        Ok(n) => {
+                            match n == send_data.len() {
+                                true => (),
+                                false => continue,
+                            }
+                        }
+                        Err(_) => continue,
+                    };
+
+                    const MAX_READ_SIZE: usize = 1024;
+
+                    let mut recv_data = [0u8; MAX_READ_SIZE];
+                    let recv_size = match stream.read(&mut recv_data[..]) {
+                        Ok(recv_size) => recv_size,
+                        Err(_) => continue,
+                    };
+                    if let Ok(ListenerResponse::EchoExternalAddr { external_addr }) =
+                           deserialise::<ListenerResponse>(&recv_data[..recv_size]) {
+                        our_external_addr = Some(external_addr);
+                        stream.shutdown(Shutdown::Both);
+                        break;
+                    }
+                }
+                Err(_) => continue,
+            }
+        }
+    }
 
     let stop_flag = Arc::new(AtomicBool::new(false));
     let cloned_stop_flag = stop_flag.clone();
+
+    let mut addrs = match our_external_addr {
+        Some(addr) => vec![addr],
+        None => Vec::new(),
+    };
 
     let if_addrs = try!(get_if_addrs())
                        .into_iter()
                        .map(|i| SocketAddr::new(i.addr.ip(), port))
                        .collect_vec();
+    addrs.extend(if_addrs);
 
-    unwrap_result!(our_contact_info.lock()).tcp_acceptors.extend(if_addrs);
+    unwrap_result!(our_contact_info.lock()).tcp_acceptors.extend(addrs);
 
     let joiner = RaiiThreadJoiner::new(thread!("TcpAcceptorThread", move || {
         loop {

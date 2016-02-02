@@ -23,16 +23,18 @@ use std::sync::{Arc, Mutex, mpsc};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 use std::thread;
-use std::collections::HashSet;
 
 use config_file_handler::FileHandler;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 use service_discovery::ServiceDiscovery;
 use sodiumoxide::crypto::sign::PublicKey;
 
+use error::Error;
 use config_handler::Config;
 use static_contact_info::StaticContactInfo;
 use event::Event;
+
+const MAX_CONTACTS_EXPECTED: usize = 1500;
 
 pub struct RaiiBootstrap {
     stop_flag: Arc<AtomicBool>,
@@ -40,33 +42,18 @@ pub struct RaiiBootstrap {
 }
 
 impl RaiiBootstrap {
-    pub fn new(service_discovery: &ServiceDiscovery<StaticContactInfo>,
-               our_contact_info: Arc<Mutex<StaticContactInfo>>,
-               peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
+    pub fn new(our_contact_info: Arc<Mutex<StaticContactInfo>>,
+               bootstrap_contacts: Vec<StaticContactInfo>,
                event_tx: ::CrustEventSender)
                -> RaiiBootstrap {
         let stop_flag = Arc::new(AtomicBool::new(false));
         let cloned_stop_flag = stop_flag.clone();
 
-        let (seek_peers_tx, seek_peers_rx) = mpsc::channel();
-        if service_discovery.register_seek_peer_observer(seek_peers_tx) {
-            let _ = service_discovery.seek_peers();
-        }
-
         let raii_joiner = RaiiThreadJoiner::new(thread!("RaiiBootstrap", move || {
-            let contacts =
-                match RaiiBootstrap::get_bootstrap_contacts(&unwrap_result!(our_contact_info.lock())
-                                                             .pub_key,
-                                                        peer_contact_infos,
-                                                        seek_peers_rx) {
-                    Ok(contacts) => contacts,
-                    Err(err) => {
-                        error!("RaiiBootstrap failed: {:?}", err);
-                        return;
-                    }
-                };
-
-            RaiiBootstrap::bootstrap(our_contact_info, contacts, cloned_stop_flag, event_tx);
+            RaiiBootstrap::bootstrap(our_contact_info,
+                                     bootstrap_contacts,
+                                     cloned_stop_flag,
+                                     event_tx);
         }));
 
         RaiiBootstrap {
@@ -77,54 +64,6 @@ impl RaiiBootstrap {
 
     pub fn stop(&mut self) {
         self.stop_flag.store(true, Ordering::SeqCst);
-    }
-
-    fn get_bootstrap_contacts(our_pub_key: &PublicKey,
-                              peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
-                              seek_peers_rx: mpsc::Receiver<StaticContactInfo>)
-                              -> Result<Vec<StaticContactInfo>, ::error::Error> {
-        let mut contacts = unwrap_result!(peer_contact_infos.lock()).clone();
-
-        // In production, we expect to have total contacts of atleast 1000 specially from
-        // bootstrap.cache alone.
-        contacts.reserve(1000);
-
-        // Get contacts from service discovery
-        thread::sleep(Duration::from_secs(1));
-        while let Ok(static_contact_info) = seek_peers_rx.try_recv() {
-            contacts.push(static_contact_info);
-        }
-
-        // Get further contacts from bootstrap cache
-        contacts.extend(try!(FileHandler::new("bootstrap.cache")).read_file().unwrap_or(vec![]));
-
-        // Get further contacts from config file - contains seed nodes
-        let config = match ::config_handler::read_config_file() {
-            Ok(cfg) => cfg,
-            Err(e) => {
-                debug!("Crust failed to read config file; Error: {:?};", e);
-                try!(::config_handler::create_default_config_file());
-                Config::make_default()
-            }
-        };
-        contacts.extend(config.hard_coded_contacts);
-
-        // Please don't be tempted to use a HashSet here because we want to preserve the
-        // order in which we collect the contacts
-        contacts = contacts.into_iter().unique().collect();
-
-        // Remove own endpoints:
-        // Node A is on EP Ea. Node B starts up finds A and populates its bootstrap.cache with Ea.
-        // Now A dies and C starts after that on exactly Ea. Since they all share the same
-        // bootstrap.cache file (if all Crusts start from same path), C will have EP Ea and also
-        // have Ea in the bootstrap.cache so it will try to bootstrap to itself. The following code
-        // prevents that.
-        contacts.retain(|contact| contact.pub_key != *our_pub_key);
-
-        // Re-assign our findings so that others can use an updated list
-        *unwrap_result!(peer_contact_infos.lock()) = contacts.clone();
-
-        Ok((contacts))
     }
 
     fn bootstrap(our_contact_info: Arc<Mutex<StaticContactInfo>>,
@@ -166,4 +105,50 @@ impl Drop for RaiiBootstrap {
     fn drop(&mut self) {
         self.stop();
     }
+}
+
+// Returns the peers from service discovery, cache and config for bootstrapping (not to be held)
+pub fn get_known_contacts(service_discovery: &ServiceDiscovery<StaticContactInfo>,
+                          our_pub_key: &PublicKey)
+                          -> Result<Vec<StaticContactInfo>, Error> {
+    let (seek_peers_tx, seek_peers_rx) = mpsc::channel();
+    if service_discovery.register_seek_peer_observer(seek_peers_tx) {
+        let _ = service_discovery.seek_peers();
+    }
+
+    let mut contacts = Vec::with_capacity(MAX_CONTACTS_EXPECTED);
+
+    // Get contacts from bootstrap cache
+    contacts.extend(try!(FileHandler::new("bootstrap.cache")).read_file().unwrap_or(vec![]));
+
+    // Get further contacts from config file - contains seed nodes
+    let config = match ::config_handler::read_config_file() {
+        Ok(cfg) => cfg,
+        Err(e) => {
+            debug!("Crust failed to read config file; Error: {:?};", e);
+            try!(::config_handler::create_default_config_file());
+            Config::make_default()
+        }
+    };
+    contacts.extend(config.hard_coded_contacts);
+
+    // Get contacts from service discovery. Give a sec or so for seek peers to find someone on LAN.
+    thread::sleep(Duration::from_secs(1));
+    while let Ok(static_contact_info) = seek_peers_rx.try_recv() {
+        contacts.push(static_contact_info);
+    }
+
+    // Please don't be tempted to use a HashSet here because we want to preserve the
+    // order in which we collect the contacts
+    contacts = contacts.into_iter().unique().collect();
+
+    // Remove own endpoints:
+    // Node A is on EP Ea. Node B starts up finds A and populates its bootstrap.cache with Ea.
+    // Now A dies and C starts after that on exactly Ea. Since they all share the same
+    // bootstrap.cache file (if all Crusts start from same path), C will have EP Ea and also
+    // have Ea in the bootstrap.cache so it will try to bootstrap to itself. The following code
+    // prevents that.
+    contacts.retain(|contact| contact.pub_key != *our_pub_key);
+
+    Ok((contacts))
 }

@@ -44,6 +44,7 @@ use connection::Connection;
 use error::Error;
 use ip::SocketAddrExt;
 use connection;
+use bootstrap;
 use bootstrap::RaiiBootstrap;
 
 use event::{Event, OurConnectionInfo, OurConnectionInfoInner, TheirConnectionInfo,
@@ -86,26 +87,28 @@ impl Service {
             udp_listeners: Vec::new(),
         }));
 
+        let cloned_contact_info = static_contact_info.clone();
+        let generator = move || unwrap_result!(cloned_contact_info.lock()).clone();
+        let service_discovery = try!(ServiceDiscovery::new_with_generator(service_discovery_port,
+                                                                          generator));
+
         // Form initial peer contact infos - these will also contain echo-service addrs.
-        let peer_contact_infos = Arc::new(Mutex::new(Vec::new()));
+        let bootstrap_contacts = try!(bootstrap::get_known_contacts(&service_discovery, &pub_key));
+        let peer_contact_infos = Arc::new(Mutex::new(bootstrap_contacts.clone()));
 
         // Start the TCP Acceptor
         let raii_tcp_acceptor = try!(connection::start_tcp_accept(0,
                                                                   static_contact_info.clone(),
+                                                                  peer_contact_infos.clone(),
                                                                   event_tx.clone()));
         // Start the UDP Listener
         let udp_listener = try!(UdpListener::new(static_contact_info.clone(),
                                                  peer_contact_infos.clone(),
                                                  event_tx.clone()));
 
-        let cloned_contact_info = static_contact_info.clone();
-        let generator = move || unwrap_result!(cloned_contact_info.lock()).clone();
-        let service_discovery = try!(ServiceDiscovery::new_with_generator(service_discovery_port,
-                                                                          generator));
 
-        let bootstrap = RaiiBootstrap::new(&service_discovery,
-                                           static_contact_info.clone(),
-                                           peer_contact_infos.clone(),
+        let bootstrap = RaiiBootstrap::new(static_contact_info.clone(),
+                                           bootstrap_contacts,
                                            event_tx.clone());
 
         let service = Service {
