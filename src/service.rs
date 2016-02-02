@@ -23,7 +23,6 @@ use std::net;
 use std::thread::JoinHandle;
 use std::sync::{Arc, Mutex};
 use std::str::FromStr;
-use std::collections::BTreeSet;
 use std::cmp;
 use service_discovery::ServiceDiscovery;
 use sodiumoxide;
