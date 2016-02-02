@@ -52,6 +52,14 @@ use event::{Event, OurConnectionInfo, OurConnectionInfoInner, TheirConnectionInf
 use socket_addr::{SocketAddr, SocketAddrV4};
 use bootstrap_handler::BootstrapHandler;
 
+// Mainly used for testing right now
+#[derive(Clone, Copy, Eq, PartialEq)]
+pub enum UseProtocol {
+    TcpOnly,
+    UdpOnly,
+    TcpUdpBoth,
+}
+
 /// A structure representing a connection manager.
 ///
 /// This abstraction has a hidden dependency on a config file. Refer to [the docs for `FileHandler`]
@@ -62,11 +70,12 @@ pub struct Service {
     static_contact_info: Arc<Mutex<StaticContactInfo>>,
     peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
     service_discovery: ServiceDiscovery<StaticContactInfo>,
-    udp_listener: UdpListener,
+    udp_listener: Option<UdpListener>,
     event_tx: ::CrustEventSender,
     external_udp_sock_seq_id: u32,
     bootstrap: RaiiBootstrap,
-    _raii_tcp_acceptor: RaiiTcpAcceptor,
+    use_protocol: UseProtocol,
+    _raii_tcp_acceptor: Option<RaiiTcpAcceptor>,
 }
 
 impl Service {
@@ -75,6 +84,13 @@ impl Service {
     pub fn new(event_tx: ::CrustEventSender,
                service_discovery_port: u16)
                -> Result<Service, Error> {
+        Service::new_impl(event_tx, service_discovery_port, UseProtocol::TcpUdpBoth)
+    }
+
+    fn new_impl(event_tx: ::CrustEventSender,
+                service_discovery_port: u16,
+                use_protocol: UseProtocol)
+                -> Result<Service, Error> {
         sodiumoxide::init();
 
         // TODO Use private key once crate is stable
@@ -97,16 +113,24 @@ impl Service {
         let peer_contact_infos = Arc::new(Mutex::new(bootstrap_contacts));
 
         // Start the TCP Acceptor
-        let raii_tcp_acceptor = try!(connection::start_tcp_accept(0,
-                                                                  static_contact_info.clone(),
-                                                                  peer_contact_infos.clone(),
-                                                                  event_tx.clone()));
-        // Start the UDP Listener
-        let udp_listener = try!(UdpListener::new(0,
-                                                 static_contact_info.clone(),
-                                                 peer_contact_infos.clone(),
-                                                 event_tx.clone()));
+        let raii_tcp_acceptor = if use_protocol != UseProtocol::UdpOnly {
+            Some(try!(connection::start_tcp_accept(0,
+                                                   static_contact_info.clone(),
+                                                   peer_contact_infos.clone(),
+                                                   event_tx.clone())))
+        } else {
+            None
+        };
 
+        // Start the UDP Listener
+        let udp_listener = if use_protocol != UseProtocol::TcpOnly {
+            Some(try!(UdpListener::new(0,
+                                       static_contact_info.clone(),
+                                       peer_contact_infos.clone(),
+                                       event_tx.clone())))
+        } else {
+            None
+        };
 
         let bootstrap = RaiiBootstrap::new(static_contact_info.clone(),
                                            peer_contact_infos.clone(),
@@ -120,6 +144,7 @@ impl Service {
             event_tx: event_tx,
             external_udp_sock_seq_id: 0,
             bootstrap: bootstrap,
+            use_protocol: use_protocol,
             _raii_tcp_acceptor: raii_tcp_acceptor,
         };
 
@@ -300,12 +325,11 @@ mod test {
         let _service = unwrap_result!(Service::new(event_sender, 44444));
     }
 
-    #[test]
-    fn start_two_services_tcp_connect() {
+    fn two_services_bootstrap_communicate_and_exit(use_protocol: UseProtocol) {
         let (event_sender_0, category_rx_0, event_rx_0) = get_event_sender();
         let (event_sender_1, category_rx_1, event_rx_1) = get_event_sender();
 
-        let service_0 = unwrap_result!(Service::new(event_sender_0, 5483));
+        let service_0 = unwrap_result!(Service::new_impl(event_sender_0, 5483, use_protocol));
         // let service_0 finish bootstrap - since it is the zero state, it should not find any peer
         // to bootstrap
         {
@@ -317,7 +341,7 @@ mod test {
         }
         assert!(service_0.set_listen_for_peers(true));
 
-        let service_1 = unwrap_result!(Service::new(event_sender_1, 5483));
+        let service_1 = unwrap_result!(Service::new_impl(event_sender_1, 5483, use_protocol));
         // let service_1 finish bootstrap - it should bootstrap off service_0
         let (mut connection_1_to_0, pub_key_0) = {
             let event_rxd = unwrap_result!(event_rx_1.recv());
@@ -346,8 +370,14 @@ mod test {
             _ => panic!("0 Should have got a new connection from 1."),
         };
 
-        assert_eq!(*connection_0_to_1.get_protocol(), Protocol::Tcp);
-        assert_eq!(*connection_1_to_0.get_protocol(), Protocol::Tcp);
+        if use_protocol != UseProtocol::UdpOnly {
+            assert_eq!(*connection_0_to_1.get_protocol(), Protocol::Tcp);
+            assert_eq!(*connection_1_to_0.get_protocol(), Protocol::Tcp);
+        } else {
+            assert_eq!(*connection_0_to_1.get_protocol(), Protocol::Utp);
+            assert_eq!(*connection_1_to_0.get_protocol(), Protocol::Utp);
+        }
+
         assert!(pub_key_0 != pub_key_1);
 
         // send data from 0 to 1
@@ -385,6 +415,21 @@ mod test {
             assert_eq!(data_rxd, data_txd);
             assert_eq!(peer_pub_key, pub_key_1);
         }
+    }
+
+    #[test]
+    fn start_two_services_bootstrap_communicate_exit_tcp() {
+        two_services_bootstrap_communicate_and_exit(UseProtocol::TcpOnly);
+    }
+
+    #[test]
+    fn start_two_services_bootstrap_communicate_exit_udp() {
+        two_services_bootstrap_communicate_and_exit(UseProtocol::UdpOnly);
+    }
+
+    #[test]
+    fn start_two_services_bootstrap_communicate_exit_tcp_and_udp() {
+        two_services_bootstrap_communicate_and_exit(UseProtocol::TcpUdpBoth);
     }
 
     #[test]

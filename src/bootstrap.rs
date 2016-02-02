@@ -70,7 +70,8 @@ impl RaiiBootstrap {
                  peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
                  stop_flag: Arc<AtomicBool>,
                  event_tx: ::CrustEventSender) {
-        let bootstrap_contacts: Vec<StaticContactInfo> = unwrap_result!(peer_contact_infos.lock()).clone();
+        let bootstrap_contacts: Vec<StaticContactInfo> = unwrap_result!(peer_contact_infos.lock())
+                                                             .clone();
         for contact in bootstrap_contacts {
             // Bootstrapping got cancelled.
             // Later check the bootstrap contacts in the background to see if they are still valid

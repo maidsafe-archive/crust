@@ -63,13 +63,6 @@ extern crate config_file_handler;
 extern crate service_discovery;
 extern crate libc;
 
-/// Module implementing the `Service` which provides an interface to manage peer-to-peer
-/// connections.
-pub mod service;
-
-/// Defines errors.
-pub mod error;
-
 /// Crust Observers will be informed of crust events on this
 pub type CrustEventSender = ::maidsafe_utilities::event_sender::MaidSafeObserver<Event>;
 pub use config_handler::write_config_file;
@@ -79,7 +72,10 @@ pub use endpoint::{Endpoint, Protocol};
 pub use connection::Connection;
 pub use socket_addr::SocketAddr;
 pub use static_contact_info::StaticContactInfo;
+pub use error::Error;
 
+mod error;
+mod service;
 mod bootstrap;
 mod connection;
 mod listener_message;

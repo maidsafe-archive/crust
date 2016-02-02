@@ -68,9 +68,9 @@ pub fn external_udp_socket(peer_udp_listeners: Vec<SocketAddr>)
     let send_data = unwrap_result!(serialise(&ListenerRequest::EchoExternalAddr));
 
     let if_addrs: Vec<SocketAddr> = try!(get_if_addrs::get_if_addrs())
-                                           .into_iter()
-                                           .map(|i| SocketAddr::new(i.addr.ip(), port))
-                                           .collect();
+                                        .into_iter()
+                                        .map(|i| SocketAddr::new(i.addr.ip(), port))
+                                        .collect();
 
     let res = try!(::crossbeam::scope(|scope| -> io::Result<Vec<SocketAddr>> {
         // TODO Instead of periodic sender just send the request to every body and start listening.

@@ -95,7 +95,11 @@ impl UdpListener {
         unwrap_result!(our_contact_info.lock()).udp_listeners.extend(addrs);
 
         let raii_joiner = RaiiThreadJoiner::new(thread!("UdpListener", move || {
-            Self::run(udp_socket, event_tx, peer_contact_infos, cloned_stop_flag);
+            Self::run(our_contact_info,
+                      udp_socket,
+                      event_tx,
+                      peer_contact_infos,
+                      cloned_stop_flag);
         }));
 
         Ok(UdpListener {
@@ -104,7 +108,8 @@ impl UdpListener {
         })
     }
 
-    fn run(udp_socket: UdpSocket,
+    fn run(our_contact_info: Arc<Mutex<StaticContactInfo>>,
+           udp_socket: UdpSocket,
            event_tx: ::CrustEventSender,
            peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
            stop_flag: Arc<AtomicBool>) {
@@ -114,12 +119,14 @@ impl UdpListener {
             if let Ok((bytes_read, peer_addr)) = udp_socket.recv_from(&mut read_buf) {
                 if let Ok(msg) = deserialise::<ListenerRequest>(&read_buf[..bytes_read]) {
                     UdpListener::handle_request(msg,
+                                                &our_contact_info,
                                                 &udp_socket,
                                                 peer_addr,
                                                 &event_tx,
                                                 &peer_contact_infos);
                 } else if let Ok(msg) = deserialise::<ListenerResponse>(&read_buf[..bytes_read]) {
                     UdpListener::handle_response(msg,
+                                                 &our_contact_info,
                                                  &udp_socket,
                                                  peer_addr,
                                                  &event_tx,
@@ -130,6 +137,7 @@ impl UdpListener {
     }
 
     fn handle_request(msg: ListenerRequest,
+                      our_contact_info: &Arc<Mutex<StaticContactInfo>>,
                       udp_socket: &UdpSocket,
                       peer_addr: net::SocketAddr,
                       event_tx: &::CrustEventSender,
@@ -155,7 +163,7 @@ impl UdpListener {
                     let connect_resp = ListenerResponse::Connect {
                         connect_on: res.1,
                         secret: secret,
-                        pub_key: pub_key,
+                        pub_key: unwrap_result!(our_contact_info.lock()).pub_key.clone(),
                     };
 
                     if udp_socket.send_to(&unwrap_result!(serialise(&connect_resp)),
@@ -189,6 +197,7 @@ impl UdpListener {
     }
 
     fn handle_response(msg: ListenerResponse,
+                       our_contact_info: &Arc<Mutex<StaticContactInfo>>,
                        udp_socket: &UdpSocket,
                        peer_addr: net::SocketAddr,
                        event_tx: &::CrustEventSender,
