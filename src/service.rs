@@ -273,6 +273,7 @@ impl Service {
 mod test {
     use super::*;
     use event::Event;
+    use endpoint::Protocol;
 
     use std::sync::mpsc;
     use std::sync::mpsc::Receiver;
@@ -345,6 +346,8 @@ mod test {
             _ => panic!("0 Should have got a new connection from 1."),
         };
 
+        assert_eq!(*connection_0_to_1.get_protocol(), Protocol::Tcp);
+        assert_eq!(*connection_1_to_0.get_protocol(), Protocol::Tcp);
         assert!(pub_key_0 != pub_key_1);
 
         // send data from 0 to 1

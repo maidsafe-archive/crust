@@ -77,6 +77,11 @@ impl Connection {
     pub fn send(&mut self, data: &[u8]) -> io::Result<()> {
         self.network_tx.send(data)
     }
+
+    #[cfg(test)]
+    pub fn get_protocol(&self) -> &Protocol {
+        &self.protocol
+    }
 }
 
 pub struct RaiiTcpAcceptor {
