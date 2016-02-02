@@ -105,14 +105,68 @@ impl Debug for RaiiTcpAcceptor {
     }
 }
 
-pub fn connect(contact: StaticContactInfo,
+pub fn connect(peer_contact: StaticContactInfo,
+               peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
                our_contact_info: Arc<Mutex<StaticContactInfo>>,
                event_tx: ::CrustEventSender)
                -> io::Result<Connection> {
     let mut last_err = None;
-    for tcp_addr in contact.tcp_acceptors {
-        match connect_tcp_endpoint(tcp_addr,
-                                   contact.pub_key,
+    // for tcp_addr in peer_contact.tcp_acceptors {
+    //     match connect_tcp_endpoint(tcp_addr,
+    //                                peer_contact.pub_key,
+    //                                our_contact_info.clone(),
+    //                                event_tx.clone()) {
+    //         Ok(connection) => return Ok(connection),
+    //         Err(e) => last_err = Some(e),
+    //     }
+    // }
+
+    println!("============================ 0");
+
+    let (udp_socket, our_external_addrs) =
+        try!(utp_connections::external_udp_socket(unwrap_result!(peer_contact_infos.lock())
+                                                      .clone()));
+    let our_secret = [255; 4];
+    let connect_req = ListenerRequest::Connect {
+        secret: our_secret,
+        pub_key: unwrap_result!(our_contact_info.lock()).pub_key.clone(),
+    };
+    let serialised_connect_req = unwrap_result!(serialise(&connect_req));
+    let mut read_buf = [0; 1024];
+
+    for udp_addr in peer_contact.udp_listeners {
+        println!("Trying ........ {:?}", udp_addr);
+        if udp_socket.send_to(&udp_addr, &serialised_connect_req).is_err() {
+            continue;
+        }
+        match udp_socket.recv_from(&mut read_buf) {
+            Ok((bytes_rxd, peer_addr)) => {
+                match deserialise::<ListenerResponse>(&read_buf[..bytes_rxd]) {
+                    Ok(ListenerResponse::Connect { connect_on, secret, pub_key, }) => {
+                        if secret != our_secret {
+                            continue;
+                        }
+                        for peer_udp_hole_punched_socket_addr in connect_on {
+                            match utp_connections::blocking_udp_punch_hole(cloned_udp_socket,
+                                                                           Some(our_secret),
+                                                                           peer_udp_hole_punched_socket_addr) {
+                            Ok((our_socket, Ok(peer_addr))) => {
+                                match utp_rendezvous_connect(our_socket, peer_addr, pub_key, event_tx.clone()) {
+                                    Ok(connection) => return Ok(connection),
+                                    Err(_) => continue,
+                                }
+                            }
+                            Err(_) => continue,
+                        }
+                        }
+                    }
+                    Err(_) => continue,
+                }
+            }
+            Err(_) => continue,
+        }
+        match connect_utp_endpoint(udp_addr,
+                                   peer_contact.pub_key,
                                    our_contact_info.clone(),
                                    event_tx.clone()) {
             Ok(connection) => return Ok(connection),
@@ -120,15 +174,7 @@ pub fn connect(contact: StaticContactInfo,
         }
     }
 
-    for udp_addr in contact.udp_listeners {
-        match connect_utp_endpoint(udp_addr,
-                                   contact.pub_key,
-                                   our_contact_info.clone(),
-                                   event_tx.clone()) {
-            Ok(connection) => return Ok(connection),
-            Err(e) => last_err = Some(e),
-        }
-    }
+    println!("============================ 1");
 
     match last_err {
         Some(e) => Err(e),
@@ -173,7 +219,9 @@ fn connect_utp_endpoint(remote_addr: SocketAddr,
                         our_contact_info: Arc<Mutex<StaticContactInfo>>,
                         event_tx: ::CrustEventSender)
                         -> io::Result<Connection> {
+    println!("----------------------------------- 0");
     let (network_input, writer) = try!(utp_connections::connect_utp(remote_addr.clone()));
+    println!("----------------------------------- 1");
     let our_addr = SocketAddr(network_input.local_addr());
     let their_addr = SocketAddr(network_input.peer_addr());
 
@@ -261,7 +309,7 @@ pub fn start_tcp_accept(port: u16,
                        .collect_vec();
     addrs.extend(if_addrs);
 
-    unwrap_result!(our_contact_info.lock()).tcp_acceptors.extend(addrs);
+    // unwrap_result!(our_contact_info.lock()).tcp_acceptors.extend(addrs);
 
     let joiner = RaiiThreadJoiner::new(thread!("TcpAcceptorThread", move || {
         loop {

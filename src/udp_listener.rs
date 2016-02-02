@@ -63,6 +63,7 @@ impl UdpListener {
         const MAX_READ_SIZE: usize = 1024;
 
         let mut read_buf = [0; MAX_READ_SIZE];
+        // TODO This will be very slow for production
         // Ask others for our UDP external addresses as they see us. No need to filter out the
         // Local addresses as they will be used by processes in LAN where TCP is disallowed.
         let echo_external_addr_request =

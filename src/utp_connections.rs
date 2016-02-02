@@ -55,19 +55,26 @@ pub fn upgrade_utp(newconnection: UtpSocket) -> IoResult<(UtpWrapper, Sender<Wri
 
 // TODO(canndrew): This should return a Vec of SocketAddrs rather than a single SocketAddr. The Vec
 // should contain all known addresses of the socket.
-pub fn external_udp_socket(udp_listeners: Vec<SocketAddr>) -> io::Result<(UdpSocket, SocketAddr)> {
+pub fn external_udp_socket(peer_udp_listeners: Vec<SocketAddr>)
+                           -> io::Result<(UdpSocket, Vec<SocketAddr>)> {
     const MAX_DATAGRAM_SIZE: usize = 256;
 
     let udp_socket = try!(UdpSocket::bind("0.0.0.0:0"));
+    let port = try!(udp_socket.local_addr()).port();
     try!(udp_socket.set_read_timeout(Some(Duration::from_secs(2))));
     let cloned_udp_socket = try!(udp_socket.try_clone());
 
     let send_data = unwrap_result!(serialise(&ListenerRequest::EchoExternalAddr));
 
+    let if_addrs = try!(get_if_addrs::get_if_addrs())
+                       .into_iter()
+                       .map(|i| SocketAddr::new(i.addr.ip(), port))
+                       .collect_vec();
+
     let res = try!(::crossbeam::scope(|scope| -> io::Result<SocketAddr> {
         // TODO Instead of periodic sender just send the request to every body and start listening.
         // If we get it back from even one, we collect the info and return.
-        for udp_listener in &udp_listeners {
+        for udp_listener in &peer_udp_listeners {
             let cloned_udp_socket = try!(cloned_udp_socket.try_clone());
             let _periodic_sender = PeriodicSender::start(cloned_udp_socket,
                                                          *udp_listener,
@@ -82,11 +89,12 @@ pub fn external_udp_socket(udp_listeners: Vec<SocketAddr>) -> io::Result<(UdpSoc
 
             if let Ok(ListenerResponse::EchoExternalAddr { external_addr }) =
                    deserialise::<ListenerResponse>(&recv_data[..read_size]) {
-                return Ok(external_addr);
+                let mut addrs = vec![external_addr];
+                addrs.extend(if_addrs);
+                return Ok(addrs);
             }
         }
-        return Err(io::Error::new(io::ErrorKind::Other,
-                                  "TODO - Improve this - Could Not find our external address"));
+        return if_addrs;
     }));
 
     Ok((udp_socket, res))
