@@ -209,13 +209,13 @@
 <span class='doccomment'>//! This means that `read_config_file()`, `create_default_config_file()`, and</span>
 <span class='doccomment'>//! `write_config_file()` should not be called concurrently with one another.</span>
 
-<span class='kw'>use</span> <span class='ident'>contact_info</span>::<span class='ident'>ContactInfo</span>;
+<span class='kw'>use</span> <span class='ident'>static_contact_info</span>::<span class='ident'>StaticContactInfo</span>;
 <span class='kw'>use</span> <span class='ident'>config_file_handler</span>::<span class='ident'>FileHandler</span>;
 <span class='kw'>use</span> <span class='ident'>config_file_handler</span>;
 
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>PartialEq</span>, <span class='ident'>Eq</span>, <span class='ident'>Debug</span>, <span class='ident'>RustcDecodable</span>, <span class='ident'>RustcEncodable</span>, <span class='ident'>Clone</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>Config</span> {
-    <span class='kw'>pub</span> <span class='ident'>hard_coded_contacts</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>ContactInfo</span><span class='op'>&gt;</span>,
+    <span class='kw'>pub</span> <span class='ident'>hard_coded_contacts</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>StaticContactInfo</span><span class='op'>&gt;</span>,
 }
 
 <span class='kw'>impl</span> <span class='ident'>Config</span> {
@@ -244,7 +244,7 @@
 <span class='doccomment'>///</span>
 <span class='doccomment'>/// N.B. This method should only be used as a utility for test and examples.  In normal use cases,</span>
 <span class='doccomment'>/// this file should be created by the installer for the dependent application.</span>
-<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>write_config_file</span>(<span class='ident'>hard_coded_endpoints</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>ContactInfo</span><span class='op'>&gt;&gt;</span>)
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>write_config_file</span>(<span class='ident'>hard_coded_endpoints</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>StaticContactInfo</span><span class='op'>&gt;&gt;</span>)
                          <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>::<span class='ident'>std</span>::<span class='ident'>path</span>::<span class='ident'>PathBuf</span>, ::<span class='ident'>error</span>::<span class='ident'>Error</span><span class='op'>&gt;</span> {
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>Write</span>;
 

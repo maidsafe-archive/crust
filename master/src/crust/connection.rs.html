@@ -459,6 +459,115 @@
 <span id="416">416</span>
 <span id="417">417</span>
 <span id="418">418</span>
+<span id="419">419</span>
+<span id="420">420</span>
+<span id="421">421</span>
+<span id="422">422</span>
+<span id="423">423</span>
+<span id="424">424</span>
+<span id="425">425</span>
+<span id="426">426</span>
+<span id="427">427</span>
+<span id="428">428</span>
+<span id="429">429</span>
+<span id="430">430</span>
+<span id="431">431</span>
+<span id="432">432</span>
+<span id="433">433</span>
+<span id="434">434</span>
+<span id="435">435</span>
+<span id="436">436</span>
+<span id="437">437</span>
+<span id="438">438</span>
+<span id="439">439</span>
+<span id="440">440</span>
+<span id="441">441</span>
+<span id="442">442</span>
+<span id="443">443</span>
+<span id="444">444</span>
+<span id="445">445</span>
+<span id="446">446</span>
+<span id="447">447</span>
+<span id="448">448</span>
+<span id="449">449</span>
+<span id="450">450</span>
+<span id="451">451</span>
+<span id="452">452</span>
+<span id="453">453</span>
+<span id="454">454</span>
+<span id="455">455</span>
+<span id="456">456</span>
+<span id="457">457</span>
+<span id="458">458</span>
+<span id="459">459</span>
+<span id="460">460</span>
+<span id="461">461</span>
+<span id="462">462</span>
+<span id="463">463</span>
+<span id="464">464</span>
+<span id="465">465</span>
+<span id="466">466</span>
+<span id="467">467</span>
+<span id="468">468</span>
+<span id="469">469</span>
+<span id="470">470</span>
+<span id="471">471</span>
+<span id="472">472</span>
+<span id="473">473</span>
+<span id="474">474</span>
+<span id="475">475</span>
+<span id="476">476</span>
+<span id="477">477</span>
+<span id="478">478</span>
+<span id="479">479</span>
+<span id="480">480</span>
+<span id="481">481</span>
+<span id="482">482</span>
+<span id="483">483</span>
+<span id="484">484</span>
+<span id="485">485</span>
+<span id="486">486</span>
+<span id="487">487</span>
+<span id="488">488</span>
+<span id="489">489</span>
+<span id="490">490</span>
+<span id="491">491</span>
+<span id="492">492</span>
+<span id="493">493</span>
+<span id="494">494</span>
+<span id="495">495</span>
+<span id="496">496</span>
+<span id="497">497</span>
+<span id="498">498</span>
+<span id="499">499</span>
+<span id="500">500</span>
+<span id="501">501</span>
+<span id="502">502</span>
+<span id="503">503</span>
+<span id="504">504</span>
+<span id="505">505</span>
+<span id="506">506</span>
+<span id="507">507</span>
+<span id="508">508</span>
+<span id="509">509</span>
+<span id="510">510</span>
+<span id="511">511</span>
+<span id="512">512</span>
+<span id="513">513</span>
+<span id="514">514</span>
+<span id="515">515</span>
+<span id="516">516</span>
+<span id="517">517</span>
+<span id="518">518</span>
+<span id="519">519</span>
+<span id="520">520</span>
+<span id="521">521</span>
+<span id="522">522</span>
+<span id="523">523</span>
+<span id="524">524</span>
+<span id="525">525</span>
+<span id="526">526</span>
+<span id="527">527</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -488,7 +597,7 @@
 <span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>::<span class='ident'>thread</span>::<span class='ident'>RaiiThreadJoiner</span>;
 <span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>::<span class='ident'>serialisation</span>::{<span class='ident'>deserialise</span>, <span class='ident'>serialise</span>};
 <span class='kw'>use</span> <span class='ident'>get_if_addrs</span>::<span class='ident'>get_if_addrs</span>;
-<span class='kw'>use</span> <span class='ident'>contact_info</span>::<span class='ident'>ContactInfo</span>;
+<span class='kw'>use</span> <span class='ident'>static_contact_info</span>::<span class='ident'>StaticContactInfo</span>;
 <span class='kw'>use</span> <span class='ident'>tcp_connections</span>;
 <span class='kw'>use</span> <span class='ident'>utp_connections</span>;
 <span class='kw'>use</span> <span class='ident'>sender_receiver</span>::{<span class='ident'>RaiiSender</span>, <span class='ident'>Receiver</span>};
@@ -498,6 +607,10 @@
 <span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>crypto</span>::<span class='ident'>sign</span>::<span class='ident'>PublicKey</span>;
 <span class='kw'>use</span> <span class='ident'>endpoint</span>::{<span class='ident'>Endpoint</span>, <span class='ident'>Protocol</span>};
 <span class='kw'>use</span> <span class='ident'>rand</span>;
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fmt</span>::{<span class='ident'>Debug</span>, <span class='ident'>Formatter</span>};
+<span class='kw'>use</span> <span class='ident'>net2</span>::<span class='ident'>TcpBuilder</span>;
+<span class='kw'>use</span> <span class='ident'>socket_utils</span>;
+<span class='kw'>use</span> <span class='ident'>listener_message</span>::{<span class='ident'>ListenerRequest</span>, <span class='ident'>ListenerResponse</span>};
 
 <span class='doccomment'>/// An open connection that can be used to send messages to a peer.</span>
 <span class='doccomment'>///</span>
@@ -520,8 +633,8 @@
     }
 }
 
-<span class='kw'>impl</span> <span class='ident'>fmt</span>::<span class='ident'>Debug</span> <span class='kw'>for</span> <span class='ident'>Connection</span> {
-    <span class='kw'>fn</span> <span class='ident'>fmt</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>f</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>fmt</span>::<span class='ident'>Formatter</span>) <span class='op'>-&gt;</span> <span class='ident'>fmt</span>::<span class='prelude-ty'>Result</span> {
+<span class='kw'>impl</span> <span class='ident'>Debug</span> <span class='kw'>for</span> <span class='ident'>Connection</span> {
+    <span class='kw'>fn</span> <span class='ident'>fmt</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>f</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Formatter</span>) <span class='op'>-&gt;</span> <span class='ident'>fmt</span>::<span class='prelude-ty'>Result</span> {
         <span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>f</span>,
                <span class='string'>&quot;Connection {{ protocol: {:?}, our_addr: {:?}, their_addr: {:?} }}&quot;</span>,
                <span class='self'>self</span>.<span class='ident'>protocol</span>,
@@ -534,6 +647,11 @@
     <span class='doccomment'>/// Send the `data` to a peer via this connection.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>send</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>data</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>]) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
         <span class='self'>self</span>.<span class='ident'>network_tx</span>.<span class='ident'>send</span>(<span class='ident'>data</span>)
+    }
+
+    <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>get_protocol</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='ident'>Protocol</span> {
+        <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>protocol</span>
     }
 }
 
@@ -552,14 +670,21 @@
     }
 }
 
-<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>connect</span>(<span class='ident'>contact</span>: <span class='ident'>ContactInfo</span>,
-               <span class='ident'>our_contact_info</span>: <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Mutex</span><span class='op'>&lt;</span><span class='ident'>ContactInfo</span><span class='op'>&gt;&gt;</span>,
+<span class='kw'>impl</span> <span class='ident'>Debug</span> <span class='kw'>for</span> <span class='ident'>RaiiTcpAcceptor</span> {
+    <span class='kw'>fn</span> <span class='ident'>fmt</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>f</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Formatter</span>) <span class='op'>-&gt;</span> <span class='ident'>fmt</span>::<span class='prelude-ty'>Result</span> {
+        <span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>f</span>, <span class='string'>&quot;RaiiTcpAcceptor {{ port: {}, }}&quot;</span>, <span class='self'>self</span>.<span class='ident'>port</span>)
+    }
+}
+
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>connect</span>(<span class='ident'>peer_contact</span>: <span class='ident'>StaticContactInfo</span>,
+               <span class='ident'>peer_contact_infos</span>: <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Mutex</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>StaticContactInfo</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span>,
+               <span class='ident'>our_contact_info</span>: <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Mutex</span><span class='op'>&lt;</span><span class='ident'>StaticContactInfo</span><span class='op'>&gt;&gt;</span>,
                <span class='ident'>event_tx</span>: ::<span class='ident'>CrustEventSender</span>)
                <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>Connection</span><span class='op'>&gt;</span> {
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>last_err</span> <span class='op'>=</span> <span class='prelude-val'>None</span>;
-    <span class='kw'>for</span> <span class='ident'>tcp_addr</span> <span class='kw'>in</span> <span class='ident'>contact</span>.<span class='ident'>tcp_acceptors</span> {
+    <span class='kw'>for</span> <span class='ident'>tcp_addr</span> <span class='kw'>in</span> <span class='ident'>peer_contact</span>.<span class='ident'>tcp_acceptors</span> {
         <span class='kw'>match</span> <span class='ident'>connect_tcp_endpoint</span>(<span class='ident'>tcp_addr</span>,
-                                   <span class='ident'>contact</span>.<span class='ident'>pub_key</span>,
+                                   <span class='ident'>peer_contact</span>.<span class='ident'>pub_key</span>,
                                    <span class='ident'>our_contact_info</span>.<span class='ident'>clone</span>(),
                                    <span class='ident'>event_tx</span>.<span class='ident'>clone</span>()) {
             <span class='prelude-val'>Ok</span>(<span class='ident'>connection</span>) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='ident'>connection</span>),
@@ -567,13 +692,51 @@
         }
     }
 
-    <span class='kw'>for</span> <span class='ident'>udp_addr</span> <span class='kw'>in</span> <span class='ident'>contact</span>.<span class='ident'>udp_listeners</span> {
-        <span class='kw'>match</span> <span class='ident'>connect_utp_endpoint</span>(<span class='ident'>udp_addr</span>,
-                                   <span class='ident'>contact</span>.<span class='ident'>pub_key</span>,
-                                   <span class='ident'>our_contact_info</span>.<span class='ident'>clone</span>(),
-                                   <span class='ident'>event_tx</span>.<span class='ident'>clone</span>()) {
-            <span class='prelude-val'>Ok</span>(<span class='ident'>connection</span>) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='ident'>connection</span>),
-            <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=&gt;</span> <span class='ident'>last_err</span> <span class='op'>=</span> <span class='prelude-val'>Some</span>(<span class='ident'>e</span>),
+    <span class='kw'>let</span> <span class='ident'>udp_helper_nodes</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>SocketAddr</span><span class='op'>&gt;</span> <span class='op'>=</span> {
+        <span class='kw'>let</span> <span class='ident'>peer_contact_infos</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>peer_contact_infos</span>.<span class='ident'>lock</span>());
+        <span class='ident'>peer_contact_infos</span>.<span class='ident'>iter</span>().<span class='ident'>flat_map</span>(<span class='op'>|</span><span class='ident'>ci</span><span class='op'>|</span> <span class='ident'>ci</span>.<span class='ident'>udp_listeners</span>.<span class='ident'>iter</span>().<span class='ident'>cloned</span>()).<span class='ident'>collect</span>()
+    };
+
+    <span class='kw'>let</span> (<span class='ident'>udp_socket</span>, <span class='ident'>our_external_addrs</span>) <span class='op'>=</span>
+        <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>utp_connections</span>::<span class='ident'>external_udp_socket</span>(<span class='ident'>udp_helper_nodes</span>));
+    <span class='kw'>let</span> <span class='ident'>our_secret</span> <span class='op'>=</span> [<span class='number'>255</span>; <span class='number'>4</span>];
+    <span class='kw'>let</span> <span class='ident'>connect_req</span> <span class='op'>=</span> <span class='ident'>ListenerRequest</span>::<span class='ident'>Connect</span> {
+        <span class='ident'>secret</span>: <span class='ident'>our_secret</span>,
+        <span class='ident'>pub_key</span>: <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>our_contact_info</span>.<span class='ident'>lock</span>()).<span class='ident'>pub_key</span>.<span class='ident'>clone</span>(),
+    };
+    <span class='kw'>let</span> <span class='ident'>serialised_connect_req</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>serialise</span>(<span class='kw-2'>&amp;</span><span class='ident'>connect_req</span>));
+    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>read_buf</span> <span class='op'>=</span> [<span class='number'>0</span>; <span class='number'>1024</span>];
+
+    <span class='kw'>for</span> <span class='ident'>udp_addr</span> <span class='kw'>in</span> <span class='ident'>peer_contact</span>.<span class='ident'>udp_listeners</span> {
+        <span class='kw'>if</span> <span class='ident'>udp_socket</span>.<span class='ident'>send_to</span>(<span class='kw-2'>&amp;</span><span class='ident'>serialised_connect_req</span>, <span class='kw-2'>&amp;</span><span class='op'>*</span><span class='ident'>udp_addr</span>).<span class='ident'>is_err</span>() {
+            <span class='kw'>continue</span>;
+        }
+        <span class='kw'>match</span> <span class='ident'>udp_socket</span>.<span class='ident'>recv_from</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>read_buf</span>) {
+            <span class='prelude-val'>Ok</span>((<span class='ident'>bytes_rxd</span>, <span class='ident'>peer_addr</span>)) <span class='op'>=&gt;</span> {
+                <span class='kw'>match</span> <span class='ident'>deserialise</span>::<span class='op'>&lt;</span><span class='ident'>ListenerResponse</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='ident'>read_buf</span>[..<span class='ident'>bytes_rxd</span>]) {
+                    <span class='prelude-val'>Ok</span>(<span class='ident'>ListenerResponse</span>::<span class='ident'>Connect</span> { <span class='ident'>connect_on</span>, <span class='ident'>secret</span>, <span class='ident'>pub_key</span>, }) <span class='op'>=&gt;</span> {
+                        <span class='kw'>if</span> <span class='ident'>secret</span> <span class='op'>!=</span> <span class='ident'>our_secret</span> {
+                            <span class='kw'>continue</span>;
+                        }
+                        <span class='kw'>for</span> <span class='ident'>peer_udp_hole_punched_socket_addr</span> <span class='kw'>in</span> <span class='ident'>connect_on</span> {
+                            <span class='kw'>let</span> <span class='ident'>cloned_udp_socket</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>udp_socket</span>.<span class='ident'>try_clone</span>());
+                            <span class='kw'>match</span> <span class='ident'>utp_connections</span>::<span class='ident'>blocking_udp_punch_hole</span>(<span class='ident'>cloned_udp_socket</span>,
+                                                                           <span class='prelude-val'>Some</span>(<span class='ident'>our_secret</span>),
+                                                                           <span class='ident'>peer_udp_hole_punched_socket_addr</span>) {
+                                (<span class='ident'>our_socket</span>, <span class='prelude-val'>Ok</span>(<span class='ident'>peer_addr</span>)) <span class='op'>=&gt;</span> {
+                                    <span class='kw'>match</span> <span class='ident'>utp_rendezvous_connect</span>(<span class='ident'>our_socket</span>, <span class='ident'>peer_addr</span>, <span class='ident'>pub_key</span>, <span class='ident'>event_tx</span>.<span class='ident'>clone</span>()) {
+                                        <span class='prelude-val'>Ok</span>(<span class='ident'>connection</span>) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='ident'>connection</span>),
+                                        <span class='prelude-val'>Err</span>(_) <span class='op'>=&gt;</span> <span class='kw'>continue</span>,
+                                    }
+                                }
+                                _ <span class='op'>=&gt;</span> <span class='kw'>continue</span>,
+                            }
+                        }
+                    }
+                    _ <span class='op'>=&gt;</span> <span class='kw'>continue</span>,
+                }
+            }
+            <span class='prelude-val'>Err</span>(_) <span class='op'>=&gt;</span> <span class='kw'>continue</span>,
         }
     }
 
@@ -588,7 +751,7 @@
 
 <span class='kw'>fn</span> <span class='ident'>connect_tcp_endpoint</span>(<span class='ident'>remote_addr</span>: <span class='ident'>SocketAddr</span>,
                         <span class='ident'>their_pub_key</span>: <span class='ident'>PublicKey</span>,
-                        <span class='ident'>our_contact_info</span>: <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Mutex</span><span class='op'>&lt;</span><span class='ident'>ContactInfo</span><span class='op'>&gt;&gt;</span>,
+                        <span class='ident'>our_contact_info</span>: <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Mutex</span><span class='op'>&lt;</span><span class='ident'>StaticContactInfo</span><span class='op'>&gt;&gt;</span>,
                         <span class='ident'>event_tx</span>: ::<span class='ident'>CrustEventSender</span>)
                         <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>Connection</span><span class='op'>&gt;</span> {
     <span class='kw'>let</span> (<span class='ident'>network_input</span>, <span class='ident'>writer</span>) <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>tcp_connections</span>::<span class='ident'>connect_tcp</span>(<span class='ident'>remote_addr</span>.<span class='ident'>clone</span>()));
@@ -617,7 +780,7 @@
 
 <span class='kw'>fn</span> <span class='ident'>connect_utp_endpoint</span>(<span class='ident'>remote_addr</span>: <span class='ident'>SocketAddr</span>,
                         <span class='ident'>their_pub_key</span>: <span class='ident'>PublicKey</span>,
-                        <span class='ident'>our_contact_info</span>: <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Mutex</span><span class='op'>&lt;</span><span class='ident'>ContactInfo</span><span class='op'>&gt;&gt;</span>,
+                        <span class='ident'>our_contact_info</span>: <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Mutex</span><span class='op'>&lt;</span><span class='ident'>StaticContactInfo</span><span class='op'>&gt;&gt;</span>,
                         <span class='ident'>event_tx</span>: ::<span class='ident'>CrustEventSender</span>)
                         <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>Connection</span><span class='op'>&gt;</span> {
     <span class='kw'>let</span> (<span class='ident'>network_input</span>, <span class='ident'>writer</span>) <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>utp_connections</span>::<span class='ident'>connect_utp</span>(<span class='ident'>remote_addr</span>.<span class='ident'>clone</span>()));
@@ -638,22 +801,77 @@
     })
 }
 
+<span class='comment'>// TODO use peer_contact_infos to get the external addresses</span>
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>start_tcp_accept</span>(<span class='ident'>port</span>: <span class='ident'>u16</span>,
-                        <span class='ident'>our_contact_info</span>: <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Mutex</span><span class='op'>&lt;</span><span class='ident'>ContactInfo</span><span class='op'>&gt;&gt;</span>,
+                        <span class='ident'>our_contact_info</span>: <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Mutex</span><span class='op'>&lt;</span><span class='ident'>StaticContactInfo</span><span class='op'>&gt;&gt;</span>,
+                        <span class='ident'>peer_contact_infos</span>: <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Mutex</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>StaticContactInfo</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span>,
                         <span class='ident'>event_tx</span>: ::<span class='ident'>CrustEventSender</span>)
                         <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>RaiiTcpAcceptor</span><span class='op'>&gt;</span> {
-    <span class='kw'>let</span> <span class='ident'>listener</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>TcpListener</span>::<span class='ident'>bind</span>((<span class='string'>&quot;0.0.0.0&quot;</span>, <span class='ident'>port</span>)));
+    <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>Write</span>;
+    <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>Read</span>;
+    <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>net</span>::<span class='ident'>ToSocketAddrs</span>;
+
+    <span class='kw'>let</span> <span class='ident'>tcp_builder_listener</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>TcpBuilder</span>::<span class='ident'>new_v4</span>());
+    <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>socket_utils</span>::<span class='ident'>enable_so_reuseport</span>(<span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>tcp_builder_listener</span>.<span class='ident'>reuse_address</span>(<span class='boolval'>true</span>))));
+    <span class='kw'>let</span> _ <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>tcp_builder_listener</span>.<span class='ident'>bind</span>((<span class='string'>&quot;0.0.0.0&quot;</span>, <span class='ident'>port</span>)));
+
+    <span class='kw'>let</span> <span class='ident'>listener</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>tcp_builder_listener</span>.<span class='ident'>listen</span>(<span class='number'>1</span>));
     <span class='kw'>let</span> <span class='ident'>port</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>listener</span>.<span class='ident'>local_addr</span>()).<span class='ident'>port</span>(); <span class='comment'>// Useful if supplied port was 0</span>
+
+    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>our_external_addr</span> <span class='op'>=</span> <span class='prelude-val'>None</span>;
+    <span class='kw'>let</span> <span class='ident'>send_data</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>serialise</span>(<span class='kw-2'>&amp;</span><span class='ident'>ListenerRequest</span>::<span class='ident'>EchoExternalAddr</span>));
+    <span class='kw'>for</span> <span class='ident'>peer_contact</span> <span class='kw'>in</span> <span class='kw-2'>&amp;</span><span class='op'>*</span><span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>peer_contact_infos</span>.<span class='ident'>lock</span>()) {
+        <span class='kw'>for</span> <span class='ident'>tcp_acceptor_addr</span> <span class='kw'>in</span> <span class='kw-2'>&amp;</span><span class='ident'>peer_contact</span>.<span class='ident'>tcp_acceptors</span> {
+            <span class='kw'>let</span> <span class='ident'>tcp_builder_connect</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>TcpBuilder</span>::<span class='ident'>new_v4</span>());
+            <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>socket_utils</span>::<span class='ident'>enable_so_reuseport</span>(<span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>tcp_builder_connect</span>.<span class='ident'>reuse_address</span>(<span class='boolval'>true</span>))));
+            <span class='kw'>let</span> _ <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>tcp_builder_connect</span>.<span class='ident'>bind</span>((<span class='string'>&quot;0.0.0.0&quot;</span>, <span class='ident'>port</span>)));
+
+            <span class='kw'>match</span> <span class='ident'>tcp_builder_connect</span>.<span class='ident'>connect</span>(<span class='op'>*</span><span class='ident'>tcp_acceptor_addr</span>.<span class='ident'>clone</span>()) {
+                <span class='prelude-val'>Ok</span>(<span class='kw-2'>mut</span> <span class='ident'>stream</span>) <span class='op'>=&gt;</span> {
+                    <span class='kw'>match</span> <span class='ident'>stream</span>.<span class='ident'>write</span>(<span class='kw-2'>&amp;</span><span class='ident'>send_data</span>[..]) {
+                        <span class='prelude-val'>Ok</span>(<span class='ident'>n</span>) <span class='op'>=&gt;</span> {
+                            <span class='kw'>match</span> <span class='ident'>n</span> <span class='op'>==</span> <span class='ident'>send_data</span>.<span class='ident'>len</span>() {
+                                <span class='boolval'>true</span> <span class='op'>=&gt;</span> (),
+                                <span class='boolval'>false</span> <span class='op'>=&gt;</span> <span class='kw'>continue</span>,
+                            }
+                        }
+                        <span class='prelude-val'>Err</span>(_) <span class='op'>=&gt;</span> <span class='kw'>continue</span>,
+                    };
+
+                    <span class='kw'>const</span> <span class='ident'>MAX_READ_SIZE</span>: <span class='ident'>usize</span> <span class='op'>=</span> <span class='number'>1024</span>;
+
+                    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>recv_data</span> <span class='op'>=</span> [<span class='number'>0u8</span>; <span class='ident'>MAX_READ_SIZE</span>];
+                    <span class='kw'>let</span> <span class='ident'>recv_size</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>stream</span>.<span class='ident'>read</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>recv_data</span>[..]) {
+                        <span class='prelude-val'>Ok</span>(<span class='ident'>recv_size</span>) <span class='op'>=&gt;</span> <span class='ident'>recv_size</span>,
+                        <span class='prelude-val'>Err</span>(_) <span class='op'>=&gt;</span> <span class='kw'>continue</span>,
+                    };
+                    <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Ok</span>(<span class='ident'>ListenerResponse</span>::<span class='ident'>EchoExternalAddr</span> { <span class='ident'>external_addr</span> }) <span class='op'>=</span>
+                           <span class='ident'>deserialise</span>::<span class='op'>&lt;</span><span class='ident'>ListenerResponse</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='ident'>recv_data</span>[..<span class='ident'>recv_size</span>]) {
+                        <span class='ident'>our_external_addr</span> <span class='op'>=</span> <span class='prelude-val'>Some</span>(<span class='ident'>external_addr</span>);
+                        <span class='ident'>stream</span>.<span class='ident'>shutdown</span>(<span class='ident'>Shutdown</span>::<span class='ident'>Both</span>);
+                        <span class='kw'>break</span>;
+                    }
+                }
+                <span class='prelude-val'>Err</span>(_) <span class='op'>=&gt;</span> <span class='kw'>continue</span>,
+            }
+        }
+    }
 
     <span class='kw'>let</span> <span class='ident'>stop_flag</span> <span class='op'>=</span> <span class='ident'>Arc</span>::<span class='ident'>new</span>(<span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolval'>false</span>));
     <span class='kw'>let</span> <span class='ident'>cloned_stop_flag</span> <span class='op'>=</span> <span class='ident'>stop_flag</span>.<span class='ident'>clone</span>();
+
+    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>addrs</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>our_external_addr</span> {
+        <span class='prelude-val'>Some</span>(<span class='ident'>addr</span>) <span class='op'>=&gt;</span> <span class='macro'>vec</span><span class='macro'>!</span>[<span class='ident'>addr</span>],
+        <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
+    };
 
     <span class='kw'>let</span> <span class='ident'>if_addrs</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>get_if_addrs</span>())
                        .<span class='ident'>into_iter</span>()
                        .<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>i</span><span class='op'>|</span> <span class='ident'>SocketAddr</span>::<span class='ident'>new</span>(<span class='ident'>i</span>.<span class='ident'>addr</span>.<span class='ident'>ip</span>(), <span class='ident'>port</span>))
                        .<span class='ident'>collect_vec</span>();
+    <span class='ident'>addrs</span>.<span class='ident'>extend</span>(<span class='ident'>if_addrs</span>);
 
-    <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>our_contact_info</span>.<span class='ident'>lock</span>()).<span class='ident'>tcp_acceptors</span>.<span class='ident'>extend</span>(<span class='ident'>if_addrs</span>);
+    <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>our_contact_info</span>.<span class='ident'>lock</span>()).<span class='ident'>tcp_acceptors</span>.<span class='ident'>extend</span>(<span class='ident'>addrs</span>);
 
     <span class='kw'>let</span> <span class='ident'>joiner</span> <span class='op'>=</span> <span class='ident'>RaiiThreadJoiner</span>::<span class='ident'>new</span>(<span class='macro'>thread</span><span class='macro'>!</span>(<span class='string'>&quot;TcpAcceptorThread&quot;</span>, <span class='kw'>move</span> <span class='op'>||</span> {
         <span class='kw'>loop</span> {
@@ -677,21 +895,21 @@
 
             <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>network_rx</span> <span class='op'>=</span> <span class='ident'>Receiver</span>::<span class='ident'>Tcp</span>(<span class='ident'>cbor</span>::<span class='ident'>Decoder</span>::<span class='ident'>from_reader</span>(<span class='ident'>network_input</span>));
 
-            <span class='kw'>let</span> <span class='ident'>their_contact_info</span>: <span class='ident'>ContactInfo</span> <span class='op'>=</span> {
+            <span class='kw'>let</span> <span class='ident'>their_contact_info</span>: <span class='ident'>StaticContactInfo</span> <span class='op'>=</span> {
                 <span class='kw'>let</span> <span class='ident'>raw_data</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>network_rx</span>.<span class='ident'>receive</span>() {
                     <span class='prelude-val'>Ok</span>(<span class='ident'>data</span>) <span class='op'>=&gt;</span> <span class='ident'>data</span>,
                     <span class='prelude-val'>Err</span>(<span class='ident'>err</span>) <span class='op'>=&gt;</span> {
-                        <span class='macro'>error</span><span class='macro'>!</span>(<span class='string'>&quot;ContactInfo not shared by peer as expected. Connection will be \
-                                discarded - {:?}&quot;</span>,
+                        <span class='macro'>error</span><span class='macro'>!</span>(<span class='string'>&quot;StaticContactInfo not shared by peer as expected. Connection \
+                                will be discarded - {:?}&quot;</span>,
                                <span class='ident'>err</span>);
                         <span class='kw'>continue</span>;
                     }
                 };
                 <span class='kw'>match</span> <span class='ident'>deserialise</span>(<span class='kw-2'>&amp;</span><span class='ident'>raw_data</span>) {
-                    <span class='prelude-val'>Ok</span>(<span class='ident'>contact_info</span>) <span class='op'>=&gt;</span> <span class='ident'>contact_info</span>,
+                    <span class='prelude-val'>Ok</span>(<span class='ident'>static_contact_info</span>) <span class='op'>=&gt;</span> <span class='ident'>static_contact_info</span>,
                     <span class='prelude-val'>Err</span>(<span class='ident'>err</span>) <span class='op'>=&gt;</span> {
-                        <span class='macro'>error</span><span class='macro'>!</span>(<span class='string'>&quot;ContactInfo not shared by peer as expected. Connection will be \
-                                discarded - {:?}&quot;</span>,
+                        <span class='macro'>error</span><span class='macro'>!</span>(<span class='string'>&quot;StaticContactInfo not shared by peer as expected. Connection \
+                                will be discarded - {:?}&quot;</span>,
                                <span class='ident'>err</span>);
                         <span class='kw'>continue</span>;
                     }

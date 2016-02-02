@@ -363,7 +363,7 @@
 <span class='doccomment'>//! with any other one.</span>
 
 <span class='kw'>use</span> <span class='ident'>error</span>::<span class='ident'>Error</span>;
-<span class='kw'>use</span> <span class='ident'>contact_info</span>::<span class='ident'>ContactInfo</span>;
+<span class='kw'>use</span> <span class='ident'>static_contact_info</span>::<span class='ident'>StaticContactInfo</span>;
 <span class='kw'>use</span> <span class='ident'>config_file_handler</span>::<span class='ident'>FileHandler</span>;
 <span class='kw'>use</span> <span class='ident'>config_file_handler</span>;
 <span class='kw'>use</span> <span class='ident'>util</span>;
@@ -388,8 +388,8 @@
     }
 
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>update_contacts</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>,
-                           <span class='ident'>contacts</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>ContactInfo</span><span class='op'>&gt;</span>,
-                           <span class='ident'>prune</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>ContactInfo</span><span class='op'>&gt;</span>)
+                           <span class='ident'>contacts</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>StaticContactInfo</span><span class='op'>&gt;</span>,
+                           <span class='ident'>prune</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>StaticContactInfo</span><span class='op'>&gt;</span>)
                            <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>(), <span class='ident'>Error</span><span class='op'>&gt;</span> {
         <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>insert_contacts</span>(<span class='ident'>contacts</span>, <span class='ident'>prune</span>));
         <span class='comment'>// TODO(Team) this implementation is missing and should be considered in next planning</span>
@@ -399,8 +399,8 @@
         <span class='prelude-val'>Ok</span>(())
     }
 
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>read_file</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>ContactInfo</span><span class='op'>&gt;</span>, <span class='ident'>Error</span><span class='op'>&gt;</span> {
-        <span class='prelude-val'>Ok</span>(<span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>file_handler</span>.<span class='ident'>read_file</span>::<span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>ContactInfo</span><span class='op'>&gt;&gt;</span>()))
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>read_file</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>StaticContactInfo</span><span class='op'>&gt;</span>, <span class='ident'>Error</span><span class='op'>&gt;</span> {
+        <span class='prelude-val'>Ok</span>(<span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>file_handler</span>.<span class='ident'>read_file</span>::<span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>StaticContactInfo</span><span class='op'>&gt;&gt;</span>()))
     }
 
     <span class='kw'>fn</span> <span class='ident'>duration_between_updates</span>() <span class='op'>-&gt;</span> ::<span class='ident'>time</span>::<span class='ident'>Duration</span> {
@@ -412,8 +412,8 @@
     }
 
     <span class='kw'>fn</span> <span class='ident'>insert_contacts</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>,
-                       <span class='kw-2'>mut</span> <span class='ident'>contacts</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>ContactInfo</span><span class='op'>&gt;</span>,
-                       <span class='ident'>prune</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>ContactInfo</span><span class='op'>&gt;</span>)
+                       <span class='kw-2'>mut</span> <span class='ident'>contacts</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>StaticContactInfo</span><span class='op'>&gt;</span>,
+                       <span class='ident'>prune</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>StaticContactInfo</span><span class='op'>&gt;</span>)
                        <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>(), <span class='ident'>Error</span><span class='op'>&gt;</span> {
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>bootstrap_contacts</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>read_file</span>().<span class='ident'>unwrap_or_else</span>(<span class='op'>|</span><span class='ident'>e</span><span class='op'>|</span> {
             <span class='macro'>debug</span><span class='macro'>!</span>(<span class='string'>&quot;Error reading Bootstrap file: {:?}.&quot;</span>, <span class='ident'>e</span>);
@@ -449,7 +449,7 @@
 <span class='kw'>mod</span> <span class='ident'>test</span> {
 
     <span class='comment'>// TODO(canndrew): Add these tests back</span>
-    <span class='comment'>// the main thing that has changed is that ContactInfo has replaced Endpoint. Probably nothing</span>
+    <span class='comment'>// the main thing that has changed is that StaticContactInfo has replaced Endpoint. Probably nothing</span>
     <span class='comment'>// else has changed.</span>
 
     <span class='comment'>// use std::net;</span>

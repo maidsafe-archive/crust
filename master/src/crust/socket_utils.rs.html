@@ -110,6 +110,34 @@
 <span id="67">67</span>
 <span id="68">68</span>
 <span id="69">69</span>
+<span id="70">70</span>
+<span id="71">71</span>
+<span id="72">72</span>
+<span id="73">73</span>
+<span id="74">74</span>
+<span id="75">75</span>
+<span id="76">76</span>
+<span id="77">77</span>
+<span id="78">78</span>
+<span id="79">79</span>
+<span id="80">80</span>
+<span id="81">81</span>
+<span id="82">82</span>
+<span id="83">83</span>
+<span id="84">84</span>
+<span id="85">85</span>
+<span id="86">86</span>
+<span id="87">87</span>
+<span id="88">88</span>
+<span id="89">89</span>
+<span id="90">90</span>
+<span id="91">91</span>
+<span id="92">92</span>
+<span id="93">93</span>
+<span id="94">94</span>
+<span id="95">95</span>
+<span id="96">96</span>
+<span id="97">97</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -132,6 +160,7 @@
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>net</span>::<span class='ident'>UdpSocket</span>;
 <span class='kw'>use</span> <span class='ident'>socket_addr</span>::<span class='ident'>SocketAddr</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>ErrorKind</span>;
+<span class='kw'>use</span> <span class='ident'>net2</span>::<span class='ident'>TcpBuilder</span>;
 
 <span class='doccomment'>/// A self interruptable receive trait that allows a timed-out period to be defined</span>
 <span class='kw'>pub</span> <span class='kw'>trait</span> <span class='ident'>RecvUntil</span> {
@@ -179,6 +208,33 @@
             }
         }
     }
+}
+
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>target_family</span> <span class='op'>=</span> <span class='string'>&quot;unix&quot;</span>)]</span>
+<span class='attribute'>#[<span class='ident'>allow</span>(<span class='ident'>unsafe_code</span>)]</span>
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>enable_so_reuseport</span>(<span class='ident'>sock</span>: <span class='kw-2'>&amp;</span><span class='ident'>TcpBuilder</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+    <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>os</span>::<span class='ident'>unix</span>::<span class='ident'>io</span>::<span class='ident'>AsRawFd</span>;
+    <span class='kw'>use</span> <span class='ident'>libc</span>;
+    <span class='kw'>use</span> <span class='ident'>std</span>;
+
+    <span class='kw'>let</span> <span class='ident'>one</span>: <span class='ident'>libc</span>::<span class='ident'>c_int</span> <span class='op'>=</span> <span class='number'>1</span>;
+    <span class='kw'>let</span> <span class='ident'>raw_fd</span> <span class='op'>=</span> <span class='ident'>sock</span>.<span class='ident'>as_raw_fd</span>();
+    <span class='kw'>let</span> <span class='ident'>one_ptr</span>: <span class='op'>*</span><span class='kw'>const</span> <span class='ident'>libc</span>::<span class='ident'>c_int</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>one</span>;
+    <span class='kw'>unsafe</span> {
+        <span class='kw'>if</span> <span class='ident'>libc</span>::<span class='ident'>setsockopt</span>(<span class='ident'>raw_fd</span>,
+                            <span class='ident'>libc</span>::<span class='ident'>SOL_SOCKET</span>,
+                            <span class='ident'>libc</span>::<span class='ident'>SO_REUSEPORT</span>,
+                            <span class='ident'>one_ptr</span> <span class='kw'>as</span> <span class='op'>*</span><span class='kw'>const</span> <span class='ident'>libc</span>::<span class='ident'>c_void</span>,
+                            <span class='ident'>std</span>::<span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>libc</span>::<span class='ident'>c_int</span><span class='op'>&gt;</span>() <span class='kw'>as</span> <span class='ident'>libc</span>::<span class='ident'>socklen_t</span>) <span class='op'>&lt;</span> <span class='number'>0</span> {
+            <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>io</span>::<span class='ident'>Error</span>::<span class='ident'>last_os_error</span>());
+        };
+    }
+    <span class='prelude-val'>Ok</span>(())
+}
+
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>not</span>(<span class='ident'>target_family</span> <span class='op'>=</span> <span class='string'>&quot;unix&quot;</span>))]</span>
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>enable_so_reuseport</span>(<span class='ident'>sock</span>: <span class='kw-2'>&amp;</span><span class='ident'>TcpBuilder</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+    <span class='prelude-val'>Ok</span>(())
 }
 </pre>
 </section>
