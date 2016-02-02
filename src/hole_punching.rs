@@ -21,4 +21,3 @@ pub struct HolePunch {
     pub secret: Option<[u8; 4]>,
     pub ack: bool,
 }
-

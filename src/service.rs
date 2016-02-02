@@ -34,7 +34,7 @@ use std::net::TcpListener;
 
 use connection::RaiiTcpAcceptor;
 use udp_listener::UdpListener;
-use contact_info::ContactInfo;
+use static_contact_info::StaticContactInfo;
 use rand;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 use itertools::Itertools;
@@ -46,7 +46,8 @@ use ip::SocketAddrExt;
 use connection;
 use bootstrap::RaiiBootstrap;
 
-use event::{Event, OurContactInfo, TheirContactInfo, ContactInfoResult};
+use event::{Event, OurConnectionInfo, OurConnectionInfoInner, TheirConnectionInfo,
+            TheirConnectionInfoInner, ConnectionInfoResult};
 use socket_addr::{SocketAddr, SocketAddrV4};
 use bootstrap_handler::BootstrapHandler;
 
@@ -57,9 +58,9 @@ use bootstrap_handler::BootstrapHandler;
 /// (https://github.com/maidsafe/crust/blob/master/docs/vault_config_file_flowchart.pdf) for more
 /// information.
 pub struct Service {
-    our_contact_info: Arc<Mutex<ContactInfo>>,
-    peer_contact_infos: Arc<Mutex<Vec<ContactInfo>>>,
-    service_discovery: ServiceDiscovery<ContactInfo>,
+    static_contact_info: Arc<Mutex<StaticContactInfo>>,
+    peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
+    service_discovery: ServiceDiscovery<StaticContactInfo>,
     udp_listener: UdpListener,
     event_tx: ::CrustEventSender,
     external_udp_sock_seq_id: u32,
@@ -79,7 +80,7 @@ impl Service {
         let (pub_key, _priv_key) = sign::gen_keypair();
 
         // Form our initial contact info
-        let our_contact_info = Arc::new(Mutex::new(ContactInfo {
+        let static_contact_info = Arc::new(Mutex::new(StaticContactInfo {
             pub_key: pub_key,
             tcp_acceptors: Vec::new(),
             udp_listeners: Vec::new(),
@@ -90,25 +91,25 @@ impl Service {
 
         // Start the TCP Acceptor
         let raii_tcp_acceptor = try!(connection::start_tcp_accept(0,
-                                                                  our_contact_info.clone(),
+                                                                  static_contact_info.clone(),
                                                                   event_tx.clone()));
         // Start the UDP Listener
-        let udp_listener = try!(UdpListener::new(our_contact_info.clone(),
+        let udp_listener = try!(UdpListener::new(static_contact_info.clone(),
                                                  peer_contact_infos.clone(),
                                                  event_tx.clone()));
 
-        let cloned_contact_info = our_contact_info.clone();
+        let cloned_contact_info = static_contact_info.clone();
         let generator = move || unwrap_result!(cloned_contact_info.lock()).clone();
         let service_discovery = try!(ServiceDiscovery::new_with_generator(service_discovery_port,
                                                                           generator));
 
         let bootstrap = RaiiBootstrap::new(&service_discovery,
-                                           our_contact_info.clone(),
+                                           static_contact_info.clone(),
                                            peer_contact_infos.clone(),
                                            event_tx.clone());
 
         let service = Service {
-            our_contact_info: our_contact_info,
+            static_contact_info: static_contact_info,
             peer_contact_infos: peer_contact_infos,
             service_discovery: service_discovery,
             udp_listener: udp_listener,
@@ -161,11 +162,14 @@ impl Service {
     /// Connecting]
     /// (https://github.com/maidsafe/crust/blob/master/docs/connect.md) for
     /// details on handling of connect in different protocols.
-    pub fn connect(&self, our_contact_info: OurContactInfo, their_contact_info: TheirContactInfo) {
-        if let Some(msg) = if our_contact_info.secret != their_contact_info.secret {
-            Some("Cannot connect. our_contact_info and their_contact_info are not associated with \
-                  the same connection.")
-        } else if their_contact_info.rendezvous_addrs.is_empty() {
+    pub fn connect(&self,
+                   our_conection_info: OurConnectionInfo,
+                   their_connection_info: TheirConnectionInfo) {
+        unimplemented!() /*
+        if let Some(msg) = if our_conection_info.0.secret != their_connection_info.secret {
+            Some("Cannot connect. our_conection_info and their_connection_info are not associated \
+                  with the same connection.")
+        } else if their_connection_info.rendezvous_addrs.is_empty() {
             Some("No rendezvous address supplied. Direct connections not yet supported.")
         } else {
             None
@@ -173,28 +177,28 @@ impl Service {
             let err = io::Error::new(io::ErrorKind::Other, msg);
             let ev = Event::NewConnection {
                 connection: Err(err),
-                their_pub_key: their_contact_info.pub_key,
+                their_pub_key: their_connection_info.0.pub_key,
             };
             let _ = self.event_tx.send(ev);
             return;
         }
 
         let event_tx = self.event_tx.clone();
-        let our_pub_key = unwrap_result!(self.our_contact_info.lock()).pub_key.clone();
+        let our_pub_key = unwrap_result!(self.static_contact_info.lock()).pub_key.clone();
 
         // TODO connect to all the socket addresses of peer in parallel
         let _joiner = thread!("PeerConnectionThread", move || {
             let (udp_socket, result_addr) =
-                ::utp_connections::blocking_udp_punch_hole(our_contact_info.socket,
-                                                           our_contact_info.secret,
-                                                           their_contact_info.rendezvous_addrs[0]
+                ::utp_connections::blocking_udp_punch_hole(our_conection_info.0.socket,
+                                                           our_conection_info.0.secret,
+                                                           their_connection_info.0.rendezvous_addrs[0]
                                                                .clone());
             let public_endpoint = match result_addr {
                 Ok(addr) => addr,
                 Err(e) => {
                     let ev = Event::NewConnection {
                         connection: Err(e),
-                        their_pub_key: their_contact_info.pub_key,
+                        their_pub_key: their_connection_info.pub_key,
                     };
                     let _ = event_tx.send(ev);
                     return;
@@ -204,16 +208,17 @@ impl Service {
             let _ = event_tx.send(Event::NewConnection {
                 connection: connection::utp_rendezvous_connect(udp_socket,
                                                                public_endpoint,
-                                                               their_contact_info.pub_key,
+                                                               their_connection_info.pub_key,
                                                                event_tx.clone()),
-                their_pub_key: their_contact_info.pub_key,
+                their_pub_key: their_connection_info.pub_key,
             });
         });
+        */
     }
 
     /// Get already known external endpoints without any upnp mapping
     pub fn get_known_external_endpoints(&self) -> Vec<Endpoint> {
-        unwrap_result!(self.our_contact_info.lock())
+        unwrap_result!(self.static_contact_info.lock())
             .tcp_acceptors
             .iter()
             .map(|sa| Endpoint::from_socket_addr(Protocol::Tcp, *sa))
@@ -221,41 +226,42 @@ impl Service {
     }
 
     /// Lookup a mapped udp socket based on result_token
-    pub fn prepare_contact_info(&mut self, result_token: u32) {
-        use utp_connections::external_udp_socket;
+    pub fn prepare_connection_info(&mut self, result_token: u32) {
+        unimplemented!()
+        // use utp_connections::external_udp_socket;
 
-        let helping_nodes = self.get_ordered_helping_nodes();
-        let event_tx = self.event_tx.clone();
+        // let helping_nodes = self.get_ordered_helping_nodes();
+        // let event_tx = self.event_tx.clone();
 
-        let static_addrs = self.get_known_external_endpoints();
-        let our_pub_key = unwrap_result!(self.our_contact_info.lock()).pub_key;
+        // let static_addrs = self.get_known_external_endpoints();
+        // let our_pub_key = unwrap_result!(self.static_contact_info.lock()).pub_key;
 
-        let seq_id = self.external_udp_sock_seq_id;
-        self.external_udp_sock_seq_id += 1;
+        // let seq_id = self.external_udp_sock_seq_id;
+        // self.external_udp_sock_seq_id += 1;
 
-        let _result_handle = thread!("map_udp", move || {
-            let result = external_udp_socket(seq_id, helping_nodes);
+        // let _result_handle = thread!("map_udp", move || {
+        //     let result = external_udp_socket(seq_id, helping_nodes);
 
-            let res = match result {
-                // TODO (peterj) use _rest
-                Ok((socket, mapped_addr)) => {
-                    let addrs = vec![mapped_addr];
-                    Ok(OurContactInfo {
-                        socket: socket,
-                        secret: Some(rand::random()),
-                        static_addrs: static_addrs,
-                        rendezvous_addrs: addrs,
-                        pub_key: our_pub_key,
-                    })
-                }
-                Err(what) => Err(what),
-            };
+        //     let res = match result {
+        //         // TODO (peterj) use _rest
+        //         Ok((socket, mapped_addr)) => {
+        //             let addrs = vec![mapped_addr];
+        //             Ok(OurConnectionInfo {
+        //                 socket: socket,
+        //                 secret: Some(rand::random()),
+        //                 static_addrs: static_addrs,
+        //                 rendezvous_addrs: addrs,
+        //                 pub_key: our_pub_key,
+        //             })
+        //         }
+        //         Err(what) => Err(what),
+        //     };
 
-            let _ = event_tx.send(Event::ContactInfoPrepared(ContactInfoResult {
-                result_token: result_token,
-                result: res,
-            }));
-        });
+        //     let _ = event_tx.send(Event::ContactInfoPrepared(ConnectionInfoResult {
+        //         result_token: result_token,
+        //         result: res,
+        //     }));
+        // });
     }
 }
 

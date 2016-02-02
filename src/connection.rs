@@ -26,7 +26,7 @@ use itertools::Itertools;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 use maidsafe_utilities::serialisation::{deserialise, serialise};
 use get_if_addrs::get_if_addrs;
-use contact_info::ContactInfo;
+use static_contact_info::StaticContactInfo;
 use tcp_connections;
 use utp_connections;
 use sender_receiver::{RaiiSender, Receiver};
@@ -36,6 +36,7 @@ use event::Event;
 use sodiumoxide::crypto::sign::PublicKey;
 use endpoint::{Endpoint, Protocol};
 use rand;
+use std::fmt::{Debug, Formatter};
 
 /// An open connection that can be used to send messages to a peer.
 ///
@@ -58,8 +59,8 @@ impl Hash for Connection {
     }
 }
 
-impl fmt::Debug for Connection {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+impl Debug for Connection {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         write!(f,
                "Connection {{ protocol: {:?}, our_addr: {:?}, their_addr: {:?} }}",
                self.protocol,
@@ -90,8 +91,14 @@ impl Drop for RaiiTcpAcceptor {
     }
 }
 
-pub fn connect(contact: ContactInfo,
-               our_contact_info: Arc<Mutex<ContactInfo>>,
+impl Debug for RaiiTcpAcceptor {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        write!(f, "RaiiTcpAcceptor {{ port: {}, }}", self.port)
+    }
+}
+
+pub fn connect(contact: StaticContactInfo,
+               our_contact_info: Arc<Mutex<StaticContactInfo>>,
                event_tx: ::CrustEventSender)
                -> io::Result<Connection> {
     let mut last_err = None;
@@ -126,7 +133,7 @@ pub fn connect(contact: ContactInfo,
 
 fn connect_tcp_endpoint(remote_addr: SocketAddr,
                         their_pub_key: PublicKey,
-                        our_contact_info: Arc<Mutex<ContactInfo>>,
+                        our_contact_info: Arc<Mutex<StaticContactInfo>>,
                         event_tx: ::CrustEventSender)
                         -> io::Result<Connection> {
     let (network_input, writer) = try!(tcp_connections::connect_tcp(remote_addr.clone()));
@@ -155,7 +162,7 @@ fn connect_tcp_endpoint(remote_addr: SocketAddr,
 
 fn connect_utp_endpoint(remote_addr: SocketAddr,
                         their_pub_key: PublicKey,
-                        our_contact_info: Arc<Mutex<ContactInfo>>,
+                        our_contact_info: Arc<Mutex<StaticContactInfo>>,
                         event_tx: ::CrustEventSender)
                         -> io::Result<Connection> {
     let (network_input, writer) = try!(utp_connections::connect_utp(remote_addr.clone()));
@@ -177,7 +184,7 @@ fn connect_utp_endpoint(remote_addr: SocketAddr,
 }
 
 pub fn start_tcp_accept(port: u16,
-                        our_contact_info: Arc<Mutex<ContactInfo>>,
+                        our_contact_info: Arc<Mutex<StaticContactInfo>>,
                         event_tx: ::CrustEventSender)
                         -> io::Result<RaiiTcpAcceptor> {
     let listener = try!(TcpListener::bind(("0.0.0.0", port)));
@@ -215,21 +222,21 @@ pub fn start_tcp_accept(port: u16,
 
             let mut network_rx = Receiver::Tcp(cbor::Decoder::from_reader(network_input));
 
-            let their_contact_info: ContactInfo = {
+            let their_contact_info: StaticContactInfo = {
                 let raw_data = match network_rx.receive() {
                     Ok(data) => data,
                     Err(err) => {
-                        error!("ContactInfo not shared by peer as expected. Connection will be \
-                                discarded - {:?}",
+                        error!("StaticContactInfo not shared by peer as expected. Connection \
+                                will be discarded - {:?}",
                                err);
                         continue;
                     }
                 };
                 match deserialise(&raw_data) {
-                    Ok(contact_info) => contact_info,
+                    Ok(static_contact_info) => static_contact_info,
                     Err(err) => {
-                        error!("ContactInfo not shared by peer as expected. Connection will be \
-                                discarded - {:?}",
+                        error!("StaticContactInfo not shared by peer as expected. Connection \
+                                will be discarded - {:?}",
                                err);
                         continue;
                     }

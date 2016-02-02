@@ -31,7 +31,7 @@ use rand;
 use sodiumoxide::crypto::sign::PublicKey;
 
 use connection::utp_rendezvous_connect;
-use contact_info::ContactInfo;
+use static_contact_info::StaticContactInfo;
 use event::Event;
 use utp_connections::{blocking_udp_punch_hole, external_udp_socket};
 use socket_addr::SocketAddr;
@@ -46,8 +46,8 @@ pub struct UdpListener {
 }
 
 impl UdpListener {
-    pub fn new(our_contact_info: Arc<Mutex<ContactInfo>>,
-               peer_contact_infos: Arc<Mutex<Vec<ContactInfo>>>,
+    pub fn new(our_contact_info: Arc<Mutex<StaticContactInfo>>,
+               peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
                event_tx: ::CrustEventSender)
                -> io::Result<UdpListener> {
         // TODO: update_contact_info_tx use should be replaced by updating
@@ -88,7 +88,7 @@ impl UdpListener {
 
     fn run(udp_socket: UdpSocket,
            event_tx: ::CrustEventSender,
-           peer_contact_infos: Arc<Mutex<Vec<ContactInfo>>>,
+           peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
            stop_flag: Arc<AtomicBool>) {
         let mut read_buf = [0; 1024];
 
@@ -115,7 +115,7 @@ impl UdpListener {
                       udp_socket: &UdpSocket,
                       peer_addr: net::SocketAddr,
                       event_tx: &::CrustEventSender,
-                      peer_contact_infos: &Arc<Mutex<Vec<ContactInfo>>>) {
+                      peer_contact_infos: &Arc<Mutex<Vec<StaticContactInfo>>>) {
         match msg {
             ListenerRequest::EchoExternalAddr => {
                 let resp = ListenerResponse::EchoExternalAddr {
@@ -133,7 +133,7 @@ impl UdpListener {
                                        .iter()
                                        .flat_map(|tci| tci.udp_listeners.iter().cloned())
                                        .collect();
-                if let Ok(res) = external_udp_socket(rand::random(), echo_servers) {
+                if let Ok(res) = external_udp_socket(echo_servers) {
                     let connect_resp = ListenerResponse::Connect {
                         connect_on: vec![res.1],
                         secret: secret,
@@ -174,7 +174,7 @@ impl UdpListener {
                        udp_socket: &UdpSocket,
                        peer_addr: net::SocketAddr,
                        event_tx: &::CrustEventSender,
-                       peer_contact_infos: &Arc<Mutex<Vec<ContactInfo>>>) {
+                       peer_contact_infos: &Arc<Mutex<Vec<StaticContactInfo>>>) {
         match msg {
             ListenerResponse::EchoExternalAddr { external_addr, } => unimplemented!(),
             ListenerResponse::Connect { connect_on, secret, pub_key, } => {
@@ -182,7 +182,7 @@ impl UdpListener {
                                        .iter()
                                        .flat_map(|tci| tci.udp_listeners.iter().cloned())
                                        .collect();
-                if let Ok(res) = external_udp_socket(rand::random(), echo_servers) {
+                if let Ok(res) = external_udp_socket(echo_servers) {
                     for peer_addr in connect_on {
                         let s = match res.0.try_clone() {
                             Ok(socket) => socket,

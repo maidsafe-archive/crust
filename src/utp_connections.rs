@@ -55,9 +55,7 @@ pub fn upgrade_utp(newconnection: UtpSocket) -> IoResult<(UtpWrapper, Sender<Wri
 
 // TODO(canndrew): This should return a Vec of SocketAddrs rather than a single SocketAddr. The Vec
 // should contain all known addresses of the socket.
-pub fn external_udp_socket(request_id: u32,
-                           udp_listeners: Vec<SocketAddr>)
-                           -> io::Result<(UdpSocket, SocketAddr)> {
+pub fn external_udp_socket(udp_listeners: Vec<SocketAddr>) -> io::Result<(UdpSocket, SocketAddr)> {
     const MAX_DATAGRAM_SIZE: usize = 256;
 
     let udp_socket = try!(UdpSocket::bind("0.0.0.0:0"));
@@ -389,4 +387,3 @@ mod test {
         let _ = r2.unwrap().unwrap();
     }
 }
-

@@ -72,8 +72,7 @@ fn upgrade_writer(mut stream: TcpStream) -> Sender<WriteEvent> {
 }
 
 /// Find our remote socketadddr
-pub fn external_tcp_addr(request_id: u32,
-                         tcp_listeners: Vec<SocketAddr>)
+pub fn external_tcp_addr(tcp_listeners: Vec<SocketAddr>)
                          -> io::Result<(SocketAddr, Vec<SocketAddr>)> {
 
     const MAX_DATAGRAM_SIZE: usize = 256;
@@ -90,10 +89,12 @@ pub fn external_tcp_addr(request_id: u32,
         };
         let local_addr = try!(stream.local_addr());
         match stream.write(&send_data[..]) {
-            Ok(n) => match n == send_data.len() {
-                true => (),
-                false => continue,
-            },
+            Ok(n) => {
+                match n == send_data.len() {
+                    true => (),
+                    false => continue,
+                }
+            }
             Err(_) => continue,
         };
         let mut recv_data = [0u8; MAX_DATAGRAM_SIZE];
@@ -101,9 +102,10 @@ pub fn external_tcp_addr(request_id: u32,
             Ok(recv_size) => recv_size,
             Err(_) => continue,
         };
-        if let Ok(ListenerResponse::EchoExternalAddr { external_addr }) = 
-                deserialise::<ListenerResponse>(&recv_data[..recv_size]) {
-            return Ok((SocketAddr(local_addr), vec![SocketAddr(local_addr), external_addr]))
+        if let Ok(ListenerResponse::EchoExternalAddr { external_addr }) =
+               deserialise::<ListenerResponse>(&recv_data[..recv_size]) {
+            return Ok((SocketAddr(local_addr),
+                       vec![SocketAddr(local_addr), external_addr]));
         }
     }
 
@@ -113,7 +115,7 @@ pub fn external_tcp_addr(request_id: u32,
 
 /// Returns the stream along with the peer's SocketAddr
 pub fn blocking_tcp_punch_hole(local_addr: SocketAddr,
-                               //secret: Option<[u8; 4]>,
+                               // secret: Option<[u8; 4]>,
                                peer_addrs: Vec<SocketAddr>)
                                -> io::Result<TcpStream> {
     // TODO(canndrew): Use secrets or public keys to make sure we have connected to the peer and

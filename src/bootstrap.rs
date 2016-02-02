@@ -31,7 +31,7 @@ use service_discovery::ServiceDiscovery;
 use sodiumoxide::crypto::sign::PublicKey;
 
 use config_handler::Config;
-use contact_info::ContactInfo;
+use static_contact_info::StaticContactInfo;
 use event::Event;
 
 pub struct RaiiBootstrap {
@@ -40,9 +40,9 @@ pub struct RaiiBootstrap {
 }
 
 impl RaiiBootstrap {
-    pub fn new(service_discovery: &ServiceDiscovery<ContactInfo>,
-               our_contact_info: Arc<Mutex<ContactInfo>>,
-               peer_contact_infos: Arc<Mutex<Vec<ContactInfo>>>,
+    pub fn new(service_discovery: &ServiceDiscovery<StaticContactInfo>,
+               our_contact_info: Arc<Mutex<StaticContactInfo>>,
+               peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
                event_tx: ::CrustEventSender)
                -> RaiiBootstrap {
         let stop_flag = Arc::new(AtomicBool::new(false));
@@ -80,9 +80,9 @@ impl RaiiBootstrap {
     }
 
     fn get_bootstrap_contacts(our_pub_key: &PublicKey,
-                              peer_contact_infos: Arc<Mutex<Vec<ContactInfo>>>,
-                              seek_peers_rx: mpsc::Receiver<ContactInfo>)
-                              -> Result<Vec<ContactInfo>, ::error::Error> {
+                              peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
+                              seek_peers_rx: mpsc::Receiver<StaticContactInfo>)
+                              -> Result<Vec<StaticContactInfo>, ::error::Error> {
         let mut contacts = unwrap_result!(peer_contact_infos.lock()).clone();
 
         // In production, we expect to have total contacts of atleast 1000 specially from
@@ -91,8 +91,8 @@ impl RaiiBootstrap {
 
         // Get contacts from service discovery
         thread::sleep(Duration::from_secs(1));
-        while let Ok(contact_info) = seek_peers_rx.try_recv() {
-            contacts.push(contact_info);
+        while let Ok(static_contact_info) = seek_peers_rx.try_recv() {
+            contacts.push(static_contact_info);
         }
 
         // Get further contacts from bootstrap cache
@@ -127,8 +127,8 @@ impl RaiiBootstrap {
         Ok((contacts))
     }
 
-    fn bootstrap(our_contact_info: Arc<Mutex<ContactInfo>>,
-                 bootstrap_contacts: Vec<ContactInfo>,
+    fn bootstrap(our_contact_info: Arc<Mutex<StaticContactInfo>>,
+                 bootstrap_contacts: Vec<StaticContactInfo>,
                  stop_flag: Arc<AtomicBool>,
                  event_tx: ::CrustEventSender) {
         for contact in bootstrap_contacts {

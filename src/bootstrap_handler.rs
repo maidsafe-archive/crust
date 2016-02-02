@@ -23,7 +23,7 @@
 //! with any other one.
 
 use error::Error;
-use contact_info::ContactInfo;
+use static_contact_info::StaticContactInfo;
 use config_file_handler::FileHandler;
 use config_file_handler;
 use util;
@@ -48,8 +48,8 @@ impl BootstrapHandler {
     }
 
     pub fn update_contacts(&mut self,
-                           contacts: Vec<ContactInfo>,
-                           prune: Vec<ContactInfo>)
+                           contacts: Vec<StaticContactInfo>,
+                           prune: Vec<StaticContactInfo>)
                            -> Result<(), Error> {
         try!(self.insert_contacts(contacts, prune));
         // TODO(Team) this implementation is missing and should be considered in next planning
@@ -59,8 +59,8 @@ impl BootstrapHandler {
         Ok(())
     }
 
-    pub fn read_file(&mut self) -> Result<Vec<ContactInfo>, Error> {
-        Ok(try!(self.file_handler.read_file::<Vec<ContactInfo>>()))
+    pub fn read_file(&mut self) -> Result<Vec<StaticContactInfo>, Error> {
+        Ok(try!(self.file_handler.read_file::<Vec<StaticContactInfo>>()))
     }
 
     fn duration_between_updates() -> ::time::Duration {
@@ -72,8 +72,8 @@ impl BootstrapHandler {
     }
 
     fn insert_contacts(&mut self,
-                       mut contacts: Vec<ContactInfo>,
-                       prune: Vec<ContactInfo>)
+                       mut contacts: Vec<StaticContactInfo>,
+                       prune: Vec<StaticContactInfo>)
                        -> Result<(), Error> {
         let mut bootstrap_contacts = self.read_file().unwrap_or_else(|e| {
             debug!("Error reading Bootstrap file: {:?}.", e);
@@ -109,7 +109,7 @@ fn get_file_name() -> Result<::std::ffi::OsString, Error> {
 mod test {
 
     // TODO(canndrew): Add these tests back
-    // the main thing that has changed is that ContactInfo has replaced Endpoint. Probably nothing
+    // the main thing that has changed is that StaticContactInfo has replaced Endpoint. Probably nothing
     // else has changed.
 
     // use std::net;
