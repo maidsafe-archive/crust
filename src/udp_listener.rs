@@ -40,17 +40,17 @@ use listener_message::{ListenerRequest, ListenerResponse};
 const UDP_READ_TIMEOUT_SECS: u64 = 2;
 
 
-pub struct UdpListener {
+pub struct RaiiUdpListener {
     stop_flag: Arc<AtomicBool>,
     _raii_joiner: RaiiThreadJoiner,
 }
 
-impl UdpListener {
+impl RaiiUdpListener {
     pub fn new(port: u16,
                our_contact_info: Arc<Mutex<StaticContactInfo>>,
                peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
                event_tx: ::CrustEventSender)
-               -> io::Result<UdpListener> {
+               -> io::Result<RaiiUdpListener> {
         let udp_socket = try!(UdpSocket::bind("0.0.0.0:0"));
         let stop_flag = Arc::new(AtomicBool::new(false));
         let cloned_stop_flag = stop_flag.clone();
@@ -94,7 +94,7 @@ impl UdpListener {
 
         unwrap_result!(our_contact_info.lock()).udp_listeners.extend(addrs);
 
-        let raii_joiner = RaiiThreadJoiner::new(thread!("UdpListener", move || {
+        let raii_joiner = RaiiThreadJoiner::new(thread!("RaiiUdpListener", move || {
             Self::run(our_contact_info,
                       udp_socket,
                       event_tx,
@@ -102,7 +102,7 @@ impl UdpListener {
                       cloned_stop_flag);
         }));
 
-        Ok(UdpListener {
+        Ok(RaiiUdpListener {
             stop_flag: stop_flag,
             _raii_joiner: raii_joiner,
         })
@@ -118,19 +118,19 @@ impl UdpListener {
         while !stop_flag.load(Ordering::SeqCst) {
             if let Ok((bytes_read, peer_addr)) = udp_socket.recv_from(&mut read_buf) {
                 if let Ok(msg) = deserialise::<ListenerRequest>(&read_buf[..bytes_read]) {
-                    UdpListener::handle_request(msg,
-                                                &our_contact_info,
-                                                &udp_socket,
-                                                peer_addr,
-                                                &event_tx,
-                                                &peer_contact_infos);
+                    RaiiUdpListener::handle_request(msg,
+                                                    &our_contact_info,
+                                                    &udp_socket,
+                                                    peer_addr,
+                                                    &event_tx,
+                                                    &peer_contact_infos);
                 } else if let Ok(msg) = deserialise::<ListenerResponse>(&read_buf[..bytes_read]) {
-                    UdpListener::handle_response(msg,
-                                                 &our_contact_info,
-                                                 &udp_socket,
-                                                 peer_addr,
-                                                 &event_tx,
-                                                 &peer_contact_infos);
+                    RaiiUdpListener::handle_response(msg,
+                                                     &our_contact_info,
+                                                     &udp_socket,
+                                                     peer_addr,
+                                                     &event_tx,
+                                                     &peer_contact_infos);
                 }
             }
         }
@@ -151,10 +151,6 @@ impl UdpListener {
                 let _ = udp_socket.send_to(&unwrap_result!(serialise(&resp)), peer_addr);
             }
             ListenerRequest::Connect { secret, pub_key } => {
-                // TODO external_udp_socket() should return the external address
-                // of the socket that it freshly spawned or (if it cannot because of say
-                // Zero-state etc.) Vector of all interface addresses. This should never be
-                // an option because then it is pretty useless.
                 let echo_servers = unwrap_result!(peer_contact_infos.lock())
                                        .iter()
                                        .flat_map(|tci| tci.udp_listeners.iter().cloned())
@@ -196,56 +192,22 @@ impl UdpListener {
         }
     }
 
-    fn handle_response(msg: ListenerResponse,
-                       our_contact_info: &Arc<Mutex<StaticContactInfo>>,
-                       udp_socket: &UdpSocket,
-                       peer_addr: net::SocketAddr,
-                       event_tx: &::CrustEventSender,
-                       peer_contact_infos: &Arc<Mutex<Vec<StaticContactInfo>>>) {
-        match msg {
+    fn handle_response(_msg: ListenerResponse,
+                       _our_contact_info: &Arc<Mutex<StaticContactInfo>>,
+                       _udp_socket: &UdpSocket,
+                       _peer_addr: net::SocketAddr,
+                       _event_tx: &::CrustEventSender,
+                       _peer_contact_infos: &Arc<Mutex<Vec<StaticContactInfo>>>) {
+        // This is currently unimplemented as RaiiUdpListener should not have made
+        // any request - it is supposed to get requests, not make one
+        match _msg {
             ListenerResponse::EchoExternalAddr { external_addr, } => unimplemented!(),
-            ListenerResponse::Connect { connect_on, secret, pub_key, } => {
-                let echo_servers = unwrap_result!(peer_contact_infos.lock())
-                                       .iter()
-                                       .flat_map(|tci| tci.udp_listeners.iter().cloned())
-                                       .collect();
-                if let Ok(res) = external_udp_socket(echo_servers) {
-                    for peer_addr in connect_on {
-                        let s = match res.0.try_clone() {
-                            Ok(socket) => socket,
-                            Err(_) => return,
-                        };
-                        let (socket, peer_addr) = match blocking_udp_punch_hole(s,
-                                                                                Some(secret),
-                                                                                peer_addr) {
-                            (socket, Ok(peer_addr)) => (socket, peer_addr),
-                            (socket, Err(_)) => return,
-                        };
-
-                        let connection = match utp_rendezvous_connect(socket,
-                                                                      peer_addr,
-                                                                      pub_key.clone(),
-                                                                      event_tx.clone()) {
-                            Ok(connection) => connection,
-                            Err(_) => return,
-                        };
-
-                        let event = Event::NewConnection {
-                            their_pub_key: pub_key,
-                            connection: Ok(connection),
-                        };
-
-                        if event_tx.send(event).is_err() {
-                            return;
-                        }
-                    }
-                }
-            }
+            ListenerResponse::Connect { connect_on, secret, pub_key, } => unimplemented!(),
         }
     }
 }
 
-impl Drop for UdpListener {
+impl Drop for RaiiUdpListener {
     fn drop(&mut self) {
         self.stop_flag.store(true, Ordering::SeqCst);
     }

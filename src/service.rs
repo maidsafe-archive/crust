@@ -33,7 +33,7 @@ use sodiumoxide::crypto::sign::PublicKey;
 use std::net::TcpListener;
 
 use connection::RaiiTcpAcceptor;
-use udp_listener::UdpListener;
+use udp_listener::RaiiUdpListener;
 use static_contact_info::StaticContactInfo;
 use rand;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
@@ -47,8 +47,9 @@ use connection;
 use bootstrap;
 use bootstrap::RaiiBootstrap;
 
-use event::{Event, OurConnectionInfo, OurConnectionInfoInner, TheirConnectionInfo,
-            TheirConnectionInfoInner, ConnectionInfoResult};
+use event::Event;
+use connection_info::{OurConnectionInfo, OurConnectionInfoInner, TheirConnectionInfo,
+                      TheirConnectionInfoInner, ConnectionInfoResult};
 use socket_addr::{SocketAddr, SocketAddrV4};
 use bootstrap_handler::BootstrapHandler;
 
@@ -70,11 +71,11 @@ pub struct Service {
     static_contact_info: Arc<Mutex<StaticContactInfo>>,
     peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
     service_discovery: ServiceDiscovery<StaticContactInfo>,
-    udp_listener: Option<UdpListener>,
     event_tx: ::CrustEventSender,
     external_udp_sock_seq_id: u32,
     bootstrap: RaiiBootstrap,
     use_protocol: UseProtocol,
+    _raii_udp_listener: Option<RaiiUdpListener>,
     _raii_tcp_acceptor: Option<RaiiTcpAcceptor>,
 }
 
@@ -124,10 +125,10 @@ impl Service {
 
         // Start the UDP Listener
         let udp_listener = if use_protocol != UseProtocol::TcpOnly {
-            Some(try!(UdpListener::new(0,
-                                       static_contact_info.clone(),
-                                       peer_contact_infos.clone(),
-                                       event_tx.clone())))
+            Some(try!(RaiiUdpListener::new(0,
+                                           static_contact_info.clone(),
+                                           peer_contact_infos.clone(),
+                                           event_tx.clone())))
         } else {
             None
         };
@@ -140,11 +141,11 @@ impl Service {
             static_contact_info: static_contact_info,
             peer_contact_infos: peer_contact_infos,
             service_discovery: service_discovery,
-            udp_listener: udp_listener,
             event_tx: event_tx,
             external_udp_sock_seq_id: 0,
             bootstrap: bootstrap,
             use_protocol: use_protocol,
+            _raii_udp_listener: udp_listener,
             _raii_tcp_acceptor: raii_tcp_acceptor,
         };
 
