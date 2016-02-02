@@ -43,7 +43,7 @@ pub struct RaiiBootstrap {
 
 impl RaiiBootstrap {
     pub fn new(our_contact_info: Arc<Mutex<StaticContactInfo>>,
-               bootstrap_contacts: Vec<StaticContactInfo>,
+               peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
                event_tx: ::CrustEventSender)
                -> RaiiBootstrap {
         let stop_flag = Arc::new(AtomicBool::new(false));
@@ -51,7 +51,7 @@ impl RaiiBootstrap {
 
         let raii_joiner = RaiiThreadJoiner::new(thread!("RaiiBootstrap", move || {
             RaiiBootstrap::bootstrap(our_contact_info,
-                                     bootstrap_contacts,
+                                     peer_contact_infos,
                                      cloned_stop_flag,
                                      event_tx);
         }));
@@ -67,9 +67,10 @@ impl RaiiBootstrap {
     }
 
     fn bootstrap(our_contact_info: Arc<Mutex<StaticContactInfo>>,
-                 bootstrap_contacts: Vec<StaticContactInfo>,
+                 peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
                  stop_flag: Arc<AtomicBool>,
                  event_tx: ::CrustEventSender) {
+        let bootstrap_contacts: Vec<StaticContactInfo> = unwrap_result!(peer_contact_infos.lock()).clone();
         for contact in bootstrap_contacts {
             // Bootstrapping got cancelled.
             // Later check the bootstrap contacts in the background to see if they are still valid
@@ -82,6 +83,7 @@ impl RaiiBootstrap {
             // 1st try a TCP connect
             // 2nd try a UDP connection (and upgrade to UTP)
             let connect_result = ::connection::connect(contact,
+                                                       peer_contact_infos.clone(),
                                                        our_contact_info.clone(),
                                                        event_tx.clone());
             if stop_flag.load(Ordering::SeqCst) {

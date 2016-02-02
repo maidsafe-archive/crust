@@ -24,6 +24,7 @@ use std::sync::mpsc;
 use std::sync::mpsc::Sender;
 use std::io;
 use std::time::Duration;
+use get_if_addrs;
 use maidsafe_utilities::serialisation::{deserialise, serialise};
 
 use periodic_sender::PeriodicSender;
@@ -66,12 +67,12 @@ pub fn external_udp_socket(peer_udp_listeners: Vec<SocketAddr>)
 
     let send_data = unwrap_result!(serialise(&ListenerRequest::EchoExternalAddr));
 
-    let if_addrs = try!(get_if_addrs::get_if_addrs())
-                       .into_iter()
-                       .map(|i| SocketAddr::new(i.addr.ip(), port))
-                       .collect_vec();
+    let if_addrs: Vec<SocketAddr> = try!(get_if_addrs::get_if_addrs())
+                                           .into_iter()
+                                           .map(|i| SocketAddr::new(i.addr.ip(), port))
+                                           .collect();
 
-    let res = try!(::crossbeam::scope(|scope| -> io::Result<SocketAddr> {
+    let res = try!(::crossbeam::scope(|scope| -> io::Result<Vec<SocketAddr>> {
         // TODO Instead of periodic sender just send the request to every body and start listening.
         // If we get it back from even one, we collect the info and return.
         for udp_listener in &peer_udp_listeners {
@@ -94,7 +95,7 @@ pub fn external_udp_socket(peer_udp_listeners: Vec<SocketAddr>)
                 return Ok(addrs);
             }
         }
-        return if_addrs;
+        Ok(if_addrs)
     }));
 
     Ok((udp_socket, res))

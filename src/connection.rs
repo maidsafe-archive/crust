@@ -123,9 +123,13 @@ pub fn connect(peer_contact: StaticContactInfo,
 
     println!("============================ 0");
 
+    let udp_helper_nodes: Vec<SocketAddr> = {
+        let peer_contact_infos = unwrap_result!(peer_contact_infos.lock());
+        peer_contact_infos.iter().flat_map(|ci| ci.udp_listeners.iter().cloned()).collect()
+    };
+
     let (udp_socket, our_external_addrs) =
-        try!(utp_connections::external_udp_socket(unwrap_result!(peer_contact_infos.lock())
-                                                      .clone()));
+        try!(utp_connections::external_udp_socket(udp_helper_nodes));
     let our_secret = [255; 4];
     let connect_req = ListenerRequest::Connect {
         secret: our_secret,
@@ -136,7 +140,7 @@ pub fn connect(peer_contact: StaticContactInfo,
 
     for udp_addr in peer_contact.udp_listeners {
         println!("Trying ........ {:?}", udp_addr);
-        if udp_socket.send_to(&udp_addr, &serialised_connect_req).is_err() {
+        if udp_socket.send_to(&serialised_connect_req, &*udp_addr).is_err() {
             continue;
         }
         match udp_socket.recv_from(&mut read_buf) {
@@ -147,19 +151,21 @@ pub fn connect(peer_contact: StaticContactInfo,
                             continue;
                         }
                         for peer_udp_hole_punched_socket_addr in connect_on {
+                            let cloned_udp_socket = try!(udp_socket.try_clone());
                             match utp_connections::blocking_udp_punch_hole(cloned_udp_socket,
                                                                            Some(our_secret),
                                                                            peer_udp_hole_punched_socket_addr) {
-                            Ok((our_socket, Ok(peer_addr))) => {
-                                match utp_rendezvous_connect(our_socket, peer_addr, pub_key, event_tx.clone()) {
-                                    Ok(connection) => return Ok(connection),
-                                    Err(_) => continue,
+                                (our_socket, Ok(peer_addr)) => {
+                                    match utp_rendezvous_connect(our_socket, peer_addr, pub_key, event_tx.clone()) {
+                                        Ok(connection) => return Ok(connection),
+                                        Err(_) => continue,
+                                    }
                                 }
+                                (_, Err(_)) => continue,
                             }
-                            Err(_) => continue,
-                        }
                         }
                     }
+                    Ok(_) => continue,
                     Err(_) => continue,
                 }
             }

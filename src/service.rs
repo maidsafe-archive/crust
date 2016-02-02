@@ -94,7 +94,7 @@ impl Service {
 
         // Form initial peer contact infos - these will also contain echo-service addrs.
         let bootstrap_contacts = try!(bootstrap::get_known_contacts(&service_discovery, &pub_key));
-        let peer_contact_infos = Arc::new(Mutex::new(bootstrap_contacts.clone()));
+        let peer_contact_infos = Arc::new(Mutex::new(bootstrap_contacts));
 
         // Start the TCP Acceptor
         let raii_tcp_acceptor = try!(connection::start_tcp_accept(0,
@@ -109,7 +109,7 @@ impl Service {
 
 
         let bootstrap = RaiiBootstrap::new(static_contact_info.clone(),
-                                           bootstrap_contacts,
+                                           peer_contact_infos.clone(),
                                            event_tx.clone());
 
         let service = Service {

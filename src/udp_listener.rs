@@ -153,7 +153,7 @@ impl UdpListener {
                                        .collect();
                 if let Ok(res) = external_udp_socket(echo_servers) {
                     let connect_resp = ListenerResponse::Connect {
-                        connect_on: vec![res.1],
+                        connect_on: res.1,
                         secret: secret,
                         pub_key: pub_key,
                     };
