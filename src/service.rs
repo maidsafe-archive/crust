@@ -431,11 +431,4 @@ mod test {
     fn start_two_services_bootstrap_communicate_exit_tcp_and_udp() {
         two_services_bootstrap_communicate_and_exit(UseProtocol::TcpUdpBoth);
     }
-
-    #[test]
-    fn start_two_services_utp_rendezvous_connect() {
-        // Start 2 services and get their OurContactInfos. Filter the contact infos to contain just
-        // utp rendezvous endpoints and ensure that the two services can connect and exchange
-        // messages in both directions.
-    }
 }
