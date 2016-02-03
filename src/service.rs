@@ -71,7 +71,6 @@ pub struct Service {
     peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
     service_discovery: ServiceDiscovery<StaticContactInfo>,
     event_tx: ::CrustEventSender,
-    external_udp_sock_seq_id: u32,
     bootstrap: RaiiBootstrap,
     use_protocol: UseProtocol,
     _raii_udp_listener: Option<RaiiUdpListener>,
@@ -141,7 +140,6 @@ impl Service {
             peer_contact_infos: peer_contact_infos,
             service_discovery: service_discovery,
             event_tx: event_tx,
-            external_udp_sock_seq_id: 0,
             bootstrap: bootstrap,
             use_protocol: use_protocol,
             _raii_udp_listener: udp_listener,
@@ -245,52 +243,39 @@ impl Service {
         */
     }
 
-    /// Get already known external endpoints without any upnp mapping
-    pub fn get_known_external_endpoints(&self) -> Vec<Endpoint> {
-        unwrap_result!(self.static_contact_info.lock())
-            .tcp_acceptors
-            .iter()
-            .map(|sa| Endpoint::from_socket_addr(Protocol::Tcp, *sa))
-            .collect::<Vec<Endpoint>>()
-    }
-
     /// Lookup a mapped udp socket based on result_token
     pub fn prepare_connection_info(&mut self, result_token: u32) {
-        unimplemented!()
-        // use utp_connections::external_udp_socket;
+        let mut peer_udp_listeners = Vec::with_capacity(100);
+        for peer_contact_info in &*unwrap_result!(self.peer_contact_infos.lock()) {
+            peer_udp_listeners.extend(peer_contact_info.udp_listeners.clone());
+        }
 
-        // let helping_nodes = self.get_ordered_helping_nodes();
-        // let event_tx = self.event_tx.clone();
+        let our_static_contact_info = self.static_contact_info.clone();
+        let peer_contact_infos = self.peer_contact_infos.clone();
+        let event_tx = self.event_tx.clone();
 
-        // let static_addrs = self.get_known_external_endpoints();
-        // let our_pub_key = unwrap_result!(self.static_contact_info.lock()).pub_key;
+        let _joiner = thread!("PrepareContactInfo", move || {
+            let result_external_socket = utp_connections::external_udp_socket(peer_udp_listeners);
+            if result_external_socket.is_err() {
+                let _ = event_tx.send(Event::ContactInfoPrepared(ConnectionInfoResult {
+                    result: result_external_socket,
+                }));
+                return;
+            }
 
-        // let seq_id = self.external_udp_sock_seq_id;
-        // self.external_udp_sock_seq_id += 1;
+            let result_tcp_acceptor = connection::start_tcp_accept(0,
+                                                                   our_static_contact_info,
+                                                                   peer_contact_infos,
+                                                                   event_tx);
+            if result_tcp_acceptor.is_err() {
+                let _ = event_tx.send(Event::ContactInfoPrepared(ConnectionInfoResult {
+                    result: result_external_socket,
+                }));
+                return;
+            }
 
-        // let _result_handle = thread!("map_udp", move || {
-        //     let result = external_udp_socket(seq_id, helping_nodes);
-
-        //     let res = match result {
-        //         // TODO (peterj) use _rest
-        //         Ok((socket, mapped_addr)) => {
-        //             let addrs = vec![mapped_addr];
-        //             Ok(OurConnectionInfo {
-        //                 socket: socket,
-        //                 secret: Some(rand::random()),
-        //                 static_addrs: static_addrs,
-        //                 rendezvous_addrs: addrs,
-        //                 pub_key: our_pub_key,
-        //             })
-        //         }
-        //         Err(what) => Err(what),
-        //     };
-
-        //     let _ = event_tx.send(Event::ContactInfoPrepared(ConnectionInfoResult {
-        //         result_token: result_token,
-        //         result: res,
-        //     }));
-        // });
+            // Now prepare Ok(OurConnectionInfo) and send via ConnectionInfoResult to routing
+        });
     }
 }
 

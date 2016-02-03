@@ -69,7 +69,7 @@ impl GetOurConnectionInfoInner for OurConnectionInfo {
 
 #[derive(Debug)]
 pub struct OurConnectionInfoInner {
-    pub secret: Option<[u8; 4]>,
+    pub secret: [u8; 4],
     pub raii_tcp_acceptor: RaiiTcpAcceptor,
     pub tcp_addrs: Vec<SocketAddr>,
     pub udp_socket: UdpSocket,
@@ -83,7 +83,7 @@ pub struct TheirConnectionInfo(TheirConnectionInfoInner);
 
 #[derive(Debug, RustcEncodable, RustcDecodable)]
 pub struct TheirConnectionInfoInner {
-    pub secret: Option<[u8; 4]>,
+    pub secret: [u8; 4],
     pub static_contact_info: StaticContactInfo,
     pub tcp_addrs: Vec<SocketAddr>,
     pub udp_addrs: Vec<SocketAddr>,
