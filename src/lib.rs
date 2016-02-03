@@ -56,6 +56,7 @@ extern crate crossbeam;
 extern crate memmap;
 #[macro_use]
 extern crate maidsafe_utilities;
+extern crate socket_addr;
 extern crate ip;
 extern crate get_if_addrs;
 extern crate sodiumoxide;
@@ -93,7 +94,6 @@ mod event;
 mod hole_punching;
 mod periodic_sender;
 mod socket_utils;
-mod socket_addr;
 mod ip_info;
 mod udp_listener;
 mod connection_info;
