@@ -36,6 +36,7 @@ pub enum ListenerResponse {
     Connect {
         connect_on: Vec<SocketAddr>,
         secret: [u8; 4],
+        their_secret: [u8; 4],
         pub_key: PublicKey,
     },
 }

@@ -110,6 +110,8 @@ pub trait FriendTheirConnectionInfo {
     fn get_inner(&self) -> &TheirConnectionInfoInner;
     /// Get mutable inner item
     fn get_inner_mut(&mut self) -> &mut TheirConnectionInfoInner;
+    /// Take the inner item.
+    fn take_inner(self) -> TheirConnectionInfoInner;
 }
 
 impl FriendTheirConnectionInfo for TheirConnectionInfo {
@@ -119,5 +121,9 @@ impl FriendTheirConnectionInfo for TheirConnectionInfo {
 
     fn get_inner_mut(&mut self) -> &mut TheirConnectionInfoInner {
         &mut self.0
+    }
+
+    fn take_inner(self) -> TheirConnectionInfoInner {
+        self.0
     }
 }

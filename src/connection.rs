@@ -143,14 +143,14 @@ pub fn connect(peer_contact: StaticContactInfo,
         match udp_socket.recv_from(&mut read_buf) {
             Ok((bytes_rxd, peer_addr)) => {
                 match deserialise::<ListenerResponse>(&read_buf[..bytes_rxd]) {
-                    Ok(ListenerResponse::Connect { connect_on, secret, pub_key, }) => {
+                    Ok(ListenerResponse::Connect { connect_on, secret, their_secret, pub_key, }) => {
                         if secret != our_secret {
                             continue;
                         }
                         for peer_udp_hole_punched_socket_addr in connect_on {
                             let cloned_udp_socket = try!(udp_socket.try_clone());
                             match utp_connections::blocking_udp_punch_hole(cloned_udp_socket,
-                                                                           Some(our_secret),
+                                                                           our_secret, their_secret,
                                                                            peer_udp_hole_punched_socket_addr) {
                                 (our_socket, Ok(peer_addr)) => {
                                     match utp_rendezvous_connect(

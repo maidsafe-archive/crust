@@ -18,6 +18,6 @@ use event::WriteEvent;
 
 #[derive(Debug, RustcEncodable, RustcDecodable)]
 pub struct HolePunch {
-    pub secret: Option<[u8; 4]>,
+    pub secret: [u8; 4],
     pub ack: bool,
 }
