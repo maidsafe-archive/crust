@@ -172,14 +172,14 @@ impl RaiiUdpListener {
                            blocking_udp_punch_hole(res.0, Some(secret), SocketAddr(peer_addr)) {
                         let connection = match utp_rendezvous_connect(socket,
                                                                       peer_addr,
-                                                                      pub_key.clone(),
+                                                                      //pub_key.clone(),
                                                                       event_tx.clone()) {
                             Ok(connection) => connection,
                             Err(_) => return,
                         };
 
                         let event = Event::NewConnection {
-                            their_pub_key: pub_key,
+                            //their_pub_key: pub_key,
                             connection: Ok(connection),
                         };
 
