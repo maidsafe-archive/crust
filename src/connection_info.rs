@@ -24,7 +24,7 @@ use static_contact_info::StaticContactInfo;
 /// The result of a `Service::prepare_contact_info` call.
 #[derive(Debug)]
 pub struct ConnectionInfoResult {
-    /// The token that was passed to `prepare_contact_info`.
+    /// The token that was passed to `prepare_connection_info`.
     pub result_token: u32,
     /// The new contact info, if successful.
     pub result: io::Result<OurConnectionInfo>,
@@ -40,7 +40,7 @@ impl OurConnectionInfo {
         TheirConnectionInfo(TheirConnectionInfoInner {
             secret: self.0.secret.clone(),
             static_contact_info: self.0.static_contact_info.clone(),
-            tcp_addrs: self.0.tcp_addrs.clone(),
+            //tcp_addrs: self.0.tcp_addrs.clone(),
             udp_addrs: self.0.udp_addrs.clone(),
         })
     }
@@ -50,14 +50,18 @@ impl OurConnectionInfo {
 // http://stackoverflow.com/questions/35142292/c-friend-like-construct-for-rust
 /// Get the Inner contained structure - this is to allow the access of inner item to this crate but
 /// not to other crates
-pub trait GetOurConnectionInfoInner {
+pub trait FriendOurConnectionInfo {
     /// Get inner item
     fn get_inner(&self) -> &OurConnectionInfoInner;
     /// Get mutable inner item
     fn get_inner_mut(&mut self) -> &mut OurConnectionInfoInner;
+    /// Take the inner item
+    fn take_inner(self) -> OurConnectionInfoInner;
+    /// Make OurConnectionInfo
+    fn new(inner: OurConnectionInfoInner) -> OurConnectionInfo;
 }
 
-impl GetOurConnectionInfoInner for OurConnectionInfo {
+impl FriendOurConnectionInfo for OurConnectionInfo {
     fn get_inner(&self) -> &OurConnectionInfoInner {
         &self.0
     }
@@ -65,13 +69,21 @@ impl GetOurConnectionInfoInner for OurConnectionInfo {
     fn get_inner_mut(&mut self) -> &mut OurConnectionInfoInner {
         &mut self.0
     }
+
+    fn take_inner(self) -> OurConnectionInfoInner {
+        self.0
+    }
+
+    fn new(inner: OurConnectionInfoInner) -> OurConnectionInfo {
+        OurConnectionInfo(inner)
+    }
 }
 
 #[derive(Debug)]
 pub struct OurConnectionInfoInner {
-    pub secret: Option<[u8; 4]>,
-    pub raii_tcp_acceptor: RaiiTcpAcceptor,
-    pub tcp_addrs: Vec<SocketAddr>,
+    pub secret: [u8; 4],
+    //pub raii_tcp_acceptor: RaiiTcpAcceptor,
+    //pub tcp_addrs: Vec<SocketAddr>,
     pub udp_socket: UdpSocket,
     pub udp_addrs: Vec<SocketAddr>,
     pub static_contact_info: StaticContactInfo,
@@ -83,9 +95,9 @@ pub struct TheirConnectionInfo(TheirConnectionInfoInner);
 
 #[derive(Debug, RustcEncodable, RustcDecodable)]
 pub struct TheirConnectionInfoInner {
-    pub secret: Option<[u8; 4]>,
+    pub secret: [u8; 4],
     pub static_contact_info: StaticContactInfo,
-    pub tcp_addrs: Vec<SocketAddr>,
+    //pub tcp_addrs: Vec<SocketAddr>,
     pub udp_addrs: Vec<SocketAddr>,
 }
 
@@ -93,19 +105,25 @@ pub struct TheirConnectionInfoInner {
 // http://stackoverflow.com/questions/35142292/c-friend-like-construct-for-rust
 /// Get the Inner contained structure - this is to allow the access of inner item to this crate but
 /// not to other crates
-pub trait GetTheirConnectionInfoInner {
+pub trait FriendTheirConnectionInfo {
     /// Get inner item
     fn get_inner(&self) -> &TheirConnectionInfoInner;
     /// Get mutable inner item
     fn get_inner_mut(&mut self) -> &mut TheirConnectionInfoInner;
+    /// Take the inner item.
+    fn take_inner(self) -> TheirConnectionInfoInner;
 }
 
-impl GetTheirConnectionInfoInner for TheirConnectionInfo {
+impl FriendTheirConnectionInfo for TheirConnectionInfo {
     fn get_inner(&self) -> &TheirConnectionInfoInner {
         &self.0
     }
 
     fn get_inner_mut(&mut self) -> &mut TheirConnectionInfoInner {
         &mut self.0
+    }
+
+    fn take_inner(self) -> TheirConnectionInfoInner {
+        self.0
     }
 }

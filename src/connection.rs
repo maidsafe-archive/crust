@@ -113,7 +113,7 @@ pub fn connect(peer_contact: StaticContactInfo,
     let mut last_err = None;
     for tcp_addr in peer_contact.tcp_acceptors {
         match connect_tcp_endpoint(tcp_addr,
-                                   peer_contact.pub_key,
+                                   //peer_contact.pub_key,
                                    our_contact_info.clone(),
                                    event_tx.clone()) {
             Ok(connection) => return Ok(connection),
@@ -143,17 +143,21 @@ pub fn connect(peer_contact: StaticContactInfo,
         match udp_socket.recv_from(&mut read_buf) {
             Ok((bytes_rxd, peer_addr)) => {
                 match deserialise::<ListenerResponse>(&read_buf[..bytes_rxd]) {
-                    Ok(ListenerResponse::Connect { connect_on, secret, pub_key, }) => {
+                    Ok(ListenerResponse::Connect { connect_on, secret, their_secret, pub_key, }) => {
                         if secret != our_secret {
                             continue;
                         }
                         for peer_udp_hole_punched_socket_addr in connect_on {
                             let cloned_udp_socket = try!(udp_socket.try_clone());
                             match utp_connections::blocking_udp_punch_hole(cloned_udp_socket,
-                                                                           Some(our_secret),
+                                                                           our_secret, their_secret,
                                                                            peer_udp_hole_punched_socket_addr) {
                                 (our_socket, Ok(peer_addr)) => {
-                                    match utp_rendezvous_connect(our_socket, peer_addr, pub_key, event_tx.clone()) {
+                                    match utp_rendezvous_connect(
+                                            our_socket,
+                                            peer_addr,
+                                            //pub_key,
+                                            event_tx.clone()) {
                                         Ok(connection) => return Ok(connection),
                                         Err(_) => continue,
                                     }
@@ -179,7 +183,7 @@ pub fn connect(peer_contact: StaticContactInfo,
 }
 
 fn connect_tcp_endpoint(remote_addr: SocketAddr,
-                        their_pub_key: PublicKey,
+                        //their_pub_key: PublicKey,
                         our_contact_info: Arc<Mutex<StaticContactInfo>>,
                         event_tx: ::CrustEventSender)
                         -> io::Result<Connection> {
@@ -190,7 +194,7 @@ fn connect_tcp_endpoint(remote_addr: SocketAddr,
 
     let network_rx = Receiver::Tcp(cbor::Decoder::from_reader(network_input));
     let joiner = RaiiThreadJoiner::new(thread!("TcpNetworkReader", move || {
-        start_rx(network_rx, their_pub_key, event_tx);
+        start_rx(network_rx, /*their_pub_key,*/ event_tx);
     }));
 
     let mut connection = Connection {
@@ -208,7 +212,7 @@ fn connect_tcp_endpoint(remote_addr: SocketAddr,
 }
 
 fn connect_utp_endpoint(remote_addr: SocketAddr,
-                        their_pub_key: PublicKey,
+                        //their_pub_key: PublicKey,
                         our_contact_info: Arc<Mutex<StaticContactInfo>>,
                         event_tx: ::CrustEventSender)
                         -> io::Result<Connection> {
@@ -218,7 +222,7 @@ fn connect_utp_endpoint(remote_addr: SocketAddr,
 
     let network_rx = Receiver::Utp(cbor::Decoder::from_reader(network_input));
     let joiner = RaiiThreadJoiner::new(thread!("UtpNetworkReader", move || {
-        start_rx(network_rx, their_pub_key, event_tx);
+        start_rx(network_rx, /*their_pub_key,*/ event_tx);
     }));
 
     Ok(Connection {
@@ -344,11 +348,11 @@ pub fn start_tcp_accept(port: u16,
                     }
                 }
             };
-            let their_pub_key = their_contact_info.pub_key.clone();
+            //let their_pub_key = their_contact_info.pub_key.clone();
 
             let event_tx_cloned = event_tx.clone();
             let joiner = RaiiThreadJoiner::new(thread!("TcpNetworkReader", move || {
-                start_rx(network_rx, their_pub_key, event_tx_cloned);
+                start_rx(network_rx, /*their_pub_key,*/ event_tx_cloned);
             }));
 
             let connection = Connection {
@@ -360,7 +364,7 @@ pub fn start_tcp_accept(port: u16,
             };
 
             let event = Event::NewConnection {
-                their_pub_key: their_contact_info.pub_key,
+                //their_pub_key: their_contact_info.pub_key,
                 connection: Ok(connection),
             };
 
@@ -379,7 +383,7 @@ pub fn start_tcp_accept(port: u16,
 
 pub fn utp_rendezvous_connect(udp_socket: UdpSocket,
                               their_addr: SocketAddr,
-                              their_pub_key: PublicKey,
+                              //their_pub_key: PublicKey,
                               event_tx: ::CrustEventSender)
                               -> io::Result<Connection> {
     let (network_input, writer) = try!(utp_connections::rendezvous_connect_utp(udp_socket,
@@ -389,7 +393,7 @@ pub fn utp_rendezvous_connect(udp_socket: UdpSocket,
 
     let network_rx = Receiver::Utp(cbor::Decoder::from_reader(network_input));
     let joiner = RaiiThreadJoiner::new(thread!("UtpNetworkReader", move || {
-        start_rx(network_rx, their_pub_key, event_tx);
+        start_rx(network_rx, /* their_pub_key, */ event_tx);
     }));
 
     Ok(Connection {
@@ -401,13 +405,13 @@ pub fn utp_rendezvous_connect(udp_socket: UdpSocket,
     })
 }
 
-fn start_rx(mut network_rx: Receiver, their_pub_key: PublicKey, event_tx: ::CrustEventSender) {
+fn start_rx(mut network_rx: Receiver, /* their_pub_key: PublicKey, */ event_tx: ::CrustEventSender) {
     while let Ok(msg) = network_rx.receive() {
-        if event_tx.send(Event::NewMessage(their_pub_key, msg)).is_err() {
+        if event_tx.send(Event::NewMessage(/* their_pub_key, */ msg)).is_err() {
             break;
         }
     }
-    let _ = event_tx.send(Event::LostConnection(their_pub_key));
+    let _ = event_tx.send(Event::LostConnection/*(their_pub_key)*/);
 }
 
 mod test {

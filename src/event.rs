@@ -39,25 +39,26 @@ pub enum WriteEvent {
 #[derive(Debug)]
 pub enum Event {
     /// Invoked when a new message is received.  Passes the peer's public key and the message.
-    NewMessage(PublicKey, Vec<u8>),
+    NewMessage(/*PublicKey,*/ Vec<u8>),
     /// Invoked when we get a new bootstrap connection.
     /// Passes the new connection and the peer's public key.
     NewBootstrapConnection {
         /// TODO Doc
         connection: Connection,
-        /// TODO Doc
-        their_pub_key: PublicKey,
+        // /// TODO Doc
+        //their_pub_key: PublicKey,
     },
     /// Invoked when the new rendezvous connection request finishes.
     /// Passes the new connection and the peer's public key.
     NewConnection {
         /// TODO Doc
         connection: io::Result<Connection>,
-        /// TODO Doc
-        their_pub_key: PublicKey,
+        // /// TODO Doc
+        //their_pub_key: PublicKey,
     },
     /// Invoked when a connection to a peer is lost.  Passes the peer's public key.
-    LostConnection(PublicKey),
+    //LostConnection(PublicKey),
+    LostConnection,
     /// TODO THIS IS WRONG - Invoked when a new bootstrap connection to a peer is established.
     /// Passes the peer's endpoint.
     BootstrapFinished,

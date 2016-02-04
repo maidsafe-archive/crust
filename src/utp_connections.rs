@@ -104,7 +104,8 @@ pub fn external_udp_socket(peer_udp_listeners: Vec<SocketAddr>)
 // TODO All this function should be returning is either an Ok(()) or Err(..)
 /// Returns the socket along with the peer's SocketAddr
 pub fn blocking_udp_punch_hole(udp_socket: UdpSocket,
-                               secret: Option<[u8; 4]>,
+                               our_secret: [u8; 4],
+                               their_secret: [u8; 4],
                                peer_addr: SocketAddr)
                                -> (UdpSocket, io::Result<SocketAddr>) {
     // Cbor seems to serialize into bytes of different sizes and
@@ -113,7 +114,7 @@ pub fn blocking_udp_punch_hole(udp_socket: UdpSocket,
 
     let send_data = {
         let hole_punch = HolePunch {
-            secret: secret,
+            secret: our_secret,
             ack: false,
         };
         let mut enc = ::cbor::Encoder::from_memory();
@@ -153,28 +154,31 @@ pub fn blocking_udp_punch_hole(udp_socket: UdpSocket,
                               .decode::<HolePunch>()
                               .next() {
                         Some(Ok(ref hp)) => {
-                            if hp.secret == secret {
-                                if hp.ack {
-                                    return Ok(Some(addr));
-                                } else {
-                                    let send_data = {
-                                        let hole_punch = HolePunch {
-                                            secret: secret,
-                                            ack: true,
-                                        };
-                                        let mut enc = ::cbor::Encoder::from_memory();
-                                        enc.encode(::std::iter::once(&hole_punch)).unwrap();
-                                        enc.into_bytes()
+                            if hp.secret == our_secret && hp.ack {
+                                return Ok(Some(addr));
+                            }
+                            if hp.secret == their_secret {
+                                let send_data = {
+                                    let hole_punch = HolePunch {
+                                        secret: their_secret,
+                                        ack: true,
                                     };
-                                    periodic_sender.set_payload(send_data);
-                                    periodic_sender.set_destination(addr);
-                                    // TODO Do not do this. The only thing we should do is make
-                                    // sure the supplied peer_addr to this function is == to this
-                                    // addr (which can be spoofed anyway so additionally verify the
-                                    // secret above), otherwise it would mean we are connecting to
-                                    // someone who we are not sending HolePunch struct to
-                                    peer_addr = Some(addr);
-                                }
+                                    let mut enc = ::cbor::Encoder::from_memory();
+                                    enc.encode(::std::iter::once(&hole_punch)).unwrap();
+                                    enc.into_bytes()
+                                };
+                                periodic_sender.set_payload(send_data);
+                                periodic_sender.set_destination(addr);
+                                // TODO Do not do this. The only thing we should do is make
+                                // sure the supplied peer_addr to this function is == to this
+                                // addr (which can be spoofed anyway so additionally verify the
+                                // secret above), otherwise it would mean we are connecting to
+                                // someone who we are not sending HolePunch struct to
+                                // TODO(canndrew): Actually it makes sense that their HolePunch
+                                // message might come from an unexpected address. Instead we should
+                                // sign these messages to make sure we are talking to the right
+                                // person.
+                                peer_addr = Some(addr);
                             } else {
                                 info!("udp_hole_punch non matching secret");
                             }
@@ -211,6 +215,7 @@ mod test {
     use std::io;
     use std::thread::spawn;
     use std::sync::Arc;
+    use rand;
 
     fn listen(port: u16) -> io::Result<UtpListener> {
         UtpListener::bind(("0.0.0.0", port))
@@ -296,9 +301,10 @@ mod test {
 
     fn run_hole_punching(socket: UdpSocket,
                          peer_addr: SocketAddr,
-                         secret: Option<[u8; 4]>)
+                         our_secret: [u8; 4],
+                         their_secret: [u8; 4])
                          -> io::Result<SocketAddr> {
-        blocking_udp_punch_hole(socket, secret, peer_addr).1
+        blocking_udp_punch_hole(socket, our_secret, their_secret, peer_addr).1
     }
 
     fn duration_diff(t1: ::time::Duration, t2: ::time::Duration) -> ::time::Duration {
@@ -338,7 +344,9 @@ mod test {
         let s2_addr = loopback_v4(s2.local_addr().unwrap().port());
         let start = ::time::SteadyTime::now();
 
-        let t = spawn(move || run_hole_punching(s1, s2_addr, None));
+        let sec1 = rand::random();
+        let sec2 = rand::random();
+        let t = spawn(move || run_hole_punching(s1, s2_addr, sec1, sec2));
 
         let thread_status = t.join();
         assert!(thread_status.is_ok());
@@ -358,6 +366,7 @@ mod test {
         assert_eq!(punch_status.unwrap_err().kind(), io::ErrorKind::TimedOut);
     }
 
+    /*
     #[test]
     fn test_udp_hole_punching_1_terminates_no_secret() {
         let s1 = UdpSocket::bind(&*loopback_v4(0)).unwrap();
@@ -366,8 +375,10 @@ mod test {
         let s1_addr = loopback_v4(s1.local_addr().unwrap().port());
         let s2_addr = loopback_v4(s2.local_addr().unwrap().port());
 
-        let t1 = spawn(move || run_hole_punching(s1, s2_addr, None));
-        let t2 = spawn(move || run_hole_punching(s2, s1_addr, None));
+        let sec1 = rand::random();
+        let sec2 = rand::random();
+        let t1 = spawn(move || run_hole_punching(s1, s2_addr, sec1, sec2));
+        let t2 = spawn(move || run_hole_punching(s2, s1_addr, sec2, sec1));
 
         let r1 = t1.join();
         let r2 = t2.join();
@@ -375,6 +386,7 @@ mod test {
         let _ = r1.unwrap().unwrap();
         let _ = r2.unwrap().unwrap();
     }
+    */
 
     #[test]
     fn test_udp_hole_punching_2_terminates_with_secret() {
@@ -384,10 +396,10 @@ mod test {
         let s1_addr = loopback_v4(s1.local_addr().unwrap().port());
         let s2_addr = loopback_v4(s2.local_addr().unwrap().port());
 
-        let secret = ::rand::random();
-
-        let t1 = spawn(move || run_hole_punching(s1, s2_addr, secret));
-        let t2 = spawn(move || run_hole_punching(s2, s1_addr, secret));
+        let sec1 = rand::random();
+        let sec2 = rand::random();
+        let t1 = spawn(move || run_hole_punching(s1, s2_addr, sec1, sec2));
+        let t2 = spawn(move || run_hole_punching(s2, s1_addr, sec2, sec1));
 
         let r1 = t1.join();
         let r2 = t2.join();

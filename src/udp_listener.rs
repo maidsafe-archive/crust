@@ -156,9 +156,11 @@ impl RaiiUdpListener {
                                        .flat_map(|tci| tci.udp_listeners.iter().cloned())
                                        .collect();
                 if let Ok(res) = external_udp_socket(echo_servers) {
+                    let our_secret = rand::random();
                     let connect_resp = ListenerResponse::Connect {
                         connect_on: res.1,
                         secret: secret,
+                        their_secret: our_secret,
                         pub_key: unwrap_result!(our_contact_info.lock()).pub_key.clone(),
                     };
 
@@ -169,17 +171,17 @@ impl RaiiUdpListener {
                     }
 
                     if let (socket, Ok(peer_addr)) =
-                           blocking_udp_punch_hole(res.0, Some(secret), SocketAddr(peer_addr)) {
+                           blocking_udp_punch_hole(res.0, our_secret, secret, SocketAddr(peer_addr)) {
                         let connection = match utp_rendezvous_connect(socket,
                                                                       peer_addr,
-                                                                      pub_key.clone(),
+                                                                      //pub_key.clone(),
                                                                       event_tx.clone()) {
                             Ok(connection) => connection,
                             Err(_) => return,
                         };
 
                         let event = Event::NewConnection {
-                            their_pub_key: pub_key,
+                            //their_pub_key: pub_key,
                             connection: Ok(connection),
                         };
 
@@ -202,7 +204,7 @@ impl RaiiUdpListener {
         // any request - it is supposed to get requests, not make one
         match _msg {
             ListenerResponse::EchoExternalAddr { external_addr, } => unimplemented!(),
-            ListenerResponse::Connect { connect_on, secret, pub_key, } => unimplemented!(),
+            ListenerResponse::Connect { connect_on, secret, their_secret, pub_key, } => unimplemented!(),
         }
     }
 }
