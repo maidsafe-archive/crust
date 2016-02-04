@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-149' class='srclink' href='../src/crust/service.rs.html#69-79' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-128' class='srclink' href='../src/crust/service.rs.html#73-83' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Service {
     // some fields omitted
 }</pre><div class='docblock'><p>A structure representing a connection manager.</p>
@@ -64,7 +64,7 @@ successful registration of the request.</p>
 </div><h4 id='method.get_ordered_helping_nodes' class='method'><code>fn <a href='#method.get_ordered_helping_nodes' class='fnname'>get_ordered_helping_nodes</a>(&amp;self) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../crust/struct.SocketAddr.html' title='crust::SocketAddr'>SocketAddr</a>&gt;</code></h4>
 <div class='docblock'><p>Get the hole punch servers addresses of nodes that we&#39;re connected to ordered by how likely
 they are to be on a seperate network.</p>
-</div><h4 id='method.connect' class='method'><code>fn <a href='#method.connect' class='fnname'>connect</a>(&amp;self, our_conection_info: <a class='struct' href='../crust/struct.OurConnectionInfo.html' title='crust::OurConnectionInfo'>OurConnectionInfo</a>, their_connection_info: <a class='struct' href='../crust/struct.TheirConnectionInfo.html' title='crust::TheirConnectionInfo'>TheirConnectionInfo</a>)</code></h4>
+</div><h4 id='method.connect' class='method'><code>fn <a href='#method.connect' class='fnname'>connect</a>(&amp;self, our_connection_info: <a class='struct' href='../crust/struct.OurConnectionInfo.html' title='crust::OurConnectionInfo'>OurConnectionInfo</a>, their_connection_info: <a class='struct' href='../crust/struct.TheirConnectionInfo.html' title='crust::TheirConnectionInfo'>TheirConnectionInfo</a>)</code></h4>
 <div class='docblock'><p>Opens a connection to a remote peer. <code>public_endpoint</code> is the endpoint
 of the remote peer. <code>udp_socket</code> is a socket whose public address will
 be used by the other peer.</p>
@@ -87,8 +87,6 @@ itself which times out if a corresponding
 <code>Event::OnConnect</code> isn&#39;t received. See also <a href="https://github.com/maidsafe/crust/blob/master/docs/connect.md">Process for
 Connecting</a> for
 details on handling of connect in different protocols.</p>
-</div><h4 id='method.get_known_external_endpoints' class='method'><code>fn <a href='#method.get_known_external_endpoints' class='fnname'>get_known_external_endpoints</a>(&amp;self) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../crust/struct.Endpoint.html' title='crust::Endpoint'>Endpoint</a>&gt;</code></h4>
-<div class='docblock'><p>Get already known external endpoints without any upnp mapping</p>
 </div><h4 id='method.prepare_connection_info' class='method'><code>fn <a href='#method.prepare_connection_info' class='fnname'>prepare_connection_info</a>(&amp;mut self, result_token: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>)</code></h4>
 <div class='docblock'><p>Lookup a mapped udp socket based on result_token</p>
 </div></div></section>

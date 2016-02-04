@@ -110,6 +110,7 @@
 <span id="67">67</span>
 <span id="68">68</span>
 <span id="69">69</span>
+<span id="70">70</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -152,25 +153,26 @@
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>enum</span> <span class='ident'>Event</span> {
     <span class='doccomment'>/// Invoked when a new message is received.  Passes the peer&#39;s public key and the message.</span>
-    <span class='ident'>NewMessage</span>(<span class='ident'>PublicKey</span>, <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span>),
+    <span class='ident'>NewMessage</span>(<span class='comment'>/*PublicKey,*/</span> <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span>),
     <span class='doccomment'>/// Invoked when we get a new bootstrap connection.</span>
     <span class='doccomment'>/// Passes the new connection and the peer&#39;s public key.</span>
     <span class='ident'>NewBootstrapConnection</span> {
         <span class='doccomment'>/// TODO Doc</span>
         <span class='ident'>connection</span>: <span class='ident'>Connection</span>,
-        <span class='doccomment'>/// TODO Doc</span>
-        <span class='ident'>their_pub_key</span>: <span class='ident'>PublicKey</span>,
+        <span class='comment'>// /// TODO Doc</span>
+        <span class='comment'>//their_pub_key: PublicKey,</span>
     },
     <span class='doccomment'>/// Invoked when the new rendezvous connection request finishes.</span>
     <span class='doccomment'>/// Passes the new connection and the peer&#39;s public key.</span>
     <span class='ident'>NewConnection</span> {
         <span class='doccomment'>/// TODO Doc</span>
         <span class='ident'>connection</span>: <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>Connection</span><span class='op'>&gt;</span>,
-        <span class='doccomment'>/// TODO Doc</span>
-        <span class='ident'>their_pub_key</span>: <span class='ident'>PublicKey</span>,
+        <span class='comment'>// /// TODO Doc</span>
+        <span class='comment'>//their_pub_key: PublicKey,</span>
     },
     <span class='doccomment'>/// Invoked when a connection to a peer is lost.  Passes the peer&#39;s public key.</span>
-    <span class='ident'>LostConnection</span>(<span class='ident'>PublicKey</span>),
+    <span class='comment'>//LostConnection(PublicKey),</span>
+    <span class='ident'>LostConnection</span>,
     <span class='doccomment'>/// TODO THIS IS WRONG - Invoked when a new bootstrap connection to a peer is established.</span>
     <span class='doccomment'>/// Passes the peer&#39;s endpoint.</span>
     <span class='ident'>BootstrapFinished</span>,
