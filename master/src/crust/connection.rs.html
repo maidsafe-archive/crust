@@ -688,7 +688,7 @@
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>last_err</span> <span class='op'>=</span> <span class='prelude-val'>None</span>;
     <span class='kw'>for</span> <span class='ident'>tcp_addr</span> <span class='kw'>in</span> <span class='ident'>peer_contact</span>.<span class='ident'>tcp_acceptors</span> {
         <span class='kw'>match</span> <span class='ident'>connect_tcp_endpoint</span>(<span class='ident'>tcp_addr</span>,
-                                   <span class='comment'>//peer_contact.pub_key,</span>
+                                   <span class='ident'>peer_contact</span>.<span class='ident'>pub_key</span>,
                                    <span class='ident'>our_contact_info</span>.<span class='ident'>clone</span>(),
                                    <span class='ident'>event_tx</span>.<span class='ident'>clone</span>()) {
             <span class='prelude-val'>Ok</span>(<span class='ident'>connection</span>) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='ident'>connection</span>),
@@ -731,7 +731,7 @@
                                     <span class='kw'>match</span> <span class='ident'>utp_rendezvous_connect</span>(
                                             <span class='ident'>our_socket</span>,
                                             <span class='ident'>peer_addr</span>,
-                                            <span class='comment'>//pub_key,</span>
+                                            <span class='ident'>peer_contact</span>.<span class='ident'>pub_key</span>,
                                             <span class='ident'>event_tx</span>.<span class='ident'>clone</span>()) {
                                         <span class='prelude-val'>Ok</span>(<span class='ident'>connection</span>) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='ident'>connection</span>),
                                         <span class='prelude-val'>Err</span>(_) <span class='op'>=&gt;</span> <span class='kw'>continue</span>,
@@ -758,7 +758,7 @@
 }
 
 <span class='kw'>fn</span> <span class='ident'>connect_tcp_endpoint</span>(<span class='ident'>remote_addr</span>: <span class='ident'>SocketAddr</span>,
-                        <span class='comment'>//their_pub_key: PublicKey,</span>
+                        <span class='ident'>their_pub_key</span>: <span class='ident'>PublicKey</span>,
                         <span class='ident'>our_contact_info</span>: <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Mutex</span><span class='op'>&lt;</span><span class='ident'>StaticContactInfo</span><span class='op'>&gt;&gt;</span>,
                         <span class='ident'>event_tx</span>: ::<span class='ident'>CrustEventSender</span>)
                         <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>Connection</span><span class='op'>&gt;</span> {
@@ -769,7 +769,7 @@
 
     <span class='kw'>let</span> <span class='ident'>network_rx</span> <span class='op'>=</span> <span class='ident'>Receiver</span>::<span class='ident'>Tcp</span>(<span class='ident'>cbor</span>::<span class='ident'>Decoder</span>::<span class='ident'>from_reader</span>(<span class='ident'>network_input</span>));
     <span class='kw'>let</span> <span class='ident'>joiner</span> <span class='op'>=</span> <span class='ident'>RaiiThreadJoiner</span>::<span class='ident'>new</span>(<span class='macro'>thread</span><span class='macro'>!</span>(<span class='string'>&quot;TcpNetworkReader&quot;</span>, <span class='kw'>move</span> <span class='op'>||</span> {
-        <span class='ident'>start_rx</span>(<span class='ident'>network_rx</span>, <span class='comment'>/*their_pub_key,*/</span> <span class='ident'>event_tx</span>);
+        <span class='ident'>start_rx</span>(<span class='ident'>network_rx</span>, <span class='ident'>their_pub_key</span>, <span class='ident'>event_tx</span>);
     }));
 
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>connection</span> <span class='op'>=</span> <span class='ident'>Connection</span> {
@@ -787,7 +787,7 @@
 }
 
 <span class='kw'>fn</span> <span class='ident'>connect_utp_endpoint</span>(<span class='ident'>remote_addr</span>: <span class='ident'>SocketAddr</span>,
-                        <span class='comment'>//their_pub_key: PublicKey,</span>
+                        <span class='ident'>their_pub_key</span>: <span class='ident'>PublicKey</span>,
                         <span class='ident'>our_contact_info</span>: <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Mutex</span><span class='op'>&lt;</span><span class='ident'>StaticContactInfo</span><span class='op'>&gt;&gt;</span>,
                         <span class='ident'>event_tx</span>: ::<span class='ident'>CrustEventSender</span>)
                         <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>Connection</span><span class='op'>&gt;</span> {
@@ -797,7 +797,7 @@
 
     <span class='kw'>let</span> <span class='ident'>network_rx</span> <span class='op'>=</span> <span class='ident'>Receiver</span>::<span class='ident'>Utp</span>(<span class='ident'>cbor</span>::<span class='ident'>Decoder</span>::<span class='ident'>from_reader</span>(<span class='ident'>network_input</span>));
     <span class='kw'>let</span> <span class='ident'>joiner</span> <span class='op'>=</span> <span class='ident'>RaiiThreadJoiner</span>::<span class='ident'>new</span>(<span class='macro'>thread</span><span class='macro'>!</span>(<span class='string'>&quot;UtpNetworkReader&quot;</span>, <span class='kw'>move</span> <span class='op'>||</span> {
-        <span class='ident'>start_rx</span>(<span class='ident'>network_rx</span>, <span class='comment'>/*their_pub_key,*/</span> <span class='ident'>event_tx</span>);
+        <span class='ident'>start_rx</span>(<span class='ident'>network_rx</span>, <span class='ident'>their_pub_key</span>, <span class='ident'>event_tx</span>);
     }));
 
     <span class='prelude-val'>Ok</span>(<span class='ident'>Connection</span> {
@@ -923,11 +923,11 @@
                     }
                 }
             };
-            <span class='comment'>//let their_pub_key = their_contact_info.pub_key.clone();</span>
+            <span class='kw'>let</span> <span class='ident'>their_pub_key</span> <span class='op'>=</span> <span class='ident'>their_contact_info</span>.<span class='ident'>pub_key</span>.<span class='ident'>clone</span>();
 
             <span class='kw'>let</span> <span class='ident'>event_tx_cloned</span> <span class='op'>=</span> <span class='ident'>event_tx</span>.<span class='ident'>clone</span>();
             <span class='kw'>let</span> <span class='ident'>joiner</span> <span class='op'>=</span> <span class='ident'>RaiiThreadJoiner</span>::<span class='ident'>new</span>(<span class='macro'>thread</span><span class='macro'>!</span>(<span class='string'>&quot;TcpNetworkReader&quot;</span>, <span class='kw'>move</span> <span class='op'>||</span> {
-                <span class='ident'>start_rx</span>(<span class='ident'>network_rx</span>, <span class='comment'>/*their_pub_key,*/</span> <span class='ident'>event_tx_cloned</span>);
+                <span class='ident'>start_rx</span>(<span class='ident'>network_rx</span>, <span class='ident'>their_pub_key</span>, <span class='ident'>event_tx_cloned</span>);
             }));
 
             <span class='kw'>let</span> <span class='ident'>connection</span> <span class='op'>=</span> <span class='ident'>Connection</span> {
@@ -939,7 +939,7 @@
             };
 
             <span class='kw'>let</span> <span class='ident'>event</span> <span class='op'>=</span> <span class='ident'>Event</span>::<span class='ident'>NewConnection</span> {
-                <span class='comment'>//their_pub_key: their_contact_info.pub_key,</span>
+                <span class='ident'>their_pub_key</span>: <span class='ident'>their_contact_info</span>.<span class='ident'>pub_key</span>,
                 <span class='ident'>connection</span>: <span class='prelude-val'>Ok</span>(<span class='ident'>connection</span>),
             };
 
@@ -958,7 +958,7 @@
 
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>utp_rendezvous_connect</span>(<span class='ident'>udp_socket</span>: <span class='ident'>UdpSocket</span>,
                               <span class='ident'>their_addr</span>: <span class='ident'>SocketAddr</span>,
-                              <span class='comment'>//their_pub_key: PublicKey,</span>
+                              <span class='ident'>their_pub_key</span>: <span class='ident'>PublicKey</span>,
                               <span class='ident'>event_tx</span>: ::<span class='ident'>CrustEventSender</span>)
                               <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>Connection</span><span class='op'>&gt;</span> {
     <span class='kw'>let</span> (<span class='ident'>network_input</span>, <span class='ident'>writer</span>) <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>utp_connections</span>::<span class='ident'>rendezvous_connect_utp</span>(<span class='ident'>udp_socket</span>,
@@ -968,7 +968,7 @@
 
     <span class='kw'>let</span> <span class='ident'>network_rx</span> <span class='op'>=</span> <span class='ident'>Receiver</span>::<span class='ident'>Utp</span>(<span class='ident'>cbor</span>::<span class='ident'>Decoder</span>::<span class='ident'>from_reader</span>(<span class='ident'>network_input</span>));
     <span class='kw'>let</span> <span class='ident'>joiner</span> <span class='op'>=</span> <span class='ident'>RaiiThreadJoiner</span>::<span class='ident'>new</span>(<span class='macro'>thread</span><span class='macro'>!</span>(<span class='string'>&quot;UtpNetworkReader&quot;</span>, <span class='kw'>move</span> <span class='op'>||</span> {
-        <span class='ident'>start_rx</span>(<span class='ident'>network_rx</span>, <span class='comment'>/* their_pub_key, */</span> <span class='ident'>event_tx</span>);
+        <span class='ident'>start_rx</span>(<span class='ident'>network_rx</span>, <span class='ident'>their_pub_key</span>, <span class='ident'>event_tx</span>);
     }));
 
     <span class='prelude-val'>Ok</span>(<span class='ident'>Connection</span> {
@@ -980,13 +980,13 @@
     })
 }
 
-<span class='kw'>fn</span> <span class='ident'>start_rx</span>(<span class='kw-2'>mut</span> <span class='ident'>network_rx</span>: <span class='ident'>Receiver</span>, <span class='comment'>/* their_pub_key: PublicKey, */</span> <span class='ident'>event_tx</span>: ::<span class='ident'>CrustEventSender</span>) {
+<span class='kw'>fn</span> <span class='ident'>start_rx</span>(<span class='kw-2'>mut</span> <span class='ident'>network_rx</span>: <span class='ident'>Receiver</span>, <span class='ident'>their_pub_key</span>: <span class='ident'>PublicKey</span>, <span class='ident'>event_tx</span>: ::<span class='ident'>CrustEventSender</span>) {
     <span class='kw'>while</span> <span class='kw'>let</span> <span class='prelude-val'>Ok</span>(<span class='ident'>msg</span>) <span class='op'>=</span> <span class='ident'>network_rx</span>.<span class='ident'>receive</span>() {
-        <span class='kw'>if</span> <span class='ident'>event_tx</span>.<span class='ident'>send</span>(<span class='ident'>Event</span>::<span class='ident'>NewMessage</span>(<span class='comment'>/* their_pub_key, */</span> <span class='ident'>msg</span>)).<span class='ident'>is_err</span>() {
+        <span class='kw'>if</span> <span class='ident'>event_tx</span>.<span class='ident'>send</span>(<span class='ident'>Event</span>::<span class='ident'>NewMessage</span>(<span class='ident'>their_pub_key</span>, <span class='ident'>msg</span>)).<span class='ident'>is_err</span>() {
             <span class='kw'>break</span>;
         }
     }
-    <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>event_tx</span>.<span class='ident'>send</span>(<span class='ident'>Event</span>::<span class='ident'>LostConnection</span><span class='comment'>/*(their_pub_key)*/</span>);
+    <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>event_tx</span>.<span class='ident'>send</span>(<span class='ident'>Event</span>::<span class='ident'>LostConnection</span>(<span class='ident'>their_pub_key</span>));
 }
 
 <span class='kw'>mod</span> <span class='ident'>test</span> {
