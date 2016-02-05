@@ -19,6 +19,7 @@ use std::io;
 use std::net::UdpSocket;
 use socket_addr::SocketAddr;
 use connection::RaiiTcpAcceptor;
+use sodiumoxide::crypto::sign::PublicKey;
 use static_contact_info::StaticContactInfo;
 
 /// The result of a `Service::prepare_contact_info` call.
@@ -42,6 +43,7 @@ impl OurConnectionInfo {
             static_contact_info: self.0.static_contact_info.clone(),
             //tcp_addrs: self.0.tcp_addrs.clone(),
             udp_addrs: self.0.udp_addrs.clone(),
+            pub_key: self.0.static_contact_info.pub_key.clone(),
         })
     }
 }
@@ -99,9 +101,10 @@ pub struct TheirConnectionInfoInner {
     pub static_contact_info: StaticContactInfo,
     //pub tcp_addrs: Vec<SocketAddr>,
     pub udp_addrs: Vec<SocketAddr>,
+    pub pub_key: PublicKey,
 }
 
-// This is an ugly hack because of the limitation of the language for a c++ friend-like cocept:
+// This is an ugly hack because of the limitation of the language for a c++ friend-like concept:
 // http://stackoverflow.com/questions/35142292/c-friend-like-construct-for-rust
 /// Get the Inner contained structure - this is to allow the access of inner item to this crate but
 /// not to other crates
@@ -112,6 +115,8 @@ pub trait FriendTheirConnectionInfo {
     fn get_inner_mut(&mut self) -> &mut TheirConnectionInfoInner;
     /// Take the inner item.
     fn take_inner(self) -> TheirConnectionInfoInner;
+    /// Get their public key.
+    fn get_pub_key(&self) -> &PublicKey;
 }
 
 impl FriendTheirConnectionInfo for TheirConnectionInfo {
@@ -125,5 +130,9 @@ impl FriendTheirConnectionInfo for TheirConnectionInfo {
 
     fn take_inner(self) -> TheirConnectionInfoInner {
         self.0
+    }
+
+    fn get_pub_key(&self) -> &PublicKey {
+        &self.0.pub_key
     }
 }

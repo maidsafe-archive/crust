@@ -79,7 +79,7 @@ impl RaiiBootstrap {
                 break;
             }
 
-            //let their_pub_key = contact.pub_key.clone();
+            let their_pub_key = contact.pub_key.clone();
 
             // 1st try a TCP connect
             // 2nd try a UDP connection (and upgrade to UTP)
@@ -93,7 +93,7 @@ impl RaiiBootstrap {
 
             if let Ok(connection) = connect_result {
                 let event = Event::NewConnection {
-                    //their_pub_key: their_pub_key,
+                    their_pub_key: their_pub_key,
                     connection: Ok(connection),
                 };
                 let _ = event_tx.send(event);
