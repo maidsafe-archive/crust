@@ -209,17 +209,18 @@ impl Service {
             let err = io::Error::new(io::ErrorKind::Other, msg);
             let ev = Event::NewConnection {
                 connection: Err(err),
-                //their_pub_key: their_connection_info.0.pub_key,
+                their_pub_key: their_connection_info.get_pub_key().clone(),
             };
             let _ = self.event_tx.send(ev);
             return;
         }
 
         let event_tx = self.event_tx.clone();
-        //let our_pub_key = unwrap_result!(self.static_contact_info.lock()).pub_key.clone();
+        let our_pub_key = unwrap_result!(self.static_contact_info.lock()).pub_key.clone();
 
         // TODO connect to all the socket addresses of peer in parallel
         let _joiner = thread!("PeerConnectionThread", move || {
+            let their_pub_key = their_connection_info.get_pub_key().clone();
             let our_connection_info_inner = our_connection_info.take_inner();
             let their_connection_info_inner = their_connection_info.take_inner();
             let (udp_socket, result_addr) =
@@ -233,7 +234,7 @@ impl Service {
                 Err(e) => {
                     let ev = Event::NewConnection {
                         connection: Err(e),
-                        //their_pub_key: their_connection_info.0.pub_key,
+                        their_pub_key: their_pub_key,
                     };
                     let _ = event_tx.send(ev);
                     return;
@@ -243,9 +244,9 @@ impl Service {
             let _ = event_tx.send(Event::NewConnection {
                 connection: connection::utp_rendezvous_connect(udp_socket,
                                                                public_endpoint,
-                                                               //their_connection_info.0.pub_key,
+                                                               their_pub_key.clone(),
                                                                event_tx.clone()),
-                //their_pub_key: their_connection_info.0.pub_key,
+                their_pub_key: their_pub_key,
             });
         });
     }
@@ -362,12 +363,11 @@ mod test {
 
         let service_1 = unwrap_result!(Service::new_impl(event_sender_1, port, use_tcp, use_udp));
         // let service_1 finish bootstrap - it should bootstrap off service_0
-        //let (mut connection_1_to_0, pub_key_0) = {
-        let mut connection_1_to_0 = {
+        let (mut connection_1_to_0, pub_key_0) = {
             let event_rxd = unwrap_result!(event_rx_1.recv());
             match event_rxd {
-                Event::NewConnection { connection: Ok(connection_obj) /* their_pub_key */ } => {
-                    (connection_obj /*, their_pub_key */)
+                Event::NewConnection { connection: Ok(connection_obj), their_pub_key } => {
+                    (connection_obj, their_pub_key)
                 }
                 _ => panic!("Received unexpected event: {:?}", event_rxd),
             }
@@ -383,10 +383,9 @@ mod test {
         }
 
         // service_0 should have received service_1's connection bootstrap connection by now
-        //let (mut connection_0_to_1, pub_key_1) = match unwrap_result!(event_rx_0.recv()) {
-        let mut connection_0_to_1 = match unwrap_result!(event_rx_0.recv()) {
-            Event::NewConnection { connection: Ok(connection_obj) /* their_pub_key */ } => {
-                (connection_obj /*, their_pub_key */)
+        let (mut connection_0_to_1, pub_key_1) = match unwrap_result!(event_rx_0.recv()) {
+            Event::NewConnection { connection: Ok(connection_obj), their_pub_key } => {
+                (connection_obj, their_pub_key)
             }
             _ => panic!("0 Should have got a new connection from 1."),
         };
@@ -399,7 +398,7 @@ mod test {
             assert_eq!(*connection_1_to_0.get_protocol(), Protocol::Utp);
         }
 
-        //assert!(pub_key_0 != pub_key_1);
+        assert!(pub_key_0 != pub_key_1);
 
         // send data from 0 to 1
         {
@@ -407,17 +406,16 @@ mod test {
             unwrap_result!(connection_0_to_1.send(&data_txd));
 
             // 1 should rx data
-            //let (data_rxd, peer_pub_key) = {
-            let data_rxd = {
+            let (data_rxd, peer_pub_key) = {
                 let event_rxd = unwrap_result!(event_rx_1.recv());
                 match event_rxd {
-                    Event::NewMessage(/*their_pub_key, */ msg) => (msg /*, their_pub_key */),
+                    Event::NewMessage(their_pub_key, msg) => (msg , their_pub_key),
                     _ => panic!("Received unexpected event: {:?}", event_rxd),
                 }
             };
 
             assert_eq!(data_rxd, data_txd);
-            //assert_eq!(peer_pub_key, pub_key_0);
+            assert_eq!(peer_pub_key, pub_key_0);
         }
 
         // send data from 1 to 0
@@ -426,17 +424,16 @@ mod test {
             unwrap_result!(connection_1_to_0.send(&data_txd));
 
             // 0 should rx data
-            //let (data_rxd, peer_pub_key) = {
-            let data_rxd = {
+            let (data_rxd, peer_pub_key) = {
                 let event_rxd = unwrap_result!(event_rx_0.recv());
                 match event_rxd {
-                    Event::NewMessage(/*their_pub_key, */ msg) => (msg /*, their_pub_key */),
+                    Event::NewMessage(their_pub_key, msg) => (msg , their_pub_key),
                     _ => panic!("Received unexpected event: {:?}", event_rxd),
                 }
             };
 
             assert_eq!(data_rxd, data_txd);
-            //assert_eq!(peer_pub_key, pub_key_1);
+            assert_eq!(peer_pub_key, pub_key_1);
         }
     }
 
@@ -515,16 +512,16 @@ mod test {
         service_0.connect(our_ci_0, their_ci_1);
         service_1.connect(our_ci_1, their_ci_0);
 
-        let mut connection_0_to_1 = match unwrap_result!(event_rx_0.recv()) {
-            Event::NewConnection { connection: Ok(connection_obj) /* their_pub_key */ } => {
-                (connection_obj /*, their_pub_key */)
+        let (mut connection_0_to_1, pub_key_1) = match unwrap_result!(event_rx_0.recv()) {
+            Event::NewConnection { connection: Ok(connection_obj), their_pub_key } => {
+                (connection_obj, their_pub_key)
             }
             m => panic!("0 Should have connected to 1. Got message {:?}", m),
         };
 
-        let mut connection_1_to_0 = match unwrap_result!(event_rx_1.recv()) {
-            Event::NewConnection { connection: Ok(connection_obj) /* their_pub_key */ } => {
-                (connection_obj /*, their_pub_key */)
+        let (mut connection_1_to_0, pub_key_0) = match unwrap_result!(event_rx_1.recv()) {
+            Event::NewConnection { connection: Ok(connection_obj), their_pub_key } => {
+                (connection_obj, their_pub_key)
             }
             m => panic!("1 Should have connected to 0. Got message {:?}", m),
         };
@@ -535,17 +532,16 @@ mod test {
             unwrap_result!(connection_0_to_1.send(&data_txd));
 
             // 1 should rx data
-            //let (data_rxd, peer_pub_key) = {
-            let data_rxd = {
+            let (data_rxd, peer_pub_key) = {
                 let event_rxd = unwrap_result!(event_rx_1.recv());
                 match event_rxd {
-                    Event::NewMessage(/*their_pub_key, */ msg) => (msg /*, their_pub_key */),
+                    Event::NewMessage(their_pub_key,  msg) => (msg , their_pub_key),
                     _ => panic!("Received unexpected event: {:?}", event_rxd),
                 }
             };
 
             assert_eq!(data_rxd, data_txd);
-            //assert_eq!(peer_pub_key, pub_key_0);
+            assert_eq!(peer_pub_key, pub_key_0);
         }
 
         // send data from 1 to 0
@@ -554,17 +550,16 @@ mod test {
             unwrap_result!(connection_1_to_0.send(&data_txd));
 
             // 0 should rx data
-            //let (data_rxd, peer_pub_key) = {
-            let data_rxd = {
+            let (data_rxd, peer_pub_key) = {
                 let event_rxd = unwrap_result!(event_rx_0.recv());
                 match event_rxd {
-                    Event::NewMessage(/*their_pub_key, */ msg) => (msg /*, their_pub_key */),
+                    Event::NewMessage(their_pub_key,  msg) => (msg, their_pub_key),
                     _ => panic!("Received unexpected event: {:?}", event_rxd),
                 }
             };
 
             assert_eq!(data_rxd, data_txd);
-            //assert_eq!(peer_pub_key, pub_key_1);
+            assert_eq!(peer_pub_key, pub_key_1);
         }
     }
 }
