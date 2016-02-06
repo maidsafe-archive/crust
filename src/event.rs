@@ -17,12 +17,12 @@
 
 use endpoint::Endpoint;
 use connection::{RaiiTcpAcceptor, Connection};
+use service::ConnectionInfoResult;
 use std::net::UdpSocket;
 use socket_addr::SocketAddr;
 use sodiumoxide::crypto::sign::PublicKey;
 use std::io;
 use static_contact_info::StaticContactInfo;
-use connection_info::ConnectionInfoResult;
 
 // This is necessary to gracefully exit the threads. In current design, there is no control over
 // the network reader threads - they infinitely block. So this workaround will use the writer
