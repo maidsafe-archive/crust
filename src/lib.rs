@@ -67,9 +67,8 @@ extern crate libc;
 /// Crust Observers will be informed of crust events on this
 pub type CrustEventSender = ::maidsafe_utilities::event_sender::MaidSafeObserver<Event>;
 pub use config_handler::write_config_file;
-pub use service::Service;
+pub use service::{ConnectionInfoResult, OurConnectionInfo, Service, TheirConnectionInfo};
 pub use event::Event;
-pub use connection_info::{ConnectionInfoResult, OurConnectionInfo, TheirConnectionInfo};
 pub use endpoint::{Endpoint, Protocol};
 pub use connection::Connection;
 pub use socket_addr::SocketAddr;
@@ -96,4 +95,3 @@ mod periodic_sender;
 mod socket_utils;
 mod ip_info;
 mod udp_listener;
-mod connection_info;
