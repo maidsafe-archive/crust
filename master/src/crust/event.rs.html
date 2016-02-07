@@ -130,12 +130,12 @@
 
 <span class='kw'>use</span> <span class='ident'>endpoint</span>::<span class='ident'>Endpoint</span>;
 <span class='kw'>use</span> <span class='ident'>connection</span>::{<span class='ident'>RaiiTcpAcceptor</span>, <span class='ident'>Connection</span>};
+<span class='kw'>use</span> <span class='ident'>service</span>::<span class='ident'>ConnectionInfoResult</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>net</span>::<span class='ident'>UdpSocket</span>;
 <span class='kw'>use</span> <span class='ident'>socket_addr</span>::<span class='ident'>SocketAddr</span>;
 <span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>crypto</span>::<span class='ident'>sign</span>::<span class='ident'>PublicKey</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>;
 <span class='kw'>use</span> <span class='ident'>static_contact_info</span>::<span class='ident'>StaticContactInfo</span>;
-<span class='kw'>use</span> <span class='ident'>connection_info</span>::<span class='ident'>ConnectionInfoResult</span>;
 
 <span class='comment'>// This is necessary to gracefully exit the threads. In current design, there is no control over</span>
 <span class='comment'>// the network reader threads - they infinitely block. So this workaround will use the writer</span>
