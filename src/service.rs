@@ -82,7 +82,7 @@ pub struct OurConnectionInfo {
 }
 
 impl OurConnectionInfo {
-    /// Convert our connection info to theirs so that we can give it to peer
+    /// Convert our connection info to theirs so that we can give it to peer.
     pub fn to_their_connection_info(&self) -> TheirConnectionInfo {
         TheirConnectionInfo {
             secret: self.secret.clone(),
