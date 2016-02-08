@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/rustc-serialize-0.3.16/src/json.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/rustc-serialize-0.3.17/src/json.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>json.rs.html -- source</title>
@@ -12,7 +12,7 @@
     <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
 
-    <link rel="shortcut icon" href="http://www.rust-lang.org/favicon.ico">
+    <link rel="shortcut icon" href="https://www.rust-lang.org/favicon.ico">
     
 </head>
 <body class="rustdoc">
@@ -26,7 +26,7 @@
     
 
     <nav class="sidebar">
-        <a href='../../rustc_serialize/index.html'><img src='http://www.rust-lang.org/logos/rust-logo-128x128-blk-v2.png' alt='' width='100'></a>
+        <a href='../../rustc_serialize/index.html'><img src='https://www.rust-lang.org/logos/rust-logo-128x128-blk-v2.png' alt='' width='100'></a>
         
     </nav>
 
@@ -3971,7 +3971,6 @@
 <span id="3928">3928</span>
 <span id="3929">3929</span>
 <span id="3930">3930</span>
-<span id="3931">3931</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2012-2014 The Rust Project Developers. See the COPYRIGHT</span>
 <span class='comment'>// file at the top-level directory of this distribution and at</span>
@@ -3991,8 +3990,8 @@
 <span class='doccomment'>//! # What is JSON?</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! JSON (JavaScript Object Notation) is a way to write data in Javascript.</span>
-<span class='doccomment'>//! Like XML, it allows to encode structured data in a text format that can be</span>
-<span class='doccomment'>//! easily read by humans Its simple syntax and native compatibility with</span>
+<span class='doccomment'>//! Like XML, it allows encoding structured data in a text format that can be</span>
+<span class='doccomment'>//! easily read by humans. Its simple syntax and native compatibility with</span>
 <span class='doccomment'>//! JavaScript have made it a widely used format.</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! Data types that can be encoded are JavaScript types (see the `Json` enum</span>
@@ -4047,7 +4046,7 @@
 <span class='doccomment'>//! string or buffer using the functions described above.  You can also use the</span>
 <span class='doccomment'>//! `json::Encoder` object, which implements the `Encoder` trait.</span>
 <span class='doccomment'>//!</span>
-<span class='doccomment'>//! When using `ToJson` the `Encodable` trait implementation is not</span>
+<span class='doccomment'>//! When using `ToJson`, the `Encodable` trait implementation is not</span>
 <span class='doccomment'>//! mandatory.</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! # Examples of use</span>
@@ -4087,7 +4086,7 @@
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! ## Using the `ToJson` trait</span>
 <span class='doccomment'>//!</span>
-<span class='doccomment'>//! The examples above use the `ToJson` trait to generate the JSON string,</span>
+<span class='doccomment'>//! The examples below use the `ToJson` trait to generate the JSON string,</span>
 <span class='doccomment'>//! which is required for custom mappings.</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! ### Simple example of `ToJson` usage</span>
@@ -4209,7 +4208,7 @@
 <span class='doccomment'>//! While this library is the standard way of working with JSON in Rust,</span>
 <span class='doccomment'>//! there is a next-generation library called Serde that&#39;s in the works (it&#39;s</span>
 <span class='doccomment'>//! faster, overcomes some design limitations of rustc-serialize and has more</span>
-<span class='doccomment'>//! features). You might consider using it when starting new project or</span>
+<span class='doccomment'>//! features). You might consider using it when starting a new project or</span>
 <span class='doccomment'>//! evaluating Rust JSON performance.</span>
 
 <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>JsonEvent</span>::<span class='op'>*</span>;
@@ -6530,7 +6529,6 @@
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
 <span class='kw'>mod</span> <span class='ident'>tests</span> {
     <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>Animal</span>::<span class='op'>*</span>;
-    <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>DecodeEnum</span>::<span class='op'>*</span>;
     <span class='kw'>use</span> {<span class='ident'>Encodable</span>, <span class='ident'>Decodable</span>};
     <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>Json</span>::<span class='op'>*</span>;
     <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>ErrorCode</span>::<span class='op'>*</span>;
@@ -7865,7 +7863,7 @@
         <span class='kw'>struct</span> <span class='ident'>Foo</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span> {
             <span class='ident'>phantom_data</span>: <span class='ident'>PhantomData</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span>
         }
-        
+
         <span class='kw'>let</span> <span class='ident'>f</span>: <span class='ident'>Foo</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>Foo</span> {
             <span class='ident'>phantom_data</span>: <span class='ident'>PhantomData</span>
         };

@@ -46,10 +46,13 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-3077' class='srclink' href='../src/itertools/lib.rs.html#1319-1335' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-3095' class='srclink' href='../src/itertools/lib.rs.html#1322-1338' title='goto source code'>[src]</a></span></h1>
 <pre class='rust fn'>pub fn equal&lt;I, J&gt;(a: I, b: J) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a> <span class='where'>where I: <a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/trait.IntoIterator.html' title='core::iter::IntoIterator'>IntoIterator</a>, J: <a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/trait.IntoIterator.html' title='core::iter::IntoIterator'>IntoIterator</a>, I::Item: <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a>&lt;J::Item&gt;</span></pre><div class='docblock'><p>Return <code>true</code> if both iterators produce equal sequences
 (elements pairwise equal and sequences of the same length),
 <code>false</code> otherwise.</p>
+
+<p><strong>Note:</strong> the standard library method <code>Iterator::eq</code> now provides
+the same functionality.</p>
 <pre class='rust rust-example-rendered'>
 <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>itertools</span>::<span class='ident'>equal</span>(<span class='macro'>vec</span><span class='macro'>!</span>[<span class='number'>1</span>, <span class='number'>2</span>, <span class='number'>3</span>], <span class='number'>1</span>..<span class='number'>4</span>));
 <span class='macro'>assert</span><span class='macro'>!</span>(<span class='op'>!</span><span class='ident'>itertools</span>::<span class='ident'>equal</span>(<span class='kw-2'>&amp;</span>[<span class='number'>0</span>, <span class='number'>0</span>], <span class='kw-2'>&amp;</span>[<span class='number'>0</span>, <span class='number'>0</span>, <span class='number'>0</span>]));</pre>

@@ -12,7 +12,7 @@
     <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
 
-    <link rel="shortcut icon" href="http://www.rust-lang.org/favicon.ico">
+    <link rel="shortcut icon" href="https://www.rust-lang.org/favicon.ico">
     
 </head>
 <body class="rustdoc">
@@ -26,7 +26,7 @@
     
 
     <nav class="sidebar">
-        <a href='../../rustc_serialize/index.html'><img src='http://www.rust-lang.org/logos/rust-logo-128x128-blk-v2.png' alt='' width='100'></a>
+        <a href='../../rustc_serialize/index.html'><img src='https://www.rust-lang.org/logos/rust-logo-128x128-blk-v2.png' alt='' width='100'></a>
         <p class='location'><a href='../index.html'>rustc_serialize</a></p><script>window.sidebarCurrent = {name: 'json', ty: 'mod', relpath: '../'};</script><script defer src="../sidebar-items.js"></script>
     </nav>
 
@@ -46,13 +46,13 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-5129' class='srclink' href='../../src/rustc_serialize/json.rs.html#14-3931' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-5150' class='srclink' href='../../src/rustc_serialize/json.rs.html#14-3930' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>JSON parsing and serialization</p>
 
 <h1 id='what-is-json' class='section-header'><a href='#what-is-json'>What is JSON?</a></h1>
 <p>JSON (JavaScript Object Notation) is a way to write data in Javascript.
-Like XML, it allows to encode structured data in a text format that can be
-easily read by humans Its simple syntax and native compatibility with
+Like XML, it allows encoding structured data in a text format that can be
+easily read by humans. Its simple syntax and native compatibility with
 JavaScript have made it a widely used format.</p>
 
 <p>Data types that can be encoded are JavaScript types (see the <code>Json</code> enum
@@ -106,7 +106,7 @@ object into a <code>json::Json</code> value.  A <code>json::Json</code> value ca
 string or buffer using the functions described above.  You can also use the
 <code>json::Encoder</code> object, which implements the <code>Encoder</code> trait.</p>
 
-<p>When using <code>ToJson</code> the <code>Encodable</code> trait implementation is not
+<p>When using <code>ToJson</code>, the <code>Encodable</code> trait implementation is not
 mandatory.</p>
 
 <h1 id='examples-of-use' class='section-header'><a href='#examples-of-use'>Examples of use</a></h1>
@@ -141,7 +141,7 @@ from JSON using the serialization API, using the derived serialization code.</p>
 }</pre>
 
 <h2 id='using-the-tojson-trait' class='section-header'><a href='#using-the-tojson-trait'>Using the <code>ToJson</code> trait</a></h2>
-<p>The examples above use the <code>ToJson</code> trait to generate the JSON string,
+<p>The examples below use the <code>ToJson</code> trait to generate the JSON string,
 which is required for custom mappings.</p>
 
 <h3 id='simple-example-of-tojson-usage' class='section-header'><a href='#simple-example-of-tojson-usage'>Simple example of <code>ToJson</code> usage</a></h3><pre class='rust rust-example-rendered'>
@@ -253,7 +253,7 @@ which is required for custom mappings.</p>
 <p>While this library is the standard way of working with JSON in Rust,
 there is a next-generation library called Serde that&#39;s in the works (it&#39;s
 faster, overcomes some design limitations of rustc-serialize and has more
-features). You might consider using it when starting new project or
+features). You might consider using it when starting a new project or
 evaluating Rust JSON performance.</p>
 </div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>

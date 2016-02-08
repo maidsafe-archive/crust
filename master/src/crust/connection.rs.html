@@ -572,6 +572,55 @@
 <span id="529">529</span>
 <span id="530">530</span>
 <span id="531">531</span>
+<span id="532">532</span>
+<span id="533">533</span>
+<span id="534">534</span>
+<span id="535">535</span>
+<span id="536">536</span>
+<span id="537">537</span>
+<span id="538">538</span>
+<span id="539">539</span>
+<span id="540">540</span>
+<span id="541">541</span>
+<span id="542">542</span>
+<span id="543">543</span>
+<span id="544">544</span>
+<span id="545">545</span>
+<span id="546">546</span>
+<span id="547">547</span>
+<span id="548">548</span>
+<span id="549">549</span>
+<span id="550">550</span>
+<span id="551">551</span>
+<span id="552">552</span>
+<span id="553">553</span>
+<span id="554">554</span>
+<span id="555">555</span>
+<span id="556">556</span>
+<span id="557">557</span>
+<span id="558">558</span>
+<span id="559">559</span>
+<span id="560">560</span>
+<span id="561">561</span>
+<span id="562">562</span>
+<span id="563">563</span>
+<span id="564">564</span>
+<span id="565">565</span>
+<span id="566">566</span>
+<span id="567">567</span>
+<span id="568">568</span>
+<span id="569">569</span>
+<span id="570">570</span>
+<span id="571">571</span>
+<span id="572">572</span>
+<span id="573">573</span>
+<span id="574">574</span>
+<span id="575">575</span>
+<span id="576">576</span>
+<span id="577">577</span>
+<span id="578">578</span>
+<span id="579">579</span>
+<span id="580">580</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -627,6 +676,7 @@
     <span class='ident'>their_addr</span>: <span class='ident'>SocketAddr</span>,
     <span class='ident'>network_tx</span>: <span class='ident'>RaiiSender</span>,
     <span class='ident'>_network_read_joiner</span>: <span class='ident'>RaiiThreadJoiner</span>,
+    <span class='ident'>closed</span>: <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>AtomicBool</span><span class='op'>&gt;</span>,
 }
 
 <span class='kw'>impl</span> <span class='ident'>Hash</span> <span class='kw'>for</span> <span class='ident'>Connection</span> {
@@ -634,16 +684,18 @@
         <span class='self'>self</span>.<span class='ident'>protocol</span>.<span class='ident'>hash</span>(<span class='ident'>state</span>);
         <span class='self'>self</span>.<span class='ident'>our_addr</span>.<span class='ident'>hash</span>(<span class='ident'>state</span>);
         <span class='self'>self</span>.<span class='ident'>their_addr</span>.<span class='ident'>hash</span>(<span class='ident'>state</span>);
+        <span class='self'>self</span>.<span class='ident'>closed</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>Relaxed</span>).<span class='ident'>hash</span>(<span class='ident'>state</span>);
     }
 }
 
 <span class='kw'>impl</span> <span class='ident'>Debug</span> <span class='kw'>for</span> <span class='ident'>Connection</span> {
     <span class='kw'>fn</span> <span class='ident'>fmt</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>f</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Formatter</span>) <span class='op'>-&gt;</span> <span class='ident'>fmt</span>::<span class='prelude-ty'>Result</span> {
         <span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>f</span>,
-               <span class='string'>&quot;Connection {{ protocol: {:?}, our_addr: {:?}, their_addr: {:?} }}&quot;</span>,
+               <span class='string'>&quot;Connection {{ protocol: {:?}, our_addr: {:?}, their_addr: {:?}, closed: {} }}&quot;</span>,
                <span class='self'>self</span>.<span class='ident'>protocol</span>,
                <span class='self'>self</span>.<span class='ident'>our_addr</span>,
-               <span class='self'>self</span>.<span class='ident'>their_addr</span>)
+               <span class='self'>self</span>.<span class='ident'>their_addr</span>,
+               <span class='self'>self</span>.<span class='ident'>closed</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>Relaxed</span>))
     }
 }
 
@@ -651,6 +703,11 @@
     <span class='doccomment'>/// Send the `data` to a peer via this connection.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>send</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>data</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>]) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
         <span class='self'>self</span>.<span class='ident'>network_tx</span>.<span class='ident'>send</span>(<span class='ident'>data</span>)
+    }
+
+    <span class='doccomment'>/// Returns whether this connection has been closed.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>is_closed</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
+        <span class='self'>self</span>.<span class='ident'>closed</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>Relaxed</span>)
     }
 
     <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
@@ -767,9 +824,11 @@
     <span class='kw'>let</span> <span class='ident'>our_addr</span> <span class='op'>=</span> <span class='ident'>SocketAddr</span>(<span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>network_input</span>.<span class='ident'>local_addr</span>()));
     <span class='kw'>let</span> <span class='ident'>their_addr</span> <span class='op'>=</span> <span class='ident'>SocketAddr</span>(<span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>network_input</span>.<span class='ident'>peer_addr</span>()));
 
+    <span class='kw'>let</span> <span class='ident'>closed</span> <span class='op'>=</span> <span class='ident'>Arc</span>::<span class='ident'>new</span>(<span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolval'>false</span>));
+    <span class='kw'>let</span> <span class='ident'>closed_clone</span> <span class='op'>=</span> <span class='ident'>closed</span>.<span class='ident'>clone</span>();
     <span class='kw'>let</span> <span class='ident'>network_rx</span> <span class='op'>=</span> <span class='ident'>Receiver</span>::<span class='ident'>Tcp</span>(<span class='ident'>cbor</span>::<span class='ident'>Decoder</span>::<span class='ident'>from_reader</span>(<span class='ident'>network_input</span>));
     <span class='kw'>let</span> <span class='ident'>joiner</span> <span class='op'>=</span> <span class='ident'>RaiiThreadJoiner</span>::<span class='ident'>new</span>(<span class='macro'>thread</span><span class='macro'>!</span>(<span class='string'>&quot;TcpNetworkReader&quot;</span>, <span class='kw'>move</span> <span class='op'>||</span> {
-        <span class='ident'>start_rx</span>(<span class='ident'>network_rx</span>, <span class='ident'>their_pub_key</span>, <span class='ident'>event_tx</span>);
+        <span class='ident'>start_rx</span>(<span class='ident'>network_rx</span>, <span class='ident'>their_pub_key</span>, <span class='ident'>event_tx</span>, <span class='ident'>closed_clone</span>);
     }));
 
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>connection</span> <span class='op'>=</span> <span class='ident'>Connection</span> {
@@ -778,6 +837,7 @@
         <span class='ident'>their_addr</span>: <span class='ident'>their_addr</span>,
         <span class='ident'>network_tx</span>: <span class='ident'>RaiiSender</span>(<span class='ident'>writer</span>),
         <span class='ident'>_network_read_joiner</span>: <span class='ident'>joiner</span>,
+        <span class='ident'>closed</span>: <span class='ident'>closed</span>,
     };
 
     <span class='kw'>let</span> <span class='ident'>serialised_info</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>serialise</span>(<span class='kw-2'>&amp;</span><span class='op'>*</span><span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>our_contact_info</span>.<span class='ident'>lock</span>())));
@@ -795,9 +855,11 @@
     <span class='kw'>let</span> <span class='ident'>our_addr</span> <span class='op'>=</span> <span class='ident'>SocketAddr</span>(<span class='ident'>network_input</span>.<span class='ident'>local_addr</span>());
     <span class='kw'>let</span> <span class='ident'>their_addr</span> <span class='op'>=</span> <span class='ident'>SocketAddr</span>(<span class='ident'>network_input</span>.<span class='ident'>peer_addr</span>());
 
+    <span class='kw'>let</span> <span class='ident'>closed</span> <span class='op'>=</span> <span class='ident'>Arc</span>::<span class='ident'>new</span>(<span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolval'>false</span>));
+    <span class='kw'>let</span> <span class='ident'>closed_clone</span> <span class='op'>=</span> <span class='ident'>closed</span>.<span class='ident'>clone</span>();
     <span class='kw'>let</span> <span class='ident'>network_rx</span> <span class='op'>=</span> <span class='ident'>Receiver</span>::<span class='ident'>Utp</span>(<span class='ident'>cbor</span>::<span class='ident'>Decoder</span>::<span class='ident'>from_reader</span>(<span class='ident'>network_input</span>));
     <span class='kw'>let</span> <span class='ident'>joiner</span> <span class='op'>=</span> <span class='ident'>RaiiThreadJoiner</span>::<span class='ident'>new</span>(<span class='macro'>thread</span><span class='macro'>!</span>(<span class='string'>&quot;UtpNetworkReader&quot;</span>, <span class='kw'>move</span> <span class='op'>||</span> {
-        <span class='ident'>start_rx</span>(<span class='ident'>network_rx</span>, <span class='ident'>their_pub_key</span>, <span class='ident'>event_tx</span>);
+        <span class='ident'>start_rx</span>(<span class='ident'>network_rx</span>, <span class='ident'>their_pub_key</span>, <span class='ident'>event_tx</span>, <span class='ident'>closed_clone</span>);
     }));
 
     <span class='prelude-val'>Ok</span>(<span class='ident'>Connection</span> {
@@ -806,6 +868,7 @@
         <span class='ident'>their_addr</span>: <span class='ident'>their_addr</span>,
         <span class='ident'>network_tx</span>: <span class='ident'>RaiiSender</span>(<span class='ident'>writer</span>),
         <span class='ident'>_network_read_joiner</span>: <span class='ident'>joiner</span>,
+        <span class='ident'>closed</span>: <span class='ident'>closed</span>,
     })
 }
 
@@ -925,9 +988,11 @@
             };
             <span class='kw'>let</span> <span class='ident'>their_pub_key</span> <span class='op'>=</span> <span class='ident'>their_contact_info</span>.<span class='ident'>pub_key</span>.<span class='ident'>clone</span>();
 
+            <span class='kw'>let</span> <span class='ident'>closed</span> <span class='op'>=</span> <span class='ident'>Arc</span>::<span class='ident'>new</span>(<span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolval'>false</span>));
+            <span class='kw'>let</span> <span class='ident'>closed_clone</span> <span class='op'>=</span> <span class='ident'>closed</span>.<span class='ident'>clone</span>();
             <span class='kw'>let</span> <span class='ident'>event_tx_cloned</span> <span class='op'>=</span> <span class='ident'>event_tx</span>.<span class='ident'>clone</span>();
             <span class='kw'>let</span> <span class='ident'>joiner</span> <span class='op'>=</span> <span class='ident'>RaiiThreadJoiner</span>::<span class='ident'>new</span>(<span class='macro'>thread</span><span class='macro'>!</span>(<span class='string'>&quot;TcpNetworkReader&quot;</span>, <span class='kw'>move</span> <span class='op'>||</span> {
-                <span class='ident'>start_rx</span>(<span class='ident'>network_rx</span>, <span class='ident'>their_pub_key</span>, <span class='ident'>event_tx_cloned</span>);
+                <span class='ident'>start_rx</span>(<span class='ident'>network_rx</span>, <span class='ident'>their_pub_key</span>, <span class='ident'>event_tx_cloned</span>, <span class='ident'>closed_clone</span>);
             }));
 
             <span class='kw'>let</span> <span class='ident'>connection</span> <span class='op'>=</span> <span class='ident'>Connection</span> {
@@ -936,6 +1001,7 @@
                 <span class='ident'>their_addr</span>: <span class='ident'>their_addr</span>,
                 <span class='ident'>network_tx</span>: <span class='ident'>RaiiSender</span>(<span class='ident'>writer</span>),
                 <span class='ident'>_network_read_joiner</span>: <span class='ident'>joiner</span>,
+                <span class='ident'>closed</span>: <span class='ident'>closed</span>,
             };
 
             <span class='kw'>let</span> <span class='ident'>event</span> <span class='op'>=</span> <span class='ident'>Event</span>::<span class='ident'>NewConnection</span> {
@@ -966,9 +1032,11 @@
     <span class='kw'>let</span> <span class='ident'>our_addr</span> <span class='op'>=</span> <span class='ident'>SocketAddr</span>(<span class='ident'>network_input</span>.<span class='ident'>local_addr</span>());
     <span class='kw'>let</span> <span class='ident'>their_addr</span> <span class='op'>=</span> <span class='ident'>SocketAddr</span>(<span class='ident'>network_input</span>.<span class='ident'>peer_addr</span>());
 
+    <span class='kw'>let</span> <span class='ident'>closed</span> <span class='op'>=</span> <span class='ident'>Arc</span>::<span class='ident'>new</span>(<span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolval'>false</span>));
+    <span class='kw'>let</span> <span class='ident'>closed_clone</span> <span class='op'>=</span> <span class='ident'>closed</span>.<span class='ident'>clone</span>();
     <span class='kw'>let</span> <span class='ident'>network_rx</span> <span class='op'>=</span> <span class='ident'>Receiver</span>::<span class='ident'>Utp</span>(<span class='ident'>cbor</span>::<span class='ident'>Decoder</span>::<span class='ident'>from_reader</span>(<span class='ident'>network_input</span>));
     <span class='kw'>let</span> <span class='ident'>joiner</span> <span class='op'>=</span> <span class='ident'>RaiiThreadJoiner</span>::<span class='ident'>new</span>(<span class='macro'>thread</span><span class='macro'>!</span>(<span class='string'>&quot;UtpNetworkReader&quot;</span>, <span class='kw'>move</span> <span class='op'>||</span> {
-        <span class='ident'>start_rx</span>(<span class='ident'>network_rx</span>, <span class='ident'>their_pub_key</span>, <span class='ident'>event_tx</span>);
+        <span class='ident'>start_rx</span>(<span class='ident'>network_rx</span>, <span class='ident'>their_pub_key</span>, <span class='ident'>event_tx</span>, <span class='ident'>closed_clone</span>);
     }));
 
     <span class='prelude-val'>Ok</span>(<span class='ident'>Connection</span> {
@@ -977,21 +1045,26 @@
         <span class='ident'>their_addr</span>: <span class='ident'>their_addr</span>,
         <span class='ident'>network_tx</span>: <span class='ident'>RaiiSender</span>(<span class='ident'>writer</span>),
         <span class='ident'>_network_read_joiner</span>: <span class='ident'>joiner</span>,
+        <span class='ident'>closed</span>: <span class='ident'>closed</span>,
     })
 }
 
-<span class='kw'>fn</span> <span class='ident'>start_rx</span>(<span class='kw-2'>mut</span> <span class='ident'>network_rx</span>: <span class='ident'>Receiver</span>, <span class='ident'>their_pub_key</span>: <span class='ident'>PublicKey</span>, <span class='ident'>event_tx</span>: ::<span class='ident'>CrustEventSender</span>) {
+<span class='kw'>fn</span> <span class='ident'>start_rx</span>(<span class='kw-2'>mut</span> <span class='ident'>network_rx</span>: <span class='ident'>Receiver</span>, <span class='ident'>their_pub_key</span>: <span class='ident'>PublicKey</span>, <span class='ident'>event_tx</span>: ::<span class='ident'>CrustEventSender</span>,
+            <span class='ident'>closed</span>: <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>AtomicBool</span><span class='op'>&gt;</span>) {
     <span class='kw'>while</span> <span class='kw'>let</span> <span class='prelude-val'>Ok</span>(<span class='ident'>msg</span>) <span class='op'>=</span> <span class='ident'>network_rx</span>.<span class='ident'>receive</span>() {
         <span class='kw'>if</span> <span class='ident'>event_tx</span>.<span class='ident'>send</span>(<span class='ident'>Event</span>::<span class='ident'>NewMessage</span>(<span class='ident'>their_pub_key</span>, <span class='ident'>msg</span>)).<span class='ident'>is_err</span>() {
             <span class='kw'>break</span>;
         }
     }
+    <span class='ident'>closed</span>.<span class='ident'>store</span>(<span class='boolval'>true</span>, <span class='ident'>Ordering</span>::<span class='ident'>Relaxed</span>);
     <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>event_tx</span>.<span class='ident'>send</span>(<span class='ident'>Event</span>::<span class='ident'>LostConnection</span>(<span class='ident'>their_pub_key</span>));
 }
 
 <span class='kw'>mod</span> <span class='ident'>test</span> {
     <span class='kw'>use</span> <span class='ident'>super</span>::<span class='op'>*</span>;
 
+    <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>Arc</span>;
+    <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>atomic</span>::{<span class='ident'>Ordering</span>, <span class='ident'>AtomicBool</span>};
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>mpsc</span>;
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>str</span>::<span class='ident'>FromStr</span>;
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>hash</span>::{<span class='ident'>Hash</span>, <span class='ident'>SipHasher</span>, <span class='ident'>Hasher</span>};
@@ -1024,6 +1097,7 @@
                                                                                  30000&quot;</span>))),
                 <span class='ident'>network_tx</span>: <span class='ident'>RaiiSender</span>(<span class='ident'>tx</span>),
                 <span class='ident'>_network_read_joiner</span>: <span class='ident'>raii_joiner</span>,
+                <span class='ident'>closed</span>: <span class='ident'>Arc</span>::<span class='ident'>new</span>(<span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolval'>false</span>)),
             }
         };
 
@@ -1040,6 +1114,7 @@
                                                                                  30000&quot;</span>))),
                 <span class='ident'>network_tx</span>: <span class='ident'>RaiiSender</span>(<span class='ident'>tx</span>),
                 <span class='ident'>_network_read_joiner</span>: <span class='ident'>raii_joiner</span>,
+                <span class='ident'>closed</span>: <span class='ident'>Arc</span>::<span class='ident'>new</span>(<span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolval'>false</span>)),
             }
         };
 
@@ -1059,6 +1134,7 @@
                                                                                  30000&quot;</span>))),
                 <span class='ident'>network_tx</span>: <span class='ident'>RaiiSender</span>(<span class='ident'>tx</span>),
                 <span class='ident'>_network_read_joiner</span>: <span class='ident'>raii_joiner</span>,
+                <span class='ident'>closed</span>: <span class='ident'>Arc</span>::<span class='ident'>new</span>(<span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolval'>false</span>)),
             }
         };
 
@@ -1078,6 +1154,7 @@
                                                                                  30000&quot;</span>))),
                 <span class='ident'>network_tx</span>: <span class='ident'>RaiiSender</span>(<span class='ident'>tx</span>),
                 <span class='ident'>_network_read_joiner</span>: <span class='ident'>raii_joiner</span>,
+                <span class='ident'>closed</span>: <span class='ident'>Arc</span>::<span class='ident'>new</span>(<span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolval'>false</span>)),
             }
         };
 
@@ -1097,11 +1174,32 @@
                                                                                  30000&quot;</span>))),
                 <span class='ident'>network_tx</span>: <span class='ident'>RaiiSender</span>(<span class='ident'>tx</span>),
                 <span class='ident'>_network_read_joiner</span>: <span class='ident'>raii_joiner</span>,
+                <span class='ident'>closed</span>: <span class='ident'>Arc</span>::<span class='ident'>new</span>(<span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolval'>false</span>)),
             }
         };
 
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>hash</span>(<span class='kw-2'>&amp;</span><span class='ident'>connection_4</span>), <span class='ident'>hash</span>(<span class='kw-2'>&amp;</span><span class='ident'>connection_4</span>));
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>hash</span>(<span class='kw-2'>&amp;</span><span class='ident'>connection_0</span>) <span class='op'>!=</span> <span class='ident'>hash</span>(<span class='kw-2'>&amp;</span><span class='ident'>connection_4</span>));
+
+        <span class='comment'>// closed different</span>
+        <span class='kw'>let</span> <span class='ident'>connection_5</span> <span class='op'>=</span> {
+            <span class='kw'>let</span> (<span class='ident'>tx</span>, _) <span class='op'>=</span> <span class='ident'>mpsc</span>::<span class='ident'>channel</span>();
+            <span class='kw'>let</span> <span class='ident'>raii_joiner</span> <span class='op'>=</span> <span class='ident'>RaiiThreadJoiner</span>::<span class='ident'>new</span>(<span class='macro'>thread</span><span class='macro'>!</span>(<span class='string'>&quot;DummyThread&quot;</span>, <span class='kw'>move</span> <span class='op'>||</span> ()));
+
+            <span class='ident'>Connection</span> {
+                <span class='ident'>protocol</span>: <span class='ident'>Protocol</span>::<span class='ident'>Tcp</span>,
+                <span class='ident'>our_addr</span>: <span class='ident'>SocketAddr</span>(<span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>net</span>::<span class='ident'>SocketAddr</span>::<span class='ident'>from_str</span>(<span class='string'>&quot;10.199.254.200:\
+                                                                               30000&quot;</span>))),
+                <span class='ident'>their_addr</span>: <span class='ident'>SocketAddr</span>(<span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>net</span>::<span class='ident'>SocketAddr</span>::<span class='ident'>from_str</span>(<span class='string'>&quot;11.199.254.200:\
+                                                                                 30000&quot;</span>))),
+                <span class='ident'>network_tx</span>: <span class='ident'>RaiiSender</span>(<span class='ident'>tx</span>),
+                <span class='ident'>_network_read_joiner</span>: <span class='ident'>raii_joiner</span>,
+                <span class='ident'>closed</span>: <span class='ident'>Arc</span>::<span class='ident'>new</span>(<span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolval'>true</span>)),
+            }
+        };
+
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>hash</span>(<span class='kw-2'>&amp;</span><span class='ident'>connection_5</span>), <span class='ident'>hash</span>(<span class='kw-2'>&amp;</span><span class='ident'>connection_5</span>));
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>hash</span>(<span class='kw-2'>&amp;</span><span class='ident'>connection_0</span>) <span class='op'>!=</span> <span class='ident'>hash</span>(<span class='kw-2'>&amp;</span><span class='ident'>connection_5</span>));
     }
 }
 </pre>

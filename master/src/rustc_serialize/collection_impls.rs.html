@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/rustc-serialize-0.3.16/src/collection_impls.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/rustc-serialize-0.3.17/src/collection_impls.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>collection_impls.rs.html -- source</title>
@@ -12,7 +12,7 @@
     <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
 
-    <link rel="shortcut icon" href="http://www.rust-lang.org/favicon.ico">
+    <link rel="shortcut icon" href="https://www.rust-lang.org/favicon.ico">
     
 </head>
 <body class="rustdoc">
@@ -26,7 +26,7 @@
     
 
     <nav class="sidebar">
-        <a href='../../rustc_serialize/index.html'><img src='http://www.rust-lang.org/logos/rust-logo-128x128-blk-v2.png' alt='' width='100'></a>
+        <a href='../../rustc_serialize/index.html'><img src='https://www.rust-lang.org/logos/rust-logo-128x128-blk-v2.png' alt='' width='100'></a>
         
     </nav>
 
@@ -294,8 +294,8 @@
 }
 
 <span class='kw'>impl</span><span class='op'>&lt;</span>
-    <span class='ident'>K</span>: <span class='ident'>Encodable</span> <span class='op'>+</span> <span class='ident'>PartialEq</span> <span class='op'>+</span> <span class='ident'>Ord</span>,
-    <span class='ident'>V</span>: <span class='ident'>Encodable</span> <span class='op'>+</span> <span class='ident'>PartialEq</span>
+    <span class='ident'>K</span>: <span class='ident'>Encodable</span> <span class='op'>+</span> <span class='ident'>Ord</span>,
+    <span class='ident'>V</span>: <span class='ident'>Encodable</span>
 <span class='op'>&gt;</span> <span class='ident'>Encodable</span> <span class='kw'>for</span> <span class='ident'>BTreeMap</span><span class='op'>&lt;</span><span class='ident'>K</span>, <span class='ident'>V</span><span class='op'>&gt;</span> {
     <span class='kw'>fn</span> <span class='ident'>encode</span><span class='op'>&lt;</span><span class='ident'>S</span>: <span class='ident'>Encoder</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>e</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>S</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>(), <span class='ident'>S</span>::<span class='ident'>Error</span><span class='op'>&gt;</span> {
         <span class='ident'>e</span>.<span class='ident'>emit_map</span>(<span class='self'>self</span>.<span class='ident'>len</span>(), <span class='op'>|</span><span class='ident'>e</span><span class='op'>|</span> {
@@ -311,8 +311,8 @@
 }
 
 <span class='kw'>impl</span><span class='op'>&lt;</span>
-    <span class='ident'>K</span>: <span class='ident'>Decodable</span> <span class='op'>+</span> <span class='ident'>PartialEq</span> <span class='op'>+</span> <span class='ident'>Ord</span>,
-    <span class='ident'>V</span>: <span class='ident'>Decodable</span> <span class='op'>+</span> <span class='ident'>PartialEq</span>
+    <span class='ident'>K</span>: <span class='ident'>Decodable</span> <span class='op'>+</span> <span class='ident'>Ord</span>,
+    <span class='ident'>V</span>: <span class='ident'>Decodable</span>
 <span class='op'>&gt;</span> <span class='ident'>Decodable</span> <span class='kw'>for</span> <span class='ident'>BTreeMap</span><span class='op'>&lt;</span><span class='ident'>K</span>, <span class='ident'>V</span><span class='op'>&gt;</span> {
     <span class='kw'>fn</span> <span class='ident'>decode</span><span class='op'>&lt;</span><span class='ident'>D</span>: <span class='ident'>Decoder</span><span class='op'>&gt;</span>(<span class='ident'>d</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>D</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>BTreeMap</span><span class='op'>&lt;</span><span class='ident'>K</span>, <span class='ident'>V</span><span class='op'>&gt;</span>, <span class='ident'>D</span>::<span class='ident'>Error</span><span class='op'>&gt;</span> {
         <span class='ident'>d</span>.<span class='ident'>read_map</span>(<span class='op'>|</span><span class='ident'>d</span>, <span class='ident'>len</span><span class='op'>|</span> {
@@ -328,7 +328,7 @@
 }
 
 <span class='kw'>impl</span><span class='op'>&lt;</span>
-    <span class='ident'>T</span>: <span class='ident'>Encodable</span> <span class='op'>+</span> <span class='ident'>PartialEq</span> <span class='op'>+</span> <span class='ident'>Ord</span>
+    <span class='ident'>T</span>: <span class='ident'>Encodable</span> <span class='op'>+</span> <span class='ident'>Ord</span>
 <span class='op'>&gt;</span> <span class='ident'>Encodable</span> <span class='kw'>for</span> <span class='ident'>BTreeSet</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> {
     <span class='kw'>fn</span> <span class='ident'>encode</span><span class='op'>&lt;</span><span class='ident'>S</span>: <span class='ident'>Encoder</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>s</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>S</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>(), <span class='ident'>S</span>::<span class='ident'>Error</span><span class='op'>&gt;</span> {
         <span class='ident'>s</span>.<span class='ident'>emit_seq</span>(<span class='self'>self</span>.<span class='ident'>len</span>(), <span class='op'>|</span><span class='ident'>s</span><span class='op'>|</span> {
@@ -343,7 +343,7 @@
 }
 
 <span class='kw'>impl</span><span class='op'>&lt;</span>
-    <span class='ident'>T</span>: <span class='ident'>Decodable</span> <span class='op'>+</span> <span class='ident'>PartialEq</span> <span class='op'>+</span> <span class='ident'>Ord</span>
+    <span class='ident'>T</span>: <span class='ident'>Decodable</span> <span class='op'>+</span> <span class='ident'>Ord</span>
 <span class='op'>&gt;</span> <span class='ident'>Decodable</span> <span class='kw'>for</span> <span class='ident'>BTreeSet</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> {
     <span class='kw'>fn</span> <span class='ident'>decode</span><span class='op'>&lt;</span><span class='ident'>D</span>: <span class='ident'>Decoder</span><span class='op'>&gt;</span>(<span class='ident'>d</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>D</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>BTreeSet</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span>, <span class='ident'>D</span>::<span class='ident'>Error</span><span class='op'>&gt;</span> {
         <span class='ident'>d</span>.<span class='ident'>read_seq</span>(<span class='op'>|</span><span class='ident'>d</span>, <span class='ident'>len</span><span class='op'>|</span> {
