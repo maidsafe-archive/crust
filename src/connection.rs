@@ -52,6 +52,7 @@ pub struct Connection {
     their_addr: SocketAddr,
     network_tx: RaiiSender,
     _network_read_joiner: RaiiThreadJoiner,
+    closed: Arc<AtomicBool>,
 }
 
 impl Hash for Connection {
@@ -59,16 +60,18 @@ impl Hash for Connection {
         self.protocol.hash(state);
         self.our_addr.hash(state);
         self.their_addr.hash(state);
+        self.closed.load(Ordering::Relaxed).hash(state);
     }
 }
 
 impl Debug for Connection {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         write!(f,
-               "Connection {{ protocol: {:?}, our_addr: {:?}, their_addr: {:?} }}",
+               "Connection {{ protocol: {:?}, our_addr: {:?}, their_addr: {:?}, closed: {} }}",
                self.protocol,
                self.our_addr,
-               self.their_addr)
+               self.their_addr,
+               self.closed.load(Ordering::Relaxed))
     }
 }
 
@@ -76,6 +79,11 @@ impl Connection {
     /// Send the `data` to a peer via this connection.
     pub fn send(&mut self, data: &[u8]) -> io::Result<()> {
         self.network_tx.send(data)
+    }
+
+    /// Returns whether this connection has been closed.
+    pub fn is_closed(&self) -> bool {
+        self.closed.load(Ordering::Relaxed)
     }
 
     #[cfg(test)]
@@ -192,9 +200,11 @@ fn connect_tcp_endpoint(remote_addr: SocketAddr,
     let our_addr = SocketAddr(unwrap_result!(network_input.local_addr()));
     let their_addr = SocketAddr(unwrap_result!(network_input.peer_addr()));
 
+    let closed = Arc::new(AtomicBool::new(false));
+    let closed_clone = closed.clone();
     let network_rx = Receiver::Tcp(cbor::Decoder::from_reader(network_input));
     let joiner = RaiiThreadJoiner::new(thread!("TcpNetworkReader", move || {
-        start_rx(network_rx, their_pub_key, event_tx);
+        start_rx(network_rx, their_pub_key, event_tx, closed_clone);
     }));
 
     let mut connection = Connection {
@@ -203,6 +213,7 @@ fn connect_tcp_endpoint(remote_addr: SocketAddr,
         their_addr: their_addr,
         network_tx: RaiiSender(writer),
         _network_read_joiner: joiner,
+        closed: closed,
     };
 
     let serialised_info = unwrap_result!(serialise(&*unwrap_result!(our_contact_info.lock())));
@@ -220,9 +231,11 @@ fn connect_utp_endpoint(remote_addr: SocketAddr,
     let our_addr = SocketAddr(network_input.local_addr());
     let their_addr = SocketAddr(network_input.peer_addr());
 
+    let closed = Arc::new(AtomicBool::new(false));
+    let closed_clone = closed.clone();
     let network_rx = Receiver::Utp(cbor::Decoder::from_reader(network_input));
     let joiner = RaiiThreadJoiner::new(thread!("UtpNetworkReader", move || {
-        start_rx(network_rx, their_pub_key, event_tx);
+        start_rx(network_rx, their_pub_key, event_tx, closed_clone);
     }));
 
     Ok(Connection {
@@ -231,6 +244,7 @@ fn connect_utp_endpoint(remote_addr: SocketAddr,
         their_addr: their_addr,
         network_tx: RaiiSender(writer),
         _network_read_joiner: joiner,
+        closed: closed,
     })
 }
 
@@ -350,9 +364,11 @@ pub fn start_tcp_accept(port: u16,
             };
             let their_pub_key = their_contact_info.pub_key.clone();
 
+            let closed = Arc::new(AtomicBool::new(false));
+            let closed_clone = closed.clone();
             let event_tx_cloned = event_tx.clone();
             let joiner = RaiiThreadJoiner::new(thread!("TcpNetworkReader", move || {
-                start_rx(network_rx, their_pub_key, event_tx_cloned);
+                start_rx(network_rx, their_pub_key, event_tx_cloned, closed_clone);
             }));
 
             let connection = Connection {
@@ -361,6 +377,7 @@ pub fn start_tcp_accept(port: u16,
                 their_addr: their_addr,
                 network_tx: RaiiSender(writer),
                 _network_read_joiner: joiner,
+                closed: closed,
             };
 
             let event = Event::NewConnection {
@@ -391,9 +408,11 @@ pub fn utp_rendezvous_connect(udp_socket: UdpSocket,
     let our_addr = SocketAddr(network_input.local_addr());
     let their_addr = SocketAddr(network_input.peer_addr());
 
+    let closed = Arc::new(AtomicBool::new(false));
+    let closed_clone = closed.clone();
     let network_rx = Receiver::Utp(cbor::Decoder::from_reader(network_input));
     let joiner = RaiiThreadJoiner::new(thread!("UtpNetworkReader", move || {
-        start_rx(network_rx, their_pub_key, event_tx);
+        start_rx(network_rx, their_pub_key, event_tx, closed_clone);
     }));
 
     Ok(Connection {
@@ -402,21 +421,26 @@ pub fn utp_rendezvous_connect(udp_socket: UdpSocket,
         their_addr: their_addr,
         network_tx: RaiiSender(writer),
         _network_read_joiner: joiner,
+        closed: closed,
     })
 }
 
-fn start_rx(mut network_rx: Receiver, their_pub_key: PublicKey, event_tx: ::CrustEventSender) {
+fn start_rx(mut network_rx: Receiver, their_pub_key: PublicKey, event_tx: ::CrustEventSender,
+            closed: Arc<AtomicBool>) {
     while let Ok(msg) = network_rx.receive() {
         if event_tx.send(Event::NewMessage(their_pub_key, msg)).is_err() {
             break;
         }
     }
+    closed.store(true, Ordering::Relaxed);
     let _ = event_tx.send(Event::LostConnection(their_pub_key));
 }
 
 mod test {
     use super::*;
 
+    use std::sync::Arc;
+    use std::sync::atomic::{Ordering, AtomicBool};
     use std::sync::mpsc;
     use std::str::FromStr;
     use std::hash::{Hash, SipHasher, Hasher};
@@ -449,6 +473,7 @@ mod test {
                                                                                  30000"))),
                 network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
+                closed: Arc::new(AtomicBool::new(false)),
             }
         };
 
@@ -465,6 +490,7 @@ mod test {
                                                                                  30000"))),
                 network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
+                closed: Arc::new(AtomicBool::new(false)),
             }
         };
 
@@ -484,6 +510,7 @@ mod test {
                                                                                  30000"))),
                 network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
+                closed: Arc::new(AtomicBool::new(false)),
             }
         };
 
@@ -503,6 +530,7 @@ mod test {
                                                                                  30000"))),
                 network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
+                closed: Arc::new(AtomicBool::new(false)),
             }
         };
 
@@ -522,10 +550,31 @@ mod test {
                                                                                  30000"))),
                 network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
+                closed: Arc::new(AtomicBool::new(false)),
             }
         };
 
         assert_eq!(hash(&connection_4), hash(&connection_4));
         assert!(hash(&connection_0) != hash(&connection_4));
+
+        // closed different
+        let connection_5 = {
+            let (tx, _) = mpsc::channel();
+            let raii_joiner = RaiiThreadJoiner::new(thread!("DummyThread", move || ()));
+
+            Connection {
+                protocol: Protocol::Tcp,
+                our_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("10.199.254.200:\
+                                                                               30000"))),
+                their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.200:\
+                                                                                 30000"))),
+                network_tx: RaiiSender(tx),
+                _network_read_joiner: raii_joiner,
+                closed: Arc::new(AtomicBool::new(true)),
+            }
+        };
+
+        assert_eq!(hash(&connection_5), hash(&connection_5));
+        assert!(hash(&connection_0) != hash(&connection_5));
     }
 }

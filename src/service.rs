@@ -336,10 +336,10 @@ impl Service {
                     secret: rand::random(),
                     //raii_tcp_acceptor: unimplemented!(),
                     //tcp_addrs: unimplemented!(),
-                        // wny are we starting a tcp acceptor?
+                        // why are we starting a tcp acceptor?
                         // Are tcp acceptors being used to do rendezvous connections now?
                         // coz that doesn't make sense
-                    
+
                     udp_socket: udp_socket,
                     udp_addrs: udp_addrs,
                     static_contact_info: unwrap_result!(our_static_contact_info.lock()).clone(),
@@ -363,6 +363,7 @@ mod test {
 
     use std::sync::mpsc;
     use std::sync::mpsc::Receiver;
+    use std::thread;
 
     use maidsafe_utilities::event_sender::{MaidSafeObserver, MaidSafeEventCategory};
 
@@ -425,59 +426,72 @@ mod test {
             }
         }
 
-        // service_0 should have received service_1's connection bootstrap connection by now
-        let (mut connection_0_to_1, pub_key_1) = match unwrap_result!(event_rx_0.recv()) {
-            Event::NewConnection { connection: Ok(connection_obj), their_pub_key } => {
-                (connection_obj, their_pub_key)
+        {
+            // service_0 should have received service_1's connection bootstrap connection by now
+            let (mut connection_0_to_1, pub_key_1) = match unwrap_result!(event_rx_0.recv()) {
+                Event::NewConnection { connection: Ok(connection_obj), their_pub_key } => {
+                    (connection_obj, their_pub_key)
+                }
+                _ => panic!("0 Should have got a new connection from 1."),
+            };
+
+            if use_tcp {
+                assert_eq!(*connection_0_to_1.get_protocol(), Protocol::Tcp);
+                assert_eq!(*connection_1_to_0.get_protocol(), Protocol::Tcp);
+            } else {
+                assert_eq!(*connection_0_to_1.get_protocol(), Protocol::Utp);
+                assert_eq!(*connection_1_to_0.get_protocol(), Protocol::Utp);
             }
-            _ => panic!("0 Should have got a new connection from 1."),
-        };
 
-        if use_tcp {
-            assert_eq!(*connection_0_to_1.get_protocol(), Protocol::Tcp);
-            assert_eq!(*connection_1_to_0.get_protocol(), Protocol::Tcp);
-        } else {
-            assert_eq!(*connection_0_to_1.get_protocol(), Protocol::Utp);
-            assert_eq!(*connection_1_to_0.get_protocol(), Protocol::Utp);
+            assert!(pub_key_0 != pub_key_1);
+
+            // send data from 0 to 1
+            {
+                let data_txd = vec![0, 1, 255, 254, 222, 1];
+                unwrap_result!(connection_0_to_1.send(&data_txd));
+
+                // 1 should rx data
+                let (data_rxd, peer_pub_key) = {
+                    let event_rxd = unwrap_result!(event_rx_1.recv());
+                    match event_rxd {
+                        Event::NewMessage(their_pub_key, msg) => (msg , their_pub_key),
+                        _ => panic!("Received unexpected event: {:?}", event_rxd),
+                    }
+                };
+
+                assert_eq!(data_rxd, data_txd);
+                assert_eq!(peer_pub_key, pub_key_0);
+            }
+
+            // send data from 1 to 0
+            {
+                let data_txd = vec![10, 11, 155, 214, 202];
+                unwrap_result!(connection_1_to_0.send(&data_txd));
+
+                // 0 should rx data
+                let (data_rxd, peer_pub_key) = {
+                    let event_rxd = unwrap_result!(event_rx_0.recv());
+                    match event_rxd {
+                        Event::NewMessage(their_pub_key, msg) => (msg , their_pub_key),
+                        _ => panic!("Received unexpected event: {:?}", event_rxd),
+                    }
+                };
+
+                assert_eq!(data_rxd, data_txd);
+                assert_eq!(peer_pub_key, pub_key_1);
+            }
+
+            assert!(!connection_1_to_0.is_closed());
+        } // connection_0_to_1 goes out of scope and should be dropped.
+
+        // Wait up to 3 seconds for the other connection to realise that it has been closed.
+        for i in 0..30 {
+            if connection_1_to_0.is_closed() {
+                break;
+            }
+            thread::sleep(::std::time::Duration::from_millis(100));
         }
-
-        assert!(pub_key_0 != pub_key_1);
-
-        // send data from 0 to 1
-        {
-            let data_txd = vec![0, 1, 255, 254, 222, 1];
-            unwrap_result!(connection_0_to_1.send(&data_txd));
-
-            // 1 should rx data
-            let (data_rxd, peer_pub_key) = {
-                let event_rxd = unwrap_result!(event_rx_1.recv());
-                match event_rxd {
-                    Event::NewMessage(their_pub_key, msg) => (msg , their_pub_key),
-                    _ => panic!("Received unexpected event: {:?}", event_rxd),
-                }
-            };
-
-            assert_eq!(data_rxd, data_txd);
-            assert_eq!(peer_pub_key, pub_key_0);
-        }
-
-        // send data from 1 to 0
-        {
-            let data_txd = vec![10, 11, 155, 214, 202];
-            unwrap_result!(connection_1_to_0.send(&data_txd));
-
-            // 0 should rx data
-            let (data_rxd, peer_pub_key) = {
-                let event_rxd = unwrap_result!(event_rx_0.recv());
-                match event_rxd {
-                    Event::NewMessage(their_pub_key, msg) => (msg , their_pub_key),
-                    _ => panic!("Received unexpected event: {:?}", event_rxd),
-                }
-            };
-
-            assert_eq!(data_rxd, data_txd);
-            assert_eq!(peer_pub_key, pub_key_1);
-        }
+        assert!(connection_1_to_0.is_closed());
     }
 
     #[test]
