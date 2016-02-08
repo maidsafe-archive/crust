@@ -348,6 +348,11 @@ impl Service {
             let _ = event_tx.send(send);
         });
     }
+
+    /// Returns our pulic key.
+    pub fn pub_key(&self) -> PublicKey {
+        unwrap_result!(self.static_contact_info.lock()).pub_key.clone()
+    }
 }
 
 #[cfg(test)]
