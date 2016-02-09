@@ -473,10 +473,27 @@ fn start_rx(mut network_rx: Receiver,
 }
 
 mod test {
+    use super::*;
 
+    use std::sync::Arc;
+    use std::sync::atomic::{Ordering, AtomicBool};
+    use std::sync::mpsc;
+    use std::str::FromStr;
     use std::hash::{Hash, SipHasher, Hasher};
+    use std::net;
 
+    use sender_receiver::RaiiSender;
+    use maidsafe_utilities::thread::RaiiThreadJoiner;
 
+    use endpoint::Protocol;
+    use socket_addr::SocketAddr;
+
+    /// Hash `object_to_hash` using a `SipHasher`
+    fn hash<T: Hash>(object_to_hash: &T) -> u64 {
+        let mut sip_hasher = SipHasher::new();
+        object_to_hash.hash(&mut sip_hasher);
+        sip_hasher.finish()
+    }
 
     #[test]
     fn connection_hash() {

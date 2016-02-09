@@ -41,6 +41,7 @@
 #![cfg_attr(feature="clippy", plugin(clippy))]
 #![cfg_attr(feature="clippy", deny(clippy, clippy_pedantic))]
 
+#![allow(unused)]
 
 extern crate cbor;
 extern crate itertools;
