@@ -37,11 +37,10 @@
 #![allow(box_pointers, fat_ptr_transmutes, missing_copy_implementations,
          missing_debug_implementations)]
 
-// Uncomment to use Clippy
-// #![feature(plugin)]
-// #![plugin(clippy)]
+#![cfg_attr(feature="clippy", feature(plugin))]
+#![cfg_attr(feature="clippy", plugin(clippy))]
+#![cfg_attr(feature="clippy", deny(clippy, clippy_pedantic))]
 
-#![allow(unused, unused_extern_crates)]
 
 extern crate cbor;
 extern crate itertools;
@@ -53,7 +52,6 @@ extern crate rustc_serialize;
 extern crate time;
 extern crate utp;
 extern crate crossbeam;
-extern crate memmap;
 #[macro_use]
 extern crate maidsafe_utilities;
 extern crate socket_addr;

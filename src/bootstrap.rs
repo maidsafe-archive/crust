@@ -98,9 +98,10 @@ impl RaiiBootstrap {
             }
 
             if let Ok(connection) = connect_result {
-                unwrap_result!(connection_map.lock()).entry(their_pub_key)
-                                                     .or_insert(vec![])
-                                                     .push(connection);
+                unwrap_result!(connection_map.lock())
+                    .entry(their_pub_key)
+                    .or_insert(vec![])
+                    .push(connection);
                 let _ = event_tx.send(Event::NewBootstrapConnection(their_pub_key));
             }
         }

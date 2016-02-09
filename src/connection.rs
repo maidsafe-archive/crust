@@ -19,9 +19,9 @@ use std::collections::HashMap;
 use std::collections::hash_map::Entry;
 use std::fmt;
 use std::sync::{Arc, Mutex};
-use std::hash::{Hash, SipHasher, Hasher};
+use std::hash::{Hash, Hasher};
 use std::sync::atomic::{Ordering, AtomicBool};
-use std::net::{Shutdown, TcpListener, TcpStream, UdpSocket};
+use std::net::{Shutdown, TcpStream, UdpSocket};
 use std::io;
 use cbor;
 use itertools::Itertools;
@@ -32,12 +32,11 @@ use static_contact_info::StaticContactInfo;
 use tcp_connections;
 use utp_connections;
 use sender_receiver::{RaiiSender, Receiver};
-use ip::{IpAddr, SocketAddrExt};
+use ip::SocketAddrExt;
 use socket_addr::SocketAddr;
 use event::Event;
 use sodiumoxide::crypto::sign::PublicKey;
-use endpoint::{Endpoint, Protocol};
-use rand;
+use endpoint::Protocol;
 use std::fmt::{Debug, Formatter};
 use net2::TcpBuilder;
 use socket_utils;
@@ -138,7 +137,7 @@ pub fn connect(peer_contact: StaticContactInfo,
         peer_contact_infos.iter().flat_map(|ci| ci.udp_listeners.iter().cloned()).collect()
     };
 
-    let (udp_socket, our_external_addrs) =
+    let (udp_socket, _our_external_addrs) =
         try!(utp_connections::external_udp_socket(udp_helper_nodes));
     let our_secret = [255; 4];
     let connect_req = ListenerRequest::Connect {
@@ -153,15 +152,16 @@ pub fn connect(peer_contact: StaticContactInfo,
             continue;
         }
         match udp_socket.recv_from(&mut read_buf) {
-            Ok((bytes_rxd, peer_addr)) => {
+            Ok((bytes_rxd, _peer_addr)) => {
                 match deserialise::<ListenerResponse>(&read_buf[..bytes_rxd]) {
                     Ok(ListenerResponse::Connect { connect_on, secret, their_secret, pub_key, }) => {
-                        if secret != our_secret {
-                            continue;
-                        }
-                        for peer_udp_hole_punched_socket_addr in connect_on {
-                            let cloned_udp_socket = try!(udp_socket.try_clone());
-                            match utp_connections::blocking_udp_punch_hole(cloned_udp_socket,
+                        {
+                            if secret != our_secret {
+                                continue;
+                            }
+                            for peer_udp_hole_punched_socket_addr in connect_on {
+                                let cloned_udp_socket = try!(udp_socket.try_clone());
+                                match utp_connections::blocking_udp_punch_hole(cloned_udp_socket,
                                                                            our_secret, their_secret,
                                                                            peer_udp_hole_punched_socket_addr) {
                                 (our_socket, Ok(peer_addr)) => {
@@ -176,6 +176,7 @@ pub fn connect(peer_contact: StaticContactInfo,
                                     }
                                 }
                                 _ => continue,
+                            }
                             }
                         }
                     }
@@ -210,7 +211,11 @@ fn connect_tcp_endpoint(remote_addr: SocketAddr,
     let closed_clone = closed.clone();
     let network_rx = Receiver::Tcp(cbor::Decoder::from_reader(network_input));
     let joiner = RaiiThreadJoiner::new(thread!("TcpNetworkReader", move || {
-        start_rx(network_rx, their_pub_key, event_tx, closed_clone, connection_map);
+        start_rx(network_rx,
+                 their_pub_key,
+                 event_tx,
+                 closed_clone,
+                 connection_map);
     }));
 
     let mut connection = Connection {
@@ -228,32 +233,36 @@ fn connect_tcp_endpoint(remote_addr: SocketAddr,
     Ok(connection)
 }
 
-fn connect_utp_endpoint(remote_addr: SocketAddr,
-                        their_pub_key: PublicKey,
-                        our_contact_info: Arc<Mutex<StaticContactInfo>>,
-                        event_tx: ::CrustEventSender,
-                        connection_map: Arc<Mutex<HashMap<PublicKey, Vec<Connection>>>>)
-                        -> io::Result<Connection> {
-    let (network_input, writer) = try!(utp_connections::connect_utp(remote_addr.clone()));
-    let our_addr = SocketAddr(network_input.local_addr());
-    let their_addr = SocketAddr(network_input.peer_addr());
-
-    let closed = Arc::new(AtomicBool::new(false));
-    let closed_clone = closed.clone();
-    let network_rx = Receiver::Utp(cbor::Decoder::from_reader(network_input));
-    let joiner = RaiiThreadJoiner::new(thread!("UtpNetworkReader", move || {
-        start_rx(network_rx, their_pub_key, event_tx, closed_clone, connection_map);
-    }));
-
-    Ok(Connection {
-        protocol: Protocol::Utp,
-        our_addr: our_addr,
-        their_addr: their_addr,
-        network_tx: RaiiSender(writer),
-        _network_read_joiner: joiner,
-        closed: closed,
-    })
-}
+// fn connect_utp_endpoint(remote_addr: SocketAddr,
+//                         their_pub_key: PublicKey,
+//                         our_contact_info: Arc<Mutex<StaticContactInfo>>,
+//                         event_tx: ::CrustEventSender,
+//                         connection_map: Arc<Mutex<HashMap<PublicKey, Vec<Connection>>>>)
+//                         -> io::Result<Connection> {
+//     let (network_input, writer) = try!(utp_connections::connect_utp(remote_addr.clone()));
+//     let our_addr = SocketAddr(network_input.local_addr());
+//     let their_addr = SocketAddr(network_input.peer_addr());
+//
+//     let closed = Arc::new(AtomicBool::new(false));
+//     let closed_clone = closed.clone();
+//     let network_rx = Receiver::Utp(cbor::Decoder::from_reader(network_input));
+//     let joiner = RaiiThreadJoiner::new(thread!("UtpNetworkReader", move || {
+//         start_rx(network_rx,
+//                  their_pub_key,
+//                  event_tx,
+//                  closed_clone,
+//                  connection_map);
+//     }));
+//
+//     Ok(Connection {
+//         protocol: Protocol::Utp,
+//         our_addr: our_addr,
+//         their_addr: their_addr,
+//         network_tx: RaiiSender(writer),
+//         _network_read_joiner: joiner,
+//         closed: closed,
+//     })
+// }
 
 // TODO use peer_contact_infos to get the external addresses
 pub fn start_tcp_accept(port: u16,
@@ -264,7 +273,6 @@ pub fn start_tcp_accept(port: u16,
                         -> io::Result<RaiiTcpAcceptor> {
     use std::io::Write;
     use std::io::Read;
-    use std::net::ToSocketAddrs;
 
     let tcp_builder_listener = try!(TcpBuilder::new_v4());
     try!(socket_utils::enable_so_reuseport(try!(tcp_builder_listener.reuse_address(true))));
@@ -303,7 +311,7 @@ pub fn start_tcp_accept(port: u16,
                     if let Ok(ListenerResponse::EchoExternalAddr { external_addr }) =
                            deserialise::<ListenerResponse>(&recv_data[..recv_size]) {
                         our_external_addr = Some(external_addr);
-                        stream.shutdown(Shutdown::Both);
+                        let _ = stream.shutdown(Shutdown::Both);
                         break;
                     }
                 }
@@ -393,9 +401,10 @@ pub fn start_tcp_accept(port: u16,
                 closed: closed,
             };
 
-            unwrap_result!(connection_map.lock()).entry(their_pub_key)
-                                                 .or_insert(Vec::new())
-                                                 .push(connection);
+            unwrap_result!(connection_map.lock())
+                .entry(their_pub_key)
+                .or_insert(Vec::new())
+                .push(connection);
             let event = Event::NewConnection(Ok(()), their_contact_info.pub_key);
 
             if event_tx.send(event).is_err() {
@@ -426,7 +435,11 @@ pub fn utp_rendezvous_connect(udp_socket: UdpSocket,
     let closed_clone = closed.clone();
     let network_rx = Receiver::Utp(cbor::Decoder::from_reader(network_input));
     let joiner = RaiiThreadJoiner::new(thread!("UtpNetworkReader", move || {
-        start_rx(network_rx, their_pub_key, event_tx, closed_clone, connection_map);
+        start_rx(network_rx,
+                 their_pub_key,
+                 event_tx,
+                 closed_clone,
+                 connection_map);
     }));
 
     Ok(Connection {
@@ -460,27 +473,10 @@ fn start_rx(mut network_rx: Receiver,
 }
 
 mod test {
-    use super::*;
 
-    use std::sync::Arc;
-    use std::sync::atomic::{Ordering, AtomicBool};
-    use std::sync::mpsc;
-    use std::str::FromStr;
     use std::hash::{Hash, SipHasher, Hasher};
-    use std::net;
 
-    use sender_receiver::RaiiSender;
-    use maidsafe_utilities::thread::RaiiThreadJoiner;
 
-    use endpoint::Protocol;
-    use socket_addr::SocketAddr;
-
-    /// Hash `object_to_hash` using a `SipHasher`
-    fn hash<T: Hash>(object_to_hash: &T) -> u64 {
-        let mut sip_hasher = SipHasher::new();
-        object_to_hash.hash(&mut sip_hasher);
-        sip_hasher.finish()
-    }
 
     #[test]
     fn connection_hash() {

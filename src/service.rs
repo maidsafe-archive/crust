@@ -17,29 +17,17 @@
 
 use std::collections::HashMap;
 use std::io;
-use std::sync::mpsc;
-use std::sync::atomic::{Ordering, AtomicBool};
-use std::thread;
 use std::net;
-use std::thread::JoinHandle;
 use std::sync::{Arc, Mutex};
-use std::str::FromStr;
-use std::cmp;
 use service_discovery::ServiceDiscovery;
 use sodiumoxide;
 use sodiumoxide::crypto::sign;
 use sodiumoxide::crypto::sign::PublicKey;
 
-use std::net::TcpListener;
-
 use connection::RaiiTcpAcceptor;
 use udp_listener::RaiiUdpListener;
 use static_contact_info::StaticContactInfo;
 use rand;
-use maidsafe_utilities::thread::RaiiThreadJoiner;
-use itertools::Itertools;
-use config_handler::{Config, read_config_file};
-use endpoint::{Endpoint, Protocol};
 use connection::Connection;
 use error::Error;
 use ip::SocketAddrExt;
@@ -48,19 +36,8 @@ use bootstrap;
 use bootstrap::RaiiBootstrap;
 
 use event::Event;
-use socket_addr::{SocketAddr, SocketAddrV4};
-use bootstrap_handler::BootstrapHandler;
+use socket_addr::SocketAddr;
 use utp_connections;
-
-/*
-// Mainly used for testing right now
-#[derive(Clone, Copy, Eq, PartialEq)]
-pub enum UseProtocol {
-    TcpOnly,
-    UdpOnly,
-    TcpUdpBoth,
-}
-*/
 
 /// The result of a `Service::prepare_contact_info` call.
 #[derive(Debug)]
@@ -75,8 +52,8 @@ pub struct ConnectionInfoResult {
 #[derive(Debug)]
 pub struct OurConnectionInfo {
     secret: [u8; 4],
-    //raii_tcp_acceptor: RaiiTcpAcceptor,
-    //tcp_addrs: Vec<SocketAddr>,
+    // raii_tcp_acceptor: RaiiTcpAcceptor,
+    // tcp_addrs: Vec<SocketAddr>,
     udp_socket: net::UdpSocket,
     udp_addrs: Vec<SocketAddr>,
     static_contact_info: StaticContactInfo,
@@ -88,7 +65,7 @@ impl OurConnectionInfo {
         TheirConnectionInfo {
             secret: self.secret.clone(),
             static_contact_info: self.static_contact_info.clone(),
-            //tcp_addrs: self.tcp_addrs.clone(),
+            // tcp_addrs: self.tcp_addrs.clone(),
             udp_addrs: self.udp_addrs.clone(),
             pub_key: self.static_contact_info.pub_key.clone(),
         }
@@ -100,7 +77,7 @@ impl OurConnectionInfo {
 pub struct TheirConnectionInfo {
     secret: [u8; 4],
     static_contact_info: StaticContactInfo,
-    //tcp_addrs: Vec<SocketAddr>,
+    // tcp_addrs: Vec<SocketAddr>,
     udp_addrs: Vec<SocketAddr>,
     pub_key: PublicKey,
 }
@@ -117,8 +94,6 @@ pub struct Service {
     service_discovery: ServiceDiscovery<StaticContactInfo>,
     event_tx: ::CrustEventSender,
     bootstrap: RaiiBootstrap,
-    use_static_tcp_listener: bool,
-    use_static_udp_listener: bool,
     connection_map: Arc<Mutex<HashMap<PublicKey, Vec<Connection>>>>,
     _raii_udp_listener: Option<RaiiUdpListener>,
     _raii_tcp_acceptor: Option<RaiiTcpAcceptor>,
@@ -194,8 +169,6 @@ impl Service {
             service_discovery: service_discovery,
             event_tx: event_tx,
             bootstrap: bootstrap,
-            use_static_tcp_listener: use_static_tcp_listener,
-            use_static_udp_listener: use_static_udp_listener,
             connection_map: connection_map,
             _raii_udp_listener: udp_listener,
             _raii_tcp_acceptor: raii_tcp_acceptor,
@@ -223,13 +196,14 @@ impl Service {
 
     /// Send the given `data` to the peer with the given `pub_key`.
     pub fn send(&self, pub_key: &PublicKey, data: &[u8]) -> io::Result<()> {
-        match unwrap_result!(self.connection_map.lock()).get_mut(pub_key)
-                                                        .and_then(|conns| conns.get_mut(0)) {
+        match unwrap_result!(self.connection_map.lock())
+                  .get_mut(pub_key)
+                  .and_then(|conns| conns.get_mut(0)) {
             None => {
                 let msg = format!("No connection to peer {:?}", pub_key);
                 Err(io::Error::new(io::ErrorKind::Other, msg))
             }
-            Some(connection) => connection.send(data)
+            Some(connection) => connection.send(data),
         }
     }
 
@@ -273,7 +247,6 @@ impl Service {
         }
 
         let event_tx = self.event_tx.clone();
-        let our_pub_key = unwrap_result!(self.static_contact_info.lock()).pub_key.clone();
         let connection_map = self.connection_map.clone();
 
         // TODO connect to all the socket addresses of peer in parallel
@@ -301,9 +274,10 @@ impl Service {
                                                                   connection_map.clone()) {
                 Err(e) => Err(e),
                 Ok(connection) => {
-                    unwrap_result!(connection_map.lock()).entry(their_pub_key)
-                                                         .or_insert(Vec::new())
-                                                         .push(connection);
+                    unwrap_result!(connection_map.lock())
+                        .entry(their_pub_key)
+                        .or_insert(Vec::new())
+                        .push(connection);
                     Ok(())
                 }
             };
@@ -319,9 +293,7 @@ impl Service {
         }
 
         let our_static_contact_info = self.static_contact_info.clone();
-        let peer_contact_infos = self.peer_contact_infos.clone();
         let event_tx = self.event_tx.clone();
-        let connection_map = self.connection_map.clone();
 
         let _joiner = thread!("PrepareContactInfo", move || {
             let result_external_socket = utp_connections::external_udp_socket(peer_udp_listeners);
@@ -333,37 +305,19 @@ impl Service {
                         result: Err(e),
                     }));
                     return;
-                },
+                }
             };
 
-            let result_tcp_acceptor = connection::start_tcp_accept(0,
-                                                                   our_static_contact_info.clone(),
-                                                                   peer_contact_infos,
-                                                                   event_tx.clone(),
-                                                                   connection_map);
-            /*
-            let raii_tcp_acceptor = match result_tcp_acceptor {
-                Ok(x) => x,
-                Err(e) => {
-                    let _ = event_tx.send(Event::ConnectionInfoPrepared(ConnectionInfoResult {
-                        result_token: result_token,
-                        result: Err(e),
-                    }));
-                    return;
-                },
-            };
-            */
 
             let send = Event::ConnectionInfoPrepared(ConnectionInfoResult {
                 result_token: result_token,
                 result: Ok(OurConnectionInfo {
                     secret: rand::random(),
-                    //raii_tcp_acceptor: unimplemented!(),
-                    //tcp_addrs: unimplemented!(),
-                        // why are we starting a tcp acceptor?
-                        // Are tcp acceptors being used to do rendezvous connections now?
-                        // coz that doesn't make sense
-
+                    // raii_tcp_acceptor: unimplemented!(),
+                    // tcp_addrs: unimplemented!(),
+                    // why are we starting a tcp acceptor?
+                    // Are tcp acceptors being used to do rendezvous connections now?
+                    // coz that doesn't make sense
                     udp_socket: udp_socket,
                     udp_addrs: udp_addrs,
                     static_contact_info: unwrap_result!(our_static_contact_info.lock()).clone(),
@@ -455,13 +409,14 @@ mod test {
         };
 
         // TODO: Evaluate whether these are still needed.
-        /*if use_tcp {
-            assert_eq!(*connection_0_to_1.get_protocol(), Protocol::Tcp);
-            assert_eq!(*connection_1_to_0.get_protocol(), Protocol::Tcp);
-        } else {
-            assert_eq!(*connection_0_to_1.get_protocol(), Protocol::Utp);
-            assert_eq!(*connection_1_to_0.get_protocol(), Protocol::Utp);
-        }*/
+        // if use_tcp {
+        // assert_eq!(*connection_0_to_1.get_protocol(), Protocol::Tcp);
+        // assert_eq!(*connection_1_to_0.get_protocol(), Protocol::Tcp);
+        // } else {
+        // assert_eq!(*connection_0_to_1.get_protocol(), Protocol::Utp);
+        // assert_eq!(*connection_1_to_0.get_protocol(), Protocol::Utp);
+        // }
+
 
         assert!(pub_key_0 != pub_key_1);
 
@@ -474,7 +429,7 @@ mod test {
             let (data_rxd, peer_pub_key) = {
                 let event_rxd = unwrap_result!(event_rx_1.recv());
                 match event_rxd {
-                    Event::NewMessage(their_pub_key, msg) => (msg , their_pub_key),
+                    Event::NewMessage(their_pub_key, msg) => (msg, their_pub_key),
                     _ => panic!("Received unexpected event: {:?}", event_rxd),
                 }
             };
@@ -492,7 +447,7 @@ mod test {
             let (data_rxd, peer_pub_key) = {
                 let event_rxd = unwrap_result!(event_rx_0.recv());
                 match event_rxd {
-                    Event::NewMessage(their_pub_key, msg) => (msg , their_pub_key),
+                    Event::NewMessage(their_pub_key, msg) => (msg, their_pub_key),
                     _ => panic!("Received unexpected event: {:?}", event_rxd),
                 }
             };
@@ -500,7 +455,7 @@ mod test {
             assert_eq!(data_rxd, data_txd);
             assert_eq!(peer_pub_key, pub_key_1);
         }
-        
+
         // TODO: Close the connection and verify LostPeer event.
     }
 
@@ -598,7 +553,7 @@ mod test {
             let (data_rxd, peer_pub_key) = {
                 let event_rxd = unwrap_result!(event_rx_1.recv());
                 match event_rxd {
-                    Event::NewMessage(their_pub_key,  msg) => (msg , their_pub_key),
+                    Event::NewMessage(their_pub_key, msg) => (msg, their_pub_key),
                     _ => panic!("Received unexpected event: {:?}", event_rxd),
                 }
             };
@@ -616,7 +571,7 @@ mod test {
             let (data_rxd, peer_pub_key) = {
                 let event_rxd = unwrap_result!(event_rx_0.recv());
                 match event_rxd {
-                    Event::NewMessage(their_pub_key,  msg) => (msg, their_pub_key),
+                    Event::NewMessage(their_pub_key, msg) => (msg, their_pub_key),
                     _ => panic!("Received unexpected event: {:?}", event_rxd),
                 }
             };

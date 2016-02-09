@@ -366,27 +366,26 @@ mod test {
         assert_eq!(punch_status.unwrap_err().kind(), io::ErrorKind::TimedOut);
     }
 
-    /*
-    #[test]
-    fn test_udp_hole_punching_1_terminates_no_secret() {
-        let s1 = UdpSocket::bind(&*loopback_v4(0)).unwrap();
-        let s2 = UdpSocket::bind(&*loopback_v4(0)).unwrap();
-
-        let s1_addr = loopback_v4(s1.local_addr().unwrap().port());
-        let s2_addr = loopback_v4(s2.local_addr().unwrap().port());
-
-        let sec1 = rand::random();
-        let sec2 = rand::random();
-        let t1 = spawn(move || run_hole_punching(s1, s2_addr, sec1, sec2));
-        let t2 = spawn(move || run_hole_punching(s2, s1_addr, sec2, sec1));
-
-        let r1 = t1.join();
-        let r2 = t2.join();
-
-        let _ = r1.unwrap().unwrap();
-        let _ = r2.unwrap().unwrap();
-    }
-    */
+    // #[test]
+    // fn test_udp_hole_punching_1_terminates_no_secret() {
+    // let s1 = UdpSocket::bind(&*loopback_v4(0)).unwrap();
+    // let s2 = UdpSocket::bind(&*loopback_v4(0)).unwrap();
+    //
+    // let s1_addr = loopback_v4(s1.local_addr().unwrap().port());
+    // let s2_addr = loopback_v4(s2.local_addr().unwrap().port());
+    //
+    // let sec1 = rand::random();
+    // let sec2 = rand::random();
+    // let t1 = spawn(move || run_hole_punching(s1, s2_addr, sec1, sec2));
+    // let t2 = spawn(move || run_hole_punching(s2, s1_addr, sec2, sec1));
+    //
+    // let r1 = t1.join();
+    // let r2 = t2.join();
+    //
+    // let _ = r1.unwrap().unwrap();
+    // let _ = r2.unwrap().unwrap();
+    // }
+    //
 
     #[test]
     fn test_udp_hole_punching_2_terminates_with_secret() {

@@ -18,9 +18,8 @@
 use std::collections::HashMap;
 use std::io;
 use std::net;
-use std::net::UdpSocket;
+use std::net::{SocketAddrV4, UdpSocket};
 use std::time::Duration;
-use std::sync::mpsc::Sender;
 use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicBool, Ordering};
 use itertools::Itertools;
@@ -53,7 +52,7 @@ impl RaiiUdpListener {
                event_tx: ::CrustEventSender,
                connection_map: Arc<Mutex<HashMap<PublicKey, Vec<Connection>>>>)
                -> io::Result<RaiiUdpListener> {
-        let udp_socket = try!(UdpSocket::bind("0.0.0.0:0"));
+        let udp_socket = try!(UdpSocket::bind(&format!("0.0.0.0:{}", port)[..]));
         let stop_flag = Arc::new(AtomicBool::new(false));
         let cloned_stop_flag = stop_flag.clone();
 
@@ -187,9 +186,10 @@ impl RaiiUdpListener {
                             Err(_) => return,
                         };
 
-                        unwrap_result!(connection_map.lock()).entry(pub_key)
-                                                             .or_insert(Vec::new())
-                                                             .push(connection);
+                        unwrap_result!(connection_map.lock())
+                            .entry(pub_key)
+                            .or_insert(Vec::new())
+                            .push(connection);
 
                         let event = Event::NewConnection(Ok(()), pub_key);
 
@@ -210,10 +210,10 @@ impl RaiiUdpListener {
                        _peer_contact_infos: &Arc<Mutex<Vec<StaticContactInfo>>>) {
         // This is currently unimplemented as RaiiUdpListener should not have made
         // any request - it is supposed to get requests, not make one
-        match _msg {
-            ListenerResponse::EchoExternalAddr { external_addr, } => unimplemented!(),
-            ListenerResponse::Connect { connect_on, secret, their_secret, pub_key, } => unimplemented!(),
-        }
+        // match _msg {
+        //     ListenerResponse::EchoExternalAddr { external_addr, } => unimplemented!(),
+        //     ListenerResponse::Connect { connect_on, secret, their_secret, pub_key, } => unimplemented!(),
+        // }
     }
 }
 
