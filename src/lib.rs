@@ -70,7 +70,6 @@ pub use config_handler::write_config_file;
 pub use service::{ConnectionInfoResult, OurConnectionInfo, Service, TheirConnectionInfo};
 pub use event::Event;
 pub use endpoint::{Endpoint, Protocol};
-pub use connection::Connection;
 pub use socket_addr::SocketAddr;
 pub use static_contact_info::StaticContactInfo;
 pub use error::Error;

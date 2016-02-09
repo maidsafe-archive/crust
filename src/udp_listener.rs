@@ -15,6 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use std::collections::HashMap;
 use std::io;
 use std::net;
 use std::net::UdpSocket;
@@ -30,7 +31,7 @@ use maidsafe_utilities::thread::RaiiThreadJoiner;
 use rand;
 use sodiumoxide::crypto::sign::PublicKey;
 
-use connection::utp_rendezvous_connect;
+use connection::{Connection, utp_rendezvous_connect};
 use static_contact_info::StaticContactInfo;
 use event::Event;
 use utp_connections::{blocking_udp_punch_hole, external_udp_socket};
@@ -49,7 +50,8 @@ impl RaiiUdpListener {
     pub fn new(port: u16,
                our_contact_info: Arc<Mutex<StaticContactInfo>>,
                peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
-               event_tx: ::CrustEventSender)
+               event_tx: ::CrustEventSender,
+               connection_map: Arc<Mutex<HashMap<PublicKey, Vec<Connection>>>>)
                -> io::Result<RaiiUdpListener> {
         let udp_socket = try!(UdpSocket::bind("0.0.0.0:0"));
         let stop_flag = Arc::new(AtomicBool::new(false));
@@ -99,7 +101,8 @@ impl RaiiUdpListener {
                       udp_socket,
                       event_tx,
                       peer_contact_infos,
-                      cloned_stop_flag);
+                      cloned_stop_flag,
+                      connection_map);
         }));
 
         Ok(RaiiUdpListener {
@@ -112,7 +115,8 @@ impl RaiiUdpListener {
            udp_socket: UdpSocket,
            event_tx: ::CrustEventSender,
            peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
-           stop_flag: Arc<AtomicBool>) {
+           stop_flag: Arc<AtomicBool>,
+           connection_map: Arc<Mutex<HashMap<PublicKey, Vec<Connection>>>>) {
         let mut read_buf = [0; 1024];
 
         while !stop_flag.load(Ordering::SeqCst) {
@@ -123,7 +127,8 @@ impl RaiiUdpListener {
                                                     &udp_socket,
                                                     peer_addr,
                                                     &event_tx,
-                                                    &peer_contact_infos);
+                                                    &peer_contact_infos,
+                                                    connection_map.clone());
                 } else if let Ok(msg) = deserialise::<ListenerResponse>(&read_buf[..bytes_read]) {
                     RaiiUdpListener::handle_response(msg,
                                                      &our_contact_info,
@@ -141,7 +146,8 @@ impl RaiiUdpListener {
                       udp_socket: &UdpSocket,
                       peer_addr: net::SocketAddr,
                       event_tx: &::CrustEventSender,
-                      peer_contact_infos: &Arc<Mutex<Vec<StaticContactInfo>>>) {
+                      peer_contact_infos: &Arc<Mutex<Vec<StaticContactInfo>>>,
+                      connection_map: Arc<Mutex<HashMap<PublicKey, Vec<Connection>>>>) {
         match msg {
             ListenerRequest::EchoExternalAddr => {
                 let resp = ListenerResponse::EchoExternalAddr {
@@ -175,15 +181,17 @@ impl RaiiUdpListener {
                         let connection = match utp_rendezvous_connect(socket,
                                                                       peer_addr,
                                                                       pub_key.clone(),
-                                                                      event_tx.clone()) {
+                                                                      event_tx.clone(),
+                                                                      connection_map.clone()) {
                             Ok(connection) => connection,
                             Err(_) => return,
                         };
 
-                        let event = Event::NewConnection {
-                            their_pub_key: pub_key,
-                            connection: Ok(connection),
-                        };
+                        unwrap_result!(connection_map.lock()).entry(pub_key)
+                                                             .or_insert(Vec::new())
+                                                             .push(connection);
+
+                        let event = Event::NewConnection(Ok(()), pub_key);
 
                         if event_tx.send(event).is_err() {
                             return;
