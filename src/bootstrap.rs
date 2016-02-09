@@ -19,6 +19,7 @@
 
 use itertools::Itertools;
 
+use std::collections::HashMap;
 use std::sync::{Arc, Mutex, mpsc};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
@@ -31,6 +32,7 @@ use sodiumoxide::crypto::sign::PublicKey;
 
 use error::Error;
 use config_handler::Config;
+use connection::Connection;
 use static_contact_info::StaticContactInfo;
 use event::Event;
 
@@ -44,7 +46,8 @@ pub struct RaiiBootstrap {
 impl RaiiBootstrap {
     pub fn new(our_contact_info: Arc<Mutex<StaticContactInfo>>,
                peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
-               event_tx: ::CrustEventSender)
+               event_tx: ::CrustEventSender,
+               connection_map: Arc<Mutex<HashMap<PublicKey, Vec<Connection>>>>)
                -> RaiiBootstrap {
         let stop_flag = Arc::new(AtomicBool::new(false));
         let cloned_stop_flag = stop_flag.clone();
@@ -53,7 +56,8 @@ impl RaiiBootstrap {
             RaiiBootstrap::bootstrap(our_contact_info,
                                      peer_contact_infos,
                                      cloned_stop_flag,
-                                     event_tx);
+                                     event_tx,
+                                     connection_map);
         }));
 
         RaiiBootstrap {
@@ -69,7 +73,8 @@ impl RaiiBootstrap {
     fn bootstrap(our_contact_info: Arc<Mutex<StaticContactInfo>>,
                  peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
                  stop_flag: Arc<AtomicBool>,
-                 event_tx: ::CrustEventSender) {
+                 event_tx: ::CrustEventSender,
+                 connection_map: Arc<Mutex<HashMap<PublicKey, Vec<Connection>>>>) {
         let bootstrap_contacts: Vec<StaticContactInfo> = unwrap_result!(peer_contact_infos.lock())
                                                              .clone();
         for contact in bootstrap_contacts {
@@ -86,17 +91,17 @@ impl RaiiBootstrap {
             let connect_result = ::connection::connect(contact,
                                                        peer_contact_infos.clone(),
                                                        our_contact_info.clone(),
-                                                       event_tx.clone());
+                                                       event_tx.clone(),
+                                                       connection_map.clone());
             if stop_flag.load(Ordering::SeqCst) {
                 break;
             }
 
             if let Ok(connection) = connect_result {
-                let event = Event::NewConnection {
-                    their_pub_key: their_pub_key,
-                    connection: Ok(connection),
-                };
-                let _ = event_tx.send(event);
+                unwrap_result!(connection_map.lock()).entry(their_pub_key)
+                                                     .or_insert(vec![])
+                                                     .push(connection);
+                let _ = event_tx.send(Event::NewBootstrapConnection(their_pub_key));
             }
         }
 

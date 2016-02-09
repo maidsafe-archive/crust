@@ -97,7 +97,7 @@ fn send_random_data(b: &mut Bencher) {
                 crust::Event::NewMessage(_, _bytes) => {
                     break;
                 },
-                crust::Event::LostConnection(_) => {
+                crust::Event::LostPeer(_) => {
                     break;
                 },
                 _ => {

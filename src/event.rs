@@ -41,29 +41,15 @@ pub enum Event {
     /// Invoked when a new message is received.  Passes the peer's public key and the message.
     NewMessage(PublicKey, Vec<u8>),
     /// Invoked when we get a new bootstrap connection.
-    /// Passes the new connection and the peer's public key.
-    NewBootstrapConnection {
-        /// The connection object.
-        connection: Connection,
-        /// The peer's public key.
-        their_pub_key: PublicKey,
-    },
+    /// Passes the peer's public key.
+    NewBootstrapConnection(PublicKey),
     /// Invoked when the new rendezvous connection request finishes.
-    /// Passes the new connection and the peer's public key.
-    NewConnection {
-        /// The connection object.
-        connection: io::Result<Connection>,
-        /// The peer's public key.
-        their_pub_key: PublicKey,
-    },
+    /// Passes the peer's public key.
+    NewConnection(io::Result<()>, PublicKey),
     /// Invoked when a connection to a peer is lost.  Passes the peer's public key.
-    LostConnection(PublicKey),
-    /// TODO THIS IS WRONG - Invoked when a new bootstrap connection to a peer is established.
-    /// Passes the peer's endpoint.
+    LostPeer(PublicKey),
+    /// Raised once the list of bootstrap contacts is exhausted.
     BootstrapFinished,
-    /// Invoked when a new bootstrap connection to a peer is established.
-    /// Passes the peer's endpoint.
-    ExternalEndpoints(Vec<Endpoint>),
     /// Invoked as a result to the call of `Service::prepare_contact_info`.
     ConnectionInfoPrepared(ConnectionInfoResult),
 }
