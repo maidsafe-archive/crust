@@ -461,14 +461,18 @@ fn start_rx(mut network_rx: Receiver,
             break;
         }
     }
-    closed.store(true, Ordering::AcqRel);
-    if let Entry::Occupied(mut entry) = unwrap_result!(connection_map.lock()).entry(their_pub_key) {
-        entry.get_mut().retain(|connection| !connection.is_closed());
-        if entry.get().is_empty() {
-            let _ = entry.remove();
-            let _ = event_tx.send(Event::LostPeer(their_pub_key));
+    closed.store(true, Ordering::Relaxed);
+    // Drop the connection in a separate thread, because the destructor joins _this_ thread.
+    let _ = thread!("ConnectionDropper", move || {
+        let mut lock = unwrap_result!(connection_map.lock());
+        if let Entry::Occupied(mut entry) = lock.entry(their_pub_key) {
+            entry.get_mut().retain(|connection| !connection.is_closed());
+            if entry.get().is_empty() {
+                let _ = entry.remove();
+                let _ = event_tx.send(Event::LostPeer(their_pub_key));
+            }
         }
-    }
+    });
 }
 
 mod test {
