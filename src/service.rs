@@ -207,6 +207,11 @@ impl Service {
         }
     }
 
+    /// Disconnect from the given peer and returns whether there was a connection at all.
+    pub fn disconnect(&self, pub_key: &PublicKey) -> bool {
+        unwrap_result!(self.connection_map.lock()).remove(pub_key).is_some()
+    }
+
     /// Opens a connection to a remote peer. `public_endpoint` is the endpoint
     /// of the remote peer. `udp_socket` is a socket whose public address will
     /// be used by the other peer.
@@ -456,7 +461,12 @@ mod test {
             assert_eq!(peer_pub_key, pub_key_1);
         }
 
-        // TODO: Close the connection and verify LostPeer event.
+        assert!(service_0.disconnect(&pub_key_1));
+
+        match unwrap_result!(event_rx_1.recv()) {
+            Event::LostPeer(pub_key) => assert_eq!(pub_key, pub_key_0),
+            e => panic!("Received unexpected event: {:?}", e),
+        }
     }
 
     #[test]
