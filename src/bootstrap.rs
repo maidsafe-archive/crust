@@ -85,7 +85,7 @@ impl RaiiBootstrap {
                 break;
             }
 
-			let their_id = peer_id::new_id(contact.pub_key);
+            let their_id = peer_id::new_id(contact.pub_key);
 
             // 1st try a TCP connect
             // 2nd try a UDP connection (and upgrade to UTP)
@@ -118,7 +118,7 @@ impl Drop for RaiiBootstrap {
 }
 
 // Returns the peers from service discovery, cache and config for bootstrapping (not to be held)
-pub fn get_known_contacts(service_discovery: &ServiceDiscovery<StaticContactInfo>, our_id: &PeerId)
+pub fn get_known_contacts(service_discovery: &ServiceDiscovery<StaticContactInfo>)
                           -> Result<Vec<StaticContactInfo>, Error> {
     let (seek_peers_tx, seek_peers_rx) = mpsc::channel();
     if service_discovery.register_seek_peer_observer(seek_peers_tx) {
@@ -153,13 +153,6 @@ pub fn get_known_contacts(service_discovery: &ServiceDiscovery<StaticContactInfo
     // order in which we collect the contacts
     contacts = contacts.into_iter().unique().collect();
 
-    // Remove own endpoints:
-    // Node A is on EP Ea. Node B starts up finds A and populates its bootstrap.cache with Ea.
-    // Now A dies and C starts after that on exactly Ea. Since they all share the same
-    // bootstrap.cache file (if all Crusts start from same path), C will have EP Ea and also
-    // have Ea in the bootstrap.cache so it will try to bootstrap to itself. The following code
-    // prevents that.
-    contacts.retain(|contact| contact.pub_key != *peer_id::get_pub_key(our_id));
 
     Ok((contacts))
 }

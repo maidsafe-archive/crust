@@ -118,9 +118,7 @@ impl Service {
                 -> Result<Service, Error> {
         sodiumoxide::init();
 
-        // TODO Use private key once crate is stable
         let our_keys = box_::gen_keypair();
-        let id = peer_id::new_id(our_keys.0);
 
         // Form our initial contact info
         let static_contact_info = Arc::new(Mutex::new(StaticContactInfo {
@@ -135,7 +133,7 @@ impl Service {
                                                                           generator));
 
         // Form initial peer contact infos - these will also contain echo-service addrs.
-        let bootstrap_contacts = try!(bootstrap::get_known_contacts(&service_discovery, &id));
+        let bootstrap_contacts = try!(bootstrap::get_known_contacts(&service_discovery));
         let peer_contact_infos = Arc::new(Mutex::new(bootstrap_contacts));
 
         let connection_map = Arc::new(Mutex::new(HashMap::new()));
