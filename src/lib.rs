@@ -74,6 +74,7 @@ pub use endpoint::{Endpoint, Protocol};
 pub use socket_addr::SocketAddr;
 pub use static_contact_info::StaticContactInfo;
 pub use error::Error;
+pub use peer_id::PeerId;
 
 mod error;
 mod service;
@@ -94,4 +95,5 @@ mod hole_punching;
 mod periodic_sender;
 mod socket_utils;
 mod ip_info;
+mod peer_id;
 mod udp_listener;
