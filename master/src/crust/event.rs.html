@@ -96,20 +96,6 @@
 <span id="53">53</span>
 <span id="54">54</span>
 <span id="55">55</span>
-<span id="56">56</span>
-<span id="57">57</span>
-<span id="58">58</span>
-<span id="59">59</span>
-<span id="60">60</span>
-<span id="61">61</span>
-<span id="62">62</span>
-<span id="63">63</span>
-<span id="64">64</span>
-<span id="65">65</span>
-<span id="66">66</span>
-<span id="67">67</span>
-<span id="68">68</span>
-<span id="69">69</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -154,29 +140,15 @@
     <span class='doccomment'>/// Invoked when a new message is received.  Passes the peer&#39;s public key and the message.</span>
     <span class='ident'>NewMessage</span>(<span class='ident'>PublicKey</span>, <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span>),
     <span class='doccomment'>/// Invoked when we get a new bootstrap connection.</span>
-    <span class='doccomment'>/// Passes the new connection and the peer&#39;s public key.</span>
-    <span class='ident'>NewBootstrapConnection</span> {
-        <span class='doccomment'>/// The connection object.</span>
-        <span class='ident'>connection</span>: <span class='ident'>Connection</span>,
-        <span class='doccomment'>/// The peer&#39;s public key.</span>
-        <span class='ident'>their_pub_key</span>: <span class='ident'>PublicKey</span>,
-    },
+    <span class='doccomment'>/// Passes the peer&#39;s public key.</span>
+    <span class='ident'>NewBootstrapConnection</span>(<span class='ident'>PublicKey</span>),
     <span class='doccomment'>/// Invoked when the new rendezvous connection request finishes.</span>
-    <span class='doccomment'>/// Passes the new connection and the peer&#39;s public key.</span>
-    <span class='ident'>NewConnection</span> {
-        <span class='doccomment'>/// The connection object.</span>
-        <span class='ident'>connection</span>: <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>Connection</span><span class='op'>&gt;</span>,
-        <span class='doccomment'>/// The peer&#39;s public key.</span>
-        <span class='ident'>their_pub_key</span>: <span class='ident'>PublicKey</span>,
-    },
+    <span class='doccomment'>/// Passes the peer&#39;s public key.</span>
+    <span class='ident'>NewConnection</span>(<span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>, <span class='ident'>PublicKey</span>),
     <span class='doccomment'>/// Invoked when a connection to a peer is lost.  Passes the peer&#39;s public key.</span>
-    <span class='ident'>LostConnection</span>(<span class='ident'>PublicKey</span>),
-    <span class='doccomment'>/// TODO THIS IS WRONG - Invoked when a new bootstrap connection to a peer is established.</span>
-    <span class='doccomment'>/// Passes the peer&#39;s endpoint.</span>
+    <span class='ident'>LostPeer</span>(<span class='ident'>PublicKey</span>),
+    <span class='doccomment'>/// Raised once the list of bootstrap contacts is exhausted.</span>
     <span class='ident'>BootstrapFinished</span>,
-    <span class='doccomment'>/// Invoked when a new bootstrap connection to a peer is established.</span>
-    <span class='doccomment'>/// Passes the peer&#39;s endpoint.</span>
-    <span class='ident'>ExternalEndpoints</span>(<span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>Endpoint</span><span class='op'>&gt;</span>),
     <span class='doccomment'>/// Invoked as a result to the call of `Service::prepare_contact_info`.</span>
     <span class='ident'>ConnectionInfoPrepared</span>(<span class='ident'>ConnectionInfoResult</span>),
 }

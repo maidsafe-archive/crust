@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-206' class='srclink' href='../src/crust/service.rs.html#113-123' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-193' class='srclink' href='../src/crust/service.rs.html#91-100' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Service {
     // some fields omitted
 }</pre><div class='docblock'><p>A structure representing a connection manager.</p>
@@ -64,6 +64,10 @@ successful registration of the request.</p>
 </div><h4 id='method.get_ordered_helping_nodes' class='method'><code>fn <a href='#method.get_ordered_helping_nodes' class='fnname'>get_ordered_helping_nodes</a>(&amp;self) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../crust/struct.SocketAddr.html' title='crust::SocketAddr'>SocketAddr</a>&gt;</code></h4>
 <div class='docblock'><p>Get the hole punch servers addresses of nodes that we&#39;re connected to ordered by how likely
 they are to be on a seperate network.</p>
+</div><h4 id='method.send' class='method'><code>fn <a href='#method.send' class='fnname'>send</a>(&amp;self, pub_key: &amp;<a class='struct' href='../sodiumoxide/crypto/sign/ed25519/struct.PublicKey.html' title='sodiumoxide::crypto::sign::ed25519::PublicKey'>PublicKey</a>, data: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
+<div class='docblock'><p>Send the given <code>data</code> to the peer with the given <code>pub_key</code>.</p>
+</div><h4 id='method.disconnect' class='method'><code>fn <a href='#method.disconnect' class='fnname'>disconnect</a>(&amp;self, pub_key: &amp;<a class='struct' href='../sodiumoxide/crypto/sign/ed25519/struct.PublicKey.html' title='sodiumoxide::crypto::sign::ed25519::PublicKey'>PublicKey</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+<div class='docblock'><p>Disconnect from the given peer and returns whether there was a connection at all.</p>
 </div><h4 id='method.connect' class='method'><code>fn <a href='#method.connect' class='fnname'>connect</a>(&amp;self, our_connection_info: <a class='struct' href='../crust/struct.OurConnectionInfo.html' title='crust::OurConnectionInfo'>OurConnectionInfo</a>, their_connection_info: <a class='struct' href='../crust/struct.TheirConnectionInfo.html' title='crust::TheirConnectionInfo'>TheirConnectionInfo</a>)</code></h4>
 <div class='docblock'><p>Opens a connection to a remote peer. <code>public_endpoint</code> is the endpoint
 of the remote peer. <code>udp_socket</code> is a socket whose public address will

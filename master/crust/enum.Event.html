@@ -46,42 +46,24 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-2047' class='srclink' href='../src/crust/event.rs.html#40-69' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-2109' class='srclink' href='../src/crust/event.rs.html#40-55' title='goto source code'>[src]</a></span></h1>
 <pre class='rust enum'>pub enum Event {
     NewMessage(<a class='struct' href='../sodiumoxide/crypto/sign/ed25519/struct.PublicKey.html' title='sodiumoxide::crypto::sign::ed25519::PublicKey'>PublicKey</a>, <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;),
-    NewBootstrapConnection {
-        connection: <a class='struct' href='../crust/struct.Connection.html' title='crust::Connection'>Connection</a>,
-        their_pub_key: <a class='struct' href='../sodiumoxide/crypto/sign/ed25519/struct.PublicKey.html' title='sodiumoxide::crypto::sign::ed25519::PublicKey'>PublicKey</a>,
-    },
-    NewConnection {
-        connection: <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='struct' href='../crust/struct.Connection.html' title='crust::Connection'>Connection</a>&gt;,
-        their_pub_key: <a class='struct' href='../sodiumoxide/crypto/sign/ed25519/struct.PublicKey.html' title='sodiumoxide::crypto::sign::ed25519::PublicKey'>PublicKey</a>,
-    },
-    LostConnection(<a class='struct' href='../sodiumoxide/crypto/sign/ed25519/struct.PublicKey.html' title='sodiumoxide::crypto::sign::ed25519::PublicKey'>PublicKey</a>),
+    NewBootstrapConnection(<a class='struct' href='../sodiumoxide/crypto/sign/ed25519/struct.PublicKey.html' title='sodiumoxide::crypto::sign::ed25519::PublicKey'>PublicKey</a>),
+    NewConnection(<a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;, <a class='struct' href='../sodiumoxide/crypto/sign/ed25519/struct.PublicKey.html' title='sodiumoxide::crypto::sign::ed25519::PublicKey'>PublicKey</a>),
+    LostPeer(<a class='struct' href='../sodiumoxide/crypto/sign/ed25519/struct.PublicKey.html' title='sodiumoxide::crypto::sign::ed25519::PublicKey'>PublicKey</a>),
     BootstrapFinished,
-    ExternalEndpoints(<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../crust/struct.Endpoint.html' title='crust::Endpoint'>Endpoint</a>&gt;),
     ConnectionInfoPrepared(<a class='struct' href='../crust/struct.ConnectionInfoResult.html' title='crust::ConnectionInfoResult'>ConnectionInfoResult</a>),
 }</pre><div class='docblock'><p>Enum representing different events that will be sent over the asynchronous channel to the user
 of this module.</p>
 </div><h2 class='variants'>Variants</h2>
 <table><tr><td id='variant.NewMessage'><code>NewMessage</code></td><td><div class='docblock'><p>Invoked when a new message is received.  Passes the peer&#39;s public key and the message.</p>
 </div></td></tr><tr><td id='variant.NewBootstrapConnection'><code>NewBootstrapConnection</code></td><td><div class='docblock'><p>Invoked when we get a new bootstrap connection.
-Passes the new connection and the peer&#39;s public key.</p>
-</div><h3 class='fields'>Fields</h3>
-
-                                              <table><tr><td id='variant.NewBootstrapConnection.field.connection'><code>connection</code></td><td><div class='docblock'><p>The connection object.</p>
-</div></td></tr><tr><td id='variant.NewBootstrapConnection.field.their_pub_key'><code>their_pub_key</code></td><td><div class='docblock'><p>The peer&#39;s public key.</p>
-</div></td></tr></table></td></tr><tr><td id='variant.NewConnection'><code>NewConnection</code></td><td><div class='docblock'><p>Invoked when the new rendezvous connection request finishes.
-Passes the new connection and the peer&#39;s public key.</p>
-</div><h3 class='fields'>Fields</h3>
-
-                                              <table><tr><td id='variant.NewConnection.field.connection'><code>connection</code></td><td><div class='docblock'><p>The connection object.</p>
-</div></td></tr><tr><td id='variant.NewConnection.field.their_pub_key'><code>their_pub_key</code></td><td><div class='docblock'><p>The peer&#39;s public key.</p>
-</div></td></tr></table></td></tr><tr><td id='variant.LostConnection'><code>LostConnection</code></td><td><div class='docblock'><p>Invoked when a connection to a peer is lost.  Passes the peer&#39;s public key.</p>
-</div></td></tr><tr><td id='variant.BootstrapFinished'><code>BootstrapFinished</code></td><td><div class='docblock'><p>TODO THIS IS WRONG - Invoked when a new bootstrap connection to a peer is established.
-Passes the peer&#39;s endpoint.</p>
-</div></td></tr><tr><td id='variant.ExternalEndpoints'><code>ExternalEndpoints</code></td><td><div class='docblock'><p>Invoked when a new bootstrap connection to a peer is established.
-Passes the peer&#39;s endpoint.</p>
+Passes the peer&#39;s public key.</p>
+</div></td></tr><tr><td id='variant.NewConnection'><code>NewConnection</code></td><td><div class='docblock'><p>Invoked when the new rendezvous connection request finishes.
+Passes the peer&#39;s public key.</p>
+</div></td></tr><tr><td id='variant.LostPeer'><code>LostPeer</code></td><td><div class='docblock'><p>Invoked when a connection to a peer is lost.  Passes the peer&#39;s public key.</p>
+</div></td></tr><tr><td id='variant.BootstrapFinished'><code>BootstrapFinished</code></td><td><div class='docblock'><p>Raised once the list of bootstrap contacts is exhausted.</p>
 </div></td></tr><tr><td id='variant.ConnectionInfoPrepared'><code>ConnectionInfoPrepared</code></td><td><div class='docblock'><p>Invoked as a result to the call of <code>Service::prepare_contact_info</code>.</p>
 </div></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='enum' href='../crust/enum.Event.html' title='crust::Event'>Event</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#method.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
 </div></section>

@@ -634,35 +634,6 @@
 <span id="591">591</span>
 <span id="592">592</span>
 <span id="593">593</span>
-<span id="594">594</span>
-<span id="595">595</span>
-<span id="596">596</span>
-<span id="597">597</span>
-<span id="598">598</span>
-<span id="599">599</span>
-<span id="600">600</span>
-<span id="601">601</span>
-<span id="602">602</span>
-<span id="603">603</span>
-<span id="604">604</span>
-<span id="605">605</span>
-<span id="606">606</span>
-<span id="607">607</span>
-<span id="608">608</span>
-<span id="609">609</span>
-<span id="610">610</span>
-<span id="611">611</span>
-<span id="612">612</span>
-<span id="613">613</span>
-<span id="614">614</span>
-<span id="615">615</span>
-<span id="616">616</span>
-<span id="617">617</span>
-<span id="618">618</span>
-<span id="619">619</span>
-<span id="620">620</span>
-<span id="621">621</span>
-<span id="622">622</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -681,30 +652,19 @@
 <span class='comment'>// Please review the Licences for the specific language governing permissions and limitations</span>
 <span class='comment'>// relating to use of the SAFE Network Software.</span>
 
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>collections</span>::<span class='ident'>HashMap</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>;
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>mpsc</span>;
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>atomic</span>::{<span class='ident'>Ordering</span>, <span class='ident'>AtomicBool</span>};
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>thread</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>net</span>;
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>thread</span>::<span class='ident'>JoinHandle</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::{<span class='ident'>Arc</span>, <span class='ident'>Mutex</span>};
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>str</span>::<span class='ident'>FromStr</span>;
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>cmp</span>;
 <span class='kw'>use</span> <span class='ident'>service_discovery</span>::<span class='ident'>ServiceDiscovery</span>;
 <span class='kw'>use</span> <span class='ident'>sodiumoxide</span>;
 <span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>crypto</span>::<span class='ident'>sign</span>;
 <span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>crypto</span>::<span class='ident'>sign</span>::<span class='ident'>PublicKey</span>;
 
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>net</span>::<span class='ident'>TcpListener</span>;
-
 <span class='kw'>use</span> <span class='ident'>connection</span>::<span class='ident'>RaiiTcpAcceptor</span>;
 <span class='kw'>use</span> <span class='ident'>udp_listener</span>::<span class='ident'>RaiiUdpListener</span>;
 <span class='kw'>use</span> <span class='ident'>static_contact_info</span>::<span class='ident'>StaticContactInfo</span>;
 <span class='kw'>use</span> <span class='ident'>rand</span>;
-<span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>::<span class='ident'>thread</span>::<span class='ident'>RaiiThreadJoiner</span>;
-<span class='kw'>use</span> <span class='ident'>itertools</span>::<span class='ident'>Itertools</span>;
-<span class='kw'>use</span> <span class='ident'>config_handler</span>::{<span class='ident'>Config</span>, <span class='ident'>read_config_file</span>};
-<span class='kw'>use</span> <span class='ident'>endpoint</span>::{<span class='ident'>Endpoint</span>, <span class='ident'>Protocol</span>};
 <span class='kw'>use</span> <span class='ident'>connection</span>::<span class='ident'>Connection</span>;
 <span class='kw'>use</span> <span class='ident'>error</span>::<span class='ident'>Error</span>;
 <span class='kw'>use</span> <span class='ident'>ip</span>::<span class='ident'>SocketAddrExt</span>;
@@ -713,19 +673,8 @@
 <span class='kw'>use</span> <span class='ident'>bootstrap</span>::<span class='ident'>RaiiBootstrap</span>;
 
 <span class='kw'>use</span> <span class='ident'>event</span>::<span class='ident'>Event</span>;
-<span class='kw'>use</span> <span class='ident'>socket_addr</span>::{<span class='ident'>SocketAddr</span>, <span class='ident'>SocketAddrV4</span>};
-<span class='kw'>use</span> <span class='ident'>bootstrap_handler</span>::<span class='ident'>BootstrapHandler</span>;
+<span class='kw'>use</span> <span class='ident'>socket_addr</span>::<span class='ident'>SocketAddr</span>;
 <span class='kw'>use</span> <span class='ident'>utp_connections</span>;
-
-<span class='comment'>/*
-// Mainly used for testing right now
-#[derive(Clone, Copy, Eq, PartialEq)]
-pub enum UseProtocol {
-    TcpOnly,
-    UdpOnly,
-    TcpUdpBoth,
-}
-*/</span>
 
 <span class='doccomment'>/// The result of a `Service::prepare_contact_info` call.</span>
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>)]</span>
@@ -740,8 +689,8 @@ pub enum UseProtocol {
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>OurConnectionInfo</span> {
     <span class='ident'>secret</span>: [<span class='ident'>u8</span>; <span class='number'>4</span>],
-    <span class='comment'>//raii_tcp_acceptor: RaiiTcpAcceptor,</span>
-    <span class='comment'>//tcp_addrs: Vec&lt;SocketAddr&gt;,</span>
+    <span class='comment'>// raii_tcp_acceptor: RaiiTcpAcceptor,</span>
+    <span class='comment'>// tcp_addrs: Vec&lt;SocketAddr&gt;,</span>
     <span class='ident'>udp_socket</span>: <span class='ident'>net</span>::<span class='ident'>UdpSocket</span>,
     <span class='ident'>udp_addrs</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>SocketAddr</span><span class='op'>&gt;</span>,
     <span class='ident'>static_contact_info</span>: <span class='ident'>StaticContactInfo</span>,
@@ -753,7 +702,7 @@ pub enum UseProtocol {
         <span class='ident'>TheirConnectionInfo</span> {
             <span class='ident'>secret</span>: <span class='self'>self</span>.<span class='ident'>secret</span>.<span class='ident'>clone</span>(),
             <span class='ident'>static_contact_info</span>: <span class='self'>self</span>.<span class='ident'>static_contact_info</span>.<span class='ident'>clone</span>(),
-            <span class='comment'>//tcp_addrs: self.tcp_addrs.clone(),</span>
+            <span class='comment'>// tcp_addrs: self.tcp_addrs.clone(),</span>
             <span class='ident'>udp_addrs</span>: <span class='self'>self</span>.<span class='ident'>udp_addrs</span>.<span class='ident'>clone</span>(),
             <span class='ident'>pub_key</span>: <span class='self'>self</span>.<span class='ident'>static_contact_info</span>.<span class='ident'>pub_key</span>.<span class='ident'>clone</span>(),
         }
@@ -765,7 +714,7 @@ pub enum UseProtocol {
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>TheirConnectionInfo</span> {
     <span class='ident'>secret</span>: [<span class='ident'>u8</span>; <span class='number'>4</span>],
     <span class='ident'>static_contact_info</span>: <span class='ident'>StaticContactInfo</span>,
-    <span class='comment'>//tcp_addrs: Vec&lt;SocketAddr&gt;,</span>
+    <span class='comment'>// tcp_addrs: Vec&lt;SocketAddr&gt;,</span>
     <span class='ident'>udp_addrs</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>SocketAddr</span><span class='op'>&gt;</span>,
     <span class='ident'>pub_key</span>: <span class='ident'>PublicKey</span>,
 }
@@ -782,8 +731,7 @@ pub enum UseProtocol {
     <span class='ident'>service_discovery</span>: <span class='ident'>ServiceDiscovery</span><span class='op'>&lt;</span><span class='ident'>StaticContactInfo</span><span class='op'>&gt;</span>,
     <span class='ident'>event_tx</span>: ::<span class='ident'>CrustEventSender</span>,
     <span class='ident'>bootstrap</span>: <span class='ident'>RaiiBootstrap</span>,
-    <span class='ident'>use_static_tcp_listener</span>: <span class='ident'>bool</span>,
-    <span class='ident'>use_static_udp_listener</span>: <span class='ident'>bool</span>,
+    <span class='ident'>connection_map</span>: <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>Mutex</span><span class='op'>&lt;</span><span class='ident'>HashMap</span><span class='op'>&lt;</span><span class='ident'>PublicKey</span>, <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>Connection</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;&gt;</span>,
     <span class='ident'>_raii_udp_listener</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>RaiiUdpListener</span><span class='op'>&gt;</span>,
     <span class='ident'>_raii_tcp_acceptor</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>RaiiTcpAcceptor</span><span class='op'>&gt;</span>,
 }
@@ -823,12 +771,15 @@ pub enum UseProtocol {
         <span class='kw'>let</span> <span class='ident'>bootstrap_contacts</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>bootstrap</span>::<span class='ident'>get_known_contacts</span>(<span class='kw-2'>&amp;</span><span class='ident'>service_discovery</span>, <span class='kw-2'>&amp;</span><span class='ident'>pub_key</span>));
         <span class='kw'>let</span> <span class='ident'>peer_contact_infos</span> <span class='op'>=</span> <span class='ident'>Arc</span>::<span class='ident'>new</span>(<span class='ident'>Mutex</span>::<span class='ident'>new</span>(<span class='ident'>bootstrap_contacts</span>));
 
+        <span class='kw'>let</span> <span class='ident'>connection_map</span> <span class='op'>=</span> <span class='ident'>Arc</span>::<span class='ident'>new</span>(<span class='ident'>Mutex</span>::<span class='ident'>new</span>(<span class='ident'>HashMap</span>::<span class='ident'>new</span>()));
+
         <span class='comment'>// Start the TCP Acceptor</span>
         <span class='kw'>let</span> <span class='ident'>raii_tcp_acceptor</span> <span class='op'>=</span> <span class='kw'>if</span> <span class='ident'>use_static_tcp_listener</span> {
             <span class='prelude-val'>Some</span>(<span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>connection</span>::<span class='ident'>start_tcp_accept</span>(<span class='number'>0</span>,
                                                    <span class='ident'>static_contact_info</span>.<span class='ident'>clone</span>(),
                                                    <span class='ident'>peer_contact_infos</span>.<span class='ident'>clone</span>(),
-                                                   <span class='ident'>event_tx</span>.<span class='ident'>clone</span>())))
+                                                   <span class='ident'>event_tx</span>.<span class='ident'>clone</span>(),
+                                                   <span class='ident'>connection_map</span>.<span class='ident'>clone</span>())))
         } <span class='kw'>else</span> {
             <span class='prelude-val'>None</span>
         };
@@ -838,14 +789,16 @@ pub enum UseProtocol {
             <span class='prelude-val'>Some</span>(<span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>RaiiUdpListener</span>::<span class='ident'>new</span>(<span class='number'>0</span>,
                                            <span class='ident'>static_contact_info</span>.<span class='ident'>clone</span>(),
                                            <span class='ident'>peer_contact_infos</span>.<span class='ident'>clone</span>(),
-                                           <span class='ident'>event_tx</span>.<span class='ident'>clone</span>())))
+                                           <span class='ident'>event_tx</span>.<span class='ident'>clone</span>(),
+                                           <span class='ident'>connection_map</span>.<span class='ident'>clone</span>())))
         } <span class='kw'>else</span> {
             <span class='prelude-val'>None</span>
         };
 
         <span class='kw'>let</span> <span class='ident'>bootstrap</span> <span class='op'>=</span> <span class='ident'>RaiiBootstrap</span>::<span class='ident'>new</span>(<span class='ident'>static_contact_info</span>.<span class='ident'>clone</span>(),
                                            <span class='ident'>peer_contact_infos</span>.<span class='ident'>clone</span>(),
-                                           <span class='ident'>event_tx</span>.<span class='ident'>clone</span>());
+                                           <span class='ident'>event_tx</span>.<span class='ident'>clone</span>(),
+                                           <span class='ident'>connection_map</span>.<span class='ident'>clone</span>());
 
         <span class='kw'>let</span> <span class='ident'>service</span> <span class='op'>=</span> <span class='ident'>Service</span> {
             <span class='ident'>static_contact_info</span>: <span class='ident'>static_contact_info</span>,
@@ -853,8 +806,7 @@ pub enum UseProtocol {
             <span class='ident'>service_discovery</span>: <span class='ident'>service_discovery</span>,
             <span class='ident'>event_tx</span>: <span class='ident'>event_tx</span>,
             <span class='ident'>bootstrap</span>: <span class='ident'>bootstrap</span>,
-            <span class='ident'>use_static_tcp_listener</span>: <span class='ident'>use_static_tcp_listener</span>,
-            <span class='ident'>use_static_udp_listener</span>: <span class='ident'>use_static_udp_listener</span>,
+            <span class='ident'>connection_map</span>: <span class='ident'>connection_map</span>,
             <span class='ident'>_raii_udp_listener</span>: <span class='ident'>udp_listener</span>,
             <span class='ident'>_raii_tcp_acceptor</span>: <span class='ident'>raii_tcp_acceptor</span>,
         };
@@ -877,6 +829,24 @@ pub enum UseProtocol {
     <span class='doccomment'>/// they are to be on a seperate network.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>get_ordered_helping_nodes</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>SocketAddr</span><span class='op'>&gt;</span> {
         <span class='macro'>unimplemented</span><span class='macro'>!</span>()
+    }
+
+    <span class='doccomment'>/// Send the given `data` to the peer with the given `pub_key`.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>send</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>pub_key</span>: <span class='kw-2'>&amp;</span><span class='ident'>PublicKey</span>, <span class='ident'>data</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>]) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+        <span class='kw'>match</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>connection_map</span>.<span class='ident'>lock</span>())
+                  .<span class='ident'>get_mut</span>(<span class='ident'>pub_key</span>)
+                  .<span class='ident'>and_then</span>(<span class='op'>|</span><span class='ident'>conns</span><span class='op'>|</span> <span class='ident'>conns</span>.<span class='ident'>get_mut</span>(<span class='number'>0</span>)) {
+            <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> {
+                <span class='kw'>let</span> <span class='ident'>msg</span> <span class='op'>=</span> <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;No connection to peer {:?}&quot;</span>, <span class='ident'>pub_key</span>);
+                <span class='prelude-val'>Err</span>(<span class='ident'>io</span>::<span class='ident'>Error</span>::<span class='ident'>new</span>(<span class='ident'>io</span>::<span class='ident'>ErrorKind</span>::<span class='ident'>Other</span>, <span class='ident'>msg</span>))
+            }
+            <span class='prelude-val'>Some</span>(<span class='ident'>connection</span>) <span class='op'>=&gt;</span> <span class='ident'>connection</span>.<span class='ident'>send</span>(<span class='ident'>data</span>),
+        }
+    }
+
+    <span class='doccomment'>/// Disconnect from the given peer and returns whether there was a connection at all.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>disconnect</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>pub_key</span>: <span class='kw-2'>&amp;</span><span class='ident'>PublicKey</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
+        <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>connection_map</span>.<span class='ident'>lock</span>()).<span class='ident'>remove</span>(<span class='ident'>pub_key</span>).<span class='ident'>is_some</span>()
     }
 
     <span class='doccomment'>/// Opens a connection to a remote peer. `public_endpoint` is the endpoint</span>
@@ -913,16 +883,13 @@ pub enum UseProtocol {
             }
         } {
             <span class='kw'>let</span> <span class='ident'>err</span> <span class='op'>=</span> <span class='ident'>io</span>::<span class='ident'>Error</span>::<span class='ident'>new</span>(<span class='ident'>io</span>::<span class='ident'>ErrorKind</span>::<span class='ident'>Other</span>, <span class='ident'>msg</span>);
-            <span class='kw'>let</span> <span class='ident'>ev</span> <span class='op'>=</span> <span class='ident'>Event</span>::<span class='ident'>NewConnection</span> {
-                <span class='ident'>connection</span>: <span class='prelude-val'>Err</span>(<span class='ident'>err</span>),
-                <span class='ident'>their_pub_key</span>: <span class='ident'>their_connection_info</span>.<span class='ident'>pub_key</span>.<span class='ident'>clone</span>(),
-            };
+            <span class='kw'>let</span> <span class='ident'>ev</span> <span class='op'>=</span> <span class='ident'>Event</span>::<span class='ident'>NewConnection</span>(<span class='prelude-val'>Err</span>(<span class='ident'>err</span>), <span class='ident'>their_connection_info</span>.<span class='ident'>pub_key</span>.<span class='ident'>clone</span>());
             <span class='kw'>let</span> _ <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>event_tx</span>.<span class='ident'>send</span>(<span class='ident'>ev</span>);
             <span class='kw'>return</span>;
         }
 
         <span class='kw'>let</span> <span class='ident'>event_tx</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>event_tx</span>.<span class='ident'>clone</span>();
-        <span class='kw'>let</span> <span class='ident'>our_pub_key</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>static_contact_info</span>.<span class='ident'>lock</span>()).<span class='ident'>pub_key</span>.<span class='ident'>clone</span>();
+        <span class='kw'>let</span> <span class='ident'>connection_map</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>connection_map</span>.<span class='ident'>clone</span>();
 
         <span class='comment'>// TODO connect to all the socket addresses of peer in parallel</span>
         <span class='kw'>let</span> <span class='ident'>_joiner</span> <span class='op'>=</span> <span class='macro'>thread</span><span class='macro'>!</span>(<span class='string'>&quot;PeerConnectionThread&quot;</span>, <span class='kw'>move</span> <span class='op'>||</span> {
@@ -936,22 +903,27 @@ pub enum UseProtocol {
             <span class='kw'>let</span> <span class='ident'>public_endpoint</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>result_addr</span> {
                 <span class='prelude-val'>Ok</span>(<span class='ident'>addr</span>) <span class='op'>=&gt;</span> <span class='ident'>addr</span>,
                 <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=&gt;</span> {
-                    <span class='kw'>let</span> <span class='ident'>ev</span> <span class='op'>=</span> <span class='ident'>Event</span>::<span class='ident'>NewConnection</span> {
-                        <span class='ident'>connection</span>: <span class='prelude-val'>Err</span>(<span class='ident'>e</span>),
-                        <span class='ident'>their_pub_key</span>: <span class='ident'>their_pub_key</span>,
-                    };
+                    <span class='kw'>let</span> <span class='ident'>ev</span> <span class='op'>=</span> <span class='ident'>Event</span>::<span class='ident'>NewConnection</span>(<span class='prelude-val'>Err</span>(<span class='ident'>e</span>), <span class='ident'>their_pub_key</span>);
                     <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>event_tx</span>.<span class='ident'>send</span>(<span class='ident'>ev</span>);
                     <span class='kw'>return</span>;
                 }
             };
 
-            <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>event_tx</span>.<span class='ident'>send</span>(<span class='ident'>Event</span>::<span class='ident'>NewConnection</span> {
-                <span class='ident'>connection</span>: <span class='ident'>connection</span>::<span class='ident'>utp_rendezvous_connect</span>(<span class='ident'>udp_socket</span>,
-                                                               <span class='ident'>public_endpoint</span>,
-                                                               <span class='ident'>their_pub_key</span>.<span class='ident'>clone</span>(),
-                                                               <span class='ident'>event_tx</span>.<span class='ident'>clone</span>()),
-                <span class='ident'>their_pub_key</span>: <span class='ident'>their_pub_key</span>,
-            });
+            <span class='kw'>let</span> <span class='ident'>result</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>connection</span>::<span class='ident'>utp_rendezvous_connect</span>(<span class='ident'>udp_socket</span>,
+                                                                  <span class='ident'>public_endpoint</span>,
+                                                                  <span class='ident'>their_pub_key</span>.<span class='ident'>clone</span>(),
+                                                                  <span class='ident'>event_tx</span>.<span class='ident'>clone</span>(),
+                                                                  <span class='ident'>connection_map</span>.<span class='ident'>clone</span>()) {
+                <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=&gt;</span> <span class='prelude-val'>Err</span>(<span class='ident'>e</span>),
+                <span class='prelude-val'>Ok</span>(<span class='ident'>connection</span>) <span class='op'>=&gt;</span> {
+                    <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>connection_map</span>.<span class='ident'>lock</span>())
+                        .<span class='ident'>entry</span>(<span class='ident'>their_pub_key</span>)
+                        .<span class='ident'>or_insert</span>(<span class='ident'>Vec</span>::<span class='ident'>new</span>())
+                        .<span class='ident'>push</span>(<span class='ident'>connection</span>);
+                    <span class='prelude-val'>Ok</span>(())
+                }
+            };
+            <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>event_tx</span>.<span class='ident'>send</span>(<span class='ident'>Event</span>::<span class='ident'>NewConnection</span>(<span class='ident'>result</span>, <span class='ident'>their_pub_key</span>));
         });
     }
 
@@ -963,7 +935,6 @@ pub enum UseProtocol {
         }
 
         <span class='kw'>let</span> <span class='ident'>our_static_contact_info</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>static_contact_info</span>.<span class='ident'>clone</span>();
-        <span class='kw'>let</span> <span class='ident'>peer_contact_infos</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>peer_contact_infos</span>.<span class='ident'>clone</span>();
         <span class='kw'>let</span> <span class='ident'>event_tx</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>event_tx</span>.<span class='ident'>clone</span>();
 
         <span class='kw'>let</span> <span class='ident'>_joiner</span> <span class='op'>=</span> <span class='macro'>thread</span><span class='macro'>!</span>(<span class='string'>&quot;PrepareContactInfo&quot;</span>, <span class='kw'>move</span> <span class='op'>||</span> {
@@ -976,36 +947,19 @@ pub enum UseProtocol {
                         <span class='ident'>result</span>: <span class='prelude-val'>Err</span>(<span class='ident'>e</span>),
                     }));
                     <span class='kw'>return</span>;
-                },
+                }
             };
 
-            <span class='kw'>let</span> <span class='ident'>result_tcp_acceptor</span> <span class='op'>=</span> <span class='ident'>connection</span>::<span class='ident'>start_tcp_accept</span>(<span class='number'>0</span>,
-                                                                   <span class='ident'>our_static_contact_info</span>.<span class='ident'>clone</span>(),
-                                                                   <span class='ident'>peer_contact_infos</span>,
-                                                                   <span class='ident'>event_tx</span>.<span class='ident'>clone</span>());
-            <span class='comment'>/*
-            let raii_tcp_acceptor = match result_tcp_acceptor {
-                Ok(x) =&gt; x,
-                Err(e) =&gt; {
-                    let _ = event_tx.send(Event::ConnectionInfoPrepared(ConnectionInfoResult {
-                        result_token: result_token,
-                        result: Err(e),
-                    }));
-                    return;
-                },
-            };
-            */</span>
 
             <span class='kw'>let</span> <span class='ident'>send</span> <span class='op'>=</span> <span class='ident'>Event</span>::<span class='ident'>ConnectionInfoPrepared</span>(<span class='ident'>ConnectionInfoResult</span> {
                 <span class='ident'>result_token</span>: <span class='ident'>result_token</span>,
                 <span class='ident'>result</span>: <span class='prelude-val'>Ok</span>(<span class='ident'>OurConnectionInfo</span> {
                     <span class='ident'>secret</span>: <span class='ident'>rand</span>::<span class='ident'>random</span>(),
-                    <span class='comment'>//raii_tcp_acceptor: unimplemented!(),</span>
-                    <span class='comment'>//tcp_addrs: unimplemented!(),</span>
-                        <span class='comment'>// why are we starting a tcp acceptor?</span>
-                        <span class='comment'>// Are tcp acceptors being used to do rendezvous connections now?</span>
-                        <span class='comment'>// coz that doesn&#39;t make sense</span>
-
+                    <span class='comment'>// raii_tcp_acceptor: unimplemented!(),</span>
+                    <span class='comment'>// tcp_addrs: unimplemented!(),</span>
+                    <span class='comment'>// why are we starting a tcp acceptor?</span>
+                    <span class='comment'>// Are tcp acceptors being used to do rendezvous connections now?</span>
+                    <span class='comment'>// coz that doesn&#39;t make sense</span>
                     <span class='ident'>udp_socket</span>: <span class='ident'>udp_socket</span>,
                     <span class='ident'>udp_addrs</span>: <span class='ident'>udp_addrs</span>,
                     <span class='ident'>static_contact_info</span>: <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>our_static_contact_info</span>.<span class='ident'>lock</span>()).<span class='ident'>clone</span>(),
@@ -1073,12 +1027,10 @@ pub enum UseProtocol {
 
         <span class='kw'>let</span> <span class='ident'>service_1</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>Service</span>::<span class='ident'>new_impl</span>(<span class='ident'>event_sender_1</span>, <span class='ident'>port</span>, <span class='ident'>use_tcp</span>, <span class='ident'>use_udp</span>));
         <span class='comment'>// let service_1 finish bootstrap - it should bootstrap off service_0</span>
-        <span class='kw'>let</span> (<span class='kw-2'>mut</span> <span class='ident'>connection_1_to_0</span>, <span class='ident'>pub_key_0</span>) <span class='op'>=</span> {
+        <span class='kw'>let</span> <span class='ident'>pub_key_0</span> <span class='op'>=</span> {
             <span class='kw'>let</span> <span class='ident'>event_rxd</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>event_rx_1</span>.<span class='ident'>recv</span>());
             <span class='kw'>match</span> <span class='ident'>event_rxd</span> {
-                <span class='ident'>Event</span>::<span class='ident'>NewConnection</span> { <span class='ident'>connection</span>: <span class='prelude-val'>Ok</span>(<span class='ident'>connection_obj</span>), <span class='ident'>their_pub_key</span> } <span class='op'>=&gt;</span> {
-                    (<span class='ident'>connection_obj</span>, <span class='ident'>their_pub_key</span>)
-                }
+                <span class='ident'>Event</span>::<span class='ident'>NewBootstrapConnection</span>(<span class='ident'>their_pub_key</span>) <span class='op'>=&gt;</span> <span class='ident'>their_pub_key</span>,
                 _ <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Received unexpected event: {:?}&quot;</span>, <span class='ident'>event_rxd</span>),
             }
         };
@@ -1092,72 +1044,66 @@ pub enum UseProtocol {
             }
         }
 
+        <span class='comment'>// service_0 should have received service_1&#39;s connection bootstrap connection by now</span>
+        <span class='kw'>let</span> <span class='ident'>pub_key_1</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>event_rx_0</span>.<span class='ident'>recv</span>()) {
+            <span class='ident'>Event</span>::<span class='ident'>NewConnection</span>(<span class='prelude-val'>Ok</span>(()), <span class='ident'>their_pub_key</span>) <span class='op'>=&gt;</span> <span class='ident'>their_pub_key</span>,
+            _ <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;0 Should have got a new connection from 1.&quot;</span>),
+        };
+
+        <span class='comment'>// TODO: Evaluate whether these are still needed.</span>
+        <span class='comment'>// if use_tcp {</span>
+        <span class='comment'>// assert_eq!(*connection_0_to_1.get_protocol(), Protocol::Tcp);</span>
+        <span class='comment'>// assert_eq!(*connection_1_to_0.get_protocol(), Protocol::Tcp);</span>
+        <span class='comment'>// } else {</span>
+        <span class='comment'>// assert_eq!(*connection_0_to_1.get_protocol(), Protocol::Utp);</span>
+        <span class='comment'>// assert_eq!(*connection_1_to_0.get_protocol(), Protocol::Utp);</span>
+        <span class='comment'>// }</span>
+
+
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>pub_key_0</span> <span class='op'>!=</span> <span class='ident'>pub_key_1</span>);
+
+        <span class='comment'>// send data from 0 to 1</span>
         {
-            <span class='comment'>// service_0 should have received service_1&#39;s connection bootstrap connection by now</span>
-            <span class='kw'>let</span> (<span class='kw-2'>mut</span> <span class='ident'>connection_0_to_1</span>, <span class='ident'>pub_key_1</span>) <span class='op'>=</span> <span class='kw'>match</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>event_rx_0</span>.<span class='ident'>recv</span>()) {
-                <span class='ident'>Event</span>::<span class='ident'>NewConnection</span> { <span class='ident'>connection</span>: <span class='prelude-val'>Ok</span>(<span class='ident'>connection_obj</span>), <span class='ident'>their_pub_key</span> } <span class='op'>=&gt;</span> {
-                    (<span class='ident'>connection_obj</span>, <span class='ident'>their_pub_key</span>)
+            <span class='kw'>let</span> <span class='ident'>data_txd</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[<span class='number'>0</span>, <span class='number'>1</span>, <span class='number'>255</span>, <span class='number'>254</span>, <span class='number'>222</span>, <span class='number'>1</span>];
+            <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>service_0</span>.<span class='ident'>send</span>(<span class='kw-2'>&amp;</span><span class='ident'>pub_key_1</span>, <span class='kw-2'>&amp;</span><span class='ident'>data_txd</span>));
+
+            <span class='comment'>// 1 should rx data</span>
+            <span class='kw'>let</span> (<span class='ident'>data_rxd</span>, <span class='ident'>peer_pub_key</span>) <span class='op'>=</span> {
+                <span class='kw'>let</span> <span class='ident'>event_rxd</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>event_rx_1</span>.<span class='ident'>recv</span>());
+                <span class='kw'>match</span> <span class='ident'>event_rxd</span> {
+                    <span class='ident'>Event</span>::<span class='ident'>NewMessage</span>(<span class='ident'>their_pub_key</span>, <span class='ident'>msg</span>) <span class='op'>=&gt;</span> (<span class='ident'>msg</span>, <span class='ident'>their_pub_key</span>),
+                    _ <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Received unexpected event: {:?}&quot;</span>, <span class='ident'>event_rxd</span>),
                 }
-                _ <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;0 Should have got a new connection from 1.&quot;</span>),
             };
 
-            <span class='kw'>if</span> <span class='ident'>use_tcp</span> {
-                <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='op'>*</span><span class='ident'>connection_0_to_1</span>.<span class='ident'>get_protocol</span>(), <span class='ident'>Protocol</span>::<span class='ident'>Tcp</span>);
-                <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='op'>*</span><span class='ident'>connection_1_to_0</span>.<span class='ident'>get_protocol</span>(), <span class='ident'>Protocol</span>::<span class='ident'>Tcp</span>);
-            } <span class='kw'>else</span> {
-                <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='op'>*</span><span class='ident'>connection_0_to_1</span>.<span class='ident'>get_protocol</span>(), <span class='ident'>Protocol</span>::<span class='ident'>Utp</span>);
-                <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='op'>*</span><span class='ident'>connection_1_to_0</span>.<span class='ident'>get_protocol</span>(), <span class='ident'>Protocol</span>::<span class='ident'>Utp</span>);
-            }
-
-            <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>pub_key_0</span> <span class='op'>!=</span> <span class='ident'>pub_key_1</span>);
-
-            <span class='comment'>// send data from 0 to 1</span>
-            {
-                <span class='kw'>let</span> <span class='ident'>data_txd</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[<span class='number'>0</span>, <span class='number'>1</span>, <span class='number'>255</span>, <span class='number'>254</span>, <span class='number'>222</span>, <span class='number'>1</span>];
-                <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>connection_0_to_1</span>.<span class='ident'>send</span>(<span class='kw-2'>&amp;</span><span class='ident'>data_txd</span>));
-
-                <span class='comment'>// 1 should rx data</span>
-                <span class='kw'>let</span> (<span class='ident'>data_rxd</span>, <span class='ident'>peer_pub_key</span>) <span class='op'>=</span> {
-                    <span class='kw'>let</span> <span class='ident'>event_rxd</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>event_rx_1</span>.<span class='ident'>recv</span>());
-                    <span class='kw'>match</span> <span class='ident'>event_rxd</span> {
-                        <span class='ident'>Event</span>::<span class='ident'>NewMessage</span>(<span class='ident'>their_pub_key</span>, <span class='ident'>msg</span>) <span class='op'>=&gt;</span> (<span class='ident'>msg</span> , <span class='ident'>their_pub_key</span>),
-                        _ <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Received unexpected event: {:?}&quot;</span>, <span class='ident'>event_rxd</span>),
-                    }
-                };
-
-                <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>data_rxd</span>, <span class='ident'>data_txd</span>);
-                <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>peer_pub_key</span>, <span class='ident'>pub_key_0</span>);
-            }
-
-            <span class='comment'>// send data from 1 to 0</span>
-            {
-                <span class='kw'>let</span> <span class='ident'>data_txd</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[<span class='number'>10</span>, <span class='number'>11</span>, <span class='number'>155</span>, <span class='number'>214</span>, <span class='number'>202</span>];
-                <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>connection_1_to_0</span>.<span class='ident'>send</span>(<span class='kw-2'>&amp;</span><span class='ident'>data_txd</span>));
-
-                <span class='comment'>// 0 should rx data</span>
-                <span class='kw'>let</span> (<span class='ident'>data_rxd</span>, <span class='ident'>peer_pub_key</span>) <span class='op'>=</span> {
-                    <span class='kw'>let</span> <span class='ident'>event_rxd</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>event_rx_0</span>.<span class='ident'>recv</span>());
-                    <span class='kw'>match</span> <span class='ident'>event_rxd</span> {
-                        <span class='ident'>Event</span>::<span class='ident'>NewMessage</span>(<span class='ident'>their_pub_key</span>, <span class='ident'>msg</span>) <span class='op'>=&gt;</span> (<span class='ident'>msg</span> , <span class='ident'>their_pub_key</span>),
-                        _ <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Received unexpected event: {:?}&quot;</span>, <span class='ident'>event_rxd</span>),
-                    }
-                };
-
-                <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>data_rxd</span>, <span class='ident'>data_txd</span>);
-                <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>peer_pub_key</span>, <span class='ident'>pub_key_1</span>);
-            }
-
-            <span class='macro'>assert</span><span class='macro'>!</span>(<span class='op'>!</span><span class='ident'>connection_1_to_0</span>.<span class='ident'>is_closed</span>());
-        } <span class='comment'>// connection_0_to_1 goes out of scope and should be dropped.</span>
-
-        <span class='comment'>// Wait up to 3 seconds for the other connection to realise that it has been closed.</span>
-        <span class='kw'>for</span> <span class='ident'>i</span> <span class='kw'>in</span> <span class='number'>0</span>..<span class='number'>30</span> {
-            <span class='kw'>if</span> <span class='ident'>connection_1_to_0</span>.<span class='ident'>is_closed</span>() {
-                <span class='kw'>break</span>;
-            }
-            <span class='ident'>thread</span>::<span class='ident'>sleep</span>(::<span class='ident'>std</span>::<span class='ident'>time</span>::<span class='ident'>Duration</span>::<span class='ident'>from_millis</span>(<span class='number'>100</span>));
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>data_rxd</span>, <span class='ident'>data_txd</span>);
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>peer_pub_key</span>, <span class='ident'>pub_key_0</span>);
         }
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>connection_1_to_0</span>.<span class='ident'>is_closed</span>());
+
+        <span class='comment'>// send data from 1 to 0</span>
+        {
+            <span class='kw'>let</span> <span class='ident'>data_txd</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[<span class='number'>10</span>, <span class='number'>11</span>, <span class='number'>155</span>, <span class='number'>214</span>, <span class='number'>202</span>];
+            <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>service_1</span>.<span class='ident'>send</span>(<span class='kw-2'>&amp;</span><span class='ident'>pub_key_0</span>, <span class='kw-2'>&amp;</span><span class='ident'>data_txd</span>));
+
+            <span class='comment'>// 0 should rx data</span>
+            <span class='kw'>let</span> (<span class='ident'>data_rxd</span>, <span class='ident'>peer_pub_key</span>) <span class='op'>=</span> {
+                <span class='kw'>let</span> <span class='ident'>event_rxd</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>event_rx_0</span>.<span class='ident'>recv</span>());
+                <span class='kw'>match</span> <span class='ident'>event_rxd</span> {
+                    <span class='ident'>Event</span>::<span class='ident'>NewMessage</span>(<span class='ident'>their_pub_key</span>, <span class='ident'>msg</span>) <span class='op'>=&gt;</span> (<span class='ident'>msg</span>, <span class='ident'>their_pub_key</span>),
+                    _ <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Received unexpected event: {:?}&quot;</span>, <span class='ident'>event_rxd</span>),
+                }
+            };
+
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>data_rxd</span>, <span class='ident'>data_txd</span>);
+            <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>peer_pub_key</span>, <span class='ident'>pub_key_1</span>);
+        }
+
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>service_0</span>.<span class='ident'>disconnect</span>(<span class='kw-2'>&amp;</span><span class='ident'>pub_key_1</span>));
+
+        <span class='kw'>match</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>event_rx_1</span>.<span class='ident'>recv</span>()) {
+            <span class='ident'>Event</span>::<span class='ident'>LostPeer</span>(<span class='ident'>pub_key</span>) <span class='op'>=&gt;</span> <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>pub_key</span>, <span class='ident'>pub_key_0</span>),
+            <span class='ident'>e</span> <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Received unexpected event: {:?}&quot;</span>, <span class='ident'>e</span>),
+        }
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
@@ -1235,30 +1181,26 @@ pub enum UseProtocol {
         <span class='ident'>service_0</span>.<span class='ident'>connect</span>(<span class='ident'>our_ci_0</span>, <span class='ident'>their_ci_1</span>);
         <span class='ident'>service_1</span>.<span class='ident'>connect</span>(<span class='ident'>our_ci_1</span>, <span class='ident'>their_ci_0</span>);
 
-        <span class='kw'>let</span> (<span class='kw-2'>mut</span> <span class='ident'>connection_0_to_1</span>, <span class='ident'>pub_key_1</span>) <span class='op'>=</span> <span class='kw'>match</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>event_rx_0</span>.<span class='ident'>recv</span>()) {
-            <span class='ident'>Event</span>::<span class='ident'>NewConnection</span> { <span class='ident'>connection</span>: <span class='prelude-val'>Ok</span>(<span class='ident'>connection_obj</span>), <span class='ident'>their_pub_key</span> } <span class='op'>=&gt;</span> {
-                (<span class='ident'>connection_obj</span>, <span class='ident'>their_pub_key</span>)
-            }
+        <span class='kw'>let</span> <span class='ident'>pub_key_1</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>event_rx_0</span>.<span class='ident'>recv</span>()) {
+            <span class='ident'>Event</span>::<span class='ident'>NewConnection</span>(<span class='prelude-val'>Ok</span>(()), <span class='ident'>their_pub_key</span>) <span class='op'>=&gt;</span> <span class='ident'>their_pub_key</span>,
             <span class='ident'>m</span> <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;0 Should have connected to 1. Got message {:?}&quot;</span>, <span class='ident'>m</span>),
         };
 
-        <span class='kw'>let</span> (<span class='kw-2'>mut</span> <span class='ident'>connection_1_to_0</span>, <span class='ident'>pub_key_0</span>) <span class='op'>=</span> <span class='kw'>match</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>event_rx_1</span>.<span class='ident'>recv</span>()) {
-            <span class='ident'>Event</span>::<span class='ident'>NewConnection</span> { <span class='ident'>connection</span>: <span class='prelude-val'>Ok</span>(<span class='ident'>connection_obj</span>), <span class='ident'>their_pub_key</span> } <span class='op'>=&gt;</span> {
-                (<span class='ident'>connection_obj</span>, <span class='ident'>their_pub_key</span>)
-            }
+        <span class='kw'>let</span> <span class='ident'>pub_key_0</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>event_rx_1</span>.<span class='ident'>recv</span>()) {
+            <span class='ident'>Event</span>::<span class='ident'>NewConnection</span>(<span class='prelude-val'>Ok</span>(()), <span class='ident'>their_pub_key</span>) <span class='op'>=&gt;</span> <span class='ident'>their_pub_key</span>,
             <span class='ident'>m</span> <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;1 Should have connected to 0. Got message {:?}&quot;</span>, <span class='ident'>m</span>),
         };
 
         <span class='comment'>// send data from 0 to 1</span>
         {
             <span class='kw'>let</span> <span class='ident'>data_txd</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[<span class='number'>0</span>, <span class='number'>1</span>, <span class='number'>255</span>, <span class='number'>254</span>, <span class='number'>222</span>, <span class='number'>1</span>];
-            <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>connection_0_to_1</span>.<span class='ident'>send</span>(<span class='kw-2'>&amp;</span><span class='ident'>data_txd</span>));
+            <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>service_0</span>.<span class='ident'>send</span>(<span class='kw-2'>&amp;</span><span class='ident'>pub_key_1</span>, <span class='kw-2'>&amp;</span><span class='ident'>data_txd</span>));
 
             <span class='comment'>// 1 should rx data</span>
             <span class='kw'>let</span> (<span class='ident'>data_rxd</span>, <span class='ident'>peer_pub_key</span>) <span class='op'>=</span> {
                 <span class='kw'>let</span> <span class='ident'>event_rxd</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>event_rx_1</span>.<span class='ident'>recv</span>());
                 <span class='kw'>match</span> <span class='ident'>event_rxd</span> {
-                    <span class='ident'>Event</span>::<span class='ident'>NewMessage</span>(<span class='ident'>their_pub_key</span>,  <span class='ident'>msg</span>) <span class='op'>=&gt;</span> (<span class='ident'>msg</span> , <span class='ident'>their_pub_key</span>),
+                    <span class='ident'>Event</span>::<span class='ident'>NewMessage</span>(<span class='ident'>their_pub_key</span>, <span class='ident'>msg</span>) <span class='op'>=&gt;</span> (<span class='ident'>msg</span>, <span class='ident'>their_pub_key</span>),
                     _ <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Received unexpected event: {:?}&quot;</span>, <span class='ident'>event_rxd</span>),
                 }
             };
@@ -1270,13 +1212,13 @@ pub enum UseProtocol {
         <span class='comment'>// send data from 1 to 0</span>
         {
             <span class='kw'>let</span> <span class='ident'>data_txd</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[<span class='number'>10</span>, <span class='number'>11</span>, <span class='number'>155</span>, <span class='number'>214</span>, <span class='number'>202</span>];
-            <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>connection_1_to_0</span>.<span class='ident'>send</span>(<span class='kw-2'>&amp;</span><span class='ident'>data_txd</span>));
+            <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>service_1</span>.<span class='ident'>send</span>(<span class='kw-2'>&amp;</span><span class='ident'>pub_key_0</span>, <span class='kw-2'>&amp;</span><span class='ident'>data_txd</span>));
 
             <span class='comment'>// 0 should rx data</span>
             <span class='kw'>let</span> (<span class='ident'>data_rxd</span>, <span class='ident'>peer_pub_key</span>) <span class='op'>=</span> {
                 <span class='kw'>let</span> <span class='ident'>event_rxd</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>event_rx_0</span>.<span class='ident'>recv</span>());
                 <span class='kw'>match</span> <span class='ident'>event_rxd</span> {
-                    <span class='ident'>Event</span>::<span class='ident'>NewMessage</span>(<span class='ident'>their_pub_key</span>,  <span class='ident'>msg</span>) <span class='op'>=&gt;</span> (<span class='ident'>msg</span>, <span class='ident'>their_pub_key</span>),
+                    <span class='ident'>Event</span>::<span class='ident'>NewMessage</span>(<span class='ident'>their_pub_key</span>, <span class='ident'>msg</span>) <span class='op'>=&gt;</span> (<span class='ident'>msg</span>, <span class='ident'>their_pub_key</span>),
                     _ <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Received unexpected event: {:?}&quot;</span>, <span class='ident'>event_rxd</span>),
                 }
             };

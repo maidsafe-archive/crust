@@ -178,11 +178,11 @@
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>allow</span>(<span class='ident'>box_pointers</span>, <span class='ident'>fat_ptr_transmutes</span>, <span class='ident'>missing_copy_implementations</span>,
          <span class='ident'>missing_debug_implementations</span>)]</span>
 
-<span class='comment'>// Uncomment to use Clippy</span>
-<span class='comment'>// #![feature(plugin)]</span>
-<span class='comment'>// #![plugin(clippy)]</span>
+<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>cfg_attr</span>(<span class='ident'>feature</span><span class='op'>=</span><span class='string'>&quot;clippy&quot;</span>, <span class='ident'>feature</span>(<span class='ident'>plugin</span>))]</span>
+<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>cfg_attr</span>(<span class='ident'>feature</span><span class='op'>=</span><span class='string'>&quot;clippy&quot;</span>, <span class='ident'>plugin</span>(<span class='ident'>clippy</span>))]</span>
+<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>cfg_attr</span>(<span class='ident'>feature</span><span class='op'>=</span><span class='string'>&quot;clippy&quot;</span>, <span class='ident'>deny</span>(<span class='ident'>clippy</span>, <span class='ident'>clippy_pedantic</span>))]</span>
 
-<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>allow</span>(<span class='ident'>unused</span>, <span class='ident'>unused_extern_crates</span>)]</span>
+<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>allow</span>(<span class='ident'>unused</span>)]</span>
 
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>cbor</span>;
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>itertools</span>;
@@ -194,7 +194,6 @@
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>time</span>;
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>utp</span>;
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>crossbeam</span>;
-<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>memmap</span>;
 <span class='attribute'>#[<span class='ident'>macro_use</span>]</span>
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>maidsafe_utilities</span>;
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>socket_addr</span>;
@@ -203,6 +202,8 @@
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>sodiumoxide</span>;
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>config_file_handler</span>;
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>service_discovery</span>;
+
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>target_family</span> <span class='op'>=</span> <span class='string'>&quot;unix&quot;</span>)]</span>
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>libc</span>;
 
 <span class='doccomment'>/// Crust Observers will be informed of crust events on this</span>
@@ -211,7 +212,6 @@
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>service</span>::{<span class='ident'>ConnectionInfoResult</span>, <span class='ident'>OurConnectionInfo</span>, <span class='ident'>Service</span>, <span class='ident'>TheirConnectionInfo</span>};
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>event</span>::<span class='ident'>Event</span>;
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>endpoint</span>::{<span class='ident'>Endpoint</span>, <span class='ident'>Protocol</span>};
-<span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>connection</span>::<span class='ident'>Connection</span>;
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>socket_addr</span>::<span class='ident'>SocketAddr</span>;
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>static_contact_info</span>::<span class='ident'>StaticContactInfo</span>;
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>error</span>::<span class='ident'>Error</span>;
