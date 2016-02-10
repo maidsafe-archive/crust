@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use sodiumoxide::crypto::sign::PublicKey;
+use sodiumoxide::crypto::box_::PublicKey;
 
 /// An identifier of a peer node.
 #[derive(PartialEq, Eq, Clone, Copy, Debug, Ord, PartialOrd, Hash, RustcEncodable, RustcDecodable)]
@@ -28,4 +28,3 @@ pub fn get_pub_key(id: &PeerId) -> &PublicKey {
 pub fn new_id(pub_key: PublicKey) -> PeerId {
     PeerId(pub_key)
 }
-

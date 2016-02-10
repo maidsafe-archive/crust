@@ -17,7 +17,7 @@
 
 use std::sync::{Arc, Mutex, MutexGuard};
 use socket_addr::SocketAddr;
-use sodiumoxide::crypto::sign::PublicKey;
+use sodiumoxide::crypto::box_::PublicKey;
 use rustc_serialize::{Encodable, Encoder, Decodable, Decoder};
 
 /// This struct contains information needed to Bootstrap and for echo-server services

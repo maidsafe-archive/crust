@@ -21,8 +21,8 @@ use std::net;
 use std::sync::{Arc, Mutex};
 use service_discovery::ServiceDiscovery;
 use sodiumoxide;
-use sodiumoxide::crypto::sign;
-use sodiumoxide::crypto::sign::PublicKey;
+use sodiumoxide::crypto::box_;
+use sodiumoxide::crypto::box_::{PublicKey, SecretKey};
 
 use connection::RaiiTcpAcceptor;
 use udp_listener::RaiiUdpListener;
@@ -96,6 +96,7 @@ pub struct Service {
     service_discovery: ServiceDiscovery<StaticContactInfo>,
     event_tx: ::CrustEventSender,
     bootstrap: RaiiBootstrap,
+    our_keys: (PublicKey, SecretKey),
     connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
     _raii_udp_listener: Option<RaiiUdpListener>,
     _raii_tcp_acceptor: Option<RaiiTcpAcceptor>,
@@ -118,12 +119,12 @@ impl Service {
         sodiumoxide::init();
 
         // TODO Use private key once crate is stable
-        let (pub_key, _priv_key) = sign::gen_keypair();
-        let id = peer_id::new_id(pub_key);
+        let our_keys = box_::gen_keypair();
+        let id = peer_id::new_id(our_keys.0);
 
         // Form our initial contact info
         let static_contact_info = Arc::new(Mutex::new(StaticContactInfo {
-			pub_key: pub_key,
+            pub_key: our_keys.0,
             tcp_acceptors: Vec::new(),
             udp_listeners: Vec::new(),
         }));
@@ -172,6 +173,7 @@ impl Service {
             service_discovery: service_discovery,
             event_tx: event_tx,
             bootstrap: bootstrap,
+            our_keys: our_keys,
             connection_map: connection_map,
             _raii_udp_listener: udp_listener,
             _raii_tcp_acceptor: raii_tcp_acceptor,
