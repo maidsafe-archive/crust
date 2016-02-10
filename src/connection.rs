@@ -133,8 +133,8 @@ pub fn connect(peer_contact: StaticContactInfo,
     }
 
     let udp_helper_nodes: Vec<SocketAddr> = {
-        let peer_contact_infos = unwrap_result!(peer_contact_infos.lock());
-        peer_contact_infos.iter().flat_map(|ci| ci.udp_listeners.iter().cloned()).collect()
+        let peer_contact_info = unwrap_result!(peer_contact_infos.lock());
+        peer_contact_info.iter().flat_map(|ci| ci.udp_listeners.iter().cloned()).collect()
     };
 
     let (udp_socket, _our_external_addrs) =
@@ -279,7 +279,7 @@ pub fn start_tcp_accept(port: u16,
     let _ = try!(tcp_builder_listener.bind(("0.0.0.0", port)));
 
     let listener = try!(tcp_builder_listener.listen(1));
-    let port = try!(listener.local_addr()).port(); // Useful if supplied port was 0
+    let new_port = try!(listener.local_addr()).port(); // Useful if supplied port was 0
 
     let mut our_external_addr = None;
     let send_data = unwrap_result!(serialise(&ListenerRequest::EchoExternalAddr));
@@ -287,15 +287,16 @@ pub fn start_tcp_accept(port: u16,
         for tcp_acceptor_addr in &peer_contact.tcp_acceptors {
             let tcp_builder_connect = try!(TcpBuilder::new_v4());
             try!(socket_utils::enable_so_reuseport(try!(tcp_builder_connect.reuse_address(true))));
-            let _ = try!(tcp_builder_connect.bind(("0.0.0.0", port)));
+            let _ = try!(tcp_builder_connect.bind(("0.0.0.0", new_port)));
 
             match tcp_builder_connect.connect(*tcp_acceptor_addr.clone()) {
                 Ok(mut stream) => {
                     match stream.write(&send_data[..]) {
                         Ok(n) => {
-                            match n == send_data.len() {
-                                true => (),
-                                false => continue,
+                            if n == send_data.len() {
+                                ()
+                            } else {
+                                continue;
                             }
                         }
                         Err(_) => continue,
@@ -330,7 +331,7 @@ pub fn start_tcp_accept(port: u16,
 
     let if_addrs = try!(get_if_addrs())
                        .into_iter()
-                       .map(|i| SocketAddr::new(i.addr.ip(), port))
+                       .map(|i| SocketAddr::new(i.addr.ip(), new_port))
                        .collect_vec();
     addrs.extend(if_addrs);
 
@@ -414,7 +415,7 @@ pub fn start_tcp_accept(port: u16,
     }));
 
     Ok(RaiiTcpAcceptor {
-        port: port,
+        port: new_port,
         stop_flag: stop_flag,
         _raii_joiner: joiner,
     })
@@ -429,7 +430,7 @@ pub fn utp_rendezvous_connect(udp_socket: UdpSocket,
     let (network_input, writer) = try!(utp_connections::rendezvous_connect_utp(udp_socket,
                                                                                their_addr));
     let our_addr = SocketAddr(network_input.local_addr());
-    let their_addr = SocketAddr(network_input.peer_addr());
+    let their_new_addr = SocketAddr(network_input.peer_addr());
 
     let closed = Arc::new(AtomicBool::new(false));
     let closed_clone = closed.clone();
@@ -445,7 +446,7 @@ pub fn utp_rendezvous_connect(udp_socket: UdpSocket,
     Ok(Connection {
         protocol: Protocol::Utp,
         our_addr: our_addr,
-        their_addr: their_addr,
+        their_addr: their_new_addr,
         network_tx: RaiiSender(writer),
         _network_read_joiner: joiner,
         closed: closed,

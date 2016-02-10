@@ -100,7 +100,7 @@ impl RaiiBootstrap {
             if let Ok(connection) = connect_result {
                 unwrap_result!(connection_map.lock())
                     .entry(their_pub_key)
-                    .or_insert(vec![])
+                    .or_insert_with(|| vec![])
                     .push(connection);
                 let _ = event_tx.send(Event::NewBootstrapConnection(their_pub_key));
             }
@@ -128,7 +128,9 @@ pub fn get_known_contacts(service_discovery: &ServiceDiscovery<StaticContactInfo
     let mut contacts = Vec::with_capacity(MAX_CONTACTS_EXPECTED);
 
     // Get contacts from bootstrap cache
-    contacts.extend(try!(FileHandler::new("bootstrap.cache")).read_file().unwrap_or(vec![]));
+    contacts.extend(try!(FileHandler::new("bootstrap.cache"))
+                        .read_file()
+                        .unwrap_or_else(|_| vec![]));
 
     // Get further contacts from config file - contains seed nodes
     let config = match ::config_handler::read_config_file() {
