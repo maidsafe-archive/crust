@@ -15,11 +15,13 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use std::collections::HashMap;
+use std::collections::hash_map::Entry;
 use std::fmt;
 use std::sync::{Arc, Mutex};
-use std::hash::{Hash, SipHasher, Hasher};
+use std::hash::{Hash, Hasher};
 use std::sync::atomic::{Ordering, AtomicBool};
-use std::net::{Shutdown, TcpListener, TcpStream, UdpSocket};
+use std::net::{Shutdown, TcpStream, UdpSocket};
 use std::io;
 use cbor;
 use itertools::Itertools;
@@ -30,12 +32,11 @@ use static_contact_info::StaticContactInfo;
 use tcp_connections;
 use utp_connections;
 use sender_receiver::{RaiiSender, Receiver};
-use ip::{IpAddr, SocketAddrExt};
+use ip::SocketAddrExt;
 use socket_addr::SocketAddr;
 use event::Event;
 use sodiumoxide::crypto::sign::PublicKey;
-use endpoint::{Endpoint, Protocol};
-use rand;
+use endpoint::Protocol;
 use std::fmt::{Debug, Formatter};
 use net2::TcpBuilder;
 use socket_utils;
@@ -116,25 +117,27 @@ impl Debug for RaiiTcpAcceptor {
 pub fn connect(peer_contact: StaticContactInfo,
                peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
                our_contact_info: Arc<Mutex<StaticContactInfo>>,
-               event_tx: ::CrustEventSender)
+               event_tx: ::CrustEventSender,
+               connection_map: Arc<Mutex<HashMap<PublicKey, Vec<Connection>>>>)
                -> io::Result<Connection> {
     let mut last_err = None;
     for tcp_addr in peer_contact.tcp_acceptors {
         match connect_tcp_endpoint(tcp_addr,
                                    peer_contact.pub_key,
                                    our_contact_info.clone(),
-                                   event_tx.clone()) {
+                                   event_tx.clone(),
+                                   connection_map.clone()) {
             Ok(connection) => return Ok(connection),
             Err(e) => last_err = Some(e),
         }
     }
 
     let udp_helper_nodes: Vec<SocketAddr> = {
-        let peer_contact_infos = unwrap_result!(peer_contact_infos.lock());
-        peer_contact_infos.iter().flat_map(|ci| ci.udp_listeners.iter().cloned()).collect()
+        let peer_contact_info = unwrap_result!(peer_contact_infos.lock());
+        peer_contact_info.iter().flat_map(|ci| ci.udp_listeners.iter().cloned()).collect()
     };
 
-    let (udp_socket, our_external_addrs) =
+    let (udp_socket, _our_external_addrs) =
         try!(utp_connections::external_udp_socket(udp_helper_nodes));
     let our_secret = [255; 4];
     let connect_req = ListenerRequest::Connect {
@@ -149,15 +152,16 @@ pub fn connect(peer_contact: StaticContactInfo,
             continue;
         }
         match udp_socket.recv_from(&mut read_buf) {
-            Ok((bytes_rxd, peer_addr)) => {
+            Ok((bytes_rxd, _peer_addr)) => {
                 match deserialise::<ListenerResponse>(&read_buf[..bytes_rxd]) {
                     Ok(ListenerResponse::Connect { connect_on, secret, their_secret, pub_key, }) => {
-                        if secret != our_secret {
-                            continue;
-                        }
-                        for peer_udp_hole_punched_socket_addr in connect_on {
-                            let cloned_udp_socket = try!(udp_socket.try_clone());
-                            match utp_connections::blocking_udp_punch_hole(cloned_udp_socket,
+                        {
+                            if secret != our_secret {
+                                continue;
+                            }
+                            for peer_udp_hole_punched_socket_addr in connect_on {
+                                let cloned_udp_socket = try!(udp_socket.try_clone());
+                                match utp_connections::blocking_udp_punch_hole(cloned_udp_socket,
                                                                            our_secret, their_secret,
                                                                            peer_udp_hole_punched_socket_addr) {
                                 (our_socket, Ok(peer_addr)) => {
@@ -165,12 +169,14 @@ pub fn connect(peer_contact: StaticContactInfo,
                                             our_socket,
                                             peer_addr,
                                             peer_contact.pub_key,
-                                            event_tx.clone()) {
+                                            event_tx.clone(),
+                                            connection_map.clone()) {
                                         Ok(connection) => return Ok(connection),
                                         Err(_) => continue,
                                     }
                                 }
                                 _ => continue,
+                            }
                             }
                         }
                     }
@@ -193,7 +199,8 @@ pub fn connect(peer_contact: StaticContactInfo,
 fn connect_tcp_endpoint(remote_addr: SocketAddr,
                         their_pub_key: PublicKey,
                         our_contact_info: Arc<Mutex<StaticContactInfo>>,
-                        event_tx: ::CrustEventSender)
+                        event_tx: ::CrustEventSender,
+                        connection_map: Arc<Mutex<HashMap<PublicKey, Vec<Connection>>>>)
                         -> io::Result<Connection> {
     let (network_input, writer) = try!(tcp_connections::connect_tcp(remote_addr.clone()));
 
@@ -204,7 +211,11 @@ fn connect_tcp_endpoint(remote_addr: SocketAddr,
     let closed_clone = closed.clone();
     let network_rx = Receiver::Tcp(cbor::Decoder::from_reader(network_input));
     let joiner = RaiiThreadJoiner::new(thread!("TcpNetworkReader", move || {
-        start_rx(network_rx, their_pub_key, event_tx, closed_clone);
+        start_rx(network_rx,
+                 their_pub_key,
+                 event_tx,
+                 closed_clone,
+                 connection_map);
     }));
 
     let mut connection = Connection {
@@ -222,48 +233,53 @@ fn connect_tcp_endpoint(remote_addr: SocketAddr,
     Ok(connection)
 }
 
-fn connect_utp_endpoint(remote_addr: SocketAddr,
-                        their_pub_key: PublicKey,
-                        our_contact_info: Arc<Mutex<StaticContactInfo>>,
-                        event_tx: ::CrustEventSender)
-                        -> io::Result<Connection> {
-    let (network_input, writer) = try!(utp_connections::connect_utp(remote_addr.clone()));
-    let our_addr = SocketAddr(network_input.local_addr());
-    let their_addr = SocketAddr(network_input.peer_addr());
-
-    let closed = Arc::new(AtomicBool::new(false));
-    let closed_clone = closed.clone();
-    let network_rx = Receiver::Utp(cbor::Decoder::from_reader(network_input));
-    let joiner = RaiiThreadJoiner::new(thread!("UtpNetworkReader", move || {
-        start_rx(network_rx, their_pub_key, event_tx, closed_clone);
-    }));
-
-    Ok(Connection {
-        protocol: Protocol::Utp,
-        our_addr: our_addr,
-        their_addr: their_addr,
-        network_tx: RaiiSender(writer),
-        _network_read_joiner: joiner,
-        closed: closed,
-    })
-}
+// fn connect_utp_endpoint(remote_addr: SocketAddr,
+//                         their_pub_key: PublicKey,
+//                         our_contact_info: Arc<Mutex<StaticContactInfo>>,
+//                         event_tx: ::CrustEventSender,
+//                         connection_map: Arc<Mutex<HashMap<PublicKey, Vec<Connection>>>>)
+//                         -> io::Result<Connection> {
+//     let (network_input, writer) = try!(utp_connections::connect_utp(remote_addr.clone()));
+//     let our_addr = SocketAddr(network_input.local_addr());
+//     let their_addr = SocketAddr(network_input.peer_addr());
+//
+//     let closed = Arc::new(AtomicBool::new(false));
+//     let closed_clone = closed.clone();
+//     let network_rx = Receiver::Utp(cbor::Decoder::from_reader(network_input));
+//     let joiner = RaiiThreadJoiner::new(thread!("UtpNetworkReader", move || {
+//         start_rx(network_rx,
+//                  their_pub_key,
+//                  event_tx,
+//                  closed_clone,
+//                  connection_map);
+//     }));
+//
+//     Ok(Connection {
+//         protocol: Protocol::Utp,
+//         our_addr: our_addr,
+//         their_addr: their_addr,
+//         network_tx: RaiiSender(writer),
+//         _network_read_joiner: joiner,
+//         closed: closed,
+//     })
+// }
 
 // TODO use peer_contact_infos to get the external addresses
 pub fn start_tcp_accept(port: u16,
                         our_contact_info: Arc<Mutex<StaticContactInfo>>,
                         peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
-                        event_tx: ::CrustEventSender)
+                        event_tx: ::CrustEventSender,
+                        connection_map: Arc<Mutex<HashMap<PublicKey, Vec<Connection>>>>)
                         -> io::Result<RaiiTcpAcceptor> {
     use std::io::Write;
     use std::io::Read;
-    use std::net::ToSocketAddrs;
 
     let tcp_builder_listener = try!(TcpBuilder::new_v4());
     try!(socket_utils::enable_so_reuseport(try!(tcp_builder_listener.reuse_address(true))));
     let _ = try!(tcp_builder_listener.bind(("0.0.0.0", port)));
 
     let listener = try!(tcp_builder_listener.listen(1));
-    let port = try!(listener.local_addr()).port(); // Useful if supplied port was 0
+    let new_port = try!(listener.local_addr()).port(); // Useful if supplied port was 0
 
     let mut our_external_addr = None;
     let send_data = unwrap_result!(serialise(&ListenerRequest::EchoExternalAddr));
@@ -271,15 +287,14 @@ pub fn start_tcp_accept(port: u16,
         for tcp_acceptor_addr in &peer_contact.tcp_acceptors {
             let tcp_builder_connect = try!(TcpBuilder::new_v4());
             try!(socket_utils::enable_so_reuseport(try!(tcp_builder_connect.reuse_address(true))));
-            let _ = try!(tcp_builder_connect.bind(("0.0.0.0", port)));
+            let _ = try!(tcp_builder_connect.bind(("0.0.0.0", new_port)));
 
             match tcp_builder_connect.connect(*tcp_acceptor_addr.clone()) {
                 Ok(mut stream) => {
                     match stream.write(&send_data[..]) {
                         Ok(n) => {
-                            match n == send_data.len() {
-                                true => (),
-                                false => continue,
+                            if n != send_data.len() {
+                                continue;
                             }
                         }
                         Err(_) => continue,
@@ -295,7 +310,7 @@ pub fn start_tcp_accept(port: u16,
                     if let Ok(ListenerResponse::EchoExternalAddr { external_addr }) =
                            deserialise::<ListenerResponse>(&recv_data[..recv_size]) {
                         our_external_addr = Some(external_addr);
-                        stream.shutdown(Shutdown::Both);
+                        let _ = stream.shutdown(Shutdown::Both);
                         break;
                     }
                 }
@@ -314,7 +329,7 @@ pub fn start_tcp_accept(port: u16,
 
     let if_addrs = try!(get_if_addrs())
                        .into_iter()
-                       .map(|i| SocketAddr::new(i.addr.ip(), port))
+                       .map(|i| SocketAddr::new(i.addr.ip(), new_port))
                        .collect_vec();
     addrs.extend(if_addrs);
 
@@ -367,8 +382,13 @@ pub fn start_tcp_accept(port: u16,
             let closed = Arc::new(AtomicBool::new(false));
             let closed_clone = closed.clone();
             let event_tx_cloned = event_tx.clone();
+            let connection_map_clone = connection_map.clone();
             let joiner = RaiiThreadJoiner::new(thread!("TcpNetworkReader", move || {
-                start_rx(network_rx, their_pub_key, event_tx_cloned, closed_clone);
+                start_rx(network_rx,
+                         their_pub_key,
+                         event_tx_cloned,
+                         closed_clone,
+                         connection_map_clone);
             }));
 
             let connection = Connection {
@@ -380,10 +400,11 @@ pub fn start_tcp_accept(port: u16,
                 closed: closed,
             };
 
-            let event = Event::NewConnection {
-                their_pub_key: their_contact_info.pub_key,
-                connection: Ok(connection),
-            };
+            unwrap_result!(connection_map.lock())
+                .entry(their_pub_key)
+                .or_insert(Vec::new())
+                .push(connection);
+            let event = Event::NewConnection(Ok(()), their_contact_info.pub_key);
 
             if event_tx.send(event).is_err() {
                 break;
@@ -392,7 +413,7 @@ pub fn start_tcp_accept(port: u16,
     }));
 
     Ok(RaiiTcpAcceptor {
-        port: port,
+        port: new_port,
         stop_flag: stop_flag,
         _raii_joiner: joiner,
     })
@@ -401,39 +422,57 @@ pub fn start_tcp_accept(port: u16,
 pub fn utp_rendezvous_connect(udp_socket: UdpSocket,
                               their_addr: SocketAddr,
                               their_pub_key: PublicKey,
-                              event_tx: ::CrustEventSender)
+                              event_tx: ::CrustEventSender,
+                              connection_map: Arc<Mutex<HashMap<PublicKey, Vec<Connection>>>>)
                               -> io::Result<Connection> {
     let (network_input, writer) = try!(utp_connections::rendezvous_connect_utp(udp_socket,
                                                                                their_addr));
     let our_addr = SocketAddr(network_input.local_addr());
-    let their_addr = SocketAddr(network_input.peer_addr());
+    let their_new_addr = SocketAddr(network_input.peer_addr());
 
     let closed = Arc::new(AtomicBool::new(false));
     let closed_clone = closed.clone();
     let network_rx = Receiver::Utp(cbor::Decoder::from_reader(network_input));
     let joiner = RaiiThreadJoiner::new(thread!("UtpNetworkReader", move || {
-        start_rx(network_rx, their_pub_key, event_tx, closed_clone);
+        start_rx(network_rx,
+                 their_pub_key,
+                 event_tx,
+                 closed_clone,
+                 connection_map);
     }));
 
     Ok(Connection {
         protocol: Protocol::Utp,
         our_addr: our_addr,
-        their_addr: their_addr,
+        their_addr: their_new_addr,
         network_tx: RaiiSender(writer),
         _network_read_joiner: joiner,
         closed: closed,
     })
 }
 
-fn start_rx(mut network_rx: Receiver, their_pub_key: PublicKey, event_tx: ::CrustEventSender,
-            closed: Arc<AtomicBool>) {
+fn start_rx(mut network_rx: Receiver,
+            their_pub_key: PublicKey,
+            event_tx: ::CrustEventSender,
+            closed: Arc<AtomicBool>,
+            connection_map: Arc<Mutex<HashMap<PublicKey, Vec<Connection>>>>) {
     while let Ok(msg) = network_rx.receive() {
         if event_tx.send(Event::NewMessage(their_pub_key, msg)).is_err() {
             break;
         }
     }
     closed.store(true, Ordering::Relaxed);
-    let _ = event_tx.send(Event::LostConnection(their_pub_key));
+    // Drop the connection in a separate thread, because the destructor joins _this_ thread.
+    let _ = thread!("ConnectionDropper", move || {
+        let mut lock = unwrap_result!(connection_map.lock());
+        if let Entry::Occupied(mut entry) = lock.entry(their_pub_key) {
+            entry.get_mut().retain(|connection| !connection.is_closed());
+            if entry.get().is_empty() {
+                let _ = entry.remove();
+                let _ = event_tx.send(Event::LostPeer(their_pub_key));
+            }
+        }
+    });
 }
 
 mod test {

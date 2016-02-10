@@ -37,11 +37,11 @@
 #![allow(box_pointers, fat_ptr_transmutes, missing_copy_implementations,
          missing_debug_implementations)]
 
-// Uncomment to use Clippy
-// #![feature(plugin)]
-// #![plugin(clippy)]
+#![cfg_attr(feature="clippy", feature(plugin))]
+#![cfg_attr(feature="clippy", plugin(clippy))]
+#![cfg_attr(feature="clippy", deny(clippy, clippy_pedantic))]
 
-#![allow(unused, unused_extern_crates)]
+#![allow(unused)]
 
 extern crate cbor;
 extern crate itertools;
@@ -53,7 +53,6 @@ extern crate rustc_serialize;
 extern crate time;
 extern crate utp;
 extern crate crossbeam;
-extern crate memmap;
 #[macro_use]
 extern crate maidsafe_utilities;
 extern crate socket_addr;
@@ -62,6 +61,8 @@ extern crate get_if_addrs;
 extern crate sodiumoxide;
 extern crate config_file_handler;
 extern crate service_discovery;
+
+#[cfg(target_family = "unix")]
 extern crate libc;
 
 /// Crust Observers will be informed of crust events on this
@@ -70,7 +71,6 @@ pub use config_handler::write_config_file;
 pub use service::{ConnectionInfoResult, OurConnectionInfo, Service, TheirConnectionInfo};
 pub use event::Event;
 pub use endpoint::{Endpoint, Protocol};
-pub use connection::Connection;
 pub use socket_addr::SocketAddr;
 pub use static_contact_info::StaticContactInfo;
 pub use error::Error;

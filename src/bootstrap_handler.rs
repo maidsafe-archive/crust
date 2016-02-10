@@ -26,7 +26,6 @@ use error::Error;
 use static_contact_info::StaticContactInfo;
 use config_file_handler::FileHandler;
 use config_file_handler;
-use util;
 
 pub struct BootstrapHandler {
     file_handler: FileHandler,

@@ -90,9 +90,8 @@ pub fn external_tcp_addr(tcp_listeners: Vec<SocketAddr>)
         let local_addr = try!(stream.local_addr());
         match stream.write(&send_data[..]) {
             Ok(n) => {
-                match n == send_data.len() {
-                    true => (),
-                    false => continue,
+                if n != send_data.len() {
+                    continue;
                 }
             }
             Err(_) => continue,
@@ -109,8 +108,8 @@ pub fn external_tcp_addr(tcp_listeners: Vec<SocketAddr>)
         }
     }
 
-    return Err(io::Error::new(io::ErrorKind::Other,
-                              "TODO - Improve this - Could Not find our external address"));
+    Err(io::Error::new(io::ErrorKind::Other,
+                       "TODO - Improve this - Could Not find our external address"))
 }
 
 /// Returns the stream along with the peer's SocketAddr
@@ -120,13 +119,13 @@ pub fn blocking_tcp_punch_hole(local_addr: SocketAddr,
                                -> io::Result<TcpStream> {
     // TODO(canndrew): Use secrets or public keys to make sure we have connected to the peer and
     // not some random endpoint
-    let res: io::Result<TcpStream> = crossbeam::scope(|scope| {
+    crossbeam::scope(|scope| {
         let listen_thread = scope.spawn(|| -> io::Result<_> {
-            let listener = try!(TcpBuilder::new_v4());
-            let listener = try!(listener.reuse_address(true));
-            try!(enable_so_reuseport(&listener));
-            let listener = try!(listener.bind(&*local_addr));
-            let listener = try!(listener.listen(1));
+            let socket = try!(TcpBuilder::new_v4());
+            let _ = try!(socket.reuse_address(true));
+            let _ = try!(enable_so_reuseport(&socket));
+            let _ = try!(socket.bind(&*local_addr));
+            let listener = try!(socket.listen(1));
             let (stream, addr) = try!(listener.accept());
             Ok((stream, addr))
         });
@@ -142,7 +141,7 @@ pub fn blocking_tcp_punch_hole(local_addr: SocketAddr,
             });
             connect_threads.push(connect_thread);
         }
-        let ser: io::Result<TcpStream> = match listen_thread.join() {
+        match listen_thread.join() {
             Ok((stream, _)) => Ok(stream),
             Err(_) => {
                 for connect_thread in connect_threads {
@@ -153,10 +152,8 @@ pub fn blocking_tcp_punch_hole(local_addr: SocketAddr,
                 }
                 Err(io::Error::new(io::ErrorKind::Other, "Tcp rendezvous connect failed"))
             }
-        };
-        ser
-    });
-    res
+        }
+    })
 }
 
 #[cfg(test)]
