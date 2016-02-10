@@ -109,8 +109,8 @@ pub fn external_tcp_addr(tcp_listeners: Vec<SocketAddr>)
         }
     }
 
-    return Err(io::Error::new(io::ErrorKind::Other,
-                              "TODO - Improve this - Could Not find our external address"));
+    Err(io::Error::new(io::ErrorKind::Other,
+                       "TODO - Improve this - Could Not find our external address"))
 }
 
 /// Returns the stream along with the peer's SocketAddr
@@ -120,7 +120,7 @@ pub fn blocking_tcp_punch_hole(local_addr: SocketAddr,
                                -> io::Result<TcpStream> {
     // TODO(canndrew): Use secrets or public keys to make sure we have connected to the peer and
     // not some random endpoint
-    let res: io::Result<TcpStream> = crossbeam::scope(|scope| {
+    crossbeam::scope(|scope| {
         let listen_thread = scope.spawn(|| -> io::Result<_> {
             let listener = try!(TcpBuilder::new_v4());
             let listener = try!(listener.reuse_address(true));
@@ -142,7 +142,7 @@ pub fn blocking_tcp_punch_hole(local_addr: SocketAddr,
             });
             connect_threads.push(connect_thread);
         }
-        let ser: io::Result<TcpStream> = match listen_thread.join() {
+        match listen_thread.join() {
             Ok((stream, _)) => Ok(stream),
             Err(_) => {
                 for connect_thread in connect_threads {
@@ -153,10 +153,8 @@ pub fn blocking_tcp_punch_hole(local_addr: SocketAddr,
                 }
                 Err(io::Error::new(io::ErrorKind::Other, "Tcp rendezvous connect failed"))
             }
-        };
-        ser
-    });
-    res
+        }
+    })
 }
 
 #[cfg(test)]
