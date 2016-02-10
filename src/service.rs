@@ -185,8 +185,8 @@ impl Service {
         self.bootstrap.stop();
     }
 
-    /// Enable or Disable listening to peers trying to find us. The return value indicates
-    /// successful registration of the request.
+    /// Enable or Disable listening to peers trying to find us on local lan via service discovery.
+    /// The return value indicates successful registration of the request.
     pub fn set_listen_for_peers(&self, listen: bool) -> bool {
         self.service_discovery.set_listen_for_peers(listen)
     }
