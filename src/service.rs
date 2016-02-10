@@ -122,7 +122,7 @@ impl Service {
 
         // Form our initial contact info
         let static_contact_info = Arc::new(Mutex::new(StaticContactInfo {
-            pub_key: our_keys.0,
+            pub_key: our_keys.0.clone(),
             tcp_acceptors: Vec::new(),
             udp_listeners: Vec::new(),
         }));
@@ -150,6 +150,7 @@ impl Service {
         };
 
         // Start the UDP Listener
+        // [TODO]: we should find the exteranl address and if we are directly acessabel here for all listerners. Also listen on ip4 and 6 for all protocols - 2016-02-10 11:28pm
         let udp_listener = if use_static_udp_listener {
             Some(try!(RaiiUdpListener::new(0,
                                            static_contact_info.clone(),
@@ -295,6 +296,10 @@ impl Service {
 
     /// Lookup a mapped udp socket based on result_token
     pub fn prepare_connection_info(&mut self, result_token: u32) {
+        // FIXME: If the lsiterners are directly addressable (direct full cone or upnp mapped etc.
+        // then our conact info is our static liseners
+        // for udp we can map another socket, but use same local port if accessable/mapped
+        // otherwise do following
         let mut peer_udp_listeners = Vec::with_capacity(100);
         for peer_contact_info in &*unwrap_result!(self.peer_contact_infos.lock()) {
             peer_udp_listeners.extend(peer_contact_info.udp_listeners.clone());
@@ -337,7 +342,7 @@ impl Service {
 
     /// Returns our ID.
     pub fn id(&self) -> PeerId {
-        peer_id::new_id(unwrap_result!(self.static_contact_info.lock()).pub_key)
+        peer_id::new_id(self.our_keys.0)
     }
 }
 
