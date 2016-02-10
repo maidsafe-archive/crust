@@ -62,8 +62,9 @@ impl Receiver {
             Receiver::Utp(ref mut decoder) => decoder.decode::<D>().next(),
         };
         match msg {
-            Some(a) => {
-                a.or(Err(io::Error::new(io::ErrorKind::InvalidData, "Failed to decode CBOR")))
+            Some(Ok(a)) => Ok(a),
+            Some(Err(_)) => {
+                Err(io::Error::new(io::ErrorKind::InvalidData, "Failed to decode CBOR"))
             }
             None => {
                 Err(io::Error::new(io::ErrorKind::NotConnected, "Decoder reached end of stream"))

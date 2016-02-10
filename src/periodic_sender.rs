@@ -91,7 +91,7 @@ impl<'a, 'b: 'a, D: AsRef<[u8]> + Send + 'b> PeriodicSender<D> {
 
 impl<T> Drop for PeriodicSender<T> {
     fn drop(&mut self) {
-        self.notify_exit.send(()).unwrap();
+        unwrap_result!(self.notify_exit.send(()));
         self.join_guard.thread().unpark();
     }
 }
