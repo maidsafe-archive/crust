@@ -123,11 +123,11 @@ pub fn blocking_tcp_punch_hole(local_addr: SocketAddr,
     // not some random endpoint
     crossbeam::scope(|scope| {
         let listen_thread = scope.spawn(|| -> io::Result<_> {
-            let listener = try!(TcpBuilder::new_v4());
-            let listener = try!(listener.reuse_address(true));
-            try!(enable_so_reuseport(&listener));
-            let listener = try!(listener.bind(&*local_addr));
-            let listener = try!(listener.listen(1));
+            let socket = try!(TcpBuilder::new_v4());
+            let _ = try!(socket.reuse_address(true));
+            let _ = try!(enable_so_reuseport(&socket));
+            let _ = try!(socket.bind(&*local_addr));
+            let listener = try!(socket.listen(1));
             let (stream, addr) = try!(listener.accept());
             Ok((stream, addr))
         });
