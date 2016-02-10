@@ -72,8 +72,8 @@ impl RecvUntil for UdpSocket {
 #[cfg(target_family = "unix")]
 #[allow(unsafe_code)]
 pub fn enable_so_reuseport(sock: &TcpBuilder) -> io::Result<()> {
-    use std::os::unix::io::AsRawFd;
     use libc;
+    use std::os::unix::io::AsRawFd;
     use std;
 
     let one: libc::c_int = 1;

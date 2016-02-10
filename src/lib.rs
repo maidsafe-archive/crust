@@ -61,6 +61,8 @@ extern crate get_if_addrs;
 extern crate sodiumoxide;
 extern crate config_file_handler;
 extern crate service_discovery;
+
+#[cfg(target_family = "unix")]
 extern crate libc;
 
 /// Crust Observers will be informed of crust events on this
