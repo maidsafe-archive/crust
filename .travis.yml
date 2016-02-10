@@ -8,9 +8,9 @@ os:
   - osx
 language: rust
 rust:
-#  - nightly
-#  - beta
+# - beta
   - stable
+  - nightly
 sudo: false
 branches:
   only:
