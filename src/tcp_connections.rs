@@ -90,9 +90,7 @@ pub fn external_tcp_addr(tcp_listeners: Vec<SocketAddr>)
         let local_addr = try!(stream.local_addr());
         match stream.write(&send_data[..]) {
             Ok(n) => {
-                if n == send_data.len() {
-                    ()
-                } else {
+                if n != send_data.len() {
                     continue;
                 }
             }

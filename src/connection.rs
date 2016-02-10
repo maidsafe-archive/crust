@@ -293,9 +293,7 @@ pub fn start_tcp_accept(port: u16,
                 Ok(mut stream) => {
                     match stream.write(&send_data[..]) {
                         Ok(n) => {
-                            if n == send_data.len() {
-                                ()
-                            } else {
+                            if n != send_data.len() {
                                 continue;
                             }
                         }
