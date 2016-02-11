@@ -70,47 +70,6 @@ fn upgrade_writer(mut stream: TcpStream) -> Sender<WriteEvent> {
     tx
 }
 
-/// Find our remote socketadddr
-pub fn external_tcp_addr(tcp_listeners: Vec<SocketAddr>)
-                         -> io::Result<(SocketAddr, Vec<SocketAddr>)> {
-
-    const MAX_DATAGRAM_SIZE: usize = 256;
-
-    let send_data = unwrap_result!(serialise(&ListenerRequest::EchoExternalAddr));
-
-    for tcp_listener in &tcp_listeners {
-        // TODO(canndrew): handle ipv6
-        let sock = try!(TcpBuilder::new_v4());
-        sock.reuse_address(true);
-        let mut stream = match sock.connect(&**tcp_listener) {
-            Ok(stream) => stream,
-            Err(_) => continue,
-        };
-        let local_addr = try!(stream.local_addr());
-        match stream.write(&send_data[..]) {
-            Ok(n) => {
-                if n != send_data.len() {
-                    continue;
-                }
-            }
-            Err(_) => continue,
-        };
-        let mut recv_data = [0u8; MAX_DATAGRAM_SIZE];
-        let recv_size = match stream.read(&mut recv_data[..]) {
-            Ok(recv_size) => recv_size,
-            Err(_) => continue,
-        };
-        if let Ok(ListenerResponse::EchoExternalAddr { external_addr }) =
-               deserialise::<ListenerResponse>(&recv_data[..recv_size]) {
-            return Ok((SocketAddr(local_addr),
-                       vec![SocketAddr(local_addr), external_addr]));
-        }
-    }
-
-    Err(io::Error::new(io::ErrorKind::Other,
-                       "TODO - Improve this - Could Not find our external address"))
-}
-
 /// Returns the stream along with the peer's SocketAddr
 pub fn blocking_tcp_punch_hole(local_addr: SocketAddr,
                                // secret: Option<[u8; 4]>,

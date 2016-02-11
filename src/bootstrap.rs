@@ -28,6 +28,7 @@ use std::thread;
 use config_file_handler::FileHandler;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 use service_discovery::ServiceDiscovery;
+use nat_traversal::MappingContext;
 
 use error::Error;
 use config_handler::Config;
@@ -48,7 +49,8 @@ impl RaiiBootstrap {
     pub fn new(our_contact_info: Arc<Mutex<StaticContactInfo>>,
                peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
                event_tx: ::CrustEventSender,
-               connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>)
+               connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
+               mc: Arc<MappingContext>)
                -> RaiiBootstrap {
         let stop_flag = Arc::new(AtomicBool::new(false));
         let cloned_stop_flag = stop_flag.clone();
@@ -58,7 +60,8 @@ impl RaiiBootstrap {
                                      peer_contact_infos,
                                      cloned_stop_flag,
                                      event_tx,
-                                     connection_map);
+                                     connection_map,
+                                     &mc);
         }));
 
         RaiiBootstrap {
@@ -75,7 +78,8 @@ impl RaiiBootstrap {
                  peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
                  stop_flag: Arc<AtomicBool>,
                  event_tx: ::CrustEventSender,
-                 connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>) {
+                 connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
+                 mapping_context: &MappingContext) {
         let bootstrap_contacts: Vec<StaticContactInfo> = unwrap_result!(peer_contact_infos.lock())
                                                              .clone();
         for contact in bootstrap_contacts {
@@ -93,7 +97,8 @@ impl RaiiBootstrap {
                                                        peer_contact_infos.clone(),
                                                        our_contact_info.clone(),
                                                        event_tx.clone(),
-                                                       connection_map.clone());
+                                                       connection_map.clone(),
+                                                       mapping_context);
             if stop_flag.load(Ordering::SeqCst) {
                 break;
             }

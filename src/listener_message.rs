@@ -17,26 +17,22 @@
 
 use sodiumoxide::crypto::box_::PublicKey;
 use socket_addr::SocketAddr;
+use nat_traversal::PubRendezvousInfo;
 
 
 #[derive(RustcEncodable, RustcDecodable)]
 pub enum ListenerRequest {
-    EchoExternalAddr,
     Connect {
-        secret: [u8; 4],
+        our_info: PubRendezvousInfo,
         pub_key: PublicKey,
     },
 }
 
 #[derive(RustcEncodable, RustcDecodable)]
 pub enum ListenerResponse {
-    EchoExternalAddr {
-        external_addr: SocketAddr,
-    },
     Connect {
-        connect_on: Vec<SocketAddr>,
-        secret: [u8; 4],
-        their_secret: [u8; 4],
+        our_info: PubRendezvousInfo,
+        their_info: PubRendezvousInfo,
         pub_key: PublicKey,
     },
 }
