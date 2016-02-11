@@ -1,4 +1,4 @@
-// Copyright 2015 MaidSafe.net limited.
+// Copyright 2016 MaidSafe.net limited.
 //
 // This SAFE Network Software is licensed to you under (1) the MaidSafe.net Commercial License,
 // version 1.0 or later, or (2) The General Public License (GPL), version 3, depending on which
@@ -16,27 +16,15 @@
 // relating to use of the SAFE Network Software.
 
 use sodiumoxide::crypto::box_::PublicKey;
-use socket_addr::SocketAddr;
 
+/// An identifier of a peer node.
+#[derive(PartialEq, Eq, Clone, Copy, Debug, Ord, PartialOrd, Hash, RustcEncodable, RustcDecodable)]
+pub struct PeerId(PublicKey);
 
-#[derive(RustcEncodable, RustcDecodable)]
-pub enum ListenerRequest {
-    EchoExternalAddr,
-    Connect {
-        secret: [u8; 4],
-        pub_key: PublicKey,
-    },
+pub fn get_pub_key(id: &PeerId) -> &PublicKey {
+    &id.0
 }
 
-#[derive(RustcEncodable, RustcDecodable)]
-pub enum ListenerResponse {
-    EchoExternalAddr {
-        external_addr: SocketAddr,
-    },
-    Connect {
-        connect_on: Vec<SocketAddr>,
-        secret: [u8; 4],
-        their_secret: [u8; 4],
-        pub_key: PublicKey,
-    },
+pub fn new_id(pub_key: PublicKey) -> PeerId {
+    PeerId(pub_key)
 }

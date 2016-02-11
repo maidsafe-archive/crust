@@ -21,8 +21,8 @@ use std::net;
 use std::sync::{Arc, Mutex};
 use service_discovery::ServiceDiscovery;
 use sodiumoxide;
-use sodiumoxide::crypto::sign;
-use sodiumoxide::crypto::sign::PublicKey;
+use sodiumoxide::crypto::box_;
+use sodiumoxide::crypto::box_::{PublicKey, SecretKey};
 
 use connection::RaiiTcpAcceptor;
 use udp_listener::RaiiUdpListener;
@@ -38,6 +38,8 @@ use bootstrap::RaiiBootstrap;
 use event::Event;
 use socket_addr::SocketAddr;
 use utp_connections;
+use peer_id;
+use peer_id::PeerId;
 
 /// The result of a `Service::prepare_contact_info` call.
 #[derive(Debug)]
@@ -67,7 +69,7 @@ impl OurConnectionInfo {
             static_contact_info: self.static_contact_info.clone(),
             // tcp_addrs: self.tcp_addrs.clone(),
             udp_addrs: self.udp_addrs.clone(),
-            pub_key: self.static_contact_info.pub_key.clone(),
+            id: peer_id::new_id(self.static_contact_info.pub_key),
         }
     }
 }
@@ -79,7 +81,7 @@ pub struct TheirConnectionInfo {
     static_contact_info: StaticContactInfo,
     // tcp_addrs: Vec<SocketAddr>,
     udp_addrs: Vec<SocketAddr>,
-    pub_key: PublicKey,
+    id: PeerId,
 }
 
 /// A structure representing a connection manager.
@@ -94,7 +96,8 @@ pub struct Service {
     service_discovery: ServiceDiscovery<StaticContactInfo>,
     event_tx: ::CrustEventSender,
     bootstrap: RaiiBootstrap,
-    connection_map: Arc<Mutex<HashMap<PublicKey, Vec<Connection>>>>,
+    our_keys: (PublicKey, SecretKey),
+    connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
     _raii_udp_listener: Option<RaiiUdpListener>,
     _raii_tcp_acceptor: Option<RaiiTcpAcceptor>,
 }
@@ -115,12 +118,11 @@ impl Service {
                 -> Result<Service, Error> {
         sodiumoxide::init();
 
-        // TODO Use private key once crate is stable
-        let (pub_key, _priv_key) = sign::gen_keypair();
+        let our_keys = box_::gen_keypair();
 
         // Form our initial contact info
         let static_contact_info = Arc::new(Mutex::new(StaticContactInfo {
-            pub_key: pub_key,
+            pub_key: our_keys.0.clone(),
             tcp_acceptors: Vec::new(),
             udp_listeners: Vec::new(),
         }));
@@ -131,7 +133,7 @@ impl Service {
                                                                           generator));
 
         // Form initial peer contact infos - these will also contain echo-service addrs.
-        let bootstrap_contacts = try!(bootstrap::get_known_contacts(&service_discovery, &pub_key));
+        let bootstrap_contacts = try!(bootstrap::get_known_contacts(&service_discovery));
         let peer_contact_infos = Arc::new(Mutex::new(bootstrap_contacts));
 
         let connection_map = Arc::new(Mutex::new(HashMap::new()));
@@ -148,6 +150,7 @@ impl Service {
         };
 
         // Start the UDP Listener
+        // [TODO]: we should find the exteranl address and if we are directly acessabel here for all listerners. Also listen on ip4 and 6 for all protocols - 2016-02-10 11:28pm
         let udp_listener = if use_static_udp_listener {
             Some(try!(RaiiUdpListener::new(0,
                                            static_contact_info.clone(),
@@ -169,6 +172,7 @@ impl Service {
             service_discovery: service_discovery,
             event_tx: event_tx,
             bootstrap: bootstrap,
+            our_keys: our_keys,
             connection_map: connection_map,
             _raii_udp_listener: udp_listener,
             _raii_tcp_acceptor: raii_tcp_acceptor,
@@ -182,8 +186,8 @@ impl Service {
         self.bootstrap.stop();
     }
 
-    /// Enable or Disable listening to peers trying to find us. The return value indicates
-    /// successful registration of the request.
+    /// Enable or Disable listening to peers trying to find us on local lan via service discovery.
+    /// The return value indicates successful registration of the request.
     pub fn set_listen_for_peers(&self, listen: bool) -> bool {
         self.service_discovery.set_listen_for_peers(listen)
     }
@@ -194,13 +198,13 @@ impl Service {
         unimplemented!()
     }
 
-    /// Send the given `data` to the peer with the given `pub_key`.
-    pub fn send(&self, pub_key: &PublicKey, data: &[u8]) -> io::Result<()> {
+    /// Send the given `data` to the peer with the given `PeerId`.
+    pub fn send(&self, id: &PeerId, data: &[u8]) -> io::Result<()> {
         match unwrap_result!(self.connection_map.lock())
-                  .get_mut(pub_key)
+                  .get_mut(&id)
                   .and_then(|conns| conns.get_mut(0)) {
             None => {
-                let msg = format!("No connection to peer {:?}", pub_key);
+                let msg = format!("No connection to peer {:?}", id);
                 Err(io::Error::new(io::ErrorKind::Other, msg))
             }
             Some(connection) => connection.send(data),
@@ -208,8 +212,8 @@ impl Service {
     }
 
     /// Disconnect from the given peer and returns whether there was a connection at all.
-    pub fn disconnect(&self, pub_key: &PublicKey) -> bool {
-        unwrap_result!(self.connection_map.lock()).remove(pub_key).is_some()
+    pub fn disconnect(&self, id: &PeerId) -> bool {
+        unwrap_result!(self.connection_map.lock()).remove(&id).is_some()
     }
 
     /// Opens a connection to a remote peer. `public_endpoint` is the endpoint
@@ -226,12 +230,12 @@ impl Service {
     /// Only UDP-based protocols are supported. This means that you must use a
     /// uTP endpoint or nothing will happen.
     ///
-    /// On success `Event::OnConnect` with connected `Endpoint` will
+    /// On success `Event::NewPeer` with connected `PeerId` will
     /// be sent to the event channel. On failure, nothing is reported. Failed
     /// attempts are not notified back up to the caller. If the caller wants to
     /// know of a failed attempt, it must maintain a record of the attempt
     /// itself which times out if a corresponding
-    /// `Event::OnConnect` isn't received. See also [Process for
+    /// `Event::NewPeer` isn't received. See also [Process for
     /// Connecting]
     /// (https://github.com/maidsafe/crust/blob/master/docs/connect.md) for
     /// details on handling of connect in different protocols.
@@ -246,7 +250,7 @@ impl Service {
             }
         } {
             let err = io::Error::new(io::ErrorKind::Other, msg);
-            let ev = Event::NewConnection(Err(err), their_connection_info.pub_key.clone());
+            let ev = Event::NewPeer(Err(err), their_connection_info.id);
             let _ = self.event_tx.send(ev);
             return;
         }
@@ -256,7 +260,7 @@ impl Service {
 
         // TODO connect to all the socket addresses of peer in parallel
         let _joiner = thread!("PeerConnectionThread", move || {
-            let their_pub_key = their_connection_info.pub_key.clone();
+            let their_id = their_connection_info.id;
             let (udp_socket, result_addr) =
                 ::utp_connections::blocking_udp_punch_hole(our_connection_info.udp_socket,
                                                            our_connection_info.secret,
@@ -266,7 +270,7 @@ impl Service {
             let public_endpoint = match result_addr {
                 Ok(addr) => addr,
                 Err(e) => {
-                    let ev = Event::NewConnection(Err(e), their_pub_key);
+                    let ev = Event::NewPeer(Err(e), their_id);
                     let _ = event_tx.send(ev);
                     return;
                 }
@@ -274,24 +278,28 @@ impl Service {
 
             let result = match connection::utp_rendezvous_connect(udp_socket,
                                                                   public_endpoint,
-                                                                  their_pub_key.clone(),
+                                                                  their_id,
                                                                   event_tx.clone(),
                                                                   connection_map.clone()) {
                 Err(e) => Err(e),
                 Ok(connection) => {
                     unwrap_result!(connection_map.lock())
-                        .entry(their_pub_key)
+                        .entry(their_id)
                         .or_insert(Vec::new())
                         .push(connection);
                     Ok(())
                 }
             };
-            let _ = event_tx.send(Event::NewConnection(result, their_pub_key));
+            let _ = event_tx.send(Event::NewPeer(result, their_id));
         });
     }
 
     /// Lookup a mapped udp socket based on result_token
     pub fn prepare_connection_info(&mut self, result_token: u32) {
+        // FIXME: If the lsiterners are directly addressable (direct full cone or upnp mapped etc.
+        // then our conact info is our static liseners
+        // for udp we can map another socket, but use same local port if accessable/mapped
+        // otherwise do following
         let mut peer_udp_listeners = Vec::with_capacity(100);
         for peer_contact_info in &*unwrap_result!(self.peer_contact_infos.lock()) {
             peer_udp_listeners.extend(peer_contact_info.udp_listeners.clone());
@@ -332,9 +340,9 @@ impl Service {
         });
     }
 
-    /// Returns our pulic key.
-    pub fn pub_key(&self) -> PublicKey {
-        unwrap_result!(self.static_contact_info.lock()).pub_key.clone()
+    /// Returns our ID.
+    pub fn id(&self) -> PeerId {
+        peer_id::new_id(self.our_keys.0)
     }
 }
 
@@ -390,10 +398,10 @@ mod test {
 
         let service_1 = unwrap_result!(Service::new_impl(event_sender_1, port, use_tcp, use_udp));
         // let service_1 finish bootstrap - it should bootstrap off service_0
-        let pub_key_0 = {
+        let id_0 = {
             let event_rxd = unwrap_result!(event_rx_1.recv());
             match event_rxd {
-                Event::NewBootstrapConnection(their_pub_key) => their_pub_key,
+                Event::NewBootstrapPeer(their_id) => their_id,
                 _ => panic!("Received unexpected event: {:?}", event_rxd),
             }
         };
@@ -408,8 +416,8 @@ mod test {
         }
 
         // service_0 should have received service_1's connection bootstrap connection by now
-        let pub_key_1 = match unwrap_result!(event_rx_0.recv()) {
-            Event::NewConnection(Ok(()), their_pub_key) => their_pub_key,
+        let id_1 = match unwrap_result!(event_rx_0.recv()) {
+            Event::NewPeer(Ok(()), their_id) => their_id,
             _ => panic!("0 Should have got a new connection from 1."),
         };
 
@@ -423,48 +431,48 @@ mod test {
         // }
 
 
-        assert!(pub_key_0 != pub_key_1);
+        assert!(id_0 != id_1);
 
         // send data from 0 to 1
         {
             let data_txd = vec![0, 1, 255, 254, 222, 1];
-            unwrap_result!(service_0.send(&pub_key_1, &data_txd));
+            unwrap_result!(service_0.send(&id_1, &data_txd));
 
             // 1 should rx data
-            let (data_rxd, peer_pub_key) = {
+            let (data_rxd, peer_id) = {
                 let event_rxd = unwrap_result!(event_rx_1.recv());
                 match event_rxd {
-                    Event::NewMessage(their_pub_key, msg) => (msg, their_pub_key),
+                    Event::NewMessage(their_id, msg) => (msg, their_id),
                     _ => panic!("Received unexpected event: {:?}", event_rxd),
                 }
             };
 
             assert_eq!(data_rxd, data_txd);
-            assert_eq!(peer_pub_key, pub_key_0);
+            assert_eq!(peer_id, id_0);
         }
 
         // send data from 1 to 0
         {
             let data_txd = vec![10, 11, 155, 214, 202];
-            unwrap_result!(service_1.send(&pub_key_0, &data_txd));
+            unwrap_result!(service_1.send(&id_0, &data_txd));
 
             // 0 should rx data
-            let (data_rxd, peer_pub_key) = {
+            let (data_rxd, peer_id) = {
                 let event_rxd = unwrap_result!(event_rx_0.recv());
                 match event_rxd {
-                    Event::NewMessage(their_pub_key, msg) => (msg, their_pub_key),
+                    Event::NewMessage(their_id, msg) => (msg, their_id),
                     _ => panic!("Received unexpected event: {:?}", event_rxd),
                 }
             };
 
             assert_eq!(data_rxd, data_txd);
-            assert_eq!(peer_pub_key, pub_key_1);
+            assert_eq!(peer_id, id_1);
         }
 
-        assert!(service_0.disconnect(&pub_key_1));
+        assert!(service_0.disconnect(&id_1));
 
         match unwrap_result!(event_rx_1.recv()) {
-            Event::LostPeer(pub_key) => assert_eq!(pub_key, pub_key_0),
+            Event::LostPeer(id) => assert_eq!(id, id_0),
             e => panic!("Received unexpected event: {:?}", e),
         }
     }
@@ -544,50 +552,50 @@ mod test {
         service_0.connect(our_ci_0, their_ci_1);
         service_1.connect(our_ci_1, their_ci_0);
 
-        let pub_key_1 = match unwrap_result!(event_rx_0.recv()) {
-            Event::NewConnection(Ok(()), their_pub_key) => their_pub_key,
+        let id_1 = match unwrap_result!(event_rx_0.recv()) {
+            Event::NewPeer(Ok(()), their_id) => their_id,
             m => panic!("0 Should have connected to 1. Got message {:?}", m),
         };
 
-        let pub_key_0 = match unwrap_result!(event_rx_1.recv()) {
-            Event::NewConnection(Ok(()), their_pub_key) => their_pub_key,
+        let id_0 = match unwrap_result!(event_rx_1.recv()) {
+            Event::NewPeer(Ok(()), their_id) => their_id,
             m => panic!("1 Should have connected to 0. Got message {:?}", m),
         };
 
         // send data from 0 to 1
         {
             let data_txd = vec![0, 1, 255, 254, 222, 1];
-            unwrap_result!(service_0.send(&pub_key_1, &data_txd));
+            unwrap_result!(service_0.send(&id_1, &data_txd));
 
             // 1 should rx data
-            let (data_rxd, peer_pub_key) = {
+            let (data_rxd, peer_id) = {
                 let event_rxd = unwrap_result!(event_rx_1.recv());
                 match event_rxd {
-                    Event::NewMessage(their_pub_key, msg) => (msg, their_pub_key),
+                    Event::NewMessage(their_id, msg) => (msg, their_id),
                     _ => panic!("Received unexpected event: {:?}", event_rxd),
                 }
             };
 
             assert_eq!(data_rxd, data_txd);
-            assert_eq!(peer_pub_key, pub_key_0);
+            assert_eq!(peer_id, id_0);
         }
 
         // send data from 1 to 0
         {
             let data_txd = vec![10, 11, 155, 214, 202];
-            unwrap_result!(service_1.send(&pub_key_0, &data_txd));
+            unwrap_result!(service_1.send(&id_0, &data_txd));
 
             // 0 should rx data
-            let (data_rxd, peer_pub_key) = {
+            let (data_rxd, peer_id) = {
                 let event_rxd = unwrap_result!(event_rx_0.recv());
                 match event_rxd {
-                    Event::NewMessage(their_pub_key, msg) => (msg, their_pub_key),
+                    Event::NewMessage(their_id, msg) => (msg, their_id),
                     _ => panic!("Received unexpected event: {:?}", event_rxd),
                 }
             };
 
             assert_eq!(data_rxd, data_txd);
-            assert_eq!(peer_pub_key, pub_key_1);
+            assert_eq!(peer_id, id_1);
         }
     }
 }

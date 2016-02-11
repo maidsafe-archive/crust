@@ -51,7 +51,7 @@ pub fn upgrade_tcp(stream: TcpStream) -> io::Result<(TcpStream, Sender<WriteEven
 
 fn upgrade_writer(mut stream: TcpStream) -> Sender<WriteEvent> {
     let (tx, rx) = mpsc::channel();
-    let _ = thread::Builder::new()
+    let _ = unwrap_result!(thread::Builder::new()
                 .name("TCP writer".to_owned())
                 .spawn(move || {
                     while let Ok(event) = rx.recv() {
@@ -66,8 +66,7 @@ fn upgrade_writer(mut stream: TcpStream) -> Sender<WriteEvent> {
                         }
                     }
                     stream.shutdown(Shutdown::Both)
-                })
-                .unwrap();
+                }));
     tx
 }
 
@@ -123,7 +122,7 @@ pub fn blocking_tcp_punch_hole(local_addr: SocketAddr,
         let listen_thread = scope.spawn(|| -> io::Result<_> {
             let socket = try!(TcpBuilder::new_v4());
             let _ = try!(socket.reuse_address(true));
-            let _ = try!(enable_so_reuseport(&socket));
+            try!(enable_so_reuseport(&socket));
             let _ = try!(socket.bind(&*local_addr));
             let listener = try!(socket.listen(1));
             let (stream, addr) = try!(listener.accept());
@@ -133,9 +132,9 @@ pub fn blocking_tcp_punch_hole(local_addr: SocketAddr,
         for peer_addr in &peer_addrs {
             let connect_thread = scope.spawn(move || -> io::Result<_> {
                 let connector = try!(TcpBuilder::new_v4());
-                let connector = try!(connector.reuse_address(true));
+                let _ = try!(connector.reuse_address(true));
                 try!(enable_so_reuseport(&connector));
-                let connector = try!(connector.bind(&*local_addr));
+                let _ = try!(connector.bind(&*local_addr));
                 let stream = try!(connector.connect(&**peer_addr));
                 Ok(stream)
             });

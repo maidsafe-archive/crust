@@ -17,10 +17,10 @@
 
 use endpoint::Endpoint;
 use connection::{RaiiTcpAcceptor, Connection};
+use peer_id::PeerId;
 use service::ConnectionInfoResult;
 use std::net::UdpSocket;
 use socket_addr::SocketAddr;
-use sodiumoxide::crypto::sign::PublicKey;
 use std::io;
 use static_contact_info::StaticContactInfo;
 
@@ -38,16 +38,14 @@ pub enum WriteEvent {
 /// of this module.
 #[derive(Debug)]
 pub enum Event {
-    /// Invoked when a new message is received.  Passes the peer's public key and the message.
-    NewMessage(PublicKey, Vec<u8>),
-    /// Invoked when we get a new bootstrap connection.
-    /// Passes the peer's public key.
-    NewBootstrapConnection(PublicKey),
-    /// Invoked when the new rendezvous connection request finishes.
-    /// Passes the peer's public key.
-    NewConnection(io::Result<()>, PublicKey),
-    /// Invoked when a connection to a peer is lost.  Passes the peer's public key.
-    LostPeer(PublicKey),
+    /// Invoked when a new message is received.  Passes the message.
+    NewMessage(PeerId, Vec<u8>),
+    /// Invoked when we get a bootstrap connection to a new peer.
+    NewBootstrapPeer(PeerId),
+    /// Invoked when a connection to a new peer is established.
+    NewPeer(io::Result<()>, PeerId),
+    /// Invoked when a peer is lost.
+    LostPeer(PeerId),
     /// Raised once the list of bootstrap contacts is exhausted.
     BootstrapFinished,
     /// Invoked as a result to the call of `Service::prepare_contact_info`.

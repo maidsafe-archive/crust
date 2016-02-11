@@ -118,7 +118,7 @@ pub fn blocking_udp_punch_hole(udp_socket: UdpSocket,
             ack: false,
         };
         let mut enc = ::cbor::Encoder::from_memory();
-        enc.encode(::std::iter::once(&hole_punch)).unwrap();
+        unwrap_result!(enc.encode(::std::iter::once(&hole_punch)));
         enc.into_bytes()
     };
 
@@ -164,7 +164,7 @@ pub fn blocking_udp_punch_hole(udp_socket: UdpSocket,
                                         ack: true,
                                     };
                                     let mut enc = ::cbor::Encoder::from_memory();
-                                    enc.encode(::std::iter::once(&hole_punch)).unwrap();
+                                    unwrap_result!(enc.encode(::std::iter::once(&hole_punch)));
                                     enc.into_bytes()
                                 };
                                 periodic_sender.set_payload(send_data);
@@ -322,11 +322,11 @@ mod test {
     // https://users.rust-lang.org/t/on-windows-udpsocket-set-read-timeout-x-waits-x-500ms/3334
     fn read_timeout_error() -> ::time::Duration {
         let mut buf = [0u8; 32];
-        let s = UdpSocket::bind(&*loopback_v4(0)).unwrap();
+        let s = unwrap_result!(UdpSocket::bind(&*loopback_v4(0)));
 
         ::time::Duration::span(|| {
             let timeout = ::std::time::Duration::from_millis(1);
-            s.set_read_timeout(Some(timeout)).unwrap();
+            unwrap_result!(s.set_read_timeout(Some(timeout)));
             let _ = s.recv_from(&mut buf);
         })
     }

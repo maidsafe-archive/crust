@@ -28,13 +28,14 @@ use std::thread;
 use config_file_handler::FileHandler;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 use service_discovery::ServiceDiscovery;
-use sodiumoxide::crypto::sign::PublicKey;
 
 use error::Error;
 use config_handler::Config;
 use connection::Connection;
 use static_contact_info::StaticContactInfo;
 use event::Event;
+use peer_id;
+use peer_id::PeerId;
 
 const MAX_CONTACTS_EXPECTED: usize = 1500;
 
@@ -47,7 +48,7 @@ impl RaiiBootstrap {
     pub fn new(our_contact_info: Arc<Mutex<StaticContactInfo>>,
                peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
                event_tx: ::CrustEventSender,
-               connection_map: Arc<Mutex<HashMap<PublicKey, Vec<Connection>>>>)
+               connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>)
                -> RaiiBootstrap {
         let stop_flag = Arc::new(AtomicBool::new(false));
         let cloned_stop_flag = stop_flag.clone();
@@ -74,7 +75,7 @@ impl RaiiBootstrap {
                  peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
                  stop_flag: Arc<AtomicBool>,
                  event_tx: ::CrustEventSender,
-                 connection_map: Arc<Mutex<HashMap<PublicKey, Vec<Connection>>>>) {
+                 connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>) {
         let bootstrap_contacts: Vec<StaticContactInfo> = unwrap_result!(peer_contact_infos.lock())
                                                              .clone();
         for contact in bootstrap_contacts {
@@ -84,7 +85,7 @@ impl RaiiBootstrap {
                 break;
             }
 
-            let their_pub_key = contact.pub_key.clone();
+            let their_id = peer_id::new_id(contact.pub_key);
 
             // 1st try a TCP connect
             // 2nd try a UDP connection (and upgrade to UTP)
@@ -99,10 +100,10 @@ impl RaiiBootstrap {
 
             if let Ok(connection) = connect_result {
                 unwrap_result!(connection_map.lock())
-                    .entry(their_pub_key)
+                    .entry(their_id)
                     .or_insert_with(|| vec![])
                     .push(connection);
-                let _ = event_tx.send(Event::NewBootstrapConnection(their_pub_key));
+                let _ = event_tx.send(Event::NewBootstrapPeer(their_id));
             }
         }
 
@@ -117,8 +118,7 @@ impl Drop for RaiiBootstrap {
 }
 
 // Returns the peers from service discovery, cache and config for bootstrapping (not to be held)
-pub fn get_known_contacts(service_discovery: &ServiceDiscovery<StaticContactInfo>,
-                          our_pub_key: &PublicKey)
+pub fn get_known_contacts(service_discovery: &ServiceDiscovery<StaticContactInfo>)
                           -> Result<Vec<StaticContactInfo>, Error> {
     let (seek_peers_tx, seek_peers_rx) = mpsc::channel();
     if service_discovery.register_seek_peer_observer(seek_peers_tx) {
@@ -153,13 +153,6 @@ pub fn get_known_contacts(service_discovery: &ServiceDiscovery<StaticContactInfo
     // order in which we collect the contacts
     contacts = contacts.into_iter().unique().collect();
 
-    // Remove own endpoints:
-    // Node A is on EP Ea. Node B starts up finds A and populates its bootstrap.cache with Ea.
-    // Now A dies and C starts after that on exactly Ea. Since they all share the same
-    // bootstrap.cache file (if all Crusts start from same path), C will have EP Ea and also
-    // have Ea in the bootstrap.cache so it will try to bootstrap to itself. The following code
-    // prevents that.
-    contacts.retain(|contact| contact.pub_key != *our_pub_key);
 
     Ok((contacts))
 }
