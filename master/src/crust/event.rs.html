@@ -94,8 +94,6 @@
 <span id="51">51</span>
 <span id="52">52</span>
 <span id="53">53</span>
-<span id="54">54</span>
-<span id="55">55</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -116,10 +114,10 @@
 
 <span class='kw'>use</span> <span class='ident'>endpoint</span>::<span class='ident'>Endpoint</span>;
 <span class='kw'>use</span> <span class='ident'>connection</span>::{<span class='ident'>RaiiTcpAcceptor</span>, <span class='ident'>Connection</span>};
+<span class='kw'>use</span> <span class='ident'>peer_id</span>::<span class='ident'>PeerId</span>;
 <span class='kw'>use</span> <span class='ident'>service</span>::<span class='ident'>ConnectionInfoResult</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>net</span>::<span class='ident'>UdpSocket</span>;
 <span class='kw'>use</span> <span class='ident'>socket_addr</span>::<span class='ident'>SocketAddr</span>;
-<span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>crypto</span>::<span class='ident'>sign</span>::<span class='ident'>PublicKey</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>;
 <span class='kw'>use</span> <span class='ident'>static_contact_info</span>::<span class='ident'>StaticContactInfo</span>;
 
@@ -137,16 +135,14 @@
 <span class='doccomment'>/// of this module.</span>
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>enum</span> <span class='ident'>Event</span> {
-    <span class='doccomment'>/// Invoked when a new message is received.  Passes the peer&#39;s public key and the message.</span>
-    <span class='ident'>NewMessage</span>(<span class='ident'>PublicKey</span>, <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span>),
-    <span class='doccomment'>/// Invoked when we get a new bootstrap connection.</span>
-    <span class='doccomment'>/// Passes the peer&#39;s public key.</span>
-    <span class='ident'>NewBootstrapConnection</span>(<span class='ident'>PublicKey</span>),
-    <span class='doccomment'>/// Invoked when the new rendezvous connection request finishes.</span>
-    <span class='doccomment'>/// Passes the peer&#39;s public key.</span>
-    <span class='ident'>NewConnection</span>(<span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>, <span class='ident'>PublicKey</span>),
-    <span class='doccomment'>/// Invoked when a connection to a peer is lost.  Passes the peer&#39;s public key.</span>
-    <span class='ident'>LostPeer</span>(<span class='ident'>PublicKey</span>),
+    <span class='doccomment'>/// Invoked when a new message is received.  Passes the message.</span>
+    <span class='ident'>NewMessage</span>(<span class='ident'>PeerId</span>, <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span>),
+    <span class='doccomment'>/// Invoked when we get a bootstrap connection to a new peer.</span>
+    <span class='ident'>NewBootstrapPeer</span>(<span class='ident'>PeerId</span>),
+    <span class='doccomment'>/// Invoked when a connection to a new peer is established.</span>
+    <span class='ident'>NewPeer</span>(<span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span>, <span class='ident'>PeerId</span>),
+    <span class='doccomment'>/// Invoked when a peer is lost.</span>
+    <span class='ident'>LostPeer</span>(<span class='ident'>PeerId</span>),
     <span class='doccomment'>/// Raised once the list of bootstrap contacts is exhausted.</span>
     <span class='ident'>BootstrapFinished</span>,
     <span class='doccomment'>/// Invoked as a result to the call of `Service::prepare_contact_info`.</span>

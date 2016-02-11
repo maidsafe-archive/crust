@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["gen_rendezvous_info","Create a `(PrivRendezvousInfo, PubRendezvousInfo)` pair from a list of mapped socket addresses."]],"struct":[["PrivRendezvousInfo","The local half of a `PubRendezvousInfo`."],["PubRendezvousInfo","Info exchanged by both parties before performing a rendezvous connection."]]});

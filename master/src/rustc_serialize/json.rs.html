@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/rustc-serialize-0.3.17/src/json.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/rustc-serialize-0.3.18/src/json.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>json.rs.html -- source</title>
@@ -3971,6 +3971,16 @@
 <span id="3928">3928</span>
 <span id="3929">3929</span>
 <span id="3930">3930</span>
+<span id="3931">3931</span>
+<span id="3932">3932</span>
+<span id="3933">3933</span>
+<span id="3934">3934</span>
+<span id="3935">3935</span>
+<span id="3936">3936</span>
+<span id="3937">3937</span>
+<span id="3938">3938</span>
+<span id="3939">3939</span>
+<span id="3940">3940</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2012-2014 The Rust Project Developers. See the COPYRIGHT</span>
 <span class='comment'>// file at the top-level directory of this distribution and at</span>
@@ -5655,7 +5665,7 @@
                         <span class='self'>self</span>.<span class='ident'>bump</span>();
                         <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='ident'>res</span>);
                     },
-                    <span class='prelude-val'>Some</span>(<span class='ident'>c</span>) <span class='kw'>if</span> <span class='ident'>c</span>.<span class='ident'>is_control</span>() <span class='op'>=&gt;</span>
+                    <span class='prelude-val'>Some</span>(<span class='ident'>c</span>) <span class='kw'>if</span> <span class='ident'>c</span> <span class='op'>&lt;=</span> <span class='string'>&#39;\u{1F}&#39;</span> <span class='op'>=&gt;</span>
                         <span class='kw'>return</span> <span class='self'>self</span>.<span class='ident'>error</span>(<span class='ident'>ControlCharacterInString</span>),
                     <span class='prelude-val'>Some</span>(<span class='ident'>c</span>) <span class='op'>=&gt;</span> <span class='ident'>res</span>.<span class='ident'>push</span>(<span class='ident'>c</span>),
                     <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='macro'>unreachable</span><span class='macro'>!</span>()
@@ -6944,6 +6954,16 @@
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>Json</span>::<span class='ident'>from_str</span>(<span class='string'>&quot;\&quot;&quot;</span>),     <span class='prelude-val'>Err</span>(<span class='ident'>SyntaxError</span>(<span class='ident'>EOFWhileParsingString</span>, <span class='number'>1</span>, <span class='number'>2</span>)));
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>Json</span>::<span class='ident'>from_str</span>(<span class='string'>&quot;\&quot;lol&quot;</span>),  <span class='prelude-val'>Err</span>(<span class='ident'>SyntaxError</span>(<span class='ident'>EOFWhileParsingString</span>, <span class='number'>1</span>, <span class='number'>5</span>)));
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>Json</span>::<span class='ident'>from_str</span>(<span class='string'>&quot;\&quot;\n\&quot;&quot;</span>), <span class='prelude-val'>Err</span>(<span class='ident'>SyntaxError</span>(<span class='ident'>ControlCharacterInString</span>, <span class='number'>2</span>, <span class='number'>1</span>)));
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>Json</span>::<span class='ident'>from_str</span>(<span class='string'>&quot;\&quot;\0\&quot;&quot;</span>), <span class='prelude-val'>Err</span>(<span class='ident'>SyntaxError</span>(<span class='ident'>ControlCharacterInString</span>, <span class='number'>1</span>, <span class='number'>2</span>)));
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>Json</span>::<span class='ident'>from_str</span>(<span class='string'>&quot;\&quot;\u{1}\&quot;&quot;</span>), <span class='prelude-val'>Err</span>(<span class='ident'>SyntaxError</span>(<span class='ident'>ControlCharacterInString</span>, <span class='number'>1</span>, <span class='number'>2</span>)));
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>Json</span>::<span class='ident'>from_str</span>(<span class='string'>&quot;\&quot;\u{1F}\&quot;&quot;</span>), <span class='prelude-val'>Err</span>(<span class='ident'>SyntaxError</span>(<span class='ident'>ControlCharacterInString</span>, <span class='number'>1</span>, <span class='number'>2</span>)));
+
+        <span class='comment'>// Only C0 control characters are excluded.</span>
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='string'>&#39;\u{7F}&#39;</span>.<span class='ident'>is_control</span>());
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='string'>&#39;\u{80}&#39;</span>.<span class='ident'>is_control</span>());
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='string'>&#39;\u{9F}&#39;</span>.<span class='ident'>is_control</span>());
+        <span class='kw'>let</span> <span class='ident'>c1_controls</span> <span class='op'>=</span> <span class='string'>&quot;\u{7F}\u{80}\u{9F}&quot;</span>.<span class='ident'>to_string</span>();
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>Json</span>::<span class='ident'>from_str</span>(<span class='kw-2'>&amp;</span><span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;\&quot;{}\&quot;&quot;</span>, <span class='ident'>c1_controls</span>)), <span class='prelude-val'>Ok</span>(<span class='ident'>String</span>(<span class='ident'>c1_controls</span>)));
 
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>Json</span>::<span class='ident'>from_str</span>(<span class='string'>&quot;\&quot;\&quot;&quot;</span>), <span class='prelude-val'>Ok</span>(<span class='ident'>String</span>(<span class='string'>&quot;&quot;</span>.<span class='ident'>to_string</span>())));
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>Json</span>::<span class='ident'>from_str</span>(<span class='string'>&quot;\&quot;foo\&quot;&quot;</span>), <span class='prelude-val'>Ok</span>(<span class='ident'>String</span>(<span class='string'>&quot;foo&quot;</span>.<span class='ident'>to_string</span>())));
