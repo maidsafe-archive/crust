@@ -29,11 +29,17 @@ use config_file_handler;
 #[derive(PartialEq, Eq, Debug, RustcDecodable, RustcEncodable, Clone)]
 pub struct Config {
     pub hard_coded_contacts: Vec<StaticContactInfo>,
+    pub tcp_acceptor_port: Option<u16>,
+    pub utp_acceptor_port: Option<u16>,
 }
 
 impl Config {
     pub fn make_default() -> Config {
-        Config { hard_coded_contacts: vec![] /* No hardcoded endpoints */ }
+        Config {
+            hard_coded_contacts: vec![] /* No hardcoded endpoints */,
+            tcp_acceptor_port: None,
+            utp_acceptor_port: None,
+        }
     }
 }
 
@@ -65,6 +71,8 @@ pub fn write_config_file(hard_coded_endpoints: Option<Vec<StaticContactInfo>>)
 
     let config = Config {
         hard_coded_contacts: hard_coded_endpoints.unwrap_or(default.hard_coded_contacts),
+        tcp_acceptor_port: None,
+        utp_acceptor_port: None,
     };
     let mut config_path = try!(config_file_handler::current_bin_dir());
     config_path.push(try!(get_file_name()));

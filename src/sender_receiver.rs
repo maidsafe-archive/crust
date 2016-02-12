@@ -25,19 +25,15 @@ use std::net::TcpStream;
 use rustc_serialize::Decodable;
 use utp_connections::UtpWrapper;
 use maidsafe_utilities::serialisation::serialise;
+use sodiumoxide::crypto::box_::PublicKey;
 
 pub struct RaiiSender(pub mpsc::Sender<WriteEvent>);
 
 impl RaiiSender {
-    fn send_bytes(&self, bytes: Vec<u8>) -> io::Result<()> {
+    pub fn send(&self, msg: CrustMsg) -> io::Result<()> {
         self.0
-            .send(WriteEvent::Write(bytes))
+            .send(WriteEvent::Write(msg))
             .map_err(|_| io::Error::new(io::ErrorKind::NotConnected, "can't send"))
-    }
-
-    pub fn send(&self, msg: &[u8]) -> io::Result<()> {
-        let crust_msg = CrustMsg { raw_data: msg.to_owned() };
-        self.send_bytes(unwrap_result!(serialise(&crust_msg)))
     }
 }
 
@@ -72,12 +68,16 @@ impl Receiver {
         }
     }
 
-    pub fn receive(&mut self) -> io::Result<Vec<u8>> {
-        Ok(try!(self.basic_receive::<CrustMsg>()).raw_data)
+    pub fn receive(&mut self) -> io::Result<CrustMsg> {
+        self.basic_receive::<CrustMsg>()
     }
 }
 
-#[derive(Debug, RustcEncodable, RustcDecodable)]
-struct CrustMsg {
-    raw_data: Vec<u8>,
+#[derive(Clone, PartialEq, Eq, Debug, RustcEncodable, RustcDecodable)]
+pub enum CrustMsg {
+    BootstrapRequest(PublicKey),
+    BootstrapResponse(PublicKey),
+    Connect(PublicKey),
+    Message(Vec<u8>), // encrypted data
 }
+

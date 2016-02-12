@@ -58,7 +58,8 @@ fn upgrade_writer(mut stream: TcpStream) -> Sender<WriteEvent> {
                         match event {
                             WriteEvent::Write(data) => {
                                 use std::io::Write;
-                                if stream.write_all(&data).is_err() {
+                                let msg = unwrap_result!(serialise(&data));
+                                if stream.write_all(&msg).is_err() {
                                     break;
                                 }
                             }
@@ -126,6 +127,7 @@ mod test {
     use std::sync::mpsc;
     use socket_addr::SocketAddr;
     use event::WriteEvent;
+    use sender_receiver::CrustMsg;
 
     fn loopback(port: u16) -> SocketAddr {
         SocketAddr(net::SocketAddr::from_str(&format!("127.0.0.1:{}", port)).unwrap())
@@ -139,7 +141,7 @@ mod test {
 
         for x in 0..10 {
             let x = vec![x];
-            o.send(WriteEvent::Write(x)).unwrap()
+            o.send(WriteEvent::Write(CrustMsg::Message(x))).unwrap()
         }
         let t = thread::spawn(move || {
             let connection = unwrap_result!(listener.accept()).0;
@@ -153,7 +155,7 @@ mod test {
             for item in &mut buf {
                 *item += 1;
             }
-            unwrap_result!(o.send(WriteEvent::Write(buf.iter().cloned().collect())));
+            unwrap_result!(o.send(WriteEvent::Write(CrustMsg::Message(buf.iter().cloned().collect()))));
         });
         // Collect everything that we get back.
         unwrap_result!(i.set_read_timeout(Some(Duration::new(5, 0))));
@@ -196,12 +198,12 @@ mod test {
                 for i in 0..MSG_COUNT as u8 {
                     buf.push(i)
                 }
-                o.send(WriteEvent::Write(buf.clone())).unwrap();
+                o.send(WriteEvent::Write(CrustMsg::Message(buf.clone()))).unwrap();
                 let mut len = 0;
                 while len < MSG_COUNT {
                     len += i.read(&mut buf[len..]).unwrap();
                 }
-                tx2.send(WriteEvent::Write(buf))
+                tx2.send(WriteEvent::Write(CrustMsg::Message(buf)))
             });
             let (connection, _) = listener.accept().unwrap();
             let _ = thread::spawn(move || {
@@ -215,14 +217,14 @@ mod test {
                 for item in &mut buf {
                     *item += 1
                 }
-                o.send(WriteEvent::Write(buf.iter().cloned().collect())).unwrap()
+                o.send(WriteEvent::Write(CrustMsg::Message(buf.iter().cloned().collect()))).unwrap()
             });
         }
 
         let v = (0..MSG_COUNT as u8).map(|i| i + 1).collect::<Vec<u8>>();
         for _ in 0..node_count() {
             let rxd = match rx.recv().unwrap() {
-                WriteEvent::Write(data) => data,
+                WriteEvent::Write(CrustMsg::Message(data)) => data,
                 _ => panic!("Unexpected"),
             };
             assert_eq!(rxd, v);
@@ -277,7 +279,7 @@ mod test {
 
         for i in 0..MSG_COUNT {
             let msg = encode(&format!("MSG{}", i));
-            assert!(o1.send(WriteEvent::Write(msg.clone())).is_ok());
+            assert!(o1.send(WriteEvent::Write(CrustMsg::Message(msg.clone()))).is_ok());
         }
 
         assert!(t.join().is_ok());

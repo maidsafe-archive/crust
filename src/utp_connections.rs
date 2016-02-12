@@ -63,6 +63,7 @@ mod test {
     use std::thread::spawn;
     use std::sync::Arc;
     use rand;
+    use sender_receiver::CrustMsg;
 
     fn listen(port: u16) -> io::Result<UtpListener> {
         UtpListener::bind(("0.0.0.0", port))
@@ -120,7 +121,7 @@ mod test {
             let mut buf = [0u8; 1];
             let _ = i.read(&mut buf).unwrap();
             assert_eq!(buf[0], 42);
-            o.send(WriteEvent::Write(vec![43]));
+            o.send(WriteEvent::Write(CrustMsg::Message(vec![43])));
         });
 
         let (mut i, o) =
@@ -132,7 +133,7 @@ mod test {
                 .unwrap();
 
         let th1 = spawn(move || {
-            o.send(WriteEvent::Write(vec![42]));
+            o.send(WriteEvent::Write(CrustMsg::Message(vec![42])));
             let mut buf = [0u8; 1];
             let _ = i.read(&mut buf).unwrap();
             assert_eq!(buf[0], 43);

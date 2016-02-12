@@ -30,8 +30,9 @@ use maidsafe_utilities::thread::RaiiThreadJoiner;
 use rand;
 use nat_traversal::{MappedUdpSocket, MappingContext, PunchedUdpSocket,
                     gen_rendezvous_info};
+use sodiumoxide::crypto::box_::{PublicKey, SecretKey};
 
-use connection::{Connection, utp_rendezvous_connect};
+use connection::{Connection, utp_rendezvous_connect, UtpRendezvousConnectMode};
 use static_contact_info::StaticContactInfo;
 use event::Event;
 use socket_addr::SocketAddr;
@@ -50,6 +51,7 @@ pub struct RaiiUdpListener {
 impl RaiiUdpListener {
     pub fn new(port: u16,
                our_contact_info: Arc<Mutex<StaticContactInfo>>,
+               our_public_key: PublicKey,
                peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
                event_tx: ::CrustEventSender,
                connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
@@ -84,6 +86,7 @@ impl RaiiUdpListener {
 
         let raii_joiner = RaiiThreadJoiner::new(thread!("RaiiUdpListener", move || {
             Self::run(our_contact_info,
+                      our_public_key,
                       udp_socket,
                       event_tx,
                       peer_contact_infos,
@@ -99,6 +102,7 @@ impl RaiiUdpListener {
     }
 
     fn run(our_contact_info: Arc<Mutex<StaticContactInfo>>,
+           our_public_key: PublicKey,
            udp_socket: UdpSocket,
            event_tx: ::CrustEventSender,
            peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
@@ -113,6 +117,7 @@ impl RaiiUdpListener {
                     RaiiUdpListener::handle_request(msg,
                                                     &our_contact_info,
                                                     &udp_socket,
+                                                    &our_public_key,
                                                     peer_addr,
                                                     &event_tx,
                                                     &peer_contact_infos,
@@ -133,6 +138,7 @@ impl RaiiUdpListener {
     fn handle_request(msg: ListenerRequest,
                       our_contact_info: &Arc<Mutex<StaticContactInfo>>,
                       udp_socket: &UdpSocket,
+                      our_public_key: &PublicKey,
                       peer_addr: net::SocketAddr,
                       event_tx: &::CrustEventSender,
                       peer_contact_infos: &Arc<Mutex<Vec<StaticContactInfo>>>,
@@ -161,7 +167,7 @@ impl RaiiUdpListener {
                 let connect_resp = ListenerResponse::Connect {
                     our_info: our_pub_info,
                     their_info: their_info.clone(),
-                    pub_key: unwrap_result!(our_contact_info.lock()).pub_key.clone(),
+                    pub_key: our_public_key.clone(),
                 };
 
                 if udp_socket.send_to(&unwrap_result!(serialise(&connect_resp)),
@@ -179,7 +185,8 @@ impl RaiiUdpListener {
 
                 let connection = match utp_rendezvous_connect(socket,
                                                               peer_addr,
-                                                              peer_id::new_id(pub_key),
+                                                              UtpRendezvousConnectMode::BootstrapAccept,
+                                                              our_public_key.clone(),
                                                               event_tx.clone(),
                                                               connection_map.clone()) {
                     Ok(connection) => connection,

@@ -37,6 +37,7 @@ use static_contact_info::StaticContactInfo;
 use event::Event;
 use peer_id;
 use peer_id::PeerId;
+use sodiumoxide::crypto::box_::PublicKey;
 
 const MAX_CONTACTS_EXPECTED: usize = 1500;
 
@@ -48,6 +49,7 @@ pub struct RaiiBootstrap {
 impl RaiiBootstrap {
     pub fn new(our_contact_info: Arc<Mutex<StaticContactInfo>>,
                peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
+               our_public_key: PublicKey,
                event_tx: ::CrustEventSender,
                connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
                mc: Arc<MappingContext>)
@@ -58,6 +60,7 @@ impl RaiiBootstrap {
         let raii_joiner = RaiiThreadJoiner::new(thread!("RaiiBootstrap", move || {
             RaiiBootstrap::bootstrap(our_contact_info,
                                      peer_contact_infos,
+                                     our_public_key,
                                      cloned_stop_flag,
                                      event_tx,
                                      connection_map,
@@ -76,6 +79,7 @@ impl RaiiBootstrap {
 
     fn bootstrap(our_contact_info: Arc<Mutex<StaticContactInfo>>,
                  peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
+                 our_public_key: PublicKey,
                  stop_flag: Arc<AtomicBool>,
                  event_tx: ::CrustEventSender,
                  connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
@@ -89,13 +93,12 @@ impl RaiiBootstrap {
                 break;
             }
 
-            let their_id = peer_id::new_id(contact.pub_key);
-
             // 1st try a TCP connect
             // 2nd try a UDP connection (and upgrade to UTP)
             let connect_result = ::connection::connect(contact,
                                                        peer_contact_infos.clone(),
                                                        our_contact_info.clone(),
+                                                       our_public_key.clone(),
                                                        event_tx.clone(),
                                                        connection_map.clone(),
                                                        mapping_context);
@@ -104,11 +107,12 @@ impl RaiiBootstrap {
             }
 
             if let Ok(connection) = connect_result {
+                let their_id = connection.their_id().clone();
                 unwrap_result!(connection_map.lock())
                     .entry(their_id)
                     .or_insert_with(|| vec![])
                     .push(connection);
-                let _ = event_tx.send(Event::NewBootstrapPeer(their_id));
+                let _ = event_tx.send(Event::BootstrapConnect(their_id));
             }
         }
 
