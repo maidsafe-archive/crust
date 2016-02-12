@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::collections::hash_map::Entry;
 use std::fmt;
 use std::sync::{Arc, Mutex};
@@ -137,7 +137,8 @@ pub fn connect(peer_contact: StaticContactInfo,
                                    our_contact_info.clone(),
                                    our_public_key,
                                    event_tx.clone(),
-                                   connection_map.clone()) {
+                                   connection_map.clone(),
+                                   None) {
             Ok(connection) => return Ok(connection),
             Err(e) => last_err = Some(e),
         }
@@ -212,11 +213,12 @@ pub fn connect(peer_contact: StaticContactInfo,
     }
 }
 
-fn connect_tcp_endpoint(remote_addr: SocketAddr,
+pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
                         our_contact_info: Arc<Mutex<StaticContactInfo>>,
                         our_public_key: PublicKey,
                         event_tx: ::CrustEventSender,
-                        connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>)
+                        connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
+                        their_expected_id: Option<PeerId>) // None if bootstrap
                         -> io::Result<Connection> {
     let (network_input, writer) = try!(tcp_connections::connect_tcp(remote_addr.clone()));
 
@@ -226,11 +228,25 @@ fn connect_tcp_endpoint(remote_addr: SocketAddr,
     let closed = Arc::new(AtomicBool::new(false));
     let closed_clone = closed.clone();
     let mut network_rx = Receiver::Tcp(cbor::Decoder::from_reader(network_input));
-    writer.send(WriteEvent::Write(CrustMsg::BootstrapRequest(our_public_key)));
-    let their_id = match network_rx.receive() {
-        Ok(CrustMsg::BootstrapResponse(key)) => peer_id::new_id(key),
-        Ok(m) => return Err(io::Error::new(io::ErrorKind::Other, format!("Invalid crust message from peer during bootstrap attempt: {:?}", m))),
-        Err(e) => return Err(e),
+    let their_id = match their_expected_id {
+        None => {
+            writer.send(WriteEvent::Write(CrustMsg::BootstrapRequest(our_public_key)));
+            match network_rx.receive() {
+                Ok(CrustMsg::BootstrapResponse(key)) => peer_id::new_id(key),
+                Ok(m) => return Err(io::Error::new(io::ErrorKind::Other, format!(
+                            "Invalid crust message from peer during bootstrap attempt: {:?}", m))),
+                Err(e) => return Err(e),
+            }
+        }
+        Some(id) => {
+            writer.send(WriteEvent::Write(CrustMsg::Connect(our_public_key)));
+            match network_rx.receive() {
+                Ok(CrustMsg::Connect(key)) => peer_id::new_id(key),
+                Ok(m) => return Err(io::Error::new(io::ErrorKind::Other, format!(
+                            "Invalid crust message from peer during connect attempt: {:?}", m))),
+                Err(e) => return Err(e),
+            }
+        }
     };
     let joiner = RaiiThreadJoiner::new(thread!("TcpNetworkReader", move || {
         start_rx(network_rx,
@@ -290,7 +306,8 @@ pub fn start_tcp_accept(port: u16,
                         our_public_key: PublicKey,
                         peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
                         event_tx: ::CrustEventSender,
-                        connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>)
+                        connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
+                        expected_peers: Arc<Mutex<HashSet<PeerId>>>)
                         -> io::Result<RaiiTcpAcceptor> {
     use std::io::Write;
     use std::io::Read;
@@ -345,7 +362,14 @@ pub fn start_tcp_accept(port: u16,
                     writer.send(WriteEvent::Write(CrustMsg::BootstrapResponse(our_public_key)));
                     peer_id::new_id(k)
                 },
-                Ok(CrustMsg::Connect(k)) => peer_id::new_id(k),
+                Ok(CrustMsg::Connect(k)) => {
+                    let peer_id = peer_id::new_id(k);
+                    if unwrap_result!(expected_peers.lock()).remove(&peer_id) {
+                        error!("Unexpected new peer: {:?}.", peer_id);
+                        continue;
+                    }
+                    peer_id
+                }
                 Ok(m) => {
                     error!("Unexpected crust msg on tcp accept");
                     continue;

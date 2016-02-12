@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::io;
 use std::net;
 use std::sync::{Arc, Mutex};
@@ -97,6 +97,7 @@ pub struct TheirConnectionInfo {
 pub struct Service {
     static_contact_info: Arc<Mutex<StaticContactInfo>>,
     peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
+    expected_peers: Arc<Mutex<HashSet<PeerId>>>,
     service_discovery: ServiceDiscovery<StaticContactInfo>,
     event_tx: ::CrustEventSender,
     bootstrap: RaiiBootstrap,
@@ -161,6 +162,7 @@ impl Service {
             static_contact_info: static_contact_info,
             peer_contact_infos: peer_contact_infos,
             service_discovery: service_discovery,
+            expected_peers: Arc::new(Mutex::new(HashSet::new())),
             event_tx: event_tx,
             bootstrap: bootstrap,
             our_keys: our_keys,
@@ -189,7 +191,8 @@ impl Service {
                                                    self.our_keys.0.clone(),
                                                    self.peer_contact_infos.clone(),
                                                    self.event_tx.clone(),
-                                                   self.connection_map.clone())));
+                                                   self.connection_map.clone(),
+                                                   self.expected_peers.clone())));
         Ok(())
     }
 
@@ -267,10 +270,34 @@ impl Service {
         let event_tx = self.event_tx.clone();
         let connection_map = self.connection_map.clone();
         let our_public_key = self.our_keys.0.clone();
+        let our_contact_info = self.static_contact_info.clone();
+
+        unwrap_result!(self.expected_peers.lock()).insert(their_connection_info.id);
 
         // TODO connect to all the socket addresses of peer in parallel
         let _joiner = thread!("PeerConnectionThread", move || {
             let their_id = their_connection_info.id;
+
+            // TODO(afck): Retry with delay, until the called connect, too.
+            for tcp_addr in their_connection_info.static_contact_info.tcp_acceptors {
+                match connection::connect_tcp_endpoint(tcp_addr,
+                                                       our_contact_info.clone(),
+                                                       our_public_key,
+                                                       event_tx.clone(),
+                                                       connection_map.clone(),
+                                                       Some(their_id)) {
+                    Err(e) => (),
+                    Ok(connection) => {
+                        unwrap_result!(connection_map.lock())
+                            .entry(their_id)
+                            .or_insert(Vec::new())
+                            .push(connection);
+                        let _ = event_tx.send(Event::NewPeer(Ok(()), their_id));
+                        return;
+                    }
+                }
+            };
+
             let res = PunchedUdpSocket::punch_hole(our_connection_info.udp_socket,
                                                    our_connection_info.priv_info,
                                                    their_connection_info.info);
