@@ -23,6 +23,7 @@ use std::time::Duration;
 use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicBool, Ordering};
 use itertools::Itertools;
+use ip::IpAddr;
 
 use get_if_addrs;
 use maidsafe_utilities::serialisation::{deserialise, serialise};
@@ -71,16 +72,12 @@ impl RaiiUdpListener {
             mc.add_simple_servers(peer_contact_info.mapper_servers.clone());
         }
         let mut addrs = Vec::new();
-        if let Ok(MappedUdpSocket { endpoints, .. })
+        if let Ok(MappedUdpSocket { endpoints, socket })
             = MappedUdpSocket::map(try!(udp_socket.try_clone()), &mc).result_discard() {
             addrs.extend(endpoints.into_iter().map(|ma| ma.addr));
+            let local_addr = unwrap_result!(socket.local_addr());
+            addrs.push(SocketAddr(local_addr));
         }
-
-        let if_addrs = try!(get_if_addrs::get_if_addrs())
-                           .into_iter()
-                           .map(|i| SocketAddr::new(i.addr.ip(), actual_port))
-                           .collect_vec();
-        addrs.extend(if_addrs);
 
         unwrap_result!(our_contact_info.lock()).utp_custom_listeners.extend(addrs);
 
