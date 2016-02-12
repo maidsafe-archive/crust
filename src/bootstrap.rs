@@ -127,7 +127,7 @@ impl Drop for RaiiBootstrap {
 }
 
 // Returns the peers from service discovery, cache and config for bootstrapping (not to be held)
-pub fn get_known_contacts(service_discovery: &ServiceDiscovery<StaticContactInfo>)
+pub fn get_known_contacts(service_discovery: &ServiceDiscovery<StaticContactInfo>, config: &Config)
                           -> Result<Vec<StaticContactInfo>, Error> {
     let (seek_peers_tx, seek_peers_rx) = mpsc::channel();
     if service_discovery.register_seek_peer_observer(seek_peers_tx) {
@@ -142,15 +142,7 @@ pub fn get_known_contacts(service_discovery: &ServiceDiscovery<StaticContactInfo
                         .unwrap_or_else(|_| vec![]));
 
     // Get further contacts from config file - contains seed nodes
-    let config = match ::config_handler::read_config_file() {
-        Ok(cfg) => cfg,
-        Err(e) => {
-            debug!("Crust failed to read config file; Error: {:?};", e);
-            try!(::config_handler::create_default_config_file());
-            Config::make_default()
-        }
-    };
-    contacts.extend(config.hard_coded_contacts);
+    contacts.extend(config.hard_coded_contacts.iter().cloned());
 
     // Get contacts from service discovery. Give a sec or so for seek peers to find someone on LAN.
     thread::sleep(Duration::from_secs(1));

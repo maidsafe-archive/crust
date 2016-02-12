@@ -32,6 +32,7 @@ use connection::{RaiiTcpAcceptor, UtpRendezvousConnectMode};
 use udp_listener::RaiiUdpListener;
 use static_contact_info::StaticContactInfo;
 use rand;
+use config_handler::Config;
 use connection::Connection;
 use error::Error;
 use ip::SocketAddrExt;
@@ -102,8 +103,10 @@ pub struct Service {
     our_keys: (PublicKey, SecretKey),
     connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
     mapping_context: Arc<MappingContext>,
-    _raii_udp_listener: Option<RaiiUdpListener>,
-    _raii_tcp_acceptor: Option<RaiiTcpAcceptor>,
+    tcp_acceptor_port: Option<u16>,
+    utp_acceptor_port: Option<u16>,
+    raii_udp_listener: Option<RaiiUdpListener>,
+    raii_tcp_acceptor: Option<RaiiTcpAcceptor>,
 }
 
 impl Service {
@@ -112,14 +115,6 @@ impl Service {
     pub fn new(event_tx: ::CrustEventSender,
                service_discovery_port: u16)
                -> Result<Service, Error> {
-        Service::new_impl(event_tx, service_discovery_port, true, true)
-    }
-
-    fn new_impl(event_tx: ::CrustEventSender,
-                service_discovery_port: u16,
-                use_static_tcp_listener: bool,
-                use_static_udp_listener: bool)
-                -> Result<Service, Error> {
         sodiumoxide::init();
 
         let our_keys = box_::gen_keypair();
@@ -136,42 +131,24 @@ impl Service {
         let service_discovery = try!(ServiceDiscovery::new_with_generator(service_discovery_port,
                                                                           generator));
 
+        let config = match ::config_handler::read_config_file() {
+            Ok(cfg) => cfg,
+            Err(e) => {
+                debug!("Crust failed to read config file; Error: {:?};", e);
+                try!(::config_handler::create_default_config_file());
+                Config::make_default()
+            }
+        };
         // Form initial peer contact infos - these will also contain echo-service addrs.
-        let bootstrap_contacts = try!(bootstrap::get_known_contacts(&service_discovery));
+        let bootstrap_contacts = try!(bootstrap::get_known_contacts(&service_discovery, &config));
         let peer_contact_infos = Arc::new(Mutex::new(bootstrap_contacts));
 
         let connection_map = Arc::new(Mutex::new(HashMap::new()));
-
-        // Start the TCP Acceptor
-        let raii_tcp_acceptor = if use_static_tcp_listener {
-            Some(try!(connection::start_tcp_accept(0,
-                                                   static_contact_info.clone(),
-                                                   our_keys.0.clone(),
-                                                   peer_contact_infos.clone(),
-                                                   event_tx.clone(),
-                                                   connection_map.clone())))
-        } else {
-            None
-        };
 
         let mapping_context = try!(MappingContext::new().result_discard()
                                    .or(Err(io::Error::new(io::ErrorKind::Other,
                                                           "Failed to create MappingContext"))));
         let mapping_context = Arc::new(mapping_context);
-
-        // Start the UDP Listener
-        // [TODO]: we should find the exteranl address and if we are directly acessabel here for all listerners. Also listen on ip4 and 6 for all protocols - 2016-02-10 11:28pm
-        let udp_listener = if use_static_udp_listener {
-            Some(try!(RaiiUdpListener::new(0,
-                                           static_contact_info.clone(),
-                                           our_keys.0.clone(),
-                                           peer_contact_infos.clone(),
-                                           event_tx.clone(),
-                                           connection_map.clone(),
-                                           mapping_context.clone())))
-        } else {
-            None
-        };
 
         let bootstrap = RaiiBootstrap::new(static_contact_info.clone(),
                                            peer_contact_infos.clone(),
@@ -189,8 +166,10 @@ impl Service {
             our_keys: our_keys,
             connection_map: connection_map,
             mapping_context: mapping_context,
-            _raii_udp_listener: udp_listener,
-            _raii_tcp_acceptor: raii_tcp_acceptor,
+            tcp_acceptor_port: config.tcp_acceptor_port,
+            utp_acceptor_port: config.utp_acceptor_port,
+            raii_udp_listener: None,
+            raii_tcp_acceptor: None,
         };
 
         Ok(service)
@@ -201,10 +180,38 @@ impl Service {
         self.bootstrap.stop();
     }
 
-    /// Enable or Disable listening to peers trying to find us on local lan via service discovery.
-    /// The return value indicates successful registration of the request.
-    pub fn set_listen_for_peers(&self, listen: bool) -> bool {
-        self.service_discovery.set_listen_for_peers(listen)
+    /// Starts accepting TCP connections.
+    pub fn start_listening_tcp(&mut self) -> io::Result<()> {
+        // Start the TCP Acceptor
+        self.raii_tcp_acceptor = Some(try!(connection::start_tcp_accept(self.tcp_acceptor_port
+                                                                            .unwrap_or(0),
+                                                   self.static_contact_info.clone(),
+                                                   self.our_keys.0.clone(),
+                                                   self.peer_contact_infos.clone(),
+                                                   self.event_tx.clone(),
+                                                   self.connection_map.clone())));
+        Ok(())
+    }
+
+    /// Starts accepting uTP connections.
+    pub fn start_listening_utp(&mut self) -> io::Result<()> {
+        // Start the UDP Listener
+        // [TODO]: we should find the exteranl address and if we are directly acessabel here for all listerners. Also listen on ip4 and 6 for all protocols - 2016-02-10 11:28pm
+        self.raii_udp_listener = Some(try!(RaiiUdpListener::new(self.utp_acceptor_port.unwrap_or(0),
+                                           self.static_contact_info.clone(),
+                                           self.our_keys.0.clone(),
+                                           self.peer_contact_infos.clone(),
+                                           self.event_tx.clone(),
+                                           self.connection_map.clone(),
+                                           self.mapping_context.clone())));
+        Ok(())
+    }
+
+    /// Starts listening for beacon broadcasts.
+    pub fn start_service_discovery(&mut self) {
+        if !self.service_discovery.set_listen_for_peers(true) {
+            error!("Failed to start listening for peers.");
+        }
     }
 
     /// Get the hole punch servers addresses of nodes that we're connected to ordered by how likely
@@ -393,7 +400,13 @@ mod test {
         let (event_sender_0, category_rx_0, event_rx_0) = get_event_sender();
         let (event_sender_1, category_rx_1, event_rx_1) = get_event_sender();
 
-        let service_0 = unwrap_result!(Service::new_impl(event_sender_0, port, use_tcp, use_udp));
+        let mut service_0 = unwrap_result!(Service::new(event_sender_0, port));
+        if use_tcp {
+            unwrap_result!(service_0.start_listening_tcp());
+        }
+        if use_udp {
+            unwrap_result!(service_0.start_listening_utp());
+        }
         // let service_0 finish bootstrap - since it is the zero state, it should not find any peer
         // to bootstrap
         {
@@ -403,9 +416,16 @@ mod test {
                 _ => panic!("Received unexpected event: {:?}", event_rxd),
             }
         }
-        assert!(service_0.set_listen_for_peers(true));
+        service_0.start_service_discovery();
 
-        let service_1 = unwrap_result!(Service::new_impl(event_sender_1, port, use_tcp, use_udp));
+        let mut service_1 = unwrap_result!(Service::new(event_sender_1, port));
+        if use_tcp {
+            unwrap_result!(service_1.start_listening_tcp());
+        }
+        if use_udp {
+            unwrap_result!(service_1.start_listening_utp());
+        }
+
         // let service_1 finish bootstrap - it should bootstrap off service_0
         let id_0 = {
             let event_rxd = unwrap_result!(event_rx_1.recv());
@@ -507,7 +527,7 @@ mod test {
         let (event_sender_0, category_rx_0, event_rx_0) = get_event_sender();
         let (event_sender_1, category_rx_1, event_rx_1) = get_event_sender();
 
-        let mut service_0 = unwrap_result!(Service::new_impl(event_sender_0, 1234, false, false));
+        let mut service_0 = unwrap_result!(Service::new(event_sender_0, 1234));
         // let service_0 finish bootstrap - since it is the zero state, it should not find any peer
         // to bootstrap
         {
@@ -518,7 +538,7 @@ mod test {
             }
         }
 
-        let mut service_1 = unwrap_result!(Service::new_impl(event_sender_1, 1234, false, false));
+        let mut service_1 = unwrap_result!(Service::new(event_sender_1, 1234));
         // let service_0 finish bootstrap - since it is the zero state, it should not find any peer
         // to bootstrap
         {

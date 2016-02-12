@@ -25,6 +25,7 @@ use std::net::TcpStream;
 use rustc_serialize::Decodable;
 use utp_connections::UtpWrapper;
 use maidsafe_utilities::serialisation::serialise;
+use socket_addr::SocketAddr;
 use sodiumoxide::crypto::box_::PublicKey;
 
 pub struct RaiiSender(pub mpsc::Sender<WriteEvent>);
@@ -77,6 +78,8 @@ impl Receiver {
 pub enum CrustMsg {
     BootstrapRequest(PublicKey),
     BootstrapResponse(PublicKey),
+    ExternalEndpointRequest,
+    ExternalEndpointResponse(SocketAddr),
     Connect(PublicKey),
     Message(Vec<u8>), // encrypted data
 }
