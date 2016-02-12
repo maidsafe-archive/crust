@@ -6,6 +6,7 @@ use std::io::{Read, ErrorKind};
 use std::io;
 use std::net::SocketAddr;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
+use maidsafe_utilities::serialisation::{deserialise, serialise};
 use event::WriteEvent;
 
 const CHECK_FOR_NEW_WRITES_INTERVAL_MS: u64 = 50;
@@ -44,7 +45,8 @@ impl UtpWrapper {
                                 // before we try to read again.
                                 loop {
                                     match output_rx.try_recv() {
-                                        Ok(WriteEvent::Write(data)) => {
+                                        Ok(WriteEvent::Write(msg)) => {
+                                            let data = unwrap_result!(serialise(&msg));
                                             if socket.send_to(&data).is_err() {
                                                 break 'outer;
                                             }

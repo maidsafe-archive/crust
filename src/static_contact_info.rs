@@ -23,8 +23,6 @@ use rustc_serialize::{Encodable, Encoder, Decodable, Decoder};
 /// This struct contains information needed to Bootstrap and for echo-server services
 #[derive(RustcEncodable, RustcDecodable, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct StaticContactInfo {
-    /// PublicKey to uniquely identify this crust peer
-    pub pub_key: PublicKey,
     /// This will contain both local and global addresses. Local addresses will be useful on LAN
     /// when someone wants to bootstrap off us and we haven't yet obtained our global address. In
     /// that case the list will contain only the local addresses that the process calling
@@ -36,5 +34,7 @@ pub struct StaticContactInfo {
     /// In this case the peer would ask for a new UDP socket address to connect to from one of the
     /// following listeners. Since this is a rare edge case we do not cater to it and have only
     /// global addresses populated for UDP.
-    pub udp_listeners: Vec<SocketAddr>,
+    pub utp_custom_listeners: Vec<SocketAddr>,
+    /// Mapper server addresses
+    pub mapper_servers: Vec<SocketAddr>,
 }

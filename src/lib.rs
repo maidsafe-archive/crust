@@ -64,6 +64,7 @@ extern crate service_discovery;
 
 #[cfg(target_family = "unix")]
 extern crate libc;
+extern crate nat_traversal;
 
 /// Crust Observers will be informed of crust events on this
 pub type CrustEventSender = ::maidsafe_utilities::event_sender::MaidSafeObserver<Event>;
@@ -91,8 +92,6 @@ mod sender_receiver;
 mod static_contact_info;
 mod utp_wrapper;
 mod event;
-mod hole_punching;
-mod periodic_sender;
 mod socket_utils;
 mod ip_info;
 mod peer_id;

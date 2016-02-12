@@ -23,6 +23,7 @@ use std::net::UdpSocket;
 use socket_addr::SocketAddr;
 use std::io;
 use static_contact_info::StaticContactInfo;
+use sender_receiver::CrustMsg;
 
 // This is necessary to gracefully exit the threads. In current design, there is no control over
 // the network reader threads - they infinitely block. So this workaround will use the writer
@@ -30,7 +31,7 @@ use static_contact_info::StaticContactInfo;
 // the future.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum WriteEvent {
-    Write(Vec<u8>),
+    Write(CrustMsg),
     Shutdown,
 }
 
@@ -41,7 +42,9 @@ pub enum Event {
     /// Invoked when a new message is received.  Passes the message.
     NewMessage(PeerId, Vec<u8>),
     /// Invoked when we get a bootstrap connection to a new peer.
-    NewBootstrapPeer(PeerId),
+    BootstrapConnect(PeerId),
+    /// Invoked when a bootstrap peer connects to us
+    BootstrapAccept(PeerId),
     /// Invoked when a connection to a new peer is established.
     NewPeer(io::Result<()>, PeerId),
     /// Invoked when a peer is lost.
