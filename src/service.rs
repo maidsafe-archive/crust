@@ -479,7 +479,7 @@ mod test {
 
         // service_0 should have received service_1's connection bootstrap connection by now
         let id_1 = match unwrap_result!(event_rx_0.recv()) {
-            Event::NewPeer(Ok(()), their_id) => their_id,
+            Event::BootstrapAccept(their_id) => their_id,
             _ => panic!("0 Should have got a new connection from 1."),
         };
 
