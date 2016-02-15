@@ -124,7 +124,6 @@ impl Debug for RaiiTcpAcceptor {
 }
 
 pub fn connect(peer_contact: StaticContactInfo,
-               peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
                our_contact_info: Arc<Mutex<StaticContactInfo>>,
                our_public_key: PublicKey,
                event_tx: ::CrustEventSender,
@@ -144,12 +143,6 @@ pub fn connect(peer_contact: StaticContactInfo,
         }
     }
 
-    let udp_helper_nodes: Vec<SocketAddr> = {
-        let peer_contact_info = unwrap_result!(peer_contact_infos.lock());
-        peer_contact_info.iter().flat_map(|ci| ci.mapper_servers.iter().cloned()).collect()
-    };
-
-    mc.add_simple_servers(udp_helper_nodes);
     let (udp_socket, (our_priv_info, our_pub_info)) = {
         match MappedUdpSocket::new(mc).result_discard() {
             Ok(MappedUdpSocket { socket, endpoints }) => {

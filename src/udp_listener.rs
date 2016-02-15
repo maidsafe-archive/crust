@@ -53,7 +53,6 @@ impl RaiiUdpListener {
     pub fn new(port: u16,
                our_contact_info: Arc<Mutex<StaticContactInfo>>,
                our_public_key: PublicKey,
-               peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
                event_tx: ::CrustEventSender,
                connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
                mc: Arc<MappingContext>)
@@ -68,9 +67,6 @@ impl RaiiUdpListener {
         // TODO This will be very slow for production
         // Ask others for our UDP external addresses as they see us. No need to filter out the
         // Local addresses as they will be used by processes in LAN where TCP is disallowed.
-        for peer_contact_info in &*unwrap_result!(peer_contact_infos.lock()) {
-            mc.add_simple_servers(peer_contact_info.mapper_servers.clone());
-        }
         let mut addrs = Vec::new();
         if let Ok(MappedUdpSocket { endpoints, socket })
             = MappedUdpSocket::map(try!(udp_socket.try_clone()), &mc).result_discard() {
@@ -86,7 +82,6 @@ impl RaiiUdpListener {
                       our_public_key,
                       udp_socket,
                       event_tx,
-                      peer_contact_infos,
                       cloned_stop_flag,
                       connection_map,
                       mc);
@@ -102,7 +97,6 @@ impl RaiiUdpListener {
            our_public_key: PublicKey,
            udp_socket: UdpSocket,
            event_tx: ::CrustEventSender,
-           peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
            stop_flag: Arc<AtomicBool>,
            connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
            mc: Arc<MappingContext>) {
@@ -117,7 +111,6 @@ impl RaiiUdpListener {
                                                     &our_public_key,
                                                     peer_addr,
                                                     &event_tx,
-                                                    &peer_contact_infos,
                                                     connection_map.clone(),
                                                     &mc);
                 } else if let Ok(msg) = deserialise::<ListenerResponse>(&read_buf[..bytes_read]) {
@@ -126,7 +119,7 @@ impl RaiiUdpListener {
                                                      &udp_socket,
                                                      peer_addr,
                                                      &event_tx,
-                                                     &peer_contact_infos);
+                                                     &mc);
                 }
             }
         }
@@ -138,17 +131,11 @@ impl RaiiUdpListener {
                       our_public_key: &PublicKey,
                       peer_addr: net::SocketAddr,
                       event_tx: &::CrustEventSender,
-                      peer_contact_infos: &Arc<Mutex<Vec<StaticContactInfo>>>,
                       connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
                       mc: &MappingContext) {
         match msg {
             ListenerRequest::Connect { our_info, pub_key } => {
                 let their_info = our_info;
-                let echo_servers = unwrap_result!(peer_contact_infos.lock())
-                                       .iter()
-                                       .flat_map(|tci| tci.mapper_servers.iter().cloned())
-                    .collect::<Vec<_>>();
-                mc.add_simple_servers(echo_servers);
                 let MappedUdpSocket { socket, endpoints } = {
                     let cloned_udp_socket = match udp_socket.try_clone() {
                         Ok(s) => s,
@@ -209,7 +196,7 @@ impl RaiiUdpListener {
                        _udp_socket: &UdpSocket,
                        _peer_addr: net::SocketAddr,
                        _event_tx: &::CrustEventSender,
-                       _peer_contact_infos: &Arc<Mutex<Vec<StaticContactInfo>>>) {
+                       _mc: &MappingContext) {
         // This is currently unimplemented as RaiiUdpListener should not have made
         // any request - it is supposed to get requests, not make one
         // match _msg {

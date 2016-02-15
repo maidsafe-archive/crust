@@ -140,15 +140,18 @@ impl Service {
                 Config::make_default()
             }
         };
+        let mapping_context = try!(MappingContext::new().result_discard()
+                                   .or(Err(io::Error::new(io::ErrorKind::Other,
+                                                          "Failed to create MappingContext"))));
         // Form initial peer contact infos - these will also contain echo-service addrs.
         let bootstrap_contacts = try!(bootstrap::get_known_contacts(&service_discovery, &config));
+        for peer_contact_info in bootstrap_contacts.iter() {
+            mapping_context.add_simple_servers(peer_contact_info.mapper_servers.clone());
+        }
         let peer_contact_infos = Arc::new(Mutex::new(bootstrap_contacts));
 
         let connection_map = Arc::new(Mutex::new(HashMap::new()));
 
-        let mapping_context = try!(MappingContext::new().result_discard()
-                                   .or(Err(io::Error::new(io::ErrorKind::Other,
-                                                          "Failed to create MappingContext"))));
         mapping_context.add_simple_servers(config.mapper_servers);
         let mapping_context = Arc::new(mapping_context);
 
@@ -204,7 +207,6 @@ impl Service {
         self.raii_udp_listener = Some(try!(RaiiUdpListener::new(self.utp_acceptor_port.unwrap_or(0),
                                            self.static_contact_info.clone(),
                                            self.our_keys.0.clone(),
-                                           self.peer_contact_infos.clone(),
                                            self.event_tx.clone(),
                                            self.connection_map.clone(),
                                            self.mapping_context.clone())));
