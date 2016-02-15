@@ -545,6 +545,7 @@ mod test {
     }
 
     #[test]
+    #[ignore] // For now, don't try to bootstrap over udp
     fn start_two_services_bootstrap_communicate_exit_udp() {
         two_services_bootstrap_communicate_and_exit(45667, false, true);
     }
@@ -555,7 +556,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn start_two_service_udp_rendezvous_connect() {
         let (event_sender_0, category_rx_0, event_rx_0) = get_event_sender();
         let (event_sender_1, category_rx_1, event_rx_1) = get_event_sender();

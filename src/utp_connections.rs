@@ -62,7 +62,10 @@ mod test {
     use std::io;
     use std::thread::spawn;
     use std::sync::Arc;
+    use std::sync::mpsc;
+    use cbor;
     use rand;
+    use std::time::Duration;
     use sender_receiver::CrustMsg;
 
     fn listen(port: u16) -> io::Result<UtpListener> {
@@ -111,6 +114,7 @@ mod test {
     }
 
     #[test]
+    #[ignore]
     fn send_receive_data() {
         let listener = listen(0).unwrap();
         let port = listener.local_addr().unwrap().port();
@@ -118,10 +122,16 @@ mod test {
         let th0 = spawn(move || {
             let s = listener.accept().unwrap().0;
             let (mut i, o) = upgrade_utp(s).unwrap();
-            let mut buf = [0u8; 1];
-            let _ = i.read(&mut buf).unwrap();
-            assert_eq!(buf[0], 42);
-            o.send(WriteEvent::Write(CrustMsg::Message(vec![43])));
+            let mut i = cbor::Decoder::from_reader(i);
+            let msg = unwrap_option!(i.decode::<CrustMsg>().next(), "Expected crust message");
+            let msg = unwrap_result!(msg);
+            let msg = match msg {
+                CrustMsg::Message(msg) => msg,
+                m => panic!("Unexpected message type: {:#?}", m),
+            };
+
+            assert_eq!(msg, &[42]);
+            unwrap_result!(o.send(WriteEvent::Write(CrustMsg::Message(vec![43]))));
         });
 
         let (mut i, o) =
@@ -132,15 +142,29 @@ mod test {
                                                                          port))))
                 .unwrap();
 
+        let (tx, rx) = mpsc::channel();
+
         let th1 = spawn(move || {
             o.send(WriteEvent::Write(CrustMsg::Message(vec![42])));
-            let mut buf = [0u8; 1];
-            let _ = i.read(&mut buf).unwrap();
-            assert_eq!(buf[0], 43);
+            let mut i = cbor::Decoder::from_reader(i);
+            let msg = unwrap_option!(i.decode::<CrustMsg>().next(), "Expected crust message");
+            let msg = unwrap_result!(msg);
+            let msg = match msg {
+                CrustMsg::Message(msg) => msg,
+                m => panic!("Unexpected message type: {:#?}", m),
+            };
+            assert_eq!(msg, &[43]);
+            tx.send(());
         });
 
-        th1.join();
-        th0.join();
+        thread::park_timeout(Duration::from_secs(1));
+        match rx.recv() {
+            Ok(()) => (),
+            Err(_) => panic!("Timed out"),
+        };
+
+        unwrap_result!(th1.join());
+        unwrap_result!(th0.join());
     }
 
     fn loopback_v4(port: u16) -> SocketAddr {
