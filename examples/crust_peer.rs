@@ -45,7 +45,6 @@ extern crate docopt;
 extern crate rand;
 extern crate term;
 extern crate time;
-extern crate sodiumoxide;
 extern crate cbor;
 
 use docopt::Docopt;
@@ -64,10 +63,9 @@ use std::time::Duration;
 use std::collections::{BTreeMap, HashMap};
 use std::fs::File;
 
-use crust::{Service, Protocol, Endpoint, Connection, ConnectionInfoResult,
-            SocketAddr, OurConnectionInfo, TheirConnectionInfo};
-
-use sodiumoxide::crypto::sign::ed25519::PublicKey;
+use crust::{Service, Protocol, Endpoint, ConnectionInfoResult,
+            SocketAddr, OurConnectionInfo, TheirConnectionInfo,
+            PeerId};
 
 static USAGE: &'static str = "
 Usage:
@@ -135,13 +133,14 @@ fn generate_random_vec_u8(size: usize) -> Vec<u8> {
 ///
 /// /////////////////////////////////////////////////////////////////////////////
 struct Network {
-    nodes: HashMap<PublicKey, Connection>,
+    nodes: HashMap<usize, PeerId>,
     our_contact_infos: BTreeMap<u32, String>,
     ready_contact_infos: HashMap<String, OurConnectionInfo>,
     performance_start: time::SteadyTime,
     performance_interval: time::Duration,
     received_msgs: u32,
     received_bytes: usize,
+    peer_index: usize,
 }
 
 // simple "routing table" without any structure
@@ -155,24 +154,35 @@ impl Network {
             performance_interval: time::Duration::seconds(10),
             received_msgs: 0,
             received_bytes: 0,
+            peer_index: 0,
         }
+    }
+
+    pub fn next_peer_index(&mut self) -> usize {
+        let ret = self.peer_index;
+        self.peer_index += 1;
+        ret
     }
 
     pub fn print_connected_nodes(&self) {
         println!("Node count: {}", self.nodes.len());
-        for (i, (id, node)) in self.nodes.iter().enumerate() {
+        for (i, (id, _node)) in self.nodes.iter().enumerate() {
+            /*
+             * TODO(canndrew): put this back
             let status = if !node.is_closed() {
                 "Connected   "
             } else {
                 "Disconnected"
             };
+            */
 
-            println!("    [{}] {} {:?}", i, status, id);
+            println!("    [{}] {:?}", i, id);
         }
 
         println!("");
     }
 
+    /*
     pub fn remove_disconnected_nodes(&mut self) {
         let to_remove = self.nodes.iter().filter_map(|(id, node)| {
             if node.is_closed() {
@@ -185,9 +195,10 @@ impl Network {
             let _ = self.nodes.remove(&id);
         }
     }
+    */
 
-    pub fn get_mut(&mut self, n: usize) -> Option<&mut Connection> {
-        self.nodes.iter_mut().skip(n).next().map(|(_, c)| c)
+    pub fn get_peer_id(&self, n: usize) -> Option<&PeerId> {
+        self.nodes.get(&n)
     }
 
     pub fn record_received(&mut self, msg_size: usize) {
@@ -310,13 +321,13 @@ fn main() {
                 ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent => {
                     if let Ok(event) = channel_receiver.try_recv() {
                         match event {
-                            crust::Event::NewMessage(connection, bytes) => {
+                            crust::Event::NewMessage(peer_id, bytes) => {
                                 stdout_copy = cyan_foreground(stdout_copy);
                                 let message_length = bytes.len();
                                 let mut network = network2.lock().unwrap();
                                 network.record_received(message_length);
                                 println!("\nReceived from {:?} message: {}",
-                                         connection,
+                                         peer_id,
                                          String::from_utf8(bytes)
                                          .unwrap_or(format!("non-UTF-8 message of {} bytes",
                                                             message_length)));
@@ -343,25 +354,39 @@ fn main() {
                                 println!("\n\"{}\" with our connection info is ready",
                                          our_file);
                             },
-                            crust::Event::NewBootstrapConnection{ connection, their_pub_key } |
-                            crust::Event::NewConnection{ connection: Ok(connection), their_pub_key } => {
+                            crust::Event::BootstrapConnect(peer_id) |
+                            crust::Event::BootstrapAccept(peer_id) | 
+                            crust::Event::NewPeer(Ok(()), peer_id) => {
                                 stdout_copy = cyan_foreground(stdout_copy);
-                                println!("\nConnected to peer at {:?}", their_pub_key);
+                                println!("\nConnected to peer {:?}", peer_id);
                                 let mut network = network2.lock().unwrap();
-                                let _ = network.nodes.insert(their_pub_key.clone(), connection);
+                                let peer_index = network.next_peer_index();
+                                let _ = network.nodes.insert(peer_index, peer_id);
                                 network.print_connected_nodes();
                                 if !bootstrapped {
                                     bootstrapped = true;
-                                    let _ = bs_sender.send(their_pub_key);
+                                    let _ = bs_sender.send(peer_index);
                                 }
                             }
-                            crust::Event::LostConnection(pub_key) => {
+                            crust::Event::LostPeer(peer_id) => {
                                 stdout_copy = yellow_foreground(stdout_copy);
-                                println!("\nLost connection to peer at {:?}",
-                                         pub_key);
+                                println!("\nLost connection to peer {:?}",
+                                         peer_id);
                                 stdout_copy = cyan_foreground(stdout_copy);
+                                let mut index = None;
+                                {
+                                    let network = network2.lock().unwrap();
+                                    for (i, id) in network.nodes.iter() {
+                                        if id == &peer_id {
+                                            index = Some(*i);
+                                            break;
+                                        }
+                                    }
+                                }
                                 let mut network = network2.lock().unwrap();
-                                let _ = network.nodes.remove(&pub_key);
+                                if let Some(index) = index {
+                                    let _ = network.nodes.remove(&index).unwrap();
+                                };
                                 network.print_connected_nodes();
                             }
                             e => {
@@ -392,13 +417,15 @@ fn main() {
         let tx = on_time_out(Duration::from_secs(5), running_speed_test);
 
         // Block until we get one bootstrap connection
-        let connected_peer = bs_receiver.recv().unwrap_or_else(|e| {
+        let peer_index = bs_receiver.recv().unwrap_or_else(|e| {
             println!("CrustNode event handler closed; error : {}", e);
             std::process::exit(6);
         });
+        let network = network.lock().unwrap();
+        let peer_id = network.get_peer_id(peer_index).unwrap();
 
         stdout = green_foreground(stdout);
-        println!("Bootstrapped to {:?}", connected_peer);
+        println!("Bootstrapped to {:?}", peer_id);
         let _ = reset_foreground(stdout);
 
         let _ = tx.send(true); // stop timer with no error messages
@@ -407,18 +434,15 @@ fn main() {
         println!("");
 
         let speed = args.flag_speed.unwrap();  // Safe due to `running_speed_test` == true
-        let peer = connected_peer;
         let mut rng = rand::thread_rng();
-        let mut network = network.lock().unwrap();
         loop {
             let length = rng.gen_range(50, speed);
             let times = cmp::max(1, speed / length);
             let sleep_time = cmp::max(1, 1000 / times);
             for _ in 0..times {
-                network.nodes.get_mut(&peer).unwrap()
-                    .send(&generate_random_vec_u8(length as usize)[..]).unwrap();
+                service.send(peer_id, generate_random_vec_u8(length as usize)).unwrap();
                 debug!("Sent a message with length of {} bytes to {:?}",
-                       length, peer);
+                       length, peer_id);
                 std::thread::sleep(Duration::from_millis(sleep_time));
             }
         }
@@ -459,30 +483,33 @@ fn main() {
                     println!("Connecting to {:?}", their_info);
                     service.connect(our_info, their_info);
                 }
-                UserCommand::Send(peer, message) => {
-                    let mut network = network.lock().unwrap();
-                    match network.get_mut(peer) {
-                        Some(ref mut node) => {
-                            node.send(&message.into_bytes()[..]).unwrap()
+                UserCommand::Send(peer_index, message) => {
+                    let network = network.lock().unwrap();
+                    match network.get_peer_id(peer_index) {
+                        Some(ref mut peer_id) => {
+                            service.send(peer_id, message.into_bytes()).unwrap()
                         }
                         None => println!("Invalid connection #"),
                     }
                 }
                 UserCommand::SendAll(message) => {
                     let mut network = network.lock().unwrap();
-                    for (_, node) in network.nodes.iter_mut() {
-                        node.send(&message.clone().into_bytes()[..]).unwrap();
+                    let msg = message.into_bytes();
+                    for (_, peer_id) in network.nodes.iter_mut() {
+                        service.send(peer_id, msg.clone()).unwrap();
                     }
                 }
                 UserCommand::List => {
                     let network = network.lock().unwrap();
                     network.print_connected_nodes();
                 }
+                /*
                 UserCommand::Clean => {
                     let mut network = network.lock().unwrap();
                     network.remove_disconnected_nodes();
                     network.print_connected_nodes();
                 }
+                */
                 UserCommand::Stop => {
                     break;
                 }
@@ -521,7 +548,6 @@ fn print_usage() {
     send <connection-id> <message>                - Send a string to the given connection
     send-all <message>                            - Send a string to all connections
     list                                          - List existing connections and UDP sockets
-    clean                                         - Remove disconnected connections from the list
     stop                                          - Exit the app
     help                                          - Print this help
 
@@ -540,7 +566,7 @@ struct CliArgs {
     cmd_send: bool,
     cmd_send_all: bool,
     cmd_list: bool,
-    cmd_clean: bool,
+    //cmd_clean: bool,
     cmd_stop: bool,
     cmd_help: bool,
     arg_peer: Option<usize>,
@@ -557,7 +583,7 @@ enum UserCommand {
     Send(usize, String),
     SendAll(String),
     List,
-    Clean,
+    //Clean,
 }
 
 fn parse_user_command(cmd: String) -> Option<UserCommand> {
@@ -596,9 +622,9 @@ fn parse_user_command(cmd: String) -> Option<UserCommand> {
         Some(UserCommand::PrepareConnectionInfo(our_file))
     } else if args.cmd_list {
         Some(UserCommand::List)
-    } else if args.cmd_clean {
+    } /* else if args.cmd_clean {
         Some(UserCommand::Clean)
-    } else if args.cmd_stop {
+    } */ else if args.cmd_stop {
         Some(UserCommand::Stop)
     } else if args.cmd_help {
         print_usage();
