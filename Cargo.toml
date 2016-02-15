@@ -56,7 +56,6 @@ test = false
 bench = false
 name = "crust_peer"
 path = "examples/crust_peer.rs"
-test = false
 
 [[example]]
 bench = false
