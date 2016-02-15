@@ -372,10 +372,16 @@ pub fn start_tcp_accept(port: u16,
 
             let mut network_rx = Receiver::Tcp(cbor::Decoder::from_reader(network_input));
 
+            let mut cm = unwrap_result!(connection_map.lock()); // need to lock before sending the event
             let their_id = match network_rx.receive() {
                 Ok(CrustMsg::BootstrapRequest(k)) => {
                     writer.send(WriteEvent::Write(CrustMsg::BootstrapResponse(our_public_key)));
-                    peer_id::new_id(k)
+                    let peer_id = peer_id::new_id(k);
+                    let event = Event::BootstrapAccept(peer_id);
+                    if event_tx.send(event).is_err() {
+                        break;
+                    }
+                    peer_id
                 },
                 Ok(CrustMsg::Connect(k)) => {
                     let peer_id = peer_id::new_id(k);
@@ -383,8 +389,12 @@ pub fn start_tcp_accept(port: u16,
                         error!("Unexpected new peer: {:?}.", peer_id);
                         continue;
                     }
+                    let event = Event::NewPeer(Ok(()), peer_id);
+                    if event_tx.send(event).is_err() {
+                        break;
+                    }
                     peer_id
-                }
+                },
                 Ok(m) => {
                     error!("Unexpected crust msg on tcp accept");
                     continue;
@@ -417,15 +427,9 @@ pub fn start_tcp_accept(port: u16,
                 closed: closed,
             };
 
-            unwrap_result!(connection_map.lock())
-                .entry(their_id)
-                .or_insert(Vec::new())
-                .push(connection);
-            let event = Event::NewPeer(Ok(()), their_id);
-
-            if event_tx.send(event).is_err() {
-                break;
-            }
+            cm.entry(their_id)
+              .or_insert(Vec::new())
+              .push(connection);
         }
     }));
 
