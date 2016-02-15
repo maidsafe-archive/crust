@@ -98,7 +98,6 @@ impl RaiiBootstrap {
             // 1st try a TCP connect
             // 2nd try a UDP connection (and upgrade to UTP)
             let connect_result = ::connection::connect(contact,
-                                                       peer_contact_infos.clone(),
                                                        our_contact_info.clone(),
                                                        our_public_key.clone(),
                                                        event_tx.clone(),
