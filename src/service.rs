@@ -149,6 +149,7 @@ impl Service {
         let mapping_context = try!(MappingContext::new().result_discard()
                                    .or(Err(io::Error::new(io::ErrorKind::Other,
                                                           "Failed to create MappingContext"))));
+        mapping_context.add_simple_servers(config.mapper_servers);
         let mapping_context = Arc::new(mapping_context);
 
         let bootstrap = RaiiBootstrap::new(static_contact_info.clone(),
@@ -278,6 +279,10 @@ impl Service {
         let _joiner = thread!("PeerConnectionThread", move || {
             let their_id = their_connection_info.id;
 
+            /*
+             *
+             *  For now, just do utp rendezvous connect
+             *
             // TODO(afck): Retry with delay, until the called connect, too.
             for tcp_addr in their_connection_info.static_contact_info.tcp_acceptors {
                 match connection::connect_tcp_endpoint(tcp_addr,
@@ -297,6 +302,7 @@ impl Service {
                     }
                 }
             };
+            */
 
             let res = PunchedUdpSocket::punch_hole(our_connection_info.udp_socket,
                                                    our_connection_info.priv_info,

@@ -168,7 +168,9 @@ pub fn connect(peer_contact: StaticContactInfo,
     let mut read_buf = [0; 1024];
 
     for udp_addr in peer_contact.utp_custom_listeners {
+        println!("Trying udp addr: {}", udp_addr);
         if udp_socket.send_to(&serialised_connect_req, &*udp_addr).is_err() {
+            println!("Error sending");
             continue;
         }
         match udp_socket.recv_from(&mut read_buf) {
@@ -176,6 +178,7 @@ pub fn connect(peer_contact: StaticContactInfo,
                 match deserialise::<ListenerResponse>(&read_buf[..bytes_rxd]) {
                     Ok(ListenerResponse::Connect { our_info, their_info, pub_key, }) => {
                         if our_info != our_pub_info {
+                            println!("our_info != our_pub_info");
                             continue;
                         }
                         let cloned_udp_socket = try!(udp_socket.try_clone());
@@ -191,16 +194,28 @@ pub fn connect(peer_contact: StaticContactInfo,
                                     event_tx.clone(),
                                     connection_map.clone()) {
                                     Ok(connection) => return Ok(connection),
-                                    Err(_) => continue,
+                                    Err(_) => {
+                                        println!("utp_rendezvous_connect failed");
+                                        continue;
+                                    },
                                 }
                             }
-                            _ => continue,
+                            _ => {
+                                println!("punch_hole failed");
+                                continue;
+                            },
                         }
                     }
-                    _ => continue,
+                    _ => {
+                        println!("deserialising ListenerResponse failed");
+                        continue;
+                    },
                 }
             }
-            Err(_) => continue,
+            Err(_) => {
+                println!("receiving on udp socket failed");
+                continue;
+            },
         }
     }
 
