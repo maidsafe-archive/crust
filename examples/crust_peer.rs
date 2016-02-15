@@ -288,6 +288,14 @@ fn on_time_out(timeout: Duration, flag_speed: bool) -> Sender<bool> {
     tx
 }
 
+fn handle_new_peer(protected_network: Arc<Mutex<Network>>, peer_id: PeerId) -> usize {
+    let mut network = unwrap_result!(protected_network.lock());
+    let peer_index = network.next_peer_index();
+    let _ = network.nodes.insert(peer_index, peer_id);
+    network.print_connected_nodes();
+    peer_index
+}
+
 fn main() {
     ::maidsafe_utilities::log::init(true);
 
@@ -310,6 +318,9 @@ fn main() {
                                                                   crust_event_category,
                                                                   category_tx);
     let mut service = unwrap_result!(Service::new(event_sender, BEACON_PORT));
+    unwrap_result!(service.start_listening_tcp());
+    unwrap_result!(service.start_listening_utp());
+    service.start_service_discovery();
 
     let network = Arc::new(Mutex::new(Network::new()));
     let network2 = network.clone();
@@ -353,22 +364,31 @@ fn main() {
                                 println!("{}", info_json);
                                 let mut network = unwrap_result!(network2.lock());
                                 if let Some(_) = network.our_connection_infos.insert(result_token, info) {
-                                    panic!("Got the sale result_token twice!");
+                                    panic!("Got the same result_token twice!");
                                 };
                             },
-                            crust::Event::BootstrapConnect(peer_id) |
-                            crust::Event::BootstrapAccept(peer_id) | 
-                            crust::Event::NewPeer(Ok(()), peer_id) => {
+                            crust::Event::BootstrapConnect(peer_id) => {
                                 stdout_copy = cyan_foreground(stdout_copy);
-                                println!("\nConnected to peer {:?}", peer_id);
-                                let mut network = unwrap_result!(network2.lock());
-                                let peer_index = network.next_peer_index();
-                                let _ = network.nodes.insert(peer_index, peer_id);
-                                network.print_connected_nodes();
+                                println!("\nBootstrapConnect with peer {:?}", peer_id);
+                                let peer_index = handle_new_peer(network2.clone(), peer_id);
+                                assert!(!bootstrapped);
+                                bootstrapped = true;
+                                let _ = bs_sender.send(peer_index);
+                            },
+                            crust::Event::BootstrapAccept(peer_id) => {
+                                stdout_copy = cyan_foreground(stdout_copy);
+                                println!("\nBootstrapAccept with peer {:?}", peer_id);
+                                let peer_index = handle_new_peer(network2.clone(), peer_id);
                                 if !bootstrapped {
                                     bootstrapped = true;
                                     let _ = bs_sender.send(peer_index);
                                 }
+                            },
+                            crust::Event::NewPeer(Ok(()), peer_id) => {
+                                stdout_copy = cyan_foreground(stdout_copy);
+                                println!("\nConnected to peer {:?}", peer_id);
+                                let _ = handle_new_peer(network2.clone(), peer_id);
+                                assert!(bootstrapped);
                             }
                             crust::Event::LostPeer(peer_id) => {
                                 stdout_copy = yellow_foreground(stdout_copy);
