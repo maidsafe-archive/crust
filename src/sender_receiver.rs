@@ -18,6 +18,7 @@
 use event::WriteEvent;
 
 use cbor;
+use cbor::CborError;
 use std::io;
 use std::sync::mpsc;
 use std::io::BufReader;
@@ -54,17 +55,26 @@ pub enum Receiver {
 
 impl Receiver {
     fn basic_receive<D: Decodable + ::std::fmt::Debug>(&mut self) -> io::Result<D> {
-        let msg = match *self {
-            Receiver::Tcp(ref mut decoder) => decoder.decode::<D>().next(),
-            Receiver::Utp(ref mut decoder) => decoder.decode::<D>().next(),
-        };
-        match msg {
-            Some(Ok(a)) => Ok(a),
-            Some(Err(_)) => {
-                Err(io::Error::new(io::ErrorKind::InvalidData, "Failed to decode CBOR"))
-            }
-            None => {
-                Err(io::Error::new(io::ErrorKind::NotConnected, "Decoder reached end of stream"))
+        loop {
+            let msg = match *self {
+                Receiver::Tcp(ref mut decoder) => decoder.decode::<D>().next(),
+                Receiver::Utp(ref mut decoder) => decoder.decode::<D>().next(),
+            };
+            match msg {
+                Some(Ok(a)) => return Ok(a),
+                Some(Err(CborError::Io(e))) => {
+                    return Err(e)
+                },
+                Some(Err(CborError::Decode(e))) | Some(Err(CborError::AtOffset { kind: e, .. })) => {
+                    warn!("Failed to decode CBOR: {}", e);
+                },
+                Some(Err(CborError::Encode(e))) => panic!("impossible"),
+                Some(Err(CborError::UnexpectedEOF)) => {
+                    return Err(io::Error::new(io::ErrorKind::NotConnected, "Unexpected EOF in stream"))
+                },
+                None => {
+                    return Err(io::Error::new(io::ErrorKind::NotConnected, "Decoder reached end of stream"))
+                }
             }
         }
     }
