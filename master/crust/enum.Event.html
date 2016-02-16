@@ -46,10 +46,11 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-2174' class='srclink' href='../src/crust/event.rs.html#40-53' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-2153' class='srclink' href='../src/crust/event.rs.html#41-56' title='goto source code'>[src]</a></span></h1>
 <pre class='rust enum'>pub enum Event {
     NewMessage(<a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a>, <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;),
-    NewBootstrapPeer(<a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a>),
+    BootstrapConnect(<a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a>),
+    BootstrapAccept(<a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a>),
     NewPeer(<a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;, <a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a>),
     LostPeer(<a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a>),
     BootstrapFinished,
@@ -58,7 +59,8 @@
 of this module.</p>
 </div><h2 class='variants'>Variants</h2>
 <table><tr><td id='variant.NewMessage'><code>NewMessage</code></td><td><div class='docblock'><p>Invoked when a new message is received.  Passes the message.</p>
-</div></td></tr><tr><td id='variant.NewBootstrapPeer'><code>NewBootstrapPeer</code></td><td><div class='docblock'><p>Invoked when we get a bootstrap connection to a new peer.</p>
+</div></td></tr><tr><td id='variant.BootstrapConnect'><code>BootstrapConnect</code></td><td><div class='docblock'><p>Invoked when we get a bootstrap connection to a new peer.</p>
+</div></td></tr><tr><td id='variant.BootstrapAccept'><code>BootstrapAccept</code></td><td><div class='docblock'><p>Invoked when a bootstrap peer connects to us</p>
 </div></td></tr><tr><td id='variant.NewPeer'><code>NewPeer</code></td><td><div class='docblock'><p>Invoked when a connection to a new peer is established.</p>
 </div></td></tr><tr><td id='variant.LostPeer'><code>LostPeer</code></td><td><div class='docblock'><p>Invoked when a peer is lost.</p>
 </div></td></tr><tr><td id='variant.BootstrapFinished'><code>BootstrapFinished</code></td><td><div class='docblock'><p>Raised once the list of bootstrap contacts is exhausted.</p>

@@ -71,6 +71,20 @@
 <span id="28">28</span>
 <span id="29">29</span>
 <span id="30">30</span>
+<span id="31">31</span>
+<span id="32">32</span>
+<span id="33">33</span>
+<span id="34">34</span>
+<span id="35">35</span>
+<span id="36">36</span>
+<span id="37">37</span>
+<span id="38">38</span>
+<span id="39">39</span>
+<span id="40">40</span>
+<span id="41">41</span>
+<span id="42">42</span>
+<span id="43">43</span>
+<span id="44">44</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2016 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -89,11 +103,25 @@
 <span class='comment'>// Please review the Licences for the specific language governing permissions and limitations</span>
 <span class='comment'>// relating to use of the SAFE Network Software.</span>
 
-<span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>crypto</span>::<span class='ident'>box_</span>::<span class='ident'>PublicKey</span>;
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fmt</span>::{<span class='ident'>Debug</span>, <span class='ident'>Formatter</span>, <span class='prelude-ty'>Result</span>};
+<span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>crypto</span>::<span class='ident'>box_</span>::{<span class='ident'>PublicKey</span>, <span class='ident'>PUBLICKEYBYTES</span>};
 
 <span class='doccomment'>/// An identifier of a peer node.</span>
-<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>PartialEq</span>, <span class='ident'>Eq</span>, <span class='ident'>Clone</span>, <span class='ident'>Copy</span>, <span class='ident'>Debug</span>, <span class='ident'>Ord</span>, <span class='ident'>PartialOrd</span>, <span class='ident'>Hash</span>, <span class='ident'>RustcEncodable</span>, <span class='ident'>RustcDecodable</span>)]</span>
+<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>PartialEq</span>, <span class='ident'>Eq</span>, <span class='ident'>Clone</span>, <span class='ident'>Copy</span>, <span class='ident'>Ord</span>, <span class='ident'>PartialOrd</span>, <span class='ident'>Hash</span>, <span class='ident'>RustcEncodable</span>, <span class='ident'>RustcDecodable</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>PeerId</span>(<span class='ident'>PublicKey</span>);
+
+<span class='kw'>impl</span> <span class='ident'>Debug</span> <span class='kw'>for</span> <span class='ident'>PeerId</span> {
+    <span class='kw'>fn</span> <span class='ident'>fmt</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>formatter</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Formatter</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span> {
+        <span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>formatter</span>,
+               <span class='string'>&quot;PeerId({:02x}{:02x}{:02x}..{:02x}{:02x}{:02x})&quot;</span>,
+                (<span class='self'>self</span>.<span class='number'>0</span>).<span class='number'>0</span>[<span class='number'>0</span>],
+                (<span class='self'>self</span>.<span class='number'>0</span>).<span class='number'>0</span>[<span class='number'>1</span>],
+                (<span class='self'>self</span>.<span class='number'>0</span>).<span class='number'>0</span>[<span class='number'>2</span>],
+                (<span class='self'>self</span>.<span class='number'>0</span>).<span class='number'>0</span>[<span class='ident'>PUBLICKEYBYTES</span> <span class='op'>-</span> <span class='number'>3</span>],
+                (<span class='self'>self</span>.<span class='number'>0</span>).<span class='number'>0</span>[<span class='ident'>PUBLICKEYBYTES</span> <span class='op'>-</span> <span class='number'>2</span>],
+                (<span class='self'>self</span>.<span class='number'>0</span>).<span class='number'>0</span>[<span class='ident'>PUBLICKEYBYTES</span> <span class='op'>-</span> <span class='number'>1</span>])
+    }
+}
 
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>get_pub_key</span>(<span class='ident'>id</span>: <span class='kw-2'>&amp;</span><span class='ident'>PeerId</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='ident'>PublicKey</span> {
     <span class='kw-2'>&amp;</span><span class='ident'>id</span>.<span class='number'>0</span>

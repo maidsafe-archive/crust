@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-649' class='srclink' href='../src/regex_syntax/lib.rs.html#91-151' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-650' class='srclink' href='../src/regex_syntax/lib.rs.html#94-154' title='goto source code'>[src]</a></span></h1>
 <pre class='rust enum'>pub enum Expr {
     Empty,
     Literal {
@@ -84,8 +84,8 @@
 
                                               <table><tr><td id='variant.Literal.field.chars'><code>chars</code></td><td><div class='docblock'><p>The characters.</p>
 </div></td></tr><tr><td id='variant.Literal.field.casei'><code>casei</code></td><td><div class='docblock'><p>Whether to match case insensitively.</p>
-</div></td></tr></table></td></tr><tr><td id='variant.AnyChar'><code>AnyChar</code></td><td><div class='docblock'><p>Match any character, excluding new line.</p>
-</div></td></tr><tr><td id='variant.AnyCharNoNL'><code>AnyCharNoNL</code></td><td><div class='docblock'><p>Match any character.</p>
+</div></td></tr></table></td></tr><tr><td id='variant.AnyChar'><code>AnyChar</code></td><td><div class='docblock'><p>Match any character.</p>
+</div></td></tr><tr><td id='variant.AnyCharNoNL'><code>AnyCharNoNL</code></td><td><div class='docblock'><p>Match any character, excluding new line.</p>
 </div></td></tr><tr><td id='variant.Class'><code>Class</code></td><td><div class='docblock'><p>A character class.</p>
 </div></td></tr><tr><td id='variant.StartLine'><code>StartLine</code></td><td><div class='docblock'><p>Match the start of a line or beginning of input.</p>
 </div></td></tr><tr><td id='variant.EndLine'><code>EndLine</code></td><td><div class='docblock'><p>Match the end of a line or end of input.</p>
@@ -119,6 +119,12 @@ immediately inside a group expression.</p>
 immediately inside a group expression.</p>
 </div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='enum' href='../regex_syntax/enum.Expr.html' title='regex_syntax::Expr'>Expr</a></code></h3><div class='impl-items'><h4 id='method.parse' class='method'><code>fn <a href='#method.parse' class='fnname'>parse</a>(s: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='type' href='../regex_syntax/type.Result.html' title='regex_syntax::Result'>Result</a>&lt;<a class='enum' href='../regex_syntax/enum.Expr.html' title='regex_syntax::Expr'>Expr</a>&gt;</code></h4>
 <div class='docblock'><p>Parses a string in a regular expression syntax tree.</p>
+</div><h4 id='method.is_anchored_start' class='method'><code>fn <a href='#method.is_anchored_start' class='fnname'>is_anchored_start</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+<div class='docblock'><p>Returns true if and only if the expression is required to match from
+the beginning of text.</p>
+</div><h4 id='method.is_anchored_end' class='method'><code>fn <a href='#method.is_anchored_end' class='fnname'>is_anchored_end</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+<div class='docblock'><p>Returns true if and only if the expression is required to match at the
+end of the text.</p>
 </div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html' title='core::fmt::Display'>Display</a> for <a class='enum' href='../regex_syntax/enum.Expr.html' title='regex_syntax::Expr'>Expr</a></code></h3><div class='docblock'><p>This implementation of <code>Display</code> will write a regular expression from the
 syntax tree. It does not write the original string parsed.</p>
 </div><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html#method.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>

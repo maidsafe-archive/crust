@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/nat_traversal-0.0.1/src/mapped_udp_socket.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/nat_traversal-0.0.3/src/mapped_udp_socket.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>mapped_udp_socket.rs.html -- source</title>
@@ -398,6 +398,19 @@
 <span id="355">355</span>
 <span id="356">356</span>
 <span id="357">357</span>
+<span id="358">358</span>
+<span id="359">359</span>
+<span id="360">360</span>
+<span id="361">361</span>
+<span id="362">362</span>
+<span id="363">363</span>
+<span id="364">364</span>
+<span id="365">365</span>
+<span id="366">366</span>
+<span id="367">367</span>
+<span id="368">368</span>
+<span id="369">369</span>
+<span id="370">370</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2016 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -434,7 +447,7 @@
 <span class='kw'>use</span> <span class='ident'>w_result</span>::{<span class='ident'>WResult</span>, <span class='ident'>WOk</span>, <span class='ident'>WErr</span>};
 
 <span class='kw'>use</span> <span class='ident'>hole_punch_server_addr</span>::<span class='ident'>HolePunchServerAddr</span>;
-<span class='kw'>use</span> <span class='ident'>listener_message</span>::{<span class='ident'>ListenerRequest</span>, <span class='ident'>ListenerResponse</span>};
+<span class='kw'>use</span> <span class='ident'>listener_message</span>;
 <span class='kw'>use</span> <span class='ident'>mapping_context</span>;
 <span class='kw'>use</span> <span class='ident'>mapping_context</span>::<span class='ident'>MappingContext</span>;
 <span class='kw'>use</span> <span class='ident'>mapped_socket_addr</span>::<span class='ident'>MappedSocketAddr</span>;
@@ -455,7 +468,9 @@
     <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>)]</span>
     <span class='kw'>pub</span> <span class='kw'>enum</span> <span class='ident'>MappedUdpSocketMapError</span> {
         <span class='doccomment'>/// Error getting the local address of the socket.</span>
-        <span class='ident'>SocketLocalAddr</span> { <span class='ident'>err</span>: <span class='ident'>io</span>::<span class='ident'>Error</span> } {
+        <span class='ident'>SocketLocalAddr</span> {
+            <span class='ident'>err</span>: <span class='ident'>io</span>::<span class='ident'>Error</span>
+        } {
             <span class='ident'>description</span>(<span class='string'>&quot;Error getting local address of socket \
                          (have you called bind() on the socket?)&quot;</span>)
             <span class='ident'>display</span>(<span class='string'>&quot;Error getting local address of socket. \
@@ -465,13 +480,17 @@
             <span class='ident'>cause</span>(<span class='ident'>err</span>)
         }
         <span class='doccomment'>/// IO error receiving data on the socket.</span>
-        <span class='ident'>RecvError</span> { <span class='ident'>err</span>: <span class='ident'>io</span>::<span class='ident'>Error</span> } {
+        <span class='ident'>RecvError</span> {
+            <span class='ident'>err</span>: <span class='ident'>io</span>::<span class='ident'>Error</span>
+        } {
             <span class='ident'>description</span>(<span class='string'>&quot;IO error receiving data on socket&quot;</span>)
             <span class='ident'>display</span>(<span class='string'>&quot;IO error receiving data on socket: {}&quot;</span>, <span class='ident'>err</span>)
             <span class='ident'>cause</span>(<span class='ident'>err</span>)
         }
         <span class='doccomment'>/// IO error sending data on the socket.</span>
-        <span class='ident'>SendError</span> { <span class='ident'>err</span>: <span class='ident'>io</span>::<span class='ident'>Error</span> } {
+        <span class='ident'>SendError</span> {
+            <span class='ident'>err</span>: <span class='ident'>io</span>::<span class='ident'>Error</span>
+        } {
             <span class='ident'>description</span>(<span class='string'>&quot;IO error sending data on socket&quot;</span>)
             <span class='ident'>display</span>(<span class='string'>&quot;IO error sending data on socket: {}&quot;</span>, <span class='ident'>err</span>)
             <span class='ident'>cause</span>(<span class='ident'>err</span>)
@@ -484,14 +503,17 @@
     <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>)]</span>
     <span class='kw'>pub</span> <span class='kw'>enum</span> <span class='ident'>MappedUdpSocketMapWarning</span> {
         <span class='doccomment'>/// Error searching for IGD gateway</span>
-        <span class='ident'>FindGateway</span> { <span class='ident'>err</span>: <span class='ident'>igd</span>::<span class='ident'>SearchError</span> } {
+        <span class='ident'>FindGateway</span> {
+            <span class='ident'>err</span>: <span class='ident'>igd</span>::<span class='ident'>SearchError</span>
+        } {
             <span class='ident'>description</span>(<span class='string'>&quot;Error searching for IGD gateway&quot;</span>)
             <span class='ident'>display</span>(<span class='string'>&quot;Error searching for IGD gateway. \
                      igd::search_gateway_from_timeout returned an error: {}&quot;</span>,
                      <span class='ident'>err</span>)
             <span class='ident'>cause</span>(<span class='ident'>err</span>)
         }
-        <span class='doccomment'>/// Error mapping external address and port through IGD gateway</span>
+        <span class='doccomment'>/// Error mapping external address and port through IGD gateway. `gateway_addr` is the</span>
+        <span class='doccomment'>/// address of the IGD gateway that we requested a port mapping from.</span>
         <span class='ident'>GetExternalPort</span> {
             <span class='ident'>gateway_addr</span>: <span class='ident'>net</span>::<span class='ident'>SocketAddrV4</span>,
             <span class='ident'>err</span>: <span class='ident'>igd</span>::<span class='ident'>AddAnyPortError</span>,
@@ -511,14 +533,18 @@
     <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>)]</span>
     <span class='kw'>pub</span> <span class='kw'>enum</span> <span class='ident'>MappedUdpSocketNewError</span> {
         <span class='doccomment'>/// Error creating new udp socket bound to 0.0.0.0:0</span>
-        <span class='ident'>CreateSocket</span> { <span class='ident'>err</span>: <span class='ident'>io</span>::<span class='ident'>Error</span> } {
+        <span class='ident'>CreateSocket</span> {
+            <span class='ident'>err</span>: <span class='ident'>io</span>::<span class='ident'>Error</span>
+        } {
             <span class='ident'>description</span>(<span class='string'>&quot;Error creating a new udp socket bound to 0.0.0.0:0&quot;</span>)
             <span class='ident'>display</span>(<span class='string'>&quot;Error creating a new udp socket bound to 0.0.0.0:0. \
                      UdpSocket::bind returned an IO error: {}&quot;</span>, <span class='ident'>err</span>)
             <span class='ident'>cause</span>(<span class='ident'>err</span>)
         }
         <span class='doccomment'>/// Error mapping udp socket.</span>
-        <span class='ident'>MapSocket</span> { <span class='ident'>err</span>: <span class='ident'>MappedUdpSocketMapError</span> } {
+        <span class='ident'>MapSocket</span> {
+            <span class='ident'>err</span>: <span class='ident'>MappedUdpSocketMapError</span>
+        } {
             <span class='ident'>description</span>(<span class='string'>&quot;Error mapping udp socket&quot;</span>)
             <span class='ident'>display</span>(<span class='string'>&quot;Error mapping udp socket. MappedUdpSocket::map returned \
                      an error: {}&quot;</span>, <span class='ident'>err</span>)
@@ -651,7 +677,7 @@
 
         <span class='kw'>const</span> <span class='ident'>MAX_DATAGRAM_SIZE</span>: <span class='ident'>usize</span> <span class='op'>=</span> <span class='number'>256</span>;
 
-        <span class='kw'>let</span> <span class='ident'>send_data</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>serialise</span>(<span class='kw-2'>&amp;</span><span class='ident'>ListenerRequest</span>::<span class='ident'>EchoExternalAddr</span>));
+        <span class='kw'>let</span> <span class='ident'>send_data</span> <span class='op'>=</span> <span class='ident'>listener_message</span>::<span class='ident'>REQUEST_MAGIC_CONSTANT</span>;
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>simple_servers</span>: <span class='ident'>HashSet</span><span class='op'>&lt;</span><span class='ident'>SocketAddr</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>mapping_context</span>::<span class='ident'>simple_servers</span>(<span class='kw-2'>&amp;</span><span class='ident'>mc</span>)
                                                                       .<span class='ident'>into_iter</span>().<span class='ident'>collect</span>();
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>deadline</span> <span class='op'>=</span> <span class='ident'>time</span>::<span class='ident'>SteadyTime</span>::<span class='ident'>now</span>();
@@ -681,8 +707,8 @@
                     <span class='prelude-val'>Ok</span>(<span class='prelude-val'>None</span>) <span class='op'>=&gt;</span> <span class='kw'>break</span>,
                     <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='ident'>WErr</span>(<span class='ident'>MappedUdpSocketMapError</span>::<span class='ident'>RecvError</span> { <span class='ident'>err</span>: <span class='ident'>e</span> }),
                 };
-                <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Ok</span>(<span class='ident'>ListenerResponse</span>::<span class='ident'>EchoExternalAddr</span> { <span class='ident'>external_addr</span> }) <span class='op'>=</span>
-                       <span class='ident'>deserialise</span>::<span class='op'>&lt;</span><span class='ident'>ListenerResponse</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='ident'>recv_data</span>[..<span class='ident'>read_size</span>]) {
+                <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Ok</span>(<span class='ident'>listener_message</span>::<span class='ident'>EchoExternalAddr</span> { <span class='ident'>external_addr</span> }) <span class='op'>=</span>
+                       <span class='ident'>deserialise</span>::<span class='op'>&lt;</span><span class='ident'>listener_message</span>::<span class='ident'>EchoExternalAddr</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='ident'>recv_data</span>[..<span class='ident'>read_size</span>]) {
                     <span class='comment'>// Don&#39;t ping this simple server again while mapping this socket.</span>
                     <span class='ident'>simple_servers</span>.<span class='ident'>remove</span>(<span class='kw-2'>&amp;</span><span class='ident'>recv_addr</span>);
 

@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-1270' class='srclink' href='../src/regex_syntax/lib.rs.html#641-724' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-1305' class='srclink' href='../src/regex_syntax/lib.rs.html#690-779' title='goto source code'>[src]</a></span></h1>
 <pre class='rust enum'>pub enum ErrorKind {
     DoubleFlagNegation,
     DuplicateCaptureName(<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>),
@@ -83,6 +83,7 @@
     UnrecognizedEscape(<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.char.html'>char</a>),
     UnrecognizedFlag(<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.char.html'>char</a>),
     UnrecognizedUnicodeClass(<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>),
+    StackExhausted,
     // some variants omitted
 }</pre><div class='docblock'><p>The specific type of parse error that can occur.</p>
 </div><h2 class='variants'>Variants</h2>
@@ -130,6 +131,11 @@ repeated. e.g., <code>a+*</code> or <code>a|*</code>.</p>
 </div></td></tr><tr><td id='variant.UnrecognizedEscape'><code>UnrecognizedEscape</code></td><td><div class='docblock'><p>Unrecognized escape sequence. e.g., <code>\q</code>.</p>
 </div></td></tr><tr><td id='variant.UnrecognizedFlag'><code>UnrecognizedFlag</code></td><td><div class='docblock'><p>Unrecognized flag. e.g., <code>(?a)</code>.</p>
 </div></td></tr><tr><td id='variant.UnrecognizedUnicodeClass'><code>UnrecognizedUnicodeClass</code></td><td><div class='docblock'><p>Unrecognized named Unicode class. e.g., <code>\p{Foo}</code>.</p>
+</div></td></tr><tr><td id='variant.StackExhausted'><code>StackExhausted</code></td><td><div class='docblock'><p>Indicates that the regex uses too much nesting.</p>
+
+<p>(N.B. This error exists because traversing the Expr is recursive and
+an explicit heap allocated stack is not (yet?) used. Regardless, some
+sort of limit must be applied to avoid unbounded memory growth.</p>
 </div></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html' title='core::fmt::Display'>Display</a> for <a class='enum' href='../regex_syntax/enum.ErrorKind.html' title='regex_syntax::ErrorKind'>ErrorKind</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html#method.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
 </div><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a> for <a class='enum' href='../regex_syntax/enum.ErrorKind.html' title='regex_syntax::ErrorKind'>ErrorKind</a></code></h3><div class='impl-items'><h4 id='method.eq' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.eq' class='fnname'>eq</a>(&amp;self, __arg_0: &amp;<a class='enum' href='../regex_syntax/enum.ErrorKind.html' title='regex_syntax::ErrorKind'>ErrorKind</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
 <h4 id='method.ne' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.ne' class='fnname'>ne</a>(&amp;self, __arg_0: &amp;<a class='enum' href='../regex_syntax/enum.ErrorKind.html' title='regex_syntax::ErrorKind'>ErrorKind</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/nat_traversal-0.0.1/src/rendezvous_info.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/nat_traversal-0.0.3/src/rendezvous_info.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>rendezvous_info.rs.html -- source</title>
@@ -102,6 +102,7 @@
 <span id="59">59</span>
 <span id="60">60</span>
 <span id="61">61</span>
+<span id="62">62</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2016 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -128,7 +129,7 @@
 <span class='kw'>use</span> <span class='ident'>mapped_socket_addr</span>::<span class='ident'>MappedSocketAddr</span>;
 
 <span class='doccomment'>/// Info exchanged by both parties before performing a rendezvous connection.</span>
-<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>RustcEncodable</span>, <span class='ident'>RustcDecodable</span>)]</span>
+<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>, <span class='ident'>Clone</span>, <span class='ident'>PartialEq</span>, <span class='ident'>Eq</span>, <span class='ident'>RustcEncodable</span>, <span class='ident'>RustcDecodable</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>PubRendezvousInfo</span> {
     <span class='doccomment'>/// A vector of all the mapped addresses that the peer can try connecting to.</span>
     <span class='ident'>endpoints</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>MappedSocketAddr</span><span class='op'>&gt;</span>,
@@ -137,6 +138,7 @@
 }
 
 <span class='doccomment'>/// The local half of a `PubRendezvousInfo`.</span>
+<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>, <span class='ident'>Clone</span>, <span class='ident'>PartialEq</span>, <span class='ident'>Eq</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>PrivRendezvousInfo</span> {
     <span class='ident'>secret</span>: [<span class='ident'>u8</span>; <span class='number'>4</span>],
 }

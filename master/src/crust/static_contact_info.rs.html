@@ -107,8 +107,6 @@
 <span class='doccomment'>/// This struct contains information needed to Bootstrap and for echo-server services</span>
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>RustcEncodable</span>, <span class='ident'>RustcDecodable</span>, <span class='ident'>Debug</span>, <span class='ident'>Clone</span>, <span class='ident'>PartialEq</span>, <span class='ident'>Eq</span>, <span class='ident'>Hash</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>StaticContactInfo</span> {
-    <span class='doccomment'>/// PublicKey to uniquely identify this crust peer</span>
-    <span class='kw'>pub</span> <span class='ident'>pub_key</span>: <span class='ident'>PublicKey</span>,
     <span class='doccomment'>/// This will contain both local and global addresses. Local addresses will be useful on LAN</span>
     <span class='doccomment'>/// when someone wants to bootstrap off us and we haven&#39;t yet obtained our global address. In</span>
     <span class='doccomment'>/// that case the list will contain only the local addresses that the process calling</span>
@@ -120,7 +118,9 @@
     <span class='doccomment'>/// In this case the peer would ask for a new UDP socket address to connect to from one of the</span>
     <span class='doccomment'>/// following listeners. Since this is a rare edge case we do not cater to it and have only</span>
     <span class='doccomment'>/// global addresses populated for UDP.</span>
-    <span class='kw'>pub</span> <span class='ident'>udp_listeners</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>SocketAddr</span><span class='op'>&gt;</span>,
+    <span class='kw'>pub</span> <span class='ident'>utp_custom_listeners</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>SocketAddr</span><span class='op'>&gt;</span>,
+    <span class='doccomment'>/// Mapper server addresses</span>
+    <span class='kw'>pub</span> <span class='ident'>mapper_servers</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>SocketAddr</span><span class='op'>&gt;</span>,
 }
 </pre>
 </section>

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/aho-corasick-0.4.1/src/autiter.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/aho-corasick-0.5.0/src/autiter.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>autiter.rs.html -- source</title>
@@ -442,9 +442,85 @@
 <span id="399">399</span>
 <span id="400">400</span>
 <span id="401">401</span>
+<span id="402">402</span>
+<span id="403">403</span>
+<span id="404">404</span>
+<span id="405">405</span>
+<span id="406">406</span>
+<span id="407">407</span>
+<span id="408">408</span>
+<span id="409">409</span>
+<span id="410">410</span>
+<span id="411">411</span>
+<span id="412">412</span>
+<span id="413">413</span>
+<span id="414">414</span>
+<span id="415">415</span>
+<span id="416">416</span>
+<span id="417">417</span>
+<span id="418">418</span>
+<span id="419">419</span>
+<span id="420">420</span>
+<span id="421">421</span>
+<span id="422">422</span>
+<span id="423">423</span>
+<span id="424">424</span>
+<span id="425">425</span>
+<span id="426">426</span>
+<span id="427">427</span>
+<span id="428">428</span>
+<span id="429">429</span>
+<span id="430">430</span>
+<span id="431">431</span>
+<span id="432">432</span>
+<span id="433">433</span>
+<span id="434">434</span>
+<span id="435">435</span>
+<span id="436">436</span>
+<span id="437">437</span>
+<span id="438">438</span>
+<span id="439">439</span>
+<span id="440">440</span>
+<span id="441">441</span>
+<span id="442">442</span>
+<span id="443">443</span>
+<span id="444">444</span>
+<span id="445">445</span>
+<span id="446">446</span>
+<span id="447">447</span>
+<span id="448">448</span>
+<span id="449">449</span>
+<span id="450">450</span>
+<span id="451">451</span>
+<span id="452">452</span>
+<span id="453">453</span>
+<span id="454">454</span>
+<span id="455">455</span>
+<span id="456">456</span>
+<span id="457">457</span>
+<span id="458">458</span>
+<span id="459">459</span>
+<span id="460">460</span>
+<span id="461">461</span>
+<span id="462">462</span>
+<span id="463">463</span>
+<span id="464">464</span>
+<span id="465">465</span>
+<span id="466">466</span>
+<span id="467">467</span>
+<span id="468">468</span>
+<span id="469">469</span>
+<span id="470">470</span>
+<span id="471">471</span>
+<span id="472">472</span>
+<span id="473">473</span>
+<span id="474">474</span>
+<span id="475">475</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::{<span class='self'>self</span>, <span class='ident'>BufRead</span>};
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>marker</span>::<span class='ident'>PhantomData</span>;
+
+<span class='kw'>use</span> <span class='ident'>memchr</span>::{<span class='ident'>memchr</span>, <span class='ident'>memchr2</span>, <span class='ident'>memchr3</span>};
 
 <span class='kw'>use</span> <span class='ident'>super</span>::{<span class='ident'>ROOT_STATE</span>, <span class='ident'>StateIdx</span>};
 
@@ -462,17 +538,8 @@
     <span class='doccomment'>/// Build a match given the current state, pattern index and input index.</span>
     <span class='kw'>fn</span> <span class='ident'>get_match</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>si</span>: <span class='ident'>StateIdx</span>, <span class='ident'>outi</span>: <span class='ident'>usize</span>, <span class='ident'>texti</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>Match</span>;
 
-    <span class='doccomment'>/// Attempt to skip through the input.</span>
-    <span class='doccomment'>///</span>
-    <span class='doccomment'>/// This returns the index into `text` at which the next match attempt</span>
-    <span class='doccomment'>/// should start. (If no skipping occurred, then the return value should</span>
-    <span class='doccomment'>/// be equal to `at`.)</span>
-    <span class='doccomment'>///</span>
-    <span class='doccomment'>/// Finally, if no match is possible, then return `text.len()`.</span>
-    <span class='kw'>fn</span> <span class='ident'>skip_to</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>si</span>: <span class='ident'>StateIdx</span>, <span class='ident'>text</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>], <span class='ident'>at</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>usize</span>;
-
-    <span class='doccomment'>/// Returns true if and only if this automaton can skip through the input.</span>
-    <span class='kw'>fn</span> <span class='ident'>is_skippable</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span>;
+    <span class='doccomment'>/// Return the set of bytes that have transitions in the root state.</span>
+    <span class='kw'>fn</span> <span class='ident'>start_bytes</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>];
 
     <span class='doccomment'>/// Returns all of the patterns matched by this automaton.</span>
     <span class='doccomment'>///</span>
@@ -570,12 +637,8 @@
         (<span class='op'>*</span><span class='op'>*</span><span class='self'>self</span>).<span class='ident'>has_match</span>(<span class='ident'>si</span>, <span class='ident'>outi</span>)
     }
 
-    <span class='kw'>fn</span> <span class='ident'>skip_to</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>si</span>: <span class='ident'>StateIdx</span>, <span class='ident'>text</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>], <span class='ident'>at</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>usize</span> {
-        (<span class='op'>*</span><span class='op'>*</span><span class='self'>self</span>).<span class='ident'>skip_to</span>(<span class='ident'>si</span>, <span class='ident'>text</span>, <span class='ident'>at</span>)
-    }
-
-    <span class='kw'>fn</span> <span class='ident'>is_skippable</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
-        (<span class='op'>*</span><span class='op'>*</span><span class='self'>self</span>).<span class='ident'>is_skippable</span>()
+    <span class='kw'>fn</span> <span class='ident'>start_bytes</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>] {
+        (<span class='op'>*</span><span class='op'>*</span><span class='self'>self</span>).<span class='ident'>start_bytes</span>()
     }
 
     <span class='kw'>fn</span> <span class='ident'>patterns</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span>[<span class='ident'>P</span>] {
@@ -648,29 +711,97 @@
     <span class='prelude-val'>None</span>
 }
 
-<span class='kw'>fn</span> <span class='ident'>skip_to_match</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>A</span>: <span class='ident'>Automaton</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span> <span class='op'>+</span> ?<span class='ident'>Sized</span><span class='op'>&gt;</span>(
+<span class='kw'>fn</span> <span class='ident'>skip_to_match</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>A</span>: <span class='ident'>Automaton</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span> <span class='op'>+</span> ?<span class='ident'>Sized</span>, <span class='ident'>F</span>: <span class='ident'>Fn</span>(<span class='kw-2'>&amp;</span><span class='ident'>A</span>, <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>], <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>usize</span><span class='op'>&gt;</span>(
     <span class='ident'>aut</span>: <span class='kw-2'>&amp;</span><span class='ident'>A</span>,
     <span class='ident'>text</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>],
     <span class='kw-2'>mut</span> <span class='ident'>texti</span>: <span class='ident'>usize</span>,
-    <span class='kw-2'>mut</span> <span class='ident'>si</span>: <span class='ident'>StateIdx</span>
+    <span class='kw-2'>mut</span> <span class='ident'>si</span>: <span class='ident'>StateIdx</span>,
+    <span class='ident'>skip</span>: <span class='ident'>F</span>,
 ) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span>(<span class='ident'>usize</span>, <span class='ident'>StateIdx</span>)<span class='op'>&gt;</span> {
-    <span class='ident'>texti</span> <span class='op'>=</span> <span class='ident'>aut</span>.<span class='ident'>skip_to</span>(<span class='ident'>si</span>, <span class='ident'>text</span>, <span class='ident'>texti</span>);
+    <span class='kw'>if</span> <span class='ident'>si</span> <span class='op'>==</span> <span class='ident'>ROOT_STATE</span> {
+        <span class='ident'>texti</span> <span class='op'>=</span> <span class='ident'>skip</span>(<span class='ident'>aut</span>, <span class='ident'>text</span>, <span class='ident'>texti</span>);
+    }
     <span class='kw'>while</span> <span class='ident'>texti</span> <span class='op'>&lt;</span> <span class='ident'>text</span>.<span class='ident'>len</span>() {
         <span class='ident'>si</span> <span class='op'>=</span> <span class='ident'>aut</span>.<span class='ident'>next_state</span>(<span class='ident'>si</span>, <span class='ident'>text</span>[<span class='ident'>texti</span>]);
         <span class='kw'>if</span> <span class='ident'>aut</span>.<span class='ident'>has_match</span>(<span class='ident'>si</span>, <span class='number'>0</span>) {
             <span class='kw'>return</span> <span class='prelude-val'>Some</span>((<span class='ident'>texti</span>, <span class='ident'>si</span>));
         }
-        <span class='ident'>texti</span> <span class='op'>=</span> <span class='ident'>aut</span>.<span class='ident'>skip_to</span>(<span class='ident'>si</span>, <span class='ident'>text</span>, <span class='ident'>texti</span> <span class='op'>+</span> <span class='number'>1</span>);
+        <span class='kw'>if</span> <span class='ident'>si</span> <span class='op'>==</span> <span class='ident'>ROOT_STATE</span> {
+            <span class='ident'>texti</span> <span class='op'>=</span> <span class='ident'>skip</span>(<span class='ident'>aut</span>, <span class='ident'>text</span>, <span class='ident'>texti</span> <span class='op'>+</span> <span class='number'>1</span>);
+        } <span class='kw'>else</span> {
+            <span class='ident'>texti</span> <span class='op'>+=</span> <span class='number'>1</span>;
+        }
     }
     <span class='prelude-val'>None</span>
+}
+
+<span class='attribute'>#[<span class='ident'>inline</span>]</span>
+<span class='kw'>fn</span> <span class='ident'>skip1</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>A</span>: <span class='ident'>Automaton</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span> <span class='op'>+</span> ?<span class='ident'>Sized</span><span class='op'>&gt;</span>(
+    <span class='ident'>aut</span>: <span class='kw-2'>&amp;</span><span class='ident'>A</span>,
+    <span class='ident'>text</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>],
+    <span class='ident'>at</span>: <span class='ident'>usize</span>,
+) <span class='op'>-&gt;</span> <span class='ident'>usize</span> {
+    <span class='macro'>debug_assert</span><span class='macro'>!</span>(<span class='ident'>aut</span>.<span class='ident'>start_bytes</span>().<span class='ident'>len</span>() <span class='op'>==</span> <span class='number'>1</span>);
+    <span class='kw'>let</span> <span class='ident'>b</span> <span class='op'>=</span> <span class='ident'>aut</span>.<span class='ident'>start_bytes</span>()[<span class='number'>0</span>];
+    <span class='kw'>match</span> <span class='ident'>memchr</span>(<span class='ident'>b</span>, <span class='kw-2'>&amp;</span><span class='ident'>text</span>[<span class='ident'>at</span>..]) {
+        <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='ident'>text</span>.<span class='ident'>len</span>(),
+        <span class='prelude-val'>Some</span>(<span class='ident'>i</span>) <span class='op'>=&gt;</span> <span class='ident'>at</span> <span class='op'>+</span> <span class='ident'>i</span>,
+    }
+}
+
+<span class='attribute'>#[<span class='ident'>inline</span>]</span>
+<span class='kw'>fn</span> <span class='ident'>skip2</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>A</span>: <span class='ident'>Automaton</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span> <span class='op'>+</span> ?<span class='ident'>Sized</span><span class='op'>&gt;</span>(
+    <span class='ident'>aut</span>: <span class='kw-2'>&amp;</span><span class='ident'>A</span>,
+    <span class='ident'>text</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>],
+    <span class='ident'>at</span>: <span class='ident'>usize</span>,
+) <span class='op'>-&gt;</span> <span class='ident'>usize</span> {
+    <span class='macro'>debug_assert</span><span class='macro'>!</span>(<span class='ident'>aut</span>.<span class='ident'>start_bytes</span>().<span class='ident'>len</span>() <span class='op'>==</span> <span class='number'>2</span>);
+    <span class='kw'>let</span> (<span class='ident'>b1</span>, <span class='ident'>b2</span>) <span class='op'>=</span> (<span class='ident'>aut</span>.<span class='ident'>start_bytes</span>()[<span class='number'>0</span>], <span class='ident'>aut</span>.<span class='ident'>start_bytes</span>()[<span class='number'>1</span>]);
+    <span class='kw'>match</span> <span class='ident'>memchr2</span>(<span class='ident'>b1</span>, <span class='ident'>b2</span>, <span class='kw-2'>&amp;</span><span class='ident'>text</span>[<span class='ident'>at</span>..]) {
+        <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='ident'>text</span>.<span class='ident'>len</span>(),
+        <span class='prelude-val'>Some</span>(<span class='ident'>i</span>) <span class='op'>=&gt;</span> <span class='ident'>at</span> <span class='op'>+</span> <span class='ident'>i</span>,
+    }
+}
+
+<span class='attribute'>#[<span class='ident'>inline</span>]</span>
+<span class='kw'>fn</span> <span class='ident'>skip3</span><span class='op'>&lt;</span><span class='ident'>P</span>, <span class='ident'>A</span>: <span class='ident'>Automaton</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span> <span class='op'>+</span> ?<span class='ident'>Sized</span><span class='op'>&gt;</span>(
+    <span class='ident'>aut</span>: <span class='kw-2'>&amp;</span><span class='ident'>A</span>,
+    <span class='ident'>text</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>],
+    <span class='ident'>at</span>: <span class='ident'>usize</span>,
+) <span class='op'>-&gt;</span> <span class='ident'>usize</span> {
+    <span class='macro'>debug_assert</span><span class='macro'>!</span>(<span class='ident'>aut</span>.<span class='ident'>start_bytes</span>().<span class='ident'>len</span>() <span class='op'>==</span> <span class='number'>3</span>);
+    <span class='kw'>let</span> (<span class='ident'>b1</span>, <span class='ident'>b2</span>, <span class='ident'>b3</span>) <span class='op'>=</span> (
+        <span class='ident'>aut</span>.<span class='ident'>start_bytes</span>()[<span class='number'>0</span>], <span class='ident'>aut</span>.<span class='ident'>start_bytes</span>()[<span class='number'>1</span>], <span class='ident'>aut</span>.<span class='ident'>start_bytes</span>()[<span class='number'>2</span>],
+    );
+    <span class='kw'>match</span> <span class='ident'>memchr3</span>(<span class='ident'>b1</span>, <span class='ident'>b2</span>, <span class='ident'>b3</span>, <span class='kw-2'>&amp;</span><span class='ident'>text</span>[<span class='ident'>at</span>..]) {
+        <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='ident'>text</span>.<span class='ident'>len</span>(),
+        <span class='prelude-val'>Some</span>(<span class='ident'>i</span>) <span class='op'>=&gt;</span> <span class='ident'>at</span> <span class='op'>+</span> <span class='ident'>i</span>,
+    }
 }
 
 <span class='kw'>impl</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='lifetime'>&#39;s</span>, <span class='ident'>P</span>, <span class='ident'>A</span>: <span class='ident'>Automaton</span><span class='op'>&lt;</span><span class='ident'>P</span><span class='op'>&gt;</span> <span class='op'>+</span> ?<span class='ident'>Sized</span><span class='op'>&gt;</span> <span class='ident'>Iterator</span> <span class='kw'>for</span> <span class='ident'>Matches</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='lifetime'>&#39;s</span>, <span class='ident'>P</span>, <span class='ident'>A</span><span class='op'>&gt;</span> {
     <span class='kw'>type</span> <span class='ident'>Item</span> <span class='op'>=</span> <span class='ident'>Match</span>;
 
     <span class='kw'>fn</span> <span class='ident'>next</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>Match</span><span class='op'>&gt;</span> {
-        <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>aut</span>.<span class='ident'>is_skippable</span>() {
-            <span class='kw'>let</span> <span class='ident'>skip</span> <span class='op'>=</span> <span class='ident'>skip_to_match</span>(<span class='self'>self</span>.<span class='ident'>aut</span>, <span class='self'>self</span>.<span class='ident'>text</span>, <span class='self'>self</span>.<span class='ident'>texti</span>, <span class='self'>self</span>.<span class='ident'>si</span>);
+        <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>aut</span>.<span class='ident'>start_bytes</span>().<span class='ident'>len</span>() <span class='op'>==</span> <span class='number'>1</span> {
+            <span class='kw'>let</span> <span class='ident'>skip</span> <span class='op'>=</span> <span class='ident'>skip_to_match</span>(
+                <span class='self'>self</span>.<span class='ident'>aut</span>, <span class='self'>self</span>.<span class='ident'>text</span>, <span class='self'>self</span>.<span class='ident'>texti</span>, <span class='self'>self</span>.<span class='ident'>si</span>, <span class='ident'>skip1</span>);
+            <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>((<span class='ident'>texti</span>, <span class='ident'>si</span>)) <span class='op'>=</span> <span class='ident'>skip</span> {
+                <span class='self'>self</span>.<span class='ident'>texti</span> <span class='op'>=</span> <span class='ident'>texti</span> <span class='op'>+</span> <span class='number'>1</span>;
+                <span class='self'>self</span>.<span class='ident'>si</span> <span class='op'>=</span> <span class='ident'>ROOT_STATE</span>;
+                <span class='kw'>return</span> <span class='prelude-val'>Some</span>(<span class='self'>self</span>.<span class='ident'>aut</span>.<span class='ident'>get_match</span>(<span class='ident'>si</span>, <span class='number'>0</span>, <span class='ident'>texti</span>));
+            }
+        } <span class='kw'>else</span> <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>aut</span>.<span class='ident'>start_bytes</span>().<span class='ident'>len</span>() <span class='op'>==</span> <span class='number'>2</span> {
+            <span class='kw'>let</span> <span class='ident'>skip</span> <span class='op'>=</span> <span class='ident'>skip_to_match</span>(
+                <span class='self'>self</span>.<span class='ident'>aut</span>, <span class='self'>self</span>.<span class='ident'>text</span>, <span class='self'>self</span>.<span class='ident'>texti</span>, <span class='self'>self</span>.<span class='ident'>si</span>, <span class='ident'>skip2</span>);
+            <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>((<span class='ident'>texti</span>, <span class='ident'>si</span>)) <span class='op'>=</span> <span class='ident'>skip</span> {
+                <span class='self'>self</span>.<span class='ident'>texti</span> <span class='op'>=</span> <span class='ident'>texti</span> <span class='op'>+</span> <span class='number'>1</span>;
+                <span class='self'>self</span>.<span class='ident'>si</span> <span class='op'>=</span> <span class='ident'>ROOT_STATE</span>;
+                <span class='kw'>return</span> <span class='prelude-val'>Some</span>(<span class='self'>self</span>.<span class='ident'>aut</span>.<span class='ident'>get_match</span>(<span class='ident'>si</span>, <span class='number'>0</span>, <span class='ident'>texti</span>));
+            }
+        } <span class='kw'>else</span> <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>aut</span>.<span class='ident'>start_bytes</span>().<span class='ident'>len</span>() <span class='op'>==</span> <span class='number'>3</span> {
+            <span class='kw'>let</span> <span class='ident'>skip</span> <span class='op'>=</span> <span class='ident'>skip_to_match</span>(
+                <span class='self'>self</span>.<span class='ident'>aut</span>, <span class='self'>self</span>.<span class='ident'>text</span>, <span class='self'>self</span>.<span class='ident'>texti</span>, <span class='self'>self</span>.<span class='ident'>si</span>, <span class='ident'>skip3</span>);
             <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>((<span class='ident'>texti</span>, <span class='ident'>si</span>)) <span class='op'>=</span> <span class='ident'>skip</span> {
                 <span class='self'>self</span>.<span class='ident'>texti</span> <span class='op'>=</span> <span class='ident'>texti</span> <span class='op'>+</span> <span class='number'>1</span>;
                 <span class='self'>self</span>.<span class='ident'>si</span> <span class='op'>=</span> <span class='ident'>ROOT_STATE</span>;
@@ -766,8 +897,25 @@
         }
 
         <span class='self'>self</span>.<span class='ident'>outi</span> <span class='op'>=</span> <span class='number'>0</span>;
-        <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>aut</span>.<span class='ident'>is_skippable</span>() {
-            <span class='kw'>let</span> <span class='ident'>skip</span> <span class='op'>=</span> <span class='ident'>skip_to_match</span>(<span class='self'>self</span>.<span class='ident'>aut</span>, <span class='self'>self</span>.<span class='ident'>text</span>, <span class='self'>self</span>.<span class='ident'>texti</span>, <span class='self'>self</span>.<span class='ident'>si</span>);
+        <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>aut</span>.<span class='ident'>start_bytes</span>().<span class='ident'>len</span>() <span class='op'>==</span> <span class='number'>1</span> {
+            <span class='kw'>let</span> <span class='ident'>skip</span> <span class='op'>=</span> <span class='ident'>skip_to_match</span>(
+                <span class='self'>self</span>.<span class='ident'>aut</span>, <span class='self'>self</span>.<span class='ident'>text</span>, <span class='self'>self</span>.<span class='ident'>texti</span>, <span class='self'>self</span>.<span class='ident'>si</span>, <span class='ident'>skip1</span>);
+            <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>((<span class='ident'>texti</span>, <span class='ident'>si</span>)) <span class='op'>=</span> <span class='ident'>skip</span> {
+                <span class='self'>self</span>.<span class='ident'>texti</span> <span class='op'>=</span> <span class='ident'>texti</span>;
+                <span class='self'>self</span>.<span class='ident'>si</span> <span class='op'>=</span> <span class='ident'>si</span>;
+                <span class='kw'>return</span> <span class='self'>self</span>.<span class='ident'>next</span>();
+            }
+        } <span class='kw'>else</span> <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>aut</span>.<span class='ident'>start_bytes</span>().<span class='ident'>len</span>() <span class='op'>==</span> <span class='number'>2</span> {
+            <span class='kw'>let</span> <span class='ident'>skip</span> <span class='op'>=</span> <span class='ident'>skip_to_match</span>(
+                <span class='self'>self</span>.<span class='ident'>aut</span>, <span class='self'>self</span>.<span class='ident'>text</span>, <span class='self'>self</span>.<span class='ident'>texti</span>, <span class='self'>self</span>.<span class='ident'>si</span>, <span class='ident'>skip2</span>);
+            <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>((<span class='ident'>texti</span>, <span class='ident'>si</span>)) <span class='op'>=</span> <span class='ident'>skip</span> {
+                <span class='self'>self</span>.<span class='ident'>texti</span> <span class='op'>=</span> <span class='ident'>texti</span>;
+                <span class='self'>self</span>.<span class='ident'>si</span> <span class='op'>=</span> <span class='ident'>si</span>;
+                <span class='kw'>return</span> <span class='self'>self</span>.<span class='ident'>next</span>();
+            }
+        } <span class='kw'>else</span> <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>aut</span>.<span class='ident'>start_bytes</span>().<span class='ident'>len</span>() <span class='op'>==</span> <span class='number'>3</span> {
+            <span class='kw'>let</span> <span class='ident'>skip</span> <span class='op'>=</span> <span class='ident'>skip_to_match</span>(
+                <span class='self'>self</span>.<span class='ident'>aut</span>, <span class='self'>self</span>.<span class='ident'>text</span>, <span class='self'>self</span>.<span class='ident'>texti</span>, <span class='self'>self</span>.<span class='ident'>si</span>, <span class='ident'>skip3</span>);
             <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>((<span class='ident'>texti</span>, <span class='ident'>si</span>)) <span class='op'>=</span> <span class='ident'>skip</span> {
                 <span class='self'>self</span>.<span class='ident'>texti</span> <span class='op'>=</span> <span class='ident'>texti</span>;
                 <span class='self'>self</span>.<span class='ident'>si</span> <span class='op'>=</span> <span class='ident'>si</span>;

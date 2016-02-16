@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["MappedUdpSocket","A bound udp socket for which we know our external endpoints."]]});
+initSidebarItems({"enum":[["MappedUdpSocketMapError","Errors returned by MappedUdpSocket::map"],["MappedUdpSocketMapWarning","Warnings raised by MappedUdpSocket::map"],["MappedUdpSocketNewError","Errors returned by MappedUdpSocket::new"]],"struct":[["MappedUdpSocket","A bound udp socket for which we know our external endpoints."]]});
