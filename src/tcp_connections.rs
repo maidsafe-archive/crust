@@ -58,7 +58,8 @@ fn upgrade_writer(mut stream: TcpStream) -> Sender<WriteEvent> {
                         match event {
                             WriteEvent::Write(data) => {
                                 use std::io::Write;
-                                if stream.write_all(&data).is_err() {
+                                let msg = unwrap_result!(serialise(&data));
+                                if stream.write_all(&msg).is_err() {
                                     break;
                                 }
                             }
@@ -68,47 +69,6 @@ fn upgrade_writer(mut stream: TcpStream) -> Sender<WriteEvent> {
                     stream.shutdown(Shutdown::Both)
                 }));
     tx
-}
-
-/// Find our remote socketadddr
-pub fn external_tcp_addr(tcp_listeners: Vec<SocketAddr>)
-                         -> io::Result<(SocketAddr, Vec<SocketAddr>)> {
-
-    const MAX_DATAGRAM_SIZE: usize = 256;
-
-    let send_data = unwrap_result!(serialise(&ListenerRequest::EchoExternalAddr));
-
-    for tcp_listener in &tcp_listeners {
-        // TODO(canndrew): handle ipv6
-        let sock = try!(TcpBuilder::new_v4());
-        sock.reuse_address(true);
-        let mut stream = match sock.connect(&**tcp_listener) {
-            Ok(stream) => stream,
-            Err(_) => continue,
-        };
-        let local_addr = try!(stream.local_addr());
-        match stream.write(&send_data[..]) {
-            Ok(n) => {
-                if n != send_data.len() {
-                    continue;
-                }
-            }
-            Err(_) => continue,
-        };
-        let mut recv_data = [0u8; MAX_DATAGRAM_SIZE];
-        let recv_size = match stream.read(&mut recv_data[..]) {
-            Ok(recv_size) => recv_size,
-            Err(_) => continue,
-        };
-        if let Ok(ListenerResponse::EchoExternalAddr { external_addr }) =
-               deserialise::<ListenerResponse>(&recv_data[..recv_size]) {
-            return Ok((SocketAddr(local_addr),
-                       vec![SocketAddr(local_addr), external_addr]));
-        }
-    }
-
-    Err(io::Error::new(io::ErrorKind::Other,
-                       "TODO - Improve this - Could Not find our external address"))
 }
 
 /// Returns the stream along with the peer's SocketAddr
@@ -166,7 +126,9 @@ mod test {
     use std::io::Read;
     use std::sync::mpsc;
     use socket_addr::SocketAddr;
+    use cbor;
     use event::WriteEvent;
+    use sender_receiver::CrustMsg;
 
     fn loopback(port: u16) -> SocketAddr {
         SocketAddr(net::SocketAddr::from_str(&format!("127.0.0.1:{}", port)).unwrap())
@@ -180,31 +142,40 @@ mod test {
 
         for x in 0..10 {
             let x = vec![x];
-            o.send(WriteEvent::Write(x)).unwrap()
+            o.send(WriteEvent::Write(CrustMsg::Message(x))).unwrap()
         }
         let t = thread::spawn(move || {
             let connection = unwrap_result!(listener.accept()).0;
             let (mut i, o) = unwrap_result!(upgrade_tcp(connection));
             unwrap_result!(i.set_read_timeout(Some(Duration::new(5, 0))));
-            let mut buf = [0u8; 10];
-            let mut len = 0;
-            while len < 10 {
-                len += unwrap_result!(i.read(&mut buf[len..]));
+            let mut i = cbor::Decoder::from_reader(i);
+            let mut buf = Vec::new();
+            for _msgnum in 0..10 {
+                let msg = unwrap_option!(i.decode::<CrustMsg>().next(), "Expected crust message!");
+                let msg = unwrap_result!(msg);
+                let msg = match msg {
+                    CrustMsg::Message(msg) => msg,
+                    m => panic!("Unexpected crust message: {:#?}", m),
+                };
+                buf.extend(msg);
             }
+
             for item in &mut buf {
                 *item += 1;
             }
-            unwrap_result!(o.send(WriteEvent::Write(buf.iter().cloned().collect())));
+            unwrap_result!(o.send(WriteEvent::Write(CrustMsg::Message(buf))));
         });
         // Collect everything that we get back.
         unwrap_result!(i.set_read_timeout(Some(Duration::new(5, 0))));
-        let mut buf = [0u8; 10];
-        let mut len = 0;
-        while len < 10 {
-            len += unwrap_result!(i.read(&mut buf[len..]));
-        }
-        assert_eq!(buf.iter().cloned().collect::<Vec<_>>(),
-                   vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+        let mut i = cbor::Decoder::from_reader(i);
+        let msg = unwrap_option!(i.decode::<CrustMsg>().next(), "Expected crust message");
+        let msg = unwrap_result!(msg);
+        let msg = match msg {
+            CrustMsg::Message(msg) => msg,
+            m => panic!("Unexpected crust message: {:#?}", m),
+        };
+
+        assert_eq!(msg, vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
 
         drop(o);
         unwrap_result!(t.join());
@@ -232,40 +203,44 @@ mod test {
         for _ in 0..node_count() {
             let tx2 = tx.clone();
             let (mut i, o) = connect_tcp(loopback(port)).unwrap();
-            let _ = thread::spawn(move || {
+            let send_thread = thread::spawn(move || {
                 let mut buf = Vec::with_capacity(MSG_COUNT);
                 for i in 0..MSG_COUNT as u8 {
                     buf.push(i)
                 }
-                o.send(WriteEvent::Write(buf.clone())).unwrap();
-                let mut len = 0;
-                while len < MSG_COUNT {
-                    len += i.read(&mut buf[len..]).unwrap();
-                }
-                tx2.send(WriteEvent::Write(buf))
+                o.send(WriteEvent::Write(CrustMsg::Message(buf.clone()))).unwrap();
+                let mut i = cbor::Decoder::from_reader(i);
+                let msg = unwrap_option!(i.decode::<CrustMsg>().next(), "Expected a crust message");
+                let msg = unwrap_result!(msg);
+                let msg = match msg {
+                    CrustMsg::Message(msg) => msg,
+                    m => panic!("Unexpected message {:#?}", m),
+                };
+                unwrap_result!(tx2.send(msg));
             });
             let (connection, _) = listener.accept().unwrap();
-            let _ = thread::spawn(move || {
-                let (mut i, o) = upgrade_tcp(connection).unwrap();
+            let echo_thread = thread::spawn(move || {
+                let (i, o) = upgrade_tcp(connection).unwrap();
                 i.set_read_timeout(Some(Duration::new(5, 0))).unwrap();
-                let mut buf = [0u8; MSG_COUNT];
-                let mut len = 0;
-                while len < MSG_COUNT {
-                    len += i.read(&mut buf[len..]).unwrap()
-                }
-                for item in &mut buf {
+                let mut i = cbor::Decoder::from_reader(i);
+                let msg = unwrap_option!(i.decode::<CrustMsg>().next(), "Expected a crust message");
+                let msg = unwrap_result!(msg);
+                let mut msg = match msg {
+                    CrustMsg::Message(msg) => msg,
+                    m => panic!("Unexpected message {:#?}", m),
+                };
+                for item in &mut msg {
                     *item += 1
                 }
-                o.send(WriteEvent::Write(buf.iter().cloned().collect())).unwrap()
+                unwrap_result!(o.send(WriteEvent::Write(CrustMsg::Message(msg))));
             });
+            unwrap_result!(send_thread.join());
+            unwrap_result!(echo_thread.join());
         }
 
         let v = (0..MSG_COUNT as u8).map(|i| i + 1).collect::<Vec<u8>>();
         for _ in 0..node_count() {
-            let rxd = match rx.recv().unwrap() {
-                WriteEvent::Write(data) => data,
-                _ => panic!("Unexpected"),
-            };
+            let rxd = unwrap_result!(rx.recv());
             assert_eq!(rxd, v);
         }
     }
@@ -299,13 +274,12 @@ mod test {
             let mut received = 0;
             reader.set_read_timeout(Some(Duration::new(5, 0))).unwrap();
             'outer: loop {
-                for m in d.decode::<String>() {
+                for m in d.decode::<CrustMsg>() {
                     match m {
-                        Ok(_m) => {
-                            // println!("received {:?}", m)
-                        }
-                        Err(what) => panic!(format!("Problem decoding message {}", what)),
-                    }
+                        Ok(CrustMsg::Message(msg)) => println!("received {:?}", ::std::str::from_utf8(&msg)),
+                        Ok(m) => panic!("Unexpected crust message type {:#?}", m),
+                        Err(what) => panic!("Problem decoding message {}", what),
+                    };
                     received += 1;
                     if received == MSG_COUNT {
                         break 'outer;
@@ -318,7 +292,7 @@ mod test {
 
         for i in 0..MSG_COUNT {
             let msg = encode(&format!("MSG{}", i));
-            assert!(o1.send(WriteEvent::Write(msg.clone())).is_ok());
+            assert!(o1.send(WriteEvent::Write(CrustMsg::Message(msg.clone()))).is_ok());
         }
 
         assert!(t.join().is_ok());

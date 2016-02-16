@@ -15,11 +15,25 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use sodiumoxide::crypto::box_::PublicKey;
+use std::fmt::{Debug, Formatter, Result};
+use sodiumoxide::crypto::box_::{PublicKey, PUBLICKEYBYTES};
 
 /// An identifier of a peer node.
-#[derive(PartialEq, Eq, Clone, Copy, Debug, Ord, PartialOrd, Hash, RustcEncodable, RustcDecodable)]
+#[derive(PartialEq, Eq, Clone, Copy, Ord, PartialOrd, Hash, RustcEncodable, RustcDecodable)]
 pub struct PeerId(PublicKey);
+
+impl Debug for PeerId {
+    fn fmt(&self, formatter: &mut Formatter) -> Result {
+        write!(formatter,
+               "PeerId({:02x}{:02x}{:02x}..{:02x}{:02x}{:02x})",
+                (self.0).0[0],
+                (self.0).0[1],
+                (self.0).0[2],
+                (self.0).0[PUBLICKEYBYTES - 3],
+                (self.0).0[PUBLICKEYBYTES - 2],
+                (self.0).0[PUBLICKEYBYTES - 1])
+    }
+}
 
 pub fn get_pub_key(id: &PeerId) -> &PublicKey {
     &id.0

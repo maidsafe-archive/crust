@@ -28,6 +28,7 @@ use std::thread;
 use config_file_handler::FileHandler;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 use service_discovery::ServiceDiscovery;
+use nat_traversal::MappingContext;
 
 use error::Error;
 use config_handler::Config;
@@ -36,6 +37,7 @@ use static_contact_info::StaticContactInfo;
 use event::Event;
 use peer_id;
 use peer_id::PeerId;
+use sodiumoxide::crypto::box_::PublicKey;
 
 const MAX_CONTACTS_EXPECTED: usize = 1500;
 
@@ -47,8 +49,10 @@ pub struct RaiiBootstrap {
 impl RaiiBootstrap {
     pub fn new(our_contact_info: Arc<Mutex<StaticContactInfo>>,
                peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
+               our_public_key: PublicKey,
                event_tx: ::CrustEventSender,
-               connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>)
+               connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
+               mc: Arc<MappingContext>)
                -> RaiiBootstrap {
         let stop_flag = Arc::new(AtomicBool::new(false));
         let cloned_stop_flag = stop_flag.clone();
@@ -56,9 +60,11 @@ impl RaiiBootstrap {
         let raii_joiner = RaiiThreadJoiner::new(thread!("RaiiBootstrap", move || {
             RaiiBootstrap::bootstrap(our_contact_info,
                                      peer_contact_infos,
+                                     our_public_key,
                                      cloned_stop_flag,
                                      event_tx,
-                                     connection_map);
+                                     connection_map,
+                                     &mc);
         }));
 
         RaiiBootstrap {
@@ -73,37 +79,41 @@ impl RaiiBootstrap {
 
     fn bootstrap(our_contact_info: Arc<Mutex<StaticContactInfo>>,
                  peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
+                 our_public_key: PublicKey,
                  stop_flag: Arc<AtomicBool>,
                  event_tx: ::CrustEventSender,
-                 connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>) {
+                 connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
+                 mapping_context: &MappingContext) {
         let bootstrap_contacts: Vec<StaticContactInfo> = unwrap_result!(peer_contact_infos.lock())
                                                              .clone();
         for contact in bootstrap_contacts {
             // Bootstrapping got cancelled.
             // Later check the bootstrap contacts in the background to see if they are still valid
+            println!("Connecting to bootstrap contact: {:#?}", contact);
+
             if stop_flag.load(Ordering::SeqCst) {
                 break;
             }
 
-            let their_id = peer_id::new_id(contact.pub_key);
-
             // 1st try a TCP connect
             // 2nd try a UDP connection (and upgrade to UTP)
             let connect_result = ::connection::connect(contact,
-                                                       peer_contact_infos.clone(),
                                                        our_contact_info.clone(),
+                                                       our_public_key.clone(),
                                                        event_tx.clone(),
-                                                       connection_map.clone());
+                                                       connection_map.clone(),
+                                                       mapping_context);
             if stop_flag.load(Ordering::SeqCst) {
                 break;
             }
 
             if let Ok(connection) = connect_result {
+                let their_id = connection.their_id().clone();
                 unwrap_result!(connection_map.lock())
                     .entry(their_id)
                     .or_insert_with(|| vec![])
                     .push(connection);
-                let _ = event_tx.send(Event::NewBootstrapPeer(their_id));
+                let _ = event_tx.send(Event::BootstrapConnect(their_id));
             }
         }
 
@@ -118,7 +128,7 @@ impl Drop for RaiiBootstrap {
 }
 
 // Returns the peers from service discovery, cache and config for bootstrapping (not to be held)
-pub fn get_known_contacts(service_discovery: &ServiceDiscovery<StaticContactInfo>)
+pub fn get_known_contacts(service_discovery: &ServiceDiscovery<StaticContactInfo>, config: &Config)
                           -> Result<Vec<StaticContactInfo>, Error> {
     let (seek_peers_tx, seek_peers_rx) = mpsc::channel();
     if service_discovery.register_seek_peer_observer(seek_peers_tx) {
@@ -133,15 +143,7 @@ pub fn get_known_contacts(service_discovery: &ServiceDiscovery<StaticContactInfo
                         .unwrap_or_else(|_| vec![]));
 
     // Get further contacts from config file - contains seed nodes
-    let config = match ::config_handler::read_config_file() {
-        Ok(cfg) => cfg,
-        Err(e) => {
-            debug!("Crust failed to read config file; Error: {:?};", e);
-            try!(::config_handler::create_default_config_file());
-            Config::make_default()
-        }
-    };
-    contacts.extend(config.hard_coded_contacts);
+    contacts.extend(config.hard_coded_contacts.iter().cloned());
 
     // Get contacts from service discovery. Give a sec or so for seek peers to find someone on LAN.
     thread::sleep(Duration::from_secs(1));

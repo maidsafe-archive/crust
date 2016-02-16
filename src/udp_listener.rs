@@ -23,16 +23,19 @@ use std::time::Duration;
 use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicBool, Ordering};
 use itertools::Itertools;
+use ip::IpAddr;
 
 use get_if_addrs;
 use maidsafe_utilities::serialisation::{deserialise, serialise};
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 use rand;
+use nat_traversal::{MappedUdpSocket, MappingContext, PunchedUdpSocket,
+                    gen_rendezvous_info};
+use sodiumoxide::crypto::box_::{PublicKey, SecretKey};
 
-use connection::{Connection, utp_rendezvous_connect};
+use connection::{Connection, utp_rendezvous_connect, UtpRendezvousConnectMode};
 use static_contact_info::StaticContactInfo;
 use event::Event;
-use utp_connections::{blocking_udp_punch_hole, external_udp_socket};
 use socket_addr::SocketAddr;
 use listener_message::{ListenerRequest, ListenerResponse};
 use peer_id;
@@ -49,9 +52,10 @@ pub struct RaiiUdpListener {
 impl RaiiUdpListener {
     pub fn new(port: u16,
                our_contact_info: Arc<Mutex<StaticContactInfo>>,
-               peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
+               our_public_key: PublicKey,
                event_tx: ::CrustEventSender,
-               connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>)
+               connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
+               mc: Arc<MappingContext>)
                -> io::Result<RaiiUdpListener> {
         let udp_socket = try!(UdpSocket::bind(&format!("0.0.0.0:{}", port)[..]));
         let stop_flag = Arc::new(AtomicBool::new(false));
@@ -60,49 +64,27 @@ impl RaiiUdpListener {
         try!(udp_socket.set_read_timeout(Some(Duration::from_secs(UDP_READ_TIMEOUT_SECS))));
         let actual_port = try!(udp_socket.local_addr()).port();
 
-        let mut our_external_addr = None;
-
-        const MAX_READ_SIZE: usize = 1024;
-
-        let mut read_buf = [0; MAX_READ_SIZE];
         // TODO This will be very slow for production
         // Ask others for our UDP external addresses as they see us. No need to filter out the
         // Local addresses as they will be used by processes in LAN where TCP is disallowed.
-        let echo_external_addr_request =
-            unwrap_result!(serialise(&ListenerRequest::EchoExternalAddr));
-        for peer_contact_info in &*unwrap_result!(peer_contact_infos.lock()) {
-            for udp_listener in &peer_contact_info.udp_listeners {
-                let _ = udp_socket.send_to(&echo_external_addr_request, &**udp_listener);
-                if let Ok((bytes_read, peer_addr)) = udp_socket.recv_from(&mut read_buf) {
-                    if let Ok(msg) = deserialise::<ListenerResponse>(&read_buf[..bytes_read]) {
-                        if let ListenerResponse::EchoExternalAddr { external_addr, } = msg {
-                            our_external_addr = Some(external_addr);
-                        }
-                    }
-                }
-            }
+        let mut addrs = Vec::new();
+        if let Ok(MappedUdpSocket { endpoints, socket })
+            = MappedUdpSocket::map(try!(udp_socket.try_clone()), &mc).result_discard() {
+            addrs.extend(endpoints.into_iter().map(|ma| ma.addr));
+            let local_addr = unwrap_result!(socket.local_addr());
+            addrs.push(SocketAddr(local_addr));
         }
 
-        let mut addrs = match our_external_addr {
-            Some(addr) => vec![addr],
-            None => Vec::new(),
-        };
-
-        let if_addrs = try!(get_if_addrs::get_if_addrs())
-                           .into_iter()
-                           .map(|i| SocketAddr::new(i.addr.ip(), actual_port))
-                           .collect_vec();
-        addrs.extend(if_addrs);
-
-        unwrap_result!(our_contact_info.lock()).udp_listeners.extend(addrs);
+        unwrap_result!(our_contact_info.lock()).utp_custom_listeners.extend(addrs);
 
         let raii_joiner = RaiiThreadJoiner::new(thread!("RaiiUdpListener", move || {
             Self::run(our_contact_info,
+                      our_public_key,
                       udp_socket,
                       event_tx,
-                      peer_contact_infos,
                       cloned_stop_flag,
-                      connection_map);
+                      connection_map,
+                      mc);
         }));
 
         Ok(RaiiUdpListener {
@@ -112,11 +94,12 @@ impl RaiiUdpListener {
     }
 
     fn run(our_contact_info: Arc<Mutex<StaticContactInfo>>,
+           our_public_key: PublicKey,
            udp_socket: UdpSocket,
            event_tx: ::CrustEventSender,
-           peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
            stop_flag: Arc<AtomicBool>,
-           connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>) {
+           connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
+           mc: Arc<MappingContext>) {
         let mut read_buf = [0; 1024];
 
         while !stop_flag.load(Ordering::SeqCst) {
@@ -125,17 +108,18 @@ impl RaiiUdpListener {
                     RaiiUdpListener::handle_request(msg,
                                                     &our_contact_info,
                                                     &udp_socket,
+                                                    &our_public_key,
                                                     peer_addr,
                                                     &event_tx,
-                                                    &peer_contact_infos,
-                                                    connection_map.clone());
+                                                    connection_map.clone(),
+                                                    &mc);
                 } else if let Ok(msg) = deserialise::<ListenerResponse>(&read_buf[..bytes_read]) {
                     RaiiUdpListener::handle_response(msg,
                                                      &our_contact_info,
                                                      &udp_socket,
                                                      peer_addr,
                                                      &event_tx,
-                                                     &peer_contact_infos);
+                                                     &mc);
                 }
             }
         }
@@ -144,59 +128,64 @@ impl RaiiUdpListener {
     fn handle_request(msg: ListenerRequest,
                       our_contact_info: &Arc<Mutex<StaticContactInfo>>,
                       udp_socket: &UdpSocket,
+                      our_public_key: &PublicKey,
                       peer_addr: net::SocketAddr,
                       event_tx: &::CrustEventSender,
-                      peer_contact_infos: &Arc<Mutex<Vec<StaticContactInfo>>>,
-                      connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>) {
+                      connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
+                      mc: &MappingContext) {
         match msg {
-            ListenerRequest::EchoExternalAddr => {
-                let resp = ListenerResponse::EchoExternalAddr {
-                    external_addr: SocketAddr(peer_addr.clone()),
+            ListenerRequest::Connect { our_info, pub_key } => {
+                let their_info = our_info;
+                let MappedUdpSocket { socket, endpoints } = {
+                    let cloned_udp_socket = match udp_socket.try_clone() {
+                        Ok(s) => s,
+                        Err(_) => return,
+                    };
+                    match MappedUdpSocket::map(cloned_udp_socket, &mc).result_discard() {
+                        Ok(mapped_socket) => mapped_socket,
+                        Err(_) => return,
+                    }
                 };
 
-                let _ = udp_socket.send_to(&unwrap_result!(serialise(&resp)), peer_addr);
-            }
-            ListenerRequest::Connect { secret, pub_key } => {
-                let echo_servers = unwrap_result!(peer_contact_infos.lock())
-                                       .iter()
-                                       .flat_map(|tci| tci.udp_listeners.iter().cloned())
-                                       .collect();
-                if let Ok(res) = external_udp_socket(echo_servers) {
-                    let our_secret = rand::random();
-                    let connect_resp = ListenerResponse::Connect {
-                        connect_on: res.1,
-                        secret: secret,
-                        their_secret: our_secret,
-                        pub_key: unwrap_result!(our_contact_info.lock()).pub_key.clone(),
-                    };
+                let (our_priv_info, our_pub_info) = gen_rendezvous_info(endpoints);
+                let connect_resp = ListenerResponse::Connect {
+                    our_info: our_pub_info,
+                    their_info: their_info.clone(),
+                    pub_key: our_public_key.clone(),
+                };
 
-                    let data = unwrap_result!(serialise(&connect_resp));
-                    if udp_socket.send_to(&data, peer_addr.clone()).is_err() {
-                        return;
+                if udp_socket.send_to(&unwrap_result!(serialise(&connect_resp)),
+                                      peer_addr.clone())
+                    .is_err() {
+                    return;
+                }
+
+                let PunchedUdpSocket { socket, peer_addr } = {
+                    match PunchedUdpSocket::punch_hole(socket, our_priv_info, their_info) {
+                        Ok(punched_socket) => punched_socket,
+                        Err(e) => return,
                     }
+                };
 
-                    if let (socket, Ok(peer_addr)) =
-                           blocking_udp_punch_hole(res.0, our_secret, secret, SocketAddr(peer_addr)) {
-                        let connection = match utp_rendezvous_connect(socket,
-                                                                      peer_addr,
-                                                                      peer_id::new_id(pub_key),
-                                                                      event_tx.clone(),
-                                                                      connection_map.clone()) {
-                            Ok(connection) => connection,
-                            Err(_) => return,
-                        };
+                let connection = match utp_rendezvous_connect(socket,
+                                                              peer_addr,
+                                                              UtpRendezvousConnectMode::BootstrapAccept,
+                                                              our_public_key.clone(),
+                                                              event_tx.clone(),
+                                                              connection_map.clone()) {
+                    Ok(connection) => connection,
+                    Err(_) => return,
+                };
 
-                        unwrap_result!(connection_map.lock())
-                            .entry(peer_id::new_id(pub_key))
-                            .or_insert_with(Vec::new)
-                            .push(connection);
+                unwrap_result!(connection_map.lock())
+                    .entry(peer_id::new_id(pub_key))
+                    .or_insert_with(Vec::new)
+                    .push(connection);
 
-                        let event = Event::NewPeer(Ok(()), peer_id::new_id(pub_key));
+                let event = Event::NewPeer(Ok(()), peer_id::new_id(pub_key));
 
-                        if event_tx.send(event).is_err() {
-                            return;
-                        }
-                    }
+                if event_tx.send(event).is_err() {
+                    return;
                 }
             }
         }
@@ -207,7 +196,7 @@ impl RaiiUdpListener {
                        _udp_socket: &UdpSocket,
                        _peer_addr: net::SocketAddr,
                        _event_tx: &::CrustEventSender,
-                       _peer_contact_infos: &Arc<Mutex<Vec<StaticContactInfo>>>) {
+                       _mc: &MappingContext) {
         // This is currently unimplemented as RaiiUdpListener should not have made
         // any request - it is supposed to get requests, not make one
         // match _msg {

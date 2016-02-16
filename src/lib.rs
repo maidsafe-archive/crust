@@ -33,9 +33,9 @@
         unconditional_recursion, unknown_lints, unsafe_code, unused, unused_allocation,
         unused_attributes, unused_comparisons, unused_features, unused_parens, while_true)]
 #![warn(trivial_casts, trivial_numeric_casts, unused_extern_crates, unused_import_braces,
-        unused_qualifications, unused_results, variant_size_differences)]
+        unused_qualifications, unused_results)]
 #![allow(box_pointers, fat_ptr_transmutes, missing_copy_implementations,
-         missing_debug_implementations)]
+         missing_debug_implementations, variant_size_differences)]
 
 #![cfg_attr(feature="clippy", feature(plugin))]
 #![cfg_attr(feature="clippy", plugin(clippy))]
@@ -64,6 +64,7 @@ extern crate service_discovery;
 
 #[cfg(target_family = "unix")]
 extern crate libc;
+extern crate nat_traversal;
 
 /// Crust Observers will be informed of crust events on this
 pub type CrustEventSender = ::maidsafe_utilities::event_sender::MaidSafeObserver<Event>;
@@ -91,8 +92,6 @@ mod sender_receiver;
 mod static_contact_info;
 mod utp_wrapper;
 mod event;
-mod hole_punching;
-mod periodic_sender;
 mod socket_utils;
 mod ip_info;
 mod peer_id;

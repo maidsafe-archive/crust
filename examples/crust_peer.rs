@@ -49,20 +49,21 @@ extern crate time;
 use docopt::Docopt;
 use rand::random;
 use rand::Rng;
-use rustc_serialize::{Decodable, Decoder};
+use rustc_serialize::{Decodable, Decoder, json};
 use std::cmp;
 use std::sync::mpsc::channel;
 use std::sync::mpsc::Sender;
 use std::io;
-use crust::error::Error;
 use std::net;
 use std::str::FromStr;
 use std::thread;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
+use std::collections::{BTreeMap, HashMap};
 
-use crust::{Service, Protocol, Endpoint, Connection, SocketAddr};
-use crust::{HolePunchServer, OurContactInfo, TheirContactInfo};
+use crust::{Service, Protocol, Endpoint, ConnectionInfoResult,
+            SocketAddr, OurConnectionInfo,
+            PeerId};
 
 static USAGE: &'static str = "
 Usage:
@@ -100,12 +101,6 @@ will be chosen.
 
 \
                               Options:
-  -c, --create-local-config  Tries to create a default \
-                              config file in the same
-                             directory as \
-                              this executable.  Won't overwrite an
-                             \
-                              existing file.
   -s RATE, --speed=RATE      Keep sending random \
                               data at a maximum speed of RATE
                              \
@@ -118,7 +113,6 @@ const BEACON_PORT: u16 = 5484;
 
 #[derive(RustcDecodable, Debug)]
 struct Args {
-    flag_create_local_config: bool,
     flag_speed: Option<u64>,
     flag_help: bool,
 }
@@ -133,189 +127,82 @@ fn generate_random_vec_u8(size: usize) -> Vec<u8> {
 
 /// /////////////////////////////////////////////////////////////////////////////
 ///
-/// CrustNode
-///
-/// /////////////////////////////////////////////////////////////////////////////
-#[derive(Clone)]
-struct CrustNode {
-    pub connection_id: Connection,
-    pub connected: bool,
-}
-
-impl CrustNode {
-    pub fn new(connection_id: Connection, connected: bool) -> CrustNode {
-        CrustNode {
-            connection_id: connection_id,
-            connected: connected,
-        }
-    }
-}
-
-/*
-/// /////////////////////////////////////////////////////////////////////////////
-///
-/// UdpData
-///
-/// /////////////////////////////////////////////////////////////////////////////
-struct UdpData {
-    stopped: Arc<Mutex<bool>>,
-    socket: UdpSocket,
-    external_endpoints: HashSet<SocketAddr>,
-    receiver_join_handle: Option<thread::JoinHandle<()>>,
-}
-
-impl UdpData {
-    pub fn new(socket: UdpSocket, ext_eps: HashSet<SocketAddr>) -> UdpData {
-        use std::io::ErrorKind::{TimedOut, WouldBlock, Interrupted};
-
-        let stopped = Arc::new(Mutex::new(false));
-        let stopped_copy = stopped.clone();
-        let socket_copy = socket.try_clone().unwrap();
-
-        let join_handle = thread::spawn(move || {
-            let mut buf = [0u8; 256];
-            let timeout = ::std::time::Duration::from_millis(100);
-            assert!(socket.set_read_timeout(Some(timeout)).is_ok());
-            loop {
-                {
-                    let stopped = stopped.lock().unwrap();
-                    if *stopped {
-                        break;
-                    }
-                }
-
-                match socket.recv_from(&mut buf) {
-                    Ok(_x) => {
-                        println!("UdpSocket received data");
-                    }
-                    Err(e) => {
-                        match e.kind() {
-                            TimedOut | WouldBlock => continue,
-                            Interrupted => (),
-                            _ => break,
-                        }
-                    }
-                }
-            }
-        });
-
-        UdpData {
-            stopped: stopped_copy,
-            socket: socket_copy,
-            external_endpoints: ext_eps,
-            receiver_join_handle: Some(join_handle),
-        }
-    }
-
-    pub fn send_to(&self, destination: SocketAddr) {
-        let buf = [0u8; 256];
-        assert!(self.socket.send_to(&buf, &*destination).is_ok());
-    }
-}
-
-impl Drop for UdpData {
-    fn drop(&mut self) {
-        {
-            let mut stopped = self.stopped.lock().unwrap();
-            *stopped = true;
-        }
-        let join_handle = self.receiver_join_handle.take();
-        assert!(join_handle.unwrap().join().is_ok());
-    }
-}
-*/
-
-/// /////////////////////////////////////////////////////////////////////////////
-///
 /// Network
 ///
 /// /////////////////////////////////////////////////////////////////////////////
 struct Network {
-    crust_nodes: Vec<CrustNode>,
-    our_contact_infos: Vec<OurContactInfo>,
+    nodes: HashMap<usize, PeerId>,
+    our_connection_infos: BTreeMap<u32, OurConnectionInfo>,
     performance_start: time::SteadyTime,
     performance_interval: time::Duration,
     received_msgs: u32,
     received_bytes: usize,
+    peer_index: usize,
+    connection_info_index: u32,
 }
 
 // simple "routing table" without any structure
 impl Network {
     pub fn new() -> Network {
         Network {
-            crust_nodes: Vec::new(),
-            our_contact_infos: Vec::new(),
+            nodes: HashMap::new(),
+            our_connection_infos: BTreeMap::new(),
             performance_start: time::SteadyTime::now(),
             performance_interval: time::Duration::seconds(10),
             received_msgs: 0,
             received_bytes: 0,
+            peer_index: 0,
+            connection_info_index: 0,
         }
     }
 
-    // Will add node if not duplicated.  Returns true when added.
-    pub fn add_node(&mut self, new_node: CrustNode) -> bool {
-        if self.crust_nodes
-               .iter()
-               .filter(|node| node.connection_id == new_node.connection_id)
-               .count() == 0 {
-            self.crust_nodes.push(new_node);
-            return true;
-        }
-        for node in self.crust_nodes
-                        .iter_mut()
-                        .filter(|node| node.connection_id == new_node.connection_id) {
-            node.connected = true;
-        }
-        return false;
+    pub fn next_peer_index(&mut self) -> usize {
+        let ret = self.peer_index;
+        self.peer_index += 1;
+        ret
     }
 
-    pub fn release_our_contact_info(&mut self, id: usize) -> Option<OurContactInfo> {
-        if id >= self.our_contact_infos.len() {
-            return None;
-        }
-        Some(self.our_contact_infos.remove(id))
-    }
-
-    pub fn drop_node(&mut self, lost_node: Connection) {
-        for node in self.crust_nodes.iter_mut().filter(|node| node.connection_id == lost_node) {
-            node.connected = false;
-        }
+    pub fn next_connection_info_index(&mut self) -> u32 {
+        let ret = self.connection_info_index;
+        self.connection_info_index += 1;
+        ret
     }
 
     pub fn print_connected_nodes(&self) {
-        println!("Node count: {}", self.crust_nodes.len());
-        for (i, node) in self.crust_nodes.iter().enumerate() {
-            let status = if node.connected {
+        println!("Node count: {}", self.nodes.len());
+        for (i, (id, _node)) in self.nodes.iter().enumerate() {
+            /*
+             * TODO(canndrew): put this back
+            let status = if !node.is_closed() {
                 "Connected   "
             } else {
                 "Disconnected"
             };
+            */
 
-            println!("    [{}] {} {:?}", i, status, node.connection_id);
-        }
-
-        println!("\nOur contact infocount: {}", self.our_contact_infos.len());
-        for (i, contact_info) in self.our_contact_infos.iter().enumerate() {
-            println!("    [{}] {:?} (static: {:?}) (rendezvous: {:?})",
-                     i,
-                     contact_info.socket.local_addr().unwrap(),
-                     contact_info.static_addrs,
-                     contact_info.rendezvous_addrs);
+            println!("    [{}] {:?}", i, id);
         }
 
         println!("");
     }
 
+    /*
     pub fn remove_disconnected_nodes(&mut self) {
-        self.crust_nodes.retain(|node| node.connected);
+        let to_remove = self.nodes.iter().filter_map(|(id, node)| {
+            if node.is_closed() {
+                Some(id.clone())
+            } else {
+                None
+            }
+        }).collect::<Vec<_>>();
+        for id in to_remove {
+            let _ = self.nodes.remove(&id);
+        }
     }
+    */
 
-    pub fn get(&self, n: usize) -> Option<&CrustNode> {
-        self.crust_nodes.get(n)
-    }
-
-    pub fn get_all(&self) -> &Vec<CrustNode> {
-        &self.crust_nodes
+    pub fn get_peer_id(&self, n: usize) -> Option<&PeerId> {
+        self.nodes.get(&n)
     }
 
     pub fn record_received(&mut self, msg_size: usize) {
@@ -401,51 +288,12 @@ fn on_time_out(timeout: Duration, flag_speed: bool) -> Sender<bool> {
     tx
 }
 
-fn create_local_config() -> Result<(), Error> {
-    let mut stdout = term::stdout();
-    let mut config_path = match ::crust::current_bin_dir() {
-        Ok(path) => path,
-        Err(error) => {
-            stdout = red_foreground(stdout);
-            println!("Failed to get config file path: {:?}", error);
-            let _ = reset_foreground(stdout);
-            std::process::exit(1);
-        }
-    };
-    let mut config_name = try!(::crust::exe_file_stem());
-    config_name.push(".crust.config");
-    config_path.push(config_name);
-
-    match ::std::fs::metadata(&config_path) {
-        Ok(_) => {
-            stdout = red_foreground(stdout);
-            println!("Failed to create {:?} since it already exists.",
-                     config_path);
-            let _ = reset_foreground(stdout);
-        }
-        Err(_) => {
-            // Continue if the file doesn't exist
-            // This test helper function will use defaults for each `None` value.
-            match ::crust::write_config_file(None) {
-                Ok(file_path) => {
-                    stdout = green_foreground(stdout);
-                    println!("Created default config file at {:?}.", file_path);
-                    let _ = reset_foreground(stdout);
-                }
-                Err(error) => {
-                    stdout = red_foreground(stdout);
-                    println!("Failed to write default config file: {:?}", error);
-                    let _ = reset_foreground(stdout);
-                    std::process::exit(2);
-                }
-            }
-        }
-    };
-    Ok(())
-}
-
-fn filter_ok<T>(vec: Vec<Result<T, Error>>) -> Vec<T> {
-    vec.into_iter().filter_map(|a| a.ok()).collect()
+fn handle_new_peer(protected_network: Arc<Mutex<Network>>, peer_id: PeerId) -> usize {
+    let mut network = unwrap_result!(protected_network.lock());
+    let peer_index = network.next_peer_index();
+    let _ = network.nodes.insert(peer_index, peer_id);
+    network.print_connected_nodes();
+    peer_index
 }
 
 fn main() {
@@ -454,13 +302,6 @@ fn main() {
     let args: Args = Docopt::new(USAGE)
                          .and_then(|docopt| docopt.decode())
                          .unwrap_or_else(|error| error.exit());
-
-    if args.flag_create_local_config {
-        unwrap_result!(create_local_config());
-    }
-
-    let (tx, _rx) = channel();
-    let hole_punch_server = Arc::new(unwrap_result!(HolePunchServer::start(tx)));
 
     let mut stdout = term::stdout();
     let mut stdout_copy = term::stdout();
@@ -476,20 +317,10 @@ fn main() {
         ::maidsafe_utilities::event_sender::MaidSafeObserver::new(channel_sender,
                                                                   crust_event_category,
                                                                   category_tx);
-    let mut service = Service::new(event_sender).unwrap();
-    let listening_ports = filter_ok(vec![service.start_accepting(0)]);
-    assert!(listening_ports.len() >= 1);
-    let _ = service.start_beacon(BEACON_PORT);
-
-    stdout = green_foreground(stdout);
-    print!("Listening on ports");
-    for port in &listening_ports {
-        print!(" {:?}", *port);
-    }
-    println!("");
-
-    stdout = reset_foreground(stdout);
-    service.bootstrap(0, Some(BEACON_PORT));
+    let mut service = unwrap_result!(Service::new(event_sender, BEACON_PORT));
+    unwrap_result!(service.start_listening_tcp());
+    unwrap_result!(service.start_listening_utp());
+    service.start_service_discovery();
 
     let network = Arc::new(Mutex::new(Network::new()));
     let network2 = network.clone();
@@ -505,61 +336,80 @@ fn main() {
                 ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent => {
                     if let Ok(event) = channel_receiver.try_recv() {
                         match event {
-                            crust::Event::NewMessage(connection, bytes) => {
+                            crust::Event::NewMessage(peer_id, bytes) => {
                                 stdout_copy = cyan_foreground(stdout_copy);
                                 let message_length = bytes.len();
-                                let mut network = network2.lock().unwrap();
+                                let mut network = unwrap_result!(network2.lock());
                                 network.record_received(message_length);
                                 println!("\nReceived from {:?} message: {}",
-                                         connection.peer_endpoint(),
+                                         peer_id,
                                          String::from_utf8(bytes)
                                          .unwrap_or(format!("non-UTF-8 message of {} bytes",
                                                             message_length)));
                             },
-                            crust::Event::OnBootstrapConnect(Ok((_, connection)), _) |
-                            crust::Event::OnConnect(Ok((_, connection)), _) => {
+                            crust::Event::ConnectionInfoPrepared(result) => {
+                                let ConnectionInfoResult {
+                                    result_token, result } = result;
+                                let info = match result {
+                                    Ok(i) => i,
+                                    Err(e) => {
+                                        println!("Failed to prepare connection info\ncause: {}", e);
+                                        continue;
+                                    }
+                                };
+                                println!("Prepared connection info with id {}", result_token);
+                                let their_info = info.to_their_connection_info();
+                                let info_json = unwrap_result!(json::encode(&their_info));
+                                println!("Share this info with the peer you want to connect to:");
+                                println!("{}", info_json);
+                                let mut network = unwrap_result!(network2.lock());
+                                if let Some(_) = network.our_connection_infos.insert(result_token, info) {
+                                    panic!("Got the same result_token twice!");
+                                };
+                            },
+                            crust::Event::BootstrapConnect(peer_id) => {
                                 stdout_copy = cyan_foreground(stdout_copy);
-                                println!("\nConnected to peer at {:?}", connection.peer_endpoint());
-                                let mut network = network2.lock().unwrap();
-                                network.add_node(CrustNode::new(connection.clone(), true));
-                                network.print_connected_nodes();
+                                println!("\nBootstrapConnect with peer {:?}", peer_id);
+                                let peer_index = handle_new_peer(network2.clone(), peer_id);
+                                assert!(!bootstrapped);
+                                bootstrapped = true;
+                                let _ = bs_sender.send(peer_index);
+                            },
+                            crust::Event::BootstrapAccept(peer_id) => {
+                                stdout_copy = cyan_foreground(stdout_copy);
+                                println!("\nBootstrapAccept with peer {:?}", peer_id);
+                                let peer_index = handle_new_peer(network2.clone(), peer_id);
                                 if !bootstrapped {
                                     bootstrapped = true;
-                                    let _ = bs_sender.send(connection.clone());
+                                    let _ = bs_sender.send(peer_index);
                                 }
                             },
-                            crust::Event::OnBootstrapAccept(_, connection) => {
+                            crust::Event::NewPeer(Ok(()), peer_id) => {
                                 stdout_copy = cyan_foreground(stdout_copy);
-                                println!("\nAccepted peer at {:?}", connection);
-                                let mut network = network2.lock().unwrap();
-                                network.add_node(CrustNode::new(connection.clone(), true));
-                                network.print_connected_nodes();
-                                if !bootstrapped {
-                                    bootstrapped = true;
-                                    let _ = bs_sender.send(connection);
-                                }
-                            },
-                            crust::Event::LostConnection(c) => {
+                                println!("\nConnected to peer {:?}", peer_id);
+                                let _ = handle_new_peer(network2.clone(), peer_id);
+                                assert!(bootstrapped);
+                            }
+                            crust::Event::LostPeer(peer_id) => {
                                 stdout_copy = yellow_foreground(stdout_copy);
-                                println!("\nLost connection to peer at {:?}", c);
+                                println!("\nLost connection to peer {:?}",
+                                         peer_id);
                                 stdout_copy = cyan_foreground(stdout_copy);
-                                let mut network = network2.lock().unwrap();
-                                network.drop_node(c);
-                                network.print_connected_nodes();
-                            },
-                            crust::Event::ContactInfoPrepared(content) => {
-                                match content.result {
-                                    Ok(contact_info) => {
-                                        println!("Received our contact info: {:?}", contact_info);
-                                        let mut network = network2.lock().unwrap();
-                                        network.our_contact_infos.push(contact_info);
-                                        network.print_connected_nodes();
-                                    },
-                                    Err(what) => {
-                                        println!("Preparing contact info failed: {} {:?}",
-                                                 content.result_token, what);
-                                    },
+                                let mut index = None;
+                                {
+                                    let network = unwrap_result!(network2.lock());
+                                    for (i, id) in network.nodes.iter() {
+                                        if id == &peer_id {
+                                            index = Some(*i);
+                                            break;
+                                        }
+                                    }
                                 }
+                                let mut network = unwrap_result!(network2.lock());
+                                if let Some(index) = index {
+                                    let _ = unwrap_option!(network.nodes.remove(&index), "index should definitely be a key in this map");
+                                };
+                                network.print_connected_nodes();
                             }
                             e => {
                                 println!("\nReceived event {:?} (not handled)", e);
@@ -589,13 +439,15 @@ fn main() {
         let tx = on_time_out(Duration::from_secs(5), running_speed_test);
 
         // Block until we get one bootstrap connection
-        let connected_peer = bs_receiver.recv().unwrap_or_else(|e| {
+        let peer_index = bs_receiver.recv().unwrap_or_else(|e| {
             println!("CrustNode event handler closed; error : {}", e);
             std::process::exit(6);
         });
+        let network = unwrap_result!(network.lock());
+        let peer_id = unwrap_option!(network.get_peer_id(peer_index), "No such peer index");
 
         stdout = green_foreground(stdout);
-        println!("Bootstrapped to {:?}", connected_peer);
+        println!("Bootstrapped to {:?}", peer_id);
         let _ = reset_foreground(stdout);
 
         let _ = tx.send(true); // stop timer with no error messages
@@ -603,18 +455,16 @@ fn main() {
         thread::sleep(Duration::from_millis(100));
         println!("");
 
-        let speed = args.flag_speed.unwrap();  // Safe due to `running_speed_test` == true
-        let peer = connected_peer;
+        let speed = unwrap_option!(args.flag_speed, "Safe due to `running_speed_test` == true");
         let mut rng = rand::thread_rng();
         loop {
             let length = rng.gen_range(50, speed);
             let times = cmp::max(1, speed / length);
             let sleep_time = cmp::max(1, 1000 / times);
             for _ in 0..times {
-                service.send(peer.clone(), generate_random_vec_u8(length as usize));
+                unwrap_result!(service.send(peer_id, generate_random_vec_u8(length as usize)));
                 debug!("Sent a message with length of {} bytes to {:?}",
-                       length,
-                       peer);
+                       length, peer_id);
                 std::thread::sleep(Duration::from_millis(sleep_time));
             }
         }
@@ -636,75 +486,64 @@ fn main() {
             };
 
             match cmd {
-                UserCommand::Connect(ep) => {
-                    println!("Bootstrap connecting to {:?}", ep);
-                    service.bootstrap_off_list(0, vec![ep], hole_punch_server.clone());
+                UserCommand::PrepareConnectionInfo => {
+                    let mut network = unwrap_result!(network.lock());
+                    let token = network.next_connection_info_index();
+                    service.prepare_connection_info(token);
                 }
-                UserCommand::ConnectRendezvous(udp_id, endpoint) => {
-                    let mut network = network.lock().unwrap();
-                    let our_contact_info = match network.release_our_contact_info(udp_id) {
-                        Some(ci) => ci,
-                        None => {
-                            println!("No such contact info #{}", udp_id);
+                UserCommand::Connect(our_info_index, their_info) => {
+                    let mut network = unwrap_result!(network.lock());
+                    let our_info_index = match u32::from_str(&our_info_index) {
+                        Ok(info) => info,
+                        Err(e) => {
+                            println!("Invalid connection info index: {}", e);
                             continue;
-                        }
+                        },
                     };
-                    println!("ConnectingRendezvous with {} to {:?}", udp_id, endpoint);
-                    let their_contact_info = TheirContactInfo {
-                        secret: our_contact_info.secret,
-                        static_addrs: vec![],
-                        rendezvous_addrs: vec![endpoint.socket_addr().clone()],
+                    let our_info = match network.our_connection_infos.remove(&our_info_index) {
+                        Some(info) => info,
+                        None => {
+                            println!("Invalid connection info index");
+                            continue;
+                        },
                     };
-                    service.connect(our_contact_info, their_contact_info, 0);
+                    let their_info = match json::decode(&their_info) {
+                        Ok(info) => info,
+                        Err(e) => {
+                            println!("Error decoding their connection info");
+                            println!("{}", e);
+                            continue;
+                        },
+                    };
+                    service.connect(our_info, their_info);
                 }
-                UserCommand::Send(peer, message) => {
-                    let network = network.lock().unwrap();
-                    match network.get(peer) {
-                        Some(ref node) => {
-                            service.send(node.connection_id.clone(), message.into_bytes())
+                UserCommand::Send(peer_index, message) => {
+                    let network = unwrap_result!(network.lock());
+                    match network.get_peer_id(peer_index) {
+                        Some(ref mut peer_id) => {
+                            unwrap_result!(service.send(peer_id, message.into_bytes()));
                         }
                         None => println!("Invalid connection #"),
                     }
                 }
-                /*
-                UserCommand::SendUdp(peer, dst, _message) => {
-                    let network = network.lock().unwrap();
-                    match network.get_our_contact_info(peer) {
-                        Some(ref ci) => ci.socket.send_to(dst),
-                        None => println!("Invalid udp #"),
-                    }
-                }
-                */
                 UserCommand::SendAll(message) => {
-                    let network = network.lock().unwrap();
-                    for node in network.get_all() {
-                        service.send(node.connection_id.clone(), message.clone().into_bytes());
+                    let mut network = unwrap_result!(network.lock());
+                    let msg = message.into_bytes();
+                    for (_, peer_id) in network.nodes.iter_mut() {
+                        unwrap_result!(service.send(peer_id, msg.clone()));
                     }
-                }
-                /*
-                UserCommand::Punch(peer, dst) => {
-                    let network = network.lock().unwrap();
-                    match network.get_udp(peer) {
-                        Some(ref udp) => {
-                            let socket = udp.socket.try_clone().unwrap();
-                            service.udp_punch_hole(0, socket, None, dst);
-                        }
-                        None => println!("Invalid udp #"),
-                    }
-                }
-                */
-                UserCommand::Map => {
-                    service.prepare_contact_info(0);
                 }
                 UserCommand::List => {
-                    let network = network.lock().unwrap();
+                    let network = unwrap_result!(network.lock());
                     network.print_connected_nodes();
                 }
+                /*
                 UserCommand::Clean => {
                     let mut network = network.lock().unwrap();
                     network.remove_disconnected_nodes();
                     network.print_connected_nodes();
                 }
+                */
                 UserCommand::Stop => {
                     break;
                 }
@@ -724,20 +563,13 @@ fn main() {
 /// We'll use docopt to help parse the ongoing CLI commands entered by the user.
 static CLI_USAGE: &'static str = "
 Usage:
-  cli connect <endpoint>
-  cli connect-rendezvous \
-                                  <peer> <endpoint>
+  cli prepare-connection-info
+  cli connect <our-info-id> <their-info>
   cli send <peer> <message>...
-  cli send-udp \
-                                  <peer> <destination> <message>...
   cli send-all <message>...
-  \
-                                  cli map
-  cli punch <peer> <destination>
   cli list
   cli clean
-  \
-                                  cli stop
+  cli stop
   cli help
 
 ";
@@ -745,62 +577,47 @@ Usage:
 fn print_usage() {
     static USAGE: &'static str = r#"\
 # Commands:
-    connect <endpoint>                            - Initiate a connection to the remote endpoint
-    connect-rendezvous <udp-socket-id> <endpoint> - As above, but using rendezvous connect
-    send <connection-id> <message>                - Send a string to the given connection
-    send-udp <udp-socket-id> <message>            - E.g. send-udp 0 foo bar
+    prepare-connection-info                       - Prepare a connection info
+    connect <our-info-id> <their-info>            - Initiate a connection to the remote peer
+    send <peer> <message>                         - Send a string to the given peer
     send-all <message>                            - Send a string to all connections
-    map                                           - Use existing connections to find our external
-                                                    IP address.  Also creates a UDP socket.
-    punch <udp-socket-id> <socketaddr>            - UDP hole punch with given socket to the given
-                                                    destination
     list                                          - List existing connections and UDP sockets
-    clean                                         - Remove disconnected connections from the list
     stop                                          - Exit the app
     help                                          - Print this help
 
 # Where
-    <endpoint>      - Specifies transport and socket address.  Its form is
-                      [Tcp|Utp](a.b.c.d:p)
-                      E.g. Tcp(192.168.0.1:5483)
-    <udp-socket-id> - ID of a UDP socket as listed using the `list` command
+    <our-file>      - The file where we'll read/write our connection info
+    <their-file>    - The file where we'll read their connection info.
     <connection-id> - ID of a connection as listed using the `list` command
-    <socketaddr>    - IP address and port.  E.g. 192.168.0.1:5483
 "#;
     println!("{}", USAGE);
 }
 
 #[derive(RustcDecodable, Debug)]
 struct CliArgs {
+    cmd_prepare_connection_info: bool,
     cmd_connect: bool,
-    cmd_connect_rendezvous: bool,
     cmd_send: bool,
-    cmd_send_udp: bool,
     cmd_send_all: bool,
-    cmd_map: bool,
-    cmd_punch: bool,
     cmd_list: bool,
-    cmd_clean: bool,
+    //cmd_clean: bool,
     cmd_stop: bool,
     cmd_help: bool,
-    arg_endpoint: Option<PeerEndpoint>,
-    arg_destination: Option<::crust::SocketAddr>,
     arg_peer: Option<usize>,
     arg_message: Vec<String>,
+    arg_our_info_id: Option<String>,
+    arg_their_info: Option<String>,
 }
 
 #[derive(PartialEq, Eq, Debug, Clone)]
 enum UserCommand {
     Stop,
-    Connect(Endpoint),
-    ConnectRendezvous(usize, Endpoint),
+    PrepareConnectionInfo,
+    Connect(String, String),
     Send(usize, String),
-    //SendUdp(usize, SocketAddr, String),
     SendAll(String),
-    //Punch(usize, SocketAddr),
     List,
-    Clean,
-    Map,
+    //Clean,
 }
 
 fn parse_user_command(cmd: String) -> Option<UserCommand> {
@@ -824,35 +641,23 @@ fn parse_user_command(cmd: String) -> Option<UserCommand> {
     };
 
     if args.cmd_connect {
-        let peer = args.arg_endpoint.unwrap().addr;
-        Some(UserCommand::Connect(peer))
-    } else if args.cmd_connect_rendezvous {
-        let peer = args.arg_peer.unwrap();
-        let endpoint = args.arg_endpoint.unwrap().addr;
-        Some(UserCommand::ConnectRendezvous(peer, endpoint))
+        let our_info_id = unwrap_option!(args.arg_our_info_id, "Missing our_info_id");
+        let their_info = unwrap_option!(args.arg_their_info, "Missing their_info");
+        Some(UserCommand::Connect(our_info_id, their_info))
     } else if args.cmd_send {
-        let peer = args.arg_peer.unwrap();
+        let peer = unwrap_option!(args.arg_peer, "Missing peer");
         let msg = args.arg_message.join(" ");
         Some(UserCommand::Send(peer, msg))
-    } /* else if args.cmd_send_udp {
-        let peer = args.arg_peer.unwrap();
-        let dst = args.arg_destination.unwrap();
-        let msg = args.arg_message.join(" ");
-        Some(UserCommand::SendUdp(peer, dst, msg))
-    } */ else if args.cmd_send_all {
+    } else if args.cmd_send_all {
         let msg = args.arg_message.join(" ");
         Some(UserCommand::SendAll(msg))
-    } else if args.cmd_map {
-        Some(UserCommand::Map)
-    } /* else if args.cmd_punch {
-        let peer = args.arg_peer.unwrap();
-        let dst = args.arg_destination.unwrap();
-        Some(UserCommand::Punch(peer, dst))
-    } */ else if args.cmd_list {
+    } else if args.cmd_prepare_connection_info {
+        Some(UserCommand::PrepareConnectionInfo)
+    } else if args.cmd_list {
         Some(UserCommand::List)
-    } else if args.cmd_clean {
+    } /* else if args.cmd_clean {
         Some(UserCommand::Clean)
-    } else if args.cmd_stop {
+    } */ else if args.cmd_stop {
         Some(UserCommand::Stop)
     } else if args.cmd_help {
         print_usage();
