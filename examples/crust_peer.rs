@@ -330,7 +330,6 @@ fn main() {
 
     let handler = match thread::Builder::new().name("CrustNode event handler".to_string())
                                               .spawn(move || {
-        let mut bootstrapped = false;
         for it in category_rx.iter() {
             match it {
                 ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent => {
@@ -371,29 +370,24 @@ fn main() {
                                 stdout_copy = cyan_foreground(stdout_copy);
                                 println!("\nBootstrapConnect with peer {:?}", peer_id);
                                 let peer_index = handle_new_peer(network2.clone(), peer_id);
-                                assert!(!bootstrapped);
-                                bootstrapped = true;
                                 let _ = bs_sender.send(peer_index);
                             },
                             crust::Event::BootstrapAccept(peer_id) => {
                                 stdout_copy = cyan_foreground(stdout_copy);
                                 println!("\nBootstrapAccept with peer {:?}", peer_id);
                                 let peer_index = handle_new_peer(network2.clone(), peer_id);
-                                if !bootstrapped {
-                                    bootstrapped = true;
-                                    let _ = bs_sender.send(peer_index);
-                                }
+                                let _ = bs_sender.send(peer_index);
                             },
                             crust::Event::NewPeer(Ok(()), peer_id) => {
                                 stdout_copy = cyan_foreground(stdout_copy);
                                 println!("\nConnected to peer {:?}", peer_id);
                                 let _ = handle_new_peer(network2.clone(), peer_id);
-                                assert!(bootstrapped);
                             }
-                            crust::Event::LostPeer(peer_id) => {
+                            crust::Event::LostPeer(peer_id, error) => {
                                 stdout_copy = yellow_foreground(stdout_copy);
-                                println!("\nLost connection to peer {:?}",
-                                         peer_id);
+                                println!("\nLost connection to peer {:?} with error {:?}",
+                                         peer_id,
+                                         error);
                                 stdout_copy = cyan_foreground(stdout_copy);
                                 let mut index = None;
                                 {

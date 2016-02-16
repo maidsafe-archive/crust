@@ -136,7 +136,7 @@ mod test {
 
     #[test]
     fn test_small_stream() {
-        let listener = unwrap_result!(TcpListener::bind(("0.0.0.0", 5483)));
+        let listener = unwrap_result!(TcpListener::bind(("0.0.0.0", 0)));
         let port = unwrap_result!(listener.local_addr()).port();
         let (mut i, o) = unwrap_result!(connect_tcp(loopback(port)));
 
@@ -195,7 +195,7 @@ mod test {
     fn test_multiple_nodes_small_stream() {
         const MSG_COUNT: usize = 5;
 
-        let listener = TcpListener::bind(("0.0.0.0", 5483)).unwrap();
+        let listener = TcpListener::bind(("0.0.0.0", 0)).unwrap();
         let port = listener.local_addr().unwrap().port();
 
         let (tx, rx) = mpsc::channel();
