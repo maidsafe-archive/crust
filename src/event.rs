@@ -48,7 +48,7 @@ pub enum Event {
     /// Invoked when a connection to a new peer is established.
     NewPeer(io::Result<()>, PeerId),
     /// Invoked when a peer is lost.
-    LostPeer(PeerId),
+    LostPeer(PeerId, io::Error),
     /// Raised once the list of bootstrap contacts is exhausted.
     BootstrapFinished,
     /// Invoked as a result to the call of `Service::prepare_contact_info`.
