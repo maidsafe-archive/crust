@@ -337,6 +337,42 @@ impl Service {
         });
     }
 
+    /// Connect, but only via TCP.
+    pub fn tcp_connect(&self,
+                   our_connection_info: OurConnectionInfo,
+                   their_connection_info: TheirConnectionInfo) {
+        let event_tx = self.event_tx.clone();
+        let connection_map = self.connection_map.clone();
+        let our_public_key = self.our_keys.0.clone();
+        let our_contact_info = self.static_contact_info.clone();
+
+        unwrap_result!(self.expected_peers.lock()).insert(their_connection_info.id);
+
+        // TODO connect to all the socket addresses of peer in parallel
+        let _joiner = thread!("PeerConnectionThread", move || {
+            let their_id = their_connection_info.id;
+
+            for tcp_addr in their_connection_info.static_contact_info.tcp_acceptors {
+                match connection::connect_tcp_endpoint(tcp_addr,
+                                                       our_contact_info.clone(),
+                                                       our_public_key,
+                                                       event_tx.clone(),
+                                                       connection_map.clone(),
+                                                       Some(their_id)) {
+                    Err(e) => (),
+                    Ok(connection) => {
+                        unwrap_result!(connection_map.lock())
+                            .entry(their_id)
+                            .or_insert(Vec::new())
+                            .push(connection);
+                        let _ = event_tx.send(Event::NewPeer(Ok(()), their_id));
+                        return;
+                    }
+                }
+            };
+        });
+    }
+
     /// Lookup a mapped udp socket based on result_token
     pub fn prepare_connection_info(&mut self, result_token: u32) {
         // FIXME: If the lsiterners are directly addressable (direct full cone or upnp mapped etc.

@@ -372,10 +372,11 @@ pub fn start_tcp_accept(port: u16,
                 },
                 Ok(CrustMsg::Connect(k)) => {
                     let peer_id = peer_id::new_id(k);
-                    if unwrap_result!(expected_peers.lock()).remove(&peer_id) {
+                    writer.send(WriteEvent::Write(CrustMsg::Connect(our_public_key)));
+                    /*if !unwrap_result!(expected_peers.lock()).remove(&peer_id) {
                         error!("Unexpected new peer: {:?}.", peer_id);
                         continue;
-                    }
+                    }*/
                     let event = Event::NewPeer(Ok(()), peer_id);
                     if event_tx.send(event).is_err() {
                         break;
