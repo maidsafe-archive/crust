@@ -536,7 +536,7 @@ mod test {
         assert!(service_0.disconnect(&id_1));
 
         match unwrap_result!(event_rx_1.recv()) {
-            Event::LostPeer(id) => assert_eq!(id, id_0),
+            Event::LostPeer(id, _) => assert_eq!(id, id_0),
             e => panic!("Received unexpected event: {:?}", e),
         }
     }

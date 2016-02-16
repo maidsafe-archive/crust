@@ -383,10 +383,11 @@ fn main() {
                                 println!("\nConnected to peer {:?}", peer_id);
                                 let _ = handle_new_peer(network2.clone(), peer_id);
                             }
-                            crust::Event::LostPeer(peer_id) => {
+                            crust::Event::LostPeer(peer_id, error) => {
                                 stdout_copy = yellow_foreground(stdout_copy);
-                                println!("\nLost connection to peer {:?}",
-                                         peer_id);
+                                println!("\nLost connection to peer {:?} with error {:?}",
+                                         peer_id,
+                                         error);
                                 stdout_copy = cyan_foreground(stdout_copy);
                                 let mut index = None;
                                 {
