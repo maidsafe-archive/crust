@@ -89,7 +89,6 @@ impl RaiiBootstrap {
         for contact in bootstrap_contacts {
             // Bootstrapping got cancelled.
             // Later check the bootstrap contacts in the background to see if they are still valid
-            println!("Connecting to bootstrap contact: {:#?}", contact);
 
             if stop_flag.load(Ordering::SeqCst) {
                 break;
