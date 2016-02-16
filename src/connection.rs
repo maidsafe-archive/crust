@@ -504,18 +504,29 @@ fn start_rx(mut network_rx: Receiver,
             event_tx: ::CrustEventSender,
             closed: Arc<AtomicBool>,
             connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>) {
-    while let Ok(msg) = network_rx.receive() {
-        match msg {
-            CrustMsg::Message(msg) => {
-                if event_tx.send(Event::NewMessage(their_id, msg)).is_err() {
-                    break;
+    let exit_reason;
+    loop {
+        match network_rx.receive() {
+            Ok(msg) => {
+                match msg {
+                    CrustMsg::Message(msg) => {
+                        if event_tx.send(Event::NewMessage(their_id, msg)).is_err() {
+                            exit_reason = io::Error::new(io::ErrorKind::Other, "Writing thread closed");
+                            break;
+                        }
+                    },
+                    m => {
+                        error!("Unexpected message in start_rx: {:?}", m);
+                    },
                 }
             },
-            m => {
-                error!("Unexpected message in start_rx: {:?}", m);
+            Err(e) => {
+                exit_reason = e;
+                break;
             },
-        }
+        };
     }
+    info!("Closing connection: {}", exit_reason);
     closed.store(true, Ordering::Relaxed);
     // Drop the connection in a separate thread, because the destructor joins _this_ thread.
     let _ = thread!("ConnectionDropper", move || {
@@ -524,7 +535,7 @@ fn start_rx(mut network_rx: Receiver,
             entry.get_mut().retain(|connection| !connection.is_closed());
             if entry.get().is_empty() {
                 let _ = entry.remove();
-                let _ = event_tx.send(Event::LostPeer(their_id));
+                let _ = event_tx.send(Event::LostPeer(their_id, exit_reason));
             }
         }
     });
