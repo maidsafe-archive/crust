@@ -182,7 +182,7 @@ impl RaiiUdpListener {
                     .or_insert_with(Vec::new)
                     .push(connection);
 
-                let event = Event::NewPeer(Ok(()), peer_id::new_id(pub_key));
+                let event = Event::BootstrapAccept(peer_id::new_id(pub_key));
 
                 if event_tx.send(event).is_err() {
                     return;
