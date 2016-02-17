@@ -351,6 +351,7 @@ impl Service {
         // TODO connect to all the socket addresses of peer in parallel
         let _joiner = thread!("PeerConnectionThread", move || {
             let their_id = their_connection_info.id;
+            let mut last_err = io::Error::new(io::ErrorKind::NotFound, "No TCP acceptors found.");
 
             for tcp_addr in their_connection_info.static_contact_info.tcp_acceptors {
                 match connection::connect_tcp_endpoint(tcp_addr,
@@ -359,7 +360,7 @@ impl Service {
                                                        event_tx.clone(),
                                                        connection_map.clone(),
                                                        Some(their_id)) {
-                    Err(e) => (),
+                    Err(e) => last_err = e,
                     Ok(connection) => {
                         unwrap_result!(connection_map.lock())
                             .entry(their_id)
@@ -370,6 +371,8 @@ impl Service {
                     }
                 }
             };
+
+            let _ = event_tx.send(Event::NewPeer(Err(last_err), their_id));
         });
     }
 
