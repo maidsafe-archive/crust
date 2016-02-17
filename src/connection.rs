@@ -170,6 +170,7 @@ pub fn connect(peer_contact: StaticContactInfo,
             Ok((bytes_rxd, _peer_addr)) => {
                 match deserialise::<ListenerResponse>(&read_buf[..bytes_rxd]) {
                     Ok(ListenerResponse::Connect { our_info, their_info, pub_key, }) => {
+                        let (their_info, our_info) = (our_info, their_info);
                         if our_info != our_pub_info {
                             println!("our_info != our_pub_info");
                             continue;
