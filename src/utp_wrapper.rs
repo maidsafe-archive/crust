@@ -5,6 +5,8 @@ use std::thread;
 use std::io::{Read, ErrorKind};
 use std::io;
 use std::net::SocketAddr;
+use std::collections::VecDeque;
+use std::time::Duration;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 use maidsafe_utilities::serialisation::{deserialise, serialise};
 use event::WriteEvent;
@@ -14,7 +16,7 @@ const BUFFER_SIZE: usize = 1000;
 
 pub struct UtpWrapper {
     input: Receiver<Vec<u8>>,
-    unread_bytes: Vec<u8>,
+    unread_bytes: VecDeque<u8>,
     peer_addr: SocketAddr,
     local_addr: SocketAddr,
     _thread_joiner: RaiiThreadJoiner,
@@ -22,6 +24,8 @@ pub struct UtpWrapper {
 
 impl UtpWrapper {
     pub fn wrap(socket: UtpSocket, output_rx: Receiver<WriteEvent>) -> io::Result<UtpWrapper> {
+        use std::io::Write;
+
         let (input_tx, input_rx) = mpsc::channel();
         let peer_addr = try!(socket.peer_addr());
         let local_addr = try!(socket.local_addr());
@@ -34,11 +38,16 @@ impl UtpWrapper {
                     socket.set_read_timeout(Some(CHECK_FOR_NEW_WRITES_INTERVAL_MS));
                     'outer: loop {
                         let mut buf = [0; BUFFER_SIZE];
-                        match socket.recv_from(&mut buf) {
+                        match socket.recv_from(&mut buf[..]) {
                             Ok((0, _src)) => break,
                             Ok((amt, _src)) => {
                                 let buf = &buf[..amt];
-                                let _ = input_tx.send(Vec::from(buf));
+                                match input_tx.send(Vec::from(buf)) {
+                                    Ok(()) => (),
+                                    Err(mpsc::SendError(_)) => {
+                                        break 'outer;
+                                    }
+                                }
                             }
                             Err(ref e) if e.kind() == ErrorKind::TimedOut => {
                                 // This extra loop ensures all pending messages are sent
@@ -64,7 +73,7 @@ impl UtpWrapper {
 
         Ok(UtpWrapper {
             input: input_rx,
-            unread_bytes: Vec::new(),
+            unread_bytes: VecDeque::new(),
             peer_addr: peer_addr,
             local_addr: local_addr,
             _thread_joiner: RaiiThreadJoiner::new(thread_handle),
@@ -82,36 +91,43 @@ impl UtpWrapper {
 
 impl Read for UtpWrapper {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        let mut written = 0;
-        for (idx, e) in self.unread_bytes.iter().take(buf.len()).enumerate() {
-            buf[idx] = *e;
-            written += 1;
-        }
+        use std;
+        use std::io::Write;
 
-        {
-            let mut n = written;
-            while n != 0 {
-                let _ = self.unread_bytes.remove(0);
-                n -= 1;
+        let written = {
+            let (unread_front, unread_back) = self.unread_bytes.as_slices();
+            if unread_front.len() > 0 {
+                let read_len = std::cmp::min(buf.len(), unread_front.len());
+                let target = &mut buf[..read_len];
+                let src = &unread_front[..read_len];
+                target.clone_from_slice(src);
+                read_len
             }
-        }
-
-        // We send all read bytes before issuing another request because
-        // application logic may require these bytes before it's possible to
-        // get/generate the next ones.
-        if written != 0 {
+            else if unread_back.len() > 0 {
+                let read_len = std::cmp::min(buf.len(), unread_back.len());
+                let target = &mut buf[..read_len];
+                let src = &unread_back[..read_len];
+                target.clone_from_slice(src);
+                read_len
+            }
+            else {
+                0
+            }
+        };
+        if written > 0 {
+            let _ = self.unread_bytes.drain(..written);
             return Ok(written);
         }
 
-        let mut buf_mut = &mut buf[written..];
         let recved = try!(self.input
                               .recv()
                               .or_else(|e| Err(io::Error::new(ErrorKind::BrokenPipe, e))));
-        for (idx, e) in recved.iter().take(buf_mut.len()).enumerate() {
-            buf_mut[idx] = *e;
-            written += 1;
-        }
-        self.unread_bytes.extend(recved.into_iter().skip(buf_mut.len()));
-        Ok(written)
+        let read_len = std::cmp::min(recved.len(), buf.len());
+        let target = &mut buf[..read_len];
+        let src = &recved[..read_len];
+        target.clone_from_slice(src);
+        self.unread_bytes.extend(&recved[read_len..]);
+        Ok(read_len)
     }
 }
+
