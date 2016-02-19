@@ -397,12 +397,19 @@ impl Service {
     }
 }
 
+impl Drop for Service {
+    fn drop(&mut self) {
+        unwrap_result!(self.connection_map.lock()).clear();
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
     use event::Event;
     use endpoint::Protocol;
 
+    use std::mem;
     use std::sync::mpsc;
     use std::sync::mpsc::Receiver;
     use std::thread;
@@ -479,7 +486,7 @@ mod test {
             }
         }
 
-        // service_0 should have received service_1's connection bootstrap connection by now
+        // service_0 should have received service_1's bootstrap connection by now
         let id_1 = match unwrap_result!(event_rx_0.recv()) {
             Event::BootstrapAccept(their_id) => their_id,
             _ => panic!("0 Should have got a new connection from 1."),
@@ -555,6 +562,51 @@ mod test {
     #[test]
     fn start_two_services_bootstrap_communicate_exit_tcp_and_udp() {
         two_services_bootstrap_communicate_and_exit(45668, true, true);
+    }
+
+    #[test]
+    fn drop() {
+        let port = 45666;
+        let (event_sender_0, category_rx_0, event_rx_0) = get_event_sender();
+        let (event_sender_1, category_rx_1, event_rx_1) = get_event_sender();
+
+        let mut service_0 = unwrap_result!(Service::new(event_sender_0, port));
+        unwrap_result!(service_0.start_listening_tcp());
+
+        // Let service_0 finish bootstrap - it should not find any peer.
+        match unwrap_result!(event_rx_0.recv()) {
+            Event::BootstrapFinished => (),
+            event_rxd => panic!("Received unexpected event: {:?}", event_rxd),
+        }
+        service_0.start_service_discovery();
+
+        let mut service_1 = unwrap_result!(Service::new(event_sender_1, port));
+        unwrap_result!(service_1.start_listening_tcp());
+
+        // Let service_1 finish bootstrap - it should bootstrap off service_0.
+        let id_0 = match unwrap_result!(event_rx_1.recv()) {
+            Event::BootstrapConnect(their_id) => their_id,
+            event => panic!("Received unexpected event: {:?}", event),
+        };
+
+        // Now service_1 should get BootstrapFinished.
+        match unwrap_result!(event_rx_1.recv()) {
+            Event::BootstrapFinished => (),
+            event => panic!("Received unexpected event: {:?}", event),
+        }
+
+        // service_0 should have received service_1's bootstrap connection by now.
+        let id_1 = match unwrap_result!(event_rx_0.recv()) {
+            Event::BootstrapAccept(their_id) => their_id,
+            _ => panic!("0 Should have got a new connection from 1."),
+        };
+
+        // Dropping service_0 should make service_1 receive a LostPeer event.
+        mem::drop(service_0);
+        match unwrap_result!(event_rx_1.recv()) {
+            Event::LostPeer(id) => assert_eq!(id, id_0),
+            event => panic!("Received unexpected event: {:?}", event),
+        }
     }
 
     #[test]
