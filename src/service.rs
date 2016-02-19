@@ -442,6 +442,12 @@ impl Drop for Service {
     }
 }
 
+impl Drop for Service {
+    fn drop(&mut self) {
+        unwrap_result!(self.connection_map.lock()).clear();
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
