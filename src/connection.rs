@@ -378,8 +378,10 @@ pub fn start_tcp_accept(port: u16,
                         continue;
                     }*/
                     let event = Event::NewPeer(Ok(()), peer_id);
-                    if event_tx.send(event).is_err() {
-                        break;
+                    if !cm.contains_key(&peer_id) {
+                        if event_tx.send(event).is_err() {
+                            break;
+                        }
                     }
                     peer_id
                 },

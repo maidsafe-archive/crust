@@ -362,11 +362,12 @@ impl Service {
                                                        Some(their_id)) {
                     Err(e) => last_err = e,
                     Ok(connection) => {
-                        unwrap_result!(connection_map.lock())
-                            .entry(their_id)
-                            .or_insert(Vec::new())
-                            .push(connection);
-                        let _ = event_tx.send(Event::NewPeer(Ok(()), their_id));
+                        let mut guard = unwrap_result!(connection_map.lock());
+                        let connections = guard.entry(their_id).or_insert_with(Vec::new);
+                        if connections.is_empty() {
+                            let _ = event_tx.send(Event::NewPeer(Ok(()), their_id));
+                        }
+                        connections.push(connection);
                         return;
                     }
                 }
