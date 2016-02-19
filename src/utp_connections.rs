@@ -114,7 +114,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn send_receive_data() {
         let listener = listen(0).unwrap();
         let port = listener.local_addr().unwrap().port();
