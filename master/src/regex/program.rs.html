@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/regex-0.1.51/src/program.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/regex-0.1.52/src/program.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>program.rs.html -- source</title>
@@ -391,7 +391,7 @@
     <span class='doccomment'>/// If this returns true, then it is possible to avoid running any of the</span>
     <span class='doccomment'>/// NFA or DFA based matching engines entirely.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>is_prefix_match</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
-        <span class='self'>self</span>.<span class='ident'>prefixes</span>.<span class='ident'>at_match</span>() <span class='op'>&amp;&amp;</span> <span class='self'>self</span>.<span class='ident'>prefixes</span>.<span class='ident'>preserves_priority</span>()
+        <span class='self'>self</span>.<span class='ident'>prefixes</span>.<span class='ident'>at_match</span>()
     }
 
     <span class='doccomment'>/// Returns true if the underlying program is reversed.</span>
