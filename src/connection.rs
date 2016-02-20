@@ -378,7 +378,7 @@ pub fn start_tcp_accept(port: u16,
                         continue;
                     }*/
                     let event = Event::NewPeer(Ok(()), peer_id);
-                    if !cm.contains_key(&peer_id) {
+                    if cm.get(&peer_id).into_iter().all(Vec::is_empty) {
                         if event_tx.send(event).is_err() {
                             break;
                         }
@@ -418,7 +418,7 @@ pub fn start_tcp_accept(port: u16,
             };
 
             cm.entry(their_id)
-              .or_insert(Vec::new())
+              .or_insert_with(Vec::new)
               .push(connection);
         }
     }));

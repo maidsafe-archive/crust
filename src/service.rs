@@ -339,8 +339,14 @@ impl Service {
 
     /// Connect, but only via TCP.
     pub fn tcp_connect(&self,
-                   our_connection_info: OurConnectionInfo,
-                   their_connection_info: TheirConnectionInfo) {
+                       our_connection_info: OurConnectionInfo,
+                       their_connection_info: TheirConnectionInfo) {
+        let their_id = their_connection_info.id;
+
+        if !unwrap_result!(self.connection_map.lock()).get(&their_id).into_iter().all(Vec::is_empty) {
+            return;
+        }
+
         let event_tx = self.event_tx.clone();
         let connection_map = self.connection_map.clone();
         let our_public_key = self.our_keys.0.clone();
@@ -350,7 +356,6 @@ impl Service {
 
         // TODO connect to all the socket addresses of peer in parallel
         let _joiner = thread!("PeerConnectionThread", move || {
-            let their_id = their_connection_info.id;
             let mut last_err = io::Error::new(io::ErrorKind::NotFound, "No TCP acceptors found.");
 
             for tcp_addr in their_connection_info.static_contact_info.tcp_acceptors {
@@ -373,13 +378,15 @@ impl Service {
                 }
             };
 
-            let _ = event_tx.send(Event::NewPeer(Err(last_err), their_id));
+            if unwrap_result!(connection_map.lock()).get(&their_id).into_iter().all(Vec::is_empty) {
+                let _ = event_tx.send(Event::NewPeer(Err(last_err), their_id));
+            }
         });
     }
 
     /// Lookup a mapped udp socket based on result_token
     pub fn prepare_connection_info(&mut self, result_token: u32) {
-        // FIXME: If the lsiterners are directly addressable (direct full cone or upnp mapped etc.
+        // FIXME: If the listeners are directly addressable (direct full cone or upnp mapped etc.
         // then our conact info is our static liseners
         // for udp we can map another socket, but use same local port if accessable/mapped
         // otherwise do following
