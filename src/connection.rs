@@ -234,7 +234,12 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
         None => {
             writer.send(WriteEvent::Write(CrustMsg::BootstrapRequest(our_public_key)));
             match network_rx.receive() {
-                Ok(CrustMsg::BootstrapResponse(key)) => peer_id::new_id(key),
+                Ok(CrustMsg::BootstrapResponse(key)) => {
+                    if key == our_public_key {
+                        return Err(io::Error::new(io::ErrorKind::Other, "Connected to ourselves."));
+                    }
+                    peer_id::new_id(key)
+                }
                 Ok(m) => return Err(io::Error::new(io::ErrorKind::Other, format!(
                             "Invalid crust message from peer during bootstrap attempt: {:?}", m))),
                 Err(e) => return Err(e),
@@ -243,7 +248,14 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
         Some(id) => {
             writer.send(WriteEvent::Write(CrustMsg::Connect(our_public_key)));
             match network_rx.receive() {
-                Ok(CrustMsg::Connect(key)) => peer_id::new_id(key),
+                Ok(CrustMsg::Connect(key)) => {
+                    let their_id = peer_id::new_id(key);
+                    if their_id != id {
+                        return Err(io::Error::new(io::ErrorKind::Other, format!(
+                                                  "Connected to the wrong peer: {:?}.", their_id)));
+                    }
+                    their_id
+                }
                 Ok(m) => return Err(io::Error::new(io::ErrorKind::Other, format!(
                             "Invalid crust message from peer during connect attempt: {:?}", m))),
                 Err(e) => return Err(e),
