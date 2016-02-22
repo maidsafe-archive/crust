@@ -267,7 +267,7 @@ impl Service {
     /// Connecting]
     /// (https://github.com/maidsafe/crust/blob/master/docs/connect.md) for
     /// details on handling of connect in different protocols.
-    pub fn connect(&self,
+    pub fn _connect(&self,
                    our_connection_info: OurConnectionInfo,
                    their_connection_info: TheirConnectionInfo) {
         let event_tx = self.event_tx.clone();
@@ -337,9 +337,57 @@ impl Service {
         });
     }
 
+    /// Connect, but only via TCP.
+    // TODO: Replace this with the current `_connect` once it works.
+    pub fn connect(&self,
+                       our_connection_info: OurConnectionInfo,
+                       their_connection_info: TheirConnectionInfo) {
+        let their_id = their_connection_info.id;
+
+        if !unwrap_result!(self.connection_map.lock()).get(&their_id).into_iter().all(Vec::is_empty) {
+            return;
+        }
+
+        let event_tx = self.event_tx.clone();
+        let connection_map = self.connection_map.clone();
+        let our_public_key = self.our_keys.0.clone();
+        let our_contact_info = self.static_contact_info.clone();
+
+        unwrap_result!(self.expected_peers.lock()).insert(their_connection_info.id);
+
+        // TODO connect to all the socket addresses of peer in parallel
+        let _joiner = thread!("PeerConnectionThread", move || {
+            let mut last_err = io::Error::new(io::ErrorKind::NotFound, "No TCP acceptors found.");
+
+            for tcp_addr in their_connection_info.static_contact_info.tcp_acceptors {
+                match connection::connect_tcp_endpoint(tcp_addr,
+                                                       our_contact_info.clone(),
+                                                       our_public_key,
+                                                       event_tx.clone(),
+                                                       connection_map.clone(),
+                                                       Some(their_id)) {
+                    Err(e) => last_err = e,
+                    Ok(connection) => {
+                        let mut guard = unwrap_result!(connection_map.lock());
+                        let connections = guard.entry(their_id).or_insert_with(Vec::new);
+                        if connections.is_empty() {
+                            let _ = event_tx.send(Event::NewPeer(Ok(()), their_id));
+                        }
+                        connections.push(connection);
+                        return;
+                    }
+                }
+            };
+
+            if unwrap_result!(connection_map.lock()).get(&their_id).into_iter().all(Vec::is_empty) {
+                let _ = event_tx.send(Event::NewPeer(Err(last_err), their_id));
+            }
+        });
+    }
+
     /// Lookup a mapped udp socket based on result_token
     pub fn prepare_connection_info(&mut self, result_token: u32) {
-        // FIXME: If the lsiterners are directly addressable (direct full cone or upnp mapped etc.
+        // FIXME: If the listeners are directly addressable (direct full cone or upnp mapped etc.
         // then our conact info is our static liseners
         // for udp we can map another socket, but use same local port if accessable/mapped
         // otherwise do following
@@ -665,8 +713,8 @@ mod test {
         let their_ci_0 = our_ci_0.to_their_connection_info();
         let their_ci_1 = our_ci_1.to_their_connection_info();
 
-        service_0.connect(our_ci_0, their_ci_1);
-        service_1.connect(our_ci_1, their_ci_0);
+        service_0._connect(our_ci_0, their_ci_1);
+        service_1._connect(our_ci_1, their_ci_0);
 
         let id_1 = match unwrap_result!(event_rx_0.recv()) {
             Event::NewPeer(Ok(()), their_id) => their_id,

@@ -234,7 +234,12 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
         None => {
             writer.send(WriteEvent::Write(CrustMsg::BootstrapRequest(our_public_key)));
             match network_rx.receive() {
-                Ok(CrustMsg::BootstrapResponse(key)) => peer_id::new_id(key),
+                Ok(CrustMsg::BootstrapResponse(key)) => {
+                    if key == our_public_key {
+                        return Err(io::Error::new(io::ErrorKind::Other, "Connected to ourselves."));
+                    }
+                    peer_id::new_id(key)
+                }
                 Ok(m) => return Err(io::Error::new(io::ErrorKind::Other, format!(
                             "Invalid crust message from peer during bootstrap attempt: {:?}", m))),
                 Err(e) => return Err(e),
@@ -243,7 +248,14 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
         Some(id) => {
             writer.send(WriteEvent::Write(CrustMsg::Connect(our_public_key)));
             match network_rx.receive() {
-                Ok(CrustMsg::Connect(key)) => peer_id::new_id(key),
+                Ok(CrustMsg::Connect(key)) => {
+                    let their_id = peer_id::new_id(key);
+                    if their_id != id {
+                        return Err(io::Error::new(io::ErrorKind::Other, format!(
+                                                  "Connected to the wrong peer: {:?}.", their_id)));
+                    }
+                    their_id
+                }
                 Ok(m) => return Err(io::Error::new(io::ErrorKind::Other, format!(
                             "Invalid crust message from peer during connect attempt: {:?}", m))),
                 Err(e) => return Err(e),
@@ -372,13 +384,16 @@ pub fn start_tcp_accept(port: u16,
                 },
                 Ok(CrustMsg::Connect(k)) => {
                     let peer_id = peer_id::new_id(k);
-                    if unwrap_result!(expected_peers.lock()).remove(&peer_id) {
+                    writer.send(WriteEvent::Write(CrustMsg::Connect(our_public_key)));
+                    /*if !unwrap_result!(expected_peers.lock()).remove(&peer_id) {
                         error!("Unexpected new peer: {:?}.", peer_id);
                         continue;
-                    }
+                    }*/
                     let event = Event::NewPeer(Ok(()), peer_id);
-                    if event_tx.send(event).is_err() {
-                        break;
+                    if cm.get(&peer_id).into_iter().all(Vec::is_empty) {
+                        if event_tx.send(event).is_err() {
+                            break;
+                        }
                     }
                     peer_id
                 },
@@ -415,7 +430,7 @@ pub fn start_tcp_accept(port: u16,
             };
 
             cm.entry(their_id)
-              .or_insert(Vec::new())
+              .or_insert_with(Vec::new)
               .push(connection);
         }
     }));
