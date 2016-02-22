@@ -1,5 +1,11 @@
 # CRUST - Change Log
 
+## [0.8.1]
+
+- Restrict to TCP only until the UTP problems are fixed.
+- Add peer IDs, and identify connections with them instead of `Connection`
+  objects.
+
 ## [0.8.0]
 - Removes feature gates, Crust can now compile on stable rust compiler.
 
