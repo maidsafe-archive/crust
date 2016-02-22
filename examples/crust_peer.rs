@@ -508,7 +508,7 @@ fn main() {
                             continue;
                         },
                     };
-                    service.tcp_connect(our_info, their_info);
+                    service.connect(our_info, their_info);
                 }
                 UserCommand::Send(peer_index, message) => {
                     let network = unwrap_result!(network.lock());

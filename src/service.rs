@@ -267,7 +267,7 @@ impl Service {
     /// Connecting]
     /// (https://github.com/maidsafe/crust/blob/master/docs/connect.md) for
     /// details on handling of connect in different protocols.
-    pub fn connect(&self,
+    pub fn _connect(&self,
                    our_connection_info: OurConnectionInfo,
                    their_connection_info: TheirConnectionInfo) {
         let event_tx = self.event_tx.clone();
@@ -338,7 +338,8 @@ impl Service {
     }
 
     /// Connect, but only via TCP.
-    pub fn tcp_connect(&self,
+    // TODO: Replace this with the current `_connect` once it works.
+    pub fn connect(&self,
                        our_connection_info: OurConnectionInfo,
                        their_connection_info: TheirConnectionInfo) {
         let their_id = their_connection_info.id;
@@ -441,12 +442,6 @@ impl Service {
     /// Returns our ID.
     pub fn id(&self) -> PeerId {
         peer_id::new_id(self.our_keys.0)
-    }
-}
-
-impl Drop for Service {
-    fn drop(&mut self) {
-        unwrap_result!(self.connection_map.lock()).clear();
     }
 }
 
@@ -718,8 +713,8 @@ mod test {
         let their_ci_0 = our_ci_0.to_their_connection_info();
         let their_ci_1 = our_ci_1.to_their_connection_info();
 
-        service_0.connect(our_ci_0, their_ci_1);
-        service_1.connect(our_ci_1, their_ci_0);
+        service_0._connect(our_ci_0, their_ci_1);
+        service_1._connect(our_ci_1, their_ci_0);
 
         let id_1 = match unwrap_result!(event_rx_0.recv()) {
             Event::NewPeer(Ok(()), their_id) => their_id,
