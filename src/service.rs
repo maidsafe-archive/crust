@@ -664,7 +664,7 @@ mod test {
     }
 
     #[test]
-    fn drop() {
+    fn drop_disconnects() {
         let port = 45669;
         let (event_sender_0, category_rx_0, event_rx_0) = get_event_sender();
         let (event_sender_1, category_rx_1, event_rx_1) = get_event_sender();
@@ -701,7 +701,7 @@ mod test {
         };
 
         // Dropping service_0 should make service_1 receive a LostPeer event.
-        mem::drop(service_0);
+        drop(service_0);
         match unwrap_result!(event_rx_1.recv()) {
             Event::LostPeer(id) => assert_eq!(id, id_0),
             event => panic!("Received unexpected event: {:?}", event),
