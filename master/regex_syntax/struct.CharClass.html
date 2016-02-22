@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-839' class='srclink' href='../src/regex_syntax/lib.rs.html#204-206' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-847' class='srclink' href='../src/regex_syntax/lib.rs.html#214-216' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct CharClass {
     // some fields omitted
 }</pre><div class='docblock'><p>A character class.</p>
@@ -68,14 +68,9 @@ character class.</li>
 sequence of non-overlapping ranges. This makes it possible to test whether
 a character is matched by a class with a binary search.</p>
 
-<p>Additionally, a character class may be marked <em>case insensitive</em>. If it&#39;s
-case insensitive, then:</p>
-
-<ol>
-<li>Simple case folding has been applied to all ranges.</li>
-<li>Simple case folding must be applied to a character before testing
-whether it matches the character class.</li>
-</ol>
+<p>If the case insensitive flag was set when parsing a character class, then
+simple case folding is done automatically. For example, <code>(?i)[a-c]</code> is
+automatically translated to <code>[a-cA-C]</code>.</p>
 </div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../regex_syntax/struct.CharClass.html' title='regex_syntax::CharClass'>CharClass</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(ranges: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../regex_syntax/struct.ClassRange.html' title='regex_syntax::ClassRange'>ClassRange</a>&gt;) -&gt; <a class='struct' href='../regex_syntax/struct.CharClass.html' title='regex_syntax::CharClass'>CharClass</a></code></h4>
 <div class='docblock'><p>Create a new class from an existing set of ranges.</p>
 </div><h4 id='method.matches' class='method'><code>fn <a href='#method.matches' class='fnname'>matches</a>(&amp;self, c: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.char.html'>char</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>

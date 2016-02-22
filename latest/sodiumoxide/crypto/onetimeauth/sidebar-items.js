@@ -1,0 +1,1 @@
+initSidebarItems({"mod":[["poly1305","`crypto_onetimeauth_poly1305`, an authenticator specified in Cryptography in NaCl, Section 9. This authenticator is proven to meet the standard notion of unforgeability after a single message."]]});

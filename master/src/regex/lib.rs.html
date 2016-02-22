@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/regex-0.1.52/src/lib.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/regex-0.1.53/src/lib.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>lib.rs.html -- source</title>
@@ -527,6 +527,38 @@
 <span id="484">484</span>
 <span id="485">485</span>
 <span id="486">486</span>
+<span id="487">487</span>
+<span id="488">488</span>
+<span id="489">489</span>
+<span id="490">490</span>
+<span id="491">491</span>
+<span id="492">492</span>
+<span id="493">493</span>
+<span id="494">494</span>
+<span id="495">495</span>
+<span id="496">496</span>
+<span id="497">497</span>
+<span id="498">498</span>
+<span id="499">499</span>
+<span id="500">500</span>
+<span id="501">501</span>
+<span id="502">502</span>
+<span id="503">503</span>
+<span id="504">504</span>
+<span id="505">505</span>
+<span id="506">506</span>
+<span id="507">507</span>
+<span id="508">508</span>
+<span id="509">509</span>
+<span id="510">510</span>
+<span id="511">511</span>
+<span id="512">512</span>
+<span id="513">513</span>
+<span id="514">514</span>
+<span id="515">515</span>
+<span id="516">516</span>
+<span id="517">517</span>
+<span id="518">518</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2014-2015 The Rust Project Developers. See the COPYRIGHT</span>
 <span class='comment'>// file at the top-level directory of this distribution and at</span>
@@ -738,6 +770,34 @@
 <span class='doccomment'>//! let after = re.replace_all(before, &quot;$m/$d/$y&quot;);</span>
 <span class='doccomment'>//! assert_eq!(after, &quot;03/14/2012, 01/01/2013 and 07/05/2014&quot;);</span>
 <span class='doccomment'>//! # }</span>
+<span class='doccomment'>//! ```</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! # Example: match multiple regular expressions simultaneously</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! This demonstrates how to use a `RegexSet` to match multiple (possibly</span>
+<span class='doccomment'>//! overlapping) regular expressions in a single scan of the search text:</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! ```rust</span>
+<span class='doccomment'>//! use regex::RegexSet;</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! let set = RegexSet::new(&amp;[</span>
+<span class='doccomment'>//!     r&quot;\w+&quot;,</span>
+<span class='doccomment'>//!     r&quot;\d+&quot;,</span>
+<span class='doccomment'>//!     r&quot;\pL+&quot;,</span>
+<span class='doccomment'>//!     r&quot;foo&quot;,</span>
+<span class='doccomment'>//!     r&quot;bar&quot;,</span>
+<span class='doccomment'>//!     r&quot;barfoo&quot;,</span>
+<span class='doccomment'>//!     r&quot;foobar&quot;,</span>
+<span class='doccomment'>//! ]).unwrap();</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! // Iterate over and collect all of the matches.</span>
+<span class='doccomment'>//! let matches: Vec&lt;_&gt; = set.matches(&quot;foobar&quot;).into_iter().collect();</span>
+<span class='doccomment'>//! assert_eq!(matches, vec![0, 2, 3, 4, 6]);</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//! // You can also test whether a particular regex matched:</span>
+<span class='doccomment'>//! let matches = set.matches(&quot;foobar&quot;);</span>
+<span class='doccomment'>//! assert!(!matches.matched(5));</span>
+<span class='doccomment'>//! assert!(matches.matched(6));</span>
 <span class='doccomment'>//! ```</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! # Pay for what you use</span>
@@ -968,7 +1028,9 @@
 <span class='doccomment'>//! allowed to store a fixed number of states. (When the limit is reached, its</span>
 <span class='doccomment'>//! states are wiped and continues on, possibly duplicating previous work.)</span>
 
-<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>deny</span>(<span class='ident'>missing_docs</span>)]</span>
+<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>allow</span>(<span class='ident'>dead_code</span>, <span class='ident'>unused_imports</span>, <span class='ident'>unused_variables</span>)]</span>
+
+<span class='comment'>// #![deny(missing_docs)]</span>
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>cfg_attr</span>(<span class='ident'>test</span>, <span class='ident'>deny</span>(<span class='ident'>warnings</span>))]</span>
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>cfg_attr</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;pattern&quot;</span>, <span class='ident'>feature</span>(<span class='ident'>pattern</span>))]</span>
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>doc</span>(<span class='ident'>html_logo_url</span> <span class='op'>=</span> <span class='string'>&quot;https://www.rust-lang.org/logos/rust-logo-128x128-blk-v2.png&quot;</span>,
@@ -987,6 +1049,7 @@
     <span class='ident'>Replacer</span>, <span class='ident'>NoExpand</span>, <span class='ident'>RegexSplits</span>, <span class='ident'>RegexSplitsN</span>,
     <span class='ident'>quote</span>, <span class='ident'>is_match</span>,
 };
+<span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>set</span>::{<span class='ident'>RegexSet</span>, <span class='ident'>SetMatches</span>, <span class='ident'>SetMatchesIntoIter</span>, <span class='ident'>SetMatchesIter</span>};
 
 <span class='kw'>mod</span> <span class='ident'>backtrack</span>;
 <span class='kw'>mod</span> <span class='ident'>char</span>;
@@ -995,12 +1058,12 @@
 <span class='kw'>mod</span> <span class='ident'>dfa</span>;
 <span class='kw'>mod</span> <span class='ident'>exec</span>;
 <span class='kw'>mod</span> <span class='ident'>input</span>;
-<span class='kw'>mod</span> <span class='ident'>inst</span>;
 <span class='kw'>mod</span> <span class='ident'>literals</span>;
 <span class='kw'>mod</span> <span class='ident'>nfa</span>;
 <span class='kw'>mod</span> <span class='ident'>pool</span>;
-<span class='kw'>mod</span> <span class='ident'>program</span>;
+<span class='kw'>mod</span> <span class='ident'>prog</span>;
 <span class='kw'>mod</span> <span class='ident'>re</span>;
+<span class='kw'>mod</span> <span class='ident'>set</span>;
 <span class='kw'>mod</span> <span class='ident'>sparse</span>;
 
 <span class='doccomment'>/// The `internal` module exists to support the `regex!` macro and other</span>
@@ -1008,10 +1071,11 @@
 <span class='attribute'>#[<span class='ident'>doc</span>(<span class='ident'>hidden</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>internal</span> {
     <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>char</span>::<span class='ident'>Char</span>;
+    <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>compile</span>::<span class='ident'>Compiler</span>;
     <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>exec</span>::{<span class='ident'>Exec</span>, <span class='ident'>ExecBuilder</span>};
     <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>input</span>::{<span class='ident'>Input</span>, <span class='ident'>CharInput</span>, <span class='ident'>InputAt</span>};
-    <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>inst</span>::{<span class='ident'>Inst</span>, <span class='ident'>EmptyLook</span>, <span class='ident'>InstRanges</span>};
-    <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>program</span>::{<span class='ident'>Program</span>, <span class='ident'>ProgramBuilder</span>};
+    <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>literals</span>::{<span class='ident'>BuildPrefixes</span>, <span class='ident'>Literals</span>};
+    <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>prog</span>::{<span class='ident'>Program</span>, <span class='ident'>Inst</span>, <span class='ident'>EmptyLook</span>, <span class='ident'>InstRanges</span>};
     <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>re</span>::<span class='ident'>ExNative</span>;
 }
 </pre>

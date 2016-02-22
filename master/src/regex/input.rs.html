@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/regex-0.1.52/src/input.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/regex-0.1.53/src/input.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>input.rs.html -- source</title>
@@ -283,7 +283,7 @@
 
 <span class='kw'>impl</span> <span class='ident'>InputAt</span> {
     <span class='doccomment'>/// Returns true iff this position is at the beginning of the input.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>is_beginning</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>is_start</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
         <span class='self'>self</span>.<span class='ident'>pos</span> <span class='op'>==</span> <span class='number'>0</span>
     }
 

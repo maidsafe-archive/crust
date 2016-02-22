@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["add_with_overflow","Performs checked integer addition."],["mul_with_overflow","Performs checked integer multiplication"],["sub_with_overflow","Performs checked integer subtraction"]],"trait":[["OverflowingOps",""]]});

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `WResult` enum in crate `w_result`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, WResult">
+
+    <title>w_result::WResult - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='index.html'>w_result</a></p><script>window.sidebarCurrent = {name: 'WResult', ty: 'enum', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content enum">
+<h1 class='fqn'><span class='in-band'>Enum <a href='index.html'>w_result</a>::<wbr><a class='enum' href=''>WResult</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-8' class='srclink' href='../src/w_result/lib.rs.html#20-25' title='goto source code'>[src]</a></span></h1>
+<pre class='rust enum'>#[must_use]
+pub enum WResult&lt;T, W, E&gt; {
+    WOk(T, <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;W&gt;),
+    WErr(E),
+}</pre><div class='docblock'><p>A result type that carries warnings.</p>
+</div><h2 class='variants'>Variants</h2>
+<table><tr><td id='variant.WOk'><code>WOk</code></td><td><div class='docblock'><p>Contains the success value along with any accumulated warnings.</p>
+</div></td></tr><tr><td id='variant.WErr'><code>WErr</code></td><td><div class='docblock'><p>Contains the error value.</p>
+</div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;T, W, E&gt; <a class='enum' href='../w_result/enum.WResult.html' title='w_result::WResult'>WResult</a>&lt;T, W, E&gt;</code></h3><div class='impl-items'><h4 id='method.is_ok' class='method'><code>fn <a href='#method.is_ok' class='fnname'>is_ok</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+<div class='docblock'><p>Returns true if this <code>WResult</code> is <code>WOk</code></p>
+</div><h4 id='method.is_err' class='method'><code>fn <a href='#method.is_err' class='fnname'>is_err</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+<div class='docblock'><p>Returns true if this <code>WResult</code> is <code>WErr</code></p>
+</div><h4 id='method.is_warn_or_err' class='method'><code>fn <a href='#method.is_warn_or_err' class='fnname'>is_warn_or_err</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+<div class='docblock'><p>Returns true if this <code>WResult</code> is <code>WErr</code> or if it is <code>WOk</code> but contains warnings.</p>
+</div><h4 id='method.ok_discard' class='method'><code>fn <a href='#method.ok_discard' class='fnname'>ok_discard</a>(self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;T&gt;</code></h4>
+<div class='docblock'><p>Converts this <code>WResult</code> to an <code>Option</code> by taking the taking the <code>WOk</code> value or mapping
+<code>WErr</code> to <code>None</code>. Any warnings are discarded.</p>
+</div><h4 id='method.err' class='method'><code>fn <a href='#method.err' class='fnname'>err</a>(self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;E&gt;</code></h4>
+<div class='docblock'><p>Converts this <code>WResult</code> to an <code>Option</code> by taking the <code>WErr</code> variant or mapping <code>WOk</code> to
+<code>None</code>.</p>
+</div><h4 id='method.ok_werr' class='method'><code>fn <a href='#method.ok_werr' class='fnname'>ok_werr</a>(self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;T&gt;</code></h4>
+<div class='docblock'><p>Converts this <code>WResult</code> to an <code>Option</code> by taking the <code>WOk</code> variant or mapping <code>WErr</code> to
+<code>None</code>. This function is similar to <code>ok_discard</code> except if there are any warnings then they
+are treated as errors and this function returns <code>None</code>.</p>
+</div><h4 id='method.map' class='method'><code>fn <a href='#method.map' class='fnname'>map</a>&lt;U, F&gt;(self, op: F) -&gt; <a class='enum' href='../w_result/enum.WResult.html' title='w_result::WResult'>WResult</a>&lt;U, W, E&gt; <span class='where'>where F: <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.FnOnce.html' title='core::ops::FnOnce'>FnOnce</a>(T) -&gt; U</span></code></h4>
+<div class='docblock'><p>Map the <code>WOk</code> value of this <code>WResult</code>, if any.</p>
+</div><h4 id='method.map_err' class='method'><code>fn <a href='#method.map_err' class='fnname'>map_err</a>&lt;U, F&gt;(self, op: F) -&gt; <a class='enum' href='../w_result/enum.WResult.html' title='w_result::WResult'>WResult</a>&lt;T, W, U&gt; <span class='where'>where F: <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.FnOnce.html' title='core::ops::FnOnce'>FnOnce</a>(E) -&gt; U</span></code></h4>
+<div class='docblock'><p>Map the <code>WErr</code> value of this <code>WResult</code>, if any.</p>
+</div><h4 id='method.map_warnings' class='method'><code>fn <a href='#method.map_warnings' class='fnname'>map_warnings</a>&lt;U, F&gt;(self, op: F) -&gt; <a class='enum' href='../w_result/enum.WResult.html' title='w_result::WResult'>WResult</a>&lt;T, U, E&gt; <span class='where'>where F: <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.FnMut.html' title='core::ops::FnMut'>FnMut</a>(W) -&gt; U</span></code></h4>
+<div class='docblock'><p>Map the warnings of this <code>WResult</code>.</p>
+</div><h4 id='method.and' class='method'><code>fn <a href='#method.and' class='fnname'>and</a>&lt;U&gt;(self, res: <a class='enum' href='../w_result/enum.WResult.html' title='w_result::WResult'>WResult</a>&lt;U, W, E&gt;) -&gt; <a class='enum' href='../w_result/enum.WResult.html' title='w_result::WResult'>WResult</a>&lt;U, W, E&gt;</code></h4>
+<div class='docblock'><p>If <code>self</code> is <code>WOk</code>, returns <code>res</code> with the warnings from <code>self</code> accumulated into the final
+result. Otherwise returns the <code>WErr</code> value of <code>self</code>.</p>
+</div><h4 id='method.and_then' class='method'><code>fn <a href='#method.and_then' class='fnname'>and_then</a>&lt;U, V, F&gt;(self, op: F) -&gt; <a class='enum' href='../w_result/enum.WResult.html' title='w_result::WResult'>WResult</a>&lt;U, V, E&gt; <span class='where'>where F: <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.FnOnce.html' title='core::ops::FnOnce'>FnOnce</a>(T, <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;W&gt;) -&gt; <a class='enum' href='../w_result/enum.WResult.html' title='w_result::WResult'>WResult</a>&lt;U, V, E&gt;</span></code></h4>
+<div class='docblock'><p>If <code>self</code> is <code>WOk</code>, returns the result of applying <code>op</code> to <code>self</code>&#39;s value and warnings.
+Otherwise returns the <code>WErr</code> value of <code>self</code>.</p>
+</div><h4 id='method.or' class='method'><code>fn <a href='#method.or' class='fnname'>or</a>&lt;U&gt;(self, res: <a class='enum' href='../w_result/enum.WResult.html' title='w_result::WResult'>WResult</a>&lt;T, W, U&gt;) -&gt; <a class='enum' href='../w_result/enum.WResult.html' title='w_result::WResult'>WResult</a>&lt;T, W, U&gt;</code></h4>
+<div class='docblock'><p>If <code>self</code> is <code>WOk</code> returns <code>self</code>. Otherwise returns <code>res</code>.</p>
+</div><h4 id='method.or_else' class='method'><code>fn <a href='#method.or_else' class='fnname'>or_else</a>&lt;U, F&gt;(self, op: F) -&gt; <a class='enum' href='../w_result/enum.WResult.html' title='w_result::WResult'>WResult</a>&lt;T, W, F&gt; <span class='where'>where F: <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.FnOnce.html' title='core::ops::FnOnce'>FnOnce</a>(E) -&gt; <a class='enum' href='../w_result/enum.WResult.html' title='w_result::WResult'>WResult</a>&lt;T, W, F&gt;</span></code></h4>
+<div class='docblock'><p>If <code>self</code> is <code>WOk</code> returns <code>self</code>. Otherwise returns the result of applying <code>op</code> to
+<code>self</code>&#39;s error value.</p>
+</div><h4 id='method.result_discard' class='method'><code>fn <a href='#method.result_discard' class='fnname'>result_discard</a>(self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;T, E&gt;</code></h4>
+<div class='docblock'><p>Convert this <code>WResult&lt;T, W, E&gt;</code> to a <code>Result&lt;T, E&gt;</code>, discarding any errors. See also
+<code>result_log</code> for a version of this function that logs warnings.</p>
+</div><h4 id='method.result_werr_res' class='method'><code>fn <a href='#method.result_werr_res' class='fnname'>result_werr_res</a>(self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;T, <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;W, E&gt;&gt;</code></h4>
+<div class='docblock'><p>Convert this <code>WResult&lt;T, W, E&gt;</code> to a <code>Result&lt;T, Result&lt;W, E&gt;&gt;</code>. This is a way to convert
+from <code>WResult</code> to <code>Result</code>, treating warnings as errors but allowing <code>W</code> and <code>E</code> to be two
+different types. See also <code>result_werr</code> for when <code>W</code> and <code>E</code> are the same type. If there
+are multiple warnings the first is returned.</p>
+</div><h4 id='method.unwrap_discard_or' class='method'><code>fn <a href='#method.unwrap_discard_or' class='fnname'>unwrap_discard_or</a>(self, optb: T) -&gt; T</code></h4>
+<div class='docblock'><p>If <code>self</code> is <code>WOk</code>, unwraps it discarding any warnings. Otherwise returns <code>optb</code>. See also
+<code>unwrap_log_or</code> for a version of this function that logs warnings.</p>
+</div><h4 id='method.unwrap_or_werr' class='method'><code>fn <a href='#method.unwrap_or_werr' class='fnname'>unwrap_or_werr</a>(self, optb: T) -&gt; T</code></h4>
+<div class='docblock'><p>If <code>self</code> is <code>WOk</code> and has no warnings, unwraps it. Otherwise returns <code>optb</code>.</p>
+</div><h4 id='method.unwrap_discard_or_else' class='method'><code>fn <a href='#method.unwrap_discard_or_else' class='fnname'>unwrap_discard_or_else</a>&lt;F&gt;(self, op: F) -&gt; T <span class='where'>where F: <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.FnOnce.html' title='core::ops::FnOnce'>FnOnce</a>(E) -&gt; T</span></code></h4>
+<div class='docblock'><p>If <code>self</code> is <code>WOk</code>, unwraps it discarding any warnings. Otherwise returns the result of
+applying <code>op</code> to <code>self</code>&#39;s error value. See also <code>unwrap_log_or_else</code> for a version of this
+function that logs warnings.</p>
+</div></div><h3 class='impl'><code>impl&lt;T, E&gt; <a class='enum' href='../w_result/enum.WResult.html' title='w_result::WResult'>WResult</a>&lt;T, E, E&gt;</code></h3><div class='impl-items'><h4 id='method.err_werr' class='method'><code>fn <a href='#method.err_werr' class='fnname'>err_werr</a>(self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;E&gt;</code></h4>
+<div class='docblock'><p>Take the error value of this <code>WResult</code>, if any. Otherwise returns the first warning, if
+any. This function is the same as <code>WResult::err</code> except that warnings are treated as
+errors.</p>
+</div><h4 id='method.result_werr' class='method'><code>fn <a href='#method.result_werr' class='fnname'>result_werr</a>(self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;T, E&gt;</code></h4>
+<div class='docblock'><p>Convert this <code>WResult</code> to a <code>Result</code> but treat warnings as errors. If there are multiple
+warnings the first is returned.</p>
+</div><h4 id='method.unwrap_or_else_werr' class='method'><code>fn <a href='#method.unwrap_or_else_werr' class='fnname'>unwrap_or_else_werr</a>&lt;F&gt;(self, op: F) -&gt; T <span class='where'>where F: <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.FnOnce.html' title='core::ops::FnOnce'>FnOnce</a>(E) -&gt; T</span></code></h4>
+<div class='docblock'><p>If <code>self</code> is <code>WOk</code> and has no warnings then unwrap it. Otherwise return the result of
+applying <code>op</code> to <code>self</code>&#39;s error or first warning.</p>
+</div></div><h3 class='impl'><code>impl&lt;T, W, E&gt; <a class='enum' href='../w_result/enum.WResult.html' title='w_result::WResult'>WResult</a>&lt;T, W, E&gt; <span class='where'>where W: <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html' title='core::fmt::Display'>Display</a></span></code></h3><div class='impl-items'><h4 id='method.ok_log' class='method'><code>fn <a href='#method.ok_log' class='fnname'>ok_log</a>(self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;T&gt;</code></h4>
+<div class='docblock'><p>Take the <code>WOk</code> value of <code>self</code>, if any. Warnings are logged using the <code>warn!</code> macro before
+being discarded.</p>
+</div><h4 id='method.result_log' class='method'><code>fn <a href='#method.result_log' class='fnname'>result_log</a>(self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;T, E&gt;</code></h4>
+<div class='docblock'><p>Convert this <code>WResult&lt;T, W, E&gt;</code> to a <code>Result&lt;T, E&gt;</code>. Warnings are logged using the <code>warn!</code>
+macro before being discarded.</p>
+</div><h4 id='method.unwrap_log_or' class='method'><code>fn <a href='#method.unwrap_log_or' class='fnname'>unwrap_log_or</a>(self, optb: T) -&gt; T</code></h4>
+<div class='docblock'><p>If <code>self</code> is <code>WOk</code>, unwrap it and log any warnings using the <code>warn!</code> macro. Otherwise
+return <code>optb</code>.</p>
+</div><h4 id='method.unwrap_log_or_else' class='method'><code>fn <a href='#method.unwrap_log_or_else' class='fnname'>unwrap_log_or_else</a>&lt;F&gt;(self, op: F) -&gt; T <span class='where'>where F: <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.FnOnce.html' title='core::ops::FnOnce'>FnOnce</a>(E) -&gt; T</span></code></h4>
+<div class='docblock'><p>If <code>self</code> is <code>WOk</code>, unwrap it and log any warnings using the <code>warn!</code> macro. Otherwise
+return the result of applying <code>op</code> to <code>self</code>&#39;s error value.</p>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl&lt;T, W, E&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.From.html' title='core::convert::From'>From</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;T, E&gt;&gt; for <a class='enum' href='../w_result/enum.WResult.html' title='w_result::WResult'>WResult</a>&lt;T, W, E&gt;</code></h3><div class='impl-items'><h4 id='method.from' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/convert/trait.From.html#method.from' class='fnname'>from</a>(val: <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;T, E&gt;) -&gt; <a class='enum' href='../w_result/enum.WResult.html' title='w_result::WResult'>WResult</a>&lt;T, W, E&gt;</code></h4>
+</div><h3 class='impl'><code>impl&lt;A, T, W, E&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/trait.FromIterator.html' title='core::iter::FromIterator'>FromIterator</a>&lt;<a class='enum' href='../w_result/enum.WResult.html' title='w_result::WResult'>WResult</a>&lt;A, W, E&gt;&gt; for <a class='enum' href='../w_result/enum.WResult.html' title='w_result::WResult'>WResult</a>&lt;T, W, E&gt; <span class='where'>where T: <a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/trait.FromIterator.html' title='core::iter::FromIterator'>FromIterator</a>&lt;A&gt;</span></code></h3><div class='impl-items'><h4 id='method.from_iter' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/iter/trait.FromIterator.html#method.from_iter' class='fnname'>from_iter</a>&lt;I&gt;(iter: I) -&gt; Self <span class='where'>where I: <a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/trait.IntoIterator.html' title='core::iter::IntoIterator'>IntoIterator</a>&lt;Item=<a class='enum' href='../w_result/enum.WResult.html' title='w_result::WResult'>WResult</a>&lt;A, W, E&gt;&gt;</span></code></h4>
+</div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "w_result";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script defer src="../search-index.js"></script>
+</body>
+</html>

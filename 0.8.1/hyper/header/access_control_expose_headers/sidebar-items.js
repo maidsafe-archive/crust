@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["AccessControlExposeHeaders","`Access-Control-Expose-Headers` header, part of CORS"]]});

@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `nat_traversal` crate.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, nat_traversal">
+
+    <title>nat_traversal - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+
+    <link rel="shortcut icon" href="http://maidsafe.net/img/favicon.ico">
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        <a href='../nat_traversal/index.html'><img src='https://raw.githubusercontent.com/maidsafe/QA/master/Images/maidsafe_logo.png' alt='' width='100'></a>
+        <p class='location'></p><script>window.sidebarCurrent = {name: 'nat_traversal', ty: 'mod', relpath: '../'};</script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content mod">
+<h1 class='fqn'><span class='in-band'>Crate <a class='mod' href=''>nat_traversal</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-0' class='srclink' href='../src/nat_traversal/lib.rs.html#18-93' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'>
+<h1 id='nat_traversal' class='section-header'><a href='#nat_traversal'><code>nat_traversal</code></a></h1>
+<p>NAT traversal utilities.</p>
+</div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.MappedSocketAddr.html'
+                               title='nat_traversal::MappedSocketAddr'>MappedSocketAddr</a></td>
+                        <td class='docblock short'>
+                             <p>A socket address obtained through some mapping technique.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.MappedTcpSocket.html'
+                               title='nat_traversal::MappedTcpSocket'>MappedTcpSocket</a></td>
+                        <td class='docblock short'>
+                             <p>A tcp socket for which we know our external endpoints.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.MappedUdpSocket.html'
+                               title='nat_traversal::MappedUdpSocket'>MappedUdpSocket</a></td>
+                        <td class='docblock short'>
+                             <p>A bound udp socket for which we know our external endpoints.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.MappingContext.html'
+                               title='nat_traversal::MappingContext'>MappingContext</a></td>
+                        <td class='docblock short'>
+                             <p>You need to create a <code>MappingContext</code> before doing any socket mapping. This
+<code>MappingContext</code> should ideally be kept throughout the lifetime of the
+program. Internally it caches a addresses of UPnP servers and hole punching
+servers.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.PrivRendezvousInfo.html'
+                               title='nat_traversal::PrivRendezvousInfo'>PrivRendezvousInfo</a></td>
+                        <td class='docblock short'>
+                             <p>The local half of a <code>PubRendezvousInfo</code>.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.PubRendezvousInfo.html'
+                               title='nat_traversal::PubRendezvousInfo'>PubRendezvousInfo</a></td>
+                        <td class='docblock short'>
+                             <p>Info exchanged by both parties before performing a rendezvous connection.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.PunchedUdpSocket.html'
+                               title='nat_traversal::PunchedUdpSocket'>PunchedUdpSocket</a></td>
+                        <td class='docblock short'>
+                             <p>A udp socket that has been hole punched.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.SimpleUdpHolePunchServer.html'
+                               title='nat_traversal::SimpleUdpHolePunchServer'>SimpleUdpHolePunchServer</a></td>
+                        <td class='docblock short'>
+                             <p>RAII type for a hole punch server which speaks the simple hole punching protocol.</p>
+
+                        </td>
+                    </tr>
+                </table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='enum' href='enum.HolePunchServerAddr.html'
+                               title='nat_traversal::HolePunchServerAddr'>HolePunchServerAddr</a></td>
+                        <td class='docblock short'>
+                             <p>The address of a server that can be used to obtain an external address.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='enum' href='enum.MappedUdpSocketMapError.html'
+                               title='nat_traversal::MappedUdpSocketMapError'>MappedUdpSocketMapError</a></td>
+                        <td class='docblock short'>
+                             <p>Errors returned by MappedUdpSocket::map</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='enum' href='enum.MappedUdpSocketMapWarning.html'
+                               title='nat_traversal::MappedUdpSocketMapWarning'>MappedUdpSocketMapWarning</a></td>
+                        <td class='docblock short'>
+                             <p>Warnings raised by MappedUdpSocket::map</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='enum' href='enum.MappedUdpSocketNewError.html'
+                               title='nat_traversal::MappedUdpSocketNewError'>MappedUdpSocketNewError</a></td>
+                        <td class='docblock short'>
+                             <p>Errors returned by MappedUdpSocket::new</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='enum' href='enum.MappingContextNewError.html'
+                               title='nat_traversal::MappingContextNewError'>MappingContextNewError</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='enum' href='enum.MappingContextNewWarning.html'
+                               title='nat_traversal::MappingContextNewWarning'>MappingContextNewWarning</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='enum' href='enum.SimpleUdpHolePunchServerNewError.html'
+                               title='nat_traversal::SimpleUdpHolePunchServerNewError'>SimpleUdpHolePunchServerNewError</a></td>
+                        <td class='docblock short'>
+                             <p>Errors returned by SimpleUdpHolePunchServer::new</p>
+
+                        </td>
+                    </tr>
+                </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.gen_rendezvous_info.html'
+                               title='nat_traversal::gen_rendezvous_info'>gen_rendezvous_info</a></td>
+                        <td class='docblock short'>
+                             <p>Create a <code>(PrivRendezvousInfo, PubRendezvousInfo)</code> pair from a list of
+mapped socket addresses.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.tcp_punch_hole.html'
+                               title='nat_traversal::tcp_punch_hole'>tcp_punch_hole</a></td>
+                        <td class='docblock short'>
+                             <p>Perform a tcp rendezvous connect. <code>socket</code> should have been obtained from a
+<code>MappedTcpSocket</code>.</p>
+
+                        </td>
+                    </tr>
+                </table></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "nat_traversal";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script defer src="../search-index.js"></script>
+</body>
+</html>

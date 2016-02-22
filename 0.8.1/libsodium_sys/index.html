@@ -1,0 +1,2739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `libsodium_sys` crate.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, libsodium_sys">
+
+    <title>libsodium_sys - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'></p><script>window.sidebarCurrent = {name: 'libsodium_sys', ty: 'mod', relpath: '../'};</script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content mod">
+<h1 class='fqn'><span class='in-band'>Crate <a class='mod' href=''>libsodium_sys</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-0' class='srclink' href='../src/libsodium_sys/lib.rs.html#1-56' title='goto source code'>[src]</a></span></h1>
+<h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.crypto_auth_hmacsha256_state.html'
+                               title='libsodium_sys::crypto_auth_hmacsha256_state'>crypto_auth_hmacsha256_state</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.crypto_auth_hmacsha512_state.html'
+                               title='libsodium_sys::crypto_auth_hmacsha512_state'>crypto_auth_hmacsha512_state</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.crypto_hash_sha256_state.html'
+                               title='libsodium_sys::crypto_hash_sha256_state'>crypto_hash_sha256_state</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.crypto_hash_sha512_state.html'
+                               title='libsodium_sys::crypto_hash_sha512_state'>crypto_hash_sha512_state</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                </table><h2 id='constants' class='section-header'><a href="#constants">Constants</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_aead_chacha20poly1305_ABYTES.html'
+                               title='libsodium_sys::crypto_aead_chacha20poly1305_ABYTES'>crypto_aead_chacha20poly1305_ABYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_aead_chacha20poly1305_KEYBYTES.html'
+                               title='libsodium_sys::crypto_aead_chacha20poly1305_KEYBYTES'>crypto_aead_chacha20poly1305_KEYBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_aead_chacha20poly1305_NPUBBYTES.html'
+                               title='libsodium_sys::crypto_aead_chacha20poly1305_NPUBBYTES'>crypto_aead_chacha20poly1305_NPUBBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_aead_chacha20poly1305_NSECBYTES.html'
+                               title='libsodium_sys::crypto_aead_chacha20poly1305_NSECBYTES'>crypto_aead_chacha20poly1305_NSECBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_auth_BYTES.html'
+                               title='libsodium_sys::crypto_auth_BYTES'>crypto_auth_BYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_auth_KEYBYTES.html'
+                               title='libsodium_sys::crypto_auth_KEYBYTES'>crypto_auth_KEYBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_auth_PRIMITIVE.html'
+                               title='libsodium_sys::crypto_auth_PRIMITIVE'>crypto_auth_PRIMITIVE</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_auth_hmacsha256_BYTES.html'
+                               title='libsodium_sys::crypto_auth_hmacsha256_BYTES'>crypto_auth_hmacsha256_BYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_auth_hmacsha256_KEYBYTES.html'
+                               title='libsodium_sys::crypto_auth_hmacsha256_KEYBYTES'>crypto_auth_hmacsha256_KEYBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_auth_hmacsha512256_BYTES.html'
+                               title='libsodium_sys::crypto_auth_hmacsha512256_BYTES'>crypto_auth_hmacsha512256_BYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_auth_hmacsha512256_KEYBYTES.html'
+                               title='libsodium_sys::crypto_auth_hmacsha512256_KEYBYTES'>crypto_auth_hmacsha512256_KEYBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_auth_hmacsha512_BYTES.html'
+                               title='libsodium_sys::crypto_auth_hmacsha512_BYTES'>crypto_auth_hmacsha512_BYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_auth_hmacsha512_KEYBYTES.html'
+                               title='libsodium_sys::crypto_auth_hmacsha512_KEYBYTES'>crypto_auth_hmacsha512_KEYBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_box_BEFORENMBYTES.html'
+                               title='libsodium_sys::crypto_box_BEFORENMBYTES'>crypto_box_BEFORENMBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_box_BOXZEROBYTES.html'
+                               title='libsodium_sys::crypto_box_BOXZEROBYTES'>crypto_box_BOXZEROBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_box_MACBYTES.html'
+                               title='libsodium_sys::crypto_box_MACBYTES'>crypto_box_MACBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_box_NONCEBYTES.html'
+                               title='libsodium_sys::crypto_box_NONCEBYTES'>crypto_box_NONCEBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_box_PRIMITIVE.html'
+                               title='libsodium_sys::crypto_box_PRIMITIVE'>crypto_box_PRIMITIVE</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_box_PUBLICKEYBYTES.html'
+                               title='libsodium_sys::crypto_box_PUBLICKEYBYTES'>crypto_box_PUBLICKEYBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_box_SECRETKEYBYTES.html'
+                               title='libsodium_sys::crypto_box_SECRETKEYBYTES'>crypto_box_SECRETKEYBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_box_SEEDBYTES.html'
+                               title='libsodium_sys::crypto_box_SEEDBYTES'>crypto_box_SEEDBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_box_ZEROBYTES.html'
+                               title='libsodium_sys::crypto_box_ZEROBYTES'>crypto_box_ZEROBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_box_curve25519xsalsa20poly1305_BEFORENMBYTES.html'
+                               title='libsodium_sys::crypto_box_curve25519xsalsa20poly1305_BEFORENMBYTES'>crypto_box_curve25519xsalsa20poly1305_BEFORENMBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES.html'
+                               title='libsodium_sys::crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES'>crypto_box_curve25519xsalsa20poly1305_BOXZEROBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_box_curve25519xsalsa20poly1305_MACBYTES.html'
+                               title='libsodium_sys::crypto_box_curve25519xsalsa20poly1305_MACBYTES'>crypto_box_curve25519xsalsa20poly1305_MACBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_box_curve25519xsalsa20poly1305_NONCEBYTES.html'
+                               title='libsodium_sys::crypto_box_curve25519xsalsa20poly1305_NONCEBYTES'>crypto_box_curve25519xsalsa20poly1305_NONCEBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_box_curve25519xsalsa20poly1305_PUBLICKEYBYTES.html'
+                               title='libsodium_sys::crypto_box_curve25519xsalsa20poly1305_PUBLICKEYBYTES'>crypto_box_curve25519xsalsa20poly1305_PUBLICKEYBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_box_curve25519xsalsa20poly1305_SECRETKEYBYTES.html'
+                               title='libsodium_sys::crypto_box_curve25519xsalsa20poly1305_SECRETKEYBYTES'>crypto_box_curve25519xsalsa20poly1305_SECRETKEYBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_box_curve25519xsalsa20poly1305_SEEDBYTES.html'
+                               title='libsodium_sys::crypto_box_curve25519xsalsa20poly1305_SEEDBYTES'>crypto_box_curve25519xsalsa20poly1305_SEEDBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_box_curve25519xsalsa20poly1305_ZEROBYTES.html'
+                               title='libsodium_sys::crypto_box_curve25519xsalsa20poly1305_ZEROBYTES'>crypto_box_curve25519xsalsa20poly1305_ZEROBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_core_hsalsa20_CONSTBYTES.html'
+                               title='libsodium_sys::crypto_core_hsalsa20_CONSTBYTES'>crypto_core_hsalsa20_CONSTBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_core_hsalsa20_INPUTBYTES.html'
+                               title='libsodium_sys::crypto_core_hsalsa20_INPUTBYTES'>crypto_core_hsalsa20_INPUTBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_core_hsalsa20_KEYBYTES.html'
+                               title='libsodium_sys::crypto_core_hsalsa20_KEYBYTES'>crypto_core_hsalsa20_KEYBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_core_hsalsa20_OUTPUTBYTES.html'
+                               title='libsodium_sys::crypto_core_hsalsa20_OUTPUTBYTES'>crypto_core_hsalsa20_OUTPUTBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_core_salsa2012_CONSTBYTES.html'
+                               title='libsodium_sys::crypto_core_salsa2012_CONSTBYTES'>crypto_core_salsa2012_CONSTBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_core_salsa2012_INPUTBYTES.html'
+                               title='libsodium_sys::crypto_core_salsa2012_INPUTBYTES'>crypto_core_salsa2012_INPUTBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_core_salsa2012_KEYBYTES.html'
+                               title='libsodium_sys::crypto_core_salsa2012_KEYBYTES'>crypto_core_salsa2012_KEYBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_core_salsa2012_OUTPUTBYTES.html'
+                               title='libsodium_sys::crypto_core_salsa2012_OUTPUTBYTES'>crypto_core_salsa2012_OUTPUTBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_core_salsa208_CONSTBYTES.html'
+                               title='libsodium_sys::crypto_core_salsa208_CONSTBYTES'>crypto_core_salsa208_CONSTBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_core_salsa208_INPUTBYTES.html'
+                               title='libsodium_sys::crypto_core_salsa208_INPUTBYTES'>crypto_core_salsa208_INPUTBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_core_salsa208_KEYBYTES.html'
+                               title='libsodium_sys::crypto_core_salsa208_KEYBYTES'>crypto_core_salsa208_KEYBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_core_salsa208_OUTPUTBYTES.html'
+                               title='libsodium_sys::crypto_core_salsa208_OUTPUTBYTES'>crypto_core_salsa208_OUTPUTBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_core_salsa20_CONSTBYTES.html'
+                               title='libsodium_sys::crypto_core_salsa20_CONSTBYTES'>crypto_core_salsa20_CONSTBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_core_salsa20_INPUTBYTES.html'
+                               title='libsodium_sys::crypto_core_salsa20_INPUTBYTES'>crypto_core_salsa20_INPUTBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_core_salsa20_KEYBYTES.html'
+                               title='libsodium_sys::crypto_core_salsa20_KEYBYTES'>crypto_core_salsa20_KEYBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_core_salsa20_OUTPUTBYTES.html'
+                               title='libsodium_sys::crypto_core_salsa20_OUTPUTBYTES'>crypto_core_salsa20_OUTPUTBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_generichash_BYTES.html'
+                               title='libsodium_sys::crypto_generichash_BYTES'>crypto_generichash_BYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_generichash_BYTES_MAX.html'
+                               title='libsodium_sys::crypto_generichash_BYTES_MAX'>crypto_generichash_BYTES_MAX</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_generichash_BYTES_MIN.html'
+                               title='libsodium_sys::crypto_generichash_BYTES_MIN'>crypto_generichash_BYTES_MIN</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_generichash_KEYBYTES.html'
+                               title='libsodium_sys::crypto_generichash_KEYBYTES'>crypto_generichash_KEYBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_generichash_KEYBYTES_MAX.html'
+                               title='libsodium_sys::crypto_generichash_KEYBYTES_MAX'>crypto_generichash_KEYBYTES_MAX</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_generichash_KEYBYTES_MIN.html'
+                               title='libsodium_sys::crypto_generichash_KEYBYTES_MIN'>crypto_generichash_KEYBYTES_MIN</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_generichash_PRIMITIVE.html'
+                               title='libsodium_sys::crypto_generichash_PRIMITIVE'>crypto_generichash_PRIMITIVE</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_generichash_blake2b_BYTES.html'
+                               title='libsodium_sys::crypto_generichash_blake2b_BYTES'>crypto_generichash_blake2b_BYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_generichash_blake2b_BYTES_MAX.html'
+                               title='libsodium_sys::crypto_generichash_blake2b_BYTES_MAX'>crypto_generichash_blake2b_BYTES_MAX</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_generichash_blake2b_BYTES_MIN.html'
+                               title='libsodium_sys::crypto_generichash_blake2b_BYTES_MIN'>crypto_generichash_blake2b_BYTES_MIN</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_generichash_blake2b_KEYBYTES.html'
+                               title='libsodium_sys::crypto_generichash_blake2b_KEYBYTES'>crypto_generichash_blake2b_KEYBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_generichash_blake2b_KEYBYTES_MAX.html'
+                               title='libsodium_sys::crypto_generichash_blake2b_KEYBYTES_MAX'>crypto_generichash_blake2b_KEYBYTES_MAX</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_generichash_blake2b_KEYBYTES_MIN.html'
+                               title='libsodium_sys::crypto_generichash_blake2b_KEYBYTES_MIN'>crypto_generichash_blake2b_KEYBYTES_MIN</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_generichash_blake2b_PERSONALBYTES.html'
+                               title='libsodium_sys::crypto_generichash_blake2b_PERSONALBYTES'>crypto_generichash_blake2b_PERSONALBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_generichash_blake2b_SALTBYTES.html'
+                               title='libsodium_sys::crypto_generichash_blake2b_SALTBYTES'>crypto_generichash_blake2b_SALTBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_hash_BYTES.html'
+                               title='libsodium_sys::crypto_hash_BYTES'>crypto_hash_BYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_hash_PRIMITIVE.html'
+                               title='libsodium_sys::crypto_hash_PRIMITIVE'>crypto_hash_PRIMITIVE</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_hash_sha256_BYTES.html'
+                               title='libsodium_sys::crypto_hash_sha256_BYTES'>crypto_hash_sha256_BYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_hash_sha512_BYTES.html'
+                               title='libsodium_sys::crypto_hash_sha512_BYTES'>crypto_hash_sha512_BYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_onetimeauth_BYTES.html'
+                               title='libsodium_sys::crypto_onetimeauth_BYTES'>crypto_onetimeauth_BYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_onetimeauth_KEYBYTES.html'
+                               title='libsodium_sys::crypto_onetimeauth_KEYBYTES'>crypto_onetimeauth_KEYBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_onetimeauth_PRIMITIVE.html'
+                               title='libsodium_sys::crypto_onetimeauth_PRIMITIVE'>crypto_onetimeauth_PRIMITIVE</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_onetimeauth_poly1305_BYTES.html'
+                               title='libsodium_sys::crypto_onetimeauth_poly1305_BYTES'>crypto_onetimeauth_poly1305_BYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_onetimeauth_poly1305_KEYBYTES.html'
+                               title='libsodium_sys::crypto_onetimeauth_poly1305_KEYBYTES'>crypto_onetimeauth_poly1305_KEYBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_pwhash_scryptsalsa208sha256_MEMLIMIT_INTERACTIVE.html'
+                               title='libsodium_sys::crypto_pwhash_scryptsalsa208sha256_MEMLIMIT_INTERACTIVE'>crypto_pwhash_scryptsalsa208sha256_MEMLIMIT_INTERACTIVE</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_pwhash_scryptsalsa208sha256_MEMLIMIT_SENSITIVE.html'
+                               title='libsodium_sys::crypto_pwhash_scryptsalsa208sha256_MEMLIMIT_SENSITIVE'>crypto_pwhash_scryptsalsa208sha256_MEMLIMIT_SENSITIVE</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_pwhash_scryptsalsa208sha256_OPSLIMIT_INTERACTIVE.html'
+                               title='libsodium_sys::crypto_pwhash_scryptsalsa208sha256_OPSLIMIT_INTERACTIVE'>crypto_pwhash_scryptsalsa208sha256_OPSLIMIT_INTERACTIVE</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_pwhash_scryptsalsa208sha256_OPSLIMIT_SENSITIVE.html'
+                               title='libsodium_sys::crypto_pwhash_scryptsalsa208sha256_OPSLIMIT_SENSITIVE'>crypto_pwhash_scryptsalsa208sha256_OPSLIMIT_SENSITIVE</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_pwhash_scryptsalsa208sha256_SALTBYTES.html'
+                               title='libsodium_sys::crypto_pwhash_scryptsalsa208sha256_SALTBYTES'>crypto_pwhash_scryptsalsa208sha256_SALTBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_pwhash_scryptsalsa208sha256_STRBYTES.html'
+                               title='libsodium_sys::crypto_pwhash_scryptsalsa208sha256_STRBYTES'>crypto_pwhash_scryptsalsa208sha256_STRBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_pwhash_scryptsalsa208sha256_STRPREFIX.html'
+                               title='libsodium_sys::crypto_pwhash_scryptsalsa208sha256_STRPREFIX'>crypto_pwhash_scryptsalsa208sha256_STRPREFIX</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_scalarmult_BYTES.html'
+                               title='libsodium_sys::crypto_scalarmult_BYTES'>crypto_scalarmult_BYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_scalarmult_PRIMITIVE.html'
+                               title='libsodium_sys::crypto_scalarmult_PRIMITIVE'>crypto_scalarmult_PRIMITIVE</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_scalarmult_SCALARBYTES.html'
+                               title='libsodium_sys::crypto_scalarmult_SCALARBYTES'>crypto_scalarmult_SCALARBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_scalarmult_curve25519_BYTES.html'
+                               title='libsodium_sys::crypto_scalarmult_curve25519_BYTES'>crypto_scalarmult_curve25519_BYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_scalarmult_curve25519_SCALARBYTES.html'
+                               title='libsodium_sys::crypto_scalarmult_curve25519_SCALARBYTES'>crypto_scalarmult_curve25519_SCALARBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_secretbox_xsalsa20poly1305_BOXZEROBYTES.html'
+                               title='libsodium_sys::crypto_secretbox_xsalsa20poly1305_BOXZEROBYTES'>crypto_secretbox_xsalsa20poly1305_BOXZEROBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_secretbox_xsalsa20poly1305_KEYBYTES.html'
+                               title='libsodium_sys::crypto_secretbox_xsalsa20poly1305_KEYBYTES'>crypto_secretbox_xsalsa20poly1305_KEYBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_secretbox_xsalsa20poly1305_MACBYTES.html'
+                               title='libsodium_sys::crypto_secretbox_xsalsa20poly1305_MACBYTES'>crypto_secretbox_xsalsa20poly1305_MACBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_secretbox_xsalsa20poly1305_NONCEBYTES.html'
+                               title='libsodium_sys::crypto_secretbox_xsalsa20poly1305_NONCEBYTES'>crypto_secretbox_xsalsa20poly1305_NONCEBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_secretbox_xsalsa20poly1305_ZEROBYTES.html'
+                               title='libsodium_sys::crypto_secretbox_xsalsa20poly1305_ZEROBYTES'>crypto_secretbox_xsalsa20poly1305_ZEROBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_shorthash_siphash24_BYTES.html'
+                               title='libsodium_sys::crypto_shorthash_siphash24_BYTES'>crypto_shorthash_siphash24_BYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_shorthash_siphash24_KEYBYTES.html'
+                               title='libsodium_sys::crypto_shorthash_siphash24_KEYBYTES'>crypto_shorthash_siphash24_KEYBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_sign_ed25519_BYTES.html'
+                               title='libsodium_sys::crypto_sign_ed25519_BYTES'>crypto_sign_ed25519_BYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_sign_ed25519_PUBLICKEYBYTES.html'
+                               title='libsodium_sys::crypto_sign_ed25519_PUBLICKEYBYTES'>crypto_sign_ed25519_PUBLICKEYBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_sign_ed25519_SECRETKEYBYTES.html'
+                               title='libsodium_sys::crypto_sign_ed25519_SECRETKEYBYTES'>crypto_sign_ed25519_SECRETKEYBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_sign_ed25519_SEEDBYTES.html'
+                               title='libsodium_sys::crypto_sign_ed25519_SEEDBYTES'>crypto_sign_ed25519_SEEDBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_sign_edwards25519sha512batch_BYTES.html'
+                               title='libsodium_sys::crypto_sign_edwards25519sha512batch_BYTES'>crypto_sign_edwards25519sha512batch_BYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_sign_edwards25519sha512batch_PUBLICKEYBYTES.html'
+                               title='libsodium_sys::crypto_sign_edwards25519sha512batch_PUBLICKEYBYTES'>crypto_sign_edwards25519sha512batch_PUBLICKEYBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_sign_edwards25519sha512batch_SECRETKEYBYTES.html'
+                               title='libsodium_sys::crypto_sign_edwards25519sha512batch_SECRETKEYBYTES'>crypto_sign_edwards25519sha512batch_SECRETKEYBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_stream_KEYBYTES.html'
+                               title='libsodium_sys::crypto_stream_KEYBYTES'>crypto_stream_KEYBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_stream_NONCEBYTES.html'
+                               title='libsodium_sys::crypto_stream_NONCEBYTES'>crypto_stream_NONCEBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_stream_PRIMITIVE.html'
+                               title='libsodium_sys::crypto_stream_PRIMITIVE'>crypto_stream_PRIMITIVE</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_stream_aes128ctr_BEFORENMBYTES.html'
+                               title='libsodium_sys::crypto_stream_aes128ctr_BEFORENMBYTES'>crypto_stream_aes128ctr_BEFORENMBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_stream_aes128ctr_KEYBYTES.html'
+                               title='libsodium_sys::crypto_stream_aes128ctr_KEYBYTES'>crypto_stream_aes128ctr_KEYBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_stream_aes128ctr_NONCEBYTES.html'
+                               title='libsodium_sys::crypto_stream_aes128ctr_NONCEBYTES'>crypto_stream_aes128ctr_NONCEBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_stream_chacha20_KEYBYTES.html'
+                               title='libsodium_sys::crypto_stream_chacha20_KEYBYTES'>crypto_stream_chacha20_KEYBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_stream_chacha20_NONCEBYTES.html'
+                               title='libsodium_sys::crypto_stream_chacha20_NONCEBYTES'>crypto_stream_chacha20_NONCEBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_stream_salsa2012_KEYBYTES.html'
+                               title='libsodium_sys::crypto_stream_salsa2012_KEYBYTES'>crypto_stream_salsa2012_KEYBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_stream_salsa2012_NONCEBYTES.html'
+                               title='libsodium_sys::crypto_stream_salsa2012_NONCEBYTES'>crypto_stream_salsa2012_NONCEBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_stream_salsa208_KEYBYTES.html'
+                               title='libsodium_sys::crypto_stream_salsa208_KEYBYTES'>crypto_stream_salsa208_KEYBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_stream_salsa208_NONCEBYTES.html'
+                               title='libsodium_sys::crypto_stream_salsa208_NONCEBYTES'>crypto_stream_salsa208_NONCEBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_stream_salsa20_KEYBYTES.html'
+                               title='libsodium_sys::crypto_stream_salsa20_KEYBYTES'>crypto_stream_salsa20_KEYBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_stream_salsa20_NONCEBYTES.html'
+                               title='libsodium_sys::crypto_stream_salsa20_NONCEBYTES'>crypto_stream_salsa20_NONCEBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_stream_xsalsa20_KEYBYTES.html'
+                               title='libsodium_sys::crypto_stream_xsalsa20_KEYBYTES'>crypto_stream_xsalsa20_KEYBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_stream_xsalsa20_NONCEBYTES.html'
+                               title='libsodium_sys::crypto_stream_xsalsa20_NONCEBYTES'>crypto_stream_xsalsa20_NONCEBYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_verify_16_BYTES.html'
+                               title='libsodium_sys::crypto_verify_16_BYTES'>crypto_verify_16_BYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_verify_32_BYTES.html'
+                               title='libsodium_sys::crypto_verify_32_BYTES'>crypto_verify_32_BYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.crypto_verify_64_BYTES.html'
+                               title='libsodium_sys::crypto_verify_64_BYTES'>crypto_verify_64_BYTES</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_aead_chacha20poly1305_abytes.html'
+                               title='libsodium_sys::crypto_aead_chacha20poly1305_abytes'>crypto_aead_chacha20poly1305_abytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_aead_chacha20poly1305_decrypt.html'
+                               title='libsodium_sys::crypto_aead_chacha20poly1305_decrypt'>crypto_aead_chacha20poly1305_decrypt</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_aead_chacha20poly1305_encrypt.html'
+                               title='libsodium_sys::crypto_aead_chacha20poly1305_encrypt'>crypto_aead_chacha20poly1305_encrypt</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_aead_chacha20poly1305_keybytes.html'
+                               title='libsodium_sys::crypto_aead_chacha20poly1305_keybytes'>crypto_aead_chacha20poly1305_keybytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_aead_chacha20poly1305_npubbytes.html'
+                               title='libsodium_sys::crypto_aead_chacha20poly1305_npubbytes'>crypto_aead_chacha20poly1305_npubbytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_aead_chacha20poly1305_nsecbytes.html'
+                               title='libsodium_sys::crypto_aead_chacha20poly1305_nsecbytes'>crypto_aead_chacha20poly1305_nsecbytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_auth.html'
+                               title='libsodium_sys::crypto_auth'>crypto_auth</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_auth_bytes.html'
+                               title='libsodium_sys::crypto_auth_bytes'>crypto_auth_bytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_auth_hmacsha256.html'
+                               title='libsodium_sys::crypto_auth_hmacsha256'>crypto_auth_hmacsha256</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_auth_hmacsha256_bytes.html'
+                               title='libsodium_sys::crypto_auth_hmacsha256_bytes'>crypto_auth_hmacsha256_bytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_auth_hmacsha256_final.html'
+                               title='libsodium_sys::crypto_auth_hmacsha256_final'>crypto_auth_hmacsha256_final</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_auth_hmacsha256_init.html'
+                               title='libsodium_sys::crypto_auth_hmacsha256_init'>crypto_auth_hmacsha256_init</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_auth_hmacsha256_keybytes.html'
+                               title='libsodium_sys::crypto_auth_hmacsha256_keybytes'>crypto_auth_hmacsha256_keybytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_auth_hmacsha256_update.html'
+                               title='libsodium_sys::crypto_auth_hmacsha256_update'>crypto_auth_hmacsha256_update</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_auth_hmacsha256_verify.html'
+                               title='libsodium_sys::crypto_auth_hmacsha256_verify'>crypto_auth_hmacsha256_verify</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_auth_hmacsha512.html'
+                               title='libsodium_sys::crypto_auth_hmacsha512'>crypto_auth_hmacsha512</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_auth_hmacsha512256.html'
+                               title='libsodium_sys::crypto_auth_hmacsha512256'>crypto_auth_hmacsha512256</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_auth_hmacsha512256_bytes.html'
+                               title='libsodium_sys::crypto_auth_hmacsha512256_bytes'>crypto_auth_hmacsha512256_bytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_auth_hmacsha512256_final.html'
+                               title='libsodium_sys::crypto_auth_hmacsha512256_final'>crypto_auth_hmacsha512256_final</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_auth_hmacsha512256_init.html'
+                               title='libsodium_sys::crypto_auth_hmacsha512256_init'>crypto_auth_hmacsha512256_init</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_auth_hmacsha512256_keybytes.html'
+                               title='libsodium_sys::crypto_auth_hmacsha512256_keybytes'>crypto_auth_hmacsha512256_keybytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_auth_hmacsha512256_update.html'
+                               title='libsodium_sys::crypto_auth_hmacsha512256_update'>crypto_auth_hmacsha512256_update</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_auth_hmacsha512256_verify.html'
+                               title='libsodium_sys::crypto_auth_hmacsha512256_verify'>crypto_auth_hmacsha512256_verify</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_auth_hmacsha512_bytes.html'
+                               title='libsodium_sys::crypto_auth_hmacsha512_bytes'>crypto_auth_hmacsha512_bytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_auth_hmacsha512_final.html'
+                               title='libsodium_sys::crypto_auth_hmacsha512_final'>crypto_auth_hmacsha512_final</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_auth_hmacsha512_init.html'
+                               title='libsodium_sys::crypto_auth_hmacsha512_init'>crypto_auth_hmacsha512_init</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_auth_hmacsha512_keybytes.html'
+                               title='libsodium_sys::crypto_auth_hmacsha512_keybytes'>crypto_auth_hmacsha512_keybytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_auth_hmacsha512_update.html'
+                               title='libsodium_sys::crypto_auth_hmacsha512_update'>crypto_auth_hmacsha512_update</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_auth_hmacsha512_verify.html'
+                               title='libsodium_sys::crypto_auth_hmacsha512_verify'>crypto_auth_hmacsha512_verify</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_auth_keybytes.html'
+                               title='libsodium_sys::crypto_auth_keybytes'>crypto_auth_keybytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_auth_primitive.html'
+                               title='libsodium_sys::crypto_auth_primitive'>crypto_auth_primitive</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_auth_verify.html'
+                               title='libsodium_sys::crypto_auth_verify'>crypto_auth_verify</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_box.html'
+                               title='libsodium_sys::crypto_box'>crypto_box</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_box_afternm.html'
+                               title='libsodium_sys::crypto_box_afternm'>crypto_box_afternm</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_box_beforenm.html'
+                               title='libsodium_sys::crypto_box_beforenm'>crypto_box_beforenm</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_box_beforenmbytes.html'
+                               title='libsodium_sys::crypto_box_beforenmbytes'>crypto_box_beforenmbytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_box_boxzerobytes.html'
+                               title='libsodium_sys::crypto_box_boxzerobytes'>crypto_box_boxzerobytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_box_curve25519xsalsa20poly1305.html'
+                               title='libsodium_sys::crypto_box_curve25519xsalsa20poly1305'>crypto_box_curve25519xsalsa20poly1305</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_box_curve25519xsalsa20poly1305_afternm.html'
+                               title='libsodium_sys::crypto_box_curve25519xsalsa20poly1305_afternm'>crypto_box_curve25519xsalsa20poly1305_afternm</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_box_curve25519xsalsa20poly1305_beforenm.html'
+                               title='libsodium_sys::crypto_box_curve25519xsalsa20poly1305_beforenm'>crypto_box_curve25519xsalsa20poly1305_beforenm</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_box_curve25519xsalsa20poly1305_beforenmbytes.html'
+                               title='libsodium_sys::crypto_box_curve25519xsalsa20poly1305_beforenmbytes'>crypto_box_curve25519xsalsa20poly1305_beforenmbytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_box_curve25519xsalsa20poly1305_boxzerobytes.html'
+                               title='libsodium_sys::crypto_box_curve25519xsalsa20poly1305_boxzerobytes'>crypto_box_curve25519xsalsa20poly1305_boxzerobytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_box_curve25519xsalsa20poly1305_keypair.html'
+                               title='libsodium_sys::crypto_box_curve25519xsalsa20poly1305_keypair'>crypto_box_curve25519xsalsa20poly1305_keypair</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_box_curve25519xsalsa20poly1305_macbytes.html'
+                               title='libsodium_sys::crypto_box_curve25519xsalsa20poly1305_macbytes'>crypto_box_curve25519xsalsa20poly1305_macbytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_box_curve25519xsalsa20poly1305_noncebytes.html'
+                               title='libsodium_sys::crypto_box_curve25519xsalsa20poly1305_noncebytes'>crypto_box_curve25519xsalsa20poly1305_noncebytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_box_curve25519xsalsa20poly1305_open.html'
+                               title='libsodium_sys::crypto_box_curve25519xsalsa20poly1305_open'>crypto_box_curve25519xsalsa20poly1305_open</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_box_curve25519xsalsa20poly1305_open_afternm.html'
+                               title='libsodium_sys::crypto_box_curve25519xsalsa20poly1305_open_afternm'>crypto_box_curve25519xsalsa20poly1305_open_afternm</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_box_curve25519xsalsa20poly1305_publickeybytes.html'
+                               title='libsodium_sys::crypto_box_curve25519xsalsa20poly1305_publickeybytes'>crypto_box_curve25519xsalsa20poly1305_publickeybytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_box_curve25519xsalsa20poly1305_secretkeybytes.html'
+                               title='libsodium_sys::crypto_box_curve25519xsalsa20poly1305_secretkeybytes'>crypto_box_curve25519xsalsa20poly1305_secretkeybytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_box_curve25519xsalsa20poly1305_seedbytes.html'
+                               title='libsodium_sys::crypto_box_curve25519xsalsa20poly1305_seedbytes'>crypto_box_curve25519xsalsa20poly1305_seedbytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_box_curve25519xsalsa20poly1305_zerobytes.html'
+                               title='libsodium_sys::crypto_box_curve25519xsalsa20poly1305_zerobytes'>crypto_box_curve25519xsalsa20poly1305_zerobytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_box_detached.html'
+                               title='libsodium_sys::crypto_box_detached'>crypto_box_detached</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_box_easy.html'
+                               title='libsodium_sys::crypto_box_easy'>crypto_box_easy</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_box_keypair.html'
+                               title='libsodium_sys::crypto_box_keypair'>crypto_box_keypair</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_box_macbytes.html'
+                               title='libsodium_sys::crypto_box_macbytes'>crypto_box_macbytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_box_noncebytes.html'
+                               title='libsodium_sys::crypto_box_noncebytes'>crypto_box_noncebytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_box_open.html'
+                               title='libsodium_sys::crypto_box_open'>crypto_box_open</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_box_open_afternm.html'
+                               title='libsodium_sys::crypto_box_open_afternm'>crypto_box_open_afternm</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_box_open_detached.html'
+                               title='libsodium_sys::crypto_box_open_detached'>crypto_box_open_detached</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_box_open_easy.html'
+                               title='libsodium_sys::crypto_box_open_easy'>crypto_box_open_easy</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_box_primitive.html'
+                               title='libsodium_sys::crypto_box_primitive'>crypto_box_primitive</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_box_publickeybytes.html'
+                               title='libsodium_sys::crypto_box_publickeybytes'>crypto_box_publickeybytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_box_secretkeybytes.html'
+                               title='libsodium_sys::crypto_box_secretkeybytes'>crypto_box_secretkeybytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_box_seed_keypair.html'
+                               title='libsodium_sys::crypto_box_seed_keypair'>crypto_box_seed_keypair</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_box_seedbytes.html'
+                               title='libsodium_sys::crypto_box_seedbytes'>crypto_box_seedbytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_box_zerobytes.html'
+                               title='libsodium_sys::crypto_box_zerobytes'>crypto_box_zerobytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_core_hsalsa20.html'
+                               title='libsodium_sys::crypto_core_hsalsa20'>crypto_core_hsalsa20</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_core_hsalsa20_constbytes.html'
+                               title='libsodium_sys::crypto_core_hsalsa20_constbytes'>crypto_core_hsalsa20_constbytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_core_hsalsa20_inputbytes.html'
+                               title='libsodium_sys::crypto_core_hsalsa20_inputbytes'>crypto_core_hsalsa20_inputbytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_core_hsalsa20_keybytes.html'
+                               title='libsodium_sys::crypto_core_hsalsa20_keybytes'>crypto_core_hsalsa20_keybytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_core_hsalsa20_outputbytes.html'
+                               title='libsodium_sys::crypto_core_hsalsa20_outputbytes'>crypto_core_hsalsa20_outputbytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_core_salsa20.html'
+                               title='libsodium_sys::crypto_core_salsa20'>crypto_core_salsa20</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_core_salsa2012.html'
+                               title='libsodium_sys::crypto_core_salsa2012'>crypto_core_salsa2012</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_core_salsa2012_constbytes.html'
+                               title='libsodium_sys::crypto_core_salsa2012_constbytes'>crypto_core_salsa2012_constbytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_core_salsa2012_inputbytes.html'
+                               title='libsodium_sys::crypto_core_salsa2012_inputbytes'>crypto_core_salsa2012_inputbytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_core_salsa2012_keybytes.html'
+                               title='libsodium_sys::crypto_core_salsa2012_keybytes'>crypto_core_salsa2012_keybytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_core_salsa2012_outputbytes.html'
+                               title='libsodium_sys::crypto_core_salsa2012_outputbytes'>crypto_core_salsa2012_outputbytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_core_salsa208.html'
+                               title='libsodium_sys::crypto_core_salsa208'>crypto_core_salsa208</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_core_salsa208_constbytes.html'
+                               title='libsodium_sys::crypto_core_salsa208_constbytes'>crypto_core_salsa208_constbytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_core_salsa208_inputbytes.html'
+                               title='libsodium_sys::crypto_core_salsa208_inputbytes'>crypto_core_salsa208_inputbytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_core_salsa208_keybytes.html'
+                               title='libsodium_sys::crypto_core_salsa208_keybytes'>crypto_core_salsa208_keybytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_core_salsa208_outputbytes.html'
+                               title='libsodium_sys::crypto_core_salsa208_outputbytes'>crypto_core_salsa208_outputbytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_core_salsa20_constbytes.html'
+                               title='libsodium_sys::crypto_core_salsa20_constbytes'>crypto_core_salsa20_constbytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_core_salsa20_inputbytes.html'
+                               title='libsodium_sys::crypto_core_salsa20_inputbytes'>crypto_core_salsa20_inputbytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_core_salsa20_keybytes.html'
+                               title='libsodium_sys::crypto_core_salsa20_keybytes'>crypto_core_salsa20_keybytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_core_salsa20_outputbytes.html'
+                               title='libsodium_sys::crypto_core_salsa20_outputbytes'>crypto_core_salsa20_outputbytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_generichash.html'
+                               title='libsodium_sys::crypto_generichash'>crypto_generichash</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_generichash_blake2b.html'
+                               title='libsodium_sys::crypto_generichash_blake2b'>crypto_generichash_blake2b</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_generichash_blake2b_bytes.html'
+                               title='libsodium_sys::crypto_generichash_blake2b_bytes'>crypto_generichash_blake2b_bytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_generichash_blake2b_bytes_max.html'
+                               title='libsodium_sys::crypto_generichash_blake2b_bytes_max'>crypto_generichash_blake2b_bytes_max</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_generichash_blake2b_bytes_min.html'
+                               title='libsodium_sys::crypto_generichash_blake2b_bytes_min'>crypto_generichash_blake2b_bytes_min</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_generichash_blake2b_keybytes.html'
+                               title='libsodium_sys::crypto_generichash_blake2b_keybytes'>crypto_generichash_blake2b_keybytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_generichash_blake2b_keybytes_max.html'
+                               title='libsodium_sys::crypto_generichash_blake2b_keybytes_max'>crypto_generichash_blake2b_keybytes_max</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_generichash_blake2b_keybytes_min.html'
+                               title='libsodium_sys::crypto_generichash_blake2b_keybytes_min'>crypto_generichash_blake2b_keybytes_min</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_generichash_blake2b_personalbytes.html'
+                               title='libsodium_sys::crypto_generichash_blake2b_personalbytes'>crypto_generichash_blake2b_personalbytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_generichash_blake2b_salt_personal.html'
+                               title='libsodium_sys::crypto_generichash_blake2b_salt_personal'>crypto_generichash_blake2b_salt_personal</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_generichash_blake2b_saltbytes.html'
+                               title='libsodium_sys::crypto_generichash_blake2b_saltbytes'>crypto_generichash_blake2b_saltbytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_generichash_bytes.html'
+                               title='libsodium_sys::crypto_generichash_bytes'>crypto_generichash_bytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_generichash_bytes_max.html'
+                               title='libsodium_sys::crypto_generichash_bytes_max'>crypto_generichash_bytes_max</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_generichash_bytes_min.html'
+                               title='libsodium_sys::crypto_generichash_bytes_min'>crypto_generichash_bytes_min</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_generichash_keybytes.html'
+                               title='libsodium_sys::crypto_generichash_keybytes'>crypto_generichash_keybytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_generichash_keybytes_max.html'
+                               title='libsodium_sys::crypto_generichash_keybytes_max'>crypto_generichash_keybytes_max</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_generichash_keybytes_min.html'
+                               title='libsodium_sys::crypto_generichash_keybytes_min'>crypto_generichash_keybytes_min</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_generichash_primitive.html'
+                               title='libsodium_sys::crypto_generichash_primitive'>crypto_generichash_primitive</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_hash.html'
+                               title='libsodium_sys::crypto_hash'>crypto_hash</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_hash_bytes.html'
+                               title='libsodium_sys::crypto_hash_bytes'>crypto_hash_bytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_hash_primitive.html'
+                               title='libsodium_sys::crypto_hash_primitive'>crypto_hash_primitive</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_hash_sha256.html'
+                               title='libsodium_sys::crypto_hash_sha256'>crypto_hash_sha256</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_hash_sha256_bytes.html'
+                               title='libsodium_sys::crypto_hash_sha256_bytes'>crypto_hash_sha256_bytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_hash_sha256_final.html'
+                               title='libsodium_sys::crypto_hash_sha256_final'>crypto_hash_sha256_final</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_hash_sha256_init.html'
+                               title='libsodium_sys::crypto_hash_sha256_init'>crypto_hash_sha256_init</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_hash_sha256_update.html'
+                               title='libsodium_sys::crypto_hash_sha256_update'>crypto_hash_sha256_update</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_hash_sha512.html'
+                               title='libsodium_sys::crypto_hash_sha512'>crypto_hash_sha512</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_hash_sha512_bytes.html'
+                               title='libsodium_sys::crypto_hash_sha512_bytes'>crypto_hash_sha512_bytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_hash_sha512_final.html'
+                               title='libsodium_sys::crypto_hash_sha512_final'>crypto_hash_sha512_final</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_hash_sha512_init.html'
+                               title='libsodium_sys::crypto_hash_sha512_init'>crypto_hash_sha512_init</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_hash_sha512_update.html'
+                               title='libsodium_sys::crypto_hash_sha512_update'>crypto_hash_sha512_update</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_onetimeauth_bytes.html'
+                               title='libsodium_sys::crypto_onetimeauth_bytes'>crypto_onetimeauth_bytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_onetimeauth_keybytes.html'
+                               title='libsodium_sys::crypto_onetimeauth_keybytes'>crypto_onetimeauth_keybytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_onetimeauth_poly1305.html'
+                               title='libsodium_sys::crypto_onetimeauth_poly1305'>crypto_onetimeauth_poly1305</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_onetimeauth_poly1305_bytes.html'
+                               title='libsodium_sys::crypto_onetimeauth_poly1305_bytes'>crypto_onetimeauth_poly1305_bytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_onetimeauth_poly1305_keybytes.html'
+                               title='libsodium_sys::crypto_onetimeauth_poly1305_keybytes'>crypto_onetimeauth_poly1305_keybytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_onetimeauth_poly1305_verify.html'
+                               title='libsodium_sys::crypto_onetimeauth_poly1305_verify'>crypto_onetimeauth_poly1305_verify</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_onetimeauth_primitive.html'
+                               title='libsodium_sys::crypto_onetimeauth_primitive'>crypto_onetimeauth_primitive</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_pwhash_scryptsalsa208sha256.html'
+                               title='libsodium_sys::crypto_pwhash_scryptsalsa208sha256'>crypto_pwhash_scryptsalsa208sha256</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_pwhash_scryptsalsa208sha256_ll.html'
+                               title='libsodium_sys::crypto_pwhash_scryptsalsa208sha256_ll'>crypto_pwhash_scryptsalsa208sha256_ll</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_pwhash_scryptsalsa208sha256_memlimit_interactive.html'
+                               title='libsodium_sys::crypto_pwhash_scryptsalsa208sha256_memlimit_interactive'>crypto_pwhash_scryptsalsa208sha256_memlimit_interactive</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_pwhash_scryptsalsa208sha256_memlimit_sensitive.html'
+                               title='libsodium_sys::crypto_pwhash_scryptsalsa208sha256_memlimit_sensitive'>crypto_pwhash_scryptsalsa208sha256_memlimit_sensitive</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_pwhash_scryptsalsa208sha256_opslimit_interactive.html'
+                               title='libsodium_sys::crypto_pwhash_scryptsalsa208sha256_opslimit_interactive'>crypto_pwhash_scryptsalsa208sha256_opslimit_interactive</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_pwhash_scryptsalsa208sha256_opslimit_sensitive.html'
+                               title='libsodium_sys::crypto_pwhash_scryptsalsa208sha256_opslimit_sensitive'>crypto_pwhash_scryptsalsa208sha256_opslimit_sensitive</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_pwhash_scryptsalsa208sha256_saltbytes.html'
+                               title='libsodium_sys::crypto_pwhash_scryptsalsa208sha256_saltbytes'>crypto_pwhash_scryptsalsa208sha256_saltbytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_pwhash_scryptsalsa208sha256_str.html'
+                               title='libsodium_sys::crypto_pwhash_scryptsalsa208sha256_str'>crypto_pwhash_scryptsalsa208sha256_str</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_pwhash_scryptsalsa208sha256_str_verify.html'
+                               title='libsodium_sys::crypto_pwhash_scryptsalsa208sha256_str_verify'>crypto_pwhash_scryptsalsa208sha256_str_verify</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_pwhash_scryptsalsa208sha256_strbytes.html'
+                               title='libsodium_sys::crypto_pwhash_scryptsalsa208sha256_strbytes'>crypto_pwhash_scryptsalsa208sha256_strbytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_pwhash_scryptsalsa208sha256_strprefix.html'
+                               title='libsodium_sys::crypto_pwhash_scryptsalsa208sha256_strprefix'>crypto_pwhash_scryptsalsa208sha256_strprefix</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_scalarmult.html'
+                               title='libsodium_sys::crypto_scalarmult'>crypto_scalarmult</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_scalarmult_base.html'
+                               title='libsodium_sys::crypto_scalarmult_base'>crypto_scalarmult_base</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_scalarmult_bytes.html'
+                               title='libsodium_sys::crypto_scalarmult_bytes'>crypto_scalarmult_bytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_scalarmult_curve25519.html'
+                               title='libsodium_sys::crypto_scalarmult_curve25519'>crypto_scalarmult_curve25519</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_scalarmult_curve25519_base.html'
+                               title='libsodium_sys::crypto_scalarmult_curve25519_base'>crypto_scalarmult_curve25519_base</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_scalarmult_curve25519_bytes.html'
+                               title='libsodium_sys::crypto_scalarmult_curve25519_bytes'>crypto_scalarmult_curve25519_bytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_scalarmult_curve25519_scalarbytes.html'
+                               title='libsodium_sys::crypto_scalarmult_curve25519_scalarbytes'>crypto_scalarmult_curve25519_scalarbytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_scalarmult_primitive.html'
+                               title='libsodium_sys::crypto_scalarmult_primitive'>crypto_scalarmult_primitive</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_scalarmult_scalarbytes.html'
+                               title='libsodium_sys::crypto_scalarmult_scalarbytes'>crypto_scalarmult_scalarbytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_secretbox_xsalsa20poly1305.html'
+                               title='libsodium_sys::crypto_secretbox_xsalsa20poly1305'>crypto_secretbox_xsalsa20poly1305</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_secretbox_xsalsa20poly1305_boxzerobytes.html'
+                               title='libsodium_sys::crypto_secretbox_xsalsa20poly1305_boxzerobytes'>crypto_secretbox_xsalsa20poly1305_boxzerobytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_secretbox_xsalsa20poly1305_keybytes.html'
+                               title='libsodium_sys::crypto_secretbox_xsalsa20poly1305_keybytes'>crypto_secretbox_xsalsa20poly1305_keybytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_secretbox_xsalsa20poly1305_macbytes.html'
+                               title='libsodium_sys::crypto_secretbox_xsalsa20poly1305_macbytes'>crypto_secretbox_xsalsa20poly1305_macbytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_secretbox_xsalsa20poly1305_noncebytes.html'
+                               title='libsodium_sys::crypto_secretbox_xsalsa20poly1305_noncebytes'>crypto_secretbox_xsalsa20poly1305_noncebytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_secretbox_xsalsa20poly1305_open.html'
+                               title='libsodium_sys::crypto_secretbox_xsalsa20poly1305_open'>crypto_secretbox_xsalsa20poly1305_open</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_secretbox_xsalsa20poly1305_zerobytes.html'
+                               title='libsodium_sys::crypto_secretbox_xsalsa20poly1305_zerobytes'>crypto_secretbox_xsalsa20poly1305_zerobytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_shorthash_siphash24.html'
+                               title='libsodium_sys::crypto_shorthash_siphash24'>crypto_shorthash_siphash24</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_shorthash_siphash24_bytes.html'
+                               title='libsodium_sys::crypto_shorthash_siphash24_bytes'>crypto_shorthash_siphash24_bytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_shorthash_siphash24_keybytes.html'
+                               title='libsodium_sys::crypto_shorthash_siphash24_keybytes'>crypto_shorthash_siphash24_keybytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_sign_ed25519.html'
+                               title='libsodium_sys::crypto_sign_ed25519'>crypto_sign_ed25519</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_sign_ed25519_bytes.html'
+                               title='libsodium_sys::crypto_sign_ed25519_bytes'>crypto_sign_ed25519_bytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_sign_ed25519_detached.html'
+                               title='libsodium_sys::crypto_sign_ed25519_detached'>crypto_sign_ed25519_detached</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_sign_ed25519_keypair.html'
+                               title='libsodium_sys::crypto_sign_ed25519_keypair'>crypto_sign_ed25519_keypair</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_sign_ed25519_open.html'
+                               title='libsodium_sys::crypto_sign_ed25519_open'>crypto_sign_ed25519_open</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_sign_ed25519_publickeybytes.html'
+                               title='libsodium_sys::crypto_sign_ed25519_publickeybytes'>crypto_sign_ed25519_publickeybytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_sign_ed25519_secretkeybytes.html'
+                               title='libsodium_sys::crypto_sign_ed25519_secretkeybytes'>crypto_sign_ed25519_secretkeybytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_sign_ed25519_seed_keypair.html'
+                               title='libsodium_sys::crypto_sign_ed25519_seed_keypair'>crypto_sign_ed25519_seed_keypair</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_sign_ed25519_seedbytes.html'
+                               title='libsodium_sys::crypto_sign_ed25519_seedbytes'>crypto_sign_ed25519_seedbytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_sign_ed25519_verify_detached.html'
+                               title='libsodium_sys::crypto_sign_ed25519_verify_detached'>crypto_sign_ed25519_verify_detached</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_sign_edwards25519sha512batch.html'
+                               title='libsodium_sys::crypto_sign_edwards25519sha512batch'>crypto_sign_edwards25519sha512batch</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_sign_edwards25519sha512batch_bytes.html'
+                               title='libsodium_sys::crypto_sign_edwards25519sha512batch_bytes'>crypto_sign_edwards25519sha512batch_bytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_sign_edwards25519sha512batch_keypair.html'
+                               title='libsodium_sys::crypto_sign_edwards25519sha512batch_keypair'>crypto_sign_edwards25519sha512batch_keypair</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_sign_edwards25519sha512batch_open.html'
+                               title='libsodium_sys::crypto_sign_edwards25519sha512batch_open'>crypto_sign_edwards25519sha512batch_open</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_sign_edwards25519sha512batch_publickeybytes.html'
+                               title='libsodium_sys::crypto_sign_edwards25519sha512batch_publickeybytes'>crypto_sign_edwards25519sha512batch_publickeybytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_sign_edwards25519sha512batch_secretkeybytes.html'
+                               title='libsodium_sys::crypto_sign_edwards25519sha512batch_secretkeybytes'>crypto_sign_edwards25519sha512batch_secretkeybytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_stream_aes128ctr.html'
+                               title='libsodium_sys::crypto_stream_aes128ctr'>crypto_stream_aes128ctr</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_stream_aes128ctr_beforenmbytes.html'
+                               title='libsodium_sys::crypto_stream_aes128ctr_beforenmbytes'>crypto_stream_aes128ctr_beforenmbytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_stream_aes128ctr_keybytes.html'
+                               title='libsodium_sys::crypto_stream_aes128ctr_keybytes'>crypto_stream_aes128ctr_keybytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_stream_aes128ctr_noncebytes.html'
+                               title='libsodium_sys::crypto_stream_aes128ctr_noncebytes'>crypto_stream_aes128ctr_noncebytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_stream_aes128ctr_xor.html'
+                               title='libsodium_sys::crypto_stream_aes128ctr_xor'>crypto_stream_aes128ctr_xor</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_stream_chacha20.html'
+                               title='libsodium_sys::crypto_stream_chacha20'>crypto_stream_chacha20</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_stream_chacha20_keybytes.html'
+                               title='libsodium_sys::crypto_stream_chacha20_keybytes'>crypto_stream_chacha20_keybytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_stream_chacha20_noncebytes.html'
+                               title='libsodium_sys::crypto_stream_chacha20_noncebytes'>crypto_stream_chacha20_noncebytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_stream_chacha20_xor.html'
+                               title='libsodium_sys::crypto_stream_chacha20_xor'>crypto_stream_chacha20_xor</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_stream_keybytes.html'
+                               title='libsodium_sys::crypto_stream_keybytes'>crypto_stream_keybytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_stream_noncebytes.html'
+                               title='libsodium_sys::crypto_stream_noncebytes'>crypto_stream_noncebytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_stream_primitive.html'
+                               title='libsodium_sys::crypto_stream_primitive'>crypto_stream_primitive</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_stream_salsa20.html'
+                               title='libsodium_sys::crypto_stream_salsa20'>crypto_stream_salsa20</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_stream_salsa2012.html'
+                               title='libsodium_sys::crypto_stream_salsa2012'>crypto_stream_salsa2012</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_stream_salsa2012_keybytes.html'
+                               title='libsodium_sys::crypto_stream_salsa2012_keybytes'>crypto_stream_salsa2012_keybytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_stream_salsa2012_noncebytes.html'
+                               title='libsodium_sys::crypto_stream_salsa2012_noncebytes'>crypto_stream_salsa2012_noncebytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_stream_salsa2012_xor.html'
+                               title='libsodium_sys::crypto_stream_salsa2012_xor'>crypto_stream_salsa2012_xor</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_stream_salsa208.html'
+                               title='libsodium_sys::crypto_stream_salsa208'>crypto_stream_salsa208</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_stream_salsa208_keybytes.html'
+                               title='libsodium_sys::crypto_stream_salsa208_keybytes'>crypto_stream_salsa208_keybytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_stream_salsa208_noncebytes.html'
+                               title='libsodium_sys::crypto_stream_salsa208_noncebytes'>crypto_stream_salsa208_noncebytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_stream_salsa208_xor.html'
+                               title='libsodium_sys::crypto_stream_salsa208_xor'>crypto_stream_salsa208_xor</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_stream_salsa20_keybytes.html'
+                               title='libsodium_sys::crypto_stream_salsa20_keybytes'>crypto_stream_salsa20_keybytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_stream_salsa20_noncebytes.html'
+                               title='libsodium_sys::crypto_stream_salsa20_noncebytes'>crypto_stream_salsa20_noncebytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_stream_salsa20_xor.html'
+                               title='libsodium_sys::crypto_stream_salsa20_xor'>crypto_stream_salsa20_xor</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_stream_xsalsa20.html'
+                               title='libsodium_sys::crypto_stream_xsalsa20'>crypto_stream_xsalsa20</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_stream_xsalsa20_keybytes.html'
+                               title='libsodium_sys::crypto_stream_xsalsa20_keybytes'>crypto_stream_xsalsa20_keybytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_stream_xsalsa20_noncebytes.html'
+                               title='libsodium_sys::crypto_stream_xsalsa20_noncebytes'>crypto_stream_xsalsa20_noncebytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_stream_xsalsa20_xor.html'
+                               title='libsodium_sys::crypto_stream_xsalsa20_xor'>crypto_stream_xsalsa20_xor</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_verify_16.html'
+                               title='libsodium_sys::crypto_verify_16'>crypto_verify_16</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_verify_16_bytes.html'
+                               title='libsodium_sys::crypto_verify_16_bytes'>crypto_verify_16_bytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_verify_32.html'
+                               title='libsodium_sys::crypto_verify_32'>crypto_verify_32</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_verify_32_bytes.html'
+                               title='libsodium_sys::crypto_verify_32_bytes'>crypto_verify_32_bytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_verify_64.html'
+                               title='libsodium_sys::crypto_verify_64'>crypto_verify_64</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.crypto_verify_64_bytes.html'
+                               title='libsodium_sys::crypto_verify_64_bytes'>crypto_verify_64_bytes</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.randombytes_buf.html'
+                               title='libsodium_sys::randombytes_buf'>randombytes_buf</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.sodium_init.html'
+                               title='libsodium_sys::sodium_init'>sodium_init</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.sodium_memcmp.html'
+                               title='libsodium_sys::sodium_memcmp'>sodium_memcmp</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.sodium_memzero.html'
+                               title='libsodium_sys::sodium_memzero'>sodium_memzero</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                </table><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='type' href='type.crypto_auth_hmacsha512256_state.html'
+                               title='libsodium_sys::crypto_auth_hmacsha512256_state'>crypto_auth_hmacsha512256_state</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                </table></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "libsodium_sys";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script defer src="../search-index.js"></script>
+</body>
+</html>

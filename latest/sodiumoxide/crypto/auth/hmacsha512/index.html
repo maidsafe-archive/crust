@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `hmacsha512` mod in crate `sodiumoxide`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, hmacsha512">
+
+    <title>sodiumoxide::crypto::auth::hmacsha512 - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../../../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='../../../index.html'>sodiumoxide</a>::<wbr><a href='../../index.html'>crypto</a>::<wbr><a href='../index.html'>auth</a></p><script>window.sidebarCurrent = {name: 'hmacsha512', ty: 'mod', relpath: '../'};</script><script defer src="../sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content mod">
+<h1 class='fqn'><span class='in-band'>Module <a href='../../../index.html'>sodiumoxide</a>::<wbr><a href='../../index.html'>crypto</a>::<wbr><a href='../index.html'>auth</a>::<wbr><a class='mod' href=''>hmacsha512</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-1406' class='srclink' href='../../../../src/sodiumoxide/crypto/auth/hmacsha512.rs.html#1-81' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p><code>HMAC-SHA-512</code> <code>HMAC-SHA-512</code> is conjectured to meet the standard notion of
+unforgeability.</p>
+</div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Key.html'
+                               title='sodiumoxide::crypto::auth::hmacsha512::Key'>Key</a></td>
+                        <td class='docblock short'>
+                             <p>Authentication <code>Key</code></p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.State.html'
+                               title='sodiumoxide::crypto::auth::hmacsha512::State'>State</a></td>
+                        <td class='docblock short'>
+                             <p>Authentication <code>State</code></p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Tag.html'
+                               title='sodiumoxide::crypto::auth::hmacsha512::Tag'>Tag</a></td>
+                        <td class='docblock short'>
+                             <p>Authentication <code>Tag</code></p>
+
+                        </td>
+                    </tr>
+                </table><h2 id='constants' class='section-header'><a href="#constants">Constants</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.KEYBYTES.html'
+                               title='sodiumoxide::crypto::auth::hmacsha512::KEYBYTES'>KEYBYTES</a></td>
+                        <td class='docblock short'>
+                             <p>Number of bytes in a <code>Key</code>.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.TAGBYTES.html'
+                               title='sodiumoxide::crypto::auth::hmacsha512::TAGBYTES'>TAGBYTES</a></td>
+                        <td class='docblock short'>
+                             <p>Number of bytes in a <code>Tag</code>.</p>
+
+                        </td>
+                    </tr>
+                </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.authenticate.html'
+                               title='sodiumoxide::crypto::auth::hmacsha512::authenticate'>authenticate</a></td>
+                        <td class='docblock short'>
+                             <p><code>authenticate()</code> authenticates a message <code>m</code> using a secret key <code>k</code>.
+The function returns an authenticator tag.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.gen_key.html'
+                               title='sodiumoxide::crypto::auth::hmacsha512::gen_key'>gen_key</a></td>
+                        <td class='docblock short'>
+                             <p><code>gen_key()</code> randomly generates a key for authentication</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.verify.html'
+                               title='sodiumoxide::crypto::auth::hmacsha512::verify'>verify</a></td>
+                        <td class='docblock short'>
+                             <p><code>verify()</code> returns <code>true</code> if <code>tag</code> is a correct authenticator of message <code>m</code>
+under a secret key <code>k</code>. Otherwise it returns false.</p>
+
+                        </td>
+                    </tr>
+                </table></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../../../";
+        window.currentCrate = "sodiumoxide";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../../../../jquery.js"></script>
+    <script src="../../../../main.js"></script>
+    
+    <script defer src="../../../../search-index.js"></script>
+</body>
+</html>

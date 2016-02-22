@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/regex-syntax-0.2.3/src/lib.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/regex-syntax-0.2.4/src/lib.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>lib.rs.html -- source</title>
@@ -1351,6 +1351,12 @@
 <span id="1308">1308</span>
 <span id="1309">1309</span>
 <span id="1310">1310</span>
+<span id="1311">1311</span>
+<span id="1312">1312</span>
+<span id="1313">1313</span>
+<span id="1314">1314</span>
+<span id="1315">1315</span>
+<span id="1316">1316</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2014-2015 The Rust Project Developers. See the COPYRIGHT</span>
 <span class='comment'>// file at the top-level directory of this distribution and at</span>
@@ -1531,6 +1537,19 @@ assert_eq!(err.kind(), &amp;ErrorKind::UnclosedParen);
     },
 }
 
+<span class='kw'>impl</span> <span class='ident'>Repeater</span> {
+    <span class='doccomment'>/// Returns true if and only if this repetition can match the empty string.</span>
+    <span class='kw'>fn</span> <span class='ident'>matches_empty</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
+        <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>Repeater</span>::<span class='op'>*</span>;
+        <span class='kw'>match</span> <span class='op'>*</span><span class='self'>self</span> {
+            <span class='ident'>ZeroOrOne</span> <span class='op'>=&gt;</span> <span class='boolval'>true</span>,
+            <span class='ident'>ZeroOrMore</span> <span class='op'>=&gt;</span> <span class='boolval'>true</span>,
+            <span class='ident'>OneOrMore</span> <span class='op'>=&gt;</span> <span class='boolval'>false</span>,
+            <span class='ident'>Range</span> { <span class='ident'>min</span>, .. } <span class='op'>=&gt;</span> <span class='ident'>min</span> <span class='op'>==</span> <span class='number'>0</span>,
+        }
+    }
+}
+
 <span class='doccomment'>/// A character class.</span>
 <span class='doccomment'>///</span>
 <span class='doccomment'>/// A character class has a canonical format that the parser guarantees. Its</span>
@@ -1548,12 +1567,9 @@ assert_eq!(err.kind(), &amp;ErrorKind::UnclosedParen);
 <span class='doccomment'>/// sequence of non-overlapping ranges. This makes it possible to test whether</span>
 <span class='doccomment'>/// a character is matched by a class with a binary search.</span>
 <span class='doccomment'>///</span>
-<span class='doccomment'>/// Additionally, a character class may be marked *case insensitive*. If it&#39;s</span>
-<span class='doccomment'>/// case insensitive, then:</span>
-<span class='doccomment'>///</span>
-<span class='doccomment'>/// 1. Simple case folding has been applied to all ranges.</span>
-<span class='doccomment'>/// 2. Simple case folding must be applied to a character before testing</span>
-<span class='doccomment'>///    whether it matches the character class.</span>
+<span class='doccomment'>/// If the case insensitive flag was set when parsing a character class, then</span>
+<span class='doccomment'>/// simple case folding is done automatically. For example, `(?i)[a-c]` is</span>
+<span class='doccomment'>/// automatically translated to `[a-cA-C]`.</span>
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Clone</span>, <span class='ident'>Debug</span>, <span class='ident'>PartialEq</span>, <span class='ident'>Eq</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>CharClass</span> {
     <span class='ident'>ranges</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>ClassRange</span><span class='op'>&gt;</span>,
@@ -1672,7 +1688,9 @@ assert_eq!(err.kind(), &amp;ErrorKind::UnclosedParen);
     <span class='doccomment'>/// the beginning of text.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>is_anchored_start</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
         <span class='kw'>match</span> <span class='op'>*</span><span class='self'>self</span> {
-            <span class='ident'>Repeat</span> { <span class='kw-2'>ref</span> <span class='ident'>e</span>, .. } <span class='op'>=&gt;</span> <span class='ident'>e</span>.<span class='ident'>is_anchored_start</span>(),
+            <span class='ident'>Repeat</span> { <span class='kw-2'>ref</span> <span class='ident'>e</span>, <span class='ident'>r</span>, .. } <span class='op'>=&gt;</span> {
+                <span class='op'>!</span><span class='ident'>r</span>.<span class='ident'>matches_empty</span>() <span class='op'>&amp;&amp;</span> <span class='ident'>e</span>.<span class='ident'>is_anchored_start</span>()
+            }
             <span class='ident'>Group</span> { <span class='kw-2'>ref</span> <span class='ident'>e</span>, .. } <span class='op'>=&gt;</span> <span class='ident'>e</span>.<span class='ident'>is_anchored_start</span>(),
             <span class='ident'>Concat</span>(<span class='kw-2'>ref</span> <span class='ident'>es</span>) <span class='op'>=&gt;</span> <span class='ident'>es</span>[<span class='number'>0</span>].<span class='ident'>is_anchored_start</span>(),
             <span class='ident'>Alternate</span>(<span class='kw-2'>ref</span> <span class='ident'>es</span>) <span class='op'>=&gt;</span> <span class='ident'>es</span>.<span class='ident'>iter</span>().<span class='ident'>all</span>(<span class='op'>|</span><span class='ident'>e</span><span class='op'>|</span> <span class='ident'>e</span>.<span class='ident'>is_anchored_start</span>()),
@@ -1685,7 +1703,9 @@ assert_eq!(err.kind(), &amp;ErrorKind::UnclosedParen);
     <span class='doccomment'>/// end of the text.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>is_anchored_end</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
         <span class='kw'>match</span> <span class='op'>*</span><span class='self'>self</span> {
-            <span class='ident'>Repeat</span> { <span class='kw-2'>ref</span> <span class='ident'>e</span>, .. } <span class='op'>=&gt;</span> <span class='ident'>e</span>.<span class='ident'>is_anchored_end</span>(),
+            <span class='ident'>Repeat</span> { <span class='kw-2'>ref</span> <span class='ident'>e</span>, <span class='ident'>r</span>, .. } <span class='op'>=&gt;</span> {
+                <span class='op'>!</span><span class='ident'>r</span>.<span class='ident'>matches_empty</span>() <span class='op'>&amp;&amp;</span> <span class='ident'>e</span>.<span class='ident'>is_anchored_end</span>()
+            }
             <span class='ident'>Group</span> { <span class='kw-2'>ref</span> <span class='ident'>e</span>, .. } <span class='op'>=&gt;</span> <span class='ident'>e</span>.<span class='ident'>is_anchored_end</span>(),
             <span class='ident'>Concat</span>(<span class='kw-2'>ref</span> <span class='ident'>es</span>) <span class='op'>=&gt;</span> <span class='ident'>es</span>[<span class='ident'>es</span>.<span class='ident'>len</span>() <span class='op'>-</span> <span class='number'>1</span>].<span class='ident'>is_anchored_end</span>(),
             <span class='ident'>Alternate</span>(<span class='kw-2'>ref</span> <span class='ident'>es</span>) <span class='op'>=&gt;</span> <span class='ident'>es</span>.<span class='ident'>iter</span>().<span class='ident'>all</span>(<span class='op'>|</span><span class='ident'>e</span><span class='op'>|</span> <span class='ident'>e</span>.<span class='ident'>is_anchored_end</span>()),
@@ -1729,8 +1749,6 @@ assert_eq!(err.kind(), &amp;ErrorKind::UnclosedParen);
     }
 
     <span class='doccomment'>/// Create a new empty class from this one.</span>
-    <span class='doccomment'>///</span>
-    <span class='doccomment'>/// Namely, its capacity and case insensitive setting will be the same.</span>
     <span class='kw'>fn</span> <span class='ident'>to_empty</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>CharClass</span> {
         <span class='ident'>CharClass</span> { <span class='ident'>ranges</span>: <span class='ident'>Vec</span>::<span class='ident'>with_capacity</span>(<span class='self'>self</span>.<span class='ident'>len</span>()) }
     }
@@ -2418,9 +2436,6 @@ assert_eq!(err.kind(), &amp;ErrorKind::UnclosedParen);
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>e</span>(<span class='string'>&quot;^a|^b&quot;</span>).<span class='ident'>is_anchored_start</span>());
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>e</span>(<span class='string'>&quot;(^a)|(^b)&quot;</span>).<span class='ident'>is_anchored_start</span>());
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>e</span>(<span class='string'>&quot;(^(a|b))&quot;</span>).<span class='ident'>is_anchored_start</span>());
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>e</span>(<span class='string'>&quot;^*&quot;</span>).<span class='ident'>is_anchored_start</span>());
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>e</span>(<span class='string'>&quot;(^)*&quot;</span>).<span class='ident'>is_anchored_start</span>());
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>e</span>(<span class='string'>&quot;((^)*)*&quot;</span>).<span class='ident'>is_anchored_start</span>());
 
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='op'>!</span><span class='ident'>e</span>(<span class='string'>&quot;^a|b&quot;</span>).<span class='ident'>is_anchored_start</span>());
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='op'>!</span><span class='ident'>e</span>(<span class='string'>&quot;a|^b&quot;</span>).<span class='ident'>is_anchored_start</span>());
@@ -2433,9 +2448,6 @@ assert_eq!(err.kind(), &amp;ErrorKind::UnclosedParen);
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>e</span>(<span class='string'>&quot;a$|b$&quot;</span>).<span class='ident'>is_anchored_end</span>());
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>e</span>(<span class='string'>&quot;(a$)|(b$)&quot;</span>).<span class='ident'>is_anchored_end</span>());
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>e</span>(<span class='string'>&quot;((a|b)$)&quot;</span>).<span class='ident'>is_anchored_end</span>());
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>e</span>(<span class='string'>&quot;$*&quot;</span>).<span class='ident'>is_anchored_end</span>());
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>e</span>(<span class='string'>&quot;($)*&quot;</span>).<span class='ident'>is_anchored_end</span>());
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>e</span>(<span class='string'>&quot;(($)*)*&quot;</span>).<span class='ident'>is_anchored_end</span>());
 
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='op'>!</span><span class='ident'>e</span>(<span class='string'>&quot;a$|b&quot;</span>).<span class='ident'>is_anchored_end</span>());
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='op'>!</span><span class='ident'>e</span>(<span class='string'>&quot;a|b$&quot;</span>).<span class='ident'>is_anchored_end</span>());

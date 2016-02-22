@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `secure_serialisation` crate.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, secure_serialisation">
+
+    <title>secure_serialisation - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+
+    <link rel="shortcut icon" href="http://maidsafe.net/img/favicon.ico">
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        <a href='../secure_serialisation/index.html'><img src='https://raw.githubusercontent.com/maidsafe/QA/master/Images/maidsafe_logo.png' alt='' width='100'></a>
+        <p class='location'></p><script>window.sidebarCurrent = {name: 'secure_serialisation', ty: 'mod', relpath: '../'};</script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content mod">
+<h1 class='fqn'><span class='in-band'>Crate <a class='mod' href=''>secure_serialisation</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-0' class='srclink' href='../src/secure_serialisation/lib.rs.html#18-278' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'>
+<h1 id='secure-serialisation' class='section-header'><a href='#secure-serialisation'>Secure Serialisation</a></h1>
+<p>Given a remote nacl box PublicKey this lib will securely serialise and encrypt messages destined
+for that node.  These will use authenticated encryption.</p>
+
+<h1 id='authenticated-encryption' class='section-header'><a href='#authenticated-encryption'>Authenticated encryption</a></h1>
+<p>Using public-key authenticated encryption, Bob can encrypt a confidential message specifically
+for Alice, using Alice&#39;s public key.</p>
+
+<p>Using Bob&#39;s public key, Alice can verify that the encrypted message was actually created by Bob
+and was not tampered with, before eventually decrypting it.</p>
+
+<p>Alice only needs Bob&#39;s public key, the nonce and the ciphertext.  Bob should never ever share
+his secret key, even with Alice.  And in order to send messages to Alice, Bob only needs Alice&#39;s
+public key.  Alice should never ever share her secret key either, even with Bob.</p>
+
+<p>Alice can reply to Bob using the same system, without having to generate a distinct key pair.
+The nonce doesn&#39;t have to be confidential, but it should be used with just one invocation of
+<code>crypto_box_open_easy()</code> for a particular pair of public and secret keys.</p>
+
+<p>One easy way to generate a nonce is to use <code>randombytes_buf()</code>; considering the size of nonces
+the risk of any random collisions is negligible.  For some applications, if you wish to use
+nonces to detect missing messages or to ignore replayed messages, it is also OK to use a simple
+incrementing counter as a nonce.  In this crate we use a random nonce wrapped into the message.</p>
+
+<p>This implementation will encrypt data with a nonce and then serialise the payload.  The nonce
+is then prepended to the message and pulled off first at the remote end.  This provides a clean,
+secure mechanism for sending data between entities who have session-based keypairs.  It SHOULD
+NOT be used for permanent keys.</p>
+
+<p>Where possible the <code>precompute_*</code> functions will lessen any CPU overhead in sending messages and
+should be preferred.  This is not enforced to allow occasional sending of messages between
+parties using a simpler, although slower, method.</p>
+
+<p>These functions are not meant to provide non-repudiation.  On the contrary: they  guarantee
+repudiability.  A receiver can freely modify a message, and therefore cannot convince third
+parties that this particular message came from the sender.  The sender and receiver are
+nevertheless protected against forgeries by other parties.  In the terminology of
+<a href="http://groups.google.com/group/sci.crypt/msg/ec5c18b23b11d82c">http://groups.google.com/group/sci.crypt/msg/ec5c18b23b11d82c</a>, this crate uses &quot;public-key
+authenticators&quot; rather than &quot;public-key signatures.&quot;</p>
+</div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.PrecomputedKey.html'
+                               title='secure_serialisation::PrecomputedKey'>PrecomputedKey</a></td>
+                        <td class='docblock short'>
+                             <p>Applications that send several messages to the same receiver can gain speed by
+splitting <code>seal()</code> into two steps, <code>precompute()</code> and <code>seal_precomputed()</code>.
+Similarly, applications that receive several messages from the same sender can gain
+speed by splitting <code>open()</code> into two steps, <code>precompute()</code> and <code>open_precomputed()</code>.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.PublicKey.html'
+                               title='secure_serialisation::PublicKey'>PublicKey</a></td>
+                        <td class='docblock short'>
+                             <p><code>PublicKey</code> for asymmetric authenticated encryption</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.SecretKey.html'
+                               title='secure_serialisation::SecretKey'>SecretKey</a></td>
+                        <td class='docblock short'>
+                             <p><code>SecretKey</code> for asymmetric authenticated encryption</p>
+
+                        </td>
+                    </tr>
+                </table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='enum' href='enum.Error.html'
+                               title='secure_serialisation::Error'>Error</a></td>
+                        <td class='docblock short'>
+                             <p>Error types.</p>
+
+                        </td>
+                    </tr>
+                </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.deserialise.html'
+                               title='secure_serialisation::deserialise'>deserialise</a></td>
+                        <td class='docblock short'>
+                             <p>Parse a data type from an encoded message from a sender whose public key we know.  Success
+ensures the message was from the holder of the private key related to the public key we know of
+the sender.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.gen_keypair.html'
+                               title='secure_serialisation::gen_keypair'>gen_keypair</a></td>
+                        <td class='docblock short'>
+                             <p><code>gen_keypair()</code> randomly generates a secret key and a corresponding public key.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.pre_computed_deserialise.html'
+                               title='secure_serialisation::pre_computed_deserialise'>pre_computed_deserialise</a></td>
+                        <td class='docblock short'>
+                             <p>Parse a data type from an encoded message from a sender whose public key we know, and which is
+pre-computed.  This is less CPU-intensive than <a href="fn.deserialise.html"><code>deserialise()</code></a> which can
+be useful if many messages are to be transferred.  Success ensures the message was from the
+holder of the private key related to the public key we know of the sender.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.pre_computed_serialise.html'
+                               title='secure_serialisation::pre_computed_serialise'>pre_computed_serialise</a></td>
+                        <td class='docblock short'>
+                             <p>Prepare an encodable data element for transmission to another process whose public key we
+know, and which is pre-computed.  This is less CPU-intensive than
+<a href="fn.serialise.html"><code>serialise()</code></a> which can be useful if many messages are to be transferred.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.precompute.html'
+                               title='secure_serialisation::precompute'>precompute</a></td>
+                        <td class='docblock short'>
+                             <p><code>precompute()</code> computes an intermediate key that can be used by <code>seal_precomputed()</code>
+and <code>open_precomputed()</code></p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.serialise.html'
+                               title='secure_serialisation::serialise'>serialise</a></td>
+                        <td class='docblock short'>
+                             <p>Prepare an encodable data element for transmission to another process whose public key we know.</p>
+
+                        </td>
+                    </tr>
+                </table></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "secure_serialisation";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script defer src="../search-index.js"></script>
+</body>
+</html>
