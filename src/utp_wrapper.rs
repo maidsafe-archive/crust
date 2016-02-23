@@ -52,9 +52,11 @@ impl UtpWrapper {
                             Err(ref e) if e.kind() == ErrorKind::TimedOut => {
                                 // This extra loop ensures all pending messages are sent
                                 // before we try to read again.
+                                let mut send_keepalive = true;
                                 loop {
                                     match output_rx.try_recv() {
                                         Ok(WriteEvent::Write(msg)) => {
+                                            send_keepalive = false;
                                             let data = unwrap_result!(serialise(&msg));
                                             if socket.send_to(&data).is_err() {
                                                 break 'outer;
@@ -64,6 +66,9 @@ impl UtpWrapper {
                                         Err(TryRecvError::Disconnected) => break 'outer,
                                         Err(TryRecvError::Empty) => break,
                                     }
+                                }
+                                if send_keepalive {
+                                    socket.send_keepalive();
                                 }
                             }
                             Err(_) => break,
