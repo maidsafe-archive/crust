@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/itertools-0.4.8/src/islice.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/itertools-0.4.10/src/islice.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>islice.rs.html -- source</title>
@@ -115,6 +115,9 @@
 <span id="72">72</span>
 <span id="73">73</span>
 <span id="74">74</span>
+<span id="75">75</span>
+<span id="76">76</span>
+<span id="77">77</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>Itertools</span>;
 <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>size_hint</span>;
@@ -145,11 +148,15 @@
     <span class='kw'>where</span> <span class='ident'>I</span>: <span class='ident'>Iterator</span>
 {
     <span class='doccomment'>/// Create a new **ISlice**.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span><span class='op'>&lt;</span><span class='ident'>R</span>: <span class='ident'>GenericRange</span><span class='op'>&gt;</span>(<span class='ident'>iter</span>: <span class='ident'>I</span>, <span class='ident'>range</span>: <span class='ident'>R</span>) <span class='op'>-&gt;</span> <span class='kw'>Self</span>
-    {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span><span class='op'>&lt;</span><span class='ident'>R</span>: <span class='ident'>GenericRange</span><span class='op'>&gt;</span>(<span class='ident'>iter</span>: <span class='ident'>I</span>, <span class='ident'>range</span>: <span class='ident'>R</span>) <span class='op'>-&gt;</span> <span class='kw'>Self</span> {
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>start</span> <span class='op'>=</span> <span class='ident'>range</span>.<span class='ident'>start</span>().<span class='ident'>unwrap_or</span>(<span class='number'>0</span>);
+        <span class='kw'>let</span> <span class='ident'>end</span> <span class='op'>=</span> <span class='ident'>range</span>.<span class='ident'>end</span>().<span class='ident'>unwrap_or</span>(::<span class='ident'>std</span>::<span class='ident'>usize</span>::<span class='ident'>MAX</span>);
+        <span class='kw'>if</span> <span class='ident'>start</span> <span class='op'>&gt;</span> <span class='ident'>end</span> {
+            <span class='ident'>start</span> <span class='op'>=</span> <span class='ident'>end</span>;
+        }
         <span class='ident'>ISlice</span> {
-            <span class='ident'>start</span>: <span class='ident'>range</span>.<span class='ident'>start</span>().<span class='ident'>unwrap_or</span>(<span class='number'>0</span>),
-            <span class='ident'>end</span>: <span class='ident'>range</span>.<span class='ident'>end</span>().<span class='ident'>unwrap_or</span>(::<span class='ident'>std</span>::<span class='ident'>usize</span>::<span class='ident'>MAX</span>),
+            <span class='ident'>start</span>: <span class='ident'>start</span>,
+            <span class='ident'>end</span>: <span class='ident'>end</span>,
             <span class='ident'>iter</span>: <span class='ident'>iter</span>,
         }
     }
@@ -160,8 +167,7 @@
 {
     <span class='kw'>type</span> <span class='ident'>Item</span> <span class='op'>=</span> <span class='ident'>I</span>::<span class='ident'>Item</span>;
 
-    <span class='kw'>fn</span> <span class='ident'>next</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>I</span>::<span class='ident'>Item</span><span class='op'>&gt;</span>
-    {
+    <span class='kw'>fn</span> <span class='ident'>next</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>I</span>::<span class='ident'>Item</span><span class='op'>&gt;</span> {
         <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>start</span> <span class='op'>!=</span> <span class='number'>0</span> {
             <span class='kw'>let</span> <span class='ident'>st</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>start</span>;
             <span class='kw'>let</span> <span class='ident'>n</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>iter</span>.<span class='ident'>dropn</span>(<span class='self'>self</span>.<span class='ident'>start</span>);
@@ -169,7 +175,7 @@
             <span class='self'>self</span>.<span class='ident'>end</span> <span class='op'>-=</span> <span class='ident'>n</span>;
             <span class='kw'>if</span> <span class='ident'>n</span> <span class='op'>!=</span> <span class='ident'>st</span> {
                 <span class='comment'>// iterator is already done.</span>
-                <span class='kw'>return</span> <span class='prelude-val'>None</span>
+                <span class='kw'>return</span> <span class='prelude-val'>None</span>;
             }
         }
         <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>end</span> <span class='op'>!=</span> <span class='number'>0</span> {
@@ -180,16 +186,16 @@
         }
     }
 
-    <span class='kw'>fn</span> <span class='ident'>size_hint</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> (<span class='ident'>usize</span>, <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>usize</span><span class='op'>&gt;</span>)
-    {
+    <span class='kw'>fn</span> <span class='ident'>size_hint</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> (<span class='ident'>usize</span>, <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>usize</span><span class='op'>&gt;</span>) {
         <span class='kw'>let</span> <span class='ident'>len</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>end</span> <span class='op'>-</span> <span class='self'>self</span>.<span class='ident'>start</span>;
-        <span class='ident'>size_hint</span>::<span class='ident'>min</span>(<span class='self'>self</span>.<span class='ident'>iter</span>.<span class='ident'>size_hint</span>(), (<span class='ident'>len</span>, <span class='prelude-val'>Some</span>(<span class='ident'>len</span>)))
+        <span class='kw'>let</span> <span class='ident'>sh</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>iter</span>.<span class='ident'>size_hint</span>();
+        <span class='ident'>size_hint</span>::<span class='ident'>min</span>(<span class='ident'>size_hint</span>::<span class='ident'>sub_scalar</span>(<span class='ident'>sh</span>, <span class='self'>self</span>.<span class='ident'>start</span>), (<span class='ident'>len</span>, <span class='prelude-val'>Some</span>(<span class='ident'>len</span>)))
     }
 }
 
 <span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>I</span><span class='op'>&gt;</span> <span class='ident'>ExactSizeIterator</span> <span class='kw'>for</span> <span class='ident'>ISlice</span><span class='op'>&lt;</span><span class='ident'>I</span><span class='op'>&gt;</span>
     <span class='kw'>where</span> <span class='ident'>I</span>: <span class='ident'>ExactSizeIterator</span>
-{ }
+{}
 </pre>
 </section>
     <section id='search' class="content hidden"></section>

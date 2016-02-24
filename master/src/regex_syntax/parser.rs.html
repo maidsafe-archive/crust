@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/regex-syntax-0.2.4/src/parser.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/regex-syntax-0.2.5/src/parser.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>parser.rs.html -- source</title>
@@ -2355,6 +2355,43 @@
 <span id="2312">2312</span>
 <span id="2313">2313</span>
 <span id="2314">2314</span>
+<span id="2315">2315</span>
+<span id="2316">2316</span>
+<span id="2317">2317</span>
+<span id="2318">2318</span>
+<span id="2319">2319</span>
+<span id="2320">2320</span>
+<span id="2321">2321</span>
+<span id="2322">2322</span>
+<span id="2323">2323</span>
+<span id="2324">2324</span>
+<span id="2325">2325</span>
+<span id="2326">2326</span>
+<span id="2327">2327</span>
+<span id="2328">2328</span>
+<span id="2329">2329</span>
+<span id="2330">2330</span>
+<span id="2331">2331</span>
+<span id="2332">2332</span>
+<span id="2333">2333</span>
+<span id="2334">2334</span>
+<span id="2335">2335</span>
+<span id="2336">2336</span>
+<span id="2337">2337</span>
+<span id="2338">2338</span>
+<span id="2339">2339</span>
+<span id="2340">2340</span>
+<span id="2341">2341</span>
+<span id="2342">2342</span>
+<span id="2343">2343</span>
+<span id="2344">2344</span>
+<span id="2345">2345</span>
+<span id="2346">2346</span>
+<span id="2347">2347</span>
+<span id="2348">2348</span>
+<span id="2349">2349</span>
+<span id="2350">2350</span>
+<span id="2351">2351</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2014-2015 The Rust Project Developers. See the COPYRIGHT</span>
 <span class='comment'>// file at the top-level directory of this distribution and at</span>
@@ -2391,7 +2428,22 @@
     <span class='ident'>flags</span>: <span class='ident'>Flags</span>,
 }
 
-<span class='doccomment'>/// An empheral type for representing the expression stack.</span>
+<span class='doccomment'>/// Flag state used in the parser.</span>
+<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Clone</span>, <span class='ident'>Copy</span>, <span class='ident'>Debug</span>, <span class='ident'>Default</span>)]</span>
+<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>Flags</span> {
+    <span class='doccomment'>/// i</span>
+    <span class='kw'>pub</span> <span class='ident'>casei</span>: <span class='ident'>bool</span>,
+    <span class='doccomment'>/// m</span>
+    <span class='kw'>pub</span> <span class='ident'>multi</span>: <span class='ident'>bool</span>,
+    <span class='doccomment'>/// s</span>
+    <span class='kw'>pub</span> <span class='ident'>dotnl</span>: <span class='ident'>bool</span>,
+    <span class='doccomment'>/// U</span>
+    <span class='kw'>pub</span> <span class='ident'>swap_greed</span>: <span class='ident'>bool</span>,
+    <span class='doccomment'>/// x</span>
+    <span class='kw'>pub</span> <span class='ident'>ignore_space</span>: <span class='ident'>bool</span>,
+}
+
+<span class='doccomment'>/// An ephemeral type for representing the expression stack.</span>
 <span class='doccomment'>///</span>
 <span class='doccomment'>/// Everything on the stack is either a regular expression or a marker</span>
 <span class='doccomment'>/// indicating the opening of a group (possibly non-capturing). The opening</span>
@@ -2408,32 +2460,16 @@
     },
 }
 
-<span class='doccomment'>/// Flag state.</span>
-<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Clone</span>, <span class='ident'>Copy</span>, <span class='ident'>Debug</span>)]</span>
-<span class='kw'>struct</span> <span class='ident'>Flags</span> {
-    <span class='ident'>casei</span>: <span class='ident'>bool</span>,
-    <span class='ident'>multi</span>: <span class='ident'>bool</span>,
-    <span class='ident'>dotnl</span>: <span class='ident'>bool</span>,
-    <span class='ident'>swap_greed</span>: <span class='ident'>bool</span>,
-    <span class='ident'>ignore_space</span>: <span class='ident'>bool</span>,
-}
-
 <span class='comment'>// Primary expression parsing routines.</span>
 <span class='kw'>impl</span> <span class='ident'>Parser</span> {
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>parse</span>(<span class='ident'>s</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>Expr</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>parse</span>(<span class='ident'>s</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>, <span class='ident'>flags</span>: <span class='ident'>Flags</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>Expr</span><span class='op'>&gt;</span> {
         <span class='ident'>Parser</span> {
             <span class='ident'>chars</span>: <span class='ident'>s</span>.<span class='ident'>chars</span>().<span class='ident'>collect</span>(),
             <span class='ident'>chari</span>: <span class='number'>0</span>,
             <span class='ident'>stack</span>: <span class='macro'>vec</span><span class='macro'>!</span>[],
             <span class='ident'>caps</span>: <span class='number'>0</span>,
             <span class='ident'>names</span>: <span class='macro'>vec</span><span class='macro'>!</span>[],
-            <span class='ident'>flags</span>: <span class='ident'>Flags</span> {
-                <span class='ident'>casei</span>: <span class='boolval'>false</span>,
-                <span class='ident'>multi</span>: <span class='boolval'>false</span>,
-                <span class='ident'>dotnl</span>: <span class='boolval'>false</span>,
-                <span class='ident'>swap_greed</span>: <span class='boolval'>false</span>,
-                <span class='ident'>ignore_space</span>: <span class='boolval'>false</span>,
-            },
+            <span class='ident'>flags</span>: <span class='ident'>flags</span>,
         }.<span class='ident'>parse_expr</span>()
     }
 
@@ -3406,7 +3442,6 @@
 }
 
 <span class='doccomment'>/// Returns true if the give character has significance in a regex.</span>
-<span class='attribute'>#[<span class='ident'>doc</span>(<span class='ident'>hidden</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>is_punct</span>(<span class='ident'>c</span>: <span class='ident'>char</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
     <span class='kw'>match</span> <span class='ident'>c</span> {
         <span class='string'>&#39;\\&#39;</span> <span class='op'>|</span> <span class='string'>&#39;.&#39;</span> <span class='op'>|</span> <span class='string'>&#39;+&#39;</span> <span class='op'>|</span> <span class='string'>&#39;*&#39;</span> <span class='op'>|</span> <span class='string'>&#39;?&#39;</span> <span class='op'>|</span> <span class='string'>&#39;(&#39;</span> <span class='op'>|</span> <span class='string'>&#39;)&#39;</span> <span class='op'>|</span> <span class='string'>&#39;|&#39;</span> <span class='op'>|</span>
@@ -3492,14 +3527,14 @@
 <span class='kw'>mod</span> <span class='ident'>tests</span> {
     <span class='kw'>use</span> { <span class='ident'>CharClass</span>, <span class='ident'>ClassRange</span>, <span class='ident'>Expr</span>, <span class='ident'>Repeater</span>, <span class='ident'>ErrorKind</span> };
     <span class='kw'>use</span> <span class='ident'>unicode</span>::<span class='ident'>regex</span>::{<span class='ident'>PERLD</span>, <span class='ident'>PERLS</span>, <span class='ident'>PERLW</span>};
-    <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>Parser</span>;
-    <span class='kw'>use</span> <span class='ident'>super</span>::{<span class='ident'>LOWER</span>, <span class='ident'>UPPER</span>};
+    <span class='kw'>use</span> <span class='ident'>super</span>::{<span class='ident'>LOWER</span>, <span class='ident'>UPPER</span>, <span class='ident'>Flags</span>, <span class='ident'>Parser</span>};
 
     <span class='kw'>static</span> <span class='ident'>YI</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> [(<span class='ident'>char</span>, <span class='ident'>char</span>)] <span class='op'>=</span> <span class='kw-2'>&amp;</span>[
         (<span class='string'>&#39;\u{a000}&#39;</span>, <span class='string'>&#39;\u{a48c}&#39;</span>), (<span class='string'>&#39;\u{a490}&#39;</span>, <span class='string'>&#39;\u{a4c6}&#39;</span>),
     ];
 
-    <span class='kw'>fn</span> <span class='ident'>p</span>(<span class='ident'>s</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>) <span class='op'>-&gt;</span> <span class='ident'>Expr</span> { <span class='ident'>Parser</span>::<span class='ident'>parse</span>(<span class='ident'>s</span>).<span class='ident'>unwrap</span>() }
+    <span class='kw'>fn</span> <span class='ident'>p</span>(<span class='ident'>s</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>) <span class='op'>-&gt;</span> <span class='ident'>Expr</span> { <span class='ident'>Parser</span>::<span class='ident'>parse</span>(<span class='ident'>s</span>, <span class='ident'>Flags</span>::<span class='ident'>default</span>()).<span class='ident'>unwrap</span>() }
+    <span class='kw'>fn</span> <span class='ident'>pf</span>(<span class='ident'>s</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>, <span class='ident'>flags</span>: <span class='ident'>Flags</span>) <span class='op'>-&gt;</span> <span class='ident'>Expr</span> { <span class='ident'>Parser</span>::<span class='ident'>parse</span>(<span class='ident'>s</span>, <span class='ident'>flags</span>).<span class='ident'>unwrap</span>() }
     <span class='kw'>fn</span> <span class='ident'>lit</span>(<span class='ident'>c</span>: <span class='ident'>char</span>) <span class='op'>-&gt;</span> <span class='ident'>Expr</span> { <span class='ident'>Expr</span>::<span class='ident'>Literal</span> { <span class='ident'>chars</span>: <span class='macro'>vec</span><span class='macro'>!</span>[<span class='ident'>c</span>], <span class='ident'>casei</span>: <span class='boolval'>false</span> } }
     <span class='kw'>fn</span> <span class='ident'>liti</span>(<span class='ident'>c</span>: <span class='ident'>char</span>) <span class='op'>-&gt;</span> <span class='ident'>Expr</span> { <span class='ident'>Expr</span>::<span class='ident'>Literal</span> { <span class='ident'>chars</span>: <span class='macro'>vec</span><span class='macro'>!</span>[<span class='ident'>c</span>], <span class='ident'>casei</span>: <span class='boolval'>true</span> } }
     <span class='kw'>fn</span> <span class='ident'>b</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span>(<span class='ident'>v</span>: <span class='ident'>T</span>) <span class='op'>-&gt;</span> <span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> { <span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='ident'>v</span>) }
@@ -3898,6 +3933,40 @@
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>flags_default_casei</span>() {
+        <span class='kw'>let</span> <span class='ident'>flags</span> <span class='op'>=</span> <span class='ident'>Flags</span> { <span class='ident'>casei</span>: <span class='boolval'>true</span>, .. <span class='ident'>Flags</span>::<span class='ident'>default</span>() };
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>pf</span>(<span class='string'>&quot;a&quot;</span>, <span class='ident'>flags</span>), <span class='ident'>liti</span>(<span class='string'>&#39;a&#39;</span>));
+    }
+
+    <span class='attribute'>#[<span class='ident'>test</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>flags_default_multi</span>() {
+        <span class='kw'>let</span> <span class='ident'>flags</span> <span class='op'>=</span> <span class='ident'>Flags</span> { <span class='ident'>multi</span>: <span class='boolval'>true</span>, .. <span class='ident'>Flags</span>::<span class='ident'>default</span>() };
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>pf</span>(<span class='string'>&quot;^&quot;</span>, <span class='ident'>flags</span>), <span class='ident'>Expr</span>::<span class='ident'>StartLine</span>);
+    }
+
+    <span class='attribute'>#[<span class='ident'>test</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>flags_default_dotnl</span>() {
+        <span class='kw'>let</span> <span class='ident'>flags</span> <span class='op'>=</span> <span class='ident'>Flags</span> { <span class='ident'>dotnl</span>: <span class='boolval'>true</span>, .. <span class='ident'>Flags</span>::<span class='ident'>default</span>() };
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>pf</span>(<span class='string'>&quot;.&quot;</span>, <span class='ident'>flags</span>), <span class='ident'>Expr</span>::<span class='ident'>AnyChar</span>);
+    }
+
+    <span class='attribute'>#[<span class='ident'>test</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>flags_default_swap_greed</span>() {
+        <span class='kw'>let</span> <span class='ident'>flags</span> <span class='op'>=</span> <span class='ident'>Flags</span> { <span class='ident'>swap_greed</span>: <span class='boolval'>true</span>, .. <span class='ident'>Flags</span>::<span class='ident'>default</span>() };
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>pf</span>(<span class='string'>&quot;a+&quot;</span>, <span class='ident'>flags</span>), <span class='ident'>Expr</span>::<span class='ident'>Repeat</span> {
+            <span class='ident'>e</span>: <span class='ident'>b</span>(<span class='ident'>lit</span>(<span class='string'>&#39;a&#39;</span>)),
+            <span class='ident'>r</span>: <span class='ident'>Repeater</span>::<span class='ident'>OneOrMore</span>,
+            <span class='ident'>greedy</span>: <span class='boolval'>false</span>,
+        });
+    }
+
+    <span class='attribute'>#[<span class='ident'>test</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>flags_default_ignore_space</span>() {
+        <span class='kw'>let</span> <span class='ident'>flags</span> <span class='op'>=</span> <span class='ident'>Flags</span> { <span class='ident'>ignore_space</span>: <span class='boolval'>true</span>, .. <span class='ident'>Flags</span>::<span class='ident'>default</span>() };
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>pf</span>(<span class='string'>&quot; a &quot;</span>, <span class='ident'>flags</span>), <span class='ident'>lit</span>(<span class='string'>&#39;a&#39;</span>));
+    }
+
+    <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>escape_simple</span>() {
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>p</span>(<span class='string'>r&quot;\a\f\t\n\r\v&quot;</span>), <span class='ident'>c</span>(<span class='kw-2'>&amp;</span>[
             <span class='ident'>lit</span>(<span class='string'>&#39;\x07&#39;</span>), <span class='ident'>lit</span>(<span class='string'>&#39;\x0C&#39;</span>), <span class='ident'>lit</span>(<span class='string'>&#39;\t&#39;</span>),
@@ -4266,6 +4335,11 @@
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>ignore_space_empty</span>() {
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>p</span>(<span class='string'>&quot;(?x) &quot;</span>), <span class='ident'>Expr</span>::<span class='ident'>Empty</span>);
+    }
+
+    <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>ignore_space_literal</span>() {
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>p</span>(<span class='string'>&quot;(?x) a b c&quot;</span>), <span class='ident'>Expr</span>::<span class='ident'>Concat</span>(<span class='macro'>vec</span><span class='macro'>!</span>[
             <span class='ident'>lit</span>(<span class='string'>&#39;a&#39;</span>), <span class='ident'>lit</span>(<span class='string'>&#39;b&#39;</span>), <span class='ident'>lit</span>(<span class='string'>&#39;c&#39;</span>),
@@ -4350,7 +4424,7 @@
 
     <span class='macro'>macro_rules</span><span class='macro'>!</span> <span class='ident'>test_err</span> {
         (<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>re</span>:<span class='ident'>expr</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>pos</span>:<span class='ident'>expr</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>kind</span>:<span class='ident'>expr</span>) <span class='op'>=&gt;</span> {{
-            <span class='kw'>let</span> <span class='ident'>err</span> <span class='op'>=</span> <span class='ident'>Parser</span>::<span class='ident'>parse</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>re</span>).<span class='ident'>unwrap_err</span>();
+            <span class='kw'>let</span> <span class='ident'>err</span> <span class='op'>=</span> <span class='ident'>Parser</span>::<span class='ident'>parse</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>re</span>, <span class='ident'>Flags</span>::<span class='ident'>default</span>()).<span class='ident'>unwrap_err</span>();
             <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>pos</span>, <span class='ident'>err</span>.<span class='ident'>pos</span>);
             <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>kind</span>, <span class='ident'>err</span>.<span class='ident'>kind</span>);
             <span class='macro'>assert</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>re</span>.<span class='ident'>contains</span>(<span class='kw-2'>&amp;</span><span class='ident'>err</span>.<span class='ident'>surround</span>));

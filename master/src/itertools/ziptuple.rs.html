@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/itertools-0.4.8/src/ziptuple.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/itertools-0.4.10/src/ziptuple.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>ziptuple.rs.html -- source</title>
@@ -149,8 +149,6 @@
 <span id="106">106</span>
 <span id="107">107</span>
 <span id="108">108</span>
-<span id="109">109</span>
-<span id="110">110</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>misc</span>::<span class='ident'>IntoIteratorTuple</span>;
 <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>size_hint</span>;
@@ -179,17 +177,16 @@
 <span class='doccomment'>/// assert_eq!(xs, [69, 106, 103]);</span>
 <span class='doccomment'>/// ```</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>Zip</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> {
-    <span class='ident'>t</span>: <span class='ident'>T</span>
+    <span class='ident'>t</span>: <span class='ident'>T</span>,
 }
 
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> <span class='ident'>Zip</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> <span class='kw'>where</span>
-    <span class='ident'>T</span>: <span class='ident'>IntoIteratorTuple</span>,
-    <span class='ident'>Zip</span><span class='op'>&lt;</span><span class='ident'>T</span>::<span class='ident'>Output</span><span class='op'>&gt;</span>: <span class='ident'>Iterator</span>
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> <span class='ident'>Zip</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span>
+    <span class='kw'>where</span> <span class='ident'>T</span>: <span class='ident'>IntoIteratorTuple</span>,
+          <span class='ident'>Zip</span><span class='op'>&lt;</span><span class='ident'>T</span>::<span class='ident'>Output</span><span class='op'>&gt;</span>: <span class='ident'>Iterator</span>
 {
     <span class='doccomment'>/// Create a new `Zip` from a tuple of iterators.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>t</span>: <span class='ident'>T</span>) <span class='op'>-&gt;</span> <span class='ident'>Zip</span><span class='op'>&lt;</span><span class='ident'>T</span>::<span class='ident'>Output</span><span class='op'>&gt;</span>
-    {
-        <span class='ident'>Zip</span>{<span class='ident'>t</span>: <span class='ident'>t</span>.<span class='ident'>into_iterator_tuple</span>()}
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>t</span>: <span class='ident'>T</span>) <span class='op'>-&gt;</span> <span class='ident'>Zip</span><span class='op'>&lt;</span><span class='ident'>T</span>::<span class='ident'>Output</span><span class='op'>&gt;</span> {
+        <span class='ident'>Zip</span> { <span class='ident'>t</span>: <span class='ident'>t</span>.<span class='ident'>into_iterator_tuple</span>() }
     }
 }
 
@@ -261,7 +258,6 @@
 <span class='macro'>impl_zip_iter</span><span class='macro'>!</span>(<span class='ident'>A</span>, <span class='ident'>B</span>, <span class='ident'>C</span>, <span class='ident'>D</span>, <span class='ident'>E</span>, <span class='ident'>F</span>, <span class='ident'>G</span>);
 <span class='macro'>impl_zip_iter</span><span class='macro'>!</span>(<span class='ident'>A</span>, <span class='ident'>B</span>, <span class='ident'>C</span>, <span class='ident'>D</span>, <span class='ident'>E</span>, <span class='ident'>F</span>, <span class='ident'>G</span>, <span class='ident'>H</span>);
 <span class='macro'>impl_zip_iter</span><span class='macro'>!</span>(<span class='ident'>A</span>, <span class='ident'>B</span>, <span class='ident'>C</span>, <span class='ident'>D</span>, <span class='ident'>E</span>, <span class='ident'>F</span>, <span class='ident'>G</span>, <span class='ident'>H</span>, <span class='ident'>I</span>);
-
 </pre>
 </section>
     <section id='search' class="content hidden"></section>

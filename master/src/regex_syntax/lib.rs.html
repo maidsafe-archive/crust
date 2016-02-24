@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/regex-syntax-0.2.4/src/lib.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/regex-syntax-0.2.5/src/lib.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>lib.rs.html -- source</title>
@@ -1357,6 +1357,79 @@
 <span id="1314">1314</span>
 <span id="1315">1315</span>
 <span id="1316">1316</span>
+<span id="1317">1317</span>
+<span id="1318">1318</span>
+<span id="1319">1319</span>
+<span id="1320">1320</span>
+<span id="1321">1321</span>
+<span id="1322">1322</span>
+<span id="1323">1323</span>
+<span id="1324">1324</span>
+<span id="1325">1325</span>
+<span id="1326">1326</span>
+<span id="1327">1327</span>
+<span id="1328">1328</span>
+<span id="1329">1329</span>
+<span id="1330">1330</span>
+<span id="1331">1331</span>
+<span id="1332">1332</span>
+<span id="1333">1333</span>
+<span id="1334">1334</span>
+<span id="1335">1335</span>
+<span id="1336">1336</span>
+<span id="1337">1337</span>
+<span id="1338">1338</span>
+<span id="1339">1339</span>
+<span id="1340">1340</span>
+<span id="1341">1341</span>
+<span id="1342">1342</span>
+<span id="1343">1343</span>
+<span id="1344">1344</span>
+<span id="1345">1345</span>
+<span id="1346">1346</span>
+<span id="1347">1347</span>
+<span id="1348">1348</span>
+<span id="1349">1349</span>
+<span id="1350">1350</span>
+<span id="1351">1351</span>
+<span id="1352">1352</span>
+<span id="1353">1353</span>
+<span id="1354">1354</span>
+<span id="1355">1355</span>
+<span id="1356">1356</span>
+<span id="1357">1357</span>
+<span id="1358">1358</span>
+<span id="1359">1359</span>
+<span id="1360">1360</span>
+<span id="1361">1361</span>
+<span id="1362">1362</span>
+<span id="1363">1363</span>
+<span id="1364">1364</span>
+<span id="1365">1365</span>
+<span id="1366">1366</span>
+<span id="1367">1367</span>
+<span id="1368">1368</span>
+<span id="1369">1369</span>
+<span id="1370">1370</span>
+<span id="1371">1371</span>
+<span id="1372">1372</span>
+<span id="1373">1373</span>
+<span id="1374">1374</span>
+<span id="1375">1375</span>
+<span id="1376">1376</span>
+<span id="1377">1377</span>
+<span id="1378">1378</span>
+<span id="1379">1379</span>
+<span id="1380">1380</span>
+<span id="1381">1381</span>
+<span id="1382">1382</span>
+<span id="1383">1383</span>
+<span id="1384">1384</span>
+<span id="1385">1385</span>
+<span id="1386">1386</span>
+<span id="1387">1387</span>
+<span id="1388">1388</span>
+<span id="1389">1389</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2014-2015 The Rust Project Developers. See the COPYRIGHT</span>
 <span class='comment'>// file at the top-level directory of this distribution and at</span>
@@ -1442,10 +1515,7 @@ assert_eq!(err.kind(), &amp;ErrorKind::UnclosedParen);
 <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>Expr</span>::<span class='op'>*</span>;
 <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>Repeater</span>::<span class='op'>*</span>;
 
-<span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>parser</span>::<span class='ident'>is_punct</span>;
-
-<span class='doccomment'>/// The maximum number of nested expressions allowed.</span>
-<span class='kw'>const</span> <span class='ident'>NEST_LIMIT</span>: <span class='ident'>usize</span> <span class='op'>=</span> <span class='number'>200</span>;
+<span class='kw'>use</span> <span class='ident'>parser</span>::{<span class='ident'>Flags</span>, <span class='ident'>Parser</span>};
 
 <span class='doccomment'>/// A regular expression abstract syntax tree.</span>
 <span class='doccomment'>///</span>
@@ -1596,10 +1666,86 @@ assert_eq!(err.kind(), &amp;ErrorKind::UnclosedParen);
     <span class='kw'>pub</span> <span class='ident'>end</span>: <span class='ident'>char</span>,
 }
 
+<span class='doccomment'>/// A builder for configuring regular expression parsing.</span>
+<span class='doccomment'>///</span>
+<span class='doccomment'>/// This allows setting the default values of flags and other options, such</span>
+<span class='doccomment'>/// as the maximum nesting depth.</span>
+<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Clone</span>, <span class='ident'>Debug</span>)]</span>
+<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>ExprBuilder</span> {
+    <span class='ident'>flags</span>: <span class='ident'>Flags</span>,
+    <span class='ident'>nest_limit</span>: <span class='ident'>usize</span>,
+}
+
+<span class='kw'>impl</span> <span class='ident'>ExprBuilder</span> {
+    <span class='doccomment'>/// Create a new builder for configuring expression parsing.</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// Note that all flags are disabled by default.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>() <span class='op'>-&gt;</span> <span class='ident'>ExprBuilder</span> {
+        <span class='ident'>ExprBuilder</span> {
+            <span class='ident'>flags</span>: <span class='ident'>Flags</span> {
+                <span class='ident'>casei</span>: <span class='boolval'>false</span>,
+                <span class='ident'>multi</span>: <span class='boolval'>false</span>,
+                <span class='ident'>dotnl</span>: <span class='boolval'>false</span>,
+                <span class='ident'>swap_greed</span>: <span class='boolval'>false</span>,
+                <span class='ident'>ignore_space</span>: <span class='boolval'>false</span>,
+            },
+            <span class='ident'>nest_limit</span>: <span class='number'>200</span>,
+        }
+    }
+
+    <span class='doccomment'>/// Set the default value for the case insensitive (`i`) flag.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>case_insensitive</span>(<span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>yes</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='ident'>ExprBuilder</span> {
+        <span class='self'>self</span>.<span class='ident'>flags</span>.<span class='ident'>casei</span> <span class='op'>=</span> <span class='ident'>yes</span>;
+        <span class='self'>self</span>
+    }
+
+    <span class='doccomment'>/// Set the default value for the multi-line matching (`m`) flag.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>multi_line</span>(<span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>yes</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='ident'>ExprBuilder</span> {
+        <span class='self'>self</span>.<span class='ident'>flags</span>.<span class='ident'>multi</span> <span class='op'>=</span> <span class='ident'>yes</span>;
+        <span class='self'>self</span>
+    }
+
+    <span class='doccomment'>/// Set the default value for the any character (`s`) flag.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>dot_matches_new_line</span>(<span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>yes</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='ident'>ExprBuilder</span> {
+        <span class='self'>self</span>.<span class='ident'>flags</span>.<span class='ident'>dotnl</span> <span class='op'>=</span> <span class='ident'>yes</span>;
+        <span class='self'>self</span>
+    }
+
+    <span class='doccomment'>/// Set the default value for the greedy swap (`U`) flag.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>swap_greed</span>(<span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>yes</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='ident'>ExprBuilder</span> {
+        <span class='self'>self</span>.<span class='ident'>flags</span>.<span class='ident'>swap_greed</span> <span class='op'>=</span> <span class='ident'>yes</span>;
+        <span class='self'>self</span>
+    }
+
+    <span class='doccomment'>/// Set the default value for the ignore whitespace (`x`) flag.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>ignore_whitespace</span>(<span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>yes</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='ident'>ExprBuilder</span> {
+        <span class='self'>self</span>.<span class='ident'>flags</span>.<span class='ident'>ignore_space</span> <span class='op'>=</span> <span class='ident'>yes</span>;
+        <span class='self'>self</span>
+    }
+
+    <span class='doccomment'>/// Set the nesting limit for regular expression parsing.</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// Regular expressions that nest more than this limit will result in a</span>
+    <span class='doccomment'>/// `StackExhausted` error.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>nest_limit</span>(<span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>limit</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>ExprBuilder</span> {
+        <span class='self'>self</span>.<span class='ident'>nest_limit</span> <span class='op'>=</span> <span class='ident'>limit</span>;
+        <span class='self'>self</span>
+    }
+
+    <span class='doccomment'>/// Parse a string as a regular expression using the current configuraiton.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>parse</span>(<span class='self'>self</span>, <span class='ident'>s</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>Expr</span><span class='op'>&gt;</span> {
+        <span class='ident'>Parser</span>::<span class='ident'>parse</span>(<span class='ident'>s</span>, <span class='self'>self</span>.<span class='ident'>flags</span>).<span class='ident'>and_then</span>(<span class='op'>|</span><span class='ident'>e</span><span class='op'>|</span> <span class='ident'>e</span>.<span class='ident'>simplify</span>(<span class='self'>self</span>.<span class='ident'>nest_limit</span>))
+    }
+}
+
 <span class='kw'>impl</span> <span class='ident'>Expr</span> {
     <span class='doccomment'>/// Parses a string in a regular expression syntax tree.</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// This is a convenience method for parsing an expression using the</span>
+    <span class='doccomment'>/// default configuration. To tweak parsing options (such as which flags</span>
+    <span class='doccomment'>/// are enabled by default), use the `ExprBuilder` type.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>parse</span>(<span class='ident'>s</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>Expr</span><span class='op'>&gt;</span> {
-        <span class='ident'>parser</span>::<span class='ident'>Parser</span>::<span class='ident'>parse</span>(<span class='ident'>s</span>).<span class='ident'>and_then</span>(<span class='op'>|</span><span class='ident'>e</span><span class='op'>|</span> <span class='ident'>e</span>.<span class='ident'>simplify</span>())
+        <span class='ident'>ExprBuilder</span>::<span class='ident'>new</span>().<span class='ident'>parse</span>(<span class='ident'>s</span>)
     }
 
     <span class='doccomment'>/// Returns true iff the expression can be repeated by a quantifier.</span>
@@ -1617,7 +1763,7 @@ assert_eq!(err.kind(), &amp;ErrorKind::UnclosedParen);
         }
     }
 
-    <span class='kw'>fn</span> <span class='ident'>simplify</span>(<span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>Expr</span><span class='op'>&gt;</span> {
+    <span class='kw'>fn</span> <span class='ident'>simplify</span>(<span class='self'>self</span>, <span class='ident'>nest_limit</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>Expr</span><span class='op'>&gt;</span> {
         <span class='kw'>fn</span> <span class='ident'>combine_literals</span>(<span class='ident'>es</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>Expr</span><span class='op'>&gt;</span>, <span class='ident'>e</span>: <span class='ident'>Expr</span>) {
             <span class='kw'>match</span> (<span class='ident'>es</span>.<span class='ident'>pop</span>(), <span class='ident'>e</span>) {
                 (<span class='prelude-val'>None</span>, <span class='ident'>e</span>) <span class='op'>=&gt;</span> <span class='ident'>es</span>.<span class='ident'>push</span>(<span class='ident'>e</span>),
@@ -1637,15 +1783,15 @@ assert_eq!(err.kind(), &amp;ErrorKind::UnclosedParen);
                 }
             }
         }
-        <span class='kw'>fn</span> <span class='ident'>simp</span>(<span class='ident'>expr</span>: <span class='ident'>Expr</span>, <span class='ident'>recurse</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>Expr</span><span class='op'>&gt;</span> {
-            <span class='kw'>if</span> <span class='ident'>recurse</span> <span class='op'>&gt;</span> <span class='ident'>NEST_LIMIT</span> {
+        <span class='kw'>fn</span> <span class='ident'>simp</span>(<span class='ident'>expr</span>: <span class='ident'>Expr</span>, <span class='ident'>recurse</span>: <span class='ident'>usize</span>, <span class='ident'>limit</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>Expr</span><span class='op'>&gt;</span> {
+            <span class='kw'>if</span> <span class='ident'>recurse</span> <span class='op'>&gt;</span> <span class='ident'>limit</span> {
                 <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>Error</span> {
                     <span class='ident'>pos</span>: <span class='number'>0</span>,
                     <span class='ident'>surround</span>: <span class='string'>&quot;&quot;</span>.<span class='ident'>to_owned</span>(),
                     <span class='ident'>kind</span>: <span class='ident'>ErrorKind</span>::<span class='ident'>StackExhausted</span>,
                 });
             }
-            <span class='kw'>let</span> <span class='ident'>simplify</span> <span class='op'>=</span> <span class='op'>|</span><span class='ident'>e</span><span class='op'>|</span> <span class='ident'>simp</span>(<span class='ident'>e</span>, <span class='ident'>recurse</span> <span class='op'>+</span> <span class='number'>1</span>);
+            <span class='kw'>let</span> <span class='ident'>simplify</span> <span class='op'>=</span> <span class='op'>|</span><span class='ident'>e</span><span class='op'>|</span> <span class='ident'>simp</span>(<span class='ident'>e</span>, <span class='ident'>recurse</span> <span class='op'>+</span> <span class='number'>1</span>, <span class='ident'>limit</span>);
             <span class='prelude-val'>Ok</span>(<span class='kw'>match</span> <span class='ident'>expr</span> {
                 <span class='ident'>Repeat</span> { <span class='ident'>e</span>, <span class='ident'>r</span>, <span class='ident'>greedy</span> } <span class='op'>=&gt;</span> <span class='ident'>Repeat</span> {
                     <span class='ident'>e</span>: <span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>simplify</span>(<span class='op'>*</span><span class='ident'>e</span>))),
@@ -1681,7 +1827,7 @@ assert_eq!(err.kind(), &amp;ErrorKind::UnclosedParen);
                 <span class='ident'>e</span> <span class='op'>=&gt;</span> <span class='ident'>e</span>,
             })
         }
-        <span class='ident'>simp</span>(<span class='self'>self</span>, <span class='number'>0</span>)
+        <span class='ident'>simp</span>(<span class='self'>self</span>, <span class='number'>0</span>, <span class='ident'>nest_limit</span>)
     }
 
     <span class='doccomment'>/// Returns true if and only if the expression is required to match from</span>
@@ -2404,7 +2550,7 @@ assert_eq!(err.kind(), &amp;ErrorKind::UnclosedParen);
 
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
 <span class='kw'>mod</span> <span class='ident'>tests</span> {
-    <span class='kw'>use</span> {<span class='ident'>NEST_LIMIT</span>, <span class='ident'>CharClass</span>, <span class='ident'>ClassRange</span>, <span class='ident'>Expr</span>};
+    <span class='kw'>use</span> {<span class='ident'>CharClass</span>, <span class='ident'>ClassRange</span>, <span class='ident'>Expr</span>};
 
     <span class='kw'>fn</span> <span class='ident'>class</span>(<span class='ident'>ranges</span>: <span class='kw-2'>&amp;</span>[(<span class='ident'>char</span>, <span class='ident'>char</span>)]) <span class='op'>-&gt;</span> <span class='ident'>CharClass</span> {
         <span class='kw'>let</span> <span class='ident'>ranges</span> <span class='op'>=</span> <span class='ident'>ranges</span>.<span class='ident'>iter</span>().<span class='ident'>cloned</span>()
@@ -2420,12 +2566,12 @@ assert_eq!(err.kind(), &amp;ErrorKind::UnclosedParen);
     <span class='kw'>fn</span> <span class='ident'>stack_exhaustion</span>() {
         <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>iter</span>::<span class='ident'>repeat</span>;
 
-        <span class='kw'>let</span> <span class='ident'>open</span>: <span class='ident'>String</span> <span class='op'>=</span> <span class='ident'>repeat</span>(<span class='string'>&#39;(&#39;</span>).<span class='ident'>take</span>(<span class='ident'>NEST_LIMIT</span>).<span class='ident'>collect</span>();
-        <span class='kw'>let</span> <span class='ident'>close</span>: <span class='ident'>String</span> <span class='op'>=</span> <span class='ident'>repeat</span>(<span class='string'>&#39;)&#39;</span>).<span class='ident'>take</span>(<span class='ident'>NEST_LIMIT</span>).<span class='ident'>collect</span>();
+        <span class='kw'>let</span> <span class='ident'>open</span>: <span class='ident'>String</span> <span class='op'>=</span> <span class='ident'>repeat</span>(<span class='string'>&#39;(&#39;</span>).<span class='ident'>take</span>(<span class='number'>200</span>).<span class='ident'>collect</span>();
+        <span class='kw'>let</span> <span class='ident'>close</span>: <span class='ident'>String</span> <span class='op'>=</span> <span class='ident'>repeat</span>(<span class='string'>&#39;)&#39;</span>).<span class='ident'>take</span>(<span class='number'>200</span>).<span class='ident'>collect</span>();
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>Expr</span>::<span class='ident'>parse</span>(<span class='kw-2'>&amp;</span><span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;{}a{}&quot;</span>, <span class='ident'>open</span>, <span class='ident'>close</span>)).<span class='ident'>is_ok</span>());
 
-        <span class='kw'>let</span> <span class='ident'>open</span>: <span class='ident'>String</span> <span class='op'>=</span> <span class='ident'>repeat</span>(<span class='string'>&#39;(&#39;</span>).<span class='ident'>take</span>(<span class='ident'>NEST_LIMIT</span> <span class='op'>+</span> <span class='number'>1</span>).<span class='ident'>collect</span>();
-        <span class='kw'>let</span> <span class='ident'>close</span>: <span class='ident'>String</span> <span class='op'>=</span> <span class='ident'>repeat</span>(<span class='string'>&#39;)&#39;</span>).<span class='ident'>take</span>(<span class='ident'>NEST_LIMIT</span> <span class='op'>+</span> <span class='number'>1</span>).<span class='ident'>collect</span>();
+        <span class='kw'>let</span> <span class='ident'>open</span>: <span class='ident'>String</span> <span class='op'>=</span> <span class='ident'>repeat</span>(<span class='string'>&#39;(&#39;</span>).<span class='ident'>take</span>(<span class='number'>200</span> <span class='op'>+</span> <span class='number'>1</span>).<span class='ident'>collect</span>();
+        <span class='kw'>let</span> <span class='ident'>close</span>: <span class='ident'>String</span> <span class='op'>=</span> <span class='ident'>repeat</span>(<span class='string'>&#39;)&#39;</span>).<span class='ident'>take</span>(<span class='number'>200</span> <span class='op'>+</span> <span class='number'>1</span>).<span class='ident'>collect</span>();
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>Expr</span>::<span class='ident'>parse</span>(<span class='kw-2'>&amp;</span><span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;{}a{}&quot;</span>, <span class='ident'>open</span>, <span class='ident'>close</span>)).<span class='ident'>is_err</span>());
     }
 

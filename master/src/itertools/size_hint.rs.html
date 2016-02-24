@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/itertools-0.4.8/src/size_hint.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/itertools-0.4.10/src/size_hint.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>size_hint.rs.html -- source</title>
@@ -158,13 +158,6 @@
 <span id="115">115</span>
 <span id="116">116</span>
 <span id="117">117</span>
-<span id="118">118</span>
-<span id="119">119</span>
-<span id="120">120</span>
-<span id="121">121</span>
-<span id="122">122</span>
-<span id="123">123</span>
-<span id="124">124</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! Arithmetic on **Iterator** *.size_hint()* values.</span>
 <span class='doccomment'>//!</span>
@@ -177,8 +170,7 @@
 
 <span class='doccomment'>/// Add **SizeHint** correctly.</span>
 <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>add</span>(<span class='ident'>a</span>: <span class='ident'>SizeHint</span>, <span class='ident'>b</span>: <span class='ident'>SizeHint</span>) <span class='op'>-&gt;</span> <span class='ident'>SizeHint</span>
-{
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>add</span>(<span class='ident'>a</span>: <span class='ident'>SizeHint</span>, <span class='ident'>b</span>: <span class='ident'>SizeHint</span>) <span class='op'>-&gt;</span> <span class='ident'>SizeHint</span> {
     <span class='kw'>let</span> <span class='ident'>min</span> <span class='op'>=</span> <span class='ident'>a</span>.<span class='number'>0</span>.<span class='ident'>checked_add</span>(<span class='ident'>b</span>.<span class='number'>0</span>).<span class='ident'>unwrap_or</span>(<span class='ident'>usize</span>::<span class='ident'>MAX</span>);
     <span class='kw'>let</span> <span class='ident'>max</span> <span class='op'>=</span> <span class='kw'>match</span> (<span class='ident'>a</span>.<span class='number'>1</span>, <span class='ident'>b</span>.<span class='number'>1</span>) {
         (<span class='prelude-val'>Some</span>(<span class='ident'>x</span>), <span class='prelude-val'>Some</span>(<span class='ident'>y</span>)) <span class='op'>=&gt;</span> <span class='ident'>x</span>.<span class='ident'>checked_add</span>(<span class='ident'>y</span>),
@@ -190,8 +182,7 @@
 
 <span class='doccomment'>/// Add **x** correctly to a **SizeHint**.</span>
 <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>add_scalar</span>(<span class='ident'>sh</span>: <span class='ident'>SizeHint</span>, <span class='ident'>x</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>SizeHint</span>
-{
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>add_scalar</span>(<span class='ident'>sh</span>: <span class='ident'>SizeHint</span>, <span class='ident'>x</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>SizeHint</span> {
     <span class='kw'>let</span> (<span class='kw-2'>mut</span> <span class='ident'>low</span>, <span class='kw-2'>mut</span> <span class='ident'>hi</span>) <span class='op'>=</span> <span class='ident'>sh</span>;
     <span class='ident'>low</span> <span class='op'>=</span> <span class='ident'>low</span>.<span class='ident'>saturating_add</span>(<span class='ident'>x</span>);
     <span class='ident'>hi</span> <span class='op'>=</span> <span class='ident'>hi</span>.<span class='ident'>and_then</span>(<span class='op'>|</span><span class='ident'>elt</span><span class='op'>|</span> <span class='ident'>elt</span>.<span class='ident'>checked_add</span>(<span class='ident'>x</span>));
@@ -200,8 +191,7 @@
 
 <span class='doccomment'>/// Sbb **x** correctly to a **SizeHint**.</span>
 <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>sub_scalar</span>(<span class='ident'>sh</span>: <span class='ident'>SizeHint</span>, <span class='ident'>x</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>SizeHint</span>
-{
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>sub_scalar</span>(<span class='ident'>sh</span>: <span class='ident'>SizeHint</span>, <span class='ident'>x</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>SizeHint</span> {
     <span class='kw'>let</span> (<span class='kw-2'>mut</span> <span class='ident'>low</span>, <span class='kw-2'>mut</span> <span class='ident'>hi</span>) <span class='op'>=</span> <span class='ident'>sh</span>;
     <span class='ident'>low</span> <span class='op'>=</span> <span class='ident'>low</span>.<span class='ident'>saturating_sub</span>(<span class='ident'>x</span>);
     <span class='ident'>hi</span> <span class='op'>=</span> <span class='ident'>hi</span>.<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>elt</span><span class='op'>|</span> <span class='ident'>elt</span>.<span class='ident'>saturating_sub</span>(<span class='ident'>x</span>));
@@ -221,8 +211,7 @@
 <span class='doccomment'>///            (usize::MAX, None));</span>
 <span class='doccomment'>/// ```</span>
 <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>mul_scalar</span>(<span class='ident'>sh</span>: <span class='ident'>SizeHint</span>, <span class='ident'>x</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>SizeHint</span>
-{
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>mul_scalar</span>(<span class='ident'>sh</span>: <span class='ident'>SizeHint</span>, <span class='ident'>x</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>SizeHint</span> {
     <span class='kw'>let</span> (<span class='kw-2'>mut</span> <span class='ident'>low</span>, <span class='kw-2'>mut</span> <span class='ident'>hi</span>) <span class='op'>=</span> <span class='ident'>sh</span>;
     <span class='ident'>low</span> <span class='op'>=</span> <span class='ident'>low</span>.<span class='ident'>checked_mul</span>(<span class='ident'>x</span>).<span class='ident'>unwrap_or</span>(<span class='ident'>usize</span>::<span class='ident'>MAX</span>);
     <span class='kw'>if</span> <span class='ident'>x</span> <span class='op'>==</span> <span class='number'>0</span> {
@@ -249,8 +238,7 @@
 <span class='doccomment'>///            (0, Some(0)));</span>
 <span class='doccomment'>/// ```</span>
 <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>mul</span>(<span class='ident'>a</span>: <span class='ident'>SizeHint</span>, <span class='ident'>b</span>: <span class='ident'>SizeHint</span>) <span class='op'>-&gt;</span> <span class='ident'>SizeHint</span>
-{
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>mul</span>(<span class='ident'>a</span>: <span class='ident'>SizeHint</span>, <span class='ident'>b</span>: <span class='ident'>SizeHint</span>) <span class='op'>-&gt;</span> <span class='ident'>SizeHint</span> {
     <span class='kw'>let</span> <span class='ident'>low</span> <span class='op'>=</span> <span class='ident'>a</span>.<span class='number'>0</span>.<span class='ident'>checked_mul</span>(<span class='ident'>b</span>.<span class='number'>0</span>).<span class='ident'>unwrap_or</span>(<span class='ident'>usize</span>::<span class='ident'>MAX</span>);
     <span class='kw'>let</span> <span class='ident'>hi</span> <span class='op'>=</span> <span class='kw'>match</span> (<span class='ident'>a</span>.<span class='number'>1</span>, <span class='ident'>b</span>.<span class='number'>1</span>) {
         (<span class='prelude-val'>Some</span>(<span class='ident'>x</span>), <span class='prelude-val'>Some</span>(<span class='ident'>y</span>)) <span class='op'>=&gt;</span> <span class='ident'>x</span>.<span class='ident'>checked_mul</span>(<span class='ident'>y</span>),
@@ -262,16 +250,15 @@
 
 <span class='doccomment'>/// Return the maximum</span>
 <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>max</span>(<span class='ident'>a</span>: <span class='ident'>SizeHint</span>, <span class='ident'>b</span>: <span class='ident'>SizeHint</span>) <span class='op'>-&gt;</span> <span class='ident'>SizeHint</span>
-{
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>max</span>(<span class='ident'>a</span>: <span class='ident'>SizeHint</span>, <span class='ident'>b</span>: <span class='ident'>SizeHint</span>) <span class='op'>-&gt;</span> <span class='ident'>SizeHint</span> {
     <span class='kw'>let</span> (<span class='ident'>a_lower</span>, <span class='ident'>a_upper</span>) <span class='op'>=</span> <span class='ident'>a</span>;
     <span class='kw'>let</span> (<span class='ident'>b_lower</span>, <span class='ident'>b_upper</span>) <span class='op'>=</span> <span class='ident'>b</span>;
 
     <span class='kw'>let</span> <span class='ident'>lower</span> <span class='op'>=</span> <span class='ident'>cmp</span>::<span class='ident'>max</span>(<span class='ident'>a_lower</span>, <span class='ident'>b_lower</span>);
 
     <span class='kw'>let</span> <span class='ident'>upper</span> <span class='op'>=</span> <span class='kw'>match</span> (<span class='ident'>a_upper</span>, <span class='ident'>b_upper</span>) {
-        (<span class='prelude-val'>Some</span>(<span class='ident'>x</span>), <span class='prelude-val'>Some</span>(<span class='ident'>y</span>)) <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>(<span class='ident'>cmp</span>::<span class='ident'>max</span>(<span class='ident'>x</span>,<span class='ident'>y</span>)),
-        _ <span class='op'>=&gt;</span> <span class='prelude-val'>None</span>
+        (<span class='prelude-val'>Some</span>(<span class='ident'>x</span>), <span class='prelude-val'>Some</span>(<span class='ident'>y</span>)) <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>(<span class='ident'>cmp</span>::<span class='ident'>max</span>(<span class='ident'>x</span>, <span class='ident'>y</span>)),
+        _ <span class='op'>=&gt;</span> <span class='prelude-val'>None</span>,
     };
 
     (<span class='ident'>lower</span>, <span class='ident'>upper</span>)
@@ -279,14 +266,13 @@
 
 <span class='doccomment'>/// Return the minimum</span>
 <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>min</span>(<span class='ident'>a</span>: <span class='ident'>SizeHint</span>, <span class='ident'>b</span>: <span class='ident'>SizeHint</span>) <span class='op'>-&gt;</span> <span class='ident'>SizeHint</span>
-{
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>min</span>(<span class='ident'>a</span>: <span class='ident'>SizeHint</span>, <span class='ident'>b</span>: <span class='ident'>SizeHint</span>) <span class='op'>-&gt;</span> <span class='ident'>SizeHint</span> {
     <span class='kw'>let</span> (<span class='ident'>a_lower</span>, <span class='ident'>a_upper</span>) <span class='op'>=</span> <span class='ident'>a</span>;
     <span class='kw'>let</span> (<span class='ident'>b_lower</span>, <span class='ident'>b_upper</span>) <span class='op'>=</span> <span class='ident'>b</span>;
     <span class='kw'>let</span> <span class='ident'>lower</span> <span class='op'>=</span> <span class='ident'>cmp</span>::<span class='ident'>min</span>(<span class='ident'>a_lower</span>, <span class='ident'>b_lower</span>);
     <span class='kw'>let</span> <span class='ident'>upper</span> <span class='op'>=</span> <span class='kw'>match</span> (<span class='ident'>a_upper</span>, <span class='ident'>b_upper</span>) {
         (<span class='prelude-val'>Some</span>(<span class='ident'>u1</span>), <span class='prelude-val'>Some</span>(<span class='ident'>u2</span>)) <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>(<span class='ident'>cmp</span>::<span class='ident'>min</span>(<span class='ident'>u1</span>, <span class='ident'>u2</span>)),
-        _ <span class='op'>=&gt;</span> <span class='ident'>a_upper</span>.<span class='ident'>or</span>(<span class='ident'>b_upper</span>)
+        _ <span class='op'>=&gt;</span> <span class='ident'>a_upper</span>.<span class='ident'>or</span>(<span class='ident'>b_upper</span>),
     };
     (<span class='ident'>lower</span>, <span class='ident'>upper</span>)
 }

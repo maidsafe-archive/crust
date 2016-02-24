@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/itertools-0.4.8/src/linspace.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/itertools-0.4.10/src/linspace.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>linspace.rs.html -- source</title>
@@ -131,6 +131,8 @@
 <span id="88">88</span>
 <span id="89">89</span>
 <span id="90">90</span>
+<span id="91">91</span>
+<span id="92">92</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>misc</span>::<span class='ident'>ToFloat</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>ops</span>::{<span class='ident'>Add</span>, <span class='ident'>Sub</span>, <span class='ident'>Div</span>, <span class='ident'>Mul</span>};
@@ -188,7 +190,9 @@
     }
 }
 
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>F</span><span class='op'>&gt;</span> <span class='ident'>ExactSizeIterator</span> <span class='kw'>for</span> <span class='ident'>Linspace</span><span class='op'>&lt;</span><span class='ident'>F</span><span class='op'>&gt;</span> <span class='kw'>where</span> <span class='ident'>Linspace</span><span class='op'>&lt;</span><span class='ident'>F</span><span class='op'>&gt;</span>: <span class='ident'>Iterator</span> { }
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>F</span><span class='op'>&gt;</span> <span class='ident'>ExactSizeIterator</span> <span class='kw'>for</span> <span class='ident'>Linspace</span><span class='op'>&lt;</span><span class='ident'>F</span><span class='op'>&gt;</span>
+    <span class='kw'>where</span> <span class='ident'>Linspace</span><span class='op'>&lt;</span><span class='ident'>F</span><span class='op'>&gt;</span>: <span class='ident'>Iterator</span>
+{}
 
 <span class='doccomment'>/// Return an iterator of evenly spaced floats.</span>
 <span class='doccomment'>///</span>
@@ -205,13 +209,13 @@
 <span class='doccomment'>///                         vec![0., 0.25, 0.5, 0.75, 1.0]);</span>
 <span class='doccomment'>/// ```</span>
 <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>linspace</span><span class='op'>&lt;</span><span class='ident'>F</span><span class='op'>&gt;</span>(<span class='ident'>a</span>: <span class='ident'>F</span>, <span class='ident'>b</span>: <span class='ident'>F</span>, <span class='ident'>n</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>Linspace</span><span class='op'>&lt;</span><span class='ident'>F</span><span class='op'>&gt;</span> <span class='kw'>where</span>
-    <span class='ident'>F</span>: <span class='ident'>Copy</span> <span class='op'>+</span> <span class='ident'>Sub</span><span class='op'>&lt;</span><span class='ident'>Output</span><span class='op'>=</span><span class='ident'>F</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>Div</span><span class='op'>&lt;</span><span class='ident'>Output</span><span class='op'>=</span><span class='ident'>F</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>Mul</span><span class='op'>&lt;</span><span class='ident'>Output</span><span class='op'>=</span><span class='ident'>F</span><span class='op'>&gt;</span>,
-    <span class='ident'>usize</span>: <span class='ident'>ToFloat</span><span class='op'>&lt;</span><span class='ident'>F</span><span class='op'>&gt;</span>,
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>linspace</span><span class='op'>&lt;</span><span class='ident'>F</span><span class='op'>&gt;</span>(<span class='ident'>a</span>: <span class='ident'>F</span>, <span class='ident'>b</span>: <span class='ident'>F</span>, <span class='ident'>n</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>Linspace</span><span class='op'>&lt;</span><span class='ident'>F</span><span class='op'>&gt;</span>
+    <span class='kw'>where</span> <span class='ident'>F</span>: <span class='ident'>Copy</span> <span class='op'>+</span> <span class='ident'>Sub</span><span class='op'>&lt;</span><span class='ident'>Output</span> <span class='op'>=</span> <span class='ident'>F</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>Div</span><span class='op'>&lt;</span><span class='ident'>Output</span> <span class='op'>=</span> <span class='ident'>F</span><span class='op'>&gt;</span> <span class='op'>+</span> <span class='ident'>Mul</span><span class='op'>&lt;</span><span class='ident'>Output</span> <span class='op'>=</span> <span class='ident'>F</span><span class='op'>&gt;</span>,
+          <span class='ident'>usize</span>: <span class='ident'>ToFloat</span><span class='op'>&lt;</span><span class='ident'>F</span><span class='op'>&gt;</span>
 {
     <span class='kw'>let</span> <span class='ident'>step</span> <span class='op'>=</span> <span class='kw'>if</span> <span class='ident'>n</span> <span class='op'>&gt;</span> <span class='number'>1</span> {
         <span class='kw'>let</span> <span class='ident'>nf</span>: <span class='ident'>F</span> <span class='op'>=</span> <span class='ident'>n</span>.<span class='ident'>to_float</span>();
-        (<span class='ident'>b</span> <span class='op'>-</span> <span class='ident'>a</span>)<span class='op'>/</span>(<span class='ident'>nf</span> <span class='op'>-</span> <span class='number'>1</span>.<span class='ident'>to_float</span>())
+        (<span class='ident'>b</span> <span class='op'>-</span> <span class='ident'>a</span>) <span class='op'>/</span> (<span class='ident'>nf</span> <span class='op'>-</span> <span class='number'>1</span>.<span class='ident'>to_float</span>())
     } <span class='kw'>else</span> {
         <span class='number'>0</span>.<span class='ident'>to_float</span>()
     };
