@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `MappedTcpSocket` struct in crate `nat_traversal`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, MappedTcpSocket">
+
+    <title>nat_traversal::MappedTcpSocket - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+
+    <link rel="shortcut icon" href="http://maidsafe.net/img/favicon.ico">
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        <a href='../nat_traversal/index.html'><img src='https://raw.githubusercontent.com/maidsafe/QA/master/Images/maidsafe_logo.png' alt='' width='100'></a>
+        <p class='location'><a href='index.html'>nat_traversal</a></p><script>window.sidebarCurrent = {name: 'MappedTcpSocket', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content struct">
+<h1 class='fqn'><span class='in-band'>Struct <a href='index.html'>nat_traversal</a>::<wbr><a class='struct' href=''>MappedTcpSocket</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-750' class='srclink' href='../src/nat_traversal/mapped_tcp_socket.rs.html#30-37' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct MappedTcpSocket {
+    pub socket: <a class='struct' href='../net2/tcp/struct.TcpBuilder.html' title='net2::tcp::TcpBuilder'>TcpBuilder</a>,
+    pub endpoints: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../nat_traversal/struct.MappedSocketAddr.html' title='nat_traversal::MappedSocketAddr'>MappedSocketAddr</a>&gt;,
+}</pre><div class='docblock'><p>A tcp socket for which we know our external endpoints.</p>
+</div><h2 class='fields'>Fields</h2>
+<table><tr class='stab '>
+                                  <td id='structfield.socket'><code>socket</code></td><td><div class='docblock'><p>A bound, but neither listening or connected tcp socket. The socket is
+bound to be reuseable (ie. SO_REUSEADDR is set as is SO_REUSEPORT on
+unix).</p>
+</div></td></tr><tr class='stab '>
+                                  <td id='structfield.endpoints'><code>endpoints</code></td><td><div class='docblock'><p>The known endpoints of this socket.</p>
+</div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../nat_traversal/struct.MappedTcpSocket.html' title='nat_traversal::MappedTcpSocket'>MappedTcpSocket</a></code></h3><div class='impl-items'><h4 id='method.map' class='method'><code>fn <a href='#method.map' class='fnname'>map</a>(socket: <a class='struct' href='../net2/tcp/struct.TcpBuilder.html' title='net2::tcp::TcpBuilder'>TcpBuilder</a>, mc: &amp;<a class='struct' href='../nat_traversal/struct.MappingContext.html' title='nat_traversal::MappingContext'>MappingContext</a>) -&gt; <a class='struct' href='../nat_traversal/struct.MappedTcpSocket.html' title='nat_traversal::MappedTcpSocket'>MappedTcpSocket</a></code></h4>
+<div class='docblock'><p>Map an existing tcp socket. The socket must not bound or connected. This
+function will set the options to make the socket address reuseable
+before binding it.</p>
+</div><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(mc: &amp;<a class='struct' href='../nat_traversal/struct.MappingContext.html' title='nat_traversal::MappingContext'>MappingContext</a>) -&gt; <a class='struct' href='../nat_traversal/struct.MappedTcpSocket.html' title='nat_traversal::MappedTcpSocket'>MappedTcpSocket</a></code></h4>
+<div class='docblock'><p>Create a new <code>MappedTcpSocket</code></p>
+</div></div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "nat_traversal";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script defer src="../search-index.js"></script>
+</body>
+</html>

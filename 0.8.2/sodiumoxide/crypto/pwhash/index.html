@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `pwhash` mod in crate `sodiumoxide`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, pwhash">
+
+    <title>sodiumoxide::crypto::pwhash - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='../../index.html'>sodiumoxide</a>::<wbr><a href='../index.html'>crypto</a></p><script>window.sidebarCurrent = {name: 'pwhash', ty: 'mod', relpath: '../'};</script><script defer src="../sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content mod">
+<h1 class='fqn'><span class='in-band'>Module <a href='../../index.html'>sodiumoxide</a>::<wbr><a href='../index.html'>crypto</a>::<wbr><a class='mod' href=''>pwhash</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-2878' class='srclink' href='../../../src/sodiumoxide/crypto/pwhash/mod.rs.html#1-68' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p>Password Hashing</p>
+
+<p>Secret keys used to encrypt or sign confidential data have to be chosen from
+a very large keyspace. However, passwords are usually short, human-generated
+strings, making dictionary attacks practical.</p>
+
+<p>The pwhash operation derives a secret key of any size from a password and a
+salt.</p>
+
+<ul>
+<li>The generated key has the size defined by the application, no matter what
+the password length is.</li>
+<li>The same password hashed with same parameters will
+always produce the same key.</li>
+<li>The same password hashed with different salts
+will produce different keys.</li>
+<li>The function deriving a key from a password
+and a salt is CPU intensive and intentionally requires a fair amount of
+memory. Therefore, it mitigates brute-force attacks by requiring a
+significant effort to verify each password.</li>
+</ul>
+
+<p>Common use cases:</p>
+
+<ul>
+<li>Protecting an on-disk secret key with a password,</li>
+<li>Password storage, or rather: storing what it takes to verify a password
+without having to store the actual password.</li>
+</ul>
+
+<h1 id='example-key-derivation' class='section-header'><a href='#example-key-derivation'>Example (key derivation)</a></h1><pre class='rust rust-example-rendered'>
+<span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>crypto</span>::<span class='ident'>secretbox</span>;
+<span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>crypto</span>::<span class='ident'>pwhash</span>;
+
+<span class='kw'>let</span> <span class='ident'>passwd</span> <span class='op'>=</span> <span class='string'>b&quot;Correct Horse Battery Staple&quot;</span>;
+<span class='kw'>let</span> <span class='ident'>salt</span> <span class='op'>=</span> <span class='ident'>pwhash</span>::<span class='ident'>gen_salt</span>();
+<span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>k</span> <span class='op'>=</span> <span class='ident'>secretbox</span>::<span class='ident'>Key</span>([<span class='number'>0</span>; <span class='ident'>secretbox</span>::<span class='ident'>KEYBYTES</span>]);
+{
+    <span class='kw'>let</span> <span class='ident'>secretbox</span>::<span class='ident'>Key</span>(<span class='kw-2'>ref</span> <span class='kw-2'>mut</span> <span class='ident'>kb</span>) <span class='op'>=</span> <span class='ident'>k</span>;
+    <span class='ident'>pwhash</span>::<span class='ident'>derive_key</span>(<span class='ident'>kb</span>, <span class='ident'>passwd</span>, <span class='kw-2'>&amp;</span><span class='ident'>salt</span>,
+                       <span class='ident'>pwhash</span>::<span class='ident'>OPSLIMIT_INTERACTIVE</span>,
+                       <span class='ident'>pwhash</span>::<span class='ident'>MEMLIMIT_INTERACTIVE</span>).<span class='ident'>unwrap</span>();
+}</pre>
+
+<h1 id='example-password-hashing' class='section-header'><a href='#example-password-hashing'>Example (password hashing)</a></h1><pre class='rust rust-example-rendered'>
+<span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>crypto</span>::<span class='ident'>pwhash</span>;
+<span class='kw'>let</span> <span class='ident'>passwd</span> <span class='op'>=</span> <span class='string'>b&quot;Correct Horse Battery Staple&quot;</span>;
+<span class='kw'>let</span> <span class='ident'>pwh</span> <span class='op'>=</span> <span class='ident'>pwhash</span>::<span class='ident'>pwhash</span>(<span class='ident'>passwd</span>,
+                         <span class='ident'>pwhash</span>::<span class='ident'>OPSLIMIT_INTERACTIVE</span>,
+                         <span class='ident'>pwhash</span>::<span class='ident'>MEMLIMIT_INTERACTIVE</span>).<span class='ident'>unwrap</span>();
+<span class='kw'>let</span> <span class='ident'>pwh_bytes</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='ident'>pwh</span>[..];
+<span class='comment'>//store pwh_bytes somewhere</span></pre>
+
+<h1 id='example-password-verification' class='section-header'><a href='#example-password-verification'>Example (password verification)</a></h1><pre class='rust rust-example-rendered'>
+<span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>crypto</span>::<span class='ident'>pwhash</span>;
+
+<span class='kw'>let</span> <span class='ident'>passwd</span> <span class='op'>=</span> <span class='string'>b&quot;Correct Horse Battery Staple&quot;</span>;
+<span class='comment'>// in reality we want to load the password hash from somewhere</span>
+<span class='comment'>// and we might want to create a `HashedPassword` from it using</span>
+<span class='comment'>// `HashedPassword::from_slice(pwhash_bytes).unwrap()`</span>
+<span class='kw'>let</span> <span class='ident'>pwh</span> <span class='op'>=</span> <span class='ident'>pwhash</span>::<span class='ident'>pwhash</span>(<span class='ident'>passwd</span>,
+                         <span class='ident'>pwhash</span>::<span class='ident'>OPSLIMIT_INTERACTIVE</span>,
+                         <span class='ident'>pwhash</span>::<span class='ident'>MEMLIMIT_INTERACTIVE</span>).<span class='ident'>unwrap</span>();
+<span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>pwhash</span>::<span class='ident'>pwhash_verify</span>(<span class='kw-2'>&amp;</span><span class='ident'>pwh</span>, <span class='ident'>passwd</span>));</pre>
+</div><h2 id='reexports' class='section-header'><a href="#reexports">Reexports</a></h2>
+<table><tr><td><code>pub use self::<a class='mod' href='../../../sodiumoxide/crypto/pwhash/scryptsalsa208sha256/index.html' title='sodiumoxide::crypto::pwhash::scryptsalsa208sha256'>scryptsalsa208sha256</a>::*;</code></td></tr></table><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='mod' href='scryptsalsa208sha256/index.html'
+                               title='sodiumoxide::crypto::pwhash::scryptsalsa208sha256'>scryptsalsa208sha256</a></td>
+                        <td class='docblock short'>
+                             <p><code>crypto_pwhash_scryptsalsa208sha256</code>, a particular combination of Scrypt, Salsa20/8
+and SHA-256</p>
+
+                        </td>
+                    </tr>
+                </table></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../../";
+        window.currentCrate = "sodiumoxide";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../../../jquery.js"></script>
+    <script src="../../../main.js"></script>
+    
+    <script defer src="../../../search-index.js"></script>
+</body>
+</html>

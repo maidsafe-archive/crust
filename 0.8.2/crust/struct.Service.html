@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `Service` struct in crate `crust`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, Service">
+
+    <title>crust::Service - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+
+    <link rel="shortcut icon" href="http://maidsafe.net/img/favicon.ico">
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        <a href='../crust/index.html'><img src='https://raw.githubusercontent.com/maidsafe/QA/master/Images/maidsafe_logo.png' alt='' width='100'></a>
+        <p class='location'><a href='index.html'>crust</a></p><script>window.sidebarCurrent = {name: 'Service', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content struct">
+<h1 class='fqn'><span class='in-band'>Struct <a href='index.html'>crust</a>::<wbr><a class='struct' href=''>Service</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-193' class='srclink' href='../src/crust/service.rs.html#97-111' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct Service {
+    // some fields omitted
+}</pre><div class='docblock'><p>A structure representing a connection manager.</p>
+
+<p>This abstraction has a hidden dependency on a config file. Refer to <a href="../file_handler/struct.FileHandler.html">the docs for <code>FileHandler</code></a> and <a href="https://github.com/maidsafe/crust/blob/master/docs/vault_config_file_flowchart.pdf">an example config file flowchart</a> for more
+information.</p>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../crust/struct.Service.html' title='crust::Service'>Service</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(event_tx: <a class='type' href='../crust/type.CrustEventSender.html' title='crust::CrustEventSender'>CrustEventSender</a>, service_discovery_port: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='struct' href='../crust/struct.Service.html' title='crust::Service'>Service</a>, <a class='enum' href='../crust/enum.Error.html' title='crust::Error'>Error</a>&gt;</code></h4>
+<div class='docblock'><p>Constructs a service. User needs to create an asynchronous channel, and provide
+the sender half to this method. Receiver will receive all <code>Event</code>s from this library.</p>
+</div><h4 id='method.stop_bootstrap' class='method'><code>fn <a href='#method.stop_bootstrap' class='fnname'>stop_bootstrap</a>(&amp;mut self)</code></h4>
+<div class='docblock'><p>Stop the bootstraping procedure</p>
+</div><h4 id='method.start_listening_tcp' class='method'><code>fn <a href='#method.start_listening_tcp' class='fnname'>start_listening_tcp</a>(&amp;mut self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
+<div class='docblock'><p>Starts accepting TCP connections.</p>
+</div><h4 id='method.start_listening_utp' class='method'><code>fn <a href='#method.start_listening_utp' class='fnname'>start_listening_utp</a>(&amp;mut self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
+<div class='docblock'><p>Starts accepting uTP connections.</p>
+</div><h4 id='method.start_service_discovery' class='method'><code>fn <a href='#method.start_service_discovery' class='fnname'>start_service_discovery</a>(&amp;mut self)</code></h4>
+<div class='docblock'><p>Starts listening for beacon broadcasts.</p>
+</div><h4 id='method.get_ordered_helping_nodes' class='method'><code>fn <a href='#method.get_ordered_helping_nodes' class='fnname'>get_ordered_helping_nodes</a>(&amp;self) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../crust/struct.SocketAddr.html' title='crust::SocketAddr'>SocketAddr</a>&gt;</code></h4>
+<div class='docblock'><p>Get the hole punch servers addresses of nodes that we&#39;re connected to ordered by how likely
+they are to be on a seperate network.</p>
+</div><h4 id='method.send' class='method'><code>fn <a href='#method.send' class='fnname'>send</a>(&amp;self, id: &amp;<a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a>, data: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
+<div class='docblock'><p>Send the given <code>data</code> to the peer with the given <code>PeerId</code>.</p>
+</div><h4 id='method.disconnect' class='method'><code>fn <a href='#method.disconnect' class='fnname'>disconnect</a>(&amp;self, id: &amp;<a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+<div class='docblock'><p>Disconnect from the given peer and returns whether there was a connection at all.</p>
+</div><h4 id='method._connect' class='method'><code>fn <a href='#method._connect' class='fnname'>_connect</a>(&amp;self, our_connection_info: <a class='struct' href='../crust/struct.OurConnectionInfo.html' title='crust::OurConnectionInfo'>OurConnectionInfo</a>, their_connection_info: <a class='struct' href='../crust/struct.TheirConnectionInfo.html' title='crust::TheirConnectionInfo'>TheirConnectionInfo</a>)</code></h4>
+<div class='docblock'><p>Opens a connection to a remote peer. <code>public_endpoint</code> is the endpoint
+of the remote peer. <code>udp_socket</code> is a socket whose public address will
+be used by the other peer.</p>
+
+<p>A rendezvous connection setup is different to the traditional BSD socket
+setup in which there is no client or server side. Both ends create a
+socket and send somehow its public address to the other peer. Once both
+ends know each other address, both must call this function passing the
+socket which possess the address used by the other peer and passing the
+other peer&#39;s address.</p>
+
+<p>Only UDP-based protocols are supported. This means that you must use a
+uTP endpoint or nothing will happen.</p>
+
+<p>On success <code>Event::NewPeer</code> with connected <code>PeerId</code> will
+be sent to the event channel. On failure, nothing is reported. Failed
+attempts are not notified back up to the caller. If the caller wants to
+know of a failed attempt, it must maintain a record of the attempt
+itself which times out if a corresponding
+<code>Event::NewPeer</code> isn&#39;t received. See also <a href="https://github.com/maidsafe/crust/blob/master/docs/connect.md">Process for
+Connecting</a> for
+details on handling of connect in different protocols.</p>
+</div><h4 id='method.connect' class='method'><code>fn <a href='#method.connect' class='fnname'>connect</a>(&amp;self, our_connection_info: <a class='struct' href='../crust/struct.OurConnectionInfo.html' title='crust::OurConnectionInfo'>OurConnectionInfo</a>, their_connection_info: <a class='struct' href='../crust/struct.TheirConnectionInfo.html' title='crust::TheirConnectionInfo'>TheirConnectionInfo</a>)</code></h4>
+<div class='docblock'><p>Connect, but only via TCP.</p>
+</div><h4 id='method.prepare_connection_info' class='method'><code>fn <a href='#method.prepare_connection_info' class='fnname'>prepare_connection_info</a>(&amp;mut self, result_token: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>)</code></h4>
+<div class='docblock'><p>Lookup a mapped udp socket based on result_token</p>
+</div><h4 id='method.id' class='method'><code>fn <a href='#method.id' class='fnname'>id</a>(&amp;self) -&gt; <a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a></code></h4>
+<div class='docblock'><p>Returns our ID.</p>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Drop.html' title='core::ops::Drop'>Drop</a> for <a class='struct' href='../crust/struct.Service.html' title='crust::Service'>Service</a></code></h3><div class='impl-items'><h4 id='method.drop' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/ops/trait.Drop.html#method.drop' class='fnname'>drop</a>(&amp;mut self)</code></h4>
+</div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "crust";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script defer src="../search-index.js"></script>
+</body>
+</html>

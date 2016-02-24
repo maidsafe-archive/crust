@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["init","This function initialises the env_logger."]]});

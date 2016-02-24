@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `derive_key` fn in crate `sodiumoxide`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, derive_key">
+
+    <title>sodiumoxide::crypto::pwhash::scryptsalsa208sha256::derive_key - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../../../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='../../../index.html'>sodiumoxide</a>::<wbr><a href='../../index.html'>crypto</a>::<wbr><a href='../index.html'>pwhash</a>::<wbr><a href='index.html'>scryptsalsa208sha256</a></p><script>window.sidebarCurrent = {name: 'derive_key', ty: 'fn', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content fn">
+<h1 class='fqn'><span class='in-band'>Function <a href='../../../index.html'>sodiumoxide</a>::<wbr><a href='../../index.html'>crypto</a>::<wbr><a href='../index.html'>pwhash</a>::<wbr><a href='index.html'>scryptsalsa208sha256</a>::<wbr><a class='fn' href=''>derive_key</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-3093' class='srclink' href='../../../../src/sodiumoxide/crypto/pwhash/scryptsalsa208sha256.rs.html#107-123' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub fn derive_key&lt;'a&gt;(key: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;'a mut [</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>, passwd: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>, Salt: &amp;<a class='struct' href='../../../../sodiumoxide/crypto/pwhash/scryptsalsa208sha256/struct.Salt.html' title='sodiumoxide::crypto::pwhash::scryptsalsa208sha256::Salt'>Salt</a>, OpsLimit: <a class='struct' href='../../../../sodiumoxide/crypto/pwhash/scryptsalsa208sha256/struct.OpsLimit.html' title='sodiumoxide::crypto::pwhash::scryptsalsa208sha256::OpsLimit'>OpsLimit</a>, MemLimit: <a class='struct' href='../../../../sodiumoxide/crypto/pwhash/scryptsalsa208sha256/struct.MemLimit.html' title='sodiumoxide::crypto::pwhash::scryptsalsa208sha256::MemLimit'>MemLimit</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;'a [</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</pre><div class='docblock'><p>The <code>derive_key()</code> function derives a key from a password and a <code>Salt</code></p>
+
+<p>The computed key is stored into key.</p>
+
+<p><code>opslimit</code> represents a maximum amount of computations to perform. Raising
+this number will make the function require more CPU cycles to compute a key.</p>
+
+<p><code>memlimit</code> is the maximum amount of RAM that the function will use, in
+bytes. It is highly recommended to allow the function to use at least 16
+megabytes.</p>
+
+<p>For interactive, online operations, <code>OPSLIMIT_INTERACTIVE</code> and
+<code>MEMLIMIT_INTERACTIVE</code> provide a safe base line for these two
+parameters. However, using higher values may improve security.</p>
+
+<p>For highly sensitive data, <code>OPSLIMIT_SENSITIVE</code> and <code>MEMLIMIT_SENSITIVE</code> can
+be used as an alternative. But with these parameters, deriving a key takes
+more than 10 seconds on a 2.8 Ghz Core i7 CPU and requires up to 1 gigabyte
+of dedicated RAM.</p>
+
+<p>The salt should be unpredictable. <code>gen_salt()</code> is the easiest way to create a <code>Salt</code>.</p>
+
+<p>Keep in mind that in order to produce the same key from the same password,
+the same salt, and the same values for opslimit and memlimit have to be
+used.</p>
+
+<p>The function returns <code>Ok(key)</code> on success and <code>Err(())</code> if the computation didn&#39;t
+complete, usually because the operating system refused to allocate the
+amount of requested memory.</p>
+</div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../../../";
+        window.currentCrate = "sodiumoxide";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../../../../jquery.js"></script>
+    <script src="../../../../main.js"></script>
+    
+    <script defer src="../../../../search-index.js"></script>
+</body>
+</html>
