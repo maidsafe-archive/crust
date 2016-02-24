@@ -371,8 +371,9 @@ pub fn start_tcp_accept(port: u16,
 
             let mut network_rx = Receiver::Tcp(cbor::Decoder::from_reader(network_input));
 
+            let msg = network_rx.receive();
             let mut cm = unwrap_result!(connection_map.lock()); // need to lock before sending the event
-            let their_id = match network_rx.receive() {
+            let their_id = match msg {
                 Ok(CrustMsg::BootstrapRequest(k)) => {
                     writer.send(WriteEvent::Write(CrustMsg::BootstrapResponse(our_public_key)));
                     let peer_id = peer_id::new_id(k);

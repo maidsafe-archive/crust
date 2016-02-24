@@ -311,28 +311,36 @@ impl Service {
             let (udp_socket, public_endpoint) = match res {
                 Ok(PunchedUdpSocket { socket, peer_addr }) => (socket, peer_addr),
                 Err(e) => {
-                    let ev = Event::NewPeer(Err(e), their_id);
-                    let _ = event_tx.send(ev);
+                    let mut cm = unwrap_result!(connection_map.lock());
+                    if !cm.contains_key(&their_id) {
+                        let ev = Event::NewPeer(Err(e), their_id);
+                        let _ = event_tx.send(ev);
+                    }
                     return;
                 }
             };
 
-            let result = match connection::utp_rendezvous_connect(udp_socket,
+            match connection::utp_rendezvous_connect(udp_socket,
                                                                   public_endpoint,
                                                                   UtpRendezvousConnectMode::Normal(their_id),
                                                                   our_public_key.clone(),
                                                                   event_tx.clone(),
                                                                   connection_map.clone()) {
-                Err(e) => Err(e),
+                Err(e) => {
+                    let mut cm = unwrap_result!(connection_map.lock());
+                    if !cm.contains_key(&their_id) {
+                        let _ = event_tx.send(Event::NewPeer(Err(e), their_id));
+                    }
+                }
                 Ok(connection) => {
-                    unwrap_result!(connection_map.lock())
-                        .entry(their_id)
-                        .or_insert(Vec::new())
-                        .push(connection);
-                    Ok(())
+                    let mut cm = unwrap_result!(connection_map.lock());
+                    let mut connections = cm.entry(their_id).or_insert_with(|| {
+                        let _ = event_tx.send(Event::NewPeer(Ok(()), their_id));
+                        Vec::with_capacity(1)
+                    });
+                    connections.push(connection);
                 }
             };
-            let _ = event_tx.send(Event::NewPeer(result, their_id));
         });
     }
 
