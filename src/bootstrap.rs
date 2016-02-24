@@ -27,6 +27,8 @@ use std::thread;
 
 use config_file_handler::FileHandler;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
+use rand;
+use rand::Rng;
 use service_discovery::ServiceDiscovery;
 use nat_traversal::MappingContext;
 
@@ -84,8 +86,9 @@ impl RaiiBootstrap {
                  event_tx: ::CrustEventSender,
                  connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
                  mapping_context: &MappingContext) {
-        let bootstrap_contacts: Vec<StaticContactInfo> = unwrap_result!(peer_contact_infos.lock())
-                                                             .clone();
+        let mut bootstrap_contacts: Vec<StaticContactInfo> =
+            unwrap_result!(peer_contact_infos.lock()).clone();
+        rand::thread_rng().shuffle(&mut bootstrap_contacts[..]);
         for contact in bootstrap_contacts {
             // Bootstrapping got cancelled.
             // Later check the bootstrap contacts in the background to see if they are still valid
@@ -127,7 +130,8 @@ impl Drop for RaiiBootstrap {
 }
 
 // Returns the peers from service discovery, cache and config for bootstrapping (not to be held)
-pub fn get_known_contacts(service_discovery: &ServiceDiscovery<StaticContactInfo>, config: &Config)
+pub fn get_known_contacts(service_discovery: &ServiceDiscovery<StaticContactInfo>,
+                          config: &Config)
                           -> Result<Vec<StaticContactInfo>, Error> {
     let (seek_peers_tx, seek_peers_rx) = mpsc::channel();
     if service_discovery.register_seek_peer_observer(seek_peers_tx) {
