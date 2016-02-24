@@ -1,7 +1,9 @@
 # CRUST - Change Log
 
-## [0.8.1]
+## [0.8.2]
+- Randomise the bootstrap contact order.
 
+## [0.8.1]
 - Restrict to TCP only until the UTP problems are fixed.
 - Add peer IDs, and identify connections with them instead of `Connection`
   objects.
