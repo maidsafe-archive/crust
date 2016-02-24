@@ -467,11 +467,31 @@ pub fn utp_rendezvous_connect(udp_socket: UdpSocket,
     let closed_clone = closed.clone();
     let mut network_rx = Receiver::Utp(cbor::Decoder::from_reader(network_input));
     let their_id = match mode {
-        UtpRendezvousConnectMode::Normal(their_id) => their_id,
+        UtpRendezvousConnectMode::Normal(id) => {
+            writer.send(WriteEvent::Write(CrustMsg::Connect(our_public_key)));
+            match network_rx.receive() {
+                Ok(CrustMsg::Connect(key)) => {
+                    let their_id = peer_id::new_id(key);
+                    if their_id != id {
+                        return Err(io::Error::new(io::ErrorKind::Other, format!(
+                                                  "Connected to the wrong peer: {:?}.", their_id)));
+                    }
+                    their_id
+                }
+                Ok(m) => return Err(io::Error::new(io::ErrorKind::Other, format!(
+                            "Invalid crust message from peer during connect attempt: {:?}", m))),
+                Err(e) => return Err(e),
+            }
+        }
         UtpRendezvousConnectMode::BootstrapConnect => {
             writer.send(WriteEvent::Write(CrustMsg::BootstrapRequest(our_public_key)));
             match network_rx.receive() {
-                Ok(CrustMsg::BootstrapResponse(key)) => peer_id::new_id(key),
+                Ok(CrustMsg::BootstrapResponse(key)) => {
+                    if key == our_public_key {
+                        return Err(io::Error::new(io::ErrorKind::Other, "Connected to ourselves."));
+                    }
+                    peer_id::new_id(key)
+                }
                 Ok(m) => {
                     return Err(io::Error::new(io::ErrorKind::Other, format!("Unexpected message when doing bootstrap utp connect to peer: {:?}", m)))
                 },

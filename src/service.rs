@@ -321,11 +321,11 @@ impl Service {
             };
 
             match connection::utp_rendezvous_connect(udp_socket,
-                                                                  public_endpoint,
-                                                                  UtpRendezvousConnectMode::Normal(their_id),
-                                                                  our_public_key.clone(),
-                                                                  event_tx.clone(),
-                                                                  connection_map.clone()) {
+                                                     public_endpoint,
+                                                     UtpRendezvousConnectMode::Normal(their_id),
+                                                     our_public_key.clone(),
+                                                     event_tx.clone(),
+                                                     connection_map.clone()) {
                 Err(e) => {
                     let mut cm = unwrap_result!(connection_map.lock());
                     if !cm.contains_key(&their_id) {
