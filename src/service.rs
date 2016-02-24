@@ -581,7 +581,10 @@ mod test {
         drop(service_0);
         let (done_tx, done_rx) = mpsc::channel();
         let tj = thread!("Drain event channel messages", move || {
-            for _ in event_rx_0 {}
+            match event_rx_0.recv() {
+                Ok(e) => panic!("Received unexpected event when shutting down: {:?}", e),
+                Err(mpsc::RecvError) => (),
+            };
             done_tx.send(());
         });
         thread::park_timeout(Duration::from_secs(5));
@@ -591,7 +594,10 @@ mod test {
         drop(service_1);
         let (done_tx, done_rx) = mpsc::channel();
         let tj = thread!("Drain event channel messages", move || {
-            for _ in event_rx_1 {}
+            match event_rx_1.recv() {
+                Ok(e) => panic!("Received unexpected event when shutting down: {:?}", e),
+                Err(mpsc::RecvError) => (),
+            };
             done_tx.send(());
         });
         thread::park_timeout(Duration::from_secs(5));
@@ -853,7 +859,7 @@ mod test {
                             m => panic!("Expected NewPeer message. Got message {:?}", m),
                         };
                         match their_ids.insert(their_id, 0u32) {
-                            Some(_) => panic!("Recieved two NewPeer events for same peer!"),
+                            Some(_) => panic!("Received two NewPeer events for same peer!"),
                             None => (),
                         };
                     }
@@ -885,7 +891,7 @@ mod test {
                                     hash_map::Entry::Vacant(ve) => panic!("impossible!"),
                                 }
                             },
-                            m => panic!("ERROR ERROR {} Unexpected msg receiving NewMessage: {:?}", ::time::SteadyTime::now(), m),
+                            m => panic!("Unexpected msg receiving NewMessage: {:?}", m),
                         }
                     }
 
