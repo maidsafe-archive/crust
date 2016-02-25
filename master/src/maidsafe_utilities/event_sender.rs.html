@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/maidsafe_utilities-0.1.5/src/event_sender.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/maidsafe_utilities-0.2.1/src/event_sender.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>event_sender.rs.html -- source</title>
@@ -305,6 +305,10 @@
 <span id="262">262</span>
 <span id="263">263</span>
 <span id="264">264</span>
+<span id="265">265</span>
+<span id="266">266</span>
+<span id="267">267</span>
+<span id="268">268</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -323,13 +327,16 @@
 <span class='comment'>// Please review the Licences for the specific language governing permissions and limitations</span>
 <span class='comment'>// relating to use of the SAFE Network Software.</span>
 
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fmt</span>;
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>mpsc</span>;
+
 <span class='doccomment'>/// Errors that can be returned by EventSender</span>
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>enum</span> <span class='ident'>EventSenderError</span><span class='op'>&lt;</span><span class='ident'>Category</span>, <span class='ident'>EventSubset</span><span class='op'>&gt;</span> {
     <span class='doccomment'>/// Error sending the event subset</span>
-    <span class='ident'>EventSendError</span>(::<span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>mpsc</span>::<span class='ident'>SendError</span><span class='op'>&lt;</span><span class='ident'>EventSubset</span><span class='op'>&gt;</span>),
+    <span class='ident'>EventSubset</span>(<span class='ident'>mpsc</span>::<span class='ident'>SendError</span><span class='op'>&lt;</span><span class='ident'>EventSubset</span><span class='op'>&gt;</span>),
     <span class='doccomment'>/// Error sending the event category</span>
-    <span class='ident'>CategorySendError</span>(::<span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>mpsc</span>::<span class='ident'>SendError</span><span class='op'>&lt;</span><span class='ident'>Category</span><span class='op'>&gt;</span>),
+    <span class='ident'>Category</span>(<span class='ident'>mpsc</span>::<span class='ident'>SendError</span><span class='op'>&lt;</span><span class='ident'>Category</span><span class='op'>&gt;</span>),
 }
 
 <span class='doccomment'>/// This structure is coded to achieve event-subsetting. Receivers in Rust are blocking. One cannot</span>
@@ -423,21 +430,21 @@
 <span class='doccomment'>///     assert!(ui_event_sender.send(UiEvent::Terminate).is_ok());</span>
 <span class='doccomment'>/// # }</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>EventSender</span><span class='op'>&lt;</span><span class='ident'>Category</span>, <span class='ident'>EventSubset</span><span class='op'>&gt;</span> {
-    <span class='ident'>event_tx</span>         : ::<span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>mpsc</span>::<span class='ident'>Sender</span><span class='op'>&lt;</span><span class='ident'>EventSubset</span><span class='op'>&gt;</span>,
-    <span class='ident'>event_category</span>   : <span class='ident'>Category</span>,
-    <span class='ident'>event_category_tx</span>: ::<span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>mpsc</span>::<span class='ident'>Sender</span><span class='op'>&lt;</span><span class='ident'>Category</span><span class='op'>&gt;</span>,
+    <span class='ident'>event_tx</span>: <span class='ident'>mpsc</span>::<span class='ident'>Sender</span><span class='op'>&lt;</span><span class='ident'>EventSubset</span><span class='op'>&gt;</span>,
+    <span class='ident'>event_category</span>: <span class='ident'>Category</span>,
+    <span class='ident'>event_category_tx</span>: <span class='ident'>mpsc</span>::<span class='ident'>Sender</span><span class='op'>&lt;</span><span class='ident'>Category</span><span class='op'>&gt;</span>,
 }
 
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>Category</span>   : ::<span class='ident'>std</span>::<span class='ident'>fmt</span>::<span class='ident'>Debug</span> <span class='op'>+</span> <span class='ident'>Clone</span>,
-     <span class='ident'>EventSubset</span>: ::<span class='ident'>std</span>::<span class='ident'>fmt</span>::<span class='ident'>Debug</span><span class='op'>&gt;</span> <span class='ident'>EventSender</span><span class='op'>&lt;</span><span class='ident'>Category</span>, <span class='ident'>EventSubset</span><span class='op'>&gt;</span> {
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>Category</span>: <span class='ident'>fmt</span>::<span class='ident'>Debug</span> <span class='op'>+</span> <span class='ident'>Clone</span>, <span class='ident'>EventSubset</span>: <span class='ident'>fmt</span>::<span class='ident'>Debug</span><span class='op'>&gt;</span> <span class='ident'>EventSender</span><span class='op'>&lt;</span><span class='ident'>Category</span>, <span class='ident'>EventSubset</span><span class='op'>&gt;</span> {
     <span class='doccomment'>/// Create a new instance of `EventSender`. Category type, category value and EventSubset type</span>
     <span class='doccomment'>/// are baked into `EventSender` to disallow user code from misusing it.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>event_tx</span>         : ::<span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>mpsc</span>::<span class='ident'>Sender</span><span class='op'>&lt;</span><span class='ident'>EventSubset</span><span class='op'>&gt;</span>,
-               <span class='ident'>event_category</span>   : <span class='ident'>Category</span>,
-               <span class='ident'>event_category_tx</span>: ::<span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>mpsc</span>::<span class='ident'>Sender</span><span class='op'>&lt;</span><span class='ident'>Category</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='ident'>EventSender</span><span class='op'>&lt;</span><span class='ident'>Category</span>, <span class='ident'>EventSubset</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>event_tx</span>: <span class='ident'>mpsc</span>::<span class='ident'>Sender</span><span class='op'>&lt;</span><span class='ident'>EventSubset</span><span class='op'>&gt;</span>,
+               <span class='ident'>event_category</span>: <span class='ident'>Category</span>,
+               <span class='ident'>event_category_tx</span>: <span class='ident'>mpsc</span>::<span class='ident'>Sender</span><span class='op'>&lt;</span><span class='ident'>Category</span><span class='op'>&gt;</span>)
+               <span class='op'>-&gt;</span> <span class='ident'>EventSender</span><span class='op'>&lt;</span><span class='ident'>Category</span>, <span class='ident'>EventSubset</span><span class='op'>&gt;</span> {
         <span class='ident'>EventSender</span> {
-            <span class='ident'>event_tx</span>         : <span class='ident'>event_tx</span>,
-            <span class='ident'>event_category</span>   : <span class='ident'>event_category</span>,
+            <span class='ident'>event_tx</span>: <span class='ident'>event_tx</span>,
+            <span class='ident'>event_category</span>: <span class='ident'>event_category</span>,
             <span class='ident'>event_category_tx</span>: <span class='ident'>event_category_tx</span>,
         }
     }
@@ -445,10 +452,10 @@
     <span class='doccomment'>/// Fire an allowed event/signal to the observer.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>send</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>event</span>: <span class='ident'>EventSubset</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>(), <span class='ident'>EventSenderError</span><span class='op'>&lt;</span><span class='ident'>Category</span>, <span class='ident'>EventSubset</span><span class='op'>&gt;&gt;</span> {
         <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Err</span>(<span class='ident'>error</span>) <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>event_tx</span>.<span class='ident'>send</span>(<span class='ident'>event</span>) {
-            <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>EventSenderError</span>::<span class='ident'>EventSendError</span>(<span class='ident'>error</span>))
+            <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>EventSenderError</span>::<span class='ident'>EventSubset</span>(<span class='ident'>error</span>));
         }
         <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Err</span>(<span class='ident'>error</span>) <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>event_category_tx</span>.<span class='ident'>send</span>(<span class='self'>self</span>.<span class='ident'>event_category</span>.<span class='ident'>clone</span>()) {
-            <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>EventSenderError</span>::<span class='ident'>CategorySendError</span>(<span class='ident'>error</span>))
+            <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>EventSenderError</span>::<span class='ident'>Category</span>(<span class='ident'>error</span>));
         }
 
         <span class='prelude-val'>Ok</span>(())
@@ -456,10 +463,10 @@
 }
 
 <span class='comment'>// (Spandan) Need to manually implement this because the default derived one seems faulty in that</span>
-<span class='comment'>// it requires EventSubset to be clonable even though ::std::sync::mpsc::Sender&lt;EventSubset&gt; does</span>
+<span class='comment'>// it requires EventSubset to be clonable even though mpsc::Sender&lt;EventSubset&gt; does</span>
 <span class='comment'>// not require EventSubset to be clonable for itself being cloned.</span>
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>Category</span>   : ::<span class='ident'>std</span>::<span class='ident'>fmt</span>::<span class='ident'>Debug</span> <span class='op'>+</span> <span class='ident'>Clone</span>,
-     <span class='ident'>EventSubset</span>: ::<span class='ident'>std</span>::<span class='ident'>fmt</span>::<span class='ident'>Debug</span><span class='op'>&gt;</span> <span class='ident'>Clone</span> <span class='kw'>for</span> <span class='ident'>EventSender</span><span class='op'>&lt;</span><span class='ident'>Category</span>, <span class='ident'>EventSubset</span><span class='op'>&gt;</span> {
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>Category</span>: <span class='ident'>fmt</span>::<span class='ident'>Debug</span> <span class='op'>+</span> <span class='ident'>Clone</span>, <span class='ident'>EventSubset</span>: <span class='ident'>fmt</span>::<span class='ident'>Debug</span><span class='op'>&gt;</span> <span class='ident'>Clone</span> <span class='kw'>for</span> <span class='ident'>EventSender</span><span class='op'>&lt;</span><span class='ident'>Category</span>,
+                                                                                  <span class='ident'>EventSubset</span><span class='op'>&gt;</span> {
     <span class='kw'>fn</span> <span class='ident'>clone</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>EventSender</span><span class='op'>&lt;</span><span class='ident'>Category</span>, <span class='ident'>EventSubset</span><span class='op'>&gt;</span> {
         <span class='ident'>EventSender</span> {
             <span class='ident'>event_tx</span>: <span class='self'>self</span>.<span class='ident'>event_tx</span>.<span class='ident'>clone</span>(),
@@ -473,9 +480,9 @@
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Clone</span>, <span class='ident'>Debug</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>enum</span> <span class='ident'>MaidSafeEventCategory</span> {
     <span class='doccomment'>/// Used by Crust to indicate a Crust Event has been fired</span>
-    <span class='ident'>CrustEvent</span>,
-    <span class='doccomment'>/// Used by Routing to indicated a Routing Event has been fired</span>
-    <span class='ident'>RoutingEvent</span>,
+    <span class='ident'>Crust</span>,
+    <span class='doccomment'>/// Used by Routing to indicate a Routing Event has been fired</span>
+    <span class='ident'>Routing</span>,
 }
 
 <span class='doccomment'>/// Observer that Crust (and users of Routing if required) must allow to be registered</span>
@@ -484,9 +491,13 @@
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
 <span class='kw'>mod</span> <span class='ident'>test</span> {
     <span class='kw'>use</span> <span class='ident'>super</span>::<span class='op'>*</span>;
+    <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>mpsc</span>;
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>marshall_multiple_events</span>() {
+        <span class='kw'>type</span> <span class='ident'>UiEventSender</span> <span class='op'>=</span> <span class='ident'>EventSender</span><span class='op'>&lt;</span><span class='ident'>EventCategory</span>, <span class='ident'>UiEvent</span><span class='op'>&gt;</span>;
+        <span class='kw'>type</span> <span class='ident'>NetworkEventSender</span> <span class='op'>=</span> <span class='ident'>EventSender</span><span class='op'>&lt;</span><span class='ident'>EventCategory</span>, <span class='ident'>NetworkEvent</span><span class='op'>&gt;</span>;
+
         <span class='kw'>const</span> <span class='ident'>TOKEN</span>: <span class='ident'>u32</span> <span class='op'>=</span> <span class='number'>9876</span>;
         <span class='kw'>const</span> <span class='ident'>DIR_NAME</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span> <span class='op'>=</span> <span class='string'>&quot;NewDirectory&quot;</span>;
 
@@ -508,12 +519,9 @@
             <span class='ident'>Terminate</span>,
         }
 
-        <span class='kw'>let</span> (<span class='ident'>ui_event_tx</span>, <span class='ident'>ui_event_rx</span>) <span class='op'>=</span> ::<span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>mpsc</span>::<span class='ident'>channel</span>();
-        <span class='kw'>let</span> (<span class='ident'>category_tx</span>, <span class='ident'>category_rx</span>) <span class='op'>=</span> ::<span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>mpsc</span>::<span class='ident'>channel</span>();
-        <span class='kw'>let</span> (<span class='ident'>network_event_tx</span>, <span class='ident'>network_event_rx</span>) <span class='op'>=</span> ::<span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>mpsc</span>::<span class='ident'>channel</span>();
-
-        <span class='kw'>type</span> <span class='ident'>UiEventSender</span> <span class='op'>=</span> <span class='ident'>EventSender</span><span class='op'>&lt;</span><span class='ident'>EventCategory</span>, <span class='ident'>UiEvent</span><span class='op'>&gt;</span>;
-        <span class='kw'>type</span> <span class='ident'>NetworkEventSender</span> <span class='op'>=</span> <span class='ident'>EventSender</span><span class='op'>&lt;</span><span class='ident'>EventCategory</span>, <span class='ident'>NetworkEvent</span><span class='op'>&gt;</span>;
+        <span class='kw'>let</span> (<span class='ident'>ui_event_tx</span>, <span class='ident'>ui_event_rx</span>) <span class='op'>=</span> <span class='ident'>mpsc</span>::<span class='ident'>channel</span>();
+        <span class='kw'>let</span> (<span class='ident'>category_tx</span>, <span class='ident'>category_rx</span>) <span class='op'>=</span> <span class='ident'>mpsc</span>::<span class='ident'>channel</span>();
+        <span class='kw'>let</span> (<span class='ident'>network_event_tx</span>, <span class='ident'>network_event_rx</span>) <span class='op'>=</span> <span class='ident'>mpsc</span>::<span class='ident'>channel</span>();
 
         <span class='kw'>let</span> <span class='ident'>ui_event_sender</span> <span class='op'>=</span> <span class='ident'>UiEventSender</span>::<span class='ident'>new</span>(<span class='ident'>ui_event_tx</span>,
                                                  <span class='ident'>EventCategory</span>::<span class='ident'>UserInterface</span>,
@@ -528,12 +536,13 @@
                 <span class='kw'>match</span> <span class='ident'>it</span> {
                     <span class='ident'>EventCategory</span>::<span class='ident'>Network</span> <span class='op'>=&gt;</span> {
                         <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Ok</span>(<span class='ident'>network_event</span>) <span class='op'>=</span> <span class='ident'>network_event_rx</span>.<span class='ident'>try_recv</span>() {
-                            <span class='kw'>match</span> <span class='ident'>network_event</span> {
-                                <span class='ident'>NetworkEvent</span>::<span class='ident'>Connected</span>(<span class='ident'>token</span>) <span class='op'>=&gt;</span> <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>token</span>, <span class='ident'>TOKEN</span>),
-                                _ <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Shouldn&#39;t have received this event: {:?}&quot;</span>, <span class='ident'>network_event</span>),
+                            <span class='kw'>if</span> <span class='kw'>let</span> <span class='ident'>NetworkEvent</span>::<span class='ident'>Connected</span>(<span class='ident'>token</span>) <span class='op'>=</span> <span class='ident'>network_event</span> {
+                                <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>token</span>, <span class='ident'>TOKEN</span>)
+                            } <span class='kw'>else</span> {
+                                <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Shouldn&#39;t have received this event: {:?}&quot;</span>, <span class='ident'>network_event</span>)
                             }
                         }
-                    },
+                    }
                     <span class='ident'>EventCategory</span>::<span class='ident'>UserInterface</span> <span class='op'>=&gt;</span> {
                         <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Ok</span>(<span class='ident'>ui_event</span>) <span class='op'>=</span> <span class='ident'>ui_event_rx</span>.<span class='ident'>try_recv</span>() {
                             <span class='kw'>match</span> <span class='ident'>ui_event</span> {
@@ -557,16 +566,15 @@
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>ui_event_sender</span>.<span class='ident'>send</span>(<span class='ident'>UiEvent</span>::<span class='ident'>Terminate</span>).<span class='ident'>is_err</span>());
         <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>nw_event_sender</span>.<span class='ident'>send</span>(<span class='ident'>NetworkEvent</span>::<span class='ident'>Disconnected</span>).<span class='ident'>is_err</span>());
 
-        <span class='kw'>match</span> <span class='macro'>unwrap_option</span><span class='macro'>!</span>(<span class='ident'>ui_event_sender</span>.<span class='ident'>send</span>(<span class='ident'>UiEvent</span>::<span class='ident'>CreateDirectory</span>(<span class='ident'>DIR_NAME</span>.<span class='ident'>to_string</span>()))
-                                            .<span class='ident'>err</span>(),
-                             <span class='string'>&quot;Return should have evaluated to an error.&quot;</span>) {
-            <span class='ident'>EventSenderError</span>::<span class='ident'>EventSendError</span>(<span class='ident'>send_err</span>) <span class='op'>=&gt;</span> {
-                <span class='kw'>match</span> <span class='ident'>send_err</span>.<span class='number'>0</span> {
-                    <span class='ident'>UiEvent</span>::<span class='ident'>CreateDirectory</span>(<span class='ident'>dir_name</span>) <span class='op'>=&gt;</span> <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>dir_name</span>, <span class='ident'>DIR_NAME</span>),
-                    _ <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Expected a different event !&quot;</span>),
-                }
-            },
-            _ <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Expected a different error !&quot;</span>),
+        <span class='kw'>let</span> <span class='ident'>result</span> <span class='op'>=</span> <span class='ident'>ui_event_sender</span>.<span class='ident'>send</span>(<span class='ident'>UiEvent</span>::<span class='ident'>CreateDirectory</span>(<span class='ident'>DIR_NAME</span>.<span class='ident'>to_owned</span>())).<span class='ident'>err</span>();
+        <span class='kw'>if</span> <span class='kw'>let</span> <span class='ident'>EventSenderError</span>::<span class='ident'>EventSubset</span>(<span class='ident'>send_err</span>) <span class='op'>=</span> <span class='macro'>unwrap_option</span><span class='macro'>!</span>(<span class='ident'>result</span>, <span class='string'>&quot;&quot;</span>) {
+            <span class='kw'>if</span> <span class='kw'>let</span> <span class='ident'>UiEvent</span>::<span class='ident'>CreateDirectory</span>(<span class='ident'>dir_name</span>) <span class='op'>=</span> <span class='ident'>send_err</span>.<span class='number'>0</span> {
+                <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>dir_name</span>, <span class='ident'>DIR_NAME</span>)
+            } <span class='kw'>else</span> {
+                <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Expected a different event !&quot;</span>)
+            }
+        } <span class='kw'>else</span> {
+            <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Expected a different error !&quot;</span>)
         }
     }
 }

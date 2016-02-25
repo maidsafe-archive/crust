@@ -46,14 +46,14 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-75' class='srclink' href='../../src/maidsafe_utilities/event_sender.rs.html#20-25' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-82' class='srclink' href='../../src/maidsafe_utilities/event_sender.rs.html#23-28' title='goto source code'>[src]</a></span></h1>
 <pre class='rust enum'>pub enum EventSenderError&lt;Category, EventSubset&gt; {
-    EventSendError(<a class='struct' href='https://doc.rust-lang.org/nightly/std/sync/mpsc/struct.SendError.html' title='std::sync::mpsc::SendError'>SendError</a>&lt;EventSubset&gt;),
-    CategorySendError(<a class='struct' href='https://doc.rust-lang.org/nightly/std/sync/mpsc/struct.SendError.html' title='std::sync::mpsc::SendError'>SendError</a>&lt;Category&gt;),
+    EventSubset(<a class='struct' href='https://doc.rust-lang.org/nightly/std/sync/mpsc/struct.SendError.html' title='std::sync::mpsc::SendError'>SendError</a>&lt;EventSubset&gt;),
+    Category(<a class='struct' href='https://doc.rust-lang.org/nightly/std/sync/mpsc/struct.SendError.html' title='std::sync::mpsc::SendError'>SendError</a>&lt;Category&gt;),
 }</pre><div class='docblock'><p>Errors that can be returned by EventSender</p>
 </div><h2 class='variants'>Variants</h2>
-<table><tr><td id='variant.EventSendError'><code>EventSendError</code></td><td><div class='docblock'><p>Error sending the event subset</p>
-</div></td></tr><tr><td id='variant.CategorySendError'><code>CategorySendError</code></td><td><div class='docblock'><p>Error sending the event category</p>
+<table><tr><td id='variant.EventSubset'><code>EventSubset</code></td><td><div class='docblock'><p>Error sending the event subset</p>
+</div></td></tr><tr><td id='variant.Category'><code>Category</code></td><td><div class='docblock'><p>Error sending the event category</p>
 </div></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl&lt;Category: <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a>, EventSubset: <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a>&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='enum' href='../../maidsafe_utilities/event_sender/enum.EventSenderError.html' title='maidsafe_utilities::event_sender::EventSenderError'>EventSenderError</a>&lt;Category, EventSubset&gt;</code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#method.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
 </div></section>
     <section id='search' class="content hidden"></section>
