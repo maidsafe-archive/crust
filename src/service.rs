@@ -895,7 +895,7 @@ mod test {
                 }
             }
 
-            fn run(self, barrier: Arc<Barrier>) -> JoinHandle<()> {
+            fn run(self, send_barrier: Arc<Barrier>, drop_barrier: Arc<Barrier>) -> JoinHandle<()> {
                 thread!("run!", move || {
                     for (our_ci, their_ci) in self.our_cis.into_iter().zip(self.connection_id_rx.into_iter()) {
                         self.service.connect(our_ci, their_ci);
@@ -911,6 +911,10 @@ mod test {
                             None => (),
                         };
                     }
+
+                    // Wait until all nodes have connected to each other before we start
+                    // exchanging messages.
+                    let _ = send_barrier.wait();
 
                     for their_id in their_ids.keys() {
                         for n in 0..NUM_MSGS {
@@ -945,7 +949,7 @@ mod test {
 
                     // Wait until all nodes have finished exchanging messages before we start
                     // disconnecting.
-                    let _ = barrier.wait();
+                    let _ = drop_barrier.wait();
 
                     drop(self.service);
                     match self.event_rx.recv() {
@@ -971,11 +975,13 @@ mod test {
             test_node.make_connection_infos(&ci_txs);
         }
 
-        let barrier = Arc::new(Barrier::new(NUM_SERVICES));
+        let send_barrier = Arc::new(Barrier::new(NUM_SERVICES));
+        let drop_barrier = Arc::new(Barrier::new(NUM_SERVICES));
         let mut threads = Vec::new();
         for test_node in test_nodes {
-            let barrier = barrier.clone();
-            threads.push(test_node.run(barrier));
+            let send_barrier = send_barrier.clone();
+            let drop_barrier = drop_barrier.clone();
+            threads.push(test_node.run(send_barrier, drop_barrier));
         }
 
         // Wait one hundred millisecond per message
