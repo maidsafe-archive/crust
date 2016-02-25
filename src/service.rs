@@ -141,8 +141,10 @@ impl Service {
             }
         };
         let mapping_context = try!(MappingContext::new().result_discard()
-                                   .or(Err(io::Error::new(io::ErrorKind::Other,
-                                                          "Failed to create MappingContext"))));
+                                   .or_else(|e| {
+            Err(io::Error::new(io::ErrorKind::Other,
+                               format!("Failed to create MappingContext: {}", e)))
+        }));
         // Form initial peer contact infos - these will also contain echo-service addrs.
         let bootstrap_contacts = try!(bootstrap::get_known_contacts(&service_discovery, &config));
         for peer_contact_info in bootstrap_contacts.iter() {
