@@ -932,7 +932,7 @@ mod test {
 
         // Wait one hundred millisecond per message
         // TODO(canndrew): drop this limit
-        let timeout_ms = 100 * (NUM_MSGS * (NUM_SERVICES * (NUM_SERVICES - 1)) / 2) as u64;
+        let timeout_ms = 1000 * (NUM_MSGS * (NUM_SERVICES * (NUM_SERVICES - 1)) / 2) as u64;
         timebomb(Duration::from_millis(timeout_ms), move || {
             for thread in threads {
                 unwrap_result!(thread.join());
