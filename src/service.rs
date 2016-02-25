@@ -285,6 +285,8 @@ impl Service {
 
         // TODO connect to all the socket addresses of peer in parallel
         let _joiner = thread!("PeerConnectionThread", move || {
+            let mut last_err = io::Error::new(io::ErrorKind::NotFound,
+                                              "No TCP acceptors found.");
             for tcp_addr in their_connection_info.static_contact_info.tcp_acceptors {
                 match connection::connect_tcp_endpoint(tcp_addr,
                                                        our_contact_info.clone(),
@@ -292,19 +294,19 @@ impl Service {
                                                        event_tx.clone(),
                                                        connection_map.clone(),
                                                        Some(their_id)) {
-                    Err(_) => continue, // TODO(canndrew) report this error
-                    Ok(connection) => {
-                        let mut guard = unwrap_result!(connection_map.lock());
-                        let connections = guard.entry(their_id).or_insert_with(Vec::new);
-                        if connections.is_empty() {
-                            let _ = event_tx.send(Event::NewPeer(Ok(()), their_id));
-                        }
-                        connections.push(connection);
-                        return;
+                    Err(err) => {
+                        last_err = err;
+                        continue;
                     }
+                    Ok(()) => return,
                 }
             };
 
+            if unwrap_result!(connection_map.lock()).get(&their_id).into_iter().all(Vec::is_empty) {
+                let _ = event_tx.send(Event::NewPeer(Err(last_err), their_id));
+            }
+
+            /*
             let res = PunchedUdpSocket::punch_hole(our_connection_info.udp_socket,
                                                    our_connection_info.priv_info,
                                                    their_connection_info.info);
@@ -341,6 +343,7 @@ impl Service {
                     connections.push(connection);
                 }
             };
+            */
         });
     }
 

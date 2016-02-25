@@ -129,8 +129,8 @@ pub fn connect(peer_contact: StaticContactInfo,
                event_tx: ::CrustEventSender,
                connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
                mc: &MappingContext)
-               -> io::Result<Connection> {
-    let mut last_err = None;
+               -> io::Result<()> {
+    let mut last_err = io::Error::new(io::ErrorKind::NotFound, "No TCP acceptors found.");
     for tcp_addr in peer_contact.tcp_acceptors {
         match connect_tcp_endpoint(tcp_addr,
                                    our_contact_info.clone(),
@@ -138,11 +138,13 @@ pub fn connect(peer_contact: StaticContactInfo,
                                    event_tx.clone(),
                                    connection_map.clone(),
                                    None) {
-            Ok(connection) => return Ok(connection),
-            Err(e) => last_err = Some(e),
+            Ok(()) => return Ok(()),
+            Err(e) => last_err = e,
         }
     }
+    Err(last_err)
 
+    /*
     let (udp_socket, (our_priv_info, our_pub_info)) = {
         match MappedUdpSocket::new(mc).result_discard() {
             Ok(MappedUdpSocket { socket, endpoints }) => {
@@ -212,7 +214,7 @@ pub fn connect(peer_contact: StaticContactInfo,
             Err(io::Error::new(io::ErrorKind::Other,
                                "Contact info does not contain any endpoint addresses"))
         }
-    }
+    }*/
 }
 
 pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
@@ -221,7 +223,7 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
                         event_tx: ::CrustEventSender,
                         connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
                         their_expected_id: Option<PeerId>) // None if bootstrap
-                        -> io::Result<Connection> {
+                        -> io::Result<()> {
     let (network_input, writer) = try!(tcp_connections::connect_tcp(remote_addr.clone()));
 
     let our_addr = SocketAddr(unwrap_result!(network_input.local_addr()));
@@ -262,12 +264,28 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
             }
         }
     };
+
+    // Send the events before we start listening.
+    let mut guard = unwrap_result!(connection_map.lock());
+
+    {
+        let connections = guard.entry(their_id).or_insert_with(Vec::new);
+        if connections.is_empty() {
+            let _ = event_tx.send(match their_expected_id {
+                None => Event::BootstrapConnect(their_id),
+                Some(_) => Event::NewPeer(Ok(()), their_id),
+            });
+        }
+    }
+
+    let connection_map_clone = connection_map.clone();
+
     let joiner = RaiiThreadJoiner::new(thread!("TcpNetworkReader", move || {
         start_rx(network_rx,
                  their_id,
                  event_tx,
                  closed_clone,
-                 connection_map);
+                 connection_map_clone);
     }));
 
     let mut connection = Connection {
@@ -280,7 +298,9 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
         closed: closed,
     };
 
-    Ok(connection)
+    guard.entry(their_id).or_insert_with(|| vec![]).push(connection);
+
+    Ok(())
 }
 
 // fn connect_utp_endpoint(remote_addr: SocketAddr,
