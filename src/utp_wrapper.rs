@@ -38,6 +38,7 @@ impl UtpWrapper {
                     socket.set_read_timeout(Some(CHECK_FOR_NEW_WRITES_INTERVAL_MS));
                     'outer: loop {
                         let mut buf = [0; BUFFER_SIZE];
+                        socket.send_keepalive();
                         match socket.recv_from(&mut buf[..]) {
                             Ok((0, _src)) => break,
                             Ok((amt, _src)) => {
