@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/temp_utp-0.7.2/src/socket.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/temp_utp-0.8.0/src/socket.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>socket.rs.html -- source</title>
@@ -3278,12 +3278,43 @@
 <span id="3235">3235</span>
 <span id="3236">3236</span>
 <span id="3237">3237</span>
+<span id="3238">3238</span>
+<span id="3239">3239</span>
+<span id="3240">3240</span>
+<span id="3241">3241</span>
+<span id="3242">3242</span>
+<span id="3243">3243</span>
+<span id="3244">3244</span>
+<span id="3245">3245</span>
+<span id="3246">3246</span>
+<span id="3247">3247</span>
+<span id="3248">3248</span>
+<span id="3249">3249</span>
+<span id="3250">3250</span>
+<span id="3251">3251</span>
+<span id="3252">3252</span>
+<span id="3253">3253</span>
+<span id="3254">3254</span>
+<span id="3255">3255</span>
+<span id="3256">3256</span>
+<span id="3257">3257</span>
+<span id="3258">3258</span>
+<span id="3259">3259</span>
+<span id="3260">3260</span>
+<span id="3261">3261</span>
+<span id="3262">3262</span>
+<span id="3263">3263</span>
+<span id="3264">3264</span>
+<span id="3265">3265</span>
+<span id="3266">3266</span>
+<span id="3267">3267</span>
+<span id="3268">3268</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>cmp</span>::{<span class='ident'>min</span>, <span class='ident'>max</span>};
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>collections</span>::<span class='ident'>VecDeque</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>net</span>::{<span class='ident'>ToSocketAddrs</span>, <span class='ident'>SocketAddr</span>, <span class='ident'>UdpSocket</span>};
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::{<span class='prelude-ty'>Result</span>, <span class='ident'>Error</span>, <span class='ident'>ErrorKind</span>};
-<span class='kw'>use</span> <span class='ident'>util</span>::{<span class='ident'>now_microseconds</span>, <span class='ident'>ewma</span>, <span class='ident'>abs_diff</span>, <span class='ident'>Sequence</span>};
+<span class='kw'>use</span> <span class='ident'>util</span>::{<span class='ident'>now_microseconds</span>, <span class='ident'>ewma</span>, <span class='ident'>Sequence</span>};
 <span class='kw'>use</span> <span class='ident'>packet</span>::{<span class='ident'>Packet</span>, <span class='ident'>PacketType</span>, <span class='ident'>Encodable</span>, <span class='ident'>Decodable</span>, <span class='ident'>ExtensionType</span>, <span class='ident'>HEADER_SIZE</span>};
 <span class='kw'>use</span> <span class='ident'>rand</span>::{<span class='self'>self</span>, <span class='ident'>Rng</span>};
 <span class='kw'>use</span> <span class='ident'>time</span>::<span class='ident'>SteadyTime</span>;
@@ -3455,11 +3486,11 @@
     <span class='ident'>rtt_variance</span>: <span class='ident'>i32</span>,
 
     <span class='doccomment'>/// Data from the latest packet not yet returned in `recv_from`</span>
-    <span class='ident'>pending_data</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span>,
+    <span class='ident'>pending_data</span>: <span class='ident'>VecDeque</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span>,
 
     <span class='doccomment'>/// Another buffer of data to be returned in recv_from</span>
     <span class='doccomment'>/// this comes before pending_data</span>
-    <span class='ident'>read_ready_data</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span>,
+    <span class='ident'>read_ready_data</span>: <span class='ident'>VecDeque</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span>,
 
     <span class='doccomment'>/// Bytes in flight</span>
     <span class='ident'>curr_window</span>: <span class='ident'>u32</span>,
@@ -3538,8 +3569,8 @@
             <span class='ident'>last_dropped</span>: <span class='number'>0</span>,
             <span class='ident'>rtt</span>: <span class='number'>0</span>,
             <span class='ident'>rtt_variance</span>: <span class='number'>0</span>,
-            <span class='ident'>read_ready_data</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
-            <span class='ident'>pending_data</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
+            <span class='ident'>read_ready_data</span>: <span class='ident'>VecDeque</span>::<span class='ident'>new</span>(),
+            <span class='ident'>pending_data</span>: <span class='ident'>VecDeque</span>::<span class='ident'>new</span>(),
             <span class='ident'>curr_window</span>: <span class='number'>0</span>,
             <span class='ident'>remote_wnd_size</span>: <span class='number'>0</span>,
             <span class='ident'>current_delays</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
@@ -3798,10 +3829,20 @@
     <span class='doccomment'>/// Returns 0 bytes read after receiving a FIN packet when the remaining</span>
     <span class='doccomment'>/// in-flight packets are consumed.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>recv_from</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>buf</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> [<span class='ident'>u8</span>]) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>(<span class='ident'>usize</span>, <span class='ident'>SocketAddr</span>)<span class='op'>&gt;</span> {
-        <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>read_ready_data</span>.<span class='ident'>len</span>() <span class='op'>&gt;</span> <span class='number'>0</span> {
-            <span class='kw'>let</span> <span class='ident'>len</span> <span class='op'>=</span> <span class='ident'>unsafe_copy</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>read_ready_data</span>[..], <span class='ident'>buf</span>);
-            <span class='self'>self</span>.<span class='ident'>read_ready_data</span>.<span class='ident'>drain</span>(..<span class='ident'>len</span>);
-            <span class='kw'>return</span> <span class='prelude-val'>Ok</span>((<span class='ident'>len</span>, <span class='self'>self</span>.<span class='ident'>connected_to</span>));
+        <span class='kw'>let</span> <span class='ident'>read</span> <span class='op'>=</span> {
+            <span class='kw'>let</span> (<span class='ident'>read_ready_0</span>, <span class='ident'>read_ready_1</span>) <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>read_ready_data</span>.<span class='ident'>as_slices</span>();
+            <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>read</span> <span class='op'>=</span> <span class='number'>0</span>;
+            <span class='kw'>if</span> <span class='ident'>read_ready_0</span>.<span class='ident'>len</span>() <span class='op'>&gt;</span> <span class='number'>0</span> {
+                <span class='ident'>read</span> <span class='op'>=</span> <span class='ident'>unsafe_copy</span>(<span class='ident'>read_ready_0</span>, <span class='ident'>buf</span>)
+            }
+            <span class='kw'>if</span> <span class='ident'>read_ready_1</span>.<span class='ident'>len</span>() <span class='op'>&gt;</span> <span class='number'>0</span> {
+                <span class='ident'>read</span> <span class='op'>+=</span> <span class='ident'>unsafe_copy</span>(<span class='ident'>read_ready_1</span>, <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>buf</span>[<span class='ident'>read</span>..])
+            }
+            <span class='ident'>read</span>
+        };
+        <span class='kw'>if</span> <span class='ident'>read</span> <span class='op'>&gt;</span> <span class='number'>0</span> {
+            <span class='self'>self</span>.<span class='ident'>read_ready_data</span>.<span class='ident'>drain</span>(..<span class='ident'>read</span>);
+            <span class='kw'>return</span> <span class='prelude-val'>Ok</span>((<span class='ident'>read</span>, <span class='self'>self</span>.<span class='ident'>connected_to</span>));
         }
 
         <span class='kw'>let</span> <span class='ident'>read</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>flush_incoming_buffer</span>(<span class='ident'>buf</span>);
@@ -4058,7 +4099,7 @@
         <span class='kw'>let</span> <span class='ident'>self_t_micro</span>: <span class='ident'>u32</span> <span class='op'>=</span> <span class='ident'>now_microseconds</span>();
         <span class='kw'>let</span> <span class='ident'>other_t_micro</span>: <span class='ident'>u32</span> <span class='op'>=</span> <span class='ident'>original</span>.<span class='ident'>timestamp_microseconds</span>();
         <span class='ident'>resp</span>.<span class='ident'>set_timestamp_microseconds</span>(<span class='ident'>self_t_micro</span>);
-        <span class='ident'>resp</span>.<span class='ident'>set_timestamp_difference_microseconds</span>(<span class='ident'>abs_diff</span>(<span class='ident'>self_t_micro</span>, <span class='ident'>other_t_micro</span>));
+        <span class='ident'>resp</span>.<span class='ident'>set_timestamp_difference_microseconds</span>(<span class='ident'>self_t_micro</span>.<span class='ident'>wrapping_sub</span>(<span class='ident'>other_t_micro</span>));
         <span class='ident'>resp</span>.<span class='ident'>set_connection_id</span>(<span class='self'>self</span>.<span class='ident'>sender_connection_id</span>);
         <span class='ident'>resp</span>.<span class='ident'>set_seq_nr</span>(<span class='self'>self</span>.<span class='ident'>seq_nr</span>);
         <span class='ident'>resp</span>.<span class='ident'>set_ack_nr</span>(<span class='self'>self</span>.<span class='ident'>ack_nr</span>);
@@ -4087,13 +4128,23 @@
     <span class='kw'>fn</span> <span class='ident'>flush_incoming_buffer</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>buf</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> [<span class='ident'>u8</span>]) <span class='op'>-&gt;</span> <span class='ident'>usize</span> {
         <span class='comment'>// Return pending data from a partially read packet</span>
         <span class='kw'>if</span> <span class='op'>!</span><span class='self'>self</span>.<span class='ident'>pending_data</span>.<span class='ident'>is_empty</span>() {
-            <span class='kw'>let</span> <span class='ident'>flushed</span> <span class='op'>=</span> <span class='ident'>unsafe_copy</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>pending_data</span>[..], <span class='ident'>buf</span>);
+            <span class='kw'>let</span> <span class='ident'>flushed</span> <span class='op'>=</span> {
+                <span class='kw'>let</span> (<span class='ident'>pending_0</span>, <span class='ident'>pending_1</span>) <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>pending_data</span>.<span class='ident'>as_slices</span>();
+                <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>flushed</span> <span class='op'>=</span> <span class='number'>0</span>;
+                <span class='kw'>if</span> <span class='ident'>pending_0</span>.<span class='ident'>len</span>() <span class='op'>&gt;</span> <span class='number'>0</span> {
+                    <span class='ident'>flushed</span> <span class='op'>+=</span> <span class='ident'>unsafe_copy</span>(<span class='ident'>pending_0</span>, <span class='ident'>buf</span>);
+                }
+                <span class='kw'>if</span> <span class='ident'>pending_1</span>.<span class='ident'>len</span>() <span class='op'>&gt;</span> <span class='number'>0</span> {
+                    <span class='ident'>flushed</span> <span class='op'>+=</span> <span class='ident'>unsafe_copy</span>(<span class='ident'>pending_1</span>, <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>buf</span>[<span class='ident'>flushed</span>..]);
+                }
+                <span class='ident'>flushed</span>
+            };
 
             <span class='kw'>if</span> <span class='ident'>flushed</span> <span class='op'>==</span> <span class='self'>self</span>.<span class='ident'>pending_data</span>.<span class='ident'>len</span>() {
                 <span class='self'>self</span>.<span class='ident'>pending_data</span>.<span class='ident'>clear</span>();
                 <span class='self'>self</span>.<span class='ident'>advance_incoming_buffer</span>();
             } <span class='kw'>else</span> {
-                <span class='self'>self</span>.<span class='ident'>pending_data</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>pending_data</span>[<span class='ident'>flushed</span>..].<span class='ident'>to_vec</span>();
+                <span class='self'>self</span>.<span class='ident'>pending_data</span>.<span class='ident'>drain</span>(..<span class='ident'>flushed</span>);
             }
 
             <span class='kw'>return</span> <span class='ident'>flushed</span>;
@@ -4108,7 +4159,7 @@
             <span class='kw'>if</span> <span class='ident'>flushed</span> <span class='op'>==</span> <span class='self'>self</span>.<span class='ident'>incoming_buffer</span>[<span class='number'>0</span>].<span class='ident'>payload</span>.<span class='ident'>len</span>() {
                 <span class='self'>self</span>.<span class='ident'>advance_incoming_buffer</span>();
             } <span class='kw'>else</span> {
-                <span class='self'>self</span>.<span class='ident'>pending_data</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>incoming_buffer</span>[<span class='number'>0</span>].<span class='ident'>payload</span>[<span class='ident'>flushed</span>..].<span class='ident'>to_vec</span>();
+                <span class='self'>self</span>.<span class='ident'>pending_data</span>.<span class='ident'>extend</span>(<span class='self'>self</span>.<span class='ident'>incoming_buffer</span>[<span class='number'>0</span>].<span class='ident'>payload</span>.<span class='ident'>drain</span>(<span class='ident'>flushed</span>..));
             }
 
             <span class='kw'>return</span> <span class='ident'>flushed</span>;
@@ -4166,6 +4217,25 @@
         }
 
         <span class='prelude-val'>Ok</span>(())
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>send_state</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) {
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>packet</span> <span class='op'>=</span> <span class='ident'>Packet</span>::<span class='ident'>new</span>();
+        <span class='ident'>packet</span>.<span class='ident'>set_type</span>(<span class='ident'>PacketType</span>::<span class='ident'>State</span>);
+        <span class='kw'>let</span> <span class='ident'>self_t_micro</span>: <span class='ident'>u32</span> <span class='op'>=</span> <span class='ident'>now_microseconds</span>();
+        <span class='ident'>packet</span>.<span class='ident'>set_timestamp_microseconds</span>(<span class='ident'>self_t_micro</span>);
+        <span class='ident'>packet</span>.<span class='ident'>set_timestamp_difference_microseconds</span>(<span class='self'>self</span>.<span class='ident'>their_delay</span>);
+        <span class='ident'>packet</span>.<span class='ident'>set_connection_id</span>(<span class='self'>self</span>.<span class='ident'>sender_connection_id</span>);
+        <span class='ident'>packet</span>.<span class='ident'>set_seq_nr</span>(<span class='self'>self</span>.<span class='ident'>seq_nr</span>);
+        <span class='ident'>packet</span>.<span class='ident'>set_ack_nr</span>(<span class='self'>self</span>.<span class='ident'>ack_nr</span>);
+        <span class='kw'>let</span> _ <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>socket</span>.<span class='ident'>send_to</span>(<span class='kw-2'>&amp;</span><span class='ident'>packet</span>.<span class='ident'>to_bytes</span>()[..], <span class='self'>self</span>.<span class='ident'>connected_to</span>);
+    }
+
+    <span class='doccomment'>/// Send a keepalive packet on the stream.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>send_keepalive</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) {
+        <span class='kw'>if</span> <span class='ident'>now_microseconds</span>().<span class='ident'>wrapping_sub</span>(<span class='self'>self</span>.<span class='ident'>last_acked_timestamp</span>) <span class='op'>&gt;</span> <span class='number'>14_000_000</span> {
+            <span class='self'>self</span>.<span class='ident'>send_state</span>();
+        }
     }
 
     <span class='doccomment'>/// Sends every packet in the unsent packet queue.</span>
@@ -4318,15 +4388,7 @@
     <span class='doccomment'>/// received packet) in quick succession.</span>
     <span class='kw'>fn</span> <span class='ident'>send_fast_resend_request</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) {
         <span class='kw'>for</span> _ <span class='kw'>in</span> <span class='number'>0</span>..<span class='number'>3</span> {
-            <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>packet</span> <span class='op'>=</span> <span class='ident'>Packet</span>::<span class='ident'>new</span>();
-            <span class='ident'>packet</span>.<span class='ident'>set_type</span>(<span class='ident'>PacketType</span>::<span class='ident'>State</span>);
-            <span class='kw'>let</span> <span class='ident'>self_t_micro</span>: <span class='ident'>u32</span> <span class='op'>=</span> <span class='ident'>now_microseconds</span>();
-            <span class='ident'>packet</span>.<span class='ident'>set_timestamp_microseconds</span>(<span class='ident'>self_t_micro</span>);
-            <span class='ident'>packet</span>.<span class='ident'>set_timestamp_difference_microseconds</span>(<span class='self'>self</span>.<span class='ident'>their_delay</span>);
-            <span class='ident'>packet</span>.<span class='ident'>set_connection_id</span>(<span class='self'>self</span>.<span class='ident'>sender_connection_id</span>);
-            <span class='ident'>packet</span>.<span class='ident'>set_seq_nr</span>(<span class='self'>self</span>.<span class='ident'>seq_nr</span>);
-            <span class='ident'>packet</span>.<span class='ident'>set_ack_nr</span>(<span class='self'>self</span>.<span class='ident'>ack_nr</span>);
-            <span class='kw'>let</span> _ <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>socket</span>.<span class='ident'>send_to</span>(<span class='kw-2'>&amp;</span><span class='ident'>packet</span>.<span class='ident'>to_bytes</span>()[..], <span class='self'>self</span>.<span class='ident'>connected_to</span>);
+            <span class='self'>self</span>.<span class='ident'>send_state</span>();
         }
     }
 
@@ -4401,7 +4463,7 @@
 
         <span class='comment'>// Update remote peer&#39;s delay between them sending the packet and us receiving it</span>
         <span class='kw'>let</span> <span class='ident'>now</span> <span class='op'>=</span> <span class='ident'>now_microseconds</span>();
-        <span class='self'>self</span>.<span class='ident'>their_delay</span> <span class='op'>=</span> <span class='ident'>abs_diff</span>(<span class='ident'>now</span>, <span class='ident'>packet</span>.<span class='ident'>timestamp_microseconds</span>());
+        <span class='self'>self</span>.<span class='ident'>their_delay</span> <span class='op'>=</span> <span class='ident'>now</span>.<span class='ident'>wrapping_sub</span>(<span class='ident'>packet</span>.<span class='ident'>timestamp_microseconds</span>());
         <span class='macro'>debug</span><span class='macro'>!</span>(<span class='string'>&quot;self.their_delay: {}&quot;</span>, <span class='self'>self</span>.<span class='ident'>their_delay</span>);
 
         <span class='kw'>match</span> (<span class='self'>self</span>.<span class='ident'>state</span>, <span class='ident'>packet</span>.<span class='ident'>get_type</span>()) {
