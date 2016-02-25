@@ -18,7 +18,7 @@ ip = "~1.1.0"
 itertools = "0.4.7"
 libc = "~0.2.6"
 log = "~0.3.4"
-maidsafe_utilities = "~0.1.5"
+maidsafe_utilities = "~0.2.0"
 memmap = "~0.2.2"
 nat_traversal = "~0.0.3"
 net2 = "~0.2.20"
@@ -31,6 +31,7 @@ sodiumoxide = "~0.0.9"
 temp_utp = "~0.7.0"
 term = "~0.2.14"
 time = "~0.1.34"
+void = "~1.0.1"
 
 [dependencies.clippy]
 optional = true

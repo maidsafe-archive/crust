@@ -267,9 +267,15 @@ impl Service {
     /// Connecting]
     /// (https://github.com/maidsafe/crust/blob/master/docs/connect.md) for
     /// details on handling of connect in different protocols.
-    pub fn _connect(&self,
+    pub fn connect(&self,
                    our_connection_info: OurConnectionInfo,
                    their_connection_info: TheirConnectionInfo) {
+
+        let their_id = their_connection_info.id;
+        if !unwrap_result!(self.connection_map.lock()).get(&their_id).into_iter().all(Vec::is_empty) {
+            return;
+        }
+
         let event_tx = self.event_tx.clone();
         let connection_map = self.connection_map.clone();
         let our_public_key = self.our_keys.0.clone();
@@ -279,13 +285,6 @@ impl Service {
 
         // TODO connect to all the socket addresses of peer in parallel
         let _joiner = thread!("PeerConnectionThread", move || {
-            let their_id = their_connection_info.id;
-
-            /*
-             *
-             *  For now, just do utp rendezvous connect
-             *
-            // TODO(afck): Retry with delay, until the called connect, too.
             for tcp_addr in their_connection_info.static_contact_info.tcp_acceptors {
                 match connection::connect_tcp_endpoint(tcp_addr,
                                                        our_contact_info.clone(),
@@ -293,18 +292,18 @@ impl Service {
                                                        event_tx.clone(),
                                                        connection_map.clone(),
                                                        Some(their_id)) {
-                    Err(e) => (),
+                    Err(_) => continue, // TODO(canndrew) report this error
                     Ok(connection) => {
-                        unwrap_result!(connection_map.lock())
-                            .entry(their_id)
-                            .or_insert(Vec::new())
-                            .push(connection);
-                        let _ = event_tx.send(Event::NewPeer(Ok(()), their_id));
+                        let mut guard = unwrap_result!(connection_map.lock());
+                        let connections = guard.entry(their_id).or_insert_with(Vec::new);
+                        if connections.is_empty() {
+                            let _ = event_tx.send(Event::NewPeer(Ok(()), their_id));
+                        }
+                        connections.push(connection);
                         return;
                     }
                 }
             };
-            */
 
             let res = PunchedUdpSocket::punch_hole(our_connection_info.udp_socket,
                                                    our_connection_info.priv_info,
@@ -334,54 +333,6 @@ impl Service {
                 }
             };
             let _ = event_tx.send(Event::NewPeer(result, their_id));
-        });
-    }
-
-    /// Connect, but only via TCP.
-    // TODO: Replace this with the current `_connect` once it works.
-    pub fn connect(&self,
-                       our_connection_info: OurConnectionInfo,
-                       their_connection_info: TheirConnectionInfo) {
-        let their_id = their_connection_info.id;
-
-        if !unwrap_result!(self.connection_map.lock()).get(&their_id).into_iter().all(Vec::is_empty) {
-            return;
-        }
-
-        let event_tx = self.event_tx.clone();
-        let connection_map = self.connection_map.clone();
-        let our_public_key = self.our_keys.0.clone();
-        let our_contact_info = self.static_contact_info.clone();
-
-        unwrap_result!(self.expected_peers.lock()).insert(their_connection_info.id);
-
-        // TODO connect to all the socket addresses of peer in parallel
-        let _joiner = thread!("PeerConnectionThread", move || {
-            let mut last_err = io::Error::new(io::ErrorKind::NotFound, "No TCP acceptors found.");
-
-            for tcp_addr in their_connection_info.static_contact_info.tcp_acceptors {
-                match connection::connect_tcp_endpoint(tcp_addr,
-                                                       our_contact_info.clone(),
-                                                       our_public_key,
-                                                       event_tx.clone(),
-                                                       connection_map.clone(),
-                                                       Some(their_id)) {
-                    Err(e) => last_err = e,
-                    Ok(connection) => {
-                        let mut guard = unwrap_result!(connection_map.lock());
-                        let connections = guard.entry(their_id).or_insert_with(Vec::new);
-                        if connections.is_empty() {
-                            let _ = event_tx.send(Event::NewPeer(Ok(()), their_id));
-                        }
-                        connections.push(connection);
-                        return;
-                    }
-                }
-            };
-
-            if unwrap_result!(connection_map.lock()).get(&their_id).into_iter().all(Vec::is_empty) {
-                let _ = event_tx.send(Event::NewPeer(Err(last_err), their_id));
-            }
         });
     }
 
@@ -447,7 +398,9 @@ impl Service {
 
 impl Drop for Service {
     fn drop(&mut self) {
-        unwrap_result!(self.connection_map.lock()).clear();
+        // Disconnect from all peers when we drop the service
+        let mut cm = unwrap_result!(self.connection_map.lock());
+        cm.clear();
     }
 }
 
@@ -458,10 +411,16 @@ mod test {
     use endpoint::Protocol;
 
     use std::mem;
+    use std::time::Duration;
+    use std::sync::{Mutex, Arc, Barrier};
     use std::sync::mpsc;
     use std::sync::mpsc::Receiver;
     use std::thread;
+    use std::thread::JoinHandle;
+    use std::collections::{hash_map, HashMap};
 
+    use crossbeam;
+    use void::Void;
     use maidsafe_utilities::event_sender::{MaidSafeObserver, MaidSafeEventCategory};
 
     fn get_event_sender()
@@ -470,12 +429,34 @@ mod test {
             Receiver<Event>)
     {
         let (category_tx, category_rx) = mpsc::channel();
-        let event_category = MaidSafeEventCategory::CrustEvent;
+        let event_category = MaidSafeEventCategory::Crust;
         let (event_tx, event_rx) = mpsc::channel();
 
         (MaidSafeObserver::new(event_tx, event_category, category_tx),
          category_rx,
          event_rx)
+    }
+
+    fn timebomb<R, F>(dur: Duration, f: F) -> R
+            where R: Send,
+                  F: Send + FnOnce() -> R
+    {
+        crossbeam::scope(|scope| {
+            let thread_handle = thread::current();
+            let (done_tx, done_rx) = mpsc::channel::<Void>();
+            let jh = scope.spawn(move || {
+                let ret = f();
+                drop(done_tx);
+                thread_handle.unpark();
+                ret
+            });
+            thread::park_timeout(dur);
+            match done_rx.try_recv() {
+                Ok(x) => match x {},
+                Err(mpsc::TryRecvError::Empty) => panic!("Timed out!"),
+                Err(mpsc::TryRecvError::Disconnected) => jh.join(),
+            }
+        })
     }
 
     #[test]
@@ -594,6 +575,33 @@ mod test {
             Event::LostPeer(id) => assert_eq!(id, id_0),
             e => panic!("Received unexpected event: {:?}", e),
         }
+
+        // Drop services and make sure the event channels close
+        drop(service_0);
+        let (done_tx, done_rx) = mpsc::channel();
+        let tj = thread!("Drain event channel messages", move || {
+            match event_rx_0.recv() {
+                Ok(e) => panic!("Received unexpected event when shutting down: {:?}", e),
+                Err(mpsc::RecvError) => (),
+            };
+            done_tx.send(());
+        });
+        thread::park_timeout(Duration::from_secs(5));
+        unwrap_result!(done_rx.try_recv());
+        unwrap_result!(tj.join());
+
+        drop(service_1);
+        let (done_tx, done_rx) = mpsc::channel();
+        let tj = thread!("Drain event channel messages", move || {
+            match event_rx_1.recv() {
+                Ok(e) => panic!("Received unexpected event when shutting down: {:?}", e),
+                Err(mpsc::RecvError) => (),
+            };
+            done_tx.send(());
+        });
+        thread::park_timeout(Duration::from_secs(5));
+        unwrap_result!(done_rx.try_recv());
+        unwrap_result!(tj.join());
     }
 
     #[test]
@@ -613,7 +621,7 @@ mod test {
     }
 
     #[test]
-    fn drop() {
+    fn drop_disconnects() {
         let port = 45669;
         let (event_sender_0, category_rx_0, event_rx_0) = get_event_sender();
         let (event_sender_1, category_rx_1, event_rx_1) = get_event_sender();
@@ -650,7 +658,7 @@ mod test {
         };
 
         // Dropping service_0 should make service_1 receive a LostPeer event.
-        mem::drop(service_0);
+        drop(service_0);
         match unwrap_result!(event_rx_1.recv()) {
             Event::LostPeer(id) => assert_eq!(id, id_0),
             event => panic!("Received unexpected event: {:?}", event),
@@ -713,8 +721,8 @@ mod test {
         let their_ci_0 = our_ci_0.to_their_connection_info();
         let their_ci_1 = our_ci_1.to_their_connection_info();
 
-        service_0._connect(our_ci_0, their_ci_1);
-        service_1._connect(our_ci_1, their_ci_0);
+        service_0.connect(our_ci_0, their_ci_1);
+        service_1.connect(our_ci_1, their_ci_0);
 
         let id_1 = match unwrap_result!(event_rx_0.recv()) {
             Event::NewPeer(Ok(()), their_id) => their_id,
@@ -761,5 +769,179 @@ mod test {
             assert_eq!(data_rxd, data_txd);
             assert_eq!(peer_id, id_1);
         }
+
+        // Drop services and make sure the event channels close
+        drop(service_0);
+        let (done_tx, done_rx) = mpsc::channel();
+        let tj = thread!("Drain event channel messages", move || {
+            for _ in event_rx_0 {}
+            done_tx.send(());
+        });
+        thread::park_timeout(Duration::from_secs(5));
+        unwrap_result!(done_rx.try_recv());
+        unwrap_result!(tj.join());
+
+        drop(service_1);
+        let (done_tx, done_rx) = mpsc::channel();
+        let tj = thread!("Drain event channel messages", move || {
+            for _ in event_rx_1 {}
+            done_tx.send(());
+        });
+        thread::park_timeout(Duration::from_secs(5));
+        unwrap_result!(done_rx.try_recv());
+        unwrap_result!(tj.join());
+    }
+
+    #[test]
+    fn start_three_service_udp_rendezvous_connect() {
+        const NUM_SERVICES: usize = 3;
+        const MSG_SIZE: usize = 1024;
+        const NUM_MSGS: usize = 256;
+
+        struct TestNode {
+            event_rx: Receiver<Event>,
+            category_rx: Receiver<MaidSafeEventCategory>,
+            service: Service,
+            connection_id_rx: Receiver<TheirConnectionInfo>,
+            our_cis: Vec<OurConnectionInfo>,
+            our_index: usize,
+        }
+
+        impl TestNode {
+            fn new(index: usize) -> (TestNode, mpsc::Sender<TheirConnectionInfo>) {
+                let (event_sender, category_rx, event_rx) = get_event_sender();
+                let service = unwrap_result!(Service::new(event_sender, 0));
+                match unwrap_result!(event_rx.recv()) {
+                    Event::BootstrapFinished => (),
+                    m => panic!("Expected BootstrapFinished, got:{:?}", m),
+                };
+                let (ci_tx, ci_rx) = mpsc::channel();
+                (TestNode {
+                    event_rx: event_rx,
+                    category_rx: category_rx,
+                    service: service,
+                    connection_id_rx: ci_rx,
+                    our_cis: Vec::new(),
+                    our_index: index,
+                }, ci_tx)
+            }
+
+            fn make_connection_infos(&mut self, ci_txs: &[mpsc::Sender<TheirConnectionInfo>]) {
+                for (i, ci_tx) in ci_txs.iter().enumerate() {
+                    if i == self.our_index {
+                        continue;
+                    }
+                    const PREPARE_CI_TOKEN: u32 = 1234;
+                    self.service.prepare_connection_info(PREPARE_CI_TOKEN);
+                    let our_ci = match unwrap_result!(self.event_rx.recv()) {
+                        Event::ConnectionInfoPrepared(cir) => {
+                            assert_eq!(cir.result_token, PREPARE_CI_TOKEN);
+                            unwrap_result!(cir.result)
+                        }
+                        m => panic!("Received unexpected event: m == {:?}", m),
+                    };
+                    let their_ci = our_ci.to_their_connection_info();
+                    ci_tx.send(their_ci);
+                    self.our_cis.push(our_ci);
+                }
+            }
+
+            fn run(self, send_barrier: Arc<Barrier>, drop_barrier: Arc<Barrier>) -> JoinHandle<()> {
+                thread!("run!", move || {
+                    for (our_ci, their_ci) in self.our_cis.into_iter().zip(self.connection_id_rx.into_iter()) {
+                        self.service.connect(our_ci, their_ci);
+                    }
+                    let mut their_ids = HashMap::new();
+                    for _ in 0..(NUM_SERVICES - 1) {
+                        let their_id = match unwrap_result!(self.event_rx.recv()) {
+                            Event::NewPeer(Ok(()), their_id) => their_id,
+                            m => panic!("Expected NewPeer message. Got message {:?}", m),
+                        };
+                        match their_ids.insert(their_id, 0u32) {
+                            Some(_) => panic!("Received two NewPeer events for same peer!"),
+                            None => (),
+                        };
+                    }
+
+                    // Wait until all nodes have connected to each other before we start
+                    // exchanging messages.
+                    let _ = send_barrier.wait();
+
+                    for their_id in their_ids.keys() {
+                        for n in 0..NUM_MSGS {
+                            let mut msg = Vec::with_capacity(MSG_SIZE);
+                            for _ in 0..MSG_SIZE {
+                                msg.push(n as u8);
+                            }
+                            self.service.send(their_id, msg);
+                        };
+                    }
+
+                    for _ in 0..((NUM_SERVICES - 1) * NUM_MSGS) {
+                        match unwrap_result!(self.event_rx.recv()) {
+                            Event::NewMessage(their_id, msg) => {
+                                let n = msg[0];
+                                assert_eq!(msg.len(), MSG_SIZE);
+                                for m in msg {
+                                    assert_eq!(n, m);
+                                };
+                                match their_ids.entry(their_id.clone()) {
+                                    hash_map::Entry::Occupied(mut oe) => {
+                                        let next_msg = oe.get_mut();
+                                        assert_eq!(*next_msg, n as u32);
+                                        *next_msg += 1;
+                                    },
+                                    hash_map::Entry::Vacant(ve) => panic!("impossible!"),
+                                }
+                            },
+                            m => panic!("Unexpected msg receiving NewMessage: {:?}", m),
+                        }
+                    }
+
+                    // Wait until all nodes have finished exchanging messages before we start
+                    // disconnecting.
+                    let _ = drop_barrier.wait();
+
+                    drop(self.service);
+                    match self.event_rx.recv() {
+                        Ok(m) => match m {
+                            Event::LostPeer(..) => (),
+                            _ => panic!("Unexpected message when shutting down: {:?}", m),
+                        },
+                        Err(mpsc::RecvError) => (),
+                    }
+                })
+            }
+        }
+
+        let mut test_nodes = Vec::new();
+        let mut ci_txs = Vec::new();
+        for i in 0..NUM_SERVICES {
+            let (test_node, ci_tx) = TestNode::new(i);
+            test_nodes.push(test_node);
+            ci_txs.push(ci_tx);
+        }
+
+        for test_node in &mut test_nodes {
+            test_node.make_connection_infos(&ci_txs);
+        }
+
+        let send_barrier = Arc::new(Barrier::new(NUM_SERVICES));
+        let drop_barrier = Arc::new(Barrier::new(NUM_SERVICES));
+        let mut threads = Vec::new();
+        for test_node in test_nodes {
+            let send_barrier = send_barrier.clone();
+            let drop_barrier = drop_barrier.clone();
+            threads.push(test_node.run(send_barrier, drop_barrier));
+        }
+
+        // Wait one hundred millisecond per message
+        // TODO(canndrew): drop this limit
+        let timeout_ms = 100 * (NUM_MSGS * (NUM_SERVICES * (NUM_SERVICES - 1)) / 2) as u64;
+        timebomb(Duration::from_millis(timeout_ms), move || {
+            for thread in threads {
+                unwrap_result!(thread.join());
+            }
+        });
     }
 }
