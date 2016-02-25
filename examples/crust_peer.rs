@@ -312,7 +312,7 @@ fn main() {
 
     let (bs_sender, bs_receiver) = channel();
     let crust_event_category =
-        ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
+        ::maidsafe_utilities::event_sender::MaidSafeEventCategory::Crust;
     let event_sender =
         ::maidsafe_utilities::event_sender::MaidSafeObserver::new(channel_sender,
                                                                   crust_event_category,
@@ -332,7 +332,7 @@ fn main() {
                                               .spawn(move || {
         for it in category_rx.iter() {
             match it {
-                ::maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent => {
+                ::maidsafe_utilities::event_sender::MaidSafeEventCategory::Crust => {
                     if let Ok(event) = channel_receiver.try_recv() {
                         match event {
                             crust::Event::NewMessage(peer_id, bytes) => {
