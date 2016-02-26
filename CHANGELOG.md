@@ -1,5 +1,9 @@
 # CRUST - Change Log
 
+## [0.8.3]
+- Bugfixes
+- Disable uTP
+
 ## [0.8.2]
 - Randomise the bootstrap contact order.
 
