@@ -304,6 +304,7 @@ impl Service {
                 }
             };
 
+/*
             let res = PunchedUdpSocket::punch_hole(our_connection_info.udp_socket,
                                                    our_connection_info.priv_info,
                                                    their_connection_info.info);
@@ -333,6 +334,7 @@ impl Service {
                 }
                 Ok(connection) => return,
             };
+*/
 
             if unwrap_result!(connection_map.lock()).get(&their_id).into_iter().all(Vec::is_empty) {
                 let _ = event_tx.send(Event::NewPeer(Err(last_err), their_id));
@@ -670,6 +672,7 @@ mod test {
     }
 
     #[test]
+    #[ignore]
     fn start_two_service_udp_rendezvous_connect() {
         let (event_sender_0, category_rx_0, event_rx_0) = get_event_sender();
         let (event_sender_1, category_rx_1, event_rx_1) = get_event_sender();
@@ -797,6 +800,7 @@ mod test {
     }
 
     #[test]
+    #[ignore]
     fn start_three_service_udp_rendezvous_connect() {
         const NUM_SERVICES: usize = 3;
         const MSG_SIZE: usize = 1024;
