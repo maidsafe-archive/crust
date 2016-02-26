@@ -99,23 +99,14 @@ impl RaiiBootstrap {
 
             // 1st try a TCP connect
             // 2nd try a UDP connection (and upgrade to UTP)
-            let connect_result = ::connection::connect(contact,
-                                                       our_contact_info.clone(),
-                                                       our_public_key.clone(),
-                                                       event_tx.clone(),
-                                                       connection_map.clone(),
-                                                       mapping_context);
+            let _ = ::connection::connect(contact,
+                                          our_contact_info.clone(),
+                                          our_public_key.clone(),
+                                          event_tx.clone(),
+                                          connection_map.clone(),
+                                          mapping_context);
             if stop_flag.load(Ordering::SeqCst) {
                 break;
-            }
-
-            if let Ok(connection) = connect_result {
-                let their_id = connection.their_id().clone();
-                unwrap_result!(connection_map.lock())
-                    .entry(their_id)
-                    .or_insert_with(|| vec![])
-                    .push(connection);
-                let _ = event_tx.send(Event::BootstrapConnect(their_id));
             }
         }
 
