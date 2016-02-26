@@ -130,7 +130,7 @@ pub fn connect(peer_contact: StaticContactInfo,
                connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
                mc: &MappingContext)
                -> io::Result<()> {
-    let mut last_err = io::Error::new(io::ErrorKind::NotFound, "No TCP acceptors found.");
+    let mut last_err = io::Error::new(io::ErrorKind::NotFound, "No TCP/uTP acceptors found.");
     for tcp_addr in peer_contact.tcp_acceptors {
         match connect_tcp_endpoint(tcp_addr,
                                    our_contact_info.clone(),
@@ -142,9 +142,7 @@ pub fn connect(peer_contact: StaticContactInfo,
             Err(e) => last_err = e,
         }
     }
-    Err(last_err)
 
-    /*
     let (udp_socket, (our_priv_info, our_pub_info)) = {
         match MappedUdpSocket::new(mc).result_discard() {
             Ok(MappedUdpSocket { socket, endpoints }) => {
@@ -186,7 +184,7 @@ pub fn connect(peer_contact: StaticContactInfo,
                                     our_public_key.clone(),
                                     event_tx.clone(),
                                     connection_map.clone()) {
-                                    Ok(connection) => return Ok(connection),
+                                    Ok(()) => return Ok(()),
                                     Err(_) => {
                                         continue;
                                     },
@@ -208,13 +206,7 @@ pub fn connect(peer_contact: StaticContactInfo,
         }
     }
 
-    match last_err {
-        Some(e) => Err(e),
-        None => {
-            Err(io::Error::new(io::ErrorKind::Other,
-                               "Contact info does not contain any endpoint addresses"))
-        }
-    }*/
+    Err(last_err)
 }
 
 pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
@@ -477,7 +469,7 @@ pub fn utp_rendezvous_connect(udp_socket: UdpSocket,
                               our_public_key: PublicKey,
                               event_tx: ::CrustEventSender,
                               connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>)
-                              -> io::Result<Connection> {
+                              -> io::Result<()> {
     let (network_input, writer) = try!(utp_connections::rendezvous_connect_utp(udp_socket,
                                                                                their_addr));
     let our_addr = SocketAddr(network_input.local_addr());
@@ -495,6 +487,11 @@ pub fn utp_rendezvous_connect(udp_socket: UdpSocket,
                     if their_id != id {
                         return Err(io::Error::new(io::ErrorKind::Other, format!(
                                                   "Connected to the wrong peer: {:?}.", their_id)));
+                    };
+                    let mut guard = unwrap_result!(connection_map.lock());
+                    let connections = guard.entry(their_id).or_insert_with(|| Vec::with_capacity(1));
+                    if connections.is_empty() {
+                        let _ = event_tx.send(Event::NewPeer(Ok(()), their_id));
                     }
                     their_id
                 }
@@ -510,7 +507,13 @@ pub fn utp_rendezvous_connect(udp_socket: UdpSocket,
                     if key == our_public_key {
                         return Err(io::Error::new(io::ErrorKind::Other, "Connected to ourselves."));
                     }
-                    peer_id::new_id(key)
+                    let their_id = peer_id::new_id(key);
+                    let mut guard = unwrap_result!(connection_map.lock());
+                    let connections = guard.entry(their_id).or_insert_with(|| Vec::with_capacity(1));
+                    if connections.is_empty() {
+                        let _ = event_tx.send(Event::BootstrapConnect(their_id));
+                    }
+                    their_id
                 }
                 Ok(m) => {
                     return Err(io::Error::new(io::ErrorKind::Other, format!("Unexpected message when doing bootstrap utp connect to peer: {:?}", m)))
@@ -520,7 +523,15 @@ pub fn utp_rendezvous_connect(udp_socket: UdpSocket,
         },
         UtpRendezvousConnectMode::BootstrapAccept => {
             let their_id = match network_rx.receive() {
-                Ok(CrustMsg::BootstrapRequest(key)) => peer_id::new_id(key),
+                Ok(CrustMsg::BootstrapRequest(key)) => {
+                    let their_id = peer_id::new_id(key);
+                    let mut guard = unwrap_result!(connection_map.lock());
+                    let connections = guard.entry(their_id).or_insert_with(|| Vec::with_capacity(1));
+                    if connections.is_empty() {
+                        let _ = event_tx.send(Event::BootstrapAccept(their_id));
+                    }
+                    their_id
+                }
                 Ok(m) => {
                     return Err(io::Error::new(io::ErrorKind::Other, format!("Unexpected message when doing bootstrap utp accept from peer: {:?}", m)))
                 },
@@ -530,15 +541,18 @@ pub fn utp_rendezvous_connect(udp_socket: UdpSocket,
             their_id
         },
     };
+
+    let connection_map_clone = connection_map.clone();
+
     let joiner = RaiiThreadJoiner::new(thread!("UtpNetworkReader", move || {
         start_rx(network_rx,
                  their_id,
                  event_tx,
                  closed_clone,
-                 connection_map);
+                 connection_map_clone);
     }));
 
-    Ok(Connection {
+    let connection = Connection {
         protocol: Protocol::Utp,
         our_addr: our_addr,
         their_addr: their_new_addr,
@@ -546,7 +560,12 @@ pub fn utp_rendezvous_connect(udp_socket: UdpSocket,
         network_tx: RaiiSender(writer),
         _network_read_joiner: joiner,
         closed: closed,
-    })
+    };
+
+    let mut guard = unwrap_result!(connection_map.lock());
+    guard.entry(their_id).or_insert_with(Vec::new).push(connection);
+
+    Ok(())
 }
 
 fn start_rx(mut network_rx: Receiver,

@@ -134,7 +134,7 @@ impl RaiiUdpListener {
                       connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
                       mc: &MappingContext) {
         match msg {
-            ListenerRequest::Connect { our_info, pub_key } => {
+            ListenerRequest::Connect { our_info, .. } => {
                 let their_info = our_info;
                 let MappedUdpSocket { socket, endpoints } = {
                     let cloned_udp_socket = match udp_socket.try_clone() {
@@ -167,26 +167,10 @@ impl RaiiUdpListener {
                     }
                 };
 
-                let connection = match utp_rendezvous_connect(socket,
-                                                              peer_addr,
-                                                              UtpRendezvousConnectMode::BootstrapAccept,
-                                                              our_public_key.clone(),
-                                                              event_tx.clone(),
-                                                              connection_map.clone()) {
-                    Ok(connection) => connection,
-                    Err(_) => return,
-                };
-
-                unwrap_result!(connection_map.lock())
-                    .entry(peer_id::new_id(pub_key))
-                    .or_insert_with(Vec::new)
-                    .push(connection);
-
-                let event = Event::BootstrapAccept(peer_id::new_id(pub_key));
-
-                if event_tx.send(event).is_err() {
-                    return;
-                }
+                utp_rendezvous_connect(socket, peer_addr,
+                                       UtpRendezvousConnectMode::BootstrapAccept,
+                                       our_public_key.clone(), event_tx.clone(),
+                                       connection_map.clone());
             }
         }
     }

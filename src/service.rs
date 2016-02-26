@@ -304,11 +304,6 @@ impl Service {
                 }
             };
 
-            if unwrap_result!(connection_map.lock()).get(&their_id).into_iter().all(Vec::is_empty) {
-                let _ = event_tx.send(Event::NewPeer(Err(last_err), their_id));
-            }
-
-            /*
             let res = PunchedUdpSocket::punch_hole(our_connection_info.udp_socket,
                                                    our_connection_info.priv_info,
                                                    their_connection_info.info);
@@ -336,16 +331,12 @@ impl Service {
                         let _ = event_tx.send(Event::NewPeer(Err(e), their_id));
                     }
                 }
-                Ok(connection) => {
-                    let mut cm = unwrap_result!(connection_map.lock());
-                    let mut connections = cm.entry(their_id).or_insert_with(|| {
-                        let _ = event_tx.send(Event::NewPeer(Ok(()), their_id));
-                        Vec::with_capacity(1)
-                    });
-                    connections.push(connection);
-                }
+                Ok(connection) => return,
             };
-            */
+
+            if unwrap_result!(connection_map.lock()).get(&their_id).into_iter().all(Vec::is_empty) {
+                let _ = event_tx.send(Event::NewPeer(Err(last_err), their_id));
+            }
         });
     }
 
