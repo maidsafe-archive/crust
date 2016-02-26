@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `FileHandler` struct in crate `config_file_handler`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, FileHandler">
+
+    <title>config_file_handler::FileHandler - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+
+    <link rel="shortcut icon" href="http://maidsafe.net/img/favicon.ico">
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        <a href='../config_file_handler/index.html'><img src='https://raw.githubusercontent.com/maidsafe/QA/master/Images/maidsafe_logo.png' alt='' width='100'></a>
+        <p class='location'><a href='index.html'>config_file_handler</a></p><script>window.sidebarCurrent = {name: 'FileHandler', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content struct">
+<h1 class='fqn'><span class='in-band'>Struct <a href='index.html'>config_file_handler</a>::<wbr><a class='struct' href=''>FileHandler</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-67' class='srclink' href='../src/config_file_handler/file_handler.rs.html#52-54' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct FileHandler {
+    // some fields omitted
+}</pre><div class='docblock'><p>Struct for reading and writing config files.</p>
+
+<h1 id='thread--and-process-safety' class='section-header'><a href='#thread--and-process-safety'>Thread- and Process-Safety</a></h1>
+<p>Since all instances of <code>FileHandler</code> initialised with the same value for <code>name</code> within a single
+process will likely refer to the same file on disk, it is not safe to access any such instance
+concurrently with that same <em>or any other</em> such instance (with the exception of the
+<a href="#method.path"><code>path()</code></a> function which is the only non-mutating member function).</p>
+
+<p>For instances initialised with different values for <code>name</code>, it is safe to access separate
+instances concurrently.</p>
+
+<p>It is possibly unsafe to call <a href="#method.write_file"><code>write_file()</code></a> concurrently with a different
+process calling <a href="#method.read_file"><code>read_file()</code></a> or <a href="#method.write_file"><code>write_file()</code></a> where
+both processes have the same name and their instances of <code>FileHandler</code> are using the same name,
+since these may be accessing the same file on disk.  However, it is safe to call
+<a href="#method.read_file"><code>read_file()</code></a> concurrently across multiple such processes, since this
+function doesn&#39;t modify the file.</p>
+
+<p>Perhaps the easiest way to make multi-process access safe is to ensure each process is a single
+execution of a binary, and that each binary is located in a directory which is
+mutually-exclusive to all other such binaries, and that each config file to be managed by
+<code>FileHandler</code> is placed in each binary&#39;s <a href="fn.current_bin_dir.html"><code>current_bin_dir()</code></a>.  In
+this way, each process should be the only one accessing that file.</p>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../config_file_handler/struct.FileHandler.html' title='config_file_handler::FileHandler'>FileHandler</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>&lt;S: <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.AsRef.html' title='core::convert::AsRef'>AsRef</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/std/ffi/os_str/struct.OsStr.html' title='std::ffi::os_str::OsStr'>OsStr</a>&gt; + ?<a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a>&gt;(name: &amp;S) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='struct' href='../config_file_handler/struct.FileHandler.html' title='config_file_handler::FileHandler'>FileHandler</a>, <a class='enum' href='../config_file_handler/enum.Error.html' title='config_file_handler::Error'>Error</a>&gt;</code></h4>
+<div class='docblock'><p>Constructor taking the required file name (not the full path)</p>
+
+<p>This function tests whether it has write access to the file in the following locations in
+this order (see also <a href="https://github.com/maidsafe/crust/blob/master/docs/vault_config_file_flowchart.pdf">an example config file flowchart</a>):</p>
+
+<ol>
+<li><a href="fn.current_bin_dir.html"><code>current_bin_dir()</code></a></li>
+<li><a href="fn.user_app_dir.html"><code>user_app_dir()</code></a></li>
+<li><a href="fn.system_cache_dir.html"><code>system_cache_dir()</code></a></li>
+</ol>
+
+<p>See <a href="#thread--and-process-safety">Thread- and Process-Safety</a> for notes on thread- and
+process-safety.</p>
+</div><h4 id='method.cleanup' class='method'><code>fn <a href='#method.cleanup' class='fnname'>cleanup</a>&lt;S: <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.AsRef.html' title='core::convert::AsRef'>AsRef</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/std/ffi/os_str/struct.OsStr.html' title='std::ffi::os_str::OsStr'>OsStr</a>&gt;&gt;(name: &amp;S) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
+<div class='docblock'><p>Remove the file from every location where it can be read.</p>
+</div><h4 id='method.path' class='method'><code>fn <a href='#method.path' class='fnname'>path</a>(&amp;self) -&gt; &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/std/path/struct.Path.html' title='std::path::Path'>Path</a></code></h4>
+<div class='docblock'><p>Get the full path to the file.</p>
+</div><h4 id='method.read_file' class='method'><code>fn <a href='#method.read_file' class='fnname'>read_file</a>&lt;Contents: <a class='trait' href='../rustc_serialize/serialize/trait.Decodable.html' title='rustc_serialize::serialize::Decodable'>Decodable</a>&gt;(&amp;self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;Contents, <a class='enum' href='../config_file_handler/enum.Error.html' title='config_file_handler::Error'>Error</a>&gt;</code></h4>
+<div class='docblock'><p>Read the contents of the file and decode it as JSON.</p>
+</div><h4 id='method.write_file' class='method'><code>fn <a href='#method.write_file' class='fnname'>write_file</a>&lt;Contents: <a class='trait' href='../rustc_serialize/serialize/trait.Encodable.html' title='rustc_serialize::serialize::Encodable'>Encodable</a>&gt;(&amp;self, contents: &amp;Contents) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, <a class='enum' href='../config_file_handler/enum.Error.html' title='config_file_handler::Error'>Error</a>&gt;</code></h4>
+<div class='docblock'><p>Write <code>contents</code> to the file as JSON.</p>
+</div></div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "config_file_handler";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script defer src="../search-index.js"></script>
+</body>
+</html>
