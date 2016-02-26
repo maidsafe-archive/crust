@@ -130,7 +130,7 @@ pub fn connect(peer_contact: StaticContactInfo,
                connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
                mc: &MappingContext)
                -> io::Result<()> {
-    let mut last_err = io::Error::new(io::ErrorKind::NotFound, "No TCP/uTP acceptors found.");
+    let mut last_err = io::Error::new(io::ErrorKind::NotFound, "No TCP acceptors found.");
     for tcp_addr in peer_contact.tcp_acceptors {
         match connect_tcp_endpoint(tcp_addr,
                                    our_contact_info.clone(),
@@ -143,6 +143,7 @@ pub fn connect(peer_contact: StaticContactInfo,
         }
     }
 
+/*
     let (udp_socket, (our_priv_info, our_pub_info)) = {
         match MappedUdpSocket::new(mc).result_discard() {
             Ok(MappedUdpSocket { socket, endpoints }) => {
@@ -205,6 +206,7 @@ pub fn connect(peer_contact: StaticContactInfo,
             },
         }
     }
+*/
 
     Err(last_err)
 }
