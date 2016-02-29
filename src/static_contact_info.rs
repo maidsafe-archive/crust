@@ -35,6 +35,8 @@ pub struct StaticContactInfo {
     /// following listeners. Since this is a rare edge case we do not cater to it and have only
     /// global addresses populated for UDP.
     pub utp_custom_listeners: Vec<SocketAddr>,
-    /// Mapper server addresses
-    pub mapper_servers: Vec<SocketAddr>,
+    /// UDP mapper server addresses
+    pub udp_mapper_servers: Vec<SocketAddr>,
+    /// TCP mapper server addresses
+    pub tcp_mapper_servers: Vec<SocketAddr>,
 }

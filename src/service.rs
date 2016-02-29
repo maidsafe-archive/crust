@@ -124,7 +124,8 @@ impl Service {
         let static_contact_info = Arc::new(Mutex::new(StaticContactInfo {
             tcp_acceptors: Vec::new(),
             utp_custom_listeners: Vec::new(),
-            mapper_servers: Vec::new(),
+            udp_mapper_servers: Vec::new(),
+            tcp_mapper_servers: Vec::new(),
         }));
 
         let cloned_contact_info = static_contact_info.clone();
@@ -148,13 +149,15 @@ impl Service {
         // Form initial peer contact infos - these will also contain echo-service addrs.
         let bootstrap_contacts = try!(bootstrap::get_known_contacts(&service_discovery, &config));
         for peer_contact_info in bootstrap_contacts.iter() {
-            mapping_context.add_simple_servers(peer_contact_info.mapper_servers.clone());
+            mapping_context.add_simple_udp_servers(peer_contact_info.udp_mapper_servers.clone());
+            mapping_context.add_simple_tcp_servers(peer_contact_info.tcp_mapper_servers.clone());
         }
         let peer_contact_infos = Arc::new(Mutex::new(bootstrap_contacts));
 
         let connection_map = Arc::new(Mutex::new(HashMap::new()));
 
-        mapping_context.add_simple_servers(config.mapper_servers);
+        mapping_context.add_simple_udp_servers(config.udp_mapper_servers);
+        mapping_context.add_simple_tcp_servers(config.tcp_mapper_servers);
         let mapping_context = Arc::new(mapping_context);
 
         let bootstrap = RaiiBootstrap::new(static_contact_info.clone(),
@@ -349,14 +352,17 @@ impl Service {
         // for udp we can map another socket, but use same local port if accessable/mapped
         // otherwise do following
         let mut peer_udp_listeners = Vec::with_capacity(100);
+        let mut peer_tcp_listeners = Vec::with_capacity(100);
         for peer_contact_info in &*unwrap_result!(self.peer_contact_infos.lock()) {
-            peer_udp_listeners.extend(peer_contact_info.mapper_servers.clone());
+            peer_udp_listeners.extend(peer_contact_info.udp_mapper_servers.clone());
+            peer_tcp_listeners.extend(peer_contact_info.tcp_mapper_servers.clone());
         }
 
         let our_static_contact_info = self.static_contact_info.clone();
         let event_tx = self.event_tx.clone();
 
-        self.mapping_context.add_simple_servers(peer_udp_listeners);
+        self.mapping_context.add_simple_udp_servers(peer_udp_listeners);
+        self.mapping_context.add_simple_tcp_servers(peer_tcp_listeners);
         let result_external_socket = MappedUdpSocket::new(&self.mapping_context)
             .result_discard();
         let mapping_context = self.mapping_context.clone();

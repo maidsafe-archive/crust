@@ -32,7 +32,8 @@ pub struct Config {
     pub hard_coded_contacts: Vec<StaticContactInfo>,
     pub tcp_acceptor_port: Option<u16>,
     pub utp_acceptor_port: Option<u16>,
-    pub mapper_servers: Vec<SocketAddr>,
+    pub udp_mapper_servers: Vec<SocketAddr>,
+    pub tcp_mapper_servers: Vec<SocketAddr>,
 }
 
 impl Config {
@@ -41,7 +42,8 @@ impl Config {
             hard_coded_contacts: vec![] /* No hardcoded endpoints */,
             tcp_acceptor_port: None,
             utp_acceptor_port: None,
-            mapper_servers: vec![],
+            udp_mapper_servers: vec![],
+            tcp_mapper_servers: vec![],
         }
     }
 }
@@ -76,7 +78,8 @@ pub fn write_config_file(hard_coded_endpoints: Option<Vec<StaticContactInfo>>)
         hard_coded_contacts: hard_coded_endpoints.unwrap_or(default.hard_coded_contacts),
         tcp_acceptor_port: None,
         utp_acceptor_port: None,
-        mapper_servers: vec![],
+        udp_mapper_servers: vec![],
+        tcp_mapper_servers: vec![],
     };
     let mut config_path = try!(config_file_handler::current_bin_dir());
     config_path.push(try!(get_file_name()));

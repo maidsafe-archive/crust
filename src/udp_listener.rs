@@ -161,7 +161,7 @@ impl RaiiUdpListener {
                 }
 
                 let PunchedUdpSocket { socket, peer_addr } = {
-                    match PunchedUdpSocket::punch_hole(socket, our_priv_info, their_info) {
+                    match PunchedUdpSocket::punch_hole(socket, our_priv_info, their_info).result_discard() {
                         Ok(punched_socket) => punched_socket,
                         Err(e) => return,
                     }
