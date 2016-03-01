@@ -315,13 +315,15 @@ impl Service {
 
             let res = PunchedUdpSocket::punch_hole(our_connection_info.udp_socket,
                                                    our_connection_info.priv_info,
-                                                   their_connection_info.info);
+                                                   their_connection_info.info).result_discard();
             let (udp_socket, public_endpoint) = match res {
                 Ok(PunchedUdpSocket { socket, peer_addr }) => (socket, peer_addr),
-                Err(e) => {
+                Err(_) => {
                     let mut cm = unwrap_result!(connection_map.lock());
                     if !cm.contains_key(&their_id) {
-                        let ev = Event::NewPeer(Err(e), their_id);
+                        let ev = Event::NewPeer(Err(io::Error::new(io::ErrorKind::Other,
+                                                                   "Failed to punch a hole")),
+                                                their_id);
                         let _ = event_tx.send(ev);
                     }
                     return;
