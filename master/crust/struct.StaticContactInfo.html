@@ -46,11 +46,12 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-1964' class='srclink' href='../src/crust/static_contact_info.rs.html#25-40' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-1980' class='srclink' href='../src/crust/static_contact_info.rs.html#25-42' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct StaticContactInfo {
     pub tcp_acceptors: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../crust/struct.SocketAddr.html' title='crust::SocketAddr'>SocketAddr</a>&gt;,
     pub utp_custom_listeners: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../crust/struct.SocketAddr.html' title='crust::SocketAddr'>SocketAddr</a>&gt;,
-    pub mapper_servers: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../crust/struct.SocketAddr.html' title='crust::SocketAddr'>SocketAddr</a>&gt;,
+    pub udp_mapper_servers: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../crust/struct.SocketAddr.html' title='crust::SocketAddr'>SocketAddr</a>&gt;,
+    pub tcp_mapper_servers: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../crust/struct.SocketAddr.html' title='crust::SocketAddr'>SocketAddr</a>&gt;,
 }</pre><div class='docblock'><p>This struct contains information needed to Bootstrap and for echo-server services</p>
 </div><h2 class='fields'>Fields</h2>
 <table><tr class='stab '>
@@ -66,7 +67,9 @@ In this case the peer would ask for a new UDP socket address to connect to from 
 following listeners. Since this is a rare edge case we do not cater to it and have only
 global addresses populated for UDP.</p>
 </div></td></tr><tr class='stab '>
-                                  <td id='structfield.mapper_servers'><code>mapper_servers</code></td><td><div class='docblock'><p>Mapper server addresses</p>
+                                  <td id='structfield.udp_mapper_servers'><code>udp_mapper_servers</code></td><td><div class='docblock'><p>UDP mapper server addresses</p>
+</div></td></tr><tr class='stab '>
+                                  <td id='structfield.tcp_mapper_servers'><code>tcp_mapper_servers</code></td><td><div class='docblock'><p>TCP mapper server addresses</p>
 </div></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/hash/trait.Hash.html' title='core::hash::Hash'>Hash</a> for <a class='struct' href='../crust/struct.StaticContactInfo.html' title='crust::StaticContactInfo'>StaticContactInfo</a></code></h3><div class='impl-items'><h4 id='method.hash' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/hash/trait.Hash.html#method.hash' class='fnname'>hash</a>&lt;__H: <a class='trait' href='https://doc.rust-lang.org/nightly/core/hash/trait.Hasher.html' title='core::hash::Hasher'>Hasher</a>&gt;(&amp;self, __arg_0: &amp;mut __H)</code></h4>
 <h4 id='method.hash_slice' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/hash/trait.Hash.html#method.hash_slice' class='fnname'>hash_slice</a>&lt;H&gt;(data: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[Self]</a>, state: &amp;mut H) <span class='where'>where H: <a class='trait' href='https://doc.rust-lang.org/nightly/core/hash/trait.Hasher.html' title='core::hash::Hasher'>Hasher</a></span></code></h4>
 </div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.Eq.html' title='core::cmp::Eq'>Eq</a> for <a class='struct' href='../crust/struct.StaticContactInfo.html' title='crust::StaticContactInfo'>StaticContactInfo</a></code></h3><div class='impl-items'></div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a> for <a class='struct' href='../crust/struct.StaticContactInfo.html' title='crust::StaticContactInfo'>StaticContactInfo</a></code></h3><div class='impl-items'><h4 id='method.eq' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.eq' class='fnname'>eq</a>(&amp;self, __arg_0: &amp;<a class='struct' href='../crust/struct.StaticContactInfo.html' title='crust::StaticContactInfo'>StaticContactInfo</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>

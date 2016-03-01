@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/nat_traversal-0.0.3/src/simple_udp_hole_punch_server.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/nat_traversal-0.1.0/src/simple_udp_hole_punch_server.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>simple_udp_hole_punch_server.rs.html -- source</title>
@@ -185,15 +185,6 @@
 <span id="142">142</span>
 <span id="143">143</span>
 <span id="144">144</span>
-<span id="145">145</span>
-<span id="146">146</span>
-<span id="147">147</span>
-<span id="148">148</span>
-<span id="149">149</span>
-<span id="150">150</span>
-<span id="151">151</span>
-<span id="152">152</span>
-<span id="153">153</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2016 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -216,35 +207,30 @@
 <span class='doccomment'>//! NAT traversal utilities.</span>
 
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>;
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>net</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>net</span>::<span class='ident'>UdpSocket</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>time</span>::<span class='ident'>Duration</span>;
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>mpsc</span>::<span class='ident'>Sender</span>;
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::{<span class='ident'>Arc</span>, <span class='ident'>Mutex</span>};
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>Arc</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>atomic</span>::{<span class='ident'>AtomicBool</span>, <span class='ident'>Ordering</span>};
 
-<span class='kw'>use</span> <span class='ident'>get_if_addrs</span>;
-<span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>::<span class='ident'>serialisation</span>::{<span class='ident'>deserialise</span>, <span class='ident'>serialise</span>};
+<span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>::<span class='ident'>serialisation</span>::<span class='ident'>serialise</span>;
 <span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>::<span class='ident'>thread</span>::<span class='ident'>RaiiThreadJoiner</span>;
-<span class='kw'>use</span> <span class='ident'>rand</span>;
-<span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>crypto</span>::<span class='ident'>sign</span>::<span class='ident'>PublicKey</span>;
 <span class='kw'>use</span> <span class='ident'>w_result</span>::{<span class='ident'>WResult</span>, <span class='ident'>WOk</span>, <span class='ident'>WErr</span>};
 
 <span class='kw'>use</span> <span class='ident'>socket_addr</span>::<span class='ident'>SocketAddr</span>;
 <span class='kw'>use</span> <span class='ident'>listener_message</span>;
 
 <span class='kw'>use</span> <span class='ident'>mapping_context</span>::<span class='ident'>MappingContext</span>;
-<span class='kw'>use</span> <span class='ident'>mapped_socket_addr</span>::<span class='ident'>MappedSocketAddr</span>;
 <span class='kw'>use</span> <span class='ident'>mapped_udp_socket</span>::{<span class='ident'>MappedUdpSocket</span>, <span class='ident'>MappedUdpSocketNewError</span>, <span class='ident'>MappedUdpSocketMapWarning</span>};
 
 <span class='kw'>const</span> <span class='ident'>UDP_READ_TIMEOUT_SECS</span>: <span class='ident'>u64</span> <span class='op'>=</span> <span class='number'>2</span>;
 
 <span class='doccomment'>/// RAII type for a hole punch server which speaks the simple hole punching protocol.</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>SimpleUdpHolePunchServer</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span> {
-    <span class='ident'>mapping_context</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>MappingContext</span>,
+    <span class='comment'>// TODO(canndrew): Use this to refresh our external addrs.</span>
+    <span class='ident'>_mapping_context</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>MappingContext</span>,
     <span class='ident'>stop_flag</span>: <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>AtomicBool</span><span class='op'>&gt;</span>,
     <span class='ident'>_raii_joiner</span>: <span class='ident'>RaiiThreadJoiner</span>,
-    <span class='ident'>known_endpoints</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>MappedSocketAddr</span><span class='op'>&gt;</span>,
+    <span class='ident'>known_endpoints</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>SocketAddr</span><span class='op'>&gt;</span>,
 }
 
 <span class='macro'>quick_error</span><span class='macro'>!</span> {
@@ -299,11 +285,17 @@
             <span class='ident'>Self</span>::<span class='ident'>run</span>(<span class='ident'>udp_socket</span>, <span class='ident'>cloned_stop_flag</span>);
         }));
 
+        <span class='kw'>let</span> <span class='ident'>unrestricted_endpoints</span> <span class='op'>=</span> <span class='ident'>mapped_socket</span>.<span class='ident'>endpoints</span>.<span class='ident'>into_iter</span>().<span class='ident'>filter_map</span>(<span class='op'>|</span><span class='ident'>msa</span><span class='op'>|</span> {
+            <span class='kw'>match</span> <span class='ident'>msa</span>.<span class='ident'>nat_restricted</span> {
+                <span class='boolval'>false</span> <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>(<span class='ident'>msa</span>.<span class='ident'>addr</span>),
+                <span class='boolval'>true</span> <span class='op'>=&gt;</span> <span class='prelude-val'>None</span>,
+            }
+        }).<span class='ident'>collect</span>();
         <span class='ident'>WOk</span>(<span class='ident'>SimpleUdpHolePunchServer</span> {
-            <span class='ident'>mapping_context</span>: <span class='ident'>mapping_context</span>,
+            <span class='ident'>_mapping_context</span>: <span class='ident'>mapping_context</span>,
             <span class='ident'>stop_flag</span>: <span class='ident'>stop_flag</span>,
             <span class='ident'>_raii_joiner</span>: <span class='ident'>raii_joiner</span>,
-            <span class='ident'>known_endpoints</span>: <span class='ident'>mapped_socket</span>.<span class='ident'>endpoints</span>,
+            <span class='ident'>known_endpoints</span>: <span class='ident'>unrestricted_endpoints</span>,
         }, <span class='ident'>warnings</span>)
     }
 
@@ -328,17 +320,7 @@
     }
 
     <span class='doccomment'>/// Get the external addresses of this server to be shared with peers.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>addresses</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>MappedSocketAddr</span><span class='op'>&gt;</span> {
-        <span class='comment'>// TODO:</span>
-
-        <span class='comment'>// The idea was it would need to know it&#39;s own external IP and whether</span>
-        <span class='comment'>// it has an open port or not.  And it might occasionally need to make</span>
-        <span class='comment'>// sure its port is still mapped. ie still open on the router</span>
-
-        <span class='comment'>// So it wants to find external ports with `nat_restricted ==</span>
-        <span class='comment'>// false`. Those are the only ones worth sharing with other peers. it</span>
-        <span class='comment'>// can get those by doing upnp for example</span>
-
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>addresses</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>SocketAddr</span><span class='op'>&gt;</span> {
         <span class='self'>self</span>.<span class='ident'>known_endpoints</span>.<span class='ident'>clone</span>()
     }
 }

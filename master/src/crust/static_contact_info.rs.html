@@ -81,6 +81,8 @@
 <span id="38">38</span>
 <span id="39">39</span>
 <span id="40">40</span>
+<span id="41">41</span>
+<span id="42">42</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -119,8 +121,10 @@
     <span class='doccomment'>/// following listeners. Since this is a rare edge case we do not cater to it and have only</span>
     <span class='doccomment'>/// global addresses populated for UDP.</span>
     <span class='kw'>pub</span> <span class='ident'>utp_custom_listeners</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>SocketAddr</span><span class='op'>&gt;</span>,
-    <span class='doccomment'>/// Mapper server addresses</span>
-    <span class='kw'>pub</span> <span class='ident'>mapper_servers</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>SocketAddr</span><span class='op'>&gt;</span>,
+    <span class='doccomment'>/// UDP mapper server addresses</span>
+    <span class='kw'>pub</span> <span class='ident'>udp_mapper_servers</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>SocketAddr</span><span class='op'>&gt;</span>,
+    <span class='doccomment'>/// TCP mapper server addresses</span>
+    <span class='kw'>pub</span> <span class='ident'>tcp_mapper_servers</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>SocketAddr</span><span class='op'>&gt;</span>,
 }
 </pre>
 </section>

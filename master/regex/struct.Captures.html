@@ -104,16 +104,29 @@ isn&#39;t a valid index), then it is replaced with the empty string.</p>
 <div class='docblock'><p>Returns true if and only if there are no captured groups.</p>
 </div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl&lt;'t&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Index.html' title='core::ops::Index'>Index</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>&gt; for <a class='struct' href='../regex/struct.Captures.html' title='regex::Captures'>Captures</a>&lt;'t&gt;</code></h3><div class='docblock'><p>Get a group by index.</p>
 
+<p><code>&#39;t</code> is the lifetime of the matched text.</p>
+
+<p>The text can&#39;t outlive the <code>Captures</code> object if this method is
+used, because of how <code>Index</code> is defined (normally <code>a[i]</code> is part
+of <code>a</code> and can&#39;t outlive it); to do that, use <code>at()</code> instead.</p>
+
 <h1 id='panics' class='section-header'><a href='#panics'>Panics</a></h1>
 <p>If there is no group at the given index.</p>
 </div><div class='impl-items'><h4 id='assoc_type.Output' class='type'><code>type Output = <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a></code></h4>
 <h4 id='method.index' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/ops/trait.Index.html#method.index' class='fnname'>index</a>(&amp;self, i: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>) -&gt; &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a></code></h4>
-</div><h3 class='impl'><code>impl&lt;'t&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Index.html' title='core::ops::Index'>Index</a>&lt;&amp;'t <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt; for <a class='struct' href='../regex/struct.Captures.html' title='regex::Captures'>Captures</a>&lt;'t&gt;</code></h3><div class='docblock'><p>Get a group by name.</p>
+</div><h3 class='impl'><code>impl&lt;'t, 'i&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Index.html' title='core::ops::Index'>Index</a>&lt;&amp;'i <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt; for <a class='struct' href='../regex/struct.Captures.html' title='regex::Captures'>Captures</a>&lt;'t&gt;</code></h3><div class='docblock'><p>Get a group by name.</p>
+
+<p><code>&#39;t</code> is the lifetime of the matched text and <code>&#39;i</code> is the lifetime
+of the group name (the index).</p>
+
+<p>The text can&#39;t outlive the <code>Captures</code> object if this method is
+used, because of how <code>Index</code> is defined (normally <code>a[i]</code> is part
+of <code>a</code> and can&#39;t outlive it); to do that, use <code>name</code> instead.</p>
 
 <h1 id='panics-1' class='section-header'><a href='#panics-1'>Panics</a></h1>
 <p>If there is no group named by the given value.</p>
 </div><div class='impl-items'><h4 id='assoc_type.Output-1' class='type'><code>type Output = <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a></code></h4>
-<h4 id='method.index-1' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/ops/trait.Index.html#method.index' class='fnname'>index</a>&lt;'a&gt;(&amp;'a self, name: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; &amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a></code></h4>
+<h4 id='method.index-1' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/ops/trait.Index.html#method.index' class='fnname'>index</a>&lt;'a&gt;(&amp;'a self, name: &amp;'i <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; &amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a></code></h4>
 </div></section>
     <section id='search' class="content hidden"></section>
 

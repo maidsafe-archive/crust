@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/nat_traversal-0.0.3/src/mapped_udp_socket.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/nat_traversal-0.1.0/src/mapped_udp_socket.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>mapped_udp_socket.rs.html -- source</title>
@@ -407,10 +407,6 @@
 <span id="364">364</span>
 <span id="365">365</span>
 <span id="366">366</span>
-<span id="367">367</span>
-<span id="368">368</span>
-<span id="369">369</span>
-<span id="370">370</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2016 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -440,18 +436,15 @@
 
 <span class='kw'>use</span> <span class='ident'>igd</span>;
 <span class='kw'>use</span> <span class='ident'>time</span>;
-<span class='kw'>use</span> <span class='ident'>get_if_addrs</span>;
 <span class='kw'>use</span> <span class='ident'>ip</span>::{<span class='ident'>SocketAddrExt</span>, <span class='ident'>IpAddr</span>};
-<span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>::<span class='ident'>serialisation</span>::{<span class='ident'>deserialise</span>, <span class='ident'>serialise</span>};
+<span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>::<span class='ident'>serialisation</span>::<span class='ident'>deserialise</span>;
 <span class='kw'>use</span> <span class='ident'>socket_addr</span>::<span class='ident'>SocketAddr</span>;
 <span class='kw'>use</span> <span class='ident'>w_result</span>::{<span class='ident'>WResult</span>, <span class='ident'>WOk</span>, <span class='ident'>WErr</span>};
 
-<span class='kw'>use</span> <span class='ident'>hole_punch_server_addr</span>::<span class='ident'>HolePunchServerAddr</span>;
 <span class='kw'>use</span> <span class='ident'>listener_message</span>;
 <span class='kw'>use</span> <span class='ident'>mapping_context</span>;
 <span class='kw'>use</span> <span class='ident'>mapping_context</span>::<span class='ident'>MappingContext</span>;
 <span class='kw'>use</span> <span class='ident'>mapped_socket_addr</span>::<span class='ident'>MappedSocketAddr</span>;
-<span class='kw'>use</span> <span class='ident'>periodic_sender</span>::<span class='ident'>PeriodicSender</span>;
 <span class='kw'>use</span> <span class='ident'>socket_utils</span>;
 <span class='kw'>use</span> <span class='ident'>socket_utils</span>::<span class='ident'>RecvUntil</span>;
 
@@ -678,15 +671,14 @@
         <span class='kw'>const</span> <span class='ident'>MAX_DATAGRAM_SIZE</span>: <span class='ident'>usize</span> <span class='op'>=</span> <span class='number'>256</span>;
 
         <span class='kw'>let</span> <span class='ident'>send_data</span> <span class='op'>=</span> <span class='ident'>listener_message</span>::<span class='ident'>REQUEST_MAGIC_CONSTANT</span>;
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>simple_servers</span>: <span class='ident'>HashSet</span><span class='op'>&lt;</span><span class='ident'>SocketAddr</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>mapping_context</span>::<span class='ident'>simple_servers</span>(<span class='kw-2'>&amp;</span><span class='ident'>mc</span>)
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>simple_servers</span>: <span class='ident'>HashSet</span><span class='op'>&lt;</span><span class='ident'>SocketAddr</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>mapping_context</span>::<span class='ident'>simple_udp_servers</span>(<span class='kw-2'>&amp;</span><span class='ident'>mc</span>)
                                                                       .<span class='ident'>into_iter</span>().<span class='ident'>collect</span>();
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>deadline</span> <span class='op'>=</span> <span class='ident'>time</span>::<span class='ident'>SteadyTime</span>::<span class='ident'>now</span>();
+
         <span class='comment'>// Ping all the simple servers and waiting for a response.</span>
-        <span class='comment'>// Run this loop at most 8 times for a maximum timeout of 250ms * 8 == 2 seconds.</span>
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>attempt</span> <span class='op'>=</span> <span class='number'>0</span>;
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>max_attempts</span> <span class='op'>=</span> <span class='number'>8</span>;
-        <span class='kw'>while</span> <span class='ident'>attempt</span> <span class='op'>&lt;</span> <span class='ident'>max_attempts</span> <span class='op'>&amp;&amp;</span> <span class='ident'>simple_servers</span>.<span class='ident'>len</span>() <span class='op'>&gt;</span> <span class='number'>0</span> {
-            <span class='ident'>attempt</span> <span class='op'>+=</span> <span class='number'>1</span>;
+        <span class='kw'>let</span> <span class='ident'>start_time</span> <span class='op'>=</span> <span class='ident'>time</span>::<span class='ident'>SteadyTime</span>::<span class='ident'>now</span>();
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>deadline</span> <span class='op'>=</span> <span class='ident'>start_time</span>;
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>final_deadline</span> <span class='op'>=</span> <span class='ident'>start_time</span> <span class='op'>+</span> <span class='ident'>time</span>::<span class='ident'>Duration</span>::<span class='ident'>seconds</span>(<span class='number'>2</span>);
+        <span class='kw'>while</span> <span class='ident'>deadline</span> <span class='op'>&lt;</span> <span class='ident'>final_deadline</span> <span class='op'>&amp;&amp;</span> <span class='ident'>simple_servers</span>.<span class='ident'>len</span>() <span class='op'>&gt;</span> <span class='number'>0</span> {
             <span class='ident'>deadline</span> <span class='op'>=</span> <span class='ident'>deadline</span> <span class='op'>+</span> <span class='ident'>time</span>::<span class='ident'>Duration</span>::<span class='ident'>milliseconds</span>(<span class='number'>250</span>);
 
             <span class='comment'>// TODO(canndrew): We should limit the number of servers that we send to. If the user</span>
@@ -718,13 +710,13 @@
                     <span class='comment'>// give us the same address. By contrast, servers on the same subnet as us or</span>
                     <span class='comment'>// behind the same carrier-level NAT are likely to respond in under a second.</span>
                     <span class='comment'>// So once we have one global address drop the timeout.</span>
-                    <span class='comment'>// TODO(canndrew): For now this is commented-out. Waiting for the is_global</span>
-                    <span class='comment'>// method to become available in the next stable rust.</span>
-                    <span class='comment'>/*
-                    if recv_addr.ip().is_global() {
-                        max_attempts = 4;
+
+                    <span class='comment'>// TODO(canndrew): Use IpAddr::is_global when it&#39;s available</span>
+                    <span class='comment'>// let is_global = recv_addr.is_global();</span>
+                    <span class='kw'>let</span> <span class='ident'>is_global</span> <span class='op'>=</span> <span class='boolval'>false</span>;
+                    <span class='kw'>if</span> <span class='ident'>is_global</span> {
+                        <span class='ident'>final_deadline</span> <span class='op'>=</span> <span class='ident'>start_time</span> <span class='op'>+</span> <span class='ident'>time</span>::<span class='ident'>Duration</span>::<span class='ident'>seconds</span>(<span class='number'>1</span>);
                     };
-                    */</span>
 
                     <span class='comment'>// Add this endpoint if we don&#39;t already know about it. We may have found it</span>
                     <span class='comment'>// through IGD or it may be a local interface.</span>
