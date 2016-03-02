@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `PathExt` trait in crate `bitflags`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, PathExt">
+
+    <title>bitflags::__core::fs::PathExt - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>fs</a></p><script>window.sidebarCurrent = {name: 'PathExt', ty: 'trait', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content trait">
+<h1 class='fqn'><span class='in-band'>Trait <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>fs</a>::<wbr><a class='trait' href=''>PathExt</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-3845' class='srclink' href='https://doc.rust-lang.org/nightly/std/fs/trait.PathExt.html?gotosrc=3845' title='goto source code'>[src]</a></span></h1>
+<pre class='rust trait'>pub trait PathExt {
+    fn <a href='#tymethod.metadata' class='fnname'>metadata</a>(&amp;self) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='struct' href='../../../bitflags/__core/fs/struct.Metadata.html' title='bitflags::__core::fs::Metadata'>Metadata</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;;
+    fn <a href='#tymethod.symlink_metadata' class='fnname'>symlink_metadata</a>(&amp;self) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='struct' href='../../../bitflags/__core/fs/struct.Metadata.html' title='bitflags::__core::fs::Metadata'>Metadata</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;;
+    fn <a href='#tymethod.canonicalize' class='fnname'>canonicalize</a>(&amp;self) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='struct' href='../../../bitflags/__core/path/struct.PathBuf.html' title='bitflags::__core::path::PathBuf'>PathBuf</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;;
+    fn <a href='#tymethod.read_link' class='fnname'>read_link</a>(&amp;self) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='struct' href='../../../bitflags/__core/path/struct.PathBuf.html' title='bitflags::__core::path::PathBuf'>PathBuf</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;;
+    fn <a href='#tymethod.read_dir' class='fnname'>read_dir</a>(&amp;self) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='struct' href='../../../bitflags/__core/fs/struct.ReadDir.html' title='bitflags::__core::fs::ReadDir'>ReadDir</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;;
+    fn <a href='#tymethod.exists' class='fnname'>exists</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a>;
+    fn <a href='#tymethod.is_file' class='fnname'>is_file</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a>;
+    fn <a href='#tymethod.is_dir' class='fnname'>is_dir</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a>;
+}</pre><div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.5.0<p>: replaced with inherent methods</p>
+</em></div><div class='docblock'><p>Utility methods for paths.</p>
+</div>
+            <h2 id='required-methods'>Required Methods</h2>
+            <div class='methods'>
+        <h3 id='tymethod.metadata' class='method stab unstable deprecated'><code>fn <a href='#tymethod.metadata' class='fnname'>metadata</a>(&amp;self) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='struct' href='../../../bitflags/__core/fs/struct.Metadata.html' title='bitflags::__core::fs::Metadata'>Metadata</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;</code></h3><div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.5.0<p>: replaced with inherent methods</p>
+</em></div><div class='docblock'><p>Gets information on the file, directory, etc at this path.</p>
+
+<p>Consult the <code>fs::metadata</code> documentation for more info.</p>
+
+<p>This call preserves identical runtime/error semantics with
+<code>fs::metadata</code>.</p>
+</div><h3 id='tymethod.symlink_metadata' class='method stab unstable deprecated'><code>fn <a href='#tymethod.symlink_metadata' class='fnname'>symlink_metadata</a>(&amp;self) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='struct' href='../../../bitflags/__core/fs/struct.Metadata.html' title='bitflags::__core::fs::Metadata'>Metadata</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;</code></h3><div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.5.0<p>: replaced with inherent methods</p>
+</em></div><div class='docblock'><p>Gets information on the file, directory, etc at this path.</p>
+
+<p>Consult the <code>fs::symlink_metadata</code> documentation for more info.</p>
+
+<p>This call preserves identical runtime/error semantics with
+<code>fs::symlink_metadata</code>.</p>
+</div><h3 id='tymethod.canonicalize' class='method stab unstable deprecated'><code>fn <a href='#tymethod.canonicalize' class='fnname'>canonicalize</a>(&amp;self) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='struct' href='../../../bitflags/__core/path/struct.PathBuf.html' title='bitflags::__core::path::PathBuf'>PathBuf</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;</code></h3><div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.5.0<p>: replaced with inherent methods</p>
+</em></div><div class='docblock'><p>Returns the canonical form of a path, normalizing all components and
+eliminate all symlinks.</p>
+
+<p>This call preserves identical runtime/error semantics with
+<code>fs::canonicalize</code>.</p>
+</div><h3 id='tymethod.read_link' class='method stab unstable deprecated'><code>fn <a href='#tymethod.read_link' class='fnname'>read_link</a>(&amp;self) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='struct' href='../../../bitflags/__core/path/struct.PathBuf.html' title='bitflags::__core::path::PathBuf'>PathBuf</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;</code></h3><div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.5.0<p>: replaced with inherent methods</p>
+</em></div><div class='docblock'><p>Reads the symlink at this path.</p>
+
+<p>For more information see <code>fs::read_link</code>.</p>
+</div><h3 id='tymethod.read_dir' class='method stab unstable deprecated'><code>fn <a href='#tymethod.read_dir' class='fnname'>read_dir</a>(&amp;self) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='struct' href='../../../bitflags/__core/fs/struct.ReadDir.html' title='bitflags::__core::fs::ReadDir'>ReadDir</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;</code></h3><div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.5.0<p>: replaced with inherent methods</p>
+</em></div><div class='docblock'><p>Reads the directory at this path.</p>
+
+<p>For more information see <code>fs::read_dir</code>.</p>
+</div><h3 id='tymethod.exists' class='method stab unstable deprecated'><code>fn <a href='#tymethod.exists' class='fnname'>exists</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a></code></h3><div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.5.0<p>: replaced with inherent methods</p>
+</em></div><div class='docblock'><p>Boolean value indicator whether the underlying file exists on the local
+filesystem. Returns false in exactly the cases where <code>fs::metadata</code>
+fails.</p>
+</div><h3 id='tymethod.is_file' class='method stab unstable deprecated'><code>fn <a href='#tymethod.is_file' class='fnname'>is_file</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a></code></h3><div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.5.0<p>: replaced with inherent methods</p>
+</em></div><div class='docblock'><p>Whether the underlying implementation (be it a file path, or something
+else) points at a &quot;regular file&quot; on the FS. Will return false for paths
+to non-existent locations or directories or other non-regular files
+(named pipes, etc). Follows links when making this determination.</p>
+</div><h3 id='tymethod.is_dir' class='method stab unstable deprecated'><code>fn <a href='#tymethod.is_dir' class='fnname'>is_dir</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a></code></h3><div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.5.0<p>: replaced with inherent methods</p>
+</em></div><div class='docblock'><p>Whether the underlying implementation (be it a file path, or something
+else) is pointing at a directory in the underlying FS. Will return
+false for paths to non-existent locations or if the item is not a
+directory (eg files, named pipes, etc). Follows links when making this
+determination.</p>
+</div></div>
+        <h2 id='implementors'>Implementors</h2>
+        <ul class='item-list' id='implementors-list'>
+    <li><code>impl <a class='trait' href='../../../bitflags/__core/io/prelude/trait.PathExt.html' title='bitflags::__core::io::prelude::PathExt'>PathExt</a> for <a class='struct' href='../../../bitflags/__core/path/struct.Path.html' title='bitflags::__core::path::Path'>Path</a></code></li>
+</ul><script type="text/javascript" async
+                              src="../../../implementors/std/fs/trait.PathExt.js">
+                      </script></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../../";
+        window.currentCrate = "bitflags";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../../../jquery.js"></script>
+    <script src="../../../main.js"></script>
+    
+    <script defer src="../../../search-index.js"></script>
+</body>
+</html>

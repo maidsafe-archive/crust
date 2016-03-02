@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["SimpleClient","A struct implementing a simple HTTP/2 client."]]});

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `CLinkedListConst` struct in crate `c_linked_list`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, CLinkedListConst">
+
+    <title>c_linked_list::CLinkedListConst - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='index.html'>c_linked_list</a></p><script>window.sidebarCurrent = {name: 'CLinkedListConst', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content struct">
+<h1 class='fqn'><span class='in-band'>Struct <a href='index.html'>c_linked_list</a>::<wbr><a class='struct' href=''>CLinkedListConst</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-34' class='srclink' href='../src/c_linked_list/lib.rs.html#90-93' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct CLinkedListConst&lt;T, N: <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.FnMut.html' title='core::ops::FnMut'>FnMut</a>(&amp;T) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.pointer.html'>*const T</a>&gt; {
+    // some fields omitted
+}</pre><div class='docblock'><p>Wraps a C linked list comprised of const pointers between nodes.</p>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;'a, T: 'a, N: <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.FnMut.html' title='core::ops::FnMut'>FnMut</a>(&amp;T) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.pointer.html'>*const T</a> + 'a&gt; <a class='struct' href='../c_linked_list/struct.CLinkedListConst.html' title='c_linked_list::CLinkedListConst'>CLinkedListConst</a>&lt;T, N&gt;</code></h3><div class='impl-items'><h4 id='method.from_ptr' class='method'><code>fn <a href='#method.from_ptr' class='fnname'>from_ptr</a>(head: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.pointer.html'>*const T</a>, next: N) -&gt; <a class='struct' href='../c_linked_list/struct.CLinkedListConst.html' title='c_linked_list::CLinkedListConst'>CLinkedListConst</a>&lt;T, N&gt;</code></h4>
+<div class='docblock'><p>Construct a <code>CLinkedListConst</code> by wrapping a C linked list. <code>head</code> points to the head element
+of the list and can be NULL for a list of length 0. <code>next</code> is a function that takes a node
+and returns a pointer to the next element.</p>
+
+<h1 id='example' class='section-header'><a href='#example'>Example</a></h1>
+<p>To wrap this C type.</p>
+
+<pre><code class="language-c">struct LinkedListNode {
+    int value;
+    const struct LinkedListNode *next;
+};
+</code></pre>
+
+<p>Call this function as <code>CLinkedListConst::from_ptr(ptr_to_head, |n| n.next)</code>.</p>
+</div><h4 id='method.iter' class='method'><code>fn <a href='#method.iter' class='fnname'>iter</a>(&amp;'a mut self) -&gt; <a class='struct' href='../c_linked_list/struct.CLinkedListConstIter.html' title='c_linked_list::CLinkedListConstIter'>CLinkedListConstIter</a>&lt;'a, T, N&gt;</code></h4>
+<div class='docblock'><p>Iterate over the linked list, returning immutable references to the nodes of the list.</p>
+</div></div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "c_linked_list";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script defer src="../search-index.js"></script>
+</body>
+</html>

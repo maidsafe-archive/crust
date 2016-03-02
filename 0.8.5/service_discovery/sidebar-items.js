@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["ServiceDiscovery","ServiceDiscovery is a RAII API for the purposes of discovering peers on the local network. To stop the process of discovery completely, it is sufficient to drop the instance of this struct."]]});

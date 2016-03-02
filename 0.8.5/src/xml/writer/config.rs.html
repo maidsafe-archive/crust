@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/xml-rs-0.1.26/src/writer/config.rs`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang">
+
+    <title>config.rs.html -- source</title>
+
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content source"><pre class="line-numbers"><span id="1"> 1</span>
+<span id="2"> 2</span>
+<span id="3"> 3</span>
+<span id="4"> 4</span>
+<span id="5"> 5</span>
+<span id="6"> 6</span>
+<span id="7"> 7</span>
+<span id="8"> 8</span>
+<span id="9"> 9</span>
+<span id="10">10</span>
+<span id="11">11</span>
+<span id="12">12</span>
+<span id="13">13</span>
+<span id="14">14</span>
+<span id="15">15</span>
+<span id="16">16</span>
+<span id="17">17</span>
+<span id="18">18</span>
+<span id="19">19</span>
+<span id="20">20</span>
+<span id="21">21</span>
+<span id="22">22</span>
+<span id="23">23</span>
+<span id="24">24</span>
+<span id="25">25</span>
+<span id="26">26</span>
+<span id="27">27</span>
+<span id="28">28</span>
+<span id="29">29</span>
+<span id="30">30</span>
+<span id="31">31</span>
+<span id="32">32</span>
+<span id="33">33</span>
+<span id="34">34</span>
+<span id="35">35</span>
+<span id="36">36</span>
+<span id="37">37</span>
+<span id="38">38</span>
+<span id="39">39</span>
+<span id="40">40</span>
+<span id="41">41</span>
+<span id="42">42</span>
+<span id="43">43</span>
+<span id="44">44</span>
+<span id="45">45</span>
+<span id="46">46</span>
+<span id="47">47</span>
+<span id="48">48</span>
+<span id="49">49</span>
+<span id="50">50</span>
+<span id="51">51</span>
+<span id="52">52</span>
+<span id="53">53</span>
+<span id="54">54</span>
+<span id="55">55</span>
+<span id="56">56</span>
+<span id="57">57</span>
+<span id="58">58</span>
+<span id="59">59</span>
+<span id="60">60</span>
+<span id="61">61</span>
+<span id="62">62</span>
+<span id="63">63</span>
+<span id="64">64</span>
+<span id="65">65</span>
+<span id="66">66</span>
+<span id="67">67</span>
+<span id="68">68</span>
+<span id="69">69</span>
+<span id="70">70</span>
+<span id="71">71</span>
+<span id="72">72</span>
+<span id="73">73</span>
+<span id="74">74</span>
+<span id="75">75</span>
+<span id="76">76</span>
+<span id="77">77</span>
+</pre><pre class='rust '>
+<span class='doccomment'>//! Contains emitter configuration structure.</span>
+
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>borrow</span>::<span class='ident'>ToOwned</span>;
+
+<span class='doccomment'>/// Emitter configuration structure.</span>
+<span class='doccomment'>///</span>
+<span class='doccomment'>/// This structure contains various options which control XML document emitter behavior.</span>
+<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>EmitterConfig</span> {
+    <span class='doccomment'>/// Line separator used to separate lines in formatted output. Default is `&quot;\n&quot;`.</span>
+    <span class='kw'>pub</span> <span class='ident'>line_separator</span>: <span class='ident'>String</span>,
+
+    <span class='doccomment'>/// A string which will be used for a single level of indentation. Default is `&quot;  &quot;`</span>
+    <span class='doccomment'>/// (two spaces).</span>
+    <span class='kw'>pub</span> <span class='ident'>indent_string</span>: <span class='ident'>String</span>,
+
+    <span class='doccomment'>/// Whether or not the emitted document should be indented. Default is false.</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// The emitter is capable to perform automatic indentation of the emitted XML document.</span>
+    <span class='doccomment'>/// It is done in stream-like fashion and does not require the knowledge of the whole</span>
+    <span class='doccomment'>/// document in advance.</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// Sometimes, however, automatic indentation is undesirable, e.g. when you want to keep</span>
+    <span class='doccomment'>/// existing layout when processing an existing XML document. Also the indentiation algorithm</span>
+    <span class='doccomment'>/// is not thoroughly tested. Hence by default it is disabled.</span>
+    <span class='kw'>pub</span> <span class='ident'>perform_indent</span>: <span class='ident'>bool</span>,
+
+    <span class='doccomment'>/// Whether or not to write XML document declaration at the beginning of a document.</span>
+    <span class='doccomment'>/// Default is true.</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// This option controls whether the document declaration should be emitted automatically</span>
+    <span class='doccomment'>/// before a root element is written if it was not emitted explicitly by the user.</span>
+    <span class='kw'>pub</span> <span class='ident'>write_document_declaration</span>: <span class='ident'>bool</span>,
+
+    <span class='doccomment'>/// Whether or not to convert elements with empty content to empty elements. Default is true.</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// This option allows turning elements like `&lt;a&gt;&lt;/a&gt;` (an element with empty content)</span>
+    <span class='doccomment'>/// into `&lt;a /&gt;` (an empty element).</span>
+    <span class='kw'>pub</span> <span class='ident'>normalize_empty_elements</span>: <span class='ident'>bool</span>,
+
+    <span class='doccomment'>/// Whether or not to emit CDATA events as plain characters. Default is false.</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// This option forces the emitter to convert CDATA events into regular character events,</span>
+    <span class='doccomment'>/// performing all the necessary escaping beforehand. This may be occasionally useful</span>
+    <span class='doccomment'>/// for feeding the document into incorrect parsers which do not support CDATA.</span>
+    <span class='kw'>pub</span> <span class='ident'>cdata_to_characters</span>: <span class='ident'>bool</span>
+}
+
+<span class='kw'>impl</span> <span class='ident'>EmitterConfig</span> {
+    <span class='doccomment'>/// Creates an emitter configuration with default values.</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// You can tweak default options with builder-like pattern:</span>
+    <span class='doccomment'>/// ```rust</span>
+    <span class='doccomment'>/// let config = EmitterConfig::new()</span>
+    <span class='doccomment'>///     .line_separator(&quot;\r\n&quot;.to_owned())</span>
+    <span class='doccomment'>///     .perform_indent(true)</span>
+    <span class='doccomment'>///     .normalize_empty_elements(false);</span>
+    <span class='doccomment'>/// ```</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>() <span class='op'>-&gt;</span> <span class='ident'>EmitterConfig</span> {
+        <span class='ident'>EmitterConfig</span> {
+            <span class='ident'>line_separator</span>: <span class='string'>&quot;\n&quot;</span>.<span class='ident'>to_owned</span>(),
+            <span class='ident'>indent_string</span>: <span class='string'>&quot;  &quot;</span>.<span class='ident'>to_owned</span>(),  <span class='comment'>// two spaces</span>
+            <span class='ident'>perform_indent</span>: <span class='boolval'>false</span>,
+            <span class='ident'>write_document_declaration</span>: <span class='boolval'>true</span>,
+            <span class='ident'>normalize_empty_elements</span>: <span class='boolval'>true</span>,
+            <span class='ident'>cdata_to_characters</span>: <span class='boolval'>false</span>
+        }
+    }
+}
+
+<span class='macro'>gen_setters</span><span class='macro'>!</span>(<span class='ident'>EmitterConfig</span>,
+    <span class='ident'>line_separator</span>: <span class='ident'>String</span>,
+    <span class='ident'>indent_string</span>: <span class='ident'>String</span>,
+    <span class='ident'>perform_indent</span>: <span class='ident'>bool</span>,
+    <span class='ident'>write_document_declaration</span>: <span class='ident'>bool</span>,
+    <span class='ident'>normalize_empty_elements</span>: <span class='ident'>bool</span>,
+    <span class='ident'>cdata_to_characters</span>: <span class='ident'>bool</span>
+);
+</pre>
+</section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../../";
+        window.currentCrate = "xml";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../../../jquery.js"></script>
+    <script src="../../../main.js"></script>
+    
+    <script defer src="../../../search-index.js"></script>
+</body>
+</html>

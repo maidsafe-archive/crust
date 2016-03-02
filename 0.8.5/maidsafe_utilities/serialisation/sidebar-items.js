@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["SerialisationError","Wrapper for Serialisation Errors. This is present because cbor code paths don't always return a Result - they return an Option too."]],"fn":[["deserialise","Function to deserialise a Decodable type"],["serialise","Function to serialise an Encodable type"]]});
