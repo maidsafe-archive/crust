@@ -85,6 +85,11 @@
 <span id="42">42</span>
 <span id="43">43</span>
 <span id="44">44</span>
+<span id="45">45</span>
+<span id="46">46</span>
+<span id="47">47</span>
+<span id="48">48</span>
+<span id="49">49</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2016 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -103,7 +108,10 @@
 <span class='comment'>// Please review the Licences for the specific language governing permissions and limitations</span>
 <span class='comment'>// relating to use of the SAFE Network Software.</span>
 
+<span class='kw'>use</span> <span class='ident'>rand</span>;
+<span class='kw'>use</span> <span class='ident'>rand</span>::{<span class='ident'>Rand</span>, <span class='ident'>Rng</span>};
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fmt</span>::{<span class='ident'>Debug</span>, <span class='ident'>Formatter</span>, <span class='prelude-ty'>Result</span>};
+<span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>crypto</span>::<span class='ident'>box_</span>;
 <span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>crypto</span>::<span class='ident'>box_</span>::{<span class='ident'>PublicKey</span>, <span class='ident'>PUBLICKEYBYTES</span>};
 
 <span class='doccomment'>/// An identifier of a peer node.</span>
@@ -113,13 +121,9 @@
 <span class='kw'>impl</span> <span class='ident'>Debug</span> <span class='kw'>for</span> <span class='ident'>PeerId</span> {
     <span class='kw'>fn</span> <span class='ident'>fmt</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>formatter</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Formatter</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span> {
         <span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>formatter</span>,
-               <span class='string'>&quot;PeerId({:02x}{:02x}{:02x}..{:02x}{:02x}{:02x})&quot;</span>,
-                (<span class='self'>self</span>.<span class='number'>0</span>).<span class='number'>0</span>[<span class='number'>0</span>],
-                (<span class='self'>self</span>.<span class='number'>0</span>).<span class='number'>0</span>[<span class='number'>1</span>],
-                (<span class='self'>self</span>.<span class='number'>0</span>).<span class='number'>0</span>[<span class='number'>2</span>],
-                (<span class='self'>self</span>.<span class='number'>0</span>).<span class='number'>0</span>[<span class='ident'>PUBLICKEYBYTES</span> <span class='op'>-</span> <span class='number'>3</span>],
-                (<span class='self'>self</span>.<span class='number'>0</span>).<span class='number'>0</span>[<span class='ident'>PUBLICKEYBYTES</span> <span class='op'>-</span> <span class='number'>2</span>],
-                (<span class='self'>self</span>.<span class='number'>0</span>).<span class='number'>0</span>[<span class='ident'>PUBLICKEYBYTES</span> <span class='op'>-</span> <span class='number'>1</span>])
+               <span class='string'>&quot;PeerId({:02x}{:02x}..)&quot;</span>,
+               (<span class='self'>self</span>.<span class='number'>0</span>).<span class='number'>0</span>[<span class='number'>0</span>],
+               (<span class='self'>self</span>.<span class='number'>0</span>).<span class='number'>0</span>[<span class='number'>1</span>])
     }
 }
 
@@ -129,6 +133,12 @@
 
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new_id</span>(<span class='ident'>pub_key</span>: <span class='ident'>PublicKey</span>) <span class='op'>-&gt;</span> <span class='ident'>PeerId</span> {
     <span class='ident'>PeerId</span>(<span class='ident'>pub_key</span>)
+}
+
+<span class='kw'>impl</span> <span class='ident'>Rand</span> <span class='kw'>for</span> <span class='ident'>PeerId</span> {
+    <span class='kw'>fn</span> <span class='ident'>rand</span><span class='op'>&lt;</span><span class='ident'>R</span>: <span class='ident'>Rng</span><span class='op'>&gt;</span>(<span class='ident'>_rng</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>R</span>) <span class='op'>-&gt;</span> <span class='ident'>PeerId</span> {
+        <span class='ident'>PeerId</span>(<span class='ident'>box_</span>::<span class='ident'>gen_keypair</span>().<span class='number'>0</span>)
+    }
 }
 </pre>
 </section>

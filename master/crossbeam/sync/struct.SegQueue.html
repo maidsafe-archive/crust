@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-636' class='srclink' href='../../src/crossbeam/sync/seg_queue.rs.html#15-18' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-561' class='srclink' href='../../src/crossbeam/sync/seg_queue.rs.html#15-18' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct SegQueue&lt;T&gt; {
     // some fields omitted
 }</pre><div class='docblock'><p>A Michael-Scott queue that allocates &quot;segments&quot; (arrays of nodes)
@@ -57,7 +57,7 @@ for efficiency.</p>
 <div class='docblock'><p>Create a new, empty queue.</p>
 </div><h4 id='method.push' class='method'><code>fn <a href='#method.push' class='fnname'>push</a>(&amp;self, t: T)</code></h4>
 <div class='docblock'><p>Add <code>t</code> to the back of the queue.</p>
-</div><h4 id='method.try_pop' class='method'><code>fn <a href='#method.try_pop' class='fnname'>try_pop</a>(&amp;self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;T&gt;</code></h4>
+</div><h4 id='method.pop' class='method'><code>fn <a href='#method.pop' class='fnname'>pop</a>(&amp;self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;T&gt;</code></h4>
 <div class='docblock'><p>Attempt to dequeue from the front.</p>
 
 <p>Returns <code>None</code> if the queue is observed to be empty.</p>
