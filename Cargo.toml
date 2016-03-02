@@ -62,7 +62,7 @@ path = "examples/crust_peer.rs"
 bench = false
 name = "reporter"
 path = "examples/reporter.rs"
-test = false
+test = true
 
 [[example]]
 bench = false

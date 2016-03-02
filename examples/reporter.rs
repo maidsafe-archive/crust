@@ -54,7 +54,6 @@ use crust::{Event, PeerId, Service};
 use docopt::Docopt;
 use ip::SocketAddrExt;
 use maidsafe_utilities::event_sender::{MaidSafeEventCategory, MaidSafeObserver};
-use maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
 use rand::{thread_rng, Rng};
 use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
 use std::cmp::max;
@@ -152,7 +151,7 @@ fn run(config: &Config) -> Report {
     let (message_tx, message_rx) = mpsc::channel();
     let (connect_tx, connect_rx) = mpsc::channel();
 
-    let event_sender = MaidSafeObserver::new(event_tx, CrustEvent, category_tx);
+    let event_sender = MaidSafeObserver::new(event_tx, MaidSafeEventCategory::Crust, category_tx);
     let mut service = unwrap_result!(Service::new(event_sender, BEACON_PORT));
 
     if config.start_listening {
@@ -203,7 +202,7 @@ fn handle_service_events(category_rx: Receiver<MaidSafeEventCategory>,
 
         for category in category_rx.iter() {
             match category {
-                CrustEvent => {
+                MaidSafeEventCategory::Crust => {
                     if let Ok(event) = event_rx.try_recv() {
                         report.record_event(&event);
 
