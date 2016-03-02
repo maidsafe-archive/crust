@@ -1,5 +1,8 @@
 # CRUST - Change Log
 
+## [0.8.5]
+- Implement Rand for PeerId.
+
 ## [0.8.4]
 - Update dependencies
 
