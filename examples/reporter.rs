@@ -154,6 +154,7 @@ fn run(config: &Config) -> Report {
 
     let event_sender = MaidSafeObserver::new(event_tx, MaidSafeEventCategory::Crust, category_tx);
     let mut service = unwrap_result!(Service::new(event_sender, BEACON_PORT));
+    let our_peer_id = service.id();
 
     if config.start_listening {
         unwrap_result!(service.start_listening_tcp());
@@ -184,13 +185,16 @@ fn run(config: &Config) -> Report {
     unwrap_result!(message_tx.send(None));
     let msgs_sent = unwrap_result!(message_join_handle.join());
 
-    if let Ok(mut report) = event_join_handle.join() {
+    let mut report = if let Ok(mut report) = event_join_handle.join() {
         report.record_break();
         report.msgs_sent = msgs_sent;
         report
     } else {
         Report::new()
-    }
+    };
+
+    report.add_our_peer_id(&our_peer_id);
+    report
 }
 
 // Handle events from crust service.
@@ -323,6 +327,7 @@ struct Config {
 #[derive(Debug, RustcEncodable)]
 struct Report {
     id: String,
+    peer_ids: Vec<String>,
     msgs_recvd: HashMap<String, u64>,
     msgs_sent: HashMap<String, u64>,
     events: Vec<Option<EventEntry>>,
@@ -332,10 +337,15 @@ impl Report {
     fn new() -> Self {
         Report {
             id: String::new(),
+            peer_ids: Vec::new(),
             msgs_recvd: HashMap::new(),
             msgs_sent: HashMap::new(),
             events: Vec::new(),
         }
+    }
+
+    fn add_our_peer_id(&mut self, peer_id: &PeerId) {
+        self.peer_ids.push(format!("{:?}", peer_id));
     }
 
     fn record_message(&mut self, message: &str) {
@@ -359,6 +369,7 @@ impl Report {
         merge_stats(&mut self.msgs_sent, &other.msgs_sent);
 
         self.events.extend(other.events);
+        self.peer_ids.extend(other.peer_ids);
     }
 
     fn format_event(event: &Event) -> String {
