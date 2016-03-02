@@ -1,5 +1,8 @@
 # CRUST - Change Log
 
+## [0.8.4]
+- Update dependencies
+
 ## [0.8.3]
 - Bugfixes
 - Disable uTP
