@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-300' class='srclink' href='../../../src/crossbeam/mem/epoch/mod.rs.html#220-223' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-299' class='srclink' href='../../../src/crossbeam/mem/epoch/mod.rs.html#225-228' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Atomic&lt;T&gt; {
     // some fields omitted
 }</pre><div class='docblock'><p>Like <code>std::sync::atomic::AtomicPtr</code>.</p>
@@ -54,7 +54,8 @@
 <p>Provides atomic access to a (nullable) pointer of type <code>T</code>, interfacing with
 the <code>Owned</code> and <code>Shared</code> types.</p>
 </div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;T&gt; <a class='struct' href='../../../crossbeam/mem/epoch/struct.Atomic.html' title='crossbeam::mem::epoch::Atomic'>Atomic</a>&lt;T&gt;</code></h3><div class='impl-items'><h4 id='method.null' class='method'><code>fn <a href='#method.null' class='fnname'>null</a>() -&gt; <a class='struct' href='../../../crossbeam/mem/epoch/struct.Atomic.html' title='crossbeam::mem::epoch::Atomic'>Atomic</a>&lt;T&gt;</code></h4>
-<div class='docblock'><p>Create a new, null atomic pointer.</p>
+<h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(data: T) -&gt; <a class='struct' href='../../../crossbeam/mem/epoch/struct.Atomic.html' title='crossbeam::mem::epoch::Atomic'>Atomic</a>&lt;T&gt;</code></h4>
+<div class='docblock'><p>Create a new atomic pointer</p>
 </div><h4 id='method.load' class='method'><code>fn <a href='#method.load' class='fnname'>load</a>&lt;'a&gt;(&amp;self, ord: <a class='enum' href='https://doc.rust-lang.org/nightly/core/sync/atomic/enum.Ordering.html' title='core::sync::atomic::Ordering'>Ordering</a>, _: &amp;'a <a class='struct' href='../../../crossbeam/mem/epoch/struct.Guard.html' title='crossbeam::mem::epoch::Guard'>Guard</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='../../../crossbeam/mem/epoch/struct.Shared.html' title='crossbeam::mem::epoch::Shared'>Shared</a>&lt;'a, T&gt;&gt;</code></h4>
 <div class='docblock'><p>Do an atomic load with the given memory ordering.</p>
 

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/crossbeam-0.1.6/src/mem/cache_padded.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/crossbeam-0.2.8/src/mem/cache_padded.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>cache_padded.rs.html -- source</title>
@@ -313,13 +313,13 @@ impl&lt;T&gt; Drop for CachePadded&lt;T&gt; {
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>cache_padded_store_u64</span>() {
-        <span class='kw'>let</span> <span class='ident'>x</span>: <span class='ident'>CachePadded</span><span class='op'>&lt;</span><span class='ident'>u64</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='kw'>unsafe</span> { <span class='ident'>CachePadded</span>::<span class='ident'>new</span>(<span class='number'>17</span>) };
+        <span class='kw'>let</span> <span class='ident'>x</span>: <span class='ident'>CachePadded</span><span class='op'>&lt;</span><span class='ident'>u64</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>CachePadded</span>::<span class='ident'>new</span>(<span class='number'>17</span>);
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='op'>*</span><span class='ident'>x</span>, <span class='number'>17</span>);
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>cache_padded_store_pair</span>() {
-        <span class='kw'>let</span> <span class='ident'>x</span>: <span class='ident'>CachePadded</span><span class='op'>&lt;</span>(<span class='ident'>u64</span>, <span class='ident'>u64</span>)<span class='op'>&gt;</span> <span class='op'>=</span> <span class='kw'>unsafe</span> { <span class='ident'>CachePadded</span>::<span class='ident'>new</span>((<span class='number'>17</span>, <span class='number'>37</span>)) };
+        <span class='kw'>let</span> <span class='ident'>x</span>: <span class='ident'>CachePadded</span><span class='op'>&lt;</span>(<span class='ident'>u64</span>, <span class='ident'>u64</span>)<span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>CachePadded</span>::<span class='ident'>new</span>((<span class='number'>17</span>, <span class='number'>37</span>));
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>x</span>.<span class='number'>0</span>, <span class='number'>17</span>);
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>x</span>.<span class='number'>1</span>, <span class='number'>37</span>);
     }
