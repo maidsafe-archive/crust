@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["EmitterConfig","Emitter configuration structure."]]});

@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["SimpleUdpHolePunchServerNewError","Errors returned by SimpleUdpHolePunchServer::new"]],"struct":[["SimpleUdpHolePunchServer","RAII type for a hole punch server which speaks the simple hole punching protocol."]]});

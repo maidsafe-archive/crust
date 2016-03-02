@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `sodiumoxide` crate.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, sodiumoxide">
+
+    <title>sodiumoxide - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'></p><script>window.sidebarCurrent = {name: 'sodiumoxide', ty: 'mod', relpath: '../'};</script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content mod">
+<h1 class='fqn'><span class='in-band'>Crate <a class='mod' href=''>sodiumoxide</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-0' class='srclink' href='../src/sodiumoxide/lib.rs.html#1-89' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p>Rust bindings to the <a href="https://github.com/jedisct1/libsodium">sodium library</a>.</p>
+
+<p>Sodium is a portable implementation of Dan Bernsteins <a href="http://nacl.cr.yp.to">NaCl: Networking and
+Cryptography library</a></p>
+
+<p>For most users, if you want public-key (asymmetric) cryptography you should use
+the functions in <code>crypto::box_</code> for encryption/decryption.</p>
+
+<p>If you want secret-key (symmetric) cryptography you should be using the
+functions in <code>crypto::secretbox</code> for encryption/decryption.</p>
+
+<p>For public-key signatures you should use the functions in <code>crypto::sign</code> for
+signature creation and verification.</p>
+
+<p>Unless you know what you&#39;re doing you most certainly don&#39;t want to use the
+functions in <code>crypto::scalarmult</code>, <code>crypto::stream</code>, <code>crypto::auth</code> and
+<code>crypto::onetimeauth</code>.</p>
+
+<h2 id='thread-safety' class='section-header'><a href='#thread-safety'>Thread Safety</a></h2>
+<p>All functions in this library are thread-safe provided that the <code>init()</code>
+function has been called during program execution.</p>
+
+<p>If <code>init()</code> hasn&#39;t been called then all functions except the random-number
+generation functions and the key-generation functions are thread-safe.</p>
+
+<h1 id='public-key-cryptography' class='section-header'><a href='#public-key-cryptography'>Public-key cryptography</a></h1>
+<p><code>crypto::box_</code></p>
+
+<p><code>crypto::sign</code></p>
+
+<h1 id='secret-key-cryptography' class='section-header'><a href='#secret-key-cryptography'>Secret-key cryptography</a></h1>
+<p><code>crypto::secretbox</code></p>
+
+<p><code>crypto::stream</code></p>
+
+<p><code>crypto::auth</code></p>
+
+<p><code>crypto::onetimeauth</code></p>
+
+<h1 id='low-level-functions' class='section-header'><a href='#low-level-functions'>Low-level functions</a></h1>
+<p><code>crypto::hash</code></p>
+
+<p><code>crypto::verify</code></p>
+
+<p><code>crypto::shorthash</code></p>
+</div><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='mod' href='crypto/index.html'
+                               title='sodiumoxide::crypto'>crypto</a></td>
+                        <td class='docblock short'>
+                             <p>Cryptographic functions</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='mod' href='randombytes/index.html'
+                               title='sodiumoxide::randombytes'>randombytes</a></td>
+                        <td class='docblock short'>
+                             <p>Cryptographic random number generation.</p>
+
+                        </td>
+                    </tr>
+                </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.init.html'
+                               title='sodiumoxide::init'>init</a></td>
+                        <td class='docblock short'>
+                             <p><code>init()</code> initializes the sodium library and chooses faster versions of
+the primitives if possible. <code>init()</code> also makes the random number generation
+functions (<code>gen_key</code>, <code>gen_keypair</code>, <code>gen_nonce</code>, <code>randombytes</code>, <code>randombytes_into</code>)
+thread-safe</p>
+
+                        </td>
+                    </tr>
+                </table></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "sodiumoxide";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script defer src="../search-index.js"></script>
+</body>
+</html>

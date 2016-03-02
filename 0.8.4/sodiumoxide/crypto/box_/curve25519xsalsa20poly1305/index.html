@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `curve25519xsalsa20poly1305` mod in crate `sodiumoxide`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, curve25519xsalsa20poly1305">
+
+    <title>sodiumoxide::crypto::box_::curve25519xsalsa20poly1305 - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../../../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='../../../index.html'>sodiumoxide</a>::<wbr><a href='../../index.html'>crypto</a>::<wbr><a href='../index.html'>box_</a></p><script>window.sidebarCurrent = {name: 'curve25519xsalsa20poly1305', ty: 'mod', relpath: '../'};</script><script defer src="../sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content mod">
+<h1 class='fqn'><span class='in-band'>Module <a href='../../../index.html'>sodiumoxide</a>::<wbr><a href='../../index.html'>crypto</a>::<wbr><a href='../index.html'>box_</a>::<wbr><a class='mod' href=''>curve25519xsalsa20poly1305</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-41' class='srclink' href='../../../../src/sodiumoxide/crypto/box_/curve25519xsalsa20poly1305.rs.html#1-428' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p><code>crypto_box_curve25519xsalsa20poly1305</code> , a particular
+combination of Curve25519, Salsa20, and Poly1305 specified in
+<a href="http://nacl.cr.yp.to/valid.html">Cryptography in NaCl</a>.</p>
+
+<p>This function is conjectured to meet the standard notions of privacy and
+third-party unforgeability.</p>
+</div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Nonce.html'
+                               title='sodiumoxide::crypto::box_::curve25519xsalsa20poly1305::Nonce'>Nonce</a></td>
+                        <td class='docblock short'>
+                             <p><code>Nonce</code> for asymmetric authenticated encryption</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.PrecomputedKey.html'
+                               title='sodiumoxide::crypto::box_::curve25519xsalsa20poly1305::PrecomputedKey'>PrecomputedKey</a></td>
+                        <td class='docblock short'>
+                             <p>Applications that send several messages to the same receiver can gain speed by
+splitting <code>seal()</code> into two steps, <code>precompute()</code> and <code>seal_precomputed()</code>.
+Similarly, applications that receive several messages from the same sender can gain
+speed by splitting <code>open()</code> into two steps, <code>precompute()</code> and <code>open_precomputed()</code>.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.PublicKey.html'
+                               title='sodiumoxide::crypto::box_::curve25519xsalsa20poly1305::PublicKey'>PublicKey</a></td>
+                        <td class='docblock short'>
+                             <p><code>PublicKey</code> for asymmetric authenticated encryption</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.SecretKey.html'
+                               title='sodiumoxide::crypto::box_::curve25519xsalsa20poly1305::SecretKey'>SecretKey</a></td>
+                        <td class='docblock short'>
+                             <p><code>SecretKey</code> for asymmetric authenticated encryption</p>
+
+                        </td>
+                    </tr>
+                </table><h2 id='constants' class='section-header'><a href="#constants">Constants</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.NONCEBYTES.html'
+                               title='sodiumoxide::crypto::box_::curve25519xsalsa20poly1305::NONCEBYTES'>NONCEBYTES</a></td>
+                        <td class='docblock short'>
+                             <p>Number of bytes in a <code>Nonce</code>.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.PRECOMPUTEDKEYBYTES.html'
+                               title='sodiumoxide::crypto::box_::curve25519xsalsa20poly1305::PRECOMPUTEDKEYBYTES'>PRECOMPUTEDKEYBYTES</a></td>
+                        <td class='docblock short'>
+                             <p>Number of bytes in a <code>PrecomputedKey</code>.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.PUBLICKEYBYTES.html'
+                               title='sodiumoxide::crypto::box_::curve25519xsalsa20poly1305::PUBLICKEYBYTES'>PUBLICKEYBYTES</a></td>
+                        <td class='docblock short'>
+                             <p>Number of bytes in a <code>PublicKey</code>.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.SECRETKEYBYTES.html'
+                               title='sodiumoxide::crypto::box_::curve25519xsalsa20poly1305::SECRETKEYBYTES'>SECRETKEYBYTES</a></td>
+                        <td class='docblock short'>
+                             <p>Number of bytes in a <code>SecretKey</code>.</p>
+
+                        </td>
+                    </tr>
+                </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.gen_keypair.html'
+                               title='sodiumoxide::crypto::box_::curve25519xsalsa20poly1305::gen_keypair'>gen_keypair</a></td>
+                        <td class='docblock short'>
+                             <p><code>gen_keypair()</code> randomly generates a secret key and a corresponding public key.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.gen_nonce.html'
+                               title='sodiumoxide::crypto::box_::curve25519xsalsa20poly1305::gen_nonce'>gen_nonce</a></td>
+                        <td class='docblock short'>
+                             <p><code>gen_nonce()</code> randomly generates a nonce</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.open.html'
+                               title='sodiumoxide::crypto::box_::curve25519xsalsa20poly1305::open'>open</a></td>
+                        <td class='docblock short'>
+                             <p><code>open()</code> verifies and decrypts a ciphertext <code>c</code> using the receiver&#39;s secret key <code>sk</code>,
+the senders public key <code>pk</code>, and a nonce <code>n</code>. It returns a plaintext <code>Ok(m)</code>.
+If the ciphertext fails verification, <code>open()</code> returns <code>Err(())</code>.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.open_precomputed.html'
+                               title='sodiumoxide::crypto::box_::curve25519xsalsa20poly1305::open_precomputed'>open_precomputed</a></td>
+                        <td class='docblock short'>
+                             <p><code>open_precomputed()</code> verifies and decrypts a ciphertext <code>c</code> using a precomputed
+key <code>k</code> and a nonce <code>n</code>. It returns a plaintext <code>Ok(m)</code>.
+If the ciphertext fails verification, <code>open_precomputed()</code> returns <code>Err(())</code>.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.precompute.html'
+                               title='sodiumoxide::crypto::box_::curve25519xsalsa20poly1305::precompute'>precompute</a></td>
+                        <td class='docblock short'>
+                             <p><code>precompute()</code> computes an intermediate key that can be used by <code>seal_precomputed()</code>
+and <code>open_precomputed()</code></p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.seal.html'
+                               title='sodiumoxide::crypto::box_::curve25519xsalsa20poly1305::seal'>seal</a></td>
+                        <td class='docblock short'>
+                             <p><code>seal()</code> encrypts and authenticates a message <code>m</code> using the senders secret key <code>sk</code>,
+the receivers public key <code>pk</code> and a nonce <code>n</code>. It returns a ciphertext <code>c</code>.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.seal_precomputed.html'
+                               title='sodiumoxide::crypto::box_::curve25519xsalsa20poly1305::seal_precomputed'>seal_precomputed</a></td>
+                        <td class='docblock short'>
+                             <p><code>seal_precomputed()</code> encrypts and authenticates a message <code>m</code> using a precomputed key <code>k</code>,
+and a nonce <code>n</code>. It returns a ciphertext <code>c</code>.</p>
+
+                        </td>
+                    </tr>
+                </table></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../../../";
+        window.currentCrate = "sodiumoxide";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../../../../jquery.js"></script>
+    <script src="../../../../main.js"></script>
+    
+    <script defer src="../../../../search-index.js"></script>
+</body>
+</html>

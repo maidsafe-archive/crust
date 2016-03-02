@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["SocketAddr","Wrapper around `std::net::SocketAddr` to enable it to encoded and decoded."],["SocketAddrV4","Utility struct of SocketAddrV4 for hole punching"],["SocketAddrV6","Utility struct of SocketAddrV6 for hole punching"]]});
