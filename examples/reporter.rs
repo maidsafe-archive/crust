@@ -54,11 +54,11 @@ use crust::{Event, PeerId, Service};
 use docopt::Docopt;
 use ip::SocketAddrExt;
 use maidsafe_utilities::event_sender::{MaidSafeEventCategory, MaidSafeObserver};
-use maidsafe_utilities::event_sender::MaidSafeEventCategory::CrustEvent;
 use rand::{thread_rng, Rng};
 use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
 use std::cmp::max;
 use std::collections::{HashMap, HashSet};
+use std::hash::Hash;
 use std::sync::{Arc, Mutex};
 use std::sync::mpsc::{self, Receiver, Sender};
 use std::thread::{self, JoinHandle};
@@ -152,8 +152,9 @@ fn run(config: &Config) -> Report {
     let (message_tx, message_rx) = mpsc::channel();
     let (connect_tx, connect_rx) = mpsc::channel();
 
-    let event_sender = MaidSafeObserver::new(event_tx, CrustEvent, category_tx);
+    let event_sender = MaidSafeObserver::new(event_tx, MaidSafeEventCategory::Crust, category_tx);
     let mut service = unwrap_result!(Service::new(event_sender, BEACON_PORT));
+    let our_peer_id = service.id();
 
     if config.start_listening {
         unwrap_result!(service.start_listening_tcp());
@@ -182,14 +183,18 @@ fn run(config: &Config) -> Report {
 
 
     unwrap_result!(message_tx.send(None));
-    unwrap_result!(message_join_handle.join());
+    let msgs_sent = unwrap_result!(message_join_handle.join());
 
-    if let Ok(mut report) = event_join_handle.join() {
+    let mut report = if let Ok(mut report) = event_join_handle.join() {
         report.record_break();
+        report.msgs_sent = msgs_sent;
         report
     } else {
         Report::new()
-    }
+    };
+
+    report.add_our_peer_id(&our_peer_id);
+    report
 }
 
 // Handle events from crust service.
@@ -203,7 +208,7 @@ fn handle_service_events(category_rx: Receiver<MaidSafeEventCategory>,
 
         for category in category_rx.iter() {
             match category {
-                CrustEvent => {
+                MaidSafeEventCategory::Crust => {
                     if let Ok(event) = event_rx.try_recv() {
                         report.record_event(&event);
 
@@ -257,7 +262,7 @@ fn handle_messages(config: &Config,
                    message_rx: Receiver<Option<PeerId>>,
                    connect_tx: Sender<()>,
                    peers: Arc<Mutex<HashSet<PeerId>>>)
-                   -> JoinHandle<()> {
+                   -> JoinHandle<HashMap<String, u64>> {
     let msgs_per_sec = config.max_msgs_per_sec.unwrap_or(0);
     let msg_time = if msgs_per_sec > 0 {
         Duration::milliseconds(1000 / msgs_per_sec as i64)
@@ -269,6 +274,7 @@ fn handle_messages(config: &Config,
 
     thread::spawn(move || {
         let mut sent_at = time::now() - msg_time;
+        let mut stats = HashMap::new();
 
         for peer_id in message_rx.iter() {
             match peer_id {
@@ -286,6 +292,8 @@ fn handle_messages(config: &Config,
                     if peers.lock().unwrap().contains(&peer_id) {
                         unwrap_result!(service.send(&peer_id, message_bytes.clone()));
                         sent_at = time::now();
+
+                        *stats.entry(format!("{:?}", peer_id)).or_insert(0) += 1;
                     }
                 }
                 None => break,
@@ -295,6 +303,8 @@ fn handle_messages(config: &Config,
         for peer_id in peers.lock().unwrap().iter() {
             service.disconnect(peer_id);
         }
+
+        stats
     })
 }
 
@@ -317,7 +327,9 @@ struct Config {
 #[derive(Debug, RustcEncodable)]
 struct Report {
     id: String,
+    peer_ids: Vec<String>,
     msgs_recvd: HashMap<String, u64>,
+    msgs_sent: HashMap<String, u64>,
     events: Vec<Option<EventEntry>>,
 }
 
@@ -325,9 +337,15 @@ impl Report {
     fn new() -> Self {
         Report {
             id: String::new(),
+            peer_ids: Vec::new(),
             msgs_recvd: HashMap::new(),
+            msgs_sent: HashMap::new(),
             events: Vec::new(),
         }
+    }
+
+    fn add_our_peer_id(&mut self, peer_id: &PeerId) {
+        self.peer_ids.push(format!("{:?}", peer_id));
     }
 
     fn record_message(&mut self, message: &str) {
@@ -347,12 +365,11 @@ impl Report {
     }
 
     fn update(&mut self, other: Report) {
-        for (key, value) in other.msgs_recvd.iter() {
-            let counter = self.msgs_recvd.entry(key.clone()).or_insert(0);
-            *counter += *value;
-        }
+        merge_stats(&mut self.msgs_recvd, &other.msgs_recvd);
+        merge_stats(&mut self.msgs_sent, &other.msgs_sent);
 
         self.events.extend(other.events);
+        self.peer_ids.extend(other.peer_ids);
     }
 
     fn format_event(event: &Event) -> String {
@@ -409,3 +426,10 @@ fn recv_with_timeout<T>(receiver: Receiver<T>,
     Err(RecvWithTimeoutError::Timeout)
 }
 
+fn merge_stats<K>(target: &mut HashMap<K, u64>, source: &HashMap<K, u64>)
+    where K: Clone + Eq + Hash
+{
+    for (key, value) in source.iter() {
+        *target.entry(key.clone()).or_insert(0) += *value;
+    }
+}
