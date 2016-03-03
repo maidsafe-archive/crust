@@ -88,6 +88,13 @@ pub struct TheirConnectionInfo {
     id: PeerId,
 }
 
+impl TheirConnectionInfo {
+    /// Returns the `PeerId` of the node that created this connection info.
+    pub fn id(&self) -> PeerId {
+        self.id
+    }
+}
+
 /// A structure representing a connection manager.
 ///
 /// This abstraction has a hidden dependency on a config file. Refer to [the docs for `FileHandler`]
