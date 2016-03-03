@@ -27,7 +27,7 @@ use std::thread::{self, JoinHandle};
 const BEACON_PORT: u16 = 44444;
 
 // Number of nodes that will be sending messages to the receiving node.
-const NUM_SENDERS: usize = 20;
+const NUM_SENDERS: usize = 5;
 
 // Number of messages each sending node tries to send.
 const NUM_MESSAGES_PER_SENDER: usize = 1000;
