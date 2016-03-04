@@ -46,15 +46,15 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-1222' class='srclink' href='../src/crust/endpoint.rs.html#39-42' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-1217' class='srclink' href='../src/crust/endpoint.rs.html#36-39' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Endpoint {
     // some fields omitted
 }</pre><div class='docblock'><p>Enum representing endpoint of supported protocols</p>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../crust/struct.Endpoint.html' title='crust::Endpoint'>Endpoint</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(protocol: <a class='enum' href='../crust/enum.Protocol.html' title='crust::Protocol'>Protocol</a>, addr: <a class='enum' href='../ip/enum.IpAddr.html' title='ip::IpAddr'>IpAddr</a>, port: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a>) -&gt; <a class='struct' href='../crust/struct.Endpoint.html' title='crust::Endpoint'>Endpoint</a></code></h4>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../crust/struct.Endpoint.html' title='crust::Endpoint'>Endpoint</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(protocol: <a class='enum' href='../crust/enum.Protocol.html' title='crust::Protocol'>Protocol</a>, addr: <a class='enum' href='https://doc.rust-lang.org/nightly/std/net/ip/enum.IpAddr.html' title='std::net::ip::IpAddr'>IpAddr</a>, port: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a>) -&gt; <a class='struct' href='../crust/struct.Endpoint.html' title='crust::Endpoint'>Endpoint</a></code></h4>
 <div class='docblock'><p>Construct a new Endpoint</p>
 </div><h4 id='method.from_socket_addr' class='method'><code>fn <a href='#method.from_socket_addr' class='fnname'>from_socket_addr</a>(protocol: <a class='enum' href='../crust/enum.Protocol.html' title='crust::Protocol'>Protocol</a>, addr: <a class='struct' href='../crust/struct.SocketAddr.html' title='crust::SocketAddr'>SocketAddr</a>) -&gt; <a class='struct' href='../crust/struct.Endpoint.html' title='crust::Endpoint'>Endpoint</a></code></h4>
 <div class='docblock'><p>Construct a new Endpoint from socketaddr</p>
-</div><h4 id='method.ip' class='method'><code>fn <a href='#method.ip' class='fnname'>ip</a>(&amp;self) -&gt; <a class='enum' href='../ip/enum.IpAddr.html' title='ip::IpAddr'>IpAddr</a></code></h4>
+</div><h4 id='method.ip' class='method'><code>fn <a href='#method.ip' class='fnname'>ip</a>(&amp;self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/std/net/ip/enum.IpAddr.html' title='std::net::ip::IpAddr'>IpAddr</a></code></h4>
 <div class='docblock'><p>Returns IpAddr</p>
 </div><h4 id='method.port' class='method'><code>fn <a href='#method.port' class='fnname'>port</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a></code></h4>
 <div class='docblock'><p>Returns Port</p>

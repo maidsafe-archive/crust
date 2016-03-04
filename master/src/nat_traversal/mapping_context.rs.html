@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/nat_traversal-0.1.0/src/mapping_context.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/nat_traversal-0.2.0/src/mapping_context.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>mapping_context.rs.html -- source</title>
@@ -298,6 +298,8 @@
 <span class='kw'>use</span> <span class='ident'>get_if_addrs</span>;
 <span class='kw'>use</span> <span class='ident'>void</span>::<span class='ident'>Void</span>;
 
+<span class='kw'>use</span> <span class='ident'>socket_utils</span>;
+
 <span class='doccomment'>/// You need to create a `MappingContext` before doing any socket mapping. This</span>
 <span class='doccomment'>/// `MappingContext` should ideally be kept throughout the lifetime of the</span>
 <span class='doccomment'>/// program. Internally it caches a addresses of UPnP servers and hole punching</span>
@@ -388,9 +390,7 @@
                     <span class='kw'>continue</span>;
                 },
             };
-            <span class='comment'>// TODO(canndrew): use is_loopback when it&#39;s stable</span>
-            <span class='comment'>//if addr.is_loopback() {</span>
-            <span class='kw'>if</span> <span class='ident'>addr_v4</span>.<span class='ident'>octets</span>()[<span class='number'>0</span>] <span class='op'>==</span> <span class='number'>127</span> {
+            <span class='kw'>if</span> <span class='ident'>socket_utils</span>::<span class='ident'>ipv4_is_loopback</span>(<span class='kw-2'>&amp;</span><span class='ident'>addr_v4</span>) {
                 <span class='ident'>interfaces_v4</span>.<span class='ident'>push</span>(<span class='ident'>InterfaceV4</span> {
                     <span class='ident'>gateway</span>: <span class='prelude-val'>None</span>,
                     <span class='ident'>addr</span>: <span class='ident'>addr_v4</span>,

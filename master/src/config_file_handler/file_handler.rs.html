@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/config_file_handler-0.0.1/src/file_handler.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/config_file_handler-0.1.0/src/file_handler.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>file_handler.rs.html -- source</title>
@@ -455,7 +455,7 @@
 <span class='doccomment'>/// The full path to an application support directory for the current user.  See also [an example</span>
 <span class='doccomment'>/// config file flowchart]</span>
 <span class='doccomment'>/// (https://github.com/maidsafe/crust/blob/master/docs/vault_config_file_flowchart.pdf).</span>
-<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>target_os</span><span class='op'>=</span><span class='string'>&quot;windows&quot;</span>)]</span>
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>windows</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>user_app_dir</span>() <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>PathBuf</span>, <span class='ident'>Error</span><span class='op'>&gt;</span> {
     <span class='prelude-val'>Ok</span>(<span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>join_exe_file_stem</span>(<span class='ident'>Path</span>::<span class='ident'>new</span>(<span class='kw-2'>&amp;</span><span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>env</span>::<span class='ident'>var</span>(<span class='string'>&quot;APPDATA&quot;</span>))))))
 }
@@ -463,7 +463,7 @@
 <span class='doccomment'>/// The full path to an application support directory for the current user.  See also [an example</span>
 <span class='doccomment'>/// config file flowchart]</span>
 <span class='doccomment'>/// (https://github.com/maidsafe/crust/blob/master/docs/vault_config_file_flowchart.pdf).</span>
-<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>any</span>(<span class='ident'>target_os</span><span class='op'>=</span><span class='string'>&quot;macos&quot;</span>, <span class='ident'>target_os</span><span class='op'>=</span><span class='string'>&quot;ios&quot;</span>, <span class='ident'>target_os</span><span class='op'>=</span><span class='string'>&quot;linux&quot;</span>))]</span>
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>unix</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>user_app_dir</span>() <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>PathBuf</span>, <span class='ident'>Error</span><span class='op'>&gt;</span> {
     <span class='kw'>let</span> <span class='ident'>home_dir</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>env</span>::<span class='ident'>home_dir</span>().<span class='ident'>ok_or</span>(<span class='ident'>io</span>::<span class='ident'>Error</span>::<span class='ident'>new</span>(<span class='ident'>io</span>::<span class='ident'>ErrorKind</span>::<span class='ident'>NotFound</span>,
                                                              <span class='string'>&quot;User home directory not found.&quot;</span>)));
@@ -473,7 +473,7 @@
 <span class='doccomment'>/// The full path to a system cache directory available for all users.  See also [an example config</span>
 <span class='doccomment'>/// file flowchart]</span>
 <span class='doccomment'>/// (https://github.com/maidsafe/crust/blob/master/docs/vault_config_file_flowchart.pdf).</span>
-<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>target_os</span><span class='op'>=</span><span class='string'>&quot;windows&quot;</span>)]</span>
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>windows</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>system_cache_dir</span>() <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>PathBuf</span>, <span class='ident'>Error</span><span class='op'>&gt;</span> {
     <span class='prelude-val'>Ok</span>(<span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>join_exe_file_stem</span>(<span class='ident'>Path</span>::<span class='ident'>new</span>(<span class='kw-2'>&amp;</span><span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>env</span>::<span class='ident'>var</span>(<span class='string'>&quot;ALLUSERSPROFILE&quot;</span>))))))
 }
@@ -481,7 +481,7 @@
 <span class='doccomment'>/// The full path to a system cache directory available for all users.  See also [an example config</span>
 <span class='doccomment'>/// file flowchart]</span>
 <span class='doccomment'>/// (https://github.com/maidsafe/crust/blob/master/docs/vault_config_file_flowchart.pdf).</span>
-<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>any</span>(<span class='ident'>target_os</span><span class='op'>=</span><span class='string'>&quot;macos&quot;</span>, <span class='ident'>target_os</span><span class='op'>=</span><span class='string'>&quot;ios&quot;</span>, <span class='ident'>target_os</span><span class='op'>=</span><span class='string'>&quot;linux&quot;</span>))]</span>
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>unix</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>system_cache_dir</span>() <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>PathBuf</span>, <span class='ident'>Error</span><span class='op'>&gt;</span> {
     <span class='ident'>join_exe_file_stem</span>(<span class='ident'>Path</span>::<span class='ident'>new</span>(<span class='string'>&quot;/var/cache&quot;</span>))
 }

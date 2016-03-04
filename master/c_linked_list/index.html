@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-0' class='srclink' href='../src/c_linked_list/lib.rs.html#1-153' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-0' class='srclink' href='../src/c_linked_list/lib.rs.html#1-404' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>This crate provides utilities for working with NULL-terminated linked lists provided
 by C code. Suppose you call a foreign function which returns either NULL or a pointer
 to a node of the following C type.</p>
@@ -61,7 +61,7 @@ to a node of the following C type.</p>
 operations such as iteration to be performed on it.</p>
 <pre class='rust rust-example-rendered'>
 <span class='kw'>let</span> <span class='ident'>some_c_linked_list</span> <span class='op'>=</span> <span class='ident'>foreign_function_which_returns_c_linked_list</span>();
-<span class='kw'>let</span> <span class='ident'>rust_linked_list</span> <span class='op'>=</span> <span class='ident'>CLinkedListMut</span>::<span class='ident'>from_ptr</span>(<span class='ident'>some_c_linked_list</span>, <span class='op'>|</span><span class='ident'>n</span><span class='op'>|</span> <span class='ident'>n</span>.<span class='ident'>next</span>);
+<span class='kw'>let</span> <span class='ident'>rust_linked_list</span> <span class='op'>=</span> <span class='kw'>unsafe</span> { <span class='ident'>CLinkedListMut</span>::<span class='ident'>from_ptr</span>(<span class='ident'>some_c_linked_list</span>, <span class='op'>|</span><span class='ident'>n</span><span class='op'>|</span> <span class='ident'>n</span>.<span class='ident'>next</span>) };
 <span class='kw'>for</span> (<span class='ident'>i</span>, <span class='ident'>node</span>) <span class='kw'>in</span> <span class='ident'>rust_linked_list</span>.<span class='ident'>iter</span>().<span class='ident'>enumerate</span>() {
     <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;some_c_linked_list[{}] == {}&quot;</span>, <span class='ident'>i</span>, <span class='ident'>node</span>.<span class='ident'>value</span>);
 }</pre>
@@ -97,6 +97,15 @@ operations such as iteration to be performed on it.</p>
                     <tr class=' module-item'>
                         <td><a class='struct' href='struct.CLinkedListMutIter.html'
                                title='c_linked_list::CLinkedListMutIter'>CLinkedListMutIter</a></td>
+                        <td class='docblock short'>
+                             <p>Iterator over a <code>CLinkedListMut</code>. Returns references to the nodes of the list.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.CLinkedListMutIterMut.html'
+                               title='c_linked_list::CLinkedListMutIterMut'>CLinkedListMutIterMut</a></td>
                         <td class='docblock short'>
                              <p>Iterator over a <code>CLinkedListMut</code>. Returns mutable references to the nodes of the list.</p>
 

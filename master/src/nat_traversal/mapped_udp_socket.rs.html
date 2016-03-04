@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/nat_traversal-0.1.0/src/mapped_udp_socket.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/nat_traversal-0.2.0/src/mapped_udp_socket.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>mapped_udp_socket.rs.html -- source</title>
@@ -431,12 +431,12 @@
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>net</span>::<span class='ident'>UdpSocket</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>net</span>;
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>net</span>::<span class='ident'>IpAddr</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>time</span>::<span class='ident'>Duration</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>collections</span>::<span class='ident'>HashSet</span>;
 
 <span class='kw'>use</span> <span class='ident'>igd</span>;
 <span class='kw'>use</span> <span class='ident'>time</span>;
-<span class='kw'>use</span> <span class='ident'>ip</span>::{<span class='ident'>SocketAddrExt</span>, <span class='ident'>IpAddr</span>};
 <span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>::<span class='ident'>serialisation</span>::<span class='ident'>deserialise</span>;
 <span class='kw'>use</span> <span class='ident'>socket_addr</span>::<span class='ident'>SocketAddr</span>;
 <span class='kw'>use</span> <span class='ident'>w_result</span>::{<span class='ident'>WResult</span>, <span class='ident'>WOk</span>, <span class='ident'>WErr</span>};
@@ -560,7 +560,7 @@
             <span class='prelude-val'>Ok</span>(<span class='ident'>local_addr</span>) <span class='op'>=&gt;</span> <span class='ident'>local_addr</span>,
             <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='ident'>WErr</span>(<span class='ident'>MappedUdpSocketMapError</span>::<span class='ident'>SocketLocalAddr</span> { <span class='ident'>err</span>: <span class='ident'>e</span> })
         };
-        <span class='kw'>match</span> <span class='ident'>SocketAddrExt</span>::<span class='ident'>ip</span>(<span class='kw-2'>&amp;</span><span class='ident'>local_addr</span>) {
+        <span class='kw'>match</span> <span class='ident'>local_addr</span>.<span class='ident'>ip</span>() {
             <span class='ident'>IpAddr</span>::<span class='ident'>V4</span>(<span class='ident'>ipv4_addr</span>) <span class='op'>=&gt;</span> {
                 <span class='kw'>if</span> <span class='ident'>socket_utils</span>::<span class='ident'>ipv4_is_unspecified</span>(<span class='kw-2'>&amp;</span><span class='ident'>ipv4_addr</span>) {
                     <span class='comment'>// If the socket address is unspecified we add an address for every local</span>

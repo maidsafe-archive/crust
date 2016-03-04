@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/socket_addr-0.0.2/src/lib.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/socket_addr-0.1.0/src/lib.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>lib.rs.html -- source</title>
@@ -202,8 +202,6 @@
 <span id="159">159</span>
 <span id="160">160</span>
 <span id="161">161</span>
-<span id="162">162</span>
-<span id="163">163</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -222,9 +220,9 @@
 <span class='comment'>// Please review the Licences for the specific language governing permissions and limitations</span>
 <span class='comment'>// relating to use of the SAFE Network Software.</span>
 
-<span class='doccomment'>//! A very simple ScoketAddr structure that is serialisable and makes use of the `ip` crate.</span>
+<span class='doccomment'>//! A serialisable `SocketAddr` wrapper.</span>
 <span class='doccomment'>//! There is no intent here to provide many more traits (perhaps serde).</span>
-<span class='doccomment'>//! Deref is implemented to allow easy access to the underlying `net::ScoketAddr`</span>
+<span class='doccomment'>//! `Deref` is implemented to allow easy access to the underlying `net::SocketAddr`</span>
 
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>doc</span>(<span class='ident'>html_logo_url</span> <span class='op'>=</span>
            <span class='string'>&quot;https://raw.githubusercontent.com/maidsafe/QA/master/Images/maidsafe_logo.png&quot;</span>,
@@ -251,17 +249,15 @@
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>cfg_attr</span>(<span class='ident'>feature</span><span class='op'>=</span><span class='string'>&quot;clippy&quot;</span>, <span class='ident'>allow</span>(<span class='ident'>use_debug</span>))]</span>
 
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>rustc_serialize</span>;
-<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>ip</span>;
 
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>net</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>ops</span>::<span class='ident'>Deref</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>str</span>::<span class='ident'>FromStr</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fmt</span>;
 <span class='kw'>use</span> <span class='ident'>rustc_serialize</span>::{<span class='ident'>Encodable</span>, <span class='ident'>Decodable</span>, <span class='ident'>Encoder</span>, <span class='ident'>Decoder</span>};
-<span class='kw'>use</span> <span class='ident'>ip</span>::{<span class='ident'>IpAddr</span>, <span class='ident'>SocketAddrExt</span>};
 
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Copy</span>, <span class='ident'>Clone</span>, <span class='ident'>Debug</span>, <span class='ident'>Hash</span>, <span class='ident'>Eq</span>, <span class='ident'>PartialEq</span>)]</span>
-<span class='doccomment'>/// Wrapper around `std::net::SocketAddr` to enable it to encoded and decoded.</span>
+<span class='doccomment'>/// Wrapper around `std::net::SocketAddr` to enable it to be encoded and decoded.</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>SocketAddr</span>(<span class='kw'>pub</span> <span class='ident'>net</span>::<span class='ident'>SocketAddr</span>);
 
 <span class='kw'>impl</span> <span class='ident'>Deref</span> <span class='kw'>for</span> <span class='ident'>SocketAddr</span> {
@@ -299,13 +295,13 @@
 }
 
 <span class='kw'>impl</span> <span class='ident'>SocketAddr</span> {
-    <span class='doccomment'>/// Construct new from ip::IpAddr and port</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>ip</span>: <span class='ident'>IpAddr</span>, <span class='ident'>port</span>: <span class='ident'>u16</span>) <span class='op'>-&gt;</span> <span class='kw'>Self</span> {
-        <span class='ident'>SocketAddr</span>(<span class='op'>&lt;</span><span class='ident'>net</span>::<span class='ident'>SocketAddr</span> <span class='kw'>as</span> <span class='ident'>SocketAddrExt</span><span class='op'>&gt;</span>::<span class='ident'>new</span>(<span class='ident'>ip</span>, <span class='ident'>port</span>))
+    <span class='doccomment'>/// Construct new from `IpAddr` and port.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>ip</span>: <span class='ident'>net</span>::<span class='ident'>IpAddr</span>, <span class='ident'>port</span>: <span class='ident'>u16</span>) <span class='op'>-&gt;</span> <span class='kw'>Self</span> {
+        <span class='ident'>SocketAddr</span>(<span class='ident'>net</span>::<span class='ident'>SocketAddr</span>::<span class='ident'>new</span>(<span class='ident'>ip</span>, <span class='ident'>port</span>))
     }
 }
 
-<span class='doccomment'>/// Utility struct of SocketAddrV4 for hole punching</span>
+<span class='doccomment'>/// Utility struct of `SocketAddrV4` for hole punching</span>
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>, <span class='ident'>PartialEq</span>, <span class='ident'>Eq</span>, <span class='ident'>Hash</span>, <span class='ident'>Clone</span>, <span class='ident'>Copy</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>SocketAddrV4</span>(<span class='kw'>pub</span> <span class='ident'>net</span>::<span class='ident'>SocketAddrV4</span>);
 

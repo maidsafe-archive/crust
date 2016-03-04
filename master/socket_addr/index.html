@@ -46,17 +46,17 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-0' class='srclink' href='../src/socket_addr/lib.rs.html#18-163' title='goto source code'>[src]</a></span></h1>
-<div class='docblock'><p>A very simple ScoketAddr structure that is serialisable and makes use of the <code>ip</code> crate.
+        </span><a id='src-0' class='srclink' href='../src/socket_addr/lib.rs.html#18-161' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p>A serialisable <code>SocketAddr</code> wrapper.
 There is no intent here to provide many more traits (perhaps serde).
-Deref is implemented to allow easy access to the underlying <code>net::ScoketAddr</code></p>
+<code>Deref</code> is implemented to allow easy access to the underlying <code>net::SocketAddr</code></p>
 </div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
                     <tr class=' module-item'>
                         <td><a class='struct' href='struct.SocketAddr.html'
                                title='socket_addr::SocketAddr'>SocketAddr</a></td>
                         <td class='docblock short'>
-                             <p>Wrapper around <code>std::net::SocketAddr</code> to enable it to encoded and decoded.</p>
+                             <p>Wrapper around <code>std::net::SocketAddr</code> to enable it to be encoded and decoded.</p>
 
                         </td>
                     </tr>
@@ -65,7 +65,7 @@ Deref is implemented to allow easy access to the underlying <code>net::ScoketAdd
                         <td><a class='struct' href='struct.SocketAddrV4.html'
                                title='socket_addr::SocketAddrV4'>SocketAddrV4</a></td>
                         <td class='docblock short'>
-                             <p>Utility struct of SocketAddrV4 for hole punching</p>
+                             <p>Utility struct of <code>SocketAddrV4</code> for hole punching</p>
 
                         </td>
                     </tr>

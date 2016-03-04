@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/config_file_handler-0.0.1/src/error.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/config_file_handler-0.1.0/src/error.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>error.rs.html -- source</title>
@@ -102,14 +102,6 @@
 <span id="59">59</span>
 <span id="60">60</span>
 <span id="61">61</span>
-<span id="62">62</span>
-<span id="63">63</span>
-<span id="64">64</span>
-<span id="65">65</span>
-<span id="66">66</span>
-<span id="67">67</span>
-<span id="68">68</span>
-<span id="69">69</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2016 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -141,8 +133,6 @@
     <span class='ident'>JsonEncoderError</span>(::<span class='ident'>rustc_serialize</span>::<span class='ident'>json</span>::<span class='ident'>EncoderError</span>),
     <span class='doccomment'>/// Wrapper for a `rustc_serialize::json::ParserError`</span>
     <span class='ident'>JsonParserError</span>(::<span class='ident'>rustc_serialize</span>::<span class='ident'>json</span>::<span class='ident'>ParserError</span>),
-    <span class='doccomment'>/// Wrapper for a `::cbor::CborError`</span>
-    <span class='ident'>CborError</span>(::<span class='ident'>cbor</span>::<span class='ident'>CborError</span>),
 }
 
 <span class='kw'>impl</span> <span class='ident'>From</span><span class='op'>&lt;</span>::<span class='ident'>std</span>::<span class='ident'>env</span>::<span class='ident'>VarError</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>Error</span> {
@@ -172,12 +162,6 @@
 <span class='kw'>impl</span> <span class='ident'>From</span><span class='op'>&lt;</span>::<span class='ident'>rustc_serialize</span>::<span class='ident'>json</span>::<span class='ident'>ParserError</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>Error</span> {
     <span class='kw'>fn</span> <span class='ident'>from</span>(<span class='ident'>error</span>: ::<span class='ident'>rustc_serialize</span>::<span class='ident'>json</span>::<span class='ident'>ParserError</span>) <span class='op'>-&gt;</span> <span class='kw'>Self</span> {
         <span class='ident'>Error</span>::<span class='ident'>JsonParserError</span>(<span class='ident'>error</span>)
-    }
-}
-
-<span class='kw'>impl</span> <span class='ident'>From</span><span class='op'>&lt;</span>::<span class='ident'>cbor</span>::<span class='ident'>CborError</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>Error</span> {
-    <span class='kw'>fn</span> <span class='ident'>from</span>(<span class='ident'>error</span>: ::<span class='ident'>cbor</span>::<span class='ident'>CborError</span>) <span class='op'>-&gt;</span> <span class='kw'>Self</span> {
-        <span class='ident'>Error</span>::<span class='ident'>CborError</span>(<span class='ident'>error</span>)
     }
 }
 </pre>
