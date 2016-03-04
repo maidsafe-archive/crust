@@ -18,10 +18,7 @@
 #[cfg(test)]
 use util;
 use std::net;
-use ip::IpAddr;
-use ip::SocketAddrExt;
-#[cfg(test)]
-use std::net::{Ipv4Addr, Ipv6Addr};
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use rustc_serialize::{Encodable, Encoder, Decoder};
 use socket_addr::SocketAddr;
 
@@ -84,7 +81,7 @@ impl Endpoint {
 
     /// Returns IpAddr
     pub fn ip(&self) -> IpAddr {
-        <net::SocketAddr as SocketAddrExt>::ip(self.socket_addr())
+        self.socket_addr().ip()
     }
 
     /// Returns Port
