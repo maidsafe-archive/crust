@@ -628,7 +628,6 @@ mod test {
     }
 
     #[test]
-    #[ignore] // For now, don't try to bootstrap over udp
     fn start_two_services_bootstrap_communicate_exit_udp() {
         two_services_bootstrap_communicate_and_exit(45667, false, true);
     }
