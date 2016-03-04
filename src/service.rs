@@ -39,6 +39,7 @@ use ip::SocketAddrExt;
 use connection;
 use bootstrap;
 use bootstrap::RaiiBootstrap;
+use bootstrap_handler::BootstrapHandler;
 
 use event::Event;
 use socket_addr::SocketAddr;
@@ -97,6 +98,7 @@ pub struct TheirConnectionInfo {
 pub struct Service {
     static_contact_info: Arc<Mutex<StaticContactInfo>>,
     peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
+    bootstrap_cache: Arc<Mutex<BootstrapHandler>>,
     expected_peers: Arc<Mutex<HashSet<PeerId>>>,
     service_discovery: ServiceDiscovery<StaticContactInfo>,
     event_tx: ::CrustEventSender,
@@ -147,7 +149,10 @@ impl Service {
                                format!("Failed to create MappingContext: {}", e)))
         }));
         // Form initial peer contact infos - these will also contain echo-service addrs.
-        let bootstrap_contacts = try!(bootstrap::get_known_contacts(&service_discovery, &config));
+        let bootstrap_cache = Arc::new(Mutex::new(try!(BootstrapHandler::new())));
+        let bootstrap_contacts = try!(bootstrap::get_known_contacts(&service_discovery,
+                                                                    bootstrap_cache.clone(),
+                                                                    &config));
         for peer_contact_info in bootstrap_contacts.iter() {
             mapping_context.add_simple_udp_servers(peer_contact_info.udp_mapper_servers.clone());
             mapping_context.add_simple_tcp_servers(peer_contact_info.tcp_mapper_servers.clone());
@@ -165,11 +170,13 @@ impl Service {
                                            our_keys.0.clone(),
                                            event_tx.clone(),
                                            connection_map.clone(),
+                                           bootstrap_cache.clone(),
                                            mapping_context.clone());
 
         let service = Service {
             static_contact_info: static_contact_info,
             peer_contact_infos: peer_contact_infos,
+            bootstrap_cache: bootstrap_cache,
             service_discovery: service_discovery,
             expected_peers: Arc::new(Mutex::new(HashSet::new())),
             event_tx: event_tx,
@@ -201,6 +208,7 @@ impl Service {
                                                    self.peer_contact_infos.clone(),
                                                    self.event_tx.clone(),
                                                    self.connection_map.clone(),
+                                                   self.bootstrap_cache.clone(),
                                                    self.expected_peers.clone())));
         Ok(())
     }
@@ -214,6 +222,7 @@ impl Service {
                                            self.our_keys.0.clone(),
                                            self.event_tx.clone(),
                                            self.connection_map.clone(),
+                                           self.bootstrap_cache.clone(),
                                            self.mapping_context.clone())));
         Ok(())
     }
@@ -285,6 +294,7 @@ impl Service {
         let connection_map = self.connection_map.clone();
         let our_public_key = self.our_keys.0.clone();
         let our_contact_info = self.static_contact_info.clone();
+        let bootstrap_cache = self.bootstrap_cache.clone();
 
         unwrap_result!(self.expected_peers.lock()).insert(their_connection_info.id);
 
@@ -292,6 +302,7 @@ impl Service {
         let _joiner = thread!("PeerConnectionThread", move || {
             let mut last_err = io::Error::new(io::ErrorKind::NotFound,
                                               "No TCP acceptors found.");
+            let static_contact_info = their_connection_info.static_contact_info.clone();
             for tcp_addr in their_connection_info.static_contact_info.tcp_acceptors {
                 match connection::connect_tcp_endpoint(tcp_addr,
                                                        our_contact_info.clone(),
@@ -303,7 +314,13 @@ impl Service {
                         last_err = err;
                         continue;
                     }
-                    Ok(()) => return,
+                    Ok(()) => {
+                        unwrap_result!(bootstrap_cache.lock()).update_contacts(
+                            vec![static_contact_info],
+                            vec![]
+                        );
+                        return;
+                    }
                 }
             };
 

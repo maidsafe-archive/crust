@@ -42,6 +42,7 @@ use socket_utils;
 use listener_message::{ListenerRequest, ListenerResponse};
 use peer_id;
 use peer_id::PeerId;
+use bootstrap_handler::BootstrapHandler;
 use nat_traversal::{MappedUdpSocket, MappingContext, PrivRendezvousInfo,
                     PunchedUdpSocket, PubRendezvousInfo, gen_rendezvous_info};
 use sodiumoxide::crypto::box_::PublicKey;
@@ -128,8 +129,10 @@ pub fn connect(peer_contact: StaticContactInfo,
                our_public_key: PublicKey,
                event_tx: ::CrustEventSender,
                connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
+               bootstrap_cache: Arc<Mutex<BootstrapHandler>>,
                mc: &MappingContext)
                -> io::Result<()> {
+    let static_contact_info = peer_contact.clone();
     let mut last_err = io::Error::new(io::ErrorKind::NotFound, "No TCP acceptors found.");
     for tcp_addr in peer_contact.tcp_acceptors {
         match connect_tcp_endpoint(tcp_addr,
@@ -208,6 +211,7 @@ pub fn connect(peer_contact: StaticContactInfo,
     }
 */
 
+    unwrap_result!(bootstrap_cache.lock()).update_contacts(vec![], vec![static_contact_info]);
     Err(last_err)
 }
 
@@ -335,6 +339,9 @@ pub fn start_tcp_accept(port: u16,
                         peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
                         event_tx: ::CrustEventSender,
                         connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
+                        // TODO(canndrew): We currently don't share static contact infos on
+                        // accepting a connection
+                        _bootstrap_cache: Arc<Mutex<BootstrapHandler>>,
                         expected_peers: Arc<Mutex<HashSet<PeerId>>>)
                         -> io::Result<RaiiTcpAcceptor> {
     use std::io::Write;

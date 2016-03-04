@@ -40,6 +40,7 @@ use socket_addr::SocketAddr;
 use listener_message::{ListenerRequest, ListenerResponse};
 use peer_id;
 use peer_id::PeerId;
+use bootstrap_handler::BootstrapHandler;
 
 const UDP_READ_TIMEOUT_SECS: u64 = 2;
 
@@ -55,6 +56,7 @@ impl RaiiUdpListener {
                our_public_key: PublicKey,
                event_tx: ::CrustEventSender,
                connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
+               _bootstrap_cache: Arc<Mutex<BootstrapHandler>>,
                mc: Arc<MappingContext>)
                -> io::Result<RaiiUdpListener> {
         let udp_socket = try!(UdpSocket::bind(&format!("0.0.0.0:{}", port)[..]));
