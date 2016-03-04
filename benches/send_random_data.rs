@@ -32,6 +32,7 @@
 #![cfg_attr(feature="clippy", feature(plugin))]
 #![cfg_attr(feature="clippy", plugin(clippy))]
 #![cfg_attr(feature="clippy", deny(clippy, clippy_pedantic))]
+#![cfg_attr(feature="clippy", allow(use_debug))]
 
 #![feature(test)]
 extern crate crust;

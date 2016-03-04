@@ -34,13 +34,13 @@
 #![cfg_attr(feature="clippy", feature(plugin))]
 #![cfg_attr(feature="clippy", plugin(clippy))]
 #![cfg_attr(feature="clippy", deny(clippy, clippy_pedantic))]
+#![cfg_attr(feature="clippy", allow(use_debug))]
 
 #[macro_use]
 extern crate maidsafe_utilities;
 extern crate config_file_handler;
 extern crate crust;
 extern crate docopt;
-extern crate ip;
 
 #[macro_use]
 extern crate log;
@@ -52,7 +52,6 @@ extern crate time;
 use config_file_handler::FileHandler;
 use crust::{Event, PeerId, Service};
 use docopt::Docopt;
-use ip::SocketAddrExt;
 use maidsafe_utilities::event_sender::{MaidSafeEventCategory, MaidSafeObserver};
 use rand::{thread_rng, Rng};
 use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};

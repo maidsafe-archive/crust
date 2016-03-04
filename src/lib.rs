@@ -40,10 +40,10 @@
 #![cfg_attr(feature="clippy", feature(plugin))]
 #![cfg_attr(feature="clippy", plugin(clippy))]
 #![cfg_attr(feature="clippy", deny(clippy, clippy_pedantic))]
+#![cfg_attr(feature="clippy", allow(use_debug))]
 
 #![allow(unused)]
 
-extern crate cbor;
 extern crate itertools;
 #[macro_use]
 extern crate log;
@@ -56,7 +56,6 @@ extern crate crossbeam;
 #[macro_use]
 extern crate maidsafe_utilities;
 extern crate socket_addr;
-extern crate ip;
 extern crate get_if_addrs;
 extern crate sodiumoxide;
 extern crate config_file_handler;
