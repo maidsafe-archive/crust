@@ -17,14 +17,13 @@
 
 use event::WriteEvent;
 
-use cbor;
 use std::io;
 use std::sync::mpsc;
 use std::io::BufReader;
 use std::net::TcpStream;
 use rustc_serialize::Decodable;
 use utp_connections::UtpWrapper;
-use maidsafe_utilities::serialisation::serialise;
+use maidsafe_utilities::serialisation::{deserialise_from, serialise};
 use socket_addr::SocketAddr;
 use sodiumoxide::crypto::box_::PublicKey;
 
@@ -48,24 +47,27 @@ impl Drop for RaiiSender {
 
 #[allow(variant_size_differences)]
 pub enum Receiver {
-    Tcp(cbor::Decoder<BufReader<TcpStream>>),
-    Utp(cbor::Decoder<BufReader<UtpWrapper>>),
+    Tcp(BufReader<TcpStream>),
+    Utp(BufReader<UtpWrapper>),
 }
 
 impl Receiver {
+    pub fn tcp(stream: TcpStream) -> Self {
+        Receiver::Tcp(BufReader::new(stream))
+    }
+
+    pub fn utp(stream: UtpWrapper) -> Self {
+        Receiver::Utp(BufReader::new(stream))
+    }
+
     fn basic_receive<D: Decodable + ::std::fmt::Debug>(&mut self) -> io::Result<D> {
         let msg = match *self {
-            Receiver::Tcp(ref mut decoder) => decoder.decode::<D>().next(),
-            Receiver::Utp(ref mut decoder) => decoder.decode::<D>().next(),
+            Receiver::Tcp(ref mut reader) => deserialise_from::<_, D>(reader),
+            Receiver::Utp(ref mut reader) => deserialise_from::<_, D>(reader),
         };
         match msg {
-            Some(Ok(a)) => Ok(a),
-            Some(Err(_)) => {
-                Err(io::Error::new(io::ErrorKind::InvalidData, "Failed to decode CBOR"))
-            }
-            None => {
-                Err(io::Error::new(io::ErrorKind::NotConnected, "Decoder reached end of stream"))
-            }
+            Ok(a) => Ok(a),
+            Err(_) => Err(io::Error::new(io::ErrorKind::InvalidData, "Deserialisation failure")),
         }
     }
 

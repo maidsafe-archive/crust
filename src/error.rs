@@ -15,6 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 use config_file_handler;
+use maidsafe_utilities::serialisation;
 
 /// Error types.
 #[derive(Debug)]
@@ -33,8 +34,8 @@ pub enum Error {
     JsonEncoderError(::rustc_serialize::json::EncoderError),
     /// Wrapper for a `rustc_serialize::json::ParserError`
     JsonParserError(::rustc_serialize::json::ParserError),
-    /// Wrapper for a `::cbor::CborError`
-    CborError(::cbor::CborError),
+    /// Wrapper for a `maidsafe_utilities::serialisation::SerialisationError`
+    SerialisationError(serialisation::SerialisationError),
 }
 
 impl From<::std::env::VarError> for Error {
@@ -72,8 +73,8 @@ impl From<config_file_handler::Error> for Error {
     }
 }
 
-impl From<::cbor::CborError> for Error {
-    fn from(error: ::cbor::CborError) -> Self {
-        Error::CborError(error)
+impl From<serialisation::SerialisationError> for Error {
+    fn from(error: serialisation::SerialisationError) -> Self {
+        Error::SerialisationError(error)
     }
 }

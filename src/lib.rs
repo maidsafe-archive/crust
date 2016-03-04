@@ -43,7 +43,6 @@
 
 #![allow(unused)]
 
-extern crate cbor;
 extern crate itertools;
 #[macro_use]
 extern crate log;
