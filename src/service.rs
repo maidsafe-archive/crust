@@ -35,7 +35,6 @@ use rand;
 use config_handler::Config;
 use connection::Connection;
 use error::Error;
-use ip::SocketAddrExt;
 use connection;
 use bootstrap;
 use bootstrap::RaiiBootstrap;

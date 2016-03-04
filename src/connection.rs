@@ -32,7 +32,6 @@ use static_contact_info::StaticContactInfo;
 use tcp_connections;
 use utp_connections;
 use sender_receiver::{RaiiSender, Receiver, CrustMsg};
-use ip::SocketAddrExt;
 use socket_addr::SocketAddr;
 use event::{Event, WriteEvent};
 use endpoint::Protocol;
