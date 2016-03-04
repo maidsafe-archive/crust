@@ -78,7 +78,6 @@ fn main() {
                BigUint::parse_bytes(b&quot;16706&quot;, 10).unwrap());
     assert_eq!(BigUint::from_bytes_be(b&quot;Hello world!&quot;),
                BigUint::parse_bytes(b&quot;22405534230753963835153736737&quot;, 10).unwrap());
-    
 }</span><pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>num</span>::<span class='ident'>bigint</span>::<span class='ident'>BigUint</span>;
 
@@ -103,7 +102,6 @@ fn main() {
     
     let i = BigUint::parse_bytes(b&quot;1125&quot;, 10).unwrap();
     assert_eq!(i.to_bytes_le(), vec![101, 4]);
-    
 }</span><pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>num</span>::<span class='ident'>bigint</span>::<span class='ident'>BigUint</span>;
 
@@ -118,7 +116,6 @@ fn main() {
     
     let i = BigUint::parse_bytes(b&quot;1125&quot;, 10).unwrap();
     assert_eq!(i.to_bytes_be(), vec![4, 101]);
-    
 }</span><pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>num</span>::<span class='ident'>bigint</span>::<span class='ident'>BigUint</span>;
 
@@ -134,7 +131,6 @@ fn main() {
     
     let i = BigUint::parse_bytes(b&quot;ff&quot;, 16).unwrap();
     assert_eq!(i.to_str_radix(16), &quot;ff&quot;);
-    
 }</span><pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>num</span>::<span class='ident'>bigint</span>::<span class='ident'>BigUint</span>;
 
@@ -150,7 +146,6 @@ fn main() {
     assert_eq!(BigUint::parse_bytes(b&quot;1234&quot;, 10), ToBigUint::to_biguint(&amp;1234));
     assert_eq!(BigUint::parse_bytes(b&quot;ABCD&quot;, 16), ToBigUint::to_biguint(&amp;0xABCD));
     assert_eq!(BigUint::parse_bytes(b&quot;G&quot;, 16), None);
-    
 }</span><pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>num</span>::<span class='ident'>bigint</span>::{<span class='ident'>BigUint</span>, <span class='ident'>ToBigUint</span>};
 

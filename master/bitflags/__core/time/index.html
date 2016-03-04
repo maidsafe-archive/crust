@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-9817' class='srclink' href='https://doc.rust-lang.org/nightly/std/time/index.html?gotosrc=9817' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-9900' class='srclink' href='https://doc.rust-lang.org/nightly/std/time/index.html?gotosrc=9900' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Temporal quantification.</p>
 </div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
@@ -64,7 +64,8 @@ timeouts.</p>
                         <td><a class='struct' href='struct.Instant.html'
                                title='bitflags::__core::time::Instant'>Instant</a></td>
                         <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>A measurement of a monotonically increasing clock.</p>
+                            [<em class='stab unstable'>Unstable</em>] <p>A measurement of a monotonically increasing clock.
+ Opaque and useful only with <code>Duration</code>.</p>
 
                         </td>
                     </tr>
@@ -73,8 +74,8 @@ timeouts.</p>
                         <td><a class='struct' href='struct.SystemTime.html'
                                title='bitflags::__core::time::SystemTime'>SystemTime</a></td>
                         <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>A measurement of the system clock appropriate for timestamps such as those
-on files on the filesystem.</p>
+                            [<em class='stab unstable'>Unstable</em>] <p>A measurement of the system clock, useful for talking to
+external entities like the file system or other processes.</p>
 
                         </td>
                     </tr>

@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-4908' class='srclink' href='https://doc.rust-lang.org/nightly/std/io/trait.Write.html?gotosrc=4908' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-4870' class='srclink' href='https://doc.rust-lang.org/nightly/std/io/trait.Write.html?gotosrc=4870' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait Write {
     fn <a href='#tymethod.write' class='fnname'>write</a>(&amp;mut self, buf: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>&amp;[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>]</a>) -&gt; <a class='enum' href='../../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>, <a class='struct' href='../../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;;
     fn <a href='#tymethod.flush' class='fnname'>flush</a>(&amp;mut self) -&gt; <a class='enum' href='../../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;;
@@ -154,8 +154,8 @@ this method will be returned.</p>
 encountered.</p>
 
 <p>This method is primarily used to interface with the
-<a href="../std/macro.format_args!.html"><code>format_args!</code></a> macro, but it is rare that this should
-explicitly be called. The <a href="../std/macro.write!.html"><code>write!</code></a> macro should be favored to
+<a href="../macro.format_args!.html"><code>format_args!</code></a> macro, but it is rare that this should
+explicitly be called. The <a href="../macro.write!.html"><code>write!</code></a> macro should be favored to
 invoke this method instead.</p>
 
 <p>This function internally uses the <a href="#method.write_all"><code>write_all</code></a> method on
@@ -235,7 +235,7 @@ call to <code>write</code> succeeded.</p>
 <li><code>impl&lt;'a&gt; <a class='trait' href='../../../../bitflags/__core/io/trait.Write.html' title='bitflags::__core::io::Write'>Write</a> for <a class='struct' href='../../../../bitflags/__core/io/struct.StdoutLock.html' title='bitflags::__core::io::StdoutLock'>StdoutLock</a>&lt;'a&gt;</code></li>
 <li><code>impl <a class='trait' href='../../../../bitflags/__core/io/trait.Write.html' title='bitflags::__core::io::Write'>Write</a> for <a class='struct' href='../../../../bitflags/__core/io/struct.Stderr.html' title='bitflags::__core::io::Stderr'>Stderr</a></code></li>
 <li><code>impl&lt;'a&gt; <a class='trait' href='../../../../bitflags/__core/io/trait.Write.html' title='bitflags::__core::io::Write'>Write</a> for <a class='struct' href='../../../../bitflags/__core/io/struct.StderrLock.html' title='bitflags::__core::io::StderrLock'>StderrLock</a>&lt;'a&gt;</code></li>
-<li><code>impl&lt;T, U&gt; <a class='trait' href='../../../../bitflags/__core/io/trait.Write.html' title='bitflags::__core::io::Write'>Write</a> for <a class='struct' href='../../../../bitflags/__core/io/struct.Broadcast.html' title='bitflags::__core::io::Broadcast'>Broadcast</a>&lt;T, U&gt; <span class='where'>where T: <a class='trait' href='../../../../bitflags/__core/io/trait.Write.html' title='bitflags::__core::io::Write'>Write</a>, U: <a class='trait' href='../../../../bitflags/__core/io/trait.Write.html' title='bitflags::__core::io::Write'>Write</a></span></code></li>
+<li><code>impl&lt;T, U&gt; <a class='trait' href='../../../../bitflags/__core/io/trait.Write.html' title='bitflags::__core::io::Write'>Write</a> for <a class='struct' href='../../../../bitflags/__core/io/struct.Broadcast.html' title='bitflags::__core::io::Broadcast'>Broadcast</a>&lt;T, U&gt; <span class='where'>where U: <a class='trait' href='../../../../bitflags/__core/io/trait.Write.html' title='bitflags::__core::io::Write'>Write</a>, T: <a class='trait' href='../../../../bitflags/__core/io/trait.Write.html' title='bitflags::__core::io::Write'>Write</a></span></code></li>
 <li><code>impl <a class='trait' href='../../../../bitflags/__core/io/trait.Write.html' title='bitflags::__core::io::Write'>Write</a> for <a class='struct' href='../../../../bitflags/__core/net/struct.TcpStream.html' title='bitflags::__core::net::TcpStream'>TcpStream</a></code></li>
 <li><code>impl&lt;'a&gt; <a class='trait' href='../../../../bitflags/__core/io/trait.Write.html' title='bitflags::__core::io::Write'>Write</a> for &amp;'a <a class='struct' href='../../../../bitflags/__core/net/struct.TcpStream.html' title='bitflags::__core::net::TcpStream'>TcpStream</a></code></li>
 <li><code>impl <a class='trait' href='../../../../bitflags/__core/io/trait.Write.html' title='bitflags::__core::io::Write'>Write</a> for <a class='struct' href='../../../../bitflags/__core/process/struct.ChildStdin.html' title='bitflags::__core::process::ChildStdin'>ChildStdin</a></code></li>

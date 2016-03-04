@@ -1002,6 +1002,13 @@
 <span id="959">959</span>
 <span id="960">960</span>
 <span id="961">961</span>
+<span id="962">962</span>
+<span id="963">963</span>
+<span id="964">964</span>
+<span id="965">965</span>
+<span id="966">966</span>
+<span id="967">967</span>
+<span id="968">968</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -1091,6 +1098,13 @@
     <span class='ident'>static_contact_info</span>: <span class='ident'>StaticContactInfo</span>,
     <span class='comment'>// tcp_addrs: Vec&lt;SocketAddr&gt;,</span>
     <span class='ident'>id</span>: <span class='ident'>PeerId</span>,
+}
+
+<span class='kw'>impl</span> <span class='ident'>TheirConnectionInfo</span> {
+    <span class='doccomment'>/// Returns the `PeerId` of the node that created this connection info.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>id</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>PeerId</span> {
+        <span class='self'>self</span>.<span class='ident'>id</span>
+    }
 }
 
 <span class='doccomment'>/// A structure representing a connection manager.</span>

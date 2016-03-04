@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-5319' class='srclink' href='https://doc.rust-lang.org/nightly/std/net/ip/struct.Ipv6Addr.html?gotosrc=5319' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-5279' class='srclink' href='https://doc.rust-lang.org/nightly/std/net/ip/struct.Ipv6Addr.html?gotosrc=5279' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Ipv6Addr {
     // some fields omitted
 }</pre><div class='docblock'><p>Representation of an IPv6 address.</p>
@@ -57,11 +57,13 @@
 </div><h4 id='method.segments' class='method'><code>fn <a href='#method.segments' class='fnname'>segments</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.array.html'>[<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u16.html'>u16</a>; 8]</a></code></h4>
 <div class='docblock'><p>Returns the eight 16-bit segments that make up this address.</p>
 </div><h4 id='method.is_unspecified' class='method'><code>fn <a href='#method.is_unspecified' class='fnname'>is_unspecified</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a></code></h4>
-<div class='stability'><em class='stab unstable'>Unstable (<code>ip</code>)<p>: extra functionality has not been scrutinized to the level that it should be stable</p>
-</em></div><div class='docblock'><p>Returns true for the special &#39;unspecified&#39; address ::.</p>
+<div class='docblock'><p>Returns true for the special &#39;unspecified&#39; address ::.</p>
+
+<p>This property is defined in RFC 6890.</p>
 </div><h4 id='method.is_loopback' class='method'><code>fn <a href='#method.is_loopback' class='fnname'>is_loopback</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a></code></h4>
-<div class='stability'><em class='stab unstable'>Unstable (<code>ip</code>)<p>: extra functionality has not been scrutinized to the level that it should be stable</p>
-</em></div><div class='docblock'><p>Returns true if this is a loopback address (::1).</p>
+<div class='docblock'><p>Returns true if this is a loopback address (::1).</p>
+
+<p>This property is defined in RFC 6890.</p>
 </div><h4 id='method.is_global' class='method'><code>fn <a href='#method.is_global' class='fnname'>is_global</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a></code></h4>
 <div class='stability'><em class='stab unstable'>Unstable (<code>ip</code>)<p>: extra functionality has not been scrutinized to the level that it should be stable</p>
 </em></div><div class='docblock'><p>Returns true if the address appears to be globally routable.</p>
@@ -101,10 +103,10 @@ fec0::/10).</p>
 <div class='stability'><em class='stab unstable'>Unstable (<code>ip</code>)<p>: extra functionality has not been scrutinized to the level that it should be stable</p>
 </em></div><div class='docblock'><p>Returns the address&#39;s multicast scope if the address is multicast.</p>
 </div><h4 id='method.is_multicast' class='method'><code>fn <a href='#method.is_multicast' class='fnname'>is_multicast</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a></code></h4>
-<div class='stability'><em class='stab unstable'>Unstable (<code>ip</code>)<p>: extra functionality has not been scrutinized to the level that it should be stable</p>
-</em></div><div class='docblock'><p>Returns true if this is a multicast address.</p>
+<div class='docblock'><p>Returns true if this is a multicast address.</p>
 
-<p>Multicast addresses have the form ff00::/8.</p>
+<p>Multicast addresses have the form ff00::/8, and this property is defined
+by RFC 3956.</p>
 </div><h4 id='method.to_ipv4' class='method'><code>fn <a href='#method.to_ipv4' class='fnname'>to_ipv4</a>(&amp;self) -&gt; <a class='enum' href='../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;<a class='struct' href='../../../bitflags/__core/net/struct.Ipv4Addr.html' title='bitflags::__core::net::Ipv4Addr'>Ipv4Addr</a>&gt;</code></h4>
 <div class='docblock'><p>Converts this address to an IPv4 address. Returns None if this address is
 neither IPv4-compatible or IPv4-mapped.</p>

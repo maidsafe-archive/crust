@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-3034' class='srclink' href='https://doc.rust-lang.org/nightly/std/ffi/index.html?gotosrc=3034' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-3032' class='srclink' href='https://doc.rust-lang.org/nightly/std/ffi/index.html?gotosrc=3032' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Utilities related to FFI bindings.</p>
 </div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
@@ -69,6 +69,16 @@
                     </tr>
                 
                     <tr class=' module-item'>
+                        <td><a class='struct' href='struct.IntoStringError.html'
+                               title='bitflags::__core::ffi::IntoStringError'>IntoStringError</a></td>
+                        <td class='docblock short'>
+                             <p>An error returned from <code>CString::into_string</code> to indicate that a UTF-8 error
+was encountered during the conversion.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
                         <td><a class='struct' href='struct.NulError.html'
                                title='bitflags::__core::ffi::NulError'>NulError</a></td>
                         <td class='docblock short'>
@@ -82,7 +92,7 @@ in the vector provided.</p>
                         <td><a class='struct' href='struct.OsStr.html'
                                title='bitflags::__core::ffi::OsStr'>OsStr</a></td>
                         <td class='docblock short'>
-                             <p>Slices into OS strings.</p>
+                             <p>Slices into OS strings (see <code>OsString</code>).</p>
 
                         </td>
                     </tr>
@@ -91,17 +101,8 @@ in the vector provided.</p>
                         <td><a class='struct' href='struct.OsString.html'
                                title='bitflags::__core::ffi::OsString'>OsString</a></td>
                         <td class='docblock short'>
-                             <p>Owned, mutable OS strings.</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class='unstable module-item'>
-                        <td><a class='struct' href='struct.IntoStringError.html'
-                               title='bitflags::__core::ffi::IntoStringError'>IntoStringError</a></td>
-                        <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>An error returned from <code>CString::into_string</code> to indicate that a UTF-8 error
-was encountered during the conversion.</p>
+                             <p>A type that can represent owned, mutable platform-native strings, but is
+cheaply interconvertable with Rust strings.</p>
 
                         </td>
                     </tr>

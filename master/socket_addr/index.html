@@ -12,7 +12,7 @@
     <link rel="stylesheet" type="text/css" href="../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../main.css">
 
-    
+    <link rel="shortcut icon" href="http://maidsafe.net/img/favicon.ico">
     
 </head>
 <body class="rustdoc">
@@ -26,7 +26,7 @@
     
 
     <nav class="sidebar">
-        
+        <a href='../socket_addr/index.html'><img src='https://raw.githubusercontent.com/maidsafe/QA/master/Images/maidsafe_logo.png' alt='' width='100'></a>
         <p class='location'></p><script>window.sidebarCurrent = {name: 'socket_addr', ty: 'mod', relpath: '../'};</script>
     </nav>
 
@@ -46,8 +46,11 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-0' class='srclink' href='../src/socket_addr/lib.rs.html#18-139' title='goto source code'>[src]</a></span></h1>
-<h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+        </span><a id='src-0' class='srclink' href='../src/socket_addr/lib.rs.html#18-163' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p>A very simple ScoketAddr structure that is serialisable and makes use of the <code>ip</code> crate.
+There is no intent here to provide many more traits (perhaps serde).
+Deref is implemented to allow easy access to the underlying <code>net::ScoketAddr</code></p>
+</div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
                     <tr class=' module-item'>
                         <td><a class='struct' href='struct.SocketAddr.html'

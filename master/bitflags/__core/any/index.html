@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-21886' class='srclink' href='https://doc.rust-lang.org/nightly/core/any/index.html?gotosrc=21886' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-22744' class='srclink' href='https://doc.rust-lang.org/nightly/core/any/index.html?gotosrc=22744' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>This module implements the <code>Any</code> trait, which enables dynamic typing
 of any <code>&#39;static</code> type through runtime reflection.</p>
 
@@ -55,9 +55,8 @@ as a trait object. As <code>&amp;Any</code> (a borrowed trait object), it has th
 <code>downcast_ref</code> methods, to test if the contained value is of a given type,
 and to get a reference to the inner value as a type. As <code>&amp;mut Any</code>, there
 is also the <code>downcast_mut</code> method, for getting a mutable reference to the
-inner value. <code>Box&lt;Any&gt;</code> adds the <code>move</code> method, which will unwrap a
-<code>Box&lt;T&gt;</code> from the object. See the extension traits (<code>*Ext</code>) for the full
-details.</p>
+inner value. <code>Box&lt;Any&gt;</code> adds the <code>downcast</code> method, which attempts to
+convert to a <code>Box&lt;T&gt;</code>. See the <a href="../boxed/struct.Box.html"><code>Box</code></a> documentation for the full details.</p>
 
 <p>Note that &amp;Any is limited to testing whether a value is of a specified
 concrete type, and cannot be used to test whether a type implements a trait.</p>

@@ -46,10 +46,10 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-9800' class='srclink' href='https://doc.rust-lang.org/nightly/std/sync/semaphore/struct.SemaphoreGuard.html?gotosrc=9800' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-9883' class='srclink' href='https://doc.rust-lang.org/nightly/std/sync/semaphore/struct.SemaphoreGuard.html?gotosrc=9883' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct SemaphoreGuard&lt;'a&gt; {
     // some fields omitted
-}</pre><div class='stability'><em class='stab unstable'>Unstable (<code>semaphore</code>)<p>: the interaction between semaphores and the acquisition/release of resources is currently unclear</p>
+}</pre><div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.7.0<p>: easily confused with system sempahores and not used enough to pull its weight</p>
 </em></div><div class='docblock'><p>An RAII guard which will release a resource acquired from a semaphore when
 dropped.</p>
 </div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl&lt;'a&gt; <a class='trait' href='../../../bitflags/__core/ops/trait.Drop.html' title='bitflags::__core::ops::Drop'>Drop</a> for <a class='struct' href='../../../bitflags/__core/sync/struct.SemaphoreGuard.html' title='bitflags::__core::sync::SemaphoreGuard'>SemaphoreGuard</a>&lt;'a&gt;</code></h3><div class='impl-items'><h4 id='method.drop' class='method'><code>fn <a href='../../../bitflags/__core/ops/trait.Drop.html#method.drop' class='fnname'>drop</a>(&amp;mut self)</code></h4>

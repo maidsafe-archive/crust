@@ -46,10 +46,10 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-10030' class='srclink' href='https://doc.rust-lang.org/nightly/std/time/struct.SystemTime.html?gotosrc=10030' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-10120' class='srclink' href='https://doc.rust-lang.org/nightly/std/time/struct.SystemTime.html?gotosrc=10120' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct SystemTime(_);</pre><div class='stability'><em class='stab unstable'>Unstable (<code>time2</code>)<p>: recently added</p>
-</em></div><div class='docblock'><p>A measurement of the system clock appropriate for timestamps such as those
-on files on the filesystem.</p>
+</em></div><div class='docblock'><p>A measurement of the system clock, useful for talking to
+external entities like the file system or other processes.</p>
 
 <p>Distinct from the <code>Instant</code> type, this time measurement <strong>is not
 monotonic</strong>. This means that you can save a file to the file system, then

@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-4946' class='srclink' href='https://doc.rust-lang.org/nightly/std/io/enum.SeekFrom.html?gotosrc=4946' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-4908' class='srclink' href='https://doc.rust-lang.org/nightly/std/io/enum.SeekFrom.html?gotosrc=4908' title='goto source code'>[src]</a></span></h1>
 <pre class='rust enum'>pub enum SeekFrom {
     Start(<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u64.html'>u64</a>),
     End(<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.i64.html'>i64</a>),
@@ -57,12 +57,12 @@
 </div></td></tr><tr><td id='variant.End'><code>End</code></td><td><div class='docblock'><p>Set the offset to the size of this object plus the specified number of
 bytes.</p>
 
-<p>It is possible to seek beyond the end of an object, but is an error to
+<p>It is possible to seek beyond the end of an object, but it&#39;s an error to
 seek before byte 0.</p>
 </div></td></tr><tr><td id='variant.Current'><code>Current</code></td><td><div class='docblock'><p>Set the offset to the current position plus the specified number of
 bytes.</p>
 
-<p>It is possible to seek beyond the end of an object, but is an error to
+<p>It is possible to seek beyond the end of an object, but it&#39;s an error to
 seek before byte 0.</p>
 </div></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Debug.html' title='bitflags::__core::fmt::Debug'>Debug</a> for <a class='enum' href='../../../bitflags/__core/io/enum.SeekFrom.html' title='bitflags::__core::io::SeekFrom'>SeekFrom</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='../../../bitflags/__core/fmt/trait.Debug.html#method.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h4>
 </div><h3 class='impl'><code>impl <a class='trait' href='../../../bitflags/__core/clone/trait.Clone.html' title='bitflags::__core::clone::Clone'>Clone</a> for <a class='enum' href='../../../bitflags/__core/io/enum.SeekFrom.html' title='bitflags::__core::io::SeekFrom'>SeekFrom</a></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='../../../bitflags/__core/clone/trait.Clone.html#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='enum' href='../../../bitflags/__core/io/enum.SeekFrom.html' title='bitflags::__core::io::SeekFrom'>SeekFrom</a></code></h4>

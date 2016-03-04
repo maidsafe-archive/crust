@@ -46,17 +46,17 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-1881' class='srclink' href='https://doc.rust-lang.org/nightly/collections/btree/set/struct.BTreeSet.html?gotosrc=1881' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-1605' class='srclink' href='https://doc.rust-lang.org/nightly/collections/btree/set/struct.BTreeSet.html?gotosrc=1605' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct BTreeSet&lt;T&gt; {
     // some fields omitted
 }</pre><div class='docblock'><p>A set based on a B-Tree.</p>
 
-<p>See BTreeMap&#39;s documentation for a detailed discussion of this collection&#39;s performance
+<p>See <a href="../struct.BTreeMap.html"><code>BTreeMap</code></a>&#39;s documentation for a detailed discussion of this collection&#39;s performance
 benefits and drawbacks.</p>
 
 <p>It is a logic error for an item to be modified in such a way that the item&#39;s ordering relative
-to any other item, as determined by the <code>Ord</code> trait, changes while it is in the set. This is
-normally only possible through <code>Cell</code>, <code>RefCell</code>, global state, I/O, or unsafe code.</p>
+to any other item, as determined by the <a href="../../core/cmp/trait.Ord.html"><code>Ord</code></a> trait, changes while it is in the set. This is
+normally only possible through <a href="../../std/cell/struct.Cell.html"><code>Cell</code></a>, <a href="../../std/cell/struct.RefCell.html"><code>RefCell</code></a>, global state, I/O, or unsafe code.</p>
 </div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;T&gt; <a class='struct' href='../../../bitflags/__core/collections/btree_set/struct.BTreeSet.html' title='bitflags::__core::collections::btree_set::BTreeSet'>BTreeSet</a>&lt;T&gt; <span class='where'>where T: <a class='trait' href='../../../bitflags/__core/cmp/trait.Ord.html' title='bitflags::__core::cmp::Ord'>Ord</a></span></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>() -&gt; <a class='struct' href='../../../bitflags/__core/collections/btree_set/struct.BTreeSet.html' title='bitflags::__core::collections::btree_set::BTreeSet'>BTreeSet</a>&lt;T&gt;</code></h4>
 <div class='docblock'><p>Makes a new BTreeSet with a reasonable choice of B.</p>
 
@@ -64,11 +64,6 @@ normally only possible through <code>Cell</code>, <code>RefCell</code>, global s
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>collections</span>::<span class='ident'>BTreeSet</span>;
 
 <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>set</span>: <span class='ident'>BTreeSet</span><span class='op'>&lt;</span><span class='ident'>i32</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>BTreeSet</span>::<span class='ident'>new</span>();</pre>
-</div><h4 id='method.with_b' class='method'><code>fn <a href='#method.with_b' class='fnname'>with_b</a>(b: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>) -&gt; <a class='struct' href='../../../bitflags/__core/collections/btree_set/struct.BTreeSet.html' title='bitflags::__core::collections::btree_set::BTreeSet'>BTreeSet</a>&lt;T&gt;</code></h4>
-<div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.4.0<p>: niche API</p>
-</em></div><div class='docblock'><p>Makes a new BTreeSet with the given B.</p>
-
-<p>B cannot be less than 2.</p>
 </div></div><h3 class='impl'><code>impl&lt;T&gt; <a class='struct' href='../../../bitflags/__core/collections/btree_set/struct.BTreeSet.html' title='bitflags::__core::collections::btree_set::BTreeSet'>BTreeSet</a>&lt;T&gt;</code></h3><div class='impl-items'><h4 id='method.iter' class='method'><code>fn <a href='#method.iter' class='fnname'>iter</a>(&amp;self) -&gt; <a class='struct' href='../../../bitflags/__core/collections/btree_set/struct.Iter.html' title='bitflags::__core::collections::btree_set::Iter'>Iter</a>&lt;T&gt;</code></h4>
 <div class='docblock'><p>Gets an iterator over the BTreeSet&#39;s contents.</p>
 
@@ -83,7 +78,7 @@ normally only possible through <code>Cell</code>, <code>RefCell</code>, global s
 
 <span class='kw'>let</span> <span class='ident'>v</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span>_<span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>set</span>.<span class='ident'>iter</span>().<span class='ident'>cloned</span>().<span class='ident'>collect</span>();
 <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>v</span>, [<span class='number'>1</span>, <span class='number'>2</span>, <span class='number'>3</span>, <span class='number'>4</span>]);</pre>
-</div></div><h3 class='impl'><code>impl&lt;T&gt; <a class='struct' href='../../../bitflags/__core/collections/btree_set/struct.BTreeSet.html' title='bitflags::__core::collections::btree_set::BTreeSet'>BTreeSet</a>&lt;T&gt; <span class='where'>where T: <a class='trait' href='../../../bitflags/__core/cmp/trait.Ord.html' title='bitflags::__core::cmp::Ord'>Ord</a></span></code></h3><div class='impl-items'><h4 id='method.range' class='method'><code>fn <a href='#method.range' class='fnname'>range</a>&lt;Min = T, Max = T&gt;(&amp;'a self, min: <a class='enum' href='../../../bitflags/__core/collections/enum.Bound.html' title='bitflags::__core::collections::Bound'>Bound</a>&lt;&amp;Min&gt;, max: <a class='enum' href='../../../bitflags/__core/collections/enum.Bound.html' title='bitflags::__core::collections::Bound'>Bound</a>&lt;&amp;Max&gt;) -&gt; <a class='struct' href='../../../bitflags/__core/collections/btree_set/struct.Range.html' title='bitflags::__core::collections::btree_set::Range'>Range</a>&lt;'a, T&gt; <span class='where'>where T: <a class='trait' href='../../../bitflags/__core/borrow/trait.Borrow.html' title='bitflags::__core::borrow::Borrow'>Borrow</a>&lt;Min&gt; + <a class='trait' href='../../../bitflags/__core/borrow/trait.Borrow.html' title='bitflags::__core::borrow::Borrow'>Borrow</a>&lt;Max&gt;, Max: <a class='trait' href='../../../bitflags/__core/cmp/trait.Ord.html' title='bitflags::__core::cmp::Ord'>Ord</a> + ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a>, Min: <a class='trait' href='../../../bitflags/__core/cmp/trait.Ord.html' title='bitflags::__core::cmp::Ord'>Ord</a> + ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></h4>
+</div></div><h3 class='impl'><code>impl&lt;T&gt; <a class='struct' href='../../../bitflags/__core/collections/btree_set/struct.BTreeSet.html' title='bitflags::__core::collections::btree_set::BTreeSet'>BTreeSet</a>&lt;T&gt; <span class='where'>where T: <a class='trait' href='../../../bitflags/__core/cmp/trait.Ord.html' title='bitflags::__core::cmp::Ord'>Ord</a></span></code></h3><div class='impl-items'><h4 id='method.range' class='method'><code>fn <a href='#method.range' class='fnname'>range</a>&lt;Min, Max&gt;(&amp;'a self, min: <a class='enum' href='../../../bitflags/__core/collections/enum.Bound.html' title='bitflags::__core::collections::Bound'>Bound</a>&lt;&amp;Min&gt;, max: <a class='enum' href='../../../bitflags/__core/collections/enum.Bound.html' title='bitflags::__core::collections::Bound'>Bound</a>&lt;&amp;Max&gt;) -&gt; <a class='struct' href='../../../bitflags/__core/collections/btree_set/struct.Range.html' title='bitflags::__core::collections::btree_set::Range'>Range</a>&lt;'a, T&gt; <span class='where'>where T: <a class='trait' href='../../../bitflags/__core/borrow/trait.Borrow.html' title='bitflags::__core::borrow::Borrow'>Borrow</a>&lt;Min&gt; + <a class='trait' href='../../../bitflags/__core/borrow/trait.Borrow.html' title='bitflags::__core::borrow::Borrow'>Borrow</a>&lt;Max&gt;, Max: <a class='trait' href='../../../bitflags/__core/cmp/trait.Ord.html' title='bitflags::__core::cmp::Ord'>Ord</a> + ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a>, Min: <a class='trait' href='../../../bitflags/__core/cmp/trait.Ord.html' title='bitflags::__core::cmp::Ord'>Ord</a> + ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></h4>
 <div class='stability'><em class='stab unstable'>Unstable (<code>btree_range</code>)<p>: matches collection reform specification, waiting for dust to settle</p>
 </em></div><div class='docblock'><p>Constructs a double-ended iterator over a sub-range of elements in the set, starting
 at min, and ending at max. If min is <code>Unbounded</code>, then it will be treated as &quot;negative
@@ -209,7 +204,7 @@ ordering on the value type.</p>
 <span class='kw'>let</span> <span class='ident'>set</span>: <span class='ident'>BTreeSet</span><span class='op'>&lt;</span>_<span class='op'>&gt;</span> <span class='op'>=</span> [<span class='number'>1</span>, <span class='number'>2</span>, <span class='number'>3</span>].<span class='ident'>iter</span>().<span class='ident'>cloned</span>().<span class='ident'>collect</span>();
 <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>set</span>.<span class='ident'>contains</span>(<span class='kw-2'>&amp;</span><span class='number'>1</span>), <span class='boolval'>true</span>);
 <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>set</span>.<span class='ident'>contains</span>(<span class='kw-2'>&amp;</span><span class='number'>4</span>), <span class='boolval'>false</span>);</pre>
-</div><h4 id='method.get' class='method'><code>fn <a href='#method.get' class='fnname'>get</a>&lt;Q&gt;(&amp;self, value: &amp;Q) -&gt; <a class='enum' href='../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;&amp;T&gt; <span class='where'>where Q: <a class='trait' href='../../../bitflags/__core/cmp/trait.Ord.html' title='bitflags::__core::cmp::Ord'>Ord</a> + ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a>, T: <a class='trait' href='../../../bitflags/__core/borrow/trait.Borrow.html' title='bitflags::__core::borrow::Borrow'>Borrow</a>&lt;Q&gt;</span></code></h4>
+</div><h4 id='method.get' class='method'><code>fn <a href='#method.get' class='fnname'>get</a>&lt;Q&gt;(&amp;self, value: &amp;Q) -&gt; <a class='enum' href='../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;&amp;T&gt; <span class='where'>where T: <a class='trait' href='../../../bitflags/__core/borrow/trait.Borrow.html' title='bitflags::__core::borrow::Borrow'>Borrow</a>&lt;Q&gt;, Q: <a class='trait' href='../../../bitflags/__core/cmp/trait.Ord.html' title='bitflags::__core::cmp::Ord'>Ord</a> + ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></h4>
 <div class='stability'><em class='stab unstable'>Unstable (<code>set_recovery</code>)</em></div><div class='docblock'><p>Returns a reference to the value in the set, if any, that is equal to the given value.</p>
 
 <p>The value may be any borrowed form of the set&#39;s value type,
@@ -266,7 +261,7 @@ This is equivalent to checking for an empty intersection.</p>
 
 <p>If the set did not have a value present, <code>true</code> is returned.</p>
 
-<p>If the set did have this key present, that value is returned, and the
+<p>If the set did have this key present, <code>false</code> is returned, and the
 entry is not updated. See the <a href="index.html#insert-and-complex-keys">module-level documentation</a> for more.</p>
 
 <h1 id='examples-14' class='section-header'><a href='#examples-14'>Examples</a></h1><pre class='rust rust-example-rendered'>

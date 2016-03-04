@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-4872' class='srclink' href='https://doc.rust-lang.org/nightly/std/io/trait.Read.html?gotosrc=4872' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-4834' class='srclink' href='https://doc.rust-lang.org/nightly/std/io/trait.Read.html?gotosrc=4834' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait Read {
     fn <a href='#tymethod.read' class='fnname'>read</a>(&amp;mut self, buf: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>&amp;mut [</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>]</a>) -&gt; <a class='enum' href='../../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>, <a class='struct' href='../../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;;
 
@@ -78,7 +78,7 @@ therefore, using something that implements <a href="trait.BufRead.html"><code>Bu
 <a href="struct.BufReader.html"><code>BufReader</code></a>, will be more efficient.</p>
 
 <h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
-<p><a href="../std/fs/struct.File.html"><code>File</code></a>s implement <code>Read</code>:</p>
+<p><a href="../fs/struct.File.html"><code>File</code></a>s implement <code>Read</code>:</p>
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>prelude</span>::<span class='op'>*</span>;
@@ -132,7 +132,7 @@ variant will be returned. If an error is returned then it must be
 guaranteed that no bytes were read.</p>
 
 <h1 id='examples-1' class='section-header'><a href='#examples-1'>Examples</a></h1>
-<p><a href="../std/fs/struct.File.html"><code>File</code></a>s implement <code>Read</code>:</p>
+<p><a href="../fs/struct.File.html"><code>File</code></a>s implement <code>Read</code>:</p>
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>prelude</span>::<span class='op'>*</span>;
@@ -165,7 +165,7 @@ returns. Any bytes which have already been read will be appended to
 <code>buf</code>.</p>
 
 <h1 id='examples-2' class='section-header'><a href='#examples-2'>Examples</a></h1>
-<p><a href="../std/fs/struct.File.html"><code>File</code></a>s implement <code>Read</code>:</p>
+<p><a href="../fs/struct.File.html"><code>File</code></a>s implement <code>Read</code>:</p>
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>prelude</span>::<span class='op'>*</span>;
@@ -188,7 +188,7 @@ returned and <code>buf</code> is unchanged.</p>
 <p>See <a href="#method.read_to_end"><code>read_to_end()</code></a> for other error semantics.</p>
 
 <h1 id='examples-3' class='section-header'><a href='#examples-3'>Examples</a></h1>
-<p><a href="../std/fs/struct.File.html"><code>File</code></a>s implement <code>Read</code>:</p>
+<p><a href="../fs/struct.File.html"><code>File</code></a>s implement <code>Read</code>:</p>
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>prelude</span>::<span class='op'>*</span>;
@@ -225,7 +225,7 @@ has read, but it will never read more than would be necessary to
 completely fill the buffer.</p>
 
 <h1 id='examples-4' class='section-header'><a href='#examples-4'>Examples</a></h1>
-<p><a href="../std/fs/struct.File.html"><code>File</code></a>s implement <code>Read</code>:</p>
+<p><a href="../fs/struct.File.html"><code>File</code></a>s implement <code>Read</code>:</p>
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>prelude</span>::<span class='op'>*</span>;
@@ -242,7 +242,7 @@ completely fill the buffer.</p>
 current reader.</p>
 
 <h1 id='examples-5' class='section-header'><a href='#examples-5'>Examples</a></h1>
-<p><a href="../std/fs/struct.File.html"><code>File</code></a>s implement <code>Read</code>:</p>
+<p><a href="../fs/struct.File.html"><code>File</code></a>s implement <code>Read</code>:</p>
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>Read</span>;
@@ -269,7 +269,7 @@ current reader.</p>
 this iterator.</p>
 
 <h1 id='examples-6' class='section-header'><a href='#examples-6'>Examples</a></h1>
-<p><a href="../std/fs/struct.File.html"><code>File</code></a>s implement <code>Read</code>:</p>
+<p><a href="../fs/struct.File.html"><code>File</code></a>s implement <code>Read</code>:</p>
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>prelude</span>::<span class='op'>*</span>;
@@ -293,7 +293,7 @@ occurred or where decoding failed.</p>
 be avoided if this is not desired.</p>
 
 <h1 id='examples-7' class='section-header'><a href='#examples-7'>Examples</a></h1>
-<p><a href="../std/fs/struct.File.html"><code>File</code></a>s implement <code>Read</code>:</p>
+<p><a href="../fs/struct.File.html"><code>File</code></a>s implement <code>Read</code>:</p>
 <pre class='rust rust-example-rendered'>
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>feature</span>(<span class='ident'>io</span>)]</span>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>;
@@ -312,7 +312,7 @@ until EOF is encountered. Afterwards the output is equivalent to the
 output of <code>next</code>.</p>
 
 <h1 id='examples-8' class='section-header'><a href='#examples-8'>Examples</a></h1>
-<p><a href="../std/fs/struct.File.html"><code>File</code></a>s implement <code>Read</code>:</p>
+<p><a href="../fs/struct.File.html"><code>File</code></a>s implement <code>Read</code>:</p>
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>prelude</span>::<span class='op'>*</span>;
@@ -335,7 +335,7 @@ read errors will not count towards the number of bytes read and future
 calls to <code>read</code> may succeed.</p>
 
 <h1 id='examples-9' class='section-header'><a href='#examples-9'>Examples</a></h1>
-<p><a href="../std/fs/struct.File.html"><code>File</code></a>s implement <code>Read</code>:</p>
+<p><a href="../fs/struct.File.html"><code>File</code></a>s implement <code>Read</code>:</p>
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>prelude</span>::<span class='op'>*</span>;
@@ -357,7 +357,7 @@ data to <code>out</code>. The current semantics of this implementation imply tha
 a <code>write</code> error will not report how much data was initially read.</p>
 
 <h1 id='examples-10' class='section-header'><a href='#examples-10'>Examples</a></h1>
-<p><a href="../std/fs/struct.File.html"><code>File</code></a>s implement <code>Read</code>:</p>
+<p><a href="../fs/struct.File.html"><code>File</code></a>s implement <code>Read</code>:</p>
 <pre class='rust rust-example-rendered'>
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>feature</span>(<span class='ident'>io</span>)]</span>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>;
@@ -378,7 +378,6 @@ a <code>write</code> error will not report how much data was initially read.</p>
     <li><code>impl <a class='trait' href='../../../../bitflags/__core/io/trait.Read.html' title='bitflags::__core::io::Read'>Read</a> for <a class='struct' href='../../../../bitflags/__core/fs/struct.File.html' title='bitflags::__core::fs::File'>File</a></code></li>
 <li><code>impl&lt;'a&gt; <a class='trait' href='../../../../bitflags/__core/io/trait.Read.html' title='bitflags::__core::io::Read'>Read</a> for &amp;'a <a class='struct' href='../../../../bitflags/__core/fs/struct.File.html' title='bitflags::__core::fs::File'>File</a></code></li>
 <li><code>impl&lt;R&gt; <a class='trait' href='../../../../bitflags/__core/io/trait.Read.html' title='bitflags::__core::io::Read'>Read</a> for <a class='struct' href='../../../../bitflags/__core/io/struct.BufReader.html' title='bitflags::__core::io::BufReader'>BufReader</a>&lt;R&gt; <span class='where'>where R: <a class='trait' href='../../../../bitflags/__core/io/trait.Read.html' title='bitflags::__core::io::Read'>Read</a></span></code></li>
-<li><code>impl&lt;W&gt; <a class='trait' href='../../../../bitflags/__core/io/trait.Read.html' title='bitflags::__core::io::Read'>Read</a> for <a class='struct' href='https://doc.rust-lang.org/nightly/std/io/buffered/struct.InternalBufWriter.html' title='std::io::buffered::InternalBufWriter'>InternalBufWriter</a>&lt;W&gt; <span class='where'>where W: <a class='trait' href='../../../../bitflags/__core/io/trait.Read.html' title='bitflags::__core::io::Read'>Read</a> + <a class='trait' href='../../../../bitflags/__core/io/trait.Write.html' title='bitflags::__core::io::Write'>Write</a></span></code></li>
 <li><code>impl&lt;T&gt; <a class='trait' href='../../../../bitflags/__core/io/trait.Read.html' title='bitflags::__core::io::Read'>Read</a> for <a class='struct' href='../../../../bitflags/__core/io/struct.Cursor.html' title='bitflags::__core::io::Cursor'>Cursor</a>&lt;T&gt; <span class='where'>where T: <a class='trait' href='../../../../bitflags/__core/convert/trait.AsRef.html' title='bitflags::__core::convert::AsRef'>AsRef</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>[<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a>]</a>&gt;</span></code></li>
 <li><code>impl&lt;'a, R&gt; <a class='trait' href='../../../../bitflags/__core/io/trait.Read.html' title='bitflags::__core::io::Read'>Read</a> for &amp;'a mut R <span class='where'>where R: <a class='trait' href='../../../../bitflags/__core/io/trait.Read.html' title='bitflags::__core::io::Read'>Read</a> + ?<a class='trait' href='../../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></li>
 <li><code>impl&lt;R&gt; <a class='trait' href='../../../../bitflags/__core/io/trait.Read.html' title='bitflags::__core::io::Read'>Read</a> for <a class='struct' href='../../../../bitflags/__core/boxed/struct.Box.html' title='bitflags::__core::boxed::Box'>Box</a>&lt;R&gt; <span class='where'>where R: <a class='trait' href='../../../../bitflags/__core/io/trait.Read.html' title='bitflags::__core::io::Read'>Read</a> + ?<a class='trait' href='../../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></li>
@@ -389,7 +388,7 @@ a <code>write</code> error will not report how much data was initially read.</p>
 <li><code>impl&lt;R&gt; <a class='trait' href='../../../../bitflags/__core/io/trait.Read.html' title='bitflags::__core::io::Read'>Read</a> for <a class='enum' href='https://doc.rust-lang.org/nightly/std/io/stdio/enum.Maybe.html' title='std::io::stdio::Maybe'>Maybe</a>&lt;R&gt; <span class='where'>where R: <a class='trait' href='../../../../bitflags/__core/io/trait.Read.html' title='bitflags::__core::io::Read'>Read</a></span></code></li>
 <li><code>impl <a class='trait' href='../../../../bitflags/__core/io/trait.Read.html' title='bitflags::__core::io::Read'>Read</a> for <a class='struct' href='../../../../bitflags/__core/io/struct.Stdin.html' title='bitflags::__core::io::Stdin'>Stdin</a></code></li>
 <li><code>impl&lt;'a&gt; <a class='trait' href='../../../../bitflags/__core/io/trait.Read.html' title='bitflags::__core::io::Read'>Read</a> for <a class='struct' href='../../../../bitflags/__core/io/struct.StdinLock.html' title='bitflags::__core::io::StdinLock'>StdinLock</a>&lt;'a&gt;</code></li>
-<li><code>impl&lt;T, U&gt; <a class='trait' href='../../../../bitflags/__core/io/trait.Read.html' title='bitflags::__core::io::Read'>Read</a> for <a class='struct' href='../../../../bitflags/__core/io/struct.Chain.html' title='bitflags::__core::io::Chain'>Chain</a>&lt;T, U&gt; <span class='where'>where T: <a class='trait' href='../../../../bitflags/__core/io/trait.Read.html' title='bitflags::__core::io::Read'>Read</a>, U: <a class='trait' href='../../../../bitflags/__core/io/trait.Read.html' title='bitflags::__core::io::Read'>Read</a></span></code></li>
+<li><code>impl&lt;T, U&gt; <a class='trait' href='../../../../bitflags/__core/io/trait.Read.html' title='bitflags::__core::io::Read'>Read</a> for <a class='struct' href='../../../../bitflags/__core/io/struct.Chain.html' title='bitflags::__core::io::Chain'>Chain</a>&lt;T, U&gt; <span class='where'>where U: <a class='trait' href='../../../../bitflags/__core/io/trait.Read.html' title='bitflags::__core::io::Read'>Read</a>, T: <a class='trait' href='../../../../bitflags/__core/io/trait.Read.html' title='bitflags::__core::io::Read'>Read</a></span></code></li>
 <li><code>impl&lt;T&gt; <a class='trait' href='../../../../bitflags/__core/io/trait.Read.html' title='bitflags::__core::io::Read'>Read</a> for <a class='struct' href='../../../../bitflags/__core/io/struct.Take.html' title='bitflags::__core::io::Take'>Take</a>&lt;T&gt; <span class='where'>where T: <a class='trait' href='../../../../bitflags/__core/io/trait.Read.html' title='bitflags::__core::io::Read'>Read</a></span></code></li>
 <li><code>impl&lt;R, W&gt; <a class='trait' href='../../../../bitflags/__core/io/trait.Read.html' title='bitflags::__core::io::Read'>Read</a> for <a class='struct' href='../../../../bitflags/__core/io/struct.Tee.html' title='bitflags::__core::io::Tee'>Tee</a>&lt;R, W&gt; <span class='where'>where W: <a class='trait' href='../../../../bitflags/__core/io/trait.Write.html' title='bitflags::__core::io::Write'>Write</a>, R: <a class='trait' href='../../../../bitflags/__core/io/trait.Read.html' title='bitflags::__core::io::Read'>Read</a></span></code></li>
 <li><code>impl <a class='trait' href='../../../../bitflags/__core/io/trait.Read.html' title='bitflags::__core::io::Read'>Read</a> for <a class='struct' href='../../../../bitflags/__core/net/struct.TcpStream.html' title='bitflags::__core::net::TcpStream'>TcpStream</a></code></li>

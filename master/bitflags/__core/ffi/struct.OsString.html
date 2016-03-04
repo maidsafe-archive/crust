@@ -46,10 +46,25 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-3331' class='srclink' href='https://doc.rust-lang.org/nightly/std/ffi/os_str/struct.OsString.html?gotosrc=3331' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-3344' class='srclink' href='https://doc.rust-lang.org/nightly/std/ffi/os_str/struct.OsString.html?gotosrc=3344' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct OsString {
     // some fields omitted
-}</pre><div class='docblock'><p>Owned, mutable OS strings.</p>
+}</pre><div class='docblock'><p>A type that can represent owned, mutable platform-native strings, but is
+cheaply interconvertable with Rust strings.</p>
+
+<p>The need for this type arises from the fact that:</p>
+
+<ul>
+<li><p>On Unix systems, strings are often arbitrary sequences of non-zero
+bytes, in many cases interpreted as UTF-8.</p></li>
+<li><p>On Windows, strings are often arbitrary sequences of non-zero 16-bit
+values, interpreted as UTF-16 when it is valid to do so.</p></li>
+<li><p>In Rust, strings are always valid UTF-8, but may contain zeros.</p></li>
+</ul>
+
+<p><code>OsString</code> and <code>OsStr</code> bridge this gap by simultaneously representing Rust
+and platform-native string values, and in particular allowing a Rust string
+to be converted into an &quot;OS&quot; string with no cost.</p>
 </div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../../bitflags/__core/ffi/struct.OsString.html' title='bitflags::__core::ffi::OsString'>OsString</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>() -&gt; <a class='struct' href='../../../bitflags/__core/ffi/struct.OsString.html' title='bitflags::__core::ffi::OsString'>OsString</a></code></h4>
 <div class='docblock'><p>Constructs a new empty <code>OsString</code>.</p>
 </div><h4 id='method.from_bytes' class='method'><code>fn <a href='#method.from_bytes' class='fnname'>from_bytes</a>&lt;B&gt;(bytes: B) -&gt; <a class='enum' href='../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;<a class='struct' href='../../../bitflags/__core/ffi/struct.OsString.html' title='bitflags::__core::ffi::OsString'>OsString</a>&gt; <span class='where'>where B: <a class='trait' href='../../../bitflags/__core/convert/trait.Into.html' title='bitflags::__core::convert::Into'>Into</a>&lt;<a class='struct' href='../../../bitflags/__core/vec/struct.Vec.html' title='bitflags::__core::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a>&gt;&gt;</span></code></h4>

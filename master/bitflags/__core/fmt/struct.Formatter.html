@@ -46,20 +46,20 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-34683' class='srclink' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html?gotosrc=34683' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-34801' class='srclink' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html?gotosrc=34801' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Formatter&lt;'a&gt; {
     // some fields omitted
 }</pre><div class='docblock'><p>A struct to represent both where to emit formatting strings to and how they
 should be formatted. A mutable version of this is passed to all formatting
 traits.</p>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;'a&gt; <a class='struct' href='../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>&lt;'a&gt;</code></h3><div class='impl-items'><h4 id='method.pad_integral' class='method'><code>fn <a href='#method.pad_integral' class='fnname'>pad_integral</a>(&amp;mut self, is_positive: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a>, prefix: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.str.html'>str</a>, buf: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.str.html'>str</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h4>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;'a&gt; <a class='struct' href='../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>&lt;'a&gt;</code></h3><div class='impl-items'><h4 id='method.pad_integral' class='method'><code>fn <a href='#method.pad_integral' class='fnname'>pad_integral</a>(&amp;mut self, is_nonnegative: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a>, prefix: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.str.html'>str</a>, buf: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.str.html'>str</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h4>
 <div class='docblock'><p>Performs the correct padding for an integer which has already been
 emitted into a str. The str should <em>not</em> contain the sign for the
 integer, that will be added by this method.</p>
 
 <h1 id='arguments' class='section-header'><a href='#arguments'>Arguments</a></h1>
 <ul>
-<li>is_positive - whether the original integer was positive or not.</li>
+<li>is_nonnegative - whether the original integer was either positive or zero.</li>
 <li>prefix - if the &#39;#&#39; character (Alternate) is provided, this
 is the prefix to put in front of the number.</li>
 <li>buf - the byte array that the number has been formatted into</li>

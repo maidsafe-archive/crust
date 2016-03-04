@@ -46,12 +46,18 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-3802' class='srclink' href='https://doc.rust-lang.org/nightly/std/fs/fn.remove_dir_all.html?gotosrc=3802' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-3815' class='srclink' href='https://doc.rust-lang.org/nightly/std/fs/fn.remove_dir_all.html?gotosrc=3815' title='goto source code'>[src]</a></span></h1>
 <pre class='rust fn'>pub fn remove_dir_all&lt;P&gt;(path: P) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt; <span class='where'>where P: <a class='trait' href='../../../bitflags/__core/convert/trait.AsRef.html' title='bitflags::__core::convert::AsRef'>AsRef</a>&lt;<a class='struct' href='../../../bitflags/__core/path/struct.Path.html' title='bitflags::__core::path::Path'>Path</a>&gt;</span></pre><div class='docblock'><p>Removes a directory at this path, after removing all its contents. Use
 carefully!</p>
 
 <p>This function does <strong>not</strong> follow symbolic links and it will simply remove the
 symbolic link itself.</p>
+
+<h1 id='platform-specific-behavior' class='section-header'><a href='#platform-specific-behavior'>Platform-specific behavior</a></h1>
+<p>This function currently corresponds to <code>opendir</code>, <code>lstat</code>, <code>rm</code> and <code>rmdir</code> functions on Unix
+and the <code>FindFirstFile</code>, <code>GetFileAttributesEx</code>, <code>DeleteFile</code>, and <code>RemoveDirectory</code> functions
+on Windows.
+Note that, this <a href="../io/index.html#platform-specific-behavior">may change in the future</a>.</p>
 
 <h1 id='errors' class='section-header'><a href='#errors'>Errors</a></h1>
 <p>See <code>file::remove_file</code> and <code>fs::remove_dir</code>.</p>

@@ -98,7 +98,7 @@ It shows how to use <code>BinaryHeap</code> with custom types.</p>
 <span class='comment'>// to each node. This implementation isn&#39;t memory-efficient as it may leave duplicate</span>
 <span class='comment'>// nodes in the queue. It also uses `usize::MAX` as a sentinel value,</span>
 <span class='comment'>// for a simpler implementation.</span>
-<span class='kw'>fn</span> <span class='ident'>shortest_path</span>(<span class='ident'>adj_list</span>: <span class='kw-2'>&amp;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>Edge</span><span class='op'>&gt;&gt;</span>, <span class='ident'>start</span>: <span class='ident'>usize</span>, <span class='ident'>goal</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>usize</span> {
+<span class='kw'>fn</span> <span class='ident'>shortest_path</span>(<span class='ident'>adj_list</span>: <span class='kw-2'>&amp;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>Edge</span><span class='op'>&gt;&gt;</span>, <span class='ident'>start</span>: <span class='ident'>usize</span>, <span class='ident'>goal</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>usize</span><span class='op'>&gt;</span> {
     <span class='comment'>// dist[node] = current shortest distance from `start` to `node`</span>
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>dist</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span>_<span class='op'>&gt;</span> <span class='op'>=</span> (<span class='number'>0</span>..<span class='ident'>adj_list</span>.<span class='ident'>len</span>()).<span class='ident'>map</span>(<span class='op'>|</span>_<span class='op'>|</span> <span class='ident'>usize</span>::<span class='ident'>MAX</span>).<span class='ident'>collect</span>();
 
@@ -111,7 +111,7 @@ It shows how to use <code>BinaryHeap</code> with custom types.</p>
     <span class='comment'>// Examine the frontier with lower cost nodes first (min-heap)</span>
     <span class='kw'>while</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='ident'>State</span> { <span class='ident'>cost</span>, <span class='ident'>position</span> }) <span class='op'>=</span> <span class='ident'>heap</span>.<span class='ident'>pop</span>() {
         <span class='comment'>// Alternatively we could have continued to find all shortest paths</span>
-        <span class='kw'>if</span> <span class='ident'>position</span> <span class='op'>==</span> <span class='ident'>goal</span> { <span class='kw'>return</span> <span class='ident'>cost</span>; }
+        <span class='kw'>if</span> <span class='ident'>position</span> <span class='op'>==</span> <span class='ident'>goal</span> { <span class='kw'>return</span> <span class='prelude-val'>Some</span>(<span class='ident'>cost</span>); }
 
         <span class='comment'>// Important as we may have already found a better way</span>
         <span class='kw'>if</span> <span class='ident'>cost</span> <span class='op'>&gt;</span> <span class='ident'>dist</span>[<span class='ident'>position</span>] { <span class='kw'>continue</span>; }
@@ -131,7 +131,7 @@ It shows how to use <code>BinaryHeap</code> with custom types.</p>
     }
 
     <span class='comment'>// Goal not reachable</span>
-    <span class='ident'>usize</span>::<span class='ident'>MAX</span>
+    <span class='prelude-val'>None</span>
 }
 
 <span class='kw'>fn</span> <span class='ident'>main</span>() {
@@ -172,11 +172,11 @@ It shows how to use <code>BinaryHeap</code> with custom types.</p>
         <span class='comment'>// Node 4</span>
         <span class='macro'>vec</span><span class='macro'>!</span>[]];
 
-    <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>shortest_path</span>(<span class='kw-2'>&amp;</span><span class='ident'>graph</span>, <span class='number'>0</span>, <span class='number'>1</span>), <span class='number'>1</span>);
-    <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>shortest_path</span>(<span class='kw-2'>&amp;</span><span class='ident'>graph</span>, <span class='number'>0</span>, <span class='number'>3</span>), <span class='number'>3</span>);
-    <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>shortest_path</span>(<span class='kw-2'>&amp;</span><span class='ident'>graph</span>, <span class='number'>3</span>, <span class='number'>0</span>), <span class='number'>7</span>);
-    <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>shortest_path</span>(<span class='kw-2'>&amp;</span><span class='ident'>graph</span>, <span class='number'>0</span>, <span class='number'>4</span>), <span class='number'>5</span>);
-    <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>shortest_path</span>(<span class='kw-2'>&amp;</span><span class='ident'>graph</span>, <span class='number'>4</span>, <span class='number'>0</span>), <span class='ident'>usize</span>::<span class='ident'>MAX</span>);
+    <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>shortest_path</span>(<span class='kw-2'>&amp;</span><span class='ident'>graph</span>, <span class='number'>0</span>, <span class='number'>1</span>), <span class='prelude-val'>Some</span>(<span class='number'>1</span>));
+    <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>shortest_path</span>(<span class='kw-2'>&amp;</span><span class='ident'>graph</span>, <span class='number'>0</span>, <span class='number'>3</span>), <span class='prelude-val'>Some</span>(<span class='number'>3</span>));
+    <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>shortest_path</span>(<span class='kw-2'>&amp;</span><span class='ident'>graph</span>, <span class='number'>3</span>, <span class='number'>0</span>), <span class='prelude-val'>Some</span>(<span class='number'>7</span>));
+    <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>shortest_path</span>(<span class='kw-2'>&amp;</span><span class='ident'>graph</span>, <span class='number'>0</span>, <span class='number'>4</span>), <span class='prelude-val'>Some</span>(<span class='number'>5</span>));
+    <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>shortest_path</span>(<span class='kw-2'>&amp;</span><span class='ident'>graph</span>, <span class='number'>4</span>, <span class='number'>0</span>), <span class='prelude-val'>None</span>);
 }</pre>
 </div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>

@@ -46,10 +46,10 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-9797' class='srclink' href='https://doc.rust-lang.org/nightly/std/sync/semaphore/struct.Semaphore.html?gotosrc=9797' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-9880' class='srclink' href='https://doc.rust-lang.org/nightly/std/sync/semaphore/struct.Semaphore.html?gotosrc=9880' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Semaphore {
     // some fields omitted
-}</pre><div class='stability'><em class='stab unstable'>Unstable (<code>semaphore</code>)<p>: the interaction between semaphores and the acquisition/release of resources is currently unclear</p>
+}</pre><div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.7.0<p>: easily confused with system sempahores and not used enough to pull its weight</p>
 </em></div><div class='docblock'><p>A counting, blocking, semaphore.</p>
 
 <p>Semaphores are a form of atomic counter where access is only granted if the
@@ -77,27 +77,27 @@ and unblock any threads if necessary.</p>
 <span class='comment'>// Release our initially acquired resource</span>
 <span class='ident'>sem</span>.<span class='ident'>release</span>();</pre>
 </div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../../bitflags/__core/sync/struct.Semaphore.html' title='bitflags::__core::sync::Semaphore'>Semaphore</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(count: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.isize.html'>isize</a>) -&gt; <a class='struct' href='../../../bitflags/__core/sync/struct.Semaphore.html' title='bitflags::__core::sync::Semaphore'>Semaphore</a></code></h4>
-<div class='stability'><em class='stab unstable'>Unstable (<code>semaphore</code>)<p>: the interaction between semaphores and the acquisition/release of resources is currently unclear</p>
+<div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.7.0<p>: easily confused with system sempahores and not used enough to pull its weight</p>
 </em></div><div class='docblock'><p>Creates a new semaphore with the initial count specified.</p>
 
 <p>The count specified can be thought of as a number of resources, and a
 call to <code>acquire</code> or <code>access</code> will block until at least one resource is
 available. It is valid to initialize a semaphore with a negative count.</p>
 </div><h4 id='method.acquire' class='method'><code>fn <a href='#method.acquire' class='fnname'>acquire</a>(&amp;self)</code></h4>
-<div class='stability'><em class='stab unstable'>Unstable (<code>semaphore</code>)<p>: the interaction between semaphores and the acquisition/release of resources is currently unclear</p>
+<div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.7.0<p>: easily confused with system sempahores and not used enough to pull its weight</p>
 </em></div><div class='docblock'><p>Acquires a resource of this semaphore, blocking the current thread until
 it can do so.</p>
 
 <p>This method will block until the internal count of the semaphore is at
 least 1.</p>
 </div><h4 id='method.release' class='method'><code>fn <a href='#method.release' class='fnname'>release</a>(&amp;self)</code></h4>
-<div class='stability'><em class='stab unstable'>Unstable (<code>semaphore</code>)<p>: the interaction between semaphores and the acquisition/release of resources is currently unclear</p>
+<div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.7.0<p>: easily confused with system sempahores and not used enough to pull its weight</p>
 </em></div><div class='docblock'><p>Release a resource from this semaphore.</p>
 
 <p>This will increment the number of resources in this semaphore by 1 and
 will notify any pending waiters in <code>acquire</code> or <code>access</code> if necessary.</p>
 </div><h4 id='method.access' class='method'><code>fn <a href='#method.access' class='fnname'>access</a>(&amp;self) -&gt; <a class='struct' href='../../../bitflags/__core/sync/struct.SemaphoreGuard.html' title='bitflags::__core::sync::SemaphoreGuard'>SemaphoreGuard</a></code></h4>
-<div class='stability'><em class='stab unstable'>Unstable (<code>semaphore</code>)<p>: the interaction between semaphores and the acquisition/release of resources is currently unclear</p>
+<div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.7.0<p>: easily confused with system sempahores and not used enough to pull its weight</p>
 </em></div><div class='docblock'><p>Acquires a resource of this semaphore, returning an RAII guard to
 release the semaphore when dropped.</p>
 

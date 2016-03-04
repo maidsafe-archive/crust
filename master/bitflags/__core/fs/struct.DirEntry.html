@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-3538' class='srclink' href='https://doc.rust-lang.org/nightly/std/fs/struct.DirEntry.html?gotosrc=3538' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-3551' class='srclink' href='https://doc.rust-lang.org/nightly/std/fs/struct.DirEntry.html?gotosrc=3551' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct DirEntry(_);</pre><div class='docblock'><p>Entries returned by the <code>ReadDir</code> iterator.</p>
 
 <p>An instance of <code>DirEntry</code> represents an entry inside of a directory on the
@@ -79,7 +79,7 @@ path or possibly other metadata through per-platform extension traits.</p>
 <p>This function will not traverse symlinks if this entry points at a
 symlink.</p>
 
-<h1 id='platform-behavior' class='section-header'><a href='#platform-behavior'>Platform behavior</a></h1>
+<h1 id='platform-specific-behavior' class='section-header'><a href='#platform-specific-behavior'>Platform-specific behavior</a></h1>
 <p>On Windows this function is cheap to call (no extra system calls
 needed), but on Unix platforms this function is the equivalent of
 calling <code>symlink_metadata</code> on the path.</p>
@@ -89,7 +89,7 @@ calling <code>symlink_metadata</code> on the path.</p>
 <p>This function will not traverse symlinks if this entry points at a
 symlink.</p>
 
-<h1 id='platform-behavior-1' class='section-header'><a href='#platform-behavior-1'>Platform behavior</a></h1>
+<h1 id='platform-specific-behavior-1' class='section-header'><a href='#platform-specific-behavior-1'>Platform-specific behavior</a></h1>
 <p>On Windows and most Unix platforms this function is free (no extra
 system calls needed), but some Unix platforms may require the equivalent
 call to <code>symlink_metadata</code> to learn about the target file type.</p>

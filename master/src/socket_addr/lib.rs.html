@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/socket_addr-0.0.1/src/lib.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/socket_addr-0.0.2/src/lib.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>lib.rs.html -- source</title>
@@ -12,7 +12,7 @@
     <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
     <link rel="stylesheet" type="text/css" href="../../main.css">
 
-    
+    <link rel="shortcut icon" href="http://maidsafe.net/img/favicon.ico">
     
 </head>
 <body class="rustdoc">
@@ -26,7 +26,7 @@
     
 
     <nav class="sidebar">
-        
+        <a href='../../socket_addr/index.html'><img src='https://raw.githubusercontent.com/maidsafe/QA/master/Images/maidsafe_logo.png' alt='' width='100'></a>
         
     </nav>
 
@@ -180,6 +180,30 @@
 <span id="137">137</span>
 <span id="138">138</span>
 <span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
+<span id="163">163</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -198,9 +222,33 @@
 <span class='comment'>// Please review the Licences for the specific language governing permissions and limitations</span>
 <span class='comment'>// relating to use of the SAFE Network Software.</span>
 
-<span class='doccomment'>/// A very simple ScoketAddr structure that is serialisable and makes use of the `ip` crate.</span>
-<span class='doccomment'>/// There is no intent here to provide many more traits (perhaps serde).</span>
-<span class='doccomment'>/// Deref is implemented to allow easy access to the underlying `net::ScoketAddr`</span>
+<span class='doccomment'>//! A very simple ScoketAddr structure that is serialisable and makes use of the `ip` crate.</span>
+<span class='doccomment'>//! There is no intent here to provide many more traits (perhaps serde).</span>
+<span class='doccomment'>//! Deref is implemented to allow easy access to the underlying `net::ScoketAddr`</span>
+
+<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>doc</span>(<span class='ident'>html_logo_url</span> <span class='op'>=</span>
+           <span class='string'>&quot;https://raw.githubusercontent.com/maidsafe/QA/master/Images/maidsafe_logo.png&quot;</span>,
+       <span class='ident'>html_favicon_url</span> <span class='op'>=</span> <span class='string'>&quot;http://maidsafe.net/img/favicon.ico&quot;</span>,
+       <span class='ident'>html_root_url</span> <span class='op'>=</span> <span class='string'>&quot;http://maidsafe.github.io/socket_addr&quot;</span>)]</span>
+
+<span class='comment'>// For explanation of lint checks, run `rustc -W help` or see</span>
+<span class='comment'>// https://github.com/maidsafe/QA/blob/master/Documentation/Rust%20Lint%20Checks.md</span>
+<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>forbid</span>(<span class='ident'>bad_style</span>, <span class='ident'>exceeding_bitshifts</span>, <span class='ident'>mutable_transmutes</span>, <span class='ident'>no_mangle_const_items</span>,
+          <span class='ident'>unknown_crate_types</span>, <span class='ident'>warnings</span>)]</span>
+<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>deny</span>(<span class='ident'>deprecated</span>, <span class='ident'>drop_with_repr_extern</span>, <span class='ident'>improper_ctypes</span>, <span class='ident'>missing_docs</span>,
+        <span class='ident'>non_shorthand_field_patterns</span>, <span class='ident'>overflowing_literals</span>, <span class='ident'>plugin_as_library</span>,
+        <span class='ident'>private_no_mangle_fns</span>, <span class='ident'>private_no_mangle_statics</span>, <span class='ident'>stable_features</span>, <span class='ident'>unconditional_recursion</span>,
+        <span class='ident'>unknown_lints</span>, <span class='ident'>unsafe_code</span>, <span class='ident'>unused</span>, <span class='ident'>unused_allocation</span>, <span class='ident'>unused_attributes</span>,
+        <span class='ident'>unused_comparisons</span>, <span class='ident'>unused_features</span>, <span class='ident'>unused_parens</span>, <span class='ident'>while_true</span>)]</span>
+<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>warn</span>(<span class='ident'>trivial_casts</span>, <span class='ident'>trivial_numeric_casts</span>, <span class='ident'>unused_extern_crates</span>, <span class='ident'>unused_import_braces</span>,
+        <span class='ident'>unused_qualifications</span>, <span class='ident'>unused_results</span>)]</span>
+<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>allow</span>(<span class='ident'>box_pointers</span>, <span class='ident'>fat_ptr_transmutes</span>, <span class='ident'>missing_copy_implementations</span>,
+         <span class='ident'>missing_debug_implementations</span>, <span class='ident'>variant_size_differences</span>)]</span>
+
+<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>cfg_attr</span>(<span class='ident'>feature</span><span class='op'>=</span><span class='string'>&quot;clippy&quot;</span>, <span class='ident'>feature</span>(<span class='ident'>plugin</span>))]</span>
+<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>cfg_attr</span>(<span class='ident'>feature</span><span class='op'>=</span><span class='string'>&quot;clippy&quot;</span>, <span class='ident'>plugin</span>(<span class='ident'>clippy</span>))]</span>
+<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>cfg_attr</span>(<span class='ident'>feature</span><span class='op'>=</span><span class='string'>&quot;clippy&quot;</span>, <span class='ident'>deny</span>(<span class='ident'>clippy</span>, <span class='ident'>clippy_pedantic</span>))]</span>
+<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>cfg_attr</span>(<span class='ident'>feature</span><span class='op'>=</span><span class='string'>&quot;clippy&quot;</span>, <span class='ident'>allow</span>(<span class='ident'>use_debug</span>))]</span>
 
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>rustc_serialize</span>;
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>ip</span>;

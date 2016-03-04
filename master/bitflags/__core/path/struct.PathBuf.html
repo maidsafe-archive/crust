@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-7235' class='srclink' href='https://doc.rust-lang.org/nightly/std/path/struct.PathBuf.html?gotosrc=7235' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-7267' class='srclink' href='https://doc.rust-lang.org/nightly/std/path/struct.PathBuf.html?gotosrc=7267' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct PathBuf {
     // some fields omitted
 }</pre><div class='docblock'><p>An owned, mutable path (akin to <code>String</code>).</p>
@@ -182,7 +182,7 @@ other words, <code>path.is_absolute() == path.prefix().is_some() &amp;&amp; path
 
 <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>Path</span>::<span class='ident'>new</span>(<span class='string'>&quot;foo.txt&quot;</span>).<span class='ident'>is_relative</span>());</pre>
 </div><h4 id='method.prefix' class='method'><code>fn <a href='#method.prefix' class='fnname'>prefix</a>(&amp;self) -&gt; <a class='enum' href='../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;<a class='enum' href='../../../bitflags/__core/path/enum.Prefix.html' title='bitflags::__core::path::Prefix'>Prefix</a>&gt;</code></h4>
-<div class='stability'><em class='stab unstable'>Unstable (<code>path_prefix</code>)<p>: uncertain whether to expose this convenience</p>
+<div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.7.0<p>: inspect components().next() instead</p>
 </em></div><div class='docblock'><p>Returns the <em>prefix</em> of a path, if any.</p>
 
 <p>Prefixes are relevant only for Windows paths, and consist of volumes
@@ -236,8 +236,13 @@ prefix, <code>file_name</code> will return <code>None</code>.</p>
 
 <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='prelude-val'>Some</span>(<span class='ident'>os_str</span>), <span class='ident'>path</span>.<span class='ident'>file_name</span>());</pre>
 </div><h4 id='method.relative_from' class='method'><code>fn <a href='#method.relative_from' class='fnname'>relative_from</a>&lt;P&gt;(&amp;'a self, base: &amp;'a P) -&gt; <a class='enum' href='../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;&amp;'a <a class='struct' href='../../../bitflags/__core/path/struct.Path.html' title='bitflags::__core::path::Path'>Path</a>&gt; <span class='where'>where P: <a class='trait' href='../../../bitflags/__core/convert/trait.AsRef.html' title='bitflags::__core::convert::AsRef'>AsRef</a>&lt;<a class='struct' href='../../../bitflags/__core/path/struct.Path.html' title='bitflags::__core::path::Path'>Path</a>&gt; + ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></h4>
-<div class='stability'><em class='stab unstable'>Unstable (<code>path_relative_from</code>)<p>: see #23284</p>
+<div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.7.0<p>: renamed to strip_prefix</p>
 </em></div><div class='docblock'><p>Returns a path that, when joined onto <code>base</code>, yields <code>self</code>.</p>
+
+<p>If <code>base</code> is not a prefix of <code>self</code> (i.e. <code>starts_with</code>
+returns false), then <code>relative_from</code> returns <code>None</code>.</p>
+</div><h4 id='method.strip_prefix' class='method'><code>fn <a href='#method.strip_prefix' class='fnname'>strip_prefix</a>&lt;P&gt;(&amp;'a self, base: &amp;'a P) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;&amp;'a <a class='struct' href='../../../bitflags/__core/path/struct.Path.html' title='bitflags::__core::path::Path'>Path</a>, <a class='struct' href='../../../bitflags/__core/path/struct.StripPrefixError.html' title='bitflags::__core::path::StripPrefixError'>StripPrefixError</a>&gt; <span class='where'>where P: <a class='trait' href='../../../bitflags/__core/convert/trait.AsRef.html' title='bitflags::__core::convert::AsRef'>AsRef</a>&lt;<a class='struct' href='../../../bitflags/__core/path/struct.Path.html' title='bitflags::__core::path::Path'>Path</a>&gt; + ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></h4>
+<div class='docblock'><p>Returns a path that, when joined onto <code>base</code>, yields <code>self</code>.</p>
 
 <p>If <code>base</code> is not a prefix of <code>self</code> (i.e. <code>starts_with</code>
 returns false), then <code>relative_from</code> returns <code>None</code>.</p>

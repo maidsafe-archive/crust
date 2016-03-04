@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-4108' class='srclink' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html?gotosrc=4108' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-3842' class='srclink' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html?gotosrc=3842' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Vec&lt;T&gt; {
     // some fields omitted
 }</pre><div class='docblock'><p>A growable list type, written <code>Vec&lt;T&gt;</code> but pronounced &#39;vector.&#39;</p>
@@ -323,13 +323,11 @@ effect.</p>
 <span class='ident'>vec</span>.<span class='ident'>truncate</span>(<span class='number'>2</span>);
 <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>vec</span>, [<span class='number'>1</span>, <span class='number'>2</span>]);</pre>
 </div><h4 id='method.as_slice' class='method'><code>fn <a href='#method.as_slice' class='fnname'>as_slice</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>&amp;[T]</a></code></h4>
-<div class='stability'><em class='stab unstable'>Unstable (<code>convert</code>)<p>: waiting on RFC revision</p>
-</em></div><div class='docblock'><p>Extracts a slice containing the entire vector.</p>
+<div class='docblock'><p>Extracts a slice containing the entire vector.</p>
 
 <p>Equivalent to <code>&amp;s[..]</code>.</p>
 </div><h4 id='method.as_mut_slice' class='method'><code>fn <a href='#method.as_mut_slice' class='fnname'>as_mut_slice</a>(&amp;mut self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>&amp;mut [T]</a></code></h4>
-<div class='stability'><em class='stab unstable'>Unstable (<code>convert</code>)<p>: waiting on RFC revision</p>
-</em></div><div class='docblock'><p>Extracts a mutable slice of the entire vector.</p>
+<div class='docblock'><p>Extracts a mutable slice of the entire vector.</p>
 
 <p>Equivalent to <code>&amp;mut s[..]</code>.</p>
 </div><h4 id='method.set_len' class='method'><code>unsafe fn <a href='#method.set_len' class='fnname'>set_len</a>(&amp;mut self, len: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>)</code></h4>
@@ -428,10 +426,12 @@ is empty.</p>
 <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>vec2</span>, []);</pre>
 </div><h4 id='method.drain' class='method'><code>fn <a href='#method.drain' class='fnname'>drain</a>&lt;R&gt;(&amp;mut self, range: R) -&gt; <a class='struct' href='../../../bitflags/__core/vec/struct.Drain.html' title='bitflags::__core::vec::Drain'>Drain</a>&lt;T&gt; <span class='where'>where R: <a class='trait' href='https://doc.rust-lang.org/nightly/collections/range/trait.RangeArgument.html' title='collections::range::RangeArgument'>RangeArgument</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>&gt;</span></code></h4>
 <div class='docblock'><p>Create a draining iterator that removes the specified range in the vector
-and yields the removed items from start to end. The element range is
-removed even if the iterator is not consumed until the end.</p>
+and yields the removed items.</p>
 
-<p>Note: It is unspecified how many elements are removed from the vector,
+<p>Note 1: The element range is removed even if the iterator is not
+consumed until the end.</p>
+
+<p>Note 2: It is unspecified how many elements are removed from the vector,
 if the <code>Drain</code> value is leaked.</p>
 
 <h1 id='panics-7' class='section-header'><a href='#panics-7'>Panics</a></h1>
@@ -439,11 +439,14 @@ if the <code>Drain</code> value is leaked.</p>
 the end point is greater than the length of the vector.</p>
 
 <h1 id='examples-17' class='section-header'><a href='#examples-17'>Examples</a></h1><pre class='rust rust-example-rendered'>
-<span class='comment'>// Draining using `..` clears the whole vector.</span>
 <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>v</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[<span class='number'>1</span>, <span class='number'>2</span>, <span class='number'>3</span>];
-<span class='kw'>let</span> <span class='ident'>u</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span>_<span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>v</span>.<span class='ident'>drain</span>(..).<span class='ident'>collect</span>();
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>v</span>, <span class='kw-2'>&amp;</span>[]);
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>u</span>, <span class='kw-2'>&amp;</span>[<span class='number'>1</span>, <span class='number'>2</span>, <span class='number'>3</span>]);</pre>
+<span class='kw'>let</span> <span class='ident'>u</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span>_<span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>v</span>.<span class='ident'>drain</span>(<span class='number'>1</span>..).<span class='ident'>collect</span>();
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>v</span>, <span class='kw-2'>&amp;</span>[<span class='number'>1</span>]);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>u</span>, <span class='kw-2'>&amp;</span>[<span class='number'>2</span>, <span class='number'>3</span>]);
+
+<span class='comment'>// A full range clears the vector</span>
+<span class='ident'>v</span>.<span class='ident'>drain</span>(..);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>v</span>, <span class='kw-2'>&amp;</span>[]);</pre>
 </div><h4 id='method.clear' class='method'><code>fn <a href='#method.clear' class='fnname'>clear</a>(&amp;mut self)</code></h4>
 <div class='docblock'><p>Clears the vector, removing all values.</p>
 
@@ -865,8 +868,7 @@ found; the fourth could match any position in <code>[1,4]</code>.</p>
 <span class='ident'>v</span>.<span class='ident'>sort</span>();
 <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>v</span> <span class='op'>==</span> [<span class='op'>-</span><span class='number'>5</span>, <span class='op'>-</span><span class='number'>3</span>, <span class='number'>1</span>, <span class='number'>2</span>, <span class='number'>4</span>]);</pre>
 </div><h4 id='method.sort_by_key' class='method'><code>fn <a href='#method.sort_by_key' class='fnname'>sort_by_key</a>&lt;B, F&gt;(&amp;mut self, f: F) <span class='where'>where B: <a class='trait' href='../../../bitflags/__core/cmp/trait.Ord.html' title='bitflags::__core::cmp::Ord'>Ord</a>, F: <a class='trait' href='../../../bitflags/__core/ops/trait.FnMut.html' title='bitflags::__core::ops::FnMut'>FnMut</a>(&amp;T) -&gt; B</span></code></h4>
-<div class='stability'><em class='stab unstable'>Unstable (<code>slice_sort_by_key</code>)<p>: recently added</p>
-</em></div><div class='docblock'><p>Sorts the slice, in place, using <code>key</code> to extract a key by which to
+<div class='docblock'><p>Sorts the slice, in place, using <code>key</code> to extract a key by which to
 order the sort by.</p>
 
 <p>This sort is <code>O(n log n)</code> worst-case and stable, but allocates
@@ -875,8 +877,6 @@ approximately <code>2 * n</code>, where <code>n</code> is the length of <code>se
 <p>This is a stable sort.</p>
 
 <h1 id='examples-36' class='section-header'><a href='#examples-36'>Examples</a></h1><pre class='rust rust-example-rendered'>
-<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>feature</span>(<span class='ident'>slice_sort_by_key</span>)]</span>
-
 <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>v</span> <span class='op'>=</span> [<span class='op'>-</span><span class='number'>5i32</span>, <span class='number'>4</span>, <span class='number'>1</span>, <span class='op'>-</span><span class='number'>3</span>, <span class='number'>2</span>];
 
 <span class='ident'>v</span>.<span class='ident'>sort_by_key</span>(<span class='op'>|</span><span class='ident'>k</span><span class='op'>|</span> <span class='ident'>k</span>.<span class='ident'>abs</span>());
@@ -896,23 +896,20 @@ approximately <code>2 * n</code>, where <code>n</code> is the length of <code>se
 <span class='comment'>// reverse sorting</span>
 <span class='ident'>v</span>.<span class='ident'>sort_by</span>(<span class='op'>|</span><span class='ident'>a</span>, <span class='ident'>b</span><span class='op'>|</span> <span class='ident'>b</span>.<span class='ident'>cmp</span>(<span class='ident'>a</span>));
 <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>v</span> <span class='op'>==</span> [<span class='number'>5</span>, <span class='number'>4</span>, <span class='number'>3</span>, <span class='number'>2</span>, <span class='number'>1</span>]);</pre>
-</div><h4 id='method.clone_from_slice' class='method'><code>fn <a href='#method.clone_from_slice' class='fnname'>clone_from_slice</a>(&amp;mut self, src: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>&amp;[T]</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a> <span class='where'>where T: <a class='trait' href='../../../bitflags/__core/clone/trait.Clone.html' title='bitflags::__core::clone::Clone'>Clone</a></span></code></h4>
-<div class='stability'><em class='stab unstable'>Unstable (<code>clone_from_slice</code>)</em></div><div class='docblock'><p>Copies as many elements from <code>src</code> as it can into <code>self</code> (the
-shorter of <code>self.len()</code> and <code>src.len()</code>). Returns the number
-of elements copied.</p>
+</div><h4 id='method.clone_from_slice' class='method'><code>fn <a href='#method.clone_from_slice' class='fnname'>clone_from_slice</a>(&amp;mut self, src: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>&amp;[T]</a>) <span class='where'>where T: <a class='trait' href='../../../bitflags/__core/clone/trait.Clone.html' title='bitflags::__core::clone::Clone'>Clone</a></span></code></h4>
+<div class='docblock'><p>Copies the elements from <code>src</code> into <code>self</code>.</p>
+
+<p>The length of this slice must be the same as the slice passed in.</p>
+
+<h1 id='panics-15' class='section-header'><a href='#panics-15'>Panics</a></h1>
+<p>This function will panic if the two slices have different lengths.</p>
 
 <h1 id='example-9' class='section-header'><a href='#example-9'>Example</a></h1><pre class='rust rust-example-rendered'>
-<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>feature</span>(<span class='ident'>clone_from_slice</span>)]</span>
-
 <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>dst</span> <span class='op'>=</span> [<span class='number'>0</span>, <span class='number'>0</span>, <span class='number'>0</span>];
-<span class='kw'>let</span> <span class='ident'>src</span> <span class='op'>=</span> [<span class='number'>1</span>, <span class='number'>2</span>];
+<span class='kw'>let</span> <span class='ident'>src</span> <span class='op'>=</span> [<span class='number'>1</span>, <span class='number'>2</span>, <span class='number'>3</span>];
 
-<span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>dst</span>.<span class='ident'>clone_from_slice</span>(<span class='kw-2'>&amp;</span><span class='ident'>src</span>) <span class='op'>==</span> <span class='number'>2</span>);
-<span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>dst</span> <span class='op'>==</span> [<span class='number'>1</span>, <span class='number'>2</span>, <span class='number'>0</span>]);
-
-<span class='kw'>let</span> <span class='ident'>src2</span> <span class='op'>=</span> [<span class='number'>3</span>, <span class='number'>4</span>, <span class='number'>5</span>, <span class='number'>6</span>];
-<span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>dst</span>.<span class='ident'>clone_from_slice</span>(<span class='kw-2'>&amp;</span><span class='ident'>src2</span>) <span class='op'>==</span> <span class='number'>3</span>);
-<span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>dst</span> <span class='op'>==</span> [<span class='number'>3</span>, <span class='number'>4</span>, <span class='number'>5</span>]);</pre>
+<span class='ident'>dst</span>.<span class='ident'>clone_from_slice</span>(<span class='kw-2'>&amp;</span><span class='ident'>src</span>);
+<span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>dst</span> <span class='op'>==</span> [<span class='number'>1</span>, <span class='number'>2</span>, <span class='number'>3</span>]);</pre>
 </div><h4 id='method.to_vec' class='method'><code>fn <a href='#method.to_vec' class='fnname'>to_vec</a>(&amp;self) -&gt; <a class='struct' href='../../../bitflags/__core/vec/struct.Vec.html' title='bitflags::__core::vec::Vec'>Vec</a>&lt;T&gt; <span class='where'>where T: <a class='trait' href='../../../bitflags/__core/clone/trait.Clone.html' title='bitflags::__core::clone::Clone'>Clone</a></span></code></h4>
 <div class='docblock'><p>Copies <code>self</code> into a new <code>Vec</code>.</p>
 </div><h4 id='method.into_vec' class='method'><code>fn <a href='#method.into_vec' class='fnname'>into_vec</a>(self: <a class='struct' href='../../../bitflags/__core/boxed/struct.Box.html' title='bitflags::__core::boxed::Box'>Box</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>[T]</a>&gt;) -&gt; <a class='struct' href='../../../bitflags/__core/vec/struct.Vec.html' title='bitflags::__core::vec::Vec'>Vec</a>&lt;T&gt;</code></h4>
@@ -1108,6 +1105,7 @@ of elements copied.</p>
 </div><h3 class='impl'><code>impl&lt;'a, T&gt; <a class='trait' href='../../../bitflags/__core/convert/trait.From.html' title='bitflags::__core::convert::From'>From</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>&amp;'a [T]</a>&gt; for <a class='struct' href='../../../bitflags/__core/vec/struct.Vec.html' title='bitflags::__core::vec::Vec'>Vec</a>&lt;T&gt; <span class='where'>where T: <a class='trait' href='../../../bitflags/__core/clone/trait.Clone.html' title='bitflags::__core::clone::Clone'>Clone</a></span></code></h3><div class='impl-items'><h4 id='method.from-1' class='method'><code>fn <a href='../../../bitflags/__core/convert/trait.From.html#method.from' class='fnname'>from</a>(s: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>&amp;'a [T]</a>) -&gt; <a class='struct' href='../../../bitflags/__core/vec/struct.Vec.html' title='bitflags::__core::vec::Vec'>Vec</a>&lt;T&gt;</code></h4>
 </div><h3 class='impl'><code>impl&lt;'a&gt; <a class='trait' href='../../../bitflags/__core/convert/trait.From.html' title='bitflags::__core::convert::From'>From</a>&lt;&amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.str.html'>str</a>&gt; for <a class='struct' href='../../../bitflags/__core/vec/struct.Vec.html' title='bitflags::__core::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a>&gt;</code></h3><div class='impl-items'><h4 id='method.from-2' class='method'><code>fn <a href='../../../bitflags/__core/convert/trait.From.html#method.from' class='fnname'>from</a>(s: &amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.str.html'>str</a>) -&gt; <a class='struct' href='../../../bitflags/__core/vec/struct.Vec.html' title='bitflags::__core::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a>&gt;</code></h4>
 </div><h3 class='impl'><code>impl&lt;'a, T&gt; <a class='trait' href='../../../bitflags/__core/borrow/trait.IntoCow.html' title='bitflags::__core::borrow::IntoCow'>IntoCow</a>&lt;'a, <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>[T]</a>&gt; for <a class='struct' href='../../../bitflags/__core/vec/struct.Vec.html' title='bitflags::__core::vec::Vec'>Vec</a>&lt;T&gt; <span class='where'>where T: 'a + <a class='trait' href='../../../bitflags/__core/clone/trait.Clone.html' title='bitflags::__core::clone::Clone'>Clone</a></span></code></h3><div class='impl-items'><h4 id='method.into_cow' class='method'><code>fn <a href='../../../bitflags/__core/borrow/trait.IntoCow.html#method.into_cow' class='fnname'>into_cow</a>(self) -&gt; <a class='enum' href='../../../bitflags/__core/borrow/enum.Cow.html' title='bitflags::__core::borrow::Cow'>Cow</a>&lt;'a, <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>[T]</a>&gt;</code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='../../../bitflags/__core/convert/trait.From.html' title='bitflags::__core::convert::From'>From</a>&lt;<a class='struct' href='../../../bitflags/__core/ffi/struct.CString.html' title='bitflags::__core::ffi::CString'>CString</a>&gt; for <a class='struct' href='../../../bitflags/__core/vec/struct.Vec.html' title='bitflags::__core::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a>&gt;</code></h3><div class='impl-items'><h4 id='method.from-3' class='method'><code>fn <a href='../../../bitflags/__core/convert/trait.From.html#method.from' class='fnname'>from</a>(s: <a class='struct' href='../../../bitflags/__core/ffi/struct.CString.html' title='bitflags::__core::ffi::CString'>CString</a>) -&gt; <a class='struct' href='../../../bitflags/__core/vec/struct.Vec.html' title='bitflags::__core::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a>&gt;</code></h4>
 </div><h3 class='impl'><code>impl <a class='trait' href='../../../bitflags/__core/io/trait.Write.html' title='bitflags::__core::io::Write'>Write</a> for <a class='struct' href='../../../bitflags/__core/vec/struct.Vec.html' title='bitflags::__core::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a>&gt;</code></h3><div class='impl-items'><h4 id='method.write' class='method'><code>fn <a href='../../../bitflags/__core/io/trait.Write.html#method.write' class='fnname'>write</a>(&amp;mut self, buf: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>&amp;[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>]</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;</code></h4>
 <h4 id='method.write_all' class='method'><code>fn <a href='../../../bitflags/__core/io/trait.Write.html#method.write_all' class='fnname'>write_all</a>(&amp;mut self, buf: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>&amp;[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>]</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;</code></h4>
 <h4 id='method.flush' class='method'><code>fn <a href='../../../bitflags/__core/io/trait.Write.html#method.flush' class='fnname'>flush</a>(&amp;mut self) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;</code></h4>

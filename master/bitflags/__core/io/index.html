@@ -46,12 +46,12 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-3908' class='srclink' href='https://doc.rust-lang.org/nightly/std/io/index.html?gotosrc=3908' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-3883' class='srclink' href='https://doc.rust-lang.org/nightly/std/io/index.html?gotosrc=3883' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Traits, helpers, and type definitions for core I/O functionality.</p>
 
 <p>The <code>std::io</code> module contains a number of common things you&#39;ll need
 when doing input and output. The most core part of this module is
-the <a href="trait.Read.html"><code>Read</code></a> and <a href="trait.Write.html#tymethod.write"><code>Write</code></a> traits, which provide the
+the <a href="trait.Read.html"><code>Read</code></a> and <a href="trait.Write.html"><code>Write</code></a> traits, which provide the
 most general interface for reading and writing input and output.</p>
 
 <h1 id='read-and-write' class='section-header'><a href='#read-and-write'>Read and Write</a></h1>
@@ -197,7 +197,7 @@ from standard input to standard output:</p>
 <p>Last, but certainly not least, is <a href="type.Result.html"><code>io::Result</code></a>. This type is used
 as the return type of many <code>std::io</code> functions that can cause an error, and
 can be returned from your own functions as well. Many of the examples in this
-module use the <a href="macro.try!.html"><code>try!</code></a> macro:</p>
+module use the <a href="../macro.try!.html"><code>try!</code></a> macro:</p>
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>;
 
@@ -215,6 +215,14 @@ module use the <a href="macro.try!.html"><code>try!</code></a> macro:</p>
 for functions which don&#39;t have a &#39;real&#39; return value, but do want to return
 errors if they happen. In this case, the only purpose of this function is
 to read the line and print it, so we use <code>()</code>.</p>
+
+<h2 id='platform-specific-behavior' class='section-header'><a href='#platform-specific-behavior'>Platform-specific behavior</a></h2>
+<p>Many I/O functions throughout the standard library are documented to indicate
+what various library or syscalls they are delegated to. This is done to help
+applications both understand what&#39;s happening under the hood as well as investigate
+any possibly unclear semantics. Note, however, that this is informative, not a binding
+contract. The implementation of many of these functions are subject to change over
+time and may call fewer or more syscalls/library functions.</p>
 </div><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
 <table>
                     <tr class=' module-item'>

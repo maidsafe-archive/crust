@@ -46,15 +46,15 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-2391' class='srclink' href='https://doc.rust-lang.org/nightly/collections/borrow/trait.IntoCow.html?gotosrc=2391' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-2107' class='srclink' href='https://doc.rust-lang.org/nightly/collections/borrow/trait.IntoCow.html?gotosrc=2107' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait IntoCow&lt;'a, B&gt; <span class='where'>where B: <a class='trait' href='../../../bitflags/__core/borrow/trait.ToOwned.html' title='bitflags::__core::borrow::ToOwned'>ToOwned</a> + ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span> {
     fn <a href='#tymethod.into_cow' class='fnname'>into_cow</a>(self) -&gt; <a class='enum' href='../../../bitflags/__core/borrow/enum.Cow.html' title='bitflags::__core::borrow::Cow'>Cow</a>&lt;'a, B&gt;;
-}</pre><div class='stability'><em class='stab unstable'>Unstable (<code>into_cow</code>)<p>: may be replaced by <code>convert::Into</code></p>
+}</pre><div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.7.0<p>: conflicts with Into, may return with specialization</p>
 </em></div><div class='docblock'><p>Trait for moving into a <code>Cow</code>.</p>
 </div>
             <h2 id='required-methods'>Required Methods</h2>
             <div class='methods'>
-        <h3 id='tymethod.into_cow' class='method stab unstable'><code>fn <a href='#tymethod.into_cow' class='fnname'>into_cow</a>(self) -&gt; <a class='enum' href='../../../bitflags/__core/borrow/enum.Cow.html' title='bitflags::__core::borrow::Cow'>Cow</a>&lt;'a, B&gt;</code></h3><div class='stability'><em class='stab unstable'>Unstable (<code>into_cow</code>)<p>: may be replaced by <code>convert::Into</code></p>
+        <h3 id='tymethod.into_cow' class='method stab unstable deprecated'><code>fn <a href='#tymethod.into_cow' class='fnname'>into_cow</a>(self) -&gt; <a class='enum' href='../../../bitflags/__core/borrow/enum.Cow.html' title='bitflags::__core::borrow::Cow'>Cow</a>&lt;'a, B&gt;</code></h3><div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.7.0<p>: conflicts with Into, may return with specialization</p>
 </em></div><div class='docblock'><p>Moves <code>self</code> into <code>Cow</code></p>
 </div></div>
         <h2 id='implementors'>Implementors</h2>

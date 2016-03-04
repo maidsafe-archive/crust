@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-11982' class='srclink' href='https://doc.rust-lang.org/nightly/std/sys/ext/io/trait.AsRawFd.html?gotosrc=11982' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-12142' class='srclink' href='https://doc.rust-lang.org/nightly/std/sys/ext/io/trait.AsRawFd.html?gotosrc=12142' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait AsRawFd {
     fn <a href='#tymethod.as_raw_fd' class='fnname'>as_raw_fd</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.i32.html'>i32</a>;
 }</pre><div class='docblock'><p>A trait to extract the raw unix file descriptor from an underlying
@@ -61,7 +61,7 @@ and <code>AsRawSocket</code> set of traits.</p>
         <h3 id='tymethod.as_raw_fd' class='method stab '><code>fn <a href='#tymethod.as_raw_fd' class='fnname'>as_raw_fd</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.i32.html'>i32</a></code></h3><div class='docblock'><p>Extracts the raw file descriptor.</p>
 
 <p>This method does <strong>not</strong> pass ownership of the raw file descriptor
-to the caller. The descriptor is only guarantee to be valid while
+to the caller. The descriptor is only guaranteed to be valid while
 the original object has not yet been destroyed.</p>
 </div></div>
         <h2 id='implementors'>Implementors</h2>

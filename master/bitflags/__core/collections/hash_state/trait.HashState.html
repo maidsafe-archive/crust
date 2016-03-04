@@ -46,40 +46,28 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-2703' class='srclink' href='https://doc.rust-lang.org/nightly/std/collections/hash/state/trait.HashState.html?gotosrc=2703' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-33249' class='srclink' href='https://doc.rust-lang.org/nightly/core/hash/trait.HashState.html?gotosrc=33249' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait HashState {
     type Hasher: <a class='trait' href='../../../../bitflags/__core/hash/trait.Hasher.html' title='bitflags::__core::hash::Hasher'>Hasher</a>;
-    fn <a href='#tymethod.hasher' class='fnname'>hasher</a>(&amp;self) -&gt; Self::<a class='trait' href='../../../../bitflags/__core/collections/hash_state/trait.HashState.html' title='bitflags::__core::collections::hash_state::HashState'>Hasher</a>;
-}</pre><div class='stability'><em class='stab unstable'>Unstable (<code>hashmap_hasher</code>)<p>: hasher stuff is unclear</p>
-</em></div><div class='docblock'><p>A trait representing stateful hashes which can be used to hash keys in a
-<code>HashMap</code>.</p>
-
-<p>A HashState is used as a factory for instances of <code>Hasher</code> which a <code>HashMap</code>
-can then use to hash keys independently. A <code>HashMap</code> by default uses a state
-which will create instances of a <code>SipHasher</code>, but a custom state factory can
-be provided to the <code>with_hash_state</code> function.</p>
-
-<p>If a hashing algorithm has no initial state, then the <code>Hasher</code> type for that
-algorithm can implement the <code>Default</code> trait and create hash maps with the
-<code>DefaultState</code> structure. This state is 0-sized and will simply delegate
-to <code>Default</code> when asked to create a hasher.</p>
+    fn <a href='#tymethod.hasher' class='fnname'>hasher</a>(&amp;self) -&gt; Self::<a class='trait' href='../../../../bitflags/__core/hash/trait.HashState.html' title='bitflags::__core::hash::HashState'>Hasher</a>;
+}</pre><div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.7.0<p>: support moved to std::hash and renamed to BuildHasher</p>
+</em></div><div class='docblock'><p>Deprecated, renamed to <code>BuildHasher</code></p>
 </div>
             <h2 id='associated-types'>Associated Types</h2>
             <div class='methods'>
-        <h3 id='associatedtype.Hasher' class='method stab unstable'><code>type Hasher: <a class='trait' href='../../../../bitflags/__core/hash/trait.Hasher.html' title='bitflags::__core::hash::Hasher'>Hasher</a></code></h3><div class='stability'><em class='stab unstable'>Unstable (<code>hashmap_hasher</code>)<p>: hasher stuff is unclear</p>
+        <h3 id='associatedtype.Hasher' class='method stab unstable deprecated'><code>type Hasher: <a class='trait' href='../../../../bitflags/__core/hash/trait.Hasher.html' title='bitflags::__core::hash::Hasher'>Hasher</a></code></h3><div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.7.0<p>: support moved to std::hash and renamed to BuildHasher</p>
 </em></div><div class='docblock'><p>Type of the hasher that will be created.</p>
 </div></div>
             <h2 id='required-methods'>Required Methods</h2>
             <div class='methods'>
-        <h3 id='tymethod.hasher' class='method stab unstable'><code>fn <a href='#tymethod.hasher' class='fnname'>hasher</a>(&amp;self) -&gt; Self::<a class='trait' href='../../../../bitflags/__core/collections/hash_state/trait.HashState.html' title='bitflags::__core::collections::hash_state::HashState'>Hasher</a></code></h3><div class='stability'><em class='stab unstable'>Unstable (<code>hashmap_hasher</code>)<p>: hasher stuff is unclear</p>
+        <h3 id='tymethod.hasher' class='method stab unstable deprecated'><code>fn <a href='#tymethod.hasher' class='fnname'>hasher</a>(&amp;self) -&gt; Self::<a class='trait' href='../../../../bitflags/__core/hash/trait.HashState.html' title='bitflags::__core::hash::HashState'>Hasher</a></code></h3><div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.7.0<p>: support moved to std::hash and renamed to BuildHasher</p>
 </em></div><div class='docblock'><p>Creates a new hasher based on the given state of this object.</p>
 </div></div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
-    <li><code>impl <a class='trait' href='../../../../bitflags/__core/collections/hash_state/trait.HashState.html' title='bitflags::__core::collections::hash_state::HashState'>HashState</a> for <a class='struct' href='../../../../bitflags/__core/collections/hash_map/struct.RandomState.html' title='bitflags::__core::collections::hash_map::RandomState'>RandomState</a></code></li>
-<li><code>impl&lt;H&gt; <a class='trait' href='../../../../bitflags/__core/collections/hash_state/trait.HashState.html' title='bitflags::__core::collections::hash_state::HashState'>HashState</a> for <a class='struct' href='../../../../bitflags/__core/collections/hash_state/struct.DefaultState.html' title='bitflags::__core::collections::hash_state::DefaultState'>DefaultState</a>&lt;H&gt; <span class='where'>where H: <a class='trait' href='../../../../bitflags/__core/default/trait.Default.html' title='bitflags::__core::default::Default'>Default</a> + <a class='trait' href='../../../../bitflags/__core/hash/trait.Hasher.html' title='bitflags::__core::hash::Hasher'>Hasher</a></span></code></li>
+    <li><code>impl&lt;H&gt; <a class='trait' href='../../../../bitflags/__core/hash/trait.HashState.html' title='bitflags::__core::hash::HashState'>HashState</a> for <a class='struct' href='../../../../bitflags/__core/collections/hash_state/struct.DefaultState.html' title='bitflags::__core::collections::hash_state::DefaultState'>DefaultState</a>&lt;H&gt; <span class='where'>where H: <a class='trait' href='../../../../bitflags/__core/default/trait.Default.html' title='bitflags::__core::default::Default'>Default</a> + <a class='trait' href='../../../../bitflags/__core/hash/trait.Hasher.html' title='bitflags::__core::hash::Hasher'>Hasher</a></span></code></li>
 </ul><script type="text/javascript" async
-                              src="../../../../implementors/std/collections/hash/state/trait.HashState.js">
+                              src="../../../../implementors/core/hash/trait.HashState.js">
                       </script></section>
     <section id='search' class="content hidden"></section>
 

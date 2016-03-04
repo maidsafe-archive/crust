@@ -148,11 +148,11 @@ excluding <code>end</code>.</p>
 
 <h1 id='safety' class='section-header'><a href='#safety'>Safety</a></h1>
 <p>Callers of this function are responsible that three preconditions are
-satisifed:</p>
+satisfied:</p>
 
 <ul>
 <li><code>begin</code> must come before <code>end</code>.</li>
-<li><code>begin</code> and <code>end</code> must be bye positions within the string slice.</li>
+<li><code>begin</code> and <code>end</code> must be byte positions within the string slice.</li>
 <li><code>begin</code> and <code>end</code> must lie on UTF-8 sequence boundaries.</li>
 </ul>
 
@@ -182,11 +182,11 @@ excluding <code>end</code>.</p>
 
 <h1 id='safety-1' class='section-header'><a href='#safety-1'>Safety</a></h1>
 <p>Callers of this function are responsible that three preconditions are
-satisifed:</p>
+satisfied:</p>
 
 <ul>
 <li><code>begin</code> must come before <code>end</code>.</li>
-<li><code>begin</code> and <code>end</code> must be bye positions within the string slice.</li>
+<li><code>begin</code> and <code>end</code> must be byte positions within the string slice.</li>
 <li><code>begin</code> and <code>end</code> must lie on UTF-8 sequence boundaries.</li>
 </ul>
 </div><h4 id='method.char_range_at' class='method'><code>fn <a href='#method.char_range_at' class='fnname'>char_range_at</a>(&amp;self, start: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/core/str/struct.CharRange.html' title='core::str::CharRange'>CharRange</a></code></h4>
@@ -383,9 +383,9 @@ beyond the last code point of the string slice.</p>
 <div class='docblock'><p>Returns an iterator over the <code>char</code>s of a string slice.</p>
 
 <p>As a string slice consists of valid UTF-8, we can iterate through a
-string slice by <a href="../primitive.char.html"><code>char</code></a>. This method returns such an iterator.</p>
+string slice by <a href="primitive.char.html"><code>char</code></a>. This method returns such an iterator.</p>
 
-<p>It&#39;s important to remember that <a href="../primitive.char.html"><code>char</code></a> represents a Unicode Scalar
+<p>It&#39;s important to remember that <a href="primitive.char.html"><code>char</code></a> represents a Unicode Scalar
 Value, and may not match your idea of what a &#39;character&#39; is. Iteration
 over grapheme clusters may be what you actually want.</p>
 
@@ -546,9 +546,10 @@ a line feed (<code>\r\n</code>).</p>
 <div class='stability'><em class='stab unstable'>Unstable (<code>str_utf16</code>)<p>: this functionality may only be provided by libunicode</p>
 </em></div><div class='docblock'><p>Returns an iterator of <code>u16</code> over the string encoded as UTF-16.</p>
 </div><h4 id='method.contains' class='method'><code>fn <a href='#method.contains' class='fnname'>contains</a>&lt;'a, P&gt;(&amp;'a self, pat: P) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a> <span class='where'>where P: <a class='trait' href='https://doc.rust-lang.org/nightly/core/str/pattern/trait.Pattern.html' title='core::str::pattern::Pattern'>Pattern</a>&lt;'a&gt;</span></code></h4>
-<div class='docblock'><p>Returns <code>true</code> if the given <code>&amp;str</code> is a sub-slice of this string slice.</p>
+<div class='docblock'><p>Returns <code>true</code> if the given pattern matches a sub-slice of
+this string slice.</p>
 
-<p>Returns <code>false</code> if it&#39;s not.</p>
+<p>Returns <code>false</code> if it does not.</p>
 
 <h1 id='examples-18' class='section-header'><a href='#examples-18'>Examples</a></h1>
 <p>Basic usage:</p>
@@ -558,9 +559,10 @@ a line feed (<code>\r\n</code>).</p>
 <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>bananas</span>.<span class='ident'>contains</span>(<span class='string'>&quot;nana&quot;</span>));
 <span class='macro'>assert</span><span class='macro'>!</span>(<span class='op'>!</span><span class='ident'>bananas</span>.<span class='ident'>contains</span>(<span class='string'>&quot;apples&quot;</span>));</pre>
 </div><h4 id='method.starts_with' class='method'><code>fn <a href='#method.starts_with' class='fnname'>starts_with</a>&lt;'a, P&gt;(&amp;'a self, pat: P) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a> <span class='where'>where P: <a class='trait' href='https://doc.rust-lang.org/nightly/core/str/pattern/trait.Pattern.html' title='core::str::pattern::Pattern'>Pattern</a>&lt;'a&gt;</span></code></h4>
-<div class='docblock'><p>Returns <code>true</code> if the given <code>&amp;str</code> is a prefix of this string slice.</p>
+<div class='docblock'><p>Returns <code>true</code> if the given pattern matches a prefix of this
+string slice.</p>
 
-<p>Returns <code>false</code> if it&#39;s not.</p>
+<p>Returns <code>false</code> if it does not.</p>
 
 <h1 id='examples-19' class='section-header'><a href='#examples-19'>Examples</a></h1>
 <p>Basic usage:</p>
@@ -570,9 +572,10 @@ a line feed (<code>\r\n</code>).</p>
 <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>bananas</span>.<span class='ident'>starts_with</span>(<span class='string'>&quot;bana&quot;</span>));
 <span class='macro'>assert</span><span class='macro'>!</span>(<span class='op'>!</span><span class='ident'>bananas</span>.<span class='ident'>starts_with</span>(<span class='string'>&quot;nana&quot;</span>));</pre>
 </div><h4 id='method.ends_with' class='method'><code>fn <a href='#method.ends_with' class='fnname'>ends_with</a>&lt;'a, P&gt;(&amp;'a self, pat: P) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a> <span class='where'>where P: <a class='trait' href='https://doc.rust-lang.org/nightly/core/str/pattern/trait.Pattern.html' title='core::str::pattern::Pattern'>Pattern</a>&lt;'a&gt;, P::<a class='trait' href='https://doc.rust-lang.org/nightly/core/str/pattern/trait.Pattern.html' title='core::str::pattern::Pattern'>Searcher</a>: <a class='trait' href='https://doc.rust-lang.org/nightly/core/str/pattern/trait.ReverseSearcher.html' title='core::str::pattern::ReverseSearcher'>ReverseSearcher</a>&lt;'a&gt;</span></code></h4>
-<div class='docblock'><p>Returns <code>true</code> if the given <code>&amp;str</code> is a suffix of this string slice.</p>
+<div class='docblock'><p>Returns <code>true</code> if the given pattern matches a suffix of this
+string slice.</p>
 
-<p>Returns <code>false</code> if not.</p>
+<p>Returns <code>false</code> if it does not.</p>
 
 <h1 id='examples-20' class='section-header'><a href='#examples-20'>Examples</a></h1>
 <p>Basic usage:</p>
@@ -899,7 +902,7 @@ a character matches.</p>
 search, and it will be a <a href="iter/trait.DoubleEndedIterator.html"><code>DoubleEndedIterator</code></a> if a forward/reverse
 search yields the same elements.</p>
 
-<p>For iterating from the front, the [<code>matches()</code>] method can be used.</p>
+<p>For iterating from the front, the <a href="#method.matches"><code>matches()</code></a> method can be used.</p>
 
 <h1 id='examples-30' class='section-header'><a href='#examples-30'>Examples</a></h1>
 <p>Basic usage:</p>
@@ -1006,7 +1009,7 @@ Core Property <code>White_Space</code>.</p>
 <div class='docblock'><p>Returns a string slice with all prefixes and suffixes that match a
 pattern repeatedly removed.</p>
 
-<p>The pattern can be a <code>&amp;str</code>, <a href="primtive.char.html"><code>char</code></a>, or a closure that determines
+<p>The pattern can be a <code>&amp;str</code>, <a href="primitive.char.html"><code>char</code></a>, or a closure that determines
 if a character matches.</p>
 
 <h1 id='examples-36' class='section-header'><a href='#examples-36'>Examples</a></h1>
@@ -1064,7 +1067,7 @@ the syntax affectionately known as the &#39;turbofish&#39;: <code>::&lt;&gt;</co
 helps the inference algorithm understand specifically which type
 you&#39;re trying to parse into.</p>
 
-<p><code>parse()</code> can parse any type that implements the <a href="trait.FromStr.html"><code>FromStr</code></a> trait.</p>
+<p><code>parse()</code> can parse any type that implements the <a href="str/trait.FromStr.html"><code>FromStr</code></a> trait.</p>
 
 <h1 id='failure' class='section-header'><a href='#failure'>Failure</a></h1>
 <p>Will return <code>Err</code> if it&#39;s not possible to parse this string slice into
@@ -1088,12 +1091,12 @@ the desired type.</p>
 <span class='kw'>let</span> <span class='ident'>nope</span> <span class='op'>=</span> <span class='string'>&quot;j&quot;</span>.<span class='ident'>parse</span>::<span class='op'>&lt;</span><span class='ident'>u32</span><span class='op'>&gt;</span>();
 
 <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>nope</span>.<span class='ident'>is_err</span>());</pre>
-</div><h4 id='method.replace' class='method'><code>fn <a href='#method.replace' class='fnname'>replace</a>(&amp;self, from: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>, to: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a></code></h4>
-<div class='docblock'><p>Replaces all occurrences of one string with another.</p>
+</div><h4 id='method.replace' class='method'><code>fn <a href='#method.replace' class='fnname'>replace</a>&lt;'a, P&gt;(&amp;'a self, from: P, to: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a> <span class='where'>where P: <a class='trait' href='https://doc.rust-lang.org/nightly/core/str/pattern/trait.Pattern.html' title='core::str::pattern::Pattern'>Pattern</a>&lt;'a&gt;</span></code></h4>
+<div class='docblock'><p>Replaces all matches of a pattern with another string.</p>
 
 <p><code>replace</code> creates a new <a href="string/struct.String.html"><code>String</code></a>, and copies the data from this string slice into it.
-While doing so, it attempts to find a sub-<code>&amp;str</code>. If it finds it, it replaces it with
-the replacement string slice.</p>
+While doing so, it attempts to find matches of a pattern. If it finds any, it
+replaces them with the replacement string slice.</p>
 
 <h1 id='examples-39' class='section-header'><a href='#examples-39'>Examples</a></h1>
 <p>Basic usage:</p>
@@ -1102,7 +1105,7 @@ the replacement string slice.</p>
 
 <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='string'>&quot;this is new&quot;</span>, <span class='ident'>s</span>.<span class='ident'>replace</span>(<span class='string'>&quot;old&quot;</span>, <span class='string'>&quot;new&quot;</span>));</pre>
 
-<p>When a <code>&amp;str</code> isn&#39;t found:</p>
+<p>When the pattern doesn&#39;t match:</p>
 <pre class='rust rust-example-rendered'>
 <span class='kw'>let</span> <span class='ident'>s</span> <span class='op'>=</span> <span class='string'>&quot;this is old&quot;</span>;
 <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>s</span>, <span class='ident'>s</span>.<span class='ident'>replace</span>(<span class='string'>&quot;cookie monster&quot;</span>, <span class='string'>&quot;little lamb&quot;</span>));</pre>

@@ -77,7 +77,6 @@ fn main() {
                BigInt::parse_bytes(b&quot;16706&quot;, 10).unwrap());
     assert_eq!(BigInt::from_bytes_be(Sign::Plus, b&quot;Hello world!&quot;),
                BigInt::parse_bytes(b&quot;22405534230753963835153736737&quot;, 10).unwrap());
-    
 }</span><pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>num</span>::<span class='ident'>bigint</span>::{<span class='ident'>BigInt</span>, <span class='ident'>Sign</span>};
 
@@ -102,7 +101,6 @@ fn main() {
     
     let i = -1125.to_bigint().unwrap();
     assert_eq!(i.to_bytes_le(), (Sign::Minus, vec![101, 4]));
-    
 }</span><pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>num</span>::<span class='ident'>bigint</span>::{<span class='ident'>ToBigInt</span>, <span class='ident'>Sign</span>};
 
@@ -117,7 +115,6 @@ fn main() {
     
     let i = -1125.to_bigint().unwrap();
     assert_eq!(i.to_bytes_be(), (Sign::Minus, vec![4, 101]));
-    
 }</span><pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>num</span>::<span class='ident'>bigint</span>::{<span class='ident'>ToBigInt</span>, <span class='ident'>Sign</span>};
 
@@ -133,7 +130,6 @@ fn main() {
     
     let i = BigInt::parse_bytes(b&quot;ff&quot;, 16).unwrap();
     assert_eq!(i.to_str_radix(16), &quot;ff&quot;);
-    
 }</span><pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>num</span>::<span class='ident'>bigint</span>::<span class='ident'>BigInt</span>;
 
@@ -149,7 +145,6 @@ fn main() {
     assert_eq!(ToBigInt::to_bigint(&amp;1234).unwrap().sign(), Sign::Plus);
     assert_eq!(ToBigInt::to_bigint(&amp;-4321).unwrap().sign(), Sign::Minus);
     assert_eq!(ToBigInt::to_bigint(&amp;0).unwrap().sign(), Sign::NoSign);
-    
 }</span><pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>num</span>::<span class='ident'>bigint</span>::{<span class='ident'>ToBigInt</span>, <span class='ident'>Sign</span>};
 
@@ -166,7 +161,6 @@ fn main() {
     assert_eq!(BigInt::parse_bytes(b&quot;1234&quot;, 10), ToBigInt::to_bigint(&amp;1234));
     assert_eq!(BigInt::parse_bytes(b&quot;ABCD&quot;, 16), ToBigInt::to_bigint(&amp;0xABCD));
     assert_eq!(BigInt::parse_bytes(b&quot;G&quot;, 16), None);
-    
 }</span><pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>num</span>::<span class='ident'>bigint</span>::{<span class='ident'>BigInt</span>, <span class='ident'>ToBigInt</span>};
 

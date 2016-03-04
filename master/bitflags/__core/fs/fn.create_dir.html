@@ -46,12 +46,22 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-3793' class='srclink' href='https://doc.rust-lang.org/nightly/std/fs/fn.create_dir.html?gotosrc=3793' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-3806' class='srclink' href='https://doc.rust-lang.org/nightly/std/fs/fn.create_dir.html?gotosrc=3806' title='goto source code'>[src]</a></span></h1>
 <pre class='rust fn'>pub fn create_dir&lt;P&gt;(path: P) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt; <span class='where'>where P: <a class='trait' href='../../../bitflags/__core/convert/trait.AsRef.html' title='bitflags::__core::convert::AsRef'>AsRef</a>&lt;<a class='struct' href='../../../bitflags/__core/path/struct.Path.html' title='bitflags::__core::path::Path'>Path</a>&gt;</span></pre><div class='docblock'><p>Creates a new, empty directory at the provided path</p>
 
+<h1 id='platform-specific-behavior' class='section-header'><a href='#platform-specific-behavior'>Platform-specific behavior</a></h1>
+<p>This function currently corresponds to the <code>mkdir</code> function on Unix
+and the <code>CreateDirectory</code> function on Windows.
+Note that, this <a href="../io/index.html#platform-specific-behavior">may change in the future</a>.</p>
+
 <h1 id='errors' class='section-header'><a href='#errors'>Errors</a></h1>
-<p>This function will return an error if the user lacks permissions to make a
-new directory at the provided <code>path</code>, or if the directory already exists.</p>
+<p>This function will return an error in the following situations, but is not
+limited to just these cases:</p>
+
+<ul>
+<li>User lacks permissions to create directory at <code>path</code>.</li>
+<li><code>path</code> already exists.</li>
+</ul>
 
 <h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1><pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fs</span>;

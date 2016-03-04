@@ -46,32 +46,32 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-4705' class='srclink' href='https://doc.rust-lang.org/nightly/std/io/stdio/struct.Stdin.html?gotosrc=4705' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-4667' class='srclink' href='https://doc.rust-lang.org/nightly/std/io/stdio/struct.Stdin.html?gotosrc=4667' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Stdin {
     // some fields omitted
 }</pre><div class='docblock'><p>A handle to the standard input stream of a process.</p>
 
 <p>Each handle is a shared reference to a global buffer of input data to this
-process. A handle can be <code>lock</code>&#39;d to gain full access to <code>BufRead</code> methods
+process. A handle can be <code>lock</code>&#39;d to gain full access to <a href="trait.BufRead.html"><code>BufRead</code></a> methods
 (e.g. <code>.lines()</code>). Writes to this handle are otherwise locked with respect
 to other writes.</p>
 
 <p>This handle implements the <code>Read</code> trait, but beware that concurrent reads
 of <code>Stdin</code> must be executed with care.</p>
 
-<p>Created by the function <code>io::stdin()</code>.</p>
+<p>Created by the <a href="fn.stdin.html"><code>io::stdin</code></a> method.</p>
 </div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../../bitflags/__core/io/struct.Stdin.html' title='bitflags::__core::io::Stdin'>Stdin</a></code></h3><div class='impl-items'><h4 id='method.lock' class='method'><code>fn <a href='#method.lock' class='fnname'>lock</a>(&amp;self) -&gt; <a class='struct' href='../../../bitflags/__core/io/struct.StdinLock.html' title='bitflags::__core::io::StdinLock'>StdinLock</a></code></h4>
 <div class='docblock'><p>Locks this handle to the standard input stream, returning a readable
 guard.</p>
 
 <p>The lock is released when the returned lock goes out of scope. The
-returned guard also implements the <code>Read</code> and <code>BufRead</code> traits for
+returned guard also implements the <a href="trait.Read.html"><code>Read</code></a> and <a href="trait.BufRead.html"><code>BufRead</code></a> traits for
 accessing the underlying data.</p>
 </div><h4 id='method.read_line' class='method'><code>fn <a href='#method.read_line' class='fnname'>read_line</a>(&amp;self, buf: &amp;mut <a class='struct' href='../../../bitflags/__core/string/struct.String.html' title='bitflags::__core::string::String'>String</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;</code></h4>
 <div class='docblock'><p>Locks this handle and reads a line of input into the specified buffer.</p>
 
 <p>For detailed semantics of this method, see the documentation on
-<code>BufRead::read_line</code>.</p>
+<a href="trait.BufRead.html#method.read_line"><code>BufRead::read_line</code></a>.</p>
 
 <h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1><pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>;
@@ -90,6 +90,7 @@ accessing the underlying data.</p>
 <ul>
 <li>Pipe some text to it, e.g. <code>printf foo | path/to/executable</code></li>
 <li>Give it text interactively by running the executable directly,
+in which case it will wait for the Enter key to be pressed before
 continuing</li>
 </ul>
 </div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='../../../bitflags/__core/io/trait.Read.html' title='bitflags::__core::io::Read'>Read</a> for <a class='struct' href='../../../bitflags/__core/io/struct.Stdin.html' title='bitflags::__core::io::Stdin'>Stdin</a></code></h3><div class='impl-items'><h4 id='method.read' class='method'><code>fn <a href='../../../bitflags/__core/io/trait.Read.html#method.read' class='fnname'>read</a>(&amp;mut self, buf: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>&amp;mut [</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>]</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;</code></h4>

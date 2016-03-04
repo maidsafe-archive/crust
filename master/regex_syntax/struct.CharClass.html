@@ -151,13 +151,11 @@ effect.</p>
 <span class='ident'>vec</span>.<span class='ident'>truncate</span>(<span class='number'>2</span>);
 <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>vec</span>, [<span class='number'>1</span>, <span class='number'>2</span>]);</pre>
 </div><h4 id='method.as_slice' class='method'><code>fn <a href='#method.as_slice' class='fnname'>as_slice</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[T]</a></code></h4>
-<div class='stability'><em class='stab unstable'>Unstable (<code>convert</code>)<p>: waiting on RFC revision</p>
-</em></div><div class='docblock'><p>Extracts a slice containing the entire vector.</p>
+<div class='docblock'><p>Extracts a slice containing the entire vector.</p>
 
 <p>Equivalent to <code>&amp;s[..]</code>.</p>
 </div><h4 id='method.as_mut_slice' class='method'><code>fn <a href='#method.as_mut_slice' class='fnname'>as_mut_slice</a>(&amp;mut self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;mut [T]</a></code></h4>
-<div class='stability'><em class='stab unstable'>Unstable (<code>convert</code>)<p>: waiting on RFC revision</p>
-</em></div><div class='docblock'><p>Extracts a mutable slice of the entire vector.</p>
+<div class='docblock'><p>Extracts a mutable slice of the entire vector.</p>
 
 <p>Equivalent to <code>&amp;mut s[..]</code>.</p>
 </div><h4 id='method.set_len' class='method'><code>unsafe fn <a href='#method.set_len' class='fnname'>set_len</a>(&amp;mut self, len: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>)</code></h4>
@@ -256,10 +254,12 @@ is empty.</p>
 <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>vec2</span>, []);</pre>
 </div><h4 id='method.drain' class='method'><code>fn <a href='#method.drain' class='fnname'>drain</a>&lt;R&gt;(&amp;mut self, range: R) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Drain.html' title='collections::vec::Drain'>Drain</a>&lt;T&gt; <span class='where'>where R: <a class='trait' href='https://doc.rust-lang.org/nightly/collections/range/trait.RangeArgument.html' title='collections::range::RangeArgument'>RangeArgument</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>&gt;</span></code></h4>
 <div class='docblock'><p>Create a draining iterator that removes the specified range in the vector
-and yields the removed items from start to end. The element range is
-removed even if the iterator is not consumed until the end.</p>
+and yields the removed items.</p>
 
-<p>Note: It is unspecified how many elements are removed from the vector,
+<p>Note 1: The element range is removed even if the iterator is not
+consumed until the end.</p>
+
+<p>Note 2: It is unspecified how many elements are removed from the vector,
 if the <code>Drain</code> value is leaked.</p>
 
 <h1 id='panics-7' class='section-header'><a href='#panics-7'>Panics</a></h1>
@@ -267,11 +267,14 @@ if the <code>Drain</code> value is leaked.</p>
 the end point is greater than the length of the vector.</p>
 
 <h1 id='examples-13' class='section-header'><a href='#examples-13'>Examples</a></h1><pre class='rust rust-example-rendered'>
-<span class='comment'>// Draining using `..` clears the whole vector.</span>
 <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>v</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[<span class='number'>1</span>, <span class='number'>2</span>, <span class='number'>3</span>];
-<span class='kw'>let</span> <span class='ident'>u</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span>_<span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>v</span>.<span class='ident'>drain</span>(..).<span class='ident'>collect</span>();
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>v</span>, <span class='kw-2'>&amp;</span>[]);
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>u</span>, <span class='kw-2'>&amp;</span>[<span class='number'>1</span>, <span class='number'>2</span>, <span class='number'>3</span>]);</pre>
+<span class='kw'>let</span> <span class='ident'>u</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span>_<span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>v</span>.<span class='ident'>drain</span>(<span class='number'>1</span>..).<span class='ident'>collect</span>();
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>v</span>, <span class='kw-2'>&amp;</span>[<span class='number'>1</span>]);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>u</span>, <span class='kw-2'>&amp;</span>[<span class='number'>2</span>, <span class='number'>3</span>]);
+
+<span class='comment'>// A full range clears the vector</span>
+<span class='ident'>v</span>.<span class='ident'>drain</span>(..);
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>v</span>, <span class='kw-2'>&amp;</span>[]);</pre>
 </div><h4 id='method.clear' class='method'><code>fn <a href='#method.clear' class='fnname'>clear</a>(&amp;mut self)</code></h4>
 <div class='docblock'><p>Clears the vector, removing all values.</p>
 
