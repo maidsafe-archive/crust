@@ -98,7 +98,7 @@ impl BootstrapHandler {
     }
 }
 
-fn get_file_name() -> Result<::std::ffi::OsString, Error> {
+pub fn get_file_name() -> Result<::std::ffi::OsString, Error> {
     let mut name = try!(config_file_handler::exe_file_stem());
     name.push(".bootstrap.cache");
     Ok(name)
