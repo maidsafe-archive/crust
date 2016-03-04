@@ -18,12 +18,11 @@
 use std::collections::HashMap;
 use std::io;
 use std::net;
-use std::net::{SocketAddrV4, UdpSocket};
+use std::net::{IpAddr, SocketAddrV4, UdpSocket};
 use std::time::Duration;
 use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicBool, Ordering};
 use itertools::Itertools;
-use ip::IpAddr;
 
 use get_if_addrs;
 use maidsafe_utilities::serialisation::{deserialise, serialise};

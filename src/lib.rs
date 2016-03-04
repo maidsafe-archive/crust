@@ -56,7 +56,6 @@ extern crate crossbeam;
 #[macro_use]
 extern crate maidsafe_utilities;
 extern crate socket_addr;
-extern crate ip;
 extern crate get_if_addrs;
 extern crate sodiumoxide;
 extern crate config_file_handler;
