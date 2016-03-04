@@ -1,5 +1,9 @@
 # CRUST - Change Log
 
+## [0.9.0]
+- Remove cbor and ip dependencies.
+- Expose the PeerId in TheirConnectionInfo.
+
 ## [0.8.5]
 - Implement Rand for PeerId.
 
