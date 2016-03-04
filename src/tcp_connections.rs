@@ -118,6 +118,7 @@ pub fn blocking_tcp_punch_hole(local_addr: SocketAddr,
 #[cfg(test)]
 mod test {
     use super::*;
+    use maidsafe_utilities::serialisation::{deserialise_from, serialise};
     use std::thread;
     use std::net;
     use std::net::TcpListener;
@@ -126,7 +127,6 @@ mod test {
     use std::io::Read;
     use std::sync::mpsc;
     use socket_addr::SocketAddr;
-    use cbor;
     use event::WriteEvent;
     use sender_receiver::CrustMsg;
 
@@ -148,12 +148,9 @@ mod test {
             let connection = unwrap_result!(listener.accept()).0;
             let (mut i, o) = unwrap_result!(upgrade_tcp(connection));
             unwrap_result!(i.set_read_timeout(Some(Duration::new(5, 0))));
-            let mut i = cbor::Decoder::from_reader(i);
             let mut buf = Vec::new();
             for _msgnum in 0..10 {
-                let msg = unwrap_option!(i.decode::<CrustMsg>().next(), "Expected crust message!");
-                let msg = unwrap_result!(msg);
-                let msg = match msg {
+                let msg = match unwrap_result!(deserialise_from::<_, CrustMsg>(&mut i)) {
                     CrustMsg::Message(msg) => msg,
                     m => panic!("Unexpected crust message: {:#?}", m),
                 };
@@ -167,10 +164,7 @@ mod test {
         });
         // Collect everything that we get back.
         unwrap_result!(i.set_read_timeout(Some(Duration::new(5, 0))));
-        let mut i = cbor::Decoder::from_reader(i);
-        let msg = unwrap_option!(i.decode::<CrustMsg>().next(), "Expected crust message");
-        let msg = unwrap_result!(msg);
-        let msg = match msg {
+        let msg = match unwrap_result!(deserialise_from::<_, CrustMsg>(&mut i)) {
             CrustMsg::Message(msg) => msg,
             m => panic!("Unexpected crust message: {:#?}", m),
         };
@@ -209,10 +203,8 @@ mod test {
                     buf.push(i)
                 }
                 o.send(WriteEvent::Write(CrustMsg::Message(buf.clone()))).unwrap();
-                let mut i = cbor::Decoder::from_reader(i);
-                let msg = unwrap_option!(i.decode::<CrustMsg>().next(), "Expected a crust message");
-                let msg = unwrap_result!(msg);
-                let msg = match msg {
+
+                let msg = match unwrap_result!(deserialise_from::<_, CrustMsg>(&mut i)) {
                     CrustMsg::Message(msg) => msg,
                     m => panic!("Unexpected message {:#?}", m),
                 };
@@ -220,15 +212,14 @@ mod test {
             });
             let (connection, _) = listener.accept().unwrap();
             let echo_thread = thread::spawn(move || {
-                let (i, o) = upgrade_tcp(connection).unwrap();
+                let (mut i, o) = upgrade_tcp(connection).unwrap();
                 i.set_read_timeout(Some(Duration::new(5, 0))).unwrap();
-                let mut i = cbor::Decoder::from_reader(i);
-                let msg = unwrap_option!(i.decode::<CrustMsg>().next(), "Expected a crust message");
-                let msg = unwrap_result!(msg);
-                let mut msg = match msg {
+
+                let mut msg = match unwrap_result!(deserialise_from::<_, CrustMsg>(&mut i)) {
                     CrustMsg::Message(msg) => msg,
                     m => panic!("Unexpected message {:#?}", m),
                 };
+
                 for item in &mut msg {
                     *item += 1
                 }
@@ -247,19 +238,13 @@ mod test {
 
     #[test]
     fn send_messages_fast() {
-        use cbor;
         use std::net::TcpStream;
         use rustc_serialize::{Decodable, Encodable};
-        use cbor::Encoder;
 
         const MSG_COUNT: u16 = 20;
 
-        fn encode<T>(value: &T) -> Vec<u8>
-            where T: Encodable
-        {
-            let mut enc = Encoder::from_memory();
-            let _ = enc.encode(&[value]);
-            enc.into_bytes()
+        fn encode<T>(value: &T) -> Vec<u8> where T: Encodable {
+            unwrap_result!(serialise(value))
         }
 
         let listener = TcpListener::bind(("0.0.0.0", 0)).unwrap();
@@ -269,21 +254,14 @@ mod test {
         let (connection, _) = listener.accept().unwrap();
         let (i2, _o2) = upgrade_tcp(connection).unwrap();
 
-        fn read_messages(reader: TcpStream) {
-            let d = &mut cbor::Decoder::from_reader(&reader);
-            let mut received = 0;
+        fn read_messages(mut reader: TcpStream) {
             reader.set_read_timeout(Some(Duration::new(5, 0))).unwrap();
-            'outer: loop {
-                for m in d.decode::<CrustMsg>() {
-                    match m {
-                        Ok(CrustMsg::Message(msg)) => println!("received {:?}", ::std::str::from_utf8(&msg)),
-                        Ok(m) => panic!("Unexpected crust message type {:#?}", m),
-                        Err(what) => panic!("Problem decoding message {}", what),
-                    };
-                    received += 1;
-                    if received == MSG_COUNT {
-                        break 'outer;
-                    }
+
+            for _ in 0..MSG_COUNT {
+                match deserialise_from::<_, CrustMsg>(&mut reader) {
+                    Ok(CrustMsg::Message(msg)) => println!("received {:?}", ::std::str::from_utf8(&msg)),
+                    Ok(m) => panic!("Unexpected crust message type {:#?}", m),
+                    Err(what) => panic!("Problem decoding message {}", what),
                 }
             }
         }
