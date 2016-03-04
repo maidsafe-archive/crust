@@ -52,6 +52,7 @@ pub fn upgrade_utp(newconnection: UtpSocket) -> IoResult<(UtpWrapper, Sender<Wri
 #[allow(unused)]
 mod test {
     use super::*;
+    use maidsafe_utilities::serialisation::deserialise_from;
     use std::thread;
     use socket_addr::{SocketAddr, SocketAddrV4};
     use std::net::{Ipv4Addr, UdpSocket};
@@ -63,7 +64,6 @@ mod test {
     use std::thread::spawn;
     use std::sync::Arc;
     use std::sync::mpsc;
-    use cbor;
     use rand;
     use std::time::Duration;
     use sender_receiver::CrustMsg;
@@ -122,10 +122,8 @@ mod test {
         let th0 = spawn(move || {
             let s = listener.accept().unwrap().0;
             let (mut i, o) = upgrade_utp(s).unwrap();
-            let mut i = cbor::Decoder::from_reader(i);
-            let msg = unwrap_option!(i.decode::<CrustMsg>().next(), "Expected crust message");
-            let msg = unwrap_result!(msg);
-            let msg = match msg {
+
+            let msg = match unwrap_result!(deserialise_from::<_, CrustMsg>(&mut i)) {
                 CrustMsg::Message(msg) => msg,
                 m => panic!("Unexpected message type: {:#?}", m),
             };
@@ -146,10 +144,8 @@ mod test {
 
         let th1 = spawn(move || {
             o.send(WriteEvent::Write(CrustMsg::Message(vec![42])));
-            let mut i = cbor::Decoder::from_reader(i);
-            let msg = unwrap_option!(i.decode::<CrustMsg>().next(), "Expected crust message");
-            let msg = unwrap_result!(msg);
-            let msg = match msg {
+
+            let msg = match unwrap_result!(deserialise_from::<_, CrustMsg>(&mut i)) {
                 CrustMsg::Message(msg) => msg,
                 m => panic!("Unexpected message type: {:#?}", m),
             };

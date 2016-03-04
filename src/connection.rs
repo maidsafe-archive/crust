@@ -23,7 +23,6 @@ use std::hash::{Hash, Hasher};
 use std::sync::atomic::{Ordering, AtomicBool};
 use std::net::{Shutdown, TcpStream, UdpSocket};
 use std::io;
-use cbor;
 use itertools::Itertools;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 use maidsafe_utilities::serialisation::{deserialise, serialise};
@@ -225,7 +224,7 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
 
     let closed = Arc::new(AtomicBool::new(false));
     let closed_clone = closed.clone();
-    let mut network_rx = Receiver::Tcp(cbor::Decoder::from_reader(network_input));
+    let mut network_rx = Receiver::tcp(network_input);
     let their_id = match their_expected_id {
         None => {
             writer.send(WriteEvent::Write(CrustMsg::BootstrapRequest(our_public_key)));
@@ -383,7 +382,7 @@ pub fn start_tcp_accept(port: u16,
             let our_addr = SocketAddr(unwrap_result!(network_input.local_addr()));
             let their_addr = SocketAddr(unwrap_result!(network_input.peer_addr()));
 
-            let mut network_rx = Receiver::Tcp(cbor::Decoder::from_reader(network_input));
+            let mut network_rx = Receiver::tcp(network_input);
 
             let msg = network_rx.receive();
             let mut cm = unwrap_result!(connection_map.lock()); // need to lock before sending the event
@@ -479,7 +478,7 @@ pub fn utp_rendezvous_connect(udp_socket: UdpSocket,
 
     let closed = Arc::new(AtomicBool::new(false));
     let closed_clone = closed.clone();
-    let mut network_rx = Receiver::Utp(cbor::Decoder::from_reader(network_input));
+    let mut network_rx = Receiver::utp(network_input);
     let connection_map_clone = connection_map.clone();
     let (mut connection_map_guard, their_id) = match mode {
         UtpRendezvousConnectMode::Normal(id) => {
