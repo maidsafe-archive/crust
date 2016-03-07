@@ -112,13 +112,6 @@ impl RaiiUdpListener {
                                                     &event_tx,
                                                     connection_map.clone(),
                                                     &mc);
-                } else if let Ok(msg) = deserialise::<ListenerResponse>(&read_buf[..bytes_read]) {
-                    RaiiUdpListener::handle_response(msg,
-                                                     &our_contact_info,
-                                                     &udp_socket,
-                                                     peer_addr,
-                                                     &event_tx,
-                                                     &mc);
                 }
             }
         }
@@ -136,11 +129,7 @@ impl RaiiUdpListener {
             ListenerRequest::Connect { our_info, .. } => {
                 let their_info = our_info;
                 let MappedUdpSocket { socket, endpoints } = {
-                    let cloned_udp_socket = match udp_socket.try_clone() {
-                        Ok(s) => s,
-                        Err(_) => return,
-                    };
-                    match MappedUdpSocket::map(cloned_udp_socket, &mc).result_discard() {
+                    match MappedUdpSocket::new(&mc).result_discard() {
                         Ok(mapped_socket) => mapped_socket,
                         Err(_) => return,
                     }
@@ -172,20 +161,6 @@ impl RaiiUdpListener {
                                        connection_map.clone());
             }
         }
-    }
-
-    fn handle_response(_msg: ListenerResponse,
-                       _our_contact_info: &Arc<Mutex<StaticContactInfo>>,
-                       _udp_socket: &UdpSocket,
-                       _peer_addr: net::SocketAddr,
-                       _event_tx: &::CrustEventSender,
-                       _mc: &MappingContext) {
-        // This is currently unimplemented as RaiiUdpListener should not have made
-        // any request - it is supposed to get requests, not make one
-        // match _msg {
-        //     ListenerResponse::EchoExternalAddr { external_addr, } => unimplemented!(),
-        //     ListenerResponse::Connect { connect_on, secret, their_secret, pub_key, } => unimplemented!(),
-        // }
     }
 }
 
