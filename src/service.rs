@@ -141,14 +141,7 @@ impl Service {
         let service_discovery = try!(ServiceDiscovery::new_with_generator(service_discovery_port,
                                                                           generator));
 
-        let config = match ::config_handler::read_config_file() {
-            Ok(cfg) => cfg,
-            Err(e) => {
-                debug!("Crust failed to read config file; Error: {:?};", e);
-                try!(::config_handler::create_default_config_file());
-                Config::make_default()
-            }
-        };
+        let config = try!(::config_handler::read_config_file());
         let mapping_context = try!(MappingContext::new().result_discard()
                                    .or_else(|e| {
             Err(io::Error::new(io::ErrorKind::Other,
