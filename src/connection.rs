@@ -216,8 +216,8 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
                         -> io::Result<()> {
     let (network_input, writer) = try!(tcp_connections::connect_tcp(remote_addr.clone()));
 
-    let our_addr = SocketAddr(unwrap_result!(network_input.local_addr()));
-    let their_addr = SocketAddr(unwrap_result!(network_input.peer_addr()));
+    let our_addr = SocketAddr(try!(network_input.local_addr()));
+    let their_addr = SocketAddr(try!(network_input.peer_addr()));
 
     let closed = Arc::new(AtomicBool::new(false));
     let closed_clone = closed.clone();

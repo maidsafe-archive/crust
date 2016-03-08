@@ -54,10 +54,7 @@ fn spawn_receiving_node(expected_connections: usize) -> JoinHandle<usize> {
     let mut service = unwrap_result!(Service::new(event_sender, BEACON_PORT));
 
     service.start_service_discovery();
-
-    // FIXME: tcp sometimes crashes during connect on osx.
-    // let _ = unwrap_result!(service.start_listening_tcp());
-
+    let _ = unwrap_result!(service.start_listening_tcp());
     let _ = unwrap_result!(service.start_listening_utp());
 
     // Wait for BootstrapFinished so we know this node is already listening when
