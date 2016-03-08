@@ -36,8 +36,8 @@ pub struct Config {
     pub tcp_mapper_servers: Vec<SocketAddr>,
 }
 
-impl Config {
-    pub fn make_default() -> Config {
+impl Default for Config {
+    fn default() -> Config {
         Config {
             hard_coded_contacts: vec![] /* No hardcoded endpoints */,
             tcp_acceptor_port: None,
@@ -50,15 +50,8 @@ impl Config {
 
 pub fn read_config_file() -> Result<Config, ::error::Error> {
     let file_handler = try!(FileHandler::new(&try!(get_file_name())));
-    let cfg = try!(file_handler.read_file::<Config>());
+    let cfg = try!(file_handler.read_file());
     Ok(cfg)
-}
-
-// This is a best-effort to create a config file - we don't care about the result.
-pub fn create_default_config_file() -> Result<(), ::error::Error> {
-    let file_handler = try!(FileHandler::new(&try!(get_file_name())));
-    try!(file_handler.write_file(&Config::make_default()));
-    Ok(())
 }
 
 /// Writes a Crust config file **for use by tests and examples**.
@@ -72,7 +65,7 @@ pub fn write_config_file(hard_coded_endpoints: Option<Vec<StaticContactInfo>>)
                          -> Result<::std::path::PathBuf, ::error::Error> {
     use std::io::Write;
 
-    let default = Config::make_default();
+    let default = Config::default();
 
     let config = Config {
         hard_coded_contacts: hard_coded_endpoints.unwrap_or(default.hard_coded_contacts),
