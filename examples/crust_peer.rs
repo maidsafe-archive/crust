@@ -102,6 +102,9 @@ will be chosen.
 
 \
                               Options:
+  --discovery-port=PORT      Set the port for local network service discovery
+  --disable-tcp              Disable tcp
+  --disable-utp              Disable utp
   -s RATE, --speed=RATE      Keep sending random \
                               data at a maximum speed of RATE
                              \
@@ -114,7 +117,10 @@ const BEACON_PORT: u16 = 5484;
 
 #[derive(RustcDecodable, Debug)]
 struct Args {
+    flag_discovery_port: Option<u16>,
     flag_speed: Option<u64>,
+    flag_disable_tcp: bool,
+    flag_disable_utp: bool,
     flag_help: bool,
 }
 
@@ -318,9 +324,23 @@ fn main() {
         ::maidsafe_utilities::event_sender::MaidSafeObserver::new(channel_sender,
                                                                   crust_event_category,
                                                                   category_tx);
-    let mut service = unwrap_result!(Service::new(event_sender, BEACON_PORT));
-    unwrap_result!(service.start_listening_tcp());
-    unwrap_result!(service.start_listening_utp());
+    let mut config = unwrap_result!(::crust::read_config_file());
+    let port = args.flag_discovery_port.unwrap_or(BEACON_PORT);
+    if args.flag_disable_tcp {
+        config.enable_tcp = false;
+        config.tcp_acceptor_port = None;
+    }
+    if args.flag_disable_utp {
+        config.enable_utp = false;
+        config.utp_acceptor_port = None;
+    }
+    let mut service = unwrap_result!(Service::new_with_config(event_sender, port, &config));
+    if !args.flag_disable_tcp {
+        unwrap_result!(service.start_listening_tcp());
+    }
+    if !args.flag_disable_utp {
+        unwrap_result!(service.start_listening_utp());
+    }
     service.start_service_discovery();
 
     let network = Arc::new(Mutex::new(Network::new()));
