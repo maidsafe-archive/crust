@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-2985' class='srclink' href='../src/itertools/lib.rs.html#196-1333' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-3001' class='srclink' href='../src/itertools/lib.rs.html#196-1334' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait Itertools: <a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/trait.Iterator.html' title='core::iter::Iterator'>Iterator</a> {
     fn <a href='#method.interleave' class='fnname'>interleave</a>&lt;J&gt;(self, other: J) -&gt; <a class='struct' href='../itertools/struct.Interleave.html' title='itertools::Interleave'>Interleave</a>&lt;Self, J::IntoIter&gt; <span class='where'>where J: <a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/trait.IntoIterator.html' title='core::iter::IntoIterator'>IntoIterator</a>&lt;Item=Self::<a class='trait' href='../itertools/trait.Itertools.html' title='itertools::Itertools'>Item</a>&gt;, Self: <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a></span> { ... }
     fn <a href='#method.interleave_shortest' class='fnname'>interleave_shortest</a>&lt;J&gt;(self, other: J) -&gt; <a class='struct' href='../itertools/struct.InterleaveShortest.html' title='itertools::InterleaveShortest'>InterleaveShortest</a>&lt;Self, J::IntoIter&gt; <span class='where'>where J: <a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/trait.IntoIterator.html' title='core::iter::IntoIterator'>IntoIterator</a>&lt;Item=Self::<a class='trait' href='../itertools/trait.Itertools.html' title='itertools::Itertools'>Item</a>&gt;, Self: <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a></span> { ... }
@@ -98,7 +98,7 @@
 <p>This trait defines a number of methods. They are divided into two groups:</p>
 
 <ul>
-<li><p><em>Adaptors</em> take an interator and parameter as input, and return
+<li><p><em>Adaptors</em> take an iterator and parameter as input, and return
 a new iterator value. These are listed first in the trait. An example
 of an adaptor is <a href="#method.interleave"><code>.interleave()</code></a></p></li>
 <li><p><em>Regular methods</em> are those that don&#39;t return iterators and instead
@@ -373,12 +373,13 @@ the element sets of two iterators <code>self</code> and <code>J</code>.</p>
 <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>peekable</span>.<span class='ident'>next</span>(), <span class='prelude-val'>Some</span>(<span class='number'>1</span>));
 <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>peekable</span>.<span class='ident'>peek</span>(), <span class='prelude-val'>Some</span>(<span class='kw-2'>&amp;</span><span class='number'>2</span>));</pre>
 </div><h3 id='method.coalesce' class='method stab '><code>fn <a href='#method.coalesce' class='fnname'>coalesce</a>&lt;F&gt;(self, f: F) -&gt; <a class='struct' href='../itertools/struct.Coalesce.html' title='itertools::Coalesce'>Coalesce</a>&lt;Self, F&gt; <span class='where'>where Self: <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a>, F: <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.FnMut.html' title='core::ops::FnMut'>FnMut</a>(Self::<a class='trait' href='../itertools/trait.Itertools.html' title='itertools::Itertools'>Item</a>, Self::<a class='trait' href='../itertools/trait.Itertools.html' title='itertools::Itertools'>Item</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;Self::<a class='trait' href='../itertools/trait.Itertools.html' title='itertools::Itertools'>Item</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(Self::<a class='trait' href='../itertools/trait.Itertools.html' title='itertools::Itertools'>Item</a>, Self::<a class='trait' href='../itertools/trait.Itertools.html' title='itertools::Itertools'>Item</a>)</a>&gt;</span></code></h3><div class='docblock'><p>Return an iterator adaptor that uses the passed-in closure to
-optionally merge together consecutive elements. For each pair the closure
-is passed the latest two elements, <code>x</code>, <code>y</code> and may return either <code>Ok(z)</code>
-to merge the two values or <code>Err((x, y))</code> to indicate they can&#39;t be merged.</p>
+optionally merge together consecutive elements.</p>
 
-<p><code>.dedup()</code> and <code>.mend_slices()</code> are specializations of the coalesce
-adaptor.</p>
+<p>The closure <code>f</code> is passed two elements, <code>x</code>, <code>y</code> and may return either
+(1) <code>Ok(z)</code> to merge the two values or (2) <code>Err((x&#39;, y&#39;))</code> to indicate
+they can&#39;t be merged. In (2), the value <code>x&#39;</code> is emitted by the iterator.
+Coalesce continues with either <code>z</code> (1) or <code>y&#39;</code> (2), and the next iterator
+element as the next pair of elements to merge.</p>
 
 <p>Iterator element type is <code>Self::Item</code>.</p>
 

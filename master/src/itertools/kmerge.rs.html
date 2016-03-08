@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/itertools-0.4.10/src/kmerge.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/itertools-0.4.11/src/kmerge.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>kmerge.rs.html -- source</title>
@@ -252,11 +252,10 @@
 <span id="209">209</span>
 <span id="210">210</span>
 <span id="211">211</span>
-<span id="212">212</span>
-<span id="213">213</span>
 </pre><pre class='rust '>
 
 <span class='kw'>use</span> <span class='ident'>size_hint</span>;
+<span class='kw'>use</span> <span class='ident'>Itertools</span>;
 
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>cmp</span>::<span class='ident'>Ordering</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>mem</span>::<span class='ident'>replace</span>;
@@ -458,13 +457,10 @@
     }
 
     <span class='kw'>fn</span> <span class='ident'>size_hint</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> (<span class='ident'>usize</span>, <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>usize</span><span class='op'>&gt;</span>) {
-        <span class='kw'>if</span> <span class='op'>!</span><span class='self'>self</span>.<span class='ident'>heap</span>.<span class='ident'>is_empty</span>() {
-            <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>it</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>heap</span>.<span class='ident'>iter</span>();
-            <span class='kw'>let</span> <span class='ident'>sh0</span> <span class='op'>=</span> <span class='ident'>it</span>.<span class='ident'>next</span>().<span class='ident'>unwrap</span>().<span class='ident'>size_hint</span>();
-            <span class='ident'>it</span>.<span class='ident'>fold</span>(<span class='ident'>sh0</span>, <span class='op'>|</span><span class='ident'>acc</span>, <span class='ident'>it</span><span class='op'>|</span> <span class='ident'>size_hint</span>::<span class='ident'>add</span>(<span class='ident'>acc</span>, <span class='ident'>it</span>.<span class='ident'>size_hint</span>()))
-        } <span class='kw'>else</span> {
-            (<span class='number'>0</span>, <span class='prelude-val'>Some</span>(<span class='number'>0</span>))
-        }
+        <span class='self'>self</span>.<span class='ident'>heap</span>.<span class='ident'>iter</span>()
+                 .<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>i</span><span class='op'>|</span> <span class='ident'>i</span>.<span class='ident'>size_hint</span>())
+                 .<span class='ident'>fold1</span>(<span class='ident'>size_hint</span>::<span class='ident'>add</span>)
+                 .<span class='ident'>unwrap_or</span>((<span class='number'>0</span>, <span class='prelude-val'>Some</span>(<span class='number'>0</span>)))
     }
 }
 

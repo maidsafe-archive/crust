@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/itertools-0.4.10/src/lib.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/itertools-0.4.11/src/lib.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>lib.rs.html -- source</title>
@@ -1481,6 +1481,7 @@
 <span id="1438">1438</span>
 <span id="1439">1439</span>
 <span id="1440">1440</span>
+<span id="1441">1441</span>
 </pre><pre class='rust '>
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>warn</span>(<span class='ident'>missing_docs</span>)]</span>
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>cfg_attr</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;unstable&quot;</span>,
@@ -1670,7 +1671,7 @@
 <span class='doccomment'>///</span>
 <span class='doccomment'>/// This trait defines a number of methods. They are divided into two groups:</span>
 <span class='doccomment'>///</span>
-<span class='doccomment'>/// * *Adaptors* take an interator and parameter as input, and return</span>
+<span class='doccomment'>/// * *Adaptors* take an iterator and parameter as input, and return</span>
 <span class='doccomment'>/// a new iterator value. These are listed first in the trait. An example</span>
 <span class='doccomment'>/// of an adaptor is [`.interleave()`](#method.interleave)</span>
 <span class='doccomment'>///</span>
@@ -2125,12 +2126,13 @@
     }
 
     <span class='doccomment'>/// Return an iterator adaptor that uses the passed-in closure to</span>
-    <span class='doccomment'>/// optionally merge together consecutive elements. For each pair the closure</span>
-    <span class='doccomment'>/// is passed the latest two elements, `x`, `y` and may return either `Ok(z)`</span>
-    <span class='doccomment'>/// to merge the two values or `Err((x, y))` to indicate they can&#39;t be merged.</span>
+    <span class='doccomment'>/// optionally merge together consecutive elements.</span>
     <span class='doccomment'>///</span>
-    <span class='doccomment'>/// `.dedup()` and `.mend_slices()` are specializations of the coalesce</span>
-    <span class='doccomment'>/// adaptor.</span>
+    <span class='doccomment'>/// The closure `f` is passed two elements, `x`, `y` and may return either</span>
+    <span class='doccomment'>/// (1) `Ok(z)` to merge the two values or (2) `Err((x&#39;, y&#39;))` to indicate</span>
+    <span class='doccomment'>/// they can&#39;t be merged. In (2), the value `x&#39;` is emitted by the iterator.</span>
+    <span class='doccomment'>/// Coalesce continues with either `z` (1) or `y&#39;` (2), and the next iterator</span>
+    <span class='doccomment'>/// element as the next pair of elements to merge.</span>
     <span class='doccomment'>///</span>
     <span class='doccomment'>/// Iterator element type is `Self::Item`.</span>
     <span class='doccomment'>///</span>
