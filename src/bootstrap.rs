@@ -56,7 +56,9 @@ impl RaiiBootstrap {
                event_tx: ::CrustEventSender,
                connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
                bootstrap_cache: Arc<Mutex<BootstrapHandler>>,
-               mc: Arc<MappingContext>)
+               mc: Arc<MappingContext>,
+               tcp_enabled: bool,
+               utp_enabled: bool)
                -> RaiiBootstrap {
         let stop_flag = Arc::new(AtomicBool::new(false));
         let cloned_stop_flag = stop_flag.clone();
@@ -69,7 +71,9 @@ impl RaiiBootstrap {
                                      event_tx,
                                      connection_map,
                                      bootstrap_cache,
-                                     &mc);
+                                     &mc,
+                                     tcp_enabled,
+                                     utp_enabled)
         }));
 
         RaiiBootstrap {
@@ -89,7 +93,9 @@ impl RaiiBootstrap {
                  event_tx: ::CrustEventSender,
                  connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
                  bootstrap_cache: Arc<Mutex<BootstrapHandler>>,
-                 mapping_context: &MappingContext) {
+                 mapping_context: &MappingContext,
+                 tcp_enabled: bool,
+                 utp_enabled: bool) {
         let mut bootstrap_contacts: Vec<StaticContactInfo> =
             unwrap_result!(peer_contact_infos.lock()).clone();
         rand::thread_rng().shuffle(&mut bootstrap_contacts[..]);
@@ -109,7 +115,9 @@ impl RaiiBootstrap {
                                           event_tx.clone(),
                                           connection_map.clone(),
                                           bootstrap_cache.clone(),
-                                          mapping_context);
+                                          mapping_context,
+                                          tcp_enabled,
+                                          utp_enabled);
             if stop_flag.load(Ordering::SeqCst) {
                 break;
             }

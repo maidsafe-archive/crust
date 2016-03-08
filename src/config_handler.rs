@@ -34,6 +34,8 @@ pub struct Config {
     pub utp_acceptor_port: Option<u16>,
     pub udp_mapper_servers: Vec<SocketAddr>,
     pub tcp_mapper_servers: Vec<SocketAddr>,
+    pub enable_tcp: bool,
+    pub enable_utp: bool,
 }
 
 impl Default for Config {
@@ -44,10 +46,13 @@ impl Default for Config {
             utp_acceptor_port: None,
             udp_mapper_servers: vec![],
             tcp_mapper_servers: vec![],
+            enable_tcp: true,
+            enable_utp: true,
         }
     }
 }
 
+/// Reads the default crust config file.
 pub fn read_config_file() -> Result<Config, ::error::Error> {
     let file_handler = try!(FileHandler::new(&try!(get_file_name())));
     let cfg = try!(file_handler.read_file());
@@ -73,6 +78,8 @@ pub fn write_config_file(hard_coded_endpoints: Option<Vec<StaticContactInfo>>)
         utp_acceptor_port: None,
         udp_mapper_servers: vec![],
         tcp_mapper_servers: vec![],
+        enable_tcp: true,
+        enable_utp: true,
     };
     let mut config_path = try!(config_file_handler::current_bin_dir());
     config_path.push(try!(get_file_name()));
