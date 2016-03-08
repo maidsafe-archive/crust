@@ -367,14 +367,14 @@
 <span class='kw'>use</span> <span class='ident'>config_file_handler</span>;
 
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>BootstrapHandler</span> {
-    <span class='ident'>file_handler</span>: <span class='ident'>FileHandler</span>,
+    <span class='ident'>file_handler</span>: <span class='ident'>FileHandler</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>StaticContactInfo</span><span class='op'>&gt;&gt;</span>,
     <span class='ident'>last_updated</span>: ::<span class='ident'>time</span>::<span class='ident'>Tm</span>,
 }
 
 <span class='kw'>impl</span> <span class='ident'>BootstrapHandler</span> {
     <span class='attribute'>#[<span class='ident'>allow</span>(<span class='ident'>dead_code</span>)]</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>cleanup</span>() <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>(), ::<span class='ident'>error</span>::<span class='ident'>Error</span><span class='op'>&gt;</span> {
-        <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>FileHandler</span>::<span class='ident'>cleanup</span>(<span class='kw-2'>&amp;</span><span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>get_file_name</span>())));
+        <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>config_file_handler</span>::<span class='ident'>cleanup</span>(<span class='kw-2'>&amp;</span><span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>get_file_name</span>())));
         <span class='prelude-val'>Ok</span>(())
     }
 
@@ -398,7 +398,7 @@
     }
 
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>read_file</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>StaticContactInfo</span><span class='op'>&gt;</span>, <span class='ident'>Error</span><span class='op'>&gt;</span> {
-        <span class='prelude-val'>Ok</span>(<span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>file_handler</span>.<span class='ident'>read_file</span>::<span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>StaticContactInfo</span><span class='op'>&gt;&gt;</span>()))
+        <span class='prelude-val'>Ok</span>(<span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>file_handler</span>.<span class='ident'>read_file</span>()))
     }
 
     <span class='kw'>fn</span> <span class='ident'>duration_between_updates</span>() <span class='op'>-&gt;</span> ::<span class='ident'>time</span>::<span class='ident'>Duration</span> {
@@ -437,7 +437,7 @@
     }
 }
 
-<span class='kw'>fn</span> <span class='ident'>get_file_name</span>() <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>::<span class='ident'>std</span>::<span class='ident'>ffi</span>::<span class='ident'>OsString</span>, <span class='ident'>Error</span><span class='op'>&gt;</span> {
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>get_file_name</span>() <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>::<span class='ident'>std</span>::<span class='ident'>ffi</span>::<span class='ident'>OsString</span>, <span class='ident'>Error</span><span class='op'>&gt;</span> {
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>name</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>config_file_handler</span>::<span class='ident'>exe_file_stem</span>());
     <span class='ident'>name</span>.<span class='ident'>push</span>(<span class='string'>&quot;.bootstrap.cache&quot;</span>);
     <span class='prelude-val'>Ok</span>(<span class='ident'>name</span>)
