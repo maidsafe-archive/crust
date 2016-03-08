@@ -325,7 +325,7 @@ impl Service {
         let _joiner = thread!("PeerConnectionThread", move || {
             let mut last_err = io::Error::new(io::ErrorKind::NotFound,
                                               "No TCP acceptors found.");
-            if let Some(tcp_socket) = our_connection_info.tcp_socket {
+            if tcp_enabled {
                 let static_contact_info = their_connection_info.static_contact_info.clone();
                 for tcp_addr in their_connection_info.static_contact_info.tcp_acceptors {
                     match connection::connect_tcp_endpoint(tcp_addr,
@@ -348,32 +348,6 @@ impl Service {
                     }
                 };
 
-                let res = tcp_punch_hole(tcp_socket,
-                                         our_connection_info.priv_tcp_info,
-                                         their_connection_info.tcp_info).result_log();
-                match res {
-                    Ok(tcp_stream) => {
-                        match connection::tcp_rendezvous_connect(connection_map.clone(),
-                                                                 event_tx.clone(),
-                                                                 tcp_stream,
-                                                                 their_connection_info.id) {
-                            Ok(()) => {
-                                let mut c_map = unwrap_result!(connection_map.lock());
-                                let connections = c_map.entry(their_id).or_insert_with(|| Vec::with_capacity(1));
-                                if connections.is_empty() {
-                                    let _ = event_tx.send(Event::NewPeer(Ok(()), their_id));
-                                }
-                                return;
-                            },
-                            Err(e) => {
-                                last_err = From::from(e);
-                            },
-                        };
-                    },
-                    Err(e) => {
-                        last_err = From::from(e);
-                    },
-                };
             }
 
             if let Some(udp_socket) = our_connection_info.udp_socket {
@@ -407,6 +381,35 @@ impl Service {
                         }
                     }
                     Ok(connection) => return,
+                };
+            }
+
+            if let Some(tcp_socket) = our_connection_info.tcp_socket {
+                let res = tcp_punch_hole(tcp_socket,
+                                         our_connection_info.priv_tcp_info,
+                                         their_connection_info.tcp_info).result_log();
+                match res {
+                    Ok(tcp_stream) => {
+                        match connection::tcp_rendezvous_connect(connection_map.clone(),
+                                                                 event_tx.clone(),
+                                                                 tcp_stream,
+                                                                 their_connection_info.id) {
+                            Ok(()) => {
+                                let mut c_map = unwrap_result!(connection_map.lock());
+                                let connections = c_map.entry(their_id).or_insert_with(|| Vec::with_capacity(1));
+                                if connections.is_empty() {
+                                    let _ = event_tx.send(Event::NewPeer(Ok(()), their_id));
+                                }
+                                return;
+                            },
+                            Err(e) => {
+                                last_err = From::from(e);
+                            },
+                        };
+                    },
+                    Err(e) => {
+                        last_err = From::from(e);
+                    },
                 };
             }
 
