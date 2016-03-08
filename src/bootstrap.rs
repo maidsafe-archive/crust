@@ -31,15 +31,16 @@ use rand;
 use rand::Rng;
 use service_discovery::ServiceDiscovery;
 use nat_traversal::MappingContext;
+use sodiumoxide::crypto::box_::PublicKey;
 
 use error::Error;
 use config_handler::Config;
 use connection::Connection;
 use static_contact_info::StaticContactInfo;
 use event::Event;
+use bootstrap_handler::BootstrapHandler;
 use peer_id;
 use peer_id::PeerId;
-use sodiumoxide::crypto::box_::PublicKey;
 
 const MAX_CONTACTS_EXPECTED: usize = 1500;
 
@@ -54,6 +55,7 @@ impl RaiiBootstrap {
                our_public_key: PublicKey,
                event_tx: ::CrustEventSender,
                connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
+               bootstrap_cache: Arc<Mutex<BootstrapHandler>>,
                mc: Arc<MappingContext>)
                -> RaiiBootstrap {
         let stop_flag = Arc::new(AtomicBool::new(false));
@@ -66,6 +68,7 @@ impl RaiiBootstrap {
                                      cloned_stop_flag,
                                      event_tx,
                                      connection_map,
+                                     bootstrap_cache,
                                      &mc);
         }));
 
@@ -85,6 +88,7 @@ impl RaiiBootstrap {
                  stop_flag: Arc<AtomicBool>,
                  event_tx: ::CrustEventSender,
                  connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
+                 bootstrap_cache: Arc<Mutex<BootstrapHandler>>,
                  mapping_context: &MappingContext) {
         let mut bootstrap_contacts: Vec<StaticContactInfo> =
             unwrap_result!(peer_contact_infos.lock()).clone();
@@ -104,6 +108,7 @@ impl RaiiBootstrap {
                                           our_public_key.clone(),
                                           event_tx.clone(),
                                           connection_map.clone(),
+                                          bootstrap_cache.clone(),
                                           mapping_context);
             if stop_flag.load(Ordering::SeqCst) {
                 break;
@@ -122,6 +127,7 @@ impl Drop for RaiiBootstrap {
 
 // Returns the peers from service discovery, cache and config for bootstrapping (not to be held)
 pub fn get_known_contacts(service_discovery: &ServiceDiscovery<StaticContactInfo>,
+                          bootstrap_cache: Arc<Mutex<BootstrapHandler>>,
                           config: &Config)
                           -> Result<Vec<StaticContactInfo>, Error> {
     let (seek_peers_tx, seek_peers_rx) = mpsc::channel();
@@ -132,9 +138,7 @@ pub fn get_known_contacts(service_discovery: &ServiceDiscovery<StaticContactInfo
     let mut contacts = Vec::with_capacity(MAX_CONTACTS_EXPECTED);
 
     // Get contacts from bootstrap cache
-    contacts.extend(try!(FileHandler::new("bootstrap.cache"))
-                        .read_file()
-                        .unwrap_or_else(|_| vec![]));
+    contacts.extend(try!(unwrap_result!(bootstrap_cache.lock()).read_file()));
 
     // Get further contacts from config file - contains seed nodes
     contacts.extend(config.hard_coded_contacts.iter().cloned());
@@ -152,3 +156,4 @@ pub fn get_known_contacts(service_discovery: &ServiceDiscovery<StaticContactInfo
 
     Ok((contacts))
 }
+

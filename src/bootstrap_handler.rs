@@ -28,14 +28,14 @@ use config_file_handler::FileHandler;
 use config_file_handler;
 
 pub struct BootstrapHandler {
-    file_handler: FileHandler,
+    file_handler: FileHandler<Vec<StaticContactInfo>>,
     last_updated: ::time::Tm,
 }
 
 impl BootstrapHandler {
     #[allow(dead_code)]
     pub fn cleanup() -> Result<(), ::error::Error> {
-        try!(FileHandler::cleanup(&try!(get_file_name())));
+        try!(config_file_handler::cleanup(&try!(get_file_name())));
         Ok(())
     }
 
@@ -59,7 +59,7 @@ impl BootstrapHandler {
     }
 
     pub fn read_file(&mut self) -> Result<Vec<StaticContactInfo>, Error> {
-        Ok(try!(self.file_handler.read_file::<Vec<StaticContactInfo>>()))
+        Ok(try!(self.file_handler.read_file()))
     }
 
     fn duration_between_updates() -> ::time::Duration {
@@ -98,7 +98,7 @@ impl BootstrapHandler {
     }
 }
 
-fn get_file_name() -> Result<::std::ffi::OsString, Error> {
+pub fn get_file_name() -> Result<::std::ffi::OsString, Error> {
     let mut name = try!(config_file_handler::exe_file_stem());
     name.push(".bootstrap.cache");
     Ok(name)
