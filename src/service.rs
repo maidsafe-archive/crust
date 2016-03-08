@@ -23,7 +23,9 @@ use service_discovery::ServiceDiscovery;
 use sodiumoxide;
 use sodiumoxide::crypto::box_;
 use sodiumoxide::crypto::box_::{PublicKey, SecretKey};
+use net2;
 use nat_traversal::{MappedUdpSocket, MappingContext, PrivRendezvousInfo,
+                    MappedTcpSocket, tcp_punch_hole,
                     PubRendezvousInfo, PunchedUdpSocket, gen_rendezvous_info};
 
 
@@ -59,11 +61,14 @@ pub struct ConnectionInfoResult {
 #[derive(Debug)]
 pub struct OurConnectionInfo {
     id: PeerId,
-    info: PubRendezvousInfo,
-    priv_info: PrivRendezvousInfo,
+    udp_info: PubRendezvousInfo,
+    tcp_info: PubRendezvousInfo,
+    priv_udp_info: PrivRendezvousInfo,
+    priv_tcp_info: PrivRendezvousInfo,
     // raii_tcp_acceptor: RaiiTcpAcceptor,
     // tcp_addrs: Vec<SocketAddr>,
-    udp_socket: net::UdpSocket,
+    udp_socket: Option<net::UdpSocket>,
+    tcp_socket: Option<net2::TcpBuilder>,
     static_contact_info: StaticContactInfo,
 }
 
@@ -71,7 +76,8 @@ impl OurConnectionInfo {
     /// Convert our connection info to theirs so that we can give it to peer.
     pub fn to_their_connection_info(&self) -> TheirConnectionInfo {
         TheirConnectionInfo {
-            info: self.info.clone(),
+            udp_info: self.udp_info.clone(),
+            tcp_info: self.tcp_info.clone(),
             static_contact_info: self.static_contact_info.clone(),
             // tcp_addrs: self.tcp_addrs.clone(),
             id: self.id,
@@ -82,7 +88,8 @@ impl OurConnectionInfo {
 /// Contact info used to connect to another peer.
 #[derive(Debug, RustcEncodable, RustcDecodable)]
 pub struct TheirConnectionInfo {
-    info: PubRendezvousInfo,
+    udp_info: PubRendezvousInfo,
+    tcp_info: PubRendezvousInfo,
     static_contact_info: StaticContactInfo,
     // tcp_addrs: Vec<SocketAddr>,
     id: PeerId,
@@ -116,6 +123,8 @@ pub struct Service {
     utp_acceptor_port: Option<u16>,
     raii_udp_listener: Option<RaiiUdpListener>,
     raii_tcp_acceptor: Option<RaiiTcpAcceptor>,
+    tcp_enabled: bool,
+    utp_enabled: bool,
 }
 
 impl Service {
@@ -124,6 +133,16 @@ impl Service {
     pub fn new(event_tx: ::CrustEventSender,
                service_discovery_port: u16)
                -> Result<Service, Error> {
+        let config = try!(::config_handler::read_config_file());
+        Service::new_with_config(event_tx, service_discovery_port, &config)
+    }
+
+    /// Constructs a service with the given config. User needs to create an asynchronous channel,
+    /// and provide the sender half to this method. Receiver will receive all `Event`s from this
+    /// library.
+    pub fn new_with_config(event_tx: ::CrustEventSender,
+                           service_discovery_port: u16,
+                           config: &Config) -> Result<Service, Error> {
         sodiumoxide::init();
 
         let our_keys = box_::gen_keypair();
@@ -141,7 +160,6 @@ impl Service {
         let service_discovery = try!(ServiceDiscovery::new_with_generator(service_discovery_port,
                                                                           generator));
 
-        let config = try!(::config_handler::read_config_file());
         let mapping_context = try!(MappingContext::new().result_discard()
                                    .or_else(|e| {
             Err(io::Error::new(io::ErrorKind::Other,
@@ -160,8 +178,8 @@ impl Service {
 
         let connection_map = Arc::new(Mutex::new(HashMap::new()));
 
-        mapping_context.add_simple_udp_servers(config.udp_mapper_servers);
-        mapping_context.add_simple_tcp_servers(config.tcp_mapper_servers);
+        mapping_context.add_simple_udp_servers(config.udp_mapper_servers.clone());
+        mapping_context.add_simple_tcp_servers(config.tcp_mapper_servers.clone());
         let mapping_context = Arc::new(mapping_context);
 
         let bootstrap = RaiiBootstrap::new(static_contact_info.clone(),
@@ -170,7 +188,9 @@ impl Service {
                                            event_tx.clone(),
                                            connection_map.clone(),
                                            bootstrap_cache.clone(),
-                                           mapping_context.clone());
+                                           mapping_context.clone(),
+                                           config.enable_tcp,
+                                           config.enable_utp);
 
         let service = Service {
             static_contact_info: static_contact_info,
@@ -187,6 +207,8 @@ impl Service {
             utp_acceptor_port: config.utp_acceptor_port,
             raii_udp_listener: None,
             raii_tcp_acceptor: None,
+            tcp_enabled: config.enable_tcp,
+            utp_enabled: config.enable_utp,
         };
 
         Ok(service)
@@ -294,6 +316,8 @@ impl Service {
         let our_public_key = self.our_keys.0.clone();
         let our_contact_info = self.static_contact_info.clone();
         let bootstrap_cache = self.bootstrap_cache.clone();
+        let tcp_enabled = self.tcp_enabled;
+        let utp_enabled = self.utp_enabled;
 
         unwrap_result!(self.expected_peers.lock()).insert(their_connection_info.id);
 
@@ -301,59 +325,90 @@ impl Service {
         let _joiner = thread!("PeerConnectionThread", move || {
             let mut last_err = io::Error::new(io::ErrorKind::NotFound,
                                               "No TCP acceptors found.");
-            let static_contact_info = their_connection_info.static_contact_info.clone();
-            for tcp_addr in their_connection_info.static_contact_info.tcp_acceptors {
-                match connection::connect_tcp_endpoint(tcp_addr,
-                                                       our_contact_info.clone(),
-                                                       our_public_key,
-                                                       event_tx.clone(),
-                                                       connection_map.clone(),
-                                                       Some(their_id)) {
-                    Err(err) => {
-                        last_err = err;
-                        continue;
+            if let Some(tcp_socket) = our_connection_info.tcp_socket {
+                let static_contact_info = their_connection_info.static_contact_info.clone();
+                for tcp_addr in their_connection_info.static_contact_info.tcp_acceptors {
+                    match connection::connect_tcp_endpoint(tcp_addr,
+                                                           our_contact_info.clone(),
+                                                           our_public_key,
+                                                           event_tx.clone(),
+                                                           connection_map.clone(),
+                                                           Some(their_id)) {
+                        Err(err) => {
+                            last_err = err;
+                            continue;
+                        }
+                        Ok(()) => {
+                            unwrap_result!(bootstrap_cache.lock()).update_contacts(
+                                vec![static_contact_info],
+                                vec![]
+                            );
+                            return;
+                        }
                     }
-                    Ok(()) => {
-                        unwrap_result!(bootstrap_cache.lock()).update_contacts(
-                            vec![static_contact_info],
-                            vec![]
-                        );
+                };
+
+                let res = tcp_punch_hole(tcp_socket,
+                                         our_connection_info.priv_tcp_info,
+                                         their_connection_info.tcp_info).result_log();
+                match res {
+                    Ok(tcp_stream) => {
+                        match connection::tcp_rendezvous_connect(connection_map.clone(),
+                                                                 event_tx.clone(),
+                                                                 tcp_stream,
+                                                                 their_connection_info.id) {
+                            Ok(()) => {
+                                let mut c_map = unwrap_result!(connection_map.lock());
+                                let connections = c_map.entry(their_id).or_insert_with(|| Vec::with_capacity(1));
+                                if connections.is_empty() {
+                                    let _ = event_tx.send(Event::NewPeer(Ok(()), their_id));
+                                }
+                                return;
+                            },
+                            Err(e) => {
+                                last_err = From::from(e);
+                            },
+                        };
+                    },
+                    Err(e) => {
+                        last_err = From::from(e);
+                    },
+                };
+            }
+
+            if let Some(udp_socket) = our_connection_info.udp_socket {
+                let res = PunchedUdpSocket::punch_hole(udp_socket,
+                                                       our_connection_info.priv_udp_info,
+                                                       their_connection_info.udp_info).result_discard();
+                let (udp_socket, public_endpoint) = match res {
+                    Ok(PunchedUdpSocket { socket, peer_addr }) => (socket, peer_addr),
+                    Err(_) => {
+                        let mut cm = unwrap_result!(connection_map.lock());
+                        if !cm.contains_key(&their_id) {
+                            let ev = Event::NewPeer(Err(io::Error::new(io::ErrorKind::Other,
+                                                                       "Failed to punch a hole")),
+                                                    their_id);
+                            let _ = event_tx.send(ev);
+                        }
                         return;
                     }
-                }
-            };
+                };
 
-            let res = PunchedUdpSocket::punch_hole(our_connection_info.udp_socket,
-                                                   our_connection_info.priv_info,
-                                                   their_connection_info.info).result_discard();
-            let (udp_socket, public_endpoint) = match res {
-                Ok(PunchedUdpSocket { socket, peer_addr }) => (socket, peer_addr),
-                Err(_) => {
-                    let mut cm = unwrap_result!(connection_map.lock());
-                    if !cm.contains_key(&their_id) {
-                        let ev = Event::NewPeer(Err(io::Error::new(io::ErrorKind::Other,
-                                                                   "Failed to punch a hole")),
-                                                their_id);
-                        let _ = event_tx.send(ev);
+                match connection::utp_rendezvous_connect(udp_socket,
+                                                         public_endpoint,
+                                                         UtpRendezvousConnectMode::Normal(their_id),
+                                                         our_public_key.clone(),
+                                                         event_tx.clone(),
+                                                         connection_map.clone()) {
+                    Err(e) => {
+                        let mut cm = unwrap_result!(connection_map.lock());
+                        if !cm.contains_key(&their_id) {
+                            let _ = event_tx.send(Event::NewPeer(Err(e), their_id));
+                        }
                     }
-                    return;
-                }
-            };
-
-            match connection::utp_rendezvous_connect(udp_socket,
-                                                     public_endpoint,
-                                                     UtpRendezvousConnectMode::Normal(their_id),
-                                                     our_public_key.clone(),
-                                                     event_tx.clone(),
-                                                     connection_map.clone()) {
-                Err(e) => {
-                    let mut cm = unwrap_result!(connection_map.lock());
-                    if !cm.contains_key(&their_id) {
-                        let _ = event_tx.send(Event::NewPeer(Err(e), their_id));
-                    }
-                }
-                Ok(connection) => return,
-            };
+                    Ok(connection) => return,
+                };
+            }
 
             if unwrap_result!(connection_map.lock()).get(&their_id).into_iter().all(Vec::is_empty) {
                 let _ = event_tx.send(Event::NewPeer(Err(last_err), their_id));
@@ -383,34 +438,62 @@ impl Service {
             .result_discard();
         let mapping_context = self.mapping_context.clone();
         let our_pub_key = self.our_keys.0.clone();
+        let tcp_enabled = self.tcp_enabled;
+        let utp_enabled = self.utp_enabled;
         let _joiner = thread!("PrepareContactInfo", move || {
-            let (udp_socket, (our_priv_info, our_pub_info)) = match MappedUdpSocket::new(&mapping_context).result_discard() {
-                Ok(MappedUdpSocket { socket, endpoints }) => {
-                    (socket, gen_rendezvous_info(endpoints))
+            let (udp_socket, (our_priv_udp_info, our_pub_udp_info)) = if utp_enabled {
+                match MappedUdpSocket::new(&mapping_context).result_log() {
+                    Ok(MappedUdpSocket { socket, endpoints }) => {
+                        (Some(socket), gen_rendezvous_info(endpoints))
+                    }
+                    Err(e) => {
+                        let _ = event_tx.send(Event::ConnectionInfoPrepared(ConnectionInfoResult {
+                            result_token: result_token,
+                            result: Err(io::Error::new(io::ErrorKind::Other,
+                                                       "Cannot map UDP socket")),
+                        }));
+                        return;
+                    }
                 }
-                Err(e) => {
-                    let _ = event_tx.send(Event::ConnectionInfoPrepared(ConnectionInfoResult {
-                        result_token: result_token,
-                        result: Err(io::Error::new(io::ErrorKind::Other,
-                                                   "Cannot map UDP socket")),
-                    }));
-                    return;
-                }
+            }
+            else {
+                (None, gen_rendezvous_info(vec![]))
             };
 
+            let (tcp_socket, (our_priv_tcp_info, our_pub_tcp_info)) = if tcp_enabled {
+                match MappedTcpSocket::new(&mapping_context).result_log() {
+                    Ok(MappedTcpSocket { socket, endpoints }) => {
+                        (Some(socket), gen_rendezvous_info(endpoints))
+                    }
+                    Err(e) => {
+                        let _ = event_tx.send(Event::ConnectionInfoPrepared(ConnectionInfoResult {
+                            result_token: result_token,
+                            result: Err(io::Error::new(io::ErrorKind::Other,
+                                                       "Cannot map TCP socket")),
+                        }));
+                        return;
+                    }
+                }
+            }
+            else {
+                (None, gen_rendezvous_info(vec![]))
+            };
 
             let send = Event::ConnectionInfoPrepared(ConnectionInfoResult {
                 result_token: result_token,
                 result: Ok(OurConnectionInfo {
                     id: peer_id::new_id(our_pub_key),
-                    info: our_pub_info,
-                    priv_info: our_priv_info,
+                    udp_info: our_pub_udp_info,
+                    tcp_info: our_pub_tcp_info,
+                    priv_udp_info: our_priv_udp_info,
+                    priv_tcp_info: our_priv_tcp_info,
                     // raii_tcp_acceptor: unimplemented!(),
                     // tcp_addrs: unimplemented!(),
                     // why are we starting a tcp acceptor?
                     // Are tcp acceptors being used to do rendezvous connections now?
                     // coz that doesn't make sense
                     udp_socket: udp_socket,
+                    tcp_socket: tcp_socket,
                     static_contact_info: unwrap_result!(our_static_contact_info.lock()).clone(),
                 }),
             });
@@ -692,12 +775,17 @@ mod test {
         }
     }
 
-    #[test]
-    fn start_two_service_udp_rendezvous_connect() {
+    fn start_two_service_rendezvous_connect(protocol: Protocol) {
         let (event_sender_0, category_rx_0, event_rx_0) = get_event_sender();
         let (event_sender_1, category_rx_1, event_rx_1) = get_event_sender();
 
-        let mut service_0 = unwrap_result!(Service::new(event_sender_0, 1234));
+        let mut config = unwrap_result!(::config_handler::read_config_file());
+        match protocol {
+            Protocol::Tcp => config.enable_utp = false,
+            Protocol::Utp => config.enable_tcp = false,
+        };
+
+        let mut service_0 = unwrap_result!(Service::new_with_config(event_sender_0, 1234, &config));
         // let service_0 finish bootstrap - since it is the zero state, it should not find any peer
         // to bootstrap
         {
@@ -708,7 +796,7 @@ mod test {
             }
         }
 
-        let mut service_1 = unwrap_result!(Service::new(event_sender_1, 1234));
+        let mut service_1 = unwrap_result!(Service::new_with_config(event_sender_1, 1234, &config));
         // let service_0 finish bootstrap - since it is the zero state, it should not find any peer
         // to bootstrap
         {
@@ -820,7 +908,16 @@ mod test {
     }
 
     #[test]
-    fn start_three_service_udp_rendezvous_connect() {
+    fn start_two_service_utp_rendezvous_connect() {
+        start_two_service_rendezvous_connect(Protocol::Utp);
+    }
+
+    #[test]
+    fn start_two_service_tcp_rendezvous_connect() {
+        start_two_service_rendezvous_connect(Protocol::Tcp);
+    }
+
+    fn start_three_service_rendezvous_connect(protocol: Protocol) {
         const NUM_SERVICES: usize = 3;
         const MSG_SIZE: usize = 1024;
         const NUM_MSGS: usize = 256;
@@ -835,9 +932,14 @@ mod test {
         }
 
         impl TestNode {
-            fn new(index: usize) -> (TestNode, mpsc::Sender<TheirConnectionInfo>) {
+            fn new(index: usize, protocol: Protocol) -> (TestNode, mpsc::Sender<TheirConnectionInfo>) {
                 let (event_sender, category_rx, event_rx) = get_event_sender();
-                let service = unwrap_result!(Service::new(event_sender, 0));
+                let mut config = unwrap_result!(::config_handler::read_config_file());
+                match protocol {
+                    Protocol::Tcp => config.enable_utp = false,
+                    Protocol::Utp => config.enable_tcp = false,
+                };
+                let service = unwrap_result!(Service::new_with_config(event_sender, 0, &config));
                 match unwrap_result!(event_rx.recv()) {
                     Event::BootstrapFinished => (),
                     m => panic!("Expected BootstrapFinished, got:{:?}", m),
@@ -944,7 +1046,7 @@ mod test {
         let mut test_nodes = Vec::new();
         let mut ci_txs = Vec::new();
         for i in 0..NUM_SERVICES {
-            let (test_node, ci_tx) = TestNode::new(i);
+            let (test_node, ci_tx) = TestNode::new(i, protocol);
             test_nodes.push(test_node);
             ci_txs.push(ci_tx);
         }
@@ -970,5 +1072,13 @@ mod test {
                 unwrap_result!(thread.join());
             }
         });
+    }
+
+    fn start_three_service_utp_rendezvous_connect() {
+        start_three_service_rendezvous_connect(Protocol::Utp);
+    }
+
+    fn start_three_service_tcp_rendezvous_connect() {
+        start_three_service_rendezvous_connect(Protocol::Tcp);
     }
 }
