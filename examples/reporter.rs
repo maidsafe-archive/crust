@@ -54,13 +54,15 @@ use crust::{Event, PeerId, Service};
 use docopt::Docopt;
 use maidsafe_utilities::event_sender::{MaidSafeEventCategory, MaidSafeObserver};
 use rand::{thread_rng, Rng};
-use rustc_serialize::{Decodable, Decoder, Encodable, Encoder};
+use rustc_serialize::{json, Decodable, Decoder, Encodable, Encoder};
 use std::cmp::max;
 use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 use std::sync::{Arc, Mutex};
 use std::sync::mpsc::{self, Receiver, Sender};
 use std::thread::{self, JoinHandle};
+use std::fs::File;
+use std::io::Write;
 use time::{Duration, Tm};
 
 type StdDuration = std::time::Duration;
@@ -126,8 +128,8 @@ fn main() {
                          .and_then(|d| d.decode())
                          .unwrap_or_else(|e| e.exit());
 
-    let file_handler = unwrap_result!(FileHandler::new(&args.arg_config));
-    let config = unwrap_result!(file_handler.read_file::<Config>());
+    let file_handler = unwrap_result!(FileHandler::open(&args.arg_config));
+    let config: Config = unwrap_result!(file_handler.read_file());
 
     let mut report = Report::new();
     report.id = config.msg_to_send.clone();
@@ -141,8 +143,9 @@ fn main() {
             0, config.max_wait_before_restart_service_secs * 1000)));
     }
 
-    let file_handler = unwrap_result!(FileHandler::new(&config.output_report_path));
-    unwrap_result!(file_handler.write_file(&report));
+    let mut file = unwrap_result!(File::open(&config.output_report_path));
+    let contents = format!("{}", json::as_pretty_json(&report)).into_bytes();
+    unwrap_result!(file.write_all(&contents));
 }
 
 fn run(config: &Config) -> Report {
