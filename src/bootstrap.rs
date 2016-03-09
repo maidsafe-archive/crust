@@ -91,7 +91,7 @@ impl RaiiBootstrap {
                  bootstrap_cache: Arc<Mutex<BootstrapHandler>>,
                  mapping_context: &MappingContext) {
         let mut bootstrap_contacts: Vec<StaticContactInfo> =
-            unwrap_result!(peer_contact_infos.lock()).clone();
+            unwrap!(peer_contact_infos.lock()).clone();
         rand::thread_rng().shuffle(&mut bootstrap_contacts[..]);
         for contact in bootstrap_contacts {
             // Bootstrapping got cancelled.
@@ -138,7 +138,7 @@ pub fn get_known_contacts(service_discovery: &ServiceDiscovery<StaticContactInfo
     let mut contacts = Vec::with_capacity(MAX_CONTACTS_EXPECTED);
 
     // Get contacts from bootstrap cache
-    contacts.extend(try!(unwrap_result!(bootstrap_cache.lock()).read_file()));
+    contacts.extend(try!(unwrap!(bootstrap_cache.lock()).read_file()));
 
     // Get further contacts from config file - contains seed nodes
     contacts.extend(config.hard_coded_contacts.iter().cloned());

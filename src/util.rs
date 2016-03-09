@@ -277,7 +277,7 @@ mod test {
         assert_eq!(super::heuristic_geo_cmp(&l, &g), Less);
         assert_eq!(super::heuristic_geo_cmp(&g, &l), Greater);
 
-        let ifs = unwrap_result!(get_if_addrs())
+        let ifs = unwrap!(get_if_addrs())
                       .into_iter()
                       .filter(|iface| !iface.is_loopback())
                       .map(|iface| iface.ip())

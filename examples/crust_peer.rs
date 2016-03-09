@@ -38,8 +38,9 @@
 
 #[macro_use]
 extern crate log;
-#[macro_use]
 extern crate maidsafe_utilities;
+#[macro_use]
+extern crate unwrap;
 extern crate crust;
 extern crate rustc_serialize;
 extern crate docopt;
@@ -290,7 +291,7 @@ fn on_time_out(timeout: Duration, flag_speed: bool) -> Sender<bool> {
 }
 
 fn handle_new_peer(protected_network: Arc<Mutex<Network>>, peer_id: PeerId) -> usize {
-    let mut network = unwrap_result!(protected_network.lock());
+    let mut network = unwrap!(protected_network.lock());
     let peer_index = network.next_peer_index();
     let _ = network.nodes.insert(peer_index, peer_id);
     network.print_connected_nodes();
@@ -318,9 +319,9 @@ fn main() {
         ::maidsafe_utilities::event_sender::MaidSafeObserver::new(channel_sender,
                                                                   crust_event_category,
                                                                   category_tx);
-    let mut service = unwrap_result!(Service::new(event_sender, BEACON_PORT));
-    unwrap_result!(service.start_listening_tcp());
-    unwrap_result!(service.start_listening_utp());
+    let mut service = unwrap!(Service::new(event_sender, BEACON_PORT));
+    unwrap!(service.start_listening_tcp());
+    unwrap!(service.start_listening_utp());
     service.start_service_discovery();
 
     let network = Arc::new(Mutex::new(Network::new()));
@@ -339,7 +340,7 @@ fn main() {
                             crust::Event::NewMessage(peer_id, bytes) => {
                                 stdout_copy = cyan_foreground(stdout_copy);
                                 let message_length = bytes.len();
-                                let mut network = unwrap_result!(network2.lock());
+                                let mut network = unwrap!(network2.lock());
                                 network.record_received(message_length);
                                 println!("\nReceived from {:?} message: {}",
                                          peer_id,
@@ -359,10 +360,10 @@ fn main() {
                                 };
                                 println!("Prepared connection info with id {}", result_token);
                                 let their_info = info.to_their_connection_info();
-                                let info_json = unwrap_result!(json::encode(&their_info));
+                                let info_json = unwrap!(json::encode(&their_info));
                                 println!("Share this info with the peer you want to connect to:");
                                 println!("{}", info_json);
-                                let mut network = unwrap_result!(network2.lock());
+                                let mut network = unwrap!(network2.lock());
                                 if let Some(_) = network.our_connection_infos.insert(result_token, info) {
                                     panic!("Got the same result_token twice!");
                                 };
@@ -391,7 +392,7 @@ fn main() {
                                 stdout_copy = cyan_foreground(stdout_copy);
                                 let mut index = None;
                                 {
-                                    let network = unwrap_result!(network2.lock());
+                                    let network = unwrap!(network2.lock());
                                     for (i, id) in network.nodes.iter() {
                                         if id == &peer_id {
                                             index = Some(*i);
@@ -399,9 +400,9 @@ fn main() {
                                         }
                                     }
                                 }
-                                let mut network = unwrap_result!(network2.lock());
+                                let mut network = unwrap!(network2.lock());
                                 if let Some(index) = index {
-                                    let _ = unwrap_option!(network.nodes.remove(&index), "index should definitely be a key in this map");
+                                    let _ = unwrap!(network.nodes.remove(&index));
                                 };
                                 network.print_connected_nodes();
                             }
@@ -437,8 +438,8 @@ fn main() {
             println!("CrustNode event handler closed; error : {}", e);
             std::process::exit(6);
         });
-        let network = unwrap_result!(network.lock());
-        let peer_id = unwrap_option!(network.get_peer_id(peer_index), "No such peer index");
+        let network = unwrap!(network.lock());
+        let peer_id = unwrap!(network.get_peer_id(peer_index));
 
         stdout = green_foreground(stdout);
         println!("Bootstrapped to {:?}", peer_id);
@@ -449,14 +450,14 @@ fn main() {
         thread::sleep(Duration::from_millis(100));
         println!("");
 
-        let speed = unwrap_option!(args.flag_speed, "Safe due to `running_speed_test` == true");
+        let speed = unwrap!(args.flag_speed, "Safe due to `running_speed_test` == true");
         let mut rng = rand::thread_rng();
         loop {
             let length = rng.gen_range(50, speed);
             let times = cmp::max(1, speed / length);
             let sleep_time = cmp::max(1, 1000 / times);
             for _ in 0..times {
-                unwrap_result!(service.send(peer_id, generate_random_vec_u8(length as usize)));
+                unwrap!(service.send(peer_id, generate_random_vec_u8(length as usize)));
                 debug!("Sent a message with length of {} bytes to {:?}",
                        length, peer_id);
                 std::thread::sleep(Duration::from_millis(sleep_time));
@@ -481,12 +482,12 @@ fn main() {
 
             match cmd {
                 UserCommand::PrepareConnectionInfo => {
-                    let mut network = unwrap_result!(network.lock());
+                    let mut network = unwrap!(network.lock());
                     let token = network.next_connection_info_index();
                     service.prepare_connection_info(token);
                 }
                 UserCommand::Connect(our_info_index, their_info) => {
-                    let mut network = unwrap_result!(network.lock());
+                    let mut network = unwrap!(network.lock());
                     let our_info_index = match u32::from_str(&our_info_index) {
                         Ok(info) => info,
                         Err(e) => {
@@ -512,23 +513,23 @@ fn main() {
                     service.connect(our_info, their_info);
                 }
                 UserCommand::Send(peer_index, message) => {
-                    let network = unwrap_result!(network.lock());
+                    let network = unwrap!(network.lock());
                     match network.get_peer_id(peer_index) {
                         Some(ref mut peer_id) => {
-                            unwrap_result!(service.send(peer_id, message.into_bytes()));
+                            unwrap!(service.send(peer_id, message.into_bytes()));
                         }
                         None => println!("Invalid connection #"),
                     }
                 }
                 UserCommand::SendAll(message) => {
-                    let mut network = unwrap_result!(network.lock());
+                    let mut network = unwrap!(network.lock());
                     let msg = message.into_bytes();
                     for (_, peer_id) in network.nodes.iter_mut() {
-                        unwrap_result!(service.send(peer_id, msg.clone()));
+                        unwrap!(service.send(peer_id, msg.clone()));
                     }
                 }
                 UserCommand::List => {
-                    let network = unwrap_result!(network.lock());
+                    let network = unwrap!(network.lock());
                     network.print_connected_nodes();
                 }
                 /*
@@ -635,11 +636,11 @@ fn parse_user_command(cmd: String) -> Option<UserCommand> {
     };
 
     if args.cmd_connect {
-        let our_info_id = unwrap_option!(args.arg_our_info_id, "Missing our_info_id");
-        let their_info = unwrap_option!(args.arg_their_info, "Missing their_info");
+        let our_info_id = unwrap!(args.arg_our_info_id);
+        let their_info = unwrap!(args.arg_their_info);
         Some(UserCommand::Connect(our_info_id, their_info))
     } else if args.cmd_send {
-        let peer = unwrap_option!(args.arg_peer, "Missing peer");
+        let peer = unwrap!(args.arg_peer);
         let msg = args.arg_message.join(" ");
         Some(UserCommand::Send(peer, msg))
     } else if args.cmd_send_all {

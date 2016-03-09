@@ -43,7 +43,6 @@ extern crate crust;
 extern crate time;
 extern crate sodiumoxide;
 extern crate rustc_serialize;
-#[macro_use]
 extern crate maidsafe_utilities;
 
 use rand::distributions::IndependentSample;
@@ -154,7 +153,7 @@ fn main() {
     let crust_event_category = event_sender::MaidSafeEventCategory::CrustEvent;
     let (s1_tx, s1_rx) = mpsc::channel();
     let event_sender0 = event_sender::MaidSafeObserver::new(s1_tx, crust_event_category.clone(), category_tx.clone());
-    let s1 = unwrap_result!(Service::new(event_sender0, port));
+    let s1 = unwrap!(Service::new(event_sender0, port));
 
     wait_for_bootstrap_finished(&s1_rx, &category_rx);
 
@@ -162,7 +161,7 @@ fn main() {
 
     let (s2_tx, s2_rx) = mpsc::channel();
     let event_sender1 = event_sender::MaidSafeObserver::new(s2_tx, crust_event_category, category_tx);
-    let _s2 = unwrap_result!(Service::new(event_sender1, port));
+    let _s2 = unwrap!(Service::new(event_sender1, port));
     let (mut s2_s1_connection, _s1_pub_key) = wait_for_connection(&s2_rx, &category_rx);
 
     wait_for_bootstrap_finished(&s2_rx, &category_rx);
@@ -176,7 +175,7 @@ fn main() {
     let elapsed = timed(move || {
         let mut i = 0;
         while i != n_exchanges {
-            unwrap_result!(s2_s1_connection.send(&chunk.clone()[..]));
+            unwrap!(s2_s1_connection.send(&chunk.clone()[..]));
             loop {
                 match s1_rx.recv() {
                     Ok(crust::Event::NewMessage(_pub_key, ref msg)) => {

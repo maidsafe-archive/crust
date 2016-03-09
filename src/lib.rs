@@ -54,6 +54,8 @@ extern crate time;
 extern crate utp;
 extern crate crossbeam;
 #[macro_use]
+extern crate unwrap;
+#[macro_use]
 extern crate maidsafe_utilities;
 extern crate socket_addr;
 extern crate get_if_addrs;

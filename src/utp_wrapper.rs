@@ -31,7 +31,7 @@ impl UtpWrapper {
         let local_addr = try!(socket.local_addr());
 
         let thread_handle =
-            unwrap_result!(thread::Builder::new()
+            unwrap!(thread::Builder::new()
                 .name("rust-utp multiplexer".to_owned())
                 .spawn(move || {
                     let mut socket = socket;
@@ -57,7 +57,7 @@ impl UtpWrapper {
                                     match output_rx.try_recv() {
                                         Ok(WriteEvent::Write(msg)) => {
                                             send_keepalive = false;
-                                            let data = unwrap_result!(serialise(&msg));
+                                            let data = unwrap!(serialise(&msg));
                                             if socket.send_to(&data).is_err() {
                                                 break 'outer;
                                             }

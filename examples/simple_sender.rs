@@ -37,6 +37,8 @@
 #![cfg_attr(feature="clippy", allow(use_debug))]
 
 #[macro_use]
+extern crate unwrap
+#[macro_use]
 extern crate maidsafe_utilities;
 extern crate crust;
 
@@ -98,7 +100,7 @@ fn main() {
     let event_category = event_sender::MaidSafeEventCategory::CrustEvent;
     let (service_tx, service_rx) = mpsc::channel();
     let event_sender = event_sender::MaidSafeObserver::new(service_tx, event_category.clone(), category_tx.clone());
-    let service = unwrap_result!(Service::new(event_sender, 5483));
+    let service = unwrap!(Service::new(event_sender, 5483));
     let mut connection = wait_for_connection(&service_rx, &category_rx);
 
     wait_for_bootstrap_finished(&service_rx, &category_rx);
@@ -135,7 +137,7 @@ fn main() {
     // Send all the numbers from 0 to 12 inclusive.
     // Expect to receive replies containing the Fibonacci number for each value.
     for value in 0u8..13u8 {
-        let _ = unwrap_result!(connection.send(&value.to_string().into_bytes()));
+        let _ = unwrap!(connection.send(&value.to_string().into_bytes()));
     }
 
     // Allow the peer time to process the requests and reply.

@@ -122,13 +122,13 @@ mod test {
             let s = listener.accept().unwrap().0;
             let (mut i, o) = upgrade_utp(s).unwrap();
 
-            let msg = match unwrap_result!(deserialise_from::<_, CrustMsg>(&mut i)) {
+            let msg = match unwrap!(deserialise_from::<_, CrustMsg>(&mut i)) {
                 CrustMsg::Message(msg) => msg,
                 m => panic!("Unexpected message type: {:#?}", m),
             };
 
             assert_eq!(msg, &[42]);
-            unwrap_result!(o.send(WriteEvent::Write(CrustMsg::Message(vec![43]))));
+            unwrap!(o.send(WriteEvent::Write(CrustMsg::Message(vec![43]))));
         });
 
         let (mut i, o) =
@@ -144,7 +144,7 @@ mod test {
         let th1 = spawn(move || {
             o.send(WriteEvent::Write(CrustMsg::Message(vec![42])));
 
-            let msg = match unwrap_result!(deserialise_from::<_, CrustMsg>(&mut i)) {
+            let msg = match unwrap!(deserialise_from::<_, CrustMsg>(&mut i)) {
                 CrustMsg::Message(msg) => msg,
                 m => panic!("Unexpected message type: {:#?}", m),
             };
@@ -158,8 +158,8 @@ mod test {
             Err(_) => panic!("Timed out"),
         };
 
-        unwrap_result!(th1.join());
-        unwrap_result!(th0.join());
+        unwrap!(th1.join());
+        unwrap!(th0.join());
     }
 
     fn loopback_v4(port: u16) -> SocketAddr {
@@ -181,11 +181,11 @@ mod test {
     // https://users.rust-lang.org/t/on-windows-udpsocket-set-read-timeout-x-waits-x-500ms/3334
     fn read_timeout_error() -> ::time::Duration {
         let mut buf = [0u8; 32];
-        let s = unwrap_result!(UdpSocket::bind(&*loopback_v4(0)));
+        let s = unwrap!(UdpSocket::bind(&*loopback_v4(0)));
 
         ::time::Duration::span(|| {
             let timeout = ::std::time::Duration::from_millis(1);
-            unwrap_result!(s.set_read_timeout(Some(timeout)));
+            unwrap!(s.set_read_timeout(Some(timeout)));
             let _ = s.recv_from(&mut buf);
         })
     }

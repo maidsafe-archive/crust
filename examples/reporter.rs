@@ -37,6 +37,7 @@
 #![cfg_attr(feature="clippy", allow(use_debug))]
 
 #[macro_use]
+extern crate unwrap;
 extern crate maidsafe_utilities;
 extern crate config_file_handler;
 extern crate crust;
@@ -128,8 +129,8 @@ fn main() {
                          .and_then(|d| d.decode())
                          .unwrap_or_else(|e| e.exit());
 
-    let file_handler = unwrap_result!(FileHandler::open(&args.arg_config));
-    let config: Config = unwrap_result!(file_handler.read_file());
+    let file_handler = unwrap!(FileHandler::open(&args.arg_config));
+    let config: Config = unwrap!(file_handler.read_file());
 
     let mut report = Report::new();
     report.id = config.msg_to_send.clone();
@@ -143,9 +144,9 @@ fn main() {
             0, config.max_wait_before_restart_service_secs * 1000)));
     }
 
-    let mut file = unwrap_result!(File::open(&config.output_report_path));
+    let mut file = unwrap!(File::open(&config.output_report_path));
     let contents = format!("{}", json::as_pretty_json(&report)).into_bytes();
-    unwrap_result!(file.write_all(&contents));
+    unwrap!(file.write_all(&contents));
 }
 
 fn run(config: &Config) -> Report {
@@ -155,12 +156,12 @@ fn run(config: &Config) -> Report {
     let (connect_tx, connect_rx) = mpsc::channel();
 
     let event_sender = MaidSafeObserver::new(event_tx, MaidSafeEventCategory::Crust, category_tx);
-    let mut service = unwrap_result!(Service::new(event_sender, BEACON_PORT));
+    let mut service = unwrap!(Service::new(event_sender, BEACON_PORT));
     let our_peer_id = service.id();
 
     if config.start_listening {
-        unwrap_result!(service.start_listening_tcp());
-        unwrap_result!(service.start_listening_utp());
+        unwrap!(service.start_listening_tcp());
+        unwrap!(service.start_listening_utp());
     }
 
     if config.start_service_discovery {
@@ -184,8 +185,8 @@ fn run(config: &Config) -> Report {
 
 
 
-    unwrap_result!(message_tx.send(None));
-    let msgs_sent = unwrap_result!(message_join_handle.join());
+    unwrap!(message_tx.send(None));
+    let msgs_sent = unwrap!(message_join_handle.join());
 
     let mut report = if let Ok(mut report) = event_join_handle.join() {
         report.record_break();
@@ -292,7 +293,7 @@ fn handle_messages(config: &Config,
                     }
 
                     if peers.lock().unwrap().contains(&peer_id) {
-                        unwrap_result!(service.send(&peer_id, message_bytes.clone()));
+                        unwrap!(service.send(&peer_id, message_bytes.clone()));
                         sent_at = time::now();
 
                         *stats.entry(format!("{:?}", peer_id)).or_insert(0) += 1;

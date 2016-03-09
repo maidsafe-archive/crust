@@ -37,6 +37,7 @@
 #![cfg_attr(feature="clippy", allow(use_debug))]
 
 #[macro_use]
+extern crate unwrap
 extern crate maidsafe_utilities;
 extern crate crust;
 
@@ -61,7 +62,7 @@ fn main() {
     let event_category = event_sender::MaidSafeEventCategory::CrustEvent;
     let (service_tx, service_rx) = mpsc::channel();
     let event_sender = event_sender::MaidSafeObserver::new(service_tx, event_category.clone(), category_tx.clone());
-    let service = unwrap_result!(Service::new(event_sender, 5483));
+    let service = unwrap!(Service::new(event_sender, 5483));
     let mut service_connection: Option<Connection> = None;
 
     println!("Run the simple_sender example in another terminal to send messages to this node.");
@@ -97,7 +98,7 @@ fn main() {
                                          connection, fibonacci_result);
                                 let response =
                                     format!("The Fibonacci number for {} is {}", requested_value, fibonacci_result);
-                                let _ = unwrap_result!((*connection).send(&response.into_bytes()[..]));
+                                let _ = unwrap!((*connection).send(&response.into_bytes()[..]));
                             }
                         }
                         Event::BootstrapFinished => {
