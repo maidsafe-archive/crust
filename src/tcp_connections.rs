@@ -51,14 +51,14 @@ pub fn upgrade_tcp(stream: TcpStream) -> io::Result<(TcpStream, Sender<WriteEven
 
 fn upgrade_writer(mut stream: TcpStream) -> Sender<WriteEvent> {
     let (tx, rx) = mpsc::channel();
-    let _ = unwrap_result!(thread::Builder::new()
+    let _ = unwrap!(thread::Builder::new()
                 .name("TCP writer".to_owned())
                 .spawn(move || {
                     while let Ok(event) = rx.recv() {
                         match event {
                             WriteEvent::Write(data) => {
                                 use std::io::Write;
-                                let msg = unwrap_result!(serialise(&data));
+                                let msg = unwrap!(serialise(&data));
                                 if stream.write_all(&msg).is_err() {
                                     break;
                                 }
@@ -136,21 +136,21 @@ mod test {
 
     #[test]
     fn test_small_stream() {
-        let listener = unwrap_result!(TcpListener::bind(("0.0.0.0", 0)));
-        let port = unwrap_result!(listener.local_addr()).port();
-        let (mut i, o) = unwrap_result!(connect_tcp(loopback(port)));
+        let listener = unwrap!(TcpListener::bind(("0.0.0.0", 0)));
+        let port = unwrap!(listener.local_addr()).port();
+        let (mut i, o) = unwrap!(connect_tcp(loopback(port)));
 
         for x in 0..10 {
             let x = vec![x];
             o.send(WriteEvent::Write(CrustMsg::Message(x))).unwrap()
         }
         let t = thread::spawn(move || {
-            let connection = unwrap_result!(listener.accept()).0;
-            let (mut i, o) = unwrap_result!(upgrade_tcp(connection));
-            unwrap_result!(i.set_read_timeout(Some(Duration::new(5, 0))));
+            let connection = unwrap!(listener.accept()).0;
+            let (mut i, o) = unwrap!(upgrade_tcp(connection));
+            unwrap!(i.set_read_timeout(Some(Duration::new(5, 0))));
             let mut buf = Vec::new();
             for _msgnum in 0..10 {
-                let msg = match unwrap_result!(deserialise_from::<_, CrustMsg>(&mut i)) {
+                let msg = match unwrap!(deserialise_from::<_, CrustMsg>(&mut i)) {
                     CrustMsg::Message(msg) => msg,
                     m => panic!("Unexpected crust message: {:#?}", m),
                 };
@@ -160,11 +160,11 @@ mod test {
             for item in &mut buf {
                 *item += 1;
             }
-            unwrap_result!(o.send(WriteEvent::Write(CrustMsg::Message(buf))));
+            unwrap!(o.send(WriteEvent::Write(CrustMsg::Message(buf))));
         });
         // Collect everything that we get back.
-        unwrap_result!(i.set_read_timeout(Some(Duration::new(5, 0))));
-        let msg = match unwrap_result!(deserialise_from::<_, CrustMsg>(&mut i)) {
+        unwrap!(i.set_read_timeout(Some(Duration::new(5, 0))));
+        let msg = match unwrap!(deserialise_from::<_, CrustMsg>(&mut i)) {
             CrustMsg::Message(msg) => msg,
             m => panic!("Unexpected crust message: {:#?}", m),
         };
@@ -172,7 +172,7 @@ mod test {
         assert_eq!(msg, vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
 
         drop(o);
-        unwrap_result!(t.join());
+        unwrap!(t.join());
     }
 
     // Downscaling node count only for mac for test to pass.
@@ -204,18 +204,18 @@ mod test {
                 }
                 o.send(WriteEvent::Write(CrustMsg::Message(buf.clone()))).unwrap();
 
-                let msg = match unwrap_result!(deserialise_from::<_, CrustMsg>(&mut i)) {
+                let msg = match unwrap!(deserialise_from::<_, CrustMsg>(&mut i)) {
                     CrustMsg::Message(msg) => msg,
                     m => panic!("Unexpected message {:#?}", m),
                 };
-                unwrap_result!(tx2.send(msg));
+                unwrap!(tx2.send(msg));
             });
             let (connection, _) = listener.accept().unwrap();
             let echo_thread = thread::spawn(move || {
                 let (mut i, o) = upgrade_tcp(connection).unwrap();
                 i.set_read_timeout(Some(Duration::new(5, 0))).unwrap();
 
-                let mut msg = match unwrap_result!(deserialise_from::<_, CrustMsg>(&mut i)) {
+                let mut msg = match unwrap!(deserialise_from::<_, CrustMsg>(&mut i)) {
                     CrustMsg::Message(msg) => msg,
                     m => panic!("Unexpected message {:#?}", m),
                 };
@@ -223,15 +223,15 @@ mod test {
                 for item in &mut msg {
                     *item += 1
                 }
-                unwrap_result!(o.send(WriteEvent::Write(CrustMsg::Message(msg))));
+                unwrap!(o.send(WriteEvent::Write(CrustMsg::Message(msg))));
             });
-            unwrap_result!(send_thread.join());
-            unwrap_result!(echo_thread.join());
+            unwrap!(send_thread.join());
+            unwrap!(echo_thread.join());
         }
 
         let v = (0..MSG_COUNT as u8).map(|i| i + 1).collect::<Vec<u8>>();
         for _ in 0..node_count() {
-            let rxd = unwrap_result!(rx.recv());
+            let rxd = unwrap!(rx.recv());
             assert_eq!(rxd, v);
         }
     }
@@ -244,7 +244,7 @@ mod test {
         const MSG_COUNT: u16 = 20;
 
         fn encode<T>(value: &T) -> Vec<u8> where T: Encodable {
-            unwrap_result!(serialise(value))
+            unwrap!(serialise(value))
         }
 
         let listener = TcpListener::bind(("0.0.0.0", 0)).unwrap();

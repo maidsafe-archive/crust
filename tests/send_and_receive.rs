@@ -16,8 +16,9 @@
 // relating to use of the SAFE Network Software.
 
 extern crate crust;
-#[macro_use]
 extern crate maidsafe_utilities;
+#[macro_use]
+extern crate unwrap;
 
 use crust::{CrustEventSender, Event, Service};
 use maidsafe_utilities::event_sender::{MaidSafeEventCategory, MaidSafeObserver};
@@ -51,11 +52,11 @@ fn sent_messages_are_received() {
 
 fn spawn_receiving_node(expected_connections: usize) -> JoinHandle<usize> {
     let (event_sender, category_rx, event_rx) = create_event_sender();
-    let mut service = unwrap_result!(Service::new(event_sender, BEACON_PORT));
+    let mut service = unwrap!(Service::new(event_sender, BEACON_PORT));
 
     service.start_service_discovery();
-    let _ = unwrap_result!(service.start_listening_tcp());
-    let _ = unwrap_result!(service.start_listening_utp());
+    let _ = unwrap!(service.start_listening_tcp());
+    let _ = unwrap!(service.start_listening_utp());
 
     // Wait for BootstrapFinished so we know this node is already listening when
     // this function returns.
@@ -102,7 +103,7 @@ fn spawn_receiving_node(expected_connections: usize) -> JoinHandle<usize> {
 fn spawn_sending_node() -> JoinHandle<usize> {
     thread::spawn(move || {
         let (event_sender, category_rx, event_rx) = create_event_sender();
-        let service = unwrap_result!(Service::new(event_sender, BEACON_PORT));
+        let service = unwrap!(Service::new(event_sender, BEACON_PORT));
 
         let message = vec![255];
         let mut num_messages = 0;
@@ -111,7 +112,7 @@ fn spawn_sending_node() -> JoinHandle<usize> {
             match event {
                 Event::BootstrapConnect(peer_id) => {
                     for _ in 0..NUM_MESSAGES_PER_SENDER {
-                        let _ = unwrap_result!(service.send(&peer_id, message.clone()));
+                        let _ = unwrap!(service.send(&peer_id, message.clone()));
                         num_messages += 1;
                         thread::yield_now();
                     }

@@ -181,7 +181,7 @@ mod test {
     // let _test_file = TestFile::new().unwrap();
     //
     // Add contacts
-    // let mut bootstrap_handler = unwrap_result!(super::BootstrapHandler::new());
+    // let mut bootstrap_handler = unwrap!(super::BootstrapHandler::new());
     // assert!(bootstrap_handler.update_contacts(contacts.clone(), Vec::<Endpoint>::new())
     // .is_ok());
     //
@@ -208,7 +208,7 @@ mod test {
     // let _test_file = TestFile::new().unwrap();
     //
     // Add contacts
-    // let mut bootstrap_handler = unwrap_result!(super::BootstrapHandler::new());
+    // let mut bootstrap_handler = unwrap!(super::BootstrapHandler::new());
     // assert!(bootstrap_handler.update_contacts(contacts.clone(), Vec::<Endpoint>::new())
     // .is_ok());
     // assert_eq!(bootstrap_handler.read_file().unwrap(), contacts);
@@ -254,7 +254,7 @@ mod test {
     // let _test_file = TestFile::new().unwrap();
     //
     // Add contacts
-    // let mut bootstrap_handler = unwrap_result!(super::BootstrapHandler::new());
+    // let mut bootstrap_handler = unwrap!(super::BootstrapHandler::new());
     // assert!(bootstrap_handler.update_contacts(contacts.clone(), Vec::<Endpoint>::new())
     // .is_ok());
     // assert_eq!(bootstrap_handler.read_file().unwrap(), contacts);
@@ -287,7 +287,7 @@ mod test {
     // fn serialise_and_parse() {
     // let contacts = random_endpoints(5);
     // let _test_file = TestFile::new().unwrap();
-    // let mut bootstrap_handler = unwrap_result!(super::BootstrapHandler::new());
+    // let mut bootstrap_handler = unwrap!(super::BootstrapHandler::new());
     // assert!(bootstrap_handler.update_contacts(contacts.clone(), Vec::<Endpoint>::new())
     // .is_ok());
     // }

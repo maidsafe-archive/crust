@@ -104,7 +104,7 @@ mod test {
     // hard_coded_contacts.push(random_contact);
     // }
     // let config = super::Config { hard_coded_contacts: hard_coded_contacts };
-    // let path_buf = unwrap_result!(super::write_config_file(Some(hard_coded_endpoints)));
+    // let path_buf = unwrap!(super::write_config_file(Some(hard_coded_endpoints)));
     // match super::read_config_file() {
     // Ok(recovered_config) => assert_eq!(config, recovered_config),
     // Err(_) => panic!("Failed to read config file."),

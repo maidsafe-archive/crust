@@ -72,11 +72,11 @@ impl RaiiUdpListener {
         if let Ok(MappedUdpSocket { endpoints, socket })
             = MappedUdpSocket::map(try!(udp_socket.try_clone()), &mc).result_discard() {
             addrs.extend(endpoints.into_iter().map(|ma| ma.addr));
-            let local_addr = unwrap_result!(socket.local_addr());
+            let local_addr = try!(socket.local_addr());
             addrs.push(SocketAddr(local_addr));
         }
 
-        unwrap_result!(our_contact_info.lock()).utp_custom_listeners.extend(addrs);
+        unwrap!(our_contact_info.lock()).utp_custom_listeners.extend(addrs);
 
         let raii_joiner = RaiiThreadJoiner::new(thread!("RaiiUdpListener", move || {
             Self::run(our_contact_info,
@@ -144,7 +144,7 @@ impl RaiiUdpListener {
                     pub_key: our_public_key.clone(),
                 };
 
-                if udp_socket.send_to(&unwrap_result!(serialise(&connect_resp)),
+                if udp_socket.send_to(&unwrap!(serialise(&connect_resp)),
                                       peer_addr.clone())
                     .is_err() {
                     return;

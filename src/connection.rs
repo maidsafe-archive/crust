@@ -158,7 +158,7 @@ pub fn connect(peer_contact: StaticContactInfo,
         our_info: our_pub_info.clone(),
         pub_key: our_public_key.clone(),
     };
-    let serialised_connect_req = unwrap_result!(serialise(&connect_req));
+    let serialised_connect_req = unwrap!(serialise(&connect_req));
     let mut read_buf = [0; 1024];
 
     for udp_addr in peer_contact.utp_custom_listeners {
@@ -207,7 +207,7 @@ pub fn connect(peer_contact: StaticContactInfo,
         }
     }
 
-    unwrap_result!(bootstrap_cache.lock()).update_contacts(vec![], vec![static_contact_info]);
+    unwrap!(bootstrap_cache.lock()).update_contacts(vec![], vec![static_contact_info]);
     Err(last_err)
 }
 
@@ -260,7 +260,7 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
     };
 
     // Send the events before we start listening.
-    let mut guard = unwrap_result!(connection_map.lock());
+    let mut guard = unwrap!(connection_map.lock());
 
     {
         let connections = guard.entry(their_id).or_insert_with(Vec::new);
@@ -364,7 +364,7 @@ pub fn start_tcp_accept(port: u16,
                        .collect_vec();
     addrs.extend(if_addrs);
 
-    unwrap_result!(our_contact_info.lock()).tcp_acceptors.extend(addrs);
+    unwrap!(our_contact_info.lock()).tcp_acceptors.extend(addrs);
 
     let joiner = RaiiThreadJoiner::new(thread!("TcpAcceptorThread", move || {
         loop {
@@ -381,15 +381,27 @@ pub fn start_tcp_accept(port: u16,
                 break;
             }
 
-            let (network_input, writer) = unwrap_result!(tcp_connections::upgrade_tcp(stream));
+            let (network_input, writer) = match tcp_connections::upgrade_tcp(stream) {
+                Ok(x) => x,
+                Err(e) => {
+                    error!("Error upgrading tcp stream: {}", e);
+                    continue;
+                },
+            };
 
-            let our_addr = SocketAddr(unwrap_result!(network_input.local_addr()));
-            let their_addr = SocketAddr(unwrap_result!(network_input.peer_addr()));
+            let our_addr = match network_input.local_addr() {
+                Ok(addr) => SocketAddr(addr),
+                Err(_) => continue,
+            };
+            let their_addr = match network_input.peer_addr() {
+                Ok(addr) => SocketAddr(addr),
+                Err(_) => continue,
+            };
 
             let mut network_rx = Receiver::tcp(network_input);
 
             let msg = network_rx.receive();
-            let mut cm = unwrap_result!(connection_map.lock()); // need to lock before sending the event
+            let mut cm = unwrap!(connection_map.lock()); // need to lock before sending the event
             let their_id = match msg {
                 Ok(CrustMsg::BootstrapRequest(k)) => {
                     writer.send(WriteEvent::Write(CrustMsg::BootstrapResponse(our_public_key)));
@@ -403,7 +415,7 @@ pub fn start_tcp_accept(port: u16,
                 Ok(CrustMsg::Connect(k)) => {
                     let peer_id = peer_id::new_id(k);
                     writer.send(WriteEvent::Write(CrustMsg::Connect(our_public_key)));
-                    /*if !unwrap_result!(expected_peers.lock()).remove(&peer_id) {
+                    /*if !unwrap!(expected_peers.lock()).remove(&peer_id) {
                         error!("Unexpected new peer: {:?}.", peer_id);
                         continue;
                     }*/
@@ -494,7 +506,7 @@ pub fn utp_rendezvous_connect(udp_socket: UdpSocket,
                         return Err(io::Error::new(io::ErrorKind::Other, format!(
                                                   "Connected to the wrong peer: {:?}.", their_id)));
                     };
-                    let mut guard = unwrap_result!(connection_map.lock());
+                    let mut guard = unwrap!(connection_map.lock());
                     {
                         let connections = guard.entry(their_id).or_insert_with(|| Vec::with_capacity(1));
                         if connections.is_empty() {
@@ -516,7 +528,7 @@ pub fn utp_rendezvous_connect(udp_socket: UdpSocket,
                         return Err(io::Error::new(io::ErrorKind::Other, "Connected to ourselves."));
                     }
                     let their_id = peer_id::new_id(key);
-                    let mut guard = unwrap_result!(connection_map.lock());
+                    let mut guard = unwrap!(connection_map.lock());
                     {
                         let connections = guard.entry(their_id).or_insert_with(|| Vec::with_capacity(1));
                         if connections.is_empty() {
@@ -535,7 +547,7 @@ pub fn utp_rendezvous_connect(udp_socket: UdpSocket,
             let (guard, their_id) = match network_rx.receive() {
                 Ok(CrustMsg::BootstrapRequest(key)) => {
                     let their_id = peer_id::new_id(key);
-                    let mut guard = unwrap_result!(connection_map.lock());
+                    let mut guard = unwrap!(connection_map.lock());
                     {
                         let connections = guard.entry(their_id).or_insert_with(|| Vec::with_capacity(1));
                         if connections.is_empty() {
@@ -597,7 +609,7 @@ fn start_rx(mut network_rx: Receiver,
     closed.store(true, Ordering::Relaxed);
     // Drop the connection in a separate thread, because the destructor joins _this_ thread.
     let _ = thread!("ConnectionDropper", move || {
-        let mut lock = unwrap_result!(connection_map.lock());
+        let mut lock = unwrap!(connection_map.lock());
         if let Entry::Occupied(mut entry) = lock.entry(their_id) {
             entry.get_mut().retain(|connection| !connection.is_closed());
             if entry.get().is_empty() {
@@ -642,9 +654,9 @@ mod test {
 
             Connection {
                 protocol: Protocol::Tcp,
-                our_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("10.199.254.200:\
+                our_addr: SocketAddr(unwrap!(net::SocketAddr::from_str("10.199.254.200:\
                                                                                30000"))),
-                their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.200:\
+                their_addr: SocketAddr(unwrap!(net::SocketAddr::from_str("11.199.254.200:\
                                                                                  30000"))),
                 their_id: peer_id::new_id(pub_key.clone()),
                 network_tx: RaiiSender(tx),
@@ -660,9 +672,9 @@ mod test {
 
             Connection {
                 protocol: Protocol::Tcp,
-                our_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("10.199.254.200:\
+                our_addr: SocketAddr(unwrap!(net::SocketAddr::from_str("10.199.254.200:\
                                                                                30000"))),
-                their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.200:\
+                their_addr: SocketAddr(unwrap!(net::SocketAddr::from_str("11.199.254.200:\
                                                                                  30000"))),
                 their_id: peer_id::new_id(pub_key.clone()),
                 network_tx: RaiiSender(tx),
@@ -681,9 +693,9 @@ mod test {
 
             Connection {
                 protocol: Protocol::Utp,
-                our_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("10.199.254.200:\
+                our_addr: SocketAddr(unwrap!(net::SocketAddr::from_str("10.199.254.200:\
                                                                                30000"))),
-                their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.200:\
+                their_addr: SocketAddr(unwrap!(net::SocketAddr::from_str("11.199.254.200:\
                                                                                  30000"))),
                 their_id: peer_id::new_id(pub_key.clone()),
                 network_tx: RaiiSender(tx),
@@ -702,9 +714,9 @@ mod test {
 
             Connection {
                 protocol: Protocol::Tcp,
-                our_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("10.199.254.201:\
+                our_addr: SocketAddr(unwrap!(net::SocketAddr::from_str("10.199.254.201:\
                                                                                30000"))),
-                their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.200:\
+                their_addr: SocketAddr(unwrap!(net::SocketAddr::from_str("11.199.254.200:\
                                                                                  30000"))),
                 their_id: peer_id::new_id(pub_key.clone()),
                 network_tx: RaiiSender(tx),
@@ -723,9 +735,9 @@ mod test {
 
             Connection {
                 protocol: Protocol::Tcp,
-                our_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("10.199.254.200:\
+                our_addr: SocketAddr(unwrap!(net::SocketAddr::from_str("10.199.254.200:\
                                                                                30000"))),
-                their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.253.200:\
+                their_addr: SocketAddr(unwrap!(net::SocketAddr::from_str("11.199.253.200:\
                                                                                  30000"))),
                 their_id: peer_id::new_id(pub_key.clone()),
                 network_tx: RaiiSender(tx),
@@ -744,9 +756,9 @@ mod test {
 
             Connection {
                 protocol: Protocol::Tcp,
-                our_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("10.199.254.200:\
+                our_addr: SocketAddr(unwrap!(net::SocketAddr::from_str("10.199.254.200:\
                                                                                30000"))),
-                their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.200:\
+                their_addr: SocketAddr(unwrap!(net::SocketAddr::from_str("11.199.254.200:\
                                                                                  30000"))),
                 their_id: peer_id::new_id(pub_key.clone()),
                 network_tx: RaiiSender(tx),
