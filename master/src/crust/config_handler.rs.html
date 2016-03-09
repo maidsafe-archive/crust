@@ -192,6 +192,13 @@
 <span id="149">149</span>
 <span id="150">150</span>
 <span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -229,6 +236,8 @@
     <span class='kw'>pub</span> <span class='ident'>utp_acceptor_port</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>u16</span><span class='op'>&gt;</span>,
     <span class='kw'>pub</span> <span class='ident'>udp_mapper_servers</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>SocketAddr</span><span class='op'>&gt;</span>,
     <span class='kw'>pub</span> <span class='ident'>tcp_mapper_servers</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>SocketAddr</span><span class='op'>&gt;</span>,
+    <span class='kw'>pub</span> <span class='ident'>enable_tcp</span>: <span class='ident'>bool</span>,
+    <span class='kw'>pub</span> <span class='ident'>enable_utp</span>: <span class='ident'>bool</span>,
 }
 
 <span class='kw'>impl</span> <span class='ident'>Default</span> <span class='kw'>for</span> <span class='ident'>Config</span> {
@@ -239,10 +248,13 @@
             <span class='ident'>utp_acceptor_port</span>: <span class='prelude-val'>None</span>,
             <span class='ident'>udp_mapper_servers</span>: <span class='macro'>vec</span><span class='macro'>!</span>[],
             <span class='ident'>tcp_mapper_servers</span>: <span class='macro'>vec</span><span class='macro'>!</span>[],
+            <span class='ident'>enable_tcp</span>: <span class='boolval'>true</span>,
+            <span class='ident'>enable_utp</span>: <span class='boolval'>true</span>,
         }
     }
 }
 
+<span class='doccomment'>/// Reads the default crust config file.</span>
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>read_config_file</span>() <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>Config</span>, ::<span class='ident'>error</span>::<span class='ident'>Error</span><span class='op'>&gt;</span> {
     <span class='kw'>let</span> <span class='ident'>file_handler</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>FileHandler</span>::<span class='ident'>new</span>(<span class='kw-2'>&amp;</span><span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>get_file_name</span>())));
     <span class='kw'>let</span> <span class='ident'>cfg</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>file_handler</span>.<span class='ident'>read_file</span>());
@@ -268,6 +280,8 @@
         <span class='ident'>utp_acceptor_port</span>: <span class='prelude-val'>None</span>,
         <span class='ident'>udp_mapper_servers</span>: <span class='macro'>vec</span><span class='macro'>!</span>[],
         <span class='ident'>tcp_mapper_servers</span>: <span class='macro'>vec</span><span class='macro'>!</span>[],
+        <span class='ident'>enable_tcp</span>: <span class='boolval'>true</span>,
+        <span class='ident'>enable_utp</span>: <span class='boolval'>true</span>,
     };
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>config_path</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>config_file_handler</span>::<span class='ident'>current_bin_dir</span>());
     <span class='ident'>config_path</span>.<span class='ident'>push</span>(<span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>get_file_name</span>()));

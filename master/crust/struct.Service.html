@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-195' class='srclink' href='../src/crust/service.rs.html#104-119' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-211' class='srclink' href='../src/crust/service.rs.html#111-128' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Service {
     // some fields omitted
 }</pre><div class='docblock'><p>A structure representing a connection manager.</p>
@@ -56,6 +56,10 @@ information.</p>
 </div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../crust/struct.Service.html' title='crust::Service'>Service</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(event_tx: <a class='type' href='../crust/type.CrustEventSender.html' title='crust::CrustEventSender'>CrustEventSender</a>, service_discovery_port: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='struct' href='../crust/struct.Service.html' title='crust::Service'>Service</a>, <a class='enum' href='../crust/enum.Error.html' title='crust::Error'>Error</a>&gt;</code></h4>
 <div class='docblock'><p>Constructs a service. User needs to create an asynchronous channel, and provide
 the sender half to this method. Receiver will receive all <code>Event</code>s from this library.</p>
+</div><h4 id='method.new_with_config' class='method'><code>fn <a href='#method.new_with_config' class='fnname'>new_with_config</a>(event_tx: <a class='type' href='../crust/type.CrustEventSender.html' title='crust::CrustEventSender'>CrustEventSender</a>, service_discovery_port: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a>, config: &amp;Config) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='struct' href='../crust/struct.Service.html' title='crust::Service'>Service</a>, <a class='enum' href='../crust/enum.Error.html' title='crust::Error'>Error</a>&gt;</code></h4>
+<div class='docblock'><p>Constructs a service with the given config. User needs to create an asynchronous channel,
+and provide the sender half to this method. Receiver will receive all <code>Event</code>s from this
+library.</p>
 </div><h4 id='method.stop_bootstrap' class='method'><code>fn <a href='#method.stop_bootstrap' class='fnname'>stop_bootstrap</a>(&amp;mut self)</code></h4>
 <div class='docblock'><p>Stop the bootstraping procedure</p>
 </div><h4 id='method.start_listening_tcp' class='method'><code>fn <a href='#method.start_listening_tcp' class='fnname'>start_listening_tcp</a>(&amp;mut self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
