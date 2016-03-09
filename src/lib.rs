@@ -68,7 +68,7 @@ extern crate void;
 
 /// Crust Observers will be informed of crust events on this
 pub type CrustEventSender = ::maidsafe_utilities::event_sender::MaidSafeObserver<Event>;
-pub use config_handler::write_config_file;
+pub use config_handler::{read_config_file, write_config_file};
 pub use service::{ConnectionInfoResult, OurConnectionInfo, Service, TheirConnectionInfo};
 pub use event::Event;
 pub use endpoint::{Endpoint, Protocol};
