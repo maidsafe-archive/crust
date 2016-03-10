@@ -151,6 +151,10 @@ pub fn connect(peer_contact: StaticContactInfo,
                utp_enabled: bool)
                -> io::Result<()> {
     let static_contact_info = peer_contact.clone();
+
+    mc.add_simple_udp_servers(static_contact_info.udp_mapper_servers.iter().cloned());
+    mc.add_simple_tcp_servers(static_contact_info.tcp_mapper_servers.iter().cloned());
+
     let mut last_err = io::Error::new(io::ErrorKind::NotFound, "No TCP/uTP acceptors found.");
     if tcp_enabled {
         for tcp_addr in peer_contact.tcp_acceptors {

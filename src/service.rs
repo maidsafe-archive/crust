@@ -339,6 +339,12 @@ impl Service {
             return;
         }
 
+        {
+            let i = &their_connection_info.static_contact_info;
+            self.mapping_context.add_simple_udp_servers(i.udp_mapper_servers.iter().cloned());
+            self.mapping_context.add_simple_tcp_servers(i.tcp_mapper_servers.iter().cloned());
+        }
+
         let event_tx = self.event_tx.clone();
         let connection_map = self.connection_map.clone();
         let our_public_key = self.our_keys.0.clone();
@@ -453,18 +459,9 @@ impl Service {
         // then our conact info is our static liseners
         // for udp we can map another socket, but use same local port if accessable/mapped
         // otherwise do following
-        let mut peer_udp_listeners = Vec::with_capacity(100);
-        let mut peer_tcp_listeners = Vec::with_capacity(100);
-        for peer_contact_info in &*unwrap_result!(self.peer_contact_infos.lock()) {
-            peer_udp_listeners.extend(peer_contact_info.udp_mapper_servers.clone());
-            peer_tcp_listeners.extend(peer_contact_info.tcp_mapper_servers.clone());
-        }
-
         let our_static_contact_info = self.static_contact_info.clone();
         let event_tx = self.event_tx.clone();
 
-        self.mapping_context.add_simple_udp_servers(peer_udp_listeners);
-        self.mapping_context.add_simple_tcp_servers(peer_tcp_listeners);
         let result_external_socket = MappedUdpSocket::new(&self.mapping_context)
             .result_discard();
         let mapping_context = self.mapping_context.clone();
