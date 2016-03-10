@@ -19,6 +19,7 @@
 use util;
 use std::net;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
+use std::fmt;
 use rustc_serialize::{Encodable, Encoder, Decoder};
 use socket_addr::SocketAddr;
 
@@ -29,6 +30,15 @@ pub enum Protocol {
     Tcp,
     /// UTP protocol
     Utp,
+}
+
+impl fmt::Display for Protocol {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Protocol::Tcp => write!(f, "tcp"),
+            Protocol::Utp => write!(f, "utp"),
+        }
+    }
 }
 
 /// Enum representing endpoint of supported protocols

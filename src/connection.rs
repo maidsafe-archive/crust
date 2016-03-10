@@ -60,6 +60,14 @@ pub struct Connection {
     closed: Arc<AtomicBool>,
 }
 
+/// Information about a `Connection`
+pub struct ConnectionInfo {
+    pub protocol: Protocol,
+    pub our_addr: SocketAddr,
+    pub their_addr: SocketAddr,
+    pub closed: bool,
+}
+
 impl Hash for Connection {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.protocol.hash(state);
@@ -81,6 +89,16 @@ impl Debug for Connection {
 }
 
 impl Connection {
+    /// Get a `ConnectionInfo` that describes this connection.
+    pub fn get_info(&self) -> ConnectionInfo {
+        ConnectionInfo {
+            protocol: self.protocol,
+            our_addr: self.our_addr,
+            their_addr: self.their_addr,
+            closed: self.closed.load(Ordering::Relaxed),
+        }
+    }
+
     /// Send the `data` to a peer via this connection.
     pub fn send(&mut self, msg: CrustMsg) -> io::Result<()> {
         self.network_tx.send(msg)

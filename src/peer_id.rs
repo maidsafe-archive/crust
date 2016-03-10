@@ -17,7 +17,7 @@
 
 use rand;
 use rand::{Rand, Rng};
-use std::fmt::{Debug, Formatter, Result};
+use std::fmt::{Debug, Display, Formatter, Result};
 use sodiumoxide::crypto::box_;
 use sodiumoxide::crypto::box_::{PublicKey, PUBLICKEYBYTES};
 
@@ -29,6 +29,15 @@ impl Debug for PeerId {
     fn fmt(&self, formatter: &mut Formatter) -> Result {
         write!(formatter,
                "PeerId({:02x}{:02x}..)",
+               (self.0).0[0],
+               (self.0).0[1])
+    }
+}
+
+impl Display for PeerId {
+    fn fmt(&self, formatter: &mut Formatter) -> Result {
+        write!(formatter,
+               "{:02x}{:02x}..",
                (self.0).0[0],
                (self.0).0[1])
     }
