@@ -35,7 +35,7 @@ use udp_listener::RaiiUdpListener;
 use static_contact_info::StaticContactInfo;
 use rand;
 use config_handler::Config;
-use connection::Connection;
+use connection::{Connection, ConnectionInfo};
 use error::Error;
 use connection;
 use bootstrap;
@@ -272,6 +272,14 @@ impl Service {
             }
             Some(connection) => connection.send(CrustMsg::Message(data)),
         }
+    }
+
+    /// Get information about our connection to a peer.
+    pub fn connection_info(&self, id: &PeerId) -> Option<ConnectionInfo> {
+        unwrap_result!(self.connection_map.lock())
+                .get(&id)
+                .and_then(|conns| conns.get(0))
+                .and_then(|conn| Some(conn.get_info()))
     }
 
     /// Disconnect from the given peer and returns whether there was a connection at all.

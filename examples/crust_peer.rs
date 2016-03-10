@@ -175,9 +175,9 @@ impl Network {
         ret
     }
 
-    pub fn print_connected_nodes(&self) {
+    pub fn print_connected_nodes(&self, service: &Service) {
         println!("Node count: {}", self.nodes.len());
-        for (i, (id, _node)) in self.nodes.iter().enumerate() {
+        for (id, node) in self.nodes.iter() {
             /*
              * TODO(canndrew): put this back
             let status = if !node.is_closed() {
@@ -186,8 +186,13 @@ impl Network {
                 "Disconnected"
             };
             */
-
-            println!("    [{}] {:?}", i, id);
+            
+            if let Some(conn_info) = service.connection_info(node) {
+                println!("    [{}] {}   {} <--> {} [{}][{}]",
+                         id, node, conn_info.our_addr, conn_info.their_addr, conn_info.protocol,
+                         if conn_info.closed { "closed" } else { "open" }
+                );
+            }
         }
 
         println!("");
@@ -295,11 +300,11 @@ fn on_time_out(timeout: Duration, flag_speed: bool) -> Sender<bool> {
     tx
 }
 
-fn handle_new_peer(protected_network: Arc<Mutex<Network>>, peer_id: PeerId) -> usize {
+fn handle_new_peer(service: &Service, protected_network: Arc<Mutex<Network>>, peer_id: PeerId) -> usize {
     let mut network = unwrap_result!(protected_network.lock());
     let peer_index = network.next_peer_index();
     let _ = network.nodes.insert(peer_index, peer_id);
-    network.print_connected_nodes();
+    network.print_connected_nodes(service);
     peer_index
 }
 
@@ -342,6 +347,8 @@ fn main() {
         unwrap_result!(service.start_listening_utp());
     }
     service.start_service_discovery();
+    let service = Arc::new(Mutex::new(service));
+    let service_cloned = service.clone();
 
     let network = Arc::new(Mutex::new(Network::new()));
     let network2 = network.clone();
@@ -351,6 +358,7 @@ fn main() {
 
     let handler = match thread::Builder::new().name("CrustNode event handler".to_string())
                                               .spawn(move || {
+        let service = service_cloned;
         for it in category_rx.iter() {
             match it {
                 ::maidsafe_utilities::event_sender::MaidSafeEventCategory::Crust => {
@@ -390,19 +398,19 @@ fn main() {
                             crust::Event::BootstrapConnect(peer_id) => {
                                 stdout_copy = cyan_foreground(stdout_copy);
                                 println!("\nBootstrapConnect with peer {:?}", peer_id);
-                                let peer_index = handle_new_peer(network2.clone(), peer_id);
+                                let peer_index = handle_new_peer(&unwrap_result!(service.lock()), network2.clone(), peer_id);
                                 let _ = bs_sender.send(peer_index);
                             },
                             crust::Event::BootstrapAccept(peer_id) => {
                                 stdout_copy = cyan_foreground(stdout_copy);
                                 println!("\nBootstrapAccept with peer {:?}", peer_id);
-                                let peer_index = handle_new_peer(network2.clone(), peer_id);
+                                let peer_index = handle_new_peer(&unwrap_result!(service.lock()), network2.clone(), peer_id);
                                 let _ = bs_sender.send(peer_index);
                             },
                             crust::Event::NewPeer(Ok(()), peer_id) => {
                                 stdout_copy = cyan_foreground(stdout_copy);
                                 println!("\nConnected to peer {:?}", peer_id);
-                                let _ = handle_new_peer(network2.clone(), peer_id);
+                                let _ = handle_new_peer(&unwrap_result!(service.lock()), network2.clone(), peer_id);
                             }
                             crust::Event::LostPeer(peer_id) => {
                                 stdout_copy = yellow_foreground(stdout_copy);
@@ -423,7 +431,7 @@ fn main() {
                                 if let Some(index) = index {
                                     let _ = unwrap_option!(network.nodes.remove(&index), "index should definitely be a key in this map");
                                 };
-                                network.print_connected_nodes();
+                                network.print_connected_nodes(&unwrap_result!(service.lock()));
                             }
                             e => {
                                 println!("\nReceived event {:?} (not handled)", e);
@@ -476,7 +484,7 @@ fn main() {
             let times = cmp::max(1, speed / length);
             let sleep_time = cmp::max(1, 1000 / times);
             for _ in 0..times {
-                unwrap_result!(service.send(peer_id, generate_random_vec_u8(length as usize)));
+                unwrap_result!(unwrap_result!(service.lock()).send(peer_id, generate_random_vec_u8(length as usize)));
                 debug!("Sent a message with length of {} bytes to {:?}",
                        length, peer_id);
                 std::thread::sleep(Duration::from_millis(sleep_time));
@@ -503,7 +511,7 @@ fn main() {
                 UserCommand::PrepareConnectionInfo => {
                     let mut network = unwrap_result!(network.lock());
                     let token = network.next_connection_info_index();
-                    service.prepare_connection_info(token);
+                    unwrap_result!(service.lock()).prepare_connection_info(token);
                 }
                 UserCommand::Connect(our_info_index, their_info) => {
                     let mut network = unwrap_result!(network.lock());
@@ -529,13 +537,13 @@ fn main() {
                             continue;
                         },
                     };
-                    service.connect(our_info, their_info);
+                    unwrap_result!(service.lock()).connect(our_info, their_info);
                 }
                 UserCommand::Send(peer_index, message) => {
                     let network = unwrap_result!(network.lock());
                     match network.get_peer_id(peer_index) {
                         Some(ref mut peer_id) => {
-                            unwrap_result!(service.send(peer_id, message.into_bytes()));
+                            unwrap_result!(unwrap_result!(service.lock()).send(peer_id, message.into_bytes()));
                         }
                         None => println!("Invalid connection #"),
                     }
@@ -544,12 +552,12 @@ fn main() {
                     let mut network = unwrap_result!(network.lock());
                     let msg = message.into_bytes();
                     for (_, peer_id) in network.nodes.iter_mut() {
-                        unwrap_result!(service.send(peer_id, msg.clone()));
+                        unwrap_result!(unwrap_result!(service.lock()).send(peer_id, msg.clone()));
                     }
                 }
                 UserCommand::List => {
                     let network = unwrap_result!(network.lock());
-                    network.print_connected_nodes();
+                    network.print_connected_nodes(&unwrap_result!(service.lock()));
                 }
                 /*
                 UserCommand::Clean => {
