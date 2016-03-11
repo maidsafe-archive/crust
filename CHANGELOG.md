@@ -1,5 +1,11 @@
 # CRUST - Change Log
 
+## [0.9.1]
+- Reenable and improve uTP support
+- Improve usage of nat_traversal and use better version of `nat_traversal`
+  crate
+- Fix bootstrap cache management
+
 ## [0.9.0]
 - Remove cbor and ip dependencies.
 - Expose the PeerId in TheirConnectionInfo.

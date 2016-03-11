@@ -7,7 +7,7 @@ license = "GPL-3.0"
 name = "crust"
 readme = "README.md"
 repository = "https://github.com/maidsafe/crust"
-version = "0.9.0"
+version = "0.9.1"
 
 [dependencies]
 clippy = { version = "~0.0.46", optional = true }
