@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/nat_traversal-0.2.1/src/simple_udp_hole_punch_server.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/nat_traversal-0.3.0/src/simple_udp_hole_punch_server.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>simple_udp_hole_punch_server.rs.html -- source</title>
@@ -239,9 +239,9 @@
 <span class='kw'>const</span> <span class='ident'>UDP_READ_TIMEOUT_SECS</span>: <span class='ident'>u64</span> <span class='op'>=</span> <span class='number'>2</span>;
 
 <span class='doccomment'>/// RAII type for a hole punch server which speaks the simple hole punching protocol.</span>
-<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>SimpleUdpHolePunchServer</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span> {
+<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>SimpleUdpHolePunchServer</span><span class='op'>&lt;</span><span class='ident'>T</span>: <span class='ident'>AsRef</span><span class='op'>&lt;</span><span class='ident'>MappingContext</span><span class='op'>&gt;&gt;</span> {
     <span class='comment'>// TODO(canndrew): Use this to refresh our external addrs.</span>
-    <span class='ident'>_mapping_context</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>MappingContext</span>,
+    <span class='ident'>_mapping_context</span>: <span class='ident'>T</span>,
     <span class='ident'>stop_flag</span>: <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>AtomicBool</span><span class='op'>&gt;</span>,
     <span class='ident'>_raii_joiner</span>: <span class='ident'>RaiiThreadJoiner</span>,
     <span class='ident'>known_endpoints</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>SocketAddr</span><span class='op'>&gt;</span>,
@@ -283,15 +283,15 @@
     }
 }
 
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span> <span class='ident'>SimpleUdpHolePunchServer</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span> {
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>T</span>: <span class='ident'>AsRef</span><span class='op'>&lt;</span><span class='ident'>MappingContext</span><span class='op'>&gt;&gt;</span> <span class='ident'>SimpleUdpHolePunchServer</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> {
     <span class='doccomment'>/// Create a new server. This will spawn a background thread which will serve requests until</span>
     <span class='doccomment'>/// the server is dropped.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>mapping_context</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>MappingContext</span>)
-        <span class='op'>-&gt;</span> <span class='ident'>WResult</span><span class='op'>&lt;</span><span class='ident'>SimpleUdpHolePunchServer</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span>,
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>mapping_context</span>: <span class='ident'>T</span>)
+        <span class='op'>-&gt;</span> <span class='ident'>WResult</span><span class='op'>&lt;</span><span class='ident'>SimpleUdpHolePunchServer</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span>,
                    <span class='ident'>MappedUdpSocketMapWarning</span>,
                    <span class='ident'>SimpleUdpHolePunchServerNewError</span><span class='op'>&gt;</span>
     {
-        <span class='kw'>let</span> (<span class='ident'>mapped_socket</span>, <span class='ident'>warnings</span>) <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>MappedUdpSocket</span>::<span class='ident'>new</span>(<span class='ident'>mapping_context</span>) {
+        <span class='kw'>let</span> (<span class='ident'>mapped_socket</span>, <span class='ident'>warnings</span>) <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>MappedUdpSocket</span>::<span class='ident'>new</span>(<span class='ident'>mapping_context</span>.<span class='ident'>as_ref</span>()) {
             <span class='ident'>WOk</span>(<span class='ident'>mapped_socket</span>, <span class='ident'>warnings</span>) <span class='op'>=&gt;</span> (<span class='ident'>mapped_socket</span>, <span class='ident'>warnings</span>),
             <span class='ident'>WErr</span>(<span class='ident'>e</span>) <span class='op'>=&gt;</span> {
                 <span class='kw'>return</span> <span class='ident'>WErr</span>(<span class='ident'>SimpleUdpHolePunchServerNewError</span>::<span class='ident'>CreateMappedSocket</span> { <span class='ident'>err</span>: <span class='ident'>e</span> });
@@ -353,7 +353,7 @@
     }
 }
 
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span> <span class='ident'>Drop</span> <span class='kw'>for</span> <span class='ident'>SimpleUdpHolePunchServer</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span> {
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>T</span>: <span class='ident'>AsRef</span><span class='op'>&lt;</span><span class='ident'>MappingContext</span><span class='op'>&gt;&gt;</span> <span class='ident'>Drop</span> <span class='kw'>for</span> <span class='ident'>SimpleUdpHolePunchServer</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> {
     <span class='kw'>fn</span> <span class='ident'>drop</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) {
         <span class='self'>self</span>.<span class='ident'>stop_flag</span>.<span class='ident'>store</span>(<span class='boolval'>true</span>, <span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>);
     }
