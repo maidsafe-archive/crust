@@ -26,7 +26,8 @@ use sodiumoxide::crypto::box_::{PublicKey, SecretKey};
 use net2;
 use nat_traversal::{MappedUdpSocket, MappingContext, PrivRendezvousInfo,
                     MappedTcpSocket, tcp_punch_hole,
-                    PubRendezvousInfo, PunchedUdpSocket, gen_rendezvous_info};
+                    PubRendezvousInfo, PunchedUdpSocket, gen_rendezvous_info,
+                    SimpleUdpHolePunchServer, SimpleTcpHolePunchServer};
 
 
 use sender_receiver::CrustMsg;
@@ -125,6 +126,8 @@ pub struct Service {
     raii_tcp_acceptor: Option<RaiiTcpAcceptor>,
     tcp_enabled: bool,
     utp_enabled: bool,
+    udp_hole_punch_server: SimpleUdpHolePunchServer<Arc<MappingContext>>,
+    tcp_hole_punch_server: SimpleTcpHolePunchServer<Arc<MappingContext>>,
 }
 
 impl Service {
@@ -192,6 +195,21 @@ impl Service {
                                            config.enable_tcp,
                                            config.enable_utp);
 
+        let udp_hole_punch_server
+            = try!(SimpleUdpHolePunchServer::new(mapping_context.clone()).result_discard()
+                   .or(Err(io::Error::new(io::ErrorKind::Other,
+                                          "Failed to create UDP hole punch server"))));
+        let tcp_hole_punch_server
+            = try!(SimpleTcpHolePunchServer::new(mapping_context.clone()).result_discard()
+                   .or(Err(io::Error::new(io::ErrorKind::Other,
+                                          "Failed to create TCP hole punch server"))));
+
+        {
+            let mut static_contact_info = static_contact_info.lock().unwrap();
+            static_contact_info.udp_mapper_servers.extend(udp_hole_punch_server.addresses());
+            static_contact_info.tcp_mapper_servers.extend(tcp_hole_punch_server.addresses());
+        }
+
         let service = Service {
             static_contact_info: static_contact_info,
             peer_contact_infos: peer_contact_infos,
@@ -202,13 +220,15 @@ impl Service {
             bootstrap: bootstrap,
             our_keys: our_keys,
             connection_map: connection_map,
-            mapping_context: mapping_context,
+            mapping_context: mapping_context.clone(),
             tcp_acceptor_port: config.tcp_acceptor_port,
             utp_acceptor_port: config.utp_acceptor_port,
             raii_udp_listener: None,
             raii_tcp_acceptor: None,
             tcp_enabled: config.enable_tcp,
             utp_enabled: config.enable_utp,
+            udp_hole_punch_server: udp_hole_punch_server,
+            tcp_hole_punch_server: tcp_hole_punch_server,
         };
 
         Ok(service)
@@ -317,6 +337,12 @@ impl Service {
         let their_id = their_connection_info.id;
         if !unwrap_result!(self.connection_map.lock()).get(&their_id).into_iter().all(Vec::is_empty) {
             return;
+        }
+
+        {
+            let i = &their_connection_info.static_contact_info;
+            self.mapping_context.add_simple_udp_servers(i.udp_mapper_servers.iter().cloned());
+            self.mapping_context.add_simple_tcp_servers(i.tcp_mapper_servers.iter().cloned());
         }
 
         let event_tx = self.event_tx.clone();
@@ -433,18 +459,9 @@ impl Service {
         // then our conact info is our static liseners
         // for udp we can map another socket, but use same local port if accessable/mapped
         // otherwise do following
-        let mut peer_udp_listeners = Vec::with_capacity(100);
-        let mut peer_tcp_listeners = Vec::with_capacity(100);
-        for peer_contact_info in &*unwrap_result!(self.peer_contact_infos.lock()) {
-            peer_udp_listeners.extend(peer_contact_info.udp_mapper_servers.clone());
-            peer_tcp_listeners.extend(peer_contact_info.tcp_mapper_servers.clone());
-        }
-
         let our_static_contact_info = self.static_contact_info.clone();
         let event_tx = self.event_tx.clone();
 
-        self.mapping_context.add_simple_udp_servers(peer_udp_listeners);
-        self.mapping_context.add_simple_tcp_servers(peer_tcp_listeners);
         let result_external_socket = MappedUdpSocket::new(&self.mapping_context)
             .result_discard();
         let mapping_context = self.mapping_context.clone();
