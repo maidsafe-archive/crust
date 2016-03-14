@@ -18,7 +18,8 @@
 use std::collections::{HashMap, HashSet};
 use std::io;
 use std::net;
-use std::sync::{Arc, Mutex};
+use std::sync::{mpsc, Arc, Mutex};
+use std::fmt::Write;
 use service_discovery::ServiceDiscovery;
 use sodiumoxide;
 use sodiumoxide::crypto::box_;
@@ -329,100 +330,140 @@ impl Service {
 
         unwrap_result!(self.expected_peers.lock()).insert(their_connection_info.id);
 
-        // TODO connect to all the socket addresses of peer in parallel
-        let _joiner = thread!("PeerConnectionThread", move || {
-            let mut last_err = io::Error::new(io::ErrorKind::NotFound,
-                                              "No TCP acceptors found.");
-            if tcp_enabled {
-                let static_contact_info = their_connection_info.static_contact_info.clone();
-                for tcp_addr in their_connection_info.static_contact_info.tcp_acceptors {
+        let (result_tx, result_rx) = mpsc::channel();
+
+        if tcp_enabled {
+            let static_contact_info = their_connection_info.static_contact_info.clone();
+            for tcp_addr in their_connection_info.static_contact_info.tcp_acceptors {
+                let our_contact_info = our_contact_info.clone();
+                let event_tx = event_tx.clone();
+                let connection_map = connection_map.clone();
+                let result_tx = result_tx.clone();
+                let bootstrap_cache = bootstrap_cache.clone();
+                let static_contact_info = static_contact_info.clone();
+                let _ = thread!("Service::connect tcp direct", move || {
                     match connection::connect_tcp_endpoint(tcp_addr,
-                                                           our_contact_info.clone(),
+                                                           our_contact_info,
                                                            our_public_key,
-                                                           event_tx.clone(),
-                                                           connection_map.clone(),
+                                                           event_tx,
+                                                           connection_map,
                                                            Some(their_id)) {
                         Err(err) => {
-                            last_err = err;
-                            continue;
-                        }
+                            let err_msg = format!("Tcp direct connect failed: {}", err);
+                            let err = io::Error::new(err.kind(), err_msg);
+                            result_tx.send(Err(err));
+                        },
                         Ok(()) => {
+                            result_tx.send(Ok(()));
                             unwrap_result!(bootstrap_cache.lock()).update_contacts(
                                 vec![static_contact_info],
                                 vec![]
                             );
-                            return;
-                        }
+                        },
                     }
-                };
-
-            }
-
-            if let Some(udp_socket) = our_connection_info.udp_socket {
-                let res = PunchedUdpSocket::punch_hole(udp_socket,
-                                                       our_connection_info.priv_udp_info,
-                                                       their_connection_info.udp_info).result_discard();
-                let (udp_socket, public_endpoint) = match res {
-                    Ok(PunchedUdpSocket { socket, peer_addr }) => (socket, peer_addr),
-                    Err(_) => {
-                        let mut cm = unwrap_result!(connection_map.lock());
-                        if !cm.contains_key(&their_id) {
-                            let ev = Event::NewPeer(Err(io::Error::new(io::ErrorKind::Other,
-                                                                       "Failed to punch a hole")),
-                                                    their_id);
-                            let _ = event_tx.send(ev);
-                        }
-                        return;
-                    }
-                };
-
-                match connection::utp_rendezvous_connect(udp_socket,
-                                                         public_endpoint,
-                                                         UtpRendezvousConnectMode::Normal(their_id),
-                                                         our_public_key.clone(),
-                                                         event_tx.clone(),
-                                                         connection_map.clone()) {
-                    Err(e) => {
-                        let mut cm = unwrap_result!(connection_map.lock());
-                        if !cm.contains_key(&their_id) {
-                            let _ = event_tx.send(Event::NewPeer(Err(e), their_id));
-                        }
-                    }
-                    Ok(connection) => return,
-                };
+                });
             }
 
             if let Some(tcp_socket) = our_connection_info.tcp_socket {
-                let res = tcp_punch_hole(tcp_socket,
-                                         our_connection_info.priv_tcp_info,
-                                         their_connection_info.tcp_info).result_log();
-                match res {
-                    Ok(tcp_stream) => {
-                        match connection::tcp_rendezvous_connect(connection_map.clone(),
-                                                                 event_tx.clone(),
-                                                                 tcp_stream,
-                                                                 their_connection_info.id) {
-                            Ok(()) => {
-                                let mut c_map = unwrap_result!(connection_map.lock());
-                                let connections = c_map.entry(their_id).or_insert_with(|| Vec::with_capacity(1));
-                                if connections.is_empty() {
-                                    let _ = event_tx.send(Event::NewPeer(Ok(()), their_id));
-                                }
-                                return;
-                            },
-                            Err(e) => {
-                                last_err = From::from(e);
-                            },
-                        };
-                    },
-                    Err(e) => {
-                        last_err = From::from(e);
-                    },
-                };
-            }
+                let tcp_info = their_connection_info.tcp_info;
+                let event_tx = event_tx.clone();
+                let connection_map = connection_map.clone();
+                let result_tx = result_tx.clone();
+                let priv_tcp_info = our_connection_info.priv_tcp_info;
+                let _ = thread!("Service::connect tcp rendezvous", move || {
+                    let res = tcp_punch_hole(tcp_socket,
+                                             priv_tcp_info,
+                                             tcp_info).result_log();
+                    match res {
+                        Ok(tcp_stream) => {
+                            match connection::tcp_rendezvous_connect(connection_map,
+                                                                     event_tx,
+                                                                     tcp_stream,
+                                                                     their_id) {
+                                Ok(()) => {
+                                    result_tx.send(Ok(()));
+                                },
+                                Err(err) => {
+                                    let err_msg = format!("Tcp rendezvous connect failed: {}", err);
+                                    let err = io::Error::new(err.kind(), err_msg);
+                                    result_tx.send(Err(err));
+                                },
+                            }
+                        },
+                        Err(err) => {
+                            let err: io::Error = From::from(err);
+                            let err_msg = format!("Tcp hole punching failed: {}", err);
+                            let err = io::Error::new(err.kind(), err_msg);
+                            result_tx.send(Err(err));
+                        },
+                    };
+                });
+            };
+        }
 
-            if unwrap_result!(connection_map.lock()).get(&their_id).into_iter().all(Vec::is_empty) {
-                let _ = event_tx.send(Event::NewPeer(Err(last_err), their_id));
+        if utp_enabled {
+            if let Some(udp_socket) = our_connection_info.udp_socket {
+                let priv_udp_info = our_connection_info.priv_udp_info;
+                let udp_info = their_connection_info.udp_info;
+                let event_tx = event_tx.clone();
+                let connection_map = connection_map.clone();
+                let result_tx = result_tx.clone();
+                let _ = thread!("Service::connect utp rendezvous", move || {
+                    let res = PunchedUdpSocket::punch_hole(udp_socket,
+                                                           priv_udp_info,
+                                                           udp_info).result_log();
+                    let (udp_socket, public_endpoint) = match res {
+                        Ok(PunchedUdpSocket { socket, peer_addr}) => (socket, peer_addr),
+                        Err(err) => {
+                            let err: io::Error = From::from(err);
+                            let err_msg = format!("Udp hole punching failed: {}", err);
+                            let err = io::Error::new(err.kind(), err_msg);
+                            result_tx.send(Err(err));
+                            return;
+                        },
+                    };
+                    match connection::utp_rendezvous_connect(udp_socket,
+                                                             public_endpoint,
+                                                             UtpRendezvousConnectMode::Normal(their_id),
+                                                             our_public_key.clone(),
+                                                             event_tx,
+                                                             connection_map) {
+                        Err(err) => {
+                            let err_msg = format!("Utp rendezvous connect failed: {}", err);
+                            let err = io::Error::new(err.kind(), err_msg);
+                            result_tx.send(Err(err));
+                        },
+                        Ok(_) => {
+                            result_tx.send(Ok(()));
+                        },
+                    };
+                });
+            };
+        }
+
+        let _ = thread!("Service::connect aggregate results", move || {
+            let mut errors: Vec<io::Error> = Vec::new();
+            loop {
+                match result_rx.recv() {
+                    // Don't need to send a message here. Stupidly, the connect functions will have
+                    // raised the event from deep within them.
+                    Ok(Ok(())) => break,
+                    Ok(Err(err)) => {
+                        errors.push(err);
+                    },
+                    Err(mpsc::RecvError) => {
+                        // All of the senders have hung up without sending us an Ok(()). They all
+                        // must have failed to connect.
+                        let len = errors.len();
+                        let mut err_str: String = From::from("Connect failed. errors:");
+                        for (i, e) in errors.into_iter().enumerate() {
+                            write!(err_str, " ({} of {}) {}", i + 1, len, e);
+                        }
+                        let err = io::Error::new(io::ErrorKind::TimedOut, err_str);
+                        let _ = event_tx.send(Event::NewPeer(Err(err), their_id));
+                        return;
+                    },
+                }
             }
         });
     }
