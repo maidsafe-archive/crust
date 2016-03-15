@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-0' class='srclink' href='../src/regex/lib.rs.html#11-518' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-0' class='srclink' href='../src/regex/lib.rs.html#11-619' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>This crate provides a native implementation of regular expressions that is
 heavily based on RE2 both in syntax and in implementation. Notably,
 backreferences and arbitrary lookahead/lookbehind assertions are not
@@ -285,6 +285,16 @@ Cherokee letters:</p>
 <span class='kw'>let</span> <span class='ident'>re</span> <span class='op'>=</span> <span class='ident'>Regex</span>::<span class='ident'>new</span>(<span class='string'>r&quot;[\pN\p{Greek}\p{Cherokee}]+&quot;</span>).<span class='ident'>unwrap</span>();
 <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>re</span>.<span class='ident'>find</span>(<span class='string'>&quot;abcΔᎠβⅠᏴγδⅡxyz&quot;</span>), <span class='prelude-val'>Some</span>((<span class='number'>3</span>, <span class='number'>23</span>)));</pre>
 
+<h1 id='opt-out-of-unicode-support' class='section-header'><a href='#opt-out-of-unicode-support'>Opt out of Unicode support</a></h1>
+<p>The <code>bytes</code> sub-module provides a <code>Regex</code> type that can be used to match
+on <code>&amp;[u8]</code>. By default, text is interpreted as ASCII compatible text with
+all Unicode support disabled (e.g., <code>.</code> matches any byte instead of any
+Unicode codepoint). Unicode support can be selectively enabled with the
+<code>u</code> flag. See the <code>bytes</code> module documentation for more details.</p>
+
+<p>Note that Unicode support <em>cannot</em> be selectively disabled on the main
+<code>Regex</code> type that matches on <code>&amp;str</code>.</p>
+
 <h1 id='syntax' class='section-header'><a href='#syntax'>Syntax</a></h1>
 <p>The syntax supported in this crate is almost in an exact correspondence
 with the syntax supported by RE2. It is documented below.</p>
@@ -444,8 +454,27 @@ our time complexity guarantees, but can lead to unbounded memory growth
 proportional to the size of the input. As a stopgap, the DFA is only
 allowed to store a fixed number of states. (When the limit is reached, its
 states are wiped and continues on, possibly duplicating previous work.)</p>
-</div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+</div><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
 <table>
+                    <tr class=' module-item'>
+                        <td><a class='mod' href='bytes/index.html'
+                               title='regex::bytes'>bytes</a></td>
+                        <td class='docblock short'>
+                             <p>Match regular expressions on arbitrary bytes.</p>
+
+                        </td>
+                    </tr>
+                </table><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.CaptureNames.html'
+                               title='regex::CaptureNames'>CaptureNames</a></td>
+                        <td class='docblock short'>
+                             <p>An iterator over the names of all possible captures.</p>
+
+                        </td>
+                    </tr>
+                
                     <tr class=' module-item'>
                         <td><a class='struct' href='struct.Captures.html'
                                title='regex::Captures'>Captures</a></td>
@@ -479,6 +508,15 @@ particular regular expression.</p>
                                title='regex::NoExpand'>NoExpand</a></td>
                         <td class='docblock short'>
                              <p>NoExpand indicates literal string replacement.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Regex.html'
+                               title='regex::Regex'>Regex</a></td>
+                        <td class='docblock short'>
+                             <p>A compiled regular expression for matching Unicode strings.</p>
 
                         </td>
                     </tr>
@@ -569,30 +607,10 @@ regular expression.</p>
                 </table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
 <table>
                     <tr class=' module-item'>
-                        <td><a class='enum' href='enum.CaptureNames.html'
-                               title='regex::CaptureNames'>CaptureNames</a></td>
-                        <td class='docblock short'>
-                             <p>Yields the names of all possible captures.
-<code>None</code> indicates an unnamed capture; the first element
-(capture 0, the whole matched region) is always unnamed.</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
                         <td><a class='enum' href='enum.Error.html'
                                title='regex::Error'>Error</a></td>
                         <td class='docblock short'>
                              <p>An error that occurred during parsing or compiling a regular expression.</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='enum' href='enum.Regex.html'
-                               title='regex::Regex'>Regex</a></td>
-                        <td class='docblock short'>
-                             <p>A compiled regular expression</p>
 
                         </td>
                     </tr>

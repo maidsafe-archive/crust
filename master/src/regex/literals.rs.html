@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/regex-0.1.55/src/literals.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/regex-0.1.57/src/literals.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>literals.rs.html -- source</title>
@@ -851,6 +851,10 @@
 <span id="808">808</span>
 <span id="809">809</span>
 <span id="810">810</span>
+<span id="811">811</span>
+<span id="812">812</span>
+<span id="813">813</span>
+<span id="814">814</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2014-2015 The Rust Project Developers. See the COPYRIGHT</span>
 <span class='comment'>// file at the top-level directory of this distribution and at</span>
@@ -870,7 +874,7 @@
 <span class='kw'>use</span> <span class='ident'>aho_corasick</span>::{<span class='ident'>Automaton</span>, <span class='ident'>AcAutomaton</span>, <span class='ident'>FullAcAutomaton</span>};
 <span class='kw'>use</span> <span class='ident'>memchr</span>::{<span class='ident'>memchr</span>, <span class='ident'>memchr2</span>, <span class='ident'>memchr3</span>};
 
-<span class='kw'>use</span> <span class='ident'>char_utf8</span>::<span class='ident'>encode_utf8</span>;
+<span class='kw'>use</span> <span class='ident'>utf8</span>::<span class='ident'>encode_utf8</span>;
 <span class='kw'>use</span> <span class='ident'>prog</span>::{<span class='ident'>Program</span>, <span class='ident'>Inst</span>, <span class='ident'>InstBytes</span>, <span class='ident'>InstRanges</span>};
 
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Clone</span>, <span class='ident'>Eq</span>, <span class='ident'>PartialEq</span>)]</span>
@@ -1053,14 +1057,14 @@
     }
 }
 
-<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>BuildPrefixes</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span> {
+<span class='kw'>struct</span> <span class='ident'>BuildPrefixes</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span> {
     <span class='ident'>insts</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>Program</span>,
     <span class='ident'>limit</span>: <span class='ident'>usize</span>,
     <span class='ident'>alts</span>: <span class='ident'>AlternateLiterals</span>,
 }
 
 <span class='kw'>impl</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span> <span class='ident'>BuildPrefixes</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span> {
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>insts</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>Program</span>) <span class='op'>-&gt;</span> <span class='kw'>Self</span> {
+    <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>insts</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>Program</span>) <span class='op'>-&gt;</span> <span class='kw'>Self</span> {
         <span class='ident'>BuildPrefixes</span> {
             <span class='ident'>insts</span>: <span class='ident'>insts</span>,
             <span class='ident'>limit</span>: <span class='number'>250</span>,
@@ -1068,7 +1072,7 @@
         }
     }
 
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>literals</span>(<span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>AlternateLiterals</span> {
+    <span class='kw'>fn</span> <span class='ident'>literals</span>(<span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>AlternateLiterals</span> {
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>stack</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[<span class='self'>self</span>.<span class='ident'>insts</span>.<span class='ident'>skip</span>(<span class='self'>self</span>.<span class='ident'>insts</span>.<span class='ident'>start</span>)];
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>seen</span> <span class='op'>=</span> <span class='ident'>HashSet</span>::<span class='ident'>new</span>();
         <span class='kw'>while</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='kw-2'>mut</span> <span class='ident'>pc</span>) <span class='op'>=</span> <span class='ident'>stack</span>.<span class='ident'>pop</span>() {
@@ -1211,7 +1215,7 @@
         <span class='comment'>// Compute roughly how many bytes will be in our literals following</span>
         <span class='comment'>// the addition of the given range. If we blow our limit, then we</span>
         <span class='comment'>// can&#39;t add anything.</span>
-        <span class='kw'>let</span> <span class='ident'>nbytes</span> <span class='op'>=</span> (<span class='ident'>inst</span>.<span class='ident'>end</span> <span class='op'>-</span> <span class='ident'>inst</span>.<span class='ident'>start</span> <span class='op'>+</span> <span class='number'>1</span>) <span class='kw'>as</span> <span class='ident'>usize</span>;
+        <span class='kw'>let</span> <span class='ident'>nbytes</span> <span class='op'>=</span> (<span class='ident'>inst</span>.<span class='ident'>end</span> <span class='kw'>as</span> <span class='ident'>usize</span>) <span class='op'>-</span> (<span class='ident'>inst</span>.<span class='ident'>start</span> <span class='kw'>as</span> <span class='ident'>usize</span>) <span class='op'>+</span> <span class='number'>1</span>;
         <span class='kw'>let</span> <span class='ident'>new_byte_count</span> <span class='op'>=</span> (<span class='self'>self</span>.<span class='ident'>alts</span>.<span class='ident'>num_bytes</span>() <span class='op'>*</span> <span class='ident'>nbytes</span>)
                              <span class='op'>+</span> (<span class='self'>self</span>.<span class='ident'>alts</span>.<span class='ident'>literals</span>.<span class='ident'>len</span>() <span class='op'>*</span> <span class='ident'>nbytes</span>);
         <span class='kw'>if</span> <span class='ident'>new_byte_count</span> <span class='op'>&gt;</span> <span class='self'>self</span>.<span class='ident'>limit</span> {
@@ -1262,55 +1266,15 @@
     <span class='ident'>AC</span>(<span class='ident'>FullAcAutomaton</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;&gt;</span>),
 }
 
-<span class='kw'>impl</span> <span class='ident'>LiteralMatcher</span> {
-    <span class='doccomment'>/// Create a new prefix matching machine.</span>
-    <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='kw-2'>mut</span> <span class='ident'>alts</span>: <span class='ident'>AlternateLiterals</span>) <span class='op'>-&gt;</span> <span class='kw'>Self</span> {
-        <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>LiteralMatcher</span>::<span class='op'>*</span>;
-
-        <span class='kw'>if</span> <span class='ident'>alts</span>.<span class='ident'>is_empty</span>() {
-            <span class='ident'>Empty</span>
-        } <span class='kw'>else</span> <span class='kw'>if</span> <span class='ident'>alts</span>.<span class='ident'>distinct_single_bytes</span>() <span class='op'>&gt;=</span> <span class='number'>26</span> {
-            <span class='comment'>// Why do we do this? Well, it&#39;s a heuristic to prevent thrashing.</span>
-            <span class='comment'>// Basically, if our literal matcher has lots of literals that are</span>
-            <span class='comment'>// a single byte, then we lose a lot of the benefits of fast</span>
-            <span class='comment'>// literal searching. In particular, single bytes have a high</span>
-            <span class='comment'>// probability of matching. In a regex that rarely matches, we end</span>
-            <span class='comment'>// up ping-ponging between the literal matcher and the regex engine</span>
-            <span class='comment'>// for every byte of input. That&#39;s bad juju.</span>
-            <span class='comment'>//</span>
-            <span class='comment'>// Note that we only count distinct starting bytes from literals of</span>
-            <span class='comment'>// length 1. For literals longer than that, we assume they have</span>
-            <span class='comment'>// a lower probability of matching.</span>
-            <span class='comment'>//</span>
-            <span class='comment'>// This particular heuristic would be triggered on, e.g.,</span>
-            <span class='comment'>// `[a-z].+`. The prefix here is a single byte that is very likely</span>
-            <span class='comment'>// to match on any given byte in the input, so it&#39;s quicker just</span>
-            <span class='comment'>// to let the matching engine process it.</span>
-            <span class='comment'>//</span>
-            <span class='comment'>// TODO(burntsushi): Consider lowering the threshold!</span>
-            <span class='ident'>Empty</span>
-        } <span class='kw'>else</span> <span class='kw'>if</span> <span class='ident'>alts</span>.<span class='ident'>is_single_byte</span>() {
-            <span class='ident'>Byte</span>(<span class='ident'>alts</span>.<span class='ident'>literals</span>[<span class='number'>0</span>][<span class='number'>0</span>])
-        } <span class='kw'>else</span> <span class='kw'>if</span> <span class='ident'>alts</span>.<span class='ident'>all_single_bytes</span>() {
-            <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>set</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[<span class='boolval'>false</span>; <span class='number'>256</span>];
-            <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>bytes</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[];
-            <span class='kw'>for</span> <span class='ident'>lit</span> <span class='kw'>in</span> <span class='ident'>alts</span>.<span class='ident'>literals</span> {
-                <span class='ident'>bytes</span>.<span class='ident'>push</span>(<span class='ident'>lit</span>[<span class='number'>0</span>]);
-                <span class='ident'>set</span>[<span class='ident'>lit</span>[<span class='number'>0</span>] <span class='kw'>as</span> <span class='ident'>usize</span>] <span class='op'>=</span> <span class='boolval'>true</span>;
-            }
-            <span class='ident'>Bytes</span> { <span class='ident'>chars</span>: <span class='ident'>bytes</span>, <span class='ident'>sparse</span>: <span class='ident'>set</span> }
-        } <span class='kw'>else</span> <span class='kw'>if</span> <span class='ident'>alts</span>.<span class='ident'>is_one_literal</span>() {
-            <span class='ident'>Single</span>(<span class='ident'>SingleSearch</span>::<span class='ident'>new</span>(<span class='ident'>alts</span>.<span class='ident'>literals</span>.<span class='ident'>pop</span>().<span class='ident'>unwrap</span>()))
-        } <span class='kw'>else</span> {
-            <span class='ident'>AC</span>(<span class='ident'>AcAutomaton</span>::<span class='ident'>new</span>(<span class='ident'>alts</span>.<span class='ident'>literals</span>).<span class='ident'>into_full</span>())
-        }
-    }
-}
-
 <span class='kw'>impl</span> <span class='ident'>Literals</span> {
     <span class='doccomment'>/// Returns a matcher that never matches and never advances the input.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>empty</span>() <span class='op'>-&gt;</span> <span class='kw'>Self</span> {
         <span class='ident'>Literals</span> { <span class='ident'>at_match</span>: <span class='boolval'>false</span>, <span class='ident'>matcher</span>: <span class='ident'>LiteralMatcher</span>::<span class='ident'>Empty</span> }
+    }
+
+    <span class='doccomment'>/// Returns a matcher for literal prefixes in the given program.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>prefixes</span>(<span class='ident'>prog</span>: <span class='kw-2'>&amp;</span><span class='ident'>Program</span>) <span class='op'>-&gt;</span> <span class='kw'>Self</span> {
+        <span class='ident'>BuildPrefixes</span>::<span class='ident'>new</span>(<span class='ident'>prog</span>).<span class='ident'>literals</span>().<span class='ident'>into_matcher</span>()
     }
 
     <span class='doccomment'>/// Returns true if and only if a literal match corresponds to a match</span>
@@ -1384,19 +1348,19 @@
         }
     }
 
-    <span class='doccomment'>/// Returns all of the prefixes participating in this machine.</span>
+    <span class='doccomment'>/// Returns all of the literal participating in this machine.</span>
     <span class='doccomment'>///</span>
     <span class='doccomment'>/// For debug/testing only! (It allocates.)</span>
     <span class='attribute'>#[<span class='ident'>allow</span>(<span class='ident'>dead_code</span>)]</span>
-    <span class='kw'>fn</span> <span class='ident'>prefixes</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>String</span><span class='op'>&gt;</span> {
-        <span class='self'>self</span>.<span class='ident'>byte_prefixes</span>()
+    <span class='kw'>fn</span> <span class='ident'>strings</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>String</span><span class='op'>&gt;</span> {
+        <span class='self'>self</span>.<span class='ident'>byte_strings</span>()
             .<span class='ident'>into_iter</span>()
             .<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>p</span><span class='op'>|</span> <span class='ident'>String</span>::<span class='ident'>from_utf8</span>(<span class='ident'>p</span>).<span class='ident'>unwrap</span>())
             .<span class='ident'>collect</span>()
     }
 
     <span class='attribute'>#[<span class='ident'>allow</span>(<span class='ident'>dead_code</span>)]</span>
-    <span class='kw'>fn</span> <span class='ident'>byte_prefixes</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;&gt;</span> {
+    <span class='kw'>fn</span> <span class='ident'>byte_strings</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;&gt;</span> {
         <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>LiteralMatcher</span>::<span class='op'>*</span>;
         <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>matcher</span> {
             <span class='ident'>Empty</span> <span class='op'>=&gt;</span> <span class='macro'>vec</span><span class='macro'>!</span>[],
@@ -1406,6 +1370,50 @@
             }
             <span class='ident'>Single</span>(<span class='kw-2'>ref</span> <span class='ident'>searcher</span>) <span class='op'>=&gt;</span> <span class='macro'>vec</span><span class='macro'>!</span>[<span class='ident'>searcher</span>.<span class='ident'>pat</span>.<span class='ident'>clone</span>()],
             <span class='ident'>AC</span>(<span class='kw-2'>ref</span> <span class='ident'>aut</span>) <span class='op'>=&gt;</span> <span class='ident'>aut</span>.<span class='ident'>patterns</span>().<span class='ident'>iter</span>().<span class='ident'>cloned</span>().<span class='ident'>collect</span>(),
+        }
+    }
+}
+
+<span class='kw'>impl</span> <span class='ident'>LiteralMatcher</span> {
+    <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='kw-2'>mut</span> <span class='ident'>alts</span>: <span class='ident'>AlternateLiterals</span>) <span class='op'>-&gt;</span> <span class='kw'>Self</span> {
+        <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>LiteralMatcher</span>::<span class='op'>*</span>;
+
+        <span class='kw'>if</span> <span class='ident'>alts</span>.<span class='ident'>is_empty</span>() {
+            <span class='ident'>Empty</span>
+        } <span class='kw'>else</span> <span class='kw'>if</span> <span class='ident'>alts</span>.<span class='ident'>distinct_single_bytes</span>() <span class='op'>&gt;=</span> <span class='number'>26</span> {
+            <span class='comment'>// Why do we do this? Well, it&#39;s a heuristic to prevent thrashing.</span>
+            <span class='comment'>// Basically, if our literal matcher has lots of literals that are</span>
+            <span class='comment'>// a single byte, then we lose a lot of the benefits of fast</span>
+            <span class='comment'>// literal searching. In particular, single bytes have a high</span>
+            <span class='comment'>// probability of matching. In a regex that rarely matches, we end</span>
+            <span class='comment'>// up ping-ponging between the literal matcher and the regex engine</span>
+            <span class='comment'>// for every byte of input. That&#39;s bad juju.</span>
+            <span class='comment'>//</span>
+            <span class='comment'>// Note that we only count distinct starting bytes from literals of</span>
+            <span class='comment'>// length 1. For literals longer than that, we assume they have</span>
+            <span class='comment'>// a lower probability of matching.</span>
+            <span class='comment'>//</span>
+            <span class='comment'>// This particular heuristic would be triggered on, e.g.,</span>
+            <span class='comment'>// `[a-z].+`. The prefix here is a single byte that is very likely</span>
+            <span class='comment'>// to match on any given byte in the input, so it&#39;s quicker just</span>
+            <span class='comment'>// to let the matching engine process it.</span>
+            <span class='comment'>//</span>
+            <span class='comment'>// TODO(burntsushi): Consider lowering the threshold!</span>
+            <span class='ident'>Empty</span>
+        } <span class='kw'>else</span> <span class='kw'>if</span> <span class='ident'>alts</span>.<span class='ident'>is_single_byte</span>() {
+            <span class='ident'>Byte</span>(<span class='ident'>alts</span>.<span class='ident'>literals</span>[<span class='number'>0</span>][<span class='number'>0</span>])
+        } <span class='kw'>else</span> <span class='kw'>if</span> <span class='ident'>alts</span>.<span class='ident'>all_single_bytes</span>() {
+            <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>set</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[<span class='boolval'>false</span>; <span class='number'>256</span>];
+            <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>bytes</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[];
+            <span class='kw'>for</span> <span class='ident'>lit</span> <span class='kw'>in</span> <span class='ident'>alts</span>.<span class='ident'>literals</span> {
+                <span class='ident'>bytes</span>.<span class='ident'>push</span>(<span class='ident'>lit</span>[<span class='number'>0</span>]);
+                <span class='ident'>set</span>[<span class='ident'>lit</span>[<span class='number'>0</span>] <span class='kw'>as</span> <span class='ident'>usize</span>] <span class='op'>=</span> <span class='boolval'>true</span>;
+            }
+            <span class='ident'>Bytes</span> { <span class='ident'>chars</span>: <span class='ident'>bytes</span>, <span class='ident'>sparse</span>: <span class='ident'>set</span> }
+        } <span class='kw'>else</span> <span class='kw'>if</span> <span class='ident'>alts</span>.<span class='ident'>is_one_literal</span>() {
+            <span class='ident'>Single</span>(<span class='ident'>SingleSearch</span>::<span class='ident'>new</span>(<span class='ident'>alts</span>.<span class='ident'>literals</span>.<span class='ident'>pop</span>().<span class='ident'>unwrap</span>()))
+        } <span class='kw'>else</span> {
+            <span class='ident'>AC</span>(<span class='ident'>AcAutomaton</span>::<span class='ident'>new</span>(<span class='ident'>alts</span>.<span class='ident'>literals</span>).<span class='ident'>into_full</span>())
         }
     }
 }
@@ -1533,7 +1541,7 @@
             <span class='kw'>let</span> <span class='ident'>p</span> <span class='op'>=</span> <span class='macro'>prog</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>re</span>);
             <span class='kw'>let</span> <span class='ident'>prefixes</span> <span class='op'>=</span> <span class='ident'>BuildPrefixes</span>::<span class='ident'>new</span>(<span class='kw-2'>&amp;</span><span class='ident'>p</span>).<span class='ident'>literals</span>().<span class='ident'>into_matcher</span>();
             <span class='macro'>assert</span><span class='macro'>!</span>(<span class='op'>!</span><span class='ident'>prefixes</span>.<span class='ident'>at_match</span>());
-            <span class='ident'>prefixes</span>.<span class='ident'>prefixes</span>()
+            <span class='ident'>prefixes</span>.<span class='ident'>strings</span>()
         }}
     }
     <span class='macro'>macro_rules</span><span class='macro'>!</span> <span class='ident'>prefixes_complete</span> {
@@ -1541,7 +1549,7 @@
             <span class='kw'>let</span> <span class='ident'>p</span> <span class='op'>=</span> <span class='macro'>prog</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>re</span>);
             <span class='kw'>let</span> <span class='ident'>prefixes</span> <span class='op'>=</span> <span class='ident'>BuildPrefixes</span>::<span class='ident'>new</span>(<span class='kw-2'>&amp;</span><span class='ident'>p</span>).<span class='ident'>literals</span>().<span class='ident'>into_matcher</span>();
             <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>prefixes</span>.<span class='ident'>at_match</span>());
-            <span class='ident'>prefixes</span>.<span class='ident'>prefixes</span>()
+            <span class='ident'>prefixes</span>.<span class='ident'>strings</span>()
         }}
     }
 
