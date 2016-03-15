@@ -21,8 +21,9 @@ use std::io;
 use std::thread;
 use std::sync::mpsc;
 use std::sync::mpsc::Sender;
+use std::time::Duration;
 use std::io::{Read, Write};
-use net2::TcpBuilder;
+use net2::{TcpBuilder, TcpStreamExt};
 use crossbeam;
 
 use socket_utils::enable_so_reuseport;
@@ -44,6 +45,7 @@ pub fn connect_tcp(addr: SocketAddr) -> io::Result<(TcpStream, Sender<WriteEvent
 /// Upgrades a TcpStream to a Sender-Receiver pair that you can use to send and
 /// receive objects automatically.
 pub fn upgrade_tcp(stream: TcpStream) -> io::Result<(TcpStream, Sender<WriteEvent>)> {
+    try!(stream.set_keepalive(Some(Duration::from_secs(10))));
     let s1 = stream;
     let s2 = try!(s1.try_clone());
     Ok((s1, upgrade_writer(s2)))
