@@ -70,7 +70,7 @@ impl RaiiUdpListener {
         // Local addresses as they will be used by processes in LAN where TCP is disallowed.
         let mut addrs = Vec::new();
         if let Ok(MappedUdpSocket { endpoints, socket })
-            = MappedUdpSocket::map(try!(udp_socket.try_clone()), &mc).result_discard() {
+            = MappedUdpSocket::map(try!(udp_socket.try_clone()), &mc).result_log() {
             addrs.extend(endpoints.into_iter().map(|ma| ma.addr));
             let local_addr = unwrap_result!(socket.local_addr());
             addrs.push(SocketAddr(local_addr));
@@ -131,7 +131,7 @@ impl RaiiUdpListener {
             ListenerRequest::Connect { our_info, .. } => {
                 let their_info = our_info;
                 let MappedUdpSocket { socket, endpoints } = {
-                    match MappedUdpSocket::new(&mc).result_discard() {
+                    match MappedUdpSocket::new(&mc).result_log() {
                         Ok(mapped_socket) => mapped_socket,
                         Err(_) => return,
                     }
@@ -151,7 +151,7 @@ impl RaiiUdpListener {
                 }
 
                 let PunchedUdpSocket { socket, peer_addr } = {
-                    match PunchedUdpSocket::punch_hole(socket, our_priv_info, their_info).result_discard() {
+                    match PunchedUdpSocket::punch_hole(socket, our_priv_info, their_info).result_log() {
                         Ok(punched_socket) => punched_socket,
                         Err(e) => return,
                     }

@@ -163,7 +163,7 @@ impl Service {
         let service_discovery = try!(ServiceDiscovery::new_with_generator(service_discovery_port,
                                                                           generator));
 
-        let mapping_context = try!(MappingContext::new().result_discard()
+        let mapping_context = try!(MappingContext::new().result_log()
                                    .or_else(|e| {
             Err(io::Error::new(io::ErrorKind::Other,
                                format!("Failed to create MappingContext: {}", e)))
@@ -196,11 +196,11 @@ impl Service {
                                            config.enable_utp);
 
         let udp_hole_punch_server
-            = try!(SimpleUdpHolePunchServer::new(mapping_context.clone()).result_discard()
+            = try!(SimpleUdpHolePunchServer::new(mapping_context.clone()).result_log()
                    .or(Err(io::Error::new(io::ErrorKind::Other,
                                           "Failed to create UDP hole punch server"))));
         let tcp_hole_punch_server
-            = try!(SimpleTcpHolePunchServer::new(mapping_context.clone()).result_discard()
+            = try!(SimpleTcpHolePunchServer::new(mapping_context.clone()).result_log()
                    .or(Err(io::Error::new(io::ErrorKind::Other,
                                           "Failed to create TCP hole punch server"))));
 
@@ -387,7 +387,7 @@ impl Service {
             if let Some(udp_socket) = our_connection_info.udp_socket {
                 let res = PunchedUdpSocket::punch_hole(udp_socket,
                                                        our_connection_info.priv_udp_info,
-                                                       their_connection_info.udp_info).result_discard();
+                                                       their_connection_info.udp_info).result_log();
                 let (udp_socket, public_endpoint) = match res {
                     Ok(PunchedUdpSocket { socket, peer_addr }) => (socket, peer_addr),
                     Err(_) => {
@@ -463,7 +463,7 @@ impl Service {
         let event_tx = self.event_tx.clone();
 
         let result_external_socket = MappedUdpSocket::new(&self.mapping_context)
-            .result_discard();
+            .result_log();
         let mapping_context = self.mapping_context.clone();
         let our_pub_key = self.our_keys.0.clone();
         let tcp_enabled = self.tcp_enabled;
