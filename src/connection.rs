@@ -172,7 +172,7 @@ pub fn connect(peer_contact: StaticContactInfo,
 
     if utp_enabled {
         let (udp_socket, (our_priv_info, our_pub_info)) = {
-            match MappedUdpSocket::new(mc).result_discard() {
+            match MappedUdpSocket::new(mc).result_log() {
                 Ok(MappedUdpSocket { socket, endpoints }) => {
                     (socket, gen_rendezvous_info(endpoints))
                 }
@@ -203,7 +203,7 @@ pub fn connect(peer_contact: StaticContactInfo,
                             let cloned_udp_socket = try!(udp_socket.try_clone());
                             match PunchedUdpSocket::punch_hole(cloned_udp_socket,
                                                                our_priv_info.clone(),
-                                                               their_info).result_discard() {
+                                                               their_info).result_log() {
                                 Ok(PunchedUdpSocket { socket, peer_addr }) => {
                                     match utp_rendezvous_connect(
                                         socket,
