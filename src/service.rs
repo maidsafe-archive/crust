@@ -251,7 +251,8 @@ impl Service {
                                                    self.event_tx.clone(),
                                                    self.connection_map.clone(),
                                                    self.bootstrap_cache.clone(),
-                                                   self.expected_peers.clone())));
+                                                   self.expected_peers.clone(),
+                                                   self.mapping_context.clone())));
         Ok(())
     }
 
