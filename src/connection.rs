@@ -23,6 +23,7 @@ use std::hash::{Hash, Hasher};
 use std::sync::atomic::{Ordering, AtomicBool};
 use std::net::{Shutdown, TcpStream, UdpSocket};
 use std::io;
+use std::time::Duration;
 use itertools::Itertools;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 use maidsafe_utilities::serialisation::{deserialise, serialise};
@@ -44,6 +45,8 @@ use bootstrap_handler::BootstrapHandler;
 use nat_traversal::{MappedUdpSocket, MappingContext, PrivRendezvousInfo,
                     PunchedUdpSocket, PubRendezvousInfo, gen_rendezvous_info};
 use sodiumoxide::crypto::box_::PublicKey;
+
+const UDP_CONNECT_TIMEOUT_MS : u64 = 2000;
 
 /// An open connection that can be used to send messages to a peer.
 ///
@@ -181,6 +184,8 @@ pub fn connect(peer_contact: StaticContactInfo,
             }
         };
 
+        udp_socket.set_read_timeout(Some(Duration::from_millis(UDP_CONNECT_TIMEOUT_MS)));
+
         let connect_req = ListenerRequest::Connect {
             our_info: our_pub_info.clone(),
             pub_key: our_public_key.clone(),
@@ -299,14 +304,14 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
             }
         }
     };
-    
+
     let event = match their_expected_id {
         None => Event::BootstrapConnect(their_id),
         Some(_) => Event::NewPeer(Ok(()), their_id),
     };
 
     let network_tx = RaiiSender(writer);
-    register_tcp_connection(connection_map, 
+    register_tcp_connection(connection_map,
                             their_id,
                             event,
                             network_rx,
