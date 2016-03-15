@@ -46,6 +46,7 @@ extern crate docopt;
 extern crate rand;
 extern crate term;
 extern crate time;
+extern crate loggerv;
 
 use docopt::Docopt;
 use rand::random;
@@ -309,7 +310,7 @@ fn handle_new_peer(service: &Service, protected_network: Arc<Mutex<Network>>, pe
 }
 
 fn main() {
-    ::maidsafe_utilities::log::init(true);
+    unwrap_result!(loggerv::init_with_level(log::LogLevel::Warn));
 
     let args: Args = Docopt::new(USAGE)
                          .and_then(|docopt| docopt.decode())
