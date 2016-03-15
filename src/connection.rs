@@ -21,7 +21,8 @@ use std::fmt;
 use std::sync::{Arc, Mutex};
 use std::hash::{Hash, Hasher};
 use std::sync::atomic::{Ordering, AtomicBool};
-use std::net::{Shutdown, TcpStream, UdpSocket};
+use std::net::{Shutdown, TcpStream, UdpSocket, Ipv4Addr, SocketAddrV4};
+use std::net;
 use std::io;
 use itertools::Itertools;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
@@ -43,6 +44,7 @@ use peer_id::PeerId;
 use bootstrap_handler::BootstrapHandler;
 use nat_traversal::{MappedUdpSocket, MappingContext, PrivRendezvousInfo,
                     PunchedUdpSocket, PubRendezvousInfo, gen_rendezvous_info};
+use nat_traversal;
 use sodiumoxide::crypto::box_::PublicKey;
 
 /// An open connection that can be used to send messages to a peer.
@@ -404,33 +406,42 @@ pub fn start_tcp_accept(port: u16,
                         // TODO(canndrew): We currently don't share static contact infos on
                         // accepting a connection
                         _bootstrap_cache: Arc<Mutex<BootstrapHandler>>,
-                        expected_peers: Arc<Mutex<HashSet<PeerId>>>)
+                        expected_peers: Arc<Mutex<HashSet<PeerId>>>,
+                        mapping_context: Arc<MappingContext>)
                         -> io::Result<RaiiTcpAcceptor> {
     use std::io::Write;
     use std::io::Read;
 
-    let tcp_builder_listener = try!(TcpBuilder::new_v4());
-    try!(socket_utils::enable_so_reuseport(try!(tcp_builder_listener.reuse_address(true))));
-    let _ = try!(tcp_builder_listener.bind(("0.0.0.0", port)));
+    let addr = net::SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), port));
+    let tcp_builder_listener = try!(nat_traversal::new_reusably_bound_tcp_socket(&addr));
+
+    let mapped_tcp_socket = match nat_traversal::MappedTcpSocket::map(tcp_builder_listener, mapping_context.as_ref())
+                                                                 .result_log() {
+        Ok(mapped_tcp_socket) => mapped_tcp_socket,
+        Err(err) => return Err(From::from(err)),
+    };
+    let tcp_builder_listener = mapped_tcp_socket.socket;
+    let mut addrs: Vec<SocketAddr> = mapped_tcp_socket.endpoints.into_iter().map(|m| m.addr).collect();
 
     let listener = try!(tcp_builder_listener.listen(1));
     let new_port = try!(listener.local_addr()).port(); // Useful if supplied port was 0
 
-    // TODO: get TCP socket's external addresses (maybe using peer_contact_infos.tcp_acceptors)
-    // addrs.push(external_addr); // addrs is declared below
+    // This is to help with some particularly nasty routers (such as @andreas') that won't map a
+    // port correctly even if port forwarding is set up. They might be configured to forward
+    // external port 1234 to internal port 5678 but an outgoing connection from port 5678 won't 
+    // appear from 1234, making external mapper servers useless.
+    for i in 0..addrs.len() {
+        let ip = addrs[i].ip();
+        let addr = SocketAddr(net::SocketAddr::new(ip, new_port));
+        if !addrs.contains(&addr) {
+            addrs.push(addr);
+        }
+    }
+
+    unwrap_result!(our_contact_info.lock()).tcp_acceptors.extend(addrs);
 
     let stop_flag = Arc::new(AtomicBool::new(false));
     let cloned_stop_flag = stop_flag.clone();
-
-    let mut addrs = Vec::new();
-
-    let if_addrs = try!(get_if_addrs())
-                       .into_iter()
-                       .map(|i| SocketAddr::new(i.addr.ip(), new_port))
-                       .collect_vec();
-    addrs.extend(if_addrs);
-
-    unwrap_result!(our_contact_info.lock()).tcp_acceptors.extend(addrs);
 
     let joiner = RaiiThreadJoiner::new(thread!("TcpAcceptorThread", move || {
         loop {
