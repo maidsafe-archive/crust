@@ -188,10 +188,17 @@ pub fn connect(peer_contact: StaticContactInfo,
         let serialised_connect_req = unwrap_result!(serialise(&connect_req));
         let mut read_buf = [0; 1024];
 
+        {
+            let utp_custom_listeners = peer_contact.utp_custom_listeners.clone();
+            let udp_socket = try!(udp_socket.try_clone());
+            let serialised_connect_req = serialised_connect_req.clone();
+            let _ = thread!("TcpNetworkReader", move || {
+                for udp_addr in utp_custom_listeners {
+                    let _ = udp_socket.send_to(&serialised_connect_req, &*udp_addr);
+                }
+            });
+        }
         for udp_addr in peer_contact.utp_custom_listeners {
-            if udp_socket.send_to(&serialised_connect_req, &*udp_addr).is_err() {
-                continue;
-            }
             match udp_socket.recv_from(&mut read_buf) {
                 Ok((bytes_rxd, _peer_addr)) => {
                     match deserialise::<ListenerResponse>(&read_buf[..bytes_rxd]) {
