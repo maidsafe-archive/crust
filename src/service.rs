@@ -588,7 +588,6 @@ impl Drop for Service {
 #[cfg(test)]
 mod test {
     use super::*;
-    use bootstrap_handler::BootstrapHandler;
     use event::Event;
     use endpoint::Protocol;
 
@@ -643,8 +642,6 @@ mod test {
 
     #[test]
     fn start_stop_service() {
-        BootstrapHandler::cleanup();
-
         let (event_sender, _, _) = get_event_sender();
         let _service = unwrap_result!(Service::new(event_sender, 44444));
     }
@@ -805,8 +802,6 @@ mod test {
 
     #[test]
     fn drop_disconnects() {
-        BootstrapHandler::cleanup();
-
         let port = 45669;
         let (event_sender_0, category_rx_0, event_rx_0) = get_event_sender();
         let (event_sender_1, category_rx_1, event_rx_1) = get_event_sender();
@@ -1167,14 +1162,14 @@ mod test {
 
         const BEACON_PORT: u16 = 45672;
 
-        BootstrapHandler::cleanup();
-
         let mut contact_info = StaticContactInfo::default();
 
-        let invalid_addr = SocketAddr(net::SocketAddr::from_str("127.0.0.1:0").unwrap());
+        let invalid_addrs = vec![
+            SocketAddr(net::SocketAddr::from_str("127.0.0.1:0").unwrap()),
+        ];
 
-        contact_info.utp_custom_listeners = vec![invalid_addr];
-        contact_info.tcp_acceptors = vec![invalid_addr];
+        contact_info.utp_custom_listeners = invalid_addrs.clone();
+        contact_info.tcp_acceptors = invalid_addrs.clone();
 
         let mut config = Config::default();
         config.hard_coded_contacts = vec![contact_info];
@@ -1182,7 +1177,7 @@ mod test {
         let (event_sender, category_rx, event_rx) = get_event_sender();
         let service = unwrap_result!(Service::new_with_config(event_sender, BEACON_PORT, &config));
 
-        timebomb(Duration::from_millis(5000), move || {
+        timebomb(Duration::from_secs(70), move || {
             match unwrap_result!(event_rx.recv()) {
                 Event::BootstrapFinished => (),
                 event => panic!("Received unexpected event: {:?}", event),
@@ -1194,8 +1189,6 @@ mod test {
     fn new_peer_is_not_raised_if_only_one_party_calls_connect() {
         const PREPARE_CI_TOKEN: u32 = 0;
         const BEACON_PORT: u16 = 45671;
-
-        BootstrapHandler::cleanup();
 
         let (event_sender_0, category_rx_0, event_rx_0) = get_event_sender();
         let (event_sender_1, category_rx_1, event_rx_1) = get_event_sender();

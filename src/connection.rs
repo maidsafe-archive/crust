@@ -23,6 +23,7 @@ use std::hash::{Hash, Hasher};
 use std::sync::atomic::{Ordering, AtomicBool};
 use std::net::{Shutdown, TcpStream, UdpSocket};
 use std::io;
+use std::time::Duration;
 use itertools::Itertools;
 use maidsafe_utilities::event_sender::{EventSenderError, MaidSafeEventCategory};
 use maidsafe_utilities::thread::RaiiThreadJoiner;
@@ -47,6 +48,8 @@ use nat_traversal::{MappedUdpSocket, MappingContext, PrivRendezvousInfo,
 use sodiumoxide::crypto::box_::PublicKey;
 
 type CrustEventSenderError = EventSenderError<MaidSafeEventCategory, Event>;
+
+const UDP_READ_TIMEOUT_MS : u64 = 2000;
 
 /// An open connection that can be used to send messages to a peer.
 ///
@@ -169,7 +172,7 @@ pub fn connect(peer_contact: StaticContactInfo,
                                        None,
                                        None) {
                 Ok(()) => return Ok(()),
-                Err(e) => last_err = e,
+                Err(e) => last_err = e
             }
         }
     }
@@ -184,6 +187,8 @@ pub fn connect(peer_contact: StaticContactInfo,
                                                     "Cannot map UDP socket")),
             }
         };
+
+        try!(udp_socket.set_read_timeout(Some(Duration::from_millis(UDP_READ_TIMEOUT_MS))));
 
         let connect_req = ListenerRequest::Connect {
             our_info: our_pub_info.clone(),
@@ -217,24 +222,16 @@ pub fn connect(peer_contact: StaticContactInfo,
                                         event_tx.clone(),
                                         connection_map.clone()) {
                                         Ok(()) => return Ok(()),
-                                        Err(_) => {
-                                            continue;
-                                        },
+                                        Err(_) => continue,
                                     }
                                 }
-                                _ => {
-                                    continue;
-                                },
+                                _ => continue,
                             }
                         }
-                        _ => {
-                            continue;
-                        },
+                        _ => continue,
                     }
                 }
-                Err(_) => {
-                    continue;
-                },
+                Err(_) => continue,
             }
         }
     }
