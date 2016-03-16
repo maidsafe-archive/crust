@@ -355,7 +355,6 @@ impl Service {
         let tcp_enabled = self.tcp_enabled;
         let utp_enabled = self.utp_enabled;
 
-        unwrap_result!(self.expected_peers.lock()).insert(their_connection_info.id);
 
         let (result_tx, result_rx) = mpsc::channel();
 
@@ -365,6 +364,7 @@ impl Service {
                 let our_contact_info = our_contact_info.clone();
                 let event_tx = event_tx.clone();
                 let connection_map = connection_map.clone();
+                let expected_peers = self.expected_peers.clone();
                 let result_tx = result_tx.clone();
                 let bootstrap_cache = bootstrap_cache.clone();
                 let static_contact_info = static_contact_info.clone();
@@ -374,6 +374,7 @@ impl Service {
                                                            our_public_key,
                                                            event_tx,
                                                            connection_map,
+                                                           Some(expected_peers),
                                                            Some(their_id)) {
                         Err(err) => {
                             let err_msg = format!("Tcp direct connect failed: {}", err);
@@ -588,6 +589,7 @@ impl Drop for Service {
 #[cfg(test)]
 mod test {
     use super::*;
+    use bootstrap_handler::BootstrapHandler;
     use event::Event;
     use endpoint::Protocol;
 
@@ -642,6 +644,8 @@ mod test {
 
     #[test]
     fn start_stop_service() {
+        BootstrapHandler::cleanup();
+
         let (event_sender, _, _) = get_event_sender();
         let _service = unwrap_result!(Service::new(event_sender, 44444));
     }
@@ -802,6 +806,8 @@ mod test {
 
     #[test]
     fn drop_disconnects() {
+        BootstrapHandler::cleanup();
+
         let port = 45669;
         let (event_sender_0, category_rx_0, event_rx_0) = get_event_sender();
         let (event_sender_1, category_rx_1, event_rx_1) = get_event_sender();
@@ -1154,7 +1160,6 @@ mod test {
 
     #[test]
     fn skip_invalid_bootstrap_contacts() {
-        use bootstrap_handler::BootstrapHandler;
         use config_handler::Config;
         use socket_addr::SocketAddr;
         use static_contact_info::StaticContactInfo;
@@ -1184,5 +1189,72 @@ mod test {
                 event => panic!("Received unexpected event: {:?}", event),
             }
         });
+    }
+
+    #[test]
+    fn new_peer_is_not_raised_if_only_one_party_calls_connect() {
+        const PREPARE_CI_TOKEN: u32 = 0;
+        const BEACON_PORT: u16 = 45671;
+
+        BootstrapHandler::cleanup();
+
+        let (event_sender_0, category_rx_0, event_rx_0) = get_event_sender();
+        let (event_sender_1, category_rx_1, event_rx_1) = get_event_sender();
+
+        let mut service_0 = unwrap_result!(Service::new(event_sender_0, BEACON_PORT));
+        match unwrap_result!(event_rx_0.recv()) {
+            Event::BootstrapFinished => (),
+            event => panic!("Received unexpected event: {:?}", event),
+        }
+
+        unwrap_result!(service_0.start_listening_tcp());
+        unwrap_result!(service_0.start_listening_utp());
+
+        let mut service_1 = unwrap_result!(Service::new(event_sender_1, BEACON_PORT));
+        match unwrap_result!(event_rx_1.recv()) {
+            Event::BootstrapFinished => (),
+            event => panic!("Received unexpected event: {:?}", event),
+        }
+
+        unwrap_result!(service_1.start_listening_tcp());
+        unwrap_result!(service_1.start_listening_utp());
+
+        service_0.prepare_connection_info(PREPARE_CI_TOKEN);
+        let our_ci_0 = {
+            match unwrap_result!(event_rx_0.recv()) {
+                Event::ConnectionInfoPrepared(cir) => {
+                    assert_eq!(cir.result_token, PREPARE_CI_TOKEN);
+                    unwrap_result!(cir.result)
+                }
+                event => panic!("Received unexpected event: {:?}", event),
+            }
+        };
+
+        service_1.prepare_connection_info(PREPARE_CI_TOKEN);
+        let our_ci_1 = {
+            match unwrap_result!(event_rx_1.recv()) {
+                Event::ConnectionInfoPrepared(cir) => {
+                    assert_eq!(cir.result_token, PREPARE_CI_TOKEN);
+                    unwrap_result!(cir.result)
+                }
+                event => panic!("Received unexpected event: {:?}", event),
+            }
+        };
+
+        let their_ci_1 = our_ci_1.to_their_connection_info();
+
+        service_0.connect(our_ci_0, their_ci_1);
+
+        thread::sleep(Duration::from_millis(1000));
+
+        match event_rx_0.try_recv() {
+            Ok(Event::NewPeer(Ok(()), _)) => panic!("Unexpected NewPeer event"),
+            _ => (),
+        }
+
+        match event_rx_1.try_recv() {
+            Ok(Event::NewPeer(Ok(()), _)) => panic!("Unexpected NewPeer event"),
+            _ => (),
+        }
     }
 }
