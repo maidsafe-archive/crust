@@ -1151,4 +1151,38 @@ mod test {
     fn start_three_service_tcp_rendezvous_connect() {
         start_three_service_rendezvous_connect(Protocol::Tcp);
     }
+
+    #[test]
+    fn skip_invalid_bootstrap_contacts() {
+        use bootstrap_handler::BootstrapHandler;
+        use config_handler::Config;
+        use socket_addr::SocketAddr;
+        use static_contact_info::StaticContactInfo;
+        use std::net;
+        use std::str::FromStr;
+
+        const BEACON_PORT: u16 = 45672;
+
+        BootstrapHandler::cleanup();
+
+        let mut contact_info = StaticContactInfo::default();
+
+        let invalid_addr = SocketAddr(net::SocketAddr::from_str("127.0.0.1:0").unwrap());
+
+        contact_info.utp_custom_listeners = vec![invalid_addr];
+        contact_info.tcp_acceptors = vec![invalid_addr];
+
+        let mut config = Config::default();
+        config.hard_coded_contacts = vec![contact_info];
+
+        let (event_sender, category_rx, event_rx) = get_event_sender();
+        let service = unwrap_result!(Service::new_with_config(event_sender, BEACON_PORT, &config));
+
+        timebomb(Duration::from_millis(5000), move || {
+            match unwrap_result!(event_rx.recv()) {
+                Event::BootstrapFinished => (),
+                event => panic!("Received unexpected event: {:?}", event),
+            }
+        });
+    }
 }
