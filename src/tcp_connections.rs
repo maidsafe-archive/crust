@@ -259,7 +259,7 @@ mod test {
 
             for _ in 0..MSG_COUNT {
                 match deserialise_from::<_, CrustMsg>(&mut reader) {
-                    Ok(CrustMsg::Message(msg)) => println!("received {:?}", ::std::str::from_utf8(&msg)),
+                    Ok(CrustMsg::Message(msg)) => (),
                     Ok(m) => panic!("Unexpected crust message type {:#?}", m),
                     Err(what) => panic!("Problem decoding message {}", what),
                 }
