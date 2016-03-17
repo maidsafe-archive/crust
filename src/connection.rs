@@ -51,7 +51,7 @@ use sodiumoxide::crypto::box_::PublicKey;
 
 type CrustEventSenderError = EventSenderError<MaidSafeEventCategory, Event>;
 
-const UDP_READ_TIMEOUT_MS : u64 = 2000;
+const UDP_READ_TIMEOUT_MS : u64 = 20_000;
 
 /// An open connection that can be used to send messages to a peer.
 ///
@@ -438,7 +438,7 @@ pub fn start_tcp_accept(port: u16,
 
     // This is to help with some particularly nasty routers (such as @andreas') that won't map a
     // port correctly even if port forwarding is set up. They might be configured to forward
-    // external port 1234 to internal port 5678 but an outgoing connection from port 5678 won't 
+    // external port 1234 to internal port 5678 but an outgoing connection from port 5678 won't
     // appear from 1234, making external mapper servers useless.
     for i in 0..addrs.len() {
         let ip = addrs[i].ip();
