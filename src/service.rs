@@ -170,7 +170,8 @@ impl Service {
                                format!("Failed to create MappingContext: {}", e)))
         }));
         // Form initial peer contact infos - these will also contain echo-service addrs.
-        let bootstrap_cache = Arc::new(Mutex::new(try!(BootstrapHandler::new())));
+        let bootstrap_cache =
+            Arc::new(Mutex::new(try!(BootstrapHandler::new(&config.bootstrap_cache_name))));
         let bootstrap_contacts = try!(bootstrap::get_known_contacts(&service_discovery,
                                                                     bootstrap_cache.clone(),
                                                                     &config));
@@ -597,6 +598,7 @@ mod test {
 
     use std::mem;
     use std::time::Duration;
+    use std::sync::atomic::{AtomicUsize, ATOMIC_USIZE_INIT, Ordering};
     use std::sync::{Mutex, Arc, Barrier};
     use std::sync::mpsc;
     use std::sync::mpsc::Receiver;
@@ -642,6 +644,13 @@ mod test {
                 Err(mpsc::TryRecvError::Disconnected) => jh.join(),
             }
         })
+    }
+
+    // Generate unique name for the bootstrap cache.
+    fn gen_bootstrap_cache_name() -> String {
+        static COUNTER: AtomicUsize = ATOMIC_USIZE_INIT;
+        format!("test{}.bootstrap.cache",
+                COUNTER.fetch_add(1, Ordering::Relaxed))
     }
 
     #[test]
