@@ -52,22 +52,22 @@ pub fn upgrade_tcp(stream: TcpStream) -> io::Result<(TcpStream, Sender<WriteEven
 fn upgrade_writer(mut stream: TcpStream) -> Sender<WriteEvent> {
     let (tx, rx) = mpsc::channel();
     let _ = unwrap_result!(thread::Builder::new()
-                .name("TCP writer".to_owned())
-                .spawn(move || {
-                    while let Ok(event) = rx.recv() {
-                        match event {
-                            WriteEvent::Write(data) => {
-                                use std::io::Write;
-                                let msg = unwrap_result!(serialise(&data));
-                                if stream.write_all(&msg).is_err() {
-                                    break;
-                                }
-                            }
-                            WriteEvent::Shutdown => break,
-                        }
-                    }
-                    stream.shutdown(Shutdown::Both)
-                }));
+                               .name("TCP writer".to_owned())
+                               .spawn(move || {
+                                   while let Ok(event) = rx.recv() {
+                                       match event {
+                                           WriteEvent::Write(data) => {
+                                               use std::io::Write;
+                                               let msg = unwrap_result!(serialise(&data));
+                                               if stream.write_all(&msg).is_err() {
+                                                   break;
+                                               }
+                                           }
+                                           WriteEvent::Shutdown => break,
+                                       }
+                                   }
+                                   stream.shutdown(Shutdown::Both)
+                               }));
     tx
 }
 
@@ -243,7 +243,9 @@ mod test {
 
         const MSG_COUNT: u16 = 20;
 
-        fn encode<T>(value: &T) -> Vec<u8> where T: Encodable {
+        fn encode<T>(value: &T) -> Vec<u8>
+            where T: Encodable
+        {
             unwrap_result!(serialise(value))
         }
 
