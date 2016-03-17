@@ -85,4 +85,3 @@ pub enum CrustMsg {
     Connect(PublicKey),
     Message(Vec<u8>), // encrypted data
 }
-
