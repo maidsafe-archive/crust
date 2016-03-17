@@ -358,79 +358,79 @@ impl Service {
 
         let (result_tx, result_rx) = mpsc::channel();
 
-        // FIXME: TCP rendezvous temporarily disabled, until
-        // https://github.com/maidsafe/crust/issues/601 is fixed.
-        //
-        // if tcp_enabled {
-        //     let static_contact_info = their_connection_info.static_contact_info.clone();
-        //     for tcp_addr in their_connection_info.static_contact_info.tcp_acceptors {
-        //         let our_contact_info = our_contact_info.clone();
-        //         let event_tx = event_tx.clone();
-        //         let connection_map = connection_map.clone();
-        //         let expected_peers = self.expected_peers.clone();
-        //         let result_tx = result_tx.clone();
-        //         let bootstrap_cache = bootstrap_cache.clone();
-        //         let static_contact_info = static_contact_info.clone();
-        //         let _ = thread!("Service::connect tcp direct", move || {
-        //             match connection::connect_tcp_endpoint(tcp_addr,
-        //                                                    our_contact_info,
-        //                                                    our_public_key,
-        //                                                    event_tx,
-        //                                                    connection_map,
-        //                                                    Some(expected_peers),
-        //                                                    Some(their_id)) {
-        //                 Err(err) => {
-        //                     let err_msg = format!("Tcp direct connect failed: {}", err);
-        //                     let err = io::Error::new(err.kind(), err_msg);
-        //                     result_tx.send(Err(err));
-        //                 },
-        //                 Ok(()) => {
-        //                     result_tx.send(Ok(()));
-        //                     unwrap_result!(bootstrap_cache.lock()).update_contacts(
-        //                         vec![static_contact_info],
-        //                         vec![]
-        //                     );
-        //                 },
-        //             }
-        //         });
-        //     }
+        if tcp_enabled {
+            let static_contact_info = their_connection_info.static_contact_info.clone();
+            for tcp_addr in their_connection_info.static_contact_info.tcp_acceptors {
+                let our_contact_info = our_contact_info.clone();
+                let event_tx = event_tx.clone();
+                let connection_map = connection_map.clone();
+                let expected_peers = self.expected_peers.clone();
+                let result_tx = result_tx.clone();
+                let bootstrap_cache = bootstrap_cache.clone();
+                let static_contact_info = static_contact_info.clone();
+                let _ = thread!("Service::connect tcp direct", move || {
+                    match connection::connect_tcp_endpoint(tcp_addr,
+                                                           our_contact_info,
+                                                           our_public_key,
+                                                           event_tx,
+                                                           connection_map,
+                                                           Some(expected_peers),
+                                                           Some(their_id)) {
+                        Err(err) => {
+                            let err_msg = format!("Tcp direct connect failed: {}", err);
+                            let err = io::Error::new(err.kind(), err_msg);
+                            result_tx.send(Err(err));
+                        },
+                        Ok(()) => {
+                            result_tx.send(Ok(()));
+                            unwrap_result!(bootstrap_cache.lock()).update_contacts(
+                                vec![static_contact_info],
+                                vec![]
+                            );
+                        },
+                    }
+                });
+            }
 
-        //     if let Some(tcp_socket) = our_connection_info.tcp_socket {
-        //         let tcp_info = their_connection_info.tcp_info;
-        //         let event_tx = event_tx.clone();
-        //         let connection_map = connection_map.clone();
-        //         let result_tx = result_tx.clone();
-        //         let priv_tcp_info = our_connection_info.priv_tcp_info;
-        //         let _ = thread!("Service::connect tcp rendezvous", move || {
-        //             let res = tcp_punch_hole(tcp_socket,
-        //                                      priv_tcp_info,
-        //                                      tcp_info).result_log();
-        //             match res {
-        //                 Ok(tcp_stream) => {
-        //                     match connection::tcp_rendezvous_connect(connection_map,
-        //                                                              event_tx,
-        //                                                              tcp_stream,
-        //                                                              their_id) {
-        //                         Ok(()) => {
-        //                             result_tx.send(Ok(()));
-        //                         },
-        //                         Err(err) => {
-        //                             let err_msg = format!("Tcp rendezvous connect failed: {}", err);
-        //                             let err = io::Error::new(err.kind(), err_msg);
-        //                             result_tx.send(Err(err));
-        //                         },
-        //                     }
-        //                 },
-        //                 Err(err) => {
-        //                     let err: io::Error = From::from(err);
-        //                     let err_msg = format!("Tcp hole punching failed: {}", err);
-        //                     let err = io::Error::new(err.kind(), err_msg);
-        //                     result_tx.send(Err(err));
-        //                 },
-        //             };
-        //         });
-        //     };
-        // }
+            // FIXME: TCP rendezvous temporarily disabled, until
+            // https://github.com/maidsafe/crust/issues/601 is fixed.
+            //
+            // if let Some(tcp_socket) = our_connection_info.tcp_socket {
+            //     let tcp_info = their_connection_info.tcp_info;
+            //     let event_tx = event_tx.clone();
+            //     let connection_map = connection_map.clone();
+            //     let result_tx = result_tx.clone();
+            //     let priv_tcp_info = our_connection_info.priv_tcp_info;
+            //     let _ = thread!("Service::connect tcp rendezvous", move || {
+            //         let res = tcp_punch_hole(tcp_socket,
+            //                                  priv_tcp_info,
+            //                                  tcp_info).result_log();
+            //         match res {
+            //             Ok(tcp_stream) => {
+            //                 match connection::tcp_rendezvous_connect(connection_map,
+            //                                                          event_tx,
+            //                                                          tcp_stream,
+            //                                                          their_id) {
+            //                     Ok(()) => {
+            //                         result_tx.send(Ok(()));
+            //                     },
+            //                     Err(err) => {
+            //                         let err_msg = format!("Tcp rendezvous connect failed: {}", err);
+            //                         let err = io::Error::new(err.kind(), err_msg);
+            //                         result_tx.send(Err(err));
+            //                     },
+            //                 }
+            //             },
+            //             Err(err) => {
+            //                 let err: io::Error = From::from(err);
+            //                 let err_msg = format!("Tcp hole punching failed: {}", err);
+            //                 let err = io::Error::new(err.kind(), err_msg);
+            //                 result_tx.send(Err(err));
+            //             },
+            //         };
+            //     });
+            // };
+        }
 
         if utp_enabled {
             if let Some(udp_socket) = our_connection_info.udp_socket {
