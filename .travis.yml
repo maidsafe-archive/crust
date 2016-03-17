@@ -1,7 +1,6 @@
 env:
   global:
     - secure: SkbGQw5IEClmE2l6skYTFbWuXBn7LcX23cV6uwmDK5Ah0vJ+vXGN5AIV9hhPaMIytwIp4HsWOf7LKHlWlc3+ot0qFVDMRFHamg1f8zWEwbvSA8ozSGVjlcXihrWQ/y5DjBefd9kNdrXb7kq0NA/Pqy/loO91m1e7SggujOC1F2M=
-    - RUST_TEST_THREADS=1
 os:
   - linux
   - osx
