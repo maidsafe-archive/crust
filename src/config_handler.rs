@@ -36,6 +36,7 @@ pub struct Config {
     pub tcp_mapper_servers: Vec<SocketAddr>,
     pub enable_tcp: bool,
     pub enable_utp: bool,
+    pub bootstrap_cache_name: Option<String>,
 }
 
 impl Default for Config {
@@ -48,6 +49,7 @@ impl Default for Config {
             tcp_mapper_servers: vec![],
             enable_tcp: true,
             enable_utp: true,
+            bootstrap_cache_name: None,
         }
     }
 }
@@ -80,6 +82,7 @@ pub fn write_config_file(hard_coded_endpoints: Option<Vec<StaticContactInfo>>)
         tcp_mapper_servers: vec![],
         enable_tcp: true,
         enable_utp: true,
+        bootstrap_cache_name: None,
     };
     let mut config_path = try!(config_file_handler::current_bin_dir());
     config_path.push(try!(get_file_name()));
