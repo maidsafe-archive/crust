@@ -36,7 +36,7 @@ use connection::{RaiiTcpAcceptor, UtpRendezvousConnectMode};
 use udp_listener::RaiiUdpListener;
 use static_contact_info::StaticContactInfo;
 use rand;
-use config_handler::Config;
+use config_handler::{Config, read_config_file};
 use connection::{Connection, ConnectionInfo};
 use error::Error;
 use connection;
@@ -49,6 +49,8 @@ use socket_addr::SocketAddr;
 use utp_connections;
 use peer_id;
 use peer_id::PeerId;
+
+pub const DEFAULT_BEACON_PORT : u16 = 5484;
 
 /// The result of a `Service::prepare_contact_info` call.
 #[derive(Debug)]
@@ -134,19 +136,14 @@ pub struct Service {
 impl Service {
     /// Constructs a service. User needs to create an asynchronous channel, and provide
     /// the sender half to this method. Receiver will receive all `Event`s from this library.
-    pub fn new(event_tx: ::CrustEventSender,
-               service_discovery_port: u16)
-               -> Result<Service, Error> {
-        let config = try!(::config_handler::read_config_file());
-        Service::new_with_config(event_tx, service_discovery_port, &config)
+    pub fn new(event_tx: ::CrustEventSender) -> Result<Service, Error> {
+        Service::with_config(event_tx, &try!(read_config_file()))
     }
 
     /// Constructs a service with the given config. User needs to create an asynchronous channel,
     /// and provide the sender half to this method. Receiver will receive all `Event`s from this
     /// library.
-    pub fn new_with_config(event_tx: ::CrustEventSender,
-                           service_discovery_port: u16,
-                           config: &Config) -> Result<Service, Error> {
+    pub fn with_config(event_tx: ::CrustEventSender, config: &Config) -> Result<Service, Error> {
         sodiumoxide::init();
 
         let our_keys = box_::gen_keypair();
@@ -161,7 +158,7 @@ impl Service {
 
         let cloned_contact_info = static_contact_info.clone();
         let generator = move || unwrap_result!(cloned_contact_info.lock()).clone();
-        let service_discovery = try!(ServiceDiscovery::new_with_generator(service_discovery_port,
+        let service_discovery = try!(ServiceDiscovery::new_with_generator(config.service_discovery_port.unwrap_or(DEFAULT_BEACON_PORT),
                                                                           generator));
 
         let mapping_context = try!(MappingContext::new().result_log()
@@ -593,6 +590,7 @@ impl Drop for Service {
 #[cfg(test)]
 mod test {
     use super::*;
+    use config_handler::Config;
     use event::Event;
     use endpoint::Protocol;
 
@@ -653,19 +651,43 @@ mod test {
                 COUNTER.fetch_add(1, Ordering::Relaxed))
     }
 
-    #[test]
-    fn start_stop_service() {
-        let (event_sender, _, _) = get_event_sender();
-        let _service = unwrap_result!(Service::new(event_sender, 44444));
+    fn gen_beacon_port() -> u16 {
+        const BASE : u16 = 40000;
+        static COUNTER: AtomicUsize = ATOMIC_USIZE_INIT;
+
+        BASE + COUNTER.fetch_add(1, Ordering::Relaxed) as u16
     }
 
-    fn two_services_bootstrap_communicate_and_exit(port: u16, use_tcp: bool, use_udp: bool) {
+    fn gen_config() -> Config {
+        let mut config = Config::default();
+        config.bootstrap_cache_name = Some(gen_bootstrap_cache_name());
+        config
+    }
+
+    fn gen_config_with_beacon(port: u16) -> Config {
+        let mut config = gen_config();
+        config.service_discovery_port = Some(port);
+        config
+    }
+
+    #[test]
+    fn start_stop_service() {
+        let config = gen_config();
+        let (event_sender, _, _) = get_event_sender();
+        let _service = unwrap_result!(Service::with_config(event_sender, &config));
+    }
+
+    fn two_services_bootstrap_communicate_and_exit(use_tcp: bool, use_udp: bool) {
         assert!(use_tcp || use_udp);
 
         let (event_sender_0, category_rx_0, event_rx_0) = get_event_sender();
         let (event_sender_1, category_rx_1, event_rx_1) = get_event_sender();
 
-        let mut service_0 = unwrap_result!(Service::new(event_sender_0, port));
+        let beacon_port = gen_beacon_port();
+        let config_0 = gen_config_with_beacon(beacon_port);
+        let config_1 = gen_config_with_beacon(beacon_port);
+
+        let mut service_0 = unwrap_result!(Service::with_config(event_sender_0, &config_0));
         if use_tcp {
             unwrap_result!(service_0.start_listening_tcp());
         }
@@ -683,7 +705,7 @@ mod test {
         }
         service_0.start_service_discovery();
 
-        let mut service_1 = unwrap_result!(Service::new(event_sender_1, port));
+        let mut service_1 = unwrap_result!(Service::with_config(event_sender_1, &config_1));
         if use_tcp {
             unwrap_result!(service_1.start_listening_tcp());
         }
@@ -800,26 +822,30 @@ mod test {
 
     #[test]
     fn start_two_services_bootstrap_communicate_exit_tcp() {
-        two_services_bootstrap_communicate_and_exit(45666, true, false);
+        two_services_bootstrap_communicate_and_exit(true, false);
     }
 
     #[test]
     fn start_two_services_bootstrap_communicate_exit_udp() {
-        two_services_bootstrap_communicate_and_exit(45667, false, true);
+        two_services_bootstrap_communicate_and_exit(false, true);
     }
 
     #[test]
     fn start_two_services_bootstrap_communicate_exit_tcp_and_udp() {
-        two_services_bootstrap_communicate_and_exit(45668, true, true);
+        two_services_bootstrap_communicate_and_exit(true, true);
     }
 
     #[test]
     fn drop_disconnects() {
-        let port = 45669;
+        let beacon_port = gen_beacon_port();
+
+        let config_0 = gen_config_with_beacon(beacon_port);
+        let config_1 = gen_config_with_beacon(beacon_port);
+
         let (event_sender_0, category_rx_0, event_rx_0) = get_event_sender();
         let (event_sender_1, category_rx_1, event_rx_1) = get_event_sender();
 
-        let mut service_0 = unwrap_result!(Service::new(event_sender_0, port));
+        let mut service_0 = unwrap_result!(Service::with_config(event_sender_0, &config_0));
         unwrap_result!(service_0.start_listening_tcp());
 
         // Let service_0 finish bootstrap - it should not find any peer.
@@ -829,7 +855,7 @@ mod test {
         }
         service_0.start_service_discovery();
 
-        let mut service_1 = unwrap_result!(Service::new(event_sender_1, port));
+        let mut service_1 = unwrap_result!(Service::with_config(event_sender_1, &config_1));
         unwrap_result!(service_1.start_listening_tcp());
 
         // Let service_1 finish bootstrap - it should bootstrap off service_0.
@@ -862,13 +888,13 @@ mod test {
         let (event_sender_0, category_rx_0, event_rx_0) = get_event_sender();
         let (event_sender_1, category_rx_1, event_rx_1) = get_event_sender();
 
-        let mut config = unwrap_result!(::config_handler::read_config_file());
+        let mut config = gen_config();
         match protocol {
             Protocol::Tcp => config.enable_utp = false,
             Protocol::Utp => config.enable_tcp = false,
         };
 
-        let mut service_0 = unwrap_result!(Service::new_with_config(event_sender_0, 1234, &config));
+        let mut service_0 = unwrap_result!(Service::with_config(event_sender_0, &config));
         // let service_0 finish bootstrap - since it is the zero state, it should not find any peer
         // to bootstrap
         {
@@ -879,7 +905,7 @@ mod test {
             }
         }
 
-        let mut service_1 = unwrap_result!(Service::new_with_config(event_sender_1, 1234, &config));
+        let mut service_1 = unwrap_result!(Service::with_config(event_sender_1, &config));
         // let service_0 finish bootstrap - since it is the zero state, it should not find any peer
         // to bootstrap
         {
@@ -1025,7 +1051,7 @@ mod test {
                     Protocol::Tcp => config.enable_utp = false,
                     Protocol::Utp => config.enable_tcp = false,
                 };
-                let service = unwrap_result!(Service::new_with_config(event_sender, 0, &config));
+                let service = unwrap_result!(Service::with_config(event_sender, &config));
                 match unwrap_result!(event_rx.recv()) {
                     Event::BootstrapFinished => (),
                     m => panic!("Expected BootstrapFinished, got:{:?}", m),
@@ -1176,8 +1202,6 @@ mod test {
         use std::net;
         use std::str::FromStr;
 
-        const BEACON_PORT: u16 = 45672;
-
         let mut contact_info = StaticContactInfo::default();
 
         let invalid_addrs = vec![
@@ -1191,7 +1215,7 @@ mod test {
         config.hard_coded_contacts = vec![contact_info];
 
         let (event_sender, category_rx, event_rx) = get_event_sender();
-        let service = unwrap_result!(Service::new_with_config(event_sender, BEACON_PORT, &config));
+        let service = unwrap_result!(Service::with_config(event_sender, &config));
 
         timebomb(Duration::from_secs(70), move || {
             match unwrap_result!(event_rx.recv()) {
@@ -1204,12 +1228,14 @@ mod test {
     #[test]
     fn new_peer_is_not_raised_if_only_one_party_calls_connect() {
         const PREPARE_CI_TOKEN: u32 = 0;
-        const BEACON_PORT: u16 = 45671;
+
+        let config_0 = gen_config();
+        let config_1 = gen_config();
 
         let (event_sender_0, category_rx_0, event_rx_0) = get_event_sender();
         let (event_sender_1, category_rx_1, event_rx_1) = get_event_sender();
 
-        let mut service_0 = unwrap_result!(Service::new(event_sender_0, BEACON_PORT));
+        let mut service_0 = unwrap_result!(Service::with_config(event_sender_0, &config_0));
         match unwrap_result!(event_rx_0.recv()) {
             Event::BootstrapFinished => (),
             event => panic!("Received unexpected event: {:?}", event),
@@ -1218,7 +1244,7 @@ mod test {
         unwrap_result!(service_0.start_listening_tcp());
         unwrap_result!(service_0.start_listening_utp());
 
-        let mut service_1 = unwrap_result!(Service::new(event_sender_1, BEACON_PORT));
+        let mut service_1 = unwrap_result!(Service::with_config(event_sender_1, &config_1));
         match unwrap_result!(event_rx_1.recv()) {
             Event::BootstrapFinished => (),
             event => panic!("Received unexpected event: {:?}", event),
