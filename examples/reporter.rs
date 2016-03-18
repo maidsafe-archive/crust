@@ -116,7 +116,6 @@ Explanation of the config fields:
 See also the example config files in examples/reporter directory.
 "#;
 
-const BEACON_PORT: u16 = 5484;
 const MIN_RUN_TIME_MS: u64 = 1000;
 const MAX_RUN_TIME_MS: u64 = 2500;
 const WAIT_FOR_CONNECT_TIMEOUT: u64 = 10000;
@@ -155,7 +154,7 @@ fn run(config: &Config) -> Report {
     let (connect_tx, connect_rx) = mpsc::channel();
 
     let event_sender = MaidSafeObserver::new(event_tx, MaidSafeEventCategory::Crust, category_tx);
-    let mut service = unwrap_result!(Service::new(event_sender, BEACON_PORT));
+    let mut service = unwrap_result!(Service::new(event_sender));
     let our_peer_id = service.id();
 
     if config.start_listening {

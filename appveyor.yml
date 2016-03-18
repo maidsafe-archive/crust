@@ -1,7 +1,6 @@
 environment:
   global:
     RUST_BACKTRACE: 1
-    RUST_TEST_THREADS: 1
   matrix:
     - RUST_VERSION: stable
 branches:

@@ -44,14 +44,14 @@ use listener_message::{ListenerRequest, ListenerResponse};
 use peer_id;
 use peer_id::PeerId;
 use bootstrap_handler::BootstrapHandler;
-use nat_traversal::{MappedUdpSocket, MappingContext, PrivRendezvousInfo,
-                    PunchedUdpSocket, PubRendezvousInfo, gen_rendezvous_info};
+use nat_traversal::{MappedUdpSocket, MappingContext, PrivRendezvousInfo, PunchedUdpSocket,
+                    PubRendezvousInfo, gen_rendezvous_info};
 use nat_traversal;
 use sodiumoxide::crypto::box_::PublicKey;
 
 type CrustEventSenderError = EventSenderError<MaidSafeEventCategory, Event>;
 
-const UDP_READ_TIMEOUT_MS : u64 = 20_000;
+const UDP_READ_TIMEOUT_MS: u64 = 20_000;
 
 /// An open connection that can be used to send messages to a peer.
 ///
@@ -174,7 +174,7 @@ pub fn connect(peer_contact: StaticContactInfo,
                                        None,
                                        None) {
                 Ok(()) => return Ok(()),
-                Err(e) => last_err = e
+                Err(e) => last_err = e,
             }
         }
     }
@@ -185,8 +185,7 @@ pub fn connect(peer_contact: StaticContactInfo,
                 Ok(MappedUdpSocket { socket, endpoints }) => {
                     (socket, gen_rendezvous_info(endpoints))
                 }
-                Err(_) => return Err(io::Error::new(io::ErrorKind::Other,
-                                                    "Cannot map UDP socket")),
+                Err(_) => return Err(io::Error::new(io::ErrorKind::Other, "Cannot map UDP socket")),
             }
         };
 
@@ -214,7 +213,8 @@ pub fn connect(peer_contact: StaticContactInfo,
                             let cloned_udp_socket = try!(udp_socket.try_clone());
                             match PunchedUdpSocket::punch_hole(cloned_udp_socket,
                                                                our_priv_info.clone(),
-                                                               their_info).result_log() {
+                                                               their_info)
+                                      .result_log() {
                                 Ok(PunchedUdpSocket { socket, peer_addr }) => {
                                     match utp_rendezvous_connect(
                                         socket,
@@ -245,8 +245,8 @@ pub fn connect(peer_contact: StaticContactInfo,
 pub fn tcp_rendezvous_connect(connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
                               event_tx: ::CrustEventSender,
                               tcp_stream: TcpStream,
-                              their_id: PeerId) -> io::Result<()>
-{
+                              their_id: PeerId)
+                              -> io::Result<()> {
     let (network_input, writer) = try!(tcp_connections::upgrade_tcp(tcp_stream));
     let our_addr = SocketAddr(try!(network_input.local_addr()));
     let their_addr = SocketAddr(try!(network_input.peer_addr()));
@@ -258,18 +258,24 @@ pub fn tcp_rendezvous_connect(connection_map: Arc<Mutex<HashMap<PeerId, Vec<Conn
                                   Event::NewPeer(Ok(()), their_id),
                                   &event_tx);
 
-    register_tcp_connection(connection_map, their_id, network_rx, network_tx, event_tx, our_addr, their_addr);
+    register_tcp_connection(connection_map,
+                            their_id,
+                            network_rx,
+                            network_tx,
+                            event_tx,
+                            our_addr,
+                            their_addr);
     Ok(())
 }
 
 pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
-                        our_contact_info: Arc<Mutex<StaticContactInfo>>,
-                        our_public_key: PublicKey,
-                        event_tx: ::CrustEventSender,
-                        connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
-                        expected_peers: Option<Arc<Mutex<HashSet<PeerId>>>>,
-                        their_expected_id: Option<PeerId>) // None if bootstrap
-                        -> io::Result<()> {
+                            our_contact_info: Arc<Mutex<StaticContactInfo>>,
+                            our_public_key: PublicKey,
+                            event_tx: ::CrustEventSender,
+                            connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
+                            expected_peers: Option<Arc<Mutex<HashSet<PeerId>>>>,
+                            their_expected_id: Option<PeerId>)
+                            -> io::Result<()> {
     let (network_input, writer) = try!(tcp_connections::connect_tcp(remote_addr.clone()));
     let our_addr = SocketAddr(try!(network_input.local_addr()));
     let their_addr = SocketAddr(try!(network_input.peer_addr()));
@@ -287,8 +293,12 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
                     (their_id, Some(Event::BootstrapConnect(their_id)))
                 }
 
-                Ok(m) => return Err(io::Error::new(io::ErrorKind::Other, format!(
-                            "Invalid crust message from peer during bootstrap attempt: {:?}", m))),
+                Ok(m) => {
+                    return Err(io::Error::new(io::ErrorKind::Other,
+                                              format!("Invalid crust message from peer during \
+                                                       bootstrap attempt: {:?}",
+                                                      m)))
+                }
                 Err(e) => return Err(e),
             }
         }
@@ -298,15 +308,16 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
                 Ok(CrustMsg::Connect(key)) => {
                     let their_id = peer_id::new_id(key);
                     if their_id != id {
-                        return Err(io::Error::new(io::ErrorKind::Other, format!(
-                                                  "Connected to the wrong peer: {:?}.", their_id)));
+                        return Err(io::Error::new(io::ErrorKind::Other,
+                                                  format!("Connected to the wrong peer: {:?}.",
+                                                          their_id)));
                     }
 
                     if let Some(expected_peers) = expected_peers {
                         let mut expected_peers = expected_peers.lock().unwrap();
                         if !expected_peers.insert(their_id) {
                             expected_peers.remove(&their_id);
-                            (their_id,  Some(Event::NewPeer(Ok(()), their_id)))
+                            (their_id, Some(Event::NewPeer(Ok(()), their_id)))
                         } else {
                             (their_id, None)
                         }
@@ -314,18 +325,19 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
                         (their_id, Some(Event::NewPeer(Ok(()), their_id)))
                     }
                 }
-                Ok(m) => return Err(io::Error::new(io::ErrorKind::Other, format!(
-                            "Invalid crust message from peer during connect attempt: {:?}", m))),
+                Ok(m) => {
+                    return Err(io::Error::new(io::ErrorKind::Other,
+                                              format!("Invalid crust message from peer during \
+                                                       connect attempt: {:?}",
+                                                      m)))
+                }
                 Err(e) => return Err(e),
             }
         }
     };
 
     if let Some(event) = event {
-        let _ = notify_new_connection(&connection_map.lock().unwrap(),
-                                      &their_id,
-                                      event,
-                                      &event_tx);
+        let _ = notify_new_connection(&connection_map.lock().unwrap(), &their_id, event, &event_tx);
     }
 
     let network_tx = RaiiSender(writer);
@@ -339,15 +351,13 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
     Ok(())
 }
 
-pub fn register_tcp_connection(
-                        connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
-                        their_id: PeerId,
-                        network_rx: Receiver,
-                        network_tx: RaiiSender,
-                        event_tx: ::CrustEventSender,
-                        our_addr: SocketAddr,
-                        their_addr: SocketAddr)
-{
+pub fn register_tcp_connection(connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
+                               their_id: PeerId,
+                               network_rx: Receiver,
+                               network_tx: RaiiSender,
+                               event_tx: ::CrustEventSender,
+                               our_addr: SocketAddr,
+                               their_addr: SocketAddr) {
     let closed = Arc::new(AtomicBool::new(false));
     let closed_clone = closed.clone();
 
@@ -425,13 +435,17 @@ pub fn start_tcp_accept(port: u16,
     let addr = net::SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), port));
     let tcp_builder_listener = try!(nat_traversal::new_reusably_bound_tcp_socket(&addr));
 
-    let mapped_tcp_socket = match nat_traversal::MappedTcpSocket::map(tcp_builder_listener, mapping_context.as_ref())
-                                                                 .result_log() {
+    let mapped_tcp_socket = match nat_traversal::MappedTcpSocket::map(tcp_builder_listener,
+                                                                      mapping_context.as_ref())
+                                      .result_log() {
         Ok(mapped_tcp_socket) => mapped_tcp_socket,
         Err(err) => return Err(From::from(err)),
     };
     let tcp_builder_listener = mapped_tcp_socket.socket;
-    let mut addrs: Vec<SocketAddr> = mapped_tcp_socket.endpoints.into_iter().map(|m| m.addr).collect();
+    let mut addrs: Vec<SocketAddr> = mapped_tcp_socket.endpoints
+                                                      .into_iter()
+                                                      .map(|m| m.addr)
+                                                      .collect();
 
     let listener = try!(tcp_builder_listener.listen(1));
     let new_port = try!(listener.local_addr()).port(); // Useful if supplied port was 0
@@ -486,7 +500,7 @@ pub fn start_tcp_accept(port: u16,
                         break;
                     }
                     peer_id
-                },
+                }
                 Ok(CrustMsg::Connect(k)) => {
                     let peer_id = peer_id::new_id(k);
                     writer.send(WriteEvent::Write(CrustMsg::Connect(our_public_key)));
@@ -498,21 +512,22 @@ pub fn start_tcp_accept(port: u16,
                         if notify_new_connection(&cm,
                                                  &peer_id,
                                                  Event::NewPeer(Ok(()), peer_id),
-                                                 &event_tx).is_err() {
+                                                 &event_tx)
+                               .is_err() {
                             break;
                         }
                     }
 
                     peer_id
-                },
+                }
                 Ok(m) => {
                     error!("Unexpected crust msg on tcp accept");
                     continue;
-                },
+                }
                 Err(e) => {
                     error!("Invalid crust msg on tcp accept");
                     continue;
-                },
+                }
             };
 
             let closed = Arc::new(AtomicBool::new(false));
@@ -581,20 +596,26 @@ pub fn utp_rendezvous_connect(udp_socket: UdpSocket,
                 Ok(CrustMsg::Connect(key)) => {
                     let their_id = peer_id::new_id(key);
                     if their_id != id {
-                        return Err(io::Error::new(io::ErrorKind::Other, format!(
-                                                  "Connected to the wrong peer: {:?}.", their_id)));
+                        return Err(io::Error::new(io::ErrorKind::Other,
+                                                  format!("Connected to the wrong peer: {:?}.",
+                                                          their_id)));
                     };
                     let mut guard = unwrap_result!(connection_map.lock());
                     {
-                        let connections = guard.entry(their_id).or_insert_with(|| Vec::with_capacity(1));
+                        let connections = guard.entry(their_id)
+                                               .or_insert_with(|| Vec::with_capacity(1));
                         if connections.is_empty() {
                             let _ = event_tx.send(Event::NewPeer(Ok(()), their_id));
                         }
                     }
                     (guard, their_id)
                 }
-                Ok(m) => return Err(io::Error::new(io::ErrorKind::Other, format!(
-                            "Invalid crust message from peer during connect attempt: {:?}", m))),
+                Ok(m) => {
+                    return Err(io::Error::new(io::ErrorKind::Other,
+                                              format!("Invalid crust message from peer during \
+                                                       connect attempt: {:?}",
+                                                      m)))
+                }
                 Err(e) => return Err(e),
             }
         }
@@ -608,7 +629,8 @@ pub fn utp_rendezvous_connect(udp_socket: UdpSocket,
                     let their_id = peer_id::new_id(key);
                     let mut guard = unwrap_result!(connection_map.lock());
                     {
-                        let connections = guard.entry(their_id).or_insert_with(|| Vec::with_capacity(1));
+                        let connections = guard.entry(their_id)
+                                               .or_insert_with(|| Vec::with_capacity(1));
                         if connections.is_empty() {
                             let _ = event_tx.send(Event::BootstrapConnect(their_id));
                         }
@@ -616,18 +638,22 @@ pub fn utp_rendezvous_connect(udp_socket: UdpSocket,
                     (guard, their_id)
                 }
                 Ok(m) => {
-                    return Err(io::Error::new(io::ErrorKind::Other, format!("Unexpected message when doing bootstrap utp connect to peer: {:?}", m)))
-                },
+                    return Err(io::Error::new(io::ErrorKind::Other,
+                                              format!("Unexpected message when doing bootstrap \
+                                                       utp connect to peer: {:?}",
+                                                      m)))
+                }
                 Err(e) => return Err(e),
             }
-        },
+        }
         UtpRendezvousConnectMode::BootstrapAccept => {
             let (guard, their_id) = match network_rx.receive() {
                 Ok(CrustMsg::BootstrapRequest(key)) => {
                     let their_id = peer_id::new_id(key);
                     let mut guard = unwrap_result!(connection_map.lock());
                     {
-                        let connections = guard.entry(their_id).or_insert_with(|| Vec::with_capacity(1));
+                        let connections = guard.entry(their_id)
+                                               .or_insert_with(|| Vec::with_capacity(1));
                         if connections.is_empty() {
                             let _ = event_tx.send(Event::BootstrapAccept(their_id));
                         }
@@ -635,13 +661,16 @@ pub fn utp_rendezvous_connect(udp_socket: UdpSocket,
                     (guard, their_id)
                 }
                 Ok(m) => {
-                    return Err(io::Error::new(io::ErrorKind::Other, format!("Unexpected message when doing bootstrap utp accept from peer: {:?}", m)))
-                },
+                    return Err(io::Error::new(io::ErrorKind::Other,
+                                              format!("Unexpected message when doing bootstrap \
+                                                       utp accept from peer: {:?}",
+                                                      m)))
+                }
                 Err(e) => return Err(e),
             };
             writer.send(WriteEvent::Write(CrustMsg::BootstrapResponse(our_public_key)));
             (guard, their_id)
-        },
+        }
     };
 
     let joiner = RaiiThreadJoiner::new(thread!("UtpNetworkReader", move || {
@@ -678,10 +707,10 @@ fn start_rx(mut network_rx: Receiver,
                 if event_tx.send(Event::NewMessage(their_id, msg)).is_err() {
                     break;
                 }
-            },
+            }
             m => {
                 error!("Unexpected message in start_rx: {:?}", m);
-            },
+            }
         }
     }
     closed.store(true, Ordering::Relaxed);
@@ -706,7 +735,7 @@ fn notify_new_connection(connection_map: &HashMap<PeerId, Vec<Connection>>,
                          peer_id: &PeerId,
                          event: Event,
                          event_tx: &::CrustEventSender)
-    -> Result<(), CrustEventSenderError> {
+                         -> Result<(), CrustEventSenderError> {
     if connection_map.get(peer_id).into_iter().all(Vec::is_empty) {
         event_tx.send(event)
     } else {

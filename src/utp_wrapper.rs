@@ -30,8 +30,7 @@ impl UtpWrapper {
         let peer_addr = try!(socket.peer_addr());
         let local_addr = try!(socket.local_addr());
 
-        let thread_handle =
-            unwrap_result!(thread::Builder::new()
+        let thread_handle = unwrap_result!(thread::Builder::new()
                 .name("rust-utp multiplexer".to_owned())
                 .spawn(move || {
                     let mut socket = socket;
@@ -114,15 +113,13 @@ impl Read for UtpWrapper {
                 let src = &unread_front[..read_len];
                 clone_from_slice(target, src);
                 read_len
-            }
-            else if unread_back.len() > 0 {
+            } else if unread_back.len() > 0 {
                 let read_len = std::cmp::min(buf.len(), unread_back.len());
                 let target = &mut buf[..read_len];
                 let src = &unread_back[..read_len];
                 clone_from_slice(target, src);
                 read_len
-            }
-            else {
+            } else {
                 0
             }
         };
@@ -142,4 +139,3 @@ impl Read for UtpWrapper {
         Ok(read_len)
     }
 }
-

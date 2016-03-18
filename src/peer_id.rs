@@ -36,10 +36,7 @@ impl Debug for PeerId {
 
 impl Display for PeerId {
     fn fmt(&self, formatter: &mut Formatter) -> Result {
-        write!(formatter,
-               "{:02x}{:02x}..",
-               (self.0).0[0],
-               (self.0).0[1])
+        write!(formatter, "{:02x}{:02x}..", (self.0).0[0], (self.0).0[1])
     }
 }
 

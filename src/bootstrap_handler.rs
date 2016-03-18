@@ -15,12 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-//! For notes on thread- and process-safety of `FileHandler`, please see the docs either in
-//! file_handler.rs or at
-//! http://maidsafe.net/crust/master/crust/file_handler/struct.FileHandler.html#thread--and-process-safety
-//!
-//! This means that none of the public functions of `BootstrapHandler` should be called concurrently
-//! with any other one.
+use std::ffi::{OsStr, OsString};
 
 use error::Error;
 use static_contact_info::StaticContactInfo;
@@ -34,14 +29,20 @@ pub struct BootstrapHandler {
 
 impl BootstrapHandler {
     #[allow(dead_code)]
-    pub fn cleanup() -> Result<(), ::error::Error> {
-        try!(config_file_handler::cleanup(&try!(get_file_name())));
+    pub fn cleanup() -> Result<(), Error> {
+        try!(config_file_handler::cleanup(&try!(get_default_file_name())));
         Ok(())
     }
 
-    pub fn new() -> Result<BootstrapHandler, ::error::Error> {
+    pub fn new(name: &Option<String>) -> Result<Self, ::error::Error> {
+        let name = if let Some(name) = name.clone() {
+            OsString::from(name)
+        } else {
+            try!(get_default_file_name())
+        };
+
         Ok(BootstrapHandler {
-            file_handler: try!(FileHandler::new(&try!(get_file_name()))),
+            file_handler: try!(FileHandler::new(&name)),
             last_updated: ::time::now(),
         })
     }
@@ -98,7 +99,7 @@ impl BootstrapHandler {
     }
 }
 
-pub fn get_file_name() -> Result<::std::ffi::OsString, Error> {
+pub fn get_default_file_name() -> Result<OsString, Error> {
     let mut name = try!(config_file_handler::exe_file_stem());
     name.push(".bootstrap.cache");
     Ok(name)
