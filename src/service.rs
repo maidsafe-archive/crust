@@ -563,7 +563,9 @@ impl Service {
                     // Are tcp acceptors being used to do rendezvous connections now?
                     // coz that doesn't make sense
                     udp_socket: udp_socket,
-                    tcp_socket: tcp_socket,
+                    // TODO: reenable TCP rendezvous
+                    //tcp_socket: tcp_socket,
+                    tcp_socket: None,
                     static_contact_info: unwrap_result!(our_static_contact_info.lock()).clone(),
                 }),
             });
@@ -983,6 +985,7 @@ mod test {
     }
 
     #[test]
+    #[ignore]
     fn start_two_service_tcp_rendezvous_connect() {
         start_two_service_rendezvous_connect(Protocol::Tcp);
     }
