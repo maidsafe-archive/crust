@@ -174,7 +174,10 @@ pub fn connect(peer_contact: StaticContactInfo,
                                        None,
                                        None) {
                 Ok(()) => return Ok(()),
-                Err(e) => last_err = e,
+                Err(e) => {
+                    warn!("TCP direct connect failed: {}", e);
+                    last_err = e;
+                },
             }
         }
     }
@@ -443,7 +446,7 @@ pub fn start_tcp_accept(port: u16,
     use std::io::Write;
     use std::io::Read;
 
-    let addr = net::SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), port));
+    let addr = net::SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), port));
     let tcp_builder_listener = try!(nat_traversal::new_reusably_bound_tcp_socket(&addr));
 
     let mapped_tcp_socket = match nat_traversal::MappedTcpSocket::map(tcp_builder_listener,
