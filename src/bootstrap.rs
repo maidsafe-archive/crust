@@ -109,15 +109,21 @@ impl RaiiBootstrap {
 
             // 1st try a TCP connect
             // 2nd try a UDP connection (and upgrade to UTP)
-            let _ = ::connection::connect(contact,
-                                          our_contact_info.clone(),
-                                          our_public_key.clone(),
-                                          event_tx.clone(),
-                                          connection_map.clone(),
-                                          bootstrap_cache.clone(),
-                                          mapping_context,
-                                          tcp_enabled,
-                                          utp_enabled);
+            let res = ::connection::connect(contact,
+                                            our_contact_info.clone(),
+                                            our_public_key.clone(),
+                                            event_tx.clone(),
+                                            connection_map.clone(),
+                                            bootstrap_cache.clone(),
+                                            mapping_context,
+                                            tcp_enabled,
+                                            utp_enabled);
+            match res {
+                Ok(()) => (),
+                Err(e) => {
+                    warn!("Error connecting to bootstrap peer: {}", e);
+                },
+            };
             if stop_flag.load(Ordering::SeqCst) {
                 break;
             }
