@@ -52,22 +52,22 @@ pub fn upgrade_tcp(stream: TcpStream) -> io::Result<(TcpStream, Sender<WriteEven
 fn upgrade_writer(mut stream: TcpStream) -> Sender<WriteEvent> {
     let (tx, rx) = mpsc::channel();
     let _ = unwrap_result!(thread::Builder::new()
-                .name("TCP writer".to_owned())
-                .spawn(move || {
-                    while let Ok(event) = rx.recv() {
-                        match event {
-                            WriteEvent::Write(data) => {
-                                use std::io::Write;
-                                let msg = unwrap_result!(serialise(&data));
-                                if stream.write_all(&msg).is_err() {
-                                    break;
-                                }
-                            }
-                            WriteEvent::Shutdown => break,
-                        }
-                    }
-                    stream.shutdown(Shutdown::Both)
-                }));
+                               .name("TCP writer".to_owned())
+                               .spawn(move || {
+                                   while let Ok(event) = rx.recv() {
+                                       match event {
+                                           WriteEvent::Write(data) => {
+                                               use std::io::Write;
+                                               let msg = unwrap_result!(serialise(&data));
+                                               if stream.write_all(&msg).is_err() {
+                                                   break;
+                                               }
+                                           }
+                                           WriteEvent::Shutdown => break,
+                                       }
+                                   }
+                                   stream.shutdown(Shutdown::Both)
+                               }));
     tx
 }
 
@@ -243,7 +243,9 @@ mod test {
 
         const MSG_COUNT: u16 = 20;
 
-        fn encode<T>(value: &T) -> Vec<u8> where T: Encodable {
+        fn encode<T>(value: &T) -> Vec<u8>
+            where T: Encodable
+        {
             unwrap_result!(serialise(value))
         }
 
@@ -259,7 +261,7 @@ mod test {
 
             for _ in 0..MSG_COUNT {
                 match deserialise_from::<_, CrustMsg>(&mut reader) {
-                    Ok(CrustMsg::Message(msg)) => println!("received {:?}", ::std::str::from_utf8(&msg)),
+                    Ok(CrustMsg::Message(msg)) => (),
                     Ok(m) => panic!("Unexpected crust message type {:#?}", m),
                     Err(what) => panic!("Problem decoding message {}", what),
                 }

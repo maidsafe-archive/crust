@@ -15,13 +15,6 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-//! For notes on thread- and process-safety of `FileHandler`, please see the docs either in
-//! file_handler.rs or at
-//! http://maidsafe.net/crust/master/crust/file_handler/struct.FileHandler.html#thread--and-process-safety
-//!
-//! This means that `read_config_file()`, `create_default_config_file()`, and
-//! `write_config_file()` should not be called concurrently with one another.
-
 use static_contact_info::StaticContactInfo;
 use config_file_handler::FileHandler;
 use config_file_handler;
@@ -30,24 +23,28 @@ use socket_addr::SocketAddr;
 #[derive(PartialEq, Eq, Debug, RustcDecodable, RustcEncodable, Clone)]
 pub struct Config {
     pub hard_coded_contacts: Vec<StaticContactInfo>,
+    pub enable_tcp: bool,
+    pub enable_utp: bool,
     pub tcp_acceptor_port: Option<u16>,
     pub utp_acceptor_port: Option<u16>,
     pub udp_mapper_servers: Vec<SocketAddr>,
     pub tcp_mapper_servers: Vec<SocketAddr>,
-    pub enable_tcp: bool,
-    pub enable_utp: bool,
+    pub service_discovery_port: Option<u16>,
+    pub bootstrap_cache_name: Option<String>,
 }
 
 impl Default for Config {
     fn default() -> Config {
         Config {
-            hard_coded_contacts: vec![] /* No hardcoded endpoints */,
+            hard_coded_contacts: vec![], // No hardcoded endpoints
+            enable_tcp: true,
+            enable_utp: true,
             tcp_acceptor_port: None,
             utp_acceptor_port: None,
             udp_mapper_servers: vec![],
             tcp_mapper_servers: vec![],
-            enable_tcp: true,
-            enable_utp: true,
+            service_discovery_port: None,
+            bootstrap_cache_name: None,
         }
     }
 }
@@ -66,21 +63,16 @@ pub fn read_config_file() -> Result<Config, ::error::Error> {
 ///
 /// N.B. This method should only be used as a utility for test and examples.  In normal use cases,
 /// this file should be created by the installer for the dependent application.
-pub fn write_config_file(hard_coded_endpoints: Option<Vec<StaticContactInfo>>)
+pub fn write_config_file(hard_coded_contacts: Option<Vec<StaticContactInfo>>)
                          -> Result<::std::path::PathBuf, ::error::Error> {
     use std::io::Write;
 
-    let default = Config::default();
+    let mut config = Config::default();
 
-    let config = Config {
-        hard_coded_contacts: hard_coded_endpoints.unwrap_or(default.hard_coded_contacts),
-        tcp_acceptor_port: None,
-        utp_acceptor_port: None,
-        udp_mapper_servers: vec![],
-        tcp_mapper_servers: vec![],
-        enable_tcp: true,
-        enable_utp: true,
-    };
+    if let Some(contacts) = hard_coded_contacts {
+        config.hard_coded_contacts = contacts;
+    }
+
     let mut config_path = try!(config_file_handler::current_bin_dir());
     config_path.push(try!(get_file_name()));
     let mut file = try!(::std::fs::File::create(&config_path));

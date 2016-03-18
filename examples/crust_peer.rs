@@ -114,8 +114,6 @@ will be chosen.
                               Display this help message.
 ";
 
-const BEACON_PORT: u16 = 5484;
-
 #[derive(RustcDecodable, Debug)]
 struct Args {
     flag_discovery_port: Option<u16>,
@@ -187,7 +185,7 @@ impl Network {
                 "Disconnected"
             };
             */
-            
+
             if let Some(conn_info) = service.connection_info(node) {
                 println!("    [{}] {}   {} <--> {} [{}][{}]",
                          id, node, conn_info.our_addr, conn_info.their_addr, conn_info.protocol,
@@ -331,7 +329,7 @@ fn main() {
                                                                   crust_event_category,
                                                                   category_tx);
     let mut config = unwrap_result!(::crust::read_config_file());
-    let port = args.flag_discovery_port.unwrap_or(BEACON_PORT);
+
     if args.flag_disable_tcp {
         config.enable_tcp = false;
         config.tcp_acceptor_port = None;
@@ -340,7 +338,10 @@ fn main() {
         config.enable_utp = false;
         config.utp_acceptor_port = None;
     }
-    let mut service = unwrap_result!(Service::new_with_config(event_sender, port, &config));
+
+    config.service_discovery_port = args.flag_discovery_port;
+
+    let mut service = unwrap_result!(Service::with_config(event_sender, &config));
     if !args.flag_disable_tcp {
         unwrap_result!(service.start_listening_tcp());
     }

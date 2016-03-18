@@ -79,10 +79,7 @@ pub fn is_unique_local(ip_addr: &IpAddr) -> bool {
     }
 }
 
-pub fn on_same_subnet_v4(ip_addr1: Ipv4Addr,
-                         ip_addr2: Ipv4Addr,
-                         netmask: Ipv4Addr)
-                         -> bool {
+pub fn on_same_subnet_v4(ip_addr1: Ipv4Addr, ip_addr2: Ipv4Addr, netmask: Ipv4Addr) -> bool {
     let o1 = ip_addr1.octets();
     let o2 = ip_addr2.octets();
     let m = netmask.octets();
@@ -96,10 +93,7 @@ pub fn on_same_subnet_v4(ip_addr1: Ipv4Addr,
     true
 }
 
-pub fn on_same_subnet_v6(ip_addr1: Ipv6Addr,
-                         ip_addr2: Ipv6Addr,
-                         netmask: Ipv6Addr)
-                         -> bool {
+pub fn on_same_subnet_v6(ip_addr1: Ipv6Addr, ip_addr2: Ipv6Addr, netmask: Ipv6Addr) -> bool {
     let s1 = ip_addr1.segments();
     let s2 = ip_addr2.segments();
     let m = netmask.segments();
@@ -227,7 +221,7 @@ pub fn random_endpoint() -> Endpoint {
                                                   ::rand::random::<u8>(),
                                                   ::rand::random::<u8>(),
                                                   ::rand::random::<u8>()),
-                                         ::rand::random::<u16>());
+                                    ::rand::random::<u16>());
     Endpoint::from_socket_addr(Protocol::Tcp, SocketAddr(net::SocketAddr::V4(address)))
 }
 

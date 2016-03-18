@@ -24,8 +24,6 @@ use maidsafe_utilities::event_sender::{MaidSafeEventCategory, MaidSafeObserver};
 use std::sync::mpsc::{self, Receiver};
 use std::thread::{self, JoinHandle};
 
-const BEACON_PORT: u16 = 44444;
-
 // Number of nodes that will be sending messages to the receiving node.
 const NUM_SENDERS: usize = 5;
 
@@ -51,7 +49,7 @@ fn sent_messages_are_received() {
 
 fn spawn_receiving_node(expected_connections: usize) -> JoinHandle<usize> {
     let (event_sender, category_rx, event_rx) = create_event_sender();
-    let mut service = unwrap_result!(Service::new(event_sender, BEACON_PORT));
+    let mut service = unwrap_result!(Service::new(event_sender));
 
     service.start_service_discovery();
     let _ = unwrap_result!(service.start_listening_tcp());
@@ -102,7 +100,7 @@ fn spawn_receiving_node(expected_connections: usize) -> JoinHandle<usize> {
 fn spawn_sending_node() -> JoinHandle<usize> {
     thread::spawn(move || {
         let (event_sender, category_rx, event_rx) = create_event_sender();
-        let service = unwrap_result!(Service::new(event_sender, BEACON_PORT));
+        let service = unwrap_result!(Service::new(event_sender));
 
         let message = vec![255];
         let mut num_messages = 0;

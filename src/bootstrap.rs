@@ -164,4 +164,3 @@ pub fn get_known_contacts(service_discovery: &ServiceDiscovery<StaticContactInfo
 
     Ok((contacts))
 }
-
