@@ -51,10 +51,12 @@ impl BootstrapHandler {
                            contacts: Vec<StaticContactInfo>,
                            prune: Vec<StaticContactInfo>)
                            -> Result<(), Error> {
-        try!(self.insert_contacts(contacts, prune));
-        // TODO(Team) this implementation is missing and should be considered in next planning
-        if ::time::now() > self.last_updated + Self::duration_between_updates() {
-            // self.check_bootstrap_contacts();
+        if false {
+            try!(self.insert_contacts(contacts, prune));
+            // TODO(Team) this implementation is missing and should be considered in next planning
+            if ::time::now() > self.last_updated + Self::duration_between_updates() {
+                // self.check_bootstrap_contacts();
+            }
         }
         Ok(())
     }
