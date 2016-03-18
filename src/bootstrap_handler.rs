@@ -98,6 +98,18 @@ impl BootstrapHandler {
     }
 }
 
+
+#[cfg(test)]
+#[allow(unsafe_code)]
+pub fn get_file_name() -> Result<::std::ffi::OsString, Error> {
+    use libc;
+    let mut name = try!(config_file_handler::exe_file_stem());
+    let thread_id = unsafe { libc::pthread_self() };
+    name.push(format!(".bootstrap.cache._{}", thread_id));
+    Ok(name)
+}
+
+#[cfg(not(test))]
 pub fn get_file_name() -> Result<::std::ffi::OsString, Error> {
     let mut name = try!(config_file_handler::exe_file_stem());
     name.push(".bootstrap.cache");
@@ -106,6 +118,28 @@ pub fn get_file_name() -> Result<::std::ffi::OsString, Error> {
 
 #[cfg(test)]
 mod test {
+
+    use std::thread;
+
+    #[test]
+    fn thread_local_cache_for_test() {
+    // Running get_file_name from different threads
+    // during tests, should return thread-local-filenames.
+    // This allows us to run tests in parallel without
+    // race conditions on the bootstrap cache.
+    // See https://github.com/maidsafe/crust/issues/600
+
+        let child_a = thread::spawn(move || {
+            ::bootstrap_handler::get_file_name()
+        });
+
+        let child_b = thread::spawn(move || {
+            ::bootstrap_handler::get_file_name()
+        });
+
+        assert!(child_a.join().unwrap().unwrap() !=  child_b.join().unwrap().unwrap())
+
+    }
 
     // TODO(canndrew): Add these tests back
     // the main thing that has changed is that StaticContactInfo has replaced Endpoint. Probably nothing
