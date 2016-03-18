@@ -333,14 +333,13 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
 
                     if let Some(expected_peers) = expected_peers {
                         let mut expected_peers = expected_peers.lock().unwrap();
-                        if !expected_peers.insert(their_id) {
-                            expected_peers.remove(&their_id);
+                        if expected_peers.remove(&their_id) {
                             (their_id, Some(Event::NewPeer(Ok(()), their_id)))
                         } else {
                             (their_id, None)
                         }
                     } else {
-                        (their_id, Some(Event::NewPeer(Ok(()), their_id)))
+                        unreachable!("Expected Peers cannot be None when calling service connect");
                     }
                 }
                 Ok(m) => {
@@ -525,17 +524,14 @@ pub fn start_tcp_accept(port: u16,
                     peer_id
                 }
                 Ok(CrustMsg::Connect(k)) => {
-                    writer.send(WriteEvent::Write(CrustMsg::Connect(our_public_key)));
                     if our_public_key == k {
                         error!("Connected to ourselves");
                         continue;
                     }
-
                     let peer_id = peer_id::new_id(k);
                     let mut expected_peers = expected_peers.lock().unwrap();
-                    if !expected_peers.insert(peer_id) {
-                        expected_peers.remove(&peer_id);
-
+                    if expected_peers.remove(&peer_id) {
+                        writer.send(WriteEvent::Write(CrustMsg::Connect(our_public_key)));
                         if notify_new_connection(&cm,
                                                  &peer_id,
                                                  Event::NewPeer(Ok(()), peer_id),
@@ -543,6 +539,8 @@ pub fn start_tcp_accept(port: u16,
                                .is_err() {
                             break;
                         }
+                    } else {
+                        break;
                     }
 
                     peer_id
