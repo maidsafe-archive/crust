@@ -96,9 +96,6 @@
 <span id="53">53</span>
 <span id="54">54</span>
 <span id="55">55</span>
-<span id="56">56</span>
-<span id="57">57</span>
-<span id="58">58</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2016 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -138,10 +135,7 @@
 
 <span class='kw'>impl</span> <span class='ident'>Display</span> <span class='kw'>for</span> <span class='ident'>PeerId</span> {
     <span class='kw'>fn</span> <span class='ident'>fmt</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>formatter</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Formatter</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span> {
-        <span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>formatter</span>,
-               <span class='string'>&quot;{:02x}{:02x}..&quot;</span>,
-               (<span class='self'>self</span>.<span class='number'>0</span>).<span class='number'>0</span>[<span class='number'>0</span>],
-               (<span class='self'>self</span>.<span class='number'>0</span>).<span class='number'>0</span>[<span class='number'>1</span>])
+        <span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>formatter</span>, <span class='string'>&quot;{:02x}{:02x}..&quot;</span>, (<span class='self'>self</span>.<span class='number'>0</span>).<span class='number'>0</span>[<span class='number'>0</span>], (<span class='self'>self</span>.<span class='number'>0</span>).<span class='number'>0</span>[<span class='number'>1</span>])
     }
 }
 

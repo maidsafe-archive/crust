@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/maidsafe_utilities-0.4.0/src/serialisation.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/maidsafe_utilities-0.4.1/src/serialisation.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>serialisation.rs.html -- source</title>
@@ -128,6 +128,7 @@
 <span id="85">85</span>
 <span id="86">86</span>
 <span id="87">87</span>
+<span id="88">88</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -147,10 +148,10 @@
 <span class='comment'>// relating to use of the SAFE Network Software.</span>
 
 <span class='kw'>use</span> <span class='ident'>bincode</span>::<span class='ident'>SizeLimit</span>;
-<span class='kw'>use</span> <span class='ident'>bincode</span>::<span class='ident'>rustc_serialize</span>::{<span class='ident'>decode</span>, <span class='ident'>decode_from</span>, <span class='ident'>DecodingError</span>, <span class='ident'>encode</span>,
+<span class='kw'>use</span> <span class='ident'>bincode</span>::<span class='ident'>rustc_serialize</span>::{<span class='ident'>decode_from</span>, <span class='ident'>DecodingError</span>, <span class='ident'>encode</span>,
                                <span class='ident'>encode_into</span>, <span class='ident'>EncodingError</span>};
 <span class='kw'>use</span> <span class='ident'>rustc_serialize</span>::{<span class='ident'>Encodable</span>, <span class='ident'>Decodable</span>};
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::{<span class='ident'>Read</span>, <span class='ident'>Write</span>};
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::{<span class='ident'>Read</span>, <span class='ident'>Write</span>, <span class='ident'>Cursor</span>};
 
 <span class='macro'>quick_error</span><span class='macro'>!</span> {
     <span class='doccomment'>/// Serialisation error.</span>
@@ -185,19 +186,20 @@
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>deserialise</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span>(<span class='ident'>data</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>]) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>T</span>, <span class='ident'>SerialisationError</span><span class='op'>&gt;</span>
     <span class='kw'>where</span> <span class='ident'>T</span>: <span class='ident'>Decodable</span>
 {
-    <span class='ident'>decode</span>(<span class='ident'>data</span>).<span class='ident'>map_err</span>(<span class='ident'>From</span>::<span class='ident'>from</span>)
+    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>data</span> <span class='op'>=</span> <span class='ident'>Cursor</span>::<span class='ident'>new</span>(<span class='ident'>data</span>);
+    <span class='ident'>deserialise_from</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>data</span>)
 }
 
 <span class='doccomment'>/// Serialise an Encodable type directly into a Write.</span>
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>serialise_into</span><span class='op'>&lt;</span><span class='ident'>T</span>: <span class='ident'>Encodable</span>, <span class='ident'>W</span>: <span class='ident'>Write</span><span class='op'>&gt;</span>(<span class='ident'>data</span>: <span class='kw-2'>&amp;</span><span class='ident'>T</span>,
                                               <span class='ident'>write</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>W</span>)
                                               <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>(), <span class='ident'>SerialisationError</span><span class='op'>&gt;</span> {
-    <span class='ident'>encode_into</span>(<span class='ident'>data</span>, <span class='ident'>write</span>, <span class='ident'>SizeLimit</span>::<span class='ident'>Infinite</span>).<span class='ident'>map_err</span>(<span class='ident'>From</span>::<span class='ident'>from</span>)
+    <span class='ident'>encode_into</span>(<span class='ident'>data</span>, <span class='ident'>write</span>, <span class='ident'>SizeLimit</span>::<span class='ident'>Bounded</span>(<span class='number'>1</span> <span class='op'>&lt;&lt;</span> <span class='number'>21</span>)).<span class='ident'>map_err</span>(<span class='ident'>From</span>::<span class='ident'>from</span>)
 }
 
 <span class='doccomment'>/// Deserialise a Decodable type directly from a Read</span>
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>deserialise_from</span><span class='op'>&lt;</span><span class='ident'>R</span>: <span class='ident'>Read</span>, <span class='ident'>T</span>: <span class='ident'>Decodable</span><span class='op'>&gt;</span>(<span class='ident'>read</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>R</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>T</span>, <span class='ident'>SerialisationError</span><span class='op'>&gt;</span> {
-    <span class='ident'>decode_from</span>(<span class='ident'>read</span>, <span class='ident'>SizeLimit</span>::<span class='ident'>Infinite</span>).<span class='ident'>map_err</span>(<span class='ident'>From</span>::<span class='ident'>from</span>)
+    <span class='ident'>decode_from</span>(<span class='ident'>read</span>, <span class='ident'>SizeLimit</span>::<span class='ident'>Bounded</span>(<span class='number'>1</span> <span class='op'>&lt;&lt;</span> <span class='number'>21</span>)).<span class='ident'>map_err</span>(<span class='ident'>From</span>::<span class='ident'>from</span>)
 }
 
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
