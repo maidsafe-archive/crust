@@ -580,7 +580,9 @@ impl Service {
                     // Are tcp acceptors being used to do rendezvous connections now?
                     // coz that doesn't make sense
                     udp_socket: udp_socket,
-                    tcp_socket: tcp_socket,
+                    // TODO: reenable TCP rendezvous
+                    //tcp_socket: tcp_socket,
+                    tcp_socket: None,
                     static_contact_info: unwrap_result!(our_static_contact_info.lock()).clone(),
                 }),
             });
