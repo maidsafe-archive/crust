@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/nat_traversal-0.3.0/src/mapped_tcp_socket.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/nat_traversal-0.3.1/src/mapped_tcp_socket.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>mapped_tcp_socket.rs.html -- source</title>
@@ -1015,7 +1015,7 @@
                      returned an error: {}&quot;</span>, <span class='ident'>gateway_addr</span>, <span class='ident'>err</span>)
             <span class='ident'>cause</span>(<span class='ident'>err</span>)
         }
-        <span class='ident'>NewReusablyBoundSocket</span> { <span class='ident'>err</span>: <span class='ident'>NewReusablyBoundSocketError</span> } {
+        <span class='ident'>NewReusablyBoundTcpSocket</span> { <span class='ident'>err</span>: <span class='ident'>NewReusablyBoundTcpSocketError</span> } {
             <span class='ident'>description</span>(<span class='string'>&quot;Error creating a reusably bound temporary socket for mapping.&quot;</span>)
             <span class='ident'>display</span>(<span class='string'>&quot;Error creating a reusably bound temporary socket for mapping: {}&quot;</span>, <span class='ident'>err</span>)
             <span class='ident'>cause</span>(<span class='ident'>err</span>)
@@ -1105,9 +1105,9 @@
 }
 
 <span class='macro'>quick_error</span><span class='macro'>!</span> {
-    <span class='doccomment'>/// Errors returned by new_reusably_bound_socket</span>
+    <span class='doccomment'>/// Errors returned by new_reusably_bound_tcp_socket</span>
     <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>)]</span>
-    <span class='kw'>pub</span> <span class='kw'>enum</span> <span class='ident'>NewReusablyBoundSocketError</span> {
+    <span class='kw'>pub</span> <span class='kw'>enum</span> <span class='ident'>NewReusablyBoundTcpSocketError</span> {
         <span class='ident'>Create</span> { <span class='ident'>err</span>: <span class='ident'>io</span>::<span class='ident'>Error</span> } {
             <span class='ident'>description</span>(<span class='string'>&quot;Error creating socket.&quot;</span>)
             <span class='ident'>display</span>(<span class='string'>&quot;Error creating socket: {}&quot;</span>, <span class='ident'>err</span>)
@@ -1137,39 +1137,39 @@
     }
 }
 
-<span class='kw'>impl</span> <span class='ident'>From</span><span class='op'>&lt;</span><span class='ident'>NewReusablyBoundSocketError</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>io</span>::<span class='ident'>Error</span> {
-    <span class='kw'>fn</span> <span class='ident'>from</span>(<span class='ident'>e</span>: <span class='ident'>NewReusablyBoundSocketError</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='ident'>Error</span> {
+<span class='kw'>impl</span> <span class='ident'>From</span><span class='op'>&lt;</span><span class='ident'>NewReusablyBoundTcpSocketError</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>io</span>::<span class='ident'>Error</span> {
+    <span class='kw'>fn</span> <span class='ident'>from</span>(<span class='ident'>e</span>: <span class='ident'>NewReusablyBoundTcpSocketError</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='ident'>Error</span> {
         <span class='kw'>let</span> <span class='ident'>err_str</span> <span class='op'>=</span> <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;{}&quot;</span>, <span class='ident'>e</span>);
         <span class='kw'>let</span> <span class='ident'>kind</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>e</span> {
-            <span class='ident'>NewReusablyBoundSocketError</span>::<span class='ident'>Create</span> { <span class='ident'>err</span> } <span class='op'>=&gt;</span> <span class='ident'>err</span>.<span class='ident'>kind</span>(),
-            <span class='ident'>NewReusablyBoundSocketError</span>::<span class='ident'>EnableReuseAddr</span> { <span class='ident'>err</span> } <span class='op'>=&gt;</span> <span class='ident'>err</span>.<span class='ident'>kind</span>(),
-            <span class='ident'>NewReusablyBoundSocketError</span>::<span class='ident'>EnableReusePort</span> { <span class='ident'>err</span> } <span class='op'>=&gt;</span> <span class='ident'>err</span>.<span class='ident'>kind</span>(),
-            <span class='ident'>NewReusablyBoundSocketError</span>::<span class='ident'>Bind</span> { <span class='ident'>err</span> } <span class='op'>=&gt;</span> <span class='ident'>err</span>.<span class='ident'>kind</span>(),
+            <span class='ident'>NewReusablyBoundTcpSocketError</span>::<span class='ident'>Create</span> { <span class='ident'>err</span> } <span class='op'>=&gt;</span> <span class='ident'>err</span>.<span class='ident'>kind</span>(),
+            <span class='ident'>NewReusablyBoundTcpSocketError</span>::<span class='ident'>EnableReuseAddr</span> { <span class='ident'>err</span> } <span class='op'>=&gt;</span> <span class='ident'>err</span>.<span class='ident'>kind</span>(),
+            <span class='ident'>NewReusablyBoundTcpSocketError</span>::<span class='ident'>EnableReusePort</span> { <span class='ident'>err</span> } <span class='op'>=&gt;</span> <span class='ident'>err</span>.<span class='ident'>kind</span>(),
+            <span class='ident'>NewReusablyBoundTcpSocketError</span>::<span class='ident'>Bind</span> { <span class='ident'>err</span> } <span class='op'>=&gt;</span> <span class='ident'>err</span>.<span class='ident'>kind</span>(),
         };
         <span class='ident'>io</span>::<span class='ident'>Error</span>::<span class='ident'>new</span>(<span class='ident'>kind</span>, <span class='ident'>err_str</span>)
     }
 }
 
-<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new_reusably_bound_socket</span>(<span class='ident'>local_addr</span>: <span class='kw-2'>&amp;</span><span class='ident'>net</span>::<span class='ident'>SocketAddr</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>net2</span>::<span class='ident'>TcpBuilder</span>, <span class='ident'>NewReusablyBoundSocketError</span><span class='op'>&gt;</span> {
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new_reusably_bound_tcp_socket</span>(<span class='ident'>local_addr</span>: <span class='kw-2'>&amp;</span><span class='ident'>net</span>::<span class='ident'>SocketAddr</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>net2</span>::<span class='ident'>TcpBuilder</span>, <span class='ident'>NewReusablyBoundTcpSocketError</span><span class='op'>&gt;</span> {
     <span class='kw'>let</span> <span class='ident'>socket_res</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>local_addr</span>.<span class='ident'>ip</span>() {
         <span class='ident'>IpAddr</span>::<span class='ident'>V4</span>(..) <span class='op'>=&gt;</span> <span class='ident'>net2</span>::<span class='ident'>TcpBuilder</span>::<span class='ident'>new_v4</span>(),
         <span class='ident'>IpAddr</span>::<span class='ident'>V6</span>(..) <span class='op'>=&gt;</span> <span class='ident'>net2</span>::<span class='ident'>TcpBuilder</span>::<span class='ident'>new_v6</span>(),
     };
     <span class='kw'>let</span> <span class='ident'>socket</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>socket_res</span> {
         <span class='prelude-val'>Ok</span>(<span class='ident'>socket</span>) <span class='op'>=&gt;</span> <span class='ident'>socket</span>,
-        <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>NewReusablyBoundSocketError</span>::<span class='ident'>Create</span> { <span class='ident'>err</span>: <span class='ident'>e</span> }),
+        <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>NewReusablyBoundTcpSocketError</span>::<span class='ident'>Create</span> { <span class='ident'>err</span>: <span class='ident'>e</span> }),
     };
     <span class='kw'>match</span> <span class='ident'>socket</span>.<span class='ident'>reuse_address</span>(<span class='boolval'>true</span>) {
         <span class='prelude-val'>Ok</span>(_) <span class='op'>=&gt;</span> (),
-        <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>NewReusablyBoundSocketError</span>::<span class='ident'>EnableReuseAddr</span> { <span class='ident'>err</span>: <span class='ident'>e</span> }),
+        <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>NewReusablyBoundTcpSocketError</span>::<span class='ident'>EnableReuseAddr</span> { <span class='ident'>err</span>: <span class='ident'>e</span> }),
     };
     <span class='kw'>match</span> <span class='ident'>socket_utils</span>::<span class='ident'>enable_so_reuseport</span>(<span class='kw-2'>&amp;</span><span class='ident'>socket</span>) {
         <span class='prelude-val'>Ok</span>(()) <span class='op'>=&gt;</span> (),
-        <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>NewReusablyBoundSocketError</span>::<span class='ident'>EnableReusePort</span> { <span class='ident'>err</span>: <span class='ident'>e</span> }),
+        <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>NewReusablyBoundTcpSocketError</span>::<span class='ident'>EnableReusePort</span> { <span class='ident'>err</span>: <span class='ident'>e</span> }),
     };
     <span class='kw'>match</span> <span class='ident'>socket</span>.<span class='ident'>bind</span>(<span class='ident'>local_addr</span>) {
         <span class='prelude-val'>Ok</span>(..) <span class='op'>=&gt;</span> (),
-        <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>NewReusablyBoundSocketError</span>::<span class='ident'>Bind</span> { <span class='ident'>err</span>: <span class='ident'>e</span> }),
+        <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>NewReusablyBoundTcpSocketError</span>::<span class='ident'>Bind</span> { <span class='ident'>err</span>: <span class='ident'>e</span> }),
     };
     <span class='prelude-val'>Ok</span>(<span class='ident'>socket</span>)
 }
@@ -1299,9 +1299,9 @@
         <span class='kw'>let</span> <span class='ident'>simple_servers</span> <span class='op'>=</span> <span class='ident'>mapping_context</span>::<span class='ident'>simple_tcp_servers</span>(<span class='kw-2'>&amp;</span><span class='ident'>mc</span>);
         <span class='kw'>for</span> <span class='ident'>simple_server</span> <span class='kw'>in</span> <span class='ident'>simple_servers</span> {
             <span class='ident'>mapping_threads</span>.<span class='ident'>push</span>(<span class='ident'>thread</span>::<span class='ident'>spawn</span>(<span class='kw'>move</span> <span class='op'>||</span> {
-                <span class='kw'>let</span> <span class='ident'>mapping_socket</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>new_reusably_bound_socket</span>(<span class='kw-2'>&amp;</span><span class='ident'>local_addr</span>) {
+                <span class='kw'>let</span> <span class='ident'>mapping_socket</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>new_reusably_bound_tcp_socket</span>(<span class='kw-2'>&amp;</span><span class='ident'>local_addr</span>) {
                     <span class='prelude-val'>Ok</span>(<span class='ident'>mapping_socket</span>) <span class='op'>=&gt;</span> <span class='ident'>mapping_socket</span>,
-                    <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>MappedTcpSocketMapWarning</span>::<span class='ident'>NewReusablyBoundSocket</span> { <span class='ident'>err</span>: <span class='ident'>e</span> }),
+                    <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>MappedTcpSocketMapWarning</span>::<span class='ident'>NewReusablyBoundTcpSocket</span> { <span class='ident'>err</span>: <span class='ident'>e</span> }),
                 };
                 <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>stream</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>mapping_socket</span>.<span class='ident'>connect</span>(<span class='kw-2'>&amp;</span><span class='op'>*</span><span class='ident'>simple_server</span>) {
                     <span class='prelude-val'>Ok</span>(<span class='ident'>stream</span>) <span class='op'>=&gt;</span> <span class='ident'>stream</span>,
@@ -1430,7 +1430,7 @@
             <span class='ident'>display</span>(<span class='string'>&quot;Error getting the local address of the provided socket: {}&quot;</span>, <span class='ident'>err</span>)
             <span class='ident'>cause</span>(<span class='ident'>err</span>)
         }
-        <span class='ident'>NewReusablyBoundSocket</span> { <span class='ident'>err</span>: <span class='ident'>NewReusablyBoundSocketError</span> } {
+        <span class='ident'>NewReusablyBoundTcpSocket</span> { <span class='ident'>err</span>: <span class='ident'>NewReusablyBoundTcpSocketError</span> } {
             <span class='ident'>description</span>(<span class='string'>&quot;Error binding another socket to the same local address as the provided socket.&quot;</span>)
             <span class='ident'>display</span>(<span class='string'>&quot;Error binding another socket to the same local address as the provided socket: {}&quot;</span>, <span class='ident'>err</span>)
             <span class='ident'>cause</span>(<span class='ident'>err</span>)
@@ -1453,7 +1453,7 @@
         <span class='kw'>let</span> <span class='ident'>err_str</span> <span class='op'>=</span> <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;{}&quot;</span>, <span class='ident'>e</span>);
         <span class='kw'>let</span> <span class='ident'>kind</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>e</span> {
             <span class='ident'>TcpPunchHoleError</span>::<span class='ident'>SocketLocalAddr</span> { <span class='ident'>err</span> } <span class='op'>=&gt;</span> <span class='ident'>err</span>.<span class='ident'>kind</span>(),
-            <span class='ident'>TcpPunchHoleError</span>::<span class='ident'>NewReusablyBoundSocket</span> { <span class='ident'>err</span> } <span class='op'>=&gt;</span> {
+            <span class='ident'>TcpPunchHoleError</span>::<span class='ident'>NewReusablyBoundTcpSocket</span> { <span class='ident'>err</span> } <span class='op'>=&gt;</span> {
                 <span class='kw'>let</span> <span class='ident'>err</span>: <span class='ident'>io</span>::<span class='ident'>Error</span> <span class='op'>=</span> <span class='ident'>From</span>::<span class='ident'>from</span>(<span class='ident'>err</span>);
                 <span class='ident'>err</span>.<span class='ident'>kind</span>()
             },
@@ -1502,11 +1502,11 @@
     <span class='comment'>// Try connecting to every potential endpoint in a seperate thread.</span>
     <span class='kw'>for</span> <span class='ident'>endpoint</span> <span class='kw'>in</span> <span class='ident'>their_endpoints</span> {
         <span class='kw'>let</span> <span class='ident'>addr</span> <span class='op'>=</span> <span class='ident'>endpoint</span>.<span class='ident'>addr</span>;
-        <span class='comment'>// Important to call new_reusably_bound_socket outside the inner thread so that it&#39;s called</span>
+        <span class='comment'>// Important to call new_reusably_bound_tcp_socket outside the inner thread so that it&#39;s called</span>
         <span class='comment'>// before the listen() call below.</span>
-        <span class='kw'>let</span> <span class='ident'>mapping_socket</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>new_reusably_bound_socket</span>(<span class='kw-2'>&amp;</span><span class='ident'>local_addr</span>) {
+        <span class='kw'>let</span> <span class='ident'>mapping_socket</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>new_reusably_bound_tcp_socket</span>(<span class='kw-2'>&amp;</span><span class='ident'>local_addr</span>) {
             <span class='prelude-val'>Ok</span>(<span class='ident'>mapping_socket</span>) <span class='op'>=&gt;</span> <span class='ident'>mapping_socket</span>,
-            <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='ident'>WErr</span>(<span class='ident'>TcpPunchHoleError</span>::<span class='ident'>NewReusablyBoundSocket</span> { <span class='ident'>err</span>: <span class='ident'>e</span> }),
+            <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='ident'>WErr</span>(<span class='ident'>TcpPunchHoleError</span>::<span class='ident'>NewReusablyBoundTcpSocket</span> { <span class='ident'>err</span>: <span class='ident'>e</span> }),
         };
         <span class='kw'>let</span> <span class='ident'>results_tx_clone</span> <span class='op'>=</span> <span class='ident'>results_tx</span>.<span class='ident'>clone</span>();
         <span class='kw'>let</span> <span class='ident'>shutdown_clone</span> <span class='op'>=</span> <span class='ident'>shutdown</span>.<span class='ident'>clone</span>();

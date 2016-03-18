@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/nat_traversal-0.3.0/src/lib.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/nat_traversal-0.3.1/src/lib.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>lib.rs.html -- source</title>
@@ -126,6 +126,9 @@
 <span id="83">83</span>
 <span id="84">84</span>
 <span id="85">85</span>
+<span id="86">86</span>
+<span id="87">87</span>
+<span id="88">88</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2016 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -196,7 +199,10 @@
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>mapped_udp_socket</span>::{<span class='ident'>MappedUdpSocket</span>, <span class='ident'>MappedUdpSocketMapError</span>,
                             <span class='ident'>MappedUdpSocketMapWarning</span>, <span class='ident'>MappedUdpSocketNewError</span>};
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>punched_udp_socket</span>::{<span class='ident'>PunchedUdpSocket</span>, <span class='ident'>filter_udp_hole_punch_packet</span>};
-<span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>mapped_tcp_socket</span>::{<span class='ident'>MappedTcpSocket</span>, <span class='ident'>tcp_punch_hole</span>};
+<span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>mapped_tcp_socket</span>::{<span class='ident'>new_reusably_bound_tcp_socket</span>, <span class='ident'>MappedTcpSocket</span>, <span class='ident'>tcp_punch_hole</span>,
+                            <span class='ident'>MappedTcpSocketMapError</span>, <span class='ident'>MappedTcpSocketMapWarning</span>,
+                            <span class='ident'>MappedTcpSocketNewError</span>, <span class='ident'>NewReusablyBoundTcpSocketError</span>,
+                            <span class='ident'>TcpPunchHoleWarning</span>, <span class='ident'>TcpPunchHoleError</span>};
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>simple_udp_hole_punch_server</span>::{<span class='ident'>SimpleUdpHolePunchServer</span>, <span class='ident'>SimpleUdpHolePunchServerNewError</span>};
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>simple_tcp_hole_punch_server</span>::{<span class='ident'>SimpleTcpHolePunchServer</span>, <span class='ident'>SimpleTcpHolePunchServerNewError</span>};
 

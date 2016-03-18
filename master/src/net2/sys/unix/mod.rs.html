@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/net2-0.2.22/src/sys/unix/mod.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/net2-0.2.23/src/sys/unix/mod.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>mod.rs.html -- source</title>
@@ -109,6 +109,8 @@
 <span id="66">66</span>
 <span id="67">67</span>
 <span id="68">68</span>
+<span id="69">69</span>
+<span id="70">70</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 The Rust Project Developers. See the COPYRIGHT</span>
 <span class='comment'>// file at the top-level directory of this distribution and at</span>
@@ -128,7 +130,9 @@
 
 <span class='kw'>mod</span> <span class='ident'>impls</span>;
 
-<span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>libc</span> <span class='kw'>as</span> <span class='ident'>c</span>;
+<span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>c</span> {
+    <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>libc</span>::<span class='op'>*</span>;
+}
 
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>Socket</span> {
     <span class='ident'>fd</span>: <span class='ident'>c_int</span>,

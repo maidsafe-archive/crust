@@ -46,32 +46,14 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-58' class='srclink' href='../src/config_file_handler/file_handler.rs.html#52-55' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-60' class='srclink' href='../src/config_file_handler/file_handler.rs.html#36-39' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct FileHandler&lt;T&gt; {
     // some fields omitted
 }</pre><div class='docblock'><p>Struct for reading and writing config files.</p>
 
 <h1 id='thread--and-process-safety' class='section-header'><a href='#thread--and-process-safety'>Thread- and Process-Safety</a></h1>
-<p>Since all instances of <code>FileHandler</code> initialised with the same value for <code>name</code> within a single
-process will likely refer to the same file on disk, it is not safe to access any such instance
-concurrently with that same <em>or any other</em> such instance (with the exception of the
-<a href="#method.path"><code>path()</code></a> function which is the only non-mutating member function).</p>
-
-<p>For instances initialised with different values for <code>name</code>, it is safe to access separate
-instances concurrently.</p>
-
-<p>It is possibly unsafe to call <a href="#method.write_file"><code>write_file()</code></a> concurrently with a different
-process calling <a href="#method.read_file"><code>read_file()</code></a> or <a href="#method.write_file"><code>write_file()</code></a> where
-both processes have the same name and their instances of <code>FileHandler</code> are using the same name,
-since these may be accessing the same file on disk.  However, it is safe to call
-<a href="#method.read_file"><code>read_file()</code></a> concurrently across multiple such processes, since this
-function doesn&#39;t modify the file.</p>
-
-<p>Perhaps the easiest way to make multi-process access safe is to ensure each process is a single
-execution of a binary, and that each binary is located in a directory which is
-mutually-exclusive to all other such binaries, and that each config file to be managed by
-<code>FileHandler</code> is placed in each binary&#39;s <a href="fn.current_bin_dir.html"><code>current_bin_dir()</code></a>.  In
-this way, each process should be the only one accessing that file.</p>
+<p>It is safe to read and write the same file using <code>FileHandler</code>concurrently
+in multiple threads and/or processes.</p>
 </div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;T&gt; <a class='struct' href='../config_file_handler/struct.FileHandler.html' title='config_file_handler::FileHandler'>FileHandler</a>&lt;T&gt;</code></h3><div class='impl-items'><h4 id='method.open' class='method'><code>fn <a href='#method.open' class='fnname'>open</a>&lt;S: <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.AsRef.html' title='core::convert::AsRef'>AsRef</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/std/ffi/os_str/struct.OsStr.html' title='std::ffi::os_str::OsStr'>OsStr</a>&gt; + ?<a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a>&gt;(name: &amp;S) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='struct' href='../config_file_handler/struct.FileHandler.html' title='config_file_handler::FileHandler'>FileHandler</a>&lt;T&gt;, <a class='enum' href='../config_file_handler/enum.Error.html' title='config_file_handler::Error'>Error</a>&gt;</code></h4>
 <div class='docblock'><p>Constructor taking the required file name (not the full path)
 This function will return an error if the file does not exist.</p>
