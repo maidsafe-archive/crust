@@ -22,6 +22,8 @@ use static_contact_info::StaticContactInfo;
 use config_file_handler::FileHandler;
 use config_file_handler;
 
+const ENABLE_BOOTSTRAP_CACHE: bool = false;
+
 pub struct BootstrapHandler {
     file_handler: FileHandler<Vec<StaticContactInfo>>,
     last_updated: ::time::Tm,
@@ -51,7 +53,7 @@ impl BootstrapHandler {
                            contacts: Vec<StaticContactInfo>,
                            prune: Vec<StaticContactInfo>)
                            -> Result<(), Error> {
-        if false {
+        if ENABLE_BOOTSTRAP_CACHE {
             try!(self.insert_contacts(contacts, prune));
             // TODO(Team) this implementation is missing and should be considered in next planning
             if ::time::now() > self.last_updated + Self::duration_between_updates() {
