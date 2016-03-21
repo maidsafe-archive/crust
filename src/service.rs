@@ -408,42 +408,42 @@ impl Service {
 
             // FIXME: TCP rendezvous temporarily disabled, until
             // https://github.com/maidsafe/crust/issues/601 is fixed.
-            //
-            // if let Some(tcp_socket) = our_connection_info.tcp_socket {
-            //     let tcp_info = their_connection_info.tcp_info;
-            //     let event_tx = event_tx.clone();
-            //     let connection_map = connection_map.clone();
-            //     let result_tx = result_tx.clone();
-            //     let priv_tcp_info = our_connection_info.priv_tcp_info;
-            //     let _ = thread!("Service::connect tcp rendezvous", move || {
-            //         let res = tcp_punch_hole(tcp_socket,
-            //                                  priv_tcp_info,
-            //                                  tcp_info).result_log();
-            //         match res {
-            //             Ok(tcp_stream) => {
-            //                 match connection::tcp_rendezvous_connect(connection_map,
-            //                                                          event_tx,
-            //                                                          tcp_stream,
-            //                                                          their_id) {
-            //                     Ok(()) => {
-            //                         result_tx.send(Ok(()));
-            //                     },
-            //                     Err(err) => {
-            //                         let err_msg = format!("Tcp rendezvous connect failed: {}", err);
-            //                         let err = io::Error::new(err.kind(), err_msg);
-            //                         result_tx.send(Err(err));
-            //                     },
-            //                 }
-            //             },
-            //             Err(err) => {
-            //                 let err: io::Error = From::from(err);
-            //                 let err_msg = format!("Tcp hole punching failed: {}", err);
-            //                 let err = io::Error::new(err.kind(), err_msg);
-            //                 result_tx.send(Err(err));
-            //             },
-            //         };
-            //     });
-            // };
+
+            if let Some(tcp_socket) = our_connection_info.tcp_socket {
+                let tcp_info = their_connection_info.tcp_info;
+                let event_tx = event_tx.clone();
+                let connection_map = connection_map.clone();
+                let result_tx = result_tx.clone();
+                let priv_tcp_info = our_connection_info.priv_tcp_info;
+                let _ = thread!("Service::connect tcp rendezvous", move || {
+                    let res = tcp_punch_hole(tcp_socket,
+                                             priv_tcp_info,
+                                             tcp_info).result_log();
+                    match res {
+                        Ok(tcp_stream) => {
+                            match connection::tcp_rendezvous_connect(connection_map,
+                                                                     event_tx,
+                                                                     tcp_stream,
+                                                                     their_id) {
+                                Ok(()) => {
+                                    result_tx.send(Ok(()));
+                                },
+                                Err(err) => {
+                                    let err_msg = format!("Tcp rendezvous connect failed: {}", err);
+                                    let err = io::Error::new(err.kind(), err_msg);
+                                    result_tx.send(Err(err));
+                                },
+                            }
+                        },
+                        Err(err) => {
+                            let err: io::Error = From::from(err);
+                            let err_msg = format!("Tcp hole punching failed: {}", err);
+                            let err = io::Error::new(err.kind(), err_msg);
+                            result_tx.send(Err(err));
+                        },
+                    };
+                });
+            };
         }
 
         if utp_enabled {
@@ -867,9 +867,6 @@ mod test {
 
         let mut service_1 = unwrap_result!(Service::with_config(event_sender_1, &config));
 
-        // if use_tcp { unwrap_result!(service_1.start_listening_tcp()); }
-        // if use_udp { unwrap_result!(service_1.start_listening_utp()); }
-
         match unwrap_result!(event_rx_1.recv()) {
             Event::BootstrapFinished => (),
             event => panic!("Received unexpected event: {:?}", event),
@@ -920,8 +917,6 @@ mod test {
         direct_connection_two_services(false, true);
     }
 
-    // FIXME: this not only fails, but takes ages to fail too.
-    #[ignore]
     #[test]
     fn direct_connection_tcp_and_udp_two_services() {
         direct_connection_two_services(true, true);
@@ -1072,6 +1067,7 @@ mod test {
     }
 
     #[test]
+    #[ignore]
     fn rendezvous_connection_tcp_and_udp_two_services() {
         rendezvous_connection_two_services(true, true);
     }
