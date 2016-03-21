@@ -200,10 +200,10 @@ impl Service {
                                            config.enable_utp);
 
         let udp_hole_punch_server = try!(SimpleUdpHolePunchServer::new(mapping_context.clone())
-                                             .result_log()
-                                             .or(Err(io::Error::new(io::ErrorKind::Other,
-                                                                    "Failed to create UDP \
-                                                                     hole punch server"))));
+                                             .result_log().or_else(|err| {
+                                                 let e: io::Error = From::from(err);
+                                                 Err(e)
+                                             }));
         let tcp_hole_punch_server = try!(SimpleTcpHolePunchServer::new(mapping_context.clone())
                                              .result_log()
                                              .or(Err(io::Error::new(io::ErrorKind::Other,
