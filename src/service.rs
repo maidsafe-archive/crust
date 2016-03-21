@@ -707,6 +707,21 @@ mod test {
         }
     }
 
+    fn prepare_connection_info(service: &mut Service, event_rx: &Receiver<Event>) -> OurConnectionInfo {
+        static TOKEN_COUNTER: AtomicUsize = ATOMIC_USIZE_INIT;
+        let token = TOKEN_COUNTER.fetch_add(1, Ordering::Relaxed) as u32;
+
+        service.prepare_connection_info(token);
+
+        match unwrap_result!(event_rx.recv()) {
+            Event::ConnectionInfoPrepared(cir) => {
+                assert_eq!(cir.result_token, token);
+                unwrap_result!(cir.result)
+            }
+            event => panic!("Received unexpected event: {:?}", event),
+        }
+    }
+
     #[test]
     fn start_stop_service() {
         let config = gen_config();
@@ -896,33 +911,10 @@ mod test {
             event => panic!("Received unexpected event: {:?}", event),
         }
 
-        const PREPARE_CI_TOKEN: u32 = 1234;
-
-        service_0.prepare_connection_info(PREPARE_CI_TOKEN);
-        let our_ci_0 = {
-            let event_rxd = unwrap_result!(event_rx_0.recv());
-            match event_rxd {
-                Event::ConnectionInfoPrepared(cir) => {
-                    assert_eq!(cir.result_token, PREPARE_CI_TOKEN);
-                    unwrap_result!(cir.result)
-                }
-                _ => panic!("Received unexpected event: {:?}", event_rxd),
-            }
-        };
-
-        service_1.prepare_connection_info(PREPARE_CI_TOKEN);
-        let our_ci_1 = {
-            let event_rxd = unwrap_result!(event_rx_1.recv());
-            match event_rxd {
-                Event::ConnectionInfoPrepared(cir) => {
-                    assert_eq!(cir.result_token, PREPARE_CI_TOKEN);
-                    unwrap_result!(cir.result)
-                }
-                _ => panic!("Received unexpected event: {:?}", event_rxd),
-            }
-        };
-
+        let our_ci_0 = prepare_connection_info(&mut service_0, &event_rx_0);
         let their_ci_0 = our_ci_0.to_their_connection_info();
+
+        let our_ci_1 = prepare_connection_info(&mut service_1, &event_rx_1);
         let their_ci_1 = our_ci_1.to_their_connection_info();
 
         service_0.connect(our_ci_0, their_ci_1);
@@ -1016,7 +1008,6 @@ mod test {
         peer_connection_two_services(Protocol::Udp, true, false)
     }
 
-
     // FIXME: un-ignore this once https://github.com/maidsafe/crust/issues/601
     // is fixed.
     #[test]
@@ -1078,15 +1069,8 @@ mod test {
                     if i == self.our_index {
                         continue;
                     }
-                    const PREPARE_CI_TOKEN: u32 = 1234;
-                    self.service.prepare_connection_info(PREPARE_CI_TOKEN);
-                    let our_ci = match unwrap_result!(self.event_rx.recv()) {
-                        Event::ConnectionInfoPrepared(cir) => {
-                            assert_eq!(cir.result_token, PREPARE_CI_TOKEN);
-                            unwrap_result!(cir.result)
-                        }
-                        m => panic!("Received unexpected event: m == {:?}", m),
-                    };
+
+                    let our_ci = prepare_connection_info(&mut self.service, &self.event_rx);
                     let their_ci = our_ci.to_their_connection_info();
                     ci_tx.send(their_ci);
                     self.our_cis.push(our_ci);
@@ -1323,28 +1307,8 @@ mod test {
         unwrap_result!(service_1.start_listening_tcp());
         unwrap_result!(service_1.start_listening_utp());
 
-        service_0.prepare_connection_info(PREPARE_CI_TOKEN);
-        let our_ci_0 = {
-            match unwrap_result!(event_rx_0.recv()) {
-                Event::ConnectionInfoPrepared(cir) => {
-                    assert_eq!(cir.result_token, PREPARE_CI_TOKEN);
-                    unwrap_result!(cir.result)
-                }
-                event => panic!("Received unexpected event: {:?}", event),
-            }
-        };
-
-        service_1.prepare_connection_info(PREPARE_CI_TOKEN);
-        let our_ci_1 = {
-            match unwrap_result!(event_rx_1.recv()) {
-                Event::ConnectionInfoPrepared(cir) => {
-                    assert_eq!(cir.result_token, PREPARE_CI_TOKEN);
-                    unwrap_result!(cir.result)
-                }
-                event => panic!("Received unexpected event: {:?}", event),
-            }
-        };
-
+        let our_ci_0 = prepare_connection_info(&mut service_0, &event_rx_0);
+        let our_ci_1 = prepare_connection_info(&mut service_1, &event_rx_1);
         let their_ci_1 = our_ci_1.to_their_connection_info();
 
         service_0.connect(our_ci_0, their_ci_1);
