@@ -603,7 +603,6 @@ mod test {
     use super::*;
     use config_handler::Config;
     use event::Event;
-    use endpoint::Protocol;
 
     use std::time::Duration;
     use std::sync::atomic::{AtomicUsize, ATOMIC_USIZE_INIT, Ordering};
@@ -617,6 +616,13 @@ mod test {
     use crossbeam;
     use void::Void;
     use maidsafe_utilities::event_sender::{MaidSafeObserver, MaidSafeEventCategory};
+
+    #[derive(Clone, Copy)]
+    enum Protocol {
+        Tcp,
+        Udp,
+        Both,
+    }
 
     fn get_event_sender()
         -> (::CrustEventSender,
@@ -680,6 +686,17 @@ mod test {
         config
     }
 
+    fn start_listening(service: &mut Service, protocol: Protocol) {
+        match protocol {
+            Protocol::Tcp => unwrap_result!(service.start_listening_tcp()),
+            Protocol::Udp => unwrap_result!(service.start_listening_utp()),
+            Protocol::Both => {
+                unwrap_result!(service.start_listening_tcp());
+                unwrap_result!(service.start_listening_utp());
+            }
+        }
+    }
+
     #[test]
     fn start_stop_service() {
         let config = gen_config();
@@ -687,23 +704,17 @@ mod test {
         let _service = unwrap_result!(Service::with_config(event_sender, &config));
     }
 
-    fn two_services_bootstrap_communicate_and_exit(use_tcp: bool, use_udp: bool) {
-        assert!(use_tcp || use_udp);
-
-        let (event_sender_0, _category_rx_0, event_rx_0) = get_event_sender();
-        let (event_sender_1, _category_rx_1, event_rx_1) = get_event_sender();
+    fn bootstrap_connection_two_services(protocol: Protocol) {
+        let (event_sender_0, category_rx_0, event_rx_0) = get_event_sender();
+        let (event_sender_1, category_rx_1, event_rx_1) = get_event_sender();
 
         let beacon_port = gen_beacon_port();
         let config_0 = gen_config_with_beacon(beacon_port);
         let config_1 = gen_config_with_beacon(beacon_port);
 
         let mut service_0 = unwrap_result!(Service::with_config(event_sender_0, &config_0));
-        if use_tcp {
-            unwrap_result!(service_0.start_listening_tcp());
-        }
-        if use_udp {
-            unwrap_result!(service_0.start_listening_utp());
-        }
+        start_listening(&mut service_0, protocol);
+
         // let service_0 finish bootstrap - since it is the zero state, it should not find any peer
         // to bootstrap
         {
@@ -716,12 +727,7 @@ mod test {
         service_0.start_service_discovery();
 
         let mut service_1 = unwrap_result!(Service::with_config(event_sender_1, &config_1));
-        if use_tcp {
-            unwrap_result!(service_1.start_listening_tcp());
-        }
-        if use_udp {
-            unwrap_result!(service_1.start_listening_utp());
-        }
+        start_listening(&mut service_1, protocol);
 
         // let service_1 finish bootstrap - it should bootstrap off service_0
         let id_0 = {
@@ -832,41 +838,49 @@ mod test {
 
     #[test]
     fn bootstrap_connection_tcp_two_services() {
-        bootstrap_connection_two_services(true, false);
+        bootstrap_connection_two_services(Protocol::Tcp);
     }
 
     #[test]
     fn bootstrap_connection_udp_two_services() {
-        bootstrap_connection_two_services(false, true);
+        bootstrap_connection_two_services(Protocol::Udp);
     }
 
     #[test]
     fn bootstrap_connection_tcp_and_udp_two_services() {
-        bootstrap_connection_two_services(true, true);
+        bootstrap_connection_two_services(Protocol::Both);
     }
 
-    fn direct_connection_two_services(use_tcp: bool, use_udp: bool) {
-        const PREPARE_CI_TOKEN: u32 = 1;
-
+    fn peer_connection_two_services(protocol: Protocol, listen_0: bool, listen_1: bool) {
         let (event_sender_0, category_rx_0, event_rx_0) = get_event_sender();
         let (event_sender_1, category_rx_1, event_rx_1) = get_event_sender();
 
         let mut config = gen_config();
-        if !use_tcp { config.enable_tcp = false }
-        if !use_udp { config.enable_utp = false }
+        match protocol {
+            Protocol::Tcp => config.enable_utp = false,
+            Protocol::Udp => config.enable_tcp = false,
+            _ => (),
+        }
 
         let mut service_0 = unwrap_result!(Service::with_config(event_sender_0, &config));
+        if listen_0 {
+            start_listening(&mut service_0, protocol);
+        }
 
-        if use_tcp { unwrap_result!(service_0.start_listening_tcp()); }
-        if use_udp { unwrap_result!(service_0.start_listening_utp()); }
-
+        // let service_0 finish bootstrap - since it is the zero state, it should not find any peer
+        // to bootstrap
         match unwrap_result!(event_rx_0.recv()) {
             Event::BootstrapFinished => (),
             event => panic!("Received unexpected event: {:?}", event),
         }
 
         let mut service_1 = unwrap_result!(Service::with_config(event_sender_1, &config));
+        if listen_1 {
+            start_listening(&mut service_1, protocol);
+        }
 
+        // let service_0 finish bootstrap - since it is the zero state, it should not find any peer
+        // to bootstrap
         match unwrap_result!(event_rx_1.recv()) {
             Event::BootstrapFinished => (),
             event => panic!("Received unexpected event: {:?}", event),
@@ -1036,7 +1050,7 @@ mod test {
         let (done_tx, done_rx) = mpsc::channel();
         let tj = thread!("Drain event channel messages", move || {
             for _ in event_rx_0 {}
-            unwrap_result!(done_tx.send(()));
+            done_tx.send(());
         });
         thread::park_timeout(Duration::from_secs(5));
         unwrap_result!(done_rx.try_recv());
@@ -1046,7 +1060,7 @@ mod test {
         let (done_tx, done_rx) = mpsc::channel();
         let tj = thread!("Drain event channel messages", move || {
             for _ in event_rx_1 {}
-            unwrap_result!(done_tx.send(()));
+            done_tx.send(());
         });
         thread::park_timeout(Duration::from_secs(5));
         unwrap_result!(done_rx.try_recv());
@@ -1054,26 +1068,40 @@ mod test {
     }
 
     #[test]
-    fn rendezvous_connection_udp_two_services() {
-        rendezvous_connection_two_services(false, true);
+    fn direct_connection_tcp_two_services() {
+        peer_connection_two_services(Protocol::Tcp, true, true)
     }
+
+    #[test]
+    fn direct_connection_udp_two_services() {
+        peer_connection_two_services(Protocol::Udp, true, true)
+    }
+
+    #[test]
+    fn semi_direct_connection_tcp_two_services() {
+        peer_connection_two_services(Protocol::Tcp, true, false)
+    }
+
+    #[test]
+    fn semi_direct_connection_udp_two_services() {
+        peer_connection_two_services(Protocol::Udp, true, false)
+    }
+
 
     // FIXME: un-ignore this once https://github.com/maidsafe/crust/issues/601
     // is fixed.
     #[test]
     #[ignore]
     fn rendezvous_connection_tcp_two_services() {
-        rendezvous_connection_two_services(true, false);
+        peer_connection_two_services(Protocol::Tcp, false, false);
     }
 
     #[test]
-    #[ignore]
-    fn rendezvous_connection_tcp_and_udp_two_services() {
-        rendezvous_connection_two_services(true, true);
+    fn rendezvous_connection_udp_two_services() {
+        peer_connection_two_services(Protocol::Udp, false, false);
     }
 
-    // TODO: change this to allow arbitrary number of nodes and also to allow
-    // both TCP and UDP at the same time.
+    // TODO: change this to allow arbitrary number of nodes.
     fn rendezvous_connection_three_services(protocol: Protocol) {
         const NUM_SERVICES: usize = 3;
         const MSG_SIZE: usize = 1024;
@@ -1081,8 +1109,8 @@ mod test {
 
         struct TestNode {
             event_rx: Receiver<Event>,
+            category_rx: Receiver<MaidSafeEventCategory>,
             service: Service,
-            _category_rx: Receiver<MaidSafeEventCategory>,
             connection_id_rx: Receiver<TheirConnectionInfo>,
             our_cis: Vec<OurConnectionInfo>,
             our_index: usize,
@@ -1096,7 +1124,8 @@ mod test {
                 let mut config = unwrap_result!(::config_handler::read_config_file());
                 match protocol {
                     Protocol::Tcp => config.enable_utp = false,
-                    Protocol::Utp => config.enable_tcp = false,
+                    Protocol::Udp => config.enable_tcp = false,
+                    Protocol::Both => (),
                 };
                 let service = unwrap_result!(Service::with_config(event_sender, &config));
                 match unwrap_result!(event_rx.recv()) {
@@ -1106,8 +1135,8 @@ mod test {
                 let (ci_tx, ci_rx) = mpsc::channel();
                 (TestNode {
                     event_rx: event_rx,
+                    category_rx: category_rx,
                     service: service,
-                    _category_rx: category_rx,
                     connection_id_rx: ci_rx,
                     our_cis: Vec::new(),
                     our_index: index,
@@ -1130,7 +1159,7 @@ mod test {
                         m => panic!("Received unexpected event: m == {:?}", m),
                     };
                     let their_ci = our_ci.to_their_connection_info();
-                    unwrap_result!(ci_tx.send(their_ci));
+                    ci_tx.send(their_ci);
                     self.our_cis.push(our_ci);
                 }
             }
@@ -1164,7 +1193,7 @@ mod test {
                             for _ in 0..MSG_SIZE {
                                 msg.push(n as u8);
                             }
-                            unwrap_result!(self.service.send(their_id, msg));
+                            self.service.send(their_id, msg);
                         }
                     }
 
@@ -1182,7 +1211,7 @@ mod test {
                                         assert_eq!(*next_msg, n as u32);
                                         *next_msg += 1;
                                     }
-                                    hash_map::Entry::Vacant(_) => panic!("impossible!"),
+                                    hash_map::Entry::Vacant(ve) => panic!("impossible!"),
                                 }
                             }
                             m => panic!("Unexpected msg receiving NewMessage: {:?}", m),
@@ -1240,7 +1269,7 @@ mod test {
 
     #[test]
     fn rendezvous_connection_udp_three_services() {
-        rendezvous_connection_three_services(Protocol::Utp);
+        rendezvous_connection_three_services(Protocol::Udp);
     }
 
     // FIXME: un-ignore this once https://github.com/maidsafe/crust/issues/601
@@ -1249,6 +1278,12 @@ mod test {
     #[ignore]
     fn rendezvous_connection_tcp_three_service() {
         rendezvous_connection_three_services(Protocol::Tcp);
+    }
+
+    #[test]
+    #[ignore]
+    fn rendezvous_connection_tcp_and_udp_three_service() {
+        rendezvous_connection_three_services(Protocol::Both);
     }
 
     #[test]
