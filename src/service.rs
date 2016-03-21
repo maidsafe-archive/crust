@@ -347,8 +347,11 @@ impl Service {
     pub fn connect(&self,
                    our_connection_info: OurConnectionInfo,
                    their_connection_info: TheirConnectionInfo) {
-
         let their_id = their_connection_info.id;
+        if their_id == self.id() {
+            return;
+        }
+
         if !unwrap_result!(self.connection_map.lock())
                 .get(&their_id)
                 .into_iter()

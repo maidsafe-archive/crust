@@ -221,6 +221,10 @@ pub fn connect(peer_contact: StaticContactInfo,
                     match deserialise::<ListenerResponse>(&read_buf[..bytes_rxd]) {
                         Ok(ListenerResponse::Connect { our_info, their_info, pub_key, }) => {
                             let (their_info, our_info) = (our_info, their_info);
+                            let their_pub_key = pub_key;
+                            if our_public_key == their_pub_key {
+                                continue;
+                            }
                             if our_info != our_pub_info {
                                 continue;
                             }
@@ -365,13 +369,13 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
     Ok(())
 }
 
-pub fn register_tcp_connection(connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
-                               their_id: PeerId,
-                               network_rx: Receiver,
-                               network_tx: RaiiSender,
-                               event_tx: ::CrustEventSender,
-                               our_addr: SocketAddr,
-                               their_addr: SocketAddr) {
+fn register_tcp_connection(connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
+                           their_id: PeerId,
+                           network_rx: Receiver,
+                           network_tx: RaiiSender,
+                           event_tx: ::CrustEventSender,
+                           our_addr: SocketAddr,
+                           their_addr: SocketAddr) {
     let closed = Arc::new(AtomicBool::new(false));
     let closed_clone = closed.clone();
 
@@ -508,6 +512,11 @@ pub fn start_tcp_accept(port: u16,
             let their_id = match msg {
                 Ok(CrustMsg::BootstrapRequest(k)) => {
                     writer.send(WriteEvent::Write(CrustMsg::BootstrapResponse(our_public_key)));
+                    if our_public_key == k {
+                        error!("Connected to ourselves");
+                        continue;
+                    }
+
                     let peer_id = peer_id::new_id(k);
                     let event = Event::BootstrapAccept(peer_id);
                     if event_tx.send(event).is_err() {
@@ -516,9 +525,13 @@ pub fn start_tcp_accept(port: u16,
                     peer_id
                 }
                 Ok(CrustMsg::Connect(k)) => {
-                    let peer_id = peer_id::new_id(k);
                     writer.send(WriteEvent::Write(CrustMsg::Connect(our_public_key)));
+                    if our_public_key == k {
+                        error!("Connected to ourselves");
+                        continue;
+                    }
 
+                    let peer_id = peer_id::new_id(k);
                     let mut expected_peers = expected_peers.lock().unwrap();
                     if !expected_peers.insert(peer_id) {
                         expected_peers.remove(&peer_id);
@@ -663,6 +676,10 @@ pub fn utp_rendezvous_connect(udp_socket: UdpSocket,
         UtpRendezvousConnectMode::BootstrapAccept => {
             let (guard, their_id) = match network_rx.receive() {
                 Ok(CrustMsg::BootstrapRequest(key)) => {
+                    if key == our_public_key {
+                        return Err(io::Error::new(io::ErrorKind::Other, "Connected to ourselves."));
+                    }
+
                     let their_id = peer_id::new_id(key);
                     let mut guard = unwrap_result!(connection_map.lock());
                     {
