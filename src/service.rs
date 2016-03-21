@@ -359,6 +359,8 @@ impl Service {
             return;
         }
 
+        let _ = self.expected_peers.lock().unwrap().insert(their_id);
+
         {
             let i = &their_connection_info.static_contact_info;
             self.mapping_context.add_simple_udp_servers(i.udp_mapper_servers.iter().cloned());
