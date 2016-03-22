@@ -62,7 +62,6 @@ pub struct Connection {
     protocol: Protocol,
     our_addr: SocketAddr,
     their_addr: SocketAddr,
-    their_id: PeerId,
     network_tx: RaiiSender,
     _network_read_joiner: RaiiThreadJoiner,
     closed: Arc<AtomicBool>,
@@ -120,10 +119,6 @@ impl Connection {
     #[cfg(test)]
     pub fn get_protocol(&self) -> &Protocol {
         &self.protocol
-    }
-
-    pub fn their_id(&self) -> PeerId {
-        self.their_id.clone()
     }
 }
 
@@ -390,7 +385,6 @@ pub fn register_tcp_connection(connection_map: Arc<Mutex<HashMap<PeerId, Vec<Con
         protocol: Protocol::Tcp,
         our_addr: our_addr,
         their_addr: their_addr,
-        their_id: their_id.clone(),
         network_tx: network_tx,
         _network_read_joiner: joiner,
         closed: closed,
@@ -560,7 +554,6 @@ pub fn start_tcp_accept(port: u16,
                 protocol: Protocol::Tcp,
                 our_addr: our_addr,
                 their_addr: their_addr,
-                their_id: their_id,
                 network_tx: RaiiSender(writer),
                 _network_read_joiner: joiner,
                 closed: closed,
@@ -699,7 +692,6 @@ pub fn utp_rendezvous_connect(udp_socket: UdpSocket,
         protocol: Protocol::Utp,
         our_addr: our_addr,
         their_addr: their_new_addr,
-        their_id: their_id,
         network_tx: RaiiSender(writer),
         _network_read_joiner: joiner,
         closed: closed,
@@ -795,7 +787,6 @@ mod test {
                                                                                30000"))),
                 their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.200:\
                                                                                  30000"))),
-                their_id: peer_id::new_id(pub_key.clone()),
                 network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
                 closed: Arc::new(AtomicBool::new(false)),
@@ -813,7 +804,6 @@ mod test {
                                                                                30000"))),
                 their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.200:\
                                                                                  30000"))),
-                their_id: peer_id::new_id(pub_key.clone()),
                 network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
                 closed: Arc::new(AtomicBool::new(false)),
@@ -834,7 +824,6 @@ mod test {
                                                                                30000"))),
                 their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.200:\
                                                                                  30000"))),
-                their_id: peer_id::new_id(pub_key.clone()),
                 network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
                 closed: Arc::new(AtomicBool::new(false)),
@@ -855,7 +844,6 @@ mod test {
                                                                                30000"))),
                 their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.200:\
                                                                                  30000"))),
-                their_id: peer_id::new_id(pub_key.clone()),
                 network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
                 closed: Arc::new(AtomicBool::new(false)),
@@ -876,7 +864,6 @@ mod test {
                                                                                30000"))),
                 their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.253.200:\
                                                                                  30000"))),
-                their_id: peer_id::new_id(pub_key.clone()),
                 network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
                 closed: Arc::new(AtomicBool::new(false)),
@@ -897,7 +884,6 @@ mod test {
                                                                                30000"))),
                 their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.200:\
                                                                                  30000"))),
-                their_id: peer_id::new_id(pub_key.clone()),
                 network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
                 closed: Arc::new(AtomicBool::new(true)),
