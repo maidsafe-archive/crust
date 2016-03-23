@@ -26,7 +26,7 @@ use sodiumoxide::crypto::box_;
 use sodiumoxide::crypto::box_::{PublicKey, SecretKey};
 use net2;
 use nat_traversal::{MappedUdpSocket, MappingContext, PrivRendezvousInfo, MappedTcpSocket,
-                    tcp_punch_hole, PubRendezvousInfo, PunchedUdpSocket, gen_rendezvous_info,
+                    PubRendezvousInfo, PunchedUdpSocket, gen_rendezvous_info,
                     SimpleUdpHolePunchServer, SimpleTcpHolePunchServer};
 
 
@@ -34,7 +34,6 @@ use sender_receiver::CrustMsg;
 use connection::{RaiiTcpAcceptor, UtpRendezvousConnectMode};
 use udp_listener::RaiiUdpListener;
 use static_contact_info::StaticContactInfo;
-use rand;
 use config_handler::{Config, read_config_file};
 use connection::{Connection, ConnectionInfo};
 use error::Error;
@@ -45,7 +44,6 @@ use bootstrap_handler::BootstrapHandler;
 
 use event::Event;
 use socket_addr::SocketAddr;
-use utp_connections;
 use peer_id;
 use peer_id::PeerId;
 
@@ -129,8 +127,8 @@ pub struct Service {
     raii_tcp_acceptor: Option<RaiiTcpAcceptor>,
     tcp_enabled: bool,
     utp_enabled: bool,
-    udp_hole_punch_server: SimpleUdpHolePunchServer<Arc<MappingContext>>,
-    tcp_hole_punch_server: SimpleTcpHolePunchServer<Arc<MappingContext>>,
+    _udp_hole_punch_server: SimpleUdpHolePunchServer<Arc<MappingContext>>,
+    _tcp_hole_punch_server: SimpleTcpHolePunchServer<Arc<MappingContext>>,
 }
 
 impl Service {
@@ -233,8 +231,8 @@ impl Service {
             raii_tcp_acceptor: None,
             tcp_enabled: config.enable_tcp,
             utp_enabled: config.enable_utp,
-            udp_hole_punch_server: udp_hole_punch_server,
-            tcp_hole_punch_server: tcp_hole_punch_server,
+            _udp_hole_punch_server: udp_hole_punch_server,
+            _tcp_hole_punch_server: tcp_hole_punch_server,
         };
 
         Ok(service)

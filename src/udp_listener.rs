@@ -18,25 +18,20 @@
 use std::collections::HashMap;
 use std::io;
 use std::net;
-use std::net::{IpAddr, SocketAddrV4, UdpSocket};
+use std::net::{IpAddr, UdpSocket};
 use std::time::Duration;
 use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicBool, Ordering};
-use itertools::Itertools;
 
-use get_if_addrs;
 use maidsafe_utilities::serialisation::{deserialise, serialise};
 use maidsafe_utilities::thread::RaiiThreadJoiner;
-use rand;
 use nat_traversal::{MappedUdpSocket, MappingContext, PunchedUdpSocket, gen_rendezvous_info};
-use sodiumoxide::crypto::box_::{PublicKey, SecretKey};
+use sodiumoxide::crypto::box_::PublicKey;
 
 use connection::{Connection, utp_rendezvous_connect, UtpRendezvousConnectMode};
 use static_contact_info::StaticContactInfo;
-use event::Event;
 use socket_addr::SocketAddr;
 use listener_message::{ListenerRequest, ListenerResponse};
-use peer_id;
 use peer_id::PeerId;
 use bootstrap_handler::BootstrapHandler;
 
