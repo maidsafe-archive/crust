@@ -25,6 +25,7 @@ use std::net::{Shutdown, TcpStream, UdpSocket, Ipv4Addr, SocketAddrV4};
 use std::net;
 use std::io;
 use std::time::Duration;
+use time;
 use maidsafe_utilities::event_sender::{EventSenderError, MaidSafeEventCategory};
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 use maidsafe_utilities::serialisation::{deserialise, serialise};
@@ -45,8 +46,6 @@ use nat_traversal;
 use sodiumoxide::crypto::box_::PublicKey;
 
 type CrustEventSenderError = EventSenderError<MaidSafeEventCategory, Event>;
-
-const UDP_READ_TIMEOUT_MS: u64 = 20_000;
 
 /// An open connection that can be used to send messages to a peer.
 ///
@@ -181,8 +180,6 @@ pub fn connect(peer_contact: StaticContactInfo,
             }
         };
 
-        try!(udp_socket.set_read_timeout(Some(Duration::from_millis(UDP_READ_TIMEOUT_MS))));
-
         let connect_req = ListenerRequest::Connect {
             our_info: our_pub_info.clone(),
             pub_key: our_public_key.clone(),
@@ -204,7 +201,15 @@ pub fn connect(peer_contact: StaticContactInfo,
                 }
             });
         }
-        for udp_addr in peer_contact.utp_custom_listeners {
+
+        const TIMEOUT_MS: i64 = 20_000;
+        let deadline = time::SteadyTime::now() + time::Duration::milliseconds(TIMEOUT_MS);
+
+        loop {
+            let now = time::SteadyTime::now();
+            let timeout = if now < deadline { deadline - now } else { break };
+            let timeout = Duration::from_millis(timeout.num_milliseconds() as u64);
+            try!(udp_socket.set_read_timeout(Some(timeout)));
             match udp_socket.recv_from(&mut read_buf) {
                 Ok((bytes_rxd, _peer_addr)) => {
                     match deserialise::<ListenerResponse>(&read_buf[..bytes_rxd]) {
