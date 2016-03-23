@@ -26,7 +26,7 @@ use sodiumoxide::crypto::box_;
 use sodiumoxide::crypto::box_::{PublicKey, SecretKey};
 use net2;
 use nat_traversal::{MappedUdpSocket, MappingContext, PrivRendezvousInfo, MappedTcpSocket,
-                    tcp_punch_hole, PubRendezvousInfo, PunchedUdpSocket, gen_rendezvous_info,
+                    PubRendezvousInfo, PunchedUdpSocket, gen_rendezvous_info,
                     SimpleUdpHolePunchServer, SimpleTcpHolePunchServer};
 
 
@@ -34,7 +34,6 @@ use sender_receiver::CrustMsg;
 use connection::{RaiiTcpAcceptor, UtpRendezvousConnectMode};
 use udp_listener::RaiiUdpListener;
 use static_contact_info::StaticContactInfo;
-use rand;
 use config_handler::{Config, read_config_file};
 use connection::{Connection, ConnectionInfo};
 use error::Error;
@@ -45,7 +44,6 @@ use bootstrap_handler::BootstrapHandler;
 
 use event::Event;
 use socket_addr::SocketAddr;
-use utp_connections;
 use peer_id;
 use peer_id::PeerId;
 
@@ -129,8 +127,8 @@ pub struct Service {
     raii_tcp_acceptor: Option<RaiiTcpAcceptor>,
     tcp_enabled: bool,
     utp_enabled: bool,
-    udp_hole_punch_server: SimpleUdpHolePunchServer<Arc<MappingContext>>,
-    tcp_hole_punch_server: SimpleTcpHolePunchServer<Arc<MappingContext>>,
+    _udp_hole_punch_server: SimpleUdpHolePunchServer<Arc<MappingContext>>,
+    _tcp_hole_punch_server: SimpleTcpHolePunchServer<Arc<MappingContext>>,
 }
 
 impl Service {
@@ -189,8 +187,7 @@ impl Service {
         mapping_context.add_simple_tcp_servers(config.tcp_mapper_servers.clone());
         let mapping_context = Arc::new(mapping_context);
 
-        let bootstrap = RaiiBootstrap::new(static_contact_info.clone(),
-                                           peer_contact_infos.clone(),
+        let bootstrap = RaiiBootstrap::new(peer_contact_infos.clone(),
                                            our_keys.0.clone(),
                                            event_tx.clone(),
                                            connection_map.clone(),
@@ -233,8 +230,8 @@ impl Service {
             raii_tcp_acceptor: None,
             tcp_enabled: config.enable_tcp,
             utp_enabled: config.enable_utp,
-            udp_hole_punch_server: udp_hole_punch_server,
-            tcp_hole_punch_server: tcp_hole_punch_server,
+            _udp_hole_punch_server: udp_hole_punch_server,
+            _tcp_hole_punch_server: tcp_hole_punch_server,
         };
 
         Ok(service)
@@ -253,8 +250,6 @@ impl Service {
                                                                         self.static_contact_info
                                                                             .clone(),
                                                                         self.our_keys.0.clone(),
-                                                                        self.peer_contact_infos
-                                                                            .clone(),
                                                                         self.event_tx.clone(),
                                                                         self.connection_map
                                                                             .clone(),
@@ -370,7 +365,6 @@ impl Service {
         let event_tx = self.event_tx.clone();
         let connection_map = self.connection_map.clone();
         let our_public_key = self.our_keys.0.clone();
-        let our_contact_info = self.static_contact_info.clone();
         let bootstrap_cache = self.bootstrap_cache.clone();
         let tcp_enabled = self.tcp_enabled;
         let utp_enabled = self.utp_enabled;
@@ -381,7 +375,6 @@ impl Service {
         if tcp_enabled {
             let static_contact_info = their_connection_info.static_contact_info.clone();
             for tcp_addr in their_connection_info.static_contact_info.tcp_acceptors {
-                let our_contact_info = our_contact_info.clone();
                 let event_tx = event_tx.clone();
                 let connection_map = connection_map.clone();
                 let expected_peers = self.expected_peers.clone();
@@ -390,7 +383,6 @@ impl Service {
                 let static_contact_info = static_contact_info.clone();
                 let _ = thread!("Service::connect tcp direct", move || {
                     match connection::connect_tcp_endpoint(tcp_addr,
-                                                           our_contact_info,
                                                            our_public_key,
                                                            event_tx,
                                                            connection_map,
@@ -399,14 +391,19 @@ impl Service {
                         Err(err) => {
                             let err_msg = format!("Tcp direct connect failed: {}", err);
                             let err = io::Error::new(err.kind(), err_msg);
-                            result_tx.send(Err(err));
+                            let _ = result_tx.send(Err(err));
                         },
                         Ok(()) => {
-                            result_tx.send(Ok(()));
-                            unwrap_result!(bootstrap_cache.lock()).update_contacts(
+                            let _ = result_tx.send(Ok(()));
+                            match unwrap_result!(bootstrap_cache.lock()).update_contacts(
                                 vec![static_contact_info],
                                 vec![]
-                            );
+                            ) {
+                                Ok(()) => (),
+                                Err(e) => {
+                                    warn!("Failed to update bootstrap cache: {:?}", e);
+                                },
+                            };
                         },
                     }
                 });
@@ -468,7 +465,7 @@ impl Service {
                             let err: io::Error = From::from(err);
                             let err_msg = format!("Udp hole punching failed: {}", err);
                             let err = io::Error::new(err.kind(), err_msg);
-                            result_tx.send(Err(err));
+                            let _ =  result_tx.send(Err(err));
                             return;
                         }
                     };
@@ -481,10 +478,10 @@ impl Service {
                         Err(err) => {
                             let err_msg = format!("Utp rendezvous connect failed: {}", err);
                             let err = io::Error::new(err.kind(), err_msg);
-                            result_tx.send(Err(err));
+                            let _ = result_tx.send(Err(err));
                         },
                         Ok(_) => {
-                            result_tx.send(Ok(()));
+                            let _ = result_tx.send(Ok(()));
                         },
                     };
                 });
@@ -507,7 +504,7 @@ impl Service {
                         let len = errors.len();
                         let mut err_str: String = From::from("Connect failed. errors:");
                         for (i, e) in errors.into_iter().enumerate() {
-                            write!(err_str, " ({} of {}) {}", i + 1, len, e);
+                            let _ = write!(err_str, " ({} of {}) {}", i + 1, len, e);
                         }
                         let err = io::Error::new(io::ErrorKind::TimedOut, err_str);
                         let _ = event_tx.send(Event::NewPeer(Err(err), their_id));
@@ -527,7 +524,6 @@ impl Service {
         let our_static_contact_info = self.static_contact_info.clone();
         let event_tx = self.event_tx.clone();
 
-        let result_external_socket = MappedUdpSocket::new(&self.mapping_context).result_log();
         let mapping_context = self.mapping_context.clone();
         let our_pub_key = self.our_keys.0.clone();
         let tcp_enabled = self.tcp_enabled;
@@ -542,8 +538,7 @@ impl Service {
                         let _ =
                             event_tx.send(Event::ConnectionInfoPrepared(ConnectionInfoResult {
                                 result_token: result_token,
-                                result: Err(io::Error::new(io::ErrorKind::Other,
-                                                           "Cannot map UDP socket")),
+                                result: Err(From::from(e)),
                             }));
                         return;
                     }
@@ -561,8 +556,7 @@ impl Service {
                         let _ =
                             event_tx.send(Event::ConnectionInfoPrepared(ConnectionInfoResult {
                                 result_token: result_token,
-                                result: Err(io::Error::new(io::ErrorKind::Other,
-                                                           "Cannot map TCP socket")),
+                                result: Err(From::from(e)),
                             }));
                         return;
                     }

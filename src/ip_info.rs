@@ -26,39 +26,9 @@ pub mod v4 {
         a.octets() == [0, 0, 0, 0]
     }
 
-    pub fn is_loopback(a: &Ipv4Addr) -> bool {
-        a.octets()[0] == 127
-    }
-
     pub fn is_global(a: &Ipv4Addr) -> bool {
-        !is_private(a) && !is_loopback(a) && !is_link_local(a) && !is_broadcast(a) &&
-        !is_documentation(a)
-    }
-
-    pub fn is_broadcast(a: &Ipv4Addr) -> bool {
-        a.octets()[0] == 255 && a.octets()[1] == 255 && a.octets()[2] == 255 && a.octets()[3] == 255
-    }
-
-    pub fn is_documentation(a: &Ipv4Addr) -> bool {
-        match (a.octets()[0], a.octets()[1], a.octets()[2], a.octets()[3]) {
-            (192, 0, 2, _) => true,
-            (198, 51, 100, _) => true,
-            (203, 0, 113, _) => true,
-            _ => false,
-        }
-    }
-
-    pub fn is_private(a: &Ipv4Addr) -> bool {
-        match (a.octets()[0], a.octets()[1]) {
-            (10, _) => true,
-            (172, b) if b >= 16 && b <= 31 => true,
-            (192, 168) => true,
-            _ => false,
-        }
-    }
-
-    pub fn is_link_local(a: &Ipv4Addr) -> bool {
-        a.octets()[0] == 169 && a.octets()[1] == 254
+        !a.is_private() && !a.is_loopback() && !a.is_link_local() && !a.is_broadcast() &&
+        !a.is_documentation()
     }
 }
 
@@ -66,6 +36,8 @@ pub mod v6 {
     use std::net::Ipv6Addr;
 
     #[derive(Copy, PartialEq, Eq, Clone, Hash, Debug)]
+    #[allow(unused)] // We want to allow this to have the same definition as the unstable version
+                     // in the standard library. But we don't actually use all these variants.
     pub enum Ipv6MulticastScope {
         InterfaceLocal,
         LinkLocal,
@@ -74,14 +46,6 @@ pub mod v6 {
         SiteLocal,
         OrganizationLocal,
         Global,
-    }
-
-    pub fn is_unspecified(a: &Ipv6Addr) -> bool {
-        a.segments() == [0, 0, 0, 0, 0, 0, 0, 0]
-    }
-
-    pub fn is_loopback(a: &Ipv6Addr) -> bool {
-        a.segments() == [0, 0, 0, 0, 0, 0, 0, 1]
     }
 
     pub fn is_global(a: &Ipv6Addr) -> bool {
@@ -105,16 +69,12 @@ pub mod v6 {
     }
 
     pub fn is_unicast_global(a: &Ipv6Addr) -> bool {
-        !is_multicast(a) && !is_loopback(a) && !is_unicast_link_local(a) &&
+        !a.is_multicast() && !a.is_loopback() && !is_unicast_link_local(a) &&
         !is_unicast_site_local(a) && !is_unique_local(a)
     }
 
-    pub fn is_multicast(a: &Ipv6Addr) -> bool {
-        (a.segments()[0] & 0xff00) == 0xff00
-    }
-
     pub fn multicast_scope(a: &Ipv6Addr) -> Option<Ipv6MulticastScope> {
-        if is_multicast(a) {
+        if a.is_multicast() {
             match a.segments()[0] & 0x000f {
                 1 => Some(Ipv6MulticastScope::InterfaceLocal),
                 2 => Some(Ipv6MulticastScope::LinkLocal),

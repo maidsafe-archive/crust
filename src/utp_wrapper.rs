@@ -6,9 +6,8 @@ use std::io::{Read, ErrorKind};
 use std::io;
 use std::net::SocketAddr;
 use std::collections::VecDeque;
-use std::time::Duration;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
-use maidsafe_utilities::serialisation::{deserialise, serialise};
+use maidsafe_utilities::serialisation::serialise;
 use event::WriteEvent;
 
 const CHECK_FOR_NEW_WRITES_INTERVAL_MS: u64 = 50;
@@ -24,8 +23,6 @@ pub struct UtpWrapper {
 
 impl UtpWrapper {
     pub fn wrap(socket: UtpSocket, output_rx: Receiver<WriteEvent>) -> io::Result<UtpWrapper> {
-        use std::io::Write;
-
         let (input_tx, input_rx) = mpsc::channel();
         let peer_addr = try!(socket.peer_addr());
         let local_addr = try!(socket.local_addr());
@@ -103,7 +100,6 @@ fn clone_from_slice<T: Clone>(target: &mut [T], src: &[T]) {
 impl Read for UtpWrapper {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         use std;
-        use std::io::Write;
 
         let written = {
             let (unread_front, unread_back) = self.unread_bytes.as_slices();

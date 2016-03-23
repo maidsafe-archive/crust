@@ -18,7 +18,7 @@
 #[cfg(test)]
 use util;
 use std::net;
-use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
+use std::net::IpAddr;
 use std::fmt;
 use rustc_serialize::{Encodable, Encoder, Decoder};
 use socket_addr::SocketAddr;
@@ -113,6 +113,8 @@ impl Endpoint {
     /// set to the loopback address. Otherwise return a copy of the endpoint.
     #[cfg(test)]
     pub fn unspecified_to_loopback(&self) -> Endpoint {
+        use std::net::{Ipv4Addr, Ipv6Addr};
+
         if util::is_unspecified(&self.ip()) {
             let loop_back_ip = match self.ip() {
                 IpAddr::V4(_) => IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),

@@ -30,6 +30,7 @@ use endpoint::{Protocol, Endpoint};
 use socket_addr::SocketAddr;
 
 /// /////////////////////////////////////////////////////////////////////////////
+#[allow(unused)] // TODO(canndrew): Remove this at some point if it still hasn't found a use.
 pub fn is_global(ip: &IpAddr) -> bool {
     match *ip {
         IpAddr::V4(ref ipv4) => ip_info::v4::is_global(ipv4),
@@ -39,21 +40,21 @@ pub fn is_global(ip: &IpAddr) -> bool {
 
 pub fn is_unspecified(ip_addr: &IpAddr) -> bool {
     match *ip_addr {
-        IpAddr::V4(ref ip) => ::ip_info::v4::is_unspecified(ip),
-        IpAddr::V6(ref ip) => ::ip_info::v6::is_unspecified(ip),
+        IpAddr::V4(ref ip) => ip_info::v4::is_unspecified(ip),
+        IpAddr::V6(ref ip) => ip.is_unspecified(),
     }
 }
 
 pub fn is_loopback(ip_addr: &IpAddr) -> bool {
     match *ip_addr {
-        IpAddr::V4(ref ip) => ::ip_info::v4::is_loopback(ip),
-        IpAddr::V6(ref ip) => ::ip_info::v6::is_loopback(ip),
+        IpAddr::V4(ref ip) => ip.is_loopback(),
+        IpAddr::V6(ref ip) => ip.is_loopback(),
     }
 }
 
 pub fn is_link_local(ip_addr: &IpAddr) -> bool {
     match *ip_addr {
-        IpAddr::V4(ref ip) => ::ip_info::v4::is_link_local(ip),
+        IpAddr::V4(ref ip) => ip.is_link_local(),
         IpAddr::V6(ref _ip) => false, // Not applicable
     }
 }
@@ -67,7 +68,7 @@ pub fn is_unicast_link_local(ip_addr: &IpAddr) -> bool {
 
 pub fn is_private(ip_addr: &IpAddr) -> bool {
     match *ip_addr {
-        IpAddr::V4(ref ip) => ::ip_info::v4::is_private(ip),
+        IpAddr::V4(ref ip) => ip.is_private(),
         IpAddr::V6(ref _ip) => false, // Not applicable
     }
 }
@@ -128,6 +129,7 @@ pub fn is_local(ip_addr: &IpAddr, interfaces: &[Interface]) -> bool {
 
 /// If the endpoint IP address is unspecified return a copy of the endpoint with the IP address
 /// set to the loopback address. Otherwise return a copy of the endpoint.
+#[allow(unused)] // TODO(canndrew): Remove this at some point if it still hasn't found a use.
 pub fn unspecified_to_loopback(addr: &net::SocketAddr) -> net::SocketAddr {
     if is_unspecified(&addr.ip()) {
         match *addr {
