@@ -42,8 +42,6 @@
 #![cfg_attr(feature="clippy", deny(clippy, clippy_pedantic))]
 #![cfg_attr(feature="clippy", allow(use_debug))]
 
-#![allow(unused)]
-
 extern crate itertools;
 #[macro_use]
 extern crate log;
