@@ -52,6 +52,8 @@ impl RaiiUdpListener {
                _bootstrap_cache: Arc<Mutex<BootstrapHandler>>,
                mc: Arc<MappingContext>)
                -> io::Result<RaiiUdpListener> {
+
+        // TODO(canndrew): Listen on both ipv4 and ipv6
         let udp_socket = try!(UdpSocket::bind(("0.0.0.0", port)));
         let stop_flag = Arc::new(AtomicBool::new(false));
         let cloned_stop_flag = stop_flag.clone();

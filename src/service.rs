@@ -267,7 +267,6 @@ impl Service {
     /// Starts accepting uTP connections.
     pub fn start_listening_utp(&mut self) -> io::Result<()> {
         // Start the UDP Listener
-        // [TODO]: we should find the exteranl address and if we are directly acessabel here for all listerners. Also listen on ip4 and 6 for all protocols - 2016-02-10 11:28pm
         self.raii_udp_listener = Some(try!(RaiiUdpListener::new(self.utp_acceptor_port
                                                                     .unwrap_or(0),
                                                                 self.static_contact_info.clone(),
