@@ -49,7 +49,7 @@ pub struct RaiiBootstrap {
 }
 
 impl RaiiBootstrap {
-    pub fn new(peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
+    pub fn new(bootstrap_contacts: Vec<StaticContactInfo>,
                our_public_key: PublicKey,
                event_tx: ::CrustEventSender,
                connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
@@ -62,7 +62,7 @@ impl RaiiBootstrap {
         let cloned_stop_flag = stop_flag.clone();
 
         let raii_joiner = RaiiThreadJoiner::new(thread!("RaiiBootstrap", move || {
-            RaiiBootstrap::bootstrap(peer_contact_infos,
+            RaiiBootstrap::bootstrap(bootstrap_contacts,
                                      our_public_key,
                                      cloned_stop_flag,
                                      event_tx,
@@ -83,7 +83,7 @@ impl RaiiBootstrap {
         self.stop_flag.store(true, Ordering::SeqCst);
     }
 
-    fn bootstrap(peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
+    fn bootstrap(mut bootstrap_contacts: Vec<StaticContactInfo>,
                  our_public_key: PublicKey,
                  stop_flag: Arc<AtomicBool>,
                  event_tx: ::CrustEventSender,
@@ -92,8 +92,6 @@ impl RaiiBootstrap {
                  mapping_context: &MappingContext,
                  tcp_enabled: bool,
                  utp_enabled: bool) {
-        let mut bootstrap_contacts: Vec<StaticContactInfo> =
-            unwrap_result!(peer_contact_infos.lock()).clone();
         rand::thread_rng().shuffle(&mut bootstrap_contacts[..]);
         for contact in bootstrap_contacts {
             // Bootstrapping got cancelled.
