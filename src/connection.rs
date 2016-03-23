@@ -162,7 +162,6 @@ pub fn connect(peer_contact: StaticContactInfo,
     if tcp_enabled {
         for tcp_addr in peer_contact.tcp_acceptors {
             match connect_tcp_endpoint(tcp_addr,
-                                       our_contact_info.clone(),
                                        our_public_key,
                                        event_tx.clone(),
                                        connection_map.clone(),
@@ -282,7 +281,6 @@ pub fn tcp_rendezvous_connect(connection_map: Arc<Mutex<HashMap<PeerId, Vec<Conn
 }
 
 pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
-                            our_contact_info: Arc<Mutex<StaticContactInfo>>,
                             our_public_key: PublicKey,
                             event_tx: ::CrustEventSender,
                             connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
