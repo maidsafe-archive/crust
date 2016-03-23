@@ -39,6 +39,7 @@ impl Display for PeerId {
     }
 }
 
+#[allow(unused)]
 pub fn get_pub_key(id: &PeerId) -> &PublicKey {
     &id.0
 }

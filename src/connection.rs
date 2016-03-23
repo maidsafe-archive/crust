@@ -81,12 +81,12 @@ impl Hash for Connection {
 
 impl Debug for Connection {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        write!(f,
-               "Connection {{ protocol: {:?}, our_addr: {:?}, their_addr: {:?}, closed: {} }}",
-               self.protocol,
-               self.our_addr,
-               self.their_addr,
-               self.closed.load(Ordering::Relaxed))
+        f.debug_struct("Connection")
+            .field("protocol",   &self.protocol)
+            .field("our_addr",   &self.our_addr)
+            .field("their_addr", &self.their_addr)
+            .field("closed",     &self.closed.load(Ordering::Relaxed))
+            .finish()
     }
 }
 
@@ -112,6 +112,7 @@ impl Connection {
     }
 
     #[cfg(test)]
+    #[allow(unused)]
     pub fn get_protocol(&self) -> &Protocol {
         &self.protocol
     }
@@ -776,17 +777,15 @@ mod test {
     use super::*;
 
     use std::sync::Arc;
-    use std::sync::atomic::{Ordering, AtomicBool};
+    use std::sync::atomic::AtomicBool;
     use std::sync::mpsc;
     use std::str::FromStr;
     use std::hash::{Hash, SipHasher, Hasher};
     use std::net;
 
-    use sodiumoxide::crypto::box_;
     use sender_receiver::RaiiSender;
     use maidsafe_utilities::thread::RaiiThreadJoiner;
 
-    use peer_id;
     use endpoint::Protocol;
     use socket_addr::SocketAddr;
 
@@ -799,7 +798,6 @@ mod test {
 
     #[test]
     fn connection_hash() {
-        let (pub_key, _) = box_::gen_keypair();
         let connection_0 = {
             let (tx, _) = mpsc::channel();
             let raii_joiner = RaiiThreadJoiner::new(thread!("DummyThread", move || ()));

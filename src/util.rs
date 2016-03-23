@@ -20,15 +20,6 @@ use get_if_addrs::{get_if_addrs, Interface, IfAddr};
 use std::net::{self, IpAddr, Ipv4Addr, Ipv6Addr, SocketAddrV4, SocketAddrV6};
 use ip_info;
 
-#[cfg(test)]
-use std::sync::mpsc;
-#[cfg(test)]
-use std::thread;
-#[cfg(test)]
-use endpoint::{Protocol, Endpoint};
-#[cfg(test)]
-use socket_addr::SocketAddr;
-
 /// /////////////////////////////////////////////////////////////////////////////
 #[allow(unused)] // TODO(canndrew): Remove this at some point if it still hasn't found a use.
 pub fn is_global(ip: &IpAddr) -> bool {
@@ -212,46 +203,6 @@ pub fn heuristic_geo_cmp(ip1: &IpAddr, ip2: &IpAddr) -> Ordering {
         (true, false) => Less,
         (false, true) => Greater,
         (false, false) => Equal,
-    }
-}
-
-
-#[cfg(test)]
-pub fn random_endpoint() -> Endpoint {
-    // TODO - randomise V4/V6 and TCP/UTP
-    let address = SocketAddrV4::new(Ipv4Addr::new(::rand::random::<u8>(),
-                                                  ::rand::random::<u8>(),
-                                                  ::rand::random::<u8>(),
-                                                  ::rand::random::<u8>()),
-                                    ::rand::random::<u16>());
-    Endpoint::from_socket_addr(Protocol::Tcp, SocketAddr(net::SocketAddr::V4(address)))
-}
-
-
-#[cfg(test)]
-pub fn timed_recv<T>(receiver: &mpsc::Receiver<T>,
-                     timeout: ::std::time::Duration)
-                     -> Result<T, mpsc::TryRecvError> {
-    let step = ::std::time::Duration::from_millis(20);
-    let mut time = ::std::time::Duration::new(0, 0);
-    loop {
-        match receiver.try_recv() {
-            Ok(v) => return Ok(v),
-            Err(what) => {
-                match what {
-                    mpsc::TryRecvError::Empty => {
-                        if time >= timeout {
-                            return Err(what);
-                        }
-                    }
-                    mpsc::TryRecvError::Disconnected => {
-                        return Err(what);
-                    }
-                }
-            }
-        }
-        thread::sleep(step);
-        time = time + step;
     }
 }
 
