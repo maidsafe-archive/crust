@@ -52,7 +52,6 @@ extern crate rand;
 extern crate rustc_serialize;
 extern crate time;
 extern crate utp;
-extern crate crossbeam;
 #[macro_use]
 extern crate maidsafe_utilities;
 extern crate socket_addr;
@@ -60,11 +59,11 @@ extern crate get_if_addrs;
 extern crate sodiumoxide;
 extern crate config_file_handler;
 extern crate service_discovery;
-#[cfg(target_family = "unix")]
-extern crate libc;
 extern crate nat_traversal;
 #[cfg(test)]
 extern crate void;
+#[cfg(test)]
+extern crate crossbeam;
 
 /// Crust Observers will be informed of crust events on this
 pub type CrustEventSender = ::maidsafe_utilities::event_sender::MaidSafeObserver<Event>;

@@ -441,9 +441,6 @@ pub fn start_tcp_accept(port: u16,
                         expected_peers: Arc<Mutex<HashSet<PeerId>>>,
                         mapping_context: Arc<MappingContext>)
                         -> io::Result<RaiiTcpAcceptor> {
-    use std::io::Write;
-    use std::io::Read;
-
     let addr = net::SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), port));
     let tcp_builder_listener = try!(nat_traversal::new_reusably_bound_tcp_socket(&addr));
 
@@ -504,7 +501,13 @@ pub fn start_tcp_accept(port: u16,
             let msg = network_rx.receive();
             let (their_id, event) = match msg {
                 Ok(CrustMsg::BootstrapRequest(k)) => {
-                    writer.send(WriteEvent::Write(CrustMsg::BootstrapResponse(our_public_key)));
+                    match writer.send(WriteEvent::Write(CrustMsg::BootstrapResponse(our_public_key))) {
+                        Ok(()) => (),
+                        Err(_) => {
+                            error!("Reciever shutdown!");
+                            continue;
+                        },
+                    }
                     if our_public_key == k {
                         error!("Connected to ourselves");
                         continue;
@@ -521,7 +524,13 @@ pub fn start_tcp_accept(port: u16,
                     let peer_id = peer_id::new_id(k);
                     let mut expected_peers = expected_peers.lock().unwrap();
                     if expected_peers.remove(&peer_id) {
-                        writer.send(WriteEvent::Write(CrustMsg::Connect(our_public_key)));
+                        match writer.send(WriteEvent::Write(CrustMsg::Connect(our_public_key))) {
+                            Ok(()) => (),
+                            Err(_) => {
+                                error!("Receiver shutdown!");
+                                continue;
+                            },
+                        }
                     } else {
                         break;
                     }
@@ -529,11 +538,11 @@ pub fn start_tcp_accept(port: u16,
                     (peer_id, Event::NewPeer(Ok(()), peer_id))
                 }
                 Ok(m) => {
-                    error!("Unexpected crust msg on tcp accept");
+                    error!("Unexpected crust msg on tcp accept: {:?}", m);
                     continue;
                 }
                 Err(e) => {
-                    error!("Invalid crust msg on tcp accept");
+                    error!("Invalid crust msg on tcp accept: {}", e);
                     continue;
                 }
             };
@@ -589,7 +598,13 @@ pub fn utp_rendezvous_connect(udp_socket: UdpSocket,
     let connection_map_clone = connection_map.clone();
     let (mut connection_map_guard, their_id) = match mode {
         UtpRendezvousConnectMode::Normal(id) => {
-            writer.send(WriteEvent::Write(CrustMsg::Connect(our_public_key)));
+            match writer.send(WriteEvent::Write(CrustMsg::Connect(our_public_key))) {
+                Ok(()) => (),
+                Err(_) => {
+                    error!("Receiver shut down");
+                    return Err(io::Error::new(io::ErrorKind::Other, "Receiver shut down"));
+                },
+            };
             match network_rx.receive() {
                 Ok(CrustMsg::Connect(key)) => {
                     let their_id = peer_id::new_id(key);
@@ -618,7 +633,13 @@ pub fn utp_rendezvous_connect(udp_socket: UdpSocket,
             }
         }
         UtpRendezvousConnectMode::BootstrapConnect => {
-            writer.send(WriteEvent::Write(CrustMsg::BootstrapRequest(our_public_key)));
+            match writer.send(WriteEvent::Write(CrustMsg::BootstrapRequest(our_public_key))) {
+                Ok(()) => (),
+                Err(_) => {
+                    error!("Receiver shut down");
+                    return Err(io::Error::new(io::ErrorKind::Other, "Receiver shut down"));
+                },
+            };
             match network_rx.receive() {
                 Ok(CrustMsg::BootstrapResponse(key)) => {
                     if key == our_public_key {
@@ -670,7 +691,13 @@ pub fn utp_rendezvous_connect(udp_socket: UdpSocket,
                 }
                 Err(e) => return Err(e),
             };
-            writer.send(WriteEvent::Write(CrustMsg::BootstrapResponse(our_public_key)));
+            match writer.send(WriteEvent::Write(CrustMsg::BootstrapResponse(our_public_key))) {
+                Ok(()) => (),
+                Err(_) => {
+                    error!("Receiver shut down");
+                    return Err(io::Error::new(io::ErrorKind::Other, "Receiver shut down"));
+                },
+            };
             (guard, their_id)
         }
     };
@@ -744,6 +771,7 @@ fn notify_new_connection(connection_map: &HashMap<PeerId, Vec<Connection>>,
     }
 }
 
+#[cfg(test)]
 mod test {
     use super::*;
 

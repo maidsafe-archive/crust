@@ -26,6 +26,7 @@ pub mod v4 {
         a.octets() == [0, 0, 0, 0]
     }
 
+    #[allow(unused)] // TODO(canndrew): Remove this at some point if it still hasn't found a use.
     pub fn is_global(a: &Ipv4Addr) -> bool {
         !a.is_private() && !a.is_loopback() && !a.is_link_local() && !a.is_broadcast() &&
         !a.is_documentation()
@@ -48,6 +49,7 @@ pub mod v6 {
         Global,
     }
 
+    #[allow(unused)] // TODO(canndrew): Remove this at some point if it still hasn't found a use.
     pub fn is_global(a: &Ipv6Addr) -> bool {
         match multicast_scope(a) {
             Some(Ipv6MulticastScope::Global) => true,
@@ -64,15 +66,18 @@ pub mod v6 {
         (a.segments()[0] & 0xffc0) == 0xfe80
     }
 
+    #[allow(unused)] // TODO(canndrew): Remove this at some point if it still hasn't found a use.
     pub fn is_unicast_site_local(a: &Ipv6Addr) -> bool {
         (a.segments()[0] & 0xffc0) == 0xfec0
     }
 
+    #[allow(unused)] // TODO(canndrew): Remove this at some point if it still hasn't found a use.
     pub fn is_unicast_global(a: &Ipv6Addr) -> bool {
         !a.is_multicast() && !a.is_loopback() && !is_unicast_link_local(a) &&
         !is_unicast_site_local(a) && !is_unique_local(a)
     }
 
+    #[allow(unused)] // TODO(canndrew): Remove this at some point if it still hasn't found a use.
     pub fn multicast_scope(a: &Ipv6Addr) -> Option<Ipv6MulticastScope> {
         if a.is_multicast() {
             match a.segments()[0] & 0x000f {

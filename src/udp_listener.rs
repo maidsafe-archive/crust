@@ -18,7 +18,7 @@
 use std::collections::HashMap;
 use std::io;
 use std::net;
-use std::net::{IpAddr, UdpSocket};
+use std::net::UdpSocket;
 use std::time::Duration;
 use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -52,12 +52,11 @@ impl RaiiUdpListener {
                _bootstrap_cache: Arc<Mutex<BootstrapHandler>>,
                mc: Arc<MappingContext>)
                -> io::Result<RaiiUdpListener> {
-        let udp_socket = try!(UdpSocket::bind(&format!("0.0.0.0:{}", port)[..]));
+        let udp_socket = try!(UdpSocket::bind(("0.0.0.0", port)));
         let stop_flag = Arc::new(AtomicBool::new(false));
         let cloned_stop_flag = stop_flag.clone();
 
         try!(udp_socket.set_read_timeout(Some(Duration::from_secs(UDP_READ_TIMEOUT_SECS))));
-        let actual_port = try!(udp_socket.local_addr()).port();
 
         // TODO This will be very slow for production
         // Ask others for our UDP external addresses as they see us. No need to filter out the
@@ -101,7 +100,6 @@ impl RaiiUdpListener {
             if let Ok((bytes_read, peer_addr)) = udp_socket.recv_from(&mut read_buf) {
                 if let Ok(msg) = deserialise::<ListenerRequest>(&read_buf[..bytes_read]) {
                     RaiiUdpListener::handle_request(msg,
-                                                    &our_contact_info,
                                                     &udp_socket,
                                                     &our_public_key,
                                                     peer_addr,
@@ -114,7 +112,6 @@ impl RaiiUdpListener {
     }
 
     fn handle_request(msg: ListenerRequest,
-                      our_contact_info: &Arc<Mutex<StaticContactInfo>>,
                       udp_socket: &UdpSocket,
                       our_public_key: &PublicKey,
                       peer_addr: net::SocketAddr,
