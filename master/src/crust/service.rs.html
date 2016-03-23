@@ -1356,12 +1356,6 @@
 <span id="1313">1313</span>
 <span id="1314">1314</span>
 <span id="1315">1315</span>
-<span id="1316">1316</span>
-<span id="1317">1317</span>
-<span id="1318">1318</span>
-<span id="1319">1319</span>
-<span id="1320">1320</span>
-<span id="1321">1321</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -1391,7 +1385,7 @@
 <span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>crypto</span>::<span class='ident'>box_</span>::{<span class='ident'>PublicKey</span>, <span class='ident'>SecretKey</span>};
 <span class='kw'>use</span> <span class='ident'>net2</span>;
 <span class='kw'>use</span> <span class='ident'>nat_traversal</span>::{<span class='ident'>MappedUdpSocket</span>, <span class='ident'>MappingContext</span>, <span class='ident'>PrivRendezvousInfo</span>, <span class='ident'>MappedTcpSocket</span>,
-                    <span class='ident'>tcp_punch_hole</span>, <span class='ident'>PubRendezvousInfo</span>, <span class='ident'>PunchedUdpSocket</span>, <span class='ident'>gen_rendezvous_info</span>,
+                    <span class='ident'>PubRendezvousInfo</span>, <span class='ident'>PunchedUdpSocket</span>, <span class='ident'>gen_rendezvous_info</span>,
                     <span class='ident'>SimpleUdpHolePunchServer</span>, <span class='ident'>SimpleTcpHolePunchServer</span>};
 
 
@@ -1399,7 +1393,6 @@
 <span class='kw'>use</span> <span class='ident'>connection</span>::{<span class='ident'>RaiiTcpAcceptor</span>, <span class='ident'>UtpRendezvousConnectMode</span>};
 <span class='kw'>use</span> <span class='ident'>udp_listener</span>::<span class='ident'>RaiiUdpListener</span>;
 <span class='kw'>use</span> <span class='ident'>static_contact_info</span>::<span class='ident'>StaticContactInfo</span>;
-<span class='kw'>use</span> <span class='ident'>rand</span>;
 <span class='kw'>use</span> <span class='ident'>config_handler</span>::{<span class='ident'>Config</span>, <span class='ident'>read_config_file</span>};
 <span class='kw'>use</span> <span class='ident'>connection</span>::{<span class='ident'>Connection</span>, <span class='ident'>ConnectionInfo</span>};
 <span class='kw'>use</span> <span class='ident'>error</span>::<span class='ident'>Error</span>;
@@ -1410,7 +1403,6 @@
 
 <span class='kw'>use</span> <span class='ident'>event</span>::<span class='ident'>Event</span>;
 <span class='kw'>use</span> <span class='ident'>socket_addr</span>::<span class='ident'>SocketAddr</span>;
-<span class='kw'>use</span> <span class='ident'>utp_connections</span>;
 <span class='kw'>use</span> <span class='ident'>peer_id</span>;
 <span class='kw'>use</span> <span class='ident'>peer_id</span>::<span class='ident'>PeerId</span>;
 
@@ -1494,8 +1486,8 @@
     <span class='ident'>raii_tcp_acceptor</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>RaiiTcpAcceptor</span><span class='op'>&gt;</span>,
     <span class='ident'>tcp_enabled</span>: <span class='ident'>bool</span>,
     <span class='ident'>utp_enabled</span>: <span class='ident'>bool</span>,
-    <span class='ident'>udp_hole_punch_server</span>: <span class='ident'>SimpleUdpHolePunchServer</span><span class='op'>&lt;</span><span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>MappingContext</span><span class='op'>&gt;&gt;</span>,
-    <span class='ident'>tcp_hole_punch_server</span>: <span class='ident'>SimpleTcpHolePunchServer</span><span class='op'>&lt;</span><span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>MappingContext</span><span class='op'>&gt;&gt;</span>,
+    <span class='ident'>_udp_hole_punch_server</span>: <span class='ident'>SimpleUdpHolePunchServer</span><span class='op'>&lt;</span><span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>MappingContext</span><span class='op'>&gt;&gt;</span>,
+    <span class='ident'>_tcp_hole_punch_server</span>: <span class='ident'>SimpleTcpHolePunchServer</span><span class='op'>&lt;</span><span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>MappingContext</span><span class='op'>&gt;&gt;</span>,
 }
 
 <span class='kw'>impl</span> <span class='ident'>Service</span> {
@@ -1554,8 +1546,7 @@
         <span class='ident'>mapping_context</span>.<span class='ident'>add_simple_tcp_servers</span>(<span class='ident'>config</span>.<span class='ident'>tcp_mapper_servers</span>.<span class='ident'>clone</span>());
         <span class='kw'>let</span> <span class='ident'>mapping_context</span> <span class='op'>=</span> <span class='ident'>Arc</span>::<span class='ident'>new</span>(<span class='ident'>mapping_context</span>);
 
-        <span class='kw'>let</span> <span class='ident'>bootstrap</span> <span class='op'>=</span> <span class='ident'>RaiiBootstrap</span>::<span class='ident'>new</span>(<span class='ident'>static_contact_info</span>.<span class='ident'>clone</span>(),
-                                           <span class='ident'>peer_contact_infos</span>.<span class='ident'>clone</span>(),
+        <span class='kw'>let</span> <span class='ident'>bootstrap</span> <span class='op'>=</span> <span class='ident'>RaiiBootstrap</span>::<span class='ident'>new</span>(<span class='ident'>peer_contact_infos</span>.<span class='ident'>clone</span>(),
                                            <span class='ident'>our_keys</span>.<span class='number'>0</span>.<span class='ident'>clone</span>(),
                                            <span class='ident'>event_tx</span>.<span class='ident'>clone</span>(),
                                            <span class='ident'>connection_map</span>.<span class='ident'>clone</span>(),
@@ -1598,8 +1589,8 @@
             <span class='ident'>raii_tcp_acceptor</span>: <span class='prelude-val'>None</span>,
             <span class='ident'>tcp_enabled</span>: <span class='ident'>config</span>.<span class='ident'>enable_tcp</span>,
             <span class='ident'>utp_enabled</span>: <span class='ident'>config</span>.<span class='ident'>enable_utp</span>,
-            <span class='ident'>udp_hole_punch_server</span>: <span class='ident'>udp_hole_punch_server</span>,
-            <span class='ident'>tcp_hole_punch_server</span>: <span class='ident'>tcp_hole_punch_server</span>,
+            <span class='ident'>_udp_hole_punch_server</span>: <span class='ident'>udp_hole_punch_server</span>,
+            <span class='ident'>_tcp_hole_punch_server</span>: <span class='ident'>tcp_hole_punch_server</span>,
         };
 
         <span class='prelude-val'>Ok</span>(<span class='ident'>service</span>)
@@ -1618,8 +1609,6 @@
                                                                         <span class='self'>self</span>.<span class='ident'>static_contact_info</span>
                                                                             .<span class='ident'>clone</span>(),
                                                                         <span class='self'>self</span>.<span class='ident'>our_keys</span>.<span class='number'>0</span>.<span class='ident'>clone</span>(),
-                                                                        <span class='self'>self</span>.<span class='ident'>peer_contact_infos</span>
-                                                                            .<span class='ident'>clone</span>(),
                                                                         <span class='self'>self</span>.<span class='ident'>event_tx</span>.<span class='ident'>clone</span>(),
                                                                         <span class='self'>self</span>.<span class='ident'>connection_map</span>
                                                                             .<span class='ident'>clone</span>(),
@@ -1735,7 +1724,6 @@
         <span class='kw'>let</span> <span class='ident'>event_tx</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>event_tx</span>.<span class='ident'>clone</span>();
         <span class='kw'>let</span> <span class='ident'>connection_map</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>connection_map</span>.<span class='ident'>clone</span>();
         <span class='kw'>let</span> <span class='ident'>our_public_key</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>our_keys</span>.<span class='number'>0</span>.<span class='ident'>clone</span>();
-        <span class='kw'>let</span> <span class='ident'>our_contact_info</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>static_contact_info</span>.<span class='ident'>clone</span>();
         <span class='kw'>let</span> <span class='ident'>bootstrap_cache</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>bootstrap_cache</span>.<span class='ident'>clone</span>();
         <span class='kw'>let</span> <span class='ident'>tcp_enabled</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>tcp_enabled</span>;
         <span class='kw'>let</span> <span class='ident'>utp_enabled</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>utp_enabled</span>;
@@ -1746,7 +1734,6 @@
         <span class='kw'>if</span> <span class='ident'>tcp_enabled</span> {
             <span class='kw'>let</span> <span class='ident'>static_contact_info</span> <span class='op'>=</span> <span class='ident'>their_connection_info</span>.<span class='ident'>static_contact_info</span>.<span class='ident'>clone</span>();
             <span class='kw'>for</span> <span class='ident'>tcp_addr</span> <span class='kw'>in</span> <span class='ident'>their_connection_info</span>.<span class='ident'>static_contact_info</span>.<span class='ident'>tcp_acceptors</span> {
-                <span class='kw'>let</span> <span class='ident'>our_contact_info</span> <span class='op'>=</span> <span class='ident'>our_contact_info</span>.<span class='ident'>clone</span>();
                 <span class='kw'>let</span> <span class='ident'>event_tx</span> <span class='op'>=</span> <span class='ident'>event_tx</span>.<span class='ident'>clone</span>();
                 <span class='kw'>let</span> <span class='ident'>connection_map</span> <span class='op'>=</span> <span class='ident'>connection_map</span>.<span class='ident'>clone</span>();
                 <span class='kw'>let</span> <span class='ident'>expected_peers</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>expected_peers</span>.<span class='ident'>clone</span>();
@@ -1755,7 +1742,6 @@
                 <span class='kw'>let</span> <span class='ident'>static_contact_info</span> <span class='op'>=</span> <span class='ident'>static_contact_info</span>.<span class='ident'>clone</span>();
                 <span class='kw'>let</span> _ <span class='op'>=</span> <span class='macro'>thread</span><span class='macro'>!</span>(<span class='string'>&quot;Service::connect tcp direct&quot;</span>, <span class='kw'>move</span> <span class='op'>||</span> {
                     <span class='kw'>match</span> <span class='ident'>connection</span>::<span class='ident'>connect_tcp_endpoint</span>(<span class='ident'>tcp_addr</span>,
-                                                           <span class='ident'>our_contact_info</span>,
                                                            <span class='ident'>our_public_key</span>,
                                                            <span class='ident'>event_tx</span>,
                                                            <span class='ident'>connection_map</span>,
@@ -1764,14 +1750,19 @@
                         <span class='prelude-val'>Err</span>(<span class='ident'>err</span>) <span class='op'>=&gt;</span> {
                             <span class='kw'>let</span> <span class='ident'>err_msg</span> <span class='op'>=</span> <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Tcp direct connect failed: {}&quot;</span>, <span class='ident'>err</span>);
                             <span class='kw'>let</span> <span class='ident'>err</span> <span class='op'>=</span> <span class='ident'>io</span>::<span class='ident'>Error</span>::<span class='ident'>new</span>(<span class='ident'>err</span>.<span class='ident'>kind</span>(), <span class='ident'>err_msg</span>);
-                            <span class='ident'>result_tx</span>.<span class='ident'>send</span>(<span class='prelude-val'>Err</span>(<span class='ident'>err</span>));
+                            <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>result_tx</span>.<span class='ident'>send</span>(<span class='prelude-val'>Err</span>(<span class='ident'>err</span>));
                         },
                         <span class='prelude-val'>Ok</span>(()) <span class='op'>=&gt;</span> {
-                            <span class='ident'>result_tx</span>.<span class='ident'>send</span>(<span class='prelude-val'>Ok</span>(()));
-                            <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>bootstrap_cache</span>.<span class='ident'>lock</span>()).<span class='ident'>update_contacts</span>(
+                            <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>result_tx</span>.<span class='ident'>send</span>(<span class='prelude-val'>Ok</span>(()));
+                            <span class='kw'>match</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>bootstrap_cache</span>.<span class='ident'>lock</span>()).<span class='ident'>update_contacts</span>(
                                 <span class='macro'>vec</span><span class='macro'>!</span>[<span class='ident'>static_contact_info</span>],
                                 <span class='macro'>vec</span><span class='macro'>!</span>[]
-                            );
+                            ) {
+                                <span class='prelude-val'>Ok</span>(()) <span class='op'>=&gt;</span> (),
+                                <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=&gt;</span> {
+                                    <span class='macro'>warn</span><span class='macro'>!</span>(<span class='string'>&quot;Failed to update bootstrap cache: {:?}&quot;</span>, <span class='ident'>e</span>);
+                                },
+                            };
                         },
                     }
                 });
@@ -1833,7 +1824,7 @@
                             <span class='kw'>let</span> <span class='ident'>err</span>: <span class='ident'>io</span>::<span class='ident'>Error</span> <span class='op'>=</span> <span class='ident'>From</span>::<span class='ident'>from</span>(<span class='ident'>err</span>);
                             <span class='kw'>let</span> <span class='ident'>err_msg</span> <span class='op'>=</span> <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Udp hole punching failed: {}&quot;</span>, <span class='ident'>err</span>);
                             <span class='kw'>let</span> <span class='ident'>err</span> <span class='op'>=</span> <span class='ident'>io</span>::<span class='ident'>Error</span>::<span class='ident'>new</span>(<span class='ident'>err</span>.<span class='ident'>kind</span>(), <span class='ident'>err_msg</span>);
-                            <span class='ident'>result_tx</span>.<span class='ident'>send</span>(<span class='prelude-val'>Err</span>(<span class='ident'>err</span>));
+                            <span class='kw'>let</span> _ <span class='op'>=</span>  <span class='ident'>result_tx</span>.<span class='ident'>send</span>(<span class='prelude-val'>Err</span>(<span class='ident'>err</span>));
                             <span class='kw'>return</span>;
                         }
                     };
@@ -1846,10 +1837,10 @@
                         <span class='prelude-val'>Err</span>(<span class='ident'>err</span>) <span class='op'>=&gt;</span> {
                             <span class='kw'>let</span> <span class='ident'>err_msg</span> <span class='op'>=</span> <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Utp rendezvous connect failed: {}&quot;</span>, <span class='ident'>err</span>);
                             <span class='kw'>let</span> <span class='ident'>err</span> <span class='op'>=</span> <span class='ident'>io</span>::<span class='ident'>Error</span>::<span class='ident'>new</span>(<span class='ident'>err</span>.<span class='ident'>kind</span>(), <span class='ident'>err_msg</span>);
-                            <span class='ident'>result_tx</span>.<span class='ident'>send</span>(<span class='prelude-val'>Err</span>(<span class='ident'>err</span>));
+                            <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>result_tx</span>.<span class='ident'>send</span>(<span class='prelude-val'>Err</span>(<span class='ident'>err</span>));
                         },
                         <span class='prelude-val'>Ok</span>(_) <span class='op'>=&gt;</span> {
-                            <span class='ident'>result_tx</span>.<span class='ident'>send</span>(<span class='prelude-val'>Ok</span>(()));
+                            <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>result_tx</span>.<span class='ident'>send</span>(<span class='prelude-val'>Ok</span>(()));
                         },
                     };
                 });
@@ -1872,7 +1863,7 @@
                         <span class='kw'>let</span> <span class='ident'>len</span> <span class='op'>=</span> <span class='ident'>errors</span>.<span class='ident'>len</span>();
                         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>err_str</span>: <span class='ident'>String</span> <span class='op'>=</span> <span class='ident'>From</span>::<span class='ident'>from</span>(<span class='string'>&quot;Connect failed. errors:&quot;</span>);
                         <span class='kw'>for</span> (<span class='ident'>i</span>, <span class='ident'>e</span>) <span class='kw'>in</span> <span class='ident'>errors</span>.<span class='ident'>into_iter</span>().<span class='ident'>enumerate</span>() {
-                            <span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>err_str</span>, <span class='string'>&quot; ({} of {}) {}&quot;</span>, <span class='ident'>i</span> <span class='op'>+</span> <span class='number'>1</span>, <span class='ident'>len</span>, <span class='ident'>e</span>);
+                            <span class='kw'>let</span> _ <span class='op'>=</span> <span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>err_str</span>, <span class='string'>&quot; ({} of {}) {}&quot;</span>, <span class='ident'>i</span> <span class='op'>+</span> <span class='number'>1</span>, <span class='ident'>len</span>, <span class='ident'>e</span>);
                         }
                         <span class='kw'>let</span> <span class='ident'>err</span> <span class='op'>=</span> <span class='ident'>io</span>::<span class='ident'>Error</span>::<span class='ident'>new</span>(<span class='ident'>io</span>::<span class='ident'>ErrorKind</span>::<span class='ident'>TimedOut</span>, <span class='ident'>err_str</span>);
                         <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>event_tx</span>.<span class='ident'>send</span>(<span class='ident'>Event</span>::<span class='ident'>NewPeer</span>(<span class='prelude-val'>Err</span>(<span class='ident'>err</span>), <span class='ident'>their_id</span>));
@@ -1892,7 +1883,6 @@
         <span class='kw'>let</span> <span class='ident'>our_static_contact_info</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>static_contact_info</span>.<span class='ident'>clone</span>();
         <span class='kw'>let</span> <span class='ident'>event_tx</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>event_tx</span>.<span class='ident'>clone</span>();
 
-        <span class='kw'>let</span> <span class='ident'>result_external_socket</span> <span class='op'>=</span> <span class='ident'>MappedUdpSocket</span>::<span class='ident'>new</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>mapping_context</span>).<span class='ident'>result_log</span>();
         <span class='kw'>let</span> <span class='ident'>mapping_context</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>mapping_context</span>.<span class='ident'>clone</span>();
         <span class='kw'>let</span> <span class='ident'>our_pub_key</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>our_keys</span>.<span class='number'>0</span>.<span class='ident'>clone</span>();
         <span class='kw'>let</span> <span class='ident'>tcp_enabled</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>tcp_enabled</span>;
@@ -1907,8 +1897,7 @@
                         <span class='kw'>let</span> _ <span class='op'>=</span>
                             <span class='ident'>event_tx</span>.<span class='ident'>send</span>(<span class='ident'>Event</span>::<span class='ident'>ConnectionInfoPrepared</span>(<span class='ident'>ConnectionInfoResult</span> {
                                 <span class='ident'>result_token</span>: <span class='ident'>result_token</span>,
-                                <span class='ident'>result</span>: <span class='prelude-val'>Err</span>(<span class='ident'>io</span>::<span class='ident'>Error</span>::<span class='ident'>new</span>(<span class='ident'>io</span>::<span class='ident'>ErrorKind</span>::<span class='ident'>Other</span>,
-                                                           <span class='string'>&quot;Cannot map UDP socket&quot;</span>)),
+                                <span class='ident'>result</span>: <span class='prelude-val'>Err</span>(<span class='ident'>From</span>::<span class='ident'>from</span>(<span class='ident'>e</span>)),
                             }));
                         <span class='kw'>return</span>;
                     }
@@ -1926,8 +1915,7 @@
                         <span class='kw'>let</span> _ <span class='op'>=</span>
                             <span class='ident'>event_tx</span>.<span class='ident'>send</span>(<span class='ident'>Event</span>::<span class='ident'>ConnectionInfoPrepared</span>(<span class='ident'>ConnectionInfoResult</span> {
                                 <span class='ident'>result_token</span>: <span class='ident'>result_token</span>,
-                                <span class='ident'>result</span>: <span class='prelude-val'>Err</span>(<span class='ident'>io</span>::<span class='ident'>Error</span>::<span class='ident'>new</span>(<span class='ident'>io</span>::<span class='ident'>ErrorKind</span>::<span class='ident'>Other</span>,
-                                                           <span class='string'>&quot;Cannot map TCP socket&quot;</span>)),
+                                <span class='ident'>result</span>: <span class='prelude-val'>Err</span>(<span class='ident'>From</span>::<span class='ident'>from</span>(<span class='ident'>e</span>)),
                             }));
                         <span class='kw'>return</span>;
                     }

@@ -1,1 +1,0 @@
-initSidebarItems({"fn":[["write_config_file","Writes config file and parametes to exe directory with appropriate file name format This method should be only used as a utility for test and examples For installed application, this file should be created by installer."]]});

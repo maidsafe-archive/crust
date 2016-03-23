@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["Connection","An open connection that can be used to send messages to a peer."]]});
