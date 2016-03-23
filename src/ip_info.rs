@@ -36,6 +36,8 @@ pub mod v6 {
     use std::net::Ipv6Addr;
 
     #[derive(Copy, PartialEq, Eq, Clone, Hash, Debug)]
+    #[allow(unused)] // We want to allow this to have the same definition as the unstable version
+                     // in the standard library. But we don't actually use all these variants.
     pub enum Ipv6MulticastScope {
         InterfaceLocal,
         LinkLocal,

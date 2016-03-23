@@ -21,14 +21,13 @@ use std::io;
 use std::thread;
 use std::sync::mpsc;
 use std::sync::mpsc::Sender;
-use std::io::{Read, Write};
+use std::io::Write;
 use net2::TcpBuilder;
 use crossbeam;
 
 use socket_utils::enable_so_reuseport;
 use event::WriteEvent;
-use listener_message::{ListenerRequest, ListenerResponse};
-use maidsafe_utilities::serialisation::{serialise, deserialise};
+use maidsafe_utilities::serialisation::serialise;
 
 /// Connect to a peer and open a send-receive pair.  See `upgrade` for more details.
 pub fn connect_tcp(addr: SocketAddr) -> io::Result<(TcpStream, Sender<WriteEvent>)> {
@@ -69,50 +68,6 @@ fn upgrade_writer(mut stream: TcpStream) -> Sender<WriteEvent> {
                                    stream.shutdown(Shutdown::Both)
                                }));
     tx
-}
-
-/// Returns the stream along with the peer's SocketAddr
-pub fn blocking_tcp_punch_hole(local_addr: SocketAddr,
-                               // secret: Option<[u8; 4]>,
-                               peer_addrs: Vec<SocketAddr>)
-                               -> io::Result<TcpStream> {
-    // TODO(canndrew): Use secrets or public keys to make sure we have connected to the peer and
-    // not some random endpoint
-    crossbeam::scope(|scope| {
-        let listen_thread = scope.spawn(|| -> io::Result<_> {
-            let socket = try!(TcpBuilder::new_v4());
-            let _ = try!(socket.reuse_address(true));
-            try!(enable_so_reuseport(&socket));
-            let _ = try!(socket.bind(&*local_addr));
-            let listener = try!(socket.listen(1));
-            let (stream, addr) = try!(listener.accept());
-            Ok((stream, addr))
-        });
-        let mut connect_threads = Vec::new();
-        for peer_addr in &peer_addrs {
-            let connect_thread = scope.spawn(move || -> io::Result<_> {
-                let connector = try!(TcpBuilder::new_v4());
-                let _ = try!(connector.reuse_address(true));
-                try!(enable_so_reuseport(&connector));
-                let _ = try!(connector.bind(&*local_addr));
-                let stream = try!(connector.connect(&**peer_addr));
-                Ok(stream)
-            });
-            connect_threads.push(connect_thread);
-        }
-        match listen_thread.join() {
-            Ok((stream, _)) => Ok(stream),
-            Err(_) => {
-                for connect_thread in connect_threads {
-                    match connect_thread.join() {
-                        Ok(stream) => return Ok(stream),
-                        Err(_) => continue,
-                    }
-                }
-                Err(io::Error::new(io::ErrorKind::Other, "Tcp rendezvous connect failed"))
-            }
-        }
-    })
 }
 
 #[cfg(test)]

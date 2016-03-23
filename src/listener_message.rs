@@ -16,7 +16,6 @@
 // relating to use of the SAFE Network Software.
 
 use sodiumoxide::crypto::box_::PublicKey;
-use socket_addr::SocketAddr;
 use nat_traversal::PubRendezvousInfo;
 
 

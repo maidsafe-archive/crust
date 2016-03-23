@@ -15,7 +15,6 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use endpoint::Endpoint;
 use connection::{RaiiTcpAcceptor, Connection};
 use peer_id::PeerId;
 use service::ConnectionInfoResult;

@@ -25,11 +25,9 @@ use std::net::{Shutdown, TcpStream, UdpSocket, Ipv4Addr, SocketAddrV4};
 use std::net;
 use std::io;
 use std::time::Duration;
-use itertools::Itertools;
 use maidsafe_utilities::event_sender::{EventSenderError, MaidSafeEventCategory};
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 use maidsafe_utilities::serialisation::{deserialise, serialise};
-use get_if_addrs::get_if_addrs;
 use static_contact_info::StaticContactInfo;
 use tcp_connections;
 use utp_connections;
@@ -38,14 +36,11 @@ use socket_addr::SocketAddr;
 use event::{Event, WriteEvent};
 use endpoint::Protocol;
 use std::fmt::{Debug, Formatter};
-use net2::TcpBuilder;
-use socket_utils;
 use listener_message::{ListenerRequest, ListenerResponse};
 use peer_id;
 use peer_id::PeerId;
 use bootstrap_handler::BootstrapHandler;
-use nat_traversal::{MappedUdpSocket, MappingContext, PrivRendezvousInfo, PunchedUdpSocket,
-                    PubRendezvousInfo, gen_rendezvous_info};
+use nat_traversal::{MappedUdpSocket, MappingContext, PunchedUdpSocket, gen_rendezvous_info};
 use nat_traversal;
 use sodiumoxide::crypto::box_::PublicKey;
 
@@ -144,7 +139,6 @@ impl Debug for RaiiTcpAcceptor {
 }
 
 pub fn connect(peer_contact: StaticContactInfo,
-               our_contact_info: Arc<Mutex<StaticContactInfo>>,
                our_public_key: PublicKey,
                event_tx: ::CrustEventSender,
                connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
@@ -246,7 +240,12 @@ pub fn connect(peer_contact: StaticContactInfo,
         }
     }
 
-    unwrap_result!(bootstrap_cache.lock()).update_contacts(vec![], vec![static_contact_info]);
+    match unwrap_result!(bootstrap_cache.lock()).update_contacts(vec![], vec![static_contact_info]) {
+        Ok(()) => (),
+        Err(e) => {
+            warn!("Unable to update bootstrap cache: {:?}", e);
+        },
+    };
     Err(last_err)
 }
 
@@ -258,7 +257,7 @@ pub fn tcp_rendezvous_connect(connection_map: Arc<Mutex<HashMap<PeerId, Vec<Conn
     let (network_input, writer) = try!(tcp_connections::upgrade_tcp(tcp_stream));
     let our_addr = SocketAddr(try!(network_input.local_addr()));
     let their_addr = SocketAddr(try!(network_input.peer_addr()));
-    let mut network_rx = Receiver::tcp(network_input);
+    let network_rx = Receiver::tcp(network_input);
     let network_tx = RaiiSender(writer);
 
     let _ = notify_new_connection(&connection_map.lock().unwrap(),
@@ -290,7 +289,13 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
     let mut network_rx = Receiver::tcp(network_input);
     let (their_id, event) = match their_expected_id {
         None => {
-            writer.send(WriteEvent::Write(CrustMsg::BootstrapRequest(our_public_key)));
+            match writer.send(WriteEvent::Write(CrustMsg::BootstrapRequest(our_public_key))) {
+                Ok(()) => (),
+                Err(_) => {
+                    error!("Receiver shut down");
+                    return Err(io::Error::new(io::ErrorKind::Other, "Receiver shut down"));
+                },
+            };
             match network_rx.receive() {
                 Ok(CrustMsg::BootstrapResponse(key)) => {
                     if key == our_public_key {
@@ -310,7 +315,13 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
             }
         }
         Some(id) => {
-            writer.send(WriteEvent::Write(CrustMsg::Connect(our_public_key)));
+            match writer.send(WriteEvent::Write(CrustMsg::Connect(our_public_key))) {
+                Ok(()) => (),
+                Err(_) => {
+                    error!("Receiver shut down");
+                    return Err(io::Error::new(io::ErrorKind::Other, "Receiver shut down"));
+                },
+            }
             match network_rx.receive() {
                 Ok(CrustMsg::Connect(key)) => {
                     let their_id = peer_id::new_id(key);
@@ -379,7 +390,7 @@ pub fn register_tcp_connection(connection_map: Arc<Mutex<HashMap<PeerId, Vec<Con
                  connection_map_clone);
     }));
 
-    let mut connection = Connection {
+    let connection = Connection {
         protocol: Protocol::Tcp,
         our_addr: our_addr,
         their_addr: their_addr,
@@ -422,11 +433,9 @@ pub fn register_tcp_connection(connection_map: Arc<Mutex<HashMap<PeerId, Vec<Con
 //     })
 // }
 
-// TODO use peer_contact_infos to get the external addresses
 pub fn start_tcp_accept(port: u16,
                         our_contact_info: Arc<Mutex<StaticContactInfo>>,
                         our_public_key: PublicKey,
-                        peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
                         event_tx: ::CrustEventSender,
                         connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
                         // TODO(canndrew): We currently don't share static contact infos on
