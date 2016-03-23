@@ -39,21 +39,21 @@ pub fn is_global(ip: &IpAddr) -> bool {
 
 pub fn is_unspecified(ip_addr: &IpAddr) -> bool {
     match *ip_addr {
-        IpAddr::V4(ref ip) => ::ip_info::v4::is_unspecified(ip),
-        IpAddr::V6(ref ip) => ::ip_info::v6::is_unspecified(ip),
+        IpAddr::V4(ref ip) => ip_info::v4::is_unspecified(ip),
+        IpAddr::V6(ref ip) => ip.is_unspecified(),
     }
 }
 
 pub fn is_loopback(ip_addr: &IpAddr) -> bool {
     match *ip_addr {
-        IpAddr::V4(ref ip) => ::ip_info::v4::is_loopback(ip),
-        IpAddr::V6(ref ip) => ::ip_info::v6::is_loopback(ip),
+        IpAddr::V4(ref ip) => ip.is_loopback(),
+        IpAddr::V6(ref ip) => ip.is_loopback(),
     }
 }
 
 pub fn is_link_local(ip_addr: &IpAddr) -> bool {
     match *ip_addr {
-        IpAddr::V4(ref ip) => ::ip_info::v4::is_link_local(ip),
+        IpAddr::V4(ref ip) => ip.is_link_local(),
         IpAddr::V6(ref _ip) => false, // Not applicable
     }
 }
@@ -67,7 +67,7 @@ pub fn is_unicast_link_local(ip_addr: &IpAddr) -> bool {
 
 pub fn is_private(ip_addr: &IpAddr) -> bool {
     match *ip_addr {
-        IpAddr::V4(ref ip) => ::ip_info::v4::is_private(ip),
+        IpAddr::V4(ref ip) => ip.is_private(),
         IpAddr::V6(ref _ip) => false, // Not applicable
     }
 }
