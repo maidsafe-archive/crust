@@ -112,7 +112,6 @@ impl TheirConnectionInfo {
 /// information.
 pub struct Service {
     static_contact_info: Arc<Mutex<StaticContactInfo>>,
-    peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
     bootstrap_cache: Arc<Mutex<BootstrapHandler>>,
     expected_peers: Arc<Mutex<HashSet<PeerId>>>,
     service_discovery: ServiceDiscovery<StaticContactInfo>,
@@ -179,7 +178,6 @@ impl Service {
             mapping_context.add_simple_udp_servers(peer_contact_info.udp_mapper_servers.clone());
             mapping_context.add_simple_tcp_servers(peer_contact_info.tcp_mapper_servers.clone());
         }
-        let peer_contact_infos = Arc::new(Mutex::new(bootstrap_contacts));
 
         let connection_map = Arc::new(Mutex::new(HashMap::new()));
 
@@ -187,7 +185,7 @@ impl Service {
         mapping_context.add_simple_tcp_servers(config.tcp_mapper_servers.clone());
         let mapping_context = Arc::new(mapping_context);
 
-        let bootstrap = RaiiBootstrap::new(peer_contact_infos.clone(),
+        let bootstrap = RaiiBootstrap::new(bootstrap_contacts,
                                            our_keys.0.clone(),
                                            event_tx.clone(),
                                            connection_map.clone(),
@@ -215,7 +213,6 @@ impl Service {
 
         let service = Service {
             static_contact_info: static_contact_info,
-            peer_contact_infos: peer_contact_infos,
             bootstrap_cache: bootstrap_cache,
             service_discovery: service_discovery,
             expected_peers: Arc::new(Mutex::new(HashSet::new())),
