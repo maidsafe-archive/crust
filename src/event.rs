@@ -15,13 +15,9 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use connection::{RaiiTcpAcceptor, Connection};
 use peer_id::PeerId;
 use service::ConnectionInfoResult;
-use std::net::UdpSocket;
-use socket_addr::SocketAddr;
 use std::io;
-use static_contact_info::StaticContactInfo;
 use sender_receiver::CrustMsg;
 
 // This is necessary to gracefully exit the threads. In current design, there is no control over

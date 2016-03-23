@@ -22,10 +22,7 @@ use std::thread;
 use std::sync::mpsc;
 use std::sync::mpsc::Sender;
 use std::io::Write;
-use net2::TcpBuilder;
-use crossbeam;
 
-use socket_utils::enable_so_reuseport;
 use event::WriteEvent;
 use maidsafe_utilities::serialisation::serialise;
 
