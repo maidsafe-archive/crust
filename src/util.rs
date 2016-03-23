@@ -17,18 +17,10 @@
 
 use std::cmp::Ordering;
 use get_if_addrs::{get_if_addrs, Interface, IfAddr};
-use std::net::{self, IpAddr, Ipv4Addr, Ipv6Addr, SocketAddrV4, SocketAddrV6};
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use ip_info;
 
 /// /////////////////////////////////////////////////////////////////////////////
-#[allow(unused)] // TODO(canndrew): Remove this at some point if it still hasn't found a use.
-pub fn is_global(ip: &IpAddr) -> bool {
-    match *ip {
-        IpAddr::V4(ref ipv4) => ip_info::v4::is_global(ipv4),
-        IpAddr::V6(ref ipv6) => ip_info::v6::is_global(ipv6),
-    }
-}
-
 pub fn is_unspecified(ip_addr: &IpAddr) -> bool {
     match *ip_addr {
         IpAddr::V4(ref ip) => ip_info::v4::is_unspecified(ip),
@@ -116,29 +108,6 @@ pub fn is_local(ip_addr: &IpAddr, interfaces: &[Interface]) -> bool {
         }
     }
     false
-}
-
-/// If the endpoint IP address is unspecified return a copy of the endpoint with the IP address
-/// set to the loopback address. Otherwise return a copy of the endpoint.
-#[allow(unused)] // TODO(canndrew): Remove this at some point if it still hasn't found a use.
-pub fn unspecified_to_loopback(addr: &net::SocketAddr) -> net::SocketAddr {
-    if is_unspecified(&addr.ip()) {
-        match *addr {
-            net::SocketAddr::V4(ref addr) => {
-                let ip_addr = Ipv4Addr::new(127, 0, 0, 1);
-                net::SocketAddr::V4(SocketAddrV4::new(ip_addr, addr.port()))
-            }
-            net::SocketAddr::V6(ref addr) => {
-                let ip_addr = Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 1);
-                net::SocketAddr::V6(SocketAddrV6::new(ip_addr,
-                                                      addr.port(),
-                                                      addr.flowinfo(),
-                                                      addr.scope_id()))
-            }
-        }
-    } else {
-        *addr
-    }
 }
 
 /// Use heuristic to determine which IP is closer to us

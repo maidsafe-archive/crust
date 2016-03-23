@@ -110,12 +110,6 @@ impl Connection {
     pub fn is_closed(&self) -> bool {
         self.closed.load(Ordering::Relaxed)
     }
-
-    #[cfg(test)]
-    #[allow(unused)]
-    pub fn get_protocol(&self) -> &Protocol {
-        &self.protocol
-    }
 }
 
 pub struct RaiiTcpAcceptor {

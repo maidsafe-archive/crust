@@ -25,38 +25,10 @@ pub mod v4 {
     pub fn is_unspecified(a: &Ipv4Addr) -> bool {
         a.octets() == [0, 0, 0, 0]
     }
-
-    #[allow(unused)] // TODO(canndrew): Remove this at some point if it still hasn't found a use.
-    pub fn is_global(a: &Ipv4Addr) -> bool {
-        !a.is_private() && !a.is_loopback() && !a.is_link_local() && !a.is_broadcast() &&
-        !a.is_documentation()
-    }
 }
 
 pub mod v6 {
     use std::net::Ipv6Addr;
-
-    #[derive(Copy, PartialEq, Eq, Clone, Hash, Debug)]
-    #[allow(unused)] // We want to allow this to have the same definition as the unstable version
-                     // in the standard library. But we don't actually use all these variants.
-    pub enum Ipv6MulticastScope {
-        InterfaceLocal,
-        LinkLocal,
-        RealmLocal,
-        AdminLocal,
-        SiteLocal,
-        OrganizationLocal,
-        Global,
-    }
-
-    #[allow(unused)] // TODO(canndrew): Remove this at some point if it still hasn't found a use.
-    pub fn is_global(a: &Ipv6Addr) -> bool {
-        match multicast_scope(a) {
-            Some(Ipv6MulticastScope::Global) => true,
-            None => is_unicast_global(a),
-            _ => false,
-        }
-    }
 
     pub fn is_unique_local(a: &Ipv6Addr) -> bool {
         (a.segments()[0] & 0xfe00) == 0xfc00
@@ -65,33 +37,5 @@ pub mod v6 {
     pub fn is_unicast_link_local(a: &Ipv6Addr) -> bool {
         (a.segments()[0] & 0xffc0) == 0xfe80
     }
-
-    #[allow(unused)] // TODO(canndrew): Remove this at some point if it still hasn't found a use.
-    pub fn is_unicast_site_local(a: &Ipv6Addr) -> bool {
-        (a.segments()[0] & 0xffc0) == 0xfec0
-    }
-
-    #[allow(unused)] // TODO(canndrew): Remove this at some point if it still hasn't found a use.
-    pub fn is_unicast_global(a: &Ipv6Addr) -> bool {
-        !a.is_multicast() && !a.is_loopback() && !is_unicast_link_local(a) &&
-        !is_unicast_site_local(a) && !is_unique_local(a)
-    }
-
-    #[allow(unused)] // TODO(canndrew): Remove this at some point if it still hasn't found a use.
-    pub fn multicast_scope(a: &Ipv6Addr) -> Option<Ipv6MulticastScope> {
-        if a.is_multicast() {
-            match a.segments()[0] & 0x000f {
-                1 => Some(Ipv6MulticastScope::InterfaceLocal),
-                2 => Some(Ipv6MulticastScope::LinkLocal),
-                3 => Some(Ipv6MulticastScope::RealmLocal),
-                4 => Some(Ipv6MulticastScope::AdminLocal),
-                5 => Some(Ipv6MulticastScope::SiteLocal),
-                8 => Some(Ipv6MulticastScope::OrganizationLocal),
-                14 => Some(Ipv6MulticastScope::Global),
-                _ => None,
-            }
-        } else {
-            None
-        }
-    }
 }
+

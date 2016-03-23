@@ -158,7 +158,7 @@ impl RaiiUdpListener {
                                              connection_map.clone()) {
                     Ok(()) => (),
                     Err(e) => {
-                        warn!("Failed to receive udp connection: {}", e);
+                        warn!("Failed to receive utp connection: {}", e);
                     },
                 }
             }

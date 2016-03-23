@@ -605,7 +605,6 @@ mod test {
     use event::Event;
     use endpoint::Protocol;
 
-    use std::mem;
     use std::time::Duration;
     use std::sync::atomic::{AtomicUsize, ATOMIC_USIZE_INIT, Ordering};
     use std::sync::{Arc, Barrier};
@@ -621,16 +620,15 @@ mod test {
 
     fn get_event_sender()
         -> (::CrustEventSender,
+            Receiver<MaidSafeEventCategory>,
             Receiver<Event>)
     {
         let (category_tx, category_rx) = mpsc::channel();
         let event_category = MaidSafeEventCategory::Crust;
         let (event_tx, event_rx) = mpsc::channel();
 
-        // Needed so the services don't die when they can't send on this channel.
-        mem::forget(category_rx);
-
         (MaidSafeObserver::new(event_tx, event_category, category_tx),
+         category_rx,
          event_rx)
     }
 
@@ -685,15 +683,15 @@ mod test {
     #[test]
     fn start_stop_service() {
         let config = gen_config();
-        let (event_sender, _) = get_event_sender();
+        let (event_sender, _category_rx, _) = get_event_sender();
         let _service = unwrap_result!(Service::with_config(event_sender, &config));
     }
 
     fn two_services_bootstrap_communicate_and_exit(use_tcp: bool, use_udp: bool) {
         assert!(use_tcp || use_udp);
 
-        let (event_sender_0, event_rx_0) = get_event_sender();
-        let (event_sender_1, event_rx_1) = get_event_sender();
+        let (event_sender_0, _category_rx_0, event_rx_0) = get_event_sender();
+        let (event_sender_1, _category_rx_1, event_rx_1) = get_event_sender();
 
         let beacon_port = gen_beacon_port();
         let config_0 = gen_config_with_beacon(beacon_port);
@@ -854,8 +852,8 @@ mod test {
         let config_0 = gen_config_with_beacon(beacon_port);
         let config_1 = gen_config_with_beacon(beacon_port);
 
-        let (event_sender_0, event_rx_0) = get_event_sender();
-        let (event_sender_1, event_rx_1) = get_event_sender();
+        let (event_sender_0, _category_rx_0, event_rx_0) = get_event_sender();
+        let (event_sender_1, _category_rx_1, event_rx_1) = get_event_sender();
 
         let mut service_0 = unwrap_result!(Service::with_config(event_sender_0, &config_0));
         unwrap_result!(service_0.start_listening_tcp());
@@ -900,8 +898,8 @@ mod test {
     }
 
     fn start_two_service_rendezvous_connect(protocol: Protocol) {
-        let (event_sender_0, event_rx_0) = get_event_sender();
-        let (event_sender_1, event_rx_1) = get_event_sender();
+        let (event_sender_0, _category_rx_0, event_rx_0) = get_event_sender();
+        let (event_sender_1, _category_rx_1, event_rx_1) = get_event_sender();
 
         let mut config = gen_config();
         match protocol {
@@ -1052,6 +1050,7 @@ mod test {
         struct TestNode {
             event_rx: Receiver<Event>,
             service: Service,
+            _category_rx: Receiver<MaidSafeEventCategory>,
             connection_id_rx: Receiver<TheirConnectionInfo>,
             our_cis: Vec<OurConnectionInfo>,
             our_index: usize,
@@ -1061,7 +1060,7 @@ mod test {
             fn new(index: usize,
                    protocol: Protocol)
                    -> (TestNode, mpsc::Sender<TheirConnectionInfo>) {
-                let (event_sender, event_rx) = get_event_sender();
+                let (event_sender, category_rx, event_rx) = get_event_sender();
                 let mut config = unwrap_result!(::config_handler::read_config_file());
                 match protocol {
                     Protocol::Tcp => config.enable_utp = false,
@@ -1076,6 +1075,7 @@ mod test {
                 (TestNode {
                     event_rx: event_rx,
                     service: service,
+                    _category_rx: category_rx,
                     connection_id_rx: ci_rx,
                     our_cis: Vec::new(),
                     our_index: index,
@@ -1239,7 +1239,7 @@ mod test {
         let mut config = Config::default();
         config.hard_coded_contacts = vec![contact_info];
 
-        let (event_sender, event_rx) = get_event_sender();
+        let (event_sender, _category_rx, event_rx) = get_event_sender();
         let _service = unwrap_result!(Service::with_config(event_sender, &config));
 
         timebomb(Duration::from_secs(70), move || {
@@ -1257,8 +1257,8 @@ mod test {
         let config_0 = gen_config();
         let config_1 = gen_config();
 
-        let (event_sender_0, event_rx_0) = get_event_sender();
-        let (event_sender_1, event_rx_1) = get_event_sender();
+        let (event_sender_0, _category_rx_0, event_rx_0) = get_event_sender();
+        let (event_sender_1, _category_rx_1, event_rx_1) = get_event_sender();
 
         let mut service_0 = unwrap_result!(Service::with_config(event_sender_0, &config_0));
         match unwrap_result!(event_rx_0.recv()) {
