@@ -72,8 +72,7 @@ impl RaiiUdpListener {
         unwrap_result!(our_contact_info.lock()).utp_custom_listeners.extend(addrs);
 
         let raii_joiner = RaiiThreadJoiner::new(thread!("RaiiUdpListener", move || {
-            Self::run(our_contact_info,
-                      our_public_key,
+            Self::run(our_public_key,
                       udp_socket,
                       event_tx,
                       cloned_stop_flag,
@@ -87,8 +86,7 @@ impl RaiiUdpListener {
         })
     }
 
-    fn run(our_contact_info: Arc<Mutex<StaticContactInfo>>,
-           our_public_key: PublicKey,
+    fn run(our_public_key: PublicKey,
            udp_socket: UdpSocket,
            event_tx: ::CrustEventSender,
            stop_flag: Arc<AtomicBool>,
@@ -145,16 +143,24 @@ impl RaiiUdpListener {
                     match PunchedUdpSocket::punch_hole(socket, our_priv_info, their_info)
                               .result_log() {
                         Ok(punched_socket) => punched_socket,
-                        Err(e) => return,
+                        Err(e) => {
+                            warn!("Failed to punch hole when receiving connection: {}", e);
+                            return
+                        },
                     }
                 };
 
-                utp_rendezvous_connect(socket,
-                                       peer_addr,
-                                       UtpRendezvousConnectMode::BootstrapAccept,
-                                       our_public_key.clone(),
-                                       event_tx.clone(),
-                                       connection_map.clone());
+                match utp_rendezvous_connect(socket,
+                                             peer_addr,
+                                             UtpRendezvousConnectMode::BootstrapAccept,
+                                             our_public_key.clone(),
+                                             event_tx.clone(),
+                                             connection_map.clone()) {
+                    Ok(()) => (),
+                    Err(e) => {
+                        warn!("Failed to receive udp connection: {}", e);
+                    },
+                }
             }
         }
     }

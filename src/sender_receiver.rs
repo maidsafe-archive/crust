@@ -83,5 +83,5 @@ pub enum CrustMsg {
     ExternalEndpointRequest,
     ExternalEndpointResponse(SocketAddr),
     Connect(PublicKey),
-    Message(Vec<u8>), // encrypted data
+    Message(Vec<u8>),
 }

@@ -19,7 +19,6 @@ use std::io;
 use std::net::UdpSocket;
 use socket_addr::SocketAddr;
 use std::io::ErrorKind;
-use net2::TcpBuilder;
 
 /// A self interruptable receive trait that allows a timed-out period to be defined
 pub trait RecvUntil {
