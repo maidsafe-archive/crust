@@ -23,7 +23,7 @@ use std::io::BufReader;
 use std::net::TcpStream;
 use rustc_serialize::Decodable;
 use utp_connections::UtpWrapper;
-use maidsafe_utilities::serialisation::{deserialise_from, serialise};
+use maidsafe_utilities::serialisation::deserialise_from;
 use socket_addr::SocketAddr;
 use sodiumoxide::crypto::box_::PublicKey;
 

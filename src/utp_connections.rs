@@ -22,9 +22,6 @@ use socket_addr::SocketAddr;
 use std::io::Result as IoResult;
 use std::sync::mpsc;
 use std::sync::mpsc::Sender;
-use std::io;
-use std::time::Duration;
-use maidsafe_utilities::serialisation::{deserialise, serialise};
 
 use event::WriteEvent;
 
