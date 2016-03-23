@@ -385,7 +385,6 @@ impl Service {
                 let static_contact_info = static_contact_info.clone();
                 let _ = thread!("Service::connect tcp direct", move || {
                     match connection::connect_tcp_endpoint(tcp_addr,
-                                                           our_contact_info,
                                                            our_public_key,
                                                            event_tx,
                                                            connection_map,
