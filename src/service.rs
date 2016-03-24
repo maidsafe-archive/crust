@@ -292,7 +292,7 @@ impl Service {
                   .get_mut(&id)
                   .and_then(|conns| conns.get_mut(0)) {
             None => {
-                let msg = format!("No connection to peer {:?}", id);
+                let msg = format!("No connection to peer {}", id);
                 Err(io::Error::new(io::ErrorKind::Other, msg))
             }
             Some(connection) => connection.send(CrustMsg::Message(data)),
@@ -397,7 +397,7 @@ impl Service {
                             ) {
                                 Ok(()) => (),
                                 Err(e) => {
-                                    warn!("Failed to update bootstrap cache: {:?}", e);
+                                    warn!("Failed to update bootstrap cache: {}", e);
                                 },
                             };
                         },

@@ -188,7 +188,7 @@ pub fn connect(peer_contact: StaticContactInfo,
             let _ = thread!("uTP bootstrap request sender", move || {
                 for udp_addr in utp_custom_listeners {
                     if let Err(e) = udp_socket.send_to(&serialised_connect_req, &*udp_addr) {
-                        error!("Failed to send bootstrap request to peer {}, {:?}",
+                        error!("Failed to send bootstrap request to peer {}, {}",
                                &*udp_addr,
                                e);
                     }
@@ -247,7 +247,7 @@ pub fn connect(peer_contact: StaticContactInfo,
     match unwrap_result!(bootstrap_cache.lock()).update_contacts(vec![], vec![static_contact_info]) {
         Ok(()) => (),
         Err(e) => {
-            warn!("Unable to update bootstrap cache: {:?}", e);
+            warn!("Unable to update bootstrap cache: {}", e);
         },
     };
     Err(last_err)
@@ -341,7 +341,7 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
                     let their_id = peer_id::new_id(key);
                     if their_id != id {
                         return Err(io::Error::new(io::ErrorKind::Other,
-                                                  format!("Connected to the wrong peer: {:?}.",
+                                                  format!("Connected to the wrong peer: {}.",
                                                           their_id)));
                     }
 
@@ -491,7 +491,7 @@ pub fn start_tcp_accept(port: u16,
             let (stream, _) = match listener.accept() {
                 Ok(tuple) => tuple,
                 Err(err) => {
-                    error!("Error in TcpListener's accept - {:?}", err);
+                    error!("Error in TcpListener's accept: {}", err);
                     break;
                 }
             };
@@ -620,7 +620,7 @@ pub fn utp_rendezvous_connect(udp_socket: UdpSocket,
                     let their_id = peer_id::new_id(key);
                     if their_id != id {
                         return Err(io::Error::new(io::ErrorKind::Other,
-                                                  format!("Connected to the wrong peer: {:?}.",
+                                                  format!("Connected to the wrong peer: {}.",
                                                           their_id)));
                     };
                     let mut guard = unwrap_result!(connection_map.lock());
@@ -760,9 +760,9 @@ fn start_rx(mut network_rx: Receiver,
             if entry.get().is_empty() {
                 let _ = entry.remove();
                 if let Err(err) = event_tx.send(Event::LostPeer(their_id)) {
-                    error!("Failed to send LostPeer({:?}) event: {:?}", their_id, err);
+                    error!("Failed to send LostPeer({}) event: {:?}", their_id, err);
                 } else {
-                    trace!("Sent LostPeer({:?}) event.", their_id);
+                    trace!("Sent LostPeer({}) event.", their_id);
                 }
             }
         }
