@@ -25,11 +25,6 @@ use std::sync::mpsc::Sender;
 
 use event::WriteEvent;
 
-/// Connect to a peer and open a send-receive pair.  See `upgrade` for more details.
-pub fn connect_utp(addr: SocketAddr) -> IoResult<(UtpWrapper, Sender<WriteEvent>)> {
-    upgrade_utp(try!(UtpSocket::connect(&*addr)))
-}
-
 pub fn rendezvous_connect_utp(udp_socket: UdpSocket,
                               addr: SocketAddr)
                               -> IoResult<(UtpWrapper, Sender<WriteEvent>)> {
@@ -65,59 +60,19 @@ mod test {
     use std::time::Duration;
     use sender_receiver::CrustMsg;
 
-    fn listen(port: u16) -> io::Result<UtpListener> {
-        UtpListener::bind(("0.0.0.0", port))
-    }
-
-    #[test]
-    fn cannot_establish_connection() {
-        let listener = UdpSocket::bind({
-                           net::SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), 0)
-                       })
-                           .unwrap();
-        let port = listener.local_addr().unwrap().port();
-        drop(listener);
-        let _err =
-            connect_utp(SocketAddr(net::SocketAddr::V4(net::SocketAddrV4::new(Ipv4Addr::new(127,
-                                                                                       0,
-                                                                                       0,
-                                                                                       1),
-                                                                         port))))
-                .err()
-                .unwrap();
-    }
-
-    #[test]
-    fn establishing_connection() {
-        let listener = listen(0).unwrap();
-        let port = listener.local_addr().unwrap().port();
-
-        let handle = spawn(move || listener.accept().unwrap());
-
-        // Note: when the result of connect_utp here is assigned to a variable
-        // named _, this test takes much longet to complete. My guess is that
-        // it happens because _ is dropped immediately, but any other named
-        // variable is dropped only at the end of the scope. So when naming
-        // this variable, the socket outlives the above thread, which somehow
-        // makes this test finish faster for some reason.
-        let _socket = connect_utp(SocketAddr(net::SocketAddr::V4(net::SocketAddrV4::new(Ipv4Addr::new(127,
-                                                                                                      0,
-                                                                                                      0,
-                                                                                                      1),
-                                                                                        port))))
-                    .unwrap();
-
-        let _ = handle.join().unwrap();
-    }
-
     #[test]
     fn send_receive_data() {
-        let listener = listen(0).unwrap();
-        let port = listener.local_addr().unwrap().port();
+        let socket_0 = unwrap_result!(UdpSocket::bind("0.0.0.0:0"));
+        let socket_1 = unwrap_result!(UdpSocket::bind("0.0.0.0:0"));
+
+        let port_0 = unwrap_result!(socket_0.local_addr()).port();
+        let port_1 = unwrap_result!(socket_1.local_addr()).port();
+
+        let addr_0 = SocketAddr(net::SocketAddr::V4(net::SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), port_0)));
+        let addr_1 = SocketAddr(net::SocketAddr::V4(net::SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), port_1)));
 
         let th0 = spawn(move || {
-            let s = listener.accept().unwrap().0;
-            let (mut i, o) = upgrade_utp(s).unwrap();
+            let (mut i, o) = unwrap_result!(rendezvous_connect_utp(socket_0, addr_1));
 
             let msg = match unwrap_result!(deserialise_from::<_, CrustMsg>(&mut i)) {
                 CrustMsg::Message(msg) => msg,
@@ -128,13 +83,7 @@ mod test {
             unwrap_result!(o.send(WriteEvent::Write(CrustMsg::Message(vec![43]))));
         });
 
-        let (mut i, o) =
-            connect_utp(SocketAddr(net::SocketAddr::V4(net::SocketAddrV4::new(Ipv4Addr::new(127,
-                                                                                       0,
-                                                                                       0,
-                                                                                       1),
-                                                                         port))))
-                .unwrap();
+        let (mut i, o) = unwrap_result!(rendezvous_connect_utp(socket_1, addr_0));
 
         let (tx, rx) = mpsc::channel();
 
