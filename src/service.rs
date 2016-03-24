@@ -21,6 +21,7 @@ use std::collections::{HashMap, HashSet};
 use std::io;
 use std::net;
 use std::sync::{mpsc, Arc, Mutex};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::fmt::Write;
 use service_discovery::ServiceDiscovery;
 use sodiumoxide;
@@ -130,6 +131,7 @@ pub struct Service {
     utp_enabled: bool,
     _udp_hole_punch_server: SimpleUdpHolePunchServer<Arc<MappingContext>>,
     _tcp_hole_punch_server: SimpleTcpHolePunchServer<Arc<MappingContext>>,
+    is_alive: Arc<AtomicBool>,
 }
 
 impl Service {
@@ -231,6 +233,7 @@ impl Service {
             utp_enabled: config.enable_utp,
             _udp_hole_punch_server: udp_hole_punch_server,
             _tcp_hole_punch_server: tcp_hole_punch_server,
+            is_alive: Arc::new(AtomicBool::new(true)),
         };
 
         Ok(service)
@@ -414,10 +417,17 @@ impl Service {
                 let connection_map = connection_map.clone();
                 let result_tx = result_tx.clone();
                 let priv_tcp_info = our_connection_info.priv_tcp_info;
+                let is_alive = self.is_alive.clone();
+
                 let _ = thread!("Service::connect tcp rendezvous", move || {
                     let res = tcp_punch_hole(tcp_socket,
                                              priv_tcp_info,
                                              tcp_info).result_log();
+
+                    if !is_alive.load(Ordering::Relaxed) {
+                        return;
+                    }
+
                     match res {
                         Ok(tcp_stream) => {
                             match connection::tcp_rendezvous_connect(connection_map,
@@ -452,6 +462,8 @@ impl Service {
                 let event_tx = event_tx.clone();
                 let connection_map = connection_map.clone();
                 let result_tx = result_tx.clone();
+                let is_alive = self.is_alive.clone();
+
                 let _ = thread!("Service::connect utp rendezvous", move || {
                     let res = PunchedUdpSocket::punch_hole(udp_socket, priv_udp_info, udp_info)
                                   .result_log();
@@ -465,6 +477,11 @@ impl Service {
                             return;
                         }
                     };
+
+                    if !is_alive.load(Ordering::Relaxed) {
+                        return;
+                    }
+
                     match connection::utp_rendezvous_connect(udp_socket,
                                                              public_endpoint,
                                                              UtpRendezvousConnectMode::Normal(their_id),
@@ -591,6 +608,8 @@ impl Service {
 
 impl Drop for Service {
     fn drop(&mut self) {
+        self.is_alive.store(false, Ordering::Relaxed);
+
         // Disconnect from all peers when we drop the service
         let mut cm = unwrap_result!(self.connection_map.lock());
         cm.clear();
