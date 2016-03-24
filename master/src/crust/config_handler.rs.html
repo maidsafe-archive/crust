@@ -161,36 +161,6 @@
 <span id="118">118</span>
 <span id="119">119</span>
 <span id="120">120</span>
-<span id="121">121</span>
-<span id="122">122</span>
-<span id="123">123</span>
-<span id="124">124</span>
-<span id="125">125</span>
-<span id="126">126</span>
-<span id="127">127</span>
-<span id="128">128</span>
-<span id="129">129</span>
-<span id="130">130</span>
-<span id="131">131</span>
-<span id="132">132</span>
-<span id="133">133</span>
-<span id="134">134</span>
-<span id="135">135</span>
-<span id="136">136</span>
-<span id="137">137</span>
-<span id="138">138</span>
-<span id="139">139</span>
-<span id="140">140</span>
-<span id="141">141</span>
-<span id="142">142</span>
-<span id="143">143</span>
-<span id="144">144</span>
-<span id="145">145</span>
-<span id="146">146</span>
-<span id="147">147</span>
-<span id="148">148</span>
-<span id="149">149</span>
-<span id="150">150</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -285,36 +255,6 @@
 
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
 <span class='kw'>mod</span> <span class='ident'>test</span> {
-    <span class='comment'>// TODO(canndrew): Also add this test back</span>
-    <span class='comment'>//</span>
-    <span class='comment'>// #[test]</span>
-    <span class='comment'>// fn read_config_file_test() {</span>
-    <span class='comment'>// let mut hard_coded_endpoints = Vec::new();</span>
-    <span class='comment'>// let mut hard_coded_contacts = Vec::new();</span>
-    <span class='comment'>// for _ in 0..10 {</span>
-    <span class='comment'>// let random_contact = ::util::random_endpoint();</span>
-    <span class='comment'>// hard_coded_endpoints.push(random_contact.clone());</span>
-    <span class='comment'>// hard_coded_contacts.push(random_contact);</span>
-    <span class='comment'>// }</span>
-    <span class='comment'>// let config = super::Config { hard_coded_contacts: hard_coded_contacts };</span>
-    <span class='comment'>// let path_buf = unwrap_result!(super::write_config_file(Some(hard_coded_endpoints)));</span>
-    <span class='comment'>// match super::read_config_file() {</span>
-    <span class='comment'>// Ok(recovered_config) =&gt; assert_eq!(config, recovered_config),</span>
-    <span class='comment'>// Err(_) =&gt; panic!(&quot;Failed to read config file.&quot;),</span>
-    <span class='comment'>// }</span>
-    <span class='comment'>//</span>
-    <span class='comment'>// Clean up</span>
-    <span class='comment'>// match ::config_file_handler::current_bin_dir() {</span>
-    <span class='comment'>// Ok(mut config_path) =&gt; {</span>
-    <span class='comment'>// config_path.push(path_buf);</span>
-    <span class='comment'>// let _ = ::std::fs::remove_file(&amp;config_path);</span>
-    <span class='comment'>// }</span>
-    <span class='comment'>// Err(_) =&gt; (),</span>
-    <span class='comment'>// };</span>
-    <span class='comment'>// }</span>
-    <span class='comment'>//</span>
-
-
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>parse_sample_config_file</span>() {
         <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>path</span>::<span class='ident'>Path</span>;

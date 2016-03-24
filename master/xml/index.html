@@ -46,16 +46,17 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-0' class='srclink' href='../src/xml/lib.rs.html#2-21' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-0' class='srclink' href='../src/xml/lib.rs.html#2-24' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>This crate currently provides almost XML 1.0/1.1-compliant pull parser.</p>
 </div><h2 id='reexports' class='section-header'><a href="#reexports">Reexports</a></h2>
-<table><tr><td><code>pub use reader::<a class='struct' href='../xml/reader/struct.EventReader.html' title='xml::reader::EventReader'>EventReader</a>;</code></td></tr></table><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
+<table><tr><td><code>pub use reader::<a class='struct' href='../xml/reader/struct.EventReader.html' title='xml::reader::EventReader'>EventReader</a>;</code></td></tr><tr><td><code>pub use writer::<a class='struct' href='../xml/writer/struct.EventWriter.html' title='xml::writer::EventWriter'>EventWriter</a>;</code></td></tr></table><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
 <table>
                     <tr class=' module-item'>
                         <td><a class='mod' href='attribute/index.html'
                                title='xml::attribute'>attribute</a></td>
                         <td class='docblock short'>
-                             
+                             <p>Contains XML attributes manipulation types and functions.</p>
+
                         </td>
                     </tr>
                 
@@ -63,7 +64,7 @@
                         <td><a class='mod' href='common/index.html'
                                title='xml::common'>common</a></td>
                         <td class='docblock short'>
-                             <p>Contains several types used throughout the library.</p>
+                             <p>Contains common types and functions used throughout the library.</p>
 
                         </td>
                     </tr>
@@ -72,7 +73,8 @@
                         <td><a class='mod' href='escape/index.html'
                                title='xml::escape'>escape</a></td>
                         <td class='docblock short'>
-                             
+                             <p>Contains functions for performing XML special characters escaping.</p>
+
                         </td>
                     </tr>
                 
@@ -89,7 +91,8 @@
                         <td><a class='mod' href='name/index.html'
                                title='xml::name'>name</a></td>
                         <td class='docblock short'>
-                             
+                             <p>Contains XML qualified names manipulation types and functions.</p>
+
                         </td>
                     </tr>
                 
@@ -97,7 +100,8 @@
                         <td><a class='mod' href='namespace/index.html'
                                title='xml::namespace'>namespace</a></td>
                         <td class='docblock short'>
-                             
+                             <p>Contains namespace manipulation types and functions.</p>
+
                         </td>
                     </tr>
                 
@@ -111,18 +115,30 @@
                     </tr>
                 
                     <tr class=' module-item'>
-                        <td><a class='mod' href='util/index.html'
-                               title='xml::util'>util</a></td>
+                        <td><a class='mod' href='writer/index.html'
+                               title='xml::writer'>writer</a></td>
                         <td class='docblock short'>
-                             
+                             <p>Contains high-level interface for an events-based XML emitter.</p>
+
+                        </td>
+                    </tr>
+                </table><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.EmitterConfig.html'
+                               title='xml::EmitterConfig'>EmitterConfig</a></td>
+                        <td class='docblock short'>
+                             <p>Emitter configuration structure.</p>
+
                         </td>
                     </tr>
                 
                     <tr class=' module-item'>
-                        <td><a class='mod' href='writer/index.html'
-                               title='xml::writer'>writer</a></td>
+                        <td><a class='struct' href='struct.ParserConfig.html'
+                               title='xml::ParserConfig'>ParserConfig</a></td>
                         <td class='docblock short'>
-                             
+                             <p>Parser configuration structure.</p>
+
                         </td>
                     </tr>
                 </table></section>

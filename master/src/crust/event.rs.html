@@ -92,10 +92,6 @@
 <span id="49">49</span>
 <span id="50">50</span>
 <span id="51">51</span>
-<span id="52">52</span>
-<span id="53">53</span>
-<span id="54">54</span>
-<span id="55">55</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -114,13 +110,9 @@
 <span class='comment'>// Please review the Licences for the specific language governing permissions and limitations</span>
 <span class='comment'>// relating to use of the SAFE Network Software.</span>
 
-<span class='kw'>use</span> <span class='ident'>connection</span>::{<span class='ident'>RaiiTcpAcceptor</span>, <span class='ident'>Connection</span>};
 <span class='kw'>use</span> <span class='ident'>peer_id</span>::<span class='ident'>PeerId</span>;
 <span class='kw'>use</span> <span class='ident'>service</span>::<span class='ident'>ConnectionInfoResult</span>;
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>net</span>::<span class='ident'>UdpSocket</span>;
-<span class='kw'>use</span> <span class='ident'>socket_addr</span>::<span class='ident'>SocketAddr</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>;
-<span class='kw'>use</span> <span class='ident'>static_contact_info</span>::<span class='ident'>StaticContactInfo</span>;
 <span class='kw'>use</span> <span class='ident'>sender_receiver</span>::<span class='ident'>CrustMsg</span>;
 
 <span class='comment'>// This is necessary to gracefully exit the threads. In current design, there is no control over</span>
