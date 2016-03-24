@@ -17,27 +17,10 @@
 
 use std::cmp::Ordering;
 use get_if_addrs::{get_if_addrs, Interface, IfAddr};
-use std::net::{self, IpAddr, Ipv4Addr, Ipv6Addr, SocketAddrV4, SocketAddrV6};
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use ip_info;
 
-#[cfg(test)]
-use std::sync::mpsc;
-#[cfg(test)]
-use std::thread;
-#[cfg(test)]
-use endpoint::{Protocol, Endpoint};
-#[cfg(test)]
-use socket_addr::SocketAddr;
-
 /// /////////////////////////////////////////////////////////////////////////////
-#[allow(unused)] // TODO(canndrew): Remove this at some point if it still hasn't found a use.
-pub fn is_global(ip: &IpAddr) -> bool {
-    match *ip {
-        IpAddr::V4(ref ipv4) => ip_info::v4::is_global(ipv4),
-        IpAddr::V6(ref ipv6) => ip_info::v6::is_global(ipv6),
-    }
-}
-
 pub fn is_unspecified(ip_addr: &IpAddr) -> bool {
     match *ip_addr {
         IpAddr::V4(ref ip) => ip_info::v4::is_unspecified(ip),
@@ -127,29 +110,6 @@ pub fn is_local(ip_addr: &IpAddr, interfaces: &[Interface]) -> bool {
     false
 }
 
-/// If the endpoint IP address is unspecified return a copy of the endpoint with the IP address
-/// set to the loopback address. Otherwise return a copy of the endpoint.
-#[allow(unused)] // TODO(canndrew): Remove this at some point if it still hasn't found a use.
-pub fn unspecified_to_loopback(addr: &net::SocketAddr) -> net::SocketAddr {
-    if is_unspecified(&addr.ip()) {
-        match *addr {
-            net::SocketAddr::V4(ref addr) => {
-                let ip_addr = Ipv4Addr::new(127, 0, 0, 1);
-                net::SocketAddr::V4(SocketAddrV4::new(ip_addr, addr.port()))
-            }
-            net::SocketAddr::V6(ref addr) => {
-                let ip_addr = Ipv6Addr::new(0, 0, 0, 0, 0, 0, 0, 1);
-                net::SocketAddr::V6(SocketAddrV6::new(ip_addr,
-                                                      addr.port(),
-                                                      addr.flowinfo(),
-                                                      addr.scope_id()))
-            }
-        }
-    } else {
-        *addr
-    }
-}
-
 /// Use heuristic to determine which IP is closer to us
 /// geographically. That is, ip1 is closer to us than ip2 => ip1 < ip2.
 #[allow(dead_code)]
@@ -212,46 +172,6 @@ pub fn heuristic_geo_cmp(ip1: &IpAddr, ip2: &IpAddr) -> Ordering {
         (true, false) => Less,
         (false, true) => Greater,
         (false, false) => Equal,
-    }
-}
-
-
-#[cfg(test)]
-pub fn random_endpoint() -> Endpoint {
-    // TODO - randomise V4/V6 and TCP/UTP
-    let address = SocketAddrV4::new(Ipv4Addr::new(::rand::random::<u8>(),
-                                                  ::rand::random::<u8>(),
-                                                  ::rand::random::<u8>(),
-                                                  ::rand::random::<u8>()),
-                                    ::rand::random::<u16>());
-    Endpoint::from_socket_addr(Protocol::Tcp, SocketAddr(net::SocketAddr::V4(address)))
-}
-
-
-#[cfg(test)]
-pub fn timed_recv<T>(receiver: &mpsc::Receiver<T>,
-                     timeout: ::std::time::Duration)
-                     -> Result<T, mpsc::TryRecvError> {
-    let step = ::std::time::Duration::from_millis(20);
-    let mut time = ::std::time::Duration::new(0, 0);
-    loop {
-        match receiver.try_recv() {
-            Ok(v) => return Ok(v),
-            Err(what) => {
-                match what {
-                    mpsc::TryRecvError::Empty => {
-                        if time >= timeout {
-                            return Err(what);
-                        }
-                    }
-                    mpsc::TryRecvError::Disconnected => {
-                        return Err(what);
-                    }
-                }
-            }
-        }
-        thread::sleep(step);
-        time = time + step;
     }
 }
 

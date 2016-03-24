@@ -112,7 +112,6 @@ impl TheirConnectionInfo {
 /// information.
 pub struct Service {
     static_contact_info: Arc<Mutex<StaticContactInfo>>,
-    peer_contact_infos: Arc<Mutex<Vec<StaticContactInfo>>>,
     bootstrap_cache: Arc<Mutex<BootstrapHandler>>,
     expected_peers: Arc<Mutex<HashSet<PeerId>>>,
     service_discovery: ServiceDiscovery<StaticContactInfo>,
@@ -179,7 +178,6 @@ impl Service {
             mapping_context.add_simple_udp_servers(peer_contact_info.udp_mapper_servers.clone());
             mapping_context.add_simple_tcp_servers(peer_contact_info.tcp_mapper_servers.clone());
         }
-        let peer_contact_infos = Arc::new(Mutex::new(bootstrap_contacts));
 
         let connection_map = Arc::new(Mutex::new(HashMap::new()));
 
@@ -187,7 +185,7 @@ impl Service {
         mapping_context.add_simple_tcp_servers(config.tcp_mapper_servers.clone());
         let mapping_context = Arc::new(mapping_context);
 
-        let bootstrap = RaiiBootstrap::new(peer_contact_infos.clone(),
+        let bootstrap = RaiiBootstrap::new(bootstrap_contacts,
                                            our_keys.0.clone(),
                                            event_tx.clone(),
                                            connection_map.clone(),
@@ -215,7 +213,6 @@ impl Service {
 
         let service = Service {
             static_contact_info: static_contact_info,
-            peer_contact_infos: peer_contact_infos,
             bootstrap_cache: bootstrap_cache,
             service_discovery: service_discovery,
             expected_peers: Arc::new(Mutex::new(HashSet::new())),
@@ -608,10 +605,9 @@ mod test {
     use event::Event;
     use endpoint::Protocol;
 
-    use std::mem;
     use std::time::Duration;
     use std::sync::atomic::{AtomicUsize, ATOMIC_USIZE_INIT, Ordering};
-    use std::sync::{Mutex, Arc, Barrier};
+    use std::sync::{Arc, Barrier};
     use std::sync::mpsc;
     use std::sync::mpsc::Receiver;
     use std::thread;
@@ -687,15 +683,15 @@ mod test {
     #[test]
     fn start_stop_service() {
         let config = gen_config();
-        let (event_sender, _, _) = get_event_sender();
+        let (event_sender, _category_rx, _) = get_event_sender();
         let _service = unwrap_result!(Service::with_config(event_sender, &config));
     }
 
     fn two_services_bootstrap_communicate_and_exit(use_tcp: bool, use_udp: bool) {
         assert!(use_tcp || use_udp);
 
-        let (event_sender_0, category_rx_0, event_rx_0) = get_event_sender();
-        let (event_sender_1, category_rx_1, event_rx_1) = get_event_sender();
+        let (event_sender_0, _category_rx_0, event_rx_0) = get_event_sender();
+        let (event_sender_1, _category_rx_1, event_rx_1) = get_event_sender();
 
         let beacon_port = gen_beacon_port();
         let config_0 = gen_config_with_beacon(beacon_port);
@@ -814,7 +810,7 @@ mod test {
                 Ok(e) => panic!("Received unexpected event when shutting down: {:?}", e),
                 Err(mpsc::RecvError) => (),
             };
-            done_tx.send(());
+            unwrap_result!(done_tx.send(()));
         });
         thread::park_timeout(Duration::from_secs(5));
         unwrap_result!(done_rx.try_recv());
@@ -827,7 +823,7 @@ mod test {
                 Ok(e) => panic!("Received unexpected event when shutting down: {:?}", e),
                 Err(mpsc::RecvError) => (),
             };
-            done_tx.send(());
+            unwrap_result!(done_tx.send(()));
         });
         thread::park_timeout(Duration::from_secs(5));
         unwrap_result!(done_rx.try_recv());
@@ -856,8 +852,8 @@ mod test {
         let config_0 = gen_config_with_beacon(beacon_port);
         let config_1 = gen_config_with_beacon(beacon_port);
 
-        let (event_sender_0, category_rx_0, event_rx_0) = get_event_sender();
-        let (event_sender_1, category_rx_1, event_rx_1) = get_event_sender();
+        let (event_sender_0, _category_rx_0, event_rx_0) = get_event_sender();
+        let (event_sender_1, _category_rx_1, event_rx_1) = get_event_sender();
 
         let mut service_0 = unwrap_result!(Service::with_config(event_sender_0, &config_0));
         unwrap_result!(service_0.start_listening_tcp());
@@ -890,6 +886,9 @@ mod test {
             _ => panic!("0 Should have got a new connection from 1."),
         };
 
+        assert_eq!(id_0, service_0.id());
+        assert_eq!(id_1, service_1.id());
+
         // Dropping service_0 should make service_1 receive a LostPeer event.
         drop(service_0);
         match unwrap_result!(event_rx_1.recv()) {
@@ -899,8 +898,8 @@ mod test {
     }
 
     fn start_two_service_rendezvous_connect(protocol: Protocol) {
-        let (event_sender_0, category_rx_0, event_rx_0) = get_event_sender();
-        let (event_sender_1, category_rx_1, event_rx_1) = get_event_sender();
+        let (event_sender_0, _category_rx_0, event_rx_0) = get_event_sender();
+        let (event_sender_1, _category_rx_1, event_rx_1) = get_event_sender();
 
         let mut config = gen_config();
         match protocol {
@@ -1013,7 +1012,7 @@ mod test {
         let (done_tx, done_rx) = mpsc::channel();
         let tj = thread!("Drain event channel messages", move || {
             for _ in event_rx_0 {}
-            done_tx.send(());
+            unwrap_result!(done_tx.send(()));
         });
         thread::park_timeout(Duration::from_secs(5));
         unwrap_result!(done_rx.try_recv());
@@ -1023,7 +1022,7 @@ mod test {
         let (done_tx, done_rx) = mpsc::channel();
         let tj = thread!("Drain event channel messages", move || {
             for _ in event_rx_1 {}
-            done_tx.send(());
+            unwrap_result!(done_tx.send(()));
         });
         thread::park_timeout(Duration::from_secs(5));
         unwrap_result!(done_rx.try_recv());
@@ -1050,8 +1049,8 @@ mod test {
 
         struct TestNode {
             event_rx: Receiver<Event>,
-            category_rx: Receiver<MaidSafeEventCategory>,
             service: Service,
+            _category_rx: Receiver<MaidSafeEventCategory>,
             connection_id_rx: Receiver<TheirConnectionInfo>,
             our_cis: Vec<OurConnectionInfo>,
             our_index: usize,
@@ -1075,8 +1074,8 @@ mod test {
                 let (ci_tx, ci_rx) = mpsc::channel();
                 (TestNode {
                     event_rx: event_rx,
-                    category_rx: category_rx,
                     service: service,
+                    _category_rx: category_rx,
                     connection_id_rx: ci_rx,
                     our_cis: Vec::new(),
                     our_index: index,
@@ -1099,7 +1098,7 @@ mod test {
                         m => panic!("Received unexpected event: m == {:?}", m),
                     };
                     let their_ci = our_ci.to_their_connection_info();
-                    ci_tx.send(their_ci);
+                    unwrap_result!(ci_tx.send(their_ci));
                     self.our_cis.push(our_ci);
                 }
             }
@@ -1133,7 +1132,7 @@ mod test {
                             for _ in 0..MSG_SIZE {
                                 msg.push(n as u8);
                             }
-                            self.service.send(their_id, msg);
+                            unwrap_result!(self.service.send(their_id, msg));
                         }
                     }
 
@@ -1151,7 +1150,7 @@ mod test {
                                         assert_eq!(*next_msg, n as u32);
                                         *next_msg += 1;
                                     }
-                                    hash_map::Entry::Vacant(ve) => panic!("impossible!"),
+                                    hash_map::Entry::Vacant(_) => panic!("impossible!"),
                                 }
                             }
                             m => panic!("Unexpected msg receiving NewMessage: {:?}", m),
@@ -1207,10 +1206,15 @@ mod test {
         });
     }
 
+    #[test]
     fn start_three_service_utp_rendezvous_connect() {
         start_three_service_rendezvous_connect(Protocol::Utp);
     }
 
+    #[test]
+    #[ignore]
+    // FIXME: un-ignore this once https://github.com/maidsafe/crust/issues/601
+    // is fixed.
     fn start_three_service_tcp_rendezvous_connect() {
         start_three_service_rendezvous_connect(Protocol::Tcp);
     }
@@ -1235,8 +1239,8 @@ mod test {
         let mut config = Config::default();
         config.hard_coded_contacts = vec![contact_info];
 
-        let (event_sender, category_rx, event_rx) = get_event_sender();
-        let service = unwrap_result!(Service::with_config(event_sender, &config));
+        let (event_sender, _category_rx, event_rx) = get_event_sender();
+        let _service = unwrap_result!(Service::with_config(event_sender, &config));
 
         timebomb(Duration::from_secs(70), move || {
             match unwrap_result!(event_rx.recv()) {
@@ -1253,8 +1257,8 @@ mod test {
         let config_0 = gen_config();
         let config_1 = gen_config();
 
-        let (event_sender_0, category_rx_0, event_rx_0) = get_event_sender();
-        let (event_sender_1, category_rx_1, event_rx_1) = get_event_sender();
+        let (event_sender_0, _category_rx_0, event_rx_0) = get_event_sender();
+        let (event_sender_1, _category_rx_1, event_rx_1) = get_event_sender();
 
         let mut service_0 = unwrap_result!(Service::with_config(event_sender_0, &config_0));
         match unwrap_result!(event_rx_0.recv()) {

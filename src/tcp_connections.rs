@@ -22,10 +22,7 @@ use std::thread;
 use std::sync::mpsc;
 use std::sync::mpsc::Sender;
 use std::io::Write;
-use net2::TcpBuilder;
-use crossbeam;
 
-use socket_utils::enable_so_reuseport;
 use event::WriteEvent;
 use maidsafe_utilities::serialisation::serialise;
 
@@ -73,13 +70,12 @@ fn upgrade_writer(mut stream: TcpStream) -> Sender<WriteEvent> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use maidsafe_utilities::serialisation::{deserialise_from, serialise};
+    use maidsafe_utilities::serialisation::{deserialise_from, deserialise, serialise};
     use std::thread;
     use std::net;
     use std::net::TcpListener;
     use std::str::FromStr;
     use std::time::Duration;
-    use std::io::Read;
     use std::sync::mpsc;
     use socket_addr::SocketAddr;
     use event::WriteEvent;
@@ -194,15 +190,8 @@ mod test {
     #[test]
     fn send_messages_fast() {
         use std::net::TcpStream;
-        use rustc_serialize::{Decodable, Encodable};
 
         const MSG_COUNT: u16 = 20;
-
-        fn encode<T>(value: &T) -> Vec<u8>
-            where T: Encodable
-        {
-            unwrap_result!(serialise(value))
-        }
 
         let listener = TcpListener::bind(("0.0.0.0", 0)).unwrap();
         let port = listener.local_addr().unwrap().port();
@@ -214,9 +203,12 @@ mod test {
         fn read_messages(mut reader: TcpStream) {
             reader.set_read_timeout(Some(Duration::new(5, 0))).unwrap();
 
-            for _ in 0..MSG_COUNT {
+            for i in 0..MSG_COUNT {
                 match deserialise_from::<_, CrustMsg>(&mut reader) {
-                    Ok(CrustMsg::Message(msg)) => (),
+                    Ok(CrustMsg::Message(msg)) => {
+                        let s: String = unwrap_result!(deserialise(&msg));
+                        assert_eq!(s, format!("MSG{}", i));
+                    },
                     Ok(m) => panic!("Unexpected crust message type {:#?}", m),
                     Err(what) => panic!("Problem decoding message {}", what),
                 }
@@ -226,7 +218,7 @@ mod test {
         let t = thread::spawn(move || read_messages(i2));
 
         for i in 0..MSG_COUNT {
-            let msg = encode(&format!("MSG{}", i));
+            let msg = unwrap_result!(serialise(&format!("MSG{}", i)));
             assert!(o1.send(WriteEvent::Write(CrustMsg::Message(msg.clone()))).is_ok());
         }
 

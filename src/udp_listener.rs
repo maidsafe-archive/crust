@@ -18,7 +18,7 @@
 use std::collections::HashMap;
 use std::io;
 use std::net;
-use std::net::{IpAddr, UdpSocket};
+use std::net::UdpSocket;
 use std::time::Duration;
 use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -52,12 +52,11 @@ impl RaiiUdpListener {
                _bootstrap_cache: Arc<Mutex<BootstrapHandler>>,
                mc: Arc<MappingContext>)
                -> io::Result<RaiiUdpListener> {
-        let udp_socket = try!(UdpSocket::bind(&format!("0.0.0.0:{}", port)[..]));
+        let udp_socket = try!(UdpSocket::bind(("0.0.0.0", port)));
         let stop_flag = Arc::new(AtomicBool::new(false));
         let cloned_stop_flag = stop_flag.clone();
 
         try!(udp_socket.set_read_timeout(Some(Duration::from_secs(UDP_READ_TIMEOUT_SECS))));
-        let actual_port = try!(udp_socket.local_addr()).port();
 
         // TODO This will be very slow for production
         // Ask others for our UDP external addresses as they see us. No need to filter out the
@@ -73,8 +72,7 @@ impl RaiiUdpListener {
         unwrap_result!(our_contact_info.lock()).utp_custom_listeners.extend(addrs);
 
         let raii_joiner = RaiiThreadJoiner::new(thread!("RaiiUdpListener", move || {
-            Self::run(our_contact_info,
-                      our_public_key,
+            Self::run(our_public_key,
                       udp_socket,
                       event_tx,
                       cloned_stop_flag,
@@ -88,8 +86,7 @@ impl RaiiUdpListener {
         })
     }
 
-    fn run(our_contact_info: Arc<Mutex<StaticContactInfo>>,
-           our_public_key: PublicKey,
+    fn run(our_public_key: PublicKey,
            udp_socket: UdpSocket,
            event_tx: ::CrustEventSender,
            stop_flag: Arc<AtomicBool>,
@@ -101,7 +98,6 @@ impl RaiiUdpListener {
             if let Ok((bytes_read, peer_addr)) = udp_socket.recv_from(&mut read_buf) {
                 if let Ok(msg) = deserialise::<ListenerRequest>(&read_buf[..bytes_read]) {
                     RaiiUdpListener::handle_request(msg,
-                                                    &our_contact_info,
                                                     &udp_socket,
                                                     &our_public_key,
                                                     peer_addr,
@@ -114,7 +110,6 @@ impl RaiiUdpListener {
     }
 
     fn handle_request(msg: ListenerRequest,
-                      our_contact_info: &Arc<Mutex<StaticContactInfo>>,
                       udp_socket: &UdpSocket,
                       our_public_key: &PublicKey,
                       peer_addr: net::SocketAddr,
@@ -148,16 +143,24 @@ impl RaiiUdpListener {
                     match PunchedUdpSocket::punch_hole(socket, our_priv_info, their_info)
                               .result_log() {
                         Ok(punched_socket) => punched_socket,
-                        Err(e) => return,
+                        Err(e) => {
+                            warn!("Failed to punch hole when receiving connection: {}", e);
+                            return
+                        },
                     }
                 };
 
-                utp_rendezvous_connect(socket,
-                                       peer_addr,
-                                       UtpRendezvousConnectMode::BootstrapAccept,
-                                       our_public_key.clone(),
-                                       event_tx.clone(),
-                                       connection_map.clone());
+                match utp_rendezvous_connect(socket,
+                                             peer_addr,
+                                             UtpRendezvousConnectMode::BootstrapAccept,
+                                             our_public_key.clone(),
+                                             event_tx.clone(),
+                                             connection_map.clone()) {
+                    Ok(()) => (),
+                    Err(e) => {
+                        warn!("Failed to receive utp connection: {}", e);
+                    },
+                }
             }
         }
     }
