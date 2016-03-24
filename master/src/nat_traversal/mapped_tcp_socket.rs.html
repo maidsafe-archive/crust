@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/nat_traversal-0.3.1/src/mapped_tcp_socket.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/nat_traversal-0.3.2/src/mapped_tcp_socket.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>mapped_tcp_socket.rs.html -- source</title>
@@ -905,6 +905,111 @@
 <span id="862">862</span>
 <span id="863">863</span>
 <span id="864">864</span>
+<span id="865">865</span>
+<span id="866">866</span>
+<span id="867">867</span>
+<span id="868">868</span>
+<span id="869">869</span>
+<span id="870">870</span>
+<span id="871">871</span>
+<span id="872">872</span>
+<span id="873">873</span>
+<span id="874">874</span>
+<span id="875">875</span>
+<span id="876">876</span>
+<span id="877">877</span>
+<span id="878">878</span>
+<span id="879">879</span>
+<span id="880">880</span>
+<span id="881">881</span>
+<span id="882">882</span>
+<span id="883">883</span>
+<span id="884">884</span>
+<span id="885">885</span>
+<span id="886">886</span>
+<span id="887">887</span>
+<span id="888">888</span>
+<span id="889">889</span>
+<span id="890">890</span>
+<span id="891">891</span>
+<span id="892">892</span>
+<span id="893">893</span>
+<span id="894">894</span>
+<span id="895">895</span>
+<span id="896">896</span>
+<span id="897">897</span>
+<span id="898">898</span>
+<span id="899">899</span>
+<span id="900">900</span>
+<span id="901">901</span>
+<span id="902">902</span>
+<span id="903">903</span>
+<span id="904">904</span>
+<span id="905">905</span>
+<span id="906">906</span>
+<span id="907">907</span>
+<span id="908">908</span>
+<span id="909">909</span>
+<span id="910">910</span>
+<span id="911">911</span>
+<span id="912">912</span>
+<span id="913">913</span>
+<span id="914">914</span>
+<span id="915">915</span>
+<span id="916">916</span>
+<span id="917">917</span>
+<span id="918">918</span>
+<span id="919">919</span>
+<span id="920">920</span>
+<span id="921">921</span>
+<span id="922">922</span>
+<span id="923">923</span>
+<span id="924">924</span>
+<span id="925">925</span>
+<span id="926">926</span>
+<span id="927">927</span>
+<span id="928">928</span>
+<span id="929">929</span>
+<span id="930">930</span>
+<span id="931">931</span>
+<span id="932">932</span>
+<span id="933">933</span>
+<span id="934">934</span>
+<span id="935">935</span>
+<span id="936">936</span>
+<span id="937">937</span>
+<span id="938">938</span>
+<span id="939">939</span>
+<span id="940">940</span>
+<span id="941">941</span>
+<span id="942">942</span>
+<span id="943">943</span>
+<span id="944">944</span>
+<span id="945">945</span>
+<span id="946">946</span>
+<span id="947">947</span>
+<span id="948">948</span>
+<span id="949">949</span>
+<span id="950">950</span>
+<span id="951">951</span>
+<span id="952">952</span>
+<span id="953">953</span>
+<span id="954">954</span>
+<span id="955">955</span>
+<span id="956">956</span>
+<span id="957">957</span>
+<span id="958">958</span>
+<span id="959">959</span>
+<span id="960">960</span>
+<span id="961">961</span>
+<span id="962">962</span>
+<span id="963">963</span>
+<span id="964">964</span>
+<span id="965">965</span>
+<span id="966">966</span>
+<span id="967">967</span>
+<span id="968">968</span>
+<span id="969">969</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2016 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -945,6 +1050,8 @@
 <span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>::<span class='ident'>serialisation</span>::{<span class='ident'>deserialise</span>, <span class='ident'>SerialisationError</span>};
 <span class='kw'>use</span> <span class='ident'>time</span>::<span class='ident'>SteadyTime</span>;
 <span class='kw'>use</span> <span class='ident'>time</span>;
+<span class='kw'>use</span> <span class='ident'>rand</span>::<span class='ident'>random</span>;
+<span class='kw'>use</span> <span class='ident'>byteorder</span>::{<span class='ident'>ReadBytesExt</span>, <span class='ident'>WriteBytesExt</span>, <span class='ident'>BigEndian</span>};
 
 <span class='kw'>use</span> <span class='ident'>mapping_context</span>::<span class='ident'>MappingContext</span>;
 <span class='kw'>use</span> <span class='ident'>mapped_socket_addr</span>::<span class='ident'>MappedSocketAddr</span>;
@@ -954,6 +1061,7 @@
 <span class='kw'>use</span> <span class='ident'>mapping_context</span>;
 <span class='kw'>use</span> <span class='ident'>listener_message</span>;
 <span class='kw'>use</span> <span class='ident'>utils</span>;
+<span class='kw'>use</span> <span class='ident'>utils</span>::<span class='ident'>DisplaySlice</span>;
 
 <span class='doccomment'>/// A tcp socket for which we know our external endpoints.</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>MappedTcpSocket</span> {
@@ -1408,17 +1516,15 @@
     }
 }
 
-<span class='kw'>struct</span> <span class='ident'>DisplayWarnings</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span>(<span class='kw'>pub</span> <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>TcpPunchHoleWarning</span><span class='op'>&gt;</span>);
+<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>)]</span>
+<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>TcpPunchHoleBrokenStream</span> {
+    <span class='ident'>peer_addr</span>: <span class='ident'>SocketAddr</span>,
+    <span class='ident'>error</span>: <span class='ident'>io</span>::<span class='ident'>Error</span>,
+}
 
-<span class='kw'>impl</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span> <span class='ident'>fmt</span>::<span class='ident'>Display</span> <span class='kw'>for</span> <span class='ident'>DisplayWarnings</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span> {
+<span class='kw'>impl</span> <span class='ident'>fmt</span>::<span class='ident'>Display</span> <span class='kw'>for</span> <span class='ident'>TcpPunchHoleBrokenStream</span> {
     <span class='kw'>fn</span> <span class='ident'>fmt</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>f</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>fmt</span>::<span class='ident'>Formatter</span>) <span class='op'>-&gt;</span> <span class='ident'>fmt</span>::<span class='prelude-ty'>Result</span> {
-        <span class='kw'>let</span> <span class='ident'>DisplayWarnings</span>(<span class='ident'>v</span>) <span class='op'>=</span> <span class='op'>*</span><span class='self'>self</span>;
-        <span class='macro'>try</span><span class='macro'>!</span>(<span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>f</span>, <span class='string'>&quot;[ &quot;</span>));
-        <span class='kw'>for</span> <span class='ident'>warning</span> <span class='kw'>in</span> <span class='ident'>v</span> {
-            <span class='macro'>try</span><span class='macro'>!</span>(<span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>f</span>, <span class='string'>&quot;{} &quot;</span>, <span class='ident'>warning</span>));
-        }
-        <span class='macro'>try</span><span class='macro'>!</span>(<span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>f</span>, <span class='string'>&quot;]&quot;</span>));
-        <span class='prelude-val'>Ok</span>(())
+        <span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>f</span>, <span class='string'>&quot;Broken stream with peer addr {} errored: {}&quot;</span>, <span class='self'>self</span>.<span class='ident'>peer_addr</span>, <span class='self'>self</span>.<span class='ident'>error</span>)
     }
 }
 
@@ -1443,7 +1549,11 @@
         <span class='ident'>TimedOut</span> { <span class='ident'>warnings</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>TcpPunchHoleWarning</span><span class='op'>&gt;</span> } {
             <span class='ident'>description</span>(<span class='string'>&quot;Tcp hole punching timed out without making a successful connection.&quot;</span>)
             <span class='ident'>display</span>(<span class='string'>&quot;Tcp hole punching timed out without making a successful connection. The \
-                     following warnings were raised during hole punching: {}&quot;</span>, <span class='ident'>DisplayWarnings</span>(<span class='ident'>warnings</span>))
+                     following warnings were raised during hole punching: {}&quot;</span>, <span class='ident'>DisplaySlice</span>(<span class='string'>&quot;warning&quot;</span>, <span class='kw-2'>&amp;</span><span class='ident'>warnings</span>))
+        }
+        <span class='ident'>DecideStream</span> { <span class='ident'>errors</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>TcpPunchHoleBrokenStream</span><span class='op'>&gt;</span> } {
+            <span class='ident'>description</span>(<span class='string'>&quot;Multiple streams were successfully punched to the peer but all of them died.&quot;</span>)
+            <span class='ident'>display</span>(<span class='string'>&quot;Multiple streams were successfully punched to the peer but all of them died. {}&quot;</span>, <span class='ident'>DisplaySlice</span>(<span class='string'>&quot;broken stream&quot;</span>, <span class='kw-2'>&amp;</span><span class='ident'>errors</span>))
         }
     }
 }
@@ -1459,6 +1569,8 @@
             },
             <span class='ident'>TcpPunchHoleError</span>::<span class='ident'>Listen</span> { <span class='ident'>err</span> } <span class='op'>=&gt;</span> <span class='ident'>err</span>.<span class='ident'>kind</span>(),
             <span class='ident'>TcpPunchHoleError</span>::<span class='ident'>TimedOut</span> { .. } <span class='op'>=&gt;</span> <span class='ident'>io</span>::<span class='ident'>ErrorKind</span>::<span class='ident'>TimedOut</span>,
+            <span class='ident'>TcpPunchHoleError</span>::<span class='ident'>DecideStream</span> { <span class='ident'>errors</span> }
+                <span class='op'>=&gt;</span> <span class='ident'>errors</span>.<span class='ident'>first</span>().<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>bs</span><span class='op'>|</span> <span class='ident'>bs</span>.<span class='ident'>error</span>.<span class='ident'>kind</span>()).<span class='ident'>unwrap_or</span>(<span class='ident'>io</span>::<span class='ident'>ErrorKind</span>::<span class='ident'>Other</span>),
         };
         <span class='ident'>io</span>::<span class='ident'>Error</span>::<span class='ident'>new</span>(<span class='ident'>kind</span>, <span class='ident'>err_str</span>)
     }
@@ -1489,7 +1601,7 @@
     <span class='kw'>let</span> <span class='ident'>shutdown</span> <span class='op'>=</span> <span class='ident'>Arc</span>::<span class='ident'>new</span>(<span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolval'>false</span>));
 
     <span class='comment'>// The channel we will use to collect the results from the many worker threads.</span>
-    <span class='kw'>let</span> (<span class='ident'>results_tx</span>, <span class='ident'>results_rx</span>) <span class='op'>=</span> <span class='ident'>mpsc</span>::<span class='ident'>channel</span>::<span class='op'>&lt;</span><span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>TcpStream</span>, <span class='ident'>TcpPunchHoleWarning</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span>();
+    <span class='kw'>let</span> (<span class='ident'>results_tx</span>, <span class='ident'>results_rx</span>) <span class='op'>=</span> <span class='ident'>mpsc</span>::<span class='ident'>channel</span>::<span class='op'>&lt;</span><span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='prelude-ty'>Result</span><span class='op'>&lt;</span>(<span class='ident'>TcpStream</span>, <span class='ident'>SocketAddr</span>), <span class='ident'>TcpPunchHoleWarning</span><span class='op'>&gt;&gt;</span><span class='op'>&gt;</span>();
 
     <span class='kw'>let</span> <span class='ident'>our_secret</span> <span class='op'>=</span> <span class='ident'>rendezvous_info</span>::<span class='ident'>get_priv_secret</span>(<span class='ident'>our_priv_rendezvous_info</span>);
     <span class='kw'>let</span> (<span class='ident'>their_endpoints</span>, <span class='ident'>their_secret</span>) <span class='op'>=</span> <span class='ident'>rendezvous_info</span>::<span class='ident'>decompose</span>(<span class='ident'>their_pub_rendezvous_info</span>);
@@ -1568,7 +1680,7 @@
                     <span class='kw'>let</span> <span class='ident'>timeout</span> <span class='op'>=</span> <span class='ident'>utils</span>::<span class='ident'>time_duration_to_std_duration</span>(<span class='ident'>timeout</span>);
                     <span class='kw'>match</span> <span class='ident'>f</span>(<span class='ident'>timeout</span>) {
                         <span class='prelude-val'>Ok</span>(<span class='ident'>stream</span>) <span class='op'>=&gt;</span> {
-                            <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>results_tx_clone</span>.<span class='ident'>send</span>(<span class='prelude-val'>Some</span>(<span class='prelude-val'>Ok</span>(<span class='ident'>stream</span>)));
+                            <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>results_tx_clone</span>.<span class='ident'>send</span>(<span class='prelude-val'>Some</span>(<span class='prelude-val'>Ok</span>((<span class='ident'>stream</span>, <span class='ident'>addr</span>))));
                             <span class='kw'>break</span>;
                         },
                         <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=&gt;</span> {
@@ -1602,7 +1714,9 @@
                 <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=&gt;</span> {
                     <span class='kw'>match</span> <span class='ident'>results_tx_clone</span>.<span class='ident'>send</span>(<span class='prelude-val'>Some</span>(<span class='prelude-val'>Err</span>(<span class='ident'>TcpPunchHoleWarning</span>::<span class='ident'>Accept</span> { <span class='ident'>err</span>: <span class='ident'>e</span> }))) {
                         <span class='prelude-val'>Ok</span>(()) <span class='op'>=&gt;</span> (),
-                        <span class='prelude-val'>Err</span>(_) <span class='op'>=&gt;</span> <span class='kw'>break</span>,
+                        <span class='prelude-val'>Err</span>(_) <span class='op'>=&gt;</span> {
+                            <span class='kw'>break</span>;
+                        },
                     }
                     <span class='kw'>continue</span>;
                 },
@@ -1674,7 +1788,7 @@
                         <span class='kw'>return</span>;
                     },
                 };
-                <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>results_tx_clone</span>.<span class='ident'>send</span>(<span class='prelude-val'>Some</span>(<span class='prelude-val'>Ok</span>(<span class='ident'>stream</span>)));
+                <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>results_tx_clone</span>.<span class='ident'>send</span>(<span class='prelude-val'>Some</span>(<span class='prelude-val'>Ok</span>((<span class='ident'>stream</span>, <span class='ident'>SocketAddr</span>(<span class='ident'>addr</span>)))));
             });
         }
     });
@@ -1691,33 +1805,129 @@
     });
     <span class='kw'>let</span> <span class='ident'>timeout_thread_handle</span> <span class='op'>=</span> <span class='ident'>timeout_thread</span>.<span class='ident'>thread</span>();
 
+    <span class='ident'>drop</span>(<span class='ident'>results_tx</span>);
+    <span class='kw'>let</span> <span class='ident'>acceptor_addr</span> <span class='op'>=</span> <span class='ident'>net</span>::<span class='ident'>SocketAddr</span>::<span class='ident'>new</span>(<span class='ident'>socket_utils</span>::<span class='ident'>ip_unspecified_to_loopback</span>(<span class='ident'>local_addr</span>.<span class='ident'>ip</span>()),
+                                             <span class='ident'>local_addr</span>.<span class='ident'>port</span>());
     <span class='comment'>// Process the results that the worker threads send us.</span>
     <span class='kw'>loop</span> {
         <span class='kw'>match</span> <span class='ident'>results_rx</span>.<span class='ident'>recv</span>() {
+            <span class='comment'>// All the senders have closed. This could only happen if all of the worker threads</span>
+            <span class='comment'>// panicked. Propogate the panic.</span>
+            <span class='prelude-val'>Err</span>(_) <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;In tcp_punch_hole results_rx.recv() returned Err&quot;</span>),
+
             <span class='comment'>// We timed out.</span>
             <span class='prelude-val'>Ok</span>(<span class='prelude-val'>None</span>) <span class='op'>=&gt;</span> {
                 <span class='ident'>timeout_thread_handle</span>.<span class='ident'>unpark</span>();
                 <span class='ident'>shutdown</span>.<span class='ident'>store</span>(<span class='boolval'>true</span>, <span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>);
-                <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>TcpStream</span>::<span class='ident'>connect</span>(<span class='ident'>local_addr</span>);
+                <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>TcpStream</span>::<span class='ident'>connect</span>(<span class='kw-2'>&amp;</span><span class='ident'>acceptor_addr</span>);
                 <span class='kw'>return</span> <span class='ident'>WErr</span>(<span class='ident'>TcpPunchHoleError</span>::<span class='ident'>TimedOut</span> { <span class='ident'>warnings</span>: <span class='ident'>warnings</span> });
             },
-
-            <span class='comment'>// Success!</span>
-            <span class='prelude-val'>Ok</span>(<span class='prelude-val'>Some</span>(<span class='prelude-val'>Ok</span>(<span class='ident'>stream</span>))) <span class='op'>=&gt;</span> {
-                <span class='ident'>timeout_thread_handle</span>.<span class='ident'>unpark</span>();
-                <span class='ident'>shutdown</span>.<span class='ident'>store</span>(<span class='boolval'>true</span>, <span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>);
-                <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>TcpStream</span>::<span class='ident'>connect</span>(<span class='ident'>local_addr</span>);
-                <span class='kw'>return</span> <span class='ident'>WOk</span>(<span class='ident'>stream</span>, <span class='ident'>warnings</span>);
-            },
             
-            <span class='comment'>// One of the working threads raised a warning.</span>
+            <span class='comment'>// One of the worker threads raised a warning.</span>
             <span class='prelude-val'>Ok</span>(<span class='prelude-val'>Some</span>(<span class='prelude-val'>Err</span>(<span class='ident'>e</span>))) <span class='op'>=&gt;</span> {
                 <span class='ident'>warnings</span>.<span class='ident'>push</span>(<span class='ident'>e</span>);
             },
 
-            <span class='comment'>// All the senders have closed. This could only happen if all of the worker threads</span>
-            <span class='comment'>// panicked.</span>
-            <span class='prelude-val'>Err</span>(_) <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;In tcp_punch_hole results_rx.recv() returned Err&quot;</span>),
+            <span class='comment'>// Success!</span>
+            <span class='prelude-val'>Ok</span>(<span class='prelude-val'>Some</span>(<span class='prelude-val'>Ok</span>((<span class='ident'>stream</span>, <span class='ident'>stream_addr</span>)))) <span class='op'>=&gt;</span> {
+                <span class='ident'>timeout_thread_handle</span>.<span class='ident'>unpark</span>();
+                <span class='ident'>shutdown</span>.<span class='ident'>store</span>(<span class='boolval'>true</span>, <span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>);
+                <span class='comment'>// Cause the acceptor to shut down.</span>
+                <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>TcpStream</span>::<span class='ident'>connect</span>(<span class='kw-2'>&amp;</span><span class='ident'>acceptor_addr</span>);
+
+                <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>other_streams</span> <span class='op'>=</span> <span class='ident'>Vec</span>::<span class='ident'>new</span>();
+                <span class='comment'>// Collect any other successful connections that may have occured simultaneously to</span>
+                <span class='comment'>// the one we&#39;ve got.</span>
+                <span class='kw'>for</span> <span class='ident'>stream_res_opt</span> <span class='kw'>in</span> <span class='ident'>results_rx</span> {
+                    <span class='kw'>match</span> <span class='ident'>stream_res_opt</span> {
+                        <span class='comment'>// Just the timer thread shutting down.</span>
+                        <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> (),
+                        <span class='comment'>// A worker thread had an error. But we don&#39;t care because we&#39;ve already</span>
+                        <span class='comment'>// got a successful connection.</span>
+                        <span class='prelude-val'>Some</span>(<span class='prelude-val'>Err</span>(_)) <span class='op'>=&gt;</span> (),
+                        <span class='comment'>// We made another connection.</span>
+                        <span class='prelude-val'>Some</span>(<span class='prelude-val'>Ok</span>((<span class='ident'>stream</span>, <span class='ident'>stream_addr</span>))) <span class='op'>=&gt;</span> <span class='ident'>other_streams</span>.<span class='ident'>push</span>((<span class='ident'>stream</span>, <span class='ident'>stream_addr</span>)),
+                    };
+                }
+
+                <span class='kw'>if</span> <span class='ident'>other_streams</span>.<span class='ident'>len</span>() <span class='op'>==</span> <span class='number'>0</span> {
+                    <span class='kw'>return</span> <span class='ident'>WOk</span>(<span class='ident'>stream</span>, <span class='ident'>warnings</span>);
+                }
+                <span class='kw'>else</span> {
+                    <span class='comment'>// We have more than one stream. Both sides need to agree on which stream to</span>
+                    <span class='comment'>// keep and which streams to discard. To decide, we write and read a random u64</span>
+                    <span class='comment'>// to each stream, sum the read and written values, and take the stream with</span>
+                    <span class='comment'>// the highest sum.</span>
+                    
+                    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>errors</span> <span class='op'>=</span> <span class='ident'>Vec</span>::<span class='ident'>new</span>();
+                    <span class='ident'>other_streams</span>.<span class='ident'>push</span>((<span class='ident'>stream</span>, <span class='ident'>stream_addr</span>));
+
+                    <span class='comment'>// Write the random u64 to each stream.</span>
+                    <span class='kw'>let</span> <span class='ident'>streams</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span>(<span class='ident'>TcpStream</span>, <span class='ident'>SocketAddr</span>, <span class='ident'>u64</span>)<span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>other_streams</span>.<span class='ident'>into_iter</span>().<span class='ident'>filter_map</span>(<span class='op'>|</span>(<span class='kw-2'>mut</span> <span class='ident'>stream</span>, <span class='ident'>stream_addr</span>)<span class='op'>|</span> {
+                        <span class='kw'>let</span> <span class='ident'>w</span> <span class='op'>=</span> <span class='ident'>random</span>();
+                        <span class='kw'>match</span> <span class='ident'>stream</span>.<span class='ident'>write_u64</span>::<span class='op'>&lt;</span><span class='ident'>BigEndian</span><span class='op'>&gt;</span>(<span class='ident'>w</span>) {
+                            <span class='prelude-val'>Ok</span>(()) <span class='op'>=&gt;</span> (),
+                            <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=&gt;</span> {
+                                <span class='ident'>errors</span>.<span class='ident'>push</span>(<span class='ident'>TcpPunchHoleBrokenStream</span> {
+                                    <span class='ident'>peer_addr</span>: <span class='ident'>stream_addr</span>,
+                                    <span class='ident'>error</span>: <span class='ident'>e</span>,
+                                });
+                                <span class='kw'>return</span> <span class='prelude-val'>None</span>;
+                            },
+                        };
+                        <span class='prelude-val'>Some</span>((<span class='ident'>stream</span>, <span class='ident'>stream_addr</span>, <span class='ident'>w</span>))
+                    }).<span class='ident'>collect</span>();
+
+                    <span class='comment'>// Read the random u64 from each stream while keeping hold of the stream with</span>
+                    <span class='comment'>// the highest sum so far.</span>
+                    <span class='kw'>let</span> <span class='ident'>stream_opt</span> <span class='op'>=</span> <span class='ident'>streams</span>.<span class='ident'>into_iter</span>().<span class='ident'>fold</span>(<span class='prelude-val'>None</span>, <span class='op'>|</span><span class='ident'>opt</span>, (<span class='kw-2'>mut</span> <span class='ident'>this_stream</span>, <span class='ident'>this_stream_addr</span>, <span class='ident'>w</span>)<span class='op'>|</span> {
+                        <span class='comment'>// Calculate the sum for this stream.</span>
+                        <span class='kw'>let</span> <span class='ident'>this_sum</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>this_stream</span>.<span class='ident'>read_u64</span>::<span class='op'>&lt;</span><span class='ident'>BigEndian</span><span class='op'>&gt;</span>() {
+                            <span class='prelude-val'>Ok</span>(<span class='ident'>r</span>) <span class='op'>=&gt;</span> <span class='ident'>r</span>.<span class='ident'>wrapping_add</span>(<span class='ident'>w</span>),
+                            <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=&gt;</span> {
+                                <span class='ident'>errors</span>.<span class='ident'>push</span>(<span class='ident'>TcpPunchHoleBrokenStream</span> {
+                                    <span class='ident'>peer_addr</span>: <span class='ident'>this_stream_addr</span>,
+                                    <span class='ident'>error</span>: <span class='ident'>e</span>,
+                                });
+                                <span class='kw'>return</span> <span class='ident'>opt</span>;
+                            },
+                        };
+                        <span class='comment'>// If the sum is greater than the current highest (or we don&#39;t have a</span>
+                        <span class='comment'>// current highest yet), replace the highest stream and sum with this</span>
+                        <span class='comment'>// stream and sum.</span>
+                        <span class='kw'>match</span> <span class='ident'>opt</span> {
+                            <span class='prelude-val'>Some</span>((<span class='ident'>top_stream</span>, <span class='ident'>top_sum</span>)) <span class='op'>=&gt;</span> {
+                                <span class='kw'>if</span> <span class='ident'>this_sum</span> <span class='op'>&gt;</span> <span class='ident'>top_sum</span> {
+                                    <span class='prelude-val'>Some</span>((<span class='ident'>this_stream</span>, <span class='ident'>this_sum</span>))
+                                }
+                                <span class='kw'>else</span> {
+                                    <span class='prelude-val'>Some</span>((<span class='ident'>top_stream</span>, <span class='ident'>top_sum</span>))
+                                }
+                            },
+                            <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>((<span class='ident'>this_stream</span>, <span class='ident'>this_sum</span>))
+                        }
+                    });
+
+                    <span class='kw'>match</span> <span class='ident'>stream_opt</span> {
+                        <span class='comment'>// Return the chosen stream.</span>
+                        <span class='prelude-val'>Some</span>((<span class='ident'>stream</span>, <span class='ident'>_sum</span>)) <span class='op'>=&gt;</span> {
+                            <span class='ident'>warnings</span>.<span class='ident'>extend</span>(<span class='ident'>errors</span>.<span class='ident'>into_iter</span>().<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>bs</span><span class='op'>|</span> {
+                                <span class='ident'>TcpPunchHoleWarning</span>::<span class='ident'>StreamIo</span> {
+                                    <span class='ident'>peer_addr</span>: <span class='ident'>bs</span>.<span class='ident'>peer_addr</span>,
+                                    <span class='ident'>err</span>: <span class='ident'>bs</span>.<span class='ident'>error</span>,
+                                }
+                            }));
+                            <span class='kw'>return</span> <span class='ident'>WOk</span>(<span class='ident'>stream</span>, <span class='ident'>warnings</span>);
+                        },
+                        <span class='comment'>// Every stream died while deciding which stream to use.</span>
+                        <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> {
+                            <span class='kw'>return</span> <span class='ident'>WErr</span>(<span class='ident'>TcpPunchHoleError</span>::<span class='ident'>DecideStream</span> {
+                                <span class='ident'>errors</span>: <span class='ident'>errors</span>,
+                            });
+                        }
+                    }
+                }
+            },
         }
     }
 }
@@ -1733,20 +1943,20 @@
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>two_peers_tcp_hole_punch_over_loopback</span>() {
-        <span class='kw'>let</span> <span class='ident'>mapping_context</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>MappingContext</span>::<span class='ident'>new</span>().<span class='ident'>result_discard</span>());
+        <span class='kw'>let</span> <span class='ident'>mapping_context</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>MappingContext</span>::<span class='ident'>new</span>().<span class='ident'>result_log</span>());
 
-        <span class='kw'>let</span> <span class='ident'>mapped_socket_0</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>MappedTcpSocket</span>::<span class='ident'>new</span>(<span class='kw-2'>&amp;</span><span class='ident'>mapping_context</span>).<span class='ident'>result_discard</span>());
+        <span class='kw'>let</span> <span class='ident'>mapped_socket_0</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>MappedTcpSocket</span>::<span class='ident'>new</span>(<span class='kw-2'>&amp;</span><span class='ident'>mapping_context</span>).<span class='ident'>result_log</span>());
         <span class='kw'>let</span> <span class='ident'>socket_0</span> <span class='op'>=</span> <span class='ident'>mapped_socket_0</span>.<span class='ident'>socket</span>;
         <span class='kw'>let</span> <span class='ident'>endpoints_0</span> <span class='op'>=</span> <span class='ident'>mapped_socket_0</span>.<span class='ident'>endpoints</span>;
         <span class='kw'>let</span> (<span class='ident'>priv_info_0</span>, <span class='ident'>pub_info_0</span>) <span class='op'>=</span> <span class='ident'>gen_rendezvous_info</span>(<span class='ident'>endpoints_0</span>);
 
-        <span class='kw'>let</span> <span class='ident'>mapped_socket_1</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>MappedTcpSocket</span>::<span class='ident'>new</span>(<span class='kw-2'>&amp;</span><span class='ident'>mapping_context</span>).<span class='ident'>result_discard</span>());
+        <span class='kw'>let</span> <span class='ident'>mapped_socket_1</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>MappedTcpSocket</span>::<span class='ident'>new</span>(<span class='kw-2'>&amp;</span><span class='ident'>mapping_context</span>).<span class='ident'>result_log</span>());
         <span class='kw'>let</span> <span class='ident'>socket_1</span> <span class='op'>=</span> <span class='ident'>mapped_socket_1</span>.<span class='ident'>socket</span>;
         <span class='kw'>let</span> <span class='ident'>endpoints_1</span> <span class='op'>=</span> <span class='ident'>mapped_socket_1</span>.<span class='ident'>endpoints</span>;
         <span class='kw'>let</span> (<span class='ident'>priv_info_1</span>, <span class='ident'>pub_info_1</span>) <span class='op'>=</span> <span class='ident'>gen_rendezvous_info</span>(<span class='ident'>endpoints_1</span>);
 
         <span class='kw'>let</span> <span class='ident'>thread_0</span> <span class='op'>=</span> <span class='macro'>thread</span><span class='macro'>!</span>(<span class='string'>&quot;two_peers_tcp_hole_punch_over_loopback_0&quot;</span>, <span class='kw'>move</span> <span class='op'>||</span> {
-            <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>stream</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>tcp_punch_hole</span>(<span class='ident'>socket_0</span>, <span class='ident'>priv_info_0</span>, <span class='ident'>pub_info_1</span>).<span class='ident'>result_discard</span>());
+            <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>stream</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>tcp_punch_hole</span>(<span class='ident'>socket_0</span>, <span class='ident'>priv_info_0</span>, <span class='ident'>pub_info_1</span>).<span class='ident'>result_log</span>());
             <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>data</span> <span class='op'>=</span> [<span class='number'>0u8</span>; <span class='number'>4</span>];
             <span class='kw'>let</span> <span class='ident'>n</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>stream</span>.<span class='ident'>write</span>(<span class='kw-2'>&amp;</span><span class='ident'>data</span>));
             <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>n</span>, <span class='number'>4</span>);
@@ -1756,7 +1966,7 @@
         });
 
         <span class='kw'>let</span> <span class='ident'>thread_1</span> <span class='op'>=</span> <span class='macro'>thread</span><span class='macro'>!</span>(<span class='string'>&quot;two_peers_tcp_hole_punch_over_loopback_1&quot;</span>, <span class='kw'>move</span> <span class='op'>||</span> {
-            <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>stream</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>tcp_punch_hole</span>(<span class='ident'>socket_1</span>, <span class='ident'>priv_info_1</span>, <span class='ident'>pub_info_0</span>).<span class='ident'>result_discard</span>());
+            <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>stream</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>tcp_punch_hole</span>(<span class='ident'>socket_1</span>, <span class='ident'>priv_info_1</span>, <span class='ident'>pub_info_0</span>).<span class='ident'>result_log</span>());
             <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>data</span> <span class='op'>=</span> [<span class='number'>1u8</span>; <span class='number'>4</span>];
             <span class='kw'>let</span> <span class='ident'>n</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>stream</span>.<span class='ident'>write</span>(<span class='kw-2'>&amp;</span><span class='ident'>data</span>));
             <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>n</span>, <span class='number'>4</span>);
