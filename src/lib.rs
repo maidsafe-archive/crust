@@ -63,6 +63,10 @@ extern crate void;
 #[cfg(test)]
 extern crate crossbeam;
 
+#[allow(unused_extern_crates)] // Needed because the crate is only used for macros
+#[macro_use]
+extern crate quick_error;
+
 /// Crust Observers will be informed of crust events on this
 pub type CrustEventSender = ::maidsafe_utilities::event_sender::MaidSafeObserver<Event>;
 pub use config_handler::{read_config_file, write_config_file};

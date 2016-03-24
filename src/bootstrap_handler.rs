@@ -80,7 +80,7 @@ impl BootstrapHandler {
                        prune: Vec<StaticContactInfo>)
                        -> Result<(), Error> {
         let mut bootstrap_contacts = self.read_file().unwrap_or_else(|e| {
-            debug!("Error reading Bootstrap file: {:?}.", e);
+            debug!("Error reading Bootstrap file: {}.", e);
             Vec::new()
         });
 
