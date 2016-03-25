@@ -19,6 +19,26 @@ use std::cmp::Ordering;
 use get_if_addrs::{get_if_addrs, Interface, IfAddr};
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use ip_info;
+use time;
+use std;
+
+pub fn time_duration_to_std_duration(dur: time::Duration) -> std::time::Duration {
+    let secs = dur.num_seconds();
+    let secs =  if secs < 0 { 0 } else { secs as u64 };
+    let nanos = match dur.num_nanoseconds() {
+        Some(v) => {
+            if v < 0 {
+                0
+            } else {
+                let secs_and_nanos_part = v as u64;
+                let secs_par = secs * 1_000_000_000;
+                (secs_and_nanos_part - secs_par) as u32
+            }
+        }
+        None => 0,
+    };
+    std::time::Duration::new(secs, nanos)
+}
 
 /// /////////////////////////////////////////////////////////////////////////////
 pub fn is_unspecified(ip_addr: &IpAddr) -> bool {
