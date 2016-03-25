@@ -44,6 +44,7 @@ use bootstrap_handler::BootstrapHandler;
 use nat_traversal::{MappedUdpSocket, MappingContext, PunchedUdpSocket, gen_rendezvous_info};
 use nat_traversal;
 use sodiumoxide::crypto::box_::PublicKey;
+use util::time_duration_to_std_duration;
 
 type CrustEventSenderError = EventSenderError<MaidSafeEventCategory, Event>;
 
@@ -202,7 +203,7 @@ pub fn connect(peer_contact: StaticContactInfo,
         loop {
             let now = time::SteadyTime::now();
             let timeout = if now < deadline { deadline - now } else { break };
-            let timeout = Duration::from_millis(timeout.num_milliseconds() as u64);
+            let timeout = time_duration_to_std_duration(timeout);
             try!(udp_socket.set_read_timeout(Some(timeout)));
             match udp_socket.recv_from(&mut read_buf) {
                 Ok((bytes_rxd, _peer_addr)) => {
