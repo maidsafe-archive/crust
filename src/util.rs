@@ -25,18 +25,8 @@ use std;
 pub fn time_duration_to_std_duration(dur: time::Duration) -> std::time::Duration {
     let secs = dur.num_seconds();
     let secs =  if secs < 0 { 0 } else { secs as u64 };
-    let nanos = match dur.num_nanoseconds() {
-        Some(v) => {
-            if v < 0 {
-                0
-            } else {
-                let secs_and_nanos_part = v as u64;
-                let secs_par = secs * 1_000_000_000;
-                (secs_and_nanos_part - secs_par) as u32
-            }
-        }
-        None => 0,
-    };
+    let nanos = (dur - time::Duration::seconds(secs)).num_nanoseconds().unwrap();
+    let nanos = if nanos < 0 { 0 } else { nanos as u32 };
     std::time::Duration::new(secs, nanos)
 }
 
