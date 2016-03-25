@@ -150,17 +150,22 @@ impl RaiiUdpListener {
                     }
                 };
 
-                match utp_rendezvous_connect(socket,
-                                             peer_addr,
-                                             UtpRendezvousConnectMode::BootstrapAccept,
-                                             our_public_key.clone(),
-                                             event_tx.clone(),
-                                             connection_map.clone()) {
-                    Ok(()) => (),
-                    Err(e) => {
-                        warn!("Failed to receive utp connection: {}", e);
-                    },
-                }
+                let our_public_key = our_public_key.clone();
+                let event_tx = event_tx.clone();
+                let connection_map = connection_map.clone();
+                let _  = thread!("Bootstrap uTP accept", move || {
+                    match utp_rendezvous_connect(socket,
+                                                 peer_addr,
+                                                 UtpRendezvousConnectMode::BootstrapAccept,
+                                                 our_public_key,
+                                                 event_tx,
+                                                 connection_map) {
+                        Ok(()) => (),
+                        Err(e) => {
+                            warn!("Failed to receive utp connection: {}", e);
+                        },
+                    }
+                });
             }
         }
     }
