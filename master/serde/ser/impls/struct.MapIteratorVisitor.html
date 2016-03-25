@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-7042' class='srclink' href='../../../src/serde/ser/impls.rs.html#540-543' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-8371' class='srclink' href='../../../src/serde/ser/impls.rs.html#557-560' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct MapIteratorVisitor&lt;Iter&gt; {
     // some fields omitted
 }</pre><div class='docblock'><p>A <code>serde::Visitor</code> for (key, value) map iterators.</p>
@@ -62,7 +62,7 @@
     <span class='kw'>fn</span> <span class='ident'>serialize</span><span class='op'>&lt;</span><span class='ident'>S</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>ser</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>S</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>(), <span class='ident'>S</span>::<span class='ident'>Error</span><span class='op'>&gt;</span>
         <span class='kw'>where</span> <span class='ident'>S</span>: <span class='ident'>Serializer</span>,
     {
-        <span class='ident'>ser</span>.<span class='ident'>visit_map</span>(<span class='ident'>MapIteratorVisitor</span>::<span class='ident'>new</span>(
+        <span class='ident'>ser</span>.<span class='ident'>serialize_map</span>(<span class='ident'>MapIteratorVisitor</span>::<span class='ident'>new</span>(
             <span class='self'>self</span>.<span class='number'>0</span>.<span class='ident'>iter</span>(),
             <span class='prelude-val'>Some</span>(<span class='self'>self</span>.<span class='number'>0</span>.<span class='ident'>len</span>()),
         ))
