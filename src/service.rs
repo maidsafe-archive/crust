@@ -812,7 +812,7 @@ mod test {
             };
             unwrap_result!(done_tx.send(()));
         });
-        thread::park_timeout(Duration::from_secs(5));
+        thread::park_timeout(Duration::from_secs(60));
         unwrap_result!(done_rx.try_recv());
         unwrap_result!(tj.join());
 
