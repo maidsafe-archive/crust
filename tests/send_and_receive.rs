@@ -32,6 +32,7 @@ const NUM_MESSAGES_PER_SENDER: usize = 1000;
 
 #[test]
 fn sent_messages_are_received() {
+    maidsafe_utilities::log::init(false);
     let receiver_handle = spawn_receiving_node(NUM_SENDERS);
 
     let sender_handles = (0..NUM_SENDERS)
@@ -52,7 +53,7 @@ fn spawn_receiving_node(expected_connections: usize) -> JoinHandle<usize> {
     let mut service = unwrap_result!(Service::new(event_sender));
 
     service.start_service_discovery();
-    let _ = unwrap_result!(service.start_listening_tcp());
+    //let _ = unwrap_result!(service.start_listening_tcp());
     let _ = unwrap_result!(service.start_listening_utp());
 
     // Wait for BootstrapFinished so we know this node is already listening when
