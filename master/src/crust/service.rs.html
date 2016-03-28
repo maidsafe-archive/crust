@@ -2175,7 +2175,7 @@
             };
             <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>done_tx</span>.<span class='ident'>send</span>(()));
         });
-        <span class='ident'>thread</span>::<span class='ident'>park_timeout</span>(<span class='ident'>Duration</span>::<span class='ident'>from_secs</span>(<span class='number'>5</span>));
+        <span class='ident'>thread</span>::<span class='ident'>park_timeout</span>(<span class='ident'>Duration</span>::<span class='ident'>from_secs</span>(<span class='number'>60</span>));
         <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>done_rx</span>.<span class='ident'>try_recv</span>());
         <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>tj</span>.<span class='ident'>join</span>());
 
