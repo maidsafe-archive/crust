@@ -54,7 +54,8 @@ impl UtpWrapper {
                                         Ok(WriteEvent::Write(msg)) => {
                                             send_keepalive = false;
                                             let data = unwrap_result!(serialise(&msg));
-                                            if socket.send_to(&data).is_err() {
+                                            if let Err(err) = socket.send_to(&data) {
+                                                error!("Error sending: {:?}", err);
                                                 break 'outer;
                                             }
                                         }
@@ -67,7 +68,10 @@ impl UtpWrapper {
                                     socket.send_keepalive();
                                 }
                             }
-                            Err(_) => break,
+                            Err(err) => {
+                                error!("Error receiving: {:?}", err);
+                                break;
+                            }
                         }
                     }
                 }));

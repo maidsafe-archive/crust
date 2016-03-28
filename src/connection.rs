@@ -24,7 +24,6 @@ use std::sync::atomic::{Ordering, AtomicBool};
 use std::net::{Shutdown, TcpStream, UdpSocket, Ipv4Addr, SocketAddrV4};
 use std::net;
 use std::io;
-use std::time::Duration;
 use time;
 use maidsafe_utilities::event_sender::{EventSenderError, MaidSafeEventCategory};
 use maidsafe_utilities::thread::RaiiThreadJoiner;
@@ -740,15 +739,20 @@ fn start_rx(mut network_rx: Receiver,
             event_tx: ::CrustEventSender,
             closed: Arc<AtomicBool>,
             connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>) {
-    while let Ok(msg) = network_rx.receive() {
-        match msg {
-            CrustMsg::Message(msg) => {
-                if event_tx.send(Event::NewMessage(their_id, msg)).is_err() {
-                    break;
+    loop {
+        match network_rx.receive() {
+            Ok(msg) => match msg {
+                CrustMsg::Message(msg) => {
+                    if let Err(err) = event_tx.send(Event::NewMessage(their_id, msg)) {
+                        error!("Error sending message to {:?}: {:?}", their_id, err);
+                        break;
+                    }
                 }
-            }
-            m => {
-                error!("Unexpected message in start_rx: {:?}", m);
+                m => error!("Unexpected message in start_rx: {:?}", m),
+            },
+            Err(err) => {
+                error!("Error receiving from {:?}: {:?}", their_id, err);
+                break;
             }
         }
     }
