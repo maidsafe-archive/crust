@@ -97,25 +97,29 @@ impl RaiiUdpListener {
         while !stop_flag.load(Ordering::SeqCst) {
             if let Ok((bytes_read, peer_addr)) = udp_socket.recv_from(&mut read_buf) {
                 if let Ok(msg) = deserialise::<ListenerRequest>(&read_buf[..bytes_read]) {
-                    RaiiUdpListener::handle_request(msg,
-                                                    &udp_socket,
-                                                    &our_public_key,
-                                                    peer_addr,
-                                                    &event_tx,
-                                                    connection_map.clone(),
-                                                    &mc);
+                    let our_public_key = our_public_key.clone();
+                    let event_tx = event_tx.clone();
+                    let connection_map = connection_map.clone();
+                    let mc = mc.clone();
+                    let _  = thread!("Bootstrap uTP accept", move || {
+                        RaiiUdpListener::handle_request(msg,
+                                                        our_public_key,
+                                                        peer_addr,
+                                                        event_tx,
+                                                        connection_map,
+                                                        mc);
+                    });
                 }
             }
         }
     }
 
     fn handle_request(msg: ListenerRequest,
-                      udp_socket: &UdpSocket,
-                      our_public_key: &PublicKey,
+                      our_public_key: PublicKey,
                       peer_addr: net::SocketAddr,
-                      event_tx: &::CrustEventSender,
+                      event_tx: ::CrustEventSender,
                       connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
-                      mc: &MappingContext) {
+                      mc: Arc<MappingContext>) {
         match msg {
             ListenerRequest::Connect { our_info, .. } => {
                 let their_info = our_info;
@@ -133,11 +137,11 @@ impl RaiiUdpListener {
                     pub_key: our_public_key.clone(),
                 };
 
-                if udp_socket.send_to(&unwrap_result!(serialise(&connect_resp)),
-                                      peer_addr.clone())
-                             .is_err() {
-                    return;
-                }
+                if socket.send_to(&unwrap_result!(serialise(&connect_resp)),
+                                  peer_addr)
+                    .is_err() {
+                        return;
+                    }
 
                 let PunchedUdpSocket { socket, peer_addr } = {
                     match PunchedUdpSocket::punch_hole(socket, our_priv_info, their_info)
@@ -150,22 +154,17 @@ impl RaiiUdpListener {
                     }
                 };
 
-                let our_public_key = our_public_key.clone();
-                let event_tx = event_tx.clone();
-                let connection_map = connection_map.clone();
-                let _  = thread!("Bootstrap uTP accept", move || {
-                    match utp_rendezvous_connect(socket,
-                                                 peer_addr,
-                                                 UtpRendezvousConnectMode::BootstrapAccept,
-                                                 our_public_key,
-                                                 event_tx,
-                                                 connection_map) {
-                        Ok(()) => (),
-                        Err(e) => {
-                            warn!("Failed to receive utp connection: {}", e);
-                        },
-                    }
-                });
+                match utp_rendezvous_connect(socket,
+                                             peer_addr,
+                                             UtpRendezvousConnectMode::BootstrapAccept,
+                                             our_public_key,
+                                             event_tx,
+                                             connection_map) {
+                    Ok(()) => (),
+                    Err(e) => {
+                        warn!("Failed to receive utp connection: {}", e);
+                    },
+                }
             }
         }
     }
