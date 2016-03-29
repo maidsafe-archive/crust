@@ -844,12 +844,14 @@ mod test {
         // Drop services and make sure the event channels close
         drop(service_0);
         let (done_tx, done_rx) = mpsc::channel();
+        let thread_handle = thread::current();
         let tj = thread!("Drain event channel messages", move || {
             match event_rx_0.recv() {
                 Ok(e) => panic!("Received unexpected event when shutting down: {:?}", e),
                 Err(mpsc::RecvError) => (),
             };
             unwrap_result!(done_tx.send(()));
+            thread_handle.unpark();
         });
         thread::park_timeout(Duration::from_secs(60));
         unwrap_result!(done_rx.try_recv());
@@ -857,12 +859,14 @@ mod test {
 
         drop(service_1);
         let (done_tx, done_rx) = mpsc::channel();
+        let thread_handle = thread::current();
         let tj = thread!("Drain event channel messages", move || {
             match event_rx_1.recv() {
                 Ok(e) => panic!("Received unexpected event when shutting down: {:?}", e),
                 Err(mpsc::RecvError) => (),
             };
             unwrap_result!(done_tx.send(()));
+            thread_handle.unpark();
         });
         thread::park_timeout(Duration::from_secs(5));
         unwrap_result!(done_rx.try_recv());
@@ -977,9 +981,11 @@ mod test {
         // Drop services and make sure the event channels close
         drop(service_0);
         let (done_tx, done_rx) = mpsc::channel();
+        let thread_handle = thread::current();
         let tj = thread!("Drain event channel messages", move || {
             for _ in event_rx_0 {}
             let _ = done_tx.send(());
+            thread_handle.unpark();
         });
         thread::park_timeout(Duration::from_secs(5));
         unwrap_result!(done_rx.try_recv());
@@ -987,9 +993,11 @@ mod test {
 
         drop(service_1);
         let (done_tx, done_rx) = mpsc::channel();
+        let thread_handle = thread::current();
         let tj = thread!("Drain event channel messages", move || {
             for _ in event_rx_1 {}
             let _ = done_tx.send(());
+            thread_handle.unpark();
         });
         thread::park_timeout(Duration::from_secs(5));
         unwrap_result!(done_rx.try_recv());
