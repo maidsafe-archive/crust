@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-716' class='srclink' href='../src/regex_syntax/lib.rs.html#93-175' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-1145' class='srclink' href='../src/regex_syntax/lib.rs.html#97-179' title='goto source code'>[src]</a></span></h1>
 <pre class='rust enum'>pub enum Expr {
     Empty,
     Literal {
@@ -147,6 +147,10 @@ immediately inside a group expression.</p>
 <p>This is a convenience method for parsing an expression using the
 default configuration. To tweak parsing options (such as which flags
 are enabled by default), use the <code>ExprBuilder</code> type.</p>
+</div><h4 id='method.prefixes' class='method'><code>fn <a href='#method.prefixes' class='fnname'>prefixes</a>(&amp;self) -&gt; <a class='struct' href='../regex_syntax/struct.Literals.html' title='regex_syntax::Literals'>Literals</a></code></h4>
+<div class='docblock'><p>Returns a set of literal prefixes extracted from this expression.</p>
+</div><h4 id='method.suffixes' class='method'><code>fn <a href='#method.suffixes' class='fnname'>suffixes</a>(&amp;self) -&gt; <a class='struct' href='../regex_syntax/struct.Literals.html' title='regex_syntax::Literals'>Literals</a></code></h4>
+<div class='docblock'><p>Returns a set of literal suffixes extracted from this expression.</p>
 </div><h4 id='method.is_anchored_start' class='method'><code>fn <a href='#method.is_anchored_start' class='fnname'>is_anchored_start</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
 <div class='docblock'><p>Returns true if and only if the expression is required to match from
 the beginning of text.</p>

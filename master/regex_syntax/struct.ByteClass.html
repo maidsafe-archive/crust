@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-1060' class='srclink' href='../src/regex_syntax/lib.rs.html#280-282' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-1489' class='srclink' href='../src/regex_syntax/lib.rs.html#284-286' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct ByteClass {
     // some fields omitted
 }</pre><div class='docblock'><p>A byte class for byte ranges only.</p>
@@ -74,6 +74,10 @@ then simple ASCII-only case folding is done automatically. For example,
 <div class='docblock'><p>Create a new class from an existing set of ranges.</p>
 </div><h4 id='method.matches' class='method'><code>fn <a href='#method.matches' class='fnname'>matches</a>(&amp;self, b: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
 <div class='docblock'><p>Returns true if <code>b</code> is matched by this byte class.</p>
+</div><h4 id='method.remove' class='method'><code>fn <a href='#method.remove' class='fnname'>remove</a>(&amp;mut self, b: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>)</code></h4>
+<div class='docblock'><p>Removes the given byte from the class if it exists.</p>
+
+<p>Note that this takes <code>O(n)</code> time in the number of ranges.</p>
 </div><h4 id='method.negate' class='method'><code>fn <a href='#method.negate' class='fnname'>negate</a>(self) -&gt; <a class='struct' href='../regex_syntax/struct.ByteClass.html' title='regex_syntax::ByteClass'>ByteClass</a></code></h4>
 <div class='docblock'><p>Negates the byte class.</p>
 
@@ -201,7 +205,7 @@ elements after position <code>i</code> one position to the right.</p>
 <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>vec</span>, [<span class='number'>1</span>, <span class='number'>4</span>, <span class='number'>2</span>, <span class='number'>3</span>]);
 <span class='ident'>vec</span>.<span class='ident'>insert</span>(<span class='number'>4</span>, <span class='number'>5</span>);
 <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>vec</span>, [<span class='number'>1</span>, <span class='number'>4</span>, <span class='number'>2</span>, <span class='number'>3</span>, <span class='number'>5</span>]);</pre>
-</div><h4 id='method.remove' class='method'><code>fn <a href='#method.remove' class='fnname'>remove</a>(&amp;mut self, index: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>) -&gt; T</code></h4>
+</div><h4 id='method.remove-1' class='method'><code>fn <a href='#method.remove' class='fnname'>remove</a>(&amp;mut self, index: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>) -&gt; T</code></h4>
 <div class='docblock'><p>Removes and returns the element at position <code>index</code> within the vector,
 shifting all elements after position <code>index</code> one position to the left.</p>
 

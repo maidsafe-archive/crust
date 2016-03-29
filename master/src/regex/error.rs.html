@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/regex-0.1.58/src/error.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/regex-0.1.59/src/error.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>error.rs.html -- source</title>
@@ -115,6 +115,9 @@
 <span id="72">72</span>
 <span id="73">73</span>
 <span id="74">74</span>
+<span id="75">75</span>
+<span id="76">76</span>
+<span id="77">77</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2014-2015 The Rust Project Developers. See the COPYRIGHT</span>
 <span class='comment'>// file at the top-level directory of this distribution and at</span>
@@ -138,7 +141,10 @@
     <span class='doccomment'>/// The compiled program exceeded the set size limit.</span>
     <span class='doccomment'>/// The argument is the size limit imposed.</span>
     <span class='ident'>CompiledTooBig</span>(<span class='ident'>usize</span>),
-    <span class='doccomment'>/// An invalid set is a regex set with fewer than 2 regular expressions.</span>
+    <span class='doccomment'>/// **DEPRECATED:** Will be removed on next major version bump.</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// This error is no longer used. (A `RegexSet` can now contain zero or</span>
+    <span class='doccomment'>/// more regular expressions.)</span>
     <span class='ident'>InvalidSet</span>,
     <span class='doccomment'>/// Hints that destructuring should not be exhaustive.</span>
     <span class='doccomment'>///</span>

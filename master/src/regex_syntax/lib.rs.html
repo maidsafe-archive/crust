@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/regex-syntax-0.3.0/src/lib.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/regex-syntax-0.3.1/src/lib.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>lib.rs.html -- source</title>
@@ -1885,6 +1885,110 @@
 <span id="1842">1842</span>
 <span id="1843">1843</span>
 <span id="1844">1844</span>
+<span id="1845">1845</span>
+<span id="1846">1846</span>
+<span id="1847">1847</span>
+<span id="1848">1848</span>
+<span id="1849">1849</span>
+<span id="1850">1850</span>
+<span id="1851">1851</span>
+<span id="1852">1852</span>
+<span id="1853">1853</span>
+<span id="1854">1854</span>
+<span id="1855">1855</span>
+<span id="1856">1856</span>
+<span id="1857">1857</span>
+<span id="1858">1858</span>
+<span id="1859">1859</span>
+<span id="1860">1860</span>
+<span id="1861">1861</span>
+<span id="1862">1862</span>
+<span id="1863">1863</span>
+<span id="1864">1864</span>
+<span id="1865">1865</span>
+<span id="1866">1866</span>
+<span id="1867">1867</span>
+<span id="1868">1868</span>
+<span id="1869">1869</span>
+<span id="1870">1870</span>
+<span id="1871">1871</span>
+<span id="1872">1872</span>
+<span id="1873">1873</span>
+<span id="1874">1874</span>
+<span id="1875">1875</span>
+<span id="1876">1876</span>
+<span id="1877">1877</span>
+<span id="1878">1878</span>
+<span id="1879">1879</span>
+<span id="1880">1880</span>
+<span id="1881">1881</span>
+<span id="1882">1882</span>
+<span id="1883">1883</span>
+<span id="1884">1884</span>
+<span id="1885">1885</span>
+<span id="1886">1886</span>
+<span id="1887">1887</span>
+<span id="1888">1888</span>
+<span id="1889">1889</span>
+<span id="1890">1890</span>
+<span id="1891">1891</span>
+<span id="1892">1892</span>
+<span id="1893">1893</span>
+<span id="1894">1894</span>
+<span id="1895">1895</span>
+<span id="1896">1896</span>
+<span id="1897">1897</span>
+<span id="1898">1898</span>
+<span id="1899">1899</span>
+<span id="1900">1900</span>
+<span id="1901">1901</span>
+<span id="1902">1902</span>
+<span id="1903">1903</span>
+<span id="1904">1904</span>
+<span id="1905">1905</span>
+<span id="1906">1906</span>
+<span id="1907">1907</span>
+<span id="1908">1908</span>
+<span id="1909">1909</span>
+<span id="1910">1910</span>
+<span id="1911">1911</span>
+<span id="1912">1912</span>
+<span id="1913">1913</span>
+<span id="1914">1914</span>
+<span id="1915">1915</span>
+<span id="1916">1916</span>
+<span id="1917">1917</span>
+<span id="1918">1918</span>
+<span id="1919">1919</span>
+<span id="1920">1920</span>
+<span id="1921">1921</span>
+<span id="1922">1922</span>
+<span id="1923">1923</span>
+<span id="1924">1924</span>
+<span id="1925">1925</span>
+<span id="1926">1926</span>
+<span id="1927">1927</span>
+<span id="1928">1928</span>
+<span id="1929">1929</span>
+<span id="1930">1930</span>
+<span id="1931">1931</span>
+<span id="1932">1932</span>
+<span id="1933">1933</span>
+<span id="1934">1934</span>
+<span id="1935">1935</span>
+<span id="1936">1936</span>
+<span id="1937">1937</span>
+<span id="1938">1938</span>
+<span id="1939">1939</span>
+<span id="1940">1940</span>
+<span id="1941">1941</span>
+<span id="1942">1942</span>
+<span id="1943">1943</span>
+<span id="1944">1944</span>
+<span id="1945">1945</span>
+<span id="1946">1946</span>
+<span id="1947">1947</span>
+<span id="1948">1948</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2014-2015 The Rust Project Developers. See the COPYRIGHT</span>
 <span class='comment'>// file at the top-level directory of this distribution and at</span>
@@ -1949,10 +2053,12 @@ assert_eq!(err.kind(), &amp;ErrorKind::UnclosedParen);
 */</span>
 
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>deny</span>(<span class='ident'>missing_docs</span>)]</span>
+<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>cfg_attr</span>(<span class='ident'>test</span>, <span class='ident'>deny</span>(<span class='ident'>warnings</span>))]</span>
 
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span> <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>quickcheck</span>;
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span> <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>rand</span>;
 
+<span class='kw'>mod</span> <span class='ident'>literals</span>;
 <span class='kw'>mod</span> <span class='ident'>parser</span>;
 <span class='kw'>mod</span> <span class='ident'>unicode</span>;
 
@@ -1973,6 +2079,8 @@ assert_eq!(err.kind(), &amp;ErrorKind::UnclosedParen);
 <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>Repeater</span>::<span class='op'>*</span>;
 
 <span class='kw'>use</span> <span class='ident'>parser</span>::{<span class='ident'>Flags</span>, <span class='ident'>Parser</span>};
+
+<span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>literals</span>::{<span class='ident'>Literals</span>, <span class='ident'>Lit</span>};
 
 <span class='doccomment'>/// A regular expression abstract syntax tree.</span>
 <span class='doccomment'>///</span>
@@ -2376,6 +2484,20 @@ assert_eq!(err.kind(), &amp;ErrorKind::UnclosedParen);
         <span class='ident'>simp</span>(<span class='self'>self</span>, <span class='number'>0</span>, <span class='ident'>nest_limit</span>)
     }
 
+    <span class='doccomment'>/// Returns a set of literal prefixes extracted from this expression.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>prefixes</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Literals</span> {
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>lits</span> <span class='op'>=</span> <span class='ident'>Literals</span>::<span class='ident'>empty</span>();
+        <span class='ident'>lits</span>.<span class='ident'>union_prefixes</span>(<span class='self'>self</span>);
+        <span class='ident'>lits</span>
+    }
+
+    <span class='doccomment'>/// Returns a set of literal suffixes extracted from this expression.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>suffixes</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Literals</span> {
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>lits</span> <span class='op'>=</span> <span class='ident'>Literals</span>::<span class='ident'>empty</span>();
+        <span class='ident'>lits</span>.<span class='ident'>union_suffixes</span>(<span class='self'>self</span>);
+        <span class='ident'>lits</span>
+    }
+
     <span class='doccomment'>/// Returns true if and only if the expression is required to match from</span>
     <span class='doccomment'>/// the beginning of text.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>is_anchored_start</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
@@ -2454,6 +2576,41 @@ assert_eq!(err.kind(), &amp;ErrorKind::UnclosedParen);
     <span class='doccomment'>/// Returns true if `c` is matched by this character class.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>matches</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>c</span>: <span class='ident'>char</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
         <span class='self'>self</span>.<span class='ident'>binary_search_by</span>(<span class='op'>|</span><span class='ident'>range</span><span class='op'>|</span> <span class='ident'>c</span>.<span class='ident'>partial_cmp</span>(<span class='ident'>range</span>).<span class='ident'>unwrap</span>()).<span class='ident'>is_ok</span>()
+    }
+
+    <span class='doccomment'>/// Removes the given character from the class if it exists.</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// Note that this takes `O(n)` time in the number of ranges.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>remove</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>c</span>: <span class='ident'>char</span>) {
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>i</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>binary_search_by</span>(<span class='op'>|</span><span class='ident'>r</span><span class='op'>|</span> <span class='ident'>c</span>.<span class='ident'>partial_cmp</span>(<span class='ident'>r</span>).<span class='ident'>unwrap</span>()) {
+            <span class='prelude-val'>Ok</span>(<span class='ident'>i</span>) <span class='op'>=&gt;</span> <span class='ident'>i</span>,
+            <span class='prelude-val'>Err</span>(_) <span class='op'>=&gt;</span> <span class='kw'>return</span>,
+        };
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>r</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>ranges</span>.<span class='ident'>remove</span>(<span class='ident'>i</span>);
+        <span class='kw'>if</span> <span class='ident'>r</span>.<span class='ident'>start</span> <span class='op'>==</span> <span class='ident'>c</span> {
+            <span class='ident'>r</span>.<span class='ident'>start</span> <span class='op'>=</span> <span class='ident'>inc_char</span>(<span class='ident'>c</span>);
+            <span class='kw'>if</span> <span class='ident'>r</span>.<span class='ident'>start</span> <span class='op'>&gt;</span> <span class='ident'>r</span>.<span class='ident'>end</span> <span class='op'>||</span> <span class='ident'>c</span> <span class='op'>==</span> <span class='ident'>char</span>::<span class='ident'>MAX</span> {
+                <span class='kw'>return</span>;
+            }
+            <span class='self'>self</span>.<span class='ident'>ranges</span>.<span class='ident'>insert</span>(<span class='ident'>i</span>, <span class='ident'>r</span>);
+        } <span class='kw'>else</span> <span class='kw'>if</span> <span class='ident'>r</span>.<span class='ident'>end</span> <span class='op'>==</span> <span class='ident'>c</span> {
+            <span class='ident'>r</span>.<span class='ident'>end</span> <span class='op'>=</span> <span class='ident'>dec_char</span>(<span class='ident'>c</span>);
+            <span class='kw'>if</span> <span class='ident'>r</span>.<span class='ident'>end</span> <span class='op'>&lt;</span> <span class='ident'>r</span>.<span class='ident'>start</span> <span class='op'>||</span> <span class='ident'>c</span> <span class='op'>==</span> <span class='string'>&#39;\x00&#39;</span> {
+                <span class='kw'>return</span>;
+            }
+            <span class='self'>self</span>.<span class='ident'>ranges</span>.<span class='ident'>insert</span>(<span class='number'>0</span>, <span class='ident'>r</span>);
+        } <span class='kw'>else</span> {
+            <span class='kw'>let</span> (<span class='kw-2'>mut</span> <span class='ident'>r1</span>, <span class='kw-2'>mut</span> <span class='ident'>r2</span>) <span class='op'>=</span> (<span class='ident'>r</span>.<span class='ident'>clone</span>(), <span class='ident'>r</span>.<span class='ident'>clone</span>());
+            <span class='ident'>r1</span>.<span class='ident'>end</span> <span class='op'>=</span> <span class='ident'>dec_char</span>(<span class='ident'>c</span>);
+            <span class='kw'>if</span> <span class='ident'>r1</span>.<span class='ident'>start</span> <span class='op'>&lt;=</span> <span class='ident'>r1</span>.<span class='ident'>end</span> {
+                <span class='self'>self</span>.<span class='ident'>ranges</span>.<span class='ident'>insert</span>(<span class='ident'>i</span>, <span class='ident'>r1</span>);
+                <span class='ident'>i</span> <span class='op'>+=</span> <span class='number'>1</span>;
+            }
+            <span class='ident'>r2</span>.<span class='ident'>start</span> <span class='op'>=</span> <span class='ident'>inc_char</span>(<span class='ident'>c</span>);
+            <span class='kw'>if</span> <span class='ident'>r2</span>.<span class='ident'>start</span> <span class='op'>&lt;=</span> <span class='ident'>r2</span>.<span class='ident'>end</span> {
+                <span class='self'>self</span>.<span class='ident'>ranges</span>.<span class='ident'>insert</span>(<span class='ident'>i</span>, <span class='ident'>r2</span>);
+            }
+        }
     }
 
     <span class='doccomment'>/// Create a new empty class from this one.</span>
@@ -2549,6 +2706,14 @@ assert_eq!(err.kind(), &amp;ErrorKind::UnclosedParen);
             <span class='ident'>folded</span>.<span class='ident'>ranges</span>.<span class='ident'>push</span>(<span class='ident'>r</span>);
         }
         <span class='ident'>folded</span>.<span class='ident'>canonicalize</span>()
+    }
+
+    <span class='doccomment'>/// Returns the number of characters that match this class.</span>
+    <span class='kw'>fn</span> <span class='ident'>num_chars</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>usize</span> {
+        <span class='self'>self</span>.<span class='ident'>ranges</span>.<span class='ident'>iter</span>()
+            .<span class='ident'>map</span>(<span class='op'>|</span><span class='kw-2'>&amp;</span><span class='ident'>r</span><span class='op'>|</span> <span class='number'>1</span> <span class='op'>+</span> (<span class='ident'>r</span>.<span class='ident'>end</span> <span class='kw'>as</span> <span class='ident'>u32</span>) <span class='op'>-</span> (<span class='ident'>r</span>.<span class='ident'>start</span> <span class='kw'>as</span> <span class='ident'>u32</span>))
+            .<span class='ident'>fold</span>(<span class='number'>0</span>, <span class='op'>|</span><span class='ident'>acc</span>, <span class='ident'>len</span><span class='op'>|</span> <span class='ident'>acc</span> <span class='op'>+</span> <span class='ident'>len</span>)
+            <span class='kw'>as</span> <span class='ident'>usize</span>
     }
 }
 
@@ -2702,6 +2867,41 @@ assert_eq!(err.kind(), &amp;ErrorKind::UnclosedParen);
         <span class='self'>self</span>.<span class='ident'>binary_search_by</span>(<span class='op'>|</span><span class='ident'>range</span><span class='op'>|</span> <span class='ident'>b</span>.<span class='ident'>partial_cmp</span>(<span class='ident'>range</span>).<span class='ident'>unwrap</span>()).<span class='ident'>is_ok</span>()
     }
 
+    <span class='doccomment'>/// Removes the given byte from the class if it exists.</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// Note that this takes `O(n)` time in the number of ranges.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>remove</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>b</span>: <span class='ident'>u8</span>) {
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>i</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>binary_search_by</span>(<span class='op'>|</span><span class='ident'>r</span><span class='op'>|</span> <span class='ident'>b</span>.<span class='ident'>partial_cmp</span>(<span class='ident'>r</span>).<span class='ident'>unwrap</span>()) {
+            <span class='prelude-val'>Ok</span>(<span class='ident'>i</span>) <span class='op'>=&gt;</span> <span class='ident'>i</span>,
+            <span class='prelude-val'>Err</span>(_) <span class='op'>=&gt;</span> <span class='kw'>return</span>,
+        };
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>r</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>ranges</span>.<span class='ident'>remove</span>(<span class='ident'>i</span>);
+        <span class='kw'>if</span> <span class='ident'>r</span>.<span class='ident'>start</span> <span class='op'>==</span> <span class='ident'>b</span> {
+            <span class='ident'>r</span>.<span class='ident'>start</span> <span class='op'>=</span> <span class='ident'>b</span>.<span class='ident'>saturating_add</span>(<span class='number'>1</span>);
+            <span class='kw'>if</span> <span class='ident'>r</span>.<span class='ident'>start</span> <span class='op'>&gt;</span> <span class='ident'>r</span>.<span class='ident'>end</span> <span class='op'>||</span> <span class='ident'>b</span> <span class='op'>==</span> <span class='ident'>u8</span>::<span class='ident'>MAX</span> {
+                <span class='kw'>return</span>;
+            }
+            <span class='self'>self</span>.<span class='ident'>ranges</span>.<span class='ident'>insert</span>(<span class='ident'>i</span>, <span class='ident'>r</span>);
+        } <span class='kw'>else</span> <span class='kw'>if</span> <span class='ident'>r</span>.<span class='ident'>end</span> <span class='op'>==</span> <span class='ident'>b</span> {
+            <span class='ident'>r</span>.<span class='ident'>end</span> <span class='op'>=</span> <span class='ident'>b</span>.<span class='ident'>saturating_sub</span>(<span class='number'>1</span>);
+            <span class='kw'>if</span> <span class='ident'>r</span>.<span class='ident'>end</span> <span class='op'>&lt;</span> <span class='ident'>r</span>.<span class='ident'>start</span> <span class='op'>||</span> <span class='ident'>b</span> <span class='op'>==</span> <span class='string'>b&#39;\x00&#39;</span> {
+                <span class='kw'>return</span>;
+            }
+            <span class='self'>self</span>.<span class='ident'>ranges</span>.<span class='ident'>insert</span>(<span class='number'>0</span>, <span class='ident'>r</span>);
+        } <span class='kw'>else</span> {
+            <span class='kw'>let</span> (<span class='kw-2'>mut</span> <span class='ident'>r1</span>, <span class='kw-2'>mut</span> <span class='ident'>r2</span>) <span class='op'>=</span> (<span class='ident'>r</span>.<span class='ident'>clone</span>(), <span class='ident'>r</span>.<span class='ident'>clone</span>());
+            <span class='ident'>r1</span>.<span class='ident'>end</span> <span class='op'>=</span> <span class='ident'>b</span>.<span class='ident'>saturating_sub</span>(<span class='number'>1</span>);
+            <span class='kw'>if</span> <span class='ident'>r1</span>.<span class='ident'>start</span> <span class='op'>&lt;=</span> <span class='ident'>r1</span>.<span class='ident'>end</span> {
+                <span class='self'>self</span>.<span class='ident'>ranges</span>.<span class='ident'>insert</span>(<span class='ident'>i</span>, <span class='ident'>r1</span>);
+                <span class='ident'>i</span> <span class='op'>+=</span> <span class='number'>1</span>;
+            }
+            <span class='ident'>r2</span>.<span class='ident'>start</span> <span class='op'>=</span> <span class='ident'>b</span>.<span class='ident'>saturating_add</span>(<span class='number'>1</span>);
+            <span class='kw'>if</span> <span class='ident'>r2</span>.<span class='ident'>start</span> <span class='op'>&lt;=</span> <span class='ident'>r2</span>.<span class='ident'>end</span> {
+                <span class='self'>self</span>.<span class='ident'>ranges</span>.<span class='ident'>insert</span>(<span class='ident'>i</span>, <span class='ident'>r2</span>);
+            }
+        }
+    }
+
     <span class='doccomment'>/// Create a new empty class from this one.</span>
     <span class='kw'>fn</span> <span class='ident'>to_empty</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>ByteClass</span> {
         <span class='ident'>ByteClass</span> { <span class='ident'>ranges</span>: <span class='ident'>Vec</span>::<span class='ident'>with_capacity</span>(<span class='self'>self</span>.<span class='ident'>len</span>()) }
@@ -2773,6 +2973,14 @@ assert_eq!(err.kind(), &amp;ErrorKind::UnclosedParen);
             <span class='ident'>folded</span>.<span class='ident'>ranges</span>.<span class='ident'>extend</span>(<span class='ident'>r</span>.<span class='ident'>case_fold</span>());
         }
         <span class='ident'>folded</span>.<span class='ident'>canonicalize</span>()
+    }
+
+    <span class='doccomment'>/// Returns the number of bytes that match this class.</span>
+    <span class='kw'>fn</span> <span class='ident'>num_bytes</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>usize</span> {
+        <span class='self'>self</span>.<span class='ident'>ranges</span>.<span class='ident'>iter</span>()
+            .<span class='ident'>map</span>(<span class='op'>|</span><span class='kw-2'>&amp;</span><span class='ident'>r</span><span class='op'>|</span> <span class='number'>1</span> <span class='op'>+</span> (<span class='ident'>r</span>.<span class='ident'>end</span> <span class='kw'>as</span> <span class='ident'>u32</span>) <span class='op'>-</span> (<span class='ident'>r</span>.<span class='ident'>start</span> <span class='kw'>as</span> <span class='ident'>u32</span>))
+            .<span class='ident'>fold</span>(<span class='number'>0</span>, <span class='op'>|</span><span class='ident'>acc</span>, <span class='ident'>len</span><span class='op'>|</span> <span class='ident'>acc</span> <span class='op'>+</span> <span class='ident'>len</span>)
+            <span class='kw'>as</span> <span class='ident'>usize</span>
     }
 }
 
