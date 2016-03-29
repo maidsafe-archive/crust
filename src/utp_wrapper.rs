@@ -35,7 +35,10 @@ impl UtpWrapper {
                     'outer: loop {
                         let mut buf = [0; BUFFER_SIZE];
                         match socket.recv_from(&mut buf[..]) {
-                            Ok((0, _src)) => break,
+                            Ok((0, _src)) => {
+                                debug!("Gracefully closing uTP connection");
+                                break;
+                            }
                             Ok((amt, _src)) => {
                                 let buf = &buf[..amt];
                                 match input_tx.send(Vec::from(buf)) {
