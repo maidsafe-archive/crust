@@ -121,7 +121,7 @@ const MAX_RUN_TIME_MS: u64 = 2500;
 const WAIT_FOR_CONNECT_TIMEOUT: u64 = 10000;
 
 fn main() {
-    maidsafe_utilities::log::init(true);
+    unwrap_result!(maidsafe_utilities::log::init(true));
 
     let args: Args = Docopt::new(USAGE)
                          .and_then(|d| d.decode())
