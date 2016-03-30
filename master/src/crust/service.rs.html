@@ -1360,6 +1360,17 @@
 <span id="1317">1317</span>
 <span id="1318">1318</span>
 <span id="1319">1319</span>
+<span id="1320">1320</span>
+<span id="1321">1321</span>
+<span id="1322">1322</span>
+<span id="1323">1323</span>
+<span id="1324">1324</span>
+<span id="1325">1325</span>
+<span id="1326">1326</span>
+<span id="1327">1327</span>
+<span id="1328">1328</span>
+<span id="1329">1329</span>
+<span id="1330">1330</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -1378,10 +1389,13 @@
 <span class='comment'>// Please review the Licences for the specific language governing permissions and limitations</span>
 <span class='comment'>// relating to use of the SAFE Network Software.</span>
 
+<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>deny</span>(<span class='ident'>unused</span>)]</span>
+
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>collections</span>::{<span class='ident'>HashMap</span>, <span class='ident'>HashSet</span>};
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>net</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::{<span class='ident'>mpsc</span>, <span class='ident'>Arc</span>, <span class='ident'>Mutex</span>};
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>atomic</span>::{<span class='ident'>AtomicBool</span>, <span class='ident'>Ordering</span>};
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fmt</span>::<span class='ident'>Write</span>;
 <span class='kw'>use</span> <span class='ident'>service_discovery</span>::<span class='ident'>ServiceDiscovery</span>;
 <span class='kw'>use</span> <span class='ident'>sodiumoxide</span>;
@@ -1390,7 +1404,7 @@
 <span class='kw'>use</span> <span class='ident'>net2</span>;
 <span class='kw'>use</span> <span class='ident'>nat_traversal</span>::{<span class='ident'>MappedUdpSocket</span>, <span class='ident'>MappingContext</span>, <span class='ident'>PrivRendezvousInfo</span>, <span class='ident'>MappedTcpSocket</span>,
                     <span class='ident'>PubRendezvousInfo</span>, <span class='ident'>PunchedUdpSocket</span>, <span class='ident'>gen_rendezvous_info</span>,
-                    <span class='ident'>SimpleUdpHolePunchServer</span>, <span class='ident'>SimpleTcpHolePunchServer</span>};
+                    <span class='ident'>SimpleUdpHolePunchServer</span>, <span class='ident'>SimpleTcpHolePunchServer</span>, <span class='ident'>tcp_punch_hole</span>};
 
 
 <span class='kw'>use</span> <span class='ident'>sender_receiver</span>::<span class='ident'>CrustMsg</span>;
@@ -1491,6 +1505,7 @@
     <span class='ident'>utp_enabled</span>: <span class='ident'>bool</span>,
     <span class='ident'>_udp_hole_punch_server</span>: <span class='ident'>SimpleUdpHolePunchServer</span><span class='op'>&lt;</span><span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>MappingContext</span><span class='op'>&gt;&gt;</span>,
     <span class='ident'>_tcp_hole_punch_server</span>: <span class='ident'>SimpleTcpHolePunchServer</span><span class='op'>&lt;</span><span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>MappingContext</span><span class='op'>&gt;&gt;</span>,
+    <span class='ident'>is_alive</span>: <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>AtomicBool</span><span class='op'>&gt;</span>,
 }
 
 <span class='kw'>impl</span> <span class='ident'>Service</span> {
@@ -1592,6 +1607,7 @@
             <span class='ident'>utp_enabled</span>: <span class='ident'>config</span>.<span class='ident'>enable_utp</span>,
             <span class='ident'>_udp_hole_punch_server</span>: <span class='ident'>udp_hole_punch_server</span>,
             <span class='ident'>_tcp_hole_punch_server</span>: <span class='ident'>tcp_hole_punch_server</span>,
+            <span class='ident'>is_alive</span>: <span class='ident'>Arc</span>::<span class='ident'>new</span>(<span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolval'>true</span>)),
         };
 
         <span class='prelude-val'>Ok</span>(<span class='ident'>service</span>)
@@ -1769,44 +1785,48 @@
                 });
             }
 
-            <span class='comment'>// FIXME: TCP rendezvous temporarily disabled, until</span>
-            <span class='comment'>// https://github.com/maidsafe/crust/issues/601 is fixed.</span>
-            <span class='comment'>//</span>
-            <span class='comment'>// if let Some(tcp_socket) = our_connection_info.tcp_socket {</span>
-            <span class='comment'>//     let tcp_info = their_connection_info.tcp_info;</span>
-            <span class='comment'>//     let event_tx = event_tx.clone();</span>
-            <span class='comment'>//     let connection_map = connection_map.clone();</span>
-            <span class='comment'>//     let result_tx = result_tx.clone();</span>
-            <span class='comment'>//     let priv_tcp_info = our_connection_info.priv_tcp_info;</span>
-            <span class='comment'>//     let _ = thread!(&quot;Service::connect tcp rendezvous&quot;, move || {</span>
-            <span class='comment'>//         let res = tcp_punch_hole(tcp_socket,</span>
-            <span class='comment'>//                                  priv_tcp_info,</span>
-            <span class='comment'>//                                  tcp_info).result_log();</span>
-            <span class='comment'>//         match res {</span>
-            <span class='comment'>//             Ok(tcp_stream) =&gt; {</span>
-            <span class='comment'>//                 match connection::tcp_rendezvous_connect(connection_map,</span>
-            <span class='comment'>//                                                          event_tx,</span>
-            <span class='comment'>//                                                          tcp_stream,</span>
-            <span class='comment'>//                                                          their_id) {</span>
-            <span class='comment'>//                     Ok(()) =&gt; {</span>
-            <span class='comment'>//                         result_tx.send(Ok(()));</span>
-            <span class='comment'>//                     },</span>
-            <span class='comment'>//                     Err(err) =&gt; {</span>
-            <span class='comment'>//                         let err_msg = format!(&quot;Tcp rendezvous connect failed: {}&quot;, err);</span>
-            <span class='comment'>//                         let err = io::Error::new(err.kind(), err_msg);</span>
-            <span class='comment'>//                         result_tx.send(Err(err));</span>
-            <span class='comment'>//                     },</span>
-            <span class='comment'>//                 }</span>
-            <span class='comment'>//             },</span>
-            <span class='comment'>//             Err(err) =&gt; {</span>
-            <span class='comment'>//                 let err: io::Error = From::from(err);</span>
-            <span class='comment'>//                 let err_msg = format!(&quot;Tcp hole punching failed: {}&quot;, err);</span>
-            <span class='comment'>//                 let err = io::Error::new(err.kind(), err_msg);</span>
-            <span class='comment'>//                 result_tx.send(Err(err));</span>
-            <span class='comment'>//             },</span>
-            <span class='comment'>//         };</span>
-            <span class='comment'>//     });</span>
-            <span class='comment'>// };</span>
+            <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='ident'>tcp_socket</span>) <span class='op'>=</span> <span class='ident'>our_connection_info</span>.<span class='ident'>tcp_socket</span> {
+                <span class='kw'>let</span> <span class='ident'>tcp_info</span> <span class='op'>=</span> <span class='ident'>their_connection_info</span>.<span class='ident'>tcp_info</span>;
+                <span class='kw'>let</span> <span class='ident'>event_tx</span> <span class='op'>=</span> <span class='ident'>event_tx</span>.<span class='ident'>clone</span>();
+                <span class='kw'>let</span> <span class='ident'>connection_map</span> <span class='op'>=</span> <span class='ident'>connection_map</span>.<span class='ident'>clone</span>();
+                <span class='kw'>let</span> <span class='ident'>result_tx</span> <span class='op'>=</span> <span class='ident'>result_tx</span>.<span class='ident'>clone</span>();
+                <span class='kw'>let</span> <span class='ident'>priv_tcp_info</span> <span class='op'>=</span> <span class='ident'>our_connection_info</span>.<span class='ident'>priv_tcp_info</span>;
+                <span class='kw'>let</span> <span class='ident'>is_alive</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>is_alive</span>.<span class='ident'>clone</span>();
+
+                <span class='kw'>let</span> _ <span class='op'>=</span> <span class='macro'>thread</span><span class='macro'>!</span>(<span class='string'>&quot;Service::connect tcp rendezvous&quot;</span>, <span class='kw'>move</span> <span class='op'>||</span> {
+                    <span class='kw'>let</span> <span class='ident'>res</span> <span class='op'>=</span> <span class='ident'>tcp_punch_hole</span>(<span class='ident'>tcp_socket</span>,
+                                             <span class='ident'>priv_tcp_info</span>,
+                                             <span class='ident'>tcp_info</span>).<span class='ident'>result_log</span>();
+
+                    <span class='kw'>if</span> <span class='op'>!</span><span class='ident'>is_alive</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>Relaxed</span>) {
+                        <span class='kw'>return</span>;
+                    }
+
+                    <span class='kw'>match</span> <span class='ident'>res</span> {
+                        <span class='prelude-val'>Ok</span>(<span class='ident'>tcp_stream</span>) <span class='op'>=&gt;</span> {
+                            <span class='kw'>match</span> <span class='ident'>connection</span>::<span class='ident'>tcp_rendezvous_connect</span>(<span class='ident'>connection_map</span>,
+                                                                     <span class='ident'>event_tx</span>,
+                                                                     <span class='ident'>tcp_stream</span>,
+                                                                     <span class='ident'>their_id</span>) {
+                                <span class='prelude-val'>Ok</span>(()) <span class='op'>=&gt;</span> {
+                                    <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>result_tx</span>.<span class='ident'>send</span>(<span class='prelude-val'>Ok</span>(()));
+                                },
+                                <span class='prelude-val'>Err</span>(<span class='ident'>err</span>) <span class='op'>=&gt;</span> {
+                                    <span class='kw'>let</span> <span class='ident'>err_msg</span> <span class='op'>=</span> <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Tcp rendezvous connect failed: {}&quot;</span>, <span class='ident'>err</span>);
+                                    <span class='kw'>let</span> <span class='ident'>err</span> <span class='op'>=</span> <span class='ident'>io</span>::<span class='ident'>Error</span>::<span class='ident'>new</span>(<span class='ident'>err</span>.<span class='ident'>kind</span>(), <span class='ident'>err_msg</span>);
+                                    <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>result_tx</span>.<span class='ident'>send</span>(<span class='prelude-val'>Err</span>(<span class='ident'>err</span>));
+                                },
+                            }
+                        },
+                        <span class='prelude-val'>Err</span>(<span class='ident'>err</span>) <span class='op'>=&gt;</span> {
+                            <span class='kw'>let</span> <span class='ident'>err</span>: <span class='ident'>io</span>::<span class='ident'>Error</span> <span class='op'>=</span> <span class='ident'>From</span>::<span class='ident'>from</span>(<span class='ident'>err</span>);
+                            <span class='kw'>let</span> <span class='ident'>err_msg</span> <span class='op'>=</span> <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Tcp hole punching failed: {}&quot;</span>, <span class='ident'>err</span>);
+                            <span class='kw'>let</span> <span class='ident'>err</span> <span class='op'>=</span> <span class='ident'>io</span>::<span class='ident'>Error</span>::<span class='ident'>new</span>(<span class='ident'>err</span>.<span class='ident'>kind</span>(), <span class='ident'>err_msg</span>);
+                            <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>result_tx</span>.<span class='ident'>send</span>(<span class='prelude-val'>Err</span>(<span class='ident'>err</span>));
+                        },
+                    };
+                });
+            };
         }
 
         <span class='kw'>if</span> <span class='ident'>utp_enabled</span> {
@@ -1816,6 +1836,8 @@
                 <span class='kw'>let</span> <span class='ident'>event_tx</span> <span class='op'>=</span> <span class='ident'>event_tx</span>.<span class='ident'>clone</span>();
                 <span class='kw'>let</span> <span class='ident'>connection_map</span> <span class='op'>=</span> <span class='ident'>connection_map</span>.<span class='ident'>clone</span>();
                 <span class='kw'>let</span> <span class='ident'>result_tx</span> <span class='op'>=</span> <span class='ident'>result_tx</span>.<span class='ident'>clone</span>();
+                <span class='kw'>let</span> <span class='ident'>is_alive</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>is_alive</span>.<span class='ident'>clone</span>();
+
                 <span class='kw'>let</span> _ <span class='op'>=</span> <span class='macro'>thread</span><span class='macro'>!</span>(<span class='string'>&quot;Service::connect utp rendezvous&quot;</span>, <span class='kw'>move</span> <span class='op'>||</span> {
                     <span class='kw'>let</span> <span class='ident'>res</span> <span class='op'>=</span> <span class='ident'>PunchedUdpSocket</span>::<span class='ident'>punch_hole</span>(<span class='ident'>udp_socket</span>, <span class='ident'>priv_udp_info</span>, <span class='ident'>udp_info</span>)
                                   .<span class='ident'>result_log</span>();
@@ -1829,6 +1851,11 @@
                             <span class='kw'>return</span>;
                         }
                     };
+
+                    <span class='kw'>if</span> <span class='op'>!</span><span class='ident'>is_alive</span>.<span class='ident'>load</span>(<span class='ident'>Ordering</span>::<span class='ident'>Relaxed</span>) {
+                        <span class='kw'>return</span>;
+                    }
+
                     <span class='kw'>match</span> <span class='ident'>connection</span>::<span class='ident'>utp_rendezvous_connect</span>(<span class='ident'>udp_socket</span>,
                                                              <span class='ident'>public_endpoint</span>,
                                                              <span class='ident'>UtpRendezvousConnectMode</span>::<span class='ident'>Normal</span>(<span class='ident'>their_id</span>),
@@ -1955,6 +1982,8 @@
 
 <span class='kw'>impl</span> <span class='ident'>Drop</span> <span class='kw'>for</span> <span class='ident'>Service</span> {
     <span class='kw'>fn</span> <span class='ident'>drop</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) {
+        <span class='self'>self</span>.<span class='ident'>is_alive</span>.<span class='ident'>store</span>(<span class='boolval'>false</span>, <span class='ident'>Ordering</span>::<span class='ident'>Relaxed</span>);
+
         <span class='comment'>// Disconnect from all peers when we drop the service</span>
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>cm</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>connection_map</span>.<span class='ident'>lock</span>());
         <span class='ident'>cm</span>.<span class='ident'>clear</span>();
@@ -1966,7 +1995,6 @@
     <span class='kw'>use</span> <span class='ident'>super</span>::<span class='op'>*</span>;
     <span class='kw'>use</span> <span class='ident'>config_handler</span>::<span class='ident'>Config</span>;
     <span class='kw'>use</span> <span class='ident'>event</span>::<span class='ident'>Event</span>;
-    <span class='kw'>use</span> <span class='ident'>endpoint</span>::<span class='ident'>Protocol</span>;
 
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>time</span>::<span class='ident'>Duration</span>;
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>atomic</span>::{<span class='ident'>AtomicUsize</span>, <span class='ident'>ATOMIC_USIZE_INIT</span>, <span class='ident'>Ordering</span>};
@@ -1980,6 +2008,13 @@
     <span class='kw'>use</span> <span class='ident'>crossbeam</span>;
     <span class='kw'>use</span> <span class='ident'>void</span>::<span class='ident'>Void</span>;
     <span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>::<span class='ident'>event_sender</span>::{<span class='ident'>MaidSafeObserver</span>, <span class='ident'>MaidSafeEventCategory</span>};
+
+    <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Clone</span>, <span class='ident'>Copy</span>)]</span>
+    <span class='kw'>enum</span> <span class='ident'>Protocol</span> {
+        <span class='ident'>Tcp</span>,
+        <span class='ident'>Udp</span>,
+        <span class='ident'>Both</span>,
+    }
 
     <span class='kw'>fn</span> <span class='ident'>get_event_sender</span>()
         <span class='op'>-&gt;</span> (::<span class='ident'>CrustEventSender</span>,
@@ -2043,6 +2078,32 @@
         <span class='ident'>config</span>
     }
 
+    <span class='kw'>fn</span> <span class='ident'>start_listening</span>(<span class='ident'>service</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Service</span>, <span class='ident'>protocol</span>: <span class='ident'>Protocol</span>) {
+        <span class='kw'>match</span> <span class='ident'>protocol</span> {
+            <span class='ident'>Protocol</span>::<span class='ident'>Tcp</span> <span class='op'>=&gt;</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>service</span>.<span class='ident'>start_listening_tcp</span>()),
+            <span class='ident'>Protocol</span>::<span class='ident'>Udp</span> <span class='op'>=&gt;</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>service</span>.<span class='ident'>start_listening_utp</span>()),
+            <span class='ident'>Protocol</span>::<span class='ident'>Both</span> <span class='op'>=&gt;</span> {
+                <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>service</span>.<span class='ident'>start_listening_tcp</span>());
+                <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>service</span>.<span class='ident'>start_listening_utp</span>());
+            }
+        }
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>prepare_connection_info</span>(<span class='ident'>service</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Service</span>, <span class='ident'>event_rx</span>: <span class='kw-2'>&amp;</span><span class='ident'>Receiver</span><span class='op'>&lt;</span><span class='ident'>Event</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='ident'>OurConnectionInfo</span> {
+        <span class='kw'>static</span> <span class='ident'>TOKEN_COUNTER</span>: <span class='ident'>AtomicUsize</span> <span class='op'>=</span> <span class='ident'>ATOMIC_USIZE_INIT</span>;
+        <span class='kw'>let</span> <span class='ident'>token</span> <span class='op'>=</span> <span class='ident'>TOKEN_COUNTER</span>.<span class='ident'>fetch_add</span>(<span class='number'>1</span>, <span class='ident'>Ordering</span>::<span class='ident'>Relaxed</span>) <span class='kw'>as</span> <span class='ident'>u32</span>;
+
+        <span class='ident'>service</span>.<span class='ident'>prepare_connection_info</span>(<span class='ident'>token</span>);
+
+        <span class='kw'>match</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>event_rx</span>.<span class='ident'>recv</span>()) {
+            <span class='ident'>Event</span>::<span class='ident'>ConnectionInfoPrepared</span>(<span class='ident'>cir</span>) <span class='op'>=&gt;</span> {
+                <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>cir</span>.<span class='ident'>result_token</span>, <span class='ident'>token</span>);
+                <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>cir</span>.<span class='ident'>result</span>)
+            }
+            <span class='ident'>event</span> <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Received unexpected event: {:?}&quot;</span>, <span class='ident'>event</span>),
+        }
+    }
+
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>start_stop_service</span>() {
         <span class='kw'>let</span> <span class='ident'>config</span> <span class='op'>=</span> <span class='ident'>gen_config</span>();
@@ -2050,9 +2111,7 @@
         <span class='kw'>let</span> <span class='ident'>_service</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>Service</span>::<span class='ident'>with_config</span>(<span class='ident'>event_sender</span>, <span class='kw-2'>&amp;</span><span class='ident'>config</span>));
     }
 
-    <span class='kw'>fn</span> <span class='ident'>two_services_bootstrap_communicate_and_exit</span>(<span class='ident'>use_tcp</span>: <span class='ident'>bool</span>, <span class='ident'>use_udp</span>: <span class='ident'>bool</span>) {
-        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>use_tcp</span> <span class='op'>||</span> <span class='ident'>use_udp</span>);
-
+    <span class='kw'>fn</span> <span class='ident'>bootstrap_connection_two_services</span>(<span class='ident'>protocol</span>: <span class='ident'>Protocol</span>) {
         <span class='kw'>let</span> (<span class='ident'>event_sender_0</span>, <span class='ident'>_category_rx_0</span>, <span class='ident'>event_rx_0</span>) <span class='op'>=</span> <span class='ident'>get_event_sender</span>();
         <span class='kw'>let</span> (<span class='ident'>event_sender_1</span>, <span class='ident'>_category_rx_1</span>, <span class='ident'>event_rx_1</span>) <span class='op'>=</span> <span class='ident'>get_event_sender</span>();
 
@@ -2061,12 +2120,8 @@
         <span class='kw'>let</span> <span class='ident'>config_1</span> <span class='op'>=</span> <span class='ident'>gen_config_with_beacon</span>(<span class='ident'>beacon_port</span>);
 
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>service_0</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>Service</span>::<span class='ident'>with_config</span>(<span class='ident'>event_sender_0</span>, <span class='kw-2'>&amp;</span><span class='ident'>config_0</span>));
-        <span class='kw'>if</span> <span class='ident'>use_tcp</span> {
-            <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>service_0</span>.<span class='ident'>start_listening_tcp</span>());
-        }
-        <span class='kw'>if</span> <span class='ident'>use_udp</span> {
-            <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>service_0</span>.<span class='ident'>start_listening_utp</span>());
-        }
+        <span class='ident'>start_listening</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>service_0</span>, <span class='ident'>protocol</span>);
+
         <span class='comment'>// let service_0 finish bootstrap - since it is the zero state, it should not find any peer</span>
         <span class='comment'>// to bootstrap</span>
         {
@@ -2079,12 +2134,7 @@
         <span class='ident'>service_0</span>.<span class='ident'>start_service_discovery</span>();
 
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>service_1</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>Service</span>::<span class='ident'>with_config</span>(<span class='ident'>event_sender_1</span>, <span class='kw-2'>&amp;</span><span class='ident'>config_1</span>));
-        <span class='kw'>if</span> <span class='ident'>use_tcp</span> {
-            <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>service_1</span>.<span class='ident'>start_listening_tcp</span>());
-        }
-        <span class='kw'>if</span> <span class='ident'>use_udp</span> {
-            <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>service_1</span>.<span class='ident'>start_listening_utp</span>());
-        }
+        <span class='ident'>start_listening</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>service_1</span>, <span class='ident'>protocol</span>);
 
         <span class='comment'>// let service_1 finish bootstrap - it should bootstrap off service_0</span>
         <span class='kw'>let</span> <span class='ident'>id_0</span> <span class='op'>=</span> {
@@ -2168,12 +2218,14 @@
         <span class='comment'>// Drop services and make sure the event channels close</span>
         <span class='ident'>drop</span>(<span class='ident'>service_0</span>);
         <span class='kw'>let</span> (<span class='ident'>done_tx</span>, <span class='ident'>done_rx</span>) <span class='op'>=</span> <span class='ident'>mpsc</span>::<span class='ident'>channel</span>();
+        <span class='kw'>let</span> <span class='ident'>thread_handle</span> <span class='op'>=</span> <span class='ident'>thread</span>::<span class='ident'>current</span>();
         <span class='kw'>let</span> <span class='ident'>tj</span> <span class='op'>=</span> <span class='macro'>thread</span><span class='macro'>!</span>(<span class='string'>&quot;Drain event channel messages&quot;</span>, <span class='kw'>move</span> <span class='op'>||</span> {
             <span class='kw'>match</span> <span class='ident'>event_rx_0</span>.<span class='ident'>recv</span>() {
                 <span class='prelude-val'>Ok</span>(<span class='ident'>e</span>) <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Received unexpected event when shutting down: {:?}&quot;</span>, <span class='ident'>e</span>),
                 <span class='prelude-val'>Err</span>(<span class='ident'>mpsc</span>::<span class='ident'>RecvError</span>) <span class='op'>=&gt;</span> (),
             };
             <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>done_tx</span>.<span class='ident'>send</span>(()));
+            <span class='ident'>thread_handle</span>.<span class='ident'>unpark</span>();
         });
         <span class='ident'>thread</span>::<span class='ident'>park_timeout</span>(<span class='ident'>Duration</span>::<span class='ident'>from_secs</span>(<span class='number'>60</span>));
         <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>done_rx</span>.<span class='ident'>try_recv</span>());
@@ -2181,12 +2233,14 @@
 
         <span class='ident'>drop</span>(<span class='ident'>service_1</span>);
         <span class='kw'>let</span> (<span class='ident'>done_tx</span>, <span class='ident'>done_rx</span>) <span class='op'>=</span> <span class='ident'>mpsc</span>::<span class='ident'>channel</span>();
+        <span class='kw'>let</span> <span class='ident'>thread_handle</span> <span class='op'>=</span> <span class='ident'>thread</span>::<span class='ident'>current</span>();
         <span class='kw'>let</span> <span class='ident'>tj</span> <span class='op'>=</span> <span class='macro'>thread</span><span class='macro'>!</span>(<span class='string'>&quot;Drain event channel messages&quot;</span>, <span class='kw'>move</span> <span class='op'>||</span> {
             <span class='kw'>match</span> <span class='ident'>event_rx_1</span>.<span class='ident'>recv</span>() {
                 <span class='prelude-val'>Ok</span>(<span class='ident'>e</span>) <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Received unexpected event when shutting down: {:?}&quot;</span>, <span class='ident'>e</span>),
                 <span class='prelude-val'>Err</span>(<span class='ident'>mpsc</span>::<span class='ident'>RecvError</span>) <span class='op'>=&gt;</span> (),
             };
             <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>done_tx</span>.<span class='ident'>send</span>(()));
+            <span class='ident'>thread_handle</span>.<span class='ident'>unpark</span>();
         });
         <span class='ident'>thread</span>::<span class='ident'>park_timeout</span>(<span class='ident'>Duration</span>::<span class='ident'>from_secs</span>(<span class='number'>5</span>));
         <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>done_rx</span>.<span class='ident'>try_recv</span>());
@@ -2194,131 +2248,59 @@
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>start_two_services_bootstrap_communicate_exit_tcp</span>() {
-        <span class='ident'>two_services_bootstrap_communicate_and_exit</span>(<span class='boolval'>true</span>, <span class='boolval'>false</span>);
+    <span class='kw'>fn</span> <span class='ident'>bootstrap_connection_tcp_two_services</span>() {
+        <span class='ident'>bootstrap_connection_two_services</span>(<span class='ident'>Protocol</span>::<span class='ident'>Tcp</span>);
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>start_two_services_bootstrap_communicate_exit_udp</span>() {
-        <span class='ident'>two_services_bootstrap_communicate_and_exit</span>(<span class='boolval'>false</span>, <span class='boolval'>true</span>);
+    <span class='kw'>fn</span> <span class='ident'>bootstrap_connection_udp_two_services</span>() {
+        <span class='ident'>bootstrap_connection_two_services</span>(<span class='ident'>Protocol</span>::<span class='ident'>Udp</span>);
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>start_two_services_bootstrap_communicate_exit_tcp_and_udp</span>() {
-        <span class='ident'>two_services_bootstrap_communicate_and_exit</span>(<span class='boolval'>true</span>, <span class='boolval'>true</span>);
+    <span class='kw'>fn</span> <span class='ident'>bootstrap_connection_tcp_and_udp_two_services</span>() {
+        <span class='ident'>bootstrap_connection_two_services</span>(<span class='ident'>Protocol</span>::<span class='ident'>Both</span>);
     }
 
-    <span class='attribute'>#[<span class='ident'>test</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>drop_disconnects</span>() {
-        <span class='kw'>let</span> <span class='ident'>beacon_port</span> <span class='op'>=</span> <span class='ident'>gen_beacon_port</span>();
-
-        <span class='kw'>let</span> <span class='ident'>config_0</span> <span class='op'>=</span> <span class='ident'>gen_config_with_beacon</span>(<span class='ident'>beacon_port</span>);
-        <span class='kw'>let</span> <span class='ident'>config_1</span> <span class='op'>=</span> <span class='ident'>gen_config_with_beacon</span>(<span class='ident'>beacon_port</span>);
-
-        <span class='kw'>let</span> (<span class='ident'>event_sender_0</span>, <span class='ident'>_category_rx_0</span>, <span class='ident'>event_rx_0</span>) <span class='op'>=</span> <span class='ident'>get_event_sender</span>();
-        <span class='kw'>let</span> (<span class='ident'>event_sender_1</span>, <span class='ident'>_category_rx_1</span>, <span class='ident'>event_rx_1</span>) <span class='op'>=</span> <span class='ident'>get_event_sender</span>();
-
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>service_0</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>Service</span>::<span class='ident'>with_config</span>(<span class='ident'>event_sender_0</span>, <span class='kw-2'>&amp;</span><span class='ident'>config_0</span>));
-        <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>service_0</span>.<span class='ident'>start_listening_tcp</span>());
-
-        <span class='comment'>// Let service_0 finish bootstrap - it should not find any peer.</span>
-        <span class='kw'>match</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>event_rx_0</span>.<span class='ident'>recv</span>()) {
-            <span class='ident'>Event</span>::<span class='ident'>BootstrapFinished</span> <span class='op'>=&gt;</span> (),
-            <span class='ident'>event_rxd</span> <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Received unexpected event: {:?}&quot;</span>, <span class='ident'>event_rxd</span>),
-        }
-        <span class='ident'>service_0</span>.<span class='ident'>start_service_discovery</span>();
-
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>service_1</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>Service</span>::<span class='ident'>with_config</span>(<span class='ident'>event_sender_1</span>, <span class='kw-2'>&amp;</span><span class='ident'>config_1</span>));
-        <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>service_1</span>.<span class='ident'>start_listening_tcp</span>());
-
-        <span class='comment'>// Let service_1 finish bootstrap - it should bootstrap off service_0.</span>
-        <span class='kw'>let</span> <span class='ident'>id_0</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>event_rx_1</span>.<span class='ident'>recv</span>()) {
-            <span class='ident'>Event</span>::<span class='ident'>BootstrapConnect</span>(<span class='ident'>their_id</span>) <span class='op'>=&gt;</span> <span class='ident'>their_id</span>,
-            <span class='ident'>event</span> <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Received unexpected event: {:?}&quot;</span>, <span class='ident'>event</span>),
-        };
-
-        <span class='comment'>// Now service_1 should get BootstrapFinished.</span>
-        <span class='kw'>match</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>event_rx_1</span>.<span class='ident'>recv</span>()) {
-            <span class='ident'>Event</span>::<span class='ident'>BootstrapFinished</span> <span class='op'>=&gt;</span> (),
-            <span class='ident'>event</span> <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Received unexpected event: {:?}&quot;</span>, <span class='ident'>event</span>),
-        }
-
-        <span class='comment'>// service_0 should have received service_1&#39;s bootstrap connection by now.</span>
-        <span class='kw'>let</span> <span class='ident'>id_1</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>event_rx_0</span>.<span class='ident'>recv</span>()) {
-            <span class='ident'>Event</span>::<span class='ident'>BootstrapAccept</span>(<span class='ident'>their_id</span>) <span class='op'>=&gt;</span> <span class='ident'>their_id</span>,
-            _ <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;0 Should have got a new connection from 1.&quot;</span>),
-        };
-
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>id_0</span>, <span class='ident'>service_0</span>.<span class='ident'>id</span>());
-        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>id_1</span>, <span class='ident'>service_1</span>.<span class='ident'>id</span>());
-
-        <span class='comment'>// Dropping service_0 should make service_1 receive a LostPeer event.</span>
-        <span class='ident'>drop</span>(<span class='ident'>service_0</span>);
-        <span class='kw'>match</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>event_rx_1</span>.<span class='ident'>recv</span>()) {
-            <span class='ident'>Event</span>::<span class='ident'>LostPeer</span>(<span class='ident'>id</span>) <span class='op'>=&gt;</span> <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>id</span>, <span class='ident'>id_0</span>),
-            <span class='ident'>event</span> <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Received unexpected event: {:?}&quot;</span>, <span class='ident'>event</span>),
-        }
-    }
-
-    <span class='kw'>fn</span> <span class='ident'>start_two_service_rendezvous_connect</span>(<span class='ident'>protocol</span>: <span class='ident'>Protocol</span>) {
+    <span class='kw'>fn</span> <span class='ident'>peer_to_peer_connection_two_services</span>(<span class='ident'>protocol</span>: <span class='ident'>Protocol</span>, <span class='ident'>listen_0</span>: <span class='ident'>bool</span>, <span class='ident'>listen_1</span>: <span class='ident'>bool</span>) {
         <span class='kw'>let</span> (<span class='ident'>event_sender_0</span>, <span class='ident'>_category_rx_0</span>, <span class='ident'>event_rx_0</span>) <span class='op'>=</span> <span class='ident'>get_event_sender</span>();
         <span class='kw'>let</span> (<span class='ident'>event_sender_1</span>, <span class='ident'>_category_rx_1</span>, <span class='ident'>event_rx_1</span>) <span class='op'>=</span> <span class='ident'>get_event_sender</span>();
 
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>config</span> <span class='op'>=</span> <span class='ident'>gen_config</span>();
         <span class='kw'>match</span> <span class='ident'>protocol</span> {
             <span class='ident'>Protocol</span>::<span class='ident'>Tcp</span> <span class='op'>=&gt;</span> <span class='ident'>config</span>.<span class='ident'>enable_utp</span> <span class='op'>=</span> <span class='boolval'>false</span>,
-            <span class='ident'>Protocol</span>::<span class='ident'>Utp</span> <span class='op'>=&gt;</span> <span class='ident'>config</span>.<span class='ident'>enable_tcp</span> <span class='op'>=</span> <span class='boolval'>false</span>,
-        };
+            <span class='ident'>Protocol</span>::<span class='ident'>Udp</span> <span class='op'>=&gt;</span> <span class='ident'>config</span>.<span class='ident'>enable_tcp</span> <span class='op'>=</span> <span class='boolval'>false</span>,
+            _ <span class='op'>=&gt;</span> (),
+        }
 
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>service_0</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>Service</span>::<span class='ident'>with_config</span>(<span class='ident'>event_sender_0</span>, <span class='kw-2'>&amp;</span><span class='ident'>config</span>));
+        <span class='kw'>if</span> <span class='ident'>listen_0</span> {
+            <span class='ident'>start_listening</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>service_0</span>, <span class='ident'>protocol</span>);
+        }
+
         <span class='comment'>// let service_0 finish bootstrap - since it is the zero state, it should not find any peer</span>
         <span class='comment'>// to bootstrap</span>
-        {
-            <span class='kw'>let</span> <span class='ident'>event_rxd</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>event_rx_0</span>.<span class='ident'>recv</span>());
-            <span class='kw'>match</span> <span class='ident'>event_rxd</span> {
-                <span class='ident'>Event</span>::<span class='ident'>BootstrapFinished</span> <span class='op'>=&gt;</span> (),
-                _ <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Received unexpected event: {:?}&quot;</span>, <span class='ident'>event_rxd</span>),
-            }
+        <span class='kw'>match</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>event_rx_0</span>.<span class='ident'>recv</span>()) {
+            <span class='ident'>Event</span>::<span class='ident'>BootstrapFinished</span> <span class='op'>=&gt;</span> (),
+            <span class='ident'>event</span> <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Received unexpected event: {:?}&quot;</span>, <span class='ident'>event</span>),
         }
 
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>service_1</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>Service</span>::<span class='ident'>with_config</span>(<span class='ident'>event_sender_1</span>, <span class='kw-2'>&amp;</span><span class='ident'>config</span>));
-        <span class='comment'>// let service_0 finish bootstrap - since it is the zero state, it should not find any peer</span>
-        <span class='comment'>// to bootstrap</span>
-        {
-            <span class='kw'>let</span> <span class='ident'>event_rxd</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>event_rx_1</span>.<span class='ident'>recv</span>());
-            <span class='kw'>match</span> <span class='ident'>event_rxd</span> {
-                <span class='ident'>Event</span>::<span class='ident'>BootstrapFinished</span> <span class='op'>=&gt;</span> (),
-                _ <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Received unexpected event: {:?}&quot;</span>, <span class='ident'>event_rxd</span>),
-            }
+        <span class='kw'>if</span> <span class='ident'>listen_1</span> {
+            <span class='ident'>start_listening</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>service_1</span>, <span class='ident'>protocol</span>);
         }
 
-        <span class='kw'>const</span> <span class='ident'>PREPARE_CI_TOKEN</span>: <span class='ident'>u32</span> <span class='op'>=</span> <span class='number'>1234</span>;
+        <span class='comment'>// let service_0 finish bootstrap - since it is the zero state, it should not find any peer</span>
+        <span class='comment'>// to bootstrap</span>
+        <span class='kw'>match</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>event_rx_1</span>.<span class='ident'>recv</span>()) {
+            <span class='ident'>Event</span>::<span class='ident'>BootstrapFinished</span> <span class='op'>=&gt;</span> (),
+            <span class='ident'>event</span> <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Received unexpected event: {:?}&quot;</span>, <span class='ident'>event</span>),
+        }
 
-        <span class='ident'>service_0</span>.<span class='ident'>prepare_connection_info</span>(<span class='ident'>PREPARE_CI_TOKEN</span>);
-        <span class='kw'>let</span> <span class='ident'>our_ci_0</span> <span class='op'>=</span> {
-            <span class='kw'>let</span> <span class='ident'>event_rxd</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>event_rx_0</span>.<span class='ident'>recv</span>());
-            <span class='kw'>match</span> <span class='ident'>event_rxd</span> {
-                <span class='ident'>Event</span>::<span class='ident'>ConnectionInfoPrepared</span>(<span class='ident'>cir</span>) <span class='op'>=&gt;</span> {
-                    <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>cir</span>.<span class='ident'>result_token</span>, <span class='ident'>PREPARE_CI_TOKEN</span>);
-                    <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>cir</span>.<span class='ident'>result</span>)
-                }
-                _ <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Received unexpected event: {:?}&quot;</span>, <span class='ident'>event_rxd</span>),
-            }
-        };
-
-        <span class='ident'>service_1</span>.<span class='ident'>prepare_connection_info</span>(<span class='ident'>PREPARE_CI_TOKEN</span>);
-        <span class='kw'>let</span> <span class='ident'>our_ci_1</span> <span class='op'>=</span> {
-            <span class='kw'>let</span> <span class='ident'>event_rxd</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>event_rx_1</span>.<span class='ident'>recv</span>());
-            <span class='kw'>match</span> <span class='ident'>event_rxd</span> {
-                <span class='ident'>Event</span>::<span class='ident'>ConnectionInfoPrepared</span>(<span class='ident'>cir</span>) <span class='op'>=&gt;</span> {
-                    <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>cir</span>.<span class='ident'>result_token</span>, <span class='ident'>PREPARE_CI_TOKEN</span>);
-                    <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>cir</span>.<span class='ident'>result</span>)
-                }
-                _ <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Received unexpected event: {:?}&quot;</span>, <span class='ident'>event_rxd</span>),
-            }
-        };
-
+        <span class='kw'>let</span> <span class='ident'>our_ci_0</span> <span class='op'>=</span> <span class='ident'>prepare_connection_info</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>service_0</span>, <span class='kw-2'>&amp;</span><span class='ident'>event_rx_0</span>);
         <span class='kw'>let</span> <span class='ident'>their_ci_0</span> <span class='op'>=</span> <span class='ident'>our_ci_0</span>.<span class='ident'>to_their_connection_info</span>();
+
+        <span class='kw'>let</span> <span class='ident'>our_ci_1</span> <span class='op'>=</span> <span class='ident'>prepare_connection_info</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>service_1</span>, <span class='kw-2'>&amp;</span><span class='ident'>event_rx_1</span>);
         <span class='kw'>let</span> <span class='ident'>their_ci_1</span> <span class='op'>=</span> <span class='ident'>our_ci_1</span>.<span class='ident'>to_their_connection_info</span>();
 
         <span class='ident'>service_0</span>.<span class='ident'>connect</span>(<span class='ident'>our_ci_0</span>, <span class='ident'>their_ci_1</span>);
@@ -2373,9 +2355,11 @@
         <span class='comment'>// Drop services and make sure the event channels close</span>
         <span class='ident'>drop</span>(<span class='ident'>service_0</span>);
         <span class='kw'>let</span> (<span class='ident'>done_tx</span>, <span class='ident'>done_rx</span>) <span class='op'>=</span> <span class='ident'>mpsc</span>::<span class='ident'>channel</span>();
+        <span class='kw'>let</span> <span class='ident'>thread_handle</span> <span class='op'>=</span> <span class='ident'>thread</span>::<span class='ident'>current</span>();
         <span class='kw'>let</span> <span class='ident'>tj</span> <span class='op'>=</span> <span class='macro'>thread</span><span class='macro'>!</span>(<span class='string'>&quot;Drain event channel messages&quot;</span>, <span class='kw'>move</span> <span class='op'>||</span> {
             <span class='kw'>for</span> _ <span class='kw'>in</span> <span class='ident'>event_rx_0</span> {}
-            <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>done_tx</span>.<span class='ident'>send</span>(()));
+            <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>done_tx</span>.<span class='ident'>send</span>(());
+            <span class='ident'>thread_handle</span>.<span class='ident'>unpark</span>();
         });
         <span class='ident'>thread</span>::<span class='ident'>park_timeout</span>(<span class='ident'>Duration</span>::<span class='ident'>from_secs</span>(<span class='number'>5</span>));
         <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>done_rx</span>.<span class='ident'>try_recv</span>());
@@ -2383,9 +2367,11 @@
 
         <span class='ident'>drop</span>(<span class='ident'>service_1</span>);
         <span class='kw'>let</span> (<span class='ident'>done_tx</span>, <span class='ident'>done_rx</span>) <span class='op'>=</span> <span class='ident'>mpsc</span>::<span class='ident'>channel</span>();
+        <span class='kw'>let</span> <span class='ident'>thread_handle</span> <span class='op'>=</span> <span class='ident'>thread</span>::<span class='ident'>current</span>();
         <span class='kw'>let</span> <span class='ident'>tj</span> <span class='op'>=</span> <span class='macro'>thread</span><span class='macro'>!</span>(<span class='string'>&quot;Drain event channel messages&quot;</span>, <span class='kw'>move</span> <span class='op'>||</span> {
             <span class='kw'>for</span> _ <span class='kw'>in</span> <span class='ident'>event_rx_1</span> {}
-            <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>done_tx</span>.<span class='ident'>send</span>(()));
+            <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>done_tx</span>.<span class='ident'>send</span>(());
+            <span class='ident'>thread_handle</span>.<span class='ident'>unpark</span>();
         });
         <span class='ident'>thread</span>::<span class='ident'>park_timeout</span>(<span class='ident'>Duration</span>::<span class='ident'>from_secs</span>(<span class='number'>5</span>));
         <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>done_rx</span>.<span class='ident'>try_recv</span>());
@@ -2393,27 +2379,45 @@
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>start_two_service_utp_rendezvous_connect</span>() {
-        <span class='ident'>start_two_service_rendezvous_connect</span>(<span class='ident'>Protocol</span>::<span class='ident'>Utp</span>);
+    <span class='kw'>fn</span> <span class='ident'>direct_connection_tcp_two_services</span>() {
+        <span class='ident'>peer_to_peer_connection_two_services</span>(<span class='ident'>Protocol</span>::<span class='ident'>Tcp</span>, <span class='boolval'>true</span>, <span class='boolval'>true</span>)
     }
 
-    <span class='comment'>// FIXME: un-ignore this once https://github.com/maidsafe/crust/issues/601</span>
-    <span class='comment'>// is fixed.</span>
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
-    <span class='attribute'>#[<span class='ident'>ignore</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>start_two_service_tcp_rendezvous_connect</span>() {
-        <span class='ident'>start_two_service_rendezvous_connect</span>(<span class='ident'>Protocol</span>::<span class='ident'>Tcp</span>);
+    <span class='kw'>fn</span> <span class='ident'>direct_connection_udp_two_services</span>() {
+        <span class='ident'>peer_to_peer_connection_two_services</span>(<span class='ident'>Protocol</span>::<span class='ident'>Udp</span>, <span class='boolval'>true</span>, <span class='boolval'>true</span>)
     }
 
-    <span class='kw'>fn</span> <span class='ident'>start_three_service_rendezvous_connect</span>(<span class='ident'>protocol</span>: <span class='ident'>Protocol</span>) {
+    <span class='attribute'>#[<span class='ident'>test</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>semi_direct_connection_tcp_two_services</span>() {
+        <span class='ident'>peer_to_peer_connection_two_services</span>(<span class='ident'>Protocol</span>::<span class='ident'>Tcp</span>, <span class='boolval'>true</span>, <span class='boolval'>false</span>)
+    }
+
+    <span class='attribute'>#[<span class='ident'>test</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>semi_direct_connection_udp_two_services</span>() {
+        <span class='ident'>peer_to_peer_connection_two_services</span>(<span class='ident'>Protocol</span>::<span class='ident'>Udp</span>, <span class='boolval'>true</span>, <span class='boolval'>false</span>)
+    }
+
+    <span class='attribute'>#[<span class='ident'>test</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>rendezvous_connection_tcp_two_services</span>() {
+        <span class='ident'>peer_to_peer_connection_two_services</span>(<span class='ident'>Protocol</span>::<span class='ident'>Tcp</span>, <span class='boolval'>false</span>, <span class='boolval'>false</span>);
+    }
+
+    <span class='attribute'>#[<span class='ident'>test</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>rendezvous_connection_udp_two_services</span>() {
+        <span class='ident'>peer_to_peer_connection_two_services</span>(<span class='ident'>Protocol</span>::<span class='ident'>Udp</span>, <span class='boolval'>false</span>, <span class='boolval'>false</span>);
+    }
+
+    <span class='comment'>// TODO: change this to allow arbitrary number of nodes.</span>
+    <span class='kw'>fn</span> <span class='ident'>rendezvous_connection_three_services</span>(<span class='ident'>protocol</span>: <span class='ident'>Protocol</span>) {
         <span class='kw'>const</span> <span class='ident'>NUM_SERVICES</span>: <span class='ident'>usize</span> <span class='op'>=</span> <span class='number'>3</span>;
         <span class='kw'>const</span> <span class='ident'>MSG_SIZE</span>: <span class='ident'>usize</span> <span class='op'>=</span> <span class='number'>1024</span>;
         <span class='kw'>const</span> <span class='ident'>NUM_MSGS</span>: <span class='ident'>usize</span> <span class='op'>=</span> <span class='number'>256</span>;
 
         <span class='kw'>struct</span> <span class='ident'>TestNode</span> {
             <span class='ident'>event_rx</span>: <span class='ident'>Receiver</span><span class='op'>&lt;</span><span class='ident'>Event</span><span class='op'>&gt;</span>,
-            <span class='ident'>service</span>: <span class='ident'>Service</span>,
             <span class='ident'>_category_rx</span>: <span class='ident'>Receiver</span><span class='op'>&lt;</span><span class='ident'>MaidSafeEventCategory</span><span class='op'>&gt;</span>,
+            <span class='ident'>service</span>: <span class='ident'>Service</span>,
             <span class='ident'>connection_id_rx</span>: <span class='ident'>Receiver</span><span class='op'>&lt;</span><span class='ident'>TheirConnectionInfo</span><span class='op'>&gt;</span>,
             <span class='ident'>our_cis</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>OurConnectionInfo</span><span class='op'>&gt;</span>,
             <span class='ident'>our_index</span>: <span class='ident'>usize</span>,
@@ -2427,7 +2431,8 @@
                 <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>config</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(::<span class='ident'>config_handler</span>::<span class='ident'>read_config_file</span>());
                 <span class='kw'>match</span> <span class='ident'>protocol</span> {
                     <span class='ident'>Protocol</span>::<span class='ident'>Tcp</span> <span class='op'>=&gt;</span> <span class='ident'>config</span>.<span class='ident'>enable_utp</span> <span class='op'>=</span> <span class='boolval'>false</span>,
-                    <span class='ident'>Protocol</span>::<span class='ident'>Utp</span> <span class='op'>=&gt;</span> <span class='ident'>config</span>.<span class='ident'>enable_tcp</span> <span class='op'>=</span> <span class='boolval'>false</span>,
+                    <span class='ident'>Protocol</span>::<span class='ident'>Udp</span> <span class='op'>=&gt;</span> <span class='ident'>config</span>.<span class='ident'>enable_tcp</span> <span class='op'>=</span> <span class='boolval'>false</span>,
+                    <span class='ident'>Protocol</span>::<span class='ident'>Both</span> <span class='op'>=&gt;</span> (),
                 };
                 <span class='kw'>let</span> <span class='ident'>service</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>Service</span>::<span class='ident'>with_config</span>(<span class='ident'>event_sender</span>, <span class='kw-2'>&amp;</span><span class='ident'>config</span>));
                 <span class='kw'>match</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>event_rx</span>.<span class='ident'>recv</span>()) {
@@ -2437,8 +2442,8 @@
                 <span class='kw'>let</span> (<span class='ident'>ci_tx</span>, <span class='ident'>ci_rx</span>) <span class='op'>=</span> <span class='ident'>mpsc</span>::<span class='ident'>channel</span>();
                 (<span class='ident'>TestNode</span> {
                     <span class='ident'>event_rx</span>: <span class='ident'>event_rx</span>,
-                    <span class='ident'>service</span>: <span class='ident'>service</span>,
                     <span class='ident'>_category_rx</span>: <span class='ident'>category_rx</span>,
+                    <span class='ident'>service</span>: <span class='ident'>service</span>,
                     <span class='ident'>connection_id_rx</span>: <span class='ident'>ci_rx</span>,
                     <span class='ident'>our_cis</span>: <span class='ident'>Vec</span>::<span class='ident'>new</span>(),
                     <span class='ident'>our_index</span>: <span class='ident'>index</span>,
@@ -2451,17 +2456,10 @@
                     <span class='kw'>if</span> <span class='ident'>i</span> <span class='op'>==</span> <span class='self'>self</span>.<span class='ident'>our_index</span> {
                         <span class='kw'>continue</span>;
                     }
-                    <span class='kw'>const</span> <span class='ident'>PREPARE_CI_TOKEN</span>: <span class='ident'>u32</span> <span class='op'>=</span> <span class='number'>1234</span>;
-                    <span class='self'>self</span>.<span class='ident'>service</span>.<span class='ident'>prepare_connection_info</span>(<span class='ident'>PREPARE_CI_TOKEN</span>);
-                    <span class='kw'>let</span> <span class='ident'>our_ci</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>event_rx</span>.<span class='ident'>recv</span>()) {
-                        <span class='ident'>Event</span>::<span class='ident'>ConnectionInfoPrepared</span>(<span class='ident'>cir</span>) <span class='op'>=&gt;</span> {
-                            <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>cir</span>.<span class='ident'>result_token</span>, <span class='ident'>PREPARE_CI_TOKEN</span>);
-                            <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>cir</span>.<span class='ident'>result</span>)
-                        }
-                        <span class='ident'>m</span> <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Received unexpected event: m == {:?}&quot;</span>, <span class='ident'>m</span>),
-                    };
+
+                    <span class='kw'>let</span> <span class='ident'>our_ci</span> <span class='op'>=</span> <span class='ident'>prepare_connection_info</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>.<span class='ident'>service</span>, <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>event_rx</span>);
                     <span class='kw'>let</span> <span class='ident'>their_ci</span> <span class='op'>=</span> <span class='ident'>our_ci</span>.<span class='ident'>to_their_connection_info</span>();
-                    <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>ci_tx</span>.<span class='ident'>send</span>(<span class='ident'>their_ci</span>));
+                    <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>ci_tx</span>.<span class='ident'>send</span>(<span class='ident'>their_ci</span>);
                     <span class='self'>self</span>.<span class='ident'>our_cis</span>.<span class='ident'>push</span>(<span class='ident'>our_ci</span>);
                 }
             }
@@ -2495,7 +2493,7 @@
                             <span class='kw'>for</span> _ <span class='kw'>in</span> <span class='number'>0</span>..<span class='ident'>MSG_SIZE</span> {
                                 <span class='ident'>msg</span>.<span class='ident'>push</span>(<span class='ident'>n</span> <span class='kw'>as</span> <span class='ident'>u8</span>);
                             }
-                            <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>service</span>.<span class='ident'>send</span>(<span class='ident'>their_id</span>, <span class='ident'>msg</span>));
+                            <span class='kw'>let</span> _ <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>service</span>.<span class='ident'>send</span>(<span class='ident'>their_id</span>, <span class='ident'>msg</span>);
                         }
                     }
 
@@ -2570,16 +2568,62 @@
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
-    <span class='kw'>fn</span> <span class='ident'>start_three_service_utp_rendezvous_connect</span>() {
-        <span class='ident'>start_three_service_rendezvous_connect</span>(<span class='ident'>Protocol</span>::<span class='ident'>Utp</span>);
+    <span class='kw'>fn</span> <span class='ident'>rendezvous_connection_udp_three_services</span>() {
+        <span class='ident'>rendezvous_connection_three_services</span>(<span class='ident'>Protocol</span>::<span class='ident'>Udp</span>);
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
-    <span class='attribute'>#[<span class='ident'>ignore</span>]</span>
-    <span class='comment'>// FIXME: un-ignore this once https://github.com/maidsafe/crust/issues/601</span>
-    <span class='comment'>// is fixed.</span>
-    <span class='kw'>fn</span> <span class='ident'>start_three_service_tcp_rendezvous_connect</span>() {
-        <span class='ident'>start_three_service_rendezvous_connect</span>(<span class='ident'>Protocol</span>::<span class='ident'>Tcp</span>);
+    <span class='kw'>fn</span> <span class='ident'>rendezvous_connection_tcp_three_service</span>() {
+        <span class='ident'>rendezvous_connection_three_services</span>(<span class='ident'>Protocol</span>::<span class='ident'>Tcp</span>);
+    }
+
+    <span class='attribute'>#[<span class='ident'>test</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>drop_disconnects</span>() {
+        <span class='kw'>let</span> <span class='ident'>beacon_port</span> <span class='op'>=</span> <span class='ident'>gen_beacon_port</span>();
+
+        <span class='kw'>let</span> <span class='ident'>config_0</span> <span class='op'>=</span> <span class='ident'>gen_config_with_beacon</span>(<span class='ident'>beacon_port</span>);
+        <span class='kw'>let</span> <span class='ident'>config_1</span> <span class='op'>=</span> <span class='ident'>gen_config_with_beacon</span>(<span class='ident'>beacon_port</span>);
+
+        <span class='kw'>let</span> (<span class='ident'>event_sender_0</span>, <span class='ident'>_category_rx_0</span>, <span class='ident'>event_rx_0</span>) <span class='op'>=</span> <span class='ident'>get_event_sender</span>();
+        <span class='kw'>let</span> (<span class='ident'>event_sender_1</span>, <span class='ident'>_category_rx_1</span>, <span class='ident'>event_rx_1</span>) <span class='op'>=</span> <span class='ident'>get_event_sender</span>();
+
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>service_0</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>Service</span>::<span class='ident'>with_config</span>(<span class='ident'>event_sender_0</span>, <span class='kw-2'>&amp;</span><span class='ident'>config_0</span>));
+        <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>service_0</span>.<span class='ident'>start_listening_tcp</span>());
+
+        <span class='comment'>// Let service_0 finish bootstrap - it should not find any peer.</span>
+        <span class='kw'>match</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>event_rx_0</span>.<span class='ident'>recv</span>()) {
+            <span class='ident'>Event</span>::<span class='ident'>BootstrapFinished</span> <span class='op'>=&gt;</span> (),
+            <span class='ident'>event_rxd</span> <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Received unexpected event: {:?}&quot;</span>, <span class='ident'>event_rxd</span>),
+        }
+        <span class='ident'>service_0</span>.<span class='ident'>start_service_discovery</span>();
+
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>service_1</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>Service</span>::<span class='ident'>with_config</span>(<span class='ident'>event_sender_1</span>, <span class='kw-2'>&amp;</span><span class='ident'>config_1</span>));
+        <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>service_1</span>.<span class='ident'>start_listening_tcp</span>());
+
+        <span class='comment'>// Let service_1 finish bootstrap - it should bootstrap off service_0.</span>
+        <span class='kw'>let</span> <span class='ident'>id_0</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>event_rx_1</span>.<span class='ident'>recv</span>()) {
+            <span class='ident'>Event</span>::<span class='ident'>BootstrapConnect</span>(<span class='ident'>their_id</span>) <span class='op'>=&gt;</span> <span class='ident'>their_id</span>,
+            <span class='ident'>event</span> <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Received unexpected event: {:?}&quot;</span>, <span class='ident'>event</span>),
+        };
+
+        <span class='comment'>// Now service_1 should get BootstrapFinished.</span>
+        <span class='kw'>match</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>event_rx_1</span>.<span class='ident'>recv</span>()) {
+            <span class='ident'>Event</span>::<span class='ident'>BootstrapFinished</span> <span class='op'>=&gt;</span> (),
+            <span class='ident'>event</span> <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Received unexpected event: {:?}&quot;</span>, <span class='ident'>event</span>),
+        }
+
+        <span class='comment'>// service_0 should have received service_1&#39;s bootstrap connection by now.</span>
+        <span class='kw'>let</span> _ <span class='op'>=</span> <span class='kw'>match</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>event_rx_0</span>.<span class='ident'>recv</span>()) {
+            <span class='ident'>Event</span>::<span class='ident'>BootstrapAccept</span>(<span class='ident'>their_id</span>) <span class='op'>=&gt;</span> <span class='ident'>their_id</span>,
+            _ <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;0 Should have got a new connection from 1.&quot;</span>),
+        };
+
+        <span class='comment'>// Dropping service_0 should make service_1 receive a LostPeer event.</span>
+        <span class='ident'>drop</span>(<span class='ident'>service_0</span>);
+        <span class='kw'>match</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>event_rx_1</span>.<span class='ident'>recv</span>()) {
+            <span class='ident'>Event</span>::<span class='ident'>LostPeer</span>(<span class='ident'>id</span>) <span class='op'>=&gt;</span> <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>id</span>, <span class='ident'>id_0</span>),
+            <span class='ident'>event</span> <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Received unexpected event: {:?}&quot;</span>, <span class='ident'>event</span>),
+        }
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
@@ -2615,9 +2659,7 @@
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>new_peer_is_not_raised_if_only_one_party_calls_connect</span>() {
-        <span class='kw'>const</span> <span class='ident'>PREPARE_CI_TOKEN</span>: <span class='ident'>u32</span> <span class='op'>=</span> <span class='number'>0</span>;
-
-        <span class='kw'>let</span> <span class='ident'>config_0</span> <span class='op'>=</span> <span class='ident'>gen_config</span>();
+         <span class='kw'>let</span> <span class='ident'>config_0</span> <span class='op'>=</span> <span class='ident'>gen_config</span>();
         <span class='kw'>let</span> <span class='ident'>config_1</span> <span class='op'>=</span> <span class='ident'>gen_config</span>();
 
         <span class='kw'>let</span> (<span class='ident'>event_sender_0</span>, <span class='ident'>_category_rx_0</span>, <span class='ident'>event_rx_0</span>) <span class='op'>=</span> <span class='ident'>get_event_sender</span>();
@@ -2641,28 +2683,8 @@
         <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>service_1</span>.<span class='ident'>start_listening_tcp</span>());
         <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>service_1</span>.<span class='ident'>start_listening_utp</span>());
 
-        <span class='ident'>service_0</span>.<span class='ident'>prepare_connection_info</span>(<span class='ident'>PREPARE_CI_TOKEN</span>);
-        <span class='kw'>let</span> <span class='ident'>our_ci_0</span> <span class='op'>=</span> {
-            <span class='kw'>match</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>event_rx_0</span>.<span class='ident'>recv</span>()) {
-                <span class='ident'>Event</span>::<span class='ident'>ConnectionInfoPrepared</span>(<span class='ident'>cir</span>) <span class='op'>=&gt;</span> {
-                    <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>cir</span>.<span class='ident'>result_token</span>, <span class='ident'>PREPARE_CI_TOKEN</span>);
-                    <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>cir</span>.<span class='ident'>result</span>)
-                }
-                <span class='ident'>event</span> <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Received unexpected event: {:?}&quot;</span>, <span class='ident'>event</span>),
-            }
-        };
-
-        <span class='ident'>service_1</span>.<span class='ident'>prepare_connection_info</span>(<span class='ident'>PREPARE_CI_TOKEN</span>);
-        <span class='kw'>let</span> <span class='ident'>our_ci_1</span> <span class='op'>=</span> {
-            <span class='kw'>match</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>event_rx_1</span>.<span class='ident'>recv</span>()) {
-                <span class='ident'>Event</span>::<span class='ident'>ConnectionInfoPrepared</span>(<span class='ident'>cir</span>) <span class='op'>=&gt;</span> {
-                    <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>cir</span>.<span class='ident'>result_token</span>, <span class='ident'>PREPARE_CI_TOKEN</span>);
-                    <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>cir</span>.<span class='ident'>result</span>)
-                }
-                <span class='ident'>event</span> <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;Received unexpected event: {:?}&quot;</span>, <span class='ident'>event</span>),
-            }
-        };
-
+        <span class='kw'>let</span> <span class='ident'>our_ci_0</span> <span class='op'>=</span> <span class='ident'>prepare_connection_info</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>service_0</span>, <span class='kw-2'>&amp;</span><span class='ident'>event_rx_0</span>);
+        <span class='kw'>let</span> <span class='ident'>our_ci_1</span> <span class='op'>=</span> <span class='ident'>prepare_connection_info</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>service_1</span>, <span class='kw-2'>&amp;</span><span class='ident'>event_rx_1</span>);
         <span class='kw'>let</span> <span class='ident'>their_ci_1</span> <span class='op'>=</span> <span class='ident'>our_ci_1</span>.<span class='ident'>to_their_connection_info</span>();
 
         <span class='ident'>service_0</span>.<span class='ident'>connect</span>(<span class='ident'>our_ci_0</span>, <span class='ident'>their_ci_1</span>);
