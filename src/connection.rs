@@ -253,15 +253,6 @@ pub fn connect(peer_contact: StaticContactInfo,
     Err(last_err)
 }
 
-/*  FIXME(canndrew) 23/03/2016
- *
- *  This has been commented out while the corresponding code in Service::connect is commented out
- *  to avoid setting off the unused lint.
- *
- *  We should be able to reenable tcp rendezvous connect very soon as the bug has been fixed in
- *  nat_traversal.
- *  
-
 pub fn tcp_rendezvous_connect(connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
                               event_tx: ::CrustEventSender,
                               tcp_stream: TcpStream,
@@ -287,7 +278,6 @@ pub fn tcp_rendezvous_connect(connection_map: Arc<Mutex<HashMap<PeerId, Vec<Conn
     cm.entry(their_id).or_insert_with(Vec::new).push(connection);
     Ok(())
 }
-*/
 
 pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
                             our_public_key: PublicKey,
@@ -385,13 +375,12 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
 }
 
 fn register_tcp_connection(connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
-                               their_id: PeerId,
-                               network_rx: Receiver,
-                               network_tx: RaiiSender,
-                               event_tx: ::CrustEventSender,
-                               our_addr: SocketAddr,
-                               their_addr: SocketAddr)
-                               -> Connection {
+                           their_id: PeerId,
+                           network_rx: Receiver,
+                           network_tx: RaiiSender,
+                           event_tx: ::CrustEventSender,
+                           our_addr: SocketAddr,
+                           their_addr: SocketAddr) -> Connection {
     let closed = Arc::new(AtomicBool::new(false));
     let closed_clone = closed.clone();
 

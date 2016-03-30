@@ -15,10 +15,13 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+#![deny(unused)]
+
 use std::collections::{HashMap, HashSet};
 use std::io;
 use std::net;
 use std::sync::{mpsc, Arc, Mutex};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::fmt::Write;
 use service_discovery::ServiceDiscovery;
 use sodiumoxide;
@@ -27,7 +30,7 @@ use sodiumoxide::crypto::box_::{PublicKey, SecretKey};
 use net2;
 use nat_traversal::{MappedUdpSocket, MappingContext, PrivRendezvousInfo, MappedTcpSocket,
                     PubRendezvousInfo, PunchedUdpSocket, gen_rendezvous_info,
-                    SimpleUdpHolePunchServer, SimpleTcpHolePunchServer};
+                    SimpleUdpHolePunchServer, SimpleTcpHolePunchServer, tcp_punch_hole};
 
 
 use sender_receiver::CrustMsg;
@@ -128,6 +131,7 @@ pub struct Service {
     utp_enabled: bool,
     _udp_hole_punch_server: SimpleUdpHolePunchServer<Arc<MappingContext>>,
     _tcp_hole_punch_server: SimpleTcpHolePunchServer<Arc<MappingContext>>,
+    is_alive: Arc<AtomicBool>,
 }
 
 impl Service {
@@ -229,6 +233,7 @@ impl Service {
             utp_enabled: config.enable_utp,
             _udp_hole_punch_server: udp_hole_punch_server,
             _tcp_hole_punch_server: tcp_hole_punch_server,
+            is_alive: Arc::new(AtomicBool::new(true)),
         };
 
         Ok(service)
@@ -406,44 +411,48 @@ impl Service {
                 });
             }
 
-            // FIXME: TCP rendezvous temporarily disabled, until
-            // https://github.com/maidsafe/crust/issues/601 is fixed.
-            //
-            // if let Some(tcp_socket) = our_connection_info.tcp_socket {
-            //     let tcp_info = their_connection_info.tcp_info;
-            //     let event_tx = event_tx.clone();
-            //     let connection_map = connection_map.clone();
-            //     let result_tx = result_tx.clone();
-            //     let priv_tcp_info = our_connection_info.priv_tcp_info;
-            //     let _ = thread!("Service::connect tcp rendezvous", move || {
-            //         let res = tcp_punch_hole(tcp_socket,
-            //                                  priv_tcp_info,
-            //                                  tcp_info).result_log();
-            //         match res {
-            //             Ok(tcp_stream) => {
-            //                 match connection::tcp_rendezvous_connect(connection_map,
-            //                                                          event_tx,
-            //                                                          tcp_stream,
-            //                                                          their_id) {
-            //                     Ok(()) => {
-            //                         result_tx.send(Ok(()));
-            //                     },
-            //                     Err(err) => {
-            //                         let err_msg = format!("Tcp rendezvous connect failed: {}", err);
-            //                         let err = io::Error::new(err.kind(), err_msg);
-            //                         result_tx.send(Err(err));
-            //                     },
-            //                 }
-            //             },
-            //             Err(err) => {
-            //                 let err: io::Error = From::from(err);
-            //                 let err_msg = format!("Tcp hole punching failed: {}", err);
-            //                 let err = io::Error::new(err.kind(), err_msg);
-            //                 result_tx.send(Err(err));
-            //             },
-            //         };
-            //     });
-            // };
+            if let Some(tcp_socket) = our_connection_info.tcp_socket {
+                let tcp_info = their_connection_info.tcp_info;
+                let event_tx = event_tx.clone();
+                let connection_map = connection_map.clone();
+                let result_tx = result_tx.clone();
+                let priv_tcp_info = our_connection_info.priv_tcp_info;
+                let is_alive = self.is_alive.clone();
+
+                let _ = thread!("Service::connect tcp rendezvous", move || {
+                    let res = tcp_punch_hole(tcp_socket,
+                                             priv_tcp_info,
+                                             tcp_info).result_log();
+
+                    if !is_alive.load(Ordering::Relaxed) {
+                        return;
+                    }
+
+                    match res {
+                        Ok(tcp_stream) => {
+                            match connection::tcp_rendezvous_connect(connection_map,
+                                                                     event_tx,
+                                                                     tcp_stream,
+                                                                     their_id) {
+                                Ok(()) => {
+                                    let _ = result_tx.send(Ok(()));
+                                },
+                                Err(err) => {
+                                    let err_msg = format!("Tcp rendezvous connect failed: {}", err);
+                                    let err = io::Error::new(err.kind(), err_msg);
+                                    let _ = result_tx.send(Err(err));
+                                },
+                            }
+                        },
+                        Err(err) => {
+                            let err: io::Error = From::from(err);
+                            let err_msg = format!("Tcp hole punching failed: {}", err);
+                            let err = io::Error::new(err.kind(), err_msg);
+                            let _ = result_tx.send(Err(err));
+                        },
+                    };
+                });
+            };
         }
 
         if utp_enabled {
@@ -453,6 +462,8 @@ impl Service {
                 let event_tx = event_tx.clone();
                 let connection_map = connection_map.clone();
                 let result_tx = result_tx.clone();
+                let is_alive = self.is_alive.clone();
+
                 let _ = thread!("Service::connect utp rendezvous", move || {
                     let res = PunchedUdpSocket::punch_hole(udp_socket, priv_udp_info, udp_info)
                                   .result_log();
@@ -466,6 +477,11 @@ impl Service {
                             return;
                         }
                     };
+
+                    if !is_alive.load(Ordering::Relaxed) {
+                        return;
+                    }
+
                     match connection::utp_rendezvous_connect(udp_socket,
                                                              public_endpoint,
                                                              UtpRendezvousConnectMode::Normal(their_id),
@@ -592,6 +608,8 @@ impl Service {
 
 impl Drop for Service {
     fn drop(&mut self) {
+        self.is_alive.store(false, Ordering::Relaxed);
+
         // Disconnect from all peers when we drop the service
         let mut cm = unwrap_result!(self.connection_map.lock());
         cm.clear();
@@ -603,7 +621,6 @@ mod test {
     use super::*;
     use config_handler::Config;
     use event::Event;
-    use endpoint::Protocol;
 
     use std::time::Duration;
     use std::sync::atomic::{AtomicUsize, ATOMIC_USIZE_INIT, Ordering};
@@ -617,6 +634,13 @@ mod test {
     use crossbeam;
     use void::Void;
     use maidsafe_utilities::event_sender::{MaidSafeObserver, MaidSafeEventCategory};
+
+    #[derive(Clone, Copy)]
+    enum Protocol {
+        Tcp,
+        Udp,
+        Both,
+    }
 
     fn get_event_sender()
         -> (::CrustEventSender,
@@ -680,6 +704,32 @@ mod test {
         config
     }
 
+    fn start_listening(service: &mut Service, protocol: Protocol) {
+        match protocol {
+            Protocol::Tcp => unwrap_result!(service.start_listening_tcp()),
+            Protocol::Udp => unwrap_result!(service.start_listening_utp()),
+            Protocol::Both => {
+                unwrap_result!(service.start_listening_tcp());
+                unwrap_result!(service.start_listening_utp());
+            }
+        }
+    }
+
+    fn prepare_connection_info(service: &mut Service, event_rx: &Receiver<Event>) -> OurConnectionInfo {
+        static TOKEN_COUNTER: AtomicUsize = ATOMIC_USIZE_INIT;
+        let token = TOKEN_COUNTER.fetch_add(1, Ordering::Relaxed) as u32;
+
+        service.prepare_connection_info(token);
+
+        match unwrap_result!(event_rx.recv()) {
+            Event::ConnectionInfoPrepared(cir) => {
+                assert_eq!(cir.result_token, token);
+                unwrap_result!(cir.result)
+            }
+            event => panic!("Received unexpected event: {:?}", event),
+        }
+    }
+
     #[test]
     fn start_stop_service() {
         let config = gen_config();
@@ -687,9 +737,7 @@ mod test {
         let _service = unwrap_result!(Service::with_config(event_sender, &config));
     }
 
-    fn two_services_bootstrap_communicate_and_exit(use_tcp: bool, use_udp: bool) {
-        assert!(use_tcp || use_udp);
-
+    fn bootstrap_connection_two_services(protocol: Protocol) {
         let (event_sender_0, _category_rx_0, event_rx_0) = get_event_sender();
         let (event_sender_1, _category_rx_1, event_rx_1) = get_event_sender();
 
@@ -698,12 +746,8 @@ mod test {
         let config_1 = gen_config_with_beacon(beacon_port);
 
         let mut service_0 = unwrap_result!(Service::with_config(event_sender_0, &config_0));
-        if use_tcp {
-            unwrap_result!(service_0.start_listening_tcp());
-        }
-        if use_udp {
-            unwrap_result!(service_0.start_listening_utp());
-        }
+        start_listening(&mut service_0, protocol);
+
         // let service_0 finish bootstrap - since it is the zero state, it should not find any peer
         // to bootstrap
         {
@@ -716,12 +760,7 @@ mod test {
         service_0.start_service_discovery();
 
         let mut service_1 = unwrap_result!(Service::with_config(event_sender_1, &config_1));
-        if use_tcp {
-            unwrap_result!(service_1.start_listening_tcp());
-        }
-        if use_udp {
-            unwrap_result!(service_1.start_listening_utp());
-        }
+        start_listening(&mut service_1, protocol);
 
         // let service_1 finish bootstrap - it should bootstrap off service_0
         let id_0 = {
@@ -805,12 +844,14 @@ mod test {
         // Drop services and make sure the event channels close
         drop(service_0);
         let (done_tx, done_rx) = mpsc::channel();
+        let thread_handle = thread::current();
         let tj = thread!("Drain event channel messages", move || {
             match event_rx_0.recv() {
                 Ok(e) => panic!("Received unexpected event when shutting down: {:?}", e),
                 Err(mpsc::RecvError) => (),
             };
             unwrap_result!(done_tx.send(()));
+            thread_handle.unpark();
         });
         thread::park_timeout(Duration::from_secs(60));
         unwrap_result!(done_rx.try_recv());
@@ -818,12 +859,14 @@ mod test {
 
         drop(service_1);
         let (done_tx, done_rx) = mpsc::channel();
+        let thread_handle = thread::current();
         let tj = thread!("Drain event channel messages", move || {
             match event_rx_1.recv() {
                 Ok(e) => panic!("Received unexpected event when shutting down: {:?}", e),
                 Err(mpsc::RecvError) => (),
             };
             unwrap_result!(done_tx.send(()));
+            thread_handle.unpark();
         });
         thread::park_timeout(Duration::from_secs(5));
         unwrap_result!(done_rx.try_recv());
@@ -831,131 +874,59 @@ mod test {
     }
 
     #[test]
-    fn start_two_services_bootstrap_communicate_exit_tcp() {
-        two_services_bootstrap_communicate_and_exit(true, false);
+    fn bootstrap_connection_tcp_two_services() {
+        bootstrap_connection_two_services(Protocol::Tcp);
     }
 
     #[test]
-    fn start_two_services_bootstrap_communicate_exit_udp() {
-        two_services_bootstrap_communicate_and_exit(false, true);
+    fn bootstrap_connection_udp_two_services() {
+        bootstrap_connection_two_services(Protocol::Udp);
     }
 
     #[test]
-    fn start_two_services_bootstrap_communicate_exit_tcp_and_udp() {
-        two_services_bootstrap_communicate_and_exit(true, true);
+    fn bootstrap_connection_tcp_and_udp_two_services() {
+        bootstrap_connection_two_services(Protocol::Both);
     }
 
-    #[test]
-    fn drop_disconnects() {
-        let beacon_port = gen_beacon_port();
-
-        let config_0 = gen_config_with_beacon(beacon_port);
-        let config_1 = gen_config_with_beacon(beacon_port);
-
-        let (event_sender_0, _category_rx_0, event_rx_0) = get_event_sender();
-        let (event_sender_1, _category_rx_1, event_rx_1) = get_event_sender();
-
-        let mut service_0 = unwrap_result!(Service::with_config(event_sender_0, &config_0));
-        unwrap_result!(service_0.start_listening_tcp());
-
-        // Let service_0 finish bootstrap - it should not find any peer.
-        match unwrap_result!(event_rx_0.recv()) {
-            Event::BootstrapFinished => (),
-            event_rxd => panic!("Received unexpected event: {:?}", event_rxd),
-        }
-        service_0.start_service_discovery();
-
-        let mut service_1 = unwrap_result!(Service::with_config(event_sender_1, &config_1));
-        unwrap_result!(service_1.start_listening_tcp());
-
-        // Let service_1 finish bootstrap - it should bootstrap off service_0.
-        let id_0 = match unwrap_result!(event_rx_1.recv()) {
-            Event::BootstrapConnect(their_id) => their_id,
-            event => panic!("Received unexpected event: {:?}", event),
-        };
-
-        // Now service_1 should get BootstrapFinished.
-        match unwrap_result!(event_rx_1.recv()) {
-            Event::BootstrapFinished => (),
-            event => panic!("Received unexpected event: {:?}", event),
-        }
-
-        // service_0 should have received service_1's bootstrap connection by now.
-        let id_1 = match unwrap_result!(event_rx_0.recv()) {
-            Event::BootstrapAccept(their_id) => their_id,
-            _ => panic!("0 Should have got a new connection from 1."),
-        };
-
-        assert_eq!(id_0, service_0.id());
-        assert_eq!(id_1, service_1.id());
-
-        // Dropping service_0 should make service_1 receive a LostPeer event.
-        drop(service_0);
-        match unwrap_result!(event_rx_1.recv()) {
-            Event::LostPeer(id) => assert_eq!(id, id_0),
-            event => panic!("Received unexpected event: {:?}", event),
-        }
-    }
-
-    fn start_two_service_rendezvous_connect(protocol: Protocol) {
+    fn peer_to_peer_connection_two_services(protocol: Protocol, listen_0: bool, listen_1: bool) {
         let (event_sender_0, _category_rx_0, event_rx_0) = get_event_sender();
         let (event_sender_1, _category_rx_1, event_rx_1) = get_event_sender();
 
         let mut config = gen_config();
         match protocol {
             Protocol::Tcp => config.enable_utp = false,
-            Protocol::Utp => config.enable_tcp = false,
-        };
+            Protocol::Udp => config.enable_tcp = false,
+            _ => (),
+        }
 
         let mut service_0 = unwrap_result!(Service::with_config(event_sender_0, &config));
+        if listen_0 {
+            start_listening(&mut service_0, protocol);
+        }
+
         // let service_0 finish bootstrap - since it is the zero state, it should not find any peer
         // to bootstrap
-        {
-            let event_rxd = unwrap_result!(event_rx_0.recv());
-            match event_rxd {
-                Event::BootstrapFinished => (),
-                _ => panic!("Received unexpected event: {:?}", event_rxd),
-            }
+        match unwrap_result!(event_rx_0.recv()) {
+            Event::BootstrapFinished => (),
+            event => panic!("Received unexpected event: {:?}", event),
         }
 
         let mut service_1 = unwrap_result!(Service::with_config(event_sender_1, &config));
-        // let service_0 finish bootstrap - since it is the zero state, it should not find any peer
-        // to bootstrap
-        {
-            let event_rxd = unwrap_result!(event_rx_1.recv());
-            match event_rxd {
-                Event::BootstrapFinished => (),
-                _ => panic!("Received unexpected event: {:?}", event_rxd),
-            }
+        if listen_1 {
+            start_listening(&mut service_1, protocol);
         }
 
-        const PREPARE_CI_TOKEN: u32 = 1234;
+        // let service_0 finish bootstrap - since it is the zero state, it should not find any peer
+        // to bootstrap
+        match unwrap_result!(event_rx_1.recv()) {
+            Event::BootstrapFinished => (),
+            event => panic!("Received unexpected event: {:?}", event),
+        }
 
-        service_0.prepare_connection_info(PREPARE_CI_TOKEN);
-        let our_ci_0 = {
-            let event_rxd = unwrap_result!(event_rx_0.recv());
-            match event_rxd {
-                Event::ConnectionInfoPrepared(cir) => {
-                    assert_eq!(cir.result_token, PREPARE_CI_TOKEN);
-                    unwrap_result!(cir.result)
-                }
-                _ => panic!("Received unexpected event: {:?}", event_rxd),
-            }
-        };
-
-        service_1.prepare_connection_info(PREPARE_CI_TOKEN);
-        let our_ci_1 = {
-            let event_rxd = unwrap_result!(event_rx_1.recv());
-            match event_rxd {
-                Event::ConnectionInfoPrepared(cir) => {
-                    assert_eq!(cir.result_token, PREPARE_CI_TOKEN);
-                    unwrap_result!(cir.result)
-                }
-                _ => panic!("Received unexpected event: {:?}", event_rxd),
-            }
-        };
-
+        let our_ci_0 = prepare_connection_info(&mut service_0, &event_rx_0);
         let their_ci_0 = our_ci_0.to_their_connection_info();
+
+        let our_ci_1 = prepare_connection_info(&mut service_1, &event_rx_1);
         let their_ci_1 = our_ci_1.to_their_connection_info();
 
         service_0.connect(our_ci_0, their_ci_1);
@@ -1010,9 +981,11 @@ mod test {
         // Drop services and make sure the event channels close
         drop(service_0);
         let (done_tx, done_rx) = mpsc::channel();
+        let thread_handle = thread::current();
         let tj = thread!("Drain event channel messages", move || {
             for _ in event_rx_0 {}
-            unwrap_result!(done_tx.send(()));
+            let _ = done_tx.send(());
+            thread_handle.unpark();
         });
         thread::park_timeout(Duration::from_secs(5));
         unwrap_result!(done_rx.try_recv());
@@ -1020,9 +993,11 @@ mod test {
 
         drop(service_1);
         let (done_tx, done_rx) = mpsc::channel();
+        let thread_handle = thread::current();
         let tj = thread!("Drain event channel messages", move || {
             for _ in event_rx_1 {}
-            unwrap_result!(done_tx.send(()));
+            let _ = done_tx.send(());
+            thread_handle.unpark();
         });
         thread::park_timeout(Duration::from_secs(5));
         unwrap_result!(done_rx.try_recv());
@@ -1030,27 +1005,45 @@ mod test {
     }
 
     #[test]
-    fn start_two_service_utp_rendezvous_connect() {
-        start_two_service_rendezvous_connect(Protocol::Utp);
+    fn direct_connection_tcp_two_services() {
+        peer_to_peer_connection_two_services(Protocol::Tcp, true, true)
     }
 
-    // FIXME: un-ignore this once https://github.com/maidsafe/crust/issues/601
-    // is fixed.
     #[test]
-    #[ignore]
-    fn start_two_service_tcp_rendezvous_connect() {
-        start_two_service_rendezvous_connect(Protocol::Tcp);
+    fn direct_connection_udp_two_services() {
+        peer_to_peer_connection_two_services(Protocol::Udp, true, true)
     }
 
-    fn start_three_service_rendezvous_connect(protocol: Protocol) {
+    #[test]
+    fn semi_direct_connection_tcp_two_services() {
+        peer_to_peer_connection_two_services(Protocol::Tcp, true, false)
+    }
+
+    #[test]
+    fn semi_direct_connection_udp_two_services() {
+        peer_to_peer_connection_two_services(Protocol::Udp, true, false)
+    }
+
+    #[test]
+    fn rendezvous_connection_tcp_two_services() {
+        peer_to_peer_connection_two_services(Protocol::Tcp, false, false);
+    }
+
+    #[test]
+    fn rendezvous_connection_udp_two_services() {
+        peer_to_peer_connection_two_services(Protocol::Udp, false, false);
+    }
+
+    // TODO: change this to allow arbitrary number of nodes.
+    fn rendezvous_connection_three_services(protocol: Protocol) {
         const NUM_SERVICES: usize = 3;
         const MSG_SIZE: usize = 1024;
         const NUM_MSGS: usize = 256;
 
         struct TestNode {
             event_rx: Receiver<Event>,
-            service: Service,
             _category_rx: Receiver<MaidSafeEventCategory>,
+            service: Service,
             connection_id_rx: Receiver<TheirConnectionInfo>,
             our_cis: Vec<OurConnectionInfo>,
             our_index: usize,
@@ -1064,7 +1057,8 @@ mod test {
                 let mut config = unwrap_result!(::config_handler::read_config_file());
                 match protocol {
                     Protocol::Tcp => config.enable_utp = false,
-                    Protocol::Utp => config.enable_tcp = false,
+                    Protocol::Udp => config.enable_tcp = false,
+                    Protocol::Both => (),
                 };
                 let service = unwrap_result!(Service::with_config(event_sender, &config));
                 match unwrap_result!(event_rx.recv()) {
@@ -1074,8 +1068,8 @@ mod test {
                 let (ci_tx, ci_rx) = mpsc::channel();
                 (TestNode {
                     event_rx: event_rx,
-                    service: service,
                     _category_rx: category_rx,
+                    service: service,
                     connection_id_rx: ci_rx,
                     our_cis: Vec::new(),
                     our_index: index,
@@ -1088,17 +1082,10 @@ mod test {
                     if i == self.our_index {
                         continue;
                     }
-                    const PREPARE_CI_TOKEN: u32 = 1234;
-                    self.service.prepare_connection_info(PREPARE_CI_TOKEN);
-                    let our_ci = match unwrap_result!(self.event_rx.recv()) {
-                        Event::ConnectionInfoPrepared(cir) => {
-                            assert_eq!(cir.result_token, PREPARE_CI_TOKEN);
-                            unwrap_result!(cir.result)
-                        }
-                        m => panic!("Received unexpected event: m == {:?}", m),
-                    };
+
+                    let our_ci = prepare_connection_info(&mut self.service, &self.event_rx);
                     let their_ci = our_ci.to_their_connection_info();
-                    unwrap_result!(ci_tx.send(their_ci));
+                    let _ = ci_tx.send(their_ci);
                     self.our_cis.push(our_ci);
                 }
             }
@@ -1132,7 +1119,7 @@ mod test {
                             for _ in 0..MSG_SIZE {
                                 msg.push(n as u8);
                             }
-                            unwrap_result!(self.service.send(their_id, msg));
+                            let _ = self.service.send(their_id, msg);
                         }
                     }
 
@@ -1207,16 +1194,62 @@ mod test {
     }
 
     #[test]
-    fn start_three_service_utp_rendezvous_connect() {
-        start_three_service_rendezvous_connect(Protocol::Utp);
+    fn rendezvous_connection_udp_three_services() {
+        rendezvous_connection_three_services(Protocol::Udp);
     }
 
     #[test]
-    #[ignore]
-    // FIXME: un-ignore this once https://github.com/maidsafe/crust/issues/601
-    // is fixed.
-    fn start_three_service_tcp_rendezvous_connect() {
-        start_three_service_rendezvous_connect(Protocol::Tcp);
+    fn rendezvous_connection_tcp_three_service() {
+        rendezvous_connection_three_services(Protocol::Tcp);
+    }
+
+    #[test]
+    fn drop_disconnects() {
+        let beacon_port = gen_beacon_port();
+
+        let config_0 = gen_config_with_beacon(beacon_port);
+        let config_1 = gen_config_with_beacon(beacon_port);
+
+        let (event_sender_0, _category_rx_0, event_rx_0) = get_event_sender();
+        let (event_sender_1, _category_rx_1, event_rx_1) = get_event_sender();
+
+        let mut service_0 = unwrap_result!(Service::with_config(event_sender_0, &config_0));
+        unwrap_result!(service_0.start_listening_tcp());
+
+        // Let service_0 finish bootstrap - it should not find any peer.
+        match unwrap_result!(event_rx_0.recv()) {
+            Event::BootstrapFinished => (),
+            event_rxd => panic!("Received unexpected event: {:?}", event_rxd),
+        }
+        service_0.start_service_discovery();
+
+        let mut service_1 = unwrap_result!(Service::with_config(event_sender_1, &config_1));
+        unwrap_result!(service_1.start_listening_tcp());
+
+        // Let service_1 finish bootstrap - it should bootstrap off service_0.
+        let id_0 = match unwrap_result!(event_rx_1.recv()) {
+            Event::BootstrapConnect(their_id) => their_id,
+            event => panic!("Received unexpected event: {:?}", event),
+        };
+
+        // Now service_1 should get BootstrapFinished.
+        match unwrap_result!(event_rx_1.recv()) {
+            Event::BootstrapFinished => (),
+            event => panic!("Received unexpected event: {:?}", event),
+        }
+
+        // service_0 should have received service_1's bootstrap connection by now.
+        let _ = match unwrap_result!(event_rx_0.recv()) {
+            Event::BootstrapAccept(their_id) => their_id,
+            _ => panic!("0 Should have got a new connection from 1."),
+        };
+
+        // Dropping service_0 should make service_1 receive a LostPeer event.
+        drop(service_0);
+        match unwrap_result!(event_rx_1.recv()) {
+            Event::LostPeer(id) => assert_eq!(id, id_0),
+            event => panic!("Received unexpected event: {:?}", event),
+        }
     }
 
     #[test]
@@ -1252,9 +1285,7 @@ mod test {
 
     #[test]
     fn new_peer_is_not_raised_if_only_one_party_calls_connect() {
-        const PREPARE_CI_TOKEN: u32 = 0;
-
-        let config_0 = gen_config();
+         let config_0 = gen_config();
         let config_1 = gen_config();
 
         let (event_sender_0, _category_rx_0, event_rx_0) = get_event_sender();
@@ -1278,28 +1309,8 @@ mod test {
         unwrap_result!(service_1.start_listening_tcp());
         unwrap_result!(service_1.start_listening_utp());
 
-        service_0.prepare_connection_info(PREPARE_CI_TOKEN);
-        let our_ci_0 = {
-            match unwrap_result!(event_rx_0.recv()) {
-                Event::ConnectionInfoPrepared(cir) => {
-                    assert_eq!(cir.result_token, PREPARE_CI_TOKEN);
-                    unwrap_result!(cir.result)
-                }
-                event => panic!("Received unexpected event: {:?}", event),
-            }
-        };
-
-        service_1.prepare_connection_info(PREPARE_CI_TOKEN);
-        let our_ci_1 = {
-            match unwrap_result!(event_rx_1.recv()) {
-                Event::ConnectionInfoPrepared(cir) => {
-                    assert_eq!(cir.result_token, PREPARE_CI_TOKEN);
-                    unwrap_result!(cir.result)
-                }
-                event => panic!("Received unexpected event: {:?}", event),
-            }
-        };
-
+        let our_ci_0 = prepare_connection_info(&mut service_0, &event_rx_0);
+        let our_ci_1 = prepare_connection_info(&mut service_1, &event_rx_1);
         let their_ci_1 = our_ci_1.to_their_connection_info();
 
         service_0.connect(our_ci_0, their_ci_1);
