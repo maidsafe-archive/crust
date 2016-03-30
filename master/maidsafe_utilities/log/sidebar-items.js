@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["init","Initialises the env_logger for output to stderr."],["init_to_file","Initialises the env_logger for output to a file and to stderr."]]});
+initSidebarItems({"fn":[["init","Initialises the env_logger for output to stdout."],["init_to_file","Initialises the env_logger for output to a file and optionally to the console asynchronously."],["init_to_server","Initialises the env_logger for output to a server and optionally to the console asynchronously."]]});

@@ -46,11 +46,13 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-47' class='srclink' href='../../src/maidsafe_utilities/log.rs.html#18-196' title='goto source code'>[src]</a></span></h1>
-<div class='docblock'><p>Allows initialising the env_logger with a standard message format.</p>
-
-<p>These functions can initialise the env_logger for output to stderr only, or to a file and
-stderr.</p>
+        </span><a id='src-49' class='srclink' href='../../src/maidsafe_utilities/log.rs.html#18-489' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p>Allows initialising the env_logger with a standard message format.
+These functions can initialise logging for output to stdout only, or to a file and
+stdout. For more fine-grained control, create file called <code>log.toml</code> in the root
+directory of the project, or in the same directory where the executable is.
+See <a href="http://sfackler.github.io/log4rs/doc/v0.3.3/log4rs/index.html">http://sfackler.github.io/log4rs/doc/v0.3.3/log4rs/index.html</a> for details
+about format and structure of this file.</p>
 
 <p>An example of a log message is:</p>
 <pre class='rust rust-example-rendered'>
@@ -91,13 +93,20 @@ enabled, and the thread executing the log statement is unnamed, the thread name 
     <span class='comment'>// I 12:24:07.065746 ??? [example:src/main.rs:13] Message in unnamed thread</span>
     <span class='comment'>// E 12:24:07.065746 Worker [example:src/main.rs:16] Message in named thread</span>
 }</pre>
+
+<p>Environment variable <code>RUST_LOG</code> can be set and fine-tuned to get various modules logging to
+different levels. E.g. <code>RUST_LOG=mod0,mod1=debug,mod2,mod3</code> will have <code>mod0</code> &amp; <code>mod1</code> logging at
+<code>Debug</code> and more severe levels while <code>mod2</code> &amp; <code>mod3</code> logging at default (currently <code>Warn</code>) and
+more severe levels. <code>RUST_LOG=trace,mod0=error,mod1</code> is going to change the default log level to
+<code>Trace</code> and more severe. Thus <code>mod0</code> will log at <code>Error</code> level and <code>mod1</code> at <code>Trace</code> and more
+severe ones.</p>
 </div><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
 <table>
                     <tr class=' module-item'>
                         <td><a class='fn' href='fn.init.html'
                                title='maidsafe_utilities::log::init'>init</a></td>
                         <td class='docblock short'>
-                             <p>Initialises the env_logger for output to stderr.</p>
+                             <p>Initialises the env_logger for output to stdout.</p>
 
                         </td>
                     </tr>
@@ -106,7 +115,18 @@ enabled, and the thread executing the log statement is unnamed, the thread name 
                         <td><a class='fn' href='fn.init_to_file.html'
                                title='maidsafe_utilities::log::init_to_file'>init_to_file</a></td>
                         <td class='docblock short'>
-                             <p>Initialises the env_logger for output to a file and to stderr.</p>
+                             <p>Initialises the env_logger for output to a file and optionally to the
+console asynchronously.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.init_to_server.html'
+                               title='maidsafe_utilities::log::init_to_server'>init_to_server</a></td>
+                        <td class='docblock short'>
+                             <p>Initialises the env_logger for output to a server and optionally to the
+console asynchronously.</p>
 
                         </td>
                     </tr>
