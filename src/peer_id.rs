@@ -16,7 +16,7 @@
 // relating to use of the SAFE Network Software.
 
 use rand::{Rand, Rng};
-use std::fmt::{Debug, Display, Formatter, Result};
+use std::fmt;
 use sodiumoxide::crypto::box_;
 use sodiumoxide::crypto::box_::PublicKey;
 
@@ -24,8 +24,8 @@ use sodiumoxide::crypto::box_::PublicKey;
 #[derive(PartialEq, Eq, Clone, Copy, Ord, PartialOrd, Hash, RustcEncodable, RustcDecodable)]
 pub struct PeerId(PublicKey);
 
-impl Debug for PeerId {
-    fn fmt(&self, formatter: &mut Formatter) -> Result {
+impl fmt::Debug for PeerId {
+    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
         write!(formatter,
                "PeerId({:02x}{:02x}..)",
                (self.0).0[0],
@@ -33,8 +33,8 @@ impl Debug for PeerId {
     }
 }
 
-impl Display for PeerId {
-    fn fmt(&self, formatter: &mut Formatter) -> Result {
+impl fmt::Display for PeerId {
+    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
         write!(formatter, "{:02x}{:02x}..", (self.0).0[0], (self.0).0[1])
     }
 }

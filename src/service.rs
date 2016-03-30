@@ -267,7 +267,6 @@ impl Service {
     /// Starts accepting uTP connections.
     pub fn start_listening_utp(&mut self) -> io::Result<()> {
         // Start the UDP Listener
-        // [TODO]: we should find the exteranl address and if we are directly acessabel here for all listerners. Also listen on ip4 and 6 for all protocols - 2016-02-10 11:28pm
         self.raii_udp_listener = Some(try!(RaiiUdpListener::new(self.utp_acceptor_port
                                                                     .unwrap_or(0),
                                                                 self.static_contact_info.clone(),
@@ -298,7 +297,7 @@ impl Service {
                   .get_mut(&id)
                   .and_then(|conns| conns.get_mut(0)) {
             None => {
-                let msg = format!("No connection to peer {:?}", id);
+                let msg = format!("No connection to peer {}", id);
                 Err(io::Error::new(io::ErrorKind::Other, msg))
             }
             Some(connection) => connection.send(CrustMsg::Message(data)),
@@ -403,7 +402,7 @@ impl Service {
                             ) {
                                 Ok(()) => (),
                                 Err(e) => {
-                                    warn!("Failed to update bootstrap cache: {:?}", e);
+                                    warn!("Failed to update bootstrap cache: {}", e);
                                 },
                             };
                         },
