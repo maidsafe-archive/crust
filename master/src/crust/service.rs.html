@@ -1370,7 +1370,6 @@
 <span id="1327">1327</span>
 <span id="1328">1328</span>
 <span id="1329">1329</span>
-<span id="1330">1330</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -1641,7 +1640,6 @@
     <span class='doccomment'>/// Starts accepting uTP connections.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>start_listening_utp</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
         <span class='comment'>// Start the UDP Listener</span>
-        <span class='comment'>// [TODO]: we should find the exteranl address and if we are directly acessabel here for all listerners. Also listen on ip4 and 6 for all protocols - 2016-02-10 11:28pm</span>
         <span class='self'>self</span>.<span class='ident'>raii_udp_listener</span> <span class='op'>=</span> <span class='prelude-val'>Some</span>(<span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>RaiiUdpListener</span>::<span class='ident'>new</span>(<span class='self'>self</span>.<span class='ident'>utp_acceptor_port</span>
                                                                     .<span class='ident'>unwrap_or</span>(<span class='number'>0</span>),
                                                                 <span class='self'>self</span>.<span class='ident'>static_contact_info</span>.<span class='ident'>clone</span>(),
@@ -1672,7 +1670,7 @@
                   .<span class='ident'>get_mut</span>(<span class='kw-2'>&amp;</span><span class='ident'>id</span>)
                   .<span class='ident'>and_then</span>(<span class='op'>|</span><span class='ident'>conns</span><span class='op'>|</span> <span class='ident'>conns</span>.<span class='ident'>get_mut</span>(<span class='number'>0</span>)) {
             <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> {
-                <span class='kw'>let</span> <span class='ident'>msg</span> <span class='op'>=</span> <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;No connection to peer {:?}&quot;</span>, <span class='ident'>id</span>);
+                <span class='kw'>let</span> <span class='ident'>msg</span> <span class='op'>=</span> <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;No connection to peer {}&quot;</span>, <span class='ident'>id</span>);
                 <span class='prelude-val'>Err</span>(<span class='ident'>io</span>::<span class='ident'>Error</span>::<span class='ident'>new</span>(<span class='ident'>io</span>::<span class='ident'>ErrorKind</span>::<span class='ident'>Other</span>, <span class='ident'>msg</span>))
             }
             <span class='prelude-val'>Some</span>(<span class='ident'>connection</span>) <span class='op'>=&gt;</span> <span class='ident'>connection</span>.<span class='ident'>send</span>(<span class='ident'>CrustMsg</span>::<span class='ident'>Message</span>(<span class='ident'>data</span>)),
@@ -1777,7 +1775,7 @@
                             ) {
                                 <span class='prelude-val'>Ok</span>(()) <span class='op'>=&gt;</span> (),
                                 <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=&gt;</span> {
-                                    <span class='macro'>warn</span><span class='macro'>!</span>(<span class='string'>&quot;Failed to update bootstrap cache: {:?}&quot;</span>, <span class='ident'>e</span>);
+                                    <span class='macro'>warn</span><span class='macro'>!</span>(<span class='string'>&quot;Failed to update bootstrap cache: {}&quot;</span>, <span class='ident'>e</span>);
                                 },
                             };
                         },

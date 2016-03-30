@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["Error","Error types."]]});
+initSidebarItems({"enum":[["Error","Crust's universal error type."]]});
