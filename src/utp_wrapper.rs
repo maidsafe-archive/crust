@@ -44,6 +44,7 @@ impl UtpWrapper {
                                 match input_tx.send(Vec::from(buf)) {
                                     Ok(()) => (),
                                     Err(mpsc::SendError(_)) => {
+                                        debug!("User channel closed. Closing uTP connection");
                                         break 'outer;
                                     }
                                 }
@@ -62,8 +63,14 @@ impl UtpWrapper {
                                                 break 'outer;
                                             }
                                         }
-                                        Ok(WriteEvent::Shutdown) => break 'outer,
-                                        Err(TryRecvError::Disconnected) => break 'outer,
+                                        Ok(WriteEvent::Shutdown) => {
+                                            debug!("Shutdown requested. Closing socket");
+                                            break 'outer;
+                                        }
+                                        Err(TryRecvError::Disconnected) => {
+                                            debug!("User channel closed. Closing uTP connection");
+                                            break 'outer;
+                                        }
                                         Err(TryRecvError::Empty) => break,
                                     }
                                 }
