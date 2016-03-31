@@ -531,7 +531,7 @@ pub fn start_tcp_accept(port: u16,
                             },
                         }
                     } else {
-                        break;
+                        continue;
                     }
 
                     (peer_id, Event::NewPeer(Ok(()), peer_id))
