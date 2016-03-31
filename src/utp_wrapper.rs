@@ -36,7 +36,7 @@ impl UtpWrapper {
                         let mut buf = [0; BUFFER_SIZE];
                         match socket.recv_from(&mut buf[..]) {
                             Ok((0, _src)) => {
-                                debug!("Gracefully closing uTP connection");
+                                info!("Gracefully closing uTP connection");
                                 break;
                             }
                             Ok((amt, _src)) => {
