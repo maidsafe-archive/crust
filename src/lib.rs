@@ -60,7 +60,6 @@ extern crate service_discovery;
 extern crate nat_traversal;
 #[cfg(test)]
 extern crate void;
-#[cfg(test)]
 extern crate crossbeam;
 
 #[allow(unused_extern_crates)] // Needed because the crate is only used for macros

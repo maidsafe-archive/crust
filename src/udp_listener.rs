@@ -27,6 +27,7 @@ use maidsafe_utilities::serialisation::{deserialise, serialise};
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 use nat_traversal::{MappedUdpSocket, MappingContext, PunchedUdpSocket, gen_rendezvous_info};
 use sodiumoxide::crypto::box_::PublicKey;
+use crossbeam;
 
 use connection::{Connection, utp_rendezvous_connect, UtpRendezvousConnectMode};
 use static_contact_info::StaticContactInfo;
@@ -94,26 +95,30 @@ impl RaiiUdpListener {
            stop_flag: Arc<AtomicBool>,
            connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
            mc: Arc<MappingContext>) {
-        let mut read_buf = [0; 1024];
 
-        while !stop_flag.load(Ordering::SeqCst) {
-            if let Ok((bytes_read, peer_addr)) = udp_socket.recv_from(&mut read_buf) {
-                if let Ok(msg) = deserialise::<ListenerRequest>(&read_buf[..bytes_read]) {
-                    let our_public_key = our_public_key.clone();
-                    let event_tx = event_tx.clone();
-                    let connection_map = connection_map.clone();
-                    let mc = mc.clone();
-                    let _  = thread!("Bootstrap uTP accept", move || {
-                        RaiiUdpListener::handle_request(msg,
-                                                        our_public_key,
-                                                        peer_addr,
-                                                        event_tx,
-                                                        connection_map,
-                                                        mc);
-                    });
+        let udp_socket = &udp_socket;
+        crossbeam::scope(move |scope| {
+            let mut read_buf = [0; 1024];
+            while !stop_flag.load(Ordering::SeqCst) {
+                if let Ok((bytes_read, peer_addr)) = udp_socket.recv_from(&mut read_buf) {
+                    if let Ok(msg) = deserialise::<ListenerRequest>(&read_buf[..bytes_read]) {
+                        let our_public_key = our_public_key.clone();
+                        let event_tx = event_tx.clone();
+                        let connection_map = connection_map.clone();
+                        let mc = mc.clone();
+                        let _  = scope.spawn(move || {
+                            RaiiUdpListener::handle_request(msg,
+                                                            our_public_key,
+                                                            peer_addr,
+                                                            event_tx,
+                                                            connection_map,
+                                                            mc,
+                                                            udp_socket);
+                        });
+                    }
                 }
             }
-        }
+        });
     }
 
     fn handle_request(msg: ListenerRequest,
@@ -121,7 +126,8 @@ impl RaiiUdpListener {
                       peer_addr: net::SocketAddr,
                       event_tx: ::CrustEventSender,
                       connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
-                      mc: Arc<MappingContext>) {
+                      mc: Arc<MappingContext>,
+                      udp_listener: &UdpSocket) {
         match msg {
             ListenerRequest::Connect { our_info, .. } => {
                 let their_info = our_info;
@@ -139,11 +145,19 @@ impl RaiiUdpListener {
                     pub_key: our_public_key.clone(),
                 };
 
-                if socket.send_to(&unwrap_result!(serialise(&connect_resp)),
-                                  peer_addr)
-                    .is_err() {
+                let connect_resp_serialised = unwrap_result!(serialise(&connect_resp));
+                match udp_listener.send_to(&connect_resp_serialised, peer_addr) {
+                    Ok(n) => {
+                        if n != connect_resp_serialised.len() {
+                            warn!("Failed to send complete ListenerResponse to {} ({} of {} bytes written)", peer_addr, n, connect_resp_serialised.len());
+                            return;
+                        }
+                    },
+                    Err(e) => {
+                        warn!("Failed to send ListenerResponse to {}: {}", peer_addr, e);
                         return;
-                    }
+                    },
+                }
 
                 let PunchedUdpSocket { socket, peer_addr } = {
                     match PunchedUdpSocket::punch_hole(socket, our_priv_info, their_info)
