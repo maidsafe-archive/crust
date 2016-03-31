@@ -101,8 +101,16 @@ impl RaiiUdpListener {
                     let event_tx = event_tx.clone();
                     let connection_map = connection_map.clone();
                     let mc = mc.clone();
+                    let udp_socket = match udp_socket.try_clone() {
+                        Ok(s) => s,
+                        Err(e) => {
+                            warn!("couldn't clone custom UDP server listenning socket {}", e);
+                            continue;
+                        }
+                    };
                     let _  = thread!("Bootstrap uTP accept", move || {
                         RaiiUdpListener::handle_request(msg,
+                                                        udp_socket,
                                                         our_public_key,
                                                         peer_addr,
                                                         event_tx,
@@ -115,6 +123,7 @@ impl RaiiUdpListener {
     }
 
     fn handle_request(msg: ListenerRequest,
+                      udp_listener: UdpSocket,
                       our_public_key: PublicKey,
                       peer_addr: net::SocketAddr,
                       event_tx: ::CrustEventSender,
@@ -137,11 +146,19 @@ impl RaiiUdpListener {
                     pub_key: our_public_key.clone(),
                 };
 
-                if socket.send_to(&unwrap_result!(serialise(&connect_resp)),
-                                  peer_addr)
-                    .is_err() {
+                let connect_resp_serialised = unwrap_result!(serialise(&connect_resp));
+                match udp_listener.send_to(&connect_resp_serialised, peer_addr) {
+                    Ok(n) if n != connect_resp_serialised.len() => {
+                        warn!("Failed to send complete ListenerResponse to {} ({} of {} bytes written)",
+                              peer_addr, n, connect_resp_serialised.len());
                         return;
                     }
+                    Ok(_) => (),
+                    Err(e) => {
+                        warn!("Failed to send ListenerResponse to {}: {}", peer_addr, e);
+                        return;
+                    },
+                }
 
                 let PunchedUdpSocket { socket, peer_addr } = {
                     match PunchedUdpSocket::punch_hole(socket, our_priv_info, their_info)
