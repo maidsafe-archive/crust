@@ -1037,7 +1037,7 @@ mod test {
     fn rendezvous_connection_three_services(protocol: Protocol) {
         const NUM_SERVICES: usize = 3;
         const MSG_SIZE: usize = 1024;
-        const NUM_MSGS: usize = 256;
+        const NUM_MSGS: usize = 257;
 
         struct TestNode {
             event_rx: Receiver<Event>,
@@ -1133,7 +1133,7 @@ mod test {
                                 match their_ids.entry(their_id.clone()) {
                                     hash_map::Entry::Occupied(mut oe) => {
                                         let next_msg = oe.get_mut();
-                                        assert_eq!(*next_msg, n as u32);
+                                        assert_eq!(*next_msg as u8, n);
                                         *next_msg += 1;
                                     }
                                     hash_map::Entry::Vacant(_) => panic!("impossible!"),
