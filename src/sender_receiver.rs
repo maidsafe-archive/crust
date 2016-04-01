@@ -39,6 +39,7 @@ impl RaiiSender {
 
 impl Drop for RaiiSender {
     fn drop(&mut self) {
+        panic!("wants a cracker");
         let _ = self.0
                     .send(WriteEvent::Shutdown)
                     .map_err(|_| io::Error::new(io::ErrorKind::NotConnected, "can't send"));
