@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/itertools-0.4.11/src/lib.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/itertools-0.4.12/src/lib.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>lib.rs.html -- source</title>
@@ -1482,6 +1482,140 @@
 <span id="1439">1439</span>
 <span id="1440">1440</span>
 <span id="1441">1441</span>
+<span id="1442">1442</span>
+<span id="1443">1443</span>
+<span id="1444">1444</span>
+<span id="1445">1445</span>
+<span id="1446">1446</span>
+<span id="1447">1447</span>
+<span id="1448">1448</span>
+<span id="1449">1449</span>
+<span id="1450">1450</span>
+<span id="1451">1451</span>
+<span id="1452">1452</span>
+<span id="1453">1453</span>
+<span id="1454">1454</span>
+<span id="1455">1455</span>
+<span id="1456">1456</span>
+<span id="1457">1457</span>
+<span id="1458">1458</span>
+<span id="1459">1459</span>
+<span id="1460">1460</span>
+<span id="1461">1461</span>
+<span id="1462">1462</span>
+<span id="1463">1463</span>
+<span id="1464">1464</span>
+<span id="1465">1465</span>
+<span id="1466">1466</span>
+<span id="1467">1467</span>
+<span id="1468">1468</span>
+<span id="1469">1469</span>
+<span id="1470">1470</span>
+<span id="1471">1471</span>
+<span id="1472">1472</span>
+<span id="1473">1473</span>
+<span id="1474">1474</span>
+<span id="1475">1475</span>
+<span id="1476">1476</span>
+<span id="1477">1477</span>
+<span id="1478">1478</span>
+<span id="1479">1479</span>
+<span id="1480">1480</span>
+<span id="1481">1481</span>
+<span id="1482">1482</span>
+<span id="1483">1483</span>
+<span id="1484">1484</span>
+<span id="1485">1485</span>
+<span id="1486">1486</span>
+<span id="1487">1487</span>
+<span id="1488">1488</span>
+<span id="1489">1489</span>
+<span id="1490">1490</span>
+<span id="1491">1491</span>
+<span id="1492">1492</span>
+<span id="1493">1493</span>
+<span id="1494">1494</span>
+<span id="1495">1495</span>
+<span id="1496">1496</span>
+<span id="1497">1497</span>
+<span id="1498">1498</span>
+<span id="1499">1499</span>
+<span id="1500">1500</span>
+<span id="1501">1501</span>
+<span id="1502">1502</span>
+<span id="1503">1503</span>
+<span id="1504">1504</span>
+<span id="1505">1505</span>
+<span id="1506">1506</span>
+<span id="1507">1507</span>
+<span id="1508">1508</span>
+<span id="1509">1509</span>
+<span id="1510">1510</span>
+<span id="1511">1511</span>
+<span id="1512">1512</span>
+<span id="1513">1513</span>
+<span id="1514">1514</span>
+<span id="1515">1515</span>
+<span id="1516">1516</span>
+<span id="1517">1517</span>
+<span id="1518">1518</span>
+<span id="1519">1519</span>
+<span id="1520">1520</span>
+<span id="1521">1521</span>
+<span id="1522">1522</span>
+<span id="1523">1523</span>
+<span id="1524">1524</span>
+<span id="1525">1525</span>
+<span id="1526">1526</span>
+<span id="1527">1527</span>
+<span id="1528">1528</span>
+<span id="1529">1529</span>
+<span id="1530">1530</span>
+<span id="1531">1531</span>
+<span id="1532">1532</span>
+<span id="1533">1533</span>
+<span id="1534">1534</span>
+<span id="1535">1535</span>
+<span id="1536">1536</span>
+<span id="1537">1537</span>
+<span id="1538">1538</span>
+<span id="1539">1539</span>
+<span id="1540">1540</span>
+<span id="1541">1541</span>
+<span id="1542">1542</span>
+<span id="1543">1543</span>
+<span id="1544">1544</span>
+<span id="1545">1545</span>
+<span id="1546">1546</span>
+<span id="1547">1547</span>
+<span id="1548">1548</span>
+<span id="1549">1549</span>
+<span id="1550">1550</span>
+<span id="1551">1551</span>
+<span id="1552">1552</span>
+<span id="1553">1553</span>
+<span id="1554">1554</span>
+<span id="1555">1555</span>
+<span id="1556">1556</span>
+<span id="1557">1557</span>
+<span id="1558">1558</span>
+<span id="1559">1559</span>
+<span id="1560">1560</span>
+<span id="1561">1561</span>
+<span id="1562">1562</span>
+<span id="1563">1563</span>
+<span id="1564">1564</span>
+<span id="1565">1565</span>
+<span id="1566">1566</span>
+<span id="1567">1567</span>
+<span id="1568">1568</span>
+<span id="1569">1569</span>
+<span id="1570">1570</span>
+<span id="1571">1571</span>
+<span id="1572">1572</span>
+<span id="1573">1573</span>
+<span id="1574">1574</span>
+<span id="1575">1575</span>
 </pre><pre class='rust '>
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>warn</span>(<span class='ident'>missing_docs</span>)]</span>
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>cfg_attr</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;unstable&quot;</span>,
@@ -1566,6 +1700,7 @@
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>stride</span>::<span class='ident'>Stride</span>;
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>stride</span>::<span class='ident'>StrideMut</span>;
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>tee</span>::<span class='ident'>Tee</span>;
+<span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>zip_eq</span>::<span class='ident'>ZipEq</span>;
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>zip_longest</span>::{<span class='ident'>ZipLongest</span>, <span class='ident'>EitherOrBoth</span>};
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>ziptuple</span>::<span class='ident'>Zip</span>;
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;unstable&quot;</span>)]</span>
@@ -1588,6 +1723,7 @@
 <span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>size_hint</span>;
 <span class='kw'>mod</span> <span class='ident'>stride</span>;
 <span class='kw'>mod</span> <span class='ident'>tee</span>;
+<span class='kw'>mod</span> <span class='ident'>zip_eq</span>;
 <span class='kw'>mod</span> <span class='ident'>zip_longest</span>;
 <span class='kw'>mod</span> <span class='ident'>ziptuple</span>;
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;unstable&quot;</span>)]</span>
@@ -1760,6 +1896,19 @@
               <span class='kw'>Self</span>: <span class='ident'>Sized</span>
     {
         <span class='ident'>ZipLongest</span>::<span class='ident'>new</span>(<span class='self'>self</span>, <span class='ident'>other</span>.<span class='ident'>into_iter</span>())
+    }
+
+    <span class='doccomment'>/// Create an iterator which iterates over both this and the specified</span>
+    <span class='doccomment'>/// iterator simultaneously, yielding pairs of elements.</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// **Panics** if the iterators reach an end and they are not of equal</span>
+    <span class='doccomment'>/// lengths.</span>
+    <span class='attribute'>#[<span class='ident'>inline</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>zip_eq</span><span class='op'>&lt;</span><span class='ident'>J</span><span class='op'>&gt;</span>(<span class='self'>self</span>, <span class='ident'>other</span>: <span class='ident'>J</span>) <span class='op'>-&gt;</span> <span class='ident'>ZipEq</span><span class='op'>&lt;</span><span class='kw'>Self</span>, <span class='ident'>J</span>::<span class='ident'>IntoIter</span><span class='op'>&gt;</span>
+        <span class='kw'>where</span> <span class='ident'>J</span>: <span class='ident'>IntoIterator</span>,
+              <span class='kw'>Self</span>: <span class='ident'>Sized</span>
+    {
+        <span class='ident'>zip_eq</span>::<span class='ident'>new</span>(<span class='self'>self</span>, <span class='ident'>other</span>.<span class='ident'>into_iter</span>())
     }
 
     <span class='doccomment'>/// A “meta iterator adaptor”. Its closure recives a reference to the iterator</span>
@@ -2732,6 +2881,64 @@
         }
     }
 
+    <span class='doccomment'>/// An iterator adaptor that applies a function, producing a single, final value.</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// `fold_while()` is basically equivalent to `fold()` but with additional support for</span>
+    <span class='doccomment'>/// early exit via short-circuiting.</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// ```</span>
+    <span class='doccomment'>/// use itertools::Itertools;</span>
+    <span class='doccomment'>/// use itertools::FoldWhile::{Continue, Done};</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// let numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// let mut result = 0;</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// // for loop:</span>
+    <span class='doccomment'>/// for i in &amp;numbers {</span>
+    <span class='doccomment'>///     if *i &gt; 5 {</span>
+    <span class='doccomment'>///         break;</span>
+    <span class='doccomment'>///     }</span>
+    <span class='doccomment'>///     result = result + i;</span>
+    <span class='doccomment'>/// }</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// // fold:</span>
+    <span class='doccomment'>/// let result2 = numbers.iter().fold(0, |acc, x| {</span>
+    <span class='doccomment'>///     if *x &gt; 5 { acc } else { acc + x }</span>
+    <span class='doccomment'>/// });</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// // fold_while:</span>
+    <span class='doccomment'>/// let result3 = numbers.iter().fold_while(0, |acc, x| {</span>
+    <span class='doccomment'>///     if *x &gt; 5 { Done(acc) } else { Continue(acc + x) }</span>
+    <span class='doccomment'>/// });</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// // they&#39;re the same</span>
+    <span class='doccomment'>/// assert_eq!(result, result2);</span>
+    <span class='doccomment'>/// assert_eq!(result2, result3);</span>
+    <span class='doccomment'>/// ```</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// The big difference between the computations of `result2` and `result3` is that while</span>
+    <span class='doccomment'>/// `fold()` called the provided closure for every item of the callee iterator,</span>
+    <span class='doccomment'>/// `fold_while()` actually stopped iterating as soon as it encountered `Fold::Done(_)`.</span>
+    <span class='kw'>fn</span> <span class='ident'>fold_while</span><span class='op'>&lt;</span><span class='ident'>B</span>, <span class='ident'>F</span><span class='op'>&gt;</span>(<span class='self'>self</span>, <span class='ident'>init</span>: <span class='ident'>B</span>, <span class='kw-2'>mut</span> <span class='ident'>f</span>: <span class='ident'>F</span>) <span class='op'>-&gt;</span> <span class='ident'>B</span>
+        <span class='kw'>where</span> <span class='kw'>Self</span>: <span class='ident'>Sized</span>,
+              <span class='ident'>F</span>: <span class='ident'>FnMut</span>(<span class='ident'>B</span>, <span class='ident'>Self</span>::<span class='ident'>Item</span>) <span class='op'>-&gt;</span> <span class='ident'>FoldWhile</span><span class='op'>&lt;</span><span class='ident'>B</span><span class='op'>&gt;</span>
+    {
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>accum</span> <span class='op'>=</span> <span class='ident'>init</span>;
+        <span class='kw'>for</span> <span class='ident'>item</span> <span class='kw'>in</span> <span class='self'>self</span> {
+            <span class='kw'>match</span> <span class='ident'>f</span>(<span class='ident'>accum</span>, <span class='ident'>item</span>) {
+                <span class='ident'>FoldWhile</span>::<span class='ident'>Continue</span>(<span class='ident'>res</span>) <span class='op'>=&gt;</span> {
+                    <span class='ident'>accum</span> <span class='op'>=</span> <span class='ident'>res</span>;
+                }
+                <span class='ident'>FoldWhile</span>::<span class='ident'>Done</span>(<span class='ident'>res</span>) <span class='op'>=&gt;</span> {
+                    <span class='ident'>accum</span> <span class='op'>=</span> <span class='ident'>res</span>;
+                    <span class='kw'>break</span>;
+                }
+            }
+        }
+        <span class='ident'>accum</span>
+    }
+
     <span class='doccomment'>/// Tell if the iterator is empty or not according to its size hint.</span>
     <span class='doccomment'>/// Return `None` if the size hint does not tell, or return a `Some`</span>
     <span class='doccomment'>/// value with the emptiness if it&#39;s possible to tell.</span>
@@ -2815,6 +3022,46 @@
               <span class='ident'>F</span>: <span class='ident'>FnMut</span>(<span class='kw-2'>&amp;</span><span class='ident'>Self</span>::<span class='ident'>Item</span>, <span class='kw-2'>&amp;</span><span class='ident'>Self</span>::<span class='ident'>Item</span>) <span class='op'>-&gt;</span> <span class='ident'>Ordering</span>,
     {
         <span class='self'>self</span>.<span class='ident'>sorted_by</span>(<span class='ident'>cmp</span>)
+    }
+
+    <span class='doccomment'>/// Collect all iterator elements into one of two</span>
+    <span class='doccomment'>/// partitions. Unlike `Iterator::partition`, each partition may</span>
+    <span class='doccomment'>/// have a distinct type.</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// ```</span>
+    <span class='doccomment'>/// use itertools::{Itertools, Partition};</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// let successes_and_failures = vec![Ok(1), Err(false), Err(true), Ok(2)];</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// let (successes, failures): (Vec&lt;_&gt;, Vec&lt;_&gt;) = successes_and_failures</span>
+    <span class='doccomment'>///     .into_iter()</span>
+    <span class='doccomment'>///     .partition_map(|r| {</span>
+    <span class='doccomment'>///         match r {</span>
+    <span class='doccomment'>///             Ok(v) =&gt; Partition::Left(v),</span>
+    <span class='doccomment'>///             Err(v) =&gt; Partition::Right(v),</span>
+    <span class='doccomment'>///         }</span>
+    <span class='doccomment'>///     });</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// assert_eq!(successes, [1, 2]);</span>
+    <span class='doccomment'>/// assert_eq!(failures, [false, true]);</span>
+    <span class='doccomment'>/// ```</span>
+    <span class='kw'>fn</span> <span class='ident'>partition_map</span><span class='op'>&lt;</span><span class='ident'>A</span>, <span class='ident'>B</span>, <span class='ident'>F</span>, <span class='ident'>L</span>, <span class='ident'>R</span><span class='op'>&gt;</span>(<span class='self'>self</span>, <span class='ident'>predicate</span>: <span class='ident'>F</span>) <span class='op'>-&gt;</span> (<span class='ident'>A</span>, <span class='ident'>B</span>)
+        <span class='kw'>where</span> <span class='kw'>Self</span>: <span class='ident'>Sized</span>,
+              <span class='ident'>F</span>: <span class='ident'>Fn</span>(<span class='ident'>Self</span>::<span class='ident'>Item</span>) <span class='op'>-&gt;</span> <span class='ident'>Partition</span><span class='op'>&lt;</span><span class='ident'>L</span>, <span class='ident'>R</span><span class='op'>&gt;</span>,
+              <span class='ident'>A</span>: <span class='ident'>Default</span> <span class='op'>+</span> <span class='ident'>Extend</span><span class='op'>&lt;</span><span class='ident'>L</span><span class='op'>&gt;</span>,
+              <span class='ident'>B</span>: <span class='ident'>Default</span> <span class='op'>+</span> <span class='ident'>Extend</span><span class='op'>&lt;</span><span class='ident'>R</span><span class='op'>&gt;</span>,
+    {
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>left</span> <span class='op'>=</span> <span class='ident'>A</span>::<span class='ident'>default</span>();
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>right</span> <span class='op'>=</span> <span class='ident'>B</span>::<span class='ident'>default</span>();
+
+        <span class='kw'>for</span> <span class='ident'>val</span> <span class='kw'>in</span> <span class='self'>self</span> {
+            <span class='kw'>match</span> <span class='ident'>predicate</span>(<span class='ident'>val</span>) {
+                <span class='ident'>Partition</span>::<span class='ident'>Left</span>(<span class='ident'>v</span>) <span class='op'>=&gt;</span> <span class='ident'>left</span>.<span class='ident'>extend</span>(<span class='prelude-val'>Some</span>(<span class='ident'>v</span>)),
+                <span class='ident'>Partition</span>::<span class='ident'>Right</span>(<span class='ident'>v</span>) <span class='op'>=&gt;</span> <span class='ident'>right</span>.<span class='ident'>extend</span>(<span class='prelude-val'>Some</span>(<span class='ident'>v</span>)),
+            }
+        }
+
+        (<span class='ident'>left</span>, <span class='ident'>right</span>)
     }
 }
 
@@ -2924,6 +3171,27 @@
     }
     <span class='ident'>split_index</span>
 }
+
+<span class='doccomment'>/// Classifies the result of the `.partition_map()` closure into a</span>
+<span class='doccomment'>/// partition.</span>
+<span class='kw'>pub</span> <span class='kw'>enum</span> <span class='ident'>Partition</span><span class='op'>&lt;</span><span class='ident'>L</span>, <span class='ident'>R</span><span class='op'>&gt;</span> {
+    <span class='doccomment'>/// Classify into the left partition.</span>
+    <span class='ident'>Left</span>(<span class='ident'>L</span>),
+    <span class='doccomment'>/// Classify into the right partition.</span>
+    <span class='ident'>Right</span>(<span class='ident'>R</span>),
+}
+
+
+<span class='doccomment'>/// An enum used for controlling the execution of `.fold_while()`.</span>
+<span class='doccomment'>/// </span>
+<span class='doccomment'>/// See [`.fold_while()`](trait.Itertools.html#method.fold_while) for more information.</span>
+<span class='kw'>pub</span> <span class='kw'>enum</span> <span class='ident'>FoldWhile</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> {
+    <span class='doccomment'>/// Continue folding with this value</span>
+    <span class='ident'>Continue</span>(<span class='ident'>T</span>),
+    <span class='doccomment'>/// Fold is complete and will return this value</span>
+    <span class='ident'>Done</span>(<span class='ident'>T</span>),
+}
+
 </pre>
 </section>
     <section id='search' class="content hidden"></section>

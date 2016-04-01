@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/itertools-0.4.11/src/free.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/itertools-0.4.12/src/free.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>free.rs.html -- source</title>
@@ -295,6 +295,28 @@
 <span id="252">252</span>
 <span id="253">253</span>
 <span id="254">254</span>
+<span id="255">255</span>
+<span id="256">256</span>
+<span id="257">257</span>
+<span id="258">258</span>
+<span id="259">259</span>
+<span id="260">260</span>
+<span id="261">261</span>
+<span id="262">262</span>
+<span id="263">263</span>
+<span id="264">264</span>
+<span id="265">265</span>
+<span id="266">266</span>
+<span id="267">267</span>
+<span id="268">268</span>
+<span id="269">269</span>
+<span id="270">270</span>
+<span id="271">271</span>
+<span id="272">272</span>
+<span id="273">273</span>
+<span id="274">274</span>
+<span id="275">275</span>
+<span id="276">276</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! Free functions that create iterator adaptors or call iterator methods.</span>
 <span class='doccomment'>//!</span>
@@ -308,6 +330,7 @@
     <span class='ident'>Merge</span>,
     <span class='ident'>KMerge</span>,
     <span class='ident'>Interleave</span>,
+    <span class='ident'>ZipEq</span>,
 };
 
 <span class='doccomment'>/// Iterate `iterable` with a running index.</span>
@@ -362,6 +385,27 @@
           <span class='ident'>J</span>: <span class='ident'>IntoIterator</span>
 {
     <span class='ident'>i</span>.<span class='ident'>into_iter</span>().<span class='ident'>zip</span>(<span class='ident'>j</span>)
+}
+
+<span class='doccomment'>/// Iterate `i` and `j` in lock step.</span>
+<span class='doccomment'>///</span>
+<span class='doccomment'>/// **Panics** if the iterators are not of the same length.</span>
+<span class='doccomment'>///</span>
+<span class='doccomment'>/// `IntoIterator` enabled version of `i.zip_eq(j)`.</span>
+<span class='doccomment'>///</span>
+<span class='doccomment'>/// ```</span>
+<span class='doccomment'>/// use itertools::free::zip_eq;</span>
+<span class='doccomment'>///</span>
+<span class='doccomment'>/// let data = [1, 2, 3, 4, 5];</span>
+<span class='doccomment'>/// for (a, b) in zip_eq(&amp;data[..data.len() - 1], &amp;data[1..]) {</span>
+<span class='doccomment'>///     /* loop body */</span>
+<span class='doccomment'>/// }</span>
+<span class='doccomment'>/// ```</span>
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>zip_eq</span><span class='op'>&lt;</span><span class='ident'>I</span>, <span class='ident'>J</span><span class='op'>&gt;</span>(<span class='ident'>i</span>: <span class='ident'>I</span>, <span class='ident'>j</span>: <span class='ident'>J</span>) <span class='op'>-&gt;</span> <span class='ident'>ZipEq</span><span class='op'>&lt;</span><span class='ident'>I</span>::<span class='ident'>IntoIter</span>, <span class='ident'>J</span>::<span class='ident'>IntoIter</span><span class='op'>&gt;</span>
+    <span class='kw'>where</span> <span class='ident'>I</span>: <span class='ident'>IntoIterator</span>,
+          <span class='ident'>J</span>: <span class='ident'>IntoIterator</span>
+{
+    <span class='ident'>i</span>.<span class='ident'>into_iter</span>().<span class='ident'>zip_eq</span>(<span class='ident'>j</span>)
 }
 
 <span class='doccomment'>/// Create an iterator that first iterates `i` and then `j`.</span>

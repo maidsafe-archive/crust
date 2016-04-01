@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-0' class='srclink' href='../src/itertools/lib.rs.html#1-1441' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-0' class='srclink' href='../src/itertools/lib.rs.html#1-1574' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Itertools — extra iterator adaptors, functions and macros.</p>
 
 <p>To use the iterator methods in this crate, import the <a href="./trait.Itertools.html"><code>Itertools</code> trait</a>:</p>
@@ -509,6 +509,15 @@ and produces <code>A</code>. Stops on the first <code>None</code> encountered.</
                     </tr>
                 
                     <tr class=' module-item'>
+                        <td><a class='struct' href='struct.ZipEq.html'
+                               title='itertools::ZipEq'>ZipEq</a></td>
+                        <td class='docblock short'>
+                             <p>An iterator which iterates two other iterators simultaneously</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
                         <td><a class='struct' href='struct.ZipLongest.html'
                                title='itertools::ZipLongest'>ZipLongest</a></td>
                         <td class='docblock short'>
@@ -542,6 +551,25 @@ and produces <code>A</code>. Stops on the first <code>None</code> encountered.</
                         <td class='docblock short'>
                              <p>A value yielded by <code>ZipLongest</code>.
 Contains one or two values, depending on which of the input iterators are exhausted.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='enum' href='enum.FoldWhile.html'
+                               title='itertools::FoldWhile'>FoldWhile</a></td>
+                        <td class='docblock short'>
+                             <p>An enum used for controlling the execution of <code>.fold_while()</code>.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='enum' href='enum.Partition.html'
+                               title='itertools::Partition'>Partition</a></td>
+                        <td class='docblock short'>
+                             <p>Classifies the result of the <code>.partition_map()</code> closure into a
+partition.</p>
 
                         </td>
                     </tr>

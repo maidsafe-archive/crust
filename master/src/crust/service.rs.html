@@ -2410,7 +2410,7 @@
     <span class='kw'>fn</span> <span class='ident'>rendezvous_connection_three_services</span>(<span class='ident'>protocol</span>: <span class='ident'>Protocol</span>) {
         <span class='kw'>const</span> <span class='ident'>NUM_SERVICES</span>: <span class='ident'>usize</span> <span class='op'>=</span> <span class='number'>3</span>;
         <span class='kw'>const</span> <span class='ident'>MSG_SIZE</span>: <span class='ident'>usize</span> <span class='op'>=</span> <span class='number'>1024</span>;
-        <span class='kw'>const</span> <span class='ident'>NUM_MSGS</span>: <span class='ident'>usize</span> <span class='op'>=</span> <span class='number'>256</span>;
+        <span class='kw'>const</span> <span class='ident'>NUM_MSGS</span>: <span class='ident'>usize</span> <span class='op'>=</span> <span class='number'>257</span>;
 
         <span class='kw'>struct</span> <span class='ident'>TestNode</span> {
             <span class='ident'>event_rx</span>: <span class='ident'>Receiver</span><span class='op'>&lt;</span><span class='ident'>Event</span><span class='op'>&gt;</span>,
@@ -2506,7 +2506,7 @@
                                 <span class='kw'>match</span> <span class='ident'>their_ids</span>.<span class='ident'>entry</span>(<span class='ident'>their_id</span>.<span class='ident'>clone</span>()) {
                                     <span class='ident'>hash_map</span>::<span class='ident'>Entry</span>::<span class='ident'>Occupied</span>(<span class='kw-2'>mut</span> <span class='ident'>oe</span>) <span class='op'>=&gt;</span> {
                                         <span class='kw'>let</span> <span class='ident'>next_msg</span> <span class='op'>=</span> <span class='ident'>oe</span>.<span class='ident'>get_mut</span>();
-                                        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='op'>*</span><span class='ident'>next_msg</span>, <span class='ident'>n</span> <span class='kw'>as</span> <span class='ident'>u32</span>);
+                                        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='op'>*</span><span class='ident'>next_msg</span> <span class='kw'>as</span> <span class='ident'>u8</span>, <span class='ident'>n</span>);
                                         <span class='op'>*</span><span class='ident'>next_msg</span> <span class='op'>+=</span> <span class='number'>1</span>;
                                     }
                                     <span class='ident'>hash_map</span>::<span class='ident'>Entry</span>::<span class='ident'>Vacant</span>(_) <span class='op'>=&gt;</span> <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;impossible!&quot;</span>),
