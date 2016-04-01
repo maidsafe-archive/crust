@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/regex-0.1.60/src/re_bytes.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/regex-0.1.61/src/re_bytes.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>re_bytes.rs.html -- source</title>
@@ -1042,6 +1042,7 @@
 <span id="999"> 999</span>
 <span id="1000">1000</span>
 <span id="1001">1001</span>
+<span id="1002">1002</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2014-2015 The Rust Project Developers. See the COPYRIGHT</span>
 <span class='comment'>// file at the top-level directory of this distribution and at</span>
@@ -1084,6 +1085,7 @@
 <span class='doccomment'>/// byte offsets into the search text. **Unlike** the parent `Regex` type,</span>
 <span class='doccomment'>/// these byte offsets may not correspond to UTF-8 sequence boundaries since</span>
 <span class='doccomment'>/// the regexes in this module can match arbitrary bytes.</span>
+<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Clone</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>Regex</span>(<span class='ident'>Exec</span>);
 
 <span class='kw'>impl</span> <span class='ident'>fmt</span>::<span class='ident'>Display</span> <span class='kw'>for</span> <span class='ident'>Regex</span> {
