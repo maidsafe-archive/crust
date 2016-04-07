@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-2426' class='srclink' href='../../../../src/sodiumoxide/crypto/secretbox/xsalsa20poly1305.rs.html#1-219' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-2261' class='srclink' href='../../../../src/sodiumoxide/crypto/secretbox/xsalsa20poly1305.rs.html#1-222' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p><code>crypto_secretbox_xsalsa20poly1305</code>, a particular
 combination of Salsa20 and Poly1305 specified in
 <a href="http://nacl.cr.yp.to/valid.html">Cryptography in NaCl</a>.</p>
@@ -79,6 +79,17 @@ authenticity.</p>
                                title='sodiumoxide::crypto::secretbox::xsalsa20poly1305::KEYBYTES'>KEYBYTES</a></td>
                         <td class='docblock short'>
                              <p>Number of bytes in <code>Key</code>.</p>
+
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.MACBYTES.html'
+                               title='sodiumoxide::crypto::secretbox::xsalsa20poly1305::MACBYTES'>MACBYTES</a></td>
+                        <td class='docblock short'>
+                             <p>Number of bytes in the authenticator tag of an encrypted message
+i.e. the number of bytes by which the ciphertext is larger than the
+plaintext.</p>
 
                         </td>
                     </tr>

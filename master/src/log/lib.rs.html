@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/log-0.3.5/src/lib.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/log-0.3.6/src/lib.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>lib.rs.html -- source</title>
@@ -1054,12 +1054,6 @@
 <span id="1011">1011</span>
 <span id="1012">1012</span>
 <span id="1013">1013</span>
-<span id="1014">1014</span>
-<span id="1015">1015</span>
-<span id="1016">1016</span>
-<span id="1017">1017</span>
-<span id="1018">1018</span>
-<span id="1019">1019</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 The Rust Project Developers. See the COPYRIGHT</span>
 <span class='comment'>// file at the top-level directory of this distribution and at</span>
@@ -1257,9 +1251,6 @@
 
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>not</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;use_std&quot;</span>))]</span>
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>core</span> <span class='kw'>as</span> <span class='ident'>std</span>;
-
-<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;use_std&quot;</span>)]</span>
-<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>libc</span>;
 
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>cmp</span>;
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;use_std&quot;</span>)]</span>
@@ -1721,31 +1712,13 @@
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;use_std&quot;</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>set_logger</span><span class='op'>&lt;</span><span class='ident'>M</span><span class='op'>&gt;</span>(<span class='ident'>make_logger</span>: <span class='ident'>M</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>(), <span class='ident'>SetLoggerError</span><span class='op'>&gt;</span>
         <span class='kw'>where</span> <span class='ident'>M</span>: <span class='ident'>FnOnce</span>(<span class='ident'>MaxLogLevelFilter</span>) <span class='op'>-&gt;</span> <span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>Log</span><span class='op'>&gt;</span> {
-    <span class='kw'>let</span> <span class='ident'>result</span> <span class='op'>=</span> <span class='kw'>unsafe</span> {
-        <span class='ident'>set_logger_raw</span>(<span class='op'>|</span><span class='ident'>max_level</span><span class='op'>|</span> <span class='ident'>mem</span>::<span class='ident'>transmute</span>(<span class='ident'>make_logger</span>(<span class='ident'>max_level</span>)))
-    };
-
-    <span class='kw'>return</span> <span class='kw'>match</span> <span class='ident'>result</span> {
-        <span class='prelude-val'>Ok</span>(()) <span class='op'>=&gt;</span> {
-            <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='kw'>unsafe</span> { <span class='ident'>libc</span>::<span class='ident'>atexit</span>(<span class='ident'>shutdown</span>) }, <span class='number'>0</span>);
-            <span class='prelude-val'>Ok</span>(())
-        }
-        <span class='prelude-val'>Err</span>(_) <span class='op'>=&gt;</span> <span class='prelude-val'>Err</span>(<span class='ident'>SetLoggerError</span>(())),
-    };
-
-    <span class='kw'>extern</span> <span class='kw'>fn</span> <span class='ident'>shutdown</span>() {
-        <span class='ident'>shutdown_logger_raw</span>().<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>logger</span><span class='op'>|</span> <span class='kw'>unsafe</span> {
-            <span class='ident'>mem</span>::<span class='ident'>transmute</span>::<span class='op'>&lt;</span>_, <span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>Log</span><span class='op'>&gt;&gt;</span>(<span class='ident'>logger</span>);
-        }).<span class='ident'>ok</span>();
-    }
+    <span class='kw'>unsafe</span> { <span class='ident'>set_logger_raw</span>(<span class='op'>|</span><span class='ident'>max_level</span><span class='op'>|</span> <span class='ident'>mem</span>::<span class='ident'>transmute</span>(<span class='ident'>make_logger</span>(<span class='ident'>max_level</span>))) }
 }
 
 <span class='doccomment'>/// Sets the global logger from a raw pointer.</span>
 <span class='doccomment'>///</span>
 <span class='doccomment'>/// This function is similar to `set_logger` except that it is usable in</span>
-<span class='doccomment'>/// `no_std` code. Another difference is that the logger is not automatically</span>
-<span class='doccomment'>/// shut down on program exit, and `shutdown_logger_raw` must be called to</span>
-<span class='doccomment'>/// manually shut it down.</span>
+<span class='doccomment'>/// `no_std` code.</span>
 <span class='doccomment'>///</span>
 <span class='doccomment'>/// The `make_logger` closure is passed a `MaxLogLevel` object, which the</span>
 <span class='doccomment'>/// logger should use to keep the global maximum log level in sync with the</span>
@@ -1762,7 +1735,8 @@
 <span class='doccomment'>/// # Safety</span>
 <span class='doccomment'>///</span>
 <span class='doccomment'>/// The pointer returned by `make_logger` must remain valid for the entire</span>
-<span class='doccomment'>/// duration of the program or until `shutdown_logger_raw` is called.</span>
+<span class='doccomment'>/// duration of the program or until `shutdown_logger_raw` is called. In</span>
+<span class='doccomment'>/// addition, `shutdown_logger` *must not* be called after this function.</span>
 <span class='kw'>pub</span> <span class='kw'>unsafe</span> <span class='kw'>fn</span> <span class='ident'>set_logger_raw</span><span class='op'>&lt;</span><span class='ident'>M</span><span class='op'>&gt;</span>(<span class='ident'>make_logger</span>: <span class='ident'>M</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>(), <span class='ident'>SetLoggerError</span><span class='op'>&gt;</span>
         <span class='kw'>where</span> <span class='ident'>M</span>: <span class='ident'>FnOnce</span>(<span class='ident'>MaxLogLevelFilter</span>) <span class='op'>-&gt;</span> <span class='op'>*</span><span class='kw'>const</span> <span class='ident'>Log</span> {
     <span class='kw'>if</span> <span class='ident'>STATE</span>.<span class='ident'>compare_and_swap</span>(<span class='ident'>UNINITIALIZED</span>, <span class='ident'>INITIALIZING</span>,
@@ -1778,6 +1752,24 @@
 <span class='doccomment'>/// Shuts down the global logger.</span>
 <span class='doccomment'>///</span>
 <span class='doccomment'>/// This function may only be called once in the lifetime of a program, and may</span>
+<span class='doccomment'>/// not be called before `set_logger`. Once the global logger has been shut</span>
+<span class='doccomment'>/// down, it can no longer be re-initialized by `set_logger`. Any log events</span>
+<span class='doccomment'>/// that occur after the call to `shutdown_logger` completes will be ignored.</span>
+<span class='doccomment'>///</span>
+<span class='doccomment'>/// The logger that was originally created by the call to to `set_logger` is</span>
+<span class='doccomment'>/// returned on success. At that point it is guaranteed that no other threads</span>
+<span class='doccomment'>/// are concurrently accessing the logger object.</span>
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;use_std&quot;</span>)]</span>
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>shutdown_logger</span>() <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>Box</span><span class='op'>&lt;</span><span class='ident'>Log</span><span class='op'>&gt;</span>, <span class='ident'>ShutdownLoggerError</span><span class='op'>&gt;</span> {
+    <span class='ident'>shutdown_logger_raw</span>().<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>l</span><span class='op'>|</span> <span class='kw'>unsafe</span> { <span class='ident'>mem</span>::<span class='ident'>transmute</span>(<span class='ident'>l</span>) })
+}
+
+<span class='doccomment'>/// Shuts down the global logger.</span>
+<span class='doccomment'>///</span>
+<span class='doccomment'>/// This function is similar to `shutdown_logger` except that it is usable in</span>
+<span class='doccomment'>/// `no_std` code.</span>
+<span class='doccomment'>///</span>
+<span class='doccomment'>/// This function may only be called once in the lifetime of a program, and may</span>
 <span class='doccomment'>/// not be called before `set_logger_raw`. Once the global logger has been shut</span>
 <span class='doccomment'>/// down, it can no longer be re-initialized by `set_logger_raw`. Any log</span>
 <span class='doccomment'>/// events that occur after the call to `shutdown_logger_raw` completes will be</span>
@@ -1786,10 +1778,6 @@
 <span class='doccomment'>/// The pointer that was originally passed to `set_logger_raw` is returned on</span>
 <span class='doccomment'>/// success. At that point it is guaranteed that no other threads are</span>
 <span class='doccomment'>/// concurrently accessing the logger object.</span>
-<span class='doccomment'>///</span>
-<span class='doccomment'>/// This function should not be called when the global logger was registered</span>
-<span class='doccomment'>/// using `set_logger`, since in that case the logger will automatically be shut</span>
-<span class='doccomment'>/// down when the program exits</span>
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>shutdown_logger_raw</span>() <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='op'>*</span><span class='kw'>const</span> <span class='ident'>Log</span>, <span class='ident'>ShutdownLoggerError</span><span class='op'>&gt;</span> {
     <span class='comment'>// Set the global log level to stop other thread from logging</span>
     <span class='ident'>MAX_LOG_LEVEL_FILTER</span>.<span class='ident'>store</span>(<span class='number'>0</span>, <span class='ident'>Ordering</span>::<span class='ident'>SeqCst</span>);
@@ -1837,25 +1825,25 @@
 
 <span class='kw'>impl</span> <span class='ident'>fmt</span>::<span class='ident'>Display</span> <span class='kw'>for</span> <span class='ident'>ShutdownLoggerError</span> {
     <span class='kw'>fn</span> <span class='ident'>fmt</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>fmt</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>fmt</span>::<span class='ident'>Formatter</span>) <span class='op'>-&gt;</span> <span class='ident'>fmt</span>::<span class='prelude-ty'>Result</span> {
-        <span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>fmt</span>, <span class='string'>&quot;attempted to shut down a logger without an active logger&quot;</span>)
+        <span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>fmt</span>, <span class='string'>&quot;attempted to shut down the logger without an active logger&quot;</span>)
     }
 }
 
 <span class='comment'>// The Error trait is not available in libcore</span>
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;use_std&quot;</span>)]</span>
 <span class='kw'>impl</span> <span class='ident'>error</span>::<span class='ident'>Error</span> <span class='kw'>for</span> <span class='ident'>ShutdownLoggerError</span> {
-    <span class='kw'>fn</span> <span class='ident'>description</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='ident'>str</span> { <span class='string'>&quot;shutdown_logger_raw() called without an active logger&quot;</span> }
+    <span class='kw'>fn</span> <span class='ident'>description</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='kw-2'>&amp;</span><span class='ident'>str</span> { <span class='string'>&quot;shutdown_logger() called without an active logger&quot;</span> }
 }
 
-<span class='doccomment'>/// Registers a panic handler which logs at the error level.</span>
+<span class='doccomment'>/// Registers a panic hook which logs at the error level.</span>
 <span class='doccomment'>///</span>
-<span class='doccomment'>/// The format is the same as the default panic handler. The reporting module is</span>
+<span class='doccomment'>/// The format is the same as the default panic hook . The reporting module is</span>
 <span class='doccomment'>/// `log::panic`.</span>
 <span class='doccomment'>///</span>
 <span class='doccomment'>/// Requires the `use_std` (enabled by default) and `nightly` features.</span>
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>all</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;nightly&quot;</span>, <span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;use_std&quot;</span>))]</span>
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>log_panics</span>() {
-    <span class='ident'>std</span>::<span class='ident'>panic</span>::<span class='ident'>set_handler</span>(<span class='ident'>panic</span>::<span class='ident'>log</span>);
+    <span class='ident'>std</span>::<span class='ident'>panic</span>::<span class='ident'>set_hook</span>(<span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='ident'>panic</span>::<span class='ident'>log</span>));
 }
 
 <span class='comment'>// inner module so that the reporting module is log::panic instead of log</span>

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/sodiumoxide-0.0.9/src/lib.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/sodiumoxide-0.0.10/src/lib.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>lib.rs.html -- source</title>
@@ -131,6 +131,10 @@
 <span id="88">88</span>
 <span id="89">89</span>
 <span id="90">90</span>
+<span id="91">91</span>
+<span id="92">92</span>
+<span id="93">93</span>
+<span id="94">94</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! Rust bindings to the [sodium library](https://github.com/jedisct1/libsodium).</span>
 <span class='doccomment'>//!</span>
@@ -162,6 +166,9 @@
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//!  `crypto::sign`</span>
 <span class='doccomment'>//!</span>
+<span class='doccomment'>//! # Sealed boxes</span>
+<span class='doccomment'>//!  `crypto::sealedox`</span>
+<span class='doccomment'>//!</span>
 <span class='doccomment'>//! # Secret-key cryptography</span>
 <span class='doccomment'>//!  `crypto::secretbox`</span>
 <span class='doccomment'>//!</span>
@@ -186,6 +193,7 @@
 
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>libsodium_sys</span> <span class='kw'>as</span> <span class='ident'>ffi</span>;
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>libc</span>;
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>any</span>(<span class='ident'>test</span>, <span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;default&quot;</span>))]</span>
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>rustc_serialize</span>;
 
 <span class='doccomment'>/// `init()` initializes the sodium library and chooses faster versions of</span>
@@ -201,8 +209,8 @@
 <span class='kw'>mod</span> <span class='ident'>marshal</span>;
 <span class='attribute'>#[<span class='ident'>macro_use</span>]</span>
 <span class='kw'>mod</span> <span class='ident'>newtype_macros</span>;
-
 <span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>randombytes</span>;
+<span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>utils</span>;
 
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
 <span class='kw'>mod</span> <span class='ident'>test_utils</span>;
@@ -210,6 +218,7 @@
 <span class='doccomment'>/// Cryptographic functions</span>
 <span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>crypto</span> {
     <span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>box_</span>;
+    <span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>sealedbox</span>;
     <span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>sign</span>;
     <span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>scalarmult</span>;
     <span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>auth</span>;
@@ -221,7 +230,6 @@
     <span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>shorthash</span>;
     <span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>verify</span>;
 }
-
 </pre>
 </section>
     <section id='search' class="content hidden"></section>

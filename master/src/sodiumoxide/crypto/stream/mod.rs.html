@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/sodiumoxide-0.0.9/src/crypto/stream/mod.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/sodiumoxide-0.0.10/src/crypto/stream/mod.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>mod.rs.html -- source</title>
@@ -136,6 +136,7 @@
 <span id="93">93</span>
 <span id="94">94</span>
 <span id="95">95</span>
+<span id="96">96</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! Secret-key encryption</span>
 <span class='doccomment'>//!</span>
@@ -177,6 +178,7 @@
 <span class='doccomment'>//! |crypto_stream           |primitive   |KEYBYTES |NONCEBYTES|</span>
 <span class='doccomment'>//! |------------------------|------------|---------|----------|</span>
 <span class='doccomment'>//! |crypto_stream_aes128ctr |AES-128-CTR |16       |16        |</span>
+<span class='doccomment'>//! |crypto_stream_chacha20  |Chacha20/20 |32       |8         |</span>
 <span class='doccomment'>//! |crypto_stream_salsa208  |Salsa20/8   |32       |8         |</span>
 <span class='doccomment'>//! |crypto_stream_salsa2012 |Salsa20/12  |32       |8         |</span>
 <span class='doccomment'>//! |crypto_stream_salsa20   |Salsa20/20  |32       |8         |</span>

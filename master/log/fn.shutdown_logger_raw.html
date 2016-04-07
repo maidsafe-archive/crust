@@ -46,8 +46,11 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-265' class='srclink' href='../src/log/lib.rs.html#730-749' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-257' class='srclink' href='../src/log/lib.rs.html#724-743' title='goto source code'>[src]</a></span></h1>
 <pre class='rust fn'>pub fn shutdown_logger_raw() -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.pointer.html'>*const <a class='trait' href='../log/trait.Log.html' title='log::Log'>Log</a></a>, <a class='struct' href='../log/struct.ShutdownLoggerError.html' title='log::ShutdownLoggerError'>ShutdownLoggerError</a>&gt;</pre><div class='docblock'><p>Shuts down the global logger.</p>
+
+<p>This function is similar to <code>shutdown_logger</code> except that it is usable in
+<code>no_std</code> code.</p>
 
 <p>This function may only be called once in the lifetime of a program, and may
 not be called before <code>set_logger_raw</code>. Once the global logger has been shut
@@ -58,10 +61,6 @@ ignored.</p>
 <p>The pointer that was originally passed to <code>set_logger_raw</code> is returned on
 success. At that point it is guaranteed that no other threads are
 concurrently accessing the logger object.</p>
-
-<p>This function should not be called when the global logger was registered
-using <code>set_logger</code>, since in that case the logger will automatically be shut
-down when the program exits</p>
 </div></section>
     <section id='search' class="content hidden"></section>
 

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/time-0.1.34/src/lib.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/time-0.1.35/src/lib.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>lib.rs.html -- source</title>
@@ -1368,7 +1368,7 @@
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fmt</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>ops</span>::{<span class='ident'>Add</span>, <span class='ident'>Sub</span>};
 
-<span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>duration</span>::<span class='ident'>Duration</span>;
+<span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>duration</span>::{<span class='ident'>Duration</span>, <span class='ident'>OutOfRangeError</span>};
 
 <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>ParseError</span>::{<span class='ident'>InvalidDay</span>, <span class='ident'>InvalidDayOfMonth</span>, <span class='ident'>InvalidDayOfWeek</span>,
                        <span class='ident'>InvalidDayOfYear</span>, <span class='ident'>InvalidFormatSpecifier</span>, <span class='ident'>InvalidHour</span>,

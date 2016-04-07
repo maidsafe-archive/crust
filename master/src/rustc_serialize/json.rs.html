@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/rustc-serialize-0.3.18/src/json.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/rustc-serialize-0.3.19/src/json.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>json.rs.html -- source</title>
@@ -3981,6 +3981,21 @@
 <span id="3938">3938</span>
 <span id="3939">3939</span>
 <span id="3940">3940</span>
+<span id="3941">3941</span>
+<span id="3942">3942</span>
+<span id="3943">3943</span>
+<span id="3944">3944</span>
+<span id="3945">3945</span>
+<span id="3946">3946</span>
+<span id="3947">3947</span>
+<span id="3948">3948</span>
+<span id="3949">3949</span>
+<span id="3950">3950</span>
+<span id="3951">3951</span>
+<span id="3952">3952</span>
+<span id="3953">3953</span>
+<span id="3954">3954</span>
+<span id="3955">3955</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2012-2014 The Rust Project Developers. See the COPYRIGHT</span>
 <span class='comment'>// file at the top-level directory of this distribution and at</span>
@@ -5476,6 +5491,8 @@
                 <span class='comment'>// Make sure we don&#39;t underflow.</span>
                 <span class='kw'>if</span> <span class='ident'>res</span> <span class='op'>&gt;</span> (<span class='ident'>i64</span>::<span class='ident'>MAX</span> <span class='kw'>as</span> <span class='ident'>u64</span>) <span class='op'>+</span> <span class='number'>1</span> {
                     <span class='ident'>Error</span>(<span class='ident'>SyntaxError</span>(<span class='ident'>InvalidNumber</span>, <span class='self'>self</span>.<span class='ident'>line</span>, <span class='self'>self</span>.<span class='ident'>col</span>))
+                } <span class='kw'>else</span> <span class='kw'>if</span> <span class='ident'>res</span> <span class='op'>==</span> <span class='number'>0</span> {
+                    <span class='ident'>I64Value</span>(<span class='ident'>res</span> <span class='kw'>as</span> <span class='ident'>i64</span>)
                 } <span class='kw'>else</span> {
                     <span class='ident'>I64Value</span>((<span class='op'>!</span><span class='ident'>res</span> <span class='op'>+</span> <span class='number'>1</span>) <span class='kw'>as</span> <span class='ident'>i64</span>)
                 }
@@ -5916,7 +5933,7 @@
         <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>token</span>.<span class='ident'>take</span>() {
             <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> {}
             <span class='prelude-val'>Some</span>(<span class='ident'>Error</span>(<span class='ident'>e</span>)) <span class='op'>=&gt;</span> { <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>e</span>); }
-            <span class='kw-2'>ref</span> <span class='ident'>tok</span> <span class='op'>=&gt;</span> { <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;unexpected token {:?}&quot;</span>, <span class='ident'>tok</span>); }
+            _ <span class='op'>=&gt;</span> { <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>SyntaxError</span>(<span class='ident'>InvalidSyntax</span>, <span class='self'>self</span>.<span class='ident'>parser</span>.<span class='ident'>line</span>, <span class='self'>self</span>.<span class='ident'>parser</span>.<span class='ident'>col</span>)); }
         }
         <span class='ident'>result</span>
     }
@@ -7408,6 +7425,11 @@
             _ <span class='op'>=&gt;</span> {} <span class='comment'>// it parsed and we are good to go</span>
         }
     }
+    
+    <span class='attribute'>#[<span class='ident'>test</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>test_negative_zero</span>() {
+        <span class='ident'>Json</span>::<span class='ident'>from_str</span>(<span class='string'>&quot;{\&quot;test\&quot;:-0}&quot;</span>).<span class='ident'>unwrap</span>();
+    }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_prettyencode_hashmap_with_numeric_key</span>() {
@@ -7920,6 +7942,14 @@
         <span class='kw'>let</span> <span class='ident'>s</span> <span class='op'>=</span> <span class='ident'>super</span>::<span class='ident'>encode</span>(<span class='kw-2'>&amp;</span><span class='ident'>f</span>).<span class='ident'>unwrap</span>();
         <span class='kw'>let</span> <span class='ident'>d</span> <span class='op'>=</span> <span class='ident'>super</span>::<span class='ident'>decode</span>(<span class='kw-2'>&amp;</span><span class='ident'>s</span>).<span class='ident'>unwrap</span>();
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>f</span>, <span class='ident'>d</span>);
+    }
+
+    <span class='attribute'>#[<span class='ident'>test</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>test_unexpected_token</span>() {
+        <span class='kw'>match</span> <span class='ident'>Json</span>::<span class='ident'>from_str</span>(<span class='string'>&quot;{\&quot;\&quot;:\&quot;\&quot;,\&quot;\&quot;:{\&quot;\&quot;:\&quot;\&quot;,\&quot;\&quot;:[{\&quot;\&quot;:\&quot;\&quot;,}}}&quot;</span>) {
+            <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=&gt;</span> <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>e</span>, <span class='ident'>SyntaxError</span>(<span class='ident'>InvalidSyntax</span>, <span class='number'>1</span>, <span class='number'>32</span>)),
+            _ <span class='op'>=&gt;</span> ()
+        };
     }
 }
 </pre>

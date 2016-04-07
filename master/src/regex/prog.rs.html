@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/regex-0.1.61/src/prog.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/regex-0.1.63/src/prog.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>prog.rs.html -- source</title>
@@ -461,7 +461,6 @@
 <span id="418">418</span>
 <span id="419">419</span>
 <span id="420">420</span>
-<span id="421">421</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>collections</span>::<span class='ident'>HashMap</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>cmp</span>::<span class='ident'>Ordering</span>;
@@ -832,7 +831,6 @@
 
 <span class='kw'>impl</span> <span class='ident'>InstRanges</span> {
     <span class='doccomment'>/// Tests whether the given input character matches this instruction.</span>
-    <span class='attribute'>#[<span class='ident'>inline</span>(<span class='ident'>always</span>)]</span> <span class='comment'>// About ~5-15% more throughput then `#[inline]`</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>matches</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>c</span>: <span class='ident'>Char</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
         <span class='comment'>// This speeds up the `match_class_unicode` benchmark by checking</span>
         <span class='comment'>// some common cases quickly without binary search. e.g., Matching</span>

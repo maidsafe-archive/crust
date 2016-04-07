@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/regex-0.1.61/src/input.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/regex-0.1.63/src/input.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>input.rs.html -- source</title>
@@ -367,13 +367,6 @@
 <span id="324">324</span>
 <span id="325">325</span>
 <span id="326">326</span>
-<span id="327">327</span>
-<span id="328">328</span>
-<span id="329">329</span>
-<span id="330">330</span>
-<span id="331">331</span>
-<span id="332">332</span>
-<span id="333">333</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2014-2015 The Rust Project Developers. See the COPYRIGHT</span>
 <span class='comment'>// file at the top-level directory of this distribution and at</span>
@@ -514,12 +507,6 @@
 }
 
 <span class='kw'>impl</span><span class='op'>&lt;</span><span class='lifetime'>&#39;t</span><span class='op'>&gt;</span> <span class='ident'>Input</span> <span class='kw'>for</span> <span class='ident'>CharInput</span><span class='op'>&lt;</span><span class='lifetime'>&#39;t</span><span class='op'>&gt;</span> {
-    <span class='comment'>// This `inline(always)` increases throughput by almost 25% on the `hard`</span>
-    <span class='comment'>// benchmarks over a normal `inline` annotation.</span>
-    <span class='comment'>//</span>
-    <span class='comment'>// I&#39;m not sure why `#[inline]` isn&#39;t enough to convince LLVM, but it is</span>
-    <span class='comment'>// used *a lot* in the guts of the matching engines.</span>
-    <span class='attribute'>#[<span class='ident'>inline</span>(<span class='ident'>always</span>)]</span>
     <span class='kw'>fn</span> <span class='ident'>at</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>i</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>InputAt</span> {
         <span class='kw'>let</span> <span class='ident'>c</span> <span class='op'>=</span> <span class='ident'>decode_utf8</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>[<span class='ident'>i</span>..]).<span class='ident'>map</span>(<span class='op'>|</span>(<span class='ident'>c</span>, _)<span class='op'>|</span> <span class='ident'>c</span>).<span class='ident'>into</span>();
         <span class='ident'>InputAt</span> {
@@ -579,7 +566,6 @@
 }
 
 <span class='kw'>impl</span><span class='op'>&lt;</span><span class='lifetime'>&#39;t</span><span class='op'>&gt;</span> <span class='ident'>Input</span> <span class='kw'>for</span> <span class='ident'>ByteInput</span><span class='op'>&lt;</span><span class='lifetime'>&#39;t</span><span class='op'>&gt;</span> {
-    <span class='attribute'>#[<span class='ident'>inline</span>(<span class='ident'>always</span>)]</span>
     <span class='kw'>fn</span> <span class='ident'>at</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>i</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>InputAt</span> {
         <span class='ident'>InputAt</span> {
             <span class='ident'>pos</span>: <span class='ident'>i</span>,

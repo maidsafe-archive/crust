@@ -46,27 +46,26 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-49' class='srclink' href='../../src/maidsafe_utilities/log.rs.html#18-489' title='goto source code'>[src]</a></span></h1>
-<div class='docblock'><p>Allows initialising the env_logger with a standard message format.
-These functions can initialise logging for output to stdout only, or to a file and
-stdout. For more fine-grained control, create file called <code>log.toml</code> in the root
-directory of the project, or in the same directory where the executable is.
-See <a href="http://sfackler.github.io/log4rs/doc/v0.3.3/log4rs/index.html">http://sfackler.github.io/log4rs/doc/v0.3.3/log4rs/index.html</a> for details
-about format and structure of this file.</p>
+        </span><a id='src-49' class='srclink' href='../../src/maidsafe_utilities/log.rs.html#18-510' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p>Allows initialising the <code>env_logger</code> with a standard message format.
+These functions can initialise logging for output to stdout only, or to a file and stdout.  For
+more fine-grained control, create a file called <code>log.toml</code> in the root directory of the project,
+or in the same directory where the executable is.  See <a href="http://sfackler.github.io/log4rs/doc/v0.3.3/log4rs/index.html">log4rs docs</a> for details about the format and
+structure of this file.</p>
 
 <p>An example of a log message is:</p>
 <pre class='rust rust-example-rendered'>
-<span class='ident'>W</span> <span class='number'>19</span>:<span class='number'>33</span>:<span class='number'>49.245434</span> <span class='op'>&lt;</span><span class='ident'>main</span><span class='op'>&gt;</span> [<span class='ident'>example</span>:<span class='ident'>src</span><span class='op'>/</span><span class='ident'>main</span>.<span class='ident'>rs</span>:<span class='number'>50</span>] <span class='ident'>Warning</span> <span class='ident'>level</span> <span class='ident'>message</span>.
-<span class='op'>^</span>        <span class='op'>^</span>          <span class='op'>^</span>        <span class='op'>^</span>          <span class='op'>^</span>                    <span class='op'>^</span>
-<span class='op'>|</span>    <span class='ident'>timestamp</span>      <span class='op'>|</span> <span class='ident'>top</span><span class='op'>-</span><span class='ident'>level</span> <span class='ident'>module</span>  <span class='op'>|</span>                 <span class='ident'>message</span>
-<span class='op'>|</span>                   <span class='op'>|</span>                   <span class='op'>|</span>
-<span class='op'>|</span>              <span class='ident'>thread</span> <span class='ident'>name</span>       <span class='ident'>file</span> <span class='ident'>and</span> <span class='ident'>line</span> <span class='ident'>no</span>.
+<span class='ident'>WARN</span> <span class='number'>19</span>:<span class='number'>33</span>:<span class='number'>49.245434200</span> <span class='op'>&lt;</span><span class='ident'>main</span><span class='op'>&gt;</span> [<span class='ident'>example</span>::<span class='ident'>my_mod</span> <span class='ident'>main</span>.<span class='ident'>rs</span>:<span class='number'>10</span>] <span class='ident'>Warning</span> <span class='ident'>level</span> <span class='ident'>message</span>.
+<span class='op'>^</span>           <span class='op'>^</span>             <span class='op'>^</span>              <span class='op'>^</span>         <span class='op'>^</span>                  <span class='op'>^</span>
+<span class='op'>|</span>       <span class='ident'>timestamp</span>         <span class='op'>|</span>           <span class='ident'>module</span>       <span class='op'>|</span>               <span class='ident'>message</span>
+<span class='op'>|</span>                         <span class='op'>|</span>                        <span class='op'>|</span>
+<span class='op'>|</span>                    <span class='ident'>thread</span> <span class='ident'>name</span>           <span class='ident'>file</span> <span class='ident'>and</span> <span class='ident'>line</span> <span class='ident'>no</span>.
 <span class='op'>|</span>
-<span class='ident'>level</span> (<span class='ident'>E</span>, <span class='ident'>W</span>, <span class='ident'>I</span>, <span class='ident'>D</span>, <span class='ident'>or</span> <span class='ident'>T</span> <span class='kw'>for</span> <span class='ident'>error</span>, <span class='ident'>warn</span>, <span class='ident'>info</span>, <span class='ident'>debug</span> <span class='ident'>or</span> <span class='ident'>trace</span> <span class='ident'>respectively</span>)</pre>
+<span class='ident'>level</span> (<span class='ident'>ERROR</span>, <span class='ident'>WARN</span>, <span class='ident'>INFO</span>, <span class='ident'>DEBUG</span>, <span class='ident'>or</span> <span class='ident'>TRACE</span>)</pre>
 
 <p>Logging of the thread name is enabled or disabled via the <code>show_thread_name</code> parameter.  If
 enabled, and the thread executing the log statement is unnamed, the thread name is shown as
-<code>???</code>.</p>
+<code>&lt;unnamed&gt;</code>.</p>
 
 <p>The functions can safely be called multiple times concurrently.</p>
 
@@ -78,20 +77,26 @@ enabled, and the thread executing the log statement is unnamed, the thread name 
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>thread</span>;
 <span class='kw'>use</span> <span class='ident'>maidsafe_utilities</span>::<span class='ident'>thread</span>::<span class='ident'>RaiiThreadJoiner</span>;
 
-<span class='kw'>fn</span> <span class='ident'>main</span>() {
-    <span class='ident'>maidsafe_utilities</span>::<span class='ident'>log</span>::<span class='ident'>init</span>(<span class='boolval'>true</span>);
+<span class='kw'>mod</span> <span class='ident'>my_mod</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>show_warning</span>() {
+        <span class='macro'>warn</span><span class='macro'>!</span>(<span class='string'>&quot;A warning&quot;</span>);
+    }
+}
 
-    <span class='macro'>warn</span><span class='macro'>!</span>(<span class='string'>&quot;A warning&quot;</span>);
+<span class='kw'>fn</span> <span class='ident'>main</span>() {
+    <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>maidsafe_utilities</span>::<span class='ident'>log</span>::<span class='ident'>init</span>(<span class='boolval'>true</span>));
+
+    <span class='ident'>my_mod</span>::<span class='ident'>show_warning</span>();
 
     <span class='kw'>let</span> <span class='ident'>unnamed</span> <span class='op'>=</span> <span class='ident'>thread</span>::<span class='ident'>spawn</span>(<span class='kw'>move</span> <span class='op'>||</span> <span class='macro'>info</span><span class='macro'>!</span>(<span class='string'>&quot;Message in unnamed thread&quot;</span>));
     <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>unnamed</span>.<span class='ident'>join</span>();
 
     <span class='kw'>let</span> <span class='ident'>_named</span> <span class='op'>=</span> <span class='ident'>RaiiThreadJoiner</span>::<span class='ident'>new</span>(<span class='macro'>thread</span><span class='macro'>!</span>(<span class='string'>&quot;Worker&quot;</span>,
-                     <span class='kw'>move</span> <span class='op'>||</span> <span class='macro'>error</span><span class='macro'>!</span>(<span class='string'>&quot;Message in named thread&quot;</span>)));
+                                               <span class='kw'>move</span> <span class='op'>||</span> <span class='macro'>error</span><span class='macro'>!</span>(<span class='string'>&quot;Message in named thread&quot;</span>)));
 
-    <span class='comment'>// W 12:24:07.064746 &lt;main&gt; [example:src/main.rs:11] A warning</span>
-    <span class='comment'>// I 12:24:07.065746 ??? [example:src/main.rs:13] Message in unnamed thread</span>
-    <span class='comment'>// E 12:24:07.065746 Worker [example:src/main.rs:16] Message in named thread</span>
+    <span class='comment'>// WARN 16:10:44.989712300 &lt;main&gt; [example::my_mod main.rs:10] A warning</span>
+    <span class='comment'>// INFO 16:10:44.990716600 &lt;unnamed&gt; [example main.rs:19] Message in unnamed thread</span>
+    <span class='comment'>// ERROR 16:10:44.991221900 Worker [example main.rs:22] Message in named thread</span>
 }</pre>
 
 <p>Environment variable <code>RUST_LOG</code> can be set and fine-tuned to get various modules logging to
@@ -106,7 +111,7 @@ severe ones.</p>
                         <td><a class='fn' href='fn.init.html'
                                title='maidsafe_utilities::log::init'>init</a></td>
                         <td class='docblock short'>
-                             <p>Initialises the env_logger for output to stdout.</p>
+                             <p>Initialises the <code>env_logger</code> for output to stdout.</p>
 
                         </td>
                     </tr>
@@ -115,8 +120,7 @@ severe ones.</p>
                         <td><a class='fn' href='fn.init_to_file.html'
                                title='maidsafe_utilities::log::init_to_file'>init_to_file</a></td>
                         <td class='docblock short'>
-                             <p>Initialises the env_logger for output to a file and optionally to the
-console asynchronously.</p>
+                             <p>Initialises the <code>env_logger</code> for output to a file and optionally to the console asynchronously.</p>
 
                         </td>
                     </tr>
@@ -125,8 +129,8 @@ console asynchronously.</p>
                         <td><a class='fn' href='fn.init_to_server.html'
                                title='maidsafe_utilities::log::init_to_server'>init_to_server</a></td>
                         <td class='docblock short'>
-                             <p>Initialises the env_logger for output to a server and optionally to the
-console asynchronously.</p>
+                             <p>Initialises the <code>env_logger</code> for output to a server and optionally to the console
+asynchronously.</p>
 
                         </td>
                     </tr>

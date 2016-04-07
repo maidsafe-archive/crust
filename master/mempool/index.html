@@ -46,43 +46,30 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-0' class='srclink' href='../src/mempool/lib.rs.html#1-256' title='goto source code'>[src]</a></span></h1>
-<div class='docblock'><p>This crate provides a fast thread safe memory pool for reusing allocations.</p>
+        </span><a id='src-0' class='srclink' href='../src/mempool/lib.rs.html#1-179' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p>This crate provides a fast thread safe memory pool for reusing allocations. It
+aggressively optimizes for the single-threaded use case, but gracefully
+supports access from multiple threads simultaneously. In particular, values in
+a pool may not be shared across threads.</p>
 
 <h1 id='example' class='section-header'><a href='#example'>Example</a></h1>
 <p>A pool takes an initialization function for creating members of the pool. Once
-created, values can be immediately retrieved. Once the value is dropped, it is
-returned to the pool for reuse.</p>
+created, values can be immediately retrieved.</p>
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>mempool</span>::<span class='ident'>Pool</span>;
 
 <span class='kw'>let</span> <span class='ident'>pool</span> <span class='op'>=</span> <span class='ident'>Pool</span>::<span class='ident'>new</span>(<span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='op'>||</span> <span class='string'>&quot;foobar&quot;</span>));
 <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='string'>&quot;foobar&quot;</span>, <span class='op'>*</span><span class='ident'>pool</span>.<span class='ident'>get</span>());</pre>
+
+<p>Note that the pool returns an immutable reference. If you need a mutable
+reference, then use a <code>RefCell</code>. (Which is guaranteed safe by the pool.)</p>
 </div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
 <table>
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.Guard.html'
-                               title='mempool::Guard'>Guard</a></td>
-                        <td class='docblock short'>
-                             <p>A guard for putting values back into the pool on drop.</p>
-
-                        </td>
-                    </tr>
-                
                     <tr class=' module-item'>
                         <td><a class='struct' href='struct.Pool.html'
                                title='mempool::Pool'>Pool</a></td>
                         <td class='docblock short'>
                              <p>A fast memory pool.</p>
-
-                        </td>
-                    </tr>
-                
-                    <tr class=' module-item'>
-                        <td><a class='struct' href='struct.RefGuard.html'
-                               title='mempool::RefGuard'>RefGuard</a></td>
-                        <td class='docblock short'>
-                             <p>A guard for putting values back into the pool on drop.</p>
 
                         </td>
                     </tr>

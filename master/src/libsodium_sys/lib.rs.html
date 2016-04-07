@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/libsodium-sys-0.0.9/lib.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/libsodium-sys-0.0.10/lib.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>lib.rs.html -- source</title>
@@ -96,12 +96,11 @@
 <span id="53">53</span>
 <span id="54">54</span>
 <span id="55">55</span>
-<span id="56">56</span>
 </pre><pre class='rust '>
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>allow</span>(<span class='ident'>non_upper_case_globals</span>)]</span>
 
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>libc</span>;
-<span class='kw'>use</span> <span class='ident'>libc</span>::{<span class='ident'>c_int</span>, <span class='ident'>c_ulonglong</span>, <span class='ident'>c_char</span>, <span class='ident'>size_t</span>};
+<span class='kw'>use</span> <span class='ident'>libc</span>::{<span class='ident'>c_void</span>, <span class='ident'>c_int</span>, <span class='ident'>c_ulonglong</span>, <span class='ident'>c_char</span>, <span class='ident'>size_t</span>};
 
 <span class='macro'>include</span><span class='macro'>!</span>(<span class='string'>&quot;src/core.rs&quot;</span>);
 
@@ -138,7 +137,6 @@
 <span class='macro'>include</span><span class='macro'>!</span>(<span class='string'>&quot;src/crypto_secretbox_xsalsa20poly1305.rs&quot;</span>);
 <span class='macro'>include</span><span class='macro'>!</span>(<span class='string'>&quot;src/crypto_shorthash_siphash24.rs&quot;</span>);
 <span class='macro'>include</span><span class='macro'>!</span>(<span class='string'>&quot;src/crypto_sign_ed25519.rs&quot;</span>);
-<span class='macro'>include</span><span class='macro'>!</span>(<span class='string'>&quot;src/crypto_sign_edwards25519sha512batch.rs&quot;</span>);
 
 <span class='macro'>include</span><span class='macro'>!</span>(<span class='string'>&quot;src/crypto_stream.rs&quot;</span>);
 <span class='macro'>include</span><span class='macro'>!</span>(<span class='string'>&quot;src/crypto_stream_aes128ctr.rs&quot;</span>);

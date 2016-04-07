@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/sodiumoxide-0.0.9/src/crypto/stream/stream_macros.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/sodiumoxide-0.0.10/src/crypto/stream/stream_macros.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>stream_macros.rs.html -- source</title>
@@ -235,8 +235,6 @@
 <span id="192">192</span>
 <span id="193">193</span>
 <span id="194">194</span>
-<span id="195">195</span>
-<span id="196">196</span>
 </pre><pre class='rust '>
 <span class='macro'>macro_rules</span><span class='macro'>!</span> <span class='ident'>stream_module</span> ((<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>stream_name</span>:<span class='ident'>ident</span>,
                              <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>xor_name</span>:<span class='ident'>ident</span>,
@@ -246,6 +244,7 @@
 <span class='kw'>use</span> <span class='ident'>libc</span>::<span class='ident'>c_ulonglong</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>iter</span>::<span class='ident'>repeat</span>;
 <span class='kw'>use</span> <span class='ident'>randombytes</span>::<span class='ident'>randombytes_into</span>;
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;default&quot;</span>)]</span>
 <span class='kw'>use</span> <span class='ident'>rustc_serialize</span>;
 
 <span class='doccomment'>/// Number of bytes in a `Key`.</span>
@@ -254,22 +253,18 @@
 <span class='doccomment'>/// Number of bytes in a `Nonce`.</span>
 <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>NONCEBYTES</span>: <span class='ident'>usize</span> <span class='op'>=</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>noncebytes</span>;
 
-<span class='doccomment'>/// `Key` for symmetric encryption</span>
-<span class='doccomment'>///</span>
-<span class='doccomment'>/// When a `Key` goes out of scope its contents</span>
-<span class='doccomment'>/// will be zeroed out</span>
-<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>Key</span>(<span class='kw'>pub</span> [<span class='ident'>u8</span>; <span class='ident'>KEYBYTES</span>]);
+<span class='macro'>new_type</span><span class='macro'>!</span> {
+    <span class='doccomment'>/// `Key` for symmetric encryption</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// When a `Key` goes out of scope its contents</span>
+    <span class='doccomment'>/// will be zeroed out</span>
+    <span class='ident'>secret</span> <span class='ident'>Key</span>(<span class='ident'>KEYBYTES</span>);
+}
 
-<span class='macro'>newtype_drop</span><span class='macro'>!</span>(<span class='ident'>Key</span>);
-<span class='macro'>newtype_clone</span><span class='macro'>!</span>(<span class='ident'>Key</span>);
-<span class='macro'>newtype_impl</span><span class='macro'>!</span>(<span class='ident'>Key</span>, <span class='ident'>KEYBYTES</span>);
-
-<span class='doccomment'>/// `Nonce` for symmetric encryption</span>
-<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Copy</span>)]</span>
-<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>Nonce</span>(<span class='kw'>pub</span> [<span class='ident'>u8</span>; <span class='ident'>NONCEBYTES</span>]);
-
-<span class='macro'>newtype_clone</span><span class='macro'>!</span>(<span class='ident'>Nonce</span>);
-<span class='macro'>newtype_impl</span><span class='macro'>!</span>(<span class='ident'>Nonce</span>, <span class='ident'>NONCEBYTES</span>);
+<span class='macro'>new_type</span><span class='macro'>!</span> {
+    <span class='doccomment'>/// `Nonce` for symmetric encryption</span>
+    <span class='ident'>nonce</span> <span class='ident'>Nonce</span>(<span class='ident'>NONCEBYTES</span>);
+}
 
 <span class='doccomment'>/// `gen_key()` randomly generates a key for symmetric encryption</span>
 <span class='doccomment'>///</span>
@@ -352,12 +347,11 @@
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
 <span class='kw'>mod</span> <span class='ident'>test_m</span> {
     <span class='kw'>use</span> <span class='ident'>super</span>::<span class='op'>*</span>;
-    <span class='kw'>use</span> <span class='ident'>test_utils</span>::<span class='ident'>round_trip</span>;
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_encrypt_decrypt</span>() {
         <span class='kw'>use</span> <span class='ident'>randombytes</span>::<span class='ident'>randombytes</span>;
-        <span class='kw'>for</span> <span class='ident'>i</span> <span class='kw'>in</span> (<span class='number'>0</span>..<span class='number'>1024usize</span>) {
+        <span class='kw'>for</span> <span class='ident'>i</span> <span class='kw'>in</span> <span class='number'>0</span>..<span class='number'>1024usize</span> {
             <span class='kw'>let</span> <span class='ident'>k</span> <span class='op'>=</span> <span class='ident'>gen_key</span>();
             <span class='kw'>let</span> <span class='ident'>n</span> <span class='op'>=</span> <span class='ident'>gen_nonce</span>();
             <span class='kw'>let</span> <span class='ident'>m</span> <span class='op'>=</span> <span class='ident'>randombytes</span>(<span class='ident'>i</span>);
@@ -370,7 +364,7 @@
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_stream_xor</span>() {
         <span class='kw'>use</span> <span class='ident'>randombytes</span>::<span class='ident'>randombytes</span>;
-        <span class='kw'>for</span> <span class='ident'>i</span> <span class='kw'>in</span> (<span class='number'>0</span>..<span class='number'>1024usize</span>) {
+        <span class='kw'>for</span> <span class='ident'>i</span> <span class='kw'>in</span> <span class='number'>0</span>..<span class='number'>1024usize</span> {
             <span class='kw'>let</span> <span class='ident'>k</span> <span class='op'>=</span> <span class='ident'>gen_key</span>();
             <span class='kw'>let</span> <span class='ident'>n</span> <span class='op'>=</span> <span class='ident'>gen_nonce</span>();
             <span class='kw'>let</span> <span class='ident'>m</span> <span class='op'>=</span> <span class='ident'>randombytes</span>(<span class='ident'>i</span>);
@@ -387,7 +381,7 @@
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_stream_xor_inplace</span>() {
         <span class='kw'>use</span> <span class='ident'>randombytes</span>::<span class='ident'>randombytes</span>;
-        <span class='kw'>for</span> <span class='ident'>i</span> <span class='kw'>in</span> (<span class='number'>0</span>..<span class='number'>1024usize</span>) {
+        <span class='kw'>for</span> <span class='ident'>i</span> <span class='kw'>in</span> <span class='number'>0</span>..<span class='number'>1024usize</span> {
             <span class='kw'>let</span> <span class='ident'>k</span> <span class='op'>=</span> <span class='ident'>gen_key</span>();
             <span class='kw'>let</span> <span class='ident'>n</span> <span class='op'>=</span> <span class='ident'>gen_nonce</span>();
             <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>m</span> <span class='op'>=</span> <span class='ident'>randombytes</span>(<span class='ident'>i</span>);
@@ -401,9 +395,11 @@
         }
     }
 
+    <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;default&quot;</span>)]</span>
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>test_serialisation</span>() {
-        <span class='kw'>for</span> _ <span class='kw'>in</span> (<span class='number'>0</span>..<span class='number'>1024usize</span>) {
+        <span class='kw'>use</span> <span class='ident'>test_utils</span>::<span class='ident'>round_trip</span>;
+        <span class='kw'>for</span> _ <span class='kw'>in</span> <span class='number'>0</span>..<span class='number'>1024usize</span> {
             <span class='kw'>let</span> <span class='ident'>k</span> <span class='op'>=</span> <span class='ident'>gen_key</span>();
             <span class='kw'>let</span> <span class='ident'>n</span> <span class='op'>=</span> <span class='ident'>gen_nonce</span>();
             <span class='ident'>round_trip</span>(<span class='ident'>k</span>);

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/sodiumoxide-0.0.9/src/crypto/scalarmult/curve25519.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/sodiumoxide-0.0.10/src/crypto/scalarmult/curve25519.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>curve25519.rs.html -- source</title>
@@ -193,9 +193,6 @@
 <span id="150">150</span>
 <span id="151">151</span>
 <span id="152">152</span>
-<span id="153">153</span>
-<span id="154">154</span>
-<span id="155">155</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! `crypto_scalarmult_curve25519` specified in</span>
 <span class='doccomment'>//! [Cryptography in NaCl](http://nacl.cr.yp.to/valid.html), Sections 2, 3, and 4.</span>
@@ -210,21 +207,18 @@
 <span class='doccomment'>/// Number of bytes in a `Scalar`.</span>
 <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>SCALARBYTES</span>: <span class='ident'>usize</span> <span class='op'>=</span> <span class='ident'>ffi</span>::<span class='ident'>crypto_scalarmult_curve25519_SCALARBYTES</span>;
 
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;default&quot;</span>)]</span>
 <span class='kw'>use</span> <span class='ident'>rustc_serialize</span>;
 
-<span class='doccomment'>/// `Scalar` value (integer in byte representation)</span>
-<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>Scalar</span>(<span class='kw'>pub</span> [<span class='ident'>u8</span>; <span class='ident'>SCALARBYTES</span>]);
+<span class='macro'>new_type</span><span class='macro'>!</span> {
+    <span class='doccomment'>/// `Scalar` value (integer in byte representation)</span>
+    <span class='ident'>secret</span> <span class='ident'>Scalar</span>(<span class='ident'>SCALARBYTES</span>);
+}
 
-<span class='macro'>newtype_drop</span><span class='macro'>!</span>(<span class='ident'>Scalar</span>);
-<span class='macro'>newtype_clone</span><span class='macro'>!</span>(<span class='ident'>Scalar</span>);
-<span class='macro'>newtype_impl</span><span class='macro'>!</span>(<span class='ident'>Scalar</span>, <span class='ident'>SCALARBYTES</span>);
-
-<span class='doccomment'>/// `GroupElement`</span>
-<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Copy</span>)]</span>
-<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>GroupElement</span>(<span class='kw'>pub</span> [<span class='ident'>u8</span>; <span class='ident'>GROUPELEMENTBYTES</span>]);
-
-<span class='macro'>newtype_clone</span><span class='macro'>!</span>(<span class='ident'>GroupElement</span>);
-<span class='macro'>newtype_impl</span><span class='macro'>!</span>(<span class='ident'>GroupElement</span>, <span class='ident'>GROUPELEMENTBYTES</span>);
+<span class='macro'>new_type</span><span class='macro'>!</span> {
+    <span class='doccomment'>/// `GroupElement`</span>
+    <span class='ident'>secret</span> <span class='ident'>GroupElement</span>(<span class='ident'>GROUPELEMENTBYTES</span>);
+}
 
 <span class='doccomment'>/// `scalarmult()` multiplies a group element `p`</span>
 <span class='doccomment'>/// by an integer `n`. It returns the resulting group element</span>
@@ -331,7 +325,7 @@
 
     <span class='attribute'>#[<span class='ident'>bench</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>bench_scalarmult</span>(<span class='ident'>b</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>test</span>::<span class='ident'>Bencher</span>) {
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>gbs</span> <span class='op'>=</span> [<span class='number'>0u8</span>; <span class='ident'>BYTES</span>];
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>gbs</span> <span class='op'>=</span> [<span class='number'>0u8</span>; <span class='ident'>GROUPELEMENTBYTES</span>];
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>sbs</span> <span class='op'>=</span> [<span class='number'>0u8</span>; <span class='ident'>SCALARBYTES</span>];
         <span class='ident'>randombytes_into</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>gbs</span>);
         <span class='ident'>randombytes_into</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>sbs</span>);

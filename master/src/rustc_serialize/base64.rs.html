@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/rustc-serialize-0.3.18/src/base64.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/rustc-serialize-0.3.19/src/base64.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>base64.rs.html -- source</title>
@@ -509,6 +509,14 @@
 <span id="466">466</span>
 <span id="467">467</span>
 <span id="468">468</span>
+<span id="469">469</span>
+<span id="470">470</span>
+<span id="471">471</span>
+<span id="472">472</span>
+<span id="473">473</span>
+<span id="474">474</span>
+<span id="475">475</span>
+<span id="476">476</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2012-2014 The Rust Project Developers. See the COPYRIGHT</span>
 <span class='comment'>// file at the top-level directory of this distribution and at</span>
@@ -617,7 +625,10 @@
         <span class='comment'>// Preallocate memory.</span>
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>prealloc_len</span> <span class='op'>=</span> (<span class='ident'>len</span> <span class='op'>+</span> <span class='number'>2</span>) <span class='op'>/</span> <span class='number'>3</span> <span class='op'>*</span> <span class='number'>4</span>;
         <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='ident'>line_length</span>) <span class='op'>=</span> <span class='ident'>config</span>.<span class='ident'>line_length</span> {
-            <span class='kw'>let</span> <span class='ident'>num_lines</span> <span class='op'>=</span> (<span class='ident'>prealloc_len</span> <span class='op'>-</span> <span class='number'>1</span>) <span class='op'>/</span> <span class='ident'>line_length</span>;
+            <span class='kw'>let</span> <span class='ident'>num_lines</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>prealloc_len</span> {
+                <span class='number'>0</span> <span class='op'>=&gt;</span> <span class='number'>0</span>,
+                <span class='ident'>n</span> <span class='op'>=&gt;</span> (<span class='ident'>n</span> <span class='op'>-</span> <span class='number'>1</span>) <span class='op'>/</span> <span class='ident'>line_length</span>
+            };
             <span class='ident'>prealloc_len</span> <span class='op'>+=</span> <span class='ident'>num_lines</span> <span class='op'>*</span> <span class='ident'>newline</span>.<span class='ident'>bytes</span>().<span class='ident'>count</span>();
         }
 
@@ -917,6 +928,11 @@
     <span class='kw'>fn</span> <span class='ident'>test_to_base64_url_safe</span>() {
         <span class='macro'>assert_eq</span><span class='macro'>!</span>([<span class='number'>251</span>, <span class='number'>255</span>].<span class='ident'>to_base64</span>(<span class='ident'>URL_SAFE</span>), <span class='string'>&quot;-_8&quot;</span>);
         <span class='macro'>assert_eq</span><span class='macro'>!</span>([<span class='number'>251</span>, <span class='number'>255</span>].<span class='ident'>to_base64</span>(<span class='ident'>STANDARD</span>), <span class='string'>&quot;+/8=&quot;</span>);
+    }
+
+    <span class='attribute'>#[<span class='ident'>test</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>test_to_base64_empty_line_length</span>() {
+        [].<span class='ident'>to_base64</span>(<span class='ident'>Config</span> {<span class='ident'>line_length</span>: <span class='prelude-val'>Some</span>(<span class='number'>72</span>), ..<span class='ident'>STANDARD</span>});
     }
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/maidsafe_utilities-0.5.0/src/log.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/maidsafe_utilities-0.5.1/src/log.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>log.rs.html -- source</title>
@@ -530,6 +530,27 @@
 <span id="487">487</span>
 <span id="488">488</span>
 <span id="489">489</span>
+<span id="490">490</span>
+<span id="491">491</span>
+<span id="492">492</span>
+<span id="493">493</span>
+<span id="494">494</span>
+<span id="495">495</span>
+<span id="496">496</span>
+<span id="497">497</span>
+<span id="498">498</span>
+<span id="499">499</span>
+<span id="500">500</span>
+<span id="501">501</span>
+<span id="502">502</span>
+<span id="503">503</span>
+<span id="504">504</span>
+<span id="505">505</span>
+<span id="506">506</span>
+<span id="507">507</span>
+<span id="508">508</span>
+<span id="509">509</span>
+<span id="510">510</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -548,29 +569,29 @@
 <span class='comment'>// Please review the Licences for the specific language governing permissions and limitations</span>
 <span class='comment'>// relating to use of the SAFE Network Software.</span>
 
-<span class='doccomment'>//! These functions can initialise logging for output to stdout only, or to a file and</span>
-<span class='doccomment'>//! stdout. For more fine-grained control, create file called `log.toml` in the root</span>
-<span class='doccomment'>//! directory of the project, or in the same directory where the executable is.</span>
-<span class='doccomment'>//! See http://sfackler.github.io/log4rs/doc/v0.3.3/log4rs/index.html for details</span>
-<span class='doccomment'>//! about format and structure of this file.</span>
+<span class='doccomment'>//! These functions can initialise logging for output to stdout only, or to a file and stdout.  For</span>
+<span class='doccomment'>//! more fine-grained control, create a file called `log.toml` in the root directory of the project,</span>
+<span class='doccomment'>//! or in the same directory where the executable is.  See [log4rs docs]</span>
+<span class='doccomment'>//! (http://sfackler.github.io/log4rs/doc/v0.3.3/log4rs/index.html) for details about the format and</span>
+<span class='doccomment'>//! structure of this file.</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! An example of a log message is:</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! ```</span>
 <span class='doccomment'>//! # fn main() { /*</span>
-<span class='doccomment'>//! W 19:33:49.245434 &lt;main&gt; [example:src/main.rs:50] Warning level message.</span>
-<span class='doccomment'>//! ^        ^          ^        ^          ^                    ^</span>
-<span class='doccomment'>//! |    timestamp      | top-level module  |                 message</span>
-<span class='doccomment'>//! |                   |                   |</span>
-<span class='doccomment'>//! |              thread name       file and line no.</span>
+<span class='doccomment'>//! WARN 19:33:49.245434200 &lt;main&gt; [example::my_mod main.rs:10] Warning level message.</span>
+<span class='doccomment'>//! ^           ^             ^              ^         ^                  ^</span>
+<span class='doccomment'>//! |       timestamp         |           module       |               message</span>
+<span class='doccomment'>//! |                         |                        |</span>
+<span class='doccomment'>//! |                    thread name           file and line no.</span>
 <span class='doccomment'>//! |</span>
-<span class='doccomment'>//! level (E, W, I, D, or T for error, warn, info, debug or trace respectively)</span>
+<span class='doccomment'>//! level (ERROR, WARN, INFO, DEBUG, or TRACE)</span>
 <span class='doccomment'>//! # */}</span>
 <span class='doccomment'>//! ```</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! Logging of the thread name is enabled or disabled via the `show_thread_name` parameter.  If</span>
 <span class='doccomment'>//! enabled, and the thread executing the log statement is unnamed, the thread name is shown as</span>
-<span class='doccomment'>//! `???`.</span>
+<span class='doccomment'>//! `&lt;unnamed&gt;`.</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//! The functions can safely be called multiple times concurrently.</span>
 <span class='doccomment'>//!</span>
@@ -584,20 +605,26 @@
 <span class='doccomment'>//! use std::thread;</span>
 <span class='doccomment'>//! use maidsafe_utilities::thread::RaiiThreadJoiner;</span>
 <span class='doccomment'>//!</span>
-<span class='doccomment'>//! fn main() {</span>
-<span class='doccomment'>//!     maidsafe_utilities::log::init(true);</span>
+<span class='doccomment'>//! mod my_mod {</span>
+<span class='doccomment'>//!     pub fn show_warning() {</span>
+<span class='doccomment'>//!         warn!(&quot;A warning&quot;);</span>
+<span class='doccomment'>//!     }</span>
+<span class='doccomment'>//! }</span>
 <span class='doccomment'>//!</span>
-<span class='doccomment'>//!     warn!(&quot;A warning&quot;);</span>
+<span class='doccomment'>//! fn main() {</span>
+<span class='doccomment'>//!     unwrap_result!(maidsafe_utilities::log::init(true));</span>
+<span class='doccomment'>//!</span>
+<span class='doccomment'>//!     my_mod::show_warning();</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//!     let unnamed = thread::spawn(move || info!(&quot;Message in unnamed thread&quot;));</span>
 <span class='doccomment'>//!     let _ = unnamed.join();</span>
 <span class='doccomment'>//!</span>
 <span class='doccomment'>//!     let _named = RaiiThreadJoiner::new(thread!(&quot;Worker&quot;,</span>
-<span class='doccomment'>//!                      move || error!(&quot;Message in named thread&quot;)));</span>
+<span class='doccomment'>//!                                                move || error!(&quot;Message in named thread&quot;)));</span>
 <span class='doccomment'>//!</span>
-<span class='doccomment'>//!     // W 12:24:07.064746 &lt;main&gt; [example:src/main.rs:11] A warning</span>
-<span class='doccomment'>//!     // I 12:24:07.065746 ??? [example:src/main.rs:13] Message in unnamed thread</span>
-<span class='doccomment'>//!     // E 12:24:07.065746 Worker [example:src/main.rs:16] Message in named thread</span>
+<span class='doccomment'>//!     // WARN 16:10:44.989712300 &lt;main&gt; [example::my_mod main.rs:10] A warning</span>
+<span class='doccomment'>//!     // INFO 16:10:44.990716600 &lt;unnamed&gt; [example main.rs:19] Message in unnamed thread</span>
+<span class='doccomment'>//!     // ERROR 16:10:44.991221900 Worker [example main.rs:22] Message in named thread</span>
 <span class='doccomment'>//! }</span>
 <span class='doccomment'>//! ```</span>
 <span class='doccomment'>//!</span>
@@ -618,15 +645,15 @@
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>net</span>::{<span class='ident'>TcpStream</span>, <span class='ident'>ToSocketAddrs</span>};
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::{<span class='ident'>Once</span>, <span class='ident'>ONCE_INIT</span>};
 
-<span class='kw'>use</span> <span class='ident'>async_log</span>::{<span class='ident'>AsyncConsoleAppender</span>, <span class='ident'>AsyncConsoleAppenderCreator</span>, <span class='ident'>AsyncFileAppender</span>, <span class='ident'>AsyncFileAppenderCreator</span>,
-                <span class='ident'>AsyncServerAppenderCreator</span>, <span class='ident'>AsyncAppender</span>};
+<span class='kw'>use</span> <span class='ident'>async_log</span>::{<span class='ident'>AsyncConsoleAppender</span>, <span class='ident'>AsyncConsoleAppenderCreator</span>, <span class='ident'>AsyncFileAppender</span>,
+                <span class='ident'>AsyncFileAppenderCreator</span>, <span class='ident'>AsyncServerAppenderCreator</span>, <span class='ident'>AsyncAppender</span>};
 <span class='kw'>use</span> <span class='ident'>logger</span>::<span class='ident'>LogLevelFilter</span>;
 
 <span class='kw'>static</span> <span class='ident'>INITIALISE_LOGGER</span>: <span class='ident'>Once</span> <span class='op'>=</span> <span class='ident'>ONCE_INIT</span>;
 <span class='kw'>static</span> <span class='ident'>CONFIG_FILE</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;static</span> <span class='ident'>str</span> <span class='op'>=</span> <span class='string'>&quot;log.toml&quot;</span>;
 <span class='kw'>static</span> <span class='ident'>DEFAULT_LOG_LEVEL_FILTER</span>: <span class='ident'>LogLevelFilter</span> <span class='op'>=</span> <span class='ident'>LogLevelFilter</span>::<span class='ident'>Warn</span>;
 
-<span class='doccomment'>/// Initialises the env_logger for output to stdout.</span>
+<span class='doccomment'>/// Initialises the `env_logger` for output to stdout.</span>
 <span class='doccomment'>///</span>
 <span class='doccomment'>/// For further details, see the [module docs](index.html).</span>
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>init</span>(<span class='ident'>show_thread_name</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>(), <span class='ident'>String</span><span class='op'>&gt;</span> {
@@ -646,9 +673,12 @@
             <span class='kw'>let</span> <span class='ident'>console_appender</span> <span class='op'>=</span> <span class='ident'>AsyncConsoleAppender</span>::<span class='ident'>builder</span>()
                                        .<span class='ident'>pattern</span>(<span class='ident'>make_pattern</span>(<span class='ident'>show_thread_name</span>))
                                        .<span class='ident'>build</span>();
-            <span class='kw'>let</span> <span class='ident'>console_appender</span> <span class='op'>=</span> <span class='ident'>Appender</span>::<span class='ident'>builder</span>(<span class='string'>&quot;async_console&quot;</span>.<span class='ident'>to_owned</span>(), <span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='ident'>console_appender</span>)).<span class='ident'>build</span>();
+            <span class='kw'>let</span> <span class='ident'>console_appender</span> <span class='op'>=</span> <span class='ident'>Appender</span>::<span class='ident'>builder</span>(<span class='string'>&quot;async_console&quot;</span>.<span class='ident'>to_owned</span>(),
+                                                     <span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='ident'>console_appender</span>))
+                                       .<span class='ident'>build</span>();
 
-            <span class='kw'>let</span> (<span class='ident'>default_level</span>, <span class='ident'>loggers</span>) <span class='op'>=</span> <span class='ident'>parse_loggers_from_env</span>().<span class='ident'>expect</span>(<span class='string'>&quot;failed to parse RUST_LOG env variable&quot;</span>);
+            <span class='kw'>let</span> (<span class='ident'>default_level</span>, <span class='ident'>loggers</span>) <span class='op'>=</span> <span class='ident'>parse_loggers_from_env</span>()
+                                               .<span class='ident'>expect</span>(<span class='string'>&quot;failed to parse RUST_LOG env variable&quot;</span>);
 
             <span class='kw'>let</span> <span class='ident'>root</span> <span class='op'>=</span> <span class='ident'>Root</span>::<span class='ident'>builder</span>(<span class='ident'>default_level</span>).<span class='ident'>appender</span>(<span class='string'>&quot;async_console&quot;</span>.<span class='ident'>to_owned</span>()).<span class='ident'>build</span>();
             <span class='kw'>let</span> <span class='ident'>config</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>Config</span>::<span class='ident'>builder</span>(<span class='ident'>root</span>)
@@ -670,9 +700,13 @@
     <span class='ident'>result</span>
 }
 
-<span class='doccomment'>/// Initialises the env_logger for output to a file and optionally to the</span>
-<span class='doccomment'>/// console asynchronously.</span>
-<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>init_to_file</span><span class='op'>&lt;</span><span class='ident'>P</span>: <span class='ident'>AsRef</span><span class='op'>&lt;</span><span class='ident'>Path</span><span class='op'>&gt;&gt;</span>(<span class='ident'>show_thread_name</span>: <span class='ident'>bool</span>, <span class='ident'>file_path</span>: <span class='ident'>P</span>, <span class='ident'>log_to_console</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>(), <span class='ident'>String</span><span class='op'>&gt;</span> {
+<span class='doccomment'>/// Initialises the `env_logger` for output to a file and optionally to the console asynchronously.</span>
+<span class='doccomment'>///</span>
+<span class='doccomment'>/// For further details, see the [module docs](index.html).</span>
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>init_to_file</span><span class='op'>&lt;</span><span class='ident'>P</span>: <span class='ident'>AsRef</span><span class='op'>&lt;</span><span class='ident'>Path</span><span class='op'>&gt;&gt;</span>(<span class='ident'>show_thread_name</span>: <span class='ident'>bool</span>,
+                                    <span class='ident'>file_path</span>: <span class='ident'>P</span>,
+                                    <span class='ident'>log_to_console</span>: <span class='ident'>bool</span>)
+                                    <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>(), <span class='ident'>String</span><span class='op'>&gt;</span> {
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>result</span> <span class='op'>=</span> <span class='prelude-val'>Err</span>(<span class='string'>&quot;Logger already initialised&quot;</span>.<span class='ident'>to_owned</span>());
 
     <span class='ident'>INITIALISE_LOGGER</span>.<span class='ident'>call_once</span>(<span class='op'>||</span> {
@@ -713,7 +747,9 @@
             <span class='kw'>let</span> <span class='ident'>console_appender</span> <span class='op'>=</span> <span class='ident'>AsyncConsoleAppender</span>::<span class='ident'>builder</span>()
                                        .<span class='ident'>pattern</span>(<span class='ident'>make_pattern</span>(<span class='ident'>show_thread_name</span>))
                                        .<span class='ident'>build</span>();
-            <span class='kw'>let</span> <span class='ident'>console_appender</span> <span class='op'>=</span> <span class='ident'>Appender</span>::<span class='ident'>builder</span>(<span class='string'>&quot;console&quot;</span>.<span class='ident'>to_owned</span>(), <span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='ident'>console_appender</span>)).<span class='ident'>build</span>();
+            <span class='kw'>let</span> <span class='ident'>console_appender</span> <span class='op'>=</span> <span class='ident'>Appender</span>::<span class='ident'>builder</span>(<span class='string'>&quot;console&quot;</span>.<span class='ident'>to_owned</span>(),
+                                                     <span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='ident'>console_appender</span>))
+                                       .<span class='ident'>build</span>();
 
             <span class='ident'>config</span> <span class='op'>=</span> <span class='ident'>config</span>.<span class='ident'>appender</span>(<span class='ident'>console_appender</span>);
         }
@@ -731,8 +767,10 @@
     <span class='ident'>result</span>
 }
 
-<span class='doccomment'>/// Initialises the env_logger for output to a server and optionally to the</span>
-<span class='doccomment'>/// console asynchronously.</span>
+<span class='doccomment'>/// Initialises the `env_logger` for output to a server and optionally to the console</span>
+<span class='doccomment'>/// asynchronously.</span>
+<span class='doccomment'>///</span>
+<span class='doccomment'>/// For further details, see the [module docs](index.html).</span>
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>init_to_server</span><span class='op'>&lt;</span><span class='ident'>A</span>: <span class='ident'>ToSocketAddrs</span><span class='op'>&gt;</span>(<span class='ident'>server_addr</span>: <span class='ident'>A</span>,
                                         <span class='ident'>show_thread_name</span>: <span class='ident'>bool</span>,
                                         <span class='ident'>log_to_console</span>: <span class='ident'>bool</span>)
@@ -787,7 +825,9 @@
             <span class='kw'>let</span> <span class='ident'>console_appender</span> <span class='op'>=</span> <span class='ident'>AsyncConsoleAppender</span>::<span class='ident'>builder</span>()
                                        .<span class='ident'>pattern</span>(<span class='ident'>make_pattern</span>(<span class='ident'>show_thread_name</span>))
                                        .<span class='ident'>build</span>();
-            <span class='kw'>let</span> <span class='ident'>console_appender</span> <span class='op'>=</span> <span class='ident'>Appender</span>::<span class='ident'>builder</span>(<span class='string'>&quot;console&quot;</span>.<span class='ident'>to_owned</span>(), <span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='ident'>console_appender</span>)).<span class='ident'>build</span>();
+            <span class='kw'>let</span> <span class='ident'>console_appender</span> <span class='op'>=</span> <span class='ident'>Appender</span>::<span class='ident'>builder</span>(<span class='string'>&quot;console&quot;</span>.<span class='ident'>to_owned</span>(),
+                                                     <span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='ident'>console_appender</span>))
+                                       .<span class='ident'>build</span>();
 
             <span class='ident'>config</span> <span class='op'>=</span> <span class='ident'>config</span>.<span class='ident'>appender</span>(<span class='ident'>console_appender</span>);
         }
@@ -807,9 +847,9 @@
 
 <span class='kw'>fn</span> <span class='ident'>make_pattern</span>(<span class='ident'>show_thread_name</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='ident'>PatternLayout</span> {
     <span class='kw'>let</span> <span class='ident'>pattern</span> <span class='op'>=</span> <span class='kw'>if</span> <span class='ident'>show_thread_name</span> {
-        <span class='string'>&quot;%l %d{%H:%M:%S.%f} %T [%M ##%f##:%L] %m&quot;</span>
+        <span class='string'>&quot;%l %d{%H:%M:%S.%f} %T [%M #FS#%f#FE#:%L] %m&quot;</span>
     } <span class='kw'>else</span> {
-        <span class='string'>&quot;%l %d{%H:%M:%S.%f} [%M ##%f##:%L] %m&quot;</span>
+        <span class='string'>&quot;%l %d{%H:%M:%S.%f} [%M #FS#%f#FE#:%L] %m&quot;</span>
     };
 
     <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>PatternLayout</span>::<span class='ident'>new</span>(<span class='ident'>pattern</span>))
@@ -989,7 +1029,9 @@
                     }
 
                     <span class='kw'>if</span> <span class='ident'>found</span> {
-                        <span class='ident'>log_msgs</span>.<span class='ident'>push</span>(<span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>str</span>::<span class='ident'>from_utf8</span>(<span class='kw-2'>&amp;</span><span class='ident'>read_buf</span>[..<span class='ident'>search_frm_index</span>])).<span class='ident'>to_owned</span>());
+                        <span class='ident'>log_msgs</span>.<span class='ident'>push</span>(<span class='macro'>unwrap_result</span><span class='macro'>!</span>(
+                            <span class='ident'>str</span>::<span class='ident'>from_utf8</span>(<span class='kw-2'>&amp;</span><span class='ident'>read_buf</span>[..<span class='ident'>search_frm_index</span>]))
+                                          .<span class='ident'>to_owned</span>());
                         <span class='ident'>read_buf</span> <span class='op'>=</span> <span class='ident'>read_buf</span>.<span class='ident'>split_off</span>(<span class='ident'>search_frm_index</span> <span class='op'>+</span> <span class='ident'>MSG_TERMINATOR</span>.<span class='ident'>len</span>());
                         <span class='ident'>search_frm_index</span> <span class='op'>=</span> <span class='number'>0</span>;
                     }
