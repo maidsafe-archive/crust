@@ -979,28 +979,10 @@ mod test {
 
         // Drop services and make sure the event channels close
         drop(service_0);
-        let (done_tx, done_rx) = mpsc::channel();
-        let thread_handle = thread::current();
-        let tj = thread!("Drain event channel messages", move || {
-            for _ in event_rx_0 {}
-            let _ = done_tx.send(());
-            thread_handle.unpark();
-        });
-        thread::park_timeout(Duration::from_secs(5));
-        unwrap_result!(done_rx.try_recv());
-        unwrap_result!(tj.join());
-
-        drop(service_1);
-        let (done_tx, done_rx) = mpsc::channel();
-        let thread_handle = thread::current();
-        let tj = thread!("Drain event channel messages", move || {
-            for _ in event_rx_1 {}
-            let _ = done_tx.send(());
-            thread_handle.unpark();
-        });
-        thread::park_timeout(Duration::from_secs(5));
-        unwrap_result!(done_rx.try_recv());
-        unwrap_result!(tj.join());
+        match event_rx_1.recv() {
+            Ok(Event::LostPeer(id)) => assert_eq!(id_0, id),
+            event => panic!("Received unexpected event: {:?}", event),
+        }
     }
 
     #[test]

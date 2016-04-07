@@ -753,10 +753,9 @@ fn start_rx(mut network_rx: Receiver,
             entry.get_mut().retain(|connection| !connection.is_closed());
             if entry.get().is_empty() {
                 let _ = entry.remove();
+                trace!("Sending LostPeer({}) event.", their_id);
                 if let Err(err) = event_tx.send(Event::LostPeer(their_id)) {
                     error!("Failed to send LostPeer({}) event: {:?}", their_id, err);
-                } else {
-                    trace!("Sent LostPeer({}) event.", their_id);
                 }
             }
         }
