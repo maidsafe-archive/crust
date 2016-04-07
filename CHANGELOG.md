@@ -1,5 +1,16 @@
 # CRUST - Change Log
 
+## [0.10.0]
+- Peer connections wait for both sides before sending `NewPeer` events.
+- Enable uTP (still buggy).
+- Add TCP rendezvous.
+- Support port forwarding with ports specified as TCP acceptors.
+- Never raise `NewPeer` and `LostPeer` events for ourselves.
+- Update config file format to include service discovery port bootstrap cache
+  name.
+- Fix duplicate `NewPeer` events.
+- Fix issues 619, 606, 605, 601, 589 and 595.
+
 ## [0.9.0]
 - Remove cbor and ip dependencies.
 - Expose the PeerId in TheirConnectionInfo.
