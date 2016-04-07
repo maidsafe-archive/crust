@@ -1,13 +1,12 @@
 use utp::UtpSocket;
 use std::sync::mpsc::{Receiver, TryRecvError};
 use std::sync::mpsc;
-use std::thread;
 use std::io::{Read, ErrorKind};
 use std::io;
 use std::net::SocketAddr;
 use std::collections::VecDeque;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
-use maidsafe_utilities::serialisation::serialise;
+use maidsafe_utilities::serialisation::{deserialise, serialise};
 use event::WriteEvent;
 
 const CHECK_FOR_NEW_WRITES_INTERVAL_MS: u64 = 50;
@@ -22,25 +21,51 @@ pub struct UtpWrapper {
 }
 
 impl UtpWrapper {
-    pub fn wrap(socket: UtpSocket, output_rx: Receiver<WriteEvent>) -> io::Result<UtpWrapper> {
+    pub fn wrap(mut socket: UtpSocket, output_rx: Receiver<WriteEvent>) -> io::Result<UtpWrapper> {
         let (input_tx, input_rx) = mpsc::channel();
         let peer_addr = try!(socket.peer_addr());
         let local_addr = try!(socket.local_addr());
 
-        let thread_handle = unwrap_result!(thread::Builder::new()
-                .name("rust-utp multiplexer".to_owned())
-                .spawn(move || {
-                    let mut socket = socket;
-                    socket.set_read_timeout(Some(CHECK_FOR_NEW_WRITES_INTERVAL_MS));
-                    'outer: loop {
-                        let mut buf = [0; BUFFER_SIZE];
-                        match socket.recv_from(&mut buf[..]) {
-                            Ok((0, _src)) => {
-                                debug!("Gracefully closing uTP connection");
-                                break;
+        let joiner = thread!("Rust-uTP-Multiplexer", move || {
+            const MAX_NO_READ_INTERVAL_MS: u64 = 9 * 1000;
+            const HEARTBEAT_INTERVAL: u64 = MAX_NO_READ_INTERVAL_MS / 3;
+
+            const MAX_NO_READ_COUNT: u64 = MAX_NO_READ_INTERVAL_MS /
+                                           CHECK_FOR_NEW_WRITES_INTERVAL_MS;
+            const SEND_HEARTBEAT_NO_READ_COUNT: u64 = HEARTBEAT_INTERVAL /
+                                                      CHECK_FOR_NEW_WRITES_INTERVAL_MS;
+
+            let mut no_read_count = 0;
+
+            #[derive(RustcEncodable, RustcDecodable)]
+            enum WireMessage {
+                HeartbeatPing,
+                HeartbeatPong,
+            }
+
+            socket.set_read_timeout(Some(CHECK_FOR_NEW_WRITES_INTERVAL_MS));
+            'outer: loop {
+                let mut buf = [0; BUFFER_SIZE];
+
+                match socket.recv_from(&mut buf[..]) {
+                    Ok((0, _src)) => {
+                        debug!("Gracefully closing uTP connection");
+                        break;
+                    }
+                    Ok((amt, _src)) => {
+                        no_read_count = 0;
+                        let buf = &buf[..amt];
+                        match deserialise(buf) {
+                            Ok(WireMessage::HeartbeatPing) => {
+                                let data = unwrap_result!(serialise(&WireMessage::HeartbeatPong));
+                                if let Err(err) = socket.send_to(&data) {
+                                    error!("Error sending: {:?}", err);
+                                    break 'outer;
+                                }
+                                trace!("HeartbeatPong Sent");
                             }
-                            Ok((amt, _src)) => {
-                                let buf = &buf[..amt];
+                            Ok(WireMessage::HeartbeatPong) => (),
+                            _ => {
                                 match input_tx.send(Vec::from(buf)) {
                                     Ok(()) => (),
                                     Err(mpsc::SendError(_)) => {
@@ -48,43 +73,56 @@ impl UtpWrapper {
                                     }
                                 }
                             }
-                            Err(ref e) if e.kind() == ErrorKind::TimedOut => {
-                                // This extra loop ensures all pending messages are sent
-                                // before we try to read again.
-                                let mut send_keepalive = true;
-                                loop {
-                                    match output_rx.try_recv() {
-                                        Ok(WriteEvent::Write(msg)) => {
-                                            send_keepalive = false;
-                                            let data = unwrap_result!(serialise(&msg));
-                                            if let Err(err) = socket.send_to(&data) {
-                                                error!("Error sending: {:?}", err);
-                                                break 'outer;
-                                            }
-                                        }
-                                        Ok(WriteEvent::Shutdown) => break 'outer,
-                                        Err(TryRecvError::Disconnected) => break 'outer,
-                                        Err(TryRecvError::Empty) => break,
+                        }
+                    }
+                    Err(ref e) if e.kind() == ErrorKind::TimedOut => {
+                        // This extra loop ensures all pending messages are sent
+                        // before we try to read again.
+                        loop {
+                            match output_rx.try_recv() {
+                                Ok(WriteEvent::Write(msg)) => {
+                                    let data = unwrap_result!(serialise(&msg));
+                                    if let Err(err) = socket.send_to(&data) {
+                                        error!("Error sending: {:?}", err);
+                                        break 'outer;
                                     }
                                 }
-                                if send_keepalive {
-                                    socket.send_keepalive();
+                                Ok(WriteEvent::Shutdown) => break 'outer,
+                                Err(TryRecvError::Disconnected) => break 'outer,
+                                Err(TryRecvError::Empty) => {
+                                    no_read_count += 1;
+                                    if no_read_count > MAX_NO_READ_COUNT {
+                                        debug!("Closing uTP connection due to heartbeat failure");
+                                        break 'outer;
+                                    } else if no_read_count % SEND_HEARTBEAT_NO_READ_COUNT == 0 {
+                                        let data =
+                                            unwrap_result!(serialise(&WireMessage::HeartbeatPing));
+                                        if let Err(err) = socket.send_to(&data) {
+                                            error!("Error sending: {:?}", err);
+                                            break 'outer;
+                                        }
+                                        trace!("HeartbeatPing Sent");
+                                    }
+
+                                    break;
                                 }
-                            }
-                            Err(err) => {
-                                error!("Error receiving: {:?}", err);
-                                break;
                             }
                         }
                     }
-                }));
+                    Err(err) => {
+                        error!("Error receiving: {:?}", err);
+                        break;
+                    }
+                }
+            }
+        });
 
         Ok(UtpWrapper {
             input: input_rx,
             unread_bytes: VecDeque::new(),
             peer_addr: peer_addr,
             local_addr: local_addr,
-            _thread_joiner: RaiiThreadJoiner::new(thread_handle),
+            _thread_joiner: RaiiThreadJoiner::new(joiner),
         })
     }
 
