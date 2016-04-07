@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `Namespace` struct in crate `xml`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, Namespace">
+
+    <title>xml::namespace::Namespace - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='../index.html'>xml</a>::<wbr><a href='index.html'>namespace</a></p><script>window.sidebarCurrent = {name: 'Namespace', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content struct">
+<h1 class='fqn'><span class='in-band'>Struct <a href='../index.html'>xml</a>::<wbr><a href='index.html'>namespace</a>::<wbr><a class='struct' href=''>Namespace</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-559' class='srclink' href='../../src/xml/namespace.rs.html#32' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct Namespace(pub <a class='struct' href='https://doc.rust-lang.org/nightly/std/collections/hash/map/struct.HashMap.html' title='std::collections::hash::map::HashMap'>HashMap</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;, <a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;);</pre><div class='docblock'><p>Namespace is a map from prefixes to namespace URIs.</p>
+
+<p><code>None</code> prefix means no prefix (i.e. default namespace).</p>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../xml/namespace/struct.Namespace.html' title='xml::namespace::Namespace'>Namespace</a></code></h3><div class='impl-items'><h4 id='method.empty' class='method'><code>fn <a href='#method.empty' class='fnname'>empty</a>() -&gt; <a class='struct' href='../../xml/namespace/struct.Namespace.html' title='xml::namespace::Namespace'>Namespace</a></code></h4>
+<div class='docblock'><p>Returns an empty namespace.</p>
+</div><h4 id='method.is_empty' class='method'><code>fn <a href='#method.is_empty' class='fnname'>is_empty</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+<div class='docblock'><p>Checks whether this namespace is empty.</p>
+</div><h4 id='method.is_essentially_empty' class='method'><code>fn <a href='#method.is_essentially_empty' class='fnname'>is_essentially_empty</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+<div class='docblock'><p>Checks whether this namespace is essentially empty, that is, it does not contain
+anything but the default mappings.</p>
+</div><h4 id='method.put' class='method'><code>fn <a href='#method.put' class='fnname'>put</a>&lt;'s1, 's2, S1, S2&gt;(&amp;mut self, prefix: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;S1&gt;, uri: S2) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a> <span class='where'>where S1: <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.Into.html' title='core::convert::Into'>Into</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/collections/borrow/enum.Cow.html' title='collections::borrow::Cow'>Cow</a>&lt;'s1, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;&gt;, S2: <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.Into.html' title='core::convert::Into'>Into</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/collections/borrow/enum.Cow.html' title='collections::borrow::Cow'>Cow</a>&lt;'s2, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;&gt;</span></code></h4>
+<div class='docblock'><p>Puts a mapping into this namespace.</p>
+
+<p>This method does not override an already existing mapping.</p>
+
+<p>Returns a boolean flag indicating whether the map already contained
+the given prefix.</p>
+
+<h1 id='parameters' class='section-header'><a href='#parameters'>Parameters</a></h1>
+<ul>
+<li><code>prefix</code> --- namespace prefix (<code>None</code> means default namespace);</li>
+<li><code>uri</code>    --- namespace URI.</li>
+</ul>
+
+<h1 id='return-value' class='section-header'><a href='#return-value'>Return value</a></h1>
+<p><code>true</code> if <code>prefix</code> has been inserted successfully; <code>false</code> if the <code>prefix</code>
+was already present in the namespace.</p>
+</div><h4 id='method.force_put' class='method'><code>fn <a href='#method.force_put' class='fnname'>force_put</a>&lt;'s1, 's2, S1, S2&gt;(&amp;mut self, prefix: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;S1&gt;, uri: S2) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt; <span class='where'>where S1: <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.Into.html' title='core::convert::Into'>Into</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/collections/borrow/enum.Cow.html' title='collections::borrow::Cow'>Cow</a>&lt;'s1, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;&gt;, S2: <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.Into.html' title='core::convert::Into'>Into</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/collections/borrow/enum.Cow.html' title='collections::borrow::Cow'>Cow</a>&lt;'s2, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;&gt;</span></code></h4>
+<div class='docblock'><p>Puts a mapping into this namespace forcefully.</p>
+
+<p>This method, as opposed to <code>put()</code>, does replace an already existing mapping.</p>
+
+<p>Returns previous URI which was assigned to the given prefix, if it is present.</p>
+
+<h1 id='parameters-1' class='section-header'><a href='#parameters-1'>Parameters</a></h1>
+<ul>
+<li><code>prefix</code> --- namespace prefix (<code>None</code> means default namespace);</li>
+<li><code>uri</code>    --- namespace URI.</li>
+</ul>
+
+<h1 id='return-value-1' class='section-header'><a href='#return-value-1'>Return value</a></h1>
+<p><code>Some(uri)</code> with <code>uri</code> being a previous URI assigned to the <code>prefix</code>, or
+<code>None</code> if such prefix was not present in the namespace before.</p>
+</div><h4 id='method.get' class='method'><code>fn <a href='#method.get' class='fnname'>get</a>&lt;'a&gt;(&amp;'a self, prefix: &amp;<a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;&amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;</code></h4>
+<div class='docblock'><p>Queries the namespace for the given prefix.</p>
+
+<h1 id='parameters-2' class='section-header'><a href='#parameters-2'>Parameters</a></h1>
+<ul>
+<li><code>prefix</code> --- namespace prefix (<code>None</code> means default namespace).</li>
+</ul>
+
+<h1 id='return-value-2' class='section-header'><a href='#return-value-2'>Return value</a></h1>
+<p>Namespace URI corresponding to the given prefix, if it is present.</p>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl&lt;'a&gt; <a class='trait' href='../../xml/namespace/trait.NamespaceIterable.html' title='xml::namespace::NamespaceIterable'>NamespaceIterable</a>&lt;'a&gt; for <a class='struct' href='../../xml/namespace/struct.Namespace.html' title='xml::namespace::Namespace'>Namespace</a></code></h3><div class='impl-items'><h4 id='assoc_type.Iter' class='type'><code>type Iter = <a class='struct' href='../../xml/namespace/struct.NamespaceMappings.html' title='xml::namespace::NamespaceMappings'>NamespaceMappings</a>&lt;'a&gt;</code></h4>
+<h4 id='method.uri_mappings' class='method'><code>fn <a href='../../xml/namespace/trait.NamespaceIterable.html#method.uri_mappings' class='fnname'>uri_mappings</a>(&amp;'a self) -&gt; <a class='struct' href='../../xml/namespace/struct.NamespaceMappings.html' title='xml::namespace::NamespaceMappings'>NamespaceMappings</a>&lt;'a&gt;</code></h4>
+</div><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='struct' href='../../xml/namespace/struct.Namespace.html' title='xml::namespace::Namespace'>Namespace</a></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='struct' href='../../xml/namespace/struct.Namespace.html' title='xml::namespace::Namespace'>Namespace</a></code></h4>
+<h4 id='method.clone_from' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a> for <a class='struct' href='../../xml/namespace/struct.Namespace.html' title='xml::namespace::Namespace'>Namespace</a></code></h3><div class='impl-items'><h4 id='method.eq' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.eq' class='fnname'>eq</a>(&amp;self, __arg_0: &amp;<a class='struct' href='../../xml/namespace/struct.Namespace.html' title='xml::namespace::Namespace'>Namespace</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+<h4 id='method.ne' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.ne' class='fnname'>ne</a>(&amp;self, __arg_0: &amp;<a class='struct' href='../../xml/namespace/struct.Namespace.html' title='xml::namespace::Namespace'>Namespace</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+</div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "xml";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../../jquery.js"></script>
+    <script src="../../main.js"></script>
+    
+    <script defer src="../../search-index.js"></script>
+</body>
+</html>

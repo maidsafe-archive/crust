@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Vary","`Vary` header, defined in RFC7231"]]});

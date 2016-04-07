@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `Gateway` struct in crate `igd`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, Gateway">
+
+    <title>igd::Gateway - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='index.html'>igd</a></p><script>window.sidebarCurrent = {name: 'Gateway', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content struct">
+<h1 class='fqn'><span class='in-band'>Struct <a href='index.html'>igd</a>::<wbr><a class='struct' href=''>Gateway</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-253' class='srclink' href='../src/igd/gateway.rs.html#304-309' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct Gateway {
+    pub addr: <a class='struct' href='https://doc.rust-lang.org/nightly/std/net/addr/struct.SocketAddrV4.html' title='std::net::addr::SocketAddrV4'>SocketAddrV4</a>,
+    pub control_url: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>,
+}</pre><div class='docblock'><p>This structure represents a gateway found by the search functions.</p>
+</div><h2 class='fields'>Fields</h2>
+<table><tr class='stab '>
+                                  <td id='structfield.addr'><code>addr</code></td><td><div class='docblock'><p>Socket address of the gateway</p>
+</div></td></tr><tr class='stab '>
+                                  <td id='structfield.control_url'><code>control_url</code></td><td><div class='docblock'><p>Control url of the device</p>
+</div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../igd/struct.Gateway.html' title='igd::Gateway'>Gateway</a></code></h3><div class='impl-items'><h4 id='method.get_external_ip' class='method'><code>fn <a href='#method.get_external_ip' class='fnname'>get_external_ip</a>(&amp;self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/std/net/ip/struct.Ipv4Addr.html' title='std::net::ip::Ipv4Addr'>Ipv4Addr</a>, <a class='enum' href='../igd/enum.GetExternalIpError.html' title='igd::GetExternalIpError'>GetExternalIpError</a>&gt;</code></h4>
+<div class='docblock'><p>Get the external IP address of the gateway.</p>
+</div><h4 id='method.get_any_address' class='method'><code>fn <a href='#method.get_any_address' class='fnname'>get_any_address</a>(&amp;self, protocol: <a class='enum' href='../igd/enum.PortMappingProtocol.html' title='igd::PortMappingProtocol'>PortMappingProtocol</a>, local_addr: <a class='struct' href='https://doc.rust-lang.org/nightly/std/net/addr/struct.SocketAddrV4.html' title='std::net::addr::SocketAddrV4'>SocketAddrV4</a>, lease_duration: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>, description: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/std/net/addr/struct.SocketAddrV4.html' title='std::net::addr::SocketAddrV4'>SocketAddrV4</a>, <a class='enum' href='../igd/enum.AddAnyPortError.html' title='igd::AddAnyPortError'>AddAnyPortError</a>&gt;</code></h4>
+<div class='docblock'><p>Get an external socket address with our external ip and any port. This is a convenience
+function that calls <code>get_external_ip</code> followed by <code>add_any_port</code></p>
+
+<p>The local_addr is the address where the traffic is sent to.
+The lease_duration parameter is in seconds. A value of 0 is infinite.</p>
+
+<h1 id='returns' class='section-header'><a href='#returns'>Returns</a></h1>
+<p>The external address that was mapped on success. Otherwise an error.</p>
+</div><h4 id='method.add_any_port' class='method'><code>fn <a href='#method.add_any_port' class='fnname'>add_any_port</a>(&amp;self, protocol: <a class='enum' href='../igd/enum.PortMappingProtocol.html' title='igd::PortMappingProtocol'>PortMappingProtocol</a>, local_addr: <a class='struct' href='https://doc.rust-lang.org/nightly/std/net/addr/struct.SocketAddrV4.html' title='std::net::addr::SocketAddrV4'>SocketAddrV4</a>, lease_duration: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>, description: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a>, <a class='enum' href='../igd/enum.AddAnyPortError.html' title='igd::AddAnyPortError'>AddAnyPortError</a>&gt;</code></h4>
+<div class='docblock'><p>Add a port mapping.with any external port.</p>
+
+<p>The local_addr is the address where the traffic is sent to.
+The lease_duration parameter is in seconds. A value of 0 is infinite.</p>
+
+<h1 id='returns-1' class='section-header'><a href='#returns-1'>Returns</a></h1>
+<p>The external port that was mapped on success. Otherwise an error.</p>
+</div><h4 id='method.add_port' class='method'><code>fn <a href='#method.add_port' class='fnname'>add_port</a>(&amp;self, protocol: <a class='enum' href='../igd/enum.PortMappingProtocol.html' title='igd::PortMappingProtocol'>PortMappingProtocol</a>, external_port: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a>, local_addr: <a class='struct' href='https://doc.rust-lang.org/nightly/std/net/addr/struct.SocketAddrV4.html' title='std::net::addr::SocketAddrV4'>SocketAddrV4</a>, lease_duration: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>, description: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, <a class='enum' href='../igd/enum.AddPortError.html' title='igd::AddPortError'>AddPortError</a>&gt;</code></h4>
+<div class='docblock'><p>Add a port mapping.</p>
+
+<p>The local_addr is the address where the traffic is sent to.
+The lease_duration parameter is in seconds. A value of 0 is infinite.</p>
+</div><h4 id='method.remove_port' class='method'><code>fn <a href='#method.remove_port' class='fnname'>remove_port</a>(&amp;self, protocol: <a class='enum' href='../igd/enum.PortMappingProtocol.html' title='igd::PortMappingProtocol'>PortMappingProtocol</a>, external_port: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, <a class='enum' href='../igd/enum.RemovePortError.html' title='igd::RemovePortError'>RemovePortError</a>&gt;</code></h4>
+<div class='docblock'><p>Remove a port mapping.</p>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html' title='core::fmt::Display'>Display</a> for <a class='struct' href='../igd/struct.Gateway.html' title='igd::Gateway'>Gateway</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html#method.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+</div><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/hash/trait.Hash.html' title='core::hash::Hash'>Hash</a> for <a class='struct' href='../igd/struct.Gateway.html' title='igd::Gateway'>Gateway</a></code></h3><div class='impl-items'><h4 id='method.hash' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/hash/trait.Hash.html#method.hash' class='fnname'>hash</a>&lt;__H: <a class='trait' href='https://doc.rust-lang.org/nightly/core/hash/trait.Hasher.html' title='core::hash::Hasher'>Hasher</a>&gt;(&amp;self, __arg_0: &amp;mut __H)</code></h4>
+<h4 id='method.hash_slice' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/hash/trait.Hash.html#method.hash_slice' class='fnname'>hash_slice</a>&lt;H&gt;(data: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[Self]</a>, state: &amp;mut H) <span class='where'>where H: <a class='trait' href='https://doc.rust-lang.org/nightly/core/hash/trait.Hasher.html' title='core::hash::Hasher'>Hasher</a></span></code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.Eq.html' title='core::cmp::Eq'>Eq</a> for <a class='struct' href='../igd/struct.Gateway.html' title='igd::Gateway'>Gateway</a></code></h3><div class='impl-items'></div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a> for <a class='struct' href='../igd/struct.Gateway.html' title='igd::Gateway'>Gateway</a></code></h3><div class='impl-items'><h4 id='method.eq' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.eq' class='fnname'>eq</a>(&amp;self, __arg_0: &amp;<a class='struct' href='../igd/struct.Gateway.html' title='igd::Gateway'>Gateway</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+<h4 id='method.ne' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.ne' class='fnname'>ne</a>(&amp;self, __arg_0: &amp;<a class='struct' href='../igd/struct.Gateway.html' title='igd::Gateway'>Gateway</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='struct' href='../igd/struct.Gateway.html' title='igd::Gateway'>Gateway</a></code></h3><div class='impl-items'><h4 id='method.fmt-1' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#method.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='struct' href='../igd/struct.Gateway.html' title='igd::Gateway'>Gateway</a></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='struct' href='../igd/struct.Gateway.html' title='igd::Gateway'>Gateway</a></code></h4>
+<h4 id='method.clone_from' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
+</div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "igd";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script defer src="../search-index.js"></script>
+</body>
+</html>
