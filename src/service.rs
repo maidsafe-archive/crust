@@ -314,6 +314,7 @@ impl Service {
 
     /// Disconnect from the given peer and returns whether there was a connection at all.
     pub fn disconnect(&self, id: &PeerId) -> bool {
+        debug!("dropping connection to peer {:?}", id);
         unwrap_result!(self.connection_map.lock()).remove(&id).is_some()
     }
 
