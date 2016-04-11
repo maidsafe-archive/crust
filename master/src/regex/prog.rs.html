@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/regex-0.1.63/src/prog.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/regex-0.1.65/src/prog.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>prog.rs.html -- source</title>
@@ -461,6 +461,12 @@
 <span id="418">418</span>
 <span id="419">419</span>
 <span id="420">420</span>
+<span id="421">421</span>
+<span id="422">422</span>
+<span id="423">423</span>
+<span id="424">424</span>
+<span id="425">425</span>
+<span id="426">426</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>collections</span>::<span class='ident'>HashMap</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>cmp</span>::<span class='ident'>Ordering</span>;
@@ -592,7 +598,13 @@
         <span class='comment'>// The only instruction that uses heap space is Ranges (for</span>
         <span class='comment'>// Unicode codepoint programs) to store non-overlapping codepoint</span>
         <span class='comment'>// ranges. To keep this operation constant time, we ignore them.</span>
-        <span class='self'>self</span>.<span class='ident'>len</span>() <span class='op'>*</span> <span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>Inst</span><span class='op'>&gt;</span>()
+        (<span class='self'>self</span>.<span class='ident'>len</span>() <span class='op'>*</span> <span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>Inst</span><span class='op'>&gt;</span>())
+        <span class='op'>+</span> (<span class='self'>self</span>.<span class='ident'>matches</span>.<span class='ident'>len</span>() <span class='op'>*</span> <span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>InstPtr</span><span class='op'>&gt;</span>())
+        <span class='op'>+</span> (<span class='self'>self</span>.<span class='ident'>captures</span>.<span class='ident'>len</span>() <span class='op'>*</span> <span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>String</span><span class='op'>&gt;&gt;</span>())
+        <span class='op'>+</span> (<span class='self'>self</span>.<span class='ident'>capture_name_idx</span>.<span class='ident'>len</span>() <span class='op'>*</span>
+           (<span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>String</span><span class='op'>&gt;</span>() <span class='op'>+</span> <span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>usize</span><span class='op'>&gt;</span>()))
+        <span class='op'>+</span> (<span class='self'>self</span>.<span class='ident'>byte_classes</span>.<span class='ident'>len</span>() <span class='op'>*</span> <span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span>())
+        <span class='op'>+</span> <span class='self'>self</span>.<span class='ident'>prefixes</span>.<span class='ident'>approximate_size</span>()
     }
 }
 

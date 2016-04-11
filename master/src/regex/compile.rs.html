@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/regex-0.1.63/src/compile.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/regex-0.1.65/src/compile.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>compile.rs.html -- source</title>
@@ -2109,7 +2109,7 @@
         <span class='comment'>// N.B. If you&#39;re debugging the DFA, it&#39;s useful to simply return</span>
         <span class='comment'>// `(0..256).collect()`, which effectively removes the byte classes</span>
         <span class='comment'>// and makes the transitions easier to read.</span>
-        <span class='comment'>// return (0..256).collect();</span>
+        <span class='comment'>// (0usize..256).map(|x| x as u8).collect()</span>
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>byte_classes</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[<span class='number'>0</span>; <span class='number'>256</span>];
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>class</span> <span class='op'>=</span> <span class='number'>0u8</span>;
         <span class='kw'>for</span> <span class='ident'>i</span> <span class='kw'>in</span> <span class='number'>0</span>..<span class='number'>256</span> {

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/temp_utp-0.8.0/src/socket.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/temp_utp-0.8.1/src/socket.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>socket.rs.html -- source</title>
@@ -3309,6 +3309,19 @@
 <span id="3266">3266</span>
 <span id="3267">3267</span>
 <span id="3268">3268</span>
+<span id="3269">3269</span>
+<span id="3270">3270</span>
+<span id="3271">3271</span>
+<span id="3272">3272</span>
+<span id="3273">3273</span>
+<span id="3274">3274</span>
+<span id="3275">3275</span>
+<span id="3276">3276</span>
+<span id="3277">3277</span>
+<span id="3278">3278</span>
+<span id="3279">3279</span>
+<span id="3280">3280</span>
+<span id="3281">3281</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>cmp</span>::{<span class='ident'>min</span>, <span class='ident'>max</span>};
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>collections</span>::<span class='ident'>VecDeque</span>;
@@ -3530,6 +3543,9 @@
     <span class='doccomment'>/// The first &#39;State&#39; packet we sent if we are a server (it may</span>
     <span class='doccomment'>/// need to be resent if the network dropped it).</span>
     <span class='ident'>state_packet</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>Packet</span><span class='op'>&gt;</span>,
+
+    <span class='doccomment'>/// The last time we&#39;ve sent something over the wire</span>
+    <span class='ident'>last_msg_sent_timestamp</span>: <span class='ident'>SteadyTime</span>,
 }
 
 <span class='kw'>impl</span> <span class='ident'>UtpSocket</span> {
@@ -3584,6 +3600,7 @@
             <span class='ident'>last_congestion_update</span>: <span class='ident'>SteadyTime</span>::<span class='ident'>now</span>(),
             <span class='ident'>retries</span>: <span class='number'>0</span>,
             <span class='ident'>state_packet</span>: <span class='prelude-val'>None</span>,
+            <span class='ident'>last_msg_sent_timestamp</span>: <span class='ident'>SteadyTime</span>::<span class='ident'>now</span>(),
         }
     }
 
@@ -3724,6 +3741,7 @@
             <span class='comment'>// Send packet</span>
             <span class='macro'>debug</span><span class='macro'>!</span>(<span class='string'>&quot;Connecting to {}&quot;</span>, <span class='self'>self</span>.<span class='ident'>connected_to</span>);
             <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>socket</span>.<span class='ident'>send_to</span>(<span class='kw-2'>&amp;</span><span class='ident'>packet</span>.<span class='ident'>to_bytes</span>()[..], <span class='self'>self</span>.<span class='ident'>connected_to</span>));
+            <span class='self'>self</span>.<span class='ident'>last_msg_sent_timestamp</span> <span class='op'>=</span> <span class='ident'>SteadyTime</span>::<span class='ident'>now</span>();
             <span class='self'>self</span>.<span class='ident'>state</span> <span class='op'>=</span> <span class='ident'>SocketState</span>::<span class='ident'>SynSent</span>;
             <span class='macro'>debug</span><span class='macro'>!</span>(<span class='string'>&quot;sent {:?}&quot;</span>, <span class='ident'>packet</span>);
 
@@ -3754,6 +3772,7 @@
 
                             <span class='kw'>let</span> <span class='ident'>reply</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>prepare_reply</span>(<span class='kw-2'>&amp;</span><span class='ident'>packet</span>, <span class='ident'>PacketType</span>::<span class='ident'>State</span>);
                             <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>socket</span>.<span class='ident'>send_to</span>(<span class='kw-2'>&amp;</span><span class='ident'>reply</span>.<span class='ident'>to_bytes</span>()[..], <span class='self'>self</span>.<span class='ident'>connected_to</span>));
+                            <span class='self'>self</span>.<span class='ident'>last_msg_sent_timestamp</span> <span class='op'>=</span> <span class='ident'>SteadyTime</span>::<span class='ident'>now</span>();
 
                             <span class='ident'>rx_syn</span> <span class='op'>=</span> <span class='prelude-val'>Some</span>(<span class='ident'>packet</span>);
                         }
@@ -3811,6 +3830,7 @@
 
         <span class='comment'>// Send FIN</span>
         <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>socket</span>.<span class='ident'>send_to</span>(<span class='kw-2'>&amp;</span><span class='ident'>packet</span>.<span class='ident'>to_bytes</span>()[..], <span class='self'>self</span>.<span class='ident'>connected_to</span>));
+        <span class='self'>self</span>.<span class='ident'>last_msg_sent_timestamp</span> <span class='op'>=</span> <span class='ident'>SteadyTime</span>::<span class='ident'>now</span>();
         <span class='macro'>debug</span><span class='macro'>!</span>(<span class='string'>&quot;sent {:?}&quot;</span>, <span class='ident'>packet</span>);
         <span class='self'>self</span>.<span class='ident'>state</span> <span class='op'>=</span> <span class='ident'>SocketState</span>::<span class='ident'>FinSent</span>;
 
@@ -4025,6 +4045,7 @@
         <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='kw-2'>mut</span> <span class='ident'>pkt</span>) <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>handle_packet</span>(<span class='kw-2'>&amp;</span><span class='ident'>packet</span>, <span class='ident'>src</span>)) {
             <span class='ident'>pkt</span>.<span class='ident'>set_wnd_size</span>(<span class='ident'>BUF_SIZE</span> <span class='kw'>as</span> <span class='ident'>u32</span>);
             <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>socket</span>.<span class='ident'>send_to</span>(<span class='kw-2'>&amp;</span><span class='ident'>pkt</span>.<span class='ident'>to_bytes</span>()[..], <span class='ident'>src</span>));
+            <span class='self'>self</span>.<span class='ident'>last_msg_sent_timestamp</span> <span class='op'>=</span> <span class='ident'>SteadyTime</span>::<span class='ident'>now</span>();
             <span class='macro'>debug</span><span class='macro'>!</span>(<span class='string'>&quot;sent {:?}&quot;</span>, <span class='ident'>pkt</span>);
         }
 
@@ -4074,6 +4095,7 @@
 
                 <span class='comment'>// Send FIN</span>
                 <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>socket</span>.<span class='ident'>send_to</span>(<span class='kw-2'>&amp;</span><span class='ident'>packet</span>.<span class='ident'>to_bytes</span>()[..], <span class='self'>self</span>.<span class='ident'>connected_to</span>));
+                <span class='self'>self</span>.<span class='ident'>last_msg_sent_timestamp</span> <span class='op'>=</span> <span class='ident'>SteadyTime</span>::<span class='ident'>now</span>();
                 <span class='macro'>debug</span><span class='macro'>!</span>(<span class='string'>&quot;resent FIN: {:?}&quot;</span>, <span class='ident'>packet</span>);
             } <span class='kw'>else</span> <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>state</span> <span class='op'>!=</span> <span class='ident'>SocketState</span>::<span class='ident'>New</span> {
                 <span class='comment'>// The socket is waiting for incoming packets but the remote peer is silent:</span>
@@ -4087,6 +4109,7 @@
             <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>packet</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>.<span class='ident'>send_window</span>[<span class='number'>0</span>];
             <span class='ident'>packet</span>.<span class='ident'>set_timestamp_microseconds</span>(<span class='ident'>now_microseconds</span>());
             <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>socket</span>.<span class='ident'>send_to</span>(<span class='kw-2'>&amp;</span><span class='ident'>packet</span>.<span class='ident'>to_bytes</span>()[..], <span class='self'>self</span>.<span class='ident'>connected_to</span>));
+            <span class='self'>self</span>.<span class='ident'>last_msg_sent_timestamp</span> <span class='op'>=</span> <span class='ident'>SteadyTime</span>::<span class='ident'>now</span>();
             <span class='macro'>debug</span><span class='macro'>!</span>(<span class='string'>&quot;resent {:?}&quot;</span>, <span class='ident'>packet</span>);
         }
 
@@ -4219,7 +4242,7 @@
         <span class='prelude-val'>Ok</span>(())
     }
 
-    <span class='kw'>fn</span> <span class='ident'>send_state</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) {
+    <span class='kw'>fn</span> <span class='ident'>send_state</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) {
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>packet</span> <span class='op'>=</span> <span class='ident'>Packet</span>::<span class='ident'>new</span>();
         <span class='ident'>packet</span>.<span class='ident'>set_type</span>(<span class='ident'>PacketType</span>::<span class='ident'>State</span>);
         <span class='kw'>let</span> <span class='ident'>self_t_micro</span>: <span class='ident'>u32</span> <span class='op'>=</span> <span class='ident'>now_microseconds</span>();
@@ -4229,11 +4252,13 @@
         <span class='ident'>packet</span>.<span class='ident'>set_seq_nr</span>(<span class='self'>self</span>.<span class='ident'>seq_nr</span>);
         <span class='ident'>packet</span>.<span class='ident'>set_ack_nr</span>(<span class='self'>self</span>.<span class='ident'>ack_nr</span>);
         <span class='kw'>let</span> _ <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>socket</span>.<span class='ident'>send_to</span>(<span class='kw-2'>&amp;</span><span class='ident'>packet</span>.<span class='ident'>to_bytes</span>()[..], <span class='self'>self</span>.<span class='ident'>connected_to</span>);
+        <span class='self'>self</span>.<span class='ident'>last_msg_sent_timestamp</span> <span class='op'>=</span> <span class='ident'>SteadyTime</span>::<span class='ident'>now</span>();
     }
 
     <span class='doccomment'>/// Send a keepalive packet on the stream.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>send_keepalive</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) {
-        <span class='kw'>if</span> <span class='ident'>now_microseconds</span>().<span class='ident'>wrapping_sub</span>(<span class='self'>self</span>.<span class='ident'>last_acked_timestamp</span>) <span class='op'>&gt;</span> <span class='number'>14_000_000</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>send_keepalive</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) {
+        <span class='kw'>if</span> (<span class='ident'>SteadyTime</span>::<span class='ident'>now</span>() <span class='op'>-</span> <span class='self'>self</span>.<span class='ident'>last_msg_sent_timestamp</span>).<span class='ident'>num_milliseconds</span>()
+            <span class='op'>&gt;=</span> <span class='number'>14_000</span> {
             <span class='self'>self</span>.<span class='ident'>send_state</span>();
         }
     }
@@ -4284,6 +4309,7 @@
         <span class='ident'>packet</span>.<span class='ident'>set_timestamp_microseconds</span>(<span class='ident'>now_microseconds</span>());
         <span class='ident'>packet</span>.<span class='ident'>set_timestamp_difference_microseconds</span>(<span class='self'>self</span>.<span class='ident'>their_delay</span>);
         <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>socket</span>.<span class='ident'>send_to</span>(<span class='kw-2'>&amp;</span><span class='ident'>packet</span>.<span class='ident'>to_bytes</span>()[..], <span class='self'>self</span>.<span class='ident'>connected_to</span>));
+        <span class='self'>self</span>.<span class='ident'>last_msg_sent_timestamp</span> <span class='op'>=</span> <span class='ident'>SteadyTime</span>::<span class='ident'>now</span>();
         <span class='macro'>debug</span><span class='macro'>!</span>(<span class='string'>&quot;sent {:?}&quot;</span>, <span class='ident'>packet</span>);
 
         <span class='prelude-val'>Ok</span>(())
@@ -4386,7 +4412,7 @@
     <span class='doccomment'>///</span>
     <span class='doccomment'>/// A fast resend request consists of sending three State packets (acknowledging the last</span>
     <span class='doccomment'>/// received packet) in quick succession.</span>
-    <span class='kw'>fn</span> <span class='ident'>send_fast_resend_request</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) {
+    <span class='kw'>fn</span> <span class='ident'>send_fast_resend_request</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) {
         <span class='kw'>for</span> _ <span class='kw'>in</span> <span class='number'>0</span>..<span class='number'>3</span> {
             <span class='self'>self</span>.<span class='ident'>send_state</span>();
         }
