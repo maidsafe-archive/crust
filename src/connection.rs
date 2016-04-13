@@ -737,6 +737,7 @@ fn start_rx(mut network_rx: Receiver,
                         break;
                     }
                 }
+                CrustMsg::Heartbeat => (),
                 m => error!("Unexpected message in start_rx: {:?}", m),
             },
             Err(err) => {

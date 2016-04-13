@@ -87,4 +87,5 @@ pub enum CrustMsg {
     ExternalEndpointResponse(SocketAddr),
     Connect(PublicKey),
     Message(Vec<u8>),
+    Heartbeat,
 }

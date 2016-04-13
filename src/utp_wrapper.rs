@@ -9,6 +9,8 @@ use std::collections::VecDeque;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 use maidsafe_utilities::serialisation::serialise;
 use event::WriteEvent;
+use time;
+use sender_receiver::CrustMsg;
 
 const CHECK_FOR_NEW_WRITES_INTERVAL_MS: u64 = 50;
 const BUFFER_SIZE: usize = 1000;
@@ -32,8 +34,18 @@ impl UtpWrapper {
                 .spawn(move || {
                     let mut socket = socket;
                     socket.set_read_timeout(Some(CHECK_FOR_NEW_WRITES_INTERVAL_MS));
+                    let heartbeat_msg = unwrap_result!(serialise(&CrustMsg::Heartbeat));
+                    let heartbeat_interval = time::Duration::minutes(3);
+                    let mut heartbeat_deadline = time::SteadyTime::now() + heartbeat_interval;
                     'read_write: loop {
                         let mut buf = [0; BUFFER_SIZE];
+                        if time::SteadyTime::now() > heartbeat_deadline {
+                            if let Err(err) = socket.send_to(&heartbeat_msg) {
+                                error!("Error sending: {:?}", err);
+                                break;
+                            }
+                            heartbeat_deadline = time::SteadyTime::now() + heartbeat_interval;
+                        }
                         match socket.recv_from(&mut buf[..]) {
                             Ok((0, _src)) => {
                                 info!("Gracefully closing uTP connection");
@@ -41,6 +53,7 @@ impl UtpWrapper {
                             }
                             Ok((amt, _src)) => {
                                 let buf = &buf[..amt];
+                                heartbeat_deadline = time::SteadyTime::now() + heartbeat_interval;
                                 match input_tx.send(Vec::from(buf)) {
                                     Ok(()) => (),
                                     Err(mpsc::SendError(_)) => {
@@ -62,6 +75,7 @@ impl UtpWrapper {
                                                 error!("Error sending: {:?}", err);
                                                 break 'read_write;
                                             }
+                                            heartbeat_deadline = time::SteadyTime::now() + heartbeat_interval;
                                         }
                                         Ok(WriteEvent::Shutdown) => {
                                             debug!("Shutdown requested. Closing socket");
