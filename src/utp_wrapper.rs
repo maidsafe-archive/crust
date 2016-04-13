@@ -32,7 +32,7 @@ impl UtpWrapper {
                 .spawn(move || {
                     let mut socket = socket;
                     socket.set_read_timeout(Some(CHECK_FOR_NEW_WRITES_INTERVAL_MS));
-                    'outer: loop {
+                    'read_write: loop {
                         let mut buf = [0; BUFFER_SIZE];
                         match socket.recv_from(&mut buf[..]) {
                             Ok((0, _src)) => {
@@ -45,7 +45,7 @@ impl UtpWrapper {
                                     Ok(()) => (),
                                     Err(mpsc::SendError(_)) => {
                                         debug!("User channel closed. Closing uTP connection");
-                                        break 'outer;
+                                        break 'read_write;
                                     }
                                 }
                             }
@@ -60,16 +60,16 @@ impl UtpWrapper {
                                             let data = unwrap_result!(serialise(&msg));
                                             if let Err(err) = socket.send_to(&data) {
                                                 error!("Error sending: {:?}", err);
-                                                break 'outer;
+                                                break 'read_write;
                                             }
                                         }
                                         Ok(WriteEvent::Shutdown) => {
                                             debug!("Shutdown requested. Closing socket");
-                                            break 'outer;
+                                            break 'read_write;
                                         }
                                         Err(TryRecvError::Disconnected) => {
                                             debug!("User channel closed. Closing uTP connection");
-                                            break 'outer;
+                                            break 'read_write;
                                         }
                                         Err(TryRecvError::Empty) => break,
                                     }
