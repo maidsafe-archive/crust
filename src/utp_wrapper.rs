@@ -9,6 +9,8 @@ use std::collections::VecDeque;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 use maidsafe_utilities::serialisation::serialise;
 use event::WriteEvent;
+use std::time::{Duration,Instant};
+use sender_receiver::CrustMsg;
 
 const CHECK_FOR_NEW_WRITES_INTERVAL_MS: u64 = 50;
 const BUFFER_SIZE: usize = 1000;
@@ -22,7 +24,10 @@ pub struct UtpWrapper {
 }
 
 impl UtpWrapper {
-    pub fn wrap(socket: UtpSocket, output_rx: Receiver<WriteEvent>) -> io::Result<UtpWrapper> {
+    pub fn wrap(socket: UtpSocket, output_rx: Receiver<WriteEvent>,
+                heartbeat_timeout: Duration,
+                inactivity_timeout: Duration)
+                -> io::Result<UtpWrapper> {
         let (input_tx, input_rx) = mpsc::channel();
         let peer_addr = try!(socket.peer_addr());
         let local_addr = try!(socket.local_addr());
@@ -32,8 +37,31 @@ impl UtpWrapper {
                 .spawn(move || {
                     let mut socket = socket;
                     socket.set_read_timeout(Some(CHECK_FOR_NEW_WRITES_INTERVAL_MS));
+                    let heartbeat_msg = unwrap_result!(serialise(&CrustMsg::Heartbeat));
+                    let mut heartbeat_deadline = Instant::now() + heartbeat_timeout;
+                    let mut inactivity_deadline = Instant::now() + inactivity_timeout;
+                    let update_heartbeat = |heartbeat_deadline: &mut Instant, inactivity_deadline: &mut Instant| {
+                        let now = Instant::now();
+                        *heartbeat_deadline = now + heartbeat_timeout;
+                        *inactivity_deadline = now + inactivity_timeout;
+                    };
                     'read_write: loop {
                         let mut buf = [0; BUFFER_SIZE];
+                        {
+                            let now = Instant::now();
+                            if now > inactivity_deadline {
+                                info!("Stale connection. Dropping...");
+                                break;
+                            }
+                            if now > heartbeat_deadline {
+                                if let Err(e) = socket.send_to(&heartbeat_msg) {
+                                    error!("Error sending: {:?}", e);
+                                    break;
+                                }
+                                update_heartbeat(&mut heartbeat_deadline,
+                                                 &mut inactivity_deadline);
+                            }
+                        }
                         match socket.recv_from(&mut buf[..]) {
                             Ok((0, _src)) => {
                                 info!("Gracefully closing uTP connection");
@@ -41,6 +69,8 @@ impl UtpWrapper {
                             }
                             Ok((amt, _src)) => {
                                 let buf = &buf[..amt];
+                                update_heartbeat(&mut heartbeat_deadline,
+                                                 &mut inactivity_deadline);
                                 match input_tx.send(Vec::from(buf)) {
                                     Ok(()) => (),
                                     Err(mpsc::SendError(_)) => {
@@ -62,6 +92,8 @@ impl UtpWrapper {
                                                 error!("Error sending: {:?}", err);
                                                 break 'read_write;
                                             }
+                                            update_heartbeat(&mut heartbeat_deadline,
+                                                             &mut inactivity_deadline);
                                         }
                                         Ok(WriteEvent::Shutdown) => {
                                             debug!("Shutdown requested. Closing socket");
