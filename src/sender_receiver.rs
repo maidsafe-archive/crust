@@ -75,7 +75,11 @@ impl Receiver {
     }
 
     pub fn receive(&mut self) -> io::Result<CrustMsg> {
-        self.basic_receive::<CrustMsg>()
+        let mut msg = CrustMsg::Heartbeat;
+        while msg == CrustMsg::Heartbeat {
+            msg = try!(self.basic_receive::<CrustMsg>());
+        }
+        Ok(msg)
     }
 }
 
@@ -87,4 +91,5 @@ pub enum CrustMsg {
     ExternalEndpointResponse(SocketAddr),
     Connect(PublicKey),
     Message(Vec<u8>),
+    Heartbeat,
 }

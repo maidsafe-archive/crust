@@ -139,7 +139,9 @@ pub fn connect(peer_contact: StaticContactInfo,
                bootstrap_cache: Arc<Mutex<BootstrapHandler>>,
                mc: &MappingContext,
                tcp_enabled: bool,
-               utp_enabled: bool)
+               utp_enabled: bool,
+               heartbeat_timeout: Duration,
+               inactivity_timeout: Duration)
                -> io::Result<()> {
     let static_contact_info = peer_contact.clone();
 
@@ -227,7 +229,9 @@ pub fn connect(peer_contact: StaticContactInfo,
                                         UtpRendezvousConnectMode::BootstrapConnect,
                                         our_public_key.clone(),
                                         event_tx.clone(),
-                                        connection_map.clone()) {
+                                        connection_map.clone(),
+                                        heartbeat_timeout,
+                                        inactivity_timeout) {
                                         Ok(()) => return Ok(()),
                                         Err(_) => continue,
                                     }
@@ -583,10 +587,14 @@ pub fn utp_rendezvous_connect(udp_socket: UdpSocket,
                               mode: UtpRendezvousConnectMode,
                               our_public_key: PublicKey,
                               event_tx: ::CrustEventSender,
-                              connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>)
+                              connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
+                              heartbeat_timeout: Duration,
+                              inactivity_timeout: Duration)
                               -> io::Result<()> {
-    let (network_input, writer) = try!(utp_connections::rendezvous_connect_utp(udp_socket,
-                                                                               their_addr));
+    let (network_input, writer)
+        = try!(utp_connections::rendezvous_connect_utp(udp_socket, their_addr,
+                                                       heartbeat_timeout,
+                                                       inactivity_timeout));
     let our_addr = SocketAddr(network_input.local_addr());
     let their_new_addr = SocketAddr(network_input.peer_addr());
 
