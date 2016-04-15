@@ -15,14 +15,15 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use utp::UtpSocket;
-pub use utp_wrapper::UtpWrapper;
 use std::net::UdpSocket;
-use socket_addr::SocketAddr;
 use std::io;
 use std::sync::mpsc;
 use std::sync::mpsc::Sender;
 
+use utp::UtpSocket;
+use socket_addr::SocketAddr;
+
+pub use utp_wrapper::UtpWrapper;
 use event::WriteEvent;
 
 pub fn rendezvous_connect_utp(udp_socket: UdpSocket,
@@ -44,20 +45,22 @@ pub fn upgrade_utp(newconnection: UtpSocket) -> io::Result<(UtpWrapper, Sender<W
 #[allow(unused)]
 mod test {
     use super::*;
-    use maidsafe_utilities::serialisation::deserialise_from;
     use std::thread;
-    use socket_addr::{SocketAddr, SocketAddrV4};
     use std::net::{Ipv4Addr, UdpSocket};
     use std::net;
     use std::io::Read;
-    use utp::UtpListener;
-    use event::WriteEvent;
     use std::io;
     use std::thread::spawn;
     use std::sync::Arc;
     use std::sync::mpsc;
+    use std::time::{Instant, Duration};
+
     use rand;
-    use std::time::Duration;
+    use socket_addr::{SocketAddr, SocketAddrV4};
+    use maidsafe_utilities::serialisation::deserialise_from;
+    use utp::UtpListener;
+
+    use event::WriteEvent;
     use sender_receiver::CrustMsg;
 
     #[test]
@@ -112,7 +115,7 @@ mod test {
         SocketAddr(net::SocketAddr::V4(net::SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), port)))
     }
 
-    fn duration_diff(t1: ::time::Duration, t2: ::time::Duration) -> ::time::Duration {
+    fn duration_diff(t1: Duration, t2: Duration) -> Duration {
         if t1 >= t2 {
             t1 - t2
         } else {
@@ -125,14 +128,14 @@ mod test {
     // is ~500ms. We calculate this E here to adjust our tests.
     // See here for more info:
     // https://users.rust-lang.org/t/on-windows-udpsocket-set-read-timeout-x-waits-x-500ms/3334
-    fn read_timeout_error() -> ::time::Duration {
+    fn read_timeout_error() -> Duration {
         let mut buf = [0u8; 32];
         let s = unwrap_result!(UdpSocket::bind(&*loopback_v4(0)));
 
-        ::time::Duration::span(|| {
-            let timeout = ::std::time::Duration::from_millis(1);
-            unwrap_result!(s.set_read_timeout(Some(timeout)));
-            let _ = s.recv_from(&mut buf);
-        })
+        let start_time = Instant::now();
+        let timeout = ::std::time::Duration::from_millis(1);
+        unwrap_result!(s.set_read_timeout(Some(timeout)));
+        let _ = s.recv_from(&mut buf);
+        Instant::now() - start_time
     }
 }

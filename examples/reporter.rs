@@ -47,15 +47,7 @@ extern crate log;
 
 extern crate rand;
 extern crate rustc_serialize;
-extern crate time;
 
-use config_file_handler::FileHandler;
-use crust::{Event, PeerId, Service};
-use docopt::Docopt;
-use maidsafe_utilities::event_sender::{MaidSafeEventCategory, MaidSafeObserver};
-use rand::{thread_rng, Rng};
-use rustc_serialize::{json, Decodable, Decoder, Encodable, Encoder};
-use std::cmp::max;
 use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 use std::sync::{Arc, Mutex};
@@ -63,9 +55,14 @@ use std::sync::mpsc::{self, Receiver, Sender};
 use std::thread::{self, JoinHandle};
 use std::fs::File;
 use std::io::Write;
-use time::{Duration, Tm};
+use std::time::{SystemTime, Instant, Duration};
 
-type StdDuration = std::time::Duration;
+use rustc_serialize::{json, Decodable, Decoder, Encodable, Encoder};
+use docopt::Docopt;
+use maidsafe_utilities::event_sender::{MaidSafeEventCategory, MaidSafeObserver};
+use rand::{thread_rng, Rng};
+use config_file_handler::FileHandler;
+use crust::{Event, PeerId, Service};
 
 static USAGE: &'static str = r#"
 Usage:
@@ -138,7 +135,7 @@ fn main() {
         report.update(run(&config));
         debug!("Service stopped ({} of {})", i + 1, config.service_runs);
 
-        thread::sleep(StdDuration::from_millis(thread_rng().gen_range(
+        thread::sleep(Duration::from_millis(thread_rng().gen_range(
             0, config.max_wait_before_restart_service_secs * 1000)));
     }
 
@@ -173,10 +170,10 @@ fn run(config: &Config) -> Report {
 
     // Wait until we connect to someone
     let _ = recv_with_timeout(connect_rx,
-                              StdDuration::from_millis(WAIT_FOR_CONNECT_TIMEOUT));
+                              Duration::from_millis(WAIT_FOR_CONNECT_TIMEOUT));
 
     // Keep it running for a (random) while.
-    thread::sleep(StdDuration::from_millis(thread_rng()
+    thread::sleep(Duration::from_millis(thread_rng()
                                                .gen_range(MIN_RUN_TIME_MS, MAX_RUN_TIME_MS)));
 
     // Kill everything and return the report.
@@ -266,15 +263,15 @@ fn handle_messages(config: &Config,
                    -> JoinHandle<HashMap<String, u64>> {
     let msgs_per_sec = config.max_msgs_per_sec.unwrap_or(0);
     let msg_time = if msgs_per_sec > 0 {
-        Duration::milliseconds(1000 / msgs_per_sec as i64)
+        Duration::from_millis(1000 / msgs_per_sec)
     } else {
-        Duration::zero()
+        Duration::new(0, 0)
     };
 
     let message_bytes = config.msg_to_send.bytes().collect::<Vec<_>>();
 
     thread::spawn(move || {
-        let mut sent_at = time::now() - msg_time;
+        let mut sent_at = Instant::now() - msg_time;
         let mut stats = HashMap::new();
 
         for peer_id in message_rx.iter() {
@@ -285,14 +282,14 @@ fn handle_messages(config: &Config,
                     let _ = connect_tx.send(());
 
                     // Sleep to throttle the number of messages sent.
-                    let sleep = max(msg_time - (time::now() - sent_at), Duration::zero());
-                    if sleep > Duration::zero() {
-                        thread::sleep(StdDuration::from_millis(sleep.num_milliseconds() as u64));
+                    let elapsed = Instant::now() - sent_at;
+                    if msg_time > elapsed {
+                        thread::sleep(msg_time - elapsed);
                     }
 
                     if peers.lock().unwrap().contains(&peer_id) {
                         unwrap_result!(service.send(&peer_id, message_bytes.clone()));
-                        sent_at = time::now();
+                        sent_at = Instant::now();
 
                         *stats.entry(format!("{:?}", peer_id)).or_insert(0) += 1;
                     }
@@ -322,7 +319,7 @@ struct Config {
     service_runs: u64,
     output_report_path: String,
     max_wait_before_restart_service_secs: u64,
-    max_msgs_per_sec: Option<u32>,
+    max_msgs_per_sec: Option<u64>,
 }
 
 #[derive(Debug, RustcEncodable)]
@@ -356,7 +353,7 @@ impl Report {
 
     fn record_event(&mut self, event: &Event) {
         self.events.push(Some(EventEntry {
-            timestamp: time::now(),
+            timestamp: SystemTime::now(),
             description: Self::format_event(event),
         }));
     }
@@ -387,13 +384,13 @@ impl Report {
 
 #[derive(Debug)]
 struct EventEntry {
-    timestamp: Tm,
+    timestamp: SystemTime,
     description: String,
 }
 
 impl Encodable for EventEntry {
     fn encode<E: Encoder>(&self, encoder: &mut E) -> Result<(), E::Error> {
-        let timestamp_string = format!("{}", self.timestamp.rfc3339());
+        let timestamp_string = format!("{:?}", self.timestamp);
         [&timestamp_string, &self.description].encode(encoder)
     }
 }
@@ -404,10 +401,10 @@ enum RecvWithTimeoutError {
 }
 
 fn recv_with_timeout<T>(receiver: Receiver<T>,
-                        timeout: StdDuration)
+                        timeout: Duration)
                         -> Result<T, RecvWithTimeoutError> {
-    let interval = StdDuration::from_millis(100);
-    let mut elapsed = StdDuration::from_millis(0);
+    let interval = Duration::from_millis(100);
+    let mut elapsed = Duration::from_millis(0);
 
     loop {
         match receiver.try_recv() {
