@@ -104,13 +104,6 @@ impl UtpWrapper {
     }
 }
 
-// TODO(canndrew): Remove this once clone_from_slice in the standard library becomes stable.
-fn clone_from_slice<T: Clone>(target: &mut [T], src: &[T]) {
-    for (t, s) in target.into_iter().zip(src.into_iter()) {
-        *t = s.clone();
-    }
-}
-
 impl Read for UtpWrapper {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         use std;
@@ -121,13 +114,13 @@ impl Read for UtpWrapper {
                 let read_len = std::cmp::min(buf.len(), unread_front.len());
                 let target = &mut buf[..read_len];
                 let src = &unread_front[..read_len];
-                clone_from_slice(target, src);
+                target.clone_from_slice(src);
                 read_len
             } else if unread_back.len() > 0 {
                 let read_len = std::cmp::min(buf.len(), unread_back.len());
                 let target = &mut buf[..read_len];
                 let src = &unread_back[..read_len];
-                clone_from_slice(target, src);
+                target.clone_from_slice(src);
                 read_len
             } else {
                 0
@@ -144,7 +137,7 @@ impl Read for UtpWrapper {
         let read_len = std::cmp::min(recved.len(), buf.len());
         let target = &mut buf[..read_len];
         let src = &recved[..read_len];
-        clone_from_slice(target, src);
+        target.clone_from_slice(src);
         self.unread_bytes.extend(&recved[read_len..]);
         Ok(read_len)
     }
