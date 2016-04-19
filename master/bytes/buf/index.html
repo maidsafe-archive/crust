@@ -54,7 +54,6 @@
                                title='bytes::buf::ByteBuf'>ByteBuf</a></td>
                         <td class='docblock short'>
                              <p>A <code>Buf</code> backed by a contiguous region of memory.</p>
-
                         </td>
                     </tr>
                 
@@ -79,7 +78,6 @@
                                title='bytes::buf::ROByteBuf'>ROByteBuf</a></td>
                         <td class='docblock short'>
                              <p>Same as <code>ByteBuf</code> but cannot be flipped to a <code>MutByteBuf</code>.</p>
-
                         </td>
                     </tr>
                 
@@ -90,7 +88,6 @@
                              <p>Buf backed by a continous chunk of memory. Maintains a read cursor and a
 write cursor. When reads and writes reach the end of the allocated buffer,
 wraps around to the start.</p>
-
                         </td>
                     </tr>
                 
@@ -116,7 +113,6 @@ wraps around to the start.</p>
                                title='bytes::buf::Buf'>Buf</a></td>
                         <td class='docblock short'>
                              <p>A trait for values that provide sequential read access to bytes.</p>
-
                         </td>
                     </tr>
                 
@@ -125,7 +121,6 @@ wraps around to the start.</p>
                                title='bytes::buf::BufExt'>BufExt</a></td>
                         <td class='docblock short'>
                              <p>An extension trait providing extra functions applicable to all <code>Buf</code> values.</p>
-
                         </td>
                     </tr>
                 
@@ -134,7 +129,6 @@ wraps around to the start.</p>
                                title='bytes::buf::MutBuf'>MutBuf</a></td>
                         <td class='docblock short'>
                              <p>A trait for values that provide sequential write access to bytes.</p>
-
                         </td>
                     </tr>
                 
@@ -143,7 +137,6 @@ wraps around to the start.</p>
                                title='bytes::buf::MutBufExt'>MutBufExt</a></td>
                         <td class='docblock short'>
                              <p>An extension trait providing extra functions applicable to all <code>MutBuf</code> values.</p>
-
                         </td>
                     </tr>
                 
@@ -152,7 +145,6 @@ wraps around to the start.</p>
                                title='bytes::buf::Sink'>Sink</a></td>
                         <td class='docblock short'>
                              <p>A value that reads bytes from a Buf into itself</p>
-
                         </td>
                     </tr>
                 
@@ -161,7 +153,6 @@ wraps around to the start.</p>
                                title='bytes::buf::Source'>Source</a></td>
                         <td class='docblock short'>
                              <p>A value that writes bytes from itself into a <code>MutBuf</code>.</p>
-
                         </td>
                     </tr>
                 </table></section>
@@ -207,7 +198,7 @@ wraps around to the start.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

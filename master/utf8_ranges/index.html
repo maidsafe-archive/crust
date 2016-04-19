@@ -59,6 +59,7 @@ an example.</p>
 whether a particular byte sequence was a Cyrillic character. One possible
 scalar value range is <code>[0400-04FF]</code>. The set of allowed bytes for this
 range can be expressed as a sequence of byte ranges:</p>
+
 <pre class='rust rust-example-rendered'>
 [<span class='ident'>D0</span><span class='op'>-</span><span class='ident'>D3</span>][<span class='number'>80</span><span class='op'>-</span><span class='ident'>BF</span>]</pre>
 
@@ -74,6 +75,7 @@ this isn&#39;t quite correct because this range doesn&#39;t capture many charact
 for example, <code>04FF</code> (because its last byte, <code>BF</code> isn&#39;t in the range <code>80-AF</code>).</p>
 
 <p>Instead, you need multiple sequences of byte ranges:</p>
+
 <pre class='rust rust-example-rendered'>
 [<span class='ident'>D0</span><span class='op'>-</span><span class='ident'>D3</span>][<span class='number'>80</span><span class='op'>-</span><span class='ident'>BF</span>]  <span class='attribute'># <span class='ident'>matches</span> <span class='ident'>codepoints</span> <span class='number'>0400</span><span class='op'>-</span><span class='number'>04FF</span>
 [<span class='ident'>D4</span>]</span>[<span class='number'>80</span><span class='op'>-</span><span class='ident'>AF</span>]     <span class='attribute'># <span class='ident'>matches</span> <span class='ident'>codepoints</span> <span class='number'>0500</span><span class='op'>-</span><span class='number'>052F</span></pre>
@@ -81,6 +83,7 @@ for example, <code>04FF</code> (because its last byte, <code>BF</code> isn&#39;t
 <p>This gets even more complicated if you want bigger ranges, particularly if
 they naively contain surrogate codepoints. For example, the sequence of byte
 ranges for the basic multilingual plane (<code>[0000-FFFF]</code>) look like this:</p>
+
 <pre class='rust rust-example-rendered'>
 [<span class='number'>0</span><span class='op'>-</span><span class='number'>7F</span>]
 [<span class='ident'>C2</span><span class='op'>-</span><span class='ident'>DF</span>][<span class='number'>80</span><span class='op'>-</span><span class='ident'>BF</span>]
@@ -93,6 +96,7 @@ ranges for the basic multilingual plane (<code>[0000-FFFF]</code>) look like thi
 UTF-8, including encodings of surrogate codepoints.</p>
 
 <p>And, of course, for all of Unicode (<code>[000000-10FFFF]</code>):</p>
+
 <pre class='rust rust-example-rendered'>
 [<span class='number'>0</span><span class='op'>-</span><span class='number'>7F</span>]
 [<span class='ident'>C2</span><span class='op'>-</span><span class='ident'>DF</span>][<span class='number'>80</span><span class='op'>-</span><span class='ident'>BF</span>]
@@ -129,7 +133,6 @@ which uses it for executing automata on their term index.</p>
                                title='utf8_ranges::Utf8Range'>Utf8Range</a></td>
                         <td class='docblock short'>
                              <p>A single inclusive range of UTF-8 bytes.</p>
-
                         </td>
                     </tr>
                 
@@ -138,7 +141,6 @@ which uses it for executing automata on their term index.</p>
                                title='utf8_ranges::Utf8Sequences'>Utf8Sequences</a></td>
                         <td class='docblock short'>
                              <p>An iterator over ranges of matching UTF-8 byte sequences.</p>
-
                         </td>
                     </tr>
                 </table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
@@ -148,7 +150,6 @@ which uses it for executing automata on their term index.</p>
                                title='utf8_ranges::Utf8Sequence'>Utf8Sequence</a></td>
                         <td class='docblock short'>
                              <p>Utf8Sequence represents a sequence of byte ranges.</p>
-
                         </td>
                     </tr>
                 </table></section>
@@ -194,7 +195,7 @@ which uses it for executing automata on their term index.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

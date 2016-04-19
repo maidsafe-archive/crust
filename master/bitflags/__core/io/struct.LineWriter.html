@@ -46,10 +46,10 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-4072' class='srclink' href='https://doc.rust-lang.org/nightly/std/io/buffered/struct.LineWriter.html?gotosrc=4072' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-4236' class='srclink' href='https://doc.rust-lang.org/nightly/std/io/buffered/struct.LineWriter.html?gotosrc=4236' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct LineWriter&lt;W&gt; <span class='where'>where W: <a class='trait' href='../../../bitflags/__core/io/trait.Write.html' title='bitflags::__core::io::Write'>Write</a></span> {
     // some fields omitted
-}</pre><div class='docblock'><p>Wraps a writer and buffers output to it, flushing whenever a newline
+}</pre><span class="since">1.0.0</span><div class='docblock'><p>Wraps a writer and buffers output to it, flushing whenever a newline
 (<code>0x0a</code>, <code>&#39;\n&#39;</code>) is detected.</p>
 
 <p>The <a href="struct.BufWriter.html"><code>BufWriter</code></a> struct wraps a writer and buffers its output.
@@ -64,6 +64,7 @@ dropped, it will flush those contents.</p>
 <h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
 <p>We can use <code>LineWriter</code> to write one line at a time, significantly
 reducing the number of actual writes to the file.</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fs</span>::<span class='ident'>File</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>prelude</span>::<span class='op'>*</span>;
@@ -92,7 +93,8 @@ And that has made all the difference.&quot;</span>;
 </div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;W&gt; <a class='struct' href='../../../bitflags/__core/io/struct.LineWriter.html' title='bitflags::__core::io::LineWriter'>LineWriter</a>&lt;W&gt; <span class='where'>where W: <a class='trait' href='../../../bitflags/__core/io/trait.Write.html' title='bitflags::__core::io::Write'>Write</a></span></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(inner: W) -&gt; <a class='struct' href='../../../bitflags/__core/io/struct.LineWriter.html' title='bitflags::__core::io::LineWriter'>LineWriter</a>&lt;W&gt;</code></h4>
 <div class='docblock'><p>Creates a new <code>LineWriter</code>.</p>
 
-<h1 id='examples-1' class='section-header'><a href='#examples-1'>Examples</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='examples-1' class='section-header'><a href='#examples-1'>Examples</a></h1>
+<pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fs</span>::<span class='ident'>File</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>LineWriter</span>;
 
@@ -102,7 +104,8 @@ And that has made all the difference.&quot;</span>;
 <div class='docblock'><p>Creates a new <code>LineWriter</code> with a specified capacity for the internal
 buffer.</p>
 
-<h1 id='examples-2' class='section-header'><a href='#examples-2'>Examples</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='examples-2' class='section-header'><a href='#examples-2'>Examples</a></h1>
+<pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fs</span>::<span class='ident'>File</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>LineWriter</span>;
 
@@ -111,7 +114,8 @@ buffer.</p>
 </div><h4 id='method.get_ref' class='method'><code>fn <a href='#method.get_ref' class='fnname'>get_ref</a>(&amp;self) -&gt; &amp;W</code></h4>
 <div class='docblock'><p>Gets a reference to the underlying writer.</p>
 
-<h1 id='examples-3' class='section-header'><a href='#examples-3'>Examples</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='examples-3' class='section-header'><a href='#examples-3'>Examples</a></h1>
+<pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fs</span>::<span class='ident'>File</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>LineWriter</span>;
 
@@ -125,7 +129,8 @@ buffer.</p>
 <p>Caution must be taken when calling methods on the mutable reference
 returned as extra writes could corrupt the output stream.</p>
 
-<h1 id='examples-4' class='section-header'><a href='#examples-4'>Examples</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='examples-4' class='section-header'><a href='#examples-4'>Examples</a></h1>
+<pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fs</span>::<span class='ident'>File</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>LineWriter</span>;
 
@@ -139,7 +144,8 @@ returned as extra writes could corrupt the output stream.</p>
 
 <p>The internal buffer is written out before returning the writer.</p>
 
-<h1 id='examples-5' class='section-header'><a href='#examples-5'>Examples</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='examples-5' class='section-header'><a href='#examples-5'>Examples</a></h1>
+<pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fs</span>::<span class='ident'>File</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>LineWriter</span>;
 
@@ -198,7 +204,7 @@ returned as extra writes could corrupt the output stream.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

@@ -46,10 +46,10 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-6449' class='srclink' href='https://doc.rust-lang.org/nightly/std/os/raw/enum.c_void.html?gotosrc=6449' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-6719' class='srclink' href='https://doc.rust-lang.org/nightly/std/os/raw/enum.c_void.html?gotosrc=6719' title='goto source code'>[src]</a></span></h1>
 <pre class='rust enum'>pub enum c_void {
     // some variants omitted
-}</pre><div class='docblock'><p>Type used to construct void pointers for use with C.</p>
+}</pre><span class="since">1.1.0</span><div class='docblock'><p>Type used to construct void pointers for use with C.</p>
 
 <p>This type is only useful as a pointer target. Do not use it as a
 return type for FFI functions which have the <code>void</code> return type in
@@ -97,7 +97,7 @@ C. Use the unit type <code>()</code> or omit the return type instead.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

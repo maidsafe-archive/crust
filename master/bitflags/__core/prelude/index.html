@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-176' class='srclink' href='https://doc.rust-lang.org/nightly/std/prelude/index.html?gotosrc=176' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-185' class='srclink' href='https://doc.rust-lang.org/nightly/std/prelude/index.html?gotosrc=185' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>The Rust Prelude</p>
 
 <p>Rust comes with a variety of things in its standard library. However, if
@@ -56,14 +56,16 @@ good either. A balance needs to be struck.</p>
 
 <p>The <em>prelude</em> is the list of things that Rust automatically imports into
 every Rust program. It&#39;s kept as small as possible, and is focused on
-things, particuarly traits, which are used in almost every single Rust
+things, particularly traits, which are used in almost every single Rust
 program.</p>
 
 <p>On a technical level, Rust inserts</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>std</span>;</pre>
 
 <p>into the crate root of every crate, and</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>prelude</span>::<span class='ident'>v1</span>::<span class='op'>*</span>;</pre>
 
@@ -77,7 +79,7 @@ also define their own preludes.</p>
 
 <p>The difference between &#39;the prelude&#39; and these other preludes is that they
 are not automatically <code>use</code>&#39;d, and must be imported manually. This is still
-easier than importing all of their consitutent components.</p>
+easier than importing all of their constituent components.</p>
 
 <h1 id='prelude-contents' class='section-header'><a href='#prelude-contents'>Prelude contents</a></h1>
 <p>The current version of the prelude (version 1) lives in
@@ -87,7 +89,7 @@ easier than importing all of their consitutent components.</p>
 <li><a href="../marker/index.html"><code>std::marker</code></a>::{<a href="../marker/trait.Copy.html"><code>Copy</code></a>, <a href="../marker/trait.Send.html"><code>Send</code></a>, <a href="../marker/trait.Sized.html"><code>Sized</code></a>, <a href="../marker/trait.Sync.html"><code>Sync</code></a>}. The marker
 traits indicate fundamental properties of types.</li>
 <li><a href="../ops/index.html"><code>std::ops</code></a>::{<a href="../mem/fn.drop.html"><code>Drop</code></a>, <a href="../ops/trait.Fn.html"><code>Fn</code></a>, <a href="../ops/trait.FnMut.html"><code>FnMut</code></a>, <a href="../ops/trait.FnOnce.html"><code>FnOnce</code></a>}. Various
-operations for both destuctors and overloading <code>()</code>.</li>
+operations for both destructors and overloading <code>()</code>.</li>
 <li><a href="../mem/index.html"><code>std::mem</code></a>::<a href="../mem/fn.drop.html"><code>drop</code></a>, a convenience function for explicitly dropping a
 value.</li>
 <li><a href="../boxed/index.html"><code>std::boxed</code></a>::<a href="../boxed/struct.Box.html"><code>Box</code></a>, a way to allocate values on the heap.</li>
@@ -125,7 +127,6 @@ vector.</li>
                                title='bitflags::__core::prelude::v1'>v1</a></td>
                         <td class='docblock short'>
                              <p>The first version of the prelude of The Rust Standard Library.</p>
-
                         </td>
                     </tr>
                 </table></section>
@@ -171,7 +172,7 @@ vector.</li>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

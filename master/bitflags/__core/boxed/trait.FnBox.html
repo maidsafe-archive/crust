@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-259' class='srclink' href='https://doc.rust-lang.org/nightly/alloc/boxed/trait.FnBox.html?gotosrc=259' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-264' class='srclink' href='https://doc.rust-lang.org/nightly/alloc/boxed/trait.FnBox.html?gotosrc=264' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait FnBox&lt;A&gt; {
     type Output;
     fn <a href='#tymethod.call_box' class='fnname'>call_box</a>(self: <a class='struct' href='../../../bitflags/__core/boxed/struct.Box.html' title='bitflags::__core::boxed::Box'>Box</a>&lt;Self&gt;, args: A) -&gt; Self::<a class='trait' href='../../../bitflags/__core/boxed/trait.FnBox.html' title='bitflags::__core::boxed::FnBox'>Output</a>;
@@ -64,6 +64,7 @@ closures become directly usable.)</p>
 once closures and then removes them one by one, calling each
 closure as it is removed. Note that the type of the closures
 stored in the map is <code>Box&lt;FnBox() -&gt; i32&gt;</code> and not <code>Box&lt;FnOnce() -&gt; i32&gt;</code>.</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>feature</span>(<span class='ident'>fnbox</span>)]</span>
 
@@ -141,7 +142,7 @@ stored in the map is <code>Box&lt;FnBox() -&gt; i32&gt;</code> and not <code>Box
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

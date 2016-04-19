@@ -46,10 +46,11 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-818' class='srclink' href='../../src/itertools/free.rs.html#271-276' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-819' class='srclink' href='../../src/itertools/free.rs.html#271-276' title='goto source code'>[src]</a></span></h1>
 <pre class='rust fn'>pub fn sorted&lt;I&gt;(iterable: I) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;I::Item&gt; <span class='where'>where I: <a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/trait.IntoIterator.html' title='core::iter::IntoIterator'>IntoIterator</a>, I::Item: <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.Ord.html' title='core::cmp::Ord'>Ord</a></span></pre><div class='docblock'><p>Collect all the iterable&#39;s elements into a sorted vector in ascending order.</p>
 
 <p><code>IntoIterator</code> enabled version of <code>iterable.sorted()</code>.</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>itertools</span>::<span class='ident'>free</span>::<span class='ident'>sorted</span>;
 <span class='kw'>use</span> <span class='ident'>itertools</span>::<span class='ident'>assert_equal</span>;
@@ -98,7 +99,7 @@
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

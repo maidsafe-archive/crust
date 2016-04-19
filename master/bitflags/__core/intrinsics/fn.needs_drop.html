@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-5688' class='srclink' href='https://doc.rust-lang.org/nightly/core/intrinsics/fn.needs_drop.html?gotosrc=5688' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-5757' class='srclink' href='https://doc.rust-lang.org/nightly/core/intrinsics/fn.needs_drop.html?gotosrc=5757' title='goto source code'>[src]</a></span></h1>
 <pre class='rust fn'>pub unsafe extern "rust-intrinsic" fn needs_drop&lt;T&gt;() -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a></pre><div class='stability'><em class='stab unstable'>Unstable (<code>core_intrinsics</code>)<p>: intrinsics are unlikely to ever be stabilized, instead they should be used through stabilized interfaces in the rest of the standard library</p>
 </em></div><div class='docblock'><p>Returns <code>true</code> if the actual type given as <code>T</code> requires drop
 glue; returns <code>false</code> if the actual type provided for <code>T</code>
@@ -97,7 +97,7 @@ implements <code>Copy</code>.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

@@ -54,11 +54,11 @@
     MissingFieldError(&amp;'static <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>),
 }</pre><div class='docblock'><p>This represents all the possible errors that can occur using the <code>ValueDeserializer</code>.</p>
 </div><h2 class='variants'>Variants</h2>
-<table><tr><td id='variant.SyntaxError'><code>SyntaxError</code></td><td><div class='docblock'><p>The value had some syntatic error.</p>
-</div></td></tr><tr><td id='variant.EndOfStreamError'><code>EndOfStreamError</code></td><td><div class='docblock'><p>EOF while deserializing a value.</p>
-</div></td></tr><tr><td id='variant.UnknownFieldError'><code>UnknownFieldError</code></td><td><div class='docblock'><p>Unknown field in struct.</p>
-</div></td></tr><tr><td id='variant.MissingFieldError'><code>MissingFieldError</code></td><td><div class='docblock'><p>Struct is missing a field.</p>
-</div></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='../../../serde/de/trait.Error.html' title='serde::de::Error'>Error</a> for <a class='enum' href='../../../serde/de/value/enum.Error.html' title='serde::de::value::Error'>Error</a></code></h3><div class='impl-items'><h4 id='method.syntax' class='method'><code>fn <a href='../../../serde/de/trait.Error.html#method.syntax' class='fnname'>syntax</a>(_: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; Self</code></h4>
+<table class='variants_table'><tr><td id='variant.SyntaxError'><code>SyntaxError</code></td><td><div class='docblock'><p>The value had some syntatic error.</p>
+</div></td><td></td></tr><tr><td id='variant.EndOfStreamError'><code>EndOfStreamError</code></td><td><div class='docblock'><p>EOF while deserializing a value.</p>
+</div></td><td></td></tr><tr><td id='variant.UnknownFieldError'><code>UnknownFieldError</code></td><td><div class='docblock'><p>Unknown field in struct.</p>
+</div></td><td></td></tr><tr><td id='variant.MissingFieldError'><code>MissingFieldError</code></td><td><div class='docblock'><p>Struct is missing a field.</p>
+</div></td><td></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='../../../serde/de/trait.Error.html' title='serde::de::Error'>Error</a> for <a class='enum' href='../../../serde/de/value/enum.Error.html' title='serde::de::value::Error'>Error</a></code></h3><div class='impl-items'><h4 id='method.syntax' class='method'><code>fn <a href='../../../serde/de/trait.Error.html#method.syntax' class='fnname'>syntax</a>(_: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; Self</code></h4>
 <h4 id='method.end_of_stream' class='method'><code>fn <a href='../../../serde/de/trait.Error.html#method.end_of_stream' class='fnname'>end_of_stream</a>() -&gt; Self</code></h4>
 <h4 id='method.unknown_field' class='method'><code>fn <a href='../../../serde/de/trait.Error.html#method.unknown_field' class='fnname'>unknown_field</a>(field: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; Self</code></h4>
 <h4 id='method.missing_field' class='method'><code>fn <a href='../../../serde/de/trait.Error.html#method.missing_field' class='fnname'>missing_field</a>(field: &amp;'static <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; Self</code></h4>
@@ -69,7 +69,7 @@
 <h4 id='method.ne' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.ne' class='fnname'>ne</a>(&amp;self, __arg_0: &amp;<a class='enum' href='../../../serde/de/value/enum.Error.html' title='serde::de::value::Error'>Error</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
 </div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='enum' href='../../../serde/de/value/enum.Error.html' title='serde::de::value::Error'>Error</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#method.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
 </div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='enum' href='../../../serde/de/value/enum.Error.html' title='serde::de::value::Error'>Error</a></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='enum' href='../../../serde/de/value/enum.Error.html' title='serde::de::value::Error'>Error</a></code></h4>
-<h4 id='method.clone_from' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
+<h4 id='method.clone_from' class='method'><span class="since">1.0.0</span><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
 </div></section>
     <section id='search' class="content hidden"></section>
 
@@ -113,7 +113,7 @@
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

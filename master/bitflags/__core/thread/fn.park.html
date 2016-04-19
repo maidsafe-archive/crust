@@ -46,8 +46,8 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-1019' class='srclink' href='https://doc.rust-lang.org/nightly/std/thread/fn.park.html?gotosrc=1019' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub fn park()</pre><div class='docblock'><p>Blocks unless or until the current thread&#39;s token is made available.</p>
+        </span><a id='src-1038' class='srclink' href='https://doc.rust-lang.org/nightly/std/thread/fn.park.html?gotosrc=1038' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub fn park()</pre><span class="since">1.0.0</span><div class='docblock'><p>Blocks unless or until the current thread&#39;s token is made available.</p>
 
 <p>Every thread is equipped with some basic low-level blocking support, via
 the <code>park()</code> function and the <a href="struct.Thread.html#method.unpark"><code>unpark()</code></a> method. These can be
@@ -105,7 +105,7 @@ forever, and callers should be prepared for this possibility.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

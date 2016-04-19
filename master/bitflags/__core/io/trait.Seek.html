@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-4904' class='srclink' href='https://doc.rust-lang.org/nightly/std/io/trait.Seek.html?gotosrc=4904' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-5068' class='srclink' href='https://doc.rust-lang.org/nightly/std/io/trait.Seek.html?gotosrc=5068' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait Seek {
     fn <a href='#tymethod.seek' class='fnname'>seek</a>(&amp;mut self, pos: <a class='enum' href='../../../bitflags/__core/io/enum.SeekFrom.html' title='bitflags::__core::io::SeekFrom'>SeekFrom</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u64.html'>u64</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;;
 }</pre><div class='docblock'><p>The <code>Seek</code> trait provides a cursor which can be moved within a stream of
@@ -57,6 +57,7 @@ end or the current offset.</p>
 
 <h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
 <p><a href="../fs/struct.File.html"><code>File</code></a>s implement <code>Seek</code>:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>prelude</span>::<span class='op'>*</span>;
@@ -88,7 +89,7 @@ That position can be used later with <code>SeekFrom::Start</code>.</p>
 <li><code>impl&lt;'a&gt; <a class='trait' href='../../../bitflags/__core/io/trait.Seek.html' title='bitflags::__core::io::Seek'>Seek</a> for &amp;'a <a class='struct' href='../../../bitflags/__core/fs/struct.File.html' title='bitflags::__core::fs::File'>File</a></code></li>
 <li><code>impl&lt;R&gt; <a class='trait' href='../../../bitflags/__core/io/trait.Seek.html' title='bitflags::__core::io::Seek'>Seek</a> for <a class='struct' href='../../../bitflags/__core/io/struct.BufReader.html' title='bitflags::__core::io::BufReader'>BufReader</a>&lt;R&gt; <span class='where'>where R: <a class='trait' href='../../../bitflags/__core/io/trait.Seek.html' title='bitflags::__core::io::Seek'>Seek</a></span></code></li>
 <li><code>impl&lt;W&gt; <a class='trait' href='../../../bitflags/__core/io/trait.Seek.html' title='bitflags::__core::io::Seek'>Seek</a> for <a class='struct' href='../../../bitflags/__core/io/struct.BufWriter.html' title='bitflags::__core::io::BufWriter'>BufWriter</a>&lt;W&gt; <span class='where'>where W: <a class='trait' href='../../../bitflags/__core/io/trait.Write.html' title='bitflags::__core::io::Write'>Write</a> + <a class='trait' href='../../../bitflags/__core/io/trait.Seek.html' title='bitflags::__core::io::Seek'>Seek</a></span></code></li>
-<li><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/io/trait.Seek.html' title='bitflags::__core::io::Seek'>Seek</a> for <a class='struct' href='../../../bitflags/__core/io/struct.Cursor.html' title='bitflags::__core::io::Cursor'>Cursor</a>&lt;T&gt; <span class='where'>where T: <a class='trait' href='../../../bitflags/__core/convert/trait.AsRef.html' title='bitflags::__core::convert::AsRef'>AsRef</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>[<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a>]</a>&gt;</span></code></li>
+<li><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/io/trait.Seek.html' title='bitflags::__core::io::Seek'>Seek</a> for <a class='struct' href='../../../bitflags/__core/io/struct.Cursor.html' title='bitflags::__core::io::Cursor'>Cursor</a>&lt;T&gt; <span class='where'>where T: <a class='trait' href='../../../bitflags/__core/convert/trait.AsRef.html' title='bitflags::__core::convert::AsRef'>AsRef</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>]</a>&gt;</span></code></li>
 <li><code>impl&lt;'a, S&gt; <a class='trait' href='../../../bitflags/__core/io/trait.Seek.html' title='bitflags::__core::io::Seek'>Seek</a> for &amp;'a mut S <span class='where'>where S: <a class='trait' href='../../../bitflags/__core/io/trait.Seek.html' title='bitflags::__core::io::Seek'>Seek</a> + ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></li>
 <li><code>impl&lt;S&gt; <a class='trait' href='../../../bitflags/__core/io/trait.Seek.html' title='bitflags::__core::io::Seek'>Seek</a> for <a class='struct' href='../../../bitflags/__core/boxed/struct.Box.html' title='bitflags::__core::boxed::Box'>Box</a>&lt;S&gt; <span class='where'>where S: <a class='trait' href='../../../bitflags/__core/io/trait.Seek.html' title='bitflags::__core::io::Seek'>Seek</a> + ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></li>
 </ul><script type="text/javascript" async
@@ -136,7 +137,7 @@ That position can be used later with <code>SeekFrom::Start</code>.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

@@ -26,7 +26,7 @@
     
 
     <nav class="sidebar">
-        <a href='../../maidsafe_utilities/index.html'><img src='https://raw.githubusercontent.com/maidsafe/QA/master/Images/maidsafe_logo.png' alt='' width='100'></a>
+        <a href='../../maidsafe_utilities/index.html'><img src='https://raw.githubusercontent.com/maidsafe/QA/master/Images/maidsafe_logo.png' alt='logo' width='100'></a>
         <p class='location'><a href='../index.html'>maidsafe_utilities</a></p><script>window.sidebarCurrent = {name: 'event_sender', ty: 'mod', relpath: '../'};</script><script defer src="../sidebar-items.js"></script>
     </nav>
 
@@ -58,7 +58,6 @@
 listen to multiple receivers at the same time except by using <code>try_recv</code> which again is bad for
 the same reasons spin-lock based on some sleep is bad (wasting cycles, 50% efficient on an
 average etc.).</p>
-
                         </td>
                     </tr>
                 </table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
@@ -68,7 +67,6 @@ average etc.).</p>
                                title='maidsafe_utilities::event_sender::EventSenderError'>EventSenderError</a></td>
                         <td class='docblock short'>
                              <p>Errors that can be returned by <code>EventSender</code></p>
-
                         </td>
                     </tr>
                 
@@ -77,7 +75,6 @@ average etc.).</p>
                                title='maidsafe_utilities::event_sender::MaidSafeEventCategory'>MaidSafeEventCategory</a></td>
                         <td class='docblock short'>
                              <p>Category of events meant for a MaidSafe observer listening to both, routing and crust events</p>
-
                         </td>
                     </tr>
                 </table><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
@@ -87,7 +84,6 @@ average etc.).</p>
                                title='maidsafe_utilities::event_sender::MaidSafeObserver'>MaidSafeObserver</a></td>
                         <td class='docblock short'>
                              <p>Observer that Crust (and users of Routing if required) must allow to be registered</p>
-
                         </td>
                     </tr>
                 </table></section>
@@ -133,7 +129,7 @@ average etc.).</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

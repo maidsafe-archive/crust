@@ -49,7 +49,7 @@
         </span><a id='src-38' class='srclink' href='../../src/bytes/alloc/mod.rs.html#19-26' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait Allocator: <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sync.html' title='core::marker::Sync'>Sync</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Send.html' title='core::marker::Send'>Send</a> {
     fn <a href='#tymethod.allocate' class='fnname'>allocate</a>(&amp;self, len: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>) -&gt; <a class='struct' href='../../bytes/alloc/struct.MemRef.html' title='bytes::alloc::MemRef'>MemRef</a>;
-    fn <a href='#tymethod.deallocate' class='fnname'>deallocate</a>(&amp;self, mem: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.pointer.html'>*mut <a class='struct' href='../../bytes/alloc/struct.Mem.html' title='bytes::alloc::Mem'>Mem</a></a>);
+    fn <a href='#tymethod.deallocate' class='fnname'>deallocate</a>(&amp;self, mem: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.pointer.html'>*mut </a><a class='struct' href='../../bytes/alloc/struct.Mem.html' title='bytes::alloc::Mem'>Mem</a>);
 }</pre><div class='docblock'><p>Allocates memory to be used by Bufs or Bytes. Allows allocating memory
 using alternate stratgies than the default Rust heap allocator. Also does
 not require that allocations are continuous in memory.</p>
@@ -61,7 +61,7 @@ requirement.</p>
             <h2 id='required-methods'>Required Methods</h2>
             <div class='methods'>
         <h3 id='tymethod.allocate' class='method stab '><code>fn <a href='#tymethod.allocate' class='fnname'>allocate</a>(&amp;self, len: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>) -&gt; <a class='struct' href='../../bytes/alloc/struct.MemRef.html' title='bytes::alloc::MemRef'>MemRef</a></code></h3><div class='docblock'><p>Allocate memory. May or may not be contiguous.</p>
-</div><h3 id='tymethod.deallocate' class='method stab '><code>fn <a href='#tymethod.deallocate' class='fnname'>deallocate</a>(&amp;self, mem: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.pointer.html'>*mut <a class='struct' href='../../bytes/alloc/struct.Mem.html' title='bytes::alloc::Mem'>Mem</a></a>)</code></h3><div class='docblock'><p>Deallocate a chunk of memory</p>
+</div><h3 id='tymethod.deallocate' class='method stab '><code>fn <a href='#tymethod.deallocate' class='fnname'>deallocate</a>(&amp;self, mem: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.pointer.html'>*mut </a><a class='struct' href='../../bytes/alloc/struct.Mem.html' title='bytes::alloc::Mem'>Mem</a>)</code></h3><div class='docblock'><p>Deallocate a chunk of memory</p>
 </div></div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
@@ -111,7 +111,7 @@ requirement.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

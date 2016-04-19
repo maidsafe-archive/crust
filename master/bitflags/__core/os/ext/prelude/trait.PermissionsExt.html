@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-12247' class='srclink' href='https://doc.rust-lang.org/nightly/std/sys/ext/fs/trait.PermissionsExt.html?gotosrc=12247' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-12965' class='srclink' href='https://doc.rust-lang.org/nightly/std/sys/ext/fs/trait.PermissionsExt.html?gotosrc=12965' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait PermissionsExt {
     fn <a href='#tymethod.mode' class='fnname'>mode</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u32.html'>u32</a>;
     fn <a href='#tymethod.set_mode' class='fnname'>set_mode</a>(&amp;mut self, mode: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u32.html'>u32</a>);
@@ -57,7 +57,7 @@
             <div class='methods'>
         <h3 id='tymethod.mode' class='method stab '><code>fn <a href='#tymethod.mode' class='fnname'>mode</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u32.html'>u32</a></code></h3><div class='docblock'><p>Returns the underlying raw <code>mode_t</code> bits that are the standard Unix
 permissions for this file.</p>
-</div><h3 id='tymethod.set_mode' class='method stab '><code>fn <a href='#tymethod.set_mode' class='fnname'>set_mode</a>(&amp;mut self, mode: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u32.html'>u32</a>)</code></h3><div class='docblock'><p>Sets the underlying raw <code>mode_t</code> bits for this set of permissions.</p>
+</div><h3 id='tymethod.set_mode' class='method stab '><code>fn <a href='#tymethod.set_mode' class='fnname'>set_mode</a>(&amp;mut self, mode: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u32.html'>u32</a>)</code></h3><div class='docblock'><p>Sets the underlying raw bits for this set of permissions.</p>
 </div><h3 id='tymethod.from_mode' class='method stab '><code>fn <a href='#tymethod.from_mode' class='fnname'>from_mode</a>(mode: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u32.html'>u32</a>) -&gt; Self</code></h3><div class='docblock'><p>Creates a new instance of <code>Permissions</code> from the given set of Unix
 permission bits.</p>
 </div></div>
@@ -109,7 +109,7 @@ permission bits.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

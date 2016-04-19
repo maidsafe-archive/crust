@@ -26,7 +26,7 @@
     
 
     <nav class="sidebar">
-        <a href='../bincode/index.html'><img src='./icon.png' alt='' width='100'></a>
+        <a href='../bincode/index.html'><img src='./icon.png' alt='logo' width='100'></a>
         <p class='location'></p><script>window.sidebarCurrent = {name: 'bincode', ty: 'mod', relpath: '../'};</script>
     </nav>
 
@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-0' class='srclink' href='../src/bincode/lib.rs.html#1-74' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-0' class='srclink' href='../src/bincode/lib.rs.html#1-78' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p><code>bincode</code> is a crate for encoding and decoding using a tiny binary
 serialization strategy.</p>
 
@@ -62,7 +62,8 @@ corresponding modules inside of <code>bincode</code>.  Both modules have exactly
 and the only difference is whether or not the library user wants to use <code>rustc_serialize</code> or
 <code>serde</code>.</p>
 
-<h3 id='using-basic-functions' class='section-header'><a href='#using-basic-functions'>Using Basic Functions</a></h3><pre class='rust rust-example-rendered'>
+<h3 id='using-basic-functions' class='section-header'><a href='#using-basic-functions'>Using Basic Functions</a></h3>
+<pre class='rust rust-example-rendered'>
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>allow</span>(<span class='ident'>unstable</span>)]</span>
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>bincode</span>;
 <span class='kw'>use</span> <span class='ident'>bincode</span>::<span class='ident'>rustc_serialize</span>::{<span class='ident'>encode</span>, <span class='ident'>decode</span>};
@@ -85,7 +86,6 @@ and the only difference is whether or not the library user wants to use <code>ru
                              <p>A collection of serialization and deserialization functions
 that use the <code>rustc_serialize</code> crate for the encodable and decodable
 implementation.</p>
-
                         </td>
                     </tr>
                 
@@ -96,7 +96,6 @@ implementation.</p>
                              <p>A collection of serialization and deserialization functions
 that use the <code>serde</code> crate for the serialazble and deserializable
 implementation.</p>
-
                         </td>
                     </tr>
                 </table><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
@@ -106,7 +105,6 @@ implementation.</p>
                                title='bincode::RefBox'>RefBox</a></td>
                         <td class='docblock short'>
                              <p>A struct for encoding nested reference types.</p>
-
                         </td>
                     </tr>
                 
@@ -115,7 +113,6 @@ implementation.</p>
                                title='bincode::SliceBox'>SliceBox</a></td>
                         <td class='docblock short'>
                              <p>Like a RefBox, but encodes from a <code>[T]</code> and encodes to a <code>Vec&lt;T&gt;</code>.</p>
-
                         </td>
                     </tr>
                 
@@ -124,7 +121,6 @@ implementation.</p>
                                title='bincode::StrBox'>StrBox</a></td>
                         <td class='docblock short'>
                              <p>Like a RefBox, but encoding from a <code>str</code> and decoedes to a <code>String</code>.</p>
-
                         </td>
                     </tr>
                 </table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
@@ -134,7 +130,6 @@ implementation.</p>
                                title='bincode::SizeLimit'>SizeLimit</a></td>
                         <td class='docblock short'>
                              <p>A limit on the amount of bytes that can be read or written.</p>
-
                         </td>
                     </tr>
                 </table></section>
@@ -180,7 +175,7 @@ implementation.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

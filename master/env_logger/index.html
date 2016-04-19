@@ -26,7 +26,7 @@
     
 
     <nav class="sidebar">
-        <a href='../env_logger/index.html'><img src='http://www.rust-lang.org/logos/rust-logo-128x128-blk-v2.png' alt='' width='100'></a>
+        <a href='../env_logger/index.html'><img src='http://www.rust-lang.org/logos/rust-logo-128x128-blk-v2.png' alt='logo' width='100'></a>
         <p class='location'></p><script>window.sidebarCurrent = {name: 'env_logger', ty: 'mod', relpath: '../'};</script>
     </nav>
 
@@ -50,7 +50,8 @@
 <div class='docblock'><p>A logger configured via an environment variable which writes to standard
 error.</p>
 
-<h2 id='example' class='section-header'><a href='#example'>Example</a></h2><pre class='rust rust-example-rendered'>
+<h2 id='example' class='section-header'><a href='#example'>Example</a></h2>
+<pre class='rust rust-example-rendered'>
 <span class='attribute'>#[<span class='ident'>macro_use</span>]</span> <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>log</span>;
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>env_logger</span>;
 
@@ -165,7 +166,6 @@ number followed by &#39;scopes&#39;.</li>
                              <p>LogBuilder acts as builder for initializing the Logger.
 It can be used to customize the log format, change the enviromental variable used
 to provide the logging directives and also set the default log level filter.</p>
-
                         </td>
                     </tr>
                 </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
@@ -175,7 +175,6 @@ to provide the logging directives and also set the default log level filter.</p>
                                title='env_logger::init'>init</a></td>
                         <td class='docblock short'>
                              <p>Initializes the global logger with an env logger.</p>
-
                         </td>
                     </tr>
                 </table></section>
@@ -221,7 +220,7 @@ to provide the logging directives and also set the default log level filter.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

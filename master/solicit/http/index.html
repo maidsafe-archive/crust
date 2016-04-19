@@ -56,7 +56,6 @@
                         <td class='docblock short'>
                              <p>The module contains a number of reusable components for implementing the client side of an
 HTTP/2 connection.</p>
-
                         </td>
                     </tr>
                 
@@ -65,7 +64,6 @@ HTTP/2 connection.</p>
                                title='solicit::http::connection'>connection</a></td>
                         <td class='docblock short'>
                              <p>The module contains the implementation of an HTTP/2 connection.</p>
-
                         </td>
                     </tr>
                 
@@ -74,7 +72,6 @@ HTTP/2 connection.</p>
                                title='solicit::http::frame'>frame</a></td>
                         <td class='docblock short'>
                              <p>The module contains the implementation of HTTP/2 frames.</p>
-
                         </td>
                     </tr>
                 
@@ -83,7 +80,6 @@ HTTP/2 connection.</p>
                                title='solicit::http::priority'>priority</a></td>
                         <td class='docblock short'>
                              <p>The module exposes an API for defining data prioritization strategies.</p>
-
                         </td>
                     </tr>
                 
@@ -93,7 +89,6 @@ HTTP/2 connection.</p>
                         <td class='docblock short'>
                              <p>The module contains a number of reusable components for implementing the server side of an
 HTTP/2 connection.</p>
-
                         </td>
                     </tr>
                 
@@ -104,7 +99,6 @@ HTTP/2 connection.</p>
                              <p>Defines the interface for the session-level management of HTTP/2
 communication. This is effectively an API that allows hooking into an
 HTTP/2 connection in order to handle events arising on the connection.</p>
-
                         </td>
                     </tr>
                 
@@ -117,7 +111,6 @@ that HTTP/2 requires. It exposes APIs that allow the HTTP/2 connection to
 use the transport layer without requiring it to know which exact
 implementation they are using (e.g. a clear-text TCP connection, a TLS
 protected connection, or even a mock implementation).</p>
-
                         </td>
                     </tr>
                 </table><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
@@ -128,7 +121,6 @@ protected connection, or even a mock implementation).</p>
                         <td class='docblock short'>
                              <p>A struct representing a full HTTP/2 request, along with the full body, as a
 sequence of bytes.</p>
-
                         </td>
                     </tr>
                 
@@ -137,7 +129,6 @@ sequence of bytes.</p>
                                title='solicit::http::Response'>Response</a></td>
                         <td class='docblock short'>
                              <p>A struct representing the full raw response received on an HTTP/2 connection.</p>
-
                         </td>
                     </tr>
                 </table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
@@ -148,7 +139,6 @@ sequence of bytes.</p>
                         <td class='docblock short'>
                              <p>An enum representing errors that can arise when performing operations
 involving an HTTP/2 connection.</p>
-
                         </td>
                     </tr>
                 
@@ -157,7 +147,6 @@ involving an HTTP/2 connection.</p>
                                title='solicit::http::HttpScheme'>HttpScheme</a></td>
                         <td class='docblock short'>
                              <p>An enum representing the two possible HTTP schemes.</p>
-
                         </td>
                     </tr>
                 </table><h2 id='constants' class='section-header'><a href="#constants">Constants</a></h2>
@@ -172,7 +161,6 @@ We include some of the drafts&#39; protocol names, since there is basically no
 difference for all intents and purposes (and some servers out there still
 only officially advertise draft support).
 TODO: Eventually only use &quot;h2&quot;.</p>
-
                         </td>
                     </tr>
                 </table><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
@@ -183,7 +171,6 @@ TODO: Eventually only use &quot;h2&quot;.</p>
                         <td class='docblock short'>
                              <p>An alias for the type that represents HTTP/2 headers. For now we only alias
 the tuple of byte vectors instead of going with a full struct representation.</p>
-
                         </td>
                     </tr>
                 
@@ -193,7 +180,6 @@ the tuple of byte vectors instead of going with a full struct representation.</p
                         <td class='docblock short'>
                              <p>A convenience <code>Result</code> type that has the <code>HttpError</code> type as the error
 type and a generic Ok result type.</p>
-
                         </td>
                     </tr>
                 
@@ -202,7 +188,6 @@ type and a generic Ok result type.</p>
                                title='solicit::http::StreamId'>StreamId</a></td>
                         <td class='docblock short'>
                              <p>An alias for the type that represents the ID of an HTTP/2 stream</p>
-
                         </td>
                     </tr>
                 </table></section>
@@ -248,7 +233,7 @@ type and a generic Ok result type.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

@@ -26,7 +26,7 @@
     
 
     <nav class="sidebar">
-        <a href='../../maidsafe_utilities/index.html'><img src='https://raw.githubusercontent.com/maidsafe/QA/master/Images/maidsafe_logo.png' alt='' width='100'></a>
+        <a href='../../maidsafe_utilities/index.html'><img src='https://raw.githubusercontent.com/maidsafe/QA/master/Images/maidsafe_logo.png' alt='logo' width='100'></a>
         <p class='location'><a href='../index.html'>maidsafe_utilities</a></p><script>window.sidebarCurrent = {name: 'log', ty: 'mod', relpath: '../'};</script><script defer src="../sidebar-items.js"></script>
     </nav>
 
@@ -54,6 +54,7 @@ or in the same directory where the executable is.  See <a href="http://sfackler.
 structure of this file.</p>
 
 <p>An example of a log message is:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='ident'>WARN</span> <span class='number'>19</span>:<span class='number'>33</span>:<span class='number'>49.245434200</span> <span class='op'>&lt;</span><span class='ident'>main</span><span class='op'>&gt;</span> [<span class='ident'>example</span>::<span class='ident'>my_mod</span> <span class='ident'>main</span>.<span class='ident'>rs</span>:<span class='number'>10</span>] <span class='ident'>Warning</span> <span class='ident'>level</span> <span class='ident'>message</span>.
 <span class='op'>^</span>           <span class='op'>^</span>             <span class='op'>^</span>              <span class='op'>^</span>         <span class='op'>^</span>                  <span class='op'>^</span>
@@ -69,7 +70,8 @@ enabled, and the thread executing the log statement is unnamed, the thread name 
 
 <p>The functions can safely be called multiple times concurrently.</p>
 
-<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<pre class='rust rust-example-rendered'>
 <span class='attribute'>#[<span class='ident'>macro_use</span>]</span>
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>log</span>;
 <span class='attribute'>#[<span class='ident'>macro_use</span>]</span>
@@ -112,7 +114,6 @@ severe ones.</p>
                                title='maidsafe_utilities::log::init'>init</a></td>
                         <td class='docblock short'>
                              <p>Initialises the <code>env_logger</code> for output to stdout.</p>
-
                         </td>
                     </tr>
                 
@@ -121,7 +122,6 @@ severe ones.</p>
                                title='maidsafe_utilities::log::init_to_file'>init_to_file</a></td>
                         <td class='docblock short'>
                              <p>Initialises the <code>env_logger</code> for output to a file and optionally to the console asynchronously.</p>
-
                         </td>
                     </tr>
                 
@@ -131,7 +131,6 @@ severe ones.</p>
                         <td class='docblock short'>
                              <p>Initialises the <code>env_logger</code> for output to a server and optionally to the console
 asynchronously.</p>
-
                         </td>
                     </tr>
                 </table></section>
@@ -177,7 +176,7 @@ asynchronously.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

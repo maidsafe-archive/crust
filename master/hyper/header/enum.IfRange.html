@@ -75,11 +75,13 @@ in Range; otherwise, send me the entire representation.</p>
 <li><code>\&quot;xyzzy\&quot;</code></li>
 </ul>
 
-<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>hyper</span>::<span class='ident'>header</span>::{<span class='ident'>Headers</span>, <span class='ident'>IfRange</span>, <span class='ident'>EntityTag</span>};
 
 <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>headers</span> <span class='op'>=</span> <span class='ident'>Headers</span>::<span class='ident'>new</span>();
 <span class='ident'>headers</span>.<span class='ident'>set</span>(<span class='ident'>IfRange</span>::<span class='ident'>EntityTag</span>(<span class='ident'>EntityTag</span>::<span class='ident'>new</span>(<span class='boolval'>false</span>, <span class='string'>&quot;xyzzy&quot;</span>.<span class='ident'>to_owned</span>())));</pre>
+
 <pre class='rust rust-example-rendered'>
 <span class='comment'>// extern crate time;</span>
 
@@ -89,9 +91,9 @@ in Range; otherwise, send me the entire representation.</p>
 <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>headers</span> <span class='op'>=</span> <span class='ident'>Headers</span>::<span class='ident'>new</span>();
 <span class='ident'>headers</span>.<span class='ident'>set</span>(<span class='ident'>IfRange</span>::<span class='ident'>Date</span>(<span class='ident'>HttpDate</span>(<span class='ident'>time</span>::<span class='ident'>now</span>() <span class='op'>-</span> <span class='ident'>Duration</span>::<span class='ident'>days</span>(<span class='number'>1</span>))));</pre>
 </div><h2 class='variants'>Variants</h2>
-<table><tr><td id='variant.EntityTag'><code>EntityTag</code></td><td><div class='docblock'><p>The entity-tag the client has of the resource</p>
-</div></td></tr><tr><td id='variant.Date'><code>Date</code></td><td><div class='docblock'><p>The date when the client retrieved the resource</p>
-</div></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='../../hyper/header/trait.Header.html' title='hyper::header::Header'>Header</a> for <a class='enum' href='../../hyper/header/enum.IfRange.html' title='hyper::header::IfRange'>IfRange</a></code></h3><div class='impl-items'><h4 id='method.header_name' class='method'><code>fn <a href='../../hyper/header/trait.Header.html#method.header_name' class='fnname'>header_name</a>() -&gt; &amp;'static <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a></code></h4>
+<table class='variants_table'><tr><td id='variant.EntityTag'><code>EntityTag</code></td><td><div class='docblock'><p>The entity-tag the client has of the resource</p>
+</div></td><td></td></tr><tr><td id='variant.Date'><code>Date</code></td><td><div class='docblock'><p>The date when the client retrieved the resource</p>
+</div></td><td></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='../../hyper/header/trait.Header.html' title='hyper::header::Header'>Header</a> for <a class='enum' href='../../hyper/header/enum.IfRange.html' title='hyper::header::IfRange'>IfRange</a></code></h3><div class='impl-items'><h4 id='method.header_name' class='method'><code>fn <a href='../../hyper/header/trait.Header.html#method.header_name' class='fnname'>header_name</a>() -&gt; &amp;'static <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a></code></h4>
 <h4 id='method.parse_header' class='method'><code>fn <a href='../../hyper/header/trait.Header.html#method.parse_header' class='fnname'>parse_header</a>(raw: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a><a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>) -&gt; <a class='type' href='../../hyper/error/type.Result.html' title='hyper::error::Result'>Result</a>&lt;<a class='enum' href='../../hyper/header/enum.IfRange.html' title='hyper::header::IfRange'>IfRange</a>&gt;</code></h4>
 </div><h3 class='impl'><code>impl <a class='trait' href='../../hyper/header/trait.HeaderFormat.html' title='hyper::header::HeaderFormat'>HeaderFormat</a> for <a class='enum' href='../../hyper/header/enum.IfRange.html' title='hyper::header::IfRange'>IfRange</a></code></h3><div class='impl-items'><h4 id='method.fmt_header' class='method'><code>fn <a href='../../hyper/header/trait.HeaderFormat.html#method.fmt_header' class='fnname'>fmt_header</a>(&amp;self, f: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
 </div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html' title='core::fmt::Display'>Display</a> for <a class='enum' href='../../hyper/header/enum.IfRange.html' title='hyper::header::IfRange'>IfRange</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html#method.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
@@ -99,7 +101,7 @@ in Range; otherwise, send me the entire representation.</p>
 <h4 id='method.ne' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.ne' class='fnname'>ne</a>(&amp;self, __arg_0: &amp;<a class='enum' href='../../hyper/header/enum.IfRange.html' title='hyper::header::IfRange'>IfRange</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
 </div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='enum' href='../../hyper/header/enum.IfRange.html' title='hyper::header::IfRange'>IfRange</a></code></h3><div class='impl-items'><h4 id='method.fmt-1' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#method.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
 </div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='enum' href='../../hyper/header/enum.IfRange.html' title='hyper::header::IfRange'>IfRange</a></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='enum' href='../../hyper/header/enum.IfRange.html' title='hyper::header::IfRange'>IfRange</a></code></h4>
-<h4 id='method.clone_from' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
+<h4 id='method.clone_from' class='method'><span class="since">1.0.0</span><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
 </div></section>
     <section id='search' class="content hidden"></section>
 
@@ -143,7 +145,7 @@ in Range; otherwise, send me the entire representation.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

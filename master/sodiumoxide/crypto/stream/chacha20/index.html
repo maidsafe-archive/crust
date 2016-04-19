@@ -55,7 +55,6 @@
                                title='sodiumoxide::crypto::stream::chacha20::Key'>Key</a></td>
                         <td class='docblock short'>
                              <p><code>Key</code> for symmetric encryption</p>
-
                         </td>
                     </tr>
                 
@@ -64,7 +63,6 @@
                                title='sodiumoxide::crypto::stream::chacha20::Nonce'>Nonce</a></td>
                         <td class='docblock short'>
                              <p><code>Nonce</code> for symmetric encryption</p>
-
                         </td>
                     </tr>
                 </table><h2 id='constants' class='section-header'><a href="#constants">Constants</a></h2>
@@ -74,7 +72,6 @@
                                title='sodiumoxide::crypto::stream::chacha20::KEYBYTES'>KEYBYTES</a></td>
                         <td class='docblock short'>
                              <p>Number of bytes in a <code>Key</code>.</p>
-
                         </td>
                     </tr>
                 
@@ -83,7 +80,6 @@
                                title='sodiumoxide::crypto::stream::chacha20::NONCEBYTES'>NONCEBYTES</a></td>
                         <td class='docblock short'>
                              <p>Number of bytes in a <code>Nonce</code>.</p>
-
                         </td>
                     </tr>
                 </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
@@ -93,7 +89,6 @@
                                title='sodiumoxide::crypto::stream::chacha20::gen_key'>gen_key</a></td>
                         <td class='docblock short'>
                              <p><code>gen_key()</code> randomly generates a key for symmetric encryption</p>
-
                         </td>
                     </tr>
                 
@@ -102,7 +97,6 @@
                                title='sodiumoxide::crypto::stream::chacha20::gen_nonce'>gen_nonce</a></td>
                         <td class='docblock short'>
                              <p><code>gen_nonce()</code> randomly generates a nonce for symmetric encryption</p>
-
                         </td>
                     </tr>
                 
@@ -112,7 +106,6 @@
                         <td class='docblock short'>
                              <p><code>stream()</code> produces a <code>len</code>-byte stream <code>c</code> as a function of a
 secret key <code>k</code> and a nonce <code>n</code>.</p>
-
                         </td>
                     </tr>
                 
@@ -122,7 +115,6 @@ secret key <code>k</code> and a nonce <code>n</code>.</p>
                         <td class='docblock short'>
                              <p><code>stream_xor()</code> encrypts a message <code>m</code> using a secret key <code>k</code> and a nonce <code>n</code>.
 The <code>stream_xor()</code> function returns the ciphertext <code>c</code>.</p>
-
                         </td>
                     </tr>
                 
@@ -132,7 +124,6 @@ The <code>stream_xor()</code> function returns the ciphertext <code>c</code>.</p
                         <td class='docblock short'>
                              <p><code>stream_xor_inplace</code> encrypts a message <code>m</code> using a secret key <code>k</code> and a nonce <code>n</code>.
 The <code>stream_xor_inplace()</code> function encrypts the message in place.</p>
-
                         </td>
                     </tr>
                 </table></section>
@@ -178,7 +169,7 @@ The <code>stream_xor_inplace()</code> function encrypts the message in place.</p
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

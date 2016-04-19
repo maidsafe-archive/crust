@@ -26,7 +26,7 @@
     
 
     <nav class="sidebar">
-        <a href='../../num/index.html'><img src='http://rust-num.github.io/num/rust-logo-128x128-blk-v2.png' alt='' width='100'></a>
+        <a href='../../num/index.html'><img src='http://rust-num.github.io/num/rust-logo-128x128-blk-v2.png' alt='logo' width='100'></a>
         <p class='location'><a href='../index.html'>num</a>::<wbr><a href='index.html'>traits</a></p><script>window.sidebarCurrent = {name: 'One', ty: 'trait', relpath: ''};</script><script defer src="sidebar-items.js"></script>
     </nav>
 
@@ -46,8 +46,8 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-4039' class='srclink' href='../../src/num/traits.rs.html#261-278' title='goto source code'>[src]</a></span></h1>
-<pre class='rust trait'>pub trait One: <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Mul.html' title='core::ops::Mul'>Mul</a>&lt;Self, Output=Self&gt; {
+        </span><a id='src-68' class='srclink' href='../../num_traits/identities/trait.One.html?gotosrc=68' title='goto source code'>[src]</a></span></h1>
+<pre class='rust trait'>pub trait One: <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Mul.html' title='core::ops::Mul'>Mul</a>&lt;Self, Output=Self&gt; {
     fn <a href='#tymethod.one' class='fnname'>one</a>() -&gt; Self;
 }</pre><div class='docblock'><p>Defines a multiplicative identity element for <code>Self</code>.</p>
 </div>
@@ -69,7 +69,8 @@ external mutable state, for example values stored in TLS or in
         <ul class='item-list' id='implementors-list'>
     <li><code>impl <a class='trait' href='../../num/traits/trait.One.html' title='num::traits::One'>One</a> for <a class='struct' href='../../num/bigint/struct.BigUint.html' title='num::bigint::BigUint'>BigUint</a></code></li>
 <li><code>impl <a class='trait' href='../../num/traits/trait.One.html' title='num::traits::One'>One</a> for <a class='struct' href='../../num/bigint/struct.BigInt.html' title='num::bigint::BigInt'>BigInt</a></code></li>
-<li><code>impl&lt;T: <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> + <a class='trait' href='../../num/traits/trait.Num.html' title='num::traits::Num'>Num</a>&gt; <a class='trait' href='../../num/traits/trait.One.html' title='num::traits::One'>One</a> for <a class='struct' href='../../num/complex/struct.Complex.html' title='num::complex::Complex'>Complex</a>&lt;T&gt;</code></li>
+<li><code>impl&lt;T&gt; <a class='trait' href='../../num/traits/trait.One.html' title='num::traits::One'>One</a> for <a class='struct' href='../../num/rational/struct.Ratio.html' title='num::rational::Ratio'>Ratio</a>&lt;T&gt; <span class='where'>where T: <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> + <a class='trait' href='../../num/integer/trait.Integer.html' title='num::integer::Integer'>Integer</a></span></code></li>
+<li><code>impl&lt;T&gt; <a class='trait' href='../../num/traits/trait.One.html' title='num::traits::One'>One</a> for <a class='struct' href='../../num/complex/struct.Complex.html' title='num::complex::Complex'>Complex</a>&lt;T&gt; <span class='where'>where T: <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> + <a class='trait' href='../../num/traits/trait.Num.html' title='num::traits::Num'>Num</a></span></code></li>
 <li><code>impl <a class='trait' href='../../num/traits/trait.One.html' title='num::traits::One'>One</a> for <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a></code></li>
 <li><code>impl <a class='trait' href='../../num/traits/trait.One.html' title='num::traits::One'>One</a> for <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a></code></li>
 <li><code>impl <a class='trait' href='../../num/traits/trait.One.html' title='num::traits::One'>One</a> for <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a></code></li>
@@ -82,9 +83,8 @@ external mutable state, for example values stored in TLS or in
 <li><code>impl <a class='trait' href='../../num/traits/trait.One.html' title='num::traits::One'>One</a> for <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.i64.html'>i64</a></code></li>
 <li><code>impl <a class='trait' href='../../num/traits/trait.One.html' title='num::traits::One'>One</a> for <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.f32.html'>f32</a></code></li>
 <li><code>impl <a class='trait' href='../../num/traits/trait.One.html' title='num::traits::One'>One</a> for <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.f64.html'>f64</a></code></li>
-<li><code>impl&lt;T: <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> + <a class='trait' href='../../num/integer/trait.Integer.html' title='num::integer::Integer'>Integer</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialOrd.html' title='core::cmp::PartialOrd'>PartialOrd</a>&gt; <a class='trait' href='../../num/traits/trait.One.html' title='num::traits::One'>One</a> for <a class='struct' href='../../num/rational/struct.Ratio.html' title='num::rational::Ratio'>Ratio</a>&lt;T&gt;</code></li>
 </ul><script type="text/javascript" async
-                              src="../../implementors/num/traits/trait.One.js">
+                              src="../../implementors/num_traits/identities/trait.One.js">
                       </script></section>
     <section id='search' class="content hidden"></section>
 
@@ -128,7 +128,7 @@ external mutable state, for example values stored in TLS or in
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

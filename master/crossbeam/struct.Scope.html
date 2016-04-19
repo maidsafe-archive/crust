@@ -65,6 +65,7 @@ scope exits.</p>
 
 <h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
 <p>A basic scoped thread:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='ident'>crossbeam</span>::<span class='ident'>scope</span>(<span class='op'>|</span><span class='ident'>scope</span><span class='op'>|</span> {
     <span class='ident'>scope</span>.<span class='ident'>spawn</span>(<span class='op'>||</span> {
@@ -74,6 +75,7 @@ scope exits.</p>
 
 <p>When writing concurrent Rust programs, you&#39;ll sometimes see a pattern like this, using
 <a href="http://doc.rust-lang.org/std/thread/fn.spawn.html"><code>std::thread::spawn</code></a>:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>let</span> <span class='ident'>array</span> <span class='op'>=</span> [<span class='number'>1</span>, <span class='number'>2</span>, <span class='number'>3</span>];
 <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>guards</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[];
@@ -119,6 +121,7 @@ error: aborting due to previous error
 
 <p>Because <a href="http://doc.rust-lang.org/std/thread/fn.spawn.html"><code>std::thread::spawn</code></a> doesn&#39;t know about this scope, it requires a
 <code>&#39;static</code> lifetime. One way of giving it a proper lifetime is to use an <a href="http://doc.rust-lang.org/stable/std/sync/struct.Arc.html"><code>Arc</code></a>:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>Arc</span>;
 
@@ -146,6 +149,7 @@ though.</p>
 
 <p>Enter scoped threads. Here&#39;s our original example, using <code>spawn</code> from crossbeam rather
 than from <code>std::thread</code>:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>let</span> <span class='ident'>array</span> <span class='op'>=</span> [<span class='number'>1</span>, <span class='number'>2</span>, <span class='number'>3</span>];
 
@@ -202,7 +206,7 @@ than from <code>std::thread</code>:</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

@@ -46,12 +46,13 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-22621' class='srclink' href='https://doc.rust-lang.org/nightly/core/default/index.html?gotosrc=22621' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-22698' class='srclink' href='https://doc.rust-lang.org/nightly/core/default/index.html?gotosrc=22698' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>The <code>Default</code> trait for types which may have meaningful default values.</p>
 
 <p>Sometimes, you want to fall back to some kind of default value, and
 don&#39;t particularly care what it is. This comes up often with <code>struct</code>s
 that define a set of options:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>struct</span> <span class='ident'>SomeOptions</span> {
     <span class='ident'>foo</span>: <span class='ident'>i32</span>,
@@ -59,6 +60,7 @@ that define a set of options:</p>
 }</pre>
 
 <p>How can we define some default values? You can use <code>Default</code>:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Default</span>)]</span>
 <span class='kw'>struct</span> <span class='ident'>SomeOptions</span> {
@@ -73,6 +75,7 @@ that define a set of options:</p>
 
 <p>Now, you get all of the default values. Rust implements <code>Default</code> for various primitives types.
 If you have your own type, you need to implement <code>Default</code> yourself:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>enum</span> <span class='ident'>Kind</span> {
     <span class='ident'>A</span>,
@@ -97,6 +100,7 @@ If you have your own type, you need to implement <code>Default</code> yourself:<
 }</pre>
 
 <p>If you want to override a particular option, but still retain the other defaults:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>fn</span> <span class='ident'>main</span>() {
     <span class='kw'>let</span> <span class='ident'>options</span> <span class='op'>=</span> <span class='ident'>SomeOptions</span> { <span class='ident'>foo</span>: <span class='number'>42</span>, ..<span class='ident'>Default</span>::<span class='ident'>default</span>() };
@@ -108,7 +112,6 @@ If you have your own type, you need to implement <code>Default</code> yourself:<
                                title='bitflags::__core::default::Default'>Default</a></td>
                         <td class='docblock short'>
                              <p>A trait for giving a type a useful default value.</p>
-
                         </td>
                     </tr>
                 </table></section>
@@ -154,7 +157,7 @@ If you have your own type, you need to implement <code>Default</code> yourself:<
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

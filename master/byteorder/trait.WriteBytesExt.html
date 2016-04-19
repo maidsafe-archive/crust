@@ -68,6 +68,7 @@ the <code>BigEndian</code> or <code>LittleEndian</code> types defined in this cr
 
 <h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
 <p>Write unsigned 16 bit big-endian integers to a <code>Write</code>:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>byteorder</span>::{<span class='ident'>BigEndian</span>, <span class='ident'>WriteBytesExt</span>};
 
@@ -152,7 +153,7 @@ the underlying writer.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

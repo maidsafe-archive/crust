@@ -72,6 +72,7 @@ length between 0 and <code>MutBuf::remaining()</code>.</p>
 </div><h3 id='method.write_slice' class='method stab '><code>fn <a href='#method.write_slice' class='fnname'>write_slice</a>(&amp;mut self, src: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a></code></h3><div class='docblock'><p>Write bytes from the given slice into the <code>MutBuf</code> and advance the
 cursor by the number of bytes written.
 Returns the number of bytes written.</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>bytes</span>::{<span class='ident'>MutSliceBuf</span>, <span class='ident'>Buf</span>, <span class='ident'>MutBuf</span>};
 
@@ -139,7 +140,7 @@ Returns the number of bytes written.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

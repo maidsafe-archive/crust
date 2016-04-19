@@ -71,7 +71,8 @@ combination of Salsa20 and Poly1305 specified in
 <p>This function is conjectured to meet the standard notions of privacy and
 authenticity.</p>
 
-<h1 id='example' class='section-header'><a href='#example'>Example</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='example' class='section-header'><a href='#example'>Example</a></h1>
+<pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>crypto</span>::<span class='ident'>secretbox</span>;
 <span class='kw'>let</span> <span class='ident'>key</span> <span class='op'>=</span> <span class='ident'>secretbox</span>::<span class='ident'>gen_key</span>();
 <span class='kw'>let</span> <span class='ident'>nonce</span> <span class='op'>=</span> <span class='ident'>secretbox</span>::<span class='ident'>gen_nonce</span>();
@@ -89,7 +90,6 @@ authenticity.</p>
                              <p><code>crypto_secretbox_xsalsa20poly1305</code>, a particular
 combination of Salsa20 and Poly1305 specified in
 <a href="http://nacl.cr.yp.to/valid.html">Cryptography in NaCl</a>.</p>
-
                         </td>
                     </tr>
                 </table></section>
@@ -135,7 +135,7 @@ combination of Salsa20 and Poly1305 specified in
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

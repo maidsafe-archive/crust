@@ -54,6 +54,7 @@
 i.e. values of type <code>E</code> in <code>Result&lt;T, E&gt;</code>. At a minimum, errors must provide
 a description, but they may optionally provide additional detail (via
 <code>Display</code>) and cause chain information:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fmt</span>::<span class='ident'>Display</span>;
 
@@ -76,7 +77,6 @@ debugging via <code>cause</code> chains.</p>
                                title='bitflags::__core::error::Error'>Error</a></td>
                         <td class='docblock short'>
                              <p>Base functionality for all errors in Rust.</p>
-
                         </td>
                     </tr>
                 </table></section>
@@ -122,7 +122,7 @@ debugging via <code>cause</code> chains.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

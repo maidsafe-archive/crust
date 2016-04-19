@@ -26,7 +26,7 @@
     
 
     <nav class="sidebar">
-        <a href='../../bincode/index.html'><img src='./icon.png' alt='' width='100'></a>
+        <a href='../../bincode/index.html'><img src='./icon.png' alt='logo' width='100'></a>
         <p class='location'><a href='../index.html'>bincode</a>::<wbr><a href='index.html'>rustc_serialize</a></p><script>window.sidebarCurrent = {name: 'DecodingError', ty: 'enum', relpath: ''};</script><script defer src="sidebar-items.js"></script>
     </nav>
 
@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-676' class='srclink' href='../../src/bincode/rustc_serialize/reader.rs.html#35-47' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-675' class='srclink' href='../../src/bincode/rustc_serialize/reader.rs.html#34-46' title='goto source code'>[src]</a></span></h1>
 <pre class='rust enum'>pub enum DecodingError {
     IoError(<a class='struct' href='https://doc.rust-lang.org/nightly/std/io/error/struct.Error.html' title='std::io::error::Error'>IoError</a>),
     InvalidEncoding(InvalidEncoding),
@@ -56,15 +56,15 @@
 <p>If decoding from a Buffer, assume that the buffer has been left
 in an invalid state.</p>
 </div><h2 class='variants'>Variants</h2>
-<table><tr><td id='variant.IoError'><code>IoError</code></td><td><div class='docblock'><p>If the error stems from the reader that is being used
+<table class='variants_table'><tr><td id='variant.IoError'><code>IoError</code></td><td><div class='docblock'><p>If the error stems from the reader that is being used
 during decoding, that error will be stored and returned here.</p>
-</div></td></tr><tr><td id='variant.InvalidEncoding'><code>InvalidEncoding</code></td><td><div class='docblock'><p>If the bytes in the reader are not decodable because of an invalid
+</div></td><td></td></tr><tr><td id='variant.InvalidEncoding'><code>InvalidEncoding</code></td><td><div class='docblock'><p>If the bytes in the reader are not decodable because of an invalid
 encoding, this error will be returned.  This error is only possible
 if a stream is corrupted.  A stream produced from <code>encode</code> or <code>encode_into</code>
 should <strong>never</strong> produce an InvalidEncoding error.</p>
-</div></td></tr><tr><td id='variant.SizeLimit'><code>SizeLimit</code></td><td><div class='docblock'><p>If decoding a message takes more than the provided size limit, this
+</div></td><td></td></tr><tr><td id='variant.SizeLimit'><code>SizeLimit</code></td><td><div class='docblock'><p>If decoding a message takes more than the provided size limit, this
 error is returned.</p>
-</div></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html' title='core::fmt::Display'>Display</a> for <a class='enum' href='../../bincode/rustc_serialize/enum.DecodingError.html' title='bincode::rustc_serialize::DecodingError'>DecodingError</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html#method.fmt' class='fnname'>fmt</a>(&amp;self, fmt: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+</div></td><td></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html' title='core::fmt::Display'>Display</a> for <a class='enum' href='../../bincode/rustc_serialize/enum.DecodingError.html' title='bincode::rustc_serialize::DecodingError'>DecodingError</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html#method.fmt' class='fnname'>fmt</a>(&amp;self, fmt: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
 </div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/std/error/trait.Error.html' title='std::error::Error'>Error</a> for <a class='enum' href='../../bincode/rustc_serialize/enum.DecodingError.html' title='bincode::rustc_serialize::DecodingError'>DecodingError</a></code></h3><div class='impl-items'><h4 id='method.description' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/std/error/trait.Error.html#method.description' class='fnname'>description</a>(&amp;self) -&gt; &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a></code></h4>
 <h4 id='method.cause' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/std/error/trait.Error.html#method.cause' class='fnname'>cause</a>(&amp;self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;&amp;<a class='trait' href='https://doc.rust-lang.org/nightly/std/error/trait.Error.html' title='std::error::Error'>Error</a>&gt;</code></h4>
 </div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.From.html' title='core::convert::From'>From</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/std/io/error/struct.Error.html' title='std::io::error::Error'>IoError</a>&gt; for <a class='enum' href='../../bincode/rustc_serialize/enum.DecodingError.html' title='bincode::rustc_serialize::DecodingError'>DecodingError</a></code></h3><div class='impl-items'><h4 id='method.from' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/convert/trait.From.html#method.from' class='fnname'>from</a>(err: <a class='struct' href='https://doc.rust-lang.org/nightly/std/io/error/struct.Error.html' title='std::io::error::Error'>IoError</a>) -&gt; <a class='enum' href='../../bincode/rustc_serialize/enum.DecodingError.html' title='bincode::rustc_serialize::DecodingError'>DecodingError</a></code></h4>
@@ -112,7 +112,7 @@ error is returned.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

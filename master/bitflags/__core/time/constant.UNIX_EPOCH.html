@@ -46,13 +46,12 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-10232' class='srclink' href='https://doc.rust-lang.org/nightly/std/time/constant.UNIX_EPOCH.html?gotosrc=10232' title='goto source code'>[src]</a></span></h1>
-<pre class='rust const'>pub const UNIX_EPOCH: <a class='struct' href='../../../bitflags/__core/time/struct.SystemTime.html' title='bitflags::__core::time::SystemTime'>SystemTime</a><code> = </code><code>SystemTime(time::UNIX_EPOCH)</code></pre><div class='stability'><em class='stab unstable'>Unstable (<code>time2</code>)<p>: recently added</p>
-</em></div><div class='docblock'><p>An anchor in time which can be used to create new <code>SystemTime</code> instances or
+        </span><a id='src-10911' class='srclink' href='https://doc.rust-lang.org/nightly/std/time/constant.UNIX_EPOCH.html?gotosrc=10911' title='goto source code'>[src]</a></span></h1>
+<pre class='rust const'>pub const UNIX_EPOCH: <a class='struct' href='../../../bitflags/__core/time/struct.SystemTime.html' title='bitflags::__core::time::SystemTime'>SystemTime</a><code> = </code><code>SystemTime(time::UNIX_EPOCH)</code></pre><div class='docblock'><p>An anchor in time which can be used to create new <code>SystemTime</code> instances or
 learn about where in time a <code>SystemTime</code> lies.</p>
 
 <p>This constant is defined to be &quot;1970-01-01 00:00:00 UTC&quot; on all systems with
-respect to the system clock. Using <code>duration_from_earlier</code> on an existing
+respect to the system clock. Using <code>duration_since</code> on an existing
 <code>SystemTime</code> instance can tell how far away from this point in time a
 measurement lies, and using <code>UNIX_EPOCH + duration</code> can be used to create a
 <code>SystemTime</code> instance to represent another fixed point in time.</p>
@@ -99,7 +98,7 @@ measurement lies, and using <code>UNIX_EPOCH + duration</code> can be used to cr
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-31447' class='srclink' href='https://doc.rust-lang.org/nightly/core/str/pattern/index.html?gotosrc=31447' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-31640' class='srclink' href='https://doc.rust-lang.org/nightly/core/str/pattern/index.html?gotosrc=31640' title='goto source code'>[src]</a></span></h1>
 <div class='stability'><em class='stab unstable'>Unstable (<code>pattern</code>)<p>: API not fully fleshed out and ready to be stabilized</p>
 </em></div><div class='docblock'><p>The string Pattern API.</p>
 
@@ -59,7 +59,6 @@
                                title='bitflags::__core::str::pattern::CharPredicateSearcher'>CharPredicateSearcher</a></td>
                         <td class='docblock short'>
                             [<em class='stab unstable'>Unstable</em>] <p>Associated type for <code>&lt;F as Pattern&lt;&#39;a&gt;&gt;::Searcher</code>.</p>
-
                         </td>
                     </tr>
                 
@@ -68,7 +67,6 @@
                                title='bitflags::__core::str::pattern::CharSearcher'>CharSearcher</a></td>
                         <td class='docblock short'>
                             [<em class='stab unstable'>Unstable</em>] <p>Associated type for <code>&lt;char as Pattern&lt;&#39;a&gt;&gt;::Searcher</code>.</p>
-
                         </td>
                     </tr>
                 
@@ -77,7 +75,6 @@
                                title='bitflags::__core::str::pattern::CharSliceSearcher'>CharSliceSearcher</a></td>
                         <td class='docblock short'>
                             [<em class='stab unstable'>Unstable</em>] <p>Associated type for <code>&lt;&amp;[char] as Pattern&lt;&#39;a&gt;&gt;::Searcher</code>.</p>
-
                         </td>
                     </tr>
                 
@@ -86,7 +83,6 @@
                                title='bitflags::__core::str::pattern::StrSearcher'>StrSearcher</a></td>
                         <td class='docblock short'>
                             [<em class='stab unstable'>Unstable</em>] <p>Associated type for <code>&lt;&amp;str as Pattern&lt;&#39;a&gt;&gt;::Searcher</code>.</p>
-
                         </td>
                     </tr>
                 </table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
@@ -96,7 +92,6 @@
                                title='bitflags::__core::str::pattern::SearchStep'>SearchStep</a></td>
                         <td class='docblock short'>
                             [<em class='stab unstable'>Unstable</em>] <p>Result of calling <code>Searcher::next()</code> or <code>ReverseSearcher::next_back()</code>.</p>
-
                         </td>
                     </tr>
                 </table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
@@ -107,7 +102,6 @@
                         <td class='docblock short'>
                             [<em class='stab unstable'>Unstable</em>] <p>A marker trait to express that a <code>ReverseSearcher</code>
 can be used for a <code>DoubleEndedIterator</code> implementation.</p>
-
                         </td>
                     </tr>
                 
@@ -116,7 +110,6 @@ can be used for a <code>DoubleEndedIterator</code> implementation.</p>
                                title='bitflags::__core::str::pattern::Pattern'>Pattern</a></td>
                         <td class='docblock short'>
                             [<em class='stab unstable'>Unstable</em>] <p>A string pattern.</p>
-
                         </td>
                     </tr>
                 
@@ -125,7 +118,6 @@ can be used for a <code>DoubleEndedIterator</code> implementation.</p>
                                title='bitflags::__core::str::pattern::ReverseSearcher'>ReverseSearcher</a></td>
                         <td class='docblock short'>
                             [<em class='stab unstable'>Unstable</em>] <p>A reverse searcher for a string pattern.</p>
-
                         </td>
                     </tr>
                 
@@ -134,7 +126,6 @@ can be used for a <code>DoubleEndedIterator</code> implementation.</p>
                                title='bitflags::__core::str::pattern::Searcher'>Searcher</a></td>
                         <td class='docblock short'>
                             [<em class='stab unstable'>Unstable</em>] <p>A searcher for a string pattern.</p>
-
                         </td>
                     </tr>
                 </table></section>
@@ -180,7 +171,7 @@ can be used for a <code>DoubleEndedIterator</code> implementation.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

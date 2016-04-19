@@ -55,7 +55,6 @@
                                title='serde::de::impls'>impls</a></td>
                         <td class='docblock short'>
                              <p>This module contains <code>Deserialize</code> and <code>Visitor</code> implementations.</p>
-
                         </td>
                     </tr>
                 
@@ -64,7 +63,6 @@
                                title='serde::de::value'>value</a></td>
                         <td class='docblock short'>
                              <p>This module supports deserializing from primitives with the <code>ValueDeserializer</code> trait.</p>
-
                         </td>
                     </tr>
                 </table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
@@ -75,7 +73,6 @@
                         <td class='docblock short'>
                              <p><code>Type</code> represents all the primitive types that can be deserialized. This is used by
 <code>Error::kind_mismatch</code>.</p>
-
                         </td>
                     </tr>
                 </table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
@@ -85,7 +82,6 @@
                                title='serde::de::Deserialize'>Deserialize</a></td>
                         <td class='docblock short'>
                              <p><code>Deserialize</code> represents a type that can be deserialized.</p>
-
                         </td>
                     </tr>
                 
@@ -95,7 +91,6 @@
                         <td class='docblock short'>
                              <p><code>Deserializer</code> is a trait that can deserialize values by threading a <code>Visitor</code> trait through a
 value. It supports two entry point styles which enables different kinds of deserialization.</p>
-
                         </td>
                     </tr>
                 
@@ -105,7 +100,6 @@ value. It supports two entry point styles which enables different kinds of deser
                         <td class='docblock short'>
                              <p><code>EnumVisitor</code> is a visitor that is created by the <code>Deserialize</code> and passed to the
 <code>Deserializer</code> in order to deserialize enums.</p>
-
                         </td>
                     </tr>
                 
@@ -115,7 +109,6 @@ value. It supports two entry point styles which enables different kinds of deser
                         <td class='docblock short'>
                              <p><code>Error</code> is a trait that allows a <code>Deserialize</code> to generically create a
 <code>Deserializer</code> error.</p>
-
                         </td>
                     </tr>
                 
@@ -124,7 +117,6 @@ value. It supports two entry point styles which enables different kinds of deser
                                title='serde::de::MapVisitor'>MapVisitor</a></td>
                         <td class='docblock short'>
                              <p><code>MapVisitor</code> visits each item in a sequence.</p>
-
                         </td>
                     </tr>
                 
@@ -133,7 +125,6 @@ value. It supports two entry point styles which enables different kinds of deser
                                title='serde::de::SeqVisitor'>SeqVisitor</a></td>
                         <td class='docblock short'>
                              <p><code>SeqVisitor</code> visits each item in a sequence.</p>
-
                         </td>
                     </tr>
                 
@@ -143,7 +134,6 @@ value. It supports two entry point styles which enables different kinds of deser
                         <td class='docblock short'>
                              <p><code>VariantVisitor</code> is a visitor that is created by the <code>Deserializer</code> and passed to the
 <code>Deserialize</code> in order to deserialize a specific enum variant.</p>
-
                         </td>
                     </tr>
                 
@@ -152,7 +142,6 @@ value. It supports two entry point styles which enables different kinds of deser
                                title='serde::de::Visitor'>Visitor</a></td>
                         <td class='docblock short'>
                              <p>This trait represents a visitor that walks through a deserializer.</p>
-
                         </td>
                     </tr>
                 </table></section>
@@ -198,7 +187,7 @@ value. It supports two entry point styles which enables different kinds of deser
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

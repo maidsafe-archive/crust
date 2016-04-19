@@ -46,10 +46,11 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-757' class='srclink' href='../../src/itertools/free.rs.html#27-31' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-758' class='srclink' href='../../src/itertools/free.rs.html#27-31' title='goto source code'>[src]</a></span></h1>
 <pre class='rust fn'>pub fn enumerate&lt;I&gt;(iterable: I) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/core/iter/struct.Enumerate.html' title='core::iter::Enumerate'>Enumerate</a>&lt;I::IntoIter&gt; <span class='where'>where I: <a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/trait.IntoIterator.html' title='core::iter::IntoIterator'>IntoIterator</a></span></pre><div class='docblock'><p>Iterate <code>iterable</code> with a running index.</p>
 
 <p><code>IntoIterator</code> enabled version of <code>.enumerate()</code>.</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>itertools</span>::<span class='ident'>enumerate</span>;
 
@@ -99,7 +100,7 @@
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

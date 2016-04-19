@@ -46,22 +46,22 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-9108' class='srclink' href='https://doc.rust-lang.org/nightly/std/sync/mpsc/enum.TrySendError.html?gotosrc=9108' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-9744' class='srclink' href='https://doc.rust-lang.org/nightly/std/sync/mpsc/enum.TrySendError.html?gotosrc=9744' title='goto source code'>[src]</a></span></h1>
 <pre class='rust enum'>pub enum TrySendError&lt;T&gt; {
     Full(T),
     Disconnected(T),
-}</pre><div class='docblock'><p>This enumeration is the list of the possible error outcomes for the
+}</pre><span class="since">1.0.0</span><div class='docblock'><p>This enumeration is the list of the possible error outcomes for the
 <code>SyncSender::try_send</code> method.</p>
 </div><h2 class='variants'>Variants</h2>
-<table><tr><td id='variant.Full'><code>Full</code></td><td><div class='docblock'><p>The data could not be sent on the channel because it would require that
+<table class='variants_table'><tr><td id='variant.Full'><code>Full</code></td><td><div class='docblock'><p>The data could not be sent on the channel because it would require that
 the callee block to send the data.</p>
 
 <p>If this is a buffered channel, then the buffer is full at this time. If
 this is not a buffered channel, then there is no receiver available to
 acquire the data.</p>
-</div></td></tr><tr><td id='variant.Disconnected'><code>Disconnected</code></td><td><div class='docblock'><p>This channel&#39;s receiving half has disconnected, so the data could not be
+</div></td><td></td></tr><tr><td id='variant.Disconnected'><code>Disconnected</code></td><td><div class='docblock'><p>This channel&#39;s receiving half has disconnected, so the data could not be
 sent. The data is returned back to the callee in this case.</p>
-</div></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl&lt;T&gt; <a class='trait' href='../../../../bitflags/__core/fmt/trait.Debug.html' title='bitflags::__core::fmt::Debug'>Debug</a> for <a class='enum' href='../../../../bitflags/__core/sync/mpsc/enum.TrySendError.html' title='bitflags::__core::sync::mpsc::TrySendError'>TrySendError</a>&lt;T&gt;</code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='../../../../bitflags/__core/fmt/trait.Debug.html#method.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class='struct' href='../../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='../../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h4>
+</div></td><td></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl&lt;T&gt; <a class='trait' href='../../../../bitflags/__core/fmt/trait.Debug.html' title='bitflags::__core::fmt::Debug'>Debug</a> for <a class='enum' href='../../../../bitflags/__core/sync/mpsc/enum.TrySendError.html' title='bitflags::__core::sync::mpsc::TrySendError'>TrySendError</a>&lt;T&gt;</code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='../../../../bitflags/__core/fmt/trait.Debug.html#method.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class='struct' href='../../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='../../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h4>
 </div><h3 class='impl'><code>impl&lt;T&gt; <a class='trait' href='../../../../bitflags/__core/fmt/trait.Display.html' title='bitflags::__core::fmt::Display'>Display</a> for <a class='enum' href='../../../../bitflags/__core/sync/mpsc/enum.TrySendError.html' title='bitflags::__core::sync::mpsc::TrySendError'>TrySendError</a>&lt;T&gt;</code></h3><div class='impl-items'><h4 id='method.fmt-1' class='method'><code>fn <a href='../../../../bitflags/__core/fmt/trait.Display.html#method.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class='struct' href='../../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='../../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h4>
 </div><h3 class='impl'><code>impl&lt;T&gt; <a class='trait' href='../../../../bitflags/__core/error/trait.Error.html' title='bitflags::__core::error::Error'>Error</a> for <a class='enum' href='../../../../bitflags/__core/sync/mpsc/enum.TrySendError.html' title='bitflags::__core::sync::mpsc::TrySendError'>TrySendError</a>&lt;T&gt; <span class='where'>where T: <a class='trait' href='../../../../bitflags/__core/marker/trait.Send.html' title='bitflags::__core::marker::Send'>Send</a> + <a class='trait' href='../../../../bitflags/__core/marker/trait.Reflect.html' title='bitflags::__core::marker::Reflect'>Reflect</a></span></code></h3><div class='impl-items'><h4 id='method.description' class='method'><code>fn <a href='../../../../bitflags/__core/error/trait.Error.html#method.description' class='fnname'>description</a>(&amp;self) -&gt; &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.str.html'>str</a></code></h4>
 <h4 id='method.cause' class='method'><code>fn <a href='../../../../bitflags/__core/error/trait.Error.html#method.cause' class='fnname'>cause</a>(&amp;self) -&gt; <a class='enum' href='../../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;&amp;<a class='trait' href='../../../../bitflags/__core/error/trait.Error.html' title='bitflags::__core::error::Error'>Error</a>&gt;</code></h4>
@@ -112,7 +112,7 @@ sent. The data is returned back to the callee in this case.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

@@ -46,8 +46,8 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-5877' class='srclink' href='https://doc.rust-lang.org/nightly/core/mem/fn.forget.html?gotosrc=5877' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub fn forget&lt;T&gt;(t: T)</pre><div class='docblock'><p>Leaks a value into the void, consuming ownership and never running its
+        </span><a id='src-5947' class='srclink' href='https://doc.rust-lang.org/nightly/core/mem/fn.forget.html?gotosrc=5947' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub fn forget&lt;T&gt;(t: T)</pre><span class="since">1.0.0</span><div class='docblock'><p>Leaks a value into the void, consuming ownership and never running its
 destructor.</p>
 
 <p>This function will take ownership of its argument, but is distinct from the
@@ -91,6 +91,7 @@ leakage are:</p>
 
 <h1 id='example' class='section-header'><a href='#example'>Example</a></h1>
 <p>Leak some heap memory by never deallocating it:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>mem</span>;
 
@@ -98,6 +99,7 @@ leakage are:</p>
 <span class='ident'>mem</span>::<span class='ident'>forget</span>(<span class='ident'>heap_memory</span>);</pre>
 
 <p>Leak an I/O object, never closing the file:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>mem</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fs</span>::<span class='ident'>File</span>;
@@ -106,6 +108,7 @@ leakage are:</p>
 <span class='ident'>mem</span>::<span class='ident'>forget</span>(<span class='ident'>file</span>);</pre>
 
 <p>The <code>mem::swap</code> function uses <code>mem::forget</code> to good effect:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>mem</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>ptr</span>;
@@ -169,7 +172,7 @@ leakage are:</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

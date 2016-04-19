@@ -54,11 +54,11 @@
 be added to this enum; do not exhaustively pattern-match it.
 <a href="http://man7.org/linux/man-pages/man3/cmsg.3.html">Further reading</a></p>
 </div><h2 class='variants'>Variants</h2>
-<table><tr><td id='variant.ScmRights'><code>ScmRights</code></td><td><div class='docblock'><p>A message of type SCM_RIGHTS, containing an array of file
+<table class='variants_table'><tr><td id='variant.ScmRights'><code>ScmRights</code></td><td><div class='docblock'><p>A message of type SCM_RIGHTS, containing an array of file
 descriptors passed between processes. See the description in the
 &quot;Ancillary messages&quot; section of the
 <a href="http://man7.org/linux/man-pages/man7/unix.7.html">unix(7) man page</a>.</p>
-</div></td></tr></table></section>
+</div></td><td></td></tr></table></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
@@ -101,7 +101,7 @@ descriptors passed between processes. See the description in the
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

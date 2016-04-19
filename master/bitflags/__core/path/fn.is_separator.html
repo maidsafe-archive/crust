@@ -46,11 +46,12 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-6837' class='srclink' href='https://doc.rust-lang.org/nightly/std/path/fn.is_separator.html?gotosrc=6837' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub fn is_separator(c: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.char.html'>char</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a></pre><div class='docblock'><p>Determines whether the character is one of the permitted path
+        </span><a id='src-7109' class='srclink' href='https://doc.rust-lang.org/nightly/std/path/fn.is_separator.html?gotosrc=7109' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub fn is_separator(c: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.char.html'>char</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a></pre><span class="since">1.0.0</span><div class='docblock'><p>Determines whether the character is one of the permitted path
 separators for the current platform.</p>
 
-<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>path</span>;
 
 <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>path</span>::<span class='ident'>is_separator</span>(<span class='string'>&#39;/&#39;</span>));
@@ -98,7 +99,7 @@ separators for the current platform.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

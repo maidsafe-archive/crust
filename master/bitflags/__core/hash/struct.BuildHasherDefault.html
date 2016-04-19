@@ -46,15 +46,15 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-33233' class='srclink' href='https://doc.rust-lang.org/nightly/core/hash/struct.BuildHasherDefault.html?gotosrc=33233' title='goto source code'>[src]</a></span></h1>
-<pre class='rust struct'>pub struct BuildHasherDefault&lt;H&gt;(_);</pre><div class='docblock'><p>A structure which implements <code>BuildHasher</code> for all <code>Hasher</code> types which also
+        </span><a id='src-33430' class='srclink' href='https://doc.rust-lang.org/nightly/core/hash/struct.BuildHasherDefault.html?gotosrc=33430' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct BuildHasherDefault&lt;H&gt;(_);</pre><span class="since">1.7.0</span><div class='docblock'><p>A structure which implements <code>BuildHasher</code> for all <code>Hasher</code> types which also
 implement <code>Default</code>.</p>
 
 <p>This struct is 0-sized and does not need construction.</p>
-</div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl&lt;H&gt; <a class='trait' href='../../../bitflags/__core/hash/trait.BuildHasher.html' title='bitflags::__core::hash::BuildHasher'>BuildHasher</a> for <a class='struct' href='../../../bitflags/__core/hash/struct.BuildHasherDefault.html' title='bitflags::__core::hash::BuildHasherDefault'>BuildHasherDefault</a>&lt;H&gt; <span class='where'>where H: <a class='trait' href='../../../bitflags/__core/default/trait.Default.html' title='bitflags::__core::default::Default'>Default</a> + <a class='trait' href='../../../bitflags/__core/hash/trait.Hasher.html' title='bitflags::__core::hash::Hasher'>Hasher</a></span></code></h3><div class='impl-items'><h4 id='assoc_type.Hasher' class='type'><code>type Hasher = H</code></h4>
+</div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl&lt;H&gt; <a class='trait' href='../../../bitflags/__core/hash/trait.BuildHasher.html' title='bitflags::__core::hash::BuildHasher'>BuildHasher</a> for <a class='struct' href='../../../bitflags/__core/hash/struct.BuildHasherDefault.html' title='bitflags::__core::hash::BuildHasherDefault'>BuildHasherDefault</a>&lt;H&gt; <span class='where'>where H: <a class='trait' href='../../../bitflags/__core/default/trait.Default.html' title='bitflags::__core::default::Default'>Default</a> + <a class='trait' href='../../../bitflags/__core/hash/trait.Hasher.html' title='bitflags::__core::hash::Hasher'>Hasher</a></span></code></h3><div class='impl-items'><h4 id='associatedtype.Hasher' class='type'><code>type Hasher = H</code></h4>
 <h4 id='method.build_hasher' class='method'><code>fn <a href='../../../bitflags/__core/hash/trait.BuildHasher.html#method.build_hasher' class='fnname'>build_hasher</a>(&amp;self) -&gt; H</code></h4>
 </div><h3 class='impl'><code>impl&lt;H&gt; <a class='trait' href='../../../bitflags/__core/clone/trait.Clone.html' title='bitflags::__core::clone::Clone'>Clone</a> for <a class='struct' href='../../../bitflags/__core/hash/struct.BuildHasherDefault.html' title='bitflags::__core::hash::BuildHasherDefault'>BuildHasherDefault</a>&lt;H&gt;</code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='../../../bitflags/__core/clone/trait.Clone.html#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='struct' href='../../../bitflags/__core/hash/struct.BuildHasherDefault.html' title='bitflags::__core::hash::BuildHasherDefault'>BuildHasherDefault</a>&lt;H&gt;</code></h4>
-<h4 id='method.clone_from' class='method'><code>fn <a href='../../../bitflags/__core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
+<h4 id='method.clone_from' class='method'><span class="since">1.0.0</span><code>fn <a href='../../../bitflags/__core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
 </div><h3 class='impl'><code>impl&lt;H&gt; <a class='trait' href='../../../bitflags/__core/default/trait.Default.html' title='bitflags::__core::default::Default'>Default</a> for <a class='struct' href='../../../bitflags/__core/hash/struct.BuildHasherDefault.html' title='bitflags::__core::hash::BuildHasherDefault'>BuildHasherDefault</a>&lt;H&gt;</code></h3><div class='impl-items'><h4 id='method.default' class='method'><code>fn <a href='../../../bitflags/__core/default/trait.Default.html#method.default' class='fnname'>default</a>() -&gt; <a class='struct' href='../../../bitflags/__core/hash/struct.BuildHasherDefault.html' title='bitflags::__core::hash::BuildHasherDefault'>BuildHasherDefault</a>&lt;H&gt;</code></h4>
 </div></section>
     <section id='search' class="content hidden"></section>
@@ -99,7 +99,7 @@ implement <code>Default</code>.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

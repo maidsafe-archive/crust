@@ -46,11 +46,16 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-5868' class='srclink' href='https://doc.rust-lang.org/nightly/core/intrinsics/fn.try.html?gotosrc=5868' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub unsafe extern "rust-intrinsic" fn try(f: fn(<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a></a>), data: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a></a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a></a></pre><div class='stability'><em class='stab unstable'>Unstable (<code>core_intrinsics</code>)<p>: intrinsics are unlikely to ever be stabilized, instead they should be used through stabilized interfaces in the rest of the standard library</p>
+        </span><a id='src-5937' class='srclink' href='https://doc.rust-lang.org/nightly/core/intrinsics/fn.try.html?gotosrc=5937' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub unsafe extern "rust-intrinsic" fn try(f: fn(<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut </a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a>), data: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut </a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a>, local_ptr: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut </a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.i32.html'>i32</a></pre><div class='stability'><em class='stab unstable'>Unstable (<code>core_intrinsics</code>)<p>: intrinsics are unlikely to ever be stabilized, instead they should be used through stabilized interfaces in the rest of the standard library</p>
 </em></div><div class='docblock'><p>Rust&#39;s &quot;try catch&quot; construct which invokes the function pointer <code>f</code> with
-the data pointer <code>data</code>, returning the exception payload if an exception
-is thrown (aka the thread panics).</p>
+the data pointer <code>data</code>.</p>
+
+<p>The third pointer is a target-specific data pointer which is filled in
+with the specifics of the exception that occurred. For examples on Unix
+platforms this is a <code>*mut *mut T</code> which is filled in by the compiler and
+on MSVC it&#39;s <code>*mut [usize; 2]</code>. For more information see the compiler&#39;s
+source as well as std&#39;s catch implementation.</p>
 </div></section>
     <section id='search' class="content hidden"></section>
 
@@ -94,7 +99,7 @@ is thrown (aka the thread panics).</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

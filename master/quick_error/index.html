@@ -50,6 +50,7 @@
 <div class='docblock'><p>A macro which makes errors easy to write</p>
 
 <p>Minimum type is like this:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='attribute'>#[<span class='ident'>macro_use</span>]</span> <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>quick_error</span>;
 
@@ -67,6 +68,7 @@ comments <code>/// something</code> (as well as other meta attrbiutes) on varian
 are allowed.</p>
 
 <p>You may add arbitrary parameters to any struct variant:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='macro'>quick_error</span><span class='macro'>!</span> {
     <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>)]</span>
@@ -92,6 +94,7 @@ implementations. By default:</p>
 </ul>
 
 <p>To define description simply add <code>description(value)</code> inside braces:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='macro'>quick_error</span><span class='macro'>!</span> {
     <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>)]</span>
@@ -110,6 +113,7 @@ returns constant string or forwards description from enclosed type.</p>
 
 <p>To change <code>cause</code> method to return some error, add <code>cause(value)</code>, for
 example:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='macro'>quick_error</span><span class='macro'>!</span> {
     <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>)]</span>
@@ -130,6 +134,7 @@ conditionally.</p>
 
 <p>To change how each clause is <code>Display</code>ed add <code>display(pattern,..args)</code>,
 for example:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='macro'>quick_error</span><span class='macro'>!</span> {
     <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>)]</span>
@@ -145,6 +150,7 @@ for example:</p>
 
 <p>If you need a reference to the error when <code>Display</code>ing, you can instead use
 <code>display(x) -&gt; (pattern, ..args)</code>, where <code>x</code> sets the name of the reference.</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>error</span>::<span class='ident'>Error</span>; <span class='comment'>// put methods like `description()` of this trait into scope</span>
 
@@ -164,6 +170,7 @@ for example:</p>
 <code>from</code> clause.</p>
 
 <p>For example, to convert simple wrapper use bare <code>from()</code>:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='macro'>quick_error</span><span class='macro'>!</span> {
     <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>)]</span>
@@ -178,6 +185,7 @@ for example:</p>
 
 <p>To convert to singleton enumeration type (discarding the value), use
 the <code>from(type)</code> form:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='macro'>quick_error</span><span class='macro'>!</span> {
     <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>)]</span>
@@ -191,6 +199,7 @@ the <code>from(type)</code> form:</p>
 <p>And the most powerful form is <code>from(var: type) -&gt; (arguments...)</code>. It
 might be used to convert to type with multiple arguments or for arbitrary
 value conversions:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='macro'>quick_error</span><span class='macro'>!</span> {
     <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>)]</span>
@@ -218,7 +227,6 @@ Empty braces can be omitted as of quick_error 0.1.3.</p>
                                title='quick_error::quick_error!'>quick_error!</a></td>
                         <td class='docblock short'>
                              <p>Main macro that does all the work</p>
-
                         </td>
                     </tr>
                 </table></section>
@@ -264,7 +272,7 @@ Empty braces can be omitted as of quick_error 0.1.3.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

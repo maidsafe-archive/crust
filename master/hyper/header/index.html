@@ -67,6 +67,7 @@ are already provided, such as <code>Host</code>, <code>ContentType</code>, <code
 you need to define a custom header, it&#39;s easy to do while still taking
 advantage of the type system. Hyper includes a <code>header!</code> macro for defining
 many wrapper-style headers.</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='attribute'>#[<span class='ident'>macro_use</span>]</span> <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>hyper</span>;
 <span class='kw'>use</span> <span class='ident'>hyper</span>::<span class='ident'>header</span>::<span class='ident'>Headers</span>;
@@ -85,6 +86,7 @@ customize either part, you can do so.</p>
 <h2 id='header-and-headerformat' class='section-header'><a href='#header-and-headerformat'><code>Header</code> and <code>HeaderFormat</code></a></h2>
 <p>Consider a Do Not Track header. It can be true or false, but it represents
 that via the numerals <code>1</code> and <code>0</code>.</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fmt</span>;
 <span class='kw'>use</span> <span class='ident'>hyper</span>::<span class='ident'>header</span>::{<span class='ident'>Header</span>, <span class='ident'>HeaderFormat</span>};
@@ -129,7 +131,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                                title='hyper::header::parsing'>parsing</a></td>
                         <td class='docblock short'>
                              <p>Utility functions for Header implementations.</p>
-
                         </td>
                     </tr>
                 </table><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
@@ -139,7 +140,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                                title='hyper::header::Accept'>Accept</a></td>
                         <td class='docblock short'>
                              <p><code>Accept</code> header, defined in <a href="http://tools.ietf.org/html/rfc7231#section-5.3.2">RFC7231</a></p>
-
                         </td>
                     </tr>
                 
@@ -149,7 +149,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                         <td class='docblock short'>
                              <p><code>Accept-Charset</code> header, defined in
 <a href="http://tools.ietf.org/html/rfc7231#section-5.3.3">RFC7231</a></p>
-
                         </td>
                     </tr>
                 
@@ -159,7 +158,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                         <td class='docblock short'>
                              <p><code>Accept-Encoding</code> header, defined in
 <a href="http://tools.ietf.org/html/rfc7231#section-5.3.4">RFC7231</a></p>
-
                         </td>
                     </tr>
                 
@@ -169,7 +167,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                         <td class='docblock short'>
                              <p><code>Accept-Language</code> header, defined in
 <a href="http://tools.ietf.org/html/rfc7231#section-5.3.5">RFC7231</a></p>
-
                         </td>
                     </tr>
                 
@@ -179,7 +176,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                         <td class='docblock short'>
                              <p><code>Accept-Ranges</code> header, defined in
 <a href="http://tools.ietf.org/html/rfc7233#section-2.3">RFC7233</a></p>
-
                         </td>
                     </tr>
                 
@@ -189,7 +185,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                         <td class='docblock short'>
                              <p><code>Access-Control-Allow-Headers</code> header, part of
 <a href="http://www.w3.org/TR/cors/#access-control-allow-headers-response-header">CORS</a></p>
-
                         </td>
                     </tr>
                 
@@ -199,7 +194,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                         <td class='docblock short'>
                              <p><code>Access-Control-Allow-Methods</code> header, part of
 <a href="http://www.w3.org/TR/cors/#access-control-allow-methods-response-header">CORS</a></p>
-
                         </td>
                     </tr>
                 
@@ -209,7 +203,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                         <td class='docblock short'>
                              <p><code>Access-Control-Expose-Headers</code> header, part of
 <a href="http://www.w3.org/TR/cors/#access-control-expose-headers-response-header">CORS</a></p>
-
                         </td>
                     </tr>
                 
@@ -219,7 +212,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                         <td class='docblock short'>
                              <p><code>Access-Control-Max-Age</code> header, part of
 <a href="http://www.w3.org/TR/cors/#access-control-max-age-response-header">CORS</a></p>
-
                         </td>
                     </tr>
                 
@@ -229,7 +221,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                         <td class='docblock short'>
                              <p><code>Access-Control-Request-Headers</code> header, part of
 <a href="http://www.w3.org/TR/cors/#access-control-request-headers-request-header">CORS</a></p>
-
                         </td>
                     </tr>
                 
@@ -239,7 +230,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                         <td class='docblock short'>
                              <p><code>Access-Control-Request-Method</code> header, part of
 <a href="http://www.w3.org/TR/cors/#access-control-request-method-request-header">CORS</a></p>
-
                         </td>
                     </tr>
                 
@@ -248,7 +238,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                                title='hyper::header::Allow'>Allow</a></td>
                         <td class='docblock short'>
                              <p><code>Allow</code> header, defined in <a href="http://tools.ietf.org/html/rfc7231#section-7.4.1">RFC7231</a></p>
-
                         </td>
                     </tr>
                 
@@ -257,7 +246,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                                title='hyper::header::Authorization'>Authorization</a></td>
                         <td class='docblock short'>
                              <p><code>Authorization</code> header, defined in <a href="https://tools.ietf.org/html/rfc7235#section-4.2">RFC7235</a></p>
-
                         </td>
                     </tr>
                 
@@ -266,7 +254,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                                title='hyper::header::Basic'>Basic</a></td>
                         <td class='docblock short'>
                              <p>Credential holder for Basic Authentication</p>
-
                         </td>
                     </tr>
                 
@@ -275,7 +262,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                                title='hyper::header::Bearer'>Bearer</a></td>
                         <td class='docblock short'>
                              <p>Token holder for Bearer Authentication, most often seen with oauth</p>
-
                         </td>
                     </tr>
                 
@@ -284,7 +270,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                                title='hyper::header::CacheControl'>CacheControl</a></td>
                         <td class='docblock short'>
                              <p><code>Cache-Control</code> header, defined in <a href="https://tools.ietf.org/html/rfc7234#section-5.2">RFC7234</a></p>
-
                         </td>
                     </tr>
                 
@@ -294,7 +279,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                         <td class='docblock short'>
                              <p><code>Connection</code> header, defined in
 <a href="http://tools.ietf.org/html/rfc7230#section-6.1">RFC7230</a></p>
-
                         </td>
                     </tr>
                 
@@ -304,7 +288,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                         <td class='docblock short'>
                              <p><code>Content-Encoding</code> header, defined in
 <a href="http://tools.ietf.org/html/rfc7231#section-3.1.2.2">RFC7231</a></p>
-
                         </td>
                     </tr>
                 
@@ -314,7 +297,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                         <td class='docblock short'>
                              <p><code>Content-Language</code> header, defined in
 <a href="https://tools.ietf.org/html/rfc7231#section-3.1.3.2">RFC7231</a></p>
-
                         </td>
                     </tr>
                 
@@ -324,7 +306,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                         <td class='docblock short'>
                              <p><code>Content-Length</code> header, defined in
 <a href="http://tools.ietf.org/html/rfc7230#section-3.3.2">RFC7230</a></p>
-
                         </td>
                     </tr>
                 
@@ -334,7 +315,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                         <td class='docblock short'>
                              <p><code>Content-Range</code> header, defined in
 <a href="http://tools.ietf.org/html/rfc7233#section-4.2">RFC7233</a></p>
-
                         </td>
                     </tr>
                 
@@ -344,7 +324,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                         <td class='docblock short'>
                              <p><code>Content-Type</code> header, defined in
 <a href="http://tools.ietf.org/html/rfc7231#section-3.1.1.5">RFC7231</a></p>
-
                         </td>
                     </tr>
                 
@@ -353,7 +332,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                                title='hyper::header::Cookie'>Cookie</a></td>
                         <td class='docblock short'>
                              <p><code>Cookie</code> header, defined in <a href="http://tools.ietf.org/html/rfc6265#section-5.4">RFC6265</a></p>
-
                         </td>
                     </tr>
                 
@@ -362,7 +340,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                                title='hyper::header::Date'>Date</a></td>
                         <td class='docblock short'>
                              <p><code>Date</code> header, defined in <a href="http://tools.ietf.org/html/rfc7231#section-7.1.1.2">RFC7231</a></p>
-
                         </td>
                     </tr>
                 
@@ -371,7 +348,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                                title='hyper::header::ETag'>ETag</a></td>
                         <td class='docblock short'>
                              <p><code>ETag</code> header, defined in <a href="http://tools.ietf.org/html/rfc7232#section-2.3">RFC7232</a></p>
-
                         </td>
                     </tr>
                 
@@ -380,7 +356,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                                title='hyper::header::EntityTag'>EntityTag</a></td>
                         <td class='docblock short'>
                              <p>An entity tag, defined in <a href="https://tools.ietf.org/html/rfc7232#section-2.3">RFC7232</a></p>
-
                         </td>
                     </tr>
                 
@@ -389,7 +364,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                                title='hyper::header::Expires'>Expires</a></td>
                         <td class='docblock short'>
                              <p><code>Expires</code> header, defined in <a href="http://tools.ietf.org/html/rfc7234#section-5.3">RFC7234</a></p>
-
                         </td>
                     </tr>
                 
@@ -398,7 +372,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                                title='hyper::header::From'>From</a></td>
                         <td class='docblock short'>
                              <p><code>From</code> header, defined in <a href="http://tools.ietf.org/html/rfc7231#section-5.5.1">RFC7231</a></p>
-
                         </td>
                     </tr>
                 
@@ -407,7 +380,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                                title='hyper::header::HeaderFormatter'>HeaderFormatter</a></td>
                         <td class='docblock short'>
                              <p>A wrapper around any Header with a Display impl that calls fmt_header.</p>
-
                         </td>
                     </tr>
                 
@@ -416,7 +388,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                                title='hyper::header::HeaderView'>HeaderView</a></td>
                         <td class='docblock short'>
                              <p>Returned with the <code>HeadersItems</code> iterator.</p>
-
                         </td>
                     </tr>
                 
@@ -425,7 +396,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                                title='hyper::header::Headers'>Headers</a></td>
                         <td class='docblock short'>
                              <p>A map of header fields on requests and responses.</p>
-
                         </td>
                     </tr>
                 
@@ -434,7 +404,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                                title='hyper::header::HeadersItems'>HeadersItems</a></td>
                         <td class='docblock short'>
                              <p>An <code>Iterator</code> over the fields in a <code>Headers</code> map.</p>
-
                         </td>
                     </tr>
                 
@@ -443,7 +412,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                                title='hyper::header::Host'>Host</a></td>
                         <td class='docblock short'>
                              <p>The <code>Host</code> header.</p>
-
                         </td>
                     </tr>
                 
@@ -452,7 +420,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                                title='hyper::header::HttpDate'>HttpDate</a></td>
                         <td class='docblock short'>
                              <p>A <code>time::Time</code> with HTTP formatting and parsing</p>
-
                         </td>
                     </tr>
                 
@@ -462,7 +429,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                         <td class='docblock short'>
                              <p><code>If-Modified-Since</code> header, defined in
 <a href="http://tools.ietf.org/html/rfc7232#section-3.3">RFC7232</a></p>
-
                         </td>
                     </tr>
                 
@@ -472,7 +438,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                         <td class='docblock short'>
                              <p><code>If-Unmodified-Since</code> header, defined in
 <a href="http://tools.ietf.org/html/rfc7232#section-3.4">RFC7232</a></p>
-
                         </td>
                     </tr>
                 
@@ -482,7 +447,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                         <td class='docblock short'>
                              <p><code>Last-Modified</code> header, defined in
 <a href="http://tools.ietf.org/html/rfc7232#section-2.2">RFC7232</a></p>
-
                         </td>
                     </tr>
                 
@@ -492,7 +456,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                         <td class='docblock short'>
                              <p><code>Location</code> header, defined in
 <a href="http://tools.ietf.org/html/rfc7231#section-7.1.2">RFC7231</a></p>
-
                         </td>
                     </tr>
                 
@@ -501,7 +464,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                                title='hyper::header::Protocol'>Protocol</a></td>
                         <td class='docblock short'>
                              <p>Protocols that appear in the <code>Upgrade</code> header field</p>
-
                         </td>
                     </tr>
                 
@@ -510,7 +472,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                                title='hyper::header::Quality'>Quality</a></td>
                         <td class='docblock short'>
                              <p>Represents a quality used in quality values.</p>
-
                         </td>
                     </tr>
                 
@@ -520,7 +481,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                         <td class='docblock short'>
                              <p>Represents an item with a quality value as defined in
 <a href="https://tools.ietf.org/html/rfc7231#section-5.3.1">RFC7231</a>.</p>
-
                         </td>
                     </tr>
                 
@@ -530,7 +490,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                         <td class='docblock short'>
                              <p><code>Referer</code> header, defined in
 <a href="http://tools.ietf.org/html/rfc7231#section-5.5.2">RFC7231</a></p>
-
                         </td>
                     </tr>
                 
@@ -539,7 +498,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                                title='hyper::header::Server'>Server</a></td>
                         <td class='docblock short'>
                              <p><code>Server</code> header, defined in <a href="http://tools.ietf.org/html/rfc7231#section-7.4.2">RFC7231</a></p>
-
                         </td>
                     </tr>
                 
@@ -548,7 +506,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                                title='hyper::header::SetCookie'>SetCookie</a></td>
                         <td class='docblock short'>
                              <p><code>Set-Cookie</code> header, defined <a href="http://tools.ietf.org/html/rfc6265#section-4.1">RFC6265</a></p>
-
                         </td>
                     </tr>
                 
@@ -557,7 +514,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                                title='hyper::header::StrictTransportSecurity'>StrictTransportSecurity</a></td>
                         <td class='docblock short'>
                              <p><code>StrictTransportSecurity</code> header, defined in <a href="https://tools.ietf.org/html/rfc6797">RFC6797</a></p>
-
                         </td>
                     </tr>
                 
@@ -567,7 +523,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                         <td class='docblock short'>
                              <p><code>Transfer-Encoding</code> header, defined in
 <a href="http://tools.ietf.org/html/rfc7230#section-3.3.1">RFC7230</a></p>
-
                         </td>
                     </tr>
                 
@@ -576,7 +531,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                                title='hyper::header::Upgrade'>Upgrade</a></td>
                         <td class='docblock short'>
                              <p><code>Upgrade</code> header, defined in <a href="http://tools.ietf.org/html/rfc7230#section-6.7">RFC7230</a></p>
-
                         </td>
                     </tr>
                 
@@ -586,7 +540,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                         <td class='docblock short'>
                              <p><code>User-Agent</code> header, defined in
 <a href="http://tools.ietf.org/html/rfc7231#section-5.5.3">RFC7231</a></p>
-
                         </td>
                     </tr>
                 </table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
@@ -597,7 +550,6 @@ that via the numerals <code>1</code> and <code>0</code>.</p>
                         <td class='docblock short'>
                              <p>The <code>Access-Control-Allow-Origin</code> response header,
 part of <a href="http://www.w3.org/TR/cors/#access-control-allow-origin-response-header">CORS</a></p>
-
                         </td>
                     </tr>
                 
@@ -607,7 +559,6 @@ part of <a href="http://www.w3.org/TR/cors/#access-control-allow-origin-response
                         <td class='docblock short'>
                              <p>Each Range::Bytes header can contain one or more ByteRangeSpecs.
 Each ByteRangeSpec defines a range of bytes to fetch</p>
-
                         </td>
                     </tr>
                 
@@ -616,7 +567,6 @@ Each ByteRangeSpec defines a range of bytes to fetch</p>
                                title='hyper::header::CacheDirective'>CacheDirective</a></td>
                         <td class='docblock short'>
                              <p>CacheControl contains a list of these directives.</p>
-
                         </td>
                     </tr>
                 
@@ -625,7 +575,6 @@ Each ByteRangeSpec defines a range of bytes to fetch</p>
                                title='hyper::header::Charset'>Charset</a></td>
                         <td class='docblock short'>
                              <p>A Mime charset.</p>
-
                         </td>
                     </tr>
                 
@@ -634,7 +583,6 @@ Each ByteRangeSpec defines a range of bytes to fetch</p>
                                title='hyper::header::ConnectionOption'>ConnectionOption</a></td>
                         <td class='docblock short'>
                              <p>Values that can be in the <code>Connection</code> header.</p>
-
                         </td>
                     </tr>
                 
@@ -643,7 +591,6 @@ Each ByteRangeSpec defines a range of bytes to fetch</p>
                                title='hyper::header::ContentRangeSpec'>ContentRangeSpec</a></td>
                         <td class='docblock short'>
                              <p>Content-Range, described in <a href="https://tools.ietf.org/html/rfc7233#section-4.2">RFC7233</a></p>
-
                         </td>
                     </tr>
                 
@@ -653,7 +600,6 @@ Each ByteRangeSpec defines a range of bytes to fetch</p>
                         <td class='docblock short'>
                              <p>A value to represent an encoding used in <code>Transfer-Encoding</code>
 or <code>Accept-Encoding</code> header.</p>
-
                         </td>
                     </tr>
                 
@@ -662,7 +608,6 @@ or <code>Accept-Encoding</code> header.</p>
                                title='hyper::header::Expect'>Expect</a></td>
                         <td class='docblock short'>
                              <p>The <code>Expect</code> header.</p>
-
                         </td>
                     </tr>
                 
@@ -672,7 +617,6 @@ or <code>Accept-Encoding</code> header.</p>
                         <td class='docblock short'>
                              <p><code>If-Match</code> header, defined in
 <a href="https://tools.ietf.org/html/rfc7232#section-3.1">RFC7232</a></p>
-
                         </td>
                     </tr>
                 
@@ -682,7 +626,6 @@ or <code>Accept-Encoding</code> header.</p>
                         <td class='docblock short'>
                              <p><code>If-None-Match</code> header, defined in
 <a href="https://tools.ietf.org/html/rfc7232#section-3.2">RFC7232</a></p>
-
                         </td>
                     </tr>
                 
@@ -691,7 +634,6 @@ or <code>Accept-Encoding</code> header.</p>
                                title='hyper::header::IfRange'>IfRange</a></td>
                         <td class='docblock short'>
                              <p><code>If-Range</code> header, defined in <a href="http://tools.ietf.org/html/rfc7233#section-3.2">RFC7233</a></p>
-
                         </td>
                     </tr>
                 
@@ -700,7 +642,6 @@ or <code>Accept-Encoding</code> header.</p>
                                title='hyper::header::Pragma'>Pragma</a></td>
                         <td class='docblock short'>
                              <p>The <code>Pragma</code> header defined by HTTP/1.0.</p>
-
                         </td>
                     </tr>
                 
@@ -710,7 +651,6 @@ or <code>Accept-Encoding</code> header.</p>
                         <td class='docblock short'>
                              <p>A protocol name used to identify a spefic protocol. Names are case-sensitive
 except for the <code>WebSocket</code> value.</p>
-
                         </td>
                     </tr>
                 
@@ -719,7 +659,6 @@ except for the <code>WebSocket</code> value.</p>
                                title='hyper::header::Range'>Range</a></td>
                         <td class='docblock short'>
                              <p><code>Range</code> header, defined in <a href="https://tools.ietf.org/html/rfc7233#section-3.1">RFC7233</a></p>
-
                         </td>
                     </tr>
                 
@@ -728,7 +667,6 @@ except for the <code>WebSocket</code> value.</p>
                                title='hyper::header::RangeUnit'>RangeUnit</a></td>
                         <td class='docblock short'>
                              <p>Range Units, described in <a href="http://tools.ietf.org/html/rfc7233#section-2">RFC7233</a></p>
-
                         </td>
                     </tr>
                 
@@ -737,7 +675,6 @@ except for the <code>WebSocket</code> value.</p>
                                title='hyper::header::Vary'>Vary</a></td>
                         <td class='docblock short'>
                              <p><code>Vary</code> header, defined in <a href="https://tools.ietf.org/html/rfc7231#section-7.1.4">RFC7231</a></p>
-
                         </td>
                     </tr>
                 </table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
@@ -747,7 +684,6 @@ except for the <code>WebSocket</code> value.</p>
                                title='hyper::header::Header'>Header</a></td>
                         <td class='docblock short'>
                              <p>A trait for any object that will represent a header field and value.</p>
-
                         </td>
                     </tr>
                 
@@ -756,7 +692,6 @@ except for the <code>WebSocket</code> value.</p>
                                title='hyper::header::HeaderFormat'>HeaderFormat</a></td>
                         <td class='docblock short'>
                              <p>A trait for any object that will represent a header field and value.</p>
-
                         </td>
                     </tr>
                 
@@ -765,7 +700,6 @@ except for the <code>WebSocket</code> value.</p>
                                title='hyper::header::Scheme'>Scheme</a></td>
                         <td class='docblock short'>
                              <p>An Authorization scheme to be used in the header.</p>
-
                         </td>
                     </tr>
                 </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
@@ -775,7 +709,6 @@ except for the <code>WebSocket</code> value.</p>
                                title='hyper::header::q'>q</a></td>
                         <td class='docblock short'>
                              <p>Convenience function to create a <code>Quality</code> fromt a float.</p>
-
                         </td>
                     </tr>
                 
@@ -785,7 +718,6 @@ except for the <code>WebSocket</code> value.</p>
                         <td class='docblock short'>
                              <p>Convinience function to wrap a value in a <code>QualityItem</code>
 Sets <code>q</code> to the default 1.0</p>
-
                         </td>
                     </tr>
                 </table></section>
@@ -831,7 +763,7 @@ Sets <code>q</code> to the default 1.0</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

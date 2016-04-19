@@ -46,10 +46,10 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-4667' class='srclink' href='https://doc.rust-lang.org/nightly/std/io/stdio/struct.Stdin.html?gotosrc=4667' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-4831' class='srclink' href='https://doc.rust-lang.org/nightly/std/io/stdio/struct.Stdin.html?gotosrc=4831' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Stdin {
     // some fields omitted
-}</pre><div class='docblock'><p>A handle to the standard input stream of a process.</p>
+}</pre><span class="since">1.0.0</span><div class='docblock'><p>A handle to the standard input stream of a process.</p>
 
 <p>Each handle is a shared reference to a global buffer of input data to this
 process. A handle can be <code>lock</code>&#39;d to gain full access to <a href="trait.BufRead.html"><code>BufRead</code></a> methods
@@ -73,7 +73,8 @@ accessing the underlying data.</p>
 <p>For detailed semantics of this method, see the documentation on
 <a href="trait.BufRead.html#method.read_line"><code>BufRead::read_line</code></a>.</p>
 
-<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>;
 
 <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>input</span> <span class='op'>=</span> <span class='ident'>String</span>::<span class='ident'>new</span>();
@@ -146,7 +147,7 @@ continuing</li>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

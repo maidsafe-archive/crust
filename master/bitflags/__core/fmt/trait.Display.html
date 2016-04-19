@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-34886' class='srclink' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html?gotosrc=34886' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-35086' class='srclink' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html?gotosrc=35086' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait Display {
     fn <a href='#tymethod.fmt' class='fnname'>fmt</a>(&amp;self, &amp;mut <a class='struct' href='../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;;
 }</pre><div class='docblock'><p>Format trait for an empty format, <code>{}</code>.</p>
@@ -58,6 +58,7 @@ output, and so cannot be derived.</p>
 
 <h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
 <p>Implementing <code>Display</code> on a type:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fmt</span>;
 
@@ -85,7 +86,6 @@ output, and so cannot be derived.</p>
     <li><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/fmt/trait.Display.html' title='bitflags::__core::fmt::Display'>Display</a> for <a class='struct' href='../../../bitflags/__core/boxed/struct.Box.html' title='bitflags::__core::boxed::Box'>Box</a>&lt;T&gt; <span class='where'>where T: <a class='trait' href='../../../bitflags/__core/fmt/trait.Display.html' title='bitflags::__core::fmt::Display'>Display</a> + ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></li>
 <li><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/fmt/trait.Display.html' title='bitflags::__core::fmt::Display'>Display</a> for <a class='struct' href='../../../bitflags/__core/sync/struct.Arc.html' title='bitflags::__core::sync::Arc'>Arc</a>&lt;T&gt; <span class='where'>where T: <a class='trait' href='../../../bitflags/__core/fmt/trait.Display.html' title='bitflags::__core::fmt::Display'>Display</a> + ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></li>
 <li><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/fmt/trait.Display.html' title='bitflags::__core::fmt::Display'>Display</a> for <a class='struct' href='../../../bitflags/__core/rc/struct.Rc.html' title='bitflags::__core::rc::Rc'>Rc</a>&lt;T&gt; <span class='where'>where T: <a class='trait' href='../../../bitflags/__core/fmt/trait.Display.html' title='bitflags::__core::fmt::Display'>Display</a> + ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></li>
-<li><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Display.html' title='bitflags::__core::fmt::Display'>Display</a> for <a class='struct' href='../../../bitflags/__core/num/struct.ParseFloatError.html' title='bitflags::__core::num::ParseFloatError'>ParseFloatError</a></code></li>
 <li><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Display.html' title='bitflags::__core::fmt::Display'>Display</a> for <a class='struct' href='../../../bitflags/__core/num/struct.ParseIntError.html' title='bitflags::__core::num::ParseIntError'>ParseIntError</a></code></li>
 <li><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Display.html' title='bitflags::__core::fmt::Display'>Display</a> for <a class='struct' href='../../../bitflags/__core/str/struct.ParseBoolError.html' title='bitflags::__core::str::ParseBoolError'>ParseBoolError</a></code></li>
 <li><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Display.html' title='bitflags::__core::fmt::Display'>Display</a> for <a class='struct' href='../../../bitflags/__core/str/struct.Utf8Error.html' title='bitflags::__core::str::Utf8Error'>Utf8Error</a></code></li>
@@ -122,6 +122,7 @@ output, and so cannot be derived.</p>
 <li><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Display.html' title='bitflags::__core::fmt::Display'>Display</a> for <a class='struct' href='../../../bitflags/__core/string/struct.FromUtf8Error.html' title='bitflags::__core::string::FromUtf8Error'>FromUtf8Error</a></code></li>
 <li><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Display.html' title='bitflags::__core::fmt::Display'>Display</a> for <a class='struct' href='../../../bitflags/__core/string/struct.FromUtf16Error.html' title='bitflags::__core::string::FromUtf16Error'>FromUtf16Error</a></code></li>
 <li><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Display.html' title='bitflags::__core::fmt::Display'>Display</a> for <a class='struct' href='../../../bitflags/__core/string/struct.String.html' title='bitflags::__core::string::String'>String</a></code></li>
+<li><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Display.html' title='bitflags::__core::fmt::Display'>Display</a> for <a class='enum' href='../../../bitflags/__core/string/enum.ParseError.html' title='bitflags::__core::string::ParseError'>ParseError</a></code></li>
 <li><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Display.html' title='bitflags::__core::fmt::Display'>Display</a> for <a class='enum' href='../../../bitflags/__core/env/enum.VarError.html' title='bitflags::__core::env::VarError'>VarError</a></code></li>
 <li><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Display.html' title='bitflags::__core::fmt::Display'>Display</a> for <a class='struct' href='../../../bitflags/__core/env/struct.JoinPathsError.html' title='bitflags::__core::env::JoinPathsError'>JoinPathsError</a></code></li>
 <li><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Display.html' title='bitflags::__core::fmt::Display'>Display</a> for <a class='struct' href='../../../bitflags/__core/ffi/struct.NulError.html' title='bitflags::__core::ffi::NulError'>NulError</a></code></li>
@@ -145,7 +146,7 @@ output, and so cannot be derived.</p>
 <li><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Display.html' title='bitflags::__core::fmt::Display'>Display</a> for <a class='enum' href='../../../bitflags/__core/sync/mpsc/enum.TryRecvError.html' title='bitflags::__core::sync::mpsc::TryRecvError'>TryRecvError</a></code></li>
 <li><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Display.html' title='bitflags::__core::fmt::Display'>Display</a> for <a class='struct' href='../../../bitflags/__core/time/struct.SystemTimeError.html' title='bitflags::__core::time::SystemTimeError'>SystemTimeError</a></code></li>
 <li><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/fmt/trait.Display.html' title='bitflags::__core::fmt::Display'>Display</a> for <a class='struct' href='../../../bitflags/__core/sync/struct.PoisonError.html' title='bitflags::__core::sync::PoisonError'>PoisonError</a>&lt;T&gt;</code></li>
-<li><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/fmt/trait.Display.html' title='bitflags::__core::fmt::Display'>Display</a> for <a class='enum' href='../../../bitflags/__core/sync/enum.TryLockError.html' title='bitflags::__core::sync::TryLockError'>TryLockError</a>&lt;T&gt; <span class='where'>where T: <a class='trait' href='../../../bitflags/__core/marker/trait.Send.html' title='bitflags::__core::marker::Send'>Send</a> + <a class='trait' href='../../../bitflags/__core/marker/trait.Reflect.html' title='bitflags::__core::marker::Reflect'>Reflect</a></span></code></li>
+<li><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/fmt/trait.Display.html' title='bitflags::__core::fmt::Display'>Display</a> for <a class='enum' href='../../../bitflags/__core/sync/enum.TryLockError.html' title='bitflags::__core::sync::TryLockError'>TryLockError</a>&lt;T&gt;</code></li>
 <li><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Display.html' title='bitflags::__core::fmt::Display'>Display</a> for <a class='struct' href='https://doc.rust-lang.org/nightly/std/sys/os/struct.JoinPathsError.html' title='std::sys::os::JoinPathsError'>JoinPathsError</a></code></li>
 <li><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Display.html' title='bitflags::__core::fmt::Display'>Display</a> for <a class='struct' href='https://doc.rust-lang.org/nightly/std/sys/process/struct.ExitStatus.html' title='std::sys::process::ExitStatus'>ExitStatus</a></code></li>
 </ul><script type="text/javascript" async
@@ -193,7 +194,7 @@ output, and so cannot be derived.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

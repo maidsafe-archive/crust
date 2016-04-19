@@ -46,8 +46,8 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-2361' class='srclink' href='https://doc.rust-lang.org/nightly/collections/fmt/fn.format.html?gotosrc=2361' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub fn format(args: <a class='struct' href='../../../bitflags/__core/fmt/struct.Arguments.html' title='bitflags::__core::fmt::Arguments'>Arguments</a>) -&gt; <a class='struct' href='../../../bitflags/__core/string/struct.String.html' title='bitflags::__core::string::String'>String</a></pre><div class='docblock'><p>The format function takes a precompiled format string and a list of
+        </span><a id='src-2378' class='srclink' href='https://doc.rust-lang.org/nightly/collections/fmt/fn.format.html?gotosrc=2378' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub fn format(args: <a class='struct' href='../../../bitflags/__core/fmt/struct.Arguments.html' title='bitflags::__core::fmt::Arguments'>Arguments</a>) -&gt; <a class='struct' href='../../../bitflags/__core/string/struct.String.html' title='bitflags::__core::string::String'>String</a></pre><span class="since">1.0.0</span><div class='docblock'><p>The format function takes a precompiled format string and a list of
 arguments, to return the resulting formatted string.</p>
 
 <h1 id='arguments' class='section-header'><a href='#arguments'>Arguments</a></h1>
@@ -55,7 +55,8 @@ arguments, to return the resulting formatted string.</p>
 <li>args - a structure of arguments generated via the <code>format_args!</code> macro.</li>
 </ul>
 
-<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fmt</span>;
 
 <span class='kw'>let</span> <span class='ident'>s</span> <span class='op'>=</span> <span class='ident'>fmt</span>::<span class='ident'>format</span>(<span class='macro'>format_args</span><span class='macro'>!</span>(<span class='string'>&quot;Hello, {}!&quot;</span>, <span class='string'>&quot;world&quot;</span>));
@@ -103,7 +104,7 @@ arguments, to return the resulting formatted string.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

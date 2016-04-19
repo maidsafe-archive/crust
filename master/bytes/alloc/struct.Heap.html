@@ -48,9 +48,9 @@
             </a>
         </span><a id='src-12' class='srclink' href='../../src/bytes/alloc/heap.rs.html#7' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Heap;</pre><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../bytes/alloc/struct.Heap.html' title='bytes::alloc::Heap'>Heap</a></code></h3><div class='impl-items'><h4 id='method.allocate' class='method'><code>fn <a href='#method.allocate' class='fnname'>allocate</a>(&amp;self, len: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>) -&gt; <a class='struct' href='../../bytes/alloc/struct.MemRef.html' title='bytes::alloc::MemRef'>MemRef</a></code></h4>
-<h4 id='method.deallocate' class='method'><code>fn <a href='#method.deallocate' class='fnname'>deallocate</a>(&amp;self, mem: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.pointer.html'>*mut <a class='struct' href='../../bytes/alloc/struct.Mem.html' title='bytes::alloc::Mem'>Mem</a></a>)</code></h4>
+<h4 id='method.deallocate' class='method'><code>fn <a href='#method.deallocate' class='fnname'>deallocate</a>(&amp;self, mem: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.pointer.html'>*mut </a><a class='struct' href='../../bytes/alloc/struct.Mem.html' title='bytes::alloc::Mem'>Mem</a>)</code></h4>
 </div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='../../bytes/alloc/trait.Allocator.html' title='bytes::alloc::Allocator'>Allocator</a> for <a class='struct' href='../../bytes/alloc/struct.Heap.html' title='bytes::alloc::Heap'>Heap</a></code></h3><div class='impl-items'><h4 id='method.allocate-1' class='method'><code>fn <a href='../../bytes/alloc/trait.Allocator.html#method.allocate' class='fnname'>allocate</a>(&amp;self, len: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>) -&gt; <a class='struct' href='../../bytes/alloc/struct.MemRef.html' title='bytes::alloc::MemRef'>MemRef</a></code></h4>
-<h4 id='method.deallocate-1' class='method'><code>fn <a href='../../bytes/alloc/trait.Allocator.html#method.deallocate' class='fnname'>deallocate</a>(&amp;self, mem: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.pointer.html'>*mut <a class='struct' href='../../bytes/alloc/struct.Mem.html' title='bytes::alloc::Mem'>Mem</a></a>)</code></h4>
+<h4 id='method.deallocate-1' class='method'><code>fn <a href='../../bytes/alloc/trait.Allocator.html#method.deallocate' class='fnname'>deallocate</a>(&amp;self, mem: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.pointer.html'>*mut </a><a class='struct' href='../../bytes/alloc/struct.Mem.html' title='bytes::alloc::Mem'>Mem</a>)</code></h4>
 </div></section>
     <section id='search' class="content hidden"></section>
 
@@ -94,7 +94,7 @@
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

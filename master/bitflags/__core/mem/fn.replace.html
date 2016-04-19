@@ -46,8 +46,8 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-5908' class='srclink' href='https://doc.rust-lang.org/nightly/core/mem/fn.replace.html?gotosrc=5908' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub fn replace&lt;T&gt;(dest: &amp;mut T, src: T) -&gt; T</pre><div class='docblock'><p>Replaces the value at a mutable location with a new one, returning the old value, without
+        </span><a id='src-5978' class='srclink' href='https://doc.rust-lang.org/nightly/core/mem/fn.replace.html?gotosrc=5978' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub fn replace&lt;T&gt;(dest: &amp;mut T, src: T) -&gt; T</pre><span class="since">1.0.0</span><div class='docblock'><p>Replaces the value at a mutable location with a new one, returning the old value, without
 deinitializing or copying either one.</p>
 
 <p>This is primarily used for transferring and swapping ownership of a value in a mutable
@@ -55,6 +55,7 @@ location.</p>
 
 <h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
 <p>A simple example:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>mem</span>;
 
@@ -64,6 +65,7 @@ location.</p>
 
 <p>This function allows consumption of one field of a struct by replacing it with another value.
 The normal approach doesn&#39;t always work:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>struct</span> <span class='ident'>Buffer</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> { <span class='ident'>buf</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> }
 
@@ -79,6 +81,7 @@ The normal approach doesn&#39;t always work:</p>
 <p>Note that <code>T</code> does not necessarily implement <code>Clone</code>, so it can&#39;t even clone and reset
 <code>self.buf</code>. But <code>replace</code> can be used to disassociate the original value of <code>self.buf</code> from
 <code>self</code>, allowing it to be returned:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>mem</span>;
 <span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> <span class='ident'>Buffer</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> {
@@ -129,7 +132,7 @@ The normal approach doesn&#39;t always work:</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

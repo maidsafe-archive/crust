@@ -46,8 +46,8 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-4672' class='srclink' href='https://doc.rust-lang.org/nightly/std/io/stdio/fn.stdin.html?gotosrc=4672' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub fn stdin() -&gt; <a class='struct' href='../../../bitflags/__core/io/struct.Stdin.html' title='bitflags::__core::io::Stdin'>Stdin</a></pre><div class='docblock'><p>Constructs a new handle to the standard input of the current process.</p>
+        </span><a id='src-4836' class='srclink' href='https://doc.rust-lang.org/nightly/std/io/stdio/fn.stdin.html?gotosrc=4836' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub fn stdin() -&gt; <a class='struct' href='../../../bitflags/__core/io/struct.Stdin.html' title='bitflags::__core::io::Stdin'>Stdin</a></pre><span class="since">1.0.0</span><div class='docblock'><p>Constructs a new handle to the standard input of the current process.</p>
 
 <p>Each handle returned is a reference to a shared global buffer whose access
 is synchronized via a mutex. If you need more explicit control over
@@ -55,6 +55,7 @@ locking, see the <a href="struct.Stdin.html#method.lock"><code>lock() method</co
 
 <h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
 <p>Using implicit synchronization:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::{<span class='self'>self</span>, <span class='ident'>Read</span>};
 
@@ -62,6 +63,7 @@ locking, see the <a href="struct.Stdin.html#method.lock"><code>lock() method</co
 <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>io</span>::<span class='ident'>stdin</span>().<span class='ident'>read_to_string</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>buffer</span>));</pre>
 
 <p>Using explicit synchronization:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::{<span class='self'>self</span>, <span class='ident'>Read</span>};
 
@@ -113,7 +115,7 @@ locking, see the <a href="struct.Stdin.html#method.lock"><code>lock() method</co
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

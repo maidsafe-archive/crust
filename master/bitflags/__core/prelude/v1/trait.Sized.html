@@ -46,11 +46,12 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-13151' class='srclink' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html?gotosrc=13151' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-13228' class='srclink' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html?gotosrc=13228' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait Sized { }</pre><div class='docblock'><p>Types with a constant size known at compile-time.</p>
 
 <p>All type parameters which can be bounded have an implicit bound of <code>Sized</code>. The special syntax
 <code>?Sized</code> can be used to remove this bound if it is not appropriate.</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>struct</span> <span class='ident'>Foo</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span>(<span class='ident'>T</span>);
 <span class='kw'>struct</span> <span class='ident'>Bar</span><span class='op'>&lt;</span><span class='ident'>T</span>: ?<span class='ident'>Sized</span><span class='op'>&gt;</span>(<span class='ident'>T</span>);
@@ -105,7 +106,7 @@
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

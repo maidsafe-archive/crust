@@ -56,7 +56,6 @@ and SHA-256</p>
                                title='sodiumoxide::crypto::pwhash::scryptsalsa208sha256::HashedPassword'>HashedPassword</a></td>
                         <td class='docblock short'>
                              <p><code>HashedPassword</code>is a password verifier generated from a password</p>
-
                         </td>
                     </tr>
                 
@@ -66,7 +65,6 @@ and SHA-256</p>
                         <td class='docblock short'>
                              <p><code>MemLimit</code> represents the maximum amount of RAM that the functions in this
 module will use, in bytes.</p>
-
                         </td>
                     </tr>
                 
@@ -76,7 +74,6 @@ module will use, in bytes.</p>
                         <td class='docblock short'>
                              <p><code>OpsLimit</code> represents the maximum number of computations to perform when
 using the functions in this module.</p>
-
                         </td>
                     </tr>
                 
@@ -85,7 +82,6 @@ using the functions in this module.</p>
                                title='sodiumoxide::crypto::pwhash::scryptsalsa208sha256::Salt'>Salt</a></td>
                         <td class='docblock short'>
                              <p><code>Salt</code> used for password hashing</p>
-
                         </td>
                     </tr>
                 </table><h2 id='constants' class='section-header'><a href="#constants">Constants</a></h2>
@@ -95,7 +91,6 @@ using the functions in this module.</p>
                                title='sodiumoxide::crypto::pwhash::scryptsalsa208sha256::HASHEDPASSWORDBYTES'>HASHEDPASSWORDBYTES</a></td>
                         <td class='docblock short'>
                              <p>Number of bytes in a <code>HashedPassword</code>.</p>
-
                         </td>
                     </tr>
                 
@@ -104,7 +99,6 @@ using the functions in this module.</p>
                                title='sodiumoxide::crypto::pwhash::scryptsalsa208sha256::MEMLIMIT_INTERACTIVE'>MEMLIMIT_INTERACTIVE</a></td>
                         <td class='docblock short'>
                              <p>Safe base line for <code>MemLimit</code> for interactive password hashing.</p>
-
                         </td>
                     </tr>
                 
@@ -113,7 +107,6 @@ using the functions in this module.</p>
                                title='sodiumoxide::crypto::pwhash::scryptsalsa208sha256::MEMLIMIT_SENSITIVE'>MEMLIMIT_SENSITIVE</a></td>
                         <td class='docblock short'>
                              <p><code>MemLimit</code> for highly sensitive data.</p>
-
                         </td>
                     </tr>
                 
@@ -122,7 +115,6 @@ using the functions in this module.</p>
                                title='sodiumoxide::crypto::pwhash::scryptsalsa208sha256::OPSLIMIT_INTERACTIVE'>OPSLIMIT_INTERACTIVE</a></td>
                         <td class='docblock short'>
                              <p>Safe base line for <code>OpsLimit</code> for interactive password hashing.</p>
-
                         </td>
                     </tr>
                 
@@ -131,7 +123,6 @@ using the functions in this module.</p>
                                title='sodiumoxide::crypto::pwhash::scryptsalsa208sha256::OPSLIMIT_SENSITIVE'>OPSLIMIT_SENSITIVE</a></td>
                         <td class='docblock short'>
                              <p><code>OpsLimit</code> for highly sensitive data.</p>
-
                         </td>
                     </tr>
                 
@@ -140,7 +131,6 @@ using the functions in this module.</p>
                                title='sodiumoxide::crypto::pwhash::scryptsalsa208sha256::SALTBYTES'>SALTBYTES</a></td>
                         <td class='docblock short'>
                              <p>Number of bytes in a <code>Salt</code>.</p>
-
                         </td>
                     </tr>
                 
@@ -149,7 +139,6 @@ using the functions in this module.</p>
                                title='sodiumoxide::crypto::pwhash::scryptsalsa208sha256::STRPREFIX'>STRPREFIX</a></td>
                         <td class='docblock short'>
                              <p>All <code>HashedPasswords</code> start with this string.</p>
-
                         </td>
                     </tr>
                 </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
@@ -159,7 +148,6 @@ using the functions in this module.</p>
                                title='sodiumoxide::crypto::pwhash::scryptsalsa208sha256::derive_key'>derive_key</a></td>
                         <td class='docblock short'>
                              <p>The <code>derive_key()</code> function derives a key from a password and a <code>Salt</code></p>
-
                         </td>
                     </tr>
                 
@@ -168,7 +156,6 @@ using the functions in this module.</p>
                                title='sodiumoxide::crypto::pwhash::scryptsalsa208sha256::gen_salt'>gen_salt</a></td>
                         <td class='docblock short'>
                              <p><code>gen_salt()</code> randombly generates a new <code>Salt</code> for key derivation</p>
-
                         </td>
                     </tr>
                 
@@ -178,7 +165,6 @@ using the functions in this module.</p>
                         <td class='docblock short'>
                              <p>The <code>pwhash()</code> returns a <code>HashedPassword</code> which
 includes:</p>
-
                         </td>
                     </tr>
                 
@@ -188,7 +174,6 @@ includes:</p>
                         <td class='docblock short'>
                              <p><code>pwhash_verify()</code> verifies that the password <code>str_</code> is a valid password
 verification string (as generated by <code>pwhash()</code>) for <code>passwd</code></p>
-
                         </td>
                     </tr>
                 </table></section>
@@ -234,7 +219,7 @@ verification string (as generated by <code>pwhash()</code>) for <code>passwd</co
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

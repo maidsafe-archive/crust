@@ -46,13 +46,13 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-31528' class='srclink' href='https://doc.rust-lang.org/nightly/core/str/pattern/trait.Searcher.html?gotosrc=31528' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-31721' class='srclink' href='https://doc.rust-lang.org/nightly/core/str/pattern/trait.Searcher.html?gotosrc=31721' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub unsafe trait Searcher&lt;'a&gt; {
     fn <a href='#tymethod.haystack' class='fnname'>haystack</a>(&amp;self) -&gt; &amp;'a <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.str.html'>str</a>;
     fn <a href='#tymethod.next' class='fnname'>next</a>(&amp;mut self) -&gt; <a class='enum' href='../../../../bitflags/__core/str/pattern/enum.SearchStep.html' title='bitflags::__core::str::pattern::SearchStep'>SearchStep</a>;
 
-    fn <a href='#method.next_match' class='fnname'>next_match</a>(&amp;mut self) -&gt; <a class='enum' href='../../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>(<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>)</a>&gt; { ... }
-    fn <a href='#method.next_reject' class='fnname'>next_reject</a>(&amp;mut self) -&gt; <a class='enum' href='../../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>(<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>)</a>&gt; { ... }
+    fn <a href='#method.next_match' class='fnname'>next_match</a>(&amp;mut self) -&gt; <a class='enum' href='../../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>(</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>)</a>&gt; { ... }
+    fn <a href='#method.next_reject' class='fnname'>next_reject</a>(&amp;mut self) -&gt; <a class='enum' href='../../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>(</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>)</a>&gt; { ... }
 }</pre><div class='stability'><em class='stab unstable'>Unstable (<code>pattern</code>)<p>: API not fully fleshed out and ready to be stabilized</p>
 </em></div><div class='docblock'><p>A searcher for a string pattern.</p>
 
@@ -97,9 +97,9 @@ might produce the stream
 </div></div>
             <h2 id='provided-methods'>Provided Methods</h2>
             <div class='methods'>
-        <h3 id='method.next_match' class='method stab unstable'><code>fn <a href='#method.next_match' class='fnname'>next_match</a>(&amp;mut self) -&gt; <a class='enum' href='../../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>(<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>)</a>&gt;</code></h3><div class='stability'><em class='stab unstable'>Unstable (<code>pattern</code>)<p>: API not fully fleshed out and ready to be stabilized</p>
+        <h3 id='method.next_match' class='method stab unstable'><code>fn <a href='#method.next_match' class='fnname'>next_match</a>(&amp;mut self) -&gt; <a class='enum' href='../../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>(</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>)</a>&gt;</code></h3><div class='stability'><em class='stab unstable'>Unstable (<code>pattern</code>)<p>: API not fully fleshed out and ready to be stabilized</p>
 </em></div><div class='docblock'><p>Find the next <code>Match</code> result. See <code>next()</code></p>
-</div><h3 id='method.next_reject' class='method stab unstable'><code>fn <a href='#method.next_reject' class='fnname'>next_reject</a>(&amp;mut self) -&gt; <a class='enum' href='../../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>(<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>)</a>&gt;</code></h3><div class='stability'><em class='stab unstable'>Unstable (<code>pattern</code>)<p>: API not fully fleshed out and ready to be stabilized</p>
+</div><h3 id='method.next_reject' class='method stab unstable'><code>fn <a href='#method.next_reject' class='fnname'>next_reject</a>(&amp;mut self) -&gt; <a class='enum' href='../../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>(</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>, <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>)</a>&gt;</code></h3><div class='stability'><em class='stab unstable'>Unstable (<code>pattern</code>)<p>: API not fully fleshed out and ready to be stabilized</p>
 </em></div><div class='docblock'><p>Find the next <code>Reject</code> result. See <code>next()</code></p>
 </div></div>
         <h2 id='implementors'>Implementors</h2>
@@ -154,7 +154,7 @@ might produce the stream
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

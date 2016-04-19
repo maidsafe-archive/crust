@@ -53,9 +53,9 @@
     pub ai_socktype: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.i32.html'>i32</a>,
     pub ai_protocol: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.i32.html'>i32</a>,
     pub ai_addrlen: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>,
-    pub ai_addr: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.pointer.html'>*mut <a class='struct' href='../../../../../../../../nix/sys/socket/struct.sockaddr.html' title='nix::sys::socket::sockaddr'>sockaddr</a></a>,
-    pub ai_canonname: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.pointer.html'>*mut <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.i8.html'>i8</a></a>,
-    pub ai_next: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.pointer.html'>*mut <a class='struct' href='../../../../../../../../nix/sys/ioctl/libc/struct.addrinfo.html' title='nix::sys::ioctl::libc::addrinfo'>addrinfo</a></a>,
+    pub ai_addr: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.pointer.html'>*mut </a><a class='struct' href='../../../../../../../../nix/sys/socket/struct.sockaddr.html' title='nix::sys::socket::sockaddr'>sockaddr</a>,
+    pub ai_canonname: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.pointer.html'>*mut </a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.i8.html'>i8</a>,
+    pub ai_next: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.pointer.html'>*mut </a><a class='struct' href='../../../../../../../../nix/sys/ioctl/libc/struct.addrinfo.html' title='nix::sys::ioctl::libc::addrinfo'>addrinfo</a>,
 }</pre><h2 class='fields'>Fields</h2>
 <table><tr class='stab '>
                                   <td id='structfield.ai_flags'><code>ai_flags</code></td><td></td></tr><tr class='stab '>
@@ -66,7 +66,7 @@
                                   <td id='structfield.ai_addr'><code>ai_addr</code></td><td></td></tr><tr class='stab '>
                                   <td id='structfield.ai_canonname'><code>ai_canonname</code></td><td></td></tr><tr class='stab '>
                                   <td id='structfield.ai_next'><code>ai_next</code></td><td></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='struct' href='../../../../../../../../nix/sys/ioctl/libc/struct.addrinfo.html' title='nix::sys::ioctl::libc::addrinfo'>addrinfo</a></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='struct' href='../../../../../../../../nix/sys/ioctl/libc/struct.addrinfo.html' title='nix::sys::ioctl::libc::addrinfo'>addrinfo</a></code></h4>
-<h4 id='method.clone_from' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
+<h4 id='method.clone_from' class='method'><span class="since">1.0.0</span><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
 </div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Copy.html' title='core::marker::Copy'>Copy</a> for <a class='struct' href='../../../../../../../../nix/sys/ioctl/libc/struct.addrinfo.html' title='nix::sys::ioctl::libc::addrinfo'>addrinfo</a></code></h3><div class='impl-items'></div></section>
     <section id='search' class="content hidden"></section>
 
@@ -110,7 +110,7 @@
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

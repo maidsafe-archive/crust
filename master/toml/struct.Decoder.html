@@ -64,7 +64,7 @@ whether fields were decoded or not.</p>
 
 <p>This decoder can be passed to the <code>Decodable</code> methods or driven
 manually.</p>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='../rustc_serialize/serialize/trait.Decoder.html' title='rustc_serialize::serialize::Decoder'>Decoder</a> for <a class='struct' href='../toml/struct.Decoder.html' title='toml::Decoder'>Decoder</a></code></h3><div class='impl-items'><h4 id='assoc_type.Error' class='type'><code>type Error = <a class='struct' href='../toml/struct.DecodeError.html' title='toml::DecodeError'>DecodeError</a></code></h4>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='../rustc_serialize/serialize/trait.Decoder.html' title='rustc_serialize::serialize::Decoder'>Decoder</a> for <a class='struct' href='../toml/struct.Decoder.html' title='toml::Decoder'>Decoder</a></code></h3><div class='impl-items'><h4 id='associatedtype.Error' class='type'><code>type Error = <a class='struct' href='../toml/struct.DecodeError.html' title='toml::DecodeError'>DecodeError</a></code></h4>
 <h4 id='method.read_nil' class='method'><code>fn <a href='../rustc_serialize/serialize/trait.Decoder.html#method.read_nil' class='fnname'>read_nil</a>(&amp;mut self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, <a class='struct' href='../toml/struct.DecodeError.html' title='toml::DecodeError'>DecodeError</a>&gt;</code></h4>
 <h4 id='method.read_usize' class='method'><code>fn <a href='../rustc_serialize/serialize/trait.Decoder.html#method.read_usize' class='fnname'>read_usize</a>(&amp;mut self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, <a class='struct' href='../toml/struct.DecodeError.html' title='toml::DecodeError'>DecodeError</a>&gt;</code></h4>
 <h4 id='method.read_u64' class='method'><code>fn <a href='../rustc_serialize/serialize/trait.Decoder.html#method.read_u64' class='fnname'>read_u64</a>(&amp;mut self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a>, <a class='struct' href='../toml/struct.DecodeError.html' title='toml::DecodeError'>DecodeError</a>&gt;</code></h4>
@@ -142,7 +142,7 @@ manually.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

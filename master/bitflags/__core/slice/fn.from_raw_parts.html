@@ -46,8 +46,8 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-31362' class='srclink' href='https://doc.rust-lang.org/nightly/core/slice/fn.from_raw_parts.html?gotosrc=31362' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub unsafe fn from_raw_parts&lt;T&gt;(p: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*const T</a>, len: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>&amp;'a [T]</a></pre><div class='docblock'><p>Forms a slice from a pointer and a length.</p>
+        </span><a id='src-31555' class='srclink' href='https://doc.rust-lang.org/nightly/core/slice/fn.from_raw_parts.html?gotosrc=31555' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub unsafe fn from_raw_parts&lt;T&gt;(p: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*const T</a>, len: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>&amp;'a [T]</a></pre><span class="since">1.0.0</span><div class='docblock'><p>Forms a slice from a pointer and a length.</p>
 
 <p>The <code>len</code> argument is the number of <strong>elements</strong>, not the number of bytes.</p>
 
@@ -65,7 +65,8 @@ source lifetime is safe in the context, such as by providing a helper
 function taking the lifetime of a host value for the slice, or by explicit
 annotation.</p>
 
-<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>slice</span>;
 
 <span class='comment'>// manifest a slice out of thin air!</span>
@@ -117,7 +118,7 @@ annotation.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

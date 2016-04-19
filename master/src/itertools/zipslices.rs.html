@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/itertools-0.4.12/src/zipslices.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/itertools-0.4.13/src/zipslices.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>zipslices.rs.html -- source</title>
@@ -175,6 +175,10 @@
 <span id="132">132</span>
 <span id="133">133</span>
 <span id="134">134</span>
+<span id="135">135</span>
+<span id="136">136</span>
+<span id="137">137</span>
+<span id="138">138</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>cmp</span>;
 
@@ -189,7 +193,11 @@
 
 <span class='doccomment'>/// An iterator which iterates two slices simultaneously.</span>
 <span class='doccomment'>///</span>
-<span class='doccomment'>/// `ZipSlices` acts like a double-ended `.zip()` iterator, but more efficiently.</span>
+<span class='doccomment'>/// `ZipSlices` acts like a double-ended `.zip()` iterator.</span>
+<span class='doccomment'>///</span>
+<span class='doccomment'>/// It was intended to be more efficient than `.zip()`, and it was, then</span>
+<span class='doccomment'>/// rustc changed how it optimizes so it can not promise improved performance</span>
+<span class='doccomment'>/// at this time.</span>
 <span class='doccomment'>///</span>
 <span class='doccomment'>/// Note that elements past the end of the shortest of the two slices are ignored.</span>
 <span class='doccomment'>///</span>
@@ -354,7 +362,7 @@
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

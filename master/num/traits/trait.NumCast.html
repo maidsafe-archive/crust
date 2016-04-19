@@ -26,7 +26,7 @@
     
 
     <nav class="sidebar">
-        <a href='../../num/index.html'><img src='http://rust-num.github.io/num/rust-logo-128x128-blk-v2.png' alt='' width='100'></a>
+        <a href='../../num/index.html'><img src='http://rust-num.github.io/num/rust-logo-128x128-blk-v2.png' alt='logo' width='100'></a>
         <p class='location'><a href='../index.html'>num</a>::<wbr><a href='index.html'>traits</a></p><script>window.sidebarCurrent = {name: 'NumCast', ty: 'trait', relpath: ''};</script><script defer src="sidebar-items.js"></script>
     </nav>
 
@@ -46,14 +46,14 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-5953' class='srclink' href='../../src/num/traits.rs.html#1396-1400' title='goto source code'>[src]</a></span></h1>
-<pre class='rust trait'>pub trait NumCast: <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a> + <a class='trait' href='../../num/traits/trait.ToPrimitive.html' title='num::traits::ToPrimitive'>ToPrimitive</a> {
-    fn <a href='#tymethod.from' class='fnname'>from</a>&lt;T: <a class='trait' href='../../num/traits/trait.ToPrimitive.html' title='num::traits::ToPrimitive'>ToPrimitive</a>&gt;(n: T) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;Self&gt;;
+        </span><a id='src-1976' class='srclink' href='../../num_traits/cast/trait.NumCast.html?gotosrc=1976' title='goto source code'>[src]</a></span></h1>
+<pre class='rust trait'>pub trait NumCast: <a class='trait' href='../../num/traits/trait.ToPrimitive.html' title='num::traits::ToPrimitive'>ToPrimitive</a> {
+    fn <a href='#tymethod.from' class='fnname'>from</a>&lt;T&gt;(n: T) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;Self&gt; <span class='where'>where T: <a class='trait' href='../../num/traits/trait.ToPrimitive.html' title='num::traits::ToPrimitive'>ToPrimitive</a></span>;
 }</pre><div class='docblock'><p>An interface for casting between machine scalars.</p>
 </div>
             <h2 id='required-methods'>Required Methods</h2>
             <div class='methods'>
-        <h3 id='tymethod.from' class='method stab '><code>fn <a href='#tymethod.from' class='fnname'>from</a>&lt;T: <a class='trait' href='../../num/traits/trait.ToPrimitive.html' title='num::traits::ToPrimitive'>ToPrimitive</a>&gt;(n: T) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;Self&gt;</code></h3><div class='docblock'><p>Creates a number from another value that can be converted into
+        <h3 id='tymethod.from' class='method stab '><code>fn <a href='#tymethod.from' class='fnname'>from</a>&lt;T&gt;(n: T) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;Self&gt; <span class='where'>where T: <a class='trait' href='../../num/traits/trait.ToPrimitive.html' title='num::traits::ToPrimitive'>ToPrimitive</a></span></code></h3><div class='docblock'><p>Creates a number from another value that can be converted into
 a primitive via the <code>ToPrimitive</code> trait.</p>
 </div></div>
         <h2 id='implementors'>Implementors</h2>
@@ -71,7 +71,7 @@ a primitive via the <code>ToPrimitive</code> trait.</p>
 <li><code>impl <a class='trait' href='../../num/traits/trait.NumCast.html' title='num::traits::NumCast'>NumCast</a> for <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.f32.html'>f32</a></code></li>
 <li><code>impl <a class='trait' href='../../num/traits/trait.NumCast.html' title='num::traits::NumCast'>NumCast</a> for <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.f64.html'>f64</a></code></li>
 </ul><script type="text/javascript" async
-                              src="../../implementors/num/traits/trait.NumCast.js">
+                              src="../../implementors/num_traits/cast/trait.NumCast.js">
                       </script></section>
     <section id='search' class="content hidden"></section>
 
@@ -115,7 +115,7 @@ a primitive via the <code>ToPrimitive</code> trait.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

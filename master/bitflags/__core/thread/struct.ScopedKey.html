@@ -46,10 +46,10 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-908' class='srclink' href='https://doc.rust-lang.org/nightly/std/thread/scoped_tls/struct.ScopedKey.html?gotosrc=908' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-927' class='srclink' href='https://doc.rust-lang.org/nightly/std/thread/scoped_tls/struct.ScopedKey.html?gotosrc=927' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct ScopedKey&lt;T&gt; <span class='where'>where T: 'static</span> {
     // some fields omitted
-}</pre><div class='stability'><em class='stab unstable'>Unstable (<code>scoped_tls</code>)<p>: scoped TLS has yet to have wide enough use to fully consider stabilizing its interface</p>
+}</pre><div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.8.0<p>: hasn&#39;t proven itself over LocalKey</p>
 </em></div><div class='docblock'><p>Type representing a thread local storage key corresponding to a reference
 to the type parameter <code>T</code>.</p>
 
@@ -58,7 +58,7 @@ type <code>T</code> scoped to a particular lifetime. Keys provides two methods, 
 and <code>with</code>, both of which currently use closures to control the scope of
 their contents.</p>
 </div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;T&gt; <a class='struct' href='../../../bitflags/__core/thread/struct.ScopedKey.html' title='bitflags::__core::thread::ScopedKey'>ScopedKey</a>&lt;T&gt;</code></h3><div class='impl-items'><h4 id='method.set' class='method'><code>fn <a href='#method.set' class='fnname'>set</a>&lt;R, F&gt;(&amp;'static self, t: &amp;T, cb: F) -&gt; R <span class='where'>where F: <a class='trait' href='../../../bitflags/__core/ops/trait.FnOnce.html' title='bitflags::__core::ops::FnOnce'>FnOnce</a>() -&gt; R</span></code></h4>
-<div class='stability'><em class='stab unstable'>Unstable (<code>scoped_tls</code>)<p>: scoped TLS has yet to have wide enough use to fully consider stabilizing its interface</p>
+<div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.8.0<p>: hasn&#39;t proven itself over LocalKey</p>
 </em></div><div class='docblock'><p>Inserts a value into this scoped thread local storage slot for a
 duration of a closure.</p>
 
@@ -68,7 +68,8 @@ this function is called recursively inside of <code>cb</code>.</p>
 <p>Upon return, this function will restore the previous value, if any
 was available.</p>
 
-<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<pre class='rust rust-example-rendered'>
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>feature</span>(<span class='ident'>scoped_tls</span>)]</span>
 
 <span class='macro'>scoped_thread_local</span><span class='macro'>!</span>(<span class='kw'>static</span> <span class='ident'>FOO</span>: <span class='ident'>u32</span>);
@@ -87,7 +88,7 @@ was available.</p>
     <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>val</span>, <span class='number'>100</span>);
 });</pre>
 </div><h4 id='method.with' class='method'><code>fn <a href='#method.with' class='fnname'>with</a>&lt;R, F&gt;(&amp;'static self, cb: F) -&gt; R <span class='where'>where F: <a class='trait' href='../../../bitflags/__core/ops/trait.FnOnce.html' title='bitflags::__core::ops::FnOnce'>FnOnce</a>(&amp;T) -&gt; R</span></code></h4>
-<div class='stability'><em class='stab unstable'>Unstable (<code>scoped_tls</code>)<p>: scoped TLS has yet to have wide enough use to fully consider stabilizing its interface</p>
+<div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.8.0<p>: hasn&#39;t proven itself over LocalKey</p>
 </em></div><div class='docblock'><p>Gets a value out of this scoped variable.</p>
 
 <p>This function takes a closure which receives the value of this
@@ -96,7 +97,8 @@ variable.</p>
 <h1 id='panics' class='section-header'><a href='#panics'>Panics</a></h1>
 <p>This function will panic if <code>set</code> has not previously been called.</p>
 
-<h1 id='examples-1' class='section-header'><a href='#examples-1'>Examples</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='examples-1' class='section-header'><a href='#examples-1'>Examples</a></h1>
+<pre class='rust rust-example-rendered'>
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>feature</span>(<span class='ident'>scoped_tls</span>)]</span>
 
 <span class='macro'>scoped_thread_local</span><span class='macro'>!</span>(<span class='kw'>static</span> <span class='ident'>FOO</span>: <span class='ident'>u32</span>);
@@ -105,7 +107,7 @@ variable.</p>
     <span class='comment'>// work with `slot`</span>
 });</pre>
 </div><h4 id='method.is_set' class='method'><code>fn <a href='#method.is_set' class='fnname'>is_set</a>(&amp;'static self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a></code></h4>
-<div class='stability'><em class='stab unstable'>Unstable (<code>scoped_tls</code>)<p>: scoped TLS has yet to have wide enough use to fully consider stabilizing its interface</p>
+<div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.8.0<p>: hasn&#39;t proven itself over LocalKey</p>
 </em></div><div class='docblock'><p>Test whether this TLS key has been <code>set</code> for the current thread.</p>
 </div></div></section>
     <section id='search' class="content hidden"></section>
@@ -150,7 +152,7 @@ variable.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

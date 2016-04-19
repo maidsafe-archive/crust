@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-4975' class='srclink' href='https://doc.rust-lang.org/nightly/std/io/trait.BufRead.html?gotosrc=4975' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-5139' class='srclink' href='https://doc.rust-lang.org/nightly/std/io/trait.BufRead.html?gotosrc=5139' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait BufRead: <a class='trait' href='../../../../bitflags/__core/io/trait.Read.html' title='bitflags::__core::io::Read'>Read</a> {
     fn <a href='#tymethod.fill_buf' class='fnname'>fill_buf</a>(&amp;mut self) -&gt; <a class='enum' href='../../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>&amp;[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>]</a>, <a class='struct' href='../../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;;
     fn <a href='#tymethod.consume' class='fnname'>consume</a>(&amp;mut self, amt: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>);
@@ -64,6 +64,7 @@ if you want to read by line, you&#39;ll need <code>BufRead</code>, which include
 
 <h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
 <p>A locked standard input implements <code>BufRead</code>:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>prelude</span>::<span class='op'>*</span>;
@@ -78,6 +79,7 @@ type</a> to turn it into a <code>BufRead</code>.</p>
 
 <p>For example, <a href="../fs/struct.File.html"><code>File</code></a> implements <code>Read</code>, but not <code>BufRead</code>.
 <code>BufReader</code> to the rescue!</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::{<span class='self'>self</span>, <span class='ident'>BufReader</span>};
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>prelude</span>::<span class='op'>*</span>;
@@ -110,6 +112,7 @@ read, but returned an error.</p>
 
 <h1 id='examples-1' class='section-header'><a href='#examples-1'>Examples</a></h1>
 <p>A locked standard input implements <code>BufRead</code>:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>prelude</span>::<span class='op'>*</span>;
@@ -169,6 +172,7 @@ present in <code>buf</code> and its length will have been adjusted appropriately
 <h1 id='examples-3' class='section-header'><a href='#examples-3'>Examples</a></h1>
 <p>A locked standard input implements <code>BufRead</code>. In this example, we&#39;ll
 read from standard input until we see an <code>a</code> byte.</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>prelude</span>::<span class='op'>*</span>;
@@ -204,6 +208,7 @@ event that all data read so far was valid UTF-8.</p>
 read all of the lines from standard input. If we were to do this in
 an actual project, the <a href="#method.lines"><code>lines()</code></a> method would be easier, of
 course.</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>prelude</span>::<span class='op'>*</span>;
@@ -231,6 +236,7 @@ yielded an error.</p>
 <h1 id='examples-5' class='section-header'><a href='#examples-5'>Examples</a></h1>
 <p>A locked standard input implements <code>BufRead</code>. In this example, we&#39;ll
 read some input from standard input, splitting on commas.</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>prelude</span>::<span class='op'>*</span>;
@@ -248,6 +254,7 @@ byte (the 0xA byte) or CRLF (0xD, 0xA bytes) at the end.</p>
 
 <h1 id='examples-6' class='section-header'><a href='#examples-6'>Examples</a></h1>
 <p>A locked standard input implements <code>BufRead</code>:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>prelude</span>::<span class='op'>*</span>;
@@ -261,7 +268,7 @@ byte (the 0xA byte) or CRLF (0xD, 0xA bytes) at the end.</p>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
     <li><code>impl&lt;R&gt; <a class='trait' href='../../../../bitflags/__core/io/trait.BufRead.html' title='bitflags::__core::io::BufRead'>BufRead</a> for <a class='struct' href='../../../../bitflags/__core/io/struct.BufReader.html' title='bitflags::__core::io::BufReader'>BufReader</a>&lt;R&gt; <span class='where'>where R: <a class='trait' href='../../../../bitflags/__core/io/trait.Read.html' title='bitflags::__core::io::Read'>Read</a></span></code></li>
-<li><code>impl&lt;T&gt; <a class='trait' href='../../../../bitflags/__core/io/trait.BufRead.html' title='bitflags::__core::io::BufRead'>BufRead</a> for <a class='struct' href='../../../../bitflags/__core/io/struct.Cursor.html' title='bitflags::__core::io::Cursor'>Cursor</a>&lt;T&gt; <span class='where'>where T: <a class='trait' href='../../../../bitflags/__core/convert/trait.AsRef.html' title='bitflags::__core::convert::AsRef'>AsRef</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>[<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a>]</a>&gt;</span></code></li>
+<li><code>impl&lt;T&gt; <a class='trait' href='../../../../bitflags/__core/io/trait.BufRead.html' title='bitflags::__core::io::BufRead'>BufRead</a> for <a class='struct' href='../../../../bitflags/__core/io/struct.Cursor.html' title='bitflags::__core::io::Cursor'>Cursor</a>&lt;T&gt; <span class='where'>where T: <a class='trait' href='../../../../bitflags/__core/convert/trait.AsRef.html' title='bitflags::__core::convert::AsRef'>AsRef</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>]</a>&gt;</span></code></li>
 <li><code>impl&lt;'a, B&gt; <a class='trait' href='../../../../bitflags/__core/io/trait.BufRead.html' title='bitflags::__core::io::BufRead'>BufRead</a> for &amp;'a mut B <span class='where'>where B: <a class='trait' href='../../../../bitflags/__core/io/trait.BufRead.html' title='bitflags::__core::io::BufRead'>BufRead</a> + ?<a class='trait' href='../../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></li>
 <li><code>impl&lt;B&gt; <a class='trait' href='../../../../bitflags/__core/io/trait.BufRead.html' title='bitflags::__core::io::BufRead'>BufRead</a> for <a class='struct' href='../../../../bitflags/__core/boxed/struct.Box.html' title='bitflags::__core::boxed::Box'>Box</a>&lt;B&gt; <span class='where'>where B: <a class='trait' href='../../../../bitflags/__core/io/trait.BufRead.html' title='bitflags::__core::io::BufRead'>BufRead</a> + ?<a class='trait' href='../../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></li>
 <li><code>impl&lt;'a&gt; <a class='trait' href='../../../../bitflags/__core/io/trait.BufRead.html' title='bitflags::__core::io::BufRead'>BufRead</a> for <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>&amp;'a [</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>]</a></code></li>
@@ -313,7 +320,7 @@ byte (the 0xA byte) or CRLF (0xD, 0xA bytes) at the end.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

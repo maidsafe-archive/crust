@@ -46,10 +46,13 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-5197' class='srclink' href='https://doc.rust-lang.org/nightly/core/num/struct.ParseIntError.html?gotosrc=5197' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-5201' class='srclink' href='https://doc.rust-lang.org/nightly/core/num/struct.ParseIntError.html?gotosrc=5201' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct ParseIntError {
     // some fields omitted
-}</pre><div class='docblock'><p>An error which can be returned when parsing an integer.</p>
+}</pre><span class="since">1.0.0</span><div class='docblock'><p>An error which can be returned when parsing an integer.</p>
+
+<p>This error is used as the error type for the <code>from_str_radix()</code> functions
+on the primitive integer types, such as <a href="../std/primitive.i8.html#method.from_str_radix"><code>i8::from_str_radix()</code></a>.</p>
 </div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Display.html' title='bitflags::__core::fmt::Display'>Display</a> for <a class='struct' href='../../../bitflags/__core/num/struct.ParseIntError.html' title='bitflags::__core::num::ParseIntError'>ParseIntError</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='../../../bitflags/__core/fmt/trait.Display.html#method.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class='struct' href='../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h4>
 </div><h3 class='impl'><code>impl <a class='trait' href='../../../bitflags/__core/error/trait.Error.html' title='bitflags::__core::error::Error'>Error</a> for <a class='struct' href='../../../bitflags/__core/num/struct.ParseIntError.html' title='bitflags::__core::num::ParseIntError'>ParseIntError</a></code></h3><div class='impl-items'><h4 id='method.description' class='method'><code>fn <a href='../../../bitflags/__core/error/trait.Error.html#method.description' class='fnname'>description</a>(&amp;self) -&gt; &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.str.html'>str</a></code></h4>
 <h4 id='method.cause' class='method'><code>fn <a href='../../../bitflags/__core/error/trait.Error.html#method.cause' class='fnname'>cause</a>(&amp;self) -&gt; <a class='enum' href='../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;&amp;<a class='trait' href='../../../bitflags/__core/error/trait.Error.html' title='bitflags::__core::error::Error'>Error</a>&gt;</code></h4>
@@ -101,7 +104,7 @@
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

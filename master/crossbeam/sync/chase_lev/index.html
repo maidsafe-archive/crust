@@ -54,7 +54,8 @@ described in <a href="http://neteril.org/%7Ejeremie/Dynamic_Circular_Work_Queue.
 described in <a href="http://www.di.ens.fr/%7Ezappa/readings/ppopp13.pdf">&quot;Correct and Efficient Work-Stealing for Weak Memory Models&quot;</a>.
 The implementation is heavily based on the pseudocode found in the papers.</p>
 
-<h1 id='example' class='section-header'><a href='#example'>Example</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='example' class='section-header'><a href='#example'>Example</a></h1>
+<pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>crossbeam</span>::<span class='ident'>sync</span>::<span class='ident'>chase_lev</span>;
 <span class='kw'>let</span> (<span class='kw-2'>mut</span> <span class='ident'>worker</span>, <span class='ident'>stealer</span>) <span class='op'>=</span> <span class='ident'>chase_lev</span>::<span class='ident'>deque</span>();
 
@@ -79,7 +80,6 @@ The implementation is heavily based on the pseudocode found in the papers.</p>
                              <p>The stealing half of the work-stealing deque. Stealers have access to the
 opposite end of the deque from the worker, and they only have access to the
 <code>steal</code> method.</p>
-
                         </td>
                     </tr>
                 
@@ -89,7 +89,6 @@ opposite end of the deque from the worker, and they only have access to the
                         <td class='docblock short'>
                              <p>Worker half of the work-stealing deque. This worker has exclusive access to
 one side of the deque, and uses <code>push</code> and <code>try_pop</code> method to manipulate it.</p>
-
                         </td>
                     </tr>
                 </table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
@@ -99,7 +98,6 @@ one side of the deque, and uses <code>push</code> and <code>try_pop</code> metho
                                title='crossbeam::sync::chase_lev::Steal'>Steal</a></td>
                         <td class='docblock short'>
                              <p>When stealing some data, this is an enumeration of the possible outcomes.</p>
-
                         </td>
                     </tr>
                 </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
@@ -109,7 +107,6 @@ one side of the deque, and uses <code>push</code> and <code>try_pop</code> metho
                                title='crossbeam::sync::chase_lev::deque'>deque</a></td>
                         <td class='docblock short'>
                              <p>Creates a new empty deque</p>
-
                         </td>
                     </tr>
                 </table></section>
@@ -155,7 +152,7 @@ one side of the deque, and uses <code>push</code> and <code>try_pop</code> metho
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

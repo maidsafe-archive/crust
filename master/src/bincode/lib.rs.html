@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/bincode-0.5.2/src/lib.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/bincode-0.5.4/src/lib.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>lib.rs.html -- source</title>
@@ -26,7 +26,7 @@
     
 
     <nav class="sidebar">
-        <a href='../../bincode/index.html'><img src='./icon.png' alt='' width='100'></a>
+        <a href='../../bincode/index.html'><img src='./icon.png' alt='logo' width='100'></a>
         
     </nav>
 
@@ -116,6 +116,10 @@
 <span id="73">73</span>
 <span id="74">74</span>
 <span id="75">75</span>
+<span id="76">76</span>
+<span id="77">77</span>
+<span id="78">78</span>
+<span id="79">79</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! `bincode` is a crate for encoding and decoding using a tiny binary</span>
 <span class='doccomment'>//! serialization strategy.</span>
@@ -156,16 +160,20 @@
 
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>doc</span>(<span class='ident'>html_logo_url</span> <span class='op'>=</span> <span class='string'>&quot;./icon.png&quot;</span>)]</span>
 
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;rustc-serialize&quot;</span>)]</span>
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>rustc_serialize</span> <span class='kw'>as</span> <span class='ident'>rustc_serialize_crate</span>;
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>byteorder</span>;
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>num</span>;
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;serde&quot;</span>)]</span>
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>serde</span> <span class='kw'>as</span> <span class='ident'>serde_crate</span>;
 
 
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>refbox</span>::{<span class='ident'>RefBox</span>, <span class='ident'>StrBox</span>, <span class='ident'>SliceBox</span>};
 
 <span class='kw'>mod</span> <span class='ident'>refbox</span>;
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;rustc-serialize&quot;</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>rustc_serialize</span>;
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;serde&quot;</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>serde</span>;
 
 <span class='doccomment'>/// A limit on the amount of bytes that can be read or written.</span>
@@ -185,7 +193,7 @@
 <span class='doccomment'>/// that is larger than your decoder expects.  By supplying a size limit to an</span>
 <span class='doccomment'>/// encoding function, the encoder will verify that the structure can be encoded</span>
 <span class='doccomment'>/// within that limit.  This verification occurs before any bytes are written to</span>
-<span class='doccomment'>/// the Writer, so recovering from an the error is easy.</span>
+<span class='doccomment'>/// the Writer, so recovering from an error is easy.</span>
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Clone</span>, <span class='ident'>Copy</span>, <span class='ident'>Debug</span>, <span class='ident'>Hash</span>, <span class='ident'>Eq</span>, <span class='ident'>PartialEq</span>, <span class='ident'>Ord</span>, <span class='ident'>PartialOrd</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>enum</span> <span class='ident'>SizeLimit</span> {
     <span class='ident'>Infinite</span>,
@@ -236,7 +244,7 @@
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

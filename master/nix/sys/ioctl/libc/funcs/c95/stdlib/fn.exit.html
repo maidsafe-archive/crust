@@ -55,7 +55,8 @@ consequences. This will skip all unwinding code, which means that anything
 relying on unwinding for cleanup (such as flushing and closing a buffer to a
 file) may act in an unexpected way.</p>
 
-<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<pre class='rust rust-example-rendered'>
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>libc</span>;
 
 <span class='kw'>fn</span> <span class='ident'>main</span>() {
@@ -106,7 +107,7 @@ file) may act in an unexpected way.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

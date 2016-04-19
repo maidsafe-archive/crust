@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-5872' class='srclink' href='https://doc.rust-lang.org/nightly/core/mem/index.html?gotosrc=5872' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-5942' class='srclink' href='https://doc.rust-lang.org/nightly/core/mem/index.html?gotosrc=5942' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Basic functions for dealing with memory</p>
 
 <p>This module contains functions for querying the size and alignment of
@@ -91,7 +91,6 @@ types, initializing and manipulating memory.</p>
                                title='bitflags::__core::mem::align_of'>align_of</a></td>
                         <td class='docblock short'>
                              <p>Returns the alignment in memory for a type.</p>
-
                         </td>
                     </tr>
                 
@@ -100,7 +99,6 @@ types, initializing and manipulating memory.</p>
                                title='bitflags::__core::mem::align_of_val'>align_of_val</a></td>
                         <td class='docblock short'>
                              <p>Returns the ABI-required minimum alignment of the type of the value that <code>val</code> points to</p>
-
                         </td>
                     </tr>
                 
@@ -109,7 +107,6 @@ types, initializing and manipulating memory.</p>
                                title='bitflags::__core::mem::drop'>drop</a></td>
                         <td class='docblock short'>
                              <p>Disposes of a value.</p>
-
                         </td>
                     </tr>
                 
@@ -119,7 +116,6 @@ types, initializing and manipulating memory.</p>
                         <td class='docblock short'>
                              <p>Leaks a value into the void, consuming ownership and never running its
 destructor.</p>
-
                         </td>
                     </tr>
                 
@@ -128,7 +124,6 @@ destructor.</p>
                                title='bitflags::__core::mem::min_align_of'>min_align_of</a></td>
                         <td class='docblock short'>
                             [<em class='stab  deprecated'>Deprecated</em>] <p>Returns the ABI-required minimum alignment of a type</p>
-
                         </td>
                     </tr>
                 
@@ -137,7 +132,6 @@ destructor.</p>
                                title='bitflags::__core::mem::min_align_of_val'>min_align_of_val</a></td>
                         <td class='docblock short'>
                             [<em class='stab  deprecated'>Deprecated</em>] <p>Returns the ABI-required minimum alignment of the type of the value that <code>val</code> points to</p>
-
                         </td>
                     </tr>
                 
@@ -147,7 +141,6 @@ destructor.</p>
                         <td class='docblock short'>
                              <p>Replaces the value at a mutable location with a new one, returning the old value, without
 deinitializing or copying either one.</p>
-
                         </td>
                     </tr>
                 
@@ -156,7 +149,6 @@ deinitializing or copying either one.</p>
                                title='bitflags::__core::mem::size_of'>size_of</a></td>
                         <td class='docblock short'>
                              <p>Returns the size of a type in bytes.</p>
-
                         </td>
                     </tr>
                 
@@ -165,7 +157,6 @@ deinitializing or copying either one.</p>
                                title='bitflags::__core::mem::size_of_val'>size_of_val</a></td>
                         <td class='docblock short'>
                              <p>Returns the size of the given value in bytes.</p>
-
                         </td>
                     </tr>
                 
@@ -175,7 +166,6 @@ deinitializing or copying either one.</p>
                         <td class='docblock short'>
                              <p>Swap the values at two mutable locations of the same type, without deinitializing or copying
 either one.</p>
-
                         </td>
                     </tr>
                 
@@ -184,7 +174,6 @@ either one.</p>
                                title='bitflags::__core::mem::transmute'>transmute</a></td>
                         <td class='docblock short'>
                              <p>Unsafely transforms a value of one type into a value of another type.</p>
-
                         </td>
                     </tr>
                 
@@ -194,7 +183,6 @@ either one.</p>
                         <td class='docblock short'>
                              <p>Interprets <code>src</code> as <code>&amp;U</code>, and then reads <code>src</code> without moving the contained
 value.</p>
-
                         </td>
                     </tr>
                 
@@ -204,7 +192,6 @@ value.</p>
                         <td class='docblock short'>
                              <p>Bypasses Rust&#39;s normal memory-initialization checks by pretending to
 produce a value of type T, while doing nothing at all.</p>
-
                         </td>
                     </tr>
                 
@@ -213,7 +200,6 @@ produce a value of type T, while doing nothing at all.</p>
                                title='bitflags::__core::mem::zeroed'>zeroed</a></td>
                         <td class='docblock short'>
                              <p>Creates a value initialized to zero.</p>
-
                         </td>
                     </tr>
                 
@@ -222,7 +208,6 @@ produce a value of type T, while doing nothing at all.</p>
                                title='bitflags::__core::mem::dropped'>dropped</a></td>
                         <td class='docblock short'>
                             [<em class='stab unstable'>Unstable</em>] <p>Creates a value initialized to an unspecified series of bytes.</p>
-
                         </td>
                     </tr>
                 </table></section>
@@ -268,7 +253,7 @@ produce a value of type T, while doing nothing at all.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-9745' class='srclink' href='https://doc.rust-lang.org/nightly/std/sync/rwlock/struct.StaticRwLock.html?gotosrc=9745' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-10397' class='srclink' href='https://doc.rust-lang.org/nightly/std/sync/rwlock/struct.StaticRwLock.html?gotosrc=10397' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct StaticRwLock {
     // some fields omitted
 }</pre><div class='stability'><em class='stab unstable'>Unstable (<code>static_rwlock</code>)<p>: may be merged with RwLock in the future</p>
@@ -56,7 +56,8 @@
 automatic global access as well as lazy initialization. The internal
 resources of this RwLock, however, must be manually deallocated.</p>
 
-<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<pre class='rust rust-example-rendered'>
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>feature</span>(<span class='ident'>static_rwlock</span>)]</span>
 
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::{<span class='ident'>StaticRwLock</span>, <span class='ident'>RW_LOCK_INIT</span>};
@@ -72,7 +73,7 @@ resources of this RwLock, however, must be manually deallocated.</p>
     <span class='comment'>// ... exclusive write access</span>
 }
 <span class='kw'>unsafe</span> { <span class='ident'>LOCK</span>.<span class='ident'>destroy</span>() } <span class='comment'>// free all resources</span></pre>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../../bitflags/__core/sync/struct.StaticRwLock.html' title='bitflags::__core::sync::StaticRwLock'>StaticRwLock</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>const fn <a href='#method.new' class='fnname'>new</a>() -&gt; <a class='struct' href='../../../bitflags/__core/sync/struct.StaticRwLock.html' title='bitflags::__core::sync::StaticRwLock'>StaticRwLock</a></code></h4>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../../bitflags/__core/sync/struct.StaticRwLock.html' title='bitflags::__core::sync::StaticRwLock'>StaticRwLock</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>() -&gt; <a class='struct' href='../../../bitflags/__core/sync/struct.StaticRwLock.html' title='bitflags::__core::sync::StaticRwLock'>StaticRwLock</a></code></h4>
 <div class='stability'><em class='stab unstable'>Unstable (<code>static_rwlock</code>)<p>: may be merged with RwLock in the future</p>
 </em></div><div class='docblock'><p>Creates a new rwlock.</p>
 </div><h4 id='method.read' class='method'><code>fn <a href='#method.read' class='fnname'>read</a>(&amp;'static self) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='struct' href='../../../bitflags/__core/sync/struct.RwLockReadGuard.html' title='bitflags::__core::sync::RwLockReadGuard'>RwLockReadGuard</a>&lt;'static, <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>&gt;, <a class='struct' href='../../../bitflags/__core/sync/struct.PoisonError.html' title='bitflags::__core::sync::PoisonError'>PoisonError</a>&lt;<a class='struct' href='../../../bitflags/__core/sync/struct.RwLockReadGuard.html' title='bitflags::__core::sync::RwLockReadGuard'>RwLockReadGuard</a>&lt;'static, <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>&gt;&gt;&gt;</code></h4>
@@ -148,7 +149,7 @@ all platforms.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

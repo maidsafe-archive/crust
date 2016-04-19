@@ -61,7 +61,6 @@ implementations to trigger.</p>
                         <td class='docblock short'>
                              <p>An implementation of the <code>DataPrioritizer</code> trait that is based on finding the first stream from
 the given <code>SessionState</code> instance that can send data and returning this chunk.</p>
-
                         </td>
                     </tr>
                 </table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
@@ -71,7 +70,6 @@ the given <code>SessionState</code> instance that can send data and returning th
                                title='solicit::http::priority::DataPrioritizer'>DataPrioritizer</a></td>
                         <td class='docblock short'>
                              <p>A trait that types that want to provide data to an HTTP/2 connection need to implement.</p>
-
                         </td>
                     </tr>
                 </table></section>
@@ -117,7 +115,7 @@ the given <code>SessionState</code> instance that can send data and returning th
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

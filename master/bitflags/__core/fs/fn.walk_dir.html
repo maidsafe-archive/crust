@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-3838' class='srclink' href='https://doc.rust-lang.org/nightly/std/fs/fn.walk_dir.html?gotosrc=3838' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-3999' class='srclink' href='https://doc.rust-lang.org/nightly/std/fs/fn.walk_dir.html?gotosrc=3999' title='goto source code'>[src]</a></span></h1>
 <pre class='rust fn'>pub fn walk_dir&lt;P&gt;(path: P) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='struct' href='../../../bitflags/__core/fs/struct.WalkDir.html' title='bitflags::__core::fs::WalkDir'>WalkDir</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt; <span class='where'>where P: <a class='trait' href='../../../bitflags/__core/convert/trait.AsRef.html' title='bitflags::__core::convert::AsRef'>AsRef</a>&lt;<a class='struct' href='../../../bitflags/__core/path/struct.Path.html' title='bitflags::__core::path::Path'>Path</a>&gt;</span></pre><div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.6.0<p>: superceded by the walkdir crate</p>
 </em></div><div class='docblock'><p>Returns an iterator that will recursively walk the directory structure
 rooted at <code>path</code>.</p>
@@ -99,7 +99,7 @@ be encountered after an iterator is initially constructed.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

@@ -26,7 +26,7 @@
     
 
     <nav class="sidebar">
-        <a href='../../bincode/index.html'><img src='./icon.png' alt='' width='100'></a>
+        <a href='../../bincode/index.html'><img src='./icon.png' alt='logo' width='100'></a>
         <p class='location'><a href='../index.html'>bincode</a>::<wbr><a href='index.html'>rustc_serialize</a></p><script>window.sidebarCurrent = {name: 'SizeChecker', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
     </nav>
 
@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-985' class='srclink' href='../../src/bincode/rustc_serialize/writer.rs.html#35-38' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-981' class='srclink' href='../../src/bincode/rustc_serialize/writer.rs.html#33-36' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct SizeChecker {
     pub size_limit: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a>,
     pub written: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a>,
@@ -54,7 +54,7 @@
 <table><tr class='stab '>
                                   <td id='structfield.size_limit'><code>size_limit</code></td><td></td></tr><tr class='stab '>
                                   <td id='structfield.written'><code>written</code></td><td></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../bincode/rustc_serialize/struct.SizeChecker.html' title='bincode::rustc_serialize::SizeChecker'>SizeChecker</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(limit: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a>) -&gt; <a class='struct' href='../../bincode/rustc_serialize/struct.SizeChecker.html' title='bincode::rustc_serialize::SizeChecker'>SizeChecker</a></code></h4>
-</div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='../../rustc_serialize/serialize/trait.Encoder.html' title='rustc_serialize::serialize::Encoder'>Encoder</a> for <a class='struct' href='../../bincode/rustc_serialize/struct.SizeChecker.html' title='bincode::rustc_serialize::SizeChecker'>SizeChecker</a></code></h3><div class='impl-items'><h4 id='assoc_type.Error' class='type'><code>type Error = <a class='enum' href='../../bincode/rustc_serialize/enum.EncodingError.html' title='bincode::rustc_serialize::EncodingError'>EncodingError</a></code></h4>
+</div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='../../rustc_serialize/serialize/trait.Encoder.html' title='rustc_serialize::serialize::Encoder'>Encoder</a> for <a class='struct' href='../../bincode/rustc_serialize/struct.SizeChecker.html' title='bincode::rustc_serialize::SizeChecker'>SizeChecker</a></code></h3><div class='impl-items'><h4 id='associatedtype.Error' class='type'><code>type Error = <a class='enum' href='../../bincode/rustc_serialize/enum.EncodingError.html' title='bincode::rustc_serialize::EncodingError'>EncodingError</a></code></h4>
 <h4 id='method.emit_nil' class='method'><code>fn <a href='../../rustc_serialize/serialize/trait.Encoder.html#method.emit_nil' class='fnname'>emit_nil</a>(&amp;mut self) -&gt; <a class='type' href='../../bincode/rustc_serialize/type.EncodingResult.html' title='bincode::rustc_serialize::EncodingResult'>EncodingResult</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
 <h4 id='method.emit_usize' class='method'><code>fn <a href='../../rustc_serialize/serialize/trait.Encoder.html#method.emit_usize' class='fnname'>emit_usize</a>(&amp;mut self, v: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>) -&gt; <a class='type' href='../../bincode/rustc_serialize/type.EncodingResult.html' title='bincode::rustc_serialize::EncodingResult'>EncodingResult</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
 <h4 id='method.emit_u64' class='method'><code>fn <a href='../../rustc_serialize/serialize/trait.Encoder.html#method.emit_u64' class='fnname'>emit_u64</a>(&amp;mut self, v: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a>) -&gt; <a class='type' href='../../bincode/rustc_serialize/type.EncodingResult.html' title='bincode::rustc_serialize::EncodingResult'>EncodingResult</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
@@ -133,7 +133,7 @@
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

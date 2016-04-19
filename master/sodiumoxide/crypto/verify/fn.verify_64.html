@@ -47,7 +47,7 @@
                 [<span class='inner'>&#x2212;</span>]
             </a>
         </span><a id='src-4755' class='srclink' href='../../../src/sodiumoxide/crypto/verify.rs.html#43-47' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub fn verify_64(x: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.array.html'>[<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>; 64]</a>, y: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.array.html'>[<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>; 64]</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></pre><div class='docblock'><p><code>verify_64()</code> returns true if <code>x[0]</code>, <code>x[1]</code>, ..., <code>x[63]</code> are the
+<pre class='rust fn'>pub fn verify_64(x: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.array.html'>[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.array.html'>; 64]</a>, y: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.array.html'>[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.array.html'>; 64]</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></pre><div class='docblock'><p><code>verify_64()</code> returns true if <code>x[0]</code>, <code>x[1]</code>, ..., <code>x[63]</code> are the
 same as <code>y[0]</code>, <code>y[1]</code>, ..., <code>y[63]</code>. Otherwise it returns <code>false</code>.</p>
 
 <p>This function is safe to use for secrets <code>x[0]</code>, <code>x[1]</code>, ..., <code>x[63]</code>,
@@ -99,7 +99,7 @@ timing attacks.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

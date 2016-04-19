@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/w_result-0.1.1/src/lib.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/w_result-0.1.2/src/lib.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>lib.rs.html -- source</title>
@@ -415,6 +415,7 @@
 <span id="372">372</span>
 <span id="373">373</span>
 <span id="374">374</span>
+<span id="375">375</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! Defines `WResult`, a result type that carries warnings.</span>
 <span class='doccomment'>//!</span>
@@ -435,6 +436,7 @@
 
 <span class='doccomment'>/// A result type that carries warnings.</span>
 <span class='attribute'>#[<span class='ident'>must_use</span>]</span>
+<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>PartialEq</span>, <span class='ident'>Eq</span>, <span class='ident'>Hash</span>, <span class='ident'>Clone</span>, <span class='ident'>Debug</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>enum</span> <span class='ident'>WResult</span><span class='op'>&lt;</span><span class='ident'>T</span>, <span class='ident'>W</span>, <span class='ident'>E</span><span class='op'>&gt;</span> {
     <span class='doccomment'>/// Contains the success value along with any accumulated warnings.</span>
     <span class='ident'>WOk</span>(<span class='ident'>T</span>, <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>W</span><span class='op'>&gt;</span>),
@@ -834,7 +836,7 @@
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

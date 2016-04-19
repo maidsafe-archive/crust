@@ -75,12 +75,14 @@ features = [&quot;query_encoding&quot;]
 
 <h1 id='url-parsing-and-data-structures' class='section-header'><a href='#url-parsing-and-data-structures'>URL parsing and data structures</a></h1>
 <p>First, URL parsing may fail for various reasons and therefore returns a <code>Result</code>.</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>url</span>::{<span class='ident'>Url</span>, <span class='ident'>ParseError</span>};
 
 <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>Url</span>::<span class='ident'>parse</span>(<span class='string'>&quot;http://[:::1]&quot;</span>) <span class='op'>==</span> <span class='prelude-val'>Err</span>(<span class='ident'>ParseError</span>::<span class='ident'>InvalidIpv6Address</span>))</pre>
 
 <p>Let’s parse a valid URL and look at its components.</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>url</span>::{<span class='ident'>Url</span>, <span class='ident'>SchemeData</span>};
 
@@ -106,6 +108,7 @@ features = [&quot;query_encoding&quot;]
 they apply to all URLs.
 Every other components has accessors because they only apply to URLs said to be
 “in a relative scheme”. <code>https</code> is a relative scheme, but <code>data</code> is not:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>url</span>::{<span class='ident'>Url</span>, <span class='ident'>SchemeData</span>};
 
@@ -124,6 +127,7 @@ Every other components has accessors because they only apply to URLs said to be
 </code></pre>
 
 <p>Since parsed URL are absolute, giving a base is required:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>url</span>::{<span class='ident'>Url</span>, <span class='ident'>ParseError</span>};
 
@@ -131,6 +135,7 @@ Every other components has accessors because they only apply to URLs said to be
 
 <p><code>UrlParser</code> is a method-chaining API to provide various optional parameters
 to URL parsing, including a base URL.</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>url</span>::{<span class='ident'>Url</span>, <span class='ident'>UrlParser</span>};
 
@@ -145,7 +150,6 @@ to URL parsing, including a base URL.</p>
                         <td class='docblock short'>
                              <p>Parser and serializer for the <a href="http://url.spec.whatwg.org/#application/x-www-form-urlencoded"><code>application/x-www-form-urlencoded</code> format</a>,
 as used by HTML forms.</p>
-
                         </td>
                     </tr>
                 
@@ -154,7 +158,6 @@ as used by HTML forms.</p>
                                title='url::format'>format</a></td>
                         <td class='docblock short'>
                              <p>Formatting utilities for URLs.</p>
-
                         </td>
                     </tr>
                 
@@ -171,7 +174,6 @@ as used by HTML forms.</p>
                                title='url::punycode'>punycode</a></td>
                         <td class='docblock short'>
                              <p>Punycode (<a href="http://tools.ietf.org/html/rfc3492">RFC 3492</a>) implementation.</p>
-
                         </td>
                     </tr>
                 
@@ -181,7 +183,6 @@ as used by HTML forms.</p>
                         <td class='docblock short'>
                              <p>These methods are not meant for use in Rust code,
 only to help implement the JavaScript URLUtils API: <a href="http://url.spec.whatwg.org/#urlutils">http://url.spec.whatwg.org/#urlutils</a></p>
-
                         </td>
                     </tr>
                 </table><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
@@ -191,7 +192,6 @@ only to help implement the JavaScript URLUtils API: <a href="http://url.spec.wha
                                title='url::Ipv6Address'>Ipv6Address</a></td>
                         <td class='docblock short'>
                              <p>A 128 bit IPv6 address</p>
-
                         </td>
                     </tr>
                 
@@ -200,7 +200,6 @@ only to help implement the JavaScript URLUtils API: <a href="http://url.spec.wha
                                title='url::OpaqueOrigin'>OpaqueOrigin</a></td>
                         <td class='docblock short'>
                              <p>Opaque identifier for URLs that have file or other schemes</p>
-
                         </td>
                     </tr>
                 
@@ -209,7 +208,6 @@ only to help implement the JavaScript URLUtils API: <a href="http://url.spec.wha
                                title='url::RelativeSchemeData'>RelativeSchemeData</a></td>
                         <td class='docblock short'>
                              <p>Components for URLs in a <em>relative</em> scheme such as HTTP.</p>
-
                         </td>
                     </tr>
                 
@@ -218,7 +216,6 @@ only to help implement the JavaScript URLUtils API: <a href="http://url.spec.wha
                                title='url::Url'>Url</a></td>
                         <td class='docblock short'>
                              <p>The parsed representation of an absolute URL.</p>
-
                         </td>
                     </tr>
                 
@@ -227,7 +224,6 @@ only to help implement the JavaScript URLUtils API: <a href="http://url.spec.wha
                                title='url::UrlParser'>UrlParser</a></td>
                         <td class='docblock short'>
                              <p>A set of optional parameters for URL parsing.</p>
-
                         </td>
                     </tr>
                 </table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
@@ -237,7 +233,6 @@ only to help implement the JavaScript URLUtils API: <a href="http://url.spec.wha
                                title='url::Host'>Host</a></td>
                         <td class='docblock short'>
                              <p>The host name of an URL.</p>
-
                         </td>
                     </tr>
                 
@@ -246,7 +241,6 @@ only to help implement the JavaScript URLUtils API: <a href="http://url.spec.wha
                                title='url::Origin'>Origin</a></td>
                         <td class='docblock short'>
                              <p>The origin of the URL</p>
-
                         </td>
                     </tr>
                 
@@ -255,7 +249,6 @@ only to help implement the JavaScript URLUtils API: <a href="http://url.spec.wha
                                title='url::ParseError'>ParseError</a></td>
                         <td class='docblock short'>
                              <p>Errors that can occur during parsing.</p>
-
                         </td>
                     </tr>
                 
@@ -264,7 +257,6 @@ only to help implement the JavaScript URLUtils API: <a href="http://url.spec.wha
                                title='url::SchemeData'>SchemeData</a></td>
                         <td class='docblock short'>
                              <p>The components of the URL whose representation depends on where the scheme is <em>relative</em>.</p>
-
                         </td>
                     </tr>
                 
@@ -273,7 +265,6 @@ only to help implement the JavaScript URLUtils API: <a href="http://url.spec.wha
                                title='url::SchemeType'>SchemeType</a></td>
                         <td class='docblock short'>
                              <p>Determines the behavior of the URL parser for a given scheme.</p>
-
                         </td>
                     </tr>
                 </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
@@ -284,7 +275,6 @@ only to help implement the JavaScript URLUtils API: <a href="http://url.spec.wha
                         <td class='docblock short'>
                              <p>Parse <code>input</code> as a “standalone” URL path,
 with an optional query string and fragment identifier.</p>
-
                         </td>
                     </tr>
                 
@@ -293,7 +283,6 @@ with an optional query string and fragment identifier.</p>
                                title='url::whatwg_scheme_type_mapper'>whatwg_scheme_type_mapper</a></td>
                         <td class='docblock short'>
                              <p><a href="http://url.spec.whatwg.org/#relative-scheme">http://url.spec.whatwg.org/#relative-scheme</a></p>
-
                         </td>
                     </tr>
                 </table><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
@@ -303,7 +292,6 @@ with an optional query string and fragment identifier.</p>
                                title='url::ErrorHandler'>ErrorHandler</a></td>
                         <td class='docblock short'>
                              <p>This is called on non-fatal parse errors.</p>
-
                         </td>
                     </tr>
                 
@@ -357,7 +345,7 @@ with an optional query string and fragment identifier.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

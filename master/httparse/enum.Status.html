@@ -56,9 +56,9 @@
 <code>Partial</code> is used when parsing did not reach the end of the expected value,
 but no invalid data was found.</p>
 </div><h2 class='variants'>Variants</h2>
-<table><tr><td id='variant.Complete'><code>Complete</code></td><td><div class='docblock'><p>The completed result.</p>
-</div></td></tr><tr><td id='variant.Partial'><code>Partial</code></td><td><div class='docblock'><p>A partial result.</p>
-</div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;T&gt; <a class='enum' href='../httparse/enum.Status.html' title='httparse::Status'>Status</a>&lt;T&gt;</code></h3><div class='impl-items'><h4 id='method.is_complete' class='method'><code>fn <a href='#method.is_complete' class='fnname'>is_complete</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+<table class='variants_table'><tr><td id='variant.Complete'><code>Complete</code></td><td><div class='docblock'><p>The completed result.</p>
+</div></td><td></td></tr><tr><td id='variant.Partial'><code>Partial</code></td><td><div class='docblock'><p>A partial result.</p>
+</div></td><td></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;T&gt; <a class='enum' href='../httparse/enum.Status.html' title='httparse::Status'>Status</a>&lt;T&gt;</code></h3><div class='impl-items'><h4 id='method.is_complete' class='method'><code>fn <a href='#method.is_complete' class='fnname'>is_complete</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
 <div class='docblock'><p>Convenience method to check if status is complete.</p>
 </div><h4 id='method.is_partial' class='method'><code>fn <a href='#method.is_partial' class='fnname'>is_partial</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
 <div class='docblock'><p>Convenience method to check if status is partial.</p>
@@ -69,7 +69,7 @@ but no invalid data was found.</p>
 </div><h3 class='impl'><code>impl&lt;T: <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a>&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a> for <a class='enum' href='../httparse/enum.Status.html' title='httparse::Status'>Status</a>&lt;T&gt;</code></h3><div class='impl-items'><h4 id='method.eq' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.eq' class='fnname'>eq</a>(&amp;self, __arg_0: &amp;<a class='enum' href='../httparse/enum.Status.html' title='httparse::Status'>Status</a>&lt;T&gt;) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
 <h4 id='method.ne' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.ne' class='fnname'>ne</a>(&amp;self, __arg_0: &amp;<a class='enum' href='../httparse/enum.Status.html' title='httparse::Status'>Status</a>&lt;T&gt;) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
 </div><h3 class='impl'><code>impl&lt;T: <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a>&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='enum' href='../httparse/enum.Status.html' title='httparse::Status'>Status</a>&lt;T&gt;</code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='enum' href='../httparse/enum.Status.html' title='httparse::Status'>Status</a>&lt;T&gt;</code></h4>
-<h4 id='method.clone_from' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
+<h4 id='method.clone_from' class='method'><span class="since">1.0.0</span><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
 </div><h3 class='impl'><code>impl&lt;T: <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Copy.html' title='core::marker::Copy'>Copy</a>&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Copy.html' title='core::marker::Copy'>Copy</a> for <a class='enum' href='../httparse/enum.Status.html' title='httparse::Status'>Status</a>&lt;T&gt;</code></h3><div class='impl-items'></div></section>
     <section id='search' class="content hidden"></section>
 
@@ -113,7 +113,7 @@ but no invalid data was found.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/regex-0.1.65/src/exec.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/regex-0.1.66/src/exec.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>exec.rs.html -- source</title>
@@ -26,7 +26,7 @@
     
 
     <nav class="sidebar">
-        <a href='../../regex/index.html'><img src='https://www.rust-lang.org/logos/rust-logo-128x128-blk-v2.png' alt='' width='100'></a>
+        <a href='../../regex/index.html'><img src='https://www.rust-lang.org/logos/rust-logo-128x128-blk-v2.png' alt='logo' width='100'></a>
         
     </nav>
 
@@ -964,6 +964,70 @@
 <span id="921">921</span>
 <span id="922">922</span>
 <span id="923">923</span>
+<span id="924">924</span>
+<span id="925">925</span>
+<span id="926">926</span>
+<span id="927">927</span>
+<span id="928">928</span>
+<span id="929">929</span>
+<span id="930">930</span>
+<span id="931">931</span>
+<span id="932">932</span>
+<span id="933">933</span>
+<span id="934">934</span>
+<span id="935">935</span>
+<span id="936">936</span>
+<span id="937">937</span>
+<span id="938">938</span>
+<span id="939">939</span>
+<span id="940">940</span>
+<span id="941">941</span>
+<span id="942">942</span>
+<span id="943">943</span>
+<span id="944">944</span>
+<span id="945">945</span>
+<span id="946">946</span>
+<span id="947">947</span>
+<span id="948">948</span>
+<span id="949">949</span>
+<span id="950">950</span>
+<span id="951">951</span>
+<span id="952">952</span>
+<span id="953">953</span>
+<span id="954">954</span>
+<span id="955">955</span>
+<span id="956">956</span>
+<span id="957">957</span>
+<span id="958">958</span>
+<span id="959">959</span>
+<span id="960">960</span>
+<span id="961">961</span>
+<span id="962">962</span>
+<span id="963">963</span>
+<span id="964">964</span>
+<span id="965">965</span>
+<span id="966">966</span>
+<span id="967">967</span>
+<span id="968">968</span>
+<span id="969">969</span>
+<span id="970">970</span>
+<span id="971">971</span>
+<span id="972">972</span>
+<span id="973">973</span>
+<span id="974">974</span>
+<span id="975">975</span>
+<span id="976">976</span>
+<span id="977">977</span>
+<span id="978">978</span>
+<span id="979">979</span>
+<span id="980">980</span>
+<span id="981">981</span>
+<span id="982">982</span>
+<span id="983">983</span>
+<span id="984">984</span>
+<span id="985">985</span>
+<span id="986">986</span>
+<span id="987">987</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2014-2015 The Rust Project Developers. See the COPYRIGHT</span>
 <span class='comment'>// file at the top-level directory of this distribution and at</span>
@@ -979,7 +1043,7 @@
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>collections</span>::<span class='ident'>HashMap</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>Arc</span>;
 
-<span class='kw'>use</span> <span class='ident'>mempool</span>::<span class='ident'>Pool</span>;
+<span class='kw'>use</span> <span class='ident'>thread_local</span>::<span class='ident'>CachedThreadLocal</span>;
 <span class='kw'>use</span> <span class='ident'>syntax</span>::{<span class='ident'>Expr</span>, <span class='ident'>ExprBuilder</span>, <span class='ident'>Literals</span>};
 
 <span class='kw'>use</span> <span class='ident'>backtrack</span>;
@@ -1000,12 +1064,11 @@
 <span class='doccomment'>/// In particular, this manages the various compiled forms of a single regular</span>
 <span class='doccomment'>/// expression and the choice of which matching engine to use to execute a</span>
 <span class='doccomment'>/// regular expression.</span>
-<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>Exec</span> {
     <span class='doccomment'>/// All read only state.</span>
     <span class='ident'>ro</span>: <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>ExecReadOnly</span><span class='op'>&gt;</span>,
     <span class='doccomment'>/// Caches for the various matching engines.</span>
-    <span class='ident'>cache</span>: <span class='ident'>Pool</span><span class='op'>&lt;</span><span class='ident'>ProgramCache</span><span class='op'>&gt;</span>,
+    <span class='ident'>cache</span>: <span class='ident'>CachedThreadLocal</span><span class='op'>&lt;</span><span class='ident'>ProgramCache</span><span class='op'>&gt;</span>,
 }
 
 <span class='doccomment'>/// ExecNoSync is like Exec, except it embeds a reference to a cache. This</span>
@@ -1171,8 +1234,7 @@
                 <span class='ident'>suffixes</span>: <span class='ident'>LiteralSearcher</span>::<span class='ident'>empty</span>(),
                 <span class='ident'>match_type</span>: <span class='ident'>MatchType</span>::<span class='ident'>Nothing</span>,
             });
-            <span class='kw'>let</span> <span class='ident'>ro_</span> <span class='op'>=</span> <span class='ident'>ro</span>.<span class='ident'>clone</span>();
-            <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='ident'>Exec</span> { <span class='ident'>ro</span>: <span class='ident'>ro</span>, <span class='ident'>cache</span>: <span class='ident'>create_pool</span>(<span class='ident'>ro_</span>) });
+            <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='ident'>Exec</span> { <span class='ident'>ro</span>: <span class='ident'>ro</span>, <span class='ident'>cache</span>: <span class='ident'>CachedThreadLocal</span>::<span class='ident'>new</span>() });
         }
         <span class='kw'>let</span> <span class='ident'>parsed</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>Parsed</span>::<span class='ident'>parse</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>res</span>, <span class='self'>self</span>.<span class='ident'>only_utf8</span>));
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>nfa</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(
@@ -1212,8 +1274,7 @@
         <span class='comment'>// println!(&quot;MATCH TYPE for &#39;{:?}&#39;: {:?}&quot;, ro.res, ro.match_type);</span>
 
         <span class='kw'>let</span> <span class='ident'>ro</span> <span class='op'>=</span> <span class='ident'>Arc</span>::<span class='ident'>new</span>(<span class='ident'>ro</span>);
-        <span class='kw'>let</span> <span class='ident'>ro_</span> <span class='op'>=</span> <span class='ident'>ro</span>.<span class='ident'>clone</span>();
-        <span class='prelude-val'>Ok</span>(<span class='ident'>Exec</span> { <span class='ident'>ro</span>: <span class='ident'>ro</span>, <span class='ident'>cache</span>: <span class='ident'>create_pool</span>(<span class='ident'>ro_</span>) })
+        <span class='prelude-val'>Ok</span>(<span class='ident'>Exec</span> { <span class='ident'>ro</span>: <span class='ident'>ro</span>, <span class='ident'>cache</span>: <span class='ident'>CachedThreadLocal</span>::<span class='ident'>new</span>() })
     }
 }
 
@@ -1293,6 +1354,22 @@
                     }
                 }
             }
+            <span class='ident'>MatchType</span>::<span class='ident'>DfaAnchoredReverse</span> <span class='op'>=&gt;</span> {
+                <span class='kw'>match</span> <span class='ident'>dfa</span>::<span class='ident'>Fsm</span>::<span class='ident'>reverse</span>(
+                    <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>ro</span>.<span class='ident'>dfa_reverse</span>,
+                    <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>cache</span>,
+                    <span class='boolval'>true</span>,
+                    <span class='kw-2'>&amp;</span><span class='ident'>text</span>[<span class='ident'>start</span>..],
+                    <span class='ident'>text</span>.<span class='ident'>len</span>(),
+                ) {
+                    <span class='ident'>dfa</span>::<span class='prelude-ty'>Result</span>::<span class='ident'>Match</span>(_) <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>(<span class='ident'>text</span>.<span class='ident'>len</span>()),
+                    <span class='ident'>dfa</span>::<span class='prelude-ty'>Result</span>::<span class='ident'>NoMatch</span> <span class='op'>=&gt;</span> <span class='prelude-val'>None</span>,
+                    <span class='ident'>dfa</span>::<span class='prelude-ty'>Result</span>::<span class='ident'>Quit</span> <span class='op'>=&gt;</span> {
+                        <span class='kw'>return</span> <span class='self'>self</span>.<span class='ident'>shortest_match_nfa</span>(
+                            <span class='ident'>MatchNfaType</span>::<span class='ident'>Auto</span>, <span class='ident'>text</span>, <span class='ident'>start</span>);
+                    }
+                }
+            }
             <span class='ident'>MatchType</span>::<span class='ident'>Nfa</span>(<span class='ident'>ty</span>) <span class='op'>=&gt;</span> <span class='self'>self</span>.<span class='ident'>shortest_match_nfa</span>(<span class='ident'>ty</span>, <span class='ident'>text</span>, <span class='ident'>start</span>),
             <span class='ident'>MatchType</span>::<span class='ident'>Nothing</span> <span class='op'>=&gt;</span> <span class='prelude-val'>None</span>,
         }
@@ -1312,7 +1389,7 @@
         <span class='comment'>// filling in captures[1], but a RegexSet has no captures. In other</span>
         <span class='comment'>// words, a RegexSet can&#39;t (currently) use shortest_match. ---AG</span>
         <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>ro</span>.<span class='ident'>match_type</span> {
-            <span class='ident'>Literal</span>(_) <span class='op'>|</span> <span class='ident'>Dfa</span> <span class='op'>|</span> <span class='ident'>DfaMany</span> <span class='op'>|</span> <span class='ident'>Nothing</span> <span class='op'>=&gt;</span> {
+            <span class='ident'>Literal</span>(_) <span class='op'>|</span> <span class='ident'>Dfa</span> <span class='op'>|</span> <span class='ident'>DfaAnchoredReverse</span> <span class='op'>|</span> <span class='ident'>DfaMany</span> <span class='op'>|</span> <span class='ident'>Nothing</span> <span class='op'>=&gt;</span> {
                 <span class='self'>self</span>.<span class='ident'>shortest_match_at</span>(<span class='ident'>text</span>, <span class='ident'>start</span>).<span class='ident'>is_some</span>()
             }
             <span class='ident'>Nfa</span>(<span class='ident'>ty</span>) <span class='op'>=&gt;</span> {
@@ -1334,6 +1411,15 @@
             }
             <span class='ident'>MatchType</span>::<span class='ident'>Dfa</span> <span class='op'>=&gt;</span> {
                 <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>find_dfa_forward</span>(<span class='ident'>text</span>, <span class='ident'>start</span>) {
+                    <span class='ident'>dfa</span>::<span class='prelude-ty'>Result</span>::<span class='ident'>Match</span>((<span class='ident'>s</span>, <span class='ident'>e</span>)) <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>((<span class='ident'>s</span>, <span class='ident'>e</span>)),
+                    <span class='ident'>dfa</span>::<span class='prelude-ty'>Result</span>::<span class='ident'>NoMatch</span> <span class='op'>=&gt;</span> <span class='prelude-val'>None</span>,
+                    <span class='ident'>dfa</span>::<span class='prelude-ty'>Result</span>::<span class='ident'>Quit</span> <span class='op'>=&gt;</span> {
+                        <span class='self'>self</span>.<span class='ident'>find_nfa</span>(<span class='ident'>MatchNfaType</span>::<span class='ident'>Auto</span>, <span class='ident'>text</span>, <span class='ident'>start</span>)
+                    }
+                }
+            }
+            <span class='ident'>MatchType</span>::<span class='ident'>DfaAnchoredReverse</span> <span class='op'>=&gt;</span> {
+                <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>find_dfa_anchored_reverse</span>(<span class='ident'>text</span>, <span class='ident'>start</span>) {
                     <span class='ident'>dfa</span>::<span class='prelude-ty'>Result</span>::<span class='ident'>Match</span>((<span class='ident'>s</span>, <span class='ident'>e</span>)) <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>((<span class='ident'>s</span>, <span class='ident'>e</span>)),
                     <span class='ident'>dfa</span>::<span class='prelude-ty'>Result</span>::<span class='ident'>NoMatch</span> <span class='op'>=&gt;</span> <span class='prelude-val'>None</span>,
                     <span class='ident'>dfa</span>::<span class='prelude-ty'>Result</span>::<span class='ident'>Quit</span> <span class='op'>=&gt;</span> {
@@ -1385,6 +1471,19 @@
                     }
                 }
             }
+            <span class='ident'>MatchType</span>::<span class='ident'>DfaAnchoredReverse</span> <span class='op'>=&gt;</span> {
+                <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>find_dfa_anchored_reverse</span>(<span class='ident'>text</span>, <span class='ident'>start</span>) {
+                    <span class='ident'>dfa</span>::<span class='prelude-ty'>Result</span>::<span class='ident'>Match</span>((<span class='ident'>s</span>, _)) <span class='op'>=&gt;</span> {
+                        <span class='self'>self</span>.<span class='ident'>captures_nfa</span>(
+                            <span class='ident'>MatchNfaType</span>::<span class='ident'>Auto</span>, <span class='ident'>slots</span>, <span class='ident'>text</span>, <span class='ident'>s</span>)
+                    }
+                    <span class='ident'>dfa</span>::<span class='prelude-ty'>Result</span>::<span class='ident'>NoMatch</span> <span class='op'>=&gt;</span> <span class='prelude-val'>None</span>,
+                    <span class='ident'>dfa</span>::<span class='prelude-ty'>Result</span>::<span class='ident'>Quit</span> <span class='op'>=&gt;</span> {
+                        <span class='self'>self</span>.<span class='ident'>captures_nfa</span>(
+                            <span class='ident'>MatchNfaType</span>::<span class='ident'>Auto</span>, <span class='ident'>slots</span>, <span class='ident'>text</span>, <span class='ident'>start</span>)
+                    }
+                }
+            }
             <span class='ident'>MatchType</span>::<span class='ident'>Nfa</span>(<span class='ident'>ty</span>) <span class='op'>=&gt;</span> {
                 <span class='self'>self</span>.<span class='ident'>captures_nfa</span>(<span class='ident'>ty</span>, <span class='ident'>slots</span>, <span class='ident'>text</span>, <span class='ident'>start</span>)
             }
@@ -1420,7 +1519,7 @@
                 <span class='ident'>matches</span>[<span class='number'>0</span>] <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>exec_literals</span>(<span class='ident'>ty</span>, <span class='ident'>text</span>, <span class='ident'>start</span>).<span class='ident'>is_some</span>();
                 <span class='ident'>matches</span>[<span class='number'>0</span>]
             }
-            <span class='ident'>Dfa</span> <span class='op'>|</span> <span class='ident'>DfaMany</span> <span class='op'>=&gt;</span> {
+            <span class='ident'>Dfa</span> <span class='op'>|</span> <span class='ident'>DfaAnchoredReverse</span> <span class='op'>|</span> <span class='ident'>DfaMany</span> <span class='op'>=&gt;</span> {
                 <span class='kw'>match</span> <span class='ident'>dfa</span>::<span class='ident'>Fsm</span>::<span class='ident'>forward_many</span>(
                     <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>ro</span>.<span class='ident'>dfa</span>,
                     <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>cache</span>,
@@ -1493,6 +1592,32 @@
             <span class='ident'>end</span> <span class='op'>-</span> <span class='ident'>start</span>,
         ) {
             <span class='ident'>Match</span>(<span class='ident'>s</span>) <span class='op'>=&gt;</span> <span class='ident'>Match</span>((<span class='ident'>start</span> <span class='op'>+</span> <span class='ident'>s</span>, <span class='ident'>end</span>)),
+            <span class='ident'>NoMatch</span> <span class='op'>=&gt;</span> <span class='ident'>NoMatch</span>,
+            <span class='ident'>Quit</span> <span class='op'>=&gt;</span> <span class='ident'>Quit</span>,
+        }
+    }
+
+    <span class='doccomment'>/// Finds the leftmost-first match (start and end) using only the DFA,</span>
+    <span class='doccomment'>/// but assumes the regex is anchored at the end and therefore starts at</span>
+    <span class='doccomment'>/// the end of the regex and matches in reverse.</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// If the result returned indicates that the DFA quit, then another</span>
+    <span class='doccomment'>/// matching engine should be used.</span>
+    <span class='attribute'>#[<span class='ident'>inline</span>(<span class='ident'>always</span>)]</span> <span class='comment'>// reduces constant overhead</span>
+    <span class='kw'>fn</span> <span class='ident'>find_dfa_anchored_reverse</span>(
+        <span class='kw-2'>&amp;</span><span class='self'>self</span>,
+        <span class='ident'>text</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>],
+        <span class='ident'>start</span>: <span class='ident'>usize</span>,
+    ) <span class='op'>-&gt;</span> <span class='ident'>dfa</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span>(<span class='ident'>usize</span>, <span class='ident'>usize</span>)<span class='op'>&gt;</span> {
+        <span class='kw'>use</span> <span class='ident'>dfa</span>::<span class='prelude-ty'>Result</span>::<span class='op'>*</span>;
+        <span class='kw'>match</span> <span class='ident'>dfa</span>::<span class='ident'>Fsm</span>::<span class='ident'>reverse</span>(
+            <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>ro</span>.<span class='ident'>dfa_reverse</span>,
+            <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>cache</span>,
+            <span class='boolval'>false</span>,
+            <span class='kw-2'>&amp;</span><span class='ident'>text</span>[<span class='ident'>start</span>..],
+            <span class='ident'>text</span>.<span class='ident'>len</span>() <span class='op'>-</span> <span class='ident'>start</span>,
+        ) {
+            <span class='ident'>Match</span>(<span class='ident'>s</span>) <span class='op'>=&gt;</span> <span class='ident'>Match</span>((<span class='ident'>start</span> <span class='op'>+</span> <span class='ident'>s</span>, <span class='ident'>text</span>.<span class='ident'>len</span>())),
             <span class='ident'>NoMatch</span> <span class='op'>=&gt;</span> <span class='ident'>NoMatch</span>,
             <span class='ident'>Quit</span> <span class='op'>=&gt;</span> <span class='ident'>Quit</span>,
         }
@@ -1670,9 +1795,10 @@
     <span class='doccomment'>/// Get a searcher that isn&#39;t Sync.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>(<span class='ident'>always</span>)]</span> <span class='comment'>// reduces constant overhead</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>searcher</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>ExecNoSync</span> {
+        <span class='kw'>let</span> <span class='ident'>create</span> <span class='op'>=</span> <span class='op'>||</span> <span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='ident'>RefCell</span>::<span class='ident'>new</span>(<span class='ident'>ProgramCacheInner</span>::<span class='ident'>new</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>ro</span>)));
         <span class='ident'>ExecNoSync</span> {
             <span class='ident'>ro</span>: <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>ro</span>, <span class='comment'>// a clone is too expensive here! (and not needed)</span>
-            <span class='ident'>cache</span>: <span class='self'>self</span>.<span class='ident'>cache</span>.<span class='ident'>get</span>(),
+            <span class='ident'>cache</span>: <span class='self'>self</span>.<span class='ident'>cache</span>.<span class='ident'>get_or</span>(<span class='ident'>create</span>),
         }
     }
 
@@ -1726,7 +1852,7 @@
     <span class='kw'>fn</span> <span class='ident'>clone</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Exec</span> {
         <span class='ident'>Exec</span> {
             <span class='ident'>ro</span>: <span class='self'>self</span>.<span class='ident'>ro</span>.<span class='ident'>clone</span>(),
-            <span class='ident'>cache</span>: <span class='ident'>create_pool</span>(<span class='self'>self</span>.<span class='ident'>ro</span>.<span class='ident'>clone</span>()),
+            <span class='ident'>cache</span>: <span class='ident'>CachedThreadLocal</span>::<span class='ident'>new</span>(),
         }
     }
 }
@@ -1769,6 +1895,11 @@
             <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>res</span>.<span class='ident'>len</span>() <span class='op'>&gt;=</span> <span class='number'>2</span> {
                 <span class='kw'>return</span> <span class='ident'>DfaMany</span>;
             }
+            <span class='comment'>// If the regex is anchored at the end but not the start, then</span>
+            <span class='comment'>// just match in reverse from the end of the haystack.</span>
+            <span class='kw'>if</span> <span class='op'>!</span><span class='self'>self</span>.<span class='ident'>nfa</span>.<span class='ident'>is_anchored_start</span> <span class='op'>&amp;&amp;</span> <span class='self'>self</span>.<span class='ident'>nfa</span>.<span class='ident'>is_anchored_end</span> {
+                <span class='kw'>return</span> <span class='ident'>DfaAnchoredReverse</span>;
+            }
             <span class='comment'>// Fall back to your garden variety forward searching lazy DFA.</span>
             <span class='kw'>return</span> <span class='ident'>Dfa</span>;
         }
@@ -1784,6 +1915,8 @@
     <span class='ident'>Literal</span>(<span class='ident'>MatchLiteralType</span>),
     <span class='doccomment'>/// A normal DFA search.</span>
     <span class='ident'>Dfa</span>,
+    <span class='doccomment'>/// A reverse DFA search starting from the end of a haystack.</span>
+    <span class='ident'>DfaAnchoredReverse</span>,
     <span class='doccomment'>/// Use the DFA on two or more regular expressions.</span>
     <span class='ident'>DfaMany</span>,
     <span class='doccomment'>/// An NFA variant.</span>
@@ -1828,11 +1961,6 @@
     <span class='kw'>pub</span> <span class='ident'>backtrack</span>: <span class='ident'>backtrack</span>::<span class='ident'>Cache</span>,
     <span class='kw'>pub</span> <span class='ident'>dfa</span>: <span class='ident'>dfa</span>::<span class='ident'>Cache</span>,
     <span class='kw'>pub</span> <span class='ident'>dfa_reverse</span>: <span class='ident'>dfa</span>::<span class='ident'>Cache</span>,
-}
-
-<span class='doccomment'>/// Creates a fresh pool.</span>
-<span class='kw'>fn</span> <span class='ident'>create_pool</span>(<span class='ident'>ro</span>: <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>ExecReadOnly</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='ident'>Pool</span><span class='op'>&lt;</span><span class='ident'>ProgramCache</span><span class='op'>&gt;</span> {
-    <span class='ident'>Pool</span>::<span class='ident'>new</span>(<span class='ident'>Box</span>::<span class='ident'>new</span>(<span class='kw'>move</span> <span class='op'>||</span> <span class='ident'>RefCell</span>::<span class='ident'>new</span>(<span class='ident'>ProgramCacheInner</span>::<span class='ident'>new</span>(<span class='kw-2'>&amp;</span><span class='ident'>ro</span>))))
 }
 
 <span class='kw'>impl</span> <span class='ident'>ProgramCacheInner</span> {
@@ -1932,7 +2060,7 @@
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

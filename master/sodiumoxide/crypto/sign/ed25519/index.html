@@ -58,7 +58,6 @@ chosen-message attacks.</p>
                                title='sodiumoxide::crypto::sign::ed25519::PublicKey'>PublicKey</a></td>
                         <td class='docblock short'>
                              <p><code>PublicKey</code> for signatures</p>
-
                         </td>
                     </tr>
                 
@@ -67,7 +66,6 @@ chosen-message attacks.</p>
                                title='sodiumoxide::crypto::sign::ed25519::SecretKey'>SecretKey</a></td>
                         <td class='docblock short'>
                              <p><code>SecretKey</code> for signatures</p>
-
                         </td>
                     </tr>
                 
@@ -76,7 +74,6 @@ chosen-message attacks.</p>
                                title='sodiumoxide::crypto::sign::ed25519::Seed'>Seed</a></td>
                         <td class='docblock short'>
                              <p><code>Seed</code> that can be used for keypair generation</p>
-
                         </td>
                     </tr>
                 
@@ -85,7 +82,6 @@ chosen-message attacks.</p>
                                title='sodiumoxide::crypto::sign::ed25519::Signature'>Signature</a></td>
                         <td class='docblock short'>
                              <p>Detached signature</p>
-
                         </td>
                     </tr>
                 </table><h2 id='constants' class='section-header'><a href="#constants">Constants</a></h2>
@@ -95,7 +91,6 @@ chosen-message attacks.</p>
                                title='sodiumoxide::crypto::sign::ed25519::PUBLICKEYBYTES'>PUBLICKEYBYTES</a></td>
                         <td class='docblock short'>
                              <p>Number of bytes in a <code>PublicKey</code>.</p>
-
                         </td>
                     </tr>
                 
@@ -104,7 +99,6 @@ chosen-message attacks.</p>
                                title='sodiumoxide::crypto::sign::ed25519::SECRETKEYBYTES'>SECRETKEYBYTES</a></td>
                         <td class='docblock short'>
                              <p>Number of bytes in a <code>SecretKey</code>.</p>
-
                         </td>
                     </tr>
                 
@@ -113,7 +107,6 @@ chosen-message attacks.</p>
                                title='sodiumoxide::crypto::sign::ed25519::SEEDBYTES'>SEEDBYTES</a></td>
                         <td class='docblock short'>
                              <p>Number of bytes in a <code>Seed</code>.</p>
-
                         </td>
                     </tr>
                 
@@ -122,7 +115,6 @@ chosen-message attacks.</p>
                                title='sodiumoxide::crypto::sign::ed25519::SIGNATUREBYTES'>SIGNATUREBYTES</a></td>
                         <td class='docblock short'>
                              <p>Number of bytes in a <code>Signature</code>.</p>
-
                         </td>
                     </tr>
                 </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
@@ -133,7 +125,6 @@ chosen-message attacks.</p>
                         <td class='docblock short'>
                              <p><code>gen_keypair()</code> randomly generates a secret key and a corresponding public
 key.</p>
-
                         </td>
                     </tr>
                 
@@ -143,7 +134,6 @@ key.</p>
                         <td class='docblock short'>
                              <p><code>keypair_from_seed()</code> computes a secret key and a corresponding public key
 from a <code>Seed</code>.</p>
-
                         </td>
                     </tr>
                 
@@ -153,7 +143,6 @@ from a <code>Seed</code>.</p>
                         <td class='docblock short'>
                              <p><code>sign()</code> signs a message <code>m</code> using the signer&#39;s secret key <code>sk</code>.
 <code>sign()</code> returns the resulting signed message <code>sm</code>.</p>
-
                         </td>
                     </tr>
                 
@@ -163,7 +152,6 @@ from a <code>Seed</code>.</p>
                         <td class='docblock short'>
                              <p><code>sign_detached()</code> signs a message <code>m</code> using the signer&#39;s secret key <code>sk</code>.
 <code>sign_detached()</code> returns the resulting signature <code>sig</code>.</p>
-
                         </td>
                     </tr>
                 
@@ -174,7 +162,6 @@ from a <code>Seed</code>.</p>
                              <p><code>verify()</code> verifies the signature in <code>sm</code> using the signer&#39;s public key <code>pk</code>.
 <code>verify()</code> returns the message <code>Ok(m)</code>.
 If the signature fails verification, <code>verify()</code> returns <code>Err(())</code>.</p>
-
                         </td>
                     </tr>
                 
@@ -185,7 +172,6 @@ If the signature fails verification, <code>verify()</code> returns <code>Err(())
                              <p><code>verify_detached()</code> verifies the signature in <code>sig</code> against the message <code>m</code>
 and the signer&#39;s public key <code>pk</code>.
 <code>verify_detached()</code> returns true if the signature is valid, false otherwise.</p>
-
                         </td>
                     </tr>
                 </table></section>
@@ -231,7 +217,7 @@ and the signer&#39;s public key <code>pk</code>.
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

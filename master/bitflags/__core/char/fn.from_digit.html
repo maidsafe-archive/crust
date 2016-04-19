@@ -46,8 +46,8 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-28331' class='srclink' href='https://doc.rust-lang.org/nightly/core/char/fn.from_digit.html?gotosrc=28331' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub fn from_digit(num: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u32.html'>u32</a>, radix: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u32.html'>u32</a>) -&gt; <a class='enum' href='../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.char.html'>char</a>&gt;</pre><div class='docblock'><p>Converts a digit in the given radix to a <code>char</code>.</p>
+        </span><a id='src-28516' class='srclink' href='https://doc.rust-lang.org/nightly/core/char/fn.from_digit.html?gotosrc=28516' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub fn from_digit(num: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u32.html'>u32</a>, radix: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u32.html'>u32</a>) -&gt; <a class='enum' href='../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.char.html'>char</a>&gt;</pre><span class="since">1.0.0</span><div class='docblock'><p>Converts a digit in the given radix to a <code>char</code>.</p>
 
 <p>A &#39;radix&#39; here is sometimes also called a &#39;base&#39;. A radix of two
 indicates a binary number, a radix of ten, decimal, and a radix of
@@ -62,6 +62,7 @@ the given radix.</p>
 
 <h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
 <p>Basic usage:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>char</span>;
 
@@ -75,6 +76,7 @@ the given radix.</p>
 <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='prelude-val'>Some</span>(<span class='string'>&#39;b&#39;</span>), <span class='ident'>c</span>);</pre>
 
 <p>Returning <code>None</code> when the input is not a digit:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>char</span>;
 
@@ -83,6 +85,7 @@ the given radix.</p>
 <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='prelude-val'>None</span>, <span class='ident'>c</span>);</pre>
 
 <p>Passing a large radix, causing a panic:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>thread</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>char</span>;
@@ -136,7 +139,7 @@ the given radix.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

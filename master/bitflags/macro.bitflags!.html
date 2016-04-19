@@ -71,7 +71,8 @@ bitmask flags. It is useful for creating typesafe wrappers for C APIs.</p>
 <p>The flags should only be defined for integer types, otherwise unexpected
 type errors may occur at compile time.</p>
 
-<h1 id='example' class='section-header'><a href='#example'>Example</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='example' class='section-header'><a href='#example'>Example</a></h1>
+<pre class='rust rust-example-rendered'>
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>cfg_attr</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;assignment_operators&quot;</span>, <span class='ident'>feature</span>(<span class='ident'>augmented_assignments</span>, <span class='ident'>op_assign_traits</span>))]</span>
 <span class='attribute'>#[<span class='ident'>macro_use</span>]</span>
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>bitflags</span>;
@@ -98,6 +99,7 @@ type errors may occur at compile time.</p>
 
 <p>The generated <code>struct</code>s can also be extended with type and trait
 implementations:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>cfg_attr</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;assignment_operators&quot;</span>, <span class='ident'>feature</span>(<span class='ident'>augmented_assignments</span>, <span class='ident'>op_assign_traits</span>))]</span>
 <span class='attribute'>#[<span class='ident'>macro_use</span>]</span>
@@ -138,6 +140,7 @@ implementations:</p>
 <p>The generated struct and its associated flag constants are not exported
 out of the current module by default. A definition can be exported out of
 the current module by adding <code>pub</code> before <code>flags</code>:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='attribute'>#[<span class='ident'>macro_use</span>]</span>
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>bitflags</span>;
@@ -253,7 +256,7 @@ available with the crate feature <code>assignment_ops</code> enabled.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

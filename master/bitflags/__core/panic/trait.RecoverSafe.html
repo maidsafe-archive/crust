@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-6464' class='srclink' href='https://doc.rust-lang.org/nightly/std/panic/trait.RecoverSafe.html?gotosrc=6464' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-6734' class='srclink' href='https://doc.rust-lang.org/nightly/std/panic/trait.RecoverSafe.html?gotosrc=6734' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait RecoverSafe { }</pre><div class='stability'><em class='stab unstable'>Unstable (<code>recover</code>)<p>: awaiting feedback</p>
 </em></div><div class='docblock'><p>A marker trait which represents &quot;panic safe&quot; types in Rust.</p>
 
@@ -104,7 +104,7 @@ witnessed and may need to be accounted for.</p>
 recover safe. The general idea is that any mutable state which can be shared
 across <code>recover</code> is not recover safe by default. This is because it is very
 easy to witness a broken invariant outside of <code>recover</code> as the data is
-simply accesed as usual.</p>
+simply accessed as usual.</p>
 
 <p>Types like <code>&amp;Mutex&lt;T&gt;</code>, however, are recover safe because they implement
 poisoning by default. They still allow witnessing a broken invariant, but
@@ -176,7 +176,7 @@ implemented for any closed over variables passed to the <code>recover</code> fun
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

@@ -46,14 +46,14 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-27803' class='srclink' href='https://doc.rust-lang.org/nightly/core/sync/atomic/enum.Ordering.html?gotosrc=27803' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-27880' class='srclink' href='https://doc.rust-lang.org/nightly/core/sync/atomic/enum.Ordering.html?gotosrc=27880' title='goto source code'>[src]</a></span></h1>
 <pre class='rust enum'>pub enum Ordering {
     Relaxed,
     Release,
     Acquire,
     AcqRel,
     SeqCst,
-}</pre><div class='docblock'><p>Atomic memory orderings</p>
+}</pre><span class="since">1.0.0</span><div class='docblock'><p>Atomic memory orderings</p>
 
 <p>Memory orderings limit the ways that both the compiler and CPU may reorder
 instructions around atomic operations. At its most restrictive,
@@ -64,19 +64,19 @@ to be moved either before or after the atomic operation; on the other end
 <p>Rust&#39;s memory orderings are <a href="http://llvm.org/docs/LangRef.html#memory-model-for-concurrent-operations">the same as
 LLVM&#39;s</a>.</p>
 </div><h2 class='variants'>Variants</h2>
-<table><tr><td id='variant.Relaxed'><code>Relaxed</code></td><td><div class='docblock'><p>No ordering constraints, only atomic operations. Corresponds to LLVM&#39;s
+<table class='variants_table'><tr><td id='variant.Relaxed'><code>Relaxed</code></td><td><div class='docblock'><p>No ordering constraints, only atomic operations. Corresponds to LLVM&#39;s
 <code>Monotonic</code> ordering.</p>
-</div></td></tr><tr><td id='variant.Release'><code>Release</code></td><td><div class='docblock'><p>When coupled with a store, all previous writes become visible
+</div></td><td></td></tr><tr><td id='variant.Release'><code>Release</code></td><td><div class='docblock'><p>When coupled with a store, all previous writes become visible
 to another thread that performs a load with <code>Acquire</code> ordering
 on the same value.</p>
-</div></td></tr><tr><td id='variant.Acquire'><code>Acquire</code></td><td><div class='docblock'><p>When coupled with a load, all subsequent loads will see data
+</div></td><td></td></tr><tr><td id='variant.Acquire'><code>Acquire</code></td><td><div class='docblock'><p>When coupled with a load, all subsequent loads will see data
 written before a store with <code>Release</code> ordering on the same value
 in another thread.</p>
-</div></td></tr><tr><td id='variant.AcqRel'><code>AcqRel</code></td><td><div class='docblock'><p>When coupled with a load, uses <code>Acquire</code> ordering, and with a store
+</div></td><td></td></tr><tr><td id='variant.AcqRel'><code>AcqRel</code></td><td><div class='docblock'><p>When coupled with a load, uses <code>Acquire</code> ordering, and with a store
 <code>Release</code> ordering.</p>
-</div></td></tr><tr><td id='variant.SeqCst'><code>SeqCst</code></td><td><div class='docblock'><p>Like <code>AcqRel</code> with the additional guarantee that all threads see all
+</div></td><td></td></tr><tr><td id='variant.SeqCst'><code>SeqCst</code></td><td><div class='docblock'><p>Like <code>AcqRel</code> with the additional guarantee that all threads see all
 sequentially consistent operations in the same order.</p>
-</div></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='../../../../bitflags/__core/clone/trait.Clone.html' title='bitflags::__core::clone::Clone'>Clone</a> for <a class='enum' href='../../../../bitflags/__core/sync/atomic/enum.Ordering.html' title='bitflags::__core::sync::atomic::Ordering'>Ordering</a></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='../../../../bitflags/__core/clone/trait.Clone.html#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='enum' href='../../../../bitflags/__core/sync/atomic/enum.Ordering.html' title='bitflags::__core::sync::atomic::Ordering'>Ordering</a></code></h4>
+</div></td><td></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='../../../../bitflags/__core/clone/trait.Clone.html' title='bitflags::__core::clone::Clone'>Clone</a> for <a class='enum' href='../../../../bitflags/__core/sync/atomic/enum.Ordering.html' title='bitflags::__core::sync::atomic::Ordering'>Ordering</a></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='../../../../bitflags/__core/clone/trait.Clone.html#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='enum' href='../../../../bitflags/__core/sync/atomic/enum.Ordering.html' title='bitflags::__core::sync::atomic::Ordering'>Ordering</a></code></h4>
 <h4 id='method.clone_from' class='method'><code>fn <a href='../../../../bitflags/__core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
 </div><h3 class='impl'><code>impl <a class='trait' href='../../../../bitflags/__core/marker/trait.Copy.html' title='bitflags::__core::marker::Copy'>Copy</a> for <a class='enum' href='../../../../bitflags/__core/sync/atomic/enum.Ordering.html' title='bitflags::__core::sync::atomic::Ordering'>Ordering</a></code></h3><div class='impl-items'></div></section>
     <section id='search' class="content hidden"></section>
@@ -121,7 +121,7 @@ sequentially consistent operations in the same order.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

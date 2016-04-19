@@ -46,8 +46,8 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-13161' class='srclink' href='https://doc.rust-lang.org/nightly/core/marker/struct.PhantomData.html?gotosrc=13161' title='goto source code'>[src]</a></span></h1>
-<pre class='rust struct'>pub struct PhantomData&lt;T&gt; <span class='where'>where T: ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span>;</pre><div class='docblock'><p><code>PhantomData&lt;T&gt;</code> allows you to describe that a type acts as if it stores a value of type <code>T</code>,
+        </span><a id='src-13238' class='srclink' href='https://doc.rust-lang.org/nightly/core/marker/struct.PhantomData.html?gotosrc=13238' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct PhantomData&lt;T&gt; <span class='where'>where T: ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span>;</pre><span class="since">1.0.0</span><div class='docblock'><p><code>PhantomData&lt;T&gt;</code> allows you to describe that a type acts as if it stores a value of type <code>T</code>,
 even though it does not. This allows you to inform the compiler about certain safety properties
 of your code.</p>
 
@@ -65,6 +65,7 @@ with a struct that has an unused lifetime parameter, typically as
 part of some unsafe code. For example, here is a struct <code>Slice</code>
 that has two pointers of type <code>*const T</code>, presumably pointing into
 an array somewhere:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>struct</span> <span class='ident'>Slice</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>T</span><span class='op'>&gt;</span> {
     <span class='ident'>start</span>: <span class='op'>*</span><span class='kw'>const</span> <span class='ident'>T</span>,
@@ -77,6 +78,7 @@ intent is not expressed in the code, since there are no uses of
 the lifetime <code>&#39;a</code> and hence it is not clear what data it applies
 to. We can correct this by telling the compiler to act <em>as if</em> the
 <code>Slice</code> struct contained a borrowed reference <code>&amp;&#39;a T</code>:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>marker</span>::<span class='ident'>PhantomData</span>;
 
@@ -96,6 +98,7 @@ data is not actually found in the struct itself. Here is an
 example where this arises when handling external resources over a
 foreign function interface. <code>PhantomData&lt;T&gt;</code> can prevent
 mismatches by enforcing types in the method implementations:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>marker</span>::<span class='ident'>PhantomData</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>mem</span>;
@@ -135,7 +138,7 @@ better to use a reference type, like <code>PhantomData&lt;&amp;&#39;a T&gt;</cod
 (ideally) or <code>PhantomData&lt;*const T&gt;</code> (if no lifetime applies), so
 as not to indicate ownership.</p>
 </div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/hash/trait.Hash.html' title='bitflags::__core::hash::Hash'>Hash</a> for <a class='struct' href='../../../bitflags/__core/marker/struct.PhantomData.html' title='bitflags::__core::marker::PhantomData'>PhantomData</a>&lt;T&gt; <span class='where'>where T: ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></h3><div class='impl-items'><h4 id='method.hash' class='method'><code>fn <a href='../../../bitflags/__core/hash/trait.Hash.html#method.hash' class='fnname'>hash</a>&lt;H&gt;(&amp;self, &amp;mut H) <span class='where'>where H: <a class='trait' href='../../../bitflags/__core/hash/trait.Hasher.html' title='bitflags::__core::hash::Hasher'>Hasher</a></span></code></h4>
-<h4 id='method.hash_slice' class='method'><code>fn <a href='../../../bitflags/__core/hash/trait.Hash.html#method.hash_slice' class='fnname'>hash_slice</a>&lt;H&gt;(data: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>&amp;[Self]</a>, state: &amp;mut H) <span class='where'>where H: <a class='trait' href='../../../bitflags/__core/hash/trait.Hasher.html' title='bitflags::__core::hash::Hasher'>Hasher</a></span></code></h4>
+<h4 id='method.hash_slice' class='method'><span class="since">1.3.0</span><code>fn <a href='../../../bitflags/__core/hash/trait.Hash.html#method.hash_slice' class='fnname'>hash_slice</a>&lt;H&gt;(data: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>&amp;[Self]</a>, state: &amp;mut H) <span class='where'>where H: <a class='trait' href='../../../bitflags/__core/hash/trait.Hasher.html' title='bitflags::__core::hash::Hasher'>Hasher</a></span></code></h4>
 </div><h3 class='impl'><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/cmp/trait.PartialEq.html' title='bitflags::__core::cmp::PartialEq'>PartialEq</a>&lt;<a class='struct' href='../../../bitflags/__core/marker/struct.PhantomData.html' title='bitflags::__core::marker::PhantomData'>PhantomData</a>&lt;T&gt;&gt; for <a class='struct' href='../../../bitflags/__core/marker/struct.PhantomData.html' title='bitflags::__core::marker::PhantomData'>PhantomData</a>&lt;T&gt; <span class='where'>where T: ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></h3><div class='impl-items'><h4 id='method.eq' class='method'><code>fn <a href='../../../bitflags/__core/cmp/trait.PartialEq.html#method.eq' class='fnname'>eq</a>(&amp;self, _other: &amp;<a class='struct' href='../../../bitflags/__core/marker/struct.PhantomData.html' title='bitflags::__core::marker::PhantomData'>PhantomData</a>&lt;T&gt;) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a></code></h4>
 <h4 id='method.ne' class='method'><code>fn <a href='../../../bitflags/__core/cmp/trait.PartialEq.html#method.ne' class='fnname'>ne</a>(&amp;self, other: &amp;Rhs) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a></code></h4>
 </div><h3 class='impl'><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/cmp/trait.Eq.html' title='bitflags::__core::cmp::Eq'>Eq</a> for <a class='struct' href='../../../bitflags/__core/marker/struct.PhantomData.html' title='bitflags::__core::marker::PhantomData'>PhantomData</a>&lt;T&gt; <span class='where'>where T: ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></h3><div class='impl-items'></div><h3 class='impl'><code>impl&lt;T&gt; <a class='trait' href='../../../bitflags/__core/cmp/trait.PartialOrd.html' title='bitflags::__core::cmp::PartialOrd'>PartialOrd</a>&lt;<a class='struct' href='../../../bitflags/__core/marker/struct.PhantomData.html' title='bitflags::__core::marker::PhantomData'>PhantomData</a>&lt;T&gt;&gt; for <a class='struct' href='../../../bitflags/__core/marker/struct.PhantomData.html' title='bitflags::__core::marker::PhantomData'>PhantomData</a>&lt;T&gt; <span class='where'>where T: ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></h3><div class='impl-items'><h4 id='method.partial_cmp' class='method'><code>fn <a href='../../../bitflags/__core/cmp/trait.PartialOrd.html#method.partial_cmp' class='fnname'>partial_cmp</a>(&amp;self, _other: &amp;<a class='struct' href='../../../bitflags/__core/marker/struct.PhantomData.html' title='bitflags::__core::marker::PhantomData'>PhantomData</a>&lt;T&gt;) -&gt; <a class='enum' href='../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;<a class='enum' href='../../../bitflags/__core/cmp/enum.Ordering.html' title='bitflags::__core::cmp::Ordering'>Ordering</a>&gt;</code></h4>
@@ -191,7 +194,7 @@ as not to indicate ownership.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

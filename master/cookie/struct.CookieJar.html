@@ -51,7 +51,8 @@
     // some fields omitted
 }</pre><div class='docblock'><p>A jar of cookies for managing a session</p>
 
-<h1 id='example' class='section-header'><a href='#example'>Example</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='example' class='section-header'><a href='#example'>Example</a></h1>
+<pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>cookie</span>::{<span class='ident'>Cookie</span>, <span class='ident'>CookieJar</span>};
 
 <span class='kw'>let</span> <span class='ident'>c</span> <span class='op'>=</span> <span class='ident'>CookieJar</span>::<span class='ident'>new</span>(<span class='string'>b&quot;f8f9eaf1ecdedff5e5b749c58115441e&quot;</span>);
@@ -142,7 +143,7 @@ be yielded.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

@@ -46,10 +46,10 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-3621' class='srclink' href='https://doc.rust-lang.org/nightly/std/fs/struct.DirBuilder.html?gotosrc=3621' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-3786' class='srclink' href='https://doc.rust-lang.org/nightly/std/fs/struct.DirBuilder.html?gotosrc=3786' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct DirBuilder {
     // some fields omitted
-}</pre><div class='docblock'><p>A builder used to create directories in various manners.</p>
+}</pre><span class="since">1.6.0</span><div class='docblock'><p>A builder used to create directories in various manners.</p>
 
 <p>This builder also supports platform-specific options.</p>
 </div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../../bitflags/__core/fs/struct.DirBuilder.html' title='bitflags::__core::fs::DirBuilder'>DirBuilder</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>() -&gt; <a class='struct' href='../../../bitflags/__core/fs/struct.DirBuilder.html' title='bitflags::__core::fs::DirBuilder'>DirBuilder</a></code></h4>
@@ -65,7 +65,8 @@ permissions settings.</p>
 <div class='docblock'><p>Create the specified directory with the options configured in this
 builder.</p>
 
-<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fs</span>::{<span class='self'>self</span>, <span class='ident'>DirBuilder</span>};
 
 <span class='kw'>let</span> <span class='ident'>path</span> <span class='op'>=</span> <span class='string'>&quot;/tmp/foo/bar/baz&quot;</span>;
@@ -118,7 +119,7 @@ builder.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

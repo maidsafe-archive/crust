@@ -46,19 +46,20 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-7705' class='srclink' href='https://doc.rust-lang.org/nightly/std/process/struct.Child.html?gotosrc=7705' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-8377' class='srclink' href='https://doc.rust-lang.org/nightly/std/process/struct.Child.html?gotosrc=8377' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Child {
     pub stdin: <a class='enum' href='../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;<a class='struct' href='../../../bitflags/__core/process/struct.ChildStdin.html' title='bitflags::__core::process::ChildStdin'>ChildStdin</a>&gt;,
     pub stdout: <a class='enum' href='../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;<a class='struct' href='../../../bitflags/__core/process/struct.ChildStdout.html' title='bitflags::__core::process::ChildStdout'>ChildStdout</a>&gt;,
     pub stderr: <a class='enum' href='../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;<a class='struct' href='../../../bitflags/__core/process/struct.ChildStderr.html' title='bitflags::__core::process::ChildStderr'>ChildStderr</a>&gt;,
     // some fields omitted
-}</pre><div class='docblock'><p>Representation of a running or exited child process.</p>
+}</pre><span class="since">1.0.0</span><div class='docblock'><p>Representation of a running or exited child process.</p>
 
 <p>This structure is used to represent and manage child processes. A child
 process is created via the <code>Command</code> struct, which configures the spawning
 process and can itself be constructed using a builder-style interface.</p>
 
-<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>process</span>::<span class='ident'>Command</span>;
 
 <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>child</span> <span class='op'>=</span> <span class='ident'>Command</span>::<span class='ident'>new</span>(<span class='string'>&quot;/bin/cat&quot;</span>)
@@ -70,6 +71,15 @@ process and can itself be constructed using a builder-style interface.</p>
                  .<span class='ident'>unwrap_or_else</span>(<span class='op'>|</span><span class='ident'>e</span><span class='op'>|</span> { <span class='macro'>panic</span><span class='macro'>!</span>(<span class='string'>&quot;failed to wait on child: {}&quot;</span>, <span class='ident'>e</span>) });
 
 <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>ecode</span>.<span class='ident'>success</span>());</pre>
+
+<h1 id='note' class='section-header'><a href='#note'>Note</a></h1>
+<p>Take note that there is no implementation of
+<a href="../../core/ops/trait.Drop.html"><code>Drop</code></a> for child processes, so if you
+do not ensure the <code>Child</code> has exited then it will continue to run, even
+after the <code>Child</code> handle to the child process has gone out of scope.</p>
+
+<p>Calling <code>wait</code> (or other functions that wrap around it) will make the
+parent process wait until the child has actually exited before continuing.</p>
 </div><h2 class='fields'>Fields</h2>
 <table><tr class='stab '>
                                   <td id='structfield.stdin'><code>stdin</code></td><td><div class='docblock'><p>The handle for writing to the child&#39;s stdin, if it has been captured</p>
@@ -80,7 +90,7 @@ process and can itself be constructed using a builder-style interface.</p>
 </div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../../bitflags/__core/process/struct.Child.html' title='bitflags::__core::process::Child'>Child</a></code></h3><div class='impl-items'><h4 id='method.kill' class='method'><code>fn <a href='#method.kill' class='fnname'>kill</a>(&amp;mut self) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;</code></h4>
 <div class='docblock'><p>Forces the child to exit. This is equivalent to sending a
 SIGKILL on unix platforms.</p>
-</div><h4 id='method.id' class='method'><code>fn <a href='#method.id' class='fnname'>id</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u32.html'>u32</a></code></h4>
+</div><h4 id='method.id' class='method'><span class="since">1.3.0</span><code>fn <a href='#method.id' class='fnname'>id</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u32.html'>u32</a></code></h4>
 <div class='docblock'><p>Returns the OS-assigned process identifier associated with this child.</p>
 </div><h4 id='method.wait' class='method'><code>fn <a href='#method.wait' class='fnname'>wait</a>(&amp;mut self) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='struct' href='../../../bitflags/__core/process/struct.ExitStatus.html' title='bitflags::__core::process::ExitStatus'>ExitStatus</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;</code></h4>
 <div class='docblock'><p>Waits for the child to exit completely, returning the status that it
@@ -143,7 +153,7 @@ the parent waits for the child to exit.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

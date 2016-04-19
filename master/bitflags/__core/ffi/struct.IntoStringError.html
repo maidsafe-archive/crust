@@ -46,10 +46,10 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-3158' class='srclink' href='https://doc.rust-lang.org/nightly/std/ffi/c_str/struct.IntoStringError.html?gotosrc=3158' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-3182' class='srclink' href='https://doc.rust-lang.org/nightly/std/ffi/c_str/struct.IntoStringError.html?gotosrc=3182' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct IntoStringError {
     // some fields omitted
-}</pre><div class='docblock'><p>An error returned from <code>CString::into_string</code> to indicate that a UTF-8 error
+}</pre><span class="since">1.7.0</span><div class='docblock'><p>An error returned from <code>CString::into_string</code> to indicate that a UTF-8 error
 was encountered during the conversion.</p>
 </div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../../bitflags/__core/ffi/struct.IntoStringError.html' title='bitflags::__core::ffi::IntoStringError'>IntoStringError</a></code></h3><div class='impl-items'><h4 id='method.into_cstring' class='method'><code>fn <a href='#method.into_cstring' class='fnname'>into_cstring</a>(self) -&gt; <a class='struct' href='../../../bitflags/__core/ffi/struct.CString.html' title='bitflags::__core::ffi::CString'>CString</a></code></h4>
 <div class='docblock'><p>Consumes this error, returning original <code>CString</code> which generated the
@@ -63,7 +63,7 @@ error.</p>
 </div><h3 class='impl'><code>impl <a class='trait' href='../../../bitflags/__core/cmp/trait.PartialEq.html' title='bitflags::__core::cmp::PartialEq'>PartialEq</a>&lt;<a class='struct' href='../../../bitflags/__core/ffi/struct.IntoStringError.html' title='bitflags::__core::ffi::IntoStringError'>IntoStringError</a>&gt; for <a class='struct' href='../../../bitflags/__core/ffi/struct.IntoStringError.html' title='bitflags::__core::ffi::IntoStringError'>IntoStringError</a></code></h3><div class='impl-items'><h4 id='method.eq' class='method'><code>fn <a href='../../../bitflags/__core/cmp/trait.PartialEq.html#method.eq' class='fnname'>eq</a>(&amp;self, __arg_0: &amp;<a class='struct' href='../../../bitflags/__core/ffi/struct.IntoStringError.html' title='bitflags::__core::ffi::IntoStringError'>IntoStringError</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a></code></h4>
 <h4 id='method.ne' class='method'><code>fn <a href='../../../bitflags/__core/cmp/trait.PartialEq.html#method.ne' class='fnname'>ne</a>(&amp;self, __arg_0: &amp;<a class='struct' href='../../../bitflags/__core/ffi/struct.IntoStringError.html' title='bitflags::__core::ffi::IntoStringError'>IntoStringError</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a></code></h4>
 </div><h3 class='impl'><code>impl <a class='trait' href='../../../bitflags/__core/clone/trait.Clone.html' title='bitflags::__core::clone::Clone'>Clone</a> for <a class='struct' href='../../../bitflags/__core/ffi/struct.IntoStringError.html' title='bitflags::__core::ffi::IntoStringError'>IntoStringError</a></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='../../../bitflags/__core/clone/trait.Clone.html#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='struct' href='../../../bitflags/__core/ffi/struct.IntoStringError.html' title='bitflags::__core::ffi::IntoStringError'>IntoStringError</a></code></h4>
-<h4 id='method.clone_from' class='method'><code>fn <a href='../../../bitflags/__core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
+<h4 id='method.clone_from' class='method'><span class="since">1.0.0</span><code>fn <a href='../../../bitflags/__core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
 </div></section>
     <section id='search' class="content hidden"></section>
 
@@ -107,7 +107,7 @@ error.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

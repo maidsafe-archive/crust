@@ -72,6 +72,7 @@ of the response.</p>
 <h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
 <p>Issue a simple GET request using the helper <code>get</code> method. Premade connection
 passed to the client.</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>net</span>::<span class='ident'>TcpStream</span>;
 <span class='kw'>use</span> <span class='ident'>solicit</span>::<span class='ident'>http</span>::<span class='ident'>HttpScheme</span>;
@@ -107,6 +108,7 @@ passed to the client.</p>
 
 <p>Issue a simple GET request using the helper <code>get</code> method. Pass a connector
 to establish a new connection.</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>solicit</span>::<span class='ident'>http</span>::<span class='ident'>client</span>::<span class='ident'>CleartextConnector</span>;
 <span class='kw'>use</span> <span class='ident'>solicit</span>::<span class='ident'>client</span>::<span class='ident'>SimpleClient</span>;
@@ -214,7 +216,7 @@ calling <code>request</code> followed by <code>get_response</code> for the retur
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

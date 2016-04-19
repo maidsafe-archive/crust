@@ -57,7 +57,7 @@
     fn <a href='#method.is_empty' class='fnname'>is_empty</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a> { ... }
     fn <a href='#method.slice_from' class='fnname'>slice_from</a>(&amp;self, begin: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>) -&gt; <a class='struct' href='../../bytes/struct.Bytes.html' title='bytes::Bytes'>Bytes</a> { ... }
     fn <a href='#method.slice_to' class='fnname'>slice_to</a>(&amp;self, end: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>) -&gt; <a class='struct' href='../../bytes/struct.Bytes.html' title='bytes::Bytes'>Bytes</a> { ... }
-    fn <a href='#method.split_at' class='fnname'>split_at</a>(&amp;self, mid: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(<a class='struct' href='../../bytes/struct.Bytes.html' title='bytes::Bytes'>Bytes</a>, <a class='struct' href='../../bytes/struct.Bytes.html' title='bytes::Bytes'>Bytes</a>)</a> { ... }
+    fn <a href='#method.split_at' class='fnname'>split_at</a>(&amp;self, mid: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='struct' href='../../bytes/struct.Bytes.html' title='bytes::Bytes'>Bytes</a>, <a class='struct' href='../../bytes/struct.Bytes.html' title='bytes::Bytes'>Bytes</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a> { ... }
 }</pre><div class='docblock'><p>An immutable sequence of bytes. Operations will not mutate the original
 value. Since only immutable access is permitted, operations do not require
 copying (though, sometimes copying will happen as an optimization).</p>
@@ -86,7 +86,7 @@ with the given <code>Bytes</code>.</p>
 to <code>end</code> (exclusive).</p>
 
 <p>Equivalent to <code>bytes.slice(0, end)</code></p>
-</div><h3 id='method.split_at' class='method stab '><code>fn <a href='#method.split_at' class='fnname'>split_at</a>(&amp;self, mid: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(<a class='struct' href='../../bytes/struct.Bytes.html' title='bytes::Bytes'>Bytes</a>, <a class='struct' href='../../bytes/struct.Bytes.html' title='bytes::Bytes'>Bytes</a>)</a></code></h3><div class='docblock'><p>Divides the value into two <code>Bytes</code> at the given index.</p>
+</div><h3 id='method.split_at' class='method stab '><code>fn <a href='#method.split_at' class='fnname'>split_at</a>(&amp;self, mid: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='struct' href='../../bytes/struct.Bytes.html' title='bytes::Bytes'>Bytes</a>, <a class='struct' href='../../bytes/struct.Bytes.html' title='bytes::Bytes'>Bytes</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a></code></h3><div class='docblock'><p>Divides the value into two <code>Bytes</code> at the given index.</p>
 
 <p>The first will contain all bytes from <code>[0, mid]</code> (excluding the index
 <code>mid</code> itself) and the second will contain all indices from <code>[mid, len)</code>
@@ -145,7 +145,7 @@ to <code>end</code> (exclusive).</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

@@ -77,7 +77,6 @@
 size and alignment match that of a cmsghdr followed by a T, but the
 fields are not accessible, as the actual types will change on a call
 to recvmsg.</p>
-
                         </td>
                     </tr>
                 
@@ -121,7 +120,6 @@ to recvmsg.</p>
 because it may not be null-terminated (unconnected and abstract
 sockets). Note that the actual sockaddr length is greater by
 size_of::<sa_family_t>().</p>
-
                         </td>
                     </tr>
                 
@@ -221,7 +219,6 @@ size_of::<sa_family_t>().</p>
                              <p>A type-safe wrapper around a single control message. More types may
 be added to this enum; do not exhaustively pattern-match it.
 <a href="http://man7.org/linux/man-pages/man3/cmsg.3.html">Further reading</a></p>
-
                         </td>
                     </tr>
                 
@@ -254,7 +251,6 @@ be added to this enum; do not exhaustively pattern-match it.
                                title='nix::sys::socket::SockAddr'>SockAddr</a></td>
                         <td class='docblock short'>
                              <p>Represents a socket address</p>
-
                         </td>
                     </tr>
                 
@@ -264,7 +260,6 @@ be added to this enum; do not exhaustively pattern-match it.
                         <td class='docblock short'>
                              <p>The protocol level at which to get / set socket options. Used as an
 argument to <code>getsockopt</code> and <code>setsockopt</code>.</p>
-
                         </td>
                     </tr>
                 
@@ -892,7 +887,6 @@ argument to <code>getsockopt</code> and <code>setsockopt</code>.</p>
                         <td class='docblock short'>
                              <p>Represents a socket option that can be accessed or set. Used as an argument
 to <code>getsockopt</code></p>
-
                         </td>
                     </tr>
                 
@@ -902,7 +896,6 @@ to <code>getsockopt</code></p>
                         <td class='docblock short'>
                              <p>Represents a socket option that can be accessed or set. Used as an argument
 to <code>setsockopt</code></p>
-
                         </td>
                     </tr>
                 </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
@@ -912,7 +905,6 @@ to <code>setsockopt</code></p>
                                title='nix::sys::socket::accept'>accept</a></td>
                         <td class='docblock short'>
                              <p>Accept a connection on a socket</p>
-
                         </td>
                     </tr>
                 
@@ -921,7 +913,6 @@ to <code>setsockopt</code></p>
                                title='nix::sys::socket::accept4'>accept4</a></td>
                         <td class='docblock short'>
                              <p>Accept a connection on a socket</p>
-
                         </td>
                     </tr>
                 
@@ -930,7 +921,6 @@ to <code>setsockopt</code></p>
                                title='nix::sys::socket::bind'>bind</a></td>
                         <td class='docblock short'>
                              <p>Bind a name to a socket</p>
-
                         </td>
                     </tr>
                 
@@ -939,7 +929,6 @@ to <code>setsockopt</code></p>
                                title='nix::sys::socket::connect'>connect</a></td>
                         <td class='docblock short'>
                              <p>Initiate a connection on a socket</p>
-
                         </td>
                     </tr>
                 
@@ -948,7 +937,6 @@ to <code>setsockopt</code></p>
                                title='nix::sys::socket::getpeername'>getpeername</a></td>
                         <td class='docblock short'>
                              <p>Get the address of the peer connected to the socket <code>fd</code>.</p>
-
                         </td>
                     </tr>
                 
@@ -957,7 +945,6 @@ to <code>setsockopt</code></p>
                                title='nix::sys::socket::getsockname'>getsockname</a></td>
                         <td class='docblock short'>
                              <p>Get the current address to which the socket <code>fd</code> is bound.</p>
-
                         </td>
                     </tr>
                 
@@ -966,7 +953,6 @@ to <code>setsockopt</code></p>
                                title='nix::sys::socket::getsockopt'>getsockopt</a></td>
                         <td class='docblock short'>
                              <p>Get the current value for the requested socket option</p>
-
                         </td>
                     </tr>
                 
@@ -975,7 +961,6 @@ to <code>setsockopt</code></p>
                                title='nix::sys::socket::listen'>listen</a></td>
                         <td class='docblock short'>
                              <p>Listen for connections on a socket</p>
-
                         </td>
                     </tr>
                 
@@ -985,7 +970,6 @@ to <code>setsockopt</code></p>
                         <td class='docblock short'>
                              <p>Receive data from a connection-oriented socket. Returns the number of
 bytes read</p>
-
                         </td>
                     </tr>
                 
@@ -995,7 +979,6 @@ bytes read</p>
                         <td class='docblock short'>
                              <p>Receive data from a connectionless or connection-oriented socket. Returns
 the number of bytes read and the socket address of the sender.</p>
-
                         </td>
                     </tr>
                 
@@ -1006,7 +989,6 @@ the number of bytes read and the socket address of the sender.</p>
                              <p>Receive message in scatter-gather vectors from a socket, and
 optionally receive ancillary data into the provided buffer.
 If no ancillary data is desired, use () as the type parameter.</p>
-
                         </td>
                     </tr>
                 
@@ -1015,7 +997,6 @@ If no ancillary data is desired, use () as the type parameter.</p>
                                title='nix::sys::socket::send'>send</a></td>
                         <td class='docblock short'>
                              <p>Send data to a connection-oriented socket. Returns the number of bytes read</p>
-
                         </td>
                     </tr>
                 
@@ -1026,7 +1007,6 @@ If no ancillary data is desired, use () as the type parameter.</p>
                              <p>Send data in scatter-gather vectors to a socket, possibly accompanied
 by ancillary data. Optionally direct the message at the given address,
 as with sendto.</p>
-
                         </td>
                     </tr>
                 
@@ -1043,7 +1023,6 @@ as with sendto.</p>
                                title='nix::sys::socket::setsockopt'>setsockopt</a></td>
                         <td class='docblock short'>
                              <p>Sets the value for the requested socket option</p>
-
                         </td>
                     </tr>
                 
@@ -1052,7 +1031,6 @@ as with sendto.</p>
                                title='nix::sys::socket::shutdown'>shutdown</a></td>
                         <td class='docblock short'>
                              <p>Shut down part of a full-duplex connection.</p>
-
                         </td>
                     </tr>
                 
@@ -1069,7 +1047,6 @@ as with sendto.</p>
                                title='nix::sys::socket::socket'>socket</a></td>
                         <td class='docblock short'>
                              <p>Create an endpoint for communication</p>
-
                         </td>
                     </tr>
                 
@@ -1078,7 +1055,6 @@ as with sendto.</p>
                                title='nix::sys::socket::socketpair'>socketpair</a></td>
                         <td class='docblock short'>
                              <p>Create a pair of connected sockets</p>
-
                         </td>
                     </tr>
                 </table><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
@@ -1157,7 +1133,7 @@ as with sendto.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

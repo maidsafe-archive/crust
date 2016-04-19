@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-6513' class='srclink' href='https://doc.rust-lang.org/nightly/std/panic/fn.recover.html?gotosrc=6513' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-6785' class='srclink' href='https://doc.rust-lang.org/nightly/std/panic/fn.recover.html?gotosrc=6785' title='goto source code'>[src]</a></span></h1>
 <pre class='rust fn'>pub fn recover&lt;F, R&gt;(f: F) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;R, <a class='struct' href='../../../bitflags/__core/boxed/struct.Box.html' title='bitflags::__core::boxed::Box'>Box</a>&lt;<a class='trait' href='../../../bitflags/__core/any/trait.Any.html' title='bitflags::__core::any::Any'>Any</a> + 'static + <a class='trait' href='../../../bitflags/__core/marker/trait.Send.html' title='bitflags::__core::marker::Send'>Send</a>&gt;&gt; <span class='where'>where F: <a class='trait' href='../../../bitflags/__core/panic/trait.RecoverSafe.html' title='bitflags::__core::panic::RecoverSafe'>RecoverSafe</a> + <a class='trait' href='../../../bitflags/__core/ops/trait.FnOnce.html' title='bitflags::__core::ops::FnOnce'>FnOnce</a>() -&gt; R</span></pre><div class='stability'><em class='stab unstable'>Unstable (<code>recover</code>)<p>: awaiting feedback</p>
 </em></div><div class='docblock'><p>Invokes a closure, capturing the cause of panic if one occurs.</p>
 
@@ -72,7 +72,8 @@ becomes a problem the associated <code>AssertRecoverSafe</code> wrapper type in 
 module can be used to quickly assert that the usage here is indeed exception
 safe.</p>
 
-<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<pre class='rust rust-example-rendered'>
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>feature</span>(<span class='ident'>recover</span>, <span class='ident'>std_panic</span>)]</span>
 
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>panic</span>;
@@ -129,7 +130,7 @@ safe.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

@@ -26,7 +26,7 @@
     
 
     <nav class="sidebar">
-        <a href='../../num/index.html'><img src='http://rust-num.github.io/num/rust-logo-128x128-blk-v2.png' alt='' width='100'></a>
+        <a href='../../num/index.html'><img src='http://rust-num.github.io/num/rust-logo-128x128-blk-v2.png' alt='logo' width='100'></a>
         <p class='location'><a href='../index.html'>num</a>::<wbr><a href='index.html'>traits</a></p><script>window.sidebarCurrent = {name: 'CheckedSub', ty: 'trait', relpath: ''};</script><script defer src="sidebar-items.js"></script>
     </nav>
 
@@ -46,8 +46,8 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-4547' class='srclink' href='../../src/num/traits.rs.html#561-565' title='goto source code'>[src]</a></span></h1>
-<pre class='rust trait'>pub trait CheckedSub: <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html' title='core::marker::Sized'>Sized</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Sub.html' title='core::ops::Sub'>Sub</a>&lt;Self, Output=Self&gt; {
+        </span><a id='src-334' class='srclink' href='../../num_traits/ops/checked/trait.CheckedSub.html?gotosrc=334' title='goto source code'>[src]</a></span></h1>
+<pre class='rust trait'>pub trait CheckedSub: <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Sub.html' title='core::ops::Sub'>Sub</a>&lt;Self, Output=Self&gt; {
     fn <a href='#tymethod.checked_sub' class='fnname'>checked_sub</a>(&amp;self, v: &amp;Self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;Self&gt;;
 }</pre><div class='docblock'><p>Performs subtraction that returns <code>None</code> instead of wrapping around on underflow.</p>
 </div>
@@ -71,7 +71,7 @@
 <li><code>impl <a class='trait' href='../../num/traits/trait.CheckedSub.html' title='num::traits::CheckedSub'>CheckedSub</a> for <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.i64.html'>i64</a></code></li>
 <li><code>impl <a class='trait' href='../../num/traits/trait.CheckedSub.html' title='num::traits::CheckedSub'>CheckedSub</a> for <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.isize.html'>isize</a></code></li>
 </ul><script type="text/javascript" async
-                              src="../../implementors/num/traits/trait.CheckedSub.js">
+                              src="../../implementors/num_traits/ops/checked/trait.CheckedSub.js">
                       </script></section>
     <section id='search' class="content hidden"></section>
 
@@ -115,7 +115,7 @@
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

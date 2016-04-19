@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-778' class='srclink' href='https://doc.rust-lang.org/nightly/std/thread/local/enum.LocalKeyState.html?gotosrc=778' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-797' class='srclink' href='https://doc.rust-lang.org/nightly/std/thread/local/enum.LocalKeyState.html?gotosrc=797' title='goto source code'>[src]</a></span></h1>
 <pre class='rust enum'>pub enum LocalKeyState {
     Uninitialized,
     Valid,
@@ -54,14 +54,14 @@
 }</pre><div class='stability'><em class='stab unstable'>Unstable (<code>thread_local_state</code>)<p>: state querying was recently added</p>
 </em></div><div class='docblock'><p>Indicator of the state of a thread local storage key.</p>
 </div><h2 class='variants'>Variants</h2>
-<table><tr><td id='variant.Uninitialized'><code>Uninitialized</code></td><td><div class='stability'><em class='stab unstable'>Unstable (<code>thread_local_state</code>)<p>: state querying was recently added</p>
+<table class='variants_table'><tr><td id='variant.Uninitialized'><code>Uninitialized</code></td><td><div class='stability'><em class='stab unstable'>Unstable (<code>thread_local_state</code>)<p>: state querying was recently added</p>
 </em></div><div class='docblock'><p>All keys are in this state whenever a thread starts. Keys will
 transition to the <code>Valid</code> state once the first call to <code>with</code> happens
 and the initialization expression succeeds.</p>
 
 <p>Keys in the <code>Uninitialized</code> state will yield a reference to the closure
 passed to <code>with</code> so long as the initialization routine does not panic.</p>
-</div></td></tr><tr><td id='variant.Valid'><code>Valid</code></td><td><div class='stability'><em class='stab unstable'>Unstable (<code>thread_local_state</code>)<p>: state querying was recently added</p>
+</div></td><td></td></tr><tr><td id='variant.Valid'><code>Valid</code></td><td><div class='stability'><em class='stab unstable'>Unstable (<code>thread_local_state</code>)<p>: state querying was recently added</p>
 </em></div><div class='docblock'><p>Once a key has been accessed successfully, it will enter the <code>Valid</code>
 state. Keys in the <code>Valid</code> state will remain so until the thread exits,
 at which point the destructor will be run and the key will enter the
@@ -69,15 +69,15 @@ at which point the destructor will be run and the key will enter the
 
 <p>Keys in the <code>Valid</code> state will be guaranteed to yield a reference to the
 closure passed to <code>with</code>.</p>
-</div></td></tr><tr><td id='variant.Destroyed'><code>Destroyed</code></td><td><div class='stability'><em class='stab unstable'>Unstable (<code>thread_local_state</code>)<p>: state querying was recently added</p>
+</div></td><td></td></tr><tr><td id='variant.Destroyed'><code>Destroyed</code></td><td><div class='stability'><em class='stab unstable'>Unstable (<code>thread_local_state</code>)<p>: state querying was recently added</p>
 </em></div><div class='docblock'><p>When a thread exits, the destructors for keys will be run (if
 necessary). While a destructor is running, and possibly after a
 destructor has run, a key is in the <code>Destroyed</code> state.</p>
 
 <p>Keys in the <code>Destroyed</code> states will trigger a panic when accessed via
 <code>with</code>.</p>
-</div></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='../../../bitflags/__core/clone/trait.Clone.html' title='bitflags::__core::clone::Clone'>Clone</a> for <a class='enum' href='../../../bitflags/__core/thread/enum.LocalKeyState.html' title='bitflags::__core::thread::LocalKeyState'>LocalKeyState</a></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='../../../bitflags/__core/clone/trait.Clone.html#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='enum' href='../../../bitflags/__core/thread/enum.LocalKeyState.html' title='bitflags::__core::thread::LocalKeyState'>LocalKeyState</a></code></h4>
-<h4 id='method.clone_from' class='method'><code>fn <a href='../../../bitflags/__core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
+</div></td><td></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='../../../bitflags/__core/clone/trait.Clone.html' title='bitflags::__core::clone::Clone'>Clone</a> for <a class='enum' href='../../../bitflags/__core/thread/enum.LocalKeyState.html' title='bitflags::__core::thread::LocalKeyState'>LocalKeyState</a></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='../../../bitflags/__core/clone/trait.Clone.html#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='enum' href='../../../bitflags/__core/thread/enum.LocalKeyState.html' title='bitflags::__core::thread::LocalKeyState'>LocalKeyState</a></code></h4>
+<h4 id='method.clone_from' class='method'><span class="since">1.0.0</span><code>fn <a href='../../../bitflags/__core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
 </div><h3 class='impl'><code>impl <a class='trait' href='../../../bitflags/__core/marker/trait.Copy.html' title='bitflags::__core::marker::Copy'>Copy</a> for <a class='enum' href='../../../bitflags/__core/thread/enum.LocalKeyState.html' title='bitflags::__core::thread::LocalKeyState'>LocalKeyState</a></code></h3><div class='impl-items'></div><h3 class='impl'><code>impl <a class='trait' href='../../../bitflags/__core/cmp/trait.PartialEq.html' title='bitflags::__core::cmp::PartialEq'>PartialEq</a>&lt;<a class='enum' href='../../../bitflags/__core/thread/enum.LocalKeyState.html' title='bitflags::__core::thread::LocalKeyState'>LocalKeyState</a>&gt; for <a class='enum' href='../../../bitflags/__core/thread/enum.LocalKeyState.html' title='bitflags::__core::thread::LocalKeyState'>LocalKeyState</a></code></h3><div class='impl-items'><h4 id='method.eq' class='method'><code>fn <a href='../../../bitflags/__core/cmp/trait.PartialEq.html#method.eq' class='fnname'>eq</a>(&amp;self, __arg_0: &amp;<a class='enum' href='../../../bitflags/__core/thread/enum.LocalKeyState.html' title='bitflags::__core::thread::LocalKeyState'>LocalKeyState</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a></code></h4>
 <h4 id='method.ne' class='method'><code>fn <a href='../../../bitflags/__core/cmp/trait.PartialEq.html#method.ne' class='fnname'>ne</a>(&amp;self, __arg_0: &amp;<a class='enum' href='../../../bitflags/__core/thread/enum.LocalKeyState.html' title='bitflags::__core::thread::LocalKeyState'>LocalKeyState</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.bool.html'>bool</a></code></h4>
 </div><h3 class='impl'><code>impl <a class='trait' href='../../../bitflags/__core/cmp/trait.Eq.html' title='bitflags::__core::cmp::Eq'>Eq</a> for <a class='enum' href='../../../bitflags/__core/thread/enum.LocalKeyState.html' title='bitflags::__core::thread::LocalKeyState'>LocalKeyState</a></code></h3><div class='impl-items'></div></section>
@@ -123,7 +123,7 @@ destructor has run, a key is in the <code>Destroyed</code> state.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

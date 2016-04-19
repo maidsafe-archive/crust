@@ -46,18 +46,18 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-9081' class='srclink' href='https://doc.rust-lang.org/nightly/std/sync/mpsc/enum.TryRecvError.html?gotosrc=9081' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-9717' class='srclink' href='https://doc.rust-lang.org/nightly/std/sync/mpsc/enum.TryRecvError.html?gotosrc=9717' title='goto source code'>[src]</a></span></h1>
 <pre class='rust enum'>pub enum TryRecvError {
     Empty,
     Disconnected,
-}</pre><div class='docblock'><p>This enumeration is the list of the possible reasons that <code>try_recv</code> could
+}</pre><span class="since">1.0.0</span><div class='docblock'><p>This enumeration is the list of the possible reasons that <code>try_recv</code> could
 not return data when called.</p>
 </div><h2 class='variants'>Variants</h2>
-<table><tr><td id='variant.Empty'><code>Empty</code></td><td><div class='docblock'><p>This channel is currently empty, but the sender(s) have not yet
+<table class='variants_table'><tr><td id='variant.Empty'><code>Empty</code></td><td><div class='docblock'><p>This channel is currently empty, but the sender(s) have not yet
 disconnected, so data may yet become available.</p>
-</div></td></tr><tr><td id='variant.Disconnected'><code>Disconnected</code></td><td><div class='docblock'><p>This channel&#39;s sending half has become disconnected, and there will
+</div></td><td></td></tr><tr><td id='variant.Disconnected'><code>Disconnected</code></td><td><div class='docblock'><p>This channel&#39;s sending half has become disconnected, and there will
 never be any more data received on this channel</p>
-</div></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='../../../../bitflags/__core/fmt/trait.Display.html' title='bitflags::__core::fmt::Display'>Display</a> for <a class='enum' href='../../../../bitflags/__core/sync/mpsc/enum.TryRecvError.html' title='bitflags::__core::sync::mpsc::TryRecvError'>TryRecvError</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='../../../../bitflags/__core/fmt/trait.Display.html#method.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class='struct' href='../../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='../../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h4>
+</div></td><td></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='../../../../bitflags/__core/fmt/trait.Display.html' title='bitflags::__core::fmt::Display'>Display</a> for <a class='enum' href='../../../../bitflags/__core/sync/mpsc/enum.TryRecvError.html' title='bitflags::__core::sync::mpsc::TryRecvError'>TryRecvError</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='../../../../bitflags/__core/fmt/trait.Display.html#method.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class='struct' href='../../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='../../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h4>
 </div><h3 class='impl'><code>impl <a class='trait' href='../../../../bitflags/__core/error/trait.Error.html' title='bitflags::__core::error::Error'>Error</a> for <a class='enum' href='../../../../bitflags/__core/sync/mpsc/enum.TryRecvError.html' title='bitflags::__core::sync::mpsc::TryRecvError'>TryRecvError</a></code></h3><div class='impl-items'><h4 id='method.description' class='method'><code>fn <a href='../../../../bitflags/__core/error/trait.Error.html#method.description' class='fnname'>description</a>(&amp;self) -&gt; &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.str.html'>str</a></code></h4>
 <h4 id='method.cause' class='method'><code>fn <a href='../../../../bitflags/__core/error/trait.Error.html#method.cause' class='fnname'>cause</a>(&amp;self) -&gt; <a class='enum' href='../../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;&amp;<a class='trait' href='../../../../bitflags/__core/error/trait.Error.html' title='bitflags::__core::error::Error'>Error</a>&gt;</code></h4>
 </div><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='../../../../bitflags/__core/fmt/trait.Debug.html' title='bitflags::__core::fmt::Debug'>Debug</a> for <a class='enum' href='../../../../bitflags/__core/sync/mpsc/enum.TryRecvError.html' title='bitflags::__core::sync::mpsc::TryRecvError'>TryRecvError</a></code></h3><div class='impl-items'><h4 id='method.fmt-1' class='method'><code>fn <a href='../../../../bitflags/__core/fmt/trait.Debug.html#method.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='../../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='../../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h4>
@@ -108,7 +108,7 @@ never be any more data received on this channel</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

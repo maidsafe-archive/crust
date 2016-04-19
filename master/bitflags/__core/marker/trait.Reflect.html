@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-13203' class='srclink' href='https://doc.rust-lang.org/nightly/core/marker/trait.Reflect.html?gotosrc=13203' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-13280' class='srclink' href='https://doc.rust-lang.org/nightly/core/marker/trait.Reflect.html?gotosrc=13280' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait Reflect { }</pre><div class='stability'><em class='stab unstable'>Unstable (<code>reflect_marker</code>)<p>: requires RFC and more experience</p>
 </em></div><div class='docblock'><p>Types that can be reflected over.</p>
 
@@ -54,6 +54,7 @@
 that when you write a generic function that will employ
 reflection, that must be reflected (no pun intended) in the
 generic bounds of that function. Here is an example:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>feature</span>(<span class='ident'>reflect_marker</span>)]</span>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>marker</span>::<span class='ident'>Reflect</span>;
@@ -125,7 +126,7 @@ property&quot;</a>.)</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

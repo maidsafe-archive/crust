@@ -120,6 +120,7 @@ comments text in order to get more pretty comments: <code>&lt;!-- something --&g
 <div class='docblock'><p>Creates an emitter configuration with default values.</p>
 
 <p>You can tweak default options with builder-like pattern:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>xml</span>::<span class='ident'>writer</span>::<span class='ident'>EmitterConfig</span>;
 
@@ -131,6 +132,7 @@ comments text in order to get more pretty comments: <code>&lt;!-- something --&g
 <div class='docblock'><p>Creates an XML writer with this configuration.</p>
 
 <p>This is a convenience method for configuring and creating a writer at the same time:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>xml</span>::<span class='ident'>writer</span>::<span class='ident'>EmitterConfig</span>;
 
@@ -165,7 +167,7 @@ this configuration object.</p>
 </div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.Eq.html' title='core::cmp::Eq'>Eq</a> for <a class='struct' href='../xml/struct.EmitterConfig.html' title='xml::EmitterConfig'>EmitterConfig</a></code></h3><div class='impl-items'></div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a> for <a class='struct' href='../xml/struct.EmitterConfig.html' title='xml::EmitterConfig'>EmitterConfig</a></code></h3><div class='impl-items'><h4 id='method.eq' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.eq' class='fnname'>eq</a>(&amp;self, __arg_0: &amp;<a class='struct' href='../xml/struct.EmitterConfig.html' title='xml::EmitterConfig'>EmitterConfig</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
 <h4 id='method.ne' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.ne' class='fnname'>ne</a>(&amp;self, __arg_0: &amp;<a class='struct' href='../xml/struct.EmitterConfig.html' title='xml::EmitterConfig'>EmitterConfig</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
 </div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='struct' href='../xml/struct.EmitterConfig.html' title='xml::EmitterConfig'>EmitterConfig</a></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='struct' href='../xml/struct.EmitterConfig.html' title='xml::EmitterConfig'>EmitterConfig</a></code></h4>
-<h4 id='method.clone_from' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
+<h4 id='method.clone_from' class='method'><span class="since">1.0.0</span><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
 </div></section>
     <section id='search' class="content hidden"></section>
 
@@ -209,7 +211,7 @@ this configuration object.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

@@ -46,12 +46,13 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-83' class='srclink' href='https://doc.rust-lang.org/nightly/alloc/boxed/constant.HEAP.html?gotosrc=83' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-88' class='srclink' href='https://doc.rust-lang.org/nightly/alloc/boxed/constant.HEAP.html?gotosrc=88' title='goto source code'>[src]</a></span></h1>
 <pre class='rust const'>pub const HEAP: <a class='struct' href='../../../bitflags/__core/boxed/struct.ExchangeHeapSingleton.html' title='bitflags::__core::boxed::ExchangeHeapSingleton'>ExchangeHeapSingleton</a><code> = </code><code>ExchangeHeapSingleton{_force_singleton: (),}</code></pre><div class='stability'><em class='stab unstable'>Unstable (<code>box_heap</code>)<p>: may be renamed; uncertain about custom allocator design</p>
 </em></div><div class='docblock'><p>A value that represents the heap. This is the default place that the <code>box</code>
 keyword allocates into when no place is supplied.</p>
 
 <p>The following two examples are equivalent:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>feature</span>(<span class='ident'>box_heap</span>)]</span>
 
@@ -105,7 +106,7 @@ keyword allocates into when no place is supplied.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

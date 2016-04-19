@@ -60,6 +60,7 @@ expressions or even build their own matching engine.</p>
 
 <h1 id='example-parsing-an-expression' class='section-header'><a href='#example-parsing-an-expression'>Example: parsing an expression</a></h1>
 <p>Parsing a regular expression can be done with the <code>Expr::parse</code> function.</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>regex_syntax</span>::<span class='ident'>Expr</span>;
 
@@ -71,6 +72,7 @@ expressions or even build their own matching engine.</p>
 <h1 id='example-inspecting-an-error' class='section-header'><a href='#example-inspecting-an-error'>Example: inspecting an error</a></h1>
 <p>The parser in this crate provides very detailed error values. For example,
 if an invalid character class range is given:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>regex_syntax</span>::{<span class='ident'>Expr</span>, <span class='ident'>ErrorKind</span>};
 
@@ -82,6 +84,7 @@ if an invalid character class range is given:</p>
 });</pre>
 
 <p>Or unbalanced parentheses:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>regex_syntax</span>::{<span class='ident'>Expr</span>, <span class='ident'>ErrorKind</span>};
 
@@ -95,7 +98,6 @@ if an invalid character class range is given:</p>
                                title='regex_syntax::ByteClass'>ByteClass</a></td>
                         <td class='docblock short'>
                              <p>A byte class for byte ranges only.</p>
-
                         </td>
                     </tr>
                 
@@ -104,7 +106,6 @@ if an invalid character class range is given:</p>
                                title='regex_syntax::ByteRange'>ByteRange</a></td>
                         <td class='docblock short'>
                              <p>A single inclusive range in a byte class.</p>
-
                         </td>
                     </tr>
                 
@@ -113,7 +114,6 @@ if an invalid character class range is given:</p>
                                title='regex_syntax::CharClass'>CharClass</a></td>
                         <td class='docblock short'>
                              <p>A character class.</p>
-
                         </td>
                     </tr>
                 
@@ -122,7 +122,6 @@ if an invalid character class range is given:</p>
                                title='regex_syntax::ClassRange'>ClassRange</a></td>
                         <td class='docblock short'>
                              <p>A single inclusive range in a character class.</p>
-
                         </td>
                     </tr>
                 
@@ -131,7 +130,6 @@ if an invalid character class range is given:</p>
                                title='regex_syntax::Error'>Error</a></td>
                         <td class='docblock short'>
                              <p>A parse error.</p>
-
                         </td>
                     </tr>
                 
@@ -140,7 +138,6 @@ if an invalid character class range is given:</p>
                                title='regex_syntax::ExprBuilder'>ExprBuilder</a></td>
                         <td class='docblock short'>
                              <p>A builder for configuring regular expression parsing.</p>
-
                         </td>
                     </tr>
                 
@@ -149,7 +146,6 @@ if an invalid character class range is given:</p>
                                title='regex_syntax::Lit'>Lit</a></td>
                         <td class='docblock short'>
                              <p>A single member of a set of literals extracted from a regular expression.</p>
-
                         </td>
                     </tr>
                 
@@ -158,7 +154,6 @@ if an invalid character class range is given:</p>
                                title='regex_syntax::Literals'>Literals</a></td>
                         <td class='docblock short'>
                              <p>A set of literal byte strings extracted from a regular expression.</p>
-
                         </td>
                     </tr>
                 </table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
@@ -168,7 +163,6 @@ if an invalid character class range is given:</p>
                                title='regex_syntax::ErrorKind'>ErrorKind</a></td>
                         <td class='docblock short'>
                              <p>The specific type of parse error that can occur.</p>
-
                         </td>
                     </tr>
                 
@@ -177,7 +171,6 @@ if an invalid character class range is given:</p>
                                title='regex_syntax::Expr'>Expr</a></td>
                         <td class='docblock short'>
                              <p>A regular expression abstract syntax tree.</p>
-
                         </td>
                     </tr>
                 
@@ -186,7 +179,6 @@ if an invalid character class range is given:</p>
                                title='regex_syntax::Repeater'>Repeater</a></td>
                         <td class='docblock short'>
                              <p>The type of a repeat operator expression.</p>
-
                         </td>
                     </tr>
                 </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
@@ -196,7 +188,6 @@ if an invalid character class range is given:</p>
                                title='regex_syntax::quote'>quote</a></td>
                         <td class='docblock short'>
                              <p>Escapes all regular expression meta characters in <code>text</code>.</p>
-
                         </td>
                     </tr>
                 </table><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
@@ -206,7 +197,6 @@ if an invalid character class range is given:</p>
                                title='regex_syntax::Result'>Result</a></td>
                         <td class='docblock short'>
                              <p>An alias for computations that can return a <code>Error</code>.</p>
-
                         </td>
                     </tr>
                 </table></section>
@@ -252,7 +242,7 @@ if an invalid character class range is given:</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

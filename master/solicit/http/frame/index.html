@@ -56,7 +56,6 @@
                                title='solicit::http::frame::data'>data</a></td>
                         <td class='docblock short'>
                              <p>The module contains the implementation of the <code>DATA</code> frame and associated flags.</p>
-
                         </td>
                     </tr>
                 
@@ -65,7 +64,6 @@
                                title='solicit::http::frame::headers'>headers</a></td>
                         <td class='docblock short'>
                              <p>The module contains the implementation of the <code>HEADERS</code> frame and associated flags.</p>
-
                         </td>
                     </tr>
                 
@@ -74,7 +72,6 @@
                                title='solicit::http::frame::settings'>settings</a></td>
                         <td class='docblock short'>
                              <p>The module contains the implementation of the <code>SETTINGS</code> frame and associated flags.</p>
-
                         </td>
                     </tr>
                 </table><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
@@ -85,7 +82,6 @@
                         <td class='docblock short'>
                              <p>A struct that defines the format of the raw HTTP/2 frame, i.e. the frame
 as it is read from the wire.</p>
-
                         </td>
                     </tr>
                 </table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
@@ -95,7 +91,6 @@ as it is read from the wire.</p>
                                title='solicit::http::frame::Flag'>Flag</a></td>
                         <td class='docblock short'>
                              <p>A trait that all HTTP/2 frame header flags need to implement.</p>
-
                         </td>
                     </tr>
                 
@@ -104,7 +99,6 @@ as it is read from the wire.</p>
                                title='solicit::http::frame::Frame'>Frame</a></td>
                         <td class='docblock short'>
                              <p>A trait that all HTTP/2 frame structs need to implement.</p>
-
                         </td>
                     </tr>
                 </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
@@ -114,7 +108,6 @@ as it is read from the wire.</p>
                                title='solicit::http::frame::pack_header'>pack_header</a></td>
                         <td class='docblock short'>
                              <p>Constructs a buffer of 9 bytes that represents the given <code>FrameHeader</code>.</p>
-
                         </td>
                     </tr>
                 
@@ -124,7 +117,6 @@ as it is read from the wire.</p>
                         <td class='docblock short'>
                              <p>Deconstructs a <code>FrameHeader</code> into its corresponding 4 components,
 represented as a 4-tuple: <code>(length, frame_type, flags, stream_id)</code>.</p>
-
                         </td>
                     </tr>
                 </table><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
@@ -135,7 +127,6 @@ represented as a 4-tuple: <code>(length, frame_type, flags, stream_id)</code>.</
                         <td class='docblock short'>
                              <p>An alias for the 4-tuple representing the components of each HTTP/2 frame
 header.</p>
-
                         </td>
                     </tr>
                 
@@ -145,7 +136,6 @@ header.</p>
                         <td class='docblock short'>
                              <p>An alias for the 9-byte buffer that each HTTP/2 frame header must be stored
 in.</p>
-
                         </td>
                     </tr>
                 </table></section>
@@ -191,7 +181,7 @@ in.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

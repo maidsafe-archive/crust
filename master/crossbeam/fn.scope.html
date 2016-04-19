@@ -53,6 +53,7 @@
 
 <h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
 <p>Creating and using a scope:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='ident'>crossbeam</span>::<span class='ident'>scope</span>(<span class='op'>|</span><span class='ident'>scope</span><span class='op'>|</span> {
     <span class='ident'>scope</span>.<span class='ident'>defer</span>(<span class='op'>||</span> <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;Exiting scope&quot;</span>));
@@ -102,7 +103,7 @@
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

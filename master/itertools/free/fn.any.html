@@ -46,10 +46,11 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-790' class='srclink' href='../../src/itertools/free.rs.html#150-155' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-791' class='srclink' href='../../src/itertools/free.rs.html#150-155' title='goto source code'>[src]</a></span></h1>
 <pre class='rust fn'>pub fn any&lt;I, F&gt;(iterable: I, f: F) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a> <span class='where'>where I: <a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/trait.IntoIterator.html' title='core::iter::IntoIterator'>IntoIterator</a>, F: <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.FnMut.html' title='core::ops::FnMut'>FnMut</a>(I::Item) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></span></pre><div class='docblock'><p>Test whether the predicate holds for any elements in the iterable.</p>
 
 <p><code>IntoIterator</code> enabled version of <code>i.any(f)</code></p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>itertools</span>::<span class='ident'>free</span>::<span class='ident'>any</span>;
 
@@ -97,7 +98,7 @@
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

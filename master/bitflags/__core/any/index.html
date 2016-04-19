@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-22744' class='srclink' href='https://doc.rust-lang.org/nightly/core/any/index.html?gotosrc=22744' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-22821' class='srclink' href='https://doc.rust-lang.org/nightly/core/any/index.html?gotosrc=22821' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>This module implements the <code>Any</code> trait, which enables dynamic typing
 of any <code>&#39;static</code> type through runtime reflection.</p>
 
@@ -68,6 +68,7 @@ concrete type.  We want to give special treatment to certain types: in this
 case printing out the length of String values prior to their value.
 We don&#39;t know the concrete type of our value at compile time, so we need to
 use runtime reflection instead.</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fmt</span>::<span class='ident'>Debug</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>any</span>::<span class='ident'>Any</span>;
@@ -109,7 +110,6 @@ use runtime reflection instead.</p>
                                title='bitflags::__core::any::TypeId'>TypeId</a></td>
                         <td class='docblock short'>
                              <p>A <code>TypeId</code> represents a globally unique identifier for a type.</p>
-
                         </td>
                     </tr>
                 </table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
@@ -119,7 +119,6 @@ use runtime reflection instead.</p>
                                title='bitflags::__core::any::Any'>Any</a></td>
                         <td class='docblock short'>
                              <p>A type to emulate dynamic typing.</p>
-
                         </td>
                     </tr>
                 </table></section>
@@ -165,7 +164,7 @@ use runtime reflection instead.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

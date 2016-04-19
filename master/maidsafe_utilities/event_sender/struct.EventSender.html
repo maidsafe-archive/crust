@@ -26,7 +26,7 @@
     
 
     <nav class="sidebar">
-        <a href='../../maidsafe_utilities/index.html'><img src='https://raw.githubusercontent.com/maidsafe/QA/master/Images/maidsafe_logo.png' alt='' width='100'></a>
+        <a href='../../maidsafe_utilities/index.html'><img src='https://raw.githubusercontent.com/maidsafe/QA/master/Images/maidsafe_logo.png' alt='logo' width='100'></a>
         <p class='location'><a href='../index.html'>maidsafe_utilities</a>::<wbr><a href='index.html'>event_sender</a></p><script>window.sidebarCurrent = {name: 'EventSender', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
     </nav>
 
@@ -70,7 +70,8 @@ type information of this is put into <code>EventSender</code> too during its con
 distributed, the modules cannot cheat (do the wrong thing) by trying to fire an event they are
 not permitted to. Also a single thread listens to many receivers. All problems solved.</p>
 
-<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<pre class='rust rust-example-rendered'>
     <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>, <span class='ident'>Clone</span>)]</span>
     <span class='kw'>enum</span> <span class='ident'>EventCategory</span> {
         <span class='ident'>Network</span>,
@@ -139,7 +140,7 @@ are baked into <code>EventSender</code> to disallow user code from misusing it.<
 </div><h4 id='method.send' class='method'><code>fn <a href='#method.send' class='fnname'>send</a>(&amp;self, event: EventSubset) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, <a class='enum' href='../../maidsafe_utilities/event_sender/enum.EventSenderError.html' title='maidsafe_utilities::event_sender::EventSenderError'>EventSenderError</a>&lt;Category, EventSubset&gt;&gt;</code></h4>
 <div class='docblock'><p>Fire an allowed event/signal to the observer.</p>
 </div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl&lt;Category: <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a>, EventSubset: <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a>&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='struct' href='../../maidsafe_utilities/event_sender/struct.EventSender.html' title='maidsafe_utilities::event_sender::EventSender'>EventSender</a>&lt;Category, EventSubset&gt;</code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='struct' href='../../maidsafe_utilities/event_sender/struct.EventSender.html' title='maidsafe_utilities::event_sender::EventSender'>EventSender</a>&lt;Category, EventSubset&gt;</code></h4>
-<h4 id='method.clone_from' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
+<h4 id='method.clone_from' class='method'><span class="since">1.0.0</span><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
 </div></section>
     <section id='search' class="content hidden"></section>
 
@@ -183,7 +184,7 @@ are baked into <code>EventSender</code> to disallow user code from misusing it.<
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

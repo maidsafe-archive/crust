@@ -61,7 +61,8 @@ a hash table for a given key.</p>
 <p><code>shorthash()</code> is currently an implementation of <code>SipHash-2-4</code> as specified in
 <a href="https://131002.net/siphash/">SipHash: a fast short-input PRF</a></p>
 
-<h1 id='example' class='section-header'><a href='#example'>Example</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='example' class='section-header'><a href='#example'>Example</a></h1>
+<pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>sodiumoxide</span>::<span class='ident'>crypto</span>::<span class='ident'>shorthash</span>;
 
 <span class='kw'>let</span> <span class='ident'>key</span> <span class='op'>=</span> <span class='ident'>shorthash</span>::<span class='ident'>gen_key</span>();
@@ -75,7 +76,6 @@ a hash table for a given key.</p>
                                title='sodiumoxide::crypto::shorthash::siphash24'>siphash24</a></td>
                         <td class='docblock short'>
                              <p><code>SipHash-2-4</code></p>
-
                         </td>
                     </tr>
                 </table></section>
@@ -121,7 +121,7 @@ a hash table for a given key.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

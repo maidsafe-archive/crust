@@ -50,7 +50,8 @@
 <pre class='rust const'>pub const EMPTY_HEADER: <a class='struct' href='../httparse/struct.Header.html' title='httparse::Header'>Header</a>&lt;'static&gt;<code> = </code><code>Header { name: "", value: b"" }</code></pre><div class='docblock'><p>An empty header, useful for constructing a <code>Header</code> array to pass in for
 parsing.</p>
 
-<h1 id='example' class='section-header'><a href='#example'>Example</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='example' class='section-header'><a href='#example'>Example</a></h1>
+<pre class='rust rust-example-rendered'>
 <span class='kw'>let</span> <span class='ident'>headers</span> <span class='op'>=</span> [<span class='ident'>httparse</span>::<span class='ident'>EMPTY_HEADER</span>; <span class='number'>64</span>];</pre>
 </div></section>
     <section id='search' class="content hidden"></section>
@@ -95,7 +96,7 @@ parsing.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

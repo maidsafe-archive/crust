@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-22655' class='srclink' href='https://doc.rust-lang.org/nightly/core/convert/index.html?gotosrc=22655' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-22732' class='srclink' href='https://doc.rust-lang.org/nightly/core/convert/index.html?gotosrc=22732' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Traits for conversions between types.</p>
 
 <p>The traits in this module provide a general way to talk about conversions
@@ -56,6 +56,27 @@ from one type to another. They follow the standard Rust conventions of
 <p>Like many traits, these are often used as bounds for generic functions, to
 support arguments of multiple types.</p>
 
+<ul>
+<li>Impl the <code>As*</code> traits for reference-to-reference conversions</li>
+<li>Impl the <code>Into</code> trait when you want to consume the value in the conversion</li>
+<li>The <code>From</code> trait is the most flexible, useful for values <em>and</em> references conversions</li>
+</ul>
+
+<p>As a library writer, you should prefer implementing <code>From&lt;T&gt;</code> rather than
+<code>Into&lt;U&gt;</code>, as <code>From</code> provides greater flexibility and offer the equivalent <code>Into</code>
+implementation for free, thanks to a blanket implementation in the standard library.</p>
+
+<p><strong>Note: these traits must not fail</strong>. If the conversion can fail, you must use a dedicated
+method which return an <code>Option&lt;T&gt;</code> or a <code>Result&lt;T, E&gt;</code>.</p>
+
+<h1 id='generic-impl' class='section-header'><a href='#generic-impl'>Generic impl</a></h1>
+<ul>
+<li><code>AsRef</code> and <code>AsMut</code> auto-dereference if the inner type is a reference</li>
+<li><code>From&lt;U&gt; for T</code> implies <code>Into&lt;T&gt; for U</code></li>
+<li><code>From</code> and <code>Into</code> are reflexive, which means that all types can <code>into()</code>
+themselves and <code>from()</code> themselves</li>
+</ul>
+
 <p>See each trait for usage examples.</p>
 </div><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
 <table>
@@ -64,7 +85,6 @@ support arguments of multiple types.</p>
                                title='bitflags::__core::convert::AsMut'>AsMut</a></td>
                         <td class='docblock short'>
                              <p>A cheap, mutable reference-to-mutable reference conversion.</p>
-
                         </td>
                     </tr>
                 
@@ -73,7 +93,6 @@ support arguments of multiple types.</p>
                                title='bitflags::__core::convert::AsRef'>AsRef</a></td>
                         <td class='docblock short'>
                              <p>A cheap, reference-to-reference conversion.</p>
-
                         </td>
                     </tr>
                 
@@ -82,7 +101,6 @@ support arguments of multiple types.</p>
                                title='bitflags::__core::convert::From'>From</a></td>
                         <td class='docblock short'>
                              <p>Construct <code>Self</code> via a conversion.</p>
-
                         </td>
                     </tr>
                 
@@ -91,7 +109,6 @@ support arguments of multiple types.</p>
                                title='bitflags::__core::convert::Into'>Into</a></td>
                         <td class='docblock short'>
                              <p>A conversion that consumes <code>self</code>, which may or may not be expensive.</p>
-
                         </td>
                     </tr>
                 </table></section>
@@ -137,7 +154,7 @@ support arguments of multiple types.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

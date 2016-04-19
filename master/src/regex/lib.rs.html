@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/regex-0.1.65/src/lib.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/regex-0.1.66/src/lib.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>lib.rs.html -- source</title>
@@ -26,7 +26,7 @@
     
 
     <nav class="sidebar">
-        <a href='../../regex/index.html'><img src='https://www.rust-lang.org/logos/rust-logo-128x128-blk-v2.png' alt='' width='100'></a>
+        <a href='../../regex/index.html'><img src='https://www.rust-lang.org/logos/rust-logo-128x128-blk-v2.png' alt='logo' width='100'></a>
         
     </nav>
 
@@ -1105,7 +1105,7 @@
 <span class='doccomment'>//! ```rust</span>
 <span class='doccomment'>//! # extern crate regex; use regex::Regex;</span>
 <span class='doccomment'>//! # fn main() {</span>
-<span class='doccomment'>//! let re = Regex::new(r&quot;\b.+\b&quot;).unwrap();</span>
+<span class='doccomment'>//! let re = Regex::new(r&quot;(?-u:\b).+(?-u:\b)&quot;).unwrap();</span>
 <span class='doccomment'>//! let cap = re.captures(&quot;$$abc$$&quot;).unwrap();</span>
 <span class='doccomment'>//! assert_eq!(cap.at(0), Some(&quot;abc&quot;));</span>
 <span class='doccomment'>//! # }</span>
@@ -1194,7 +1194,7 @@
 
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>aho_corasick</span>;
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>memchr</span>;
-<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>mempool</span>;
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>thread_local</span>;
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span> <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>quickcheck</span>;
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>regex_syntax</span> <span class='kw'>as</span> <span class='ident'>syntax</span>;
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>utf8_ranges</span>;
@@ -1376,7 +1376,7 @@ performance on `&amp;str`.
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

@@ -58,7 +58,8 @@ event loop will not be running yet.</p>
 <div class='docblock'><p>Returns a sender that allows sending messages to the event loop in a
 thread-safe way, waking up the event loop if needed.</p>
 
-<h1 id='example' class='section-header'><a href='#example'>Example</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='example' class='section-header'><a href='#example'>Example</a></h1>
+<pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>thread</span>;
 <span class='kw'>use</span> <span class='ident'>mio</span>::{<span class='ident'>EventLoop</span>, <span class='ident'>Handler</span>};
 
@@ -109,7 +110,8 @@ passing in the supplied token.</p>
 <p>Returns a handle to the timeout that can be used to cancel the timeout
 using <a href="#method.clear_timeout">#clear_timeout</a>.</p>
 
-<h1 id='example-1' class='section-header'><a href='#example-1'>Example</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='example-1' class='section-header'><a href='#example-1'>Example</a></h1>
+<pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>mio</span>::{<span class='ident'>EventLoop</span>, <span class='ident'>Handler</span>};
 
 <span class='kw'>struct</span> <span class='ident'>MyHandler</span>;
@@ -195,7 +197,7 @@ time.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

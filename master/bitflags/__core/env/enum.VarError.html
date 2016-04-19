@@ -46,18 +46,18 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-2876' class='srclink' href='https://doc.rust-lang.org/nightly/std/env/enum.VarError.html?gotosrc=2876' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-2900' class='srclink' href='https://doc.rust-lang.org/nightly/std/env/enum.VarError.html?gotosrc=2900' title='goto source code'>[src]</a></span></h1>
 <pre class='rust enum'>pub enum VarError {
     NotPresent,
     NotUnicode(<a class='struct' href='../../../bitflags/__core/ffi/struct.OsString.html' title='bitflags::__core::ffi::OsString'>OsString</a>),
-}</pre><div class='docblock'><p>Possible errors from the <code>env::var</code> method.</p>
+}</pre><span class="since">1.0.0</span><div class='docblock'><p>Possible errors from the <code>env::var</code> method.</p>
 </div><h2 class='variants'>Variants</h2>
-<table><tr><td id='variant.NotPresent'><code>NotPresent</code></td><td><div class='docblock'><p>The specified environment variable was not present in the current
+<table class='variants_table'><tr><td id='variant.NotPresent'><code>NotPresent</code></td><td><div class='docblock'><p>The specified environment variable was not present in the current
 process&#39;s environment.</p>
-</div></td></tr><tr><td id='variant.NotUnicode'><code>NotUnicode</code></td><td><div class='docblock'><p>The specified environment variable was found, but it did not contain
+</div></td><td></td></tr><tr><td id='variant.NotUnicode'><code>NotUnicode</code></td><td><div class='docblock'><p>The specified environment variable was found, but it did not contain
 valid unicode data. The found data is returned as a payload of this
 variant.</p>
-</div></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Display.html' title='bitflags::__core::fmt::Display'>Display</a> for <a class='enum' href='../../../bitflags/__core/env/enum.VarError.html' title='bitflags::__core::env::VarError'>VarError</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='../../../bitflags/__core/fmt/trait.Display.html#method.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class='struct' href='../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h4>
+</div></td><td></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Display.html' title='bitflags::__core::fmt::Display'>Display</a> for <a class='enum' href='../../../bitflags/__core/env/enum.VarError.html' title='bitflags::__core::env::VarError'>VarError</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='../../../bitflags/__core/fmt/trait.Display.html#method.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class='struct' href='../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h4>
 </div><h3 class='impl'><code>impl <a class='trait' href='../../../bitflags/__core/error/trait.Error.html' title='bitflags::__core::error::Error'>Error</a> for <a class='enum' href='../../../bitflags/__core/env/enum.VarError.html' title='bitflags::__core::env::VarError'>VarError</a></code></h3><div class='impl-items'><h4 id='method.description' class='method'><code>fn <a href='../../../bitflags/__core/error/trait.Error.html#method.description' class='fnname'>description</a>(&amp;self) -&gt; &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.str.html'>str</a></code></h4>
 <h4 id='method.cause' class='method'><code>fn <a href='../../../bitflags/__core/error/trait.Error.html#method.cause' class='fnname'>cause</a>(&amp;self) -&gt; <a class='enum' href='../../../bitflags/__core/option/enum.Option.html' title='bitflags::__core::option::Option'>Option</a>&lt;&amp;<a class='trait' href='../../../bitflags/__core/error/trait.Error.html' title='bitflags::__core::error::Error'>Error</a>&gt;</code></h4>
 </div><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='../../../bitflags/__core/clone/trait.Clone.html' title='bitflags::__core::clone::Clone'>Clone</a> for <a class='enum' href='../../../bitflags/__core/env/enum.VarError.html' title='bitflags::__core::env::VarError'>VarError</a></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='../../../bitflags/__core/clone/trait.Clone.html#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='enum' href='../../../bitflags/__core/env/enum.VarError.html' title='bitflags::__core::env::VarError'>VarError</a></code></h4>
@@ -108,7 +108,7 @@ variant.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

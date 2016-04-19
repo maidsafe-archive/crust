@@ -46,8 +46,8 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-2921' class='srclink' href='https://doc.rust-lang.org/nightly/std/env/fn.set_var.html?gotosrc=2921' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub fn set_var&lt;K, V&gt;(k: K, v: V) <span class='where'>where V: <a class='trait' href='../../../bitflags/__core/convert/trait.AsRef.html' title='bitflags::__core::convert::AsRef'>AsRef</a>&lt;<a class='struct' href='../../../bitflags/__core/ffi/struct.OsStr.html' title='bitflags::__core::ffi::OsStr'>OsStr</a>&gt;, K: <a class='trait' href='../../../bitflags/__core/convert/trait.AsRef.html' title='bitflags::__core::convert::AsRef'>AsRef</a>&lt;<a class='struct' href='../../../bitflags/__core/ffi/struct.OsStr.html' title='bitflags::__core::ffi::OsStr'>OsStr</a>&gt;</span></pre><div class='docblock'><p>Sets the environment variable <code>k</code> to the value <code>v</code> for the currently running
+        </span><a id='src-2945' class='srclink' href='https://doc.rust-lang.org/nightly/std/env/fn.set_var.html?gotosrc=2945' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub fn set_var&lt;K, V&gt;(k: K, v: V) <span class='where'>where K: <a class='trait' href='../../../bitflags/__core/convert/trait.AsRef.html' title='bitflags::__core::convert::AsRef'>AsRef</a>&lt;<a class='struct' href='../../../bitflags/__core/ffi/struct.OsStr.html' title='bitflags::__core::ffi::OsStr'>OsStr</a>&gt;, V: <a class='trait' href='../../../bitflags/__core/convert/trait.AsRef.html' title='bitflags::__core::convert::AsRef'>AsRef</a>&lt;<a class='struct' href='../../../bitflags/__core/ffi/struct.OsStr.html' title='bitflags::__core::ffi::OsStr'>OsStr</a>&gt;</span></pre><span class="since">1.0.0</span><div class='docblock'><p>Sets the environment variable <code>k</code> to the value <code>v</code> for the currently running
 process.</p>
 
 <p>Note that while concurrent access to environment variables is safe in Rust,
@@ -68,7 +68,8 @@ environment accesses are properly synchronized with accesses in Rust.</p>
 <code>&#39;=&#39;</code> or the NUL character <code>&#39;\0&#39;</code>, or when the value contains the NUL
 character.</p>
 
-<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>env</span>;
 
 <span class='kw'>let</span> <span class='ident'>key</span> <span class='op'>=</span> <span class='string'>&quot;KEY&quot;</span>;
@@ -117,7 +118,7 @@ character.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

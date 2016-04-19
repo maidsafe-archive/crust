@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-1096' class='srclink' href='https://doc.rust-lang.org/nightly/std/collections/index.html?gotosrc=1096' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-1115' class='srclink' href='https://doc.rust-lang.org/nightly/std/collections/index.html?gotosrc=1115' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Collection types.</p>
 
 <p>Rust&#39;s standard collection library provides efficient implementations of the
@@ -313,6 +313,7 @@ will be yielded in sorted order.  For unordered collections like <code>HashMap</
 the items will be yielded in whatever order the internal representation made
 most convenient. This is great for reading through all the contents of the
 collection.</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>let</span> <span class='ident'>vec</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[<span class='number'>1</span>, <span class='number'>2</span>, <span class='number'>3</span>, <span class='number'>4</span>];
 <span class='kw'>for</span> <span class='ident'>x</span> <span class='kw'>in</span> <span class='ident'>vec</span>.<span class='ident'>iter</span>() {
@@ -321,6 +322,7 @@ collection.</p>
 
 <p><code>iter_mut</code> provides an iterator of <em>mutable</em> references in the same order as
 <code>iter</code>.  This is great for mutating all the contents of the collection.</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>vec</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[<span class='number'>1</span>, <span class='number'>2</span>, <span class='number'>3</span>, <span class='number'>4</span>];
 <span class='kw'>for</span> <span class='ident'>x</span> <span class='kw'>in</span> <span class='ident'>vec</span>.<span class='ident'>iter_mut</span>() {
@@ -336,10 +338,12 @@ Calling <code>collect</code> on an iterator itself is also a great way to conver
 collection into another. Both of these methods should internally use the
 capacity management tools discussed in the previous section to do this as
 efficiently as possible.</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>vec1</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[<span class='number'>1</span>, <span class='number'>2</span>, <span class='number'>3</span>, <span class='number'>4</span>];
 <span class='kw'>let</span> <span class='ident'>vec2</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[<span class='number'>10</span>, <span class='number'>20</span>, <span class='number'>30</span>, <span class='number'>40</span>];
 <span class='ident'>vec1</span>.<span class='ident'>extend</span>(<span class='ident'>vec2</span>);</pre>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>collections</span>::<span class='ident'>VecDeque</span>;
 
@@ -352,6 +356,7 @@ threads to sequences. Among the adapters are functional favorites like <code>map
 <code>rev</code> adapter, that reverses any iterator that supports this operation. Most
 collections provide reversible iterators as the way to iterate over them in
 reverse order.</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>let</span> <span class='ident'>vec</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[<span class='number'>1</span>, <span class='number'>2</span>, <span class='number'>3</span>, <span class='number'>4</span>];
 <span class='kw'>for</span> <span class='ident'>x</span> <span class='kw'>in</span> <span class='ident'>vec</span>.<span class='ident'>iter</span>().<span class='ident'>rev</span>() {
@@ -396,7 +401,8 @@ vacant <code>insert</code> case.</p>
 <p>Here are the two primary ways in which <code>entry</code> is used. First, a simple
 example where the logic performed on the values is trivial.</p>
 
-<h4 id='counting-the-number-of-times-each-character-in-a-string-occurs' class='section-header'><a href='#counting-the-number-of-times-each-character-in-a-string-occurs'>Counting the number of times each character in a string occurs</a></h4><pre class='rust rust-example-rendered'>
+<h4 id='counting-the-number-of-times-each-character-in-a-string-occurs' class='section-header'><a href='#counting-the-number-of-times-each-character-in-a-string-occurs'>Counting the number of times each character in a string occurs</a></h4>
+<pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>collections</span>::<span class='ident'>btree_map</span>::<span class='ident'>BTreeMap</span>;
 
 <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>count</span> <span class='op'>=</span> <span class='ident'>BTreeMap</span>::<span class='ident'>new</span>();
@@ -417,7 +423,8 @@ example where the logic performed on the values is trivial.</p>
 use the <code>entry</code> API to ensure that the value is initialized, and perform the
 logic afterwards.</p>
 
-<h4 id='tracking-the-inebriation-of-customers-at-a-bar' class='section-header'><a href='#tracking-the-inebriation-of-customers-at-a-bar'>Tracking the inebriation of customers at a bar</a></h4><pre class='rust rust-example-rendered'>
+<h4 id='tracking-the-inebriation-of-customers-at-a-bar' class='section-header'><a href='#tracking-the-inebriation-of-customers-at-a-bar'>Tracking the inebriation of customers at a bar</a></h4>
+<pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>collections</span>::<span class='ident'>btree_map</span>::<span class='ident'>BTreeMap</span>;
 
 <span class='comment'>// A client of the bar. They have a blood alcohol level.</span>
@@ -450,6 +457,7 @@ logic afterwards.</p>
 <h1 id='insert-and-complex-keys' class='section-header'><a href='#insert-and-complex-keys'>Insert and complex keys</a></h1>
 <p>If we have a more complex key, calls to <code>insert()</code> will
 not update the value of the key. For example:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>cmp</span>::<span class='ident'>Ordering</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>collections</span>::<span class='ident'>BTreeMap</span>;
@@ -482,12 +490,15 @@ not update the value of the key. For example:</p>
 }
 
 <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>map</span> <span class='op'>=</span> <span class='ident'>BTreeMap</span>::<span class='ident'>new</span>();
-<span class='ident'>map</span>.<span class='ident'>insert</span>(<span class='ident'>Foo</span> { <span class='ident'>a</span>: <span class='number'>1</span>, <span class='ident'>b</span>: <span class='string'>&quot;baz&quot;</span> }, ());
+<span class='ident'>map</span>.<span class='ident'>insert</span>(<span class='ident'>Foo</span> { <span class='ident'>a</span>: <span class='number'>1</span>, <span class='ident'>b</span>: <span class='string'>&quot;baz&quot;</span> }, <span class='number'>99</span>);
 
 <span class='comment'>// We already have a Foo with an a of 1, so this will be updating the value.</span>
-<span class='ident'>map</span>.<span class='ident'>insert</span>(<span class='ident'>Foo</span> { <span class='ident'>a</span>: <span class='number'>1</span>, <span class='ident'>b</span>: <span class='string'>&quot;xyz&quot;</span> }, ());
+<span class='ident'>map</span>.<span class='ident'>insert</span>(<span class='ident'>Foo</span> { <span class='ident'>a</span>: <span class='number'>1</span>, <span class='ident'>b</span>: <span class='string'>&quot;xyz&quot;</span> }, <span class='number'>100</span>);
 
-<span class='comment'>// ... but the key hasn&#39;t changed. b is still &quot;baz&quot;, not &quot;xyz&quot;</span>
+<span class='comment'>// The value has been updated...</span>
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>map</span>.<span class='ident'>values</span>().<span class='ident'>next</span>().<span class='ident'>unwrap</span>(), <span class='kw-2'>&amp;</span><span class='number'>100</span>);
+
+<span class='comment'>// ...but the key hasn&#39;t changed. b is still &quot;baz&quot;, not &quot;xyz&quot;.</span>
 <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>map</span>.<span class='ident'>keys</span>().<span class='ident'>next</span>().<span class='ident'>unwrap</span>().<span class='ident'>b</span>, <span class='string'>&quot;baz&quot;</span>);</pre>
 </div><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
 <table>
@@ -496,7 +507,6 @@ not update the value of the key. For example:</p>
                                title='bitflags::__core::collections::binary_heap'>binary_heap</a></td>
                         <td class='docblock short'>
                              <p>A priority queue implemented with a binary heap.</p>
-
                         </td>
                     </tr>
                 
@@ -521,7 +531,6 @@ not update the value of the key. For example:</p>
                                title='bitflags::__core::collections::hash_map'>hash_map</a></td>
                         <td class='docblock short'>
                              <p>A hashmap</p>
-
                         </td>
                     </tr>
                 
@@ -530,7 +539,6 @@ not update the value of the key. For example:</p>
                                title='bitflags::__core::collections::hash_set'>hash_set</a></td>
                         <td class='docblock short'>
                              <p>A hashset</p>
-
                         </td>
                     </tr>
                 
@@ -539,7 +547,6 @@ not update the value of the key. For example:</p>
                                title='bitflags::__core::collections::linked_list'>linked_list</a></td>
                         <td class='docblock short'>
                              <p>A doubly-linked list with owned nodes.</p>
-
                         </td>
                     </tr>
                 
@@ -549,7 +556,6 @@ not update the value of the key. For example:</p>
                         <td class='docblock short'>
                              <p>VecDeque is a double-ended queue, which is implemented with the help of a
 growing ring buffer.</p>
-
                         </td>
                     </tr>
                 
@@ -559,7 +565,6 @@ growing ring buffer.</p>
                         <td class='docblock short'>
                             [<em class='stab unstable deprecated'>Deprecated</em>] <p>Experimental support for providing custom hash algorithms to a HashMap and
 HashSet.</p>
-
                         </td>
                     </tr>
                 </table><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
@@ -569,7 +574,6 @@ HashSet.</p>
                                title='bitflags::__core::collections::BTreeMap'>BTreeMap</a></td>
                         <td class='docblock short'>
                              <p>A map based on a B-Tree.</p>
-
                         </td>
                     </tr>
                 
@@ -578,7 +582,6 @@ HashSet.</p>
                                title='bitflags::__core::collections::BTreeSet'>BTreeSet</a></td>
                         <td class='docblock short'>
                              <p>A set based on a B-Tree.</p>
-
                         </td>
                     </tr>
                 
@@ -587,7 +590,6 @@ HashSet.</p>
                                title='bitflags::__core::collections::BinaryHeap'>BinaryHeap</a></td>
                         <td class='docblock short'>
                              <p>A priority queue implemented with a binary heap.</p>
-
                         </td>
                     </tr>
                 
@@ -597,7 +599,6 @@ HashSet.</p>
                         <td class='docblock short'>
                              <p>A hash map implementation which uses linear probing with Robin
 Hood bucket stealing.</p>
-
                         </td>
                     </tr>
                 
@@ -607,7 +608,6 @@ Hood bucket stealing.</p>
                         <td class='docblock short'>
                              <p>An implementation of a hash set using the underlying representation of a
 HashMap where the value is ().</p>
-
                         </td>
                     </tr>
                 
@@ -616,7 +616,6 @@ HashMap where the value is ().</p>
                                title='bitflags::__core::collections::LinkedList'>LinkedList</a></td>
                         <td class='docblock short'>
                              <p>A doubly-linked list.</p>
-
                         </td>
                     </tr>
                 
@@ -626,7 +625,6 @@ HashMap where the value is ().</p>
                         <td class='docblock short'>
                              <p><code>VecDeque</code> is a growable ring buffer, which can be used as a double-ended
 queue efficiently.</p>
-
                         </td>
                     </tr>
                 </table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
@@ -636,7 +634,6 @@ queue efficiently.</p>
                                title='bitflags::__core::collections::Bound'>Bound</a></td>
                         <td class='docblock short'>
                             [<em class='stab unstable'>Unstable</em>] <p>An endpoint of a range of keys.</p>
-
                         </td>
                     </tr>
                 </table></section>
@@ -682,7 +679,7 @@ queue efficiently.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

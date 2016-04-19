@@ -46,8 +46,8 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-2841' class='srclink' href='https://doc.rust-lang.org/nightly/std/env/fn.vars.html?gotosrc=2841' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub fn vars() -&gt; <a class='struct' href='../../../bitflags/__core/env/struct.Vars.html' title='bitflags::__core::env::Vars'>Vars</a></pre><div class='docblock'><p>Returns an iterator of (variable, value) pairs of strings, for all the
+        </span><a id='src-2865' class='srclink' href='https://doc.rust-lang.org/nightly/std/env/fn.vars.html?gotosrc=2865' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub fn vars() -&gt; <a class='struct' href='../../../bitflags/__core/env/struct.Vars.html' title='bitflags::__core::env::Vars'>Vars</a></pre><span class="since">1.0.0</span><div class='docblock'><p>Returns an iterator of (variable, value) pairs of strings, for all the
 environment variables of the current process.</p>
 
 <p>The returned iterator contains a snapshot of the process&#39;s environment
@@ -59,7 +59,8 @@ variables afterwards will not be reflected in the returned iterator.</p>
 environment is not valid unicode. If this is not desired, consider using the
 <code>env::vars_os</code> function.</p>
 
-<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>env</span>;
 
 <span class='comment'>// We will iterate through the references to the element returned by</span>
@@ -110,7 +111,7 @@ environment is not valid unicode. If this is not desired, consider using the
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

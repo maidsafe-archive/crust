@@ -57,7 +57,6 @@ You can then communicate with the device via this object.</p>
                                title='igd::Gateway'>Gateway</a></td>
                         <td class='docblock short'>
                              <p>This structure represents a gateway found by the search functions.</p>
-
                         </td>
                     </tr>
                 
@@ -66,7 +65,6 @@ You can then communicate with the device via this object.</p>
                                title='igd::XmlError'>XmlError</a></td>
                         <td class='docblock short'>
                              <p>XML parsing error.</p>
-
                         </td>
                     </tr>
                 </table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
@@ -76,7 +74,6 @@ You can then communicate with the device via this object.</p>
                                title='igd::AddAnyPortError'>AddAnyPortError</a></td>
                         <td class='docblock short'>
                              <p>Errors returned by <code>Gateway::add_any_port</code> and <code>Gateway::get_any_address</code></p>
-
                         </td>
                     </tr>
                 
@@ -85,7 +82,6 @@ You can then communicate with the device via this object.</p>
                                title='igd::AddPortError'>AddPortError</a></td>
                         <td class='docblock short'>
                              <p>Errors returned by <code>Gateway::add_port</code></p>
-
                         </td>
                     </tr>
                 
@@ -94,7 +90,6 @@ You can then communicate with the device via this object.</p>
                                title='igd::GetExternalIpError'>GetExternalIpError</a></td>
                         <td class='docblock short'>
                              <p>Errors returned by <code>Gateway::get_external_ip</code></p>
-
                         </td>
                     </tr>
                 
@@ -103,7 +98,6 @@ You can then communicate with the device via this object.</p>
                                title='igd::HttpError'>HttpError</a></td>
                         <td class='docblock short'>
                              <p>A set of errors that can occur parsing HTTP streams.</p>
-
                         </td>
                     </tr>
                 
@@ -112,7 +106,6 @@ You can then communicate with the device via this object.</p>
                                title='igd::PortMappingProtocol'>PortMappingProtocol</a></td>
                         <td class='docblock short'>
                              <p>Represents the protocols available for port mapping.</p>
-
                         </td>
                     </tr>
                 
@@ -121,7 +114,6 @@ You can then communicate with the device via this object.</p>
                                title='igd::RemovePortError'>RemovePortError</a></td>
                         <td class='docblock short'>
                              <p>Errors returned by <code>Gateway::remove_port</code></p>
-
                         </td>
                     </tr>
                 
@@ -130,7 +122,6 @@ You can then communicate with the device via this object.</p>
                                title='igd::RequestError'>RequestError</a></td>
                         <td class='docblock short'>
                              <p>Errors that can occur when sending the request to the gateway.</p>
-
                         </td>
                     </tr>
                 
@@ -139,7 +130,6 @@ You can then communicate with the device via this object.</p>
                                title='igd::SearchError'>SearchError</a></td>
                         <td class='docblock short'>
                              <p>Errors than can occur while trying to find the gateway.</p>
-
                         </td>
                     </tr>
                 </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
@@ -149,7 +139,6 @@ You can then communicate with the device via this object.</p>
                                title='igd::search_gateway'>search_gateway</a></td>
                         <td class='docblock short'>
                              <p>Search gateway, bind to all interfaces and use a timeout of 3 seconds.</p>
-
                         </td>
                     </tr>
                 
@@ -158,7 +147,6 @@ You can then communicate with the device via this object.</p>
                                title='igd::search_gateway_from'>search_gateway_from</a></td>
                         <td class='docblock short'>
                              <p>Search gateway, bind to the given interface and use a time of 3 seconds.</p>
-
                         </td>
                     </tr>
                 
@@ -167,7 +155,6 @@ You can then communicate with the device via this object.</p>
                                title='igd::search_gateway_from_timeout'>search_gateway_from_timeout</a></td>
                         <td class='docblock short'>
                              <p>Search gateway, bind to the given interface and use the given duration for the timeout.</p>
-
                         </td>
                     </tr>
                 
@@ -176,7 +163,6 @@ You can then communicate with the device via this object.</p>
                                title='igd::search_gateway_timeout'>search_gateway_timeout</a></td>
                         <td class='docblock short'>
                              <p>Search gateway, bind to all interfaces and use the given duration for the timeout.</p>
-
                         </td>
                     </tr>
                 </table><h2 id='impls' class='section-header'><a href="#impls">Implementations</a></h2>
@@ -223,7 +209,7 @@ You can then communicate with the device via this object.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

@@ -58,6 +58,7 @@ magnitude faster than <code>haystack.iter().position(|&amp;b| b == needle)</code
 
 <h1 id='example' class='section-header'><a href='#example'>Example</a></h1>
 <p>This shows how to find the first position of a byte in a byte string.</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>memchr</span>::<span class='ident'>memchr</span>;
 
@@ -106,7 +107,7 @@ magnitude faster than <code>haystack.iter().position(|&amp;b| b == needle)</code
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

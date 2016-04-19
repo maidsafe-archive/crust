@@ -46,12 +46,13 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-3302' class='srclink' href='../src/itertools/lib.rs.html#1490-1513' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-3497' class='srclink' href='../src/itertools/lib.rs.html#1565-1588' title='goto source code'>[src]</a></span></h1>
 <pre class='rust fn'>pub fn assert_equal&lt;I, J&gt;(a: I, b: J) <span class='where'>where I: <a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/trait.IntoIterator.html' title='core::iter::IntoIterator'>IntoIterator</a>, J: <a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/trait.IntoIterator.html' title='core::iter::IntoIterator'>IntoIterator</a>, I::Item: <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a>&lt;J::Item&gt;, J::Item: <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a></span></pre><div class='docblock'><p>Assert that two iterators produce equal sequences, with the same
 semantics as <em>equal(a, b)</em>.</p>
 
 <p><strong>Panics</strong> on assertion failure with a message that shows the
 two iteration elements.</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='ident'>assert_equal</span>(<span class='string'>&quot;exceed&quot;</span>.<span class='ident'>split</span>(<span class='string'>&#39;c&#39;</span>), <span class='string'>&quot;excess&quot;</span>.<span class='ident'>split</span>(<span class='string'>&#39;c&#39;</span>));
 <span class='comment'>// ^PANIC: panicked at &#39;Failed assertion Some(&quot;eed&quot;) == Some(&quot;ess&quot;) for iteration 1&#39;,</span></pre>
@@ -98,7 +99,7 @@ two iteration elements.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

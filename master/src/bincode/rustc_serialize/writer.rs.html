@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/bincode-0.5.2/src/rustc_serialize/writer.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/bincode-0.5.4/src/rustc_serialize/writer.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>writer.rs.html -- source</title>
@@ -26,7 +26,7 @@
     
 
     <nav class="sidebar">
-        <a href='../../../bincode/index.html'><img src='./icon.png' alt='' width='100'></a>
+        <a href='../../../bincode/index.html'><img src='./icon.png' alt='logo' width='100'></a>
         
     </nav>
 
@@ -463,24 +463,15 @@
 <span id="420">420</span>
 <span id="421">421</span>
 <span id="422">422</span>
-<span id="423">423</span>
-<span id="424">424</span>
-<span id="425">425</span>
-<span id="426">426</span>
-<span id="427">427</span>
-<span id="428">428</span>
-<span id="429">429</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>Write</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>Error</span> <span class='kw'>as</span> <span class='ident'>IoError</span>;
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>ErrorKind</span> <span class='kw'>as</span> <span class='ident'>IoErrorKind</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>error</span>::<span class='ident'>Error</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fmt</span>;
 
 <span class='kw'>use</span> <span class='ident'>rustc_serialize_crate</span>::<span class='ident'>Encoder</span>;
 
 <span class='kw'>use</span> <span class='ident'>byteorder</span>::{<span class='ident'>BigEndian</span>, <span class='ident'>WriteBytesExt</span>};
-<span class='kw'>use</span> <span class='ident'>byteorder</span>::<span class='ident'>Error</span> <span class='kw'>as</span> <span class='ident'>ByteOrderError</span>;
 
 <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>EncodingResult</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>T</span>, <span class='ident'>EncodingError</span><span class='op'>&gt;</span>;
 
@@ -510,13 +501,8 @@
     <span class='kw'>pub</span> <span class='ident'>written</span>: <span class='ident'>u64</span>
 }
 
-<span class='kw'>fn</span> <span class='ident'>wrap_io</span>(<span class='ident'>err</span>: <span class='ident'>ByteOrderError</span>) <span class='op'>-&gt;</span> <span class='ident'>EncodingError</span> {
-    <span class='kw'>match</span> <span class='ident'>err</span> {
-        <span class='ident'>ByteOrderError</span>::<span class='ident'>Io</span>(<span class='ident'>ioe</span>) <span class='op'>=&gt;</span> <span class='ident'>EncodingError</span>::<span class='ident'>IoError</span>(<span class='ident'>ioe</span>),
-        <span class='ident'>ByteOrderError</span>::<span class='ident'>UnexpectedEOF</span> <span class='op'>=&gt;</span> <span class='ident'>EncodingError</span>::<span class='ident'>IoError</span>(
-            <span class='ident'>IoError</span>::<span class='ident'>new</span>(<span class='ident'>IoErrorKind</span>::<span class='ident'>Other</span>,
-                         <span class='string'>&quot;ByteOrder could not write to the buffer&quot;</span>))
-    }
+<span class='kw'>fn</span> <span class='ident'>wrap_io</span>(<span class='ident'>err</span>: <span class='ident'>IoError</span>) <span class='op'>-&gt;</span> <span class='ident'>EncodingError</span> {
+    <span class='ident'>EncodingError</span>::<span class='ident'>IoError</span>(<span class='ident'>err</span>)
 }
 
 <span class='kw'>impl</span> <span class='ident'>fmt</span>::<span class='ident'>Display</span> <span class='kw'>for</span> <span class='ident'>EncodingError</span> {
@@ -944,7 +930,7 @@
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

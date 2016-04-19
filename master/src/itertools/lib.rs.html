@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/itertools-0.4.12/src/lib.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/itertools-0.4.13/src/lib.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>lib.rs.html -- source</title>
@@ -1616,6 +1616,81 @@
 <span id="1573">1573</span>
 <span id="1574">1574</span>
 <span id="1575">1575</span>
+<span id="1576">1576</span>
+<span id="1577">1577</span>
+<span id="1578">1578</span>
+<span id="1579">1579</span>
+<span id="1580">1580</span>
+<span id="1581">1581</span>
+<span id="1582">1582</span>
+<span id="1583">1583</span>
+<span id="1584">1584</span>
+<span id="1585">1585</span>
+<span id="1586">1586</span>
+<span id="1587">1587</span>
+<span id="1588">1588</span>
+<span id="1589">1589</span>
+<span id="1590">1590</span>
+<span id="1591">1591</span>
+<span id="1592">1592</span>
+<span id="1593">1593</span>
+<span id="1594">1594</span>
+<span id="1595">1595</span>
+<span id="1596">1596</span>
+<span id="1597">1597</span>
+<span id="1598">1598</span>
+<span id="1599">1599</span>
+<span id="1600">1600</span>
+<span id="1601">1601</span>
+<span id="1602">1602</span>
+<span id="1603">1603</span>
+<span id="1604">1604</span>
+<span id="1605">1605</span>
+<span id="1606">1606</span>
+<span id="1607">1607</span>
+<span id="1608">1608</span>
+<span id="1609">1609</span>
+<span id="1610">1610</span>
+<span id="1611">1611</span>
+<span id="1612">1612</span>
+<span id="1613">1613</span>
+<span id="1614">1614</span>
+<span id="1615">1615</span>
+<span id="1616">1616</span>
+<span id="1617">1617</span>
+<span id="1618">1618</span>
+<span id="1619">1619</span>
+<span id="1620">1620</span>
+<span id="1621">1621</span>
+<span id="1622">1622</span>
+<span id="1623">1623</span>
+<span id="1624">1624</span>
+<span id="1625">1625</span>
+<span id="1626">1626</span>
+<span id="1627">1627</span>
+<span id="1628">1628</span>
+<span id="1629">1629</span>
+<span id="1630">1630</span>
+<span id="1631">1631</span>
+<span id="1632">1632</span>
+<span id="1633">1633</span>
+<span id="1634">1634</span>
+<span id="1635">1635</span>
+<span id="1636">1636</span>
+<span id="1637">1637</span>
+<span id="1638">1638</span>
+<span id="1639">1639</span>
+<span id="1640">1640</span>
+<span id="1641">1641</span>
+<span id="1642">1642</span>
+<span id="1643">1643</span>
+<span id="1644">1644</span>
+<span id="1645">1645</span>
+<span id="1646">1646</span>
+<span id="1647">1647</span>
+<span id="1648">1648</span>
+<span id="1649">1649</span>
+<span id="1650">1650</span>
 </pre><pre class='rust '>
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>warn</span>(<span class='ident'>missing_docs</span>)]</span>
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>cfg_attr</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;unstable&quot;</span>,
@@ -1686,13 +1761,14 @@
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;unstable&quot;</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>adaptors</span>::<span class='ident'>EnumerateFrom</span>;
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>diff</span>::{<span class='ident'>diff_with</span>, <span class='ident'>Diff</span>};
-<span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>format</span>::<span class='ident'>Format</span>;
+<span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>format</span>::{<span class='ident'>Format</span>, <span class='ident'>FormatDefault</span>};
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>free</span>::{<span class='ident'>enumerate</span>, <span class='ident'>rev</span>};
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>groupbylazy</span>::{<span class='ident'>ChunksLazy</span>, <span class='ident'>Chunk</span>, <span class='ident'>Chunks</span>, <span class='ident'>GroupByLazy</span>, <span class='ident'>Group</span>, <span class='ident'>Groups</span>};
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>intersperse</span>::<span class='ident'>Intersperse</span>;
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>islice</span>::<span class='ident'>ISlice</span>;
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>kmerge</span>::<span class='ident'>KMerge</span>;
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>linspace</span>::{<span class='ident'>linspace</span>, <span class='ident'>Linspace</span>};
+<span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>minmax</span>::<span class='ident'>MinMaxResult</span>;
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>pad_tail</span>::<span class='ident'>PadUsing</span>;
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>rciter</span>::<span class='ident'>RcIter</span>;
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>repeatn</span>::<span class='ident'>RepeatN</span>;
@@ -1715,6 +1791,7 @@
 <span class='kw'>mod</span> <span class='ident'>diff</span>;
 <span class='kw'>mod</span> <span class='ident'>kmerge</span>;
 <span class='kw'>mod</span> <span class='ident'>linspace</span>;
+<span class='kw'>mod</span> <span class='ident'>minmax</span>;
 <span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>misc</span>;
 <span class='kw'>mod</span> <span class='ident'>pad_tail</span>;
 <span class='kw'>mod</span> <span class='ident'>rciter</span>;
@@ -2735,6 +2812,27 @@
 
     <span class='doccomment'>/// Format all iterator elements, separated by `sep`.</span>
     <span class='doccomment'>///</span>
+    <span class='doccomment'>/// All elements are formatted (any formatting trait)</span>
+    <span class='doccomment'>/// with `sep` inserted between each element.</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// ```</span>
+    <span class='doccomment'>/// use itertools::Itertools;</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// let data = [1.1, 2.71828, -3.];</span>
+    <span class='doccomment'>/// assert_eq!(</span>
+    <span class='doccomment'>///     format!(&quot;{:.2}&quot;, data.iter().format_default(&quot;, &quot;)),</span>
+    <span class='doccomment'>///            &quot;1.10, 2.72, -3.00&quot;);</span>
+    <span class='doccomment'>/// ```</span>
+    <span class='kw'>fn</span> <span class='ident'>format_default</span>(<span class='self'>self</span>, <span class='ident'>sep</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>) <span class='op'>-&gt;</span> <span class='ident'>FormatDefault</span><span class='op'>&lt;</span><span class='kw'>Self</span><span class='op'>&gt;</span>
+        <span class='kw'>where</span> <span class='kw'>Self</span>: <span class='ident'>Sized</span>,
+    {
+        <span class='ident'>format</span>::<span class='ident'>new_format_default</span>(<span class='self'>self</span>, <span class='ident'>sep</span>)
+    }
+
+    <span class='doccomment'>/// Format all iterator elements, separated by `sep`.</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// This is a customizable version of `.format_default()`.</span>
+    <span class='doccomment'>///</span>
     <span class='doccomment'>/// The supplied closure `format` is called once per iterator element,</span>
     <span class='doccomment'>/// with two arguments: the element and a callback that takes a</span>
     <span class='doccomment'>/// `&amp;Display` value, i.e. any reference to type that implements `Display`.</span>
@@ -2746,7 +2844,7 @@
     <span class='doccomment'>/// use itertools::Itertools;</span>
     <span class='doccomment'>///</span>
     <span class='doccomment'>/// let data = [1.1, 2.71828, -3.];</span>
-    <span class='doccomment'>/// let data_formatter = data.iter().format(&quot;, &quot;, |elt, f| f(&amp;format_args!(&quot;{:2.2}&quot;, elt)));</span>
+    <span class='doccomment'>/// let data_formatter = data.iter().format(&quot;, &quot;, |elt, f| f(&amp;format_args!(&quot;{:.2}&quot;, elt)));</span>
     <span class='doccomment'>/// assert_eq!(format!(&quot;{}&quot;, data_formatter),</span>
     <span class='doccomment'>///            &quot;1.10, 2.72, -3.00&quot;);</span>
     <span class='doccomment'>///</span>
@@ -3063,6 +3161,58 @@
 
         (<span class='ident'>left</span>, <span class='ident'>right</span>)
     }
+
+    <span class='doccomment'>/// Return the minimum and maximum elements in the iterator.</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// The return type `MinMaxResult` is an enum of three variants:</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// - `NoElements` if the iterator is empty.</span>
+    <span class='doccomment'>/// - `OneElement(x)` if the iterator has exactly one element.</span>
+    <span class='doccomment'>/// - `MinMax(x, y)` is returned otherwise, where `x &lt;= y`. Two</span>
+    <span class='doccomment'>///    values are equal if and only if there is more than one</span>
+    <span class='doccomment'>///    element in the iterator and all elements are equal.</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// On an iterator of length `n`, `min_max` does `1.5 * n` comparisons,</span>
+    <span class='doccomment'>/// and so is faster than calling `min` and `max` separately which does</span>
+    <span class='doccomment'>/// `2 * n` comparisons.</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// # Examples</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// ```</span>
+    <span class='doccomment'>/// use itertools::Itertools;</span>
+    <span class='doccomment'>/// use itertools::MinMaxResult::{NoElements, OneElement, MinMax};</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// let a: [i32; 0] = [];</span>
+    <span class='doccomment'>/// assert_eq!(a.iter().minmax(), NoElements);</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// let a = [1];</span>
+    <span class='doccomment'>/// assert_eq!(a.iter().minmax(), OneElement(&amp;1));</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// let a = [1, 2, 3, 4, 5];</span>
+    <span class='doccomment'>/// assert_eq!(a.iter().minmax(), MinMax(&amp;1, &amp;5));</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// let a = [1, 1, 1, 1];</span>
+    <span class='doccomment'>/// assert_eq!(a.iter().minmax(), MinMax(&amp;1, &amp;1));</span>
+    <span class='doccomment'>/// ```</span>
+    <span class='kw'>fn</span> <span class='ident'>minmax</span>(<span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>MinMaxResult</span><span class='op'>&lt;</span><span class='ident'>Self</span>::<span class='ident'>Item</span><span class='op'>&gt;</span>
+        <span class='kw'>where</span> <span class='kw'>Self</span>: <span class='ident'>Sized</span>, <span class='ident'>Self</span>::<span class='ident'>Item</span>: <span class='ident'>Ord</span>
+    {
+        <span class='ident'>minmax</span>::<span class='ident'>minmax_impl</span>(<span class='self'>self</span>, <span class='op'>|</span>_<span class='op'>|</span> (), <span class='op'>|</span><span class='ident'>x</span>, <span class='ident'>y</span>, _, _<span class='op'>|</span> <span class='ident'>x</span> <span class='op'>&lt;</span> <span class='ident'>y</span>, <span class='op'>|</span><span class='ident'>x</span>, <span class='ident'>y</span>, _, _<span class='op'>|</span> <span class='ident'>x</span> <span class='op'>&gt;</span> <span class='ident'>y</span>)
+    }
+
+    <span class='doccomment'>/// Return the minimum and maximum element of an iterator, as determined by</span>
+    <span class='doccomment'>/// the specified function.</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// The return value is a variant of `MinMaxResult` like for `minmax()`.</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// For the minimum, the first minimal element is returned.  For the maximum,</span>
+    <span class='doccomment'>/// the last maximal element wins.  This matches the behavior of the standard</span>
+    <span class='doccomment'>/// `Iterator::min()` and `Iterator::max()` methods.</span>
+    <span class='kw'>fn</span> <span class='ident'>minmax_by_key</span><span class='op'>&lt;</span><span class='ident'>K</span>, <span class='ident'>F</span><span class='op'>&gt;</span>(<span class='self'>self</span>, <span class='ident'>f</span>: <span class='ident'>F</span>) <span class='op'>-&gt;</span> <span class='ident'>MinMaxResult</span><span class='op'>&lt;</span><span class='ident'>Self</span>::<span class='ident'>Item</span><span class='op'>&gt;</span>
+        <span class='kw'>where</span> <span class='kw'>Self</span>: <span class='ident'>Sized</span>, <span class='ident'>K</span>: <span class='ident'>Ord</span>, <span class='ident'>F</span>: <span class='ident'>FnMut</span>(<span class='kw-2'>&amp;</span><span class='ident'>Self</span>::<span class='ident'>Item</span>) <span class='op'>-&gt;</span> <span class='ident'>K</span>
+    {
+        <span class='ident'>minmax</span>::<span class='ident'>minmax_impl</span>(<span class='self'>self</span>, <span class='ident'>f</span>, <span class='op'>|</span>_, _, <span class='ident'>xk</span>, <span class='ident'>yk</span><span class='op'>|</span> <span class='ident'>xk</span> <span class='op'>&lt;</span> <span class='ident'>yk</span>, <span class='op'>|</span>_, _, <span class='ident'>xk</span>, <span class='ident'>yk</span><span class='op'>|</span> <span class='ident'>xk</span> <span class='op'>&gt;</span> <span class='ident'>yk</span>)
+    }
 }
 
 <span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>T</span>: ?<span class='ident'>Sized</span><span class='op'>&gt;</span> <span class='ident'>Itertools</span> <span class='kw'>for</span> <span class='ident'>T</span> <span class='kw'>where</span> <span class='ident'>T</span>: <span class='ident'>Iterator</span> { }
@@ -3236,7 +3386,7 @@
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

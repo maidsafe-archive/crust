@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-9606' class='srclink' href='https://doc.rust-lang.org/nightly/std/sync/mutex/struct.StaticMutex.html?gotosrc=9606' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-10258' class='srclink' href='https://doc.rust-lang.org/nightly/std/sync/mutex/struct.StaticMutex.html?gotosrc=10258' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct StaticMutex {
     // some fields omitted
 }</pre><div class='stability'><em class='stab unstable'>Unstable (<code>static_mutex</code>)<p>: may be merged with Mutex in the future</p>
@@ -58,7 +58,8 @@ destructors. As a result, a <code>StaticMutex</code> has one extra method when c
 to a <code>Mutex</code>, a <code>destroy</code> method. This method is unsafe to call, and
 documentation can be found directly on the method.</p>
 
-<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<pre class='rust rust-example-rendered'>
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>feature</span>(<span class='ident'>static_mutex</span>)]</span>
 
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::{<span class='ident'>StaticMutex</span>, <span class='ident'>MUTEX_INIT</span>};
@@ -70,7 +71,7 @@ documentation can be found directly on the method.</p>
     <span class='comment'>// do some productive work</span>
 }
 <span class='comment'>// lock is unlocked here.</span></pre>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../../bitflags/__core/sync/struct.StaticMutex.html' title='bitflags::__core::sync::StaticMutex'>StaticMutex</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>const fn <a href='#method.new' class='fnname'>new</a>() -&gt; <a class='struct' href='../../../bitflags/__core/sync/struct.StaticMutex.html' title='bitflags::__core::sync::StaticMutex'>StaticMutex</a></code></h4>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../../bitflags/__core/sync/struct.StaticMutex.html' title='bitflags::__core::sync::StaticMutex'>StaticMutex</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>() -&gt; <a class='struct' href='../../../bitflags/__core/sync/struct.StaticMutex.html' title='bitflags::__core::sync::StaticMutex'>StaticMutex</a></code></h4>
 <div class='stability'><em class='stab unstable'>Unstable (<code>static_mutex</code>)<p>: may be merged with Mutex in the future</p>
 </em></div><div class='docblock'><p>Creates a new mutex in an unlocked state ready for use.</p>
 </div><h4 id='method.lock' class='method'><code>fn <a href='#method.lock' class='fnname'>lock</a>(&amp;'static self) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='struct' href='../../../bitflags/__core/sync/struct.MutexGuard.html' title='bitflags::__core::sync::MutexGuard'>MutexGuard</a>&lt;'static, <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>&gt;, <a class='struct' href='../../../bitflags/__core/sync/struct.PoisonError.html' title='bitflags::__core::sync::PoisonError'>PoisonError</a>&lt;<a class='struct' href='../../../bitflags/__core/sync/struct.MutexGuard.html' title='bitflags::__core::sync::MutexGuard'>MutexGuard</a>&lt;'static, <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>&gt;&gt;&gt;</code></h4>
@@ -134,7 +135,7 @@ true on all platforms.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

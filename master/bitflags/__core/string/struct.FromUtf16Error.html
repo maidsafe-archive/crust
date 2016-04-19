@@ -46,13 +46,14 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-3373' class='srclink' href='https://doc.rust-lang.org/nightly/collections/string/struct.FromUtf16Error.html?gotosrc=3373' title='goto source code'>[src]</a></span></h1>
-<pre class='rust struct'>pub struct FromUtf16Error(_);</pre><div class='docblock'><p>A possible error value when converting a <code>String</code> from a UTF-16 byte slice.</p>
+        </span><a id='src-3443' class='srclink' href='https://doc.rust-lang.org/nightly/collections/string/struct.FromUtf16Error.html?gotosrc=3443' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct FromUtf16Error(_);</pre><span class="since">1.0.0</span><div class='docblock'><p>A possible error value when converting a <code>String</code> from a UTF-16 byte slice.</p>
 
 <p>This type is the error type for the <a href="struct.String.html#method.from_utf16"><code>from_utf16()</code></a> method on <a href="struct.String.html"><code>String</code></a>.</p>
 
 <h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
 <p>Basic usage:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='comment'>// 𝄞mu&lt;invalid&gt;ic</span>
 <span class='kw'>let</span> <span class='ident'>v</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span>[<span class='number'>0xD834</span>, <span class='number'>0xDD1E</span>, <span class='number'>0x006d</span>, <span class='number'>0x0075</span>,
@@ -106,7 +107,7 @@
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

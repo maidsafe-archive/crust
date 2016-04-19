@@ -26,7 +26,7 @@
     
 
     <nav class="sidebar">
-        <a href='../../maidsafe_utilities/index.html'><img src='https://raw.githubusercontent.com/maidsafe/QA/master/Images/maidsafe_logo.png' alt='' width='100'></a>
+        <a href='../../maidsafe_utilities/index.html'><img src='https://raw.githubusercontent.com/maidsafe/QA/master/Images/maidsafe_logo.png' alt='logo' width='100'></a>
         <p class='location'><a href='../index.html'>maidsafe_utilities</a>::<wbr><a href='index.html'>serialisation</a></p><script>window.sidebarCurrent = {name: 'SerialisationError', ty: 'enum', relpath: ''};</script><script defer src="sidebar-items.js"></script>
     </nav>
 
@@ -46,15 +46,15 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-290' class='srclink' href='../../src/maidsafe_utilities/<quick_error macros>.html#159-162' title='goto source code'>[src]</a></span></h1>
+        </span></span></h1>
 <pre class='rust enum'>pub enum SerialisationError {
     Serialise(<a class='enum' href='../../bincode/rustc_serialize/writer/enum.EncodingError.html' title='bincode::rustc_serialize::writer::EncodingError'>EncodingError</a>),
     Deserialise(<a class='enum' href='../../bincode/rustc_serialize/reader/enum.DecodingError.html' title='bincode::rustc_serialize::reader::DecodingError'>DecodingError</a>),
 }</pre><div class='docblock'><p>Serialisation error.</p>
 </div><h2 class='variants'>Variants</h2>
-<table><tr><td id='variant.Serialise'><code>Serialise</code></td><td><div class='docblock'><p>Error during serialisation (encoding).</p>
-</div></td></tr><tr><td id='variant.Deserialise'><code>Deserialise</code></td><td><div class='docblock'><p>Error during deserialisation (decoding).</p>
-</div></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html' title='core::fmt::Display'>Display</a> for <a class='enum' href='../../maidsafe_utilities/serialisation/enum.SerialisationError.html' title='maidsafe_utilities::serialisation::SerialisationError'>SerialisationError</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html#method.fmt' class='fnname'>fmt</a>(&amp;self, fmt: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+<table class='variants_table'><tr><td id='variant.Serialise'><code>Serialise</code></td><td><div class='docblock'><p>Error during serialisation (encoding).</p>
+</div></td><td></td></tr><tr><td id='variant.Deserialise'><code>Deserialise</code></td><td><div class='docblock'><p>Error during deserialisation (decoding).</p>
+</div></td><td></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html' title='core::fmt::Display'>Display</a> for <a class='enum' href='../../maidsafe_utilities/serialisation/enum.SerialisationError.html' title='maidsafe_utilities::serialisation::SerialisationError'>SerialisationError</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html#method.fmt' class='fnname'>fmt</a>(&amp;self, fmt: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
 </div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/std/error/trait.Error.html' title='std::error::Error'>Error</a> for <a class='enum' href='../../maidsafe_utilities/serialisation/enum.SerialisationError.html' title='maidsafe_utilities::serialisation::SerialisationError'>SerialisationError</a></code></h3><div class='impl-items'><h4 id='method.description' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/std/error/trait.Error.html#method.description' class='fnname'>description</a>(&amp;self) -&gt; &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a></code></h4>
 <h4 id='method.cause' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/std/error/trait.Error.html#method.cause' class='fnname'>cause</a>(&amp;self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;&amp;<a class='trait' href='https://doc.rust-lang.org/nightly/std/error/trait.Error.html' title='std::error::Error'>Error</a>&gt;</code></h4>
 </div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.From.html' title='core::convert::From'>From</a>&lt;<a class='enum' href='../../bincode/rustc_serialize/writer/enum.EncodingError.html' title='bincode::rustc_serialize::writer::EncodingError'>EncodingError</a>&gt; for <a class='enum' href='../../maidsafe_utilities/serialisation/enum.SerialisationError.html' title='maidsafe_utilities::serialisation::SerialisationError'>SerialisationError</a></code></h3><div class='impl-items'><h4 id='method.from' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/convert/trait.From.html#method.from' class='fnname'>from</a>(err: <a class='enum' href='../../bincode/rustc_serialize/writer/enum.EncodingError.html' title='bincode::rustc_serialize::writer::EncodingError'>EncodingError</a>) -&gt; <a class='enum' href='../../maidsafe_utilities/serialisation/enum.SerialisationError.html' title='maidsafe_utilities::serialisation::SerialisationError'>SerialisationError</a></code></h4>
@@ -103,7 +103,7 @@
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

@@ -62,19 +62,19 @@
     InvalidType(&amp;'static <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>),
 }</pre><div class='docblock'><p>Enumeration of possible errors which can occur while decoding a structure.</p>
 </div><h2 class='variants'>Variants</h2>
-<table><tr><td id='variant.ApplicationError'><code>ApplicationError</code></td><td><div class='docblock'><p>An error flagged by the application, e.g. value out of range</p>
-</div></td></tr><tr><td id='variant.ExpectedField'><code>ExpectedField</code></td><td><div class='docblock'><p>A field was expected, but none was found.</p>
-</div></td></tr><tr><td id='variant.UnknownField'><code>UnknownField</code></td><td><div class='docblock'><p>A field was found, but it was not an expected one.</p>
-</div></td></tr><tr><td id='variant.ExpectedType'><code>ExpectedType</code></td><td><div class='docblock'><p>A field was found, but it had the wrong type.</p>
-</div></td></tr><tr><td id='variant.ExpectedMapKey'><code>ExpectedMapKey</code></td><td><div class='docblock'><p>The nth map key was expected, but none was found.</p>
-</div></td></tr><tr><td id='variant.ExpectedMapElement'><code>ExpectedMapElement</code></td><td><div class='docblock'><p>The nth map element was expected, but none was found.</p>
-</div></td></tr><tr><td id='variant.NoEnumVariants'><code>NoEnumVariants</code></td><td><div class='docblock'><p>An enum decoding was requested, but no variants were supplied</p>
-</div></td></tr><tr><td id='variant.NilTooLong'><code>NilTooLong</code></td><td><div class='docblock'><p>The unit type was being decoded, but a non-zero length string was found</p>
-</div></td></tr><tr><td id='variant.SyntaxError'><code>SyntaxError</code></td><td><div class='docblock'><p>There was an error with the syntactical structure of the TOML.</p>
-</div></td></tr><tr><td id='variant.CustomError'><code>CustomError</code></td><td><div class='docblock'><p>A custom error was generated when decoding.</p>
-</div></td></tr><tr><td id='variant.EndOfStream'><code>EndOfStream</code></td><td><div class='docblock'><p>The end of the TOML input was reached too soon</p>
-</div></td></tr><tr><td id='variant.InvalidType'><code>InvalidType</code></td><td><div class='docblock'><p>Produced by serde ...</p>
-</div></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='enum' href='../toml/enum.DecodeErrorKind.html' title='toml::DecodeErrorKind'>DecodeErrorKind</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#method.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+<table class='variants_table'><tr><td id='variant.ApplicationError'><code>ApplicationError</code></td><td><div class='docblock'><p>An error flagged by the application, e.g. value out of range</p>
+</div></td><td></td></tr><tr><td id='variant.ExpectedField'><code>ExpectedField</code></td><td><div class='docblock'><p>A field was expected, but none was found.</p>
+</div></td><td></td></tr><tr><td id='variant.UnknownField'><code>UnknownField</code></td><td><div class='docblock'><p>A field was found, but it was not an expected one.</p>
+</div></td><td></td></tr><tr><td id='variant.ExpectedType'><code>ExpectedType</code></td><td><div class='docblock'><p>A field was found, but it had the wrong type.</p>
+</div></td><td></td></tr><tr><td id='variant.ExpectedMapKey'><code>ExpectedMapKey</code></td><td><div class='docblock'><p>The nth map key was expected, but none was found.</p>
+</div></td><td></td></tr><tr><td id='variant.ExpectedMapElement'><code>ExpectedMapElement</code></td><td><div class='docblock'><p>The nth map element was expected, but none was found.</p>
+</div></td><td></td></tr><tr><td id='variant.NoEnumVariants'><code>NoEnumVariants</code></td><td><div class='docblock'><p>An enum decoding was requested, but no variants were supplied</p>
+</div></td><td></td></tr><tr><td id='variant.NilTooLong'><code>NilTooLong</code></td><td><div class='docblock'><p>The unit type was being decoded, but a non-zero length string was found</p>
+</div></td><td></td></tr><tr><td id='variant.SyntaxError'><code>SyntaxError</code></td><td><div class='docblock'><p>There was an error with the syntactical structure of the TOML.</p>
+</div></td><td></td></tr><tr><td id='variant.CustomError'><code>CustomError</code></td><td><div class='docblock'><p>A custom error was generated when decoding.</p>
+</div></td><td></td></tr><tr><td id='variant.EndOfStream'><code>EndOfStream</code></td><td><div class='docblock'><p>The end of the TOML input was reached too soon</p>
+</div></td><td></td></tr><tr><td id='variant.InvalidType'><code>InvalidType</code></td><td><div class='docblock'><p>Produced by serde ...</p>
+</div></td><td></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='enum' href='../toml/enum.DecodeErrorKind.html' title='toml::DecodeErrorKind'>DecodeErrorKind</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#method.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
 </div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a> for <a class='enum' href='../toml/enum.DecodeErrorKind.html' title='toml::DecodeErrorKind'>DecodeErrorKind</a></code></h3><div class='impl-items'><h4 id='method.eq' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.eq' class='fnname'>eq</a>(&amp;self, __arg_0: &amp;<a class='enum' href='../toml/enum.DecodeErrorKind.html' title='toml::DecodeErrorKind'>DecodeErrorKind</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
 <h4 id='method.ne' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.ne' class='fnname'>ne</a>(&amp;self, __arg_0: &amp;<a class='enum' href='../toml/enum.DecodeErrorKind.html' title='toml::DecodeErrorKind'>DecodeErrorKind</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
 </div></section>
@@ -120,7 +120,7 @@
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

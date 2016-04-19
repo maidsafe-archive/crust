@@ -46,10 +46,11 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-5811' class='srclink' href='https://doc.rust-lang.org/nightly/std/net/tcp/struct.TcpListener.html?gotosrc=5811' title='goto source code'>[src]</a></span></h1>
-<pre class='rust struct'>pub struct TcpListener(_);</pre><div class='docblock'><p>A structure representing a socket server.</p>
+        </span><a id='src-6011' class='srclink' href='https://doc.rust-lang.org/nightly/std/net/tcp/struct.TcpListener.html?gotosrc=6011' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct TcpListener(_);</pre><span class="since">1.0.0</span><div class='docblock'><p>A structure representing a socket server.</p>
 
-<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>net</span>::{<span class='ident'>TcpListener</span>, <span class='ident'>TcpStream</span>};
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>thread</span>;
 
@@ -94,7 +95,7 @@ its documentation for concrete examples.</p>
 <p>The returned <code>TcpListener</code> is a reference to the same socket that this
 object references. Both handles can be used to accept incoming
 connections and options set on one listener will affect the other.</p>
-</div><h4 id='method.accept' class='method'><code>fn <a href='#method.accept' class='fnname'>accept</a>(&amp;self) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>(<a class='struct' href='../../../bitflags/__core/net/struct.TcpStream.html' title='bitflags::__core::net::TcpStream'>TcpStream</a>, <a class='enum' href='../../../bitflags/__core/net/enum.SocketAddr.html' title='bitflags::__core::net::SocketAddr'>SocketAddr</a>)</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;</code></h4>
+</div><h4 id='method.accept' class='method'><code>fn <a href='#method.accept' class='fnname'>accept</a>(&amp;self) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>(</a><a class='struct' href='../../../bitflags/__core/net/struct.TcpStream.html' title='bitflags::__core::net::TcpStream'>TcpStream</a>, <a class='enum' href='../../../bitflags/__core/net/enum.SocketAddr.html' title='bitflags::__core::net::SocketAddr'>SocketAddr</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>)</a>, <a class='struct' href='../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;</code></h4>
 <div class='docblock'><p>Accept a new incoming connection from this listener.</p>
 
 <p>This function will block the calling thread until a new TCP connection
@@ -108,8 +109,8 @@ listener.</p>
 the peer&#39;s <code>SocketAddr</code> structure.</p>
 </div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='../../../bitflags/__core/fmt/trait.Debug.html' title='bitflags::__core::fmt::Debug'>Debug</a> for <a class='struct' href='../../../bitflags/__core/net/struct.TcpListener.html' title='bitflags::__core::net::TcpListener'>TcpListener</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='../../../bitflags/__core/fmt/trait.Debug.html#method.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class='struct' href='../../../bitflags/__core/fmt/struct.Formatter.html' title='bitflags::__core::fmt::Formatter'>Formatter</a>) -&gt; <a class='enum' href='../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../bitflags/__core/fmt/struct.Error.html' title='bitflags::__core::fmt::Error'>Error</a>&gt;</code></h4>
 </div><h3 class='impl'><code>impl <a class='trait' href='../../../bitflags/__core/os/ext/prelude/trait.AsRawFd.html' title='bitflags::__core::os::ext::prelude::AsRawFd'>AsRawFd</a> for <a class='struct' href='../../../bitflags/__core/net/struct.TcpListener.html' title='bitflags::__core::net::TcpListener'>TcpListener</a></code></h3><div class='impl-items'><h4 id='method.as_raw_fd' class='method'><code>fn <a href='../../../bitflags/__core/os/ext/prelude/trait.AsRawFd.html#method.as_raw_fd' class='fnname'>as_raw_fd</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.i32.html'>i32</a></code></h4>
-</div><h3 class='impl'><code>impl <a class='trait' href='../../../bitflags/__core/os/ext/prelude/trait.FromRawFd.html' title='bitflags::__core::os::ext::prelude::FromRawFd'>FromRawFd</a> for <a class='struct' href='../../../bitflags/__core/net/struct.TcpListener.html' title='bitflags::__core::net::TcpListener'>TcpListener</a></code></h3><div class='impl-items'><h4 id='method.from_raw_fd' class='method'><code>unsafe fn <a href='../../../bitflags/__core/os/ext/prelude/trait.FromRawFd.html#method.from_raw_fd' class='fnname'>from_raw_fd</a>(fd: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.i32.html'>i32</a>) -&gt; <a class='struct' href='../../../bitflags/__core/net/struct.TcpListener.html' title='bitflags::__core::net::TcpListener'>TcpListener</a></code></h4>
-</div><h3 class='impl'><code>impl <a class='trait' href='../../../bitflags/__core/os/ext/prelude/trait.IntoRawFd.html' title='bitflags::__core::os::ext::prelude::IntoRawFd'>IntoRawFd</a> for <a class='struct' href='../../../bitflags/__core/net/struct.TcpListener.html' title='bitflags::__core::net::TcpListener'>TcpListener</a></code></h3><div class='impl-items'><h4 id='method.into_raw_fd' class='method'><code>fn <a href='../../../bitflags/__core/os/ext/prelude/trait.IntoRawFd.html#method.into_raw_fd' class='fnname'>into_raw_fd</a>(self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.i32.html'>i32</a></code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='../../../bitflags/__core/os/ext/prelude/trait.FromRawFd.html' title='bitflags::__core::os::ext::prelude::FromRawFd'>FromRawFd</a> for <a class='struct' href='../../../bitflags/__core/net/struct.TcpListener.html' title='bitflags::__core::net::TcpListener'>TcpListener</a></code><span class="since">1.1.0</span></h3><div class='impl-items'><h4 id='method.from_raw_fd' class='method'><code>unsafe fn <a href='../../../bitflags/__core/os/ext/prelude/trait.FromRawFd.html#method.from_raw_fd' class='fnname'>from_raw_fd</a>(fd: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.i32.html'>i32</a>) -&gt; <a class='struct' href='../../../bitflags/__core/net/struct.TcpListener.html' title='bitflags::__core::net::TcpListener'>TcpListener</a></code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='../../../bitflags/__core/os/ext/prelude/trait.IntoRawFd.html' title='bitflags::__core::os::ext::prelude::IntoRawFd'>IntoRawFd</a> for <a class='struct' href='../../../bitflags/__core/net/struct.TcpListener.html' title='bitflags::__core::net::TcpListener'>TcpListener</a></code><span class="since">1.4.0</span></h3><div class='impl-items'><h4 id='method.into_raw_fd' class='method'><code>fn <a href='../../../bitflags/__core/os/ext/prelude/trait.IntoRawFd.html#method.into_raw_fd' class='fnname'>into_raw_fd</a>(self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.i32.html'>i32</a></code></h4>
 </div></section>
     <section id='search' class="content hidden"></section>
 
@@ -153,7 +154,7 @@ the peer&#39;s <code>SocketAddr</code> structure.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

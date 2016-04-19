@@ -84,17 +84,18 @@ representation that explains the status.</p>
 <p>This can be used in cases where a status code’s meaning is unknown, also,
 to get the appropriate <em>category</em> of status.</p>
 </div><h2 class='variants'>Variants</h2>
-<table><tr><td id='variant.Informational'><code>Informational</code></td><td><div class='docblock'><p>1xx (Informational): The request was received, continuing process</p>
-</div></td></tr><tr><td id='variant.Success'><code>Success</code></td><td><div class='docblock'><p>2xx (Success): The request was successfully received, understood, and accepted</p>
-</div></td></tr><tr><td id='variant.Redirection'><code>Redirection</code></td><td><div class='docblock'><p>3xx (Redirection): Further action needs to be taken in order to complete the request</p>
-</div></td></tr><tr><td id='variant.ClientError'><code>ClientError</code></td><td><div class='docblock'><p>4xx (Client Error): The request contains bad syntax or cannot be fulfilled</p>
-</div></td></tr><tr><td id='variant.ServerError'><code>ServerError</code></td><td><div class='docblock'><p>5xx (Server Error): The server failed to fulfill an apparently valid request</p>
-</div></td></tr><tr><td id='variant.NoClass'><code>NoClass</code></td><td><div class='docblock'><p>A status code lower than 100 or higher than 599. These codes do no belong to any class.</p>
-</div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='enum' href='../../hyper/status/enum.StatusClass.html' title='hyper::status::StatusClass'>StatusClass</a></code></h3><div class='impl-items'><h4 id='method.default_code' class='method'><code>fn <a href='#method.default_code' class='fnname'>default_code</a>(&amp;self) -&gt; <a class='enum' href='../../hyper/status/enum.StatusCode.html' title='hyper::status::StatusCode'>StatusCode</a></code></h4>
+<table class='variants_table'><tr><td id='variant.Informational'><code>Informational</code></td><td><div class='docblock'><p>1xx (Informational): The request was received, continuing process</p>
+</div></td><td></td></tr><tr><td id='variant.Success'><code>Success</code></td><td><div class='docblock'><p>2xx (Success): The request was successfully received, understood, and accepted</p>
+</div></td><td></td></tr><tr><td id='variant.Redirection'><code>Redirection</code></td><td><div class='docblock'><p>3xx (Redirection): Further action needs to be taken in order to complete the request</p>
+</div></td><td></td></tr><tr><td id='variant.ClientError'><code>ClientError</code></td><td><div class='docblock'><p>4xx (Client Error): The request contains bad syntax or cannot be fulfilled</p>
+</div></td><td></td></tr><tr><td id='variant.ServerError'><code>ServerError</code></td><td><div class='docblock'><p>5xx (Server Error): The server failed to fulfill an apparently valid request</p>
+</div></td><td></td></tr><tr><td id='variant.NoClass'><code>NoClass</code></td><td><div class='docblock'><p>A status code lower than 100 or higher than 599. These codes do no belong to any class.</p>
+</div></td><td></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='enum' href='../../hyper/status/enum.StatusClass.html' title='hyper::status::StatusClass'>StatusClass</a></code></h3><div class='impl-items'><h4 id='method.default_code' class='method'><code>fn <a href='#method.default_code' class='fnname'>default_code</a>(&amp;self) -&gt; <a class='enum' href='../../hyper/status/enum.StatusCode.html' title='hyper::status::StatusCode'>StatusCode</a></code></h4>
 <div class='docblock'><p>Get the default status code for the class.</p>
 
 <p>This produces the x00 status code; thus, for <code>ClientError</code> (4xx), for
 example, this will produce <code>BadRequest</code> (400):</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>ClientError</span>.<span class='ident'>default_code</span>(), <span class='ident'>BadRequest</span>);</pre>
 
@@ -118,6 +119,7 @@ representation that explains the status.</p>
 </blockquote>
 
 <p>This is demonstrated thusly:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='comment'>// Suppose we have received this status code.</span>
 <span class='comment'>// You will never directly create an unregistered status code.</span>
@@ -143,7 +145,7 @@ This is a common handling for unknown status codes in major browsers.</p>
 </div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.Eq.html' title='core::cmp::Eq'>Eq</a> for <a class='enum' href='../../hyper/status/enum.StatusClass.html' title='hyper::status::StatusClass'>StatusClass</a></code></h3><div class='impl-items'></div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a> for <a class='enum' href='../../hyper/status/enum.StatusClass.html' title='hyper::status::StatusClass'>StatusClass</a></code></h3><div class='impl-items'><h4 id='method.eq' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.eq' class='fnname'>eq</a>(&amp;self, __arg_0: &amp;<a class='enum' href='../../hyper/status/enum.StatusClass.html' title='hyper::status::StatusClass'>StatusClass</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
 <h4 id='method.ne' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.ne' class='fnname'>ne</a>(&amp;self, __arg_0: &amp;<a class='enum' href='../../hyper/status/enum.StatusClass.html' title='hyper::status::StatusClass'>StatusClass</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
 </div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='enum' href='../../hyper/status/enum.StatusClass.html' title='hyper::status::StatusClass'>StatusClass</a></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='enum' href='../../hyper/status/enum.StatusClass.html' title='hyper::status::StatusClass'>StatusClass</a></code></h4>
-<h4 id='method.clone_from' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
+<h4 id='method.clone_from' class='method'><span class="since">1.0.0</span><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
 </div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='enum' href='../../hyper/status/enum.StatusClass.html' title='hyper::status::StatusClass'>StatusClass</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#method.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
 </div></section>
     <section id='search' class="content hidden"></section>
@@ -188,7 +190,7 @@ This is a common handling for unknown status codes in major browsers.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-32688' class='srclink' href='https://doc.rust-lang.org/nightly/core/str/struct.CharRange.html?gotosrc=32688' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-32885' class='srclink' href='https://doc.rust-lang.org/nightly/core/str/struct.CharRange.html?gotosrc=32885' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct CharRange {
     pub ch: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.char.html'>char</a>,
     pub next: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>,
@@ -62,7 +62,7 @@ for iterating over the UTF-8 bytes of a string.</p>
                                   <td id='structfield.next'><code>next</code></td><td><div class='stability'><em class='stab unstable'>Unstable (<code>str_char</code>)<p>: existence of this struct is uncertain as it is frequently able to be replaced with char.len_utf8() and/or char/char_indices iterators</p>
 </em></div><div class='docblock'><p>Index of the first byte of the next <code>char</code></p>
 </div></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='../../../bitflags/__core/clone/trait.Clone.html' title='bitflags::__core::clone::Clone'>Clone</a> for <a class='struct' href='../../../bitflags/__core/str/struct.CharRange.html' title='bitflags::__core::str::CharRange'>CharRange</a></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='../../../bitflags/__core/clone/trait.Clone.html#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='struct' href='../../../bitflags/__core/str/struct.CharRange.html' title='bitflags::__core::str::CharRange'>CharRange</a></code></h4>
-<h4 id='method.clone_from' class='method'><code>fn <a href='../../../bitflags/__core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
+<h4 id='method.clone_from' class='method'><span class="since">1.0.0</span><code>fn <a href='../../../bitflags/__core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
 </div><h3 class='impl'><code>impl <a class='trait' href='../../../bitflags/__core/marker/trait.Copy.html' title='bitflags::__core::marker::Copy'>Copy</a> for <a class='struct' href='../../../bitflags/__core/str/struct.CharRange.html' title='bitflags::__core::str::CharRange'>CharRange</a></code></h3><div class='impl-items'></div></section>
     <section id='search' class="content hidden"></section>
 
@@ -106,7 +106,7 @@ for iterating over the UTF-8 bytes of a string.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

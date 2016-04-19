@@ -60,7 +60,6 @@ third-party unforgeability.</p>
                                title='sodiumoxide::crypto::box_::curve25519xsalsa20poly1305::Nonce'>Nonce</a></td>
                         <td class='docblock short'>
                              <p><code>Nonce</code> for asymmetric authenticated encryption</p>
-
                         </td>
                     </tr>
                 
@@ -72,7 +71,6 @@ third-party unforgeability.</p>
 splitting <code>seal()</code> into two steps, <code>precompute()</code> and <code>seal_precomputed()</code>.
 Similarly, applications that receive several messages from the same sender can gain
 speed by splitting <code>open()</code> into two steps, <code>precompute()</code> and <code>open_precomputed()</code>.</p>
-
                         </td>
                     </tr>
                 
@@ -81,7 +79,6 @@ speed by splitting <code>open()</code> into two steps, <code>precompute()</code>
                                title='sodiumoxide::crypto::box_::curve25519xsalsa20poly1305::PublicKey'>PublicKey</a></td>
                         <td class='docblock short'>
                              <p><code>PublicKey</code> for asymmetric authenticated encryption</p>
-
                         </td>
                     </tr>
                 
@@ -90,7 +87,6 @@ speed by splitting <code>open()</code> into two steps, <code>precompute()</code>
                                title='sodiumoxide::crypto::box_::curve25519xsalsa20poly1305::SecretKey'>SecretKey</a></td>
                         <td class='docblock short'>
                              <p><code>SecretKey</code> for asymmetric authenticated encryption</p>
-
                         </td>
                     </tr>
                 </table><h2 id='constants' class='section-header'><a href="#constants">Constants</a></h2>
@@ -102,7 +98,6 @@ speed by splitting <code>open()</code> into two steps, <code>precompute()</code>
                              <p>Number of bytes in the authenticator tag of an encrypted message
 i.e. the number of bytes by which the ciphertext is larger than the
 plaintext.</p>
-
                         </td>
                     </tr>
                 
@@ -111,7 +106,6 @@ plaintext.</p>
                                title='sodiumoxide::crypto::box_::curve25519xsalsa20poly1305::NONCEBYTES'>NONCEBYTES</a></td>
                         <td class='docblock short'>
                              <p>Number of bytes in a <code>Nonce</code>.</p>
-
                         </td>
                     </tr>
                 
@@ -120,7 +114,6 @@ plaintext.</p>
                                title='sodiumoxide::crypto::box_::curve25519xsalsa20poly1305::PRECOMPUTEDKEYBYTES'>PRECOMPUTEDKEYBYTES</a></td>
                         <td class='docblock short'>
                              <p>Number of bytes in a <code>PrecomputedKey</code>.</p>
-
                         </td>
                     </tr>
                 
@@ -129,7 +122,6 @@ plaintext.</p>
                                title='sodiumoxide::crypto::box_::curve25519xsalsa20poly1305::PUBLICKEYBYTES'>PUBLICKEYBYTES</a></td>
                         <td class='docblock short'>
                              <p>Number of bytes in a <code>PublicKey</code>.</p>
-
                         </td>
                     </tr>
                 
@@ -138,7 +130,6 @@ plaintext.</p>
                                title='sodiumoxide::crypto::box_::curve25519xsalsa20poly1305::SECRETKEYBYTES'>SECRETKEYBYTES</a></td>
                         <td class='docblock short'>
                              <p>Number of bytes in a <code>SecretKey</code>.</p>
-
                         </td>
                     </tr>
                 </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
@@ -148,7 +139,6 @@ plaintext.</p>
                                title='sodiumoxide::crypto::box_::curve25519xsalsa20poly1305::gen_keypair'>gen_keypair</a></td>
                         <td class='docblock short'>
                              <p><code>gen_keypair()</code> randomly generates a secret key and a corresponding public key.</p>
-
                         </td>
                     </tr>
                 
@@ -157,7 +147,6 @@ plaintext.</p>
                                title='sodiumoxide::crypto::box_::curve25519xsalsa20poly1305::gen_nonce'>gen_nonce</a></td>
                         <td class='docblock short'>
                              <p><code>gen_nonce()</code> randomly generates a nonce</p>
-
                         </td>
                     </tr>
                 
@@ -168,7 +157,6 @@ plaintext.</p>
                              <p><code>open()</code> verifies and decrypts a ciphertext <code>c</code> using the receiver&#39;s secret key <code>sk</code>,
 the senders public key <code>pk</code>, and a nonce <code>n</code>. It returns a plaintext <code>Ok(m)</code>.
 If the ciphertext fails verification, <code>open()</code> returns <code>Err(())</code>.</p>
-
                         </td>
                     </tr>
                 
@@ -179,7 +167,6 @@ If the ciphertext fails verification, <code>open()</code> returns <code>Err(())<
                              <p><code>open_precomputed()</code> verifies and decrypts a ciphertext <code>c</code> using a precomputed
 key <code>k</code> and a nonce <code>n</code>. It returns a plaintext <code>Ok(m)</code>.
 If the ciphertext fails verification, <code>open_precomputed()</code> returns <code>Err(())</code>.</p>
-
                         </td>
                     </tr>
                 
@@ -189,7 +176,6 @@ If the ciphertext fails verification, <code>open_precomputed()</code> returns <c
                         <td class='docblock short'>
                              <p><code>precompute()</code> computes an intermediate key that can be used by <code>seal_precomputed()</code>
 and <code>open_precomputed()</code></p>
-
                         </td>
                     </tr>
                 
@@ -199,7 +185,6 @@ and <code>open_precomputed()</code></p>
                         <td class='docblock short'>
                              <p><code>seal()</code> encrypts and authenticates a message <code>m</code> using the senders secret key <code>sk</code>,
 the receivers public key <code>pk</code> and a nonce <code>n</code>. It returns a ciphertext <code>c</code>.</p>
-
                         </td>
                     </tr>
                 
@@ -209,7 +194,6 @@ the receivers public key <code>pk</code> and a nonce <code>n</code>. It returns 
                         <td class='docblock short'>
                              <p><code>seal_precomputed()</code> encrypts and authenticates a message <code>m</code> using a precomputed key <code>k</code>,
 and a nonce <code>n</code>. It returns a ciphertext <code>c</code>.</p>
-
                         </td>
                     </tr>
                 </table></section>
@@ -255,7 +239,7 @@ and a nonce <code>n</code>. It returns a ciphertext <code>c</code>.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

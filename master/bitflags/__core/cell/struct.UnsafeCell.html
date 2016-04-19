@@ -46,10 +46,10 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-28298' class='srclink' href='https://doc.rust-lang.org/nightly/core/cell/struct.UnsafeCell.html?gotosrc=28298' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-28483' class='srclink' href='https://doc.rust-lang.org/nightly/core/cell/struct.UnsafeCell.html?gotosrc=28483' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct UnsafeCell&lt;T&gt; <span class='where'>where T: ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span> {
     // some fields omitted
-}</pre><div class='docblock'><p>The core primitive for interior mutability in Rust.</p>
+}</pre><span class="since">1.0.0</span><div class='docblock'><p>The core primitive for interior mutability in Rust.</p>
 
 <p><code>UnsafeCell&lt;T&gt;</code> is a type that wraps some <code>T</code> and indicates unsafe interior operations on the
 wrapped type. Types with an <code>UnsafeCell&lt;T&gt;</code> field are considered to have an &#39;unsafe interior&#39;.
@@ -58,7 +58,8 @@ mutable. In general, transmuting an <code>&amp;T</code> type into an <code>&amp;
 
 <p>Types like <code>Cell&lt;T&gt;</code> and <code>RefCell&lt;T&gt;</code> use this type to wrap their internal data.</p>
 
-<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>cell</span>::<span class='ident'>UnsafeCell</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>marker</span>::<span class='ident'>Sync</span>;
 
@@ -67,13 +68,14 @@ mutable. In general, transmuting an <code>&amp;T</code> type into an <code>&amp;
 }
 
 <span class='kw'>unsafe</span> <span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> <span class='ident'>Sync</span> <span class='kw'>for</span> <span class='ident'>NotThreadSafe</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> {}</pre>
-</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;T&gt; <a class='struct' href='../../../bitflags/__core/cell/struct.UnsafeCell.html' title='bitflags::__core::cell::UnsafeCell'>UnsafeCell</a>&lt;T&gt;</code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>const fn <a href='#method.new' class='fnname'>new</a>(value: T) -&gt; <a class='struct' href='../../../bitflags/__core/cell/struct.UnsafeCell.html' title='bitflags::__core::cell::UnsafeCell'>UnsafeCell</a>&lt;T&gt;</code></h4>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl&lt;T&gt; <a class='struct' href='../../../bitflags/__core/cell/struct.UnsafeCell.html' title='bitflags::__core::cell::UnsafeCell'>UnsafeCell</a>&lt;T&gt;</code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(value: T) -&gt; <a class='struct' href='../../../bitflags/__core/cell/struct.UnsafeCell.html' title='bitflags::__core::cell::UnsafeCell'>UnsafeCell</a>&lt;T&gt;</code></h4>
 <div class='docblock'><p>Constructs a new instance of <code>UnsafeCell</code> which will wrap the specified
 value.</p>
 
 <p>All access to the inner value through methods is <code>unsafe</code>.</p>
 
-<h1 id='examples-1' class='section-header'><a href='#examples-1'>Examples</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='examples-1' class='section-header'><a href='#examples-1'>Examples</a></h1>
+<pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>cell</span>::<span class='ident'>UnsafeCell</span>;
 
 <span class='kw'>let</span> <span class='ident'>uc</span> <span class='op'>=</span> <span class='ident'>UnsafeCell</span>::<span class='ident'>new</span>(<span class='number'>5</span>);</pre>
@@ -84,7 +86,8 @@ value.</p>
 <p>This function is unsafe because this thread or another thread may currently be
 inspecting the inner value.</p>
 
-<h1 id='examples-2' class='section-header'><a href='#examples-2'>Examples</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='examples-2' class='section-header'><a href='#examples-2'>Examples</a></h1>
+<pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>cell</span>::<span class='ident'>UnsafeCell</span>;
 
 <span class='kw'>let</span> <span class='ident'>uc</span> <span class='op'>=</span> <span class='ident'>UnsafeCell</span>::<span class='ident'>new</span>(<span class='number'>5</span>);
@@ -93,7 +96,8 @@ inspecting the inner value.</p>
 </div></div><h3 class='impl'><code>impl&lt;T&gt; <a class='struct' href='../../../bitflags/__core/cell/struct.UnsafeCell.html' title='bitflags::__core::cell::UnsafeCell'>UnsafeCell</a>&lt;T&gt; <span class='where'>where T: ?<a class='trait' href='../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></h3><div class='impl-items'><h4 id='method.get' class='method'><code>fn <a href='#method.get' class='fnname'>get</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut T</a></code></h4>
 <div class='docblock'><p>Gets a mutable pointer to the wrapped value.</p>
 
-<h1 id='examples-3' class='section-header'><a href='#examples-3'>Examples</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='examples-3' class='section-header'><a href='#examples-3'>Examples</a></h1>
+<pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>cell</span>::<span class='ident'>UnsafeCell</span>;
 
 <span class='kw'>let</span> <span class='ident'>uc</span> <span class='op'>=</span> <span class='ident'>UnsafeCell</span>::<span class='ident'>new</span>(<span class='number'>5</span>);
@@ -142,7 +146,7 @@ inspecting the inner value.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

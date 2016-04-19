@@ -46,11 +46,12 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-9405' class='srclink' href='https://doc.rust-lang.org/nightly/std/sync/barrier/struct.Barrier.html?gotosrc=9405' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-10057' class='srclink' href='https://doc.rust-lang.org/nightly/std/sync/barrier/struct.Barrier.html?gotosrc=10057' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Barrier {
     // some fields omitted
-}</pre><div class='docblock'><p>A barrier enables multiple threads to synchronize the beginning
+}</pre><span class="since">1.0.0</span><div class='docblock'><p>A barrier enables multiple threads to synchronize the beginning
 of some computation.</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::{<span class='ident'>Arc</span>, <span class='ident'>Barrier</span>};
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>thread</span>;
@@ -124,7 +125,7 @@ all other threads will receive a result that will return <code>false</code> from
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

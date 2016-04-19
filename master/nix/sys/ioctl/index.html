@@ -80,6 +80,7 @@ write calls in that regard.</p>
 <p>This library provides the <code>ioctl!</code> macro, for binding <code>ioctl</code>s.
 Here&#39;s a few examples of how that can work for SPI under Linux
 from <a href="https://github.com/posborne/rust-spidev">rust-spidev</a>.</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='attribute'>#[<span class='ident'>macro_use</span>]</span> <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>nix</span>;
 
@@ -310,7 +311,6 @@ the source to figure out what they do and how they should be used.</p>
                                title='nix::sys::ioctl::ioc_dir'>ioc_dir</a></td>
                         <td class='docblock short'>
                              <p>Extracts the &quot;direction&quot; (read/write/none) from an encoded ioctl command.</p>
-
                         </td>
                     </tr>
                 
@@ -319,7 +319,6 @@ the source to figure out what they do and how they should be used.</p>
                                title='nix::sys::ioctl::ioc_nr'>ioc_nr</a></td>
                         <td class='docblock short'>
                              <p>Extracts the ioctl number from an encoded ioctl command.</p>
-
                         </td>
                     </tr>
                 
@@ -328,7 +327,6 @@ the source to figure out what they do and how they should be used.</p>
                                title='nix::sys::ioctl::ioc_size'>ioc_size</a></td>
                         <td class='docblock short'>
                              <p>Extracts the size from an encoded ioctl command.</p>
-
                         </td>
                     </tr>
                 
@@ -337,7 +335,6 @@ the source to figure out what they do and how they should be used.</p>
                                title='nix::sys::ioctl::ioc_type'>ioc_type</a></td>
                         <td class='docblock short'>
                              <p>Extracts the type from an encoded ioctl command.</p>
-
                         </td>
                     </tr>
                 </table></section>
@@ -383,7 +380,7 @@ the source to figure out what they do and how they should be used.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

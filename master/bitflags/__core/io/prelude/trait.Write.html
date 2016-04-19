@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-4870' class='srclink' href='https://doc.rust-lang.org/nightly/std/io/trait.Write.html?gotosrc=4870' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-5034' class='srclink' href='https://doc.rust-lang.org/nightly/std/io/trait.Write.html?gotosrc=5034' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait Write {
     fn <a href='#tymethod.write' class='fnname'>write</a>(&amp;mut self, buf: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>&amp;[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>]</a>) -&gt; <a class='enum' href='../../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.usize.html'>usize</a>, <a class='struct' href='../../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;;
     fn <a href='#tymethod.flush' class='fnname'>flush</a>(&amp;mut self) -&gt; <a class='enum' href='../../../../bitflags/__core/result/enum.Result.html' title='bitflags::__core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>, <a class='struct' href='../../../../bitflags/__core/io/struct.Error.html' title='bitflags::__core::io::Error'>Error</a>&gt;;
@@ -73,7 +73,8 @@ themselves for ensuring that all buffered data has been pushed out to the
 throughout <code>std::io</code> take and provide types which implement the <code>Write</code>
 trait.</p>
 
-<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>prelude</span>::<span class='op'>*</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fs</span>::<span class='ident'>File</span>;
 
@@ -107,7 +108,8 @@ in the buffer were written to this writer.</p>
 <p>It is <strong>not</strong> considered an error if the entire buffer could not be
 written to this writer.</p>
 
-<h1 id='examples-1' class='section-header'><a href='#examples-1'>Examples</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='examples-1' class='section-header'><a href='#examples-1'>Examples</a></h1>
+<pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>prelude</span>::<span class='op'>*</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fs</span>::<span class='ident'>File</span>;
 
@@ -121,7 +123,8 @@ contents reach their destination.</p>
 <p>It is considered an error if not all bytes could be written due to
 I/O errors or EOF being reached.</p>
 
-<h1 id='examples-2' class='section-header'><a href='#examples-2'>Examples</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='examples-2' class='section-header'><a href='#examples-2'>Examples</a></h1>
+<pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>prelude</span>::<span class='op'>*</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>BufWriter</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fs</span>::<span class='ident'>File</span>;
@@ -143,7 +146,8 @@ this method will be returned.</p>
 <h1 id='errors-2' class='section-header'><a href='#errors-2'>Errors</a></h1>
 <p>This function will return the first error that <code>write</code> returns.</p>
 
-<h1 id='examples-3' class='section-header'><a href='#examples-3'>Examples</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='examples-3' class='section-header'><a href='#examples-3'>Examples</a></h1>
+<pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>prelude</span>::<span class='op'>*</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fs</span>::<span class='ident'>File</span>;
 
@@ -166,7 +170,8 @@ this signature.</p>
 <h1 id='errors-3' class='section-header'><a href='#errors-3'>Errors</a></h1>
 <p>This function will return any I/O error reported while formatting.</p>
 
-<h1 id='examples-4' class='section-header'><a href='#examples-4'>Examples</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='examples-4' class='section-header'><a href='#examples-4'>Examples</a></h1>
+<pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>prelude</span>::<span class='op'>*</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fs</span>::<span class='ident'>File</span>;
 
@@ -181,7 +186,8 @@ this signature.</p>
 <p>The returned adaptor also implements <code>Write</code> and will simply borrow this
 current writer.</p>
 
-<h1 id='examples-5' class='section-header'><a href='#examples-5'>Examples</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='examples-5' class='section-header'><a href='#examples-5'>Examples</a></h1>
+<pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>Write</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fs</span>::<span class='ident'>File</span>;
 
@@ -201,7 +207,8 @@ implementation do not precisely track where errors happen. For example
 an error on the second call to <code>write</code> will not report that the first
 call to <code>write</code> succeeded.</p>
 
-<h1 id='examples-6' class='section-header'><a href='#examples-6'>Examples</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='examples-6' class='section-header'><a href='#examples-6'>Examples</a></h1>
+<pre class='rust rust-example-rendered'>
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>feature</span>(<span class='ident'>io</span>)]</span>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>prelude</span>::<span class='op'>*</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fs</span>::<span class='ident'>File</span>;
@@ -222,7 +229,7 @@ call to <code>write</code> succeeded.</p>
 <li><code>impl&lt;W&gt; <a class='trait' href='../../../../bitflags/__core/io/trait.Write.html' title='bitflags::__core::io::Write'>Write</a> for <a class='struct' href='../../../../bitflags/__core/io/struct.LineWriter.html' title='bitflags::__core::io::LineWriter'>LineWriter</a>&lt;W&gt; <span class='where'>where W: <a class='trait' href='../../../../bitflags/__core/io/trait.Write.html' title='bitflags::__core::io::Write'>Write</a></span></code></li>
 <li><code>impl&lt;'a&gt; <a class='trait' href='../../../../bitflags/__core/io/trait.Write.html' title='bitflags::__core::io::Write'>Write</a> for <a class='struct' href='../../../../bitflags/__core/io/struct.Cursor.html' title='bitflags::__core::io::Cursor'>Cursor</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>&amp;'a mut [</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>]</a>&gt;</code></li>
 <li><code>impl <a class='trait' href='../../../../bitflags/__core/io/trait.Write.html' title='bitflags::__core::io::Write'>Write</a> for <a class='struct' href='../../../../bitflags/__core/io/struct.Cursor.html' title='bitflags::__core::io::Cursor'>Cursor</a>&lt;<a class='struct' href='../../../../bitflags/__core/vec/struct.Vec.html' title='bitflags::__core::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a>&gt;&gt;</code></li>
-<li><code>impl <a class='trait' href='../../../../bitflags/__core/io/trait.Write.html' title='bitflags::__core::io::Write'>Write</a> for <a class='struct' href='../../../../bitflags/__core/io/struct.Cursor.html' title='bitflags::__core::io::Cursor'>Cursor</a>&lt;<a class='struct' href='../../../../bitflags/__core/boxed/struct.Box.html' title='bitflags::__core::boxed::Box'>Box</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>[<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a>]</a>&gt;&gt;</code></li>
+<li><code>impl <a class='trait' href='../../../../bitflags/__core/io/trait.Write.html' title='bitflags::__core::io::Write'>Write</a> for <a class='struct' href='../../../../bitflags/__core/io/struct.Cursor.html' title='bitflags::__core::io::Cursor'>Cursor</a>&lt;<a class='struct' href='../../../../bitflags/__core/boxed/struct.Box.html' title='bitflags::__core::boxed::Box'>Box</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>]</a>&gt;&gt;</code></li>
 <li><code>impl&lt;'a, W&gt; <a class='trait' href='../../../../bitflags/__core/io/trait.Write.html' title='bitflags::__core::io::Write'>Write</a> for &amp;'a mut W <span class='where'>where W: <a class='trait' href='../../../../bitflags/__core/io/trait.Write.html' title='bitflags::__core::io::Write'>Write</a> + ?<a class='trait' href='../../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></li>
 <li><code>impl&lt;W&gt; <a class='trait' href='../../../../bitflags/__core/io/trait.Write.html' title='bitflags::__core::io::Write'>Write</a> for <a class='struct' href='../../../../bitflags/__core/boxed/struct.Box.html' title='bitflags::__core::boxed::Box'>Box</a>&lt;W&gt; <span class='where'>where W: <a class='trait' href='../../../../bitflags/__core/io/trait.Write.html' title='bitflags::__core::io::Write'>Write</a> + ?<a class='trait' href='../../../../bitflags/__core/marker/trait.Sized.html' title='bitflags::__core::marker::Sized'>Sized</a></span></code></li>
 <li><code>impl&lt;'a&gt; <a class='trait' href='../../../../bitflags/__core/io/trait.Write.html' title='bitflags::__core::io::Write'>Write</a> for <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>&amp;'a mut [</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.slice.html'>]</a></code></li>
@@ -235,7 +242,7 @@ call to <code>write</code> succeeded.</p>
 <li><code>impl&lt;'a&gt; <a class='trait' href='../../../../bitflags/__core/io/trait.Write.html' title='bitflags::__core::io::Write'>Write</a> for <a class='struct' href='../../../../bitflags/__core/io/struct.StdoutLock.html' title='bitflags::__core::io::StdoutLock'>StdoutLock</a>&lt;'a&gt;</code></li>
 <li><code>impl <a class='trait' href='../../../../bitflags/__core/io/trait.Write.html' title='bitflags::__core::io::Write'>Write</a> for <a class='struct' href='../../../../bitflags/__core/io/struct.Stderr.html' title='bitflags::__core::io::Stderr'>Stderr</a></code></li>
 <li><code>impl&lt;'a&gt; <a class='trait' href='../../../../bitflags/__core/io/trait.Write.html' title='bitflags::__core::io::Write'>Write</a> for <a class='struct' href='../../../../bitflags/__core/io/struct.StderrLock.html' title='bitflags::__core::io::StderrLock'>StderrLock</a>&lt;'a&gt;</code></li>
-<li><code>impl&lt;T, U&gt; <a class='trait' href='../../../../bitflags/__core/io/trait.Write.html' title='bitflags::__core::io::Write'>Write</a> for <a class='struct' href='../../../../bitflags/__core/io/struct.Broadcast.html' title='bitflags::__core::io::Broadcast'>Broadcast</a>&lt;T, U&gt; <span class='where'>where U: <a class='trait' href='../../../../bitflags/__core/io/trait.Write.html' title='bitflags::__core::io::Write'>Write</a>, T: <a class='trait' href='../../../../bitflags/__core/io/trait.Write.html' title='bitflags::__core::io::Write'>Write</a></span></code></li>
+<li><code>impl&lt;T, U&gt; <a class='trait' href='../../../../bitflags/__core/io/trait.Write.html' title='bitflags::__core::io::Write'>Write</a> for <a class='struct' href='../../../../bitflags/__core/io/struct.Broadcast.html' title='bitflags::__core::io::Broadcast'>Broadcast</a>&lt;T, U&gt; <span class='where'>where T: <a class='trait' href='../../../../bitflags/__core/io/trait.Write.html' title='bitflags::__core::io::Write'>Write</a>, U: <a class='trait' href='../../../../bitflags/__core/io/trait.Write.html' title='bitflags::__core::io::Write'>Write</a></span></code></li>
 <li><code>impl <a class='trait' href='../../../../bitflags/__core/io/trait.Write.html' title='bitflags::__core::io::Write'>Write</a> for <a class='struct' href='../../../../bitflags/__core/net/struct.TcpStream.html' title='bitflags::__core::net::TcpStream'>TcpStream</a></code></li>
 <li><code>impl&lt;'a&gt; <a class='trait' href='../../../../bitflags/__core/io/trait.Write.html' title='bitflags::__core::io::Write'>Write</a> for &amp;'a <a class='struct' href='../../../../bitflags/__core/net/struct.TcpStream.html' title='bitflags::__core::net::TcpStream'>TcpStream</a></code></li>
 <li><code>impl <a class='trait' href='../../../../bitflags/__core/io/trait.Write.html' title='bitflags::__core::io::Write'>Write</a> for <a class='struct' href='../../../../bitflags/__core/process/struct.ChildStdin.html' title='bitflags::__core::process::ChildStdin'>ChildStdin</a></code></li>
@@ -285,7 +292,7 @@ call to <code>write</code> succeeded.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

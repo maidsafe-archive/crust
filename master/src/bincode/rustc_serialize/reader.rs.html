@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/bincode-0.5.2/src/rustc_serialize/reader.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/bincode-0.5.4/src/rustc_serialize/reader.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>reader.rs.html -- source</title>
@@ -26,7 +26,7 @@
     
 
     <nav class="sidebar">
-        <a href='../../../bincode/index.html'><img src='./icon.png' alt='' width='100'></a>
+        <a href='../../../bincode/index.html'><img src='./icon.png' alt='logo' width='100'></a>
         
     </nav>
 
@@ -433,14 +433,6 @@
 <span id="390">390</span>
 <span id="391">391</span>
 <span id="392">392</span>
-<span id="393">393</span>
-<span id="394">394</span>
-<span id="395">395</span>
-<span id="396">396</span>
-<span id="397">397</span>
-<span id="398">398</span>
-<span id="399">399</span>
-<span id="400">400</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>Read</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>Error</span> <span class='kw'>as</span> <span class='ident'>IoError</span>;
@@ -451,7 +443,6 @@
 <span class='kw'>use</span> <span class='ident'>rustc_serialize_crate</span>::<span class='ident'>Decoder</span>;
 
 <span class='kw'>use</span> <span class='ident'>byteorder</span>::{<span class='ident'>BigEndian</span>, <span class='ident'>ReadBytesExt</span>};
-<span class='kw'>use</span> <span class='ident'>byteorder</span>::<span class='ident'>Error</span> <span class='kw'>as</span> <span class='ident'>ByteOrderError</span>;
 <span class='kw'>use</span> ::<span class='ident'>SizeLimit</span>;
 
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Eq</span>, <span class='ident'>PartialEq</span>, <span class='ident'>Clone</span>, <span class='ident'>Debug</span>)]</span>
@@ -505,15 +496,8 @@
 
 <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>DecodingResult</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>T</span>, <span class='ident'>DecodingError</span><span class='op'>&gt;</span>;
 
-<span class='kw'>fn</span> <span class='ident'>wrap_io</span>(<span class='ident'>err</span>: <span class='ident'>ByteOrderError</span>) <span class='op'>-&gt;</span> <span class='ident'>DecodingError</span> {
-    <span class='kw'>match</span> <span class='ident'>err</span> {
-        <span class='ident'>ByteOrderError</span>::<span class='ident'>Io</span>(<span class='ident'>ioe</span>) <span class='op'>=&gt;</span> <span class='ident'>DecodingError</span>::<span class='ident'>IoError</span>(<span class='ident'>ioe</span>),
-        <span class='ident'>ByteOrderError</span>::<span class='ident'>UnexpectedEOF</span> <span class='op'>=&gt;</span>
-            <span class='ident'>DecodingError</span>::<span class='ident'>InvalidEncoding</span>(<span class='ident'>InvalidEncoding</span> {
-                <span class='ident'>desc</span>: <span class='string'>&quot;Unexpected EOF while reading a multi-byte number&quot;</span>,
-                <span class='ident'>detail</span>: <span class='prelude-val'>None</span>
-            })
-    }
+<span class='kw'>fn</span> <span class='ident'>wrap_io</span>(<span class='ident'>err</span>: <span class='ident'>IoError</span>) <span class='op'>-&gt;</span> <span class='ident'>DecodingError</span> {
+    <span class='ident'>DecodingError</span>::<span class='ident'>IoError</span>(<span class='ident'>err</span>)
 }
 
 <span class='kw'>impl</span> <span class='ident'>Error</span> <span class='kw'>for</span> <span class='ident'>DecodingError</span> {
@@ -886,7 +870,7 @@
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

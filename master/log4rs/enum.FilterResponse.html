@@ -53,16 +53,16 @@
     Reject,
 }</pre><div class='docblock'><p>The response returned by a filter.</p>
 </div><h2 class='variants'>Variants</h2>
-<table><tr><td id='variant.Accept'><code>Accept</code></td><td><div class='docblock'><p>Accept the log event.</p>
+<table class='variants_table'><tr><td id='variant.Accept'><code>Accept</code></td><td><div class='docblock'><p>Accept the log event.</p>
 
 <p>It will be immediately passed to the appender, bypassing any remaining
 filters.</p>
-</div></td></tr><tr><td id='variant.Neutral'><code>Neutral</code></td><td><div class='docblock'><p>Take no action on the log event.</p>
+</div></td><td></td></tr><tr><td id='variant.Neutral'><code>Neutral</code></td><td><div class='docblock'><p>Take no action on the log event.</p>
 
 <p>It will continue on to remaining filters or pass on to the appender if
 there are none remaining.</p>
-</div></td></tr><tr><td id='variant.Reject'><code>Reject</code></td><td><div class='docblock'><p>Reject the log event.</p>
-</div></td></tr></table></section>
+</div></td><td></td></tr><tr><td id='variant.Reject'><code>Reject</code></td><td><div class='docblock'><p>Reject the log event.</p>
+</div></td><td></td></tr></table></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>
@@ -105,7 +105,7 @@ there are none remaining.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

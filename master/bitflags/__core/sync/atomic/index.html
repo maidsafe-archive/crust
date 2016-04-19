@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-27771' class='srclink' href='https://doc.rust-lang.org/nightly/core/sync/atomic/index.html?gotosrc=27771' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-27848' class='srclink' href='https://doc.rust-lang.org/nightly/core/sync/atomic/index.html?gotosrc=27848' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Atomic types</p>
 
 <p>Atomic types provide primitive shared-memory communication between
@@ -73,6 +73,7 @@ are often used for lazy global initialization.</p>
 
 <h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
 <p>A simple spinlock:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>Arc</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>atomic</span>::{<span class='ident'>AtomicUsize</span>, <span class='ident'>Ordering</span>};
@@ -91,6 +92,7 @@ are often used for lazy global initialization.</p>
 }</pre>
 
 <p>Keep a global count of live threads:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>atomic</span>::{<span class='ident'>AtomicUsize</span>, <span class='ident'>Ordering</span>, <span class='ident'>ATOMIC_USIZE_INIT</span>};
 
@@ -105,7 +107,6 @@ are often used for lazy global initialization.</p>
                                title='bitflags::__core::sync::atomic::AtomicBool'>AtomicBool</a></td>
                         <td class='docblock short'>
                              <p>A boolean type which can be safely shared between threads.</p>
-
                         </td>
                     </tr>
                 
@@ -114,7 +115,6 @@ are often used for lazy global initialization.</p>
                                title='bitflags::__core::sync::atomic::AtomicIsize'>AtomicIsize</a></td>
                         <td class='docblock short'>
                              <p>A signed integer type which can be safely shared between threads.</p>
-
                         </td>
                     </tr>
                 
@@ -123,7 +123,6 @@ are often used for lazy global initialization.</p>
                                title='bitflags::__core::sync::atomic::AtomicPtr'>AtomicPtr</a></td>
                         <td class='docblock short'>
                              <p>A raw pointer type which can be safely shared between threads.</p>
-
                         </td>
                     </tr>
                 
@@ -132,7 +131,6 @@ are often used for lazy global initialization.</p>
                                title='bitflags::__core::sync::atomic::AtomicUsize'>AtomicUsize</a></td>
                         <td class='docblock short'>
                              <p>An unsigned integer type which can be safely shared between threads.</p>
-
                         </td>
                     </tr>
                 </table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
@@ -142,7 +140,6 @@ are often used for lazy global initialization.</p>
                                title='bitflags::__core::sync::atomic::Ordering'>Ordering</a></td>
                         <td class='docblock short'>
                              <p>Atomic memory orderings</p>
-
                         </td>
                     </tr>
                 </table><h2 id='constants' class='section-header'><a href="#constants">Constants</a></h2>
@@ -152,7 +149,6 @@ are often used for lazy global initialization.</p>
                                title='bitflags::__core::sync::atomic::ATOMIC_BOOL_INIT'>ATOMIC_BOOL_INIT</a></td>
                         <td class='docblock short'>
                              <p>An <code>AtomicBool</code> initialized to <code>false</code>.</p>
-
                         </td>
                     </tr>
                 
@@ -161,7 +157,6 @@ are often used for lazy global initialization.</p>
                                title='bitflags::__core::sync::atomic::ATOMIC_ISIZE_INIT'>ATOMIC_ISIZE_INIT</a></td>
                         <td class='docblock short'>
                              <p>An <code>AtomicIsize</code> initialized to <code>0</code>.</p>
-
                         </td>
                     </tr>
                 
@@ -170,7 +165,6 @@ are often used for lazy global initialization.</p>
                                title='bitflags::__core::sync::atomic::ATOMIC_USIZE_INIT'>ATOMIC_USIZE_INIT</a></td>
                         <td class='docblock short'>
                              <p>An <code>AtomicUsize</code> initialized to <code>0</code>.</p>
-
                         </td>
                     </tr>
                 </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
@@ -180,7 +174,6 @@ are often used for lazy global initialization.</p>
                                title='bitflags::__core::sync::atomic::fence'>fence</a></td>
                         <td class='docblock short'>
                              <p>An atomic fence.</p>
-
                         </td>
                     </tr>
                 </table></section>
@@ -226,7 +219,7 @@ are often used for lazy global initialization.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

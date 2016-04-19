@@ -57,7 +57,8 @@
 encoder is a TOML <code>Table</code> structure. The resulting TOML can be stringified
 if necessary.</p>
 
-<h1 id='example' class='section-header'><a href='#example'>Example</a></h1><pre class='rust rust-example-rendered'>
+<h1 id='example' class='section-header'><a href='#example'>Example</a></h1>
+<pre class='rust rust-example-rendered'>
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>rustc_serialize</span>;
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>toml</span>;
 
@@ -81,7 +82,7 @@ the top-level representation of a structure to be a table.</p>
 into this <code>Encoder</code>.</p>
 </div></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../toml/struct.Encoder.html' title='toml::Encoder'>Encoder</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>() -&gt; <a class='struct' href='../toml/struct.Encoder.html' title='toml::Encoder'>Encoder</a></code></h4>
 <div class='docblock'><p>Constructs a new encoder which will emit to the given output stream.</p>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='../rustc_serialize/serialize/trait.Encoder.html' title='rustc_serialize::serialize::Encoder'>Encoder</a> for <a class='struct' href='../toml/struct.Encoder.html' title='toml::Encoder'>Encoder</a></code></h3><div class='impl-items'><h4 id='assoc_type.Error' class='type'><code>type Error = <a class='enum' href='../toml/enum.Error.html' title='toml::Error'>Error</a></code></h4>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='../rustc_serialize/serialize/trait.Encoder.html' title='rustc_serialize::serialize::Encoder'>Encoder</a> for <a class='struct' href='../toml/struct.Encoder.html' title='toml::Encoder'>Encoder</a></code></h3><div class='impl-items'><h4 id='associatedtype.Error' class='type'><code>type Error = <a class='enum' href='../toml/enum.Error.html' title='toml::Error'>Error</a></code></h4>
 <h4 id='method.emit_nil' class='method'><code>fn <a href='../rustc_serialize/serialize/trait.Encoder.html#method.emit_nil' class='fnname'>emit_nil</a>(&amp;mut self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, <a class='enum' href='../toml/enum.Error.html' title='toml::Error'>Error</a>&gt;</code></h4>
 <h4 id='method.emit_usize' class='method'><code>fn <a href='../rustc_serialize/serialize/trait.Encoder.html#method.emit_usize' class='fnname'>emit_usize</a>(&amp;mut self, v: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, <a class='enum' href='../toml/enum.Error.html' title='toml::Error'>Error</a>&gt;</code></h4>
 <h4 id='method.emit_u8' class='method'><code>fn <a href='../rustc_serialize/serialize/trait.Encoder.html#method.emit_u8' class='fnname'>emit_u8</a>(&amp;mut self, v: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, <a class='enum' href='../toml/enum.Error.html' title='toml::Error'>Error</a>&gt;</code></h4>
@@ -160,7 +161,7 @@ into this <code>Encoder</code>.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

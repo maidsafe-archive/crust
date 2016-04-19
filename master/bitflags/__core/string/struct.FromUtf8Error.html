@@ -46,10 +46,10 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-3363' class='srclink' href='https://doc.rust-lang.org/nightly/collections/string/struct.FromUtf8Error.html?gotosrc=3363' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-3433' class='srclink' href='https://doc.rust-lang.org/nightly/collections/string/struct.FromUtf8Error.html?gotosrc=3433' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct FromUtf8Error {
     // some fields omitted
-}</pre><div class='docblock'><p>A possible error value when converting a <code>String</code> from a UTF-8 byte vector.</p>
+}</pre><span class="since">1.0.0</span><div class='docblock'><p>A possible error value when converting a <code>String</code> from a UTF-8 byte vector.</p>
 
 <p>This type is the error type for the <a href="struct.String.html#method.from_utf8"><code>from_utf8()</code></a> method on <a href="struct.String.html"><code>String</code></a>. It
 is designed in such a way to carefully avoid reallocations: the
@@ -63,6 +63,7 @@ through the <a href="#method.utf8_error"><code>utf8_error()</code></a> method.</
 
 <h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
 <p>Basic usage:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='comment'>// some invalid bytes, in a vector</span>
 <span class='kw'>let</span> <span class='ident'>bytes</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[<span class='number'>0</span>, <span class='number'>159</span>];
@@ -80,6 +81,7 @@ does not need to be made.</p>
 
 <h1 id='examples-1' class='section-header'><a href='#examples-1'>Examples</a></h1>
 <p>Basic usage:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='comment'>// some invalid bytes, in a vector</span>
 <span class='kw'>let</span> <span class='ident'>bytes</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[<span class='number'>0</span>, <span class='number'>159</span>];
@@ -97,6 +99,7 @@ on using it.</p>
 
 <h1 id='examples-2' class='section-header'><a href='#examples-2'>Examples</a></h1>
 <p>Basic usage:</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='comment'>// some invalid bytes, in a vector</span>
 <span class='kw'>let</span> <span class='ident'>bytes</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[<span class='number'>0</span>, <span class='number'>159</span>];
@@ -152,7 +155,7 @@ on using it.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

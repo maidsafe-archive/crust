@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-532' class='srclink' href='https://doc.rust-lang.org/nightly/alloc/rc/index.html?gotosrc=532' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-537' class='srclink' href='https://doc.rust-lang.org/nightly/alloc/rc/index.html?gotosrc=537' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Thread-local reference-counted boxes (the <code>Rc&lt;T&gt;</code> type).</p>
 
 <p>The <code>Rc&lt;T&gt;</code> type provides shared ownership of an immutable value.
@@ -68,6 +68,7 @@ We want to have our <code>Gadget</code>s point to their <code>Owner</code>. We c
 unique ownership, because more than one gadget may belong to the same
 <code>Owner</code>. <code>Rc&lt;T&gt;</code> allows us to share an <code>Owner</code> between multiple <code>Gadget</code>s,
 and have the <code>Owner</code> remain allocated as long as any <code>Gadget</code> points at it.</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>rc</span>::<span class='ident'>Rc</span>;
 
@@ -125,6 +126,7 @@ object we wish to mutate in a <code>RefCell</code>, which provides <em>interior
 mutability</em>: a method to achieve mutability through a shared reference.
 <code>RefCell</code> enforces Rust&#39;s borrowing rules at runtime.  Read the <code>Cell</code>
 documentation for more details on interior mutability.</p>
+
 <pre class='rust rust-example-rendered'>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>rc</span>::<span class='ident'>Rc</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>rc</span>::<span class='ident'>Weak</span>;
@@ -186,7 +188,6 @@ documentation for more details on interior mutability.</p>
                                title='bitflags::__core::rc::Rc'>Rc</a></td>
                         <td class='docblock short'>
                              <p>A reference-counted pointer type over an immutable value.</p>
-
                         </td>
                     </tr>
                 
@@ -195,7 +196,6 @@ documentation for more details on interior mutability.</p>
                                title='bitflags::__core::rc::Weak'>Weak</a></td>
                         <td class='docblock short'>
                              <p>A weak version of <code>Rc&lt;T&gt;</code>.</p>
-
                         </td>
                     </tr>
                 </table></section>
@@ -241,7 +241,7 @@ documentation for more details on interior mutability.</p>
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>

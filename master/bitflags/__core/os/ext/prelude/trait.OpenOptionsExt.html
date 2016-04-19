@@ -46,9 +46,10 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-12263' class='srclink' href='https://doc.rust-lang.org/nightly/std/sys/ext/fs/trait.OpenOptionsExt.html?gotosrc=12263' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-12981' class='srclink' href='https://doc.rust-lang.org/nightly/std/sys/ext/fs/trait.OpenOptionsExt.html?gotosrc=12981' title='goto source code'>[src]</a></span></h1>
 <pre class='rust trait'>pub trait OpenOptionsExt {
     fn <a href='#tymethod.mode' class='fnname'>mode</a>(&amp;mut self, mode: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u32.html'>u32</a>) -&gt; &amp;mut Self;
+    fn <a href='#tymethod.custom_flags' class='fnname'>custom_flags</a>(&amp;mut self, flags: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.i32.html'>i32</a>) -&gt; &amp;mut Self;
 }</pre><div class='docblock'><p>Unix-specific extensions to <code>OpenOptions</code></p>
 </div>
             <h2 id='required-methods'>Required Methods</h2>
@@ -56,7 +57,31 @@
         <h3 id='tymethod.mode' class='method stab '><code>fn <a href='#tymethod.mode' class='fnname'>mode</a>(&amp;mut self, mode: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.u32.html'>u32</a>) -&gt; &amp;mut Self</code></h3><div class='docblock'><p>Sets the mode bits that a new file will be created with.</p>
 
 <p>If a new file is created as part of a <code>File::open_opts</code> call then this
-specified <code>mode</code> will be used as the permission bits for the new file.</p>
+specified <code>mode</code> will be used as the permission bits for the new file.
+If no <code>mode</code> is set, the default of <code>0o666</code> will be used.
+The operating system masks out bits with the systems <code>umask</code>, to produce
+the final permissions.</p>
+</div><h3 id='tymethod.custom_flags' class='method stab unstable'><code>fn <a href='#tymethod.custom_flags' class='fnname'>custom_flags</a>(&amp;mut self, flags: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.i32.html'>i32</a>) -&gt; &amp;mut Self</code></h3><div class='stability'><em class='stab unstable'>Unstable (<code>expand_open_options</code>)<p>: recently added</p>
+</em></div><div class='docblock'><p>Pass custom flags to the <code>flags</code> agument of <code>open</code>.</p>
+
+<p>The bits that define the access mode are masked out with <code>O_ACCMODE</code>, to
+ensure they do not interfere with the access mode set by Rusts options.</p>
+
+<p>Custom flags can only set flags, not remove flags set by Rusts options.
+This options overwrites any previously set custom flags.</p>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>libc</span>;
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fs</span>::<span class='ident'>OpenOptions</span>;
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>os</span>::<span class='ident'>unix</span>::<span class='ident'>fs</span>::<span class='ident'>OpenOptionsExt</span>;
+
+<span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>options</span> <span class='op'>=</span> <span class='ident'>OpenOptions</span>::<span class='ident'>new</span>();
+<span class='ident'>options</span>.<span class='ident'>write</span>(<span class='boolval'>true</span>);
+<span class='kw'>if</span> <span class='macro'>cfg</span><span class='macro'>!</span>(<span class='ident'>unix</span>) {
+    <span class='ident'>options</span>.<span class='ident'>custom_flags</span>(<span class='ident'>libc</span>::<span class='ident'>O_NOFOLLOW</span>);
+}
+<span class='kw'>let</span> <span class='ident'>file</span> <span class='op'>=</span> <span class='ident'>options</span>.<span class='ident'>open</span>(<span class='string'>&quot;foo.txt&quot;</span>);</pre>
 </div></div>
         <h2 id='implementors'>Implementors</h2>
         <ul class='item-list' id='implementors-list'>
@@ -106,7 +131,7 @@ specified <code>mode</code> will be used as the permission bits for the new file
 
                 <p>
                     Search functions by type signature (e.g.
-                    <code>vec -> usize</code>)
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
                 </p>
             </div>
         </div>
