@@ -68,7 +68,7 @@ impl Receiver {
         match msg {
             Ok(a) => Ok(a),
             Err(err) => {
-                error!("Deserialisation error: {:?}", err);
+                info!("Deserialisation error: {:?}", err);
                 Err(io::Error::new(io::ErrorKind::InvalidData, "Deserialisation failure"))
             }
         }
@@ -81,7 +81,7 @@ impl Receiver {
 
 #[derive(Clone, PartialEq, Eq, Debug, RustcEncodable, RustcDecodable)]
 pub enum CrustMsg {
-    BootstrapRequest(PublicKey),
+    BootstrapRequest(PublicKey, u16),
     BootstrapResponse(PublicKey),
     ExternalEndpointRequest,
     ExternalEndpointResponse(SocketAddr),

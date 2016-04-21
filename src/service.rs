@@ -119,7 +119,7 @@ pub struct Service {
     expected_peers: Arc<Mutex<HashSet<PeerId>>>,
     service_discovery: ServiceDiscovery<StaticContactInfo>,
     event_tx: ::CrustEventSender,
-    bootstrap: RaiiBootstrap,
+    bootstrap: Option<RaiiBootstrap>,
     our_keys: (PublicKey, SecretKey),
     connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
     mapping_context: Arc<MappingContext>,
@@ -189,17 +189,9 @@ impl Service {
         mapping_context.add_simple_tcp_servers(config.tcp_mapper_servers.clone());
         let mapping_context = Arc::new(mapping_context);
 
-        let bootstrap = RaiiBootstrap::new(bootstrap_contacts,
-                                           our_keys.0.clone(),
-                                           event_tx.clone(),
-                                           connection_map.clone(),
-                                           bootstrap_cache.clone(),
-                                           mapping_context.clone(),
-                                           config.enable_tcp,
-                                           config.enable_utp);
-
         let udp_hole_punch_server = try!(SimpleUdpHolePunchServer::new(mapping_context.clone())
-                                             .result_log().or_else(|err| {
+                                             .result_log()
+                                             .or_else(|err| {
                                                  let e: io::Error = From::from(err);
                                                  Err(e)
                                              }));
@@ -215,15 +207,15 @@ impl Service {
             static_contact_info.tcp_mapper_servers.extend(tcp_hole_punch_server.addresses());
         }
 
-        let service = Service {
+        let mut service = Service {
             static_contact_info: static_contact_info,
-            bootstrap_cache: bootstrap_cache,
+            bootstrap_cache: bootstrap_cache.clone(),
             service_discovery: service_discovery,
             expected_peers: Arc::new(Mutex::new(HashSet::new())),
-            event_tx: event_tx,
-            bootstrap: bootstrap,
-            our_keys: our_keys,
-            connection_map: connection_map,
+            event_tx: event_tx.clone(),
+            bootstrap: None,
+            our_keys: our_keys.clone(),
+            connection_map: connection_map.clone(),
             mapping_context: mapping_context.clone(),
             tcp_acceptor_port: config.tcp_acceptor_port,
             utp_acceptor_port: config.utp_acceptor_port,
@@ -236,16 +228,38 @@ impl Service {
             is_alive: Arc::new(AtomicBool::new(true)),
         };
 
+        let our_tcp_acceptor_port = unwrap_option!(config.tcp_acceptor_port, "This must be supplied");
+
+        if our_tcp_acceptor_port != 0{
+            let _ = service.start_listening_tcp_impl();
+        }
+
+        let bootstrap = RaiiBootstrap::new(bootstrap_contacts,
+                                           our_keys.0,
+                                           event_tx,
+                                           connection_map,
+                                           bootstrap_cache,
+                                           mapping_context,
+                                           config.enable_tcp,
+                                           config.enable_utp,
+                                           our_tcp_acceptor_port);
+
+        service.bootstrap = Some(bootstrap);
+
         Ok(service)
     }
 
     /// Stop the bootstraping procedure
     pub fn stop_bootstrap(&mut self) {
-        self.bootstrap.stop();
+        unwrap_option!(self.bootstrap.as_mut(), "It should exist").stop();
     }
 
     /// Starts accepting TCP connections.
     pub fn start_listening_tcp(&mut self) -> io::Result<()> {
+        Ok(())
+    }
+
+    fn start_listening_tcp_impl(&mut self) -> io::Result<()> {
         // Start the TCP Acceptor
         self.raii_tcp_acceptor = Some(try!(connection::start_tcp_accept(self.tcp_acceptor_port
                                                                             .unwrap_or(0),
@@ -383,30 +397,31 @@ impl Service {
                 let result_tx = result_tx.clone();
                 let bootstrap_cache = bootstrap_cache.clone();
                 let static_contact_info = static_contact_info.clone();
+                let tcp_acceptor_port = unwrap_option!(self.tcp_acceptor_port,
+                                                       "This should be present");
                 let _ = thread!("Service::connect tcp direct", move || {
                     match connection::connect_tcp_endpoint(tcp_addr,
                                                            our_public_key,
                                                            event_tx,
                                                            connection_map,
                                                            Some(expected_peers),
-                                                           Some(their_id)) {
+                                                           Some(their_id),
+                                                           tcp_acceptor_port) {
                         Err(err) => {
                             let err_msg = format!("Tcp direct connect failed: {}", err);
                             let err = io::Error::new(err.kind(), err_msg);
                             let _ = result_tx.send(Err(err));
-                        },
+                        }
                         Ok(()) => {
                             let _ = result_tx.send(Ok(()));
-                            match unwrap_result!(bootstrap_cache.lock()).update_contacts(
-                                vec![static_contact_info],
-                                vec![]
-                            ) {
+                            match unwrap_result!(bootstrap_cache.lock())
+                                      .update_contacts(vec![static_contact_info], vec![]) {
                                 Ok(()) => (),
                                 Err(e) => {
                                     warn!("Failed to update bootstrap cache: {}", e);
-                                },
+                                }
                             };
-                        },
+                        }
                     }
                 });
             }
@@ -420,9 +435,7 @@ impl Service {
                 let is_alive = self.is_alive.clone();
 
                 let _ = thread!("Service::connect tcp rendezvous", move || {
-                    let res = tcp_punch_hole(tcp_socket,
-                                             priv_tcp_info,
-                                             tcp_info).result_log();
+                    let res = tcp_punch_hole(tcp_socket, priv_tcp_info, tcp_info).result_log();
 
                     if !is_alive.load(Ordering::Relaxed) {
                         return;
@@ -436,20 +449,20 @@ impl Service {
                                                                      their_id) {
                                 Ok(()) => {
                                     let _ = result_tx.send(Ok(()));
-                                },
+                                }
                                 Err(err) => {
                                     let err_msg = format!("Tcp rendezvous connect failed: {}", err);
                                     let err = io::Error::new(err.kind(), err_msg);
                                     let _ = result_tx.send(Err(err));
-                                },
+                                }
                             }
-                        },
+                        }
                         Err(err) => {
                             let err: io::Error = From::from(err);
                             let err_msg = format!("Tcp hole punching failed: {}", err);
                             let err = io::Error::new(err.kind(), err_msg);
                             let _ = result_tx.send(Err(err));
-                        },
+                        }
                     };
                 });
             };
@@ -473,7 +486,7 @@ impl Service {
                             let err: io::Error = From::from(err);
                             let err_msg = format!("Udp hole punching failed: {}", err);
                             let err = io::Error::new(err.kind(), err_msg);
-                            let _ =  result_tx.send(Err(err));
+                            let _ = result_tx.send(Err(err));
                             return;
                         }
                     };
@@ -715,7 +728,9 @@ mod test {
         }
     }
 
-    fn prepare_connection_info(service: &mut Service, event_rx: &Receiver<Event>) -> OurConnectionInfo {
+    fn prepare_connection_info(service: &mut Service,
+                               event_rx: &Receiver<Event>)
+                               -> OurConnectionInfo {
         static TOKEN_COUNTER: AtomicUsize = ATOMIC_USIZE_INIT;
         let token = TOKEN_COUNTER.fetch_add(1, Ordering::Relaxed) as u32;
 
@@ -1267,7 +1282,7 @@ mod test {
 
     #[test]
     fn new_peer_is_not_raised_if_only_one_party_calls_connect() {
-         let config_0 = gen_config();
+        let config_0 = gen_config();
         let config_1 = gen_config();
 
         let (event_sender_0, _category_rx_0, event_rx_0) = get_event_sender();

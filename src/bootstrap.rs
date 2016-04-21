@@ -56,7 +56,8 @@ impl RaiiBootstrap {
                bootstrap_cache: Arc<Mutex<BootstrapHandler>>,
                mc: Arc<MappingContext>,
                tcp_enabled: bool,
-               utp_enabled: bool)
+               utp_enabled: bool,
+               our_tcp_acceptor_port: u16)
                -> RaiiBootstrap {
         let stop_flag = Arc::new(AtomicBool::new(false));
         let cloned_stop_flag = stop_flag.clone();
@@ -70,7 +71,8 @@ impl RaiiBootstrap {
                                      bootstrap_cache,
                                      &mc,
                                      tcp_enabled,
-                                     utp_enabled)
+                                     utp_enabled,
+                                     our_tcp_acceptor_port)
         }));
 
         RaiiBootstrap {
@@ -91,7 +93,8 @@ impl RaiiBootstrap {
                  bootstrap_cache: Arc<Mutex<BootstrapHandler>>,
                  mapping_context: &MappingContext,
                  tcp_enabled: bool,
-                 utp_enabled: bool) {
+                 utp_enabled: bool,
+                 our_tcp_acceptor_port: u16) {
         rand::thread_rng().shuffle(&mut bootstrap_contacts[..]);
         for contact in bootstrap_contacts {
             // Bootstrapping got cancelled.
@@ -110,12 +113,13 @@ impl RaiiBootstrap {
                                           bootstrap_cache.clone(),
                                           mapping_context,
                                           tcp_enabled,
-                                          utp_enabled);
+                                          utp_enabled,
+                                          our_tcp_acceptor_port);
             match res {
                 Ok(()) => (),
                 Err(e) => {
                     warn!("Error connecting to bootstrap peer: {}", e);
-                },
+                }
             };
             if stop_flag.load(Ordering::SeqCst) {
                 break;

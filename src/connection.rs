@@ -18,7 +18,7 @@
 use std::collections::{HashMap, HashSet};
 use std::collections::hash_map::Entry;
 use std::fmt;
-use std::sync::{Arc, Mutex};
+use std::sync::{Condvar, Arc, Mutex};
 use std::hash::{Hash, Hasher};
 use std::sync::atomic::{Ordering, AtomicBool};
 use std::net::{Shutdown, TcpStream, UdpSocket, Ipv4Addr, SocketAddrV4};
@@ -44,6 +44,7 @@ use nat_traversal::{MappedUdpSocket, MappingContext, PunchedUdpSocket, gen_rende
 use nat_traversal;
 use sodiumoxide::crypto::box_::PublicKey;
 use util::time_duration_to_std_duration;
+use std::time::Duration;
 
 type CrustEventSenderError = EventSenderError<MaidSafeEventCategory, Event>;
 
@@ -81,11 +82,11 @@ impl Hash for Connection {
 impl Debug for Connection {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         f.debug_struct("Connection")
-            .field("protocol",   &self.protocol)
-            .field("our_addr",   &self.our_addr)
-            .field("their_addr", &self.their_addr)
-            .field("closed",     &self.closed.load(Ordering::Relaxed))
-            .finish()
+         .field("protocol", &self.protocol)
+         .field("our_addr", &self.our_addr)
+         .field("their_addr", &self.their_addr)
+         .field("closed", &self.closed.load(Ordering::Relaxed))
+         .finish()
     }
 }
 
@@ -139,7 +140,8 @@ pub fn connect(peer_contact: StaticContactInfo,
                bootstrap_cache: Arc<Mutex<BootstrapHandler>>,
                mc: &MappingContext,
                tcp_enabled: bool,
-               utp_enabled: bool)
+               utp_enabled: bool,
+               our_tcp_acceptor_port: u16)
                -> io::Result<()> {
     let static_contact_info = peer_contact.clone();
 
@@ -154,7 +156,8 @@ pub fn connect(peer_contact: StaticContactInfo,
                                        event_tx.clone(),
                                        connection_map.clone(),
                                        None,
-                                       None) {
+                                       None,
+                                       our_tcp_acceptor_port) {
                 Ok(()) => return Ok(()),
                 Err(e) => {
                     warn!("TCP direct connect failed: {}", e);
@@ -201,7 +204,11 @@ pub fn connect(peer_contact: StaticContactInfo,
 
         loop {
             let now = time::SteadyTime::now();
-            let timeout = if now < deadline { deadline - now } else { break };
+            let timeout = if now < deadline {
+                deadline - now
+            } else {
+                break;
+            };
             let timeout = time_duration_to_std_duration(timeout);
             try!(udp_socket.set_read_timeout(Some(timeout)));
             match udp_socket.recv_from(&mut read_buf) {
@@ -244,11 +251,12 @@ pub fn connect(peer_contact: StaticContactInfo,
         }
     }
 
-    match unwrap_result!(bootstrap_cache.lock()).update_contacts(vec![], vec![static_contact_info]) {
+    match unwrap_result!(bootstrap_cache.lock())
+              .update_contacts(vec![], vec![static_contact_info]) {
         Ok(()) => (),
         Err(e) => {
             warn!("Unable to update bootstrap cache: {}", e);
-        },
+        }
     };
     Err(last_err)
 }
@@ -284,7 +292,8 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
                             event_tx: ::CrustEventSender,
                             connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
                             expected_peers: Option<Arc<Mutex<HashSet<PeerId>>>>,
-                            their_expected_id: Option<PeerId>)
+                            their_expected_id: Option<PeerId>,
+                            acceptor_port: u16)
                             -> io::Result<()> {
     let (network_input, writer) = try!(tcp_connections::connect_tcp(remote_addr.clone()));
     let our_addr = SocketAddr(try!(network_input.local_addr()));
@@ -293,12 +302,13 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
     let mut network_rx = Receiver::tcp(network_input);
     let (their_id, event) = match their_expected_id {
         None => {
-            match writer.send(WriteEvent::Write(CrustMsg::BootstrapRequest(our_public_key))) {
+            match writer.send(WriteEvent::Write(CrustMsg::BootstrapRequest(our_public_key,
+                                                                           acceptor_port))) {
                 Ok(()) => (),
                 Err(_) => {
                     error!("Receiver shut down");
                     return Err(io::Error::new(io::ErrorKind::Other, "Receiver shut down"));
-                },
+                }
             };
             match network_rx.receive() {
                 Ok(CrustMsg::BootstrapResponse(key)) => {
@@ -324,7 +334,7 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
                 Err(_) => {
                     error!("Receiver shut down");
                     return Err(io::Error::new(io::ErrorKind::Other, "Receiver shut down"));
-                },
+                }
             }
             match network_rx.receive() {
                 Ok(CrustMsg::Connect(key)) => {
@@ -380,7 +390,8 @@ fn register_tcp_connection(connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connect
                            network_tx: RaiiSender,
                            event_tx: ::CrustEventSender,
                            our_addr: SocketAddr,
-                           their_addr: SocketAddr) -> Connection {
+                           their_addr: SocketAddr)
+                           -> Connection {
     let closed = Arc::new(AtomicBool::new(false));
     let closed_clone = closed.clone();
 
@@ -499,7 +510,54 @@ pub fn start_tcp_accept(port: u16,
 
             let msg = network_rx.receive();
             let (their_id, event) = match msg {
-                Ok(CrustMsg::BootstrapRequest(k)) => {
+                Ok(CrustMsg::BootstrapRequest(k, peer_port)) => {
+                    if peer_port != 0 {
+                        let peer_ip = their_addr.ip();
+
+                        let pair = Arc::new((Mutex::new(None), Condvar::new()));
+                        let pair_clone_0 = pair.clone();
+                        let _ = thread!("TcpTestConnect", move || {
+                            match TcpStream::connect(net::SocketAddr::new(peer_ip, peer_port)) {
+                                Ok(stream) => {
+                                    if let Err(e) = stream.shutdown(Shutdown::Both) {
+                                        warn!("Could not shutdown the TCP throwaway connection - \
+                                               {:?}",
+                                              e);
+                                    }
+
+                                    let &(ref lock, ref cvar) = &*pair_clone_0;
+                                    let mut started = lock.lock().unwrap();
+                                    *started = Some(true);
+                                    cvar.notify_one();
+                                }
+                                Err(e) => {
+                                    error!("Direct Connection not possible on advertised tcp \
+                                            port - {:?}",
+                                           e);
+
+                                    let &(ref lock, ref cvar) = &*pair_clone_0;
+                                    let mut started = lock.lock().unwrap();
+                                    *started = Some(false);
+                                    cvar.notify_one();
+                                }
+                            }
+                        });
+
+                        let &(ref lock, ref cvar) = &*pair;
+                        let mut started = lock.lock().unwrap();
+                        while started.is_none() {
+                            let (tmp_started, wait_expired) = unwrap_result!(cvar.wait_timeout(started, Duration::from_secs(5)));
+                            started = tmp_started;
+                            if wait_expired.timed_out() {
+                                *started = Some(false);
+                                break;
+                            }
+                        }
+
+                        if !unwrap_option!(started, "Must be Some if it reaches here") {
+                            continue;
+                        }
+                    }
                     match writer.send(WriteEvent::Write(CrustMsg::BootstrapResponse(our_public_key))) {
                         Ok(()) => (),
                         Err(_) => {
@@ -528,7 +586,7 @@ pub fn start_tcp_accept(port: u16,
                             Err(_) => {
                                 error!("Receiver shutdown!");
                                 continue;
-                            },
+                            }
                         }
                     } else {
                         continue;
@@ -602,7 +660,7 @@ pub fn utp_rendezvous_connect(udp_socket: UdpSocket,
                 Err(_) => {
                     error!("Receiver shut down");
                     return Err(io::Error::new(io::ErrorKind::Other, "Receiver shut down"));
-                },
+                }
             };
             match network_rx.receive() {
                 Ok(CrustMsg::Connect(key)) => {
@@ -632,12 +690,12 @@ pub fn utp_rendezvous_connect(udp_socket: UdpSocket,
             }
         }
         UtpRendezvousConnectMode::BootstrapConnect => {
-            match writer.send(WriteEvent::Write(CrustMsg::BootstrapRequest(our_public_key))) {
+            match writer.send(WriteEvent::Write(CrustMsg::BootstrapRequest(our_public_key, 0))) {
                 Ok(()) => (),
                 Err(_) => {
                     error!("Receiver shut down");
                     return Err(io::Error::new(io::ErrorKind::Other, "Receiver shut down"));
-                },
+                }
             };
             match network_rx.receive() {
                 Ok(CrustMsg::BootstrapResponse(key)) => {
@@ -666,7 +724,7 @@ pub fn utp_rendezvous_connect(udp_socket: UdpSocket,
         }
         UtpRendezvousConnectMode::BootstrapAccept => {
             let (guard, their_id) = match network_rx.receive() {
-                Ok(CrustMsg::BootstrapRequest(key)) => {
+                Ok(CrustMsg::BootstrapRequest(key, 0)) => {
                     if key == our_public_key {
                         return Err(io::Error::new(io::ErrorKind::Other, "Connected to ourselves."));
                     }
@@ -695,7 +753,7 @@ pub fn utp_rendezvous_connect(udp_socket: UdpSocket,
                 Err(_) => {
                     error!("Receiver shut down");
                     return Err(io::Error::new(io::ErrorKind::Other, "Receiver shut down"));
-                },
+                }
             };
             (guard, their_id)
         }
@@ -730,15 +788,17 @@ fn start_rx(mut network_rx: Receiver,
             connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>) {
     loop {
         match network_rx.receive() {
-            Ok(msg) => match msg {
-                CrustMsg::Message(msg) => {
-                    if let Err(err) = event_tx.send(Event::NewMessage(their_id, msg)) {
-                        error!("Error sending message to {:?}: {:?}", their_id, err);
-                        break;
+            Ok(msg) => {
+                match msg {
+                    CrustMsg::Message(msg) => {
+                        if let Err(err) = event_tx.send(Event::NewMessage(their_id, msg)) {
+                            error!("Error sending message to {:?}: {:?}", their_id, err);
+                            break;
+                        }
                     }
+                    m => error!("Unexpected message in start_rx: {:?}", m),
                 }
-                m => error!("Unexpected message in start_rx: {:?}", m),
-            },
+            }
             Err(err) => {
                 error!("Error receiving from {:?}: {:?}", their_id, err);
                 break;
