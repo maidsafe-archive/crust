@@ -81,7 +81,7 @@ impl Receiver {
 
 #[derive(Clone, PartialEq, Eq, Debug, RustcEncodable, RustcDecodable)]
 pub enum CrustMsg {
-    BootstrapRequest(PublicKey),
+    BootstrapRequest(PublicKey, u16),
     BootstrapResponse(PublicKey),
     ExternalEndpointRequest,
     ExternalEndpointResponse(SocketAddr),
