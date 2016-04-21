@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `CloseCode` enum in crate `ws`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, CloseCode">
+
+    <title>ws::CloseCode - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='index.html'>ws</a></p><script>window.sidebarCurrent = {name: 'CloseCode', ty: 'enum', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content enum">
+<h1 class='fqn'><span class='in-band'>Enum <a href='index.html'>ws</a>::<wbr><a class='enum' href=''>CloseCode</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-1744' class='srclink' href='../src/ws/protocol.rs.html#74-139' title='goto source code'>[src]</a></span></h1>
+<pre class='rust enum'>pub enum CloseCode {
+    Normal,
+    Away,
+    Protocol,
+    Unsupported,
+    Status,
+    Abnormal,
+    Invalid,
+    Policy,
+    Size,
+    Extension,
+    Error,
+    Restart,
+    Again,
+    // some variants omitted
+}</pre><div class='docblock'><p>Status code used to indicate why an endpoint is closing the WebSocket connection.</p>
+</div><h2 class='variants'>Variants</h2>
+<table class='variants_table'><tr><td id='variant.Normal'><code>Normal</code></td><td><div class='docblock'><p>Indicates a normal closure, meaning that the purpose for
+which the connection was established has been fulfilled.</p>
+</div></td><td></td></tr><tr><td id='variant.Away'><code>Away</code></td><td><div class='docblock'><p>Indicates that an endpoint is &quot;going away&quot;, such as a server
+going down or a browser having navigated away from a page.</p>
+</div></td><td></td></tr><tr><td id='variant.Protocol'><code>Protocol</code></td><td><div class='docblock'><p>Indicates that an endpoint is terminating the connection due
+to a protocol error.</p>
+</div></td><td></td></tr><tr><td id='variant.Unsupported'><code>Unsupported</code></td><td><div class='docblock'><p>Indicates that an endpoint is terminating the connection
+because it has received a type of data it cannot accept (e.g., an
+endpoint that understands only text data MAY send this if it
+receives a binary message).</p>
+</div></td><td></td></tr><tr><td id='variant.Status'><code>Status</code></td><td><div class='docblock'><p>Indicates that no status code was included in a closing frame. This
+close code makes it possible to use a single method, <code>on_close</code> to 
+handle even cases where no close code was provided.</p>
+</div></td><td></td></tr><tr><td id='variant.Abnormal'><code>Abnormal</code></td><td><div class='docblock'><p>Indicates an abnormal closure. If the abnormal closure was due to an
+error, this close code will not be used. Instead, the <code>on_error</code> method
+of the handler will be called with the error. However, if the connection
+is simply dropped, without an error, this close code will be sent to the
+handler.</p>
+</div></td><td></td></tr><tr><td id='variant.Invalid'><code>Invalid</code></td><td><div class='docblock'><p>Indicates that an endpoint is terminating the connection
+because it has received data within a message that was not
+consistent with the type of the message (e.g., non-UTF-8 [RFC3629]
+data within a text message).</p>
+</div></td><td></td></tr><tr><td id='variant.Policy'><code>Policy</code></td><td><div class='docblock'><p>Indicates that an endpoint is terminating the connection
+because it has received a message that violates its policy.  This
+is a generic status code that can be returned when there is no
+other more suitable status code (e.g., Unsupported or Size) or if there
+is a need to hide specific details about the policy.</p>
+</div></td><td></td></tr><tr><td id='variant.Size'><code>Size</code></td><td><div class='docblock'><p>Indicates that an endpoint is terminating the connection
+because it has received a message that is too big for it to
+process.</p>
+</div></td><td></td></tr><tr><td id='variant.Extension'><code>Extension</code></td><td><div class='docblock'><p>Indicates that an endpoint (client) is terminating the
+connection because it has expected the server to negotiate one or
+more extension, but the server didn&#39;t return them in the response
+message of the WebSocket handshake.  The list of extensions that
+are needed should be given as the reason for closing.
+Note that this status code is not used by the server, because it
+can fail the WebSocket handshake instead.</p>
+</div></td><td></td></tr><tr><td id='variant.Error'><code>Error</code></td><td><div class='docblock'><p>Indicates that a server is terminating the connection because
+it encountered an unexpected condition that prevented it from
+fulfilling the request.</p>
+</div></td><td></td></tr><tr><td id='variant.Restart'><code>Restart</code></td><td><div class='docblock'><p>Indicates that the server is restarting. A client may choose to reconnect,
+and if it does, it should use a randomized delay of 5-30 seconds between attempts.</p>
+</div></td><td></td></tr><tr><td id='variant.Again'><code>Again</code></td><td><div class='docblock'><p>Indicates that the server is overloaded and the client should either connect
+to a different IP (when multiple targets exist), or reconnect to the same IP
+when a user has performed an action.</p>
+</div></td><td></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.Into.html' title='core::convert::Into'>Into</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a>&gt; for <a class='enum' href='../ws/enum.CloseCode.html' title='ws::CloseCode'>CloseCode</a></code></h3><div class='impl-items'><h4 id='method.into' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/convert/trait.Into.html#method.into' class='fnname'>into</a>(self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a></code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.From.html' title='core::convert::From'>From</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a>&gt; for <a class='enum' href='../ws/enum.CloseCode.html' title='ws::CloseCode'>CloseCode</a></code></h3><div class='impl-items'><h4 id='method.from' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/convert/trait.From.html#method.from' class='fnname'>from</a>(code: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u16.html'>u16</a>) -&gt; <a class='enum' href='../ws/enum.CloseCode.html' title='ws::CloseCode'>CloseCode</a></code></h4>
+</div><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Copy.html' title='core::marker::Copy'>Copy</a> for <a class='enum' href='../ws/enum.CloseCode.html' title='ws::CloseCode'>CloseCode</a></code></h3><div class='impl-items'></div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='enum' href='../ws/enum.CloseCode.html' title='ws::CloseCode'>CloseCode</a></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='enum' href='../ws/enum.CloseCode.html' title='ws::CloseCode'>CloseCode</a></code></h4>
+<h4 id='method.clone_from' class='method'><span class="since">1.0.0</span><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a> for <a class='enum' href='../ws/enum.CloseCode.html' title='ws::CloseCode'>CloseCode</a></code></h3><div class='impl-items'><h4 id='method.eq' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.eq' class='fnname'>eq</a>(&amp;self, __arg_0: &amp;<a class='enum' href='../ws/enum.CloseCode.html' title='ws::CloseCode'>CloseCode</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+<h4 id='method.ne' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.ne' class='fnname'>ne</a>(&amp;self, __arg_0: &amp;<a class='enum' href='../ws/enum.CloseCode.html' title='ws::CloseCode'>CloseCode</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.Eq.html' title='core::cmp::Eq'>Eq</a> for <a class='enum' href='../ws/enum.CloseCode.html' title='ws::CloseCode'>CloseCode</a></code></h3><div class='impl-items'></div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='enum' href='../ws/enum.CloseCode.html' title='ws::CloseCode'>CloseCode</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#method.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+</div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "ws";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script defer src="../search-index.js"></script>
+</body>
+</html>

@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `Handler` trait in crate `ws`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, Handler">
+
+    <title>ws::Handler - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='index.html'>ws</a></p><script>window.sidebarCurrent = {name: 'Handler', ty: 'trait', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content trait">
+<h1 class='fqn'><span class='in-band'>Trait <a href='index.html'>ws</a>::<wbr><a class='trait' href=''>Handler</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-747' class='srclink' href='../src/ws/handler.rs.html#16-277' title='goto source code'>[src]</a></span></h1>
+<pre class='rust trait'>pub trait Handler {
+    fn <a href='#method.on_shutdown' class='fnname'>on_shutdown</a>(&amp;mut self) { ... }
+    fn <a href='#method.on_open' class='fnname'>on_open</a>(&amp;mut self, shake: <a class='struct' href='../ws/struct.Handshake.html' title='ws::Handshake'>Handshake</a>) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt; { ... }
+    fn <a href='#method.on_message' class='fnname'>on_message</a>(&amp;mut self, msg: <a class='enum' href='../ws/enum.Message.html' title='ws::Message'>Message</a>) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt; { ... }
+    fn <a href='#method.on_close' class='fnname'>on_close</a>(&amp;mut self, code: <a class='enum' href='../ws/enum.CloseCode.html' title='ws::CloseCode'>CloseCode</a>, reason: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) { ... }
+    fn <a href='#method.on_error' class='fnname'>on_error</a>(&amp;mut self, err: <a class='struct' href='../ws/struct.Error.html' title='ws::Error'>Error</a>) { ... }
+    fn <a href='#method.on_request' class='fnname'>on_request</a>(&amp;mut self, req: &amp;<a class='struct' href='../ws/struct.Request.html' title='ws::Request'>Request</a>) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;<a class='struct' href='../ws/struct.Response.html' title='ws::Response'>Response</a>&gt; { ... }
+    fn <a href='#method.on_response' class='fnname'>on_response</a>(&amp;mut self, res: &amp;<a class='struct' href='../ws/struct.Response.html' title='ws::Response'>Response</a>) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt; { ... }
+    fn <a href='#method.on_timeout' class='fnname'>on_timeout</a>(&amp;mut self, event: <a class='struct' href='../ws/util/struct.Token.html' title='ws::util::Token'>Token</a>) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt; { ... }
+    fn <a href='#method.on_new_timeout' class='fnname'>on_new_timeout</a>(&amp;mut self, _: <a class='struct' href='../ws/util/struct.Token.html' title='ws::util::Token'>Token</a>, _: <a class='struct' href='../ws/util/struct.Timeout.html' title='ws::util::Timeout'>Timeout</a>) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt; { ... }
+    fn <a href='#method.on_frame' class='fnname'>on_frame</a>(&amp;mut self, frame: <a class='struct' href='../ws/struct.Frame.html' title='ws::Frame'>Frame</a>) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='../ws/struct.Frame.html' title='ws::Frame'>Frame</a>&gt;&gt; { ... }
+    fn <a href='#method.on_send_frame' class='fnname'>on_send_frame</a>(&amp;mut self, frame: <a class='struct' href='../ws/struct.Frame.html' title='ws::Frame'>Frame</a>) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='../ws/struct.Frame.html' title='ws::Frame'>Frame</a>&gt;&gt; { ... }
+    fn <a href='#method.build_request' class='fnname'>build_request</a>(&amp;mut self, url: &amp;<a class='struct' href='../url/struct.Url.html' title='url::Url'>Url</a>) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;<a class='struct' href='../ws/struct.Request.html' title='ws::Request'>Request</a>&gt; { ... }
+}</pre><div class='docblock'><p>The core trait of this library.
+Implementing this trait provides the business logic of the WebSocket application.</p>
+</div>
+            <h2 id='provided-methods'>Provided Methods</h2>
+            <div class='methods'>
+        <h3 id='method.on_shutdown' class='method stab '><code>fn <a href='#method.on_shutdown' class='fnname'>on_shutdown</a>(&amp;mut self)</code></h3><div class='docblock'><p>Called when a request to shutdown all connections has been received.</p>
+</div><h3 id='method.on_open' class='method stab '><code>fn <a href='#method.on_open' class='fnname'>on_open</a>(&amp;mut self, shake: <a class='struct' href='../ws/struct.Handshake.html' title='ws::Handshake'>Handshake</a>) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h3><div class='docblock'><p>Called when the WebSocket handshake is successful and the connection is open for sending
+and receiving messages.</p>
+</div><h3 id='method.on_message' class='method stab '><code>fn <a href='#method.on_message' class='fnname'>on_message</a>(&amp;mut self, msg: <a class='enum' href='../ws/enum.Message.html' title='ws::Message'>Message</a>) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h3><div class='docblock'><p>Called on incoming messages.</p>
+</div><h3 id='method.on_close' class='method stab '><code>fn <a href='#method.on_close' class='fnname'>on_close</a>(&amp;mut self, code: <a class='enum' href='../ws/enum.CloseCode.html' title='ws::CloseCode'>CloseCode</a>, reason: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>)</code></h3><div class='docblock'><p>Called any time this endpoint receives a close control frame.
+This may be because the other endpoint is initiating a closing handshake,
+or it may be the other endpoint confirming the handshake initiated by this endpoint.</p>
+</div><h3 id='method.on_error' class='method stab '><code>fn <a href='#method.on_error' class='fnname'>on_error</a>(&amp;mut self, err: <a class='struct' href='../ws/struct.Error.html' title='ws::Error'>Error</a>)</code></h3><div class='docblock'><p>Called when an error occurs on the WebSocket.</p>
+</div><h3 id='method.on_request' class='method stab '><code>fn <a href='#method.on_request' class='fnname'>on_request</a>(&amp;mut self, req: &amp;<a class='struct' href='../ws/struct.Request.html' title='ws::Request'>Request</a>) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;<a class='struct' href='../ws/struct.Response.html' title='ws::Response'>Response</a>&gt;</code></h3><div class='docblock'><p>A method for handling the low-level workings of the request portion of the WebSocket
+handshake.</p>
+
+<p>Implementors should select a WebSocket protocol and extensions where they are supported.</p>
+
+<p>Implementors can inspect the Request and must return a Response or an error
+indicating that the handshake failed. The default implementation provides conformance with
+the WebSocket protocol, and implementors should use the <code>Response::from_request</code> method and
+then modify the resulting response as necessary in order to maintain conformance.</p>
+
+<p>This method will not be called when the handler represents a client endpoint. Use
+<code>build_request</code> to provide an initial handshake request.</p>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>res</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>Response</span>::<span class='ident'>from_request</span>(<span class='ident'>req</span>));
+<span class='kw'>if</span> <span class='ident'>req</span>.<span class='ident'>extensions</span>.<span class='ident'>contains</span>(<span class='string'>&quot;myextension&quot;</span>) {
+    <span class='ident'>res</span>.<span class='ident'>add_extension</span>(<span class='string'>&quot;myextension&quot;</span>)
+}
+<span class='prelude-val'>Ok</span>(<span class='ident'>res</span>)</pre>
+</div><h3 id='method.on_response' class='method stab '><code>fn <a href='#method.on_response' class='fnname'>on_response</a>(&amp;mut self, res: &amp;<a class='struct' href='../ws/struct.Response.html' title='ws::Response'>Response</a>) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h3><div class='docblock'><p>A method for handling the low-level workings of the response portion of the WebSocket
+handshake.</p>
+
+<p>Implementors can inspect the Response and choose to fail the connection by
+returning an error. This method will not be called when the handler represents a server
+endpoint. The response should indicate which WebSocket protocol and extensions the server
+has agreed to if any.</p>
+</div><h3 id='method.on_timeout' class='method stab '><code>fn <a href='#method.on_timeout' class='fnname'>on_timeout</a>(&amp;mut self, event: <a class='struct' href='../ws/util/struct.Token.html' title='ws::util::Token'>Token</a>) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h3><div class='docblock'><p>Called when a timeout is triggered.</p>
+
+<p>This method will be called when the eventloop encounters a timeout on the specified
+token. To schedule a timeout with your specific token use the <code>Sender::timeout</code> method.</p>
+
+<h1 id='examples-1' class='section-header'><a href='#examples-1'>Examples</a></h1>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>const</span> <span class='ident'>GRATI</span>: <span class='ident'>Token</span> <span class='op'>=</span> <span class='ident'>Token</span>(<span class='number'>1</span>);
+
+... <span class='ident'>Handler</span>
+
+<span class='kw'>fn</span> <span class='ident'>on_open</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, _: <span class='ident'>Handshake</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+    <span class='comment'>// schedule a timeout to send a gratuitous pong every 5 seconds</span>
+    <span class='self'>self</span>.<span class='ident'>ws</span>.<span class='ident'>timeout</span>(<span class='number'>5_000</span>, <span class='ident'>GRATI</span>)
+}
+
+<span class='kw'>fn</span> <span class='ident'>on_timeout</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>event</span>: <span class='ident'>Token</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+    <span class='kw'>if</span> <span class='ident'>event</span> <span class='op'>==</span> <span class='ident'>GRATI</span> {
+        <span class='comment'>// send gratuitous pong</span>
+        <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>ws</span>.<span class='ident'>pong</span>(<span class='macro'>vec</span><span class='macro'>!</span>[]))
+        <span class='comment'>// reschedule the timeout</span>
+        <span class='self'>self</span>.<span class='ident'>ws</span>.<span class='ident'>timeout</span>(<span class='number'>5_000</span>, <span class='ident'>GRATI</span>)
+    } <span class='kw'>else</span> {
+        <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>new</span>(<span class='ident'>ErrorKind</span>::<span class='ident'>Internal</span>, <span class='string'>&quot;Invalid timeout token encountered!&quot;</span>)),
+    }
+}</pre>
+</div><h3 id='method.on_new_timeout' class='method stab '><code>fn <a href='#method.on_new_timeout' class='fnname'>on_new_timeout</a>(&amp;mut self, _: <a class='struct' href='../ws/util/struct.Token.html' title='ws::util::Token'>Token</a>, _: <a class='struct' href='../ws/util/struct.Timeout.html' title='ws::util::Timeout'>Timeout</a>) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h3><div class='docblock'><p>Called when a timeout has been scheduled on the eventloop.</p>
+
+<p>This method is the hook for obtaining a Timeout object that may be used to cancel a
+ timeout. This is a noop by default.</p>
+
+<p># Examples
+ ```ignore
+ const PING: Token = Token(1);
+ const EXPIRE: Token = Token(2);</p>
+
+<p>... Handler</p>
+
+<p>fn on_open(&amp;mut self, _: Handshake) -&gt; Result&lt;()&gt; {
+     // schedule a timeout to send a ping every 5 seconds
+     try!(self.ws.timeout(5_000, PING));
+     // schedule a timeout to close the connection if there is no activity for 30 seconds
+     self.ws.timeout(30_000, EXPIRE)
+ }</p>
+
+<p>fn on_timeout(&amp;mut self, event: Token) -&gt; Result&lt;()&gt; {
+     match event {
+         PING =&gt; {
+             self.ws.ping(vec![]);
+             self.ws.timeout(5_000, PING)
+         }
+         EXPIRE =&gt; self.ws.close(CloseCode::Away),
+         _ =&gt; Err(Error::new(ErrorKind::Internal, &quot;Invalid timeout token encountered!&quot;)),
+     }
+ }</p>
+
+<p>fn on_new_timeout(&amp;mut self, event: Token, timeout: Timeout) -&gt; Result&lt;()&gt; {
+     if event == EXPIRE {
+         if let Some(t) = self.timeout.take() {
+             try!(self.ws.cancel(t))
+         }
+         self.timeout = Some(timeout)
+     }
+     Ok(())
+ }</p>
+
+<p>fn on_frame(&amp;mut self, frame: Frame) -&gt; Result<Option<Frame>&gt; {
+     // some activity has occurred, let&#39;s reset the expiration
+     try!(self.ws.timeout(30_000, EXPIRE));
+     Ok(Some(frame))
+ }
+```</p>
+</div><h3 id='method.on_frame' class='method stab '><code>fn <a href='#method.on_frame' class='fnname'>on_frame</a>(&amp;mut self, frame: <a class='struct' href='../ws/struct.Frame.html' title='ws::Frame'>Frame</a>) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='../ws/struct.Frame.html' title='ws::Frame'>Frame</a>&gt;&gt;</code></h3><div class='docblock'><p>A method for handling incoming frames.</p>
+
+<p>This method provides very low-level access to the details of the WebSocket protocol. It may
+be necessary to implement this method in order to provide a particular extension, but
+incorrect implementation may cause the other endpoint to fail the connection.</p>
+
+<p>Returning <code>Ok(None)</code> will cause the connection to forget about a particular frame. This is
+useful if you want ot filter out a frame or if you don&#39;t want any of the default handler
+methods to run.</p>
+
+<p>By default this method simply ensures that no reserved bits are set.</p>
+</div><h3 id='method.on_send_frame' class='method stab '><code>fn <a href='#method.on_send_frame' class='fnname'>on_send_frame</a>(&amp;mut self, frame: <a class='struct' href='../ws/struct.Frame.html' title='ws::Frame'>Frame</a>) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='../ws/struct.Frame.html' title='ws::Frame'>Frame</a>&gt;&gt;</code></h3><div class='docblock'><p>A method for handling outgoing frames.</p>
+
+<p>This method provides very low-level access to the details of the WebSocket protocol. It may
+be necessary to implement this method in order to provide a particular extension, but
+incorrect implementation may cause the other endpoint to fail the connection.</p>
+
+<p>Returning <code>Ok(None)</code> will cause the connection to forget about a particular frame, meaning
+that it will not be sent. You can use this approach to merge multiple frames into a single
+frame before sending the message.</p>
+
+<p>By default this method simply ensures that no reserved bits are set.</p>
+</div><h3 id='method.build_request' class='method stab '><code>fn <a href='#method.build_request' class='fnname'>build_request</a>(&amp;mut self, url: &amp;<a class='struct' href='../url/struct.Url.html' title='url::Url'>Url</a>) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;<a class='struct' href='../ws/struct.Request.html' title='ws::Request'>Request</a>&gt;</code></h3><div class='docblock'><p>A method for creating the initial handshake request for WebSocket clients.</p>
+
+<p>The default implementation provides conformance with the WebSocket protocol, but this
+method may be overriden. In order to facilitate conformance,
+implementors should use the <code>Request::from_url</code> method and then modify the resulting
+request as necessary.</p>
+
+<p>Implementors should indicate any available WebSocket extensions here.</p>
+
+<h1 id='examples-2' class='section-header'><a href='#examples-2'>Examples</a></h1>
+<pre class='rust rust-example-rendered'>
+<span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>req</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>Request</span>::<span class='ident'>from_url</span>(<span class='ident'>url</span>));
+<span class='ident'>req</span>.<span class='ident'>add_extension</span>(<span class='string'>&quot;permessage-deflate; client_max_window_bits&quot;</span>);
+<span class='prelude-val'>Ok</span>(<span class='ident'>req</span>)</pre>
+</div></div>
+        <h2 id='implementors'>Implementors</h2>
+        <ul class='item-list' id='implementors-list'>
+    </ul><script type="text/javascript" async
+                              src="../implementors/ws/trait.Handler.js">
+                      </script></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "ws";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script defer src="../search-index.js"></script>
+</body>
+</html>

@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-49' class='srclink' href='../../src/maidsafe_utilities/log.rs.html#18-510' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-51' class='srclink' href='../../src/maidsafe_utilities/log/mod.rs.html#18-648' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Allows initialising the <code>env_logger</code> with a standard message format.
 These functions can initialise logging for output to stdout only, or to a file and stdout.  For
 more fine-grained control, create a file called <code>log.toml</code> in the root directory of the project,
@@ -107,7 +107,17 @@ different levels. E.g. <code>RUST_LOG=mod0,mod1=debug,mod2,mod3</code> will have
 more severe levels. <code>RUST_LOG=trace,mod0=error,mod1</code> is going to change the default log level to
 <code>Trace</code> and more severe. Thus <code>mod0</code> will log at <code>Error</code> level and <code>mod1</code> at <code>Trace</code> and more
 severe ones.</p>
-</div><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+</div><h2 id='constants' class='section-header'><a href="#constants">Constants</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='constant' href='constant.MSG_TERMINATOR.html'
+                               title='maidsafe_utilities::log::MSG_TERMINATOR'>MSG_TERMINATOR</a></td>
+                        <td class='docblock short'>
+                             <p>Message terminator for streaming to Log Servers. Servers must look out for this sequence which
+demarcates the end of a particular log message.</p>
+                        </td>
+                    </tr>
+                </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
 <table>
                     <tr class=' module-item'>
                         <td><a class='fn' href='fn.init.html'
@@ -131,6 +141,16 @@ severe ones.</p>
                         <td class='docblock short'>
                              <p>Initialises the <code>env_logger</code> for output to a server and optionally to the console
 asynchronously.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.init_to_web_socket.html'
+                               title='maidsafe_utilities::log::init_to_web_socket'>init_to_web_socket</a></td>
+                        <td class='docblock short'>
+                             <p>Initialises the <code>env_logger</code> for output to a web socket and optionally to the console
+asynchronously. The log which goes to the web-socket will be both verbose and in JSON as
+filters should be present in web-servers to manipulate the output/view.</p>
                         </td>
                     </tr>
                 </table></section>

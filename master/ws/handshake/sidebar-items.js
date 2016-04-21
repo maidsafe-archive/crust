@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Handshake","A struct representing the two halves of the WebSocket handshake."],["Request","The handshake request."],["Response","The handshake response."]]});

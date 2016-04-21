@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-5' class='srclink' href='../src/bitflags/lib.rs.html#184-496' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-5' class='srclink' href='../src/bitflags/lib.rs.html#177-485' title='goto source code'>[src]</a></span></h1>
 <pre class='rust macro'>
 <span class='macro'>macro_rules</span><span class='macro'>!</span> <span class='ident'>bitflags</span> {
     ($(<span class='attribute'>#[<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>attr</span>:<span class='ident'>meta</span>]</span>)<span class='op'>*</span> <span class='kw'>pub</span> <span class='ident'>flags</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>BitFlags</span>:<span class='ident'>ident</span>: <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>T</span>:<span class='ident'>ty</span> {
@@ -73,7 +73,6 @@ type errors may occur at compile time.</p>
 
 <h1 id='example' class='section-header'><a href='#example'>Example</a></h1>
 <pre class='rust rust-example-rendered'>
-<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>cfg_attr</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;assignment_operators&quot;</span>, <span class='ident'>feature</span>(<span class='ident'>augmented_assignments</span>, <span class='ident'>op_assign_traits</span>))]</span>
 <span class='attribute'>#[<span class='ident'>macro_use</span>]</span>
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>bitflags</span>;
 
@@ -91,17 +90,16 @@ type errors may occur at compile time.</p>
 <span class='kw'>fn</span> <span class='ident'>main</span>() {
     <span class='kw'>let</span> <span class='ident'>e1</span> <span class='op'>=</span> <span class='ident'>FLAG_A</span> <span class='op'>|</span> <span class='ident'>FLAG_C</span>;
     <span class='kw'>let</span> <span class='ident'>e2</span> <span class='op'>=</span> <span class='ident'>FLAG_B</span> <span class='op'>|</span> <span class='ident'>FLAG_C</span>;
-    <span class='macro'>assert</span><span class='macro'>!</span>((<span class='ident'>e1</span> <span class='op'>|</span> <span class='ident'>e2</span>) <span class='op'>==</span> <span class='ident'>FLAG_ABC</span>);   <span class='comment'>// union</span>
-    <span class='macro'>assert</span><span class='macro'>!</span>((<span class='ident'>e1</span> <span class='kw-2'>&amp;</span> <span class='ident'>e2</span>) <span class='op'>==</span> <span class='ident'>FLAG_C</span>);     <span class='comment'>// intersection</span>
-    <span class='macro'>assert</span><span class='macro'>!</span>((<span class='ident'>e1</span> <span class='op'>-</span> <span class='ident'>e2</span>) <span class='op'>==</span> <span class='ident'>FLAG_A</span>);     <span class='comment'>// set difference</span>
-    <span class='macro'>assert</span><span class='macro'>!</span>(<span class='op'>!</span><span class='ident'>e2</span> <span class='op'>==</span> <span class='ident'>FLAG_A</span>);           <span class='comment'>// set complement</span>
+    <span class='macro'>assert_eq</span><span class='macro'>!</span>((<span class='ident'>e1</span> <span class='op'>|</span> <span class='ident'>e2</span>), <span class='ident'>FLAG_ABC</span>);   <span class='comment'>// union</span>
+    <span class='macro'>assert_eq</span><span class='macro'>!</span>((<span class='ident'>e1</span> <span class='kw-2'>&amp;</span> <span class='ident'>e2</span>), <span class='ident'>FLAG_C</span>);     <span class='comment'>// intersection</span>
+    <span class='macro'>assert_eq</span><span class='macro'>!</span>((<span class='ident'>e1</span> <span class='op'>-</span> <span class='ident'>e2</span>), <span class='ident'>FLAG_A</span>);     <span class='comment'>// set difference</span>
+    <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='op'>!</span><span class='ident'>e2</span>, <span class='ident'>FLAG_A</span>);           <span class='comment'>// set complement</span>
 }</pre>
 
 <p>The generated <code>struct</code>s can also be extended with type and trait
 implementations:</p>
 
 <pre class='rust rust-example-rendered'>
-<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>cfg_attr</span>(<span class='ident'>feature</span> <span class='op'>=</span> <span class='string'>&quot;assignment_operators&quot;</span>, <span class='ident'>feature</span>(<span class='ident'>augmented_assignments</span>, <span class='ident'>op_assign_traits</span>))]</span>
 <span class='attribute'>#[<span class='ident'>macro_use</span>]</span>
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>bitflags</span>;
 

@@ -111,6 +111,17 @@
 <span id="68">68</span>
 <span id="69">69</span>
 <span id="70">70</span>
+<span id="71">71</span>
+<span id="72">72</span>
+<span id="73">73</span>
+<span id="74">74</span>
+<span id="75">75</span>
+<span id="76">76</span>
+<span id="77">77</span>
+<span id="78">78</span>
+<span id="79">79</span>
+<span id="80">80</span>
+<span id="81">81</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -131,40 +142,48 @@
 
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>net</span>::<span class='ident'>UdpSocket</span>;
-<span class='kw'>use</span> <span class='ident'>socket_addr</span>::<span class='ident'>SocketAddr</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>::<span class='ident'>ErrorKind</span>;
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>time</span>::<span class='ident'>Instant</span>;
+
+<span class='kw'>use</span> <span class='ident'>socket_addr</span>::<span class='ident'>SocketAddr</span>;
 
 <span class='doccomment'>/// A self interruptable receive trait that allows a timed-out period to be defined</span>
 <span class='kw'>pub</span> <span class='kw'>trait</span> <span class='ident'>RecvUntil</span> {
     <span class='doccomment'>/// After specified timed-out period, the blocking receive method shall return with an error</span>
     <span class='kw'>fn</span> <span class='ident'>recv_until</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>,
                   <span class='ident'>buf</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> [<span class='ident'>u8</span>],
-                  <span class='ident'>deadline</span>: ::<span class='ident'>time</span>::<span class='ident'>SteadyTime</span>)
+                  <span class='ident'>deadline</span>: <span class='ident'>Instant</span>)
                   <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='prelude-ty'>Option</span><span class='op'>&lt;</span>(<span class='ident'>usize</span>, <span class='ident'>SocketAddr</span>)<span class='op'>&gt;&gt;</span>;
 }
 
 <span class='kw'>impl</span> <span class='ident'>RecvUntil</span> <span class='kw'>for</span> <span class='ident'>UdpSocket</span> {
     <span class='kw'>fn</span> <span class='ident'>recv_until</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>,
                   <span class='ident'>buf</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> [<span class='ident'>u8</span>],
-                  <span class='ident'>deadline</span>: ::<span class='ident'>time</span>::<span class='ident'>SteadyTime</span>)
+                  <span class='ident'>deadline</span>: <span class='ident'>Instant</span>)
                   <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='prelude-ty'>Option</span><span class='op'>&lt;</span>(<span class='ident'>usize</span>, <span class='ident'>SocketAddr</span>)<span class='op'>&gt;&gt;</span> {
+        <span class='kw'>let</span> <span class='ident'>old_timeout</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>read_timeout</span>());
         <span class='kw'>loop</span> {
-            <span class='kw'>let</span> <span class='ident'>current_time</span> <span class='op'>=</span> ::<span class='ident'>time</span>::<span class='ident'>SteadyTime</span>::<span class='ident'>now</span>();
-            <span class='kw'>let</span> <span class='ident'>timeout_ms</span> <span class='op'>=</span> (<span class='ident'>deadline</span> <span class='op'>-</span> <span class='ident'>current_time</span>).<span class='ident'>num_milliseconds</span>();
-
-            <span class='kw'>if</span> <span class='ident'>timeout_ms</span> <span class='op'>&lt;=</span> <span class='number'>0</span> {
+            <span class='kw'>let</span> <span class='ident'>current_time</span> <span class='op'>=</span> <span class='ident'>Instant</span>::<span class='ident'>now</span>();
+            <span class='kw'>if</span> <span class='ident'>current_time</span> <span class='op'>&gt;=</span> <span class='ident'>deadline</span> {
+                <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>set_read_timeout</span>(<span class='ident'>old_timeout</span>));
                 <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='prelude-val'>None</span>);
             }
-
-            <span class='comment'>// TODO (canndrew): should eventually be able to remove this conversion</span>
-            <span class='kw'>let</span> <span class='ident'>timeout</span> <span class='op'>=</span> ::<span class='ident'>std</span>::<span class='ident'>time</span>::<span class='ident'>Duration</span>::<span class='ident'>from_millis</span>(<span class='ident'>timeout_ms</span> <span class='kw'>as</span> <span class='ident'>u64</span>);
-            <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>set_read_timeout</span>(<span class='prelude-val'>Some</span>(<span class='ident'>timeout</span>)));
+            {
+                <span class='kw'>let</span> <span class='ident'>timeout</span> <span class='op'>=</span> <span class='ident'>deadline</span> <span class='op'>-</span> <span class='ident'>current_time</span>;
+                <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>set_read_timeout</span>(<span class='prelude-val'>Some</span>(<span class='ident'>timeout</span>)));
+            }
 
             <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>recv_from</span>(<span class='ident'>buf</span>) {
-                <span class='prelude-val'>Ok</span>((<span class='ident'>bytes_len</span>, <span class='ident'>addr</span>)) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='prelude-val'>Some</span>((<span class='ident'>bytes_len</span>, <span class='ident'>SocketAddr</span>(<span class='ident'>addr</span>)))),
+                <span class='prelude-val'>Ok</span>((<span class='ident'>bytes_len</span>, <span class='ident'>addr</span>)) <span class='op'>=&gt;</span> {
+                    <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>set_read_timeout</span>(<span class='ident'>old_timeout</span>));
+                    <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='prelude-val'>Some</span>((<span class='ident'>bytes_len</span>, <span class='ident'>SocketAddr</span>(<span class='ident'>addr</span>))));
+                },
                 <span class='prelude-val'>Err</span>(<span class='ident'>e</span>) <span class='op'>=&gt;</span> {
                     <span class='kw'>match</span> <span class='ident'>e</span>.<span class='ident'>kind</span>() {
-                        <span class='ident'>ErrorKind</span>::<span class='ident'>TimedOut</span> <span class='op'>|</span> <span class='ident'>ErrorKind</span>::<span class='ident'>WouldBlock</span> <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='prelude-val'>None</span>),
+                        <span class='ident'>ErrorKind</span>::<span class='ident'>TimedOut</span> <span class='op'>|</span> <span class='ident'>ErrorKind</span>::<span class='ident'>WouldBlock</span> <span class='op'>=&gt;</span> {
+                            <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>set_read_timeout</span>(<span class='ident'>old_timeout</span>));
+                            <span class='kw'>return</span> <span class='prelude-val'>Ok</span>(<span class='prelude-val'>None</span>);
+                        },
                         <span class='ident'>ErrorKind</span>::<span class='ident'>Interrupted</span> <span class='op'>=&gt;</span> (),
                         <span class='comment'>// On Windows, when we send a packet to an endpoint</span>
                         <span class='comment'>// which is not being listened on, the system responds</span>
@@ -174,7 +193,10 @@
                         <span class='comment'>// See here for more info:</span>
                         <span class='comment'>// https://bobobobo.wordpress.com/2009/05/17/udp-an-existing-connection-was-forcibly-closed-by-the-remote-host/</span>
                         <span class='ident'>ErrorKind</span>::<span class='ident'>ConnectionReset</span> <span class='op'>=&gt;</span> (),
-                        _ <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>e</span>),
+                        _ <span class='op'>=&gt;</span> {
+                            <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>set_read_timeout</span>(<span class='ident'>old_timeout</span>));
+                            <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>e</span>);
+                        },
                     }
                 }
             }
