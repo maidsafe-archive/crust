@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Server","`Server` header, defined in RFC7231"]]});

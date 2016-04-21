@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `Request` struct in crate `ws`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, Request">
+
+    <title>ws::Request - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='index.html'>ws</a></p><script>window.sidebarCurrent = {name: 'Request', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content struct">
+<h1 class='fqn'><span class='in-band'>Struct <a href='index.html'>ws</a>::<wbr><a class='struct' href=''>Request</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-1353' class='srclink' href='../src/ws/handshake.rs.html#120-124' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct Request {
+    // some fields omitted
+}</pre><div class='docblock'><p>The handshake request.</p>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../ws/struct.Request.html' title='ws::Request'>Request</a></code></h3><div class='impl-items'><h4 id='method.header' class='method'><code>fn <a href='#method.header' class='fnname'>header</a>(&amp;self, header: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;&amp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;&gt;</code></h4>
+<div class='docblock'><p>Get the value of the first instance of an HTTP header.</p>
+</div><h4 id='method.header_mut' class='method'><code>fn <a href='#method.header_mut' class='fnname'>header_mut</a>(&amp;mut self, header: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;&amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;&gt;</code></h4>
+<div class='docblock'><p>Edit the value of the first instance of an HTTP header.</p>
+</div><h4 id='method.headers' class='method'><code>fn <a href='#method.headers' class='fnname'>headers</a>(&amp;self) -&gt; &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>, <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>&gt;</code></h4>
+<div class='docblock'><p>Access the request headers.</p>
+</div><h4 id='method.headers_mut' class='method'><code>fn <a href='#method.headers_mut' class='fnname'>headers_mut</a>(&amp;mut self) -&gt; &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>, <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>&gt;</code></h4>
+<div class='docblock'><p>Edit the request headers.</p>
+</div><h4 id='method.origin' class='method'><code>fn <a href='#method.origin' class='fnname'>origin</a>(&amp;self) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;&amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;&gt;</code></h4>
+<div class='docblock'><p>Get the origin of the request if it comes from a browser.</p>
+</div><h4 id='method.key' class='method'><code>fn <a href='#method.key' class='fnname'>key</a>(&amp;self) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;&amp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;&gt;</code></h4>
+<div class='docblock'><p>Get the unhashed WebSocket key sent in the request.</p>
+</div><h4 id='method.hashed_key' class='method'><code>fn <a href='#method.hashed_key' class='fnname'>hashed_key</a>(&amp;self) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;</code></h4>
+<div class='docblock'><p>Get the hashed WebSocket key from this request.</p>
+</div><h4 id='method.version' class='method'><code>fn <a href='#method.version' class='fnname'>version</a>(&amp;self) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;&amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;</code></h4>
+<div class='docblock'><p>Get the WebSocket protocol version from the request (should be 13).</p>
+</div><h4 id='method.resource' class='method'><code>fn <a href='#method.resource' class='fnname'>resource</a>(&amp;self) -&gt; &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a></code></h4>
+<div class='docblock'><p>Get the path of the request.</p>
+</div><h4 id='method.protocols' class='method'><code>fn <a href='#method.protocols' class='fnname'>protocols</a>(&amp;self) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;&amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;&gt;</code></h4>
+<div class='docblock'><p>Get the possible protocols for the WebSocket connection.</p>
+</div><h4 id='method.add_protocol' class='method'><code>fn <a href='#method.add_protocol' class='fnname'>add_protocol</a>(&amp;mut self, protocol: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>)</code></h4>
+<div class='docblock'><p>Add a possible protocol to this request.
+This may result in duplicate protocols listed.</p>
+</div><h4 id='method.remove_protocol' class='method'><code>fn <a href='#method.remove_protocol' class='fnname'>remove_protocol</a>(&amp;mut self, protocol: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>)</code></h4>
+<div class='docblock'><p>Remove a possible protocol from this request.</p>
+</div><h4 id='method.extensions' class='method'><code>fn <a href='#method.extensions' class='fnname'>extensions</a>(&amp;self) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;&amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;&gt;</code></h4>
+<div class='docblock'><p>Get the possible extensions for the WebSocket connection.</p>
+</div><h4 id='method.add_extension' class='method'><code>fn <a href='#method.add_extension' class='fnname'>add_extension</a>(&amp;mut self, ext: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>)</code></h4>
+<div class='docblock'><p>Add a possible extension to this request.
+This may result in duplicate extensions listed. Also, the order of extensions
+indicates preference, so if the preference matters, consider using the
+<code>Sec-WebSocket-Protocol</code> header directly.</p>
+</div><h4 id='method.remove_extension' class='method'><code>fn <a href='#method.remove_extension' class='fnname'>remove_extension</a>(&amp;mut self, ext: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>)</code></h4>
+<div class='docblock'><p>Remove a possible extension from this request.
+This will remove all configurations of the extension.</p>
+</div><h4 id='method.client_addr' class='method'><code>fn <a href='#method.client_addr' class='fnname'>client_addr</a>(&amp;self) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;&amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;&gt;</code></h4>
+<div class='docblock'><p>Get the IP address of the client.</p>
+
+<p>This method will attempt to retrieve the most likely IP address of the requester
+in the following manner:</p>
+
+<p>If the <code>X-Forwarded-For</code> header exists, this method will return the left most
+address in the list.</p>
+
+<p>If the <a href="https://tools.ietf.org/html/rfc7239">Forwarded HTTP Header Field</a> exits,
+this method will return the left most address indicated by the <code>for</code> parameter,
+if it exists.</p>
+
+<h1 id='note' class='section-header'><a href='#note'>Note</a></h1>
+<p>This method does not ensure that the address is a valid IP address.</p>
+</div><h4 id='method.parse' class='method'><code>fn <a href='#method.parse' class='fnname'>parse</a>(buf: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='../ws/struct.Request.html' title='ws::Request'>Request</a>&gt;&gt;</code></h4>
+<div class='docblock'><p>Attempt to parse an HTTP request from a buffer. If the buffer does not contain a complete
+request, this will return <code>Ok(None)</code>.</p>
+</div><h4 id='method.from_url' class='method'><code>fn <a href='#method.from_url' class='fnname'>from_url</a>(url: &amp;<a class='struct' href='../url/struct.Url.html' title='url::Url'>Url</a>) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;<a class='struct' href='../ws/struct.Request.html' title='ws::Request'>Request</a>&gt;</code></h4>
+<div class='docblock'><p>Construct a new WebSocket handshake HTTP request from a url.</p>
+</div><h4 id='method.format' class='method'><code>fn <a href='#method.format' class='fnname'>format</a>&lt;W&gt;(&amp;self, w: &amp;mut W) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt; <span class='where'>where W: <a class='trait' href='https://doc.rust-lang.org/nightly/std/io/trait.Write.html' title='std::io::Write'>Write</a></span></code></h4>
+<div class='docblock'><p>Write a request out to a buffer</p>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html' title='core::fmt::Display'>Display</a> for <a class='struct' href='../ws/struct.Request.html' title='ws::Request'>Request</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html#method.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+</div><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='struct' href='../ws/struct.Request.html' title='ws::Request'>Request</a></code></h3><div class='impl-items'><h4 id='method.fmt-1' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#method.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+</div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "ws";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script defer src="../search-index.js"></script>
+</body>
+</html>

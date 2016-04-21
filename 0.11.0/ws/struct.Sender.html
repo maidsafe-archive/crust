@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `Sender` struct in crate `ws`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, Sender">
+
+    <title>ws::Sender - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='index.html'>ws</a></p><script>window.sidebarCurrent = {name: 'Sender', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content struct">
+<h1 class='fqn'><span class='in-band'>Struct <a href='index.html'>ws</a>::<wbr><a class='struct' href=''>Sender</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-1886' class='srclink' href='../src/ws/communication.rs.html#47-50' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct Sender {
+    // some fields omitted
+}</pre><div class='docblock'><p>A representation of the output of the WebSocket connection. Use this to send messages to the
+other endpoint.</p>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../ws/struct.Sender.html' title='ws::Sender'>Sender</a></code></h3><div class='impl-items'><h4 id='method.token' class='method'><code>fn <a href='#method.token' class='fnname'>token</a>(&amp;self) -&gt; <a class='struct' href='../ws/util/struct.Token.html' title='ws::util::Token'>Token</a></code></h4>
+<div class='docblock'><p>A Token identifying this sender within the WebSocket.</p>
+</div><h4 id='method.send' class='method'><code>fn <a href='#method.send' class='fnname'>send</a>&lt;M&gt;(&amp;self, msg: M) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt; <span class='where'>where M: <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.Into.html' title='core::convert::Into'>Into</a>&lt;<a class='enum' href='../ws/enum.Message.html' title='ws::Message'>Message</a>&gt;</span></code></h4>
+<div class='docblock'><p>Send a message over the connection.</p>
+</div><h4 id='method.broadcast' class='method'><code>fn <a href='#method.broadcast' class='fnname'>broadcast</a>&lt;M&gt;(&amp;self, msg: M) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt; <span class='where'>where M: <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.Into.html' title='core::convert::Into'>Into</a>&lt;<a class='enum' href='../ws/enum.Message.html' title='ws::Message'>Message</a>&gt;</span></code></h4>
+<div class='docblock'><p>Send a message to the endpoints of all connections.</p>
+
+<p>Be careful with this method because it
+does not discriminate between client and server connections, only connections that are not
+part of <em>this</em> side of the WebSocket. If your WebSocket is only functioning as a server,
+then usage is simple, however if you have a WebSocket that is listening for
+connections and is also connected to another WebSocket, this method will broadcast a
+message to all the clients connected and to the server at the other end of the single
+client connection.</p>
+</div><h4 id='method.close' class='method'><code>fn <a href='#method.close' class='fnname'>close</a>(&amp;self, code: <a class='enum' href='../ws/enum.CloseCode.html' title='ws::CloseCode'>CloseCode</a>) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
+<div class='docblock'><p>Send a close code to the other endpoint.</p>
+</div><h4 id='method.close_with_reason' class='method'><code>fn <a href='#method.close_with_reason' class='fnname'>close_with_reason</a>&lt;S&gt;(&amp;self, code: <a class='enum' href='../ws/enum.CloseCode.html' title='ws::CloseCode'>CloseCode</a>, reason: S) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt; <span class='where'>where S: <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.Into.html' title='core::convert::Into'>Into</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/collections/borrow/enum.Cow.html' title='collections::borrow::Cow'>Cow</a>&lt;'static, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>&gt;&gt;</span></code></h4>
+<div class='docblock'><p>Send a close code and provide a descriptive reason for closing.</p>
+</div><h4 id='method.ping' class='method'><code>fn <a href='#method.ping' class='fnname'>ping</a>(&amp;self, data: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
+<div class='docblock'><p>Send a ping to the other endpoint with the given test data.</p>
+</div><h4 id='method.pong' class='method'><code>fn <a href='#method.pong' class='fnname'>pong</a>(&amp;self, data: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
+<div class='docblock'><p>Send a pong to the other endpoint responding with the given test data.</p>
+</div><h4 id='method.connect' class='method'><code>fn <a href='#method.connect' class='fnname'>connect</a>(&amp;self, url: <a class='struct' href='../url/struct.Url.html' title='url::Url'>Url</a>) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
+<div class='docblock'><p>Queue a new connection on this WebSocket to the specified URL.</p>
+</div><h4 id='method.shutdown' class='method'><code>fn <a href='#method.shutdown' class='fnname'>shutdown</a>(&amp;self) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
+<div class='docblock'><p>Request that all connections terminate and that the WebSocket stop running.</p>
+</div><h4 id='method.timeout' class='method'><code>fn <a href='#method.timeout' class='fnname'>timeout</a>(&amp;self, ms: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u64.html'>u64</a>, token: <a class='struct' href='../ws/util/struct.Token.html' title='ws::util::Token'>Token</a>) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
+<div class='docblock'><p>Schedule a <code>token</code> to be sent to the WebSocket Handler&#39;s <code>on_timeout</code> method
+after <code>ms</code> milliseconds</p>
+</div><h4 id='method.cancel' class='method'><code>fn <a href='#method.cancel' class='fnname'>cancel</a>(&amp;self, timeout: <a class='struct' href='../ws/util/struct.Timeout.html' title='ws::util::Timeout'>Timeout</a>) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
+<div class='docblock'><p>Queue the cancellation of a previously scheduled timeout.</p>
+
+<p>This method is not guaranteed to prevent the timeout from occuring, because it is
+possible to call this method after a timeout has already occured. It is still necessary to
+handle spurious timeouts.</p>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='struct' href='../ws/struct.Sender.html' title='ws::Sender'>Sender</a></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='struct' href='../ws/struct.Sender.html' title='ws::Sender'>Sender</a></code></h4>
+<h4 id='method.clone_from' class='method'><span class="since">1.0.0</span><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='struct' href='../ws/struct.Sender.html' title='ws::Sender'>Sender</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#method.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+</div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "ws";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script defer src="../search-index.js"></script>
+</body>
+</html>

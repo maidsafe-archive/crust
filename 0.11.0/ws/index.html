@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `ws` crate.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, ws">
+
+    <title>ws - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'></p><script>window.sidebarCurrent = {name: 'ws', ty: 'mod', relpath: '../'};</script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content mod">
+<h1 class='fqn'><span class='in-band'>Crate <a class='mod' href=''>ws</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-0' class='srclink' href='../src/ws/lib.rs.html#1-612' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'>
+<h2 id='usage' class='section-header'><a href='#usage'>Usage</a></h2>
+<p>For simple applications, use one of the utility functions <code>listen</code> and <code>connect</code>:</p>
+
+<p><code>listen</code> accepts a string that represents a socket address and a Factory, see
+<a href="#architecture">Architecture</a>.</p>
+
+<pre class='rust rust-example-rendered'>
+<span class='comment'>// A WebSocket echo server</span>
+
+<span class='kw'>use</span> <span class='ident'>ws</span>::<span class='ident'>listen</span>;
+
+<span class='ident'>listen</span>(<span class='string'>&quot;127.0.0.1:3012&quot;</span>, <span class='op'>|</span><span class='ident'>out</span><span class='op'>|</span> {
+    <span class='kw'>move</span> <span class='op'>|</span><span class='ident'>msg</span><span class='op'>|</span> {
+       <span class='ident'>out</span>.<span class='ident'>send</span>(<span class='ident'>msg</span>)
+    }
+}).<span class='ident'>unwrap</span>()</pre>
+
+<p><code>connect</code> accepts a string that represents a WebSocket URL (i.e. one that starts with ws://),
+and it will attempt to connect to a WebSocket server at that location. It also accepts a
+Factory.</p>
+
+<pre class='rust rust-example-rendered'>
+<span class='comment'>// A WebSocket client that sends one message then closes</span>
+
+<span class='kw'>use</span> <span class='ident'>ws</span>::{<span class='ident'>connect</span>, <span class='ident'>CloseCode</span>};
+
+<span class='ident'>connect</span>(<span class='string'>&quot;ws://127.0.0.1:3012&quot;</span>, <span class='op'>|</span><span class='ident'>out</span><span class='op'>|</span> {
+    <span class='ident'>out</span>.<span class='ident'>send</span>(<span class='string'>&quot;Hello WebSocket&quot;</span>).<span class='ident'>unwrap</span>();
+
+    <span class='kw'>move</span> <span class='op'>|</span><span class='ident'>msg</span><span class='op'>|</span> {
+        <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;Got message: {}&quot;</span>, <span class='ident'>msg</span>);
+        <span class='ident'>out</span>.<span class='ident'>close</span>(<span class='ident'>CloseCode</span>::<span class='ident'>Normal</span>)
+    }
+}).<span class='ident'>unwrap</span>()</pre>
+
+<p>Each of these functions encapsulates a mio EventLoop, creating and running a WebSocket in the
+current thread. These are blocking functions, so they will only return after the encapsulated
+WebSocket has been shutdown.</p>
+
+<h2 id='architecture' class='section-header'><a href='#architecture'>Architecture</a></h2>
+<p>A WebSocket requires two basic components: a Factory and a Handler. A Factory is any struct
+that implements the <code>Factory</code> trait. WS-RS already provides an implementation of <code>Factory</code> for
+closures, so it is possible to pass a closure as a Factory to either of the utility functions.
+Your Factory will be called each time the underlying TCP connection has been successfully
+established, and it will need to return a Handler that will handle the new WebSocket connection.</p>
+
+<p>Factories can be used to manage state that applies to multiple WebSocket connections,
+whereas Handlers manage the state of individual connections. Most of the time, a closure
+Factory is sufficient, and you will only need to focus on writing your Handler.
+Your Factory will be passed a Sender struct that represents the output of the WebSocket.
+The Sender allows the Handler to send messages, initiate a WebSocket closing handshake
+by sending a close code, and other useful actions. If you need to send messages from other parts
+of your application it is possible to clone and send the Sender across threads allowing
+other code to send messages on the WebSocket without blocking the event loop.</p>
+
+<p>Just as with the Factory, it is possible to use a closure as a simple Handler. The closure must
+take a Message as it&#39;s only argument, and it may close over variables that exist in
+the Factory. For example, in the above examples using <code>listen</code> and <code>connect</code>, the closure
+Factory returns another closure as the Handler for the new connection. This closure closes over
+the variable <code>out</code>, which is the Sender, representing the output of the WebSocket, so that it
+can use that sender later to send a Message. Closure Handlers generally need to take ownership of the variables
+that they close over because the Factory may be called multiple times. Think of Handlers as
+though they are threads and they should make sense within Rust&#39;s memory model. Closure Handlers must return
+a <code>Result&lt;()&gt;</code>, in order to handle errors without panicking.</p>
+
+<p>In the above examples, <code>out.close</code> and <code>out.send</code> both actually return a <code>Result&lt;()&gt;</code> indicating
+whether they were able to schedule the requested command (either <code>close</code> or <code>send</code>) with the
+EventLoop.</p>
+
+<p><em>It is important that your Handler does not panic carelessly because a handler that panics will
+disconnect every other connection that is using that WebSocket. Don&#39;t panic unless you want all
+connections to immediately fail.</em></p>
+
+<h2 id='guide' class='section-header'><a href='#guide'>Guide</a></h2>
+<p>You may have noticed in the usage examples that the client example calls <code>unwrap</code> when sending the first
+message, which will panic in the factory if the Message can&#39;t be sent for some reason. Also,
+sending messages before a handler is returned means that the message will be queued before
+the WebSocket handshake is complete. The handshake could fail for some reason, and then the
+queued message would be wasted effort. Sending messages in the Factory is not bad for simple,
+short-lived, or toy projects, but let&#39;s explore writing a handler that is better for
+long-running applications.</p>
+
+<p>In order to solve the problem of sending a message immediately when a WebSocket connection is
+established, you will need to write a Handler that implements the <code>on_open</code> method. For
+example:</p>
+
+<pre class='rust rust-example-rendered'>
+<span class='kw'>use</span> <span class='ident'>ws</span>::{<span class='ident'>connect</span>, <span class='ident'>Handler</span>, <span class='ident'>Sender</span>, <span class='ident'>Handshake</span>, <span class='prelude-ty'>Result</span>, <span class='ident'>Message</span>, <span class='ident'>CloseCode</span>};
+
+<span class='comment'>// Our Handler struct.</span>
+<span class='comment'>// Here we explicity indicate that the Client needs a Sender,</span>
+<span class='comment'>// whereas a closure captures the Sender for us automatically.</span>
+<span class='kw'>struct</span> <span class='ident'>Client</span> {
+    <span class='ident'>out</span>: <span class='ident'>Sender</span>,
+}
+
+<span class='comment'>// We implement the Handler trait for Client so that we can get more</span>
+<span class='comment'>// fine-grained control of the connection.</span>
+<span class='kw'>impl</span> <span class='ident'>Handler</span> <span class='kw'>for</span> <span class='ident'>Client</span> {
+
+    <span class='comment'>// `on_open` will be called only after the WebSocket handshake is successful</span>
+    <span class='comment'>// so at this point we know that the connection is ready to send/receive messages.</span>
+    <span class='comment'>// We ignore the `Handshake` for now, but you could also use this method to setup</span>
+    <span class='comment'>// Handler state or reject the connection based on the details of the Request</span>
+    <span class='comment'>// or Response, such as by checking cookies or Auth headers.</span>
+    <span class='kw'>fn</span> <span class='ident'>on_open</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, _: <span class='ident'>Handshake</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+        <span class='comment'>// Now we don&#39;t need to call unwrap since `on_open` returns a `Result&lt;()&gt;`.</span>
+        <span class='comment'>// If this call fails, it will only result in this connection disconnecting.</span>
+        <span class='self'>self</span>.<span class='ident'>out</span>.<span class='ident'>send</span>(<span class='string'>&quot;Hello WebSocket&quot;</span>)
+    }
+
+    <span class='comment'>// `on_message` is roughly equivalent to the Handler closure. It takes a `Message`</span>
+    <span class='comment'>// and returns a `Result&lt;()&gt;`.</span>
+    <span class='kw'>fn</span> <span class='ident'>on_message</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>msg</span>: <span class='ident'>Message</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+        <span class='comment'>// Close the connection when we get a response from the server</span>
+        <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;Got message: {}&quot;</span>, <span class='ident'>msg</span>);
+        <span class='self'>self</span>.<span class='ident'>out</span>.<span class='ident'>close</span>(<span class='ident'>CloseCode</span>::<span class='ident'>Normal</span>)
+    }
+}
+
+<span class='comment'>// Now, instead of a closure, the Factory returns a new instance of our Handler.</span>
+<span class='ident'>connect</span>(<span class='string'>&quot;ws://127.0.0.1:3012&quot;</span>, <span class='op'>|</span><span class='ident'>out</span><span class='op'>|</span> { <span class='ident'>Client</span> { <span class='ident'>out</span>: <span class='ident'>out</span> } }).<span class='ident'>unwrap</span>()</pre>
+
+<p>That is a big increase in verbosity in order to accomplish the same effect as the
+original example, but this way is more flexible and gives you access to more of the underlying
+details of the WebSocket connection.</p>
+
+<p>It&#39;s also important to note that using <code>on_open</code> allows you to tie in to the lifecycle of the
+WebSocket. If the opening handshake is successful and <code>on_open</code> is called, the WebSocket is now
+open and alive. Until that point, it is not guaranteed that the connection will be
+upgraded. So, if you have important state that you need to tear down, or if
+you have some state that tracks closely the lifecycle of the WebScoket connection, it is best to
+set that up in the <code>on_open</code> method rather than when your handler is first created.
+If <code>on_open</code> returns Ok, then you are guaranteed that <code>on_close</code> will run when the WebSocket
+connection is about to go down, unless a panic has occurred.</p>
+
+<p>Therefore you will probably want to implement <code>on_close</code>. This method is called anytime
+the WebSocket connection will close. The <code>on_close</code> method implements the closing handshake of
+the WebSocket protocol. Using <code>on_close</code> gives you a mechanism for informing the user regarding
+why the WebSocket connection may have been closed even if no errors were encountered.
+It also gives you an opportunity to clean up any resources or state
+that may be dependent on the connection that is now about to disconnect.</p>
+
+<p>An example server might use this as follows:</p>
+
+<pre class='rust rust-example-rendered'>
+<span class='kw'>use</span> <span class='ident'>ws</span>::{<span class='ident'>listen</span>, <span class='ident'>Handler</span>, <span class='ident'>Sender</span>, <span class='prelude-ty'>Result</span>, <span class='ident'>Message</span>, <span class='ident'>CloseCode</span>};
+
+<span class='kw'>struct</span> <span class='ident'>Server</span> {
+    <span class='ident'>out</span>: <span class='ident'>Sender</span>,
+}
+
+<span class='kw'>impl</span> <span class='ident'>Handler</span> <span class='kw'>for</span> <span class='ident'>Server</span> {
+
+    <span class='kw'>fn</span> <span class='ident'>on_message</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>msg</span>: <span class='ident'>Message</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+        <span class='comment'>// Echo the message back</span>
+        <span class='self'>self</span>.<span class='ident'>out</span>.<span class='ident'>send</span>(<span class='ident'>msg</span>)
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>on_close</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>code</span>: <span class='ident'>CloseCode</span>, <span class='ident'>reason</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>) {
+        <span class='comment'>// The WebSocket protocol allows for a utf8 reason for the closing state after the</span>
+        <span class='comment'>// close code. WS-RS will attempt to interpret this data as a utf8 description of the</span>
+        <span class='comment'>// reason for closing the connection. I many cases, `reason` will be an empty string.</span>
+        <span class='comment'>// So, you may not normally want to display `reason` to the user,</span>
+        <span class='comment'>// but let&#39;s assume that we know that `reason` is human-readable.</span>
+        <span class='kw'>match</span> <span class='ident'>code</span> {
+            <span class='ident'>CloseCode</span>::<span class='ident'>Normal</span> <span class='op'>=&gt;</span> <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;The client is done with the connection.&quot;</span>),
+            <span class='ident'>CloseCode</span>::<span class='ident'>Away</span>   <span class='op'>=&gt;</span> <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;The client is leaving the site.&quot;</span>),
+            _ <span class='op'>=&gt;</span> <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;The client encountered an error: {}&quot;</span>, <span class='ident'>reason</span>),
+        }
+    }
+}
+
+<span class='ident'>listen</span>(<span class='string'>&quot;127.0.0.1:3012&quot;</span>, <span class='op'>|</span><span class='ident'>out</span><span class='op'>|</span> { <span class='ident'>Server</span> { <span class='ident'>out</span>: <span class='ident'>out</span> } }).<span class='ident'>unwrap</span>()</pre>
+
+<p>When errors occur, your handler will be informed via the <code>on_error</code> method. Depending on the
+type of the error, the connection may or may not be about to go down. If the error is such that
+the connection needs to close, your handler&#39;s <code>on_close</code> method will be called and WS-RS will
+send the appropriate close code to the other endpoint if possible.</p>
+
+<p>A server that tracks state related to the life of the WebSocket connection
+and informs the user of errors might be as follows:</p>
+
+<pre class='rust rust-example-rendered'>
+
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>rc</span>::<span class='ident'>Rc</span>;
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>cell</span>::<span class='ident'>Cell</span>;
+
+<span class='kw'>use</span> <span class='ident'>ws</span>::{<span class='ident'>listen</span>, <span class='ident'>Handler</span>, <span class='ident'>Sender</span>, <span class='prelude-ty'>Result</span>, <span class='ident'>Message</span>, <span class='ident'>Handshake</span>, <span class='ident'>CloseCode</span>, <span class='ident'>Error</span>};
+
+<span class='kw'>struct</span> <span class='ident'>Server</span> {
+    <span class='ident'>out</span>: <span class='ident'>Sender</span>,
+    <span class='ident'>count</span>: <span class='ident'>Rc</span><span class='op'>&lt;</span><span class='ident'>Cell</span><span class='op'>&lt;</span><span class='ident'>u32</span><span class='op'>&gt;&gt;</span>,
+}
+
+<span class='kw'>impl</span> <span class='ident'>Handler</span> <span class='kw'>for</span> <span class='ident'>Server</span> {
+
+    <span class='kw'>fn</span> <span class='ident'>on_open</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, _: <span class='ident'>Handshake</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+        <span class='comment'>// We have a new connection, so we increment the connection counter</span>
+        <span class='prelude-val'>Ok</span>(<span class='self'>self</span>.<span class='ident'>count</span>.<span class='ident'>set</span>(<span class='self'>self</span>.<span class='ident'>count</span>.<span class='ident'>get</span>() <span class='op'>+</span> <span class='number'>1</span>))
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>on_message</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>msg</span>: <span class='ident'>Message</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+        <span class='comment'>// Tell the user the current count</span>
+        <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;The number of live connections is {}&quot;</span>, <span class='self'>self</span>.<span class='ident'>count</span>.<span class='ident'>get</span>());
+
+        <span class='comment'>// Echo the message back</span>
+        <span class='self'>self</span>.<span class='ident'>out</span>.<span class='ident'>send</span>(<span class='ident'>msg</span>)
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>on_close</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>code</span>: <span class='ident'>CloseCode</span>, <span class='ident'>reason</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>) {
+        <span class='kw'>match</span> <span class='ident'>code</span> {
+            <span class='ident'>CloseCode</span>::<span class='ident'>Normal</span> <span class='op'>=&gt;</span> <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;The client is done with the connection.&quot;</span>),
+            <span class='ident'>CloseCode</span>::<span class='ident'>Away</span>   <span class='op'>=&gt;</span> <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;The client is leaving the site.&quot;</span>),
+            <span class='ident'>CloseCode</span>::<span class='ident'>Abnormal</span> <span class='op'>=&gt;</span> <span class='macro'>println</span><span class='macro'>!</span>(
+                <span class='string'>&quot;Closing handshake failed! Unable to obtain closing status from client.&quot;</span>),
+            _ <span class='op'>=&gt;</span> <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;The client encountered an error: {}&quot;</span>, <span class='ident'>reason</span>),
+        }
+
+        <span class='comment'>// The connection is going down, so we need to decrement the count</span>
+        <span class='self'>self</span>.<span class='ident'>count</span>.<span class='ident'>set</span>(<span class='self'>self</span>.<span class='ident'>count</span>.<span class='ident'>get</span>() <span class='op'>-</span> <span class='number'>1</span>)
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>on_error</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>err</span>: <span class='ident'>Error</span>) {
+        <span class='macro'>println</span><span class='macro'>!</span>(<span class='string'>&quot;The server encountered an error: {:?}&quot;</span>, <span class='ident'>err</span>);
+    }
+
+}
+<span class='comment'>// Cell gives us interior mutability so we can increment</span>
+<span class='comment'>// or decrement the count between handlers.</span>
+<span class='comment'>// Rc is a reference-counted box for sharing the count between handlers</span>
+<span class='comment'>// since each handler needs to own its contents.</span>
+<span class='kw'>let</span> <span class='ident'>count</span> <span class='op'>=</span> <span class='ident'>Rc</span>::<span class='ident'>new</span>(<span class='ident'>Cell</span>::<span class='ident'>new</span>(<span class='number'>0</span>));
+<span class='ident'>listen</span>(<span class='string'>&quot;127.0.0.1:3012&quot;</span>, <span class='op'>|</span><span class='ident'>out</span><span class='op'>|</span> { <span class='ident'>Server</span> { <span class='ident'>out</span>: <span class='ident'>out</span>, <span class='ident'>count</span>: <span class='ident'>count</span>.<span class='ident'>clone</span>() } }).<span class='ident'>unwrap</span>()</pre>
+
+<p>There are other Handler methods that allow even more fine-grained access, but most applications
+will usually only need these four methods.</p>
+</div><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='mod' href='util/index.html'
+                               title='ws::util'>util</a></td>
+                        <td class='docblock short'>
+                             <p>The util module rexports some tools from mio in order to facilitate handling timeouts.</p>
+                        </td>
+                    </tr>
+                </table><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Builder.html'
+                               title='ws::Builder'>Builder</a></td>
+                        <td class='docblock short'>
+                             <p>Utility for constructing a WebSocket from various settings.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Error.html'
+                               title='ws::Error'>Error</a></td>
+                        <td class='docblock short'>
+                             <p>A struct indicating the kind of error that has occured and any precise details of that error.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Frame.html'
+                               title='ws::Frame'>Frame</a></td>
+                        <td class='docblock short'>
+                             <p>A struct representing a WebSocket frame.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Handshake.html'
+                               title='ws::Handshake'>Handshake</a></td>
+                        <td class='docblock short'>
+                             <p>A struct representing the two halves of the WebSocket handshake.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Request.html'
+                               title='ws::Request'>Request</a></td>
+                        <td class='docblock short'>
+                             <p>The handshake request.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Response.html'
+                               title='ws::Response'>Response</a></td>
+                        <td class='docblock short'>
+                             <p>The handshake response.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Sender.html'
+                               title='ws::Sender'>Sender</a></td>
+                        <td class='docblock short'>
+                             <p>A representation of the output of the WebSocket connection. Use this to send messages to the
+other endpoint.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Settings.html'
+                               title='ws::Settings'>Settings</a></td>
+                        <td class='docblock short'>
+                             <p>WebSocket settings</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.WebSocket.html'
+                               title='ws::WebSocket'>WebSocket</a></td>
+                        <td class='docblock short'>
+                             <p>The WebSocket struct. A WebSocket can support multiple incoming and outgoing connections.</p>
+                        </td>
+                    </tr>
+                </table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='enum' href='enum.CloseCode.html'
+                               title='ws::CloseCode'>CloseCode</a></td>
+                        <td class='docblock short'>
+                             <p>Status code used to indicate why an endpoint is closing the WebSocket connection.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='enum' href='enum.ErrorKind.html'
+                               title='ws::ErrorKind'>ErrorKind</a></td>
+                        <td class='docblock short'>
+                             <p>The type of an error, which may indicate other kinds of errors as the underlying cause.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='enum' href='enum.Message.html'
+                               title='ws::Message'>Message</a></td>
+                        <td class='docblock short'>
+                             <p>An enum representing the various forms of a WebSocket message.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='enum' href='enum.OpCode.html'
+                               title='ws::OpCode'>OpCode</a></td>
+                        <td class='docblock short'>
+                             <p>Operation codes as part of rfc6455.</p>
+                        </td>
+                    </tr>
+                </table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='trait' href='trait.Factory.html'
+                               title='ws::Factory'>Factory</a></td>
+                        <td class='docblock short'>
+                             <p>A trait for creating new WebSocket handlers.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='trait' href='trait.Handler.html'
+                               title='ws::Handler'>Handler</a></td>
+                        <td class='docblock short'>
+                             <p>The core trait of this library.
+Implementing this trait provides the business logic of the WebSocket application.</p>
+                        </td>
+                    </tr>
+                </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.connect.html'
+                               title='ws::connect'>connect</a></td>
+                        <td class='docblock short'>
+                             <p>A utility function for setting up a WebSocket client.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.listen.html'
+                               title='ws::listen'>listen</a></td>
+                        <td class='docblock short'>
+                             <p>A utility function for setting up a WebSocket server.</p>
+                        </td>
+                    </tr>
+                </table><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='type' href='type.Result.html'
+                               title='ws::Result'>Result</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                </table></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "ws";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script defer src="../search-index.js"></script>
+</body>
+</html>

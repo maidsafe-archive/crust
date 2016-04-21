@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Sha1","Represents a Sha1 hash object in memory."]]});

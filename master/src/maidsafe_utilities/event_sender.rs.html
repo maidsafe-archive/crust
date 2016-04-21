@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/maidsafe_utilities-0.5.3/src/event_sender.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/maidsafe_utilities-0.4.1/src/event_sender.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>event_sender.rs.html -- source</title>
@@ -310,7 +310,6 @@
 <span id="267">267</span>
 <span id="268">268</span>
 <span id="269">269</span>
-<span id="270">270</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -332,7 +331,7 @@
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fmt</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>mpsc</span>;
 
-<span class='doccomment'>/// Errors that can be returned by `EventSender`</span>
+<span class='doccomment'>/// Errors that can be returned by EventSender</span>
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>enum</span> <span class='ident'>EventSenderError</span><span class='op'>&lt;</span><span class='ident'>Category</span>, <span class='ident'>EventSubset</span><span class='op'>&gt;</span> {
     <span class='doccomment'>/// Error sending the event subset</span>
@@ -469,8 +468,7 @@
 <span class='comment'>// it requires EventSubset to be clonable even though mpsc::Sender&lt;EventSubset&gt; does</span>
 <span class='comment'>// not require EventSubset to be clonable for itself being cloned.</span>
 <span class='kw'>impl</span><span class='op'>&lt;</span><span class='ident'>Category</span>: <span class='ident'>fmt</span>::<span class='ident'>Debug</span> <span class='op'>+</span> <span class='ident'>Clone</span>, <span class='ident'>EventSubset</span>: <span class='ident'>fmt</span>::<span class='ident'>Debug</span><span class='op'>&gt;</span> <span class='ident'>Clone</span> <span class='kw'>for</span> <span class='ident'>EventSender</span><span class='op'>&lt;</span><span class='ident'>Category</span>,
-                                                                                  <span class='ident'>EventSubset</span><span class='op'>&gt;</span>
-    {
+                                                                                  <span class='ident'>EventSubset</span><span class='op'>&gt;</span> {
     <span class='kw'>fn</span> <span class='ident'>clone</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>EventSender</span><span class='op'>&lt;</span><span class='ident'>Category</span>, <span class='ident'>EventSubset</span><span class='op'>&gt;</span> {
         <span class='ident'>EventSender</span> {
             <span class='ident'>event_tx</span>: <span class='self'>self</span>.<span class='ident'>event_tx</span>.<span class='ident'>clone</span>(),
