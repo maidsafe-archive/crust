@@ -510,17 +510,21 @@ pub fn start_tcp_accept(port: u16,
             let msg = network_rx.receive();
             let (their_id, event) = match msg {
                 Ok(CrustMsg::BootstrapRequest(k, peer_port)) => {
-                    let peer_ip = their_addr.ip();
-                    match TcpStream::connect(net::SocketAddr::new(peer_ip, peer_port)) {
-                        Ok(stream) => {
-                            if let Err(e) = stream.shutdown(Shutdown::Both) {
-                                warn!("Could not shutdown the TCP throwaway connection - {:?}", e);
+                    if peer_port != 0 {
+                        let peer_ip = their_addr.ip();
+                        match TcpStream::connect(net::SocketAddr::new(peer_ip, peer_port)) {
+                            Ok(stream) => {
+                                if let Err(e) = stream.shutdown(Shutdown::Both) {
+                                    warn!("Could not shutdown the TCP throwaway connection - {:?}",
+                                          e);
+                                }
                             }
-                        }
-                        Err(e) => {
-                            error!("Direct Connection not possible on advertised tcp port - {:?}",
-                                   e);
-                            continue;
+                            Err(e) => {
+                                error!("Direct Connection not possible on advertised tcp port - \
+                                        {:?}",
+                                       e);
+                                continue;
+                            }
                         }
                     }
                     match writer.send(WriteEvent::Write(CrustMsg::BootstrapResponse(our_public_key))) {
