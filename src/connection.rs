@@ -18,7 +18,7 @@
 use std::collections::{HashMap, HashSet};
 use std::collections::hash_map::Entry;
 use std::fmt;
-use std::sync::{Arc, Mutex};
+use std::sync::{Condvar, Arc, Mutex};
 use std::hash::{Hash, Hasher};
 use std::sync::atomic::{Ordering, AtomicBool};
 use std::net::{Shutdown, TcpStream, UdpSocket, Ipv4Addr, SocketAddrV4};
@@ -44,6 +44,7 @@ use nat_traversal::{MappedUdpSocket, MappingContext, PunchedUdpSocket, gen_rende
 use nat_traversal;
 use sodiumoxide::crypto::box_::PublicKey;
 use util::time_duration_to_std_duration;
+use std::time::Duration;
 
 type CrustEventSenderError = EventSenderError<MaidSafeEventCategory, Event>;
 
@@ -512,19 +513,49 @@ pub fn start_tcp_accept(port: u16,
                 Ok(CrustMsg::BootstrapRequest(k, peer_port)) => {
                     if peer_port != 0 {
                         let peer_ip = their_addr.ip();
-                        match TcpStream::connect(net::SocketAddr::new(peer_ip, peer_port)) {
-                            Ok(stream) => {
-                                if let Err(e) = stream.shutdown(Shutdown::Both) {
-                                    warn!("Could not shutdown the TCP throwaway connection - {:?}",
-                                          e);
+
+                        let pair = Arc::new((Mutex::new(None), Condvar::new()));
+                        let pair_clone_0 = pair.clone();
+                        let _ = thread!("TcpTestConnect", move || {
+                            match TcpStream::connect(net::SocketAddr::new(peer_ip, peer_port)) {
+                                Ok(stream) => {
+                                    if let Err(e) = stream.shutdown(Shutdown::Both) {
+                                        warn!("Could not shutdown the TCP throwaway connection - \
+                                               {:?}",
+                                              e);
+                                    }
+
+                                    let &(ref lock, ref cvar) = &*pair_clone_0;
+                                    let mut started = lock.lock().unwrap();
+                                    *started = Some(true);
+                                    cvar.notify_one();
+                                }
+                                Err(e) => {
+                                    error!("Direct Connection not possible on advertised tcp \
+                                            port - {:?}",
+                                           e);
+
+                                    let &(ref lock, ref cvar) = &*pair_clone_0;
+                                    let mut started = lock.lock().unwrap();
+                                    *started = Some(false);
+                                    cvar.notify_one();
                                 }
                             }
-                            Err(e) => {
-                                error!("Direct Connection not possible on advertised tcp port - \
-                                        {:?}",
-                                       e);
-                                continue;
+                        });
+
+                        let &(ref lock, ref cvar) = &*pair;
+                        let mut started = lock.lock().unwrap();
+                        while started.is_none() {
+                            let (tmp_started, wait_expired) = unwrap_result!(cvar.wait_timeout(started, Duration::from_secs(5)));
+                            started = tmp_started;
+                            if wait_expired.timed_out() {
+                                *started = Some(false);
+                                break;
                             }
+                        }
+
+                        if !unwrap_option!(started, "Must be Some if it reaches here") {
+                            continue;
                         }
                     }
                     match writer.send(WriteEvent::Write(CrustMsg::BootstrapResponse(our_public_key))) {
