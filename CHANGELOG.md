@@ -1,5 +1,13 @@
 # CRUST - Change Log
 
+## [0.10.1]
+- Timing out the TCP connects.
+- Bootstrap after creating service object.
+- Fixed bootstrapping bug.
+- Minor cleanup.
+- Removed unneeded dependency.
+- Tests fixed.
+
 ## [0.10.0]
 - Peer connections wait for both sides before sending `NewPeer` events.
 - Enable uTP (still buggy).
