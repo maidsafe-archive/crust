@@ -24,7 +24,8 @@ use std::sync::atomic::{Ordering, AtomicBool};
 use std::net::{Shutdown, TcpStream, UdpSocket, Ipv4Addr, SocketAddrV4};
 use std::net;
 use std::io;
-use time;
+use std::time::{Instant, Duration};
+
 use maidsafe_utilities::event_sender::{EventSenderError, MaidSafeEventCategory};
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 use maidsafe_utilities::serialisation::{deserialise, serialise};
@@ -43,7 +44,6 @@ use bootstrap_handler::BootstrapHandler;
 use nat_traversal::{MappedUdpSocket, MappingContext, PunchedUdpSocket, gen_rendezvous_info};
 use nat_traversal;
 use sodiumoxide::crypto::box_::PublicKey;
-use util::time_duration_to_std_duration;
 
 type CrustEventSenderError = EventSenderError<MaidSafeEventCategory, Event>;
 
@@ -196,13 +196,12 @@ pub fn connect(peer_contact: StaticContactInfo,
             });
         }
 
-        const TIMEOUT_MS: i64 = 20_000;
-        let deadline = time::SteadyTime::now() + time::Duration::milliseconds(TIMEOUT_MS);
+        const TIMEOUT_MS: u64 = 20_000;
+        let deadline = Instant::now() + Duration::from_millis(TIMEOUT_MS);
 
         loop {
-            let now = time::SteadyTime::now();
+            let now = Instant::now();
             let timeout = if now < deadline { deadline - now } else { break };
-            let timeout = time_duration_to_std_duration(timeout);
             try!(udp_socket.set_read_timeout(Some(timeout)));
             match udp_socket.recv_from(&mut read_buf) {
                 Ok((bytes_rxd, _peer_addr)) => {

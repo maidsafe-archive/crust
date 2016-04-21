@@ -16,6 +16,7 @@
 // relating to use of the SAFE Network Software.
 
 use std::ffi::OsString;
+use std::time::{Instant, Duration};
 
 use error::Error;
 use static_contact_info::StaticContactInfo;
@@ -26,7 +27,7 @@ const ENABLE_BOOTSTRAP_CACHE: bool = false;
 
 pub struct BootstrapHandler {
     file_handler: FileHandler<Vec<StaticContactInfo>>,
-    last_updated: ::time::Tm,
+    last_updated: Instant,
 }
 
 impl BootstrapHandler {
@@ -45,7 +46,7 @@ impl BootstrapHandler {
 
         Ok(BootstrapHandler {
             file_handler: try!(FileHandler::new(&name)),
-            last_updated: ::time::now(),
+            last_updated: Instant::now(),
         })
     }
 
@@ -56,7 +57,7 @@ impl BootstrapHandler {
         if ENABLE_BOOTSTRAP_CACHE {
             try!(self.insert_contacts(contacts, prune));
             // TODO(Team) this implementation is missing and should be considered in next planning
-            if ::time::now() > self.last_updated + Self::duration_between_updates() {
+            if Instant::now() > self.last_updated + Self::duration_between_updates() {
                 // self.check_bootstrap_contacts();
             }
         }
@@ -67,8 +68,8 @@ impl BootstrapHandler {
         Ok(try!(self.file_handler.read_file()))
     }
 
-    fn duration_between_updates() -> ::time::Duration {
-        ::time::Duration::hours(4)
+    fn duration_between_updates() -> Duration {
+        Duration::from_secs(4 * 60 * 60)
     }
 
     fn max_contacts() -> usize {

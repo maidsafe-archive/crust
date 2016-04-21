@@ -27,7 +27,6 @@ socket_addr = "~0.1.0"
 sodiumoxide = "~0.0.10"
 temp_utp = "~0.8.1"
 term = "~0.4.4"
-time = "~0.1.35"
 
 [dev-dependencies]
 docopt = "~0.6.80"

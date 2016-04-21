@@ -45,7 +45,6 @@ extern crate rustc_serialize;
 extern crate docopt;
 extern crate rand;
 extern crate term;
-extern crate time;
 
 use docopt::Docopt;
 use rand::random;
@@ -59,7 +58,7 @@ use std::net;
 use std::str::FromStr;
 use std::thread;
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
+use std::time::{Instant, Duration};
 use std::collections::{BTreeMap, HashMap};
 
 use crust::{Service, Protocol, Endpoint, ConnectionInfoResult,
@@ -138,8 +137,8 @@ fn generate_random_vec_u8(size: usize) -> Vec<u8> {
 struct Network {
     nodes: HashMap<usize, PeerId>,
     our_connection_infos: BTreeMap<u32, OurConnectionInfo>,
-    performance_start: time::SteadyTime,
-    performance_interval: time::Duration,
+    performance_start: Instant,
+    performance_interval: Duration,
     received_msgs: u32,
     received_bytes: usize,
     peer_index: usize,
@@ -152,8 +151,8 @@ impl Network {
         Network {
             nodes: HashMap::new(),
             our_connection_infos: BTreeMap::new(),
-            performance_start: time::SteadyTime::now(),
-            performance_interval: time::Duration::seconds(10),
+            performance_start: Instant::now(),
+            performance_interval: Duration::from_secs(10),
             received_msgs: 0,
             received_bytes: 0,
             peer_index: 0,
@@ -219,13 +218,13 @@ impl Network {
         self.received_msgs += 1;
         self.received_bytes += msg_size;
         if self.received_msgs == 1 {
-            self.performance_start = time::SteadyTime::now();
+            self.performance_start = Instant::now();
         }
-        if self.performance_start + self.performance_interval < time::SteadyTime::now() {
+        if self.performance_start + self.performance_interval < Instant::now() {
             println!("\nReceived {} messages with total size of {} bytes in last {} seconds.",
                      self.received_msgs,
                      self.received_bytes,
-                     self.performance_interval.num_seconds());
+                     self.performance_interval.as_secs());
             self.received_msgs = 0;
             self.received_bytes = 0;
         }
