@@ -266,6 +266,10 @@ impl Service {
                                                                         self.expected_peers
                                                                             .clone(),
                                                                         self.mapping_context
+                                                                            .clone(),
+                                                                        self.heartbeat_timeout
+                                                                            .clone(),
+                                                                        self.inactivity_timeout
                                                                             .clone())));
         Ok(())
     }
@@ -391,8 +395,12 @@ impl Service {
                 let result_tx = result_tx.clone();
                 let bootstrap_cache = bootstrap_cache.clone();
                 let static_contact_info = static_contact_info.clone();
+                let heartbeat_timeout = self.heartbeat_timeout.clone();
+                let inactivity_timeout = self.inactivity_timeout.clone();
                 let _ = thread!("Service::connect tcp direct", move || {
                     match connection::connect_tcp_endpoint(tcp_addr,
+                                                           heartbeat_timeout,
+                                                           inactivity_timeout,
                                                            our_public_key,
                                                            event_tx,
                                                            connection_map,
@@ -426,6 +434,8 @@ impl Service {
                 let result_tx = result_tx.clone();
                 let priv_tcp_info = our_connection_info.priv_tcp_info;
                 let is_alive = self.is_alive.clone();
+                let heartbeat_timeout = self.heartbeat_timeout.clone();
+                let inactivity_timeout = self.inactivity_timeout.clone();
 
                 let _ = thread!("Service::connect tcp rendezvous", move || {
                     let res = tcp_punch_hole(tcp_socket,
@@ -441,6 +451,8 @@ impl Service {
                             match connection::tcp_rendezvous_connect(connection_map,
                                                                      event_tx,
                                                                      tcp_stream,
+                                                                     heartbeat_timeout,
+                                                                     inactivity_timeout,
                                                                      their_id) {
                                 Ok(()) => {
                                     let _ = result_tx.send(Ok(()));
