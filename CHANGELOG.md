@@ -1,5 +1,10 @@
 # CRUST - Change Log
 
+## [0.11.0]
+- Minor cleanup.
+- Removed unneeded dependency.
+- Tests fixed.
+
 ## [0.10.0]
 - Peer connections wait for both sides before sending `NewPeer` events.
 - Enable uTP (still buggy).
