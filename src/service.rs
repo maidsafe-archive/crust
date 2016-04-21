@@ -119,7 +119,7 @@ pub struct Service {
     expected_peers: Arc<Mutex<HashSet<PeerId>>>,
     service_discovery: ServiceDiscovery<StaticContactInfo>,
     event_tx: ::CrustEventSender,
-    bootstrap: RaiiBootstrap,
+    bootstrap: Option<RaiiBootstrap>,
     our_keys: (PublicKey, SecretKey),
     connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
     mapping_context: Arc<MappingContext>,
@@ -189,17 +189,6 @@ impl Service {
         mapping_context.add_simple_tcp_servers(config.tcp_mapper_servers.clone());
         let mapping_context = Arc::new(mapping_context);
 
-        let bootstrap = RaiiBootstrap::new(bootstrap_contacts,
-                                           our_keys.0.clone(),
-                                           event_tx.clone(),
-                                           connection_map.clone(),
-                                           bootstrap_cache.clone(),
-                                           mapping_context.clone(),
-                                           config.enable_tcp,
-                                           config.enable_utp,
-                                           unwrap_option!(config.tcp_acceptor_port,
-                                                          "This should be given"));
-
         let udp_hole_punch_server = try!(SimpleUdpHolePunchServer::new(mapping_context.clone())
                                              .result_log()
                                              .or_else(|err| {
@@ -218,15 +207,15 @@ impl Service {
             static_contact_info.tcp_mapper_servers.extend(tcp_hole_punch_server.addresses());
         }
 
-        let service = Service {
+        let mut service = Service {
             static_contact_info: static_contact_info,
-            bootstrap_cache: bootstrap_cache,
+            bootstrap_cache: bootstrap_cache.clone(),
             service_discovery: service_discovery,
             expected_peers: Arc::new(Mutex::new(HashSet::new())),
-            event_tx: event_tx,
-            bootstrap: bootstrap,
-            our_keys: our_keys,
-            connection_map: connection_map,
+            event_tx: event_tx.clone(),
+            bootstrap: None,
+            our_keys: our_keys.clone(),
+            connection_map: connection_map.clone(),
             mapping_context: mapping_context.clone(),
             tcp_acceptor_port: config.tcp_acceptor_port,
             utp_acceptor_port: config.utp_acceptor_port,
@@ -239,16 +228,38 @@ impl Service {
             is_alive: Arc::new(AtomicBool::new(true)),
         };
 
+        let our_tcp_acceptor_port = unwrap_option!(config.tcp_acceptor_port, "This must be supplied");
+
+        if our_tcp_acceptor_port != 0{
+            let _ = service.start_listening_tcp_impl();
+        }
+
+        let bootstrap = RaiiBootstrap::new(bootstrap_contacts,
+                                           our_keys.0,
+                                           event_tx,
+                                           connection_map,
+                                           bootstrap_cache,
+                                           mapping_context,
+                                           config.enable_tcp,
+                                           config.enable_utp,
+                                           our_tcp_acceptor_port);
+
+        service.bootstrap = Some(bootstrap);
+
         Ok(service)
     }
 
     /// Stop the bootstraping procedure
     pub fn stop_bootstrap(&mut self) {
-        self.bootstrap.stop();
+        unwrap_option!(self.bootstrap.as_mut(), "It should exist").stop();
     }
 
     /// Starts accepting TCP connections.
     pub fn start_listening_tcp(&mut self) -> io::Result<()> {
+        Ok(())
+    }
+
+    fn start_listening_tcp_impl(&mut self) -> io::Result<()> {
         // Start the TCP Acceptor
         self.raii_tcp_acceptor = Some(try!(connection::start_tcp_accept(self.tcp_acceptor_port
                                                                             .unwrap_or(0),
