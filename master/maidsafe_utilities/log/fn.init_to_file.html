@@ -46,26 +46,10 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-63' class='srclink' href='../../src/maidsafe_utilities/log.rs.html#112-146' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub fn init_to_file&lt;P: <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.AsRef.html' title='core::convert::AsRef'>AsRef</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/std/path/struct.Path.html' title='std::path::Path'>Path</a>&gt;&gt;(show_thread_name: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>, file_path: P) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, <a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;</pre><div class='docblock'><p>Initialises the env_logger for output to a file and to stderr.</p>
+        </span><a id='src-441' class='srclink' href='../../src/maidsafe_utilities/log/mod.rs.html#161-223' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub fn init_to_file&lt;P: <a class='trait' href='https://doc.rust-lang.org/nightly/core/convert/trait.AsRef.html' title='core::convert::AsRef'>AsRef</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/std/path/struct.Path.html' title='std::path::Path'>Path</a>&gt;&gt;(show_thread_name: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>, file_path: P, log_to_console: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, <a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;</pre><div class='docblock'><p>Initialises the <code>env_logger</code> for output to a file and optionally to the console asynchronously.</p>
 
-<p>This function will create the logfile at <code>file_path</code> if it does not exist, and will truncate it
-if it does.  For further details, see the <a href="index.html">module docs</a>.</p>
-
-<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
-<pre class='rust rust-example-rendered'>
-<span class='attribute'>#[<span class='ident'>macro_use</span>]</span>
-<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>log</span>;
-<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>maidsafe_utilities</span>;
-
-<span class='kw'>fn</span> <span class='ident'>main</span>() {
-    <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>maidsafe_utilities</span>::<span class='ident'>log</span>::<span class='ident'>init_to_file</span>(<span class='boolval'>true</span>, <span class='string'>&quot;target/test.log&quot;</span>).<span class='ident'>is_ok</span>());
-    <span class='macro'>error</span><span class='macro'>!</span>(<span class='string'>&quot;An error!&quot;</span>);
-    <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>maidsafe_utilities</span>::<span class='ident'>log</span>::<span class='ident'>init_to_file</span>(<span class='boolval'>true</span>, <span class='string'>&quot;target/test.log&quot;</span>).<span class='ident'>unwrap_err</span>(),
-        <span class='string'>&quot;Logger already initialised.&quot;</span>.<span class='ident'>to_owned</span>());
-
-    <span class='comment'>// E 22:38:05.499016 &lt;main&gt; [example:main.rs:7] An error!</span>
-}</pre>
+<p>For further details, see the <a href="index.html">module docs</a>.</p>
 </div></section>
     <section id='search' class="content hidden"></section>
 

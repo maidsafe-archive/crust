@@ -1353,6 +1353,30 @@
 <span id="1310">1310</span>
 <span id="1311">1311</span>
 <span id="1312">1312</span>
+<span id="1313">1313</span>
+<span id="1314">1314</span>
+<span id="1315">1315</span>
+<span id="1316">1316</span>
+<span id="1317">1317</span>
+<span id="1318">1318</span>
+<span id="1319">1319</span>
+<span id="1320">1320</span>
+<span id="1321">1321</span>
+<span id="1322">1322</span>
+<span id="1323">1323</span>
+<span id="1324">1324</span>
+<span id="1325">1325</span>
+<span id="1326">1326</span>
+<span id="1327">1327</span>
+<span id="1328">1328</span>
+<span id="1329">1329</span>
+<span id="1330">1330</span>
+<span id="1331">1331</span>
+<span id="1332">1332</span>
+<span id="1333">1333</span>
+<span id="1334">1334</span>
+<span id="1335">1335</span>
+<span id="1336">1336</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -1387,7 +1411,7 @@
 <span class='kw'>use</span> <span class='ident'>nat_traversal</span>::{<span class='ident'>MappedUdpSocket</span>, <span class='ident'>MappingContext</span>, <span class='ident'>PrivRendezvousInfo</span>, <span class='ident'>MappedTcpSocket</span>,
                     <span class='ident'>PubRendezvousInfo</span>, <span class='ident'>PunchedUdpSocket</span>, <span class='ident'>gen_rendezvous_info</span>,
                     <span class='ident'>SimpleUdpHolePunchServer</span>, <span class='ident'>SimpleTcpHolePunchServer</span>, <span class='ident'>tcp_punch_hole</span>};
-
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>time</span>::<span class='ident'>Duration</span>;
 
 <span class='kw'>use</span> <span class='ident'>sender_receiver</span>::<span class='ident'>CrustMsg</span>;
 <span class='kw'>use</span> <span class='ident'>connection</span>::{<span class='ident'>RaiiTcpAcceptor</span>, <span class='ident'>UtpRendezvousConnectMode</span>};
@@ -1488,6 +1512,8 @@
     <span class='ident'>_udp_hole_punch_server</span>: <span class='ident'>SimpleUdpHolePunchServer</span><span class='op'>&lt;</span><span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>MappingContext</span><span class='op'>&gt;&gt;</span>,
     <span class='ident'>_tcp_hole_punch_server</span>: <span class='ident'>SimpleTcpHolePunchServer</span><span class='op'>&lt;</span><span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>MappingContext</span><span class='op'>&gt;&gt;</span>,
     <span class='ident'>is_alive</span>: <span class='ident'>Arc</span><span class='op'>&lt;</span><span class='ident'>AtomicBool</span><span class='op'>&gt;</span>,
+    <span class='ident'>heartbeat_timeout</span>: <span class='ident'>Duration</span>,
+    <span class='ident'>inactivity_timeout</span>: <span class='ident'>Duration</span>,
 }
 
 <span class='kw'>impl</span> <span class='ident'>Service</span> {
@@ -1552,7 +1578,9 @@
                                            <span class='ident'>bootstrap_cache</span>.<span class='ident'>clone</span>(),
                                            <span class='ident'>mapping_context</span>.<span class='ident'>clone</span>(),
                                            <span class='ident'>config</span>.<span class='ident'>enable_tcp</span>,
-                                           <span class='ident'>config</span>.<span class='ident'>enable_utp</span>);
+                                           <span class='ident'>config</span>.<span class='ident'>enable_utp</span>,
+                                           <span class='ident'>config</span>.<span class='ident'>heartbeat_timeout</span>(),
+                                           <span class='ident'>config</span>.<span class='ident'>inactivity_timeout</span>());
 
         <span class='kw'>let</span> <span class='ident'>udp_hole_punch_server</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>SimpleUdpHolePunchServer</span>::<span class='ident'>new</span>(<span class='ident'>mapping_context</span>.<span class='ident'>clone</span>())
                                              .<span class='ident'>result_log</span>().<span class='ident'>or_else</span>(<span class='op'>|</span><span class='ident'>err</span><span class='op'>|</span> {
@@ -1590,6 +1618,8 @@
             <span class='ident'>_udp_hole_punch_server</span>: <span class='ident'>udp_hole_punch_server</span>,
             <span class='ident'>_tcp_hole_punch_server</span>: <span class='ident'>tcp_hole_punch_server</span>,
             <span class='ident'>is_alive</span>: <span class='ident'>Arc</span>::<span class='ident'>new</span>(<span class='ident'>AtomicBool</span>::<span class='ident'>new</span>(<span class='boolval'>true</span>)),
+            <span class='ident'>heartbeat_timeout</span>: <span class='ident'>config</span>.<span class='ident'>heartbeat_timeout</span>(),
+            <span class='ident'>inactivity_timeout</span>: <span class='ident'>config</span>.<span class='ident'>inactivity_timeout</span>(),
         };
 
         <span class='prelude-val'>Ok</span>(<span class='ident'>service</span>)
@@ -1616,6 +1646,10 @@
                                                                         <span class='self'>self</span>.<span class='ident'>expected_peers</span>
                                                                             .<span class='ident'>clone</span>(),
                                                                         <span class='self'>self</span>.<span class='ident'>mapping_context</span>
+                                                                            .<span class='ident'>clone</span>(),
+                                                                        <span class='self'>self</span>.<span class='ident'>heartbeat_timeout</span>
+                                                                            .<span class='ident'>clone</span>(),
+                                                                        <span class='self'>self</span>.<span class='ident'>inactivity_timeout</span>
                                                                             .<span class='ident'>clone</span>())));
         <span class='prelude-val'>Ok</span>(())
     }
@@ -1630,7 +1664,9 @@
                                                                 <span class='self'>self</span>.<span class='ident'>event_tx</span>.<span class='ident'>clone</span>(),
                                                                 <span class='self'>self</span>.<span class='ident'>connection_map</span>.<span class='ident'>clone</span>(),
                                                                 <span class='self'>self</span>.<span class='ident'>bootstrap_cache</span>.<span class='ident'>clone</span>(),
-                                                                <span class='self'>self</span>.<span class='ident'>mapping_context</span>.<span class='ident'>clone</span>())));
+                                                                <span class='self'>self</span>.<span class='ident'>mapping_context</span>.<span class='ident'>clone</span>(),
+                                                                <span class='self'>self</span>.<span class='ident'>heartbeat_timeout</span>,
+                                                                <span class='self'>self</span>.<span class='ident'>inactivity_timeout</span>)));
         <span class='prelude-val'>Ok</span>(())
     }
 
@@ -1739,8 +1775,12 @@
                 <span class='kw'>let</span> <span class='ident'>result_tx</span> <span class='op'>=</span> <span class='ident'>result_tx</span>.<span class='ident'>clone</span>();
                 <span class='kw'>let</span> <span class='ident'>bootstrap_cache</span> <span class='op'>=</span> <span class='ident'>bootstrap_cache</span>.<span class='ident'>clone</span>();
                 <span class='kw'>let</span> <span class='ident'>static_contact_info</span> <span class='op'>=</span> <span class='ident'>static_contact_info</span>.<span class='ident'>clone</span>();
+                <span class='kw'>let</span> <span class='ident'>heartbeat_timeout</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>heartbeat_timeout</span>.<span class='ident'>clone</span>();
+                <span class='kw'>let</span> <span class='ident'>inactivity_timeout</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>inactivity_timeout</span>.<span class='ident'>clone</span>();
                 <span class='kw'>let</span> _ <span class='op'>=</span> <span class='macro'>thread</span><span class='macro'>!</span>(<span class='string'>&quot;Service::connect tcp direct&quot;</span>, <span class='kw'>move</span> <span class='op'>||</span> {
                     <span class='kw'>match</span> <span class='ident'>connection</span>::<span class='ident'>connect_tcp_endpoint</span>(<span class='ident'>tcp_addr</span>,
+                                                           <span class='ident'>heartbeat_timeout</span>,
+                                                           <span class='ident'>inactivity_timeout</span>,
                                                            <span class='ident'>our_public_key</span>,
                                                            <span class='ident'>event_tx</span>,
                                                            <span class='ident'>connection_map</span>,
@@ -1774,6 +1814,8 @@
                 <span class='kw'>let</span> <span class='ident'>result_tx</span> <span class='op'>=</span> <span class='ident'>result_tx</span>.<span class='ident'>clone</span>();
                 <span class='kw'>let</span> <span class='ident'>priv_tcp_info</span> <span class='op'>=</span> <span class='ident'>our_connection_info</span>.<span class='ident'>priv_tcp_info</span>;
                 <span class='kw'>let</span> <span class='ident'>is_alive</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>is_alive</span>.<span class='ident'>clone</span>();
+                <span class='kw'>let</span> <span class='ident'>heartbeat_timeout</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>heartbeat_timeout</span>.<span class='ident'>clone</span>();
+                <span class='kw'>let</span> <span class='ident'>inactivity_timeout</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>inactivity_timeout</span>.<span class='ident'>clone</span>();
 
                 <span class='kw'>let</span> _ <span class='op'>=</span> <span class='macro'>thread</span><span class='macro'>!</span>(<span class='string'>&quot;Service::connect tcp rendezvous&quot;</span>, <span class='kw'>move</span> <span class='op'>||</span> {
                     <span class='kw'>let</span> <span class='ident'>res</span> <span class='op'>=</span> <span class='ident'>tcp_punch_hole</span>(<span class='ident'>tcp_socket</span>,
@@ -1789,6 +1831,8 @@
                             <span class='kw'>match</span> <span class='ident'>connection</span>::<span class='ident'>tcp_rendezvous_connect</span>(<span class='ident'>connection_map</span>,
                                                                      <span class='ident'>event_tx</span>,
                                                                      <span class='ident'>tcp_stream</span>,
+                                                                     <span class='ident'>heartbeat_timeout</span>,
+                                                                     <span class='ident'>inactivity_timeout</span>,
                                                                      <span class='ident'>their_id</span>) {
                                 <span class='prelude-val'>Ok</span>(()) <span class='op'>=&gt;</span> {
                                     <span class='kw'>let</span> _ <span class='op'>=</span> <span class='ident'>result_tx</span>.<span class='ident'>send</span>(<span class='prelude-val'>Ok</span>(()));
@@ -1819,6 +1863,8 @@
                 <span class='kw'>let</span> <span class='ident'>connection_map</span> <span class='op'>=</span> <span class='ident'>connection_map</span>.<span class='ident'>clone</span>();
                 <span class='kw'>let</span> <span class='ident'>result_tx</span> <span class='op'>=</span> <span class='ident'>result_tx</span>.<span class='ident'>clone</span>();
                 <span class='kw'>let</span> <span class='ident'>is_alive</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>is_alive</span>.<span class='ident'>clone</span>();
+                <span class='kw'>let</span> <span class='ident'>heartbeat_timeout</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>heartbeat_timeout</span>.<span class='ident'>clone</span>();
+                <span class='kw'>let</span> <span class='ident'>inactivity_timeout</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>inactivity_timeout</span>.<span class='ident'>clone</span>();
 
                 <span class='kw'>let</span> _ <span class='op'>=</span> <span class='macro'>thread</span><span class='macro'>!</span>(<span class='string'>&quot;Service::connect utp rendezvous&quot;</span>, <span class='kw'>move</span> <span class='op'>||</span> {
                     <span class='kw'>let</span> <span class='ident'>res</span> <span class='op'>=</span> <span class='ident'>PunchedUdpSocket</span>::<span class='ident'>punch_hole</span>(<span class='ident'>udp_socket</span>, <span class='ident'>priv_udp_info</span>, <span class='ident'>udp_info</span>)
@@ -1843,7 +1889,9 @@
                                                              <span class='ident'>UtpRendezvousConnectMode</span>::<span class='ident'>Normal</span>(<span class='ident'>their_id</span>),
                                                              <span class='ident'>our_public_key</span>.<span class='ident'>clone</span>(),
                                                              <span class='ident'>event_tx</span>,
-                                                             <span class='ident'>connection_map</span>) {
+                                                             <span class='ident'>connection_map</span>,
+                                                             <span class='ident'>heartbeat_timeout</span>,
+                                                             <span class='ident'>inactivity_timeout</span>) {
                         <span class='prelude-val'>Err</span>(<span class='ident'>err</span>) <span class='op'>=&gt;</span> {
                             <span class='kw'>let</span> <span class='ident'>err_msg</span> <span class='op'>=</span> <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;Utp rendezvous connect failed: {}&quot;</span>, <span class='ident'>err</span>);
                             <span class='kw'>let</span> <span class='ident'>err</span> <span class='op'>=</span> <span class='ident'>io</span>::<span class='ident'>Error</span>::<span class='ident'>new</span>(<span class='ident'>err</span>.<span class='ident'>kind</span>(), <span class='ident'>err_msg</span>);

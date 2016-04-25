@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-748' class='srclink' href='../../src/xml/namespace.rs.html#470' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-748' class='srclink' href='../../src/xml/namespace.rs.html#475' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct CheckedTarget&lt;'a&gt;(_);</pre><div class='docblock'><p>A wrapper around <code>NamespaceStack</code> which implements <code>Extend</code> using <code>put_checked()</code>.</p>
 
 <h1 id='example' class='section-header'><a href='#example'>Example</a></h1>
@@ -59,9 +59,9 @@
 <span class='ident'>nst</span>.<span class='ident'>push_empty</span>();
 <span class='ident'>nst</span>.<span class='ident'>put</span>(<span class='string'>&quot;c&quot;</span>, <span class='string'>&quot;urn:C&quot;</span>);
 
-<span class='ident'>nst</span>.<span class='ident'>checked_target</span>().<span class='ident'>extend</span>(<span class='macro'>vec</span><span class='macro'>!</span>[(<span class='string'>&quot;a&quot;</span>, <span class='string'>&quot;urn:Z&quot;</span>), (<span class='string'>&quot;c&quot;</span>, <span class='string'>&quot;urn:Y&quot;</span>), (<span class='string'>&quot;d&quot;</span>, <span class='string'>&quot;urn:D&quot;</span>)]);
+<span class='ident'>nst</span>.<span class='ident'>checked_target</span>().<span class='ident'>extend</span>(<span class='macro'>vec</span><span class='macro'>!</span>[(<span class='string'>&quot;a&quot;</span>, <span class='string'>&quot;urn:Z&quot;</span>), (<span class='string'>&quot;b&quot;</span>, <span class='string'>&quot;urn:B&quot;</span>), (<span class='string'>&quot;c&quot;</span>, <span class='string'>&quot;urn:Y&quot;</span>), (<span class='string'>&quot;d&quot;</span>, <span class='string'>&quot;urn:D&quot;</span>)]);
 <span class='macro'>assert_eq</span><span class='macro'>!</span>(
-    <span class='macro'>vec</span><span class='macro'>!</span>[(<span class='string'>&quot;c&quot;</span>, <span class='string'>&quot;urn:C&quot;</span>), (<span class='string'>&quot;d&quot;</span>, <span class='string'>&quot;urn:D&quot;</span>), (<span class='string'>&quot;a&quot;</span>, <span class='string'>&quot;urn:A&quot;</span>), (<span class='string'>&quot;b&quot;</span>, <span class='string'>&quot;urn:B&quot;</span>)],
+    <span class='macro'>vec</span><span class='macro'>!</span>[(<span class='string'>&quot;a&quot;</span>, <span class='string'>&quot;urn:Z&quot;</span>), (<span class='string'>&quot;c&quot;</span>, <span class='string'>&quot;urn:C&quot;</span>), (<span class='string'>&quot;d&quot;</span>, <span class='string'>&quot;urn:D&quot;</span>), (<span class='string'>&quot;b&quot;</span>, <span class='string'>&quot;urn:B&quot;</span>)],
     <span class='ident'>nst</span>.<span class='ident'>iter</span>().<span class='ident'>collect</span>::<span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span>_<span class='op'>&gt;&gt;</span>()
 );</pre>
 
@@ -69,9 +69,9 @@
 
 <pre class='rust rust-example-rendered'>
 
-<span class='ident'>nst</span>.<span class='ident'>extend</span>(<span class='macro'>vec</span><span class='macro'>!</span>[(<span class='string'>&quot;a&quot;</span>, <span class='string'>&quot;urn:Z&quot;</span>), (<span class='string'>&quot;c&quot;</span>, <span class='string'>&quot;urn:Y&quot;</span>), (<span class='string'>&quot;d&quot;</span>, <span class='string'>&quot;urn:D&quot;</span>)]);
+<span class='ident'>nst</span>.<span class='ident'>extend</span>(<span class='macro'>vec</span><span class='macro'>!</span>[(<span class='string'>&quot;a&quot;</span>, <span class='string'>&quot;urn:Z&quot;</span>), (<span class='string'>&quot;b&quot;</span>, <span class='string'>&quot;urn:B&quot;</span>), (<span class='string'>&quot;c&quot;</span>, <span class='string'>&quot;urn:Y&quot;</span>), (<span class='string'>&quot;d&quot;</span>, <span class='string'>&quot;urn:D&quot;</span>)]);
 <span class='macro'>assert_eq</span><span class='macro'>!</span>(
-    <span class='macro'>vec</span><span class='macro'>!</span>[(<span class='string'>&quot;a&quot;</span>, <span class='string'>&quot;urn:Z&quot;</span>), (<span class='string'>&quot;c&quot;</span>, <span class='string'>&quot;urn:C&quot;</span>), (<span class='string'>&quot;d&quot;</span>, <span class='string'>&quot;urn:D&quot;</span>), (<span class='string'>&quot;b&quot;</span>, <span class='string'>&quot;urn:B&quot;</span>)],
+    <span class='macro'>vec</span><span class='macro'>!</span>[(<span class='string'>&quot;a&quot;</span>, <span class='string'>&quot;urn:Z&quot;</span>), (<span class='string'>&quot;b&quot;</span>, <span class='string'>&quot;urn:B&quot;</span>), (<span class='string'>&quot;c&quot;</span>, <span class='string'>&quot;urn:C&quot;</span>), (<span class='string'>&quot;d&quot;</span>, <span class='string'>&quot;urn:D&quot;</span>)],
     <span class='ident'>nst</span>.<span class='ident'>iter</span>().<span class='ident'>collect</span>::<span class='op'>&lt;</span><span class='ident'>Vec</span><span class='op'>&lt;</span>_<span class='op'>&gt;&gt;</span>()
 );</pre>
 </div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl&lt;'a, 'b&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/trait.Extend.html' title='core::iter::Extend'>Extend</a>&lt;<a class='type' href='../../xml/namespace/type.UriMapping.html' title='xml::namespace::UriMapping'>UriMapping</a>&lt;'b&gt;&gt; for <a class='struct' href='../../xml/namespace/struct.CheckedTarget.html' title='xml::namespace::CheckedTarget'>CheckedTarget</a>&lt;'a&gt;</code></h3><div class='impl-items'><h4 id='method.extend' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/iter/trait.Extend.html#method.extend' class='fnname'>extend</a>&lt;T&gt;(&amp;mut self, iterable: T) <span class='where'>where T: <a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/trait.IntoIterator.html' title='core::iter::IntoIterator'>IntoIterator</a>&lt;Item=<a class='type' href='../../xml/namespace/type.UriMapping.html' title='xml::namespace::UriMapping'>UriMapping</a>&lt;'b&gt;&gt;</span></code></h4>

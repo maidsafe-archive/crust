@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/maidsafe_utilities-0.4.1/src/lib.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/maidsafe_utilities-0.5.3/src/lib.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>lib.rs.html -- source</title>
@@ -108,6 +108,13 @@
 <span id="65">65</span>
 <span id="66">66</span>
 <span id="67">67</span>
+<span id="68">68</span>
+<span id="69">69</span>
+<span id="70">70</span>
+<span id="71">71</span>
+<span id="72">72</span>
+<span id="73">73</span>
+<span id="74">74</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -154,23 +161,30 @@
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>cfg_attr</span>(<span class='ident'>feature</span><span class='op'>=</span><span class='string'>&quot;clippy&quot;</span>, <span class='ident'>deny</span>(<span class='ident'>clippy</span>, <span class='ident'>clippy_pedantic</span>))]</span>
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>cfg_attr</span>(<span class='ident'>feature</span><span class='op'>=</span><span class='string'>&quot;clippy&quot;</span>, <span class='ident'>allow</span>(<span class='ident'>use_debug</span>))]</span>
 
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>net2</span>;
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>bincode</span>;
-<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>env_logger</span>;
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>log4rs</span>;
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>rustc_serialize</span>;
-<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>time</span>;
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>toml</span>;
 <span class='attribute'>#[<span class='ident'>macro_use</span>]</span>
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>log</span> <span class='kw'>as</span> <span class='ident'>logger</span>;
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>rand</span>;
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>regex</span>;
+<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>ws</span>;
 
-<span class='attribute'>#[<span class='ident'>allow</span>(<span class='ident'>unused_extern_crates</span>)]</span> <span class='comment'>// Needed because the crate is only used for macros</span>
+<span class='attribute'>#[<span class='ident'>allow</span>(<span class='ident'>unused_extern_crates</span>)]</span>
+<span class='comment'>// Needed because the crate is only used for macros</span>
 <span class='attribute'>#[<span class='ident'>macro_use</span>]</span>
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>quick_error</span>;
 
-<span class='attribute'>#[<span class='ident'>macro_use</span>]</span> <span class='kw'>mod</span> <span class='ident'>unwrap</span>;
+<span class='attribute'>#[<span class='ident'>macro_use</span>]</span>
+<span class='kw'>mod</span> <span class='ident'>unwrap</span>;
 
 <span class='doccomment'>/// Utilities related to threading.</span>
-<span class='attribute'>#[<span class='ident'>macro_use</span>]</span><span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>thread</span>;
+<span class='attribute'>#[<span class='ident'>macro_use</span>]</span>
+<span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>thread</span>;
 
-<span class='doccomment'>/// Allows initialising the env_logger with a standard message format.</span>
+<span class='doccomment'>/// Allows initialising the `env_logger` with a standard message format.</span>
 <span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>log</span>;
 <span class='doccomment'>/// Utilities related to event-subsetting.</span>
 <span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>event_sender</span>;

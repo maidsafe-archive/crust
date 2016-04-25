@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-193' class='srclink' href='../../src/maidsafe_utilities/serialisation.rs.html#18-88' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-685' class='srclink' href='../../src/maidsafe_utilities/serialisation.rs.html#18-200' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Functions for serialisation and deserialisation</p>
 </div><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
 <table>
@@ -63,7 +63,7 @@
                         <td><a class='fn' href='fn.deserialise.html'
                                title='maidsafe_utilities::serialisation::deserialise'>deserialise</a></td>
                         <td class='docblock short'>
-                             <p>Deserialise a Decodable type</p>
+                             <p>Deserialise a Decodable type using default max size limit.</p>
                         </td>
                     </tr>
                 
@@ -71,7 +71,23 @@
                         <td><a class='fn' href='fn.deserialise_from.html'
                                title='maidsafe_utilities::serialisation::deserialise_from'>deserialise_from</a></td>
                         <td class='docblock short'>
-                             <p>Deserialise a Decodable type directly from a Read</p>
+                             <p>Deserialise a Decodable type directly from a Read with default size limit.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.deserialise_from_with_limit.html'
+                               title='maidsafe_utilities::serialisation::deserialise_from_with_limit'>deserialise_from_with_limit</a></td>
+                        <td class='docblock short'>
+                             <p>Deserialise a Decodable type directly from a Read with max size limit specified.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.deserialise_with_limit.html'
+                               title='maidsafe_utilities::serialisation::deserialise_with_limit'>deserialise_with_limit</a></td>
+                        <td class='docblock short'>
+                             <p>Deserialise a Decodable type with max size limit specified.</p>
                         </td>
                     </tr>
                 
@@ -79,7 +95,7 @@
                         <td><a class='fn' href='fn.serialise.html'
                                title='maidsafe_utilities::serialisation::serialise'>serialise</a></td>
                         <td class='docblock short'>
-                             <p>Serialise an Encodable type</p>
+                             <p>Serialise an Encodable type using default max size limit.</p>
                         </td>
                     </tr>
                 
@@ -87,7 +103,23 @@
                         <td><a class='fn' href='fn.serialise_into.html'
                                title='maidsafe_utilities::serialisation::serialise_into'>serialise_into</a></td>
                         <td class='docblock short'>
-                             <p>Serialise an Encodable type directly into a Write.</p>
+                             <p>Serialise an Encodable type directly into a Write with default size limit.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.serialise_into_with_limit.html'
+                               title='maidsafe_utilities::serialisation::serialise_into_with_limit'>serialise_into_with_limit</a></td>
+                        <td class='docblock short'>
+                             <p>Serialise an Encodable type directly into a Write with max size limit specified.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.serialise_with_limit.html'
+                               title='maidsafe_utilities::serialisation::serialise_with_limit'>serialise_with_limit</a></td>
+                        <td class='docblock short'>
+                             <p>Serialise an Encodable type with max limit specified.</p>
                         </td>
                     </tr>
                 </table></section>

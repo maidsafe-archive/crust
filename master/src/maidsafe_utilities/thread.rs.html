@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/maidsafe_utilities-0.4.1/src/thread.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/maidsafe_utilities-0.5.3/src/thread.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>thread.rs.html -- source</title>
@@ -229,7 +229,7 @@
     <span class='kw'>use</span> <span class='ident'>super</span>::<span class='op'>*</span>;
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>thread</span>;
     <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>time</span>::<span class='ident'>Duration</span>;
-    <span class='kw'>use</span> <span class='ident'>time</span>::<span class='ident'>SteadyTime</span>;
+    <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>time</span>::<span class='ident'>SteadyTime</span>;
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>raii_thread_joiner</span>() {
