@@ -82,22 +82,18 @@ fn upgrade_writer(mut stream: TcpStream,
                                        Ok(WriteEvent::Shutdown) => break,
                                        Err(TryRecvError::Empty) => {
                                            let now = Instant::now();
-                                           let mut last_activity = last_write_activity.clone();
-                                           let mut heartbeat_deadline = last_activity + heartbeat_timeout;
-                                           {
-                                               if now > heartbeat_deadline {
-                                                   let guard = last_read_activity.lock().unwrap();
-                                                   if *guard > last_activity {
-                                                       last_activity = guard.clone();
-                                                       heartbeat_deadline = last_activity + heartbeat_timeout;
-                                                   }
-                                               }
-                                           }
-                                           let inactivity_deadline = last_activity + inactivity_timeout;
+                                           let last_read_activity = last_read_activity.lock().unwrap().clone();
+                                           let inactivity_deadline = last_read_activity + inactivity_timeout;
                                            if now > inactivity_deadline {
                                                info!("Stale connection. Dropping...");
                                                break;
                                            }
+                                           let last_activity = if last_write_activity > last_read_activity {
+                                               last_write_activity
+                                           } else {
+                                               last_read_activity
+                                           };
+                                           let heartbeat_deadline = last_activity + heartbeat_timeout;
                                            if now > heartbeat_deadline {
                                                if let Err(e) = stream.write_all(&heartbeat_msg) {
                                                    error!("Error sending: {:?}", e);
