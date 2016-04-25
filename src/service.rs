@@ -31,7 +31,7 @@ use net2;
 use nat_traversal::{MappedUdpSocket, MappingContext, PrivRendezvousInfo, MappedTcpSocket,
                     PubRendezvousInfo, PunchedUdpSocket, gen_rendezvous_info,
                     SimpleUdpHolePunchServer, SimpleTcpHolePunchServer, tcp_punch_hole};
-
+use std::time::Duration;
 
 use sender_receiver::CrustMsg;
 use connection::{RaiiTcpAcceptor, UtpRendezvousConnectMode};
@@ -132,6 +132,8 @@ pub struct Service {
     _udp_hole_punch_server: SimpleUdpHolePunchServer<Arc<MappingContext>>,
     _tcp_hole_punch_server: SimpleTcpHolePunchServer<Arc<MappingContext>>,
     is_alive: Arc<AtomicBool>,
+    heartbeat_timeout: Duration,
+    inactivity_timeout: Duration,
 }
 
 impl Service {
@@ -196,7 +198,9 @@ impl Service {
                                            bootstrap_cache.clone(),
                                            mapping_context.clone(),
                                            config.enable_tcp,
-                                           config.enable_utp);
+                                           config.enable_utp,
+                                           config.heartbeat_timeout(),
+                                           config.inactivity_timeout());
 
         let udp_hole_punch_server = try!(SimpleUdpHolePunchServer::new(mapping_context.clone())
                                              .result_log().or_else(|err| {
@@ -234,6 +238,8 @@ impl Service {
             _udp_hole_punch_server: udp_hole_punch_server,
             _tcp_hole_punch_server: tcp_hole_punch_server,
             is_alive: Arc::new(AtomicBool::new(true)),
+            heartbeat_timeout: config.heartbeat_timeout(),
+            inactivity_timeout: config.inactivity_timeout(),
         };
 
         Ok(service)
@@ -260,6 +266,10 @@ impl Service {
                                                                         self.expected_peers
                                                                             .clone(),
                                                                         self.mapping_context
+                                                                            .clone(),
+                                                                        self.heartbeat_timeout
+                                                                            .clone(),
+                                                                        self.inactivity_timeout
                                                                             .clone())));
         Ok(())
     }
@@ -274,7 +284,9 @@ impl Service {
                                                                 self.event_tx.clone(),
                                                                 self.connection_map.clone(),
                                                                 self.bootstrap_cache.clone(),
-                                                                self.mapping_context.clone())));
+                                                                self.mapping_context.clone(),
+                                                                self.heartbeat_timeout,
+                                                                self.inactivity_timeout)));
         Ok(())
     }
 
@@ -383,8 +395,12 @@ impl Service {
                 let result_tx = result_tx.clone();
                 let bootstrap_cache = bootstrap_cache.clone();
                 let static_contact_info = static_contact_info.clone();
+                let heartbeat_timeout = self.heartbeat_timeout.clone();
+                let inactivity_timeout = self.inactivity_timeout.clone();
                 let _ = thread!("Service::connect tcp direct", move || {
                     match connection::connect_tcp_endpoint(tcp_addr,
+                                                           heartbeat_timeout,
+                                                           inactivity_timeout,
                                                            our_public_key,
                                                            event_tx,
                                                            connection_map,
@@ -418,6 +434,8 @@ impl Service {
                 let result_tx = result_tx.clone();
                 let priv_tcp_info = our_connection_info.priv_tcp_info;
                 let is_alive = self.is_alive.clone();
+                let heartbeat_timeout = self.heartbeat_timeout.clone();
+                let inactivity_timeout = self.inactivity_timeout.clone();
 
                 let _ = thread!("Service::connect tcp rendezvous", move || {
                     let res = tcp_punch_hole(tcp_socket,
@@ -433,6 +451,8 @@ impl Service {
                             match connection::tcp_rendezvous_connect(connection_map,
                                                                      event_tx,
                                                                      tcp_stream,
+                                                                     heartbeat_timeout,
+                                                                     inactivity_timeout,
                                                                      their_id) {
                                 Ok(()) => {
                                     let _ = result_tx.send(Ok(()));
@@ -463,6 +483,8 @@ impl Service {
                 let connection_map = connection_map.clone();
                 let result_tx = result_tx.clone();
                 let is_alive = self.is_alive.clone();
+                let heartbeat_timeout = self.heartbeat_timeout.clone();
+                let inactivity_timeout = self.inactivity_timeout.clone();
 
                 let _ = thread!("Service::connect utp rendezvous", move || {
                     let res = PunchedUdpSocket::punch_hole(udp_socket, priv_udp_info, udp_info)
@@ -487,7 +509,9 @@ impl Service {
                                                              UtpRendezvousConnectMode::Normal(their_id),
                                                              our_public_key.clone(),
                                                              event_tx,
-                                                             connection_map) {
+                                                             connection_map,
+                                                             heartbeat_timeout,
+                                                             inactivity_timeout) {
                         Err(err) => {
                             let err_msg = format!("Utp rendezvous connect failed: {}", err);
                             let err = io::Error::new(err.kind(), err_msg);
