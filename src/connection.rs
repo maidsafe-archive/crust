@@ -56,6 +56,7 @@ pub struct Connection {
     protocol: Protocol,
     our_addr: SocketAddr,
     their_addr: SocketAddr,
+    hole_punched: bool,
     network_tx: RaiiSender,
     _network_read_joiner: RaiiThreadJoiner,
     closed: Arc<AtomicBool>,
@@ -66,6 +67,7 @@ pub struct ConnectionInfo {
     pub protocol: Protocol,
     pub our_addr: SocketAddr,
     pub their_addr: SocketAddr,
+    pub hole_punched: bool,
     pub closed: bool,
 }
 
@@ -81,10 +83,11 @@ impl Hash for Connection {
 impl Debug for Connection {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         f.debug_struct("Connection")
-            .field("protocol",   &self.protocol)
-            .field("our_addr",   &self.our_addr)
-            .field("their_addr", &self.their_addr)
-            .field("closed",     &self.closed.load(Ordering::Relaxed))
+            .field("protocol",     &self.protocol)
+            .field("our_addr",     &self.our_addr)
+            .field("their_addr",   &self.their_addr)
+            .field("hole_punched", &self.hole_punched)
+            .field("closed",       &self.closed.load(Ordering::Relaxed))
             .finish()
     }
 }
@@ -96,6 +99,7 @@ impl Connection {
             protocol: self.protocol,
             our_addr: self.our_addr,
             their_addr: self.their_addr,
+            hole_punched: self.hole_punched,
             closed: self.closed.load(Ordering::Relaxed),
         }
     }
@@ -272,7 +276,8 @@ pub fn tcp_rendezvous_connect(connection_map: Arc<Mutex<HashMap<PeerId, Vec<Conn
                                              network_tx,
                                              event_tx,
                                              our_addr,
-                                             their_addr);
+                                             their_addr,
+                                             true);
 
     cm.entry(their_id).or_insert_with(Vec::new).push(connection);
     Ok(())
@@ -368,7 +373,8 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
                                              network_tx,
                                              event_tx,
                                              our_addr,
-                                             their_addr);
+                                             their_addr,
+                                             false);
     cm.entry(their_id).or_insert_with(|| vec![]).push(connection);
     Ok(())
 }
@@ -379,7 +385,8 @@ fn register_tcp_connection(connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connect
                            network_tx: RaiiSender,
                            event_tx: ::CrustEventSender,
                            our_addr: SocketAddr,
-                           their_addr: SocketAddr) -> Connection {
+                           their_addr: SocketAddr,
+                           hole_punched: bool) -> Connection {
     let closed = Arc::new(AtomicBool::new(false));
     let closed_clone = closed.clone();
 
@@ -391,6 +398,7 @@ fn register_tcp_connection(connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connect
         protocol: Protocol::Tcp,
         our_addr: our_addr,
         their_addr: their_addr,
+        hole_punched: hole_punched,
         network_tx: network_tx,
         _network_read_joiner: joiner,
         closed: closed,
@@ -555,7 +563,8 @@ pub fn start_tcp_accept(port: u16,
                                                      RaiiSender(writer),
                                                      event_tx.clone(),
                                                      our_addr,
-                                                     their_addr);
+                                                     their_addr,
+                                                     false);
 
             cm.entry(their_id)
               .or_insert_with(Vec::new)
@@ -712,6 +721,8 @@ pub fn utp_rendezvous_connect(udp_socket: UdpSocket,
         protocol: Protocol::Utp,
         our_addr: our_addr,
         their_addr: their_new_addr,
+        // TODO: detect hole punching and set this flag accordingly
+        hole_punched: false,
         network_tx: RaiiSender(writer),
         _network_read_joiner: joiner,
         closed: closed,
