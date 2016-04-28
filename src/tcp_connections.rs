@@ -22,9 +22,10 @@ use std::thread;
 use std::sync::mpsc;
 use std::sync::mpsc::Sender;
 use std::io::Write;
+use bincode::SizeLimit;
 
 use event::WriteEvent;
-use maidsafe_utilities::serialisation::serialise;
+use maidsafe_utilities::serialisation::serialise_with_limit;
 
 /// Connect to a peer and open a send-receive pair.  See `upgrade` for more details.
 pub fn connect_tcp(addr: SocketAddr) -> io::Result<(TcpStream, Sender<WriteEvent>)> {
@@ -54,7 +55,7 @@ fn upgrade_writer(mut stream: TcpStream) -> Sender<WriteEvent> {
                                        match event {
                                            WriteEvent::Write(data) => {
                                                use std::io::Write;
-                                               let msg = unwrap_result!(serialise(&data));
+                                               let msg = unwrap_result!(serialise_with_limit(&data, SizeLimit::Infinite));
                                                if stream.write_all(&msg).is_err() {
                                                    break;
                                                }
@@ -208,7 +209,7 @@ mod test {
                     Ok(CrustMsg::Message(msg)) => {
                         let s: String = unwrap_result!(deserialise(&msg));
                         assert_eq!(s, format!("MSG{}", i));
-                    },
+                    }
                     Ok(m) => panic!("Unexpected crust message type {:#?}", m),
                     Err(what) => panic!("Problem decoding message {}", what),
                 }
@@ -223,6 +224,78 @@ mod test {
         }
 
         assert!(t.join().is_ok());
+    }
+
+    #[test]
+    #[allow(unused)]
+    fn big_data_exchange() {
+        use rand::Rng;
+        use std::str::FromStr;
+        use std::time::Instant;
+        use sodiumoxide::crypto::box_;
+        use sodiumoxide::crypto::sign;
+        use bincode::SizeLimit;
+        use maidsafe_utilities::serialisation::deserialise_from_with_limit;
+
+        let (pk, sk) = sign::gen_keypair();
+
+        let (en_pk, en_sk) = box_::gen_keypair();
+        let en_pk_clone = en_pk.clone();
+        let en_sk_clone = en_sk.clone();
+
+        let en_nonce = box_::gen_nonce();
+        let en_nonce_clone = en_nonce.clone();
+
+        let mut os_rng = unwrap_result!(::rand::OsRng::new());
+        let payload: Vec<u8> = (0..1024 * 1024 * 10).map(|_| os_rng.gen()).collect();
+        // let payload = vec![255u8; 1];
+
+        let (finished_tx, finished_rx) = mpsc::channel();
+
+        let _ = thread!("Client", move || {
+            let listener = unwrap_result!(TcpListener::bind("127.0.0.1:55559"));
+            let (server_strm, _peer_addr) = unwrap_result!(listener.accept());
+            let (mut strm, _writer) = unwrap_result!(upgrade_tcp(server_strm));
+
+            for _ in 0..10 {
+                match unwrap_result!(deserialise_from_with_limit::<_,
+                                                                   CrustMsg>(&mut strm,
+                                                                             SizeLimit::Infinite)) {
+                    CrustMsg::Message(msg) => {
+                        let cipher_text = unwrap_result!(sign::verify(&msg, &pk));
+                        let _ = unwrap_result!(box_::open(&cipher_text,
+                                                          &en_nonce_clone,
+                                                          &en_pk_clone,
+                                                          &en_sk_clone));
+                    }
+                    _ => unreachable!(),
+                }
+            }
+
+            let _ = finished_tx.send(());
+        });
+
+        thread::sleep(Duration::from_millis(100));
+
+        let now = Instant::now();
+
+        let (_stream, writer) =
+            unwrap_result!(connect_tcp(SocketAddr(unwrap_result!(FromStr::from_str("127.0.0.1\
+                                                                                    :55559")))));
+
+        for _ in 0..10 {
+            let cipher_text = box_::seal(&payload, &en_nonce, &en_pk, &en_sk);
+            let signed_payload = sign::sign(&cipher_text, &sk);
+            unwrap_result!(writer.send(WriteEvent::Write(CrustMsg::Message(signed_payload))));
+        }
+
+        unwrap_result!(finished_rx.recv());
+
+        let duration = now.elapsed();
+
+        println!("Duration = {}.{}",
+                 duration.as_secs(),
+                 duration.subsec_nanos());
     }
 
     // #[test]
