@@ -1,7 +1,9 @@
 [root]
 name = "crust"
-version = "0.11.0"
+version = "0.11.1"
 dependencies = [
+ "bufstream 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "byteorder 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "clippy 0.0.64 (registry+https://github.com/rust-lang/crates.io-index)",
  "config_file_handler 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "crossbeam 0.2.9 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -50,6 +52,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "bitflags"
 version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "bufstream"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
