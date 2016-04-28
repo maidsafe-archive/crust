@@ -200,14 +200,18 @@ impl Service {
 
         let udp_hole_punch_server = try!(SimpleUdpHolePunchServer::new(mapping_context.clone())
                                              .result_log().or_else(|err| {
-                                                 let e: io::Error = From::from(err);
-                                                 Err(e)
+                                                 let err_str = format!("Failed to create UDP \
+                                                                        hole punch server: {}",
+                                                                        err);
+                                                 Err(io::Error::new(io::ErrorKind::Other, err_str))
                                              }));
         let tcp_hole_punch_server = try!(SimpleTcpHolePunchServer::new(mapping_context.clone())
-                                             .result_log()
-                                             .or(Err(io::Error::new(io::ErrorKind::Other,
-                                                                    "Failed to create TCP \
-                                                                     hole punch server"))));
+                                             .result_log().or_else(|err| {
+                                                 let err_str = format!("Failed to create TCP \
+                                                                        hole punch server: {}",
+                                                                        err);
+                                                 Err(io::Error::new(io::ErrorKind::Other, err_str))
+                                             }));
 
         {
             let mut static_contact_info = static_contact_info.lock().unwrap();
