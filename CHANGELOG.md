@@ -1,5 +1,8 @@
 # CRUST - Change Log
 
+## [0.11.1]
+- Make deserialisation errors as debug instead of error.
+
 ## [0.11.0]
 - Minor cleanup.
 - Removed unneeded dependency.
