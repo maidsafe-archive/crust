@@ -804,7 +804,7 @@ pub fn print_connection_stats(connection_map: &HashMap<PeerId, Vec<Connection>>)
         };
     }
     let total = direct + punched;
-    debug!("Connection stats: direct ({}/{}), punched ({}/{})", direct, total, punched, total);
+    debug!("Stats - Connections direct ({}/{}), punched ({}/{})", direct, total, punched, total);
 }
 
 #[cfg(test)]
