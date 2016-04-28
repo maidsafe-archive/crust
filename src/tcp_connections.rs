@@ -279,12 +279,12 @@ mod test {
 
             for _ in 0..100 {
                 match unwrap_result!(tcp_rx.receive()) {
-                    CrustMsg::Message(_msg) => {
-                        // let cipher_text = unwrap_result!(sign::verify(&msg, &pk));
-                        // let _ = unwrap_result!(box_::open(&cipher_text,
-                        //                                   &en_nonce_clone,
-                        //                                   &en_pk_clone,
-                        //                                   &en_sk_clone));
+                    CrustMsg::Message(msg) => {
+                        let cipher_text = unwrap_result!(sign::verify(&msg, &pk));
+                        let _ = unwrap_result!(box_::open(&cipher_text,
+                                                          &en_nonce_clone,
+                                                          &en_pk_clone,
+                                                          &en_sk_clone));
                     }
                     _ => unreachable!(),
                 }
@@ -302,9 +302,9 @@ mod test {
                                                                                     :55559")))));
 
         for _ in 0..100 {
-            // let cipher_text = box_::seal(&payload, &en_nonce, &en_pk, &en_sk);
-            // let signed_payload = sign::sign(&cipher_text, &sk);
-            unwrap_result!(writer.send(WriteEvent::Write(CrustMsg::Message(payload.clone()))));
+            let cipher_text = box_::seal(&payload, &en_nonce, &en_pk, &en_sk);
+            let signed_payload = sign::sign(&cipher_text, &sk);
+            unwrap_result!(writer.send(WriteEvent::Write(CrustMsg::Message(signed_payload))));
         }
 
         unwrap_result!(finished_rx.recv());
