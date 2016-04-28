@@ -23,7 +23,7 @@ use std::sync::mpsc::Sender;
 use std::io::Write;
 
 use event::WriteEvent;
-use maidsafe_utilities::serialisation::serialise;
+// use maidsafe_utilities::serialisation::serialise;
 
 /// Connect to a peer and open a send-receive pair.  See `upgrade` for more details.
 pub fn connect_tcp(addr: SocketAddr) -> io::Result<(TcpStream, Sender<WriteEvent>)> {
@@ -45,6 +45,9 @@ pub fn upgrade_tcp(stream: TcpStream) -> io::Result<(TcpStream, Sender<WriteEven
 }
 
 fn upgrade_writer(mut stream: TcpStream) -> Sender<WriteEvent> {
+    use bincode::SizeLimit;
+    use maidsafe_utilities::serialisation::serialise_with_limit;
+
     let (tx, rx) = mpsc::channel();
     let _ = thread!("TCP writer", move || {
         while let Ok(event) = rx.recv() {
@@ -53,7 +56,7 @@ fn upgrade_writer(mut stream: TcpStream) -> Sender<WriteEvent> {
                     use std::io::Write;
                     use byteorder::{WriteBytesExt, LittleEndian};
 
-                    let payload = unwrap_result!(serialise(&data));
+                    let payload = unwrap_result!(serialise_with_limit(&data, SizeLimit::Infinite));
                     let size = payload.len() as u32;
                     let mut little_endian_size_bytes = Vec::with_capacity(4);
                     unwrap_result!(little_endian_size_bytes.write_u32::<LittleEndian>(size));
@@ -242,6 +245,77 @@ mod test {
         assert!(t.join().is_ok());
     }
 
+    #[test]
+    #[allow(unused)]
+    fn big_data_exchange() {
+        use rand::Rng;
+        use std::str::FromStr;
+        use sender_receiver::Receiver;
+        use std::time::Instant;
+        use sodiumoxide::crypto::box_;
+        use sodiumoxide::crypto::sign;
+
+        let (pk, sk) = sign::gen_keypair();
+
+        let (en_pk, en_sk) = box_::gen_keypair();
+        let en_pk_clone = en_pk.clone();
+        let en_sk_clone = en_sk.clone();
+
+        let en_nonce = box_::gen_nonce();
+        let en_nonce_clone = en_nonce.clone();
+
+        let mut os_rng = unwrap_result!(::rand::OsRng::new());
+        let payload: Vec<u8> = (0..1024 * 1024 * 10).map(|_| os_rng.gen()).collect();
+        // let payload = vec![255u8; 1];
+
+        let (finished_tx, finished_rx) = mpsc::channel();
+
+        let _ = thread!("Client", move || {
+            let listener = unwrap_result!(TcpListener::bind("127.0.0.1:55559"));
+            let (server_strm, _peer_addr) = unwrap_result!(listener.accept());
+            let (strm, _writer) = unwrap_result!(upgrade_tcp(server_strm));
+
+            let mut tcp_rx = Receiver::tcp(strm);
+
+            for _ in 0..100 {
+                match unwrap_result!(tcp_rx.receive()) {
+                    CrustMsg::Message(_msg) => {
+                        // let cipher_text = unwrap_result!(sign::verify(&msg, &pk));
+                        // let _ = unwrap_result!(box_::open(&cipher_text,
+                        //                                   &en_nonce_clone,
+                        //                                   &en_pk_clone,
+                        //                                   &en_sk_clone));
+                    }
+                    _ => unreachable!(),
+                }
+            }
+
+            let _ = finished_tx.send(());
+        });
+
+        thread::sleep(Duration::from_millis(100));
+
+        let now = Instant::now();
+
+        let (_stream, writer) =
+            unwrap_result!(connect_tcp(SocketAddr(unwrap_result!(FromStr::from_str("127.0.0.1\
+                                                                                    :55559")))));
+
+        for _ in 0..100 {
+            // let cipher_text = box_::seal(&payload, &en_nonce, &en_pk, &en_sk);
+            // let signed_payload = sign::sign(&cipher_text, &sk);
+            unwrap_result!(writer.send(WriteEvent::Write(CrustMsg::Message(payload.clone()))));
+        }
+
+        unwrap_result!(finished_rx.recv());
+
+        let duration = now.elapsed();
+
+        println!("Duration = {}.{}",
+                 duration.as_secs(),
+                 duration.subsec_nanos());
+    }
+
     // #[test]
     // fn graceful_port_close() {
     // use std::net::{TcpListener};
@@ -297,5 +371,4 @@ mod test {
     //     assert_eq!(read.len(), data.len());
     //     assert_eq!(read, data);
     // }
-
 }

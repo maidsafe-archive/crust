@@ -24,7 +24,7 @@ use bufstream::BufStream;
 use std::net::TcpStream;
 use rustc_serialize::Decodable;
 use utp_connections::UtpWrapper;
-use maidsafe_utilities::serialisation::{deserialise, deserialise_from};
+use maidsafe_utilities::serialisation::deserialise_from;
 use socket_addr::SocketAddr;
 use sodiumoxide::crypto::box_::PublicKey;
 
@@ -64,6 +64,8 @@ impl Receiver {
     #[allow(unsafe_code)]
     fn basic_receive<D: Decodable + ::std::fmt::Debug>(&mut self) -> io::Result<D> {
         use std::io::{Cursor, Read};
+        use bincode::SizeLimit;
+        use maidsafe_utilities::serialisation::deserialise_with_limit;
         use byteorder::{ReadBytesExt, LittleEndian};
 
         let msg = match *self {
@@ -73,11 +75,11 @@ impl Receiver {
                 let payload_size =
                     try!(Cursor::new(&payload_size_buffer[..]).read_u32::<LittleEndian>()) as usize;
 
-                if payload_size > (1024 * 1024 * 2) {
-                    return Err(io::Error::new(io::ErrorKind::Other,
-                                              format!("Payload size prohibitive at {} bytes",
-                                                      payload_size)));
-                }
+                // if payload_size > (1024 * 1024 * 2) {
+                //     return Err(io::Error::new(io::ErrorKind::Other,
+                //                               format!("Payload size prohibitive at {} bytes",
+                //                                       payload_size)));
+                // }
 
                 let mut payload = Vec::with_capacity(payload_size);
                 unsafe {
@@ -85,7 +87,7 @@ impl Receiver {
                 }
                 try!(reader.read_exact(&mut payload));
 
-                deserialise(&payload)
+                deserialise_with_limit(&payload, SizeLimit::Infinite)
             }
             Receiver::Utp(ref mut reader) => deserialise_from::<_, D>(reader),
         };

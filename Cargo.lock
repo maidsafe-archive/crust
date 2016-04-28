@@ -2,6 +2,7 @@
 name = "crust"
 version = "0.11.1"
 dependencies = [
+ "bincode 0.5.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "bufstream 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "byteorder 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "clippy 0.0.64 (registry+https://github.com/rust-lang/crates.io-index)",
