@@ -68,7 +68,7 @@ impl Receiver {
         match msg {
             Ok(a) => Ok(a),
             Err(err) => {
-                error!("Deserialisation error: {:?}", err);
+                debug!("Deserialisation error: {:?}", err);
                 Err(io::Error::new(io::ErrorKind::InvalidData, "Deserialisation failure"))
             }
         }

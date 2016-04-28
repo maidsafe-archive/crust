@@ -750,7 +750,7 @@ fn start_rx(mut network_rx: Receiver,
                 m => error!("Unexpected message in start_rx: {:?}", m),
             },
             Err(err) => {
-                error!("Error receiving from {:?}: {:?}", their_id, err);
+                debug!("Error receiving from {:?}: {:?}", their_id, err);
                 break;
             }
         }
