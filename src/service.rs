@@ -285,7 +285,7 @@ impl Service {
     /// Starts listening for beacon broadcasts.
     pub fn start_service_discovery(&mut self) {
         if !self.service_discovery.set_listen_for_peers(true) {
-            error!("Failed to start listening for peers.");
+            debug!("Could not start service discovery");
         }
     }
 
