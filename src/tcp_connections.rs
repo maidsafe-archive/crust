@@ -39,6 +39,11 @@ pub fn connect_tcp(addr: SocketAddr) -> io::Result<(TcpStream, Sender<WriteEvent
 /// Upgrades a TcpStream to a Sender-Receiver pair that you can use to send and
 /// receive objects automatically.
 pub fn upgrade_tcp(stream: TcpStream) -> io::Result<(TcpStream, Sender<WriteEvent>)> {
+    use net2::TcpStreamExt;
+
+    if let Err(e) = stream.set_nodelay(true) {
+        warn!("Unable to set no delay on tcp stream: {:?}", e);
+    }
     let s1 = stream;
     let s2 = try!(s1.try_clone());
     Ok((s1, upgrade_writer(s2)))
