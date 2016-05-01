@@ -9,11 +9,16 @@ use std::collections::VecDeque;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 use maidsafe_utilities::serialisation::serialise;
 use event::WriteEvent;
-use std::time::{Duration,Instant};
+use std::time::{Duration, Instant};
 use sender_receiver::CrustMsg;
 
 const CHECK_FOR_NEW_WRITES_INTERVAL_MS: u64 = 50;
 const BUFFER_SIZE: usize = 1000;
+
+/// If a message is larger than this number of bytes, it may be dropped when traffic is high.
+const DROP_MSG_SIZE: usize = 8 * 1024;
+/// If a large message is that old (in seconds) when it arrives in the sending thread, drop it.
+const DROP_MSG_TIMEOUT_SECS: u64 = 30;
 
 pub struct UtpWrapper {
     input: Receiver<Vec<u8>>,
@@ -24,7 +29,8 @@ pub struct UtpWrapper {
 }
 
 impl UtpWrapper {
-    pub fn wrap(socket: UtpSocket, output_rx: Receiver<WriteEvent>,
+    pub fn wrap(socket: UtpSocket,
+                output_rx: Receiver<WriteEvent>,
                 heartbeat_timeout: Duration,
                 inactivity_timeout: Duration)
                 -> io::Result<UtpWrapper> {
@@ -85,9 +91,17 @@ impl UtpWrapper {
                                 let mut send_keepalive = true;
                                 loop {
                                     match output_rx.try_recv() {
-                                        Ok(WriteEvent::Write(msg)) => {
+                                        Ok(WriteEvent::Write(msg, timestamp)) => {
                                             send_keepalive = false;
                                             let data = unwrap_result!(serialise(&msg));
+                                            if data.len() > DROP_MSG_SIZE &&
+                                               timestamp.elapsed().as_secs() >
+                                               DROP_MSG_TIMEOUT_SECS {
+                                                   warn!("Upstream bandwidth too low - dropping \
+                                                          message with {} bytes.",
+                                                         data.len());
+                                                continue;
+                                            }
                                             if let Err(err) = socket.send_to(&data) {
                                                 error!("Error sending: {:?}", err);
                                                 break 'read_write;
