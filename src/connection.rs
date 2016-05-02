@@ -81,11 +81,11 @@ impl Hash for Connection {
 impl Debug for Connection {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         f.debug_struct("Connection")
-            .field("protocol",   &self.protocol)
-            .field("our_addr",   &self.our_addr)
-            .field("their_addr", &self.their_addr)
-            .field("closed",     &self.closed.load(Ordering::Relaxed))
-            .finish()
+         .field("protocol", &self.protocol)
+         .field("our_addr", &self.our_addr)
+         .field("their_addr", &self.their_addr)
+         .field("closed", &self.closed.load(Ordering::Relaxed))
+         .finish()
     }
 }
 
@@ -205,12 +205,16 @@ pub fn connect(peer_contact: StaticContactInfo,
 
         loop {
             let now = Instant::now();
-            let timeout = if now < deadline { deadline - now } else { break };
+            let timeout = if now < deadline {
+                deadline - now
+            } else {
+                break;
+            };
             try!(udp_socket.set_read_timeout(Some(timeout)));
             match udp_socket.recv_from(&mut read_buf) {
                 Ok((bytes_rxd, _peer_addr)) => {
                     match deserialise::<ListenerResponse>(&read_buf[..bytes_rxd]) {
-                        Ok(ListenerResponse::Connect { our_info, their_info, pub_key, }) => {
+                        Ok(ListenerResponse::Connect { our_info, their_info, pub_key }) => {
                             let (their_info, our_info) = (our_info, their_info);
                             let their_pub_key = pub_key;
                             if our_public_key == their_pub_key {
@@ -249,11 +253,12 @@ pub fn connect(peer_contact: StaticContactInfo,
         }
     }
 
-    match unwrap_result!(bootstrap_cache.lock()).update_contacts(vec![], vec![static_contact_info]) {
+    match unwrap_result!(bootstrap_cache.lock())
+              .update_contacts(vec![], vec![static_contact_info]) {
         Ok(()) => (),
         Err(e) => {
             warn!("Unable to update bootstrap cache: {}", e);
-        },
+        }
     };
     Err(last_err)
 }
@@ -266,9 +271,10 @@ pub fn tcp_rendezvous_connect(connection_map: Arc<Mutex<HashMap<PeerId, Vec<Conn
                               their_id: PeerId)
                               -> io::Result<()> {
     let last_read_activity = Arc::new(Mutex::new(Instant::now()));
-    let (network_input, writer)
-        = try!(tcp_connections::upgrade_tcp(tcp_stream, last_read_activity.clone(),
-                                            heartbeat_timeout, inactivity_timeout));
+    let (network_input, writer) = try!(tcp_connections::upgrade_tcp(tcp_stream,
+                                                                    last_read_activity.clone(),
+                                                                    heartbeat_timeout,
+                                                                    inactivity_timeout));
     let our_addr = SocketAddr(try!(network_input.local_addr()));
     let their_addr = SocketAddr(try!(network_input.peer_addr()));
     let network_rx = Receiver::tcp(network_input);
@@ -300,23 +306,23 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
                             their_expected_id: Option<PeerId>)
                             -> io::Result<()> {
     let last_read_activity = Arc::new(Mutex::new(Instant::now()));
-    let (network_input, writer)
-        = try!(tcp_connections::connect_tcp(remote_addr.clone(),
-                                            last_read_activity.clone(),
-                                            heartbeat_timeout,
-                                            inactivity_timeout));
+    let (network_input, writer) = try!(tcp_connections::connect_tcp(remote_addr.clone(),
+                                                                    last_read_activity.clone(),
+                                                                    heartbeat_timeout,
+                                                                    inactivity_timeout));
     let our_addr = SocketAddr(try!(network_input.local_addr()));
     let their_addr = SocketAddr(try!(network_input.peer_addr()));
 
     let mut network_rx = Receiver::tcp(network_input);
     let (their_id, event) = match their_expected_id {
         None => {
-            match writer.send(WriteEvent::Write(CrustMsg::BootstrapRequest(our_public_key))) {
+            match writer.send(WriteEvent::Write(CrustMsg::BootstrapRequest(our_public_key),
+                                                Instant::now())) {
                 Ok(()) => (),
                 Err(_) => {
                     error!("Receiver shut down");
                     return Err(io::Error::new(io::ErrorKind::Other, "Receiver shut down"));
-                },
+                }
             };
             match network_rx.receive() {
                 Ok(CrustMsg::BootstrapResponse(key)) => {
@@ -337,12 +343,13 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
             }
         }
         Some(id) => {
-            match writer.send(WriteEvent::Write(CrustMsg::Connect(our_public_key))) {
+            match writer.send(WriteEvent::Write(CrustMsg::Connect(our_public_key),
+                                                Instant::now())) {
                 Ok(()) => (),
                 Err(_) => {
                     error!("Receiver shut down");
                     return Err(io::Error::new(io::ErrorKind::Other, "Receiver shut down"));
-                },
+                }
             }
             match network_rx.receive() {
                 Ok(CrustMsg::Connect(key)) => {
@@ -400,12 +407,17 @@ fn register_tcp_connection(connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connect
                            last_read_activity: Arc<Mutex<Instant>>,
                            event_tx: ::CrustEventSender,
                            our_addr: SocketAddr,
-                           their_addr: SocketAddr) -> Connection {
+                           their_addr: SocketAddr)
+                           -> Connection {
     let closed = Arc::new(AtomicBool::new(false));
     let closed_clone = closed.clone();
 
     let joiner = RaiiThreadJoiner::new(thread!("TcpNetworkReader", move || {
-        start_rx(network_rx, their_id, event_tx, closed_clone, connection_map,
+        start_rx(network_rx,
+                 their_id,
+                 event_tx,
+                 closed_clone,
+                 connection_map,
                  Some(last_read_activity));
     }));
 
@@ -514,8 +526,7 @@ pub fn start_tcp_accept(port: u16,
             }
 
             let last_read_activity = Arc::new(Mutex::new(Instant::now()));
-            let (network_input, writer)
-                = unwrap_result!(tcp_connections::upgrade_tcp(stream,
+            let (network_input, writer) = unwrap_result!(tcp_connections::upgrade_tcp(stream,
                                                               last_read_activity.clone(),
                                                               heartbeat_timeout,
                                                               inactivity_timeout));
@@ -528,7 +539,8 @@ pub fn start_tcp_accept(port: u16,
             let msg = network_rx.receive();
             let (their_id, event) = match msg {
                 Ok(CrustMsg::BootstrapRequest(k)) => {
-                    match writer.send(WriteEvent::Write(CrustMsg::BootstrapResponse(our_public_key))) {
+                    match writer.send(WriteEvent::Write(CrustMsg::BootstrapResponse(our_public_key),
+                                      Instant::now())) {
                         Ok(()) => (),
                         Err(_) => {
                             error!("Reciever shutdown!");
@@ -551,12 +563,13 @@ pub fn start_tcp_accept(port: u16,
                     let peer_id = peer_id::new_id(k);
                     let mut expected_peers = expected_peers.lock().unwrap();
                     if expected_peers.remove(&peer_id) {
-                        match writer.send(WriteEvent::Write(CrustMsg::Connect(our_public_key))) {
+                        match writer.send(WriteEvent::Write(CrustMsg::Connect(our_public_key),
+                                                            Instant::now())) {
                             Ok(()) => (),
                             Err(_) => {
                                 error!("Receiver shutdown!");
                                 continue;
-                            },
+                            }
                         }
                     } else {
                         continue;
@@ -617,10 +630,10 @@ pub fn utp_rendezvous_connect(udp_socket: UdpSocket,
                               heartbeat_timeout: Duration,
                               inactivity_timeout: Duration)
                               -> io::Result<()> {
-    let (network_input, writer)
-        = try!(utp_connections::rendezvous_connect_utp(udp_socket, their_addr,
-                                                       heartbeat_timeout,
-                                                       inactivity_timeout));
+    let (network_input, writer) = try!(utp_connections::rendezvous_connect_utp(udp_socket,
+                                                                               their_addr,
+                                                                               heartbeat_timeout,
+                                                                               inactivity_timeout));
     let our_addr = SocketAddr(network_input.local_addr());
     let their_new_addr = SocketAddr(network_input.peer_addr());
 
@@ -630,12 +643,13 @@ pub fn utp_rendezvous_connect(udp_socket: UdpSocket,
     let connection_map_clone = connection_map.clone();
     let (mut connection_map_guard, their_id) = match mode {
         UtpRendezvousConnectMode::Normal(id) => {
-            match writer.send(WriteEvent::Write(CrustMsg::Connect(our_public_key))) {
+            match writer.send(WriteEvent::Write(CrustMsg::Connect(our_public_key),
+                                                Instant::now())) {
                 Ok(()) => (),
                 Err(_) => {
                     error!("Receiver shut down");
                     return Err(io::Error::new(io::ErrorKind::Other, "Receiver shut down"));
-                },
+                }
             };
             match network_rx.receive() {
                 Ok(CrustMsg::Connect(key)) => {
@@ -665,12 +679,13 @@ pub fn utp_rendezvous_connect(udp_socket: UdpSocket,
             }
         }
         UtpRendezvousConnectMode::BootstrapConnect => {
-            match writer.send(WriteEvent::Write(CrustMsg::BootstrapRequest(our_public_key))) {
+            match writer.send(WriteEvent::Write(CrustMsg::BootstrapRequest(our_public_key),
+                                                Instant::now())) {
                 Ok(()) => (),
                 Err(_) => {
                     error!("Receiver shut down");
                     return Err(io::Error::new(io::ErrorKind::Other, "Receiver shut down"));
-                },
+                }
             };
             match network_rx.receive() {
                 Ok(CrustMsg::BootstrapResponse(key)) => {
@@ -723,12 +738,13 @@ pub fn utp_rendezvous_connect(udp_socket: UdpSocket,
                 }
                 Err(e) => return Err(e),
             };
-            match writer.send(WriteEvent::Write(CrustMsg::BootstrapResponse(our_public_key))) {
+            match writer.send(WriteEvent::Write(CrustMsg::BootstrapResponse(our_public_key),
+                                                Instant::now())) {
                 Ok(()) => (),
                 Err(_) => {
                     error!("Receiver shut down");
                     return Err(io::Error::new(io::ErrorKind::Other, "Receiver shut down"));
-                },
+                }
             };
             (guard, their_id)
         }
@@ -849,8 +865,8 @@ mod test {
                 protocol: Protocol::Tcp,
                 our_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("10.199.254.200:\
                                                                                30000"))),
-                their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.200:\
-                                                                                 30000"))),
+                their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.\
+                                                                                 200:30000"))),
                 network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
                 closed: Arc::new(AtomicBool::new(false)),
@@ -866,8 +882,8 @@ mod test {
                 protocol: Protocol::Tcp,
                 our_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("10.199.254.200:\
                                                                                30000"))),
-                their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.200:\
-                                                                                 30000"))),
+                their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.\
+                                                                                 200:30000"))),
                 network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
                 closed: Arc::new(AtomicBool::new(false)),
@@ -886,8 +902,8 @@ mod test {
                 protocol: Protocol::Utp,
                 our_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("10.199.254.200:\
                                                                                30000"))),
-                their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.200:\
-                                                                                 30000"))),
+                their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.\
+                                                                                 200:30000"))),
                 network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
                 closed: Arc::new(AtomicBool::new(false)),
@@ -906,8 +922,8 @@ mod test {
                 protocol: Protocol::Tcp,
                 our_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("10.199.254.201:\
                                                                                30000"))),
-                their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.200:\
-                                                                                 30000"))),
+                their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.\
+                                                                                 200:30000"))),
                 network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
                 closed: Arc::new(AtomicBool::new(false)),
@@ -926,8 +942,8 @@ mod test {
                 protocol: Protocol::Tcp,
                 our_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("10.199.254.200:\
                                                                                30000"))),
-                their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.253.200:\
-                                                                                 30000"))),
+                their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.253.\
+                                                                                 200:30000"))),
                 network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
                 closed: Arc::new(AtomicBool::new(false)),
@@ -946,8 +962,8 @@ mod test {
                 protocol: Protocol::Tcp,
                 our_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("10.199.254.200:\
                                                                                30000"))),
-                their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.200:\
-                                                                                 30000"))),
+                their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.\
+                                                                                 200:30000"))),
                 network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
                 closed: Arc::new(AtomicBool::new(true)),

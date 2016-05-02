@@ -27,23 +27,28 @@ use socket_addr::SocketAddr;
 pub use utp_wrapper::UtpWrapper;
 use event::WriteEvent;
 
-pub fn rendezvous_connect_utp(udp_socket: UdpSocket, addr: SocketAddr,
+pub fn rendezvous_connect_utp(udp_socket: UdpSocket,
+                              addr: SocketAddr,
                               heartbeat_timeout: Duration,
                               inactivity_timeout: Duration)
                               -> io::Result<(UtpWrapper, Sender<WriteEvent>)> {
     upgrade_utp(try!(UtpSocket::rendezvous_connect(udp_socket, &*addr)),
-                heartbeat_timeout, inactivity_timeout)
+                heartbeat_timeout,
+                inactivity_timeout)
 }
 
 /// Upgrades a newly connected UtpSocket to a Sender-Receiver pair that you can use to send and
 /// receive objects automatically.  If there is an error decoding or encoding
 /// values, that respective part is shut down.
-pub fn upgrade_utp(newconnection: UtpSocket, heartbeat_timeout: Duration,
+pub fn upgrade_utp(newconnection: UtpSocket,
+                   heartbeat_timeout: Duration,
                    inactivity_timeout: Duration)
                    -> io::Result<(UtpWrapper, Sender<WriteEvent>)> {
     let (output_tx, output_rx) = mpsc::channel();
-    let wrapper = try!(UtpWrapper::wrap(newconnection, output_rx,
-                                        heartbeat_timeout, inactivity_timeout));
+    let wrapper = try!(UtpWrapper::wrap(newconnection,
+                                        output_rx,
+                                        heartbeat_timeout,
+                                        inactivity_timeout));
 
     Ok((wrapper, output_tx))
 }
@@ -80,8 +85,16 @@ mod test {
         let port_0 = unwrap_result!(socket_0.local_addr()).port();
         let port_1 = unwrap_result!(socket_1.local_addr()).port();
 
-        let addr_0 = SocketAddr(net::SocketAddr::V4(net::SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), port_0)));
-        let addr_1 = SocketAddr(net::SocketAddr::V4(net::SocketAddrV4::new(Ipv4Addr::new(127, 0, 0, 1), port_1)));
+        let addr_0 = SocketAddr(net::SocketAddr::V4(net::SocketAddrV4::new(Ipv4Addr::new(127,
+                                                                                         0,
+                                                                                         0,
+                                                                                         1),
+                                                                           port_0)));
+        let addr_1 = SocketAddr(net::SocketAddr::V4(net::SocketAddrV4::new(Ipv4Addr::new(127,
+                                                                                         0,
+                                                                                         0,
+                                                                                         1),
+                                                                           port_1)));
 
         let th0 = spawn(move || {
             let (mut i, o) = unwrap_result!(rendezvous_connect_utp(socket_0, addr_1,
@@ -94,17 +107,19 @@ mod test {
             };
 
             assert_eq!(msg, &[42]);
-            unwrap_result!(o.send(WriteEvent::Write(CrustMsg::Message(vec![43]))));
+            unwrap_result!(o.send(WriteEvent::Write(CrustMsg::Message(vec![43]), Instant::now())));
         });
 
-        let (mut i, o) = unwrap_result!(rendezvous_connect_utp(socket_1, addr_0,
-                                                               Duration::from_secs(HEARTBEAT_TIMEOUT_SECS),
-                                                               Duration::from_secs(INACTIVITY_TIMEOUT_SECS)));
+        let (mut i, o) =
+            unwrap_result!(rendezvous_connect_utp(socket_1,
+                                                  addr_0,
+                                                  Duration::from_secs(HEARTBEAT_TIMEOUT_SECS),
+                                                  Duration::from_secs(INACTIVITY_TIMEOUT_SECS)));
 
         let (tx, rx) = mpsc::channel();
 
         let th1 = spawn(move || {
-            o.send(WriteEvent::Write(CrustMsg::Message(vec![42])));
+            o.send(WriteEvent::Write(CrustMsg::Message(vec![42]), Instant::now()));
 
             let msg = match unwrap_result!(deserialise_from::<_, CrustMsg>(&mut i)) {
                 CrustMsg::Message(msg) => msg,

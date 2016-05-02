@@ -21,6 +21,7 @@ use std::io;
 use std::sync::mpsc;
 use std::io::BufReader;
 use std::net::TcpStream;
+use std::time::Instant;
 use rustc_serialize::Decodable;
 use utp_connections::UtpWrapper;
 use maidsafe_utilities::serialisation::deserialise_from;
@@ -32,7 +33,7 @@ pub struct RaiiSender(pub mpsc::Sender<WriteEvent>);
 impl RaiiSender {
     pub fn send(&self, msg: CrustMsg) -> io::Result<()> {
         self.0
-            .send(WriteEvent::Write(msg))
+            .send(WriteEvent::Write(msg, Instant::now()))
             .map_err(|_| io::Error::new(io::ErrorKind::NotConnected, "can't send"))
     }
 }

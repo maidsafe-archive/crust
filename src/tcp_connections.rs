@@ -20,14 +20,19 @@ use socket_addr::SocketAddr;
 use std::io;
 use std::thread;
 use std::sync::mpsc;
-use std::sync::mpsc::{Sender,TryRecvError};
+use std::sync::mpsc::{Sender, TryRecvError};
 use std::io::Write;
 use std::sync::{Arc, Mutex};
 
 use event::WriteEvent;
 use maidsafe_utilities::serialisation::serialise;
-use std::time::{Duration,Instant};
+use std::time::{Duration, Instant};
 use sender_receiver::CrustMsg;
+
+/// If a message is larger than this number of bytes, it may be dropped when traffic is high.
+const DROP_MSG_SIZE: usize = 8 * 1024;
+/// If a large message is that old (in seconds) when it arrives in the sending thread, drop it.
+const DROP_MSG_TIMEOUT_SECS: u64 = 10;
 
 /// Connect to a peer and open a send-receive pair.  See `upgrade` for more details.
 pub fn connect_tcp(addr: SocketAddr,
@@ -40,7 +45,9 @@ pub fn connect_tcp(addr: SocketAddr,
         return Err(io::Error::new(io::ErrorKind::ConnectionRefused, "TCP simultaneous open"));
     }
 
-    Ok(try!(upgrade_tcp(stream, last_read_activity, heartbeat_timeout,
+    Ok(try!(upgrade_tcp(stream,
+                        last_read_activity,
+                        heartbeat_timeout,
                         inactivity_timeout)))
 }
 
@@ -54,8 +61,11 @@ pub fn upgrade_tcp(stream: TcpStream,
                    -> io::Result<(TcpStream, Sender<WriteEvent>)> {
     let s1 = stream;
     let s2 = try!(s1.try_clone());
-    Ok((s1, upgrade_writer(s2, last_read_activity, heartbeat_timeout,
-                           inactivity_timeout)))
+    Ok((s1,
+        upgrade_writer(s2,
+                       last_read_activity,
+                       heartbeat_timeout,
+                       inactivity_timeout)))
 }
 
 fn upgrade_writer(mut stream: TcpStream,
@@ -65,46 +75,66 @@ fn upgrade_writer(mut stream: TcpStream,
                   -> Sender<WriteEvent> {
     let (tx, rx) = mpsc::channel();
     let _ = unwrap_result!(thread::Builder::new()
-                           .name("TCP writer".to_owned())
-                           .spawn(move || {
-                               let heartbeat_msg = unwrap_result!(serialise(&CrustMsg::Heartbeat));
-                               let mut last_write_activity = Instant::now();
-                               loop {
-                                   use std::io::Write;
-                                   match rx.try_recv() {
-                                       Ok(WriteEvent::Write(data)) => {
-                                           let msg = unwrap_result!(serialise(&data));
-                                           if stream.write_all(&msg).is_err() {
-                                               break;
-                                           }
-                                           last_write_activity = Instant::now();
-                                       }
-                                       Ok(WriteEvent::Shutdown) => break,
-                                       Err(TryRecvError::Empty) => {
-                                           let now = Instant::now();
-                                           let last_read_activity = last_read_activity.lock().unwrap().clone();
-                                           let inactivity_deadline = last_read_activity + inactivity_timeout;
-                                           if now > inactivity_deadline {
-                                               info!("Stale connection. Dropping...");
-                                               break;
-                                           }
-                                           let heartbeat_deadline = last_write_activity + heartbeat_timeout;
-                                           if now > heartbeat_deadline {
-                                               if let Err(e) = stream.write_all(&heartbeat_msg) {
-                                                   error!("Error sending: {:?}", e);
+                               .name("TCP writer".to_owned())
+                               .spawn(move || {
+                                   let heartbeat_msg =
+                                       unwrap_result!(serialise(&CrustMsg::Heartbeat));
+                                   let mut last_write_activity = Instant::now();
+                                   loop {
+                                       use std::io::Write;
+                                       match rx.try_recv() {
+                                           Ok(WriteEvent::Write(data, timestamp)) => {
+                                               let msg = unwrap_result!(serialise(&data));
+                                               if msg.len() > DROP_MSG_SIZE &&
+                                                  timestamp.elapsed().as_secs() >
+                                                  DROP_MSG_TIMEOUT_SECS {
+                                                   warn!("Upstream bandwidth too low - dropping \
+                                                          message with {} bytes.",
+                                                         msg.len());
+                                                   continue;
+                                               }
+                                               let start_timestamp = Instant::now();
+                                               if stream.write_all(&msg).is_err() {
                                                    break;
                                                }
+                                               if msg.len() > DROP_MSG_SIZE {
+                                                   trace!("Sent {} bytes in {} seconds.",
+                                                          msg.len(),
+                                                          start_timestamp.elapsed().as_secs());
+                                               }
                                                last_write_activity = Instant::now();
-                                           } else {
-                                               // Avoid CPU throttling
-                                               thread::sleep(Duration::from_millis(10));
                                            }
+                                           Ok(WriteEvent::Shutdown) => break,
+                                           Err(TryRecvError::Empty) => {
+                                               let now = Instant::now();
+                                               let last_read_activity = last_read_activity.lock()
+                                                                                          .unwrap()
+                                                                                          .clone();
+                                               let inactivity_deadline = last_read_activity +
+                                                                         inactivity_timeout;
+                                               if now > inactivity_deadline {
+                                                   info!("Stale connection. Dropping...");
+                                                   break;
+                                               }
+                                               let heartbeat_deadline = last_write_activity +
+                                                                        heartbeat_timeout;
+                                               if now > heartbeat_deadline {
+                                                   if let Err(e) =
+                                                          stream.write_all(&heartbeat_msg) {
+                                                       error!("Error sending: {:?}", e);
+                                                       break;
+                                                   }
+                                                   last_write_activity = Instant::now();
+                                               } else {
+                                                   // Avoid CPU throttling
+                                                   thread::sleep(Duration::from_millis(10));
+                                               }
+                                           }
+                                           Err(TryRecvError::Disconnected) => break,
                                        }
-                                       Err(TryRecvError::Disconnected) => break,
                                    }
-                               }
-                               stream.shutdown(Shutdown::Both)
-                           }));
+                                   stream.shutdown(Shutdown::Both)
+                               }));
     tx
 }
 
@@ -116,7 +146,7 @@ mod test {
     use std::net;
     use std::net::TcpListener;
     use std::str::FromStr;
-    use std::time::{Duration,Instant};
+    use std::time::{Duration, Instant};
     use std::sync::mpsc;
     use socket_addr::SocketAddr;
     use event::WriteEvent;
@@ -135,20 +165,22 @@ mod test {
         let listener = unwrap_result!(TcpListener::bind(("0.0.0.0", 0)));
         let port = unwrap_result!(listener.local_addr()).port();
         let last_read_activity = Arc::new(Mutex::new(Instant::now()));
-        let (mut i, o) = unwrap_result!(connect_tcp(loopback(port), last_read_activity,
+        let (mut i, o) = unwrap_result!(connect_tcp(loopback(port),
+                                                    last_read_activity,
                                                     Duration::from_secs(HEARTBEAT_TIMEOUT_SECS),
                                                     Duration::from_secs(INACTIVITY_TIMEOUT_SECS)));
 
         for x in 0..10 {
             let x = vec![x];
-            o.send(WriteEvent::Write(CrustMsg::Message(x))).unwrap()
+            o.send(WriteEvent::Write(CrustMsg::Message(x), Instant::now())).unwrap()
         }
         let t = thread::spawn(move || {
             let connection = unwrap_result!(listener.accept()).0;
             let last_read_activity = Arc::new(Mutex::new(Instant::now()));
-            let (mut i, o) = unwrap_result!(upgrade_tcp(connection, last_read_activity,
-                                                        Duration::from_secs(HEARTBEAT_TIMEOUT_SECS),
-                                                        Duration::from_secs(INACTIVITY_TIMEOUT_SECS)));
+            let (mut i, o) = unwrap_result!(upgrade_tcp(connection,
+                                           last_read_activity,
+                                           Duration::from_secs(HEARTBEAT_TIMEOUT_SECS),
+                                           Duration::from_secs(INACTIVITY_TIMEOUT_SECS)));
             unwrap_result!(i.set_read_timeout(Some(Duration::new(5, 0))));
             let mut buf = Vec::new();
             for _msgnum in 0..10 {
@@ -162,7 +194,7 @@ mod test {
             for item in &mut buf {
                 *item += 1;
             }
-            unwrap_result!(o.send(WriteEvent::Write(CrustMsg::Message(buf))));
+            unwrap_result!(o.send(WriteEvent::Write(CrustMsg::Message(buf), Instant::now())));
         });
         // Collect everything that we get back.
         unwrap_result!(i.set_read_timeout(Some(Duration::new(5, 0))));
@@ -199,15 +231,17 @@ mod test {
         for _ in 0..node_count() {
             let tx2 = tx.clone();
             let last_read_activity = Arc::new(Mutex::new(Instant::now()));
-            let (mut i, o) = connect_tcp(loopback(port), last_read_activity,
+            let (mut i, o) = connect_tcp(loopback(port),
+                                         last_read_activity,
                                          Duration::from_secs(HEARTBEAT_TIMEOUT_SECS),
-                                         Duration::from_secs(INACTIVITY_TIMEOUT_SECS)).unwrap();
+                                         Duration::from_secs(INACTIVITY_TIMEOUT_SECS))
+                                 .unwrap();
             let send_thread = thread::spawn(move || {
                 let mut buf = Vec::with_capacity(MSG_COUNT);
                 for i in 0..MSG_COUNT as u8 {
                     buf.push(i)
                 }
-                o.send(WriteEvent::Write(CrustMsg::Message(buf.clone()))).unwrap();
+                o.send(WriteEvent::Write(CrustMsg::Message(buf.clone()), Instant::now())).unwrap();
 
                 let msg = match unwrap_result!(deserialise_from::<_, CrustMsg>(&mut i)) {
                     CrustMsg::Message(msg) => msg,
@@ -218,9 +252,11 @@ mod test {
             let (connection, _) = listener.accept().unwrap();
             let echo_thread = thread::spawn(move || {
                 let last_read_activity = Arc::new(Mutex::new(Instant::now()));
-                let (mut i, o) = upgrade_tcp(connection, last_read_activity,
+                let (mut i, o) = upgrade_tcp(connection,
+                                             last_read_activity,
                                              Duration::from_secs(HEARTBEAT_TIMEOUT_SECS),
-                                             Duration::from_secs(INACTIVITY_TIMEOUT_SECS)).unwrap();
+                                             Duration::from_secs(INACTIVITY_TIMEOUT_SECS))
+                                     .unwrap();
                 i.set_read_timeout(Some(Duration::new(5, 0))).unwrap();
 
                 let mut msg = match unwrap_result!(deserialise_from::<_, CrustMsg>(&mut i)) {
@@ -231,7 +267,7 @@ mod test {
                 for item in &mut msg {
                     *item += 1
                 }
-                unwrap_result!(o.send(WriteEvent::Write(CrustMsg::Message(msg))));
+                unwrap_result!(o.send(WriteEvent::Write(CrustMsg::Message(msg), Instant::now())));
             });
             unwrap_result!(send_thread.join());
             unwrap_result!(echo_thread.join());
@@ -254,14 +290,18 @@ mod test {
         let port = listener.local_addr().unwrap().port();
 
         let last_read_activity = Arc::new(Mutex::new(Instant::now()));
-        let (_i1, o1) = connect_tcp(loopback(port), last_read_activity,
+        let (_i1, o1) = connect_tcp(loopback(port),
+                                    last_read_activity,
                                     Duration::from_secs(HEARTBEAT_TIMEOUT_SECS),
-                                    Duration::from_secs(INACTIVITY_TIMEOUT_SECS)).unwrap();
+                                    Duration::from_secs(INACTIVITY_TIMEOUT_SECS))
+                            .unwrap();
         let (connection, _) = listener.accept().unwrap();
         let last_read_activity = Arc::new(Mutex::new(Instant::now()));
-        let (i2, _o2) = upgrade_tcp(connection, last_read_activity,
+        let (i2, _o2) = upgrade_tcp(connection,
+                                    last_read_activity,
                                     Duration::from_secs(HEARTBEAT_TIMEOUT_SECS),
-                                    Duration::from_secs(INACTIVITY_TIMEOUT_SECS)).unwrap();
+                                    Duration::from_secs(INACTIVITY_TIMEOUT_SECS))
+                            .unwrap();
 
         fn read_messages(mut reader: TcpStream) {
             reader.set_read_timeout(Some(Duration::new(5, 0))).unwrap();
@@ -271,7 +311,7 @@ mod test {
                     Ok(CrustMsg::Message(msg)) => {
                         let s: String = unwrap_result!(deserialise(&msg));
                         assert_eq!(s, format!("MSG{}", i));
-                    },
+                    }
                     Ok(m) => panic!("Unexpected crust message type {:#?}", m),
                     Err(what) => panic!("Problem decoding message {}", what),
                 }
@@ -282,7 +322,8 @@ mod test {
 
         for i in 0..MSG_COUNT {
             let msg = unwrap_result!(serialise(&format!("MSG{}", i)));
-            assert!(o1.send(WriteEvent::Write(CrustMsg::Message(msg.clone()))).is_ok());
+            assert!(o1.send(WriteEvent::Write(CrustMsg::Message(msg.clone()), Instant::now()))
+                      .is_ok());
         }
 
         assert!(t.join().is_ok());
