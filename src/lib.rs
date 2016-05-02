@@ -60,6 +60,9 @@ extern crate nat_traversal;
 #[cfg(test)]
 extern crate void;
 extern crate crossbeam;
+extern crate byteorder;
+extern crate bufstream;
+extern crate bincode;
 
 #[allow(unused_extern_crates)] // Needed because the crate is only used for macros
 #[macro_use]
