@@ -15,14 +15,20 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use sender_receiver::CrustMsg;
 use std::net::{TcpStream, Shutdown};
 use socket_addr::SocketAddr;
+use std::collections::VecDeque;
 use std::io;
-use std::sync::mpsc;
-use std::sync::mpsc::Sender;
+use std::thread;
+use std::sync::mpsc::{self, TryRecvError, Sender};
 use std::io::Write;
+use std::time::Duration;
 
 use event::WriteEvent;
+
+/// Threshold in bytes below which messages are prioritised.
+const SIZE_THRESHOLD: usize = 10 * 1024;
 
 /// Connect to a peer and open a send-receive pair.  See `upgrade` for more details.
 pub fn connect_tcp(addr: SocketAddr) -> io::Result<(TcpStream, Sender<WriteEvent>)> {
@@ -48,15 +54,44 @@ pub fn upgrade_tcp(stream: TcpStream) -> io::Result<(TcpStream, Sender<WriteEven
     Ok((s1, upgrade_writer(s2)))
 }
 
+fn get_msg_priority(msg: &CrustMsg) -> usize {
+    match *msg {
+        CrustMsg::Message(ref data) if data.len() > SIZE_THRESHOLD => 1,
+        _ => 0,
+    }
+}
+
 fn upgrade_writer(mut stream: TcpStream) -> Sender<WriteEvent> {
     use bincode::SizeLimit;
     use maidsafe_utilities::serialisation::serialise_with_limit;
 
     let (tx, rx) = mpsc::channel();
-    let _ = thread!("TCP writer", move || {
-        while let Ok(event) = rx.recv() {
-            match event {
-                WriteEvent::Write(data) => {
+    let send_msgs = move || {
+        let mut closed = false;
+        // Message queues, sorted by descending priority.
+        let mut msgs = [VecDeque::new(), VecDeque::new()];
+        while !(closed && msgs.iter().all(VecDeque::is_empty)) {
+            // Sort all messages from the channel by priority.
+            loop {
+                match rx.try_recv() {
+                    Ok(WriteEvent::Write(data)) => {
+                        let index = get_msg_priority(&data);
+                        msgs[index].push_back(data);
+                        if msgs[index].len() % 50 == 0 {
+                            warn!("{} messages with priority {}.", msgs[index].len(), index);
+                        }
+                    }
+                    Err(TryRecvError::Disconnected) |
+                    Ok(WriteEvent::Shutdown) => {
+                        closed = true;
+                        break;
+                    }
+                    Err(TryRecvError::Empty) => break,
+                }
+            }
+            // Send the highest-priority message.
+            match msgs.iter_mut().filter_map(VecDeque::pop_front).next() {
+                Some(data) => {
                     use std::io::Write;
                     use byteorder::{WriteBytesExt, LittleEndian};
 
@@ -74,11 +109,12 @@ fn upgrade_writer(mut stream: TcpStream) -> Sender<WriteEvent> {
                         break;
                     }
                 }
-                WriteEvent::Shutdown => break,
+                None => thread::sleep(Duration::from_millis(10)),
             }
         }
         stream.shutdown(Shutdown::Both)
-    });
+    };
+    let _ = unwrap_result!(thread::Builder::new().name("TCP writer".to_owned()).spawn(send_msgs));
     tx
 }
 
@@ -250,7 +286,7 @@ mod test {
     }
 
     #[test]
-    #[allow(unused)]
+    #[ignore]
     fn big_data_exchange() {
         use rand::Rng;
         use std::str::FromStr;
@@ -270,7 +306,6 @@ mod test {
 
         let mut os_rng = unwrap_result!(::rand::OsRng::new());
         let payload: Vec<u8> = (0..1024 * 1024 * 10).map(|_| os_rng.gen()).collect();
-        // let payload = vec![255u8; 1];
 
         let (finished_tx, finished_rx) = mpsc::channel();
 
