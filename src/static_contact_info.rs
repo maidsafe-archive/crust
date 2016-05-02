@@ -16,7 +16,7 @@
 // relating to use of the SAFE Network Software.
 
 use socket_addr::SocketAddr;
-use rustc_serialize::{Encodable, Encoder, Decoder};
+use rustc_serialize::{Encoder, Decoder};
 
 /// This struct contains information needed to Bootstrap and for echo-server services
 #[derive(RustcEncodable, RustcDecodable, Debug, Default, Clone, PartialEq, Eq, Hash)]
