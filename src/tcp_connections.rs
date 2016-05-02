@@ -23,7 +23,6 @@ use std::sync::mpsc::Sender;
 use std::io::Write;
 
 use event::WriteEvent;
-// use maidsafe_utilities::serialisation::serialise;
 
 /// Connect to a peer and open a send-receive pair.  See `upgrade` for more details.
 pub fn connect_tcp(addr: SocketAddr) -> io::Result<(TcpStream, Sender<WriteEvent>)> {
