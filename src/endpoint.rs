@@ -20,7 +20,7 @@ use util;
 use std::net;
 use std::net::IpAddr;
 use std::fmt;
-use rustc_serialize::{Encodable, Encoder, Decoder};
+use rustc_serialize::{Encoder, Decoder};
 use socket_addr::SocketAddr;
 
 /// Enum representing supported transport protocols
