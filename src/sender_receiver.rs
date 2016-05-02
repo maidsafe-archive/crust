@@ -28,6 +28,8 @@ use maidsafe_utilities::serialisation::deserialise_from;
 use socket_addr::SocketAddr;
 use sodiumoxide::crypto::box_::PublicKey;
 
+const MAX_ALLOWED_TCP_PAYLOAD_SIZE: usize = 1024 * 1024 * 2;
+
 pub struct RaiiSender(pub mpsc::Sender<WriteEvent>);
 
 impl RaiiSender {
@@ -75,11 +77,11 @@ impl Receiver {
                 let payload_size =
                     try!(Cursor::new(&payload_size_buffer[..]).read_u32::<LittleEndian>()) as usize;
 
-                // if payload_size > (1024 * 1024 * 2) {
-                //     return Err(io::Error::new(io::ErrorKind::Other,
-                //                               format!("Payload size prohibitive at {} bytes",
-                //                                       payload_size)));
-                // }
+                if payload_size > MAX_ALLOWED_TCP_PAYLOAD_SIZE {
+                    return Err(io::Error::new(io::ErrorKind::Other,
+                                              format!("Payload size prohibitive at {} bytes",
+                                                      payload_size)));
+                }
 
                 let mut payload = Vec::with_capacity(payload_size);
                 unsafe {
