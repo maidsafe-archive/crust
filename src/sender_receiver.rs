@@ -22,7 +22,6 @@ use std::sync::mpsc;
 use std::io::BufReader;
 use std::net::TcpStream;
 use rustc_serialize::Decodable;
-use utp_connections::UtpWrapper;
 use maidsafe_utilities::serialisation::deserialise_from;
 use socket_addr::SocketAddr;
 use sodiumoxide::crypto::box_::PublicKey;
@@ -45,26 +44,19 @@ impl Drop for RaiiSender {
     }
 }
 
-#[allow(variant_size_differences)]
-pub enum Receiver {
-    Tcp(BufReader<TcpStream>),
-    Utp(BufReader<UtpWrapper>),
+
+pub struct Receiver {
+    stream: BufReader<TcpStream>,
 }
 
 impl Receiver {
     pub fn tcp(stream: TcpStream) -> Self {
-        Receiver::Tcp(BufReader::new(stream))
+        Receiver { stream: BufReader::new(stream) }
     }
 
-    pub fn utp(stream: UtpWrapper) -> Self {
-        Receiver::Utp(BufReader::new(stream))
-    }
 
     fn basic_receive<D: Decodable + ::std::fmt::Debug>(&mut self) -> io::Result<D> {
-        let msg = match *self {
-            Receiver::Tcp(ref mut reader) => deserialise_from::<_, D>(reader),
-            Receiver::Utp(ref mut reader) => deserialise_from::<_, D>(reader),
-        };
+        let msg = deserialise_from::<_, D>(&mut self.stream);
         match msg {
             Ok(a) => Ok(a),
             Err(err) => {

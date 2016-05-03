@@ -54,10 +54,17 @@ fn upgrade_writer(mut stream: TcpStream) -> Sender<WriteEvent> {
                                        match event {
                                            WriteEvent::Write(data) => {
                                                use std::io::Write;
-                                               let msg = unwrap_result!(serialise(&data));
-                                               if stream.write_all(&msg).is_err() {
-                                                   break;
-                                               }
+                                               match serialise(&data) {
+                                                   Ok(ref msg) => {
+                                                       if stream.write_all(&msg)
+                                                                .is_err() {
+                                                           break;
+                                                       }
+                                                   }
+                                                   Err(error) => {
+                                                       trace!("serialisation error {}", error)
+                                                   }
+                                               };
                                            }
                                            WriteEvent::Shutdown => break,
                                        }
@@ -208,7 +215,7 @@ mod test {
                     Ok(CrustMsg::Message(msg)) => {
                         let s: String = unwrap_result!(deserialise(&msg));
                         assert_eq!(s, format!("MSG{}", i));
-                    },
+                    }
                     Ok(m) => panic!("Unexpected crust message type {:#?}", m),
                     Err(what) => panic!("Problem decoding message {}", what),
                 }

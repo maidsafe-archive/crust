@@ -48,7 +48,6 @@ extern crate log;
 extern crate net2;
 extern crate rand;
 extern crate rustc_serialize;
-extern crate utp;
 #[macro_use]
 extern crate maidsafe_utilities;
 extern crate socket_addr;
@@ -59,9 +58,11 @@ extern crate service_discovery;
 extern crate nat_traversal;
 #[cfg(test)]
 extern crate void;
+#[cfg(test)]
 extern crate crossbeam;
 
-#[allow(unused_extern_crates)] // Needed because the crate is only used for macros
+#[allow(unused_extern_crates)]
+// Needed because the crate is only used for macros
 #[macro_use]
 extern crate quick_error;
 
@@ -87,12 +88,9 @@ mod bootstrap_handler;
 mod config_handler;
 mod util;
 mod tcp_connections;
-mod utp_connections;
 mod sender_receiver;
 mod static_contact_info;
-mod utp_wrapper;
 mod event;
 mod socket_utils;
 mod ip_info;
 mod peer_id;
-mod udp_listener;
