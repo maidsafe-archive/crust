@@ -178,9 +178,12 @@ impl Service {
 
         let tcp_hole_punch_server = try!(SimpleTcpHolePunchServer::new(mapping_context.clone())
                                              .result_log()
-                                             .or(Err(io::Error::new(io::ErrorKind::Other,
-                                                                    "Failed to create TCP \
-                                                                     hole punch server"))));
+                                             .or_else(|err| {
+                                                 let err_str = format!("Failed to create TCP \
+                                                                        hole punch server: {}",
+                                                                       err);
+                                                 Err(io::Error::new(io::ErrorKind::Other, err_str))
+                                             }));
 
         {
             let mut static_contact_info = static_contact_info.lock().unwrap();
@@ -235,7 +238,7 @@ impl Service {
     /// Starts listening for beacon broadcasts.
     pub fn start_service_discovery(&mut self) {
         if !self.service_discovery.set_listen_for_peers(true) {
-            error!("Failed to start listening for peers.");
+            debug!("Could not start service discovery");
         }
     }
 

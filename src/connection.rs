@@ -52,6 +52,7 @@ pub struct Connection {
     protocol: Protocol,
     our_addr: SocketAddr,
     their_addr: SocketAddr,
+    hole_punched: bool,
     network_tx: RaiiSender,
     _network_read_joiner: RaiiThreadJoiner,
     closed: Arc<AtomicBool>,
@@ -62,6 +63,7 @@ pub struct ConnectionInfo {
     pub protocol: Protocol,
     pub our_addr: SocketAddr,
     pub their_addr: SocketAddr,
+    pub hole_punched: bool,
     pub closed: bool,
 }
 
@@ -77,9 +79,9 @@ impl Hash for Connection {
 impl Debug for Connection {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         f.debug_struct("Connection")
-         .field("protocol", &self.protocol)
          .field("our_addr", &self.our_addr)
          .field("their_addr", &self.their_addr)
+         .field("hole_punched", &self.hole_punched)
          .field("closed", &self.closed.load(Ordering::Relaxed))
          .finish()
     }
@@ -92,6 +94,7 @@ impl Connection {
             protocol: self.protocol,
             our_addr: self.our_addr,
             their_addr: self.their_addr,
+            hole_punched: self.hole_punched,
             closed: self.closed.load(Ordering::Relaxed),
         }
     }
@@ -186,7 +189,8 @@ pub fn tcp_rendezvous_connect(connection_map: Arc<Mutex<HashMap<PeerId, Vec<Conn
                                              network_tx,
                                              event_tx,
                                              our_addr,
-                                             their_addr);
+                                             their_addr,
+                                             true);
 
     cm.entry(their_id).or_insert_with(Vec::new).push(connection);
     Ok(())
@@ -282,7 +286,8 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
                                              network_tx,
                                              event_tx,
                                              our_addr,
-                                             their_addr);
+                                             their_addr,
+                                             false);
     cm.entry(their_id).or_insert_with(|| vec![]).push(connection);
     Ok(())
 }
@@ -293,7 +298,8 @@ fn register_tcp_connection(connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connect
                            network_tx: RaiiSender,
                            event_tx: ::CrustEventSender,
                            our_addr: SocketAddr,
-                           their_addr: SocketAddr)
+                           their_addr: SocketAddr,
+                           hole_punched: bool)
                            -> Connection {
     let closed = Arc::new(AtomicBool::new(false));
     let closed_clone = closed.clone();
@@ -306,6 +312,7 @@ fn register_tcp_connection(connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connect
         protocol: Protocol::Tcp,
         our_addr: our_addr,
         their_addr: their_addr,
+        hole_punched: hole_punched,
         network_tx: network_tx,
         _network_read_joiner: joiner,
         closed: closed,
@@ -440,7 +447,8 @@ pub fn start_tcp_accept(port: u16,
                                                      RaiiSender(writer),
                                                      event_tx.clone(),
                                                      our_addr,
-                                                     their_addr);
+                                                     their_addr,
+                                                     false);
 
             cm.entry(their_id)
               .or_insert_with(Vec::new)
@@ -475,7 +483,7 @@ fn start_rx(mut network_rx: Receiver,
                 }
             }
             Err(err) => {
-                error!("Error receiving from {:?}: {:?}", their_id, err);
+                debug!("Error receiving from {:?}: {:?}", their_id, err);
                 break;
             }
         }
@@ -484,6 +492,7 @@ fn start_rx(mut network_rx: Receiver,
     // Drop the connection in a separate thread, because the destructor joins _this_ thread.
     let _ = thread!("ConnectionDropper", move || {
         let mut lock = unwrap_result!(connection_map.lock());
+        print_connection_stats(&lock);
         if let Entry::Occupied(mut entry) = lock.entry(their_id) {
             entry.get_mut().retain(|connection| !connection.is_closed());
             if entry.get().is_empty() {
@@ -502,11 +511,35 @@ fn notify_new_connection(connection_map: &HashMap<PeerId, Vec<Connection>>,
                          event: Event,
                          event_tx: &::CrustEventSender)
                          -> Result<(), CrustEventSenderError> {
+    print_connection_stats(connection_map);
     if connection_map.get(peer_id).into_iter().all(Vec::is_empty) {
         event_tx.send(event)
     } else {
         Ok(())
     }
+}
+
+pub fn print_connection_stats(connection_map: &HashMap<PeerId, Vec<Connection>>) {
+    let mut punched = 0usize;
+    let mut direct = 0usize;
+    for (peer_id, v) in connection_map {
+        if let Some(conn) = v.get(0) {
+            let s = if conn.hole_punched {
+                punched += 1;
+                "punched"
+            } else {
+                direct += 1;
+                "direct"
+            };
+            trace!("{} [{}]", peer_id, s);
+        };
+    }
+    let total = direct + punched;
+    debug!("Stats - Connections direct ({}/{}), punched ({}/{})",
+           direct,
+           total,
+           punched,
+           total);
 }
 
 #[cfg(test)]
@@ -545,6 +578,7 @@ mod test {
                                                                                30000"))),
                 their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.\
                                                                                  200:30000"))),
+                hole_punched: false,
                 network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
                 closed: Arc::new(AtomicBool::new(false)),
@@ -562,6 +596,7 @@ mod test {
                                                                                30000"))),
                 their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.\
                                                                                  200:30000"))),
+                hole_punched: false,
                 network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
                 closed: Arc::new(AtomicBool::new(false)),
@@ -583,6 +618,7 @@ mod test {
                                                                                30000"))),
                 their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.\
                                                                                  200:30000"))),
+                hole_punched: false,
                 network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
                 closed: Arc::new(AtomicBool::new(false)),
@@ -603,6 +639,7 @@ mod test {
                                                                                30000"))),
                 their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.253.\
                                                                                  200:30000"))),
+                hole_punched: false,
                 network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
                 closed: Arc::new(AtomicBool::new(false)),
@@ -623,6 +660,7 @@ mod test {
                                                                                30000"))),
                 their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.\
                                                                                  200:30000"))),
+                hole_punched: false,
                 network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
                 closed: Arc::new(AtomicBool::new(true)),

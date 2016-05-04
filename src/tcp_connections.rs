@@ -18,13 +18,11 @@
 use std::net::{TcpStream, Shutdown};
 use socket_addr::SocketAddr;
 use std::io;
-use std::thread;
 use std::sync::mpsc;
 use std::sync::mpsc::Sender;
 use std::io::Write;
 
 use event::WriteEvent;
-use maidsafe_utilities::serialisation::serialise;
 
 /// Connect to a peer and open a send-receive pair.  See `upgrade` for more details.
 pub fn connect_tcp(addr: SocketAddr) -> io::Result<(TcpStream, Sender<WriteEvent>)> {
@@ -40,44 +38,54 @@ pub fn connect_tcp(addr: SocketAddr) -> io::Result<(TcpStream, Sender<WriteEvent
 /// Upgrades a TcpStream to a Sender-Receiver pair that you can use to send and
 /// receive objects automatically.
 pub fn upgrade_tcp(stream: TcpStream) -> io::Result<(TcpStream, Sender<WriteEvent>)> {
+    use net2::TcpStreamExt;
+
+    if let Err(e) = stream.set_nodelay(true) {
+        warn!("Unable to set no delay on tcp stream: {:?}", e);
+    }
     let s1 = stream;
     let s2 = try!(s1.try_clone());
     Ok((s1, upgrade_writer(s2)))
 }
 
 fn upgrade_writer(mut stream: TcpStream) -> Sender<WriteEvent> {
+    use bincode::SizeLimit;
+    use maidsafe_utilities::serialisation::serialise_with_limit;
+
     let (tx, rx) = mpsc::channel();
-    let _ = unwrap_result!(thread::Builder::new()
-                               .name("TCP writer".to_owned())
-                               .spawn(move || {
-                                   while let Ok(event) = rx.recv() {
-                                       match event {
-                                           WriteEvent::Write(data) => {
-                                               use std::io::Write;
-                                               match serialise(&data) {
-                                                   Ok(ref msg) => {
-                                                       if stream.write_all(&msg)
-                                                                .is_err() {
-                                                           break;
-                                                       }
-                                                   }
-                                                   Err(error) => {
-                                                       trace!("serialisation error {}", error)
-                                                   }
-                                               };
-                                           }
-                                           WriteEvent::Shutdown => break,
-                                       }
-                                   }
-                                   stream.shutdown(Shutdown::Both)
-                               }));
+    let _ = thread!("TCP writer", move || {
+        while let Ok(event) = rx.recv() {
+            match event {
+                WriteEvent::Write(data) => {
+                    use std::io::Write;
+                    use byteorder::{WriteBytesExt, LittleEndian};
+
+                    let payload = unwrap_result!(serialise_with_limit(&data, SizeLimit::Infinite));
+                    let size = payload.len() as u32;
+                    let mut little_endian_size_bytes = Vec::with_capacity(4);
+                    unwrap_result!(little_endian_size_bytes.write_u32::<LittleEndian>(size));
+
+                    if let Err(e) = stream.write_all(&little_endian_size_bytes) {
+                        debug!("TCP - Failed writing payload size: {:?}", e);
+                        break;
+                    }
+                    if let Err(e) = stream.write_all(&payload) {
+                        debug!("TCP - Failed writing payload: {:?}", e);
+                        break;
+                    }
+                }
+                WriteEvent::Shutdown => break,
+            }
+        }
+        stream.shutdown(Shutdown::Both)
+    });
     tx
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
-    use maidsafe_utilities::serialisation::{deserialise_from, deserialise, serialise};
+    use maidsafe_utilities::serialisation::{deserialise, serialise};
     use std::thread;
     use std::net;
     use std::net::TcpListener;
@@ -94,9 +102,11 @@ mod test {
 
     #[test]
     fn test_small_stream() {
+        use sender_receiver::Receiver;
+
         let listener = unwrap_result!(TcpListener::bind(("0.0.0.0", 0)));
         let port = unwrap_result!(listener.local_addr()).port();
-        let (mut i, o) = unwrap_result!(connect_tcp(loopback(port)));
+        let (i, o) = unwrap_result!(connect_tcp(loopback(port)));
 
         for x in 0..10 {
             let x = vec![x];
@@ -104,11 +114,12 @@ mod test {
         }
         let t = thread::spawn(move || {
             let connection = unwrap_result!(listener.accept()).0;
-            let (mut i, o) = unwrap_result!(upgrade_tcp(connection));
+            let (i, o) = unwrap_result!(upgrade_tcp(connection));
             unwrap_result!(i.set_read_timeout(Some(Duration::new(5, 0))));
             let mut buf = Vec::new();
+            let mut rx = Receiver::tcp(i);
             for _msgnum in 0..10 {
-                let msg = match unwrap_result!(deserialise_from::<_, CrustMsg>(&mut i)) {
+                let msg = match unwrap_result!(rx.receive()) {
                     CrustMsg::Message(msg) => msg,
                     m => panic!("Unexpected crust message: {:#?}", m),
                 };
@@ -122,7 +133,8 @@ mod test {
         });
         // Collect everything that we get back.
         unwrap_result!(i.set_read_timeout(Some(Duration::new(5, 0))));
-        let msg = match unwrap_result!(deserialise_from::<_, CrustMsg>(&mut i)) {
+        let mut rx = Receiver::tcp(i);
+        let msg = match unwrap_result!(rx.receive()) {
             CrustMsg::Message(msg) => msg,
             m => panic!("Unexpected crust message: {:#?}", m),
         };
@@ -145,6 +157,8 @@ mod test {
 
     #[test]
     fn test_multiple_nodes_small_stream() {
+        use sender_receiver::Receiver;
+
         const MSG_COUNT: usize = 5;
 
         let listener = TcpListener::bind(("0.0.0.0", 0)).unwrap();
@@ -154,7 +168,7 @@ mod test {
 
         for _ in 0..node_count() {
             let tx2 = tx.clone();
-            let (mut i, o) = connect_tcp(loopback(port)).unwrap();
+            let (i, o) = connect_tcp(loopback(port)).unwrap();
             let send_thread = thread::spawn(move || {
                 let mut buf = Vec::with_capacity(MSG_COUNT);
                 for i in 0..MSG_COUNT as u8 {
@@ -162,7 +176,8 @@ mod test {
                 }
                 o.send(WriteEvent::Write(CrustMsg::Message(buf.clone()))).unwrap();
 
-                let msg = match unwrap_result!(deserialise_from::<_, CrustMsg>(&mut i)) {
+                let mut rx = Receiver::tcp(i);
+                let msg = match unwrap_result!(rx.receive()) {
                     CrustMsg::Message(msg) => msg,
                     m => panic!("Unexpected message {:#?}", m),
                 };
@@ -170,10 +185,11 @@ mod test {
             });
             let (connection, _) = listener.accept().unwrap();
             let echo_thread = thread::spawn(move || {
-                let (mut i, o) = upgrade_tcp(connection).unwrap();
+                let (i, o) = upgrade_tcp(connection).unwrap();
                 i.set_read_timeout(Some(Duration::new(5, 0))).unwrap();
 
-                let mut msg = match unwrap_result!(deserialise_from::<_, CrustMsg>(&mut i)) {
+                let mut rx = Receiver::tcp(i);
+                let mut msg = match unwrap_result!(rx.receive()) {
                     CrustMsg::Message(msg) => msg,
                     m => panic!("Unexpected message {:#?}", m),
                 };
@@ -197,6 +213,7 @@ mod test {
     #[test]
     fn send_messages_fast() {
         use std::net::TcpStream;
+        use sender_receiver::Receiver;
 
         const MSG_COUNT: u16 = 20;
 
@@ -207,17 +224,17 @@ mod test {
         let (connection, _) = listener.accept().unwrap();
         let (i2, _o2) = upgrade_tcp(connection).unwrap();
 
-        fn read_messages(mut reader: TcpStream) {
+        fn read_messages(reader: TcpStream) {
             reader.set_read_timeout(Some(Duration::new(5, 0))).unwrap();
+            let mut rx = Receiver::tcp(reader);
 
             for i in 0..MSG_COUNT {
-                match deserialise_from::<_, CrustMsg>(&mut reader) {
-                    Ok(CrustMsg::Message(msg)) => {
+                match unwrap_result!(rx.receive()) {
+                    CrustMsg::Message(msg) => {
                         let s: String = unwrap_result!(deserialise(&msg));
                         assert_eq!(s, format!("MSG{}", i));
                     }
-                    Ok(m) => panic!("Unexpected crust message type {:#?}", m),
-                    Err(what) => panic!("Problem decoding message {}", what),
+                    m => panic!("Unexpected crust message type {:#?}", m),
                 }
             }
         }
@@ -232,60 +249,75 @@ mod test {
         assert!(t.join().is_ok());
     }
 
-    // #[test]
-    // fn graceful_port_close() {
-    // use std::net::{TcpListener};
-    // use std::sync::mpsc;
-    // use std::thread::spawn;
+    #[test]
+    #[allow(unused)]
+    fn big_data_exchange() {
+        use rand::Rng;
+        use std::str::FromStr;
+        use sender_receiver::Receiver;
+        use std::time::Instant;
+        use sodiumoxide::crypto::box_;
+        use sodiumoxide::crypto::sign;
 
-    // let tcp_listener = TcpListener::bind((("0.0.0.0"), 0)).unwrap();
+        let (pk, sk) = sign::gen_keypair();
 
-    // let tcp_listener2 = tcp_listener.try_clone().unwrap();
-    // let t = spawn(move || {
-    //    loop {
-    //        match tcp_listener2.accept() {
-    //            Ok(_) => { }
-    //            Err(e) => { break; }
-    //        }
-    //    }
-    // });
+        let (en_pk, en_sk) = box_::gen_keypair();
+        let en_pk_clone = en_pk.clone();
+        let en_sk_clone = en_sk.clone();
 
-    // drop(tcp_listener);
-    // assert!(t.join().is_ok());
-    // let first_binding;
+        let en_nonce = box_::gen_nonce();
+        let en_nonce_clone = en_nonce.clone();
 
-    // {
-    //     let (event_receiver, listener) = listen().unwrap();
-    //     first_binding = listener.local_addr().unwrap();
-    // }
-    // {
-    //     let (event_receiver, listener) = listen().unwrap();
-    //     let second_binding = listener.local_addr().unwrap();
-    //     assert_eq!(first_binding.port(), second_binding.port());
-    // }
-    // }
+        let mut os_rng = unwrap_result!(::rand::OsRng::new());
+        let payload: Vec<u8> = (0..1024 * 1024 * 10).map(|_| os_rng.gen()).collect();
+        // let payload = vec![255u8; 1];
 
-    // #[test]
-    // fn test_stream_large_data() {
-    //     // Has to be sent over several packets
-    //     const LEN: usize = 1024 * 1024;
-    //     let data: Vec<u8> = (0..LEN).map(|idx| idx as u8).collect();
-    //     assert_eq!(LEN, data.len());
-    //
-    //     let d = data.clone(\;
-    //     let receiver_addr = next_test_ip4();
-    //     let mut receiver = UtpStream::bind(receiver_addr);
-    //
-    //     thread::spawn(move || {
-    //         let mut sender = iotry!(UtpStream::connect(receiver_addr));
-    //         iotry!(sender.write(&d[..]));
-    //         iotry!(sender.close());
-    //     });
-    //
-    //     let read = iotry!(receiver.read_to_end());
-    //     assert!(!read.is_empty());
-    //     assert_eq!(read.len(), data.len());
-    //     assert_eq!(read, data);
-    // }
+        let (finished_tx, finished_rx) = mpsc::channel();
+
+        let _ = thread!("Client", move || {
+            let listener = unwrap_result!(TcpListener::bind("127.0.0.1:55559"));
+            let (server_strm, _peer_addr) = unwrap_result!(listener.accept());
+            let (strm, _writer) = unwrap_result!(upgrade_tcp(server_strm));
+
+            let mut tcp_rx = Receiver::tcp(strm);
+
+            for _ in 0..100 {
+                match unwrap_result!(tcp_rx.receive()) {
+                    CrustMsg::Message(msg) => {
+                        let cipher_text = unwrap_result!(sign::verify(&msg, &pk));
+                        let _ = unwrap_result!(box_::open(&cipher_text,
+                                                          &en_nonce_clone,
+                                                          &en_pk_clone,
+                                                          &en_sk_clone));
+                    }
+                    _ => unreachable!(),
+                }
+            }
+
+            let _ = finished_tx.send(());
+        });
+
+        thread::sleep(Duration::from_millis(100));
+
+        let now = Instant::now();
+
+        let (_stream, writer) =
+            unwrap_result!(connect_tcp(SocketAddr(unwrap_result!(FromStr::from_str("127.0.0.1\
+                                                                                    :55559")))));
+
+        for _ in 0..100 {
+            let cipher_text = box_::seal(&payload, &en_nonce, &en_pk, &en_sk);
+            let signed_payload = sign::sign(&cipher_text, &sk);
+            unwrap_result!(writer.send(WriteEvent::Write(CrustMsg::Message(signed_payload))));
+        }
+
+        unwrap_result!(finished_rx.recv());
+
+        let duration = now.elapsed();
+
+        println!("Duration = {}.{}",
+                 duration.as_secs(),
+                 duration.subsec_nanos());
+    }
 
 }
