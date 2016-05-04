@@ -389,10 +389,23 @@ pub fn start_tcp_accept(port: u16,
                 break;
             }
 
-            let (network_input, writer) = unwrap_result!(tcp_connections::upgrade_tcp(stream));
+            let (network_input, writer) = match tcp_connections::upgrade_tcp(stream) {
+                Ok((stream, writer_tx)) => (stream, writer_tx),
+                Err(e) => {
+                    debug!("TCP Acceptor failed to upgrade connected stream: {:?}", e);
+                    continue;
+                }
+            };
 
-            let our_addr = SocketAddr(unwrap_result!(network_input.local_addr()));
-            let their_addr = SocketAddr(unwrap_result!(network_input.peer_addr()));
+            let (our_addr, their_addr) = match (network_input.local_addr(),
+                                                network_input.peer_addr()) {
+                (Ok(our_addr), Ok(their_addr)) => (SocketAddr(our_addr), SocketAddr(their_addr)),
+                (_, Err(e)) | (Err(e), _) => {
+                    debug!("TCP Acceptor failed to get endpoints for connected stream: {:?}",
+                           e);
+                    continue;
+                }
+            };
 
             let mut network_rx = Receiver::tcp(network_input);
 
@@ -592,8 +605,8 @@ mod test {
                 protocol: Protocol::Tcp,
                 our_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("10.199.254.200:\
                                                                                30000"))),
-                their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.\
-                                                                                 200:30000"))),
+                their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.200:\
+                                                                                 30000"))),
                 hole_punched: false,
                 network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
@@ -610,8 +623,8 @@ mod test {
                 protocol: Protocol::Tcp,
                 our_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("10.199.254.200:\
                                                                                30000"))),
-                their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.\
-                                                                                 200:30000"))),
+                their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.200:\
+                                                                                 30000"))),
                 hole_punched: false,
                 network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
@@ -632,8 +645,8 @@ mod test {
                 protocol: Protocol::Tcp,
                 our_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("10.199.254.201:\
                                                                                30000"))),
-                their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.\
-                                                                                 200:30000"))),
+                their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.200:\
+                                                                                 30000"))),
                 hole_punched: false,
                 network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
@@ -653,8 +666,8 @@ mod test {
                 protocol: Protocol::Tcp,
                 our_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("10.199.254.200:\
                                                                                30000"))),
-                their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.253.\
-                                                                                 200:30000"))),
+                their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.253.200:\
+                                                                                 30000"))),
                 hole_punched: false,
                 network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
@@ -674,8 +687,8 @@ mod test {
                 protocol: Protocol::Tcp,
                 our_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("10.199.254.200:\
                                                                                30000"))),
-                their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.\
-                                                                                 200:30000"))),
+                their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.200:\
+                                                                                 30000"))),
                 hole_punched: false,
                 network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
