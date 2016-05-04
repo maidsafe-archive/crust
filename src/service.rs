@@ -18,6 +18,7 @@
 #![deny(unused)]
 
 use std::collections::{HashMap, HashSet};
+use std::hash::{Hash, Hasher, SipHasher};
 use std::io;
 use std::sync::{mpsc, Arc, Mutex};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -96,6 +97,14 @@ impl TheirConnectionInfo {
     }
 }
 
+/// Returns a hash of the crate version.
+fn version_hash() -> u64 {
+    let version = env!("CARGO_PKG_VERSION");
+    let mut hasher = SipHasher::new();
+    version.hash(&mut hasher);
+    hasher.finish()
+}
+
 /// A structure representing a connection manager.
 ///
 /// This abstraction has a hidden dependency on a config file. Refer to [the docs for `FileHandler`]
@@ -116,6 +125,7 @@ pub struct Service {
     raii_tcp_acceptor: Option<RaiiTcpAcceptor>,
     _tcp_hole_punch_server: SimpleTcpHolePunchServer<Arc<MappingContext>>,
     is_alive: Arc<AtomicBool>,
+    version_hash: u64,
 }
 
 impl Service {
@@ -168,13 +178,15 @@ impl Service {
 
         mapping_context.add_simple_tcp_servers(config.tcp_mapper_servers.clone());
         let mapping_context = Arc::new(mapping_context);
+        let version_hash = version_hash();
 
         let bootstrap = RaiiBootstrap::new(bootstrap_contacts,
                                            our_keys.0.clone(),
                                            event_tx.clone(),
                                            connection_map.clone(),
                                            bootstrap_cache.clone(),
-                                           mapping_context.clone());
+                                           mapping_context.clone(),
+                                           version_hash);
 
         let tcp_hole_punch_server = try!(SimpleTcpHolePunchServer::new(mapping_context.clone())
                                              .result_log()
@@ -204,6 +216,7 @@ impl Service {
             raii_tcp_acceptor: None,
             _tcp_hole_punch_server: tcp_hole_punch_server,
             is_alive: Arc::new(AtomicBool::new(true)),
+            version_hash: version_hash,
         };
 
         Ok(service)
@@ -230,10 +243,10 @@ impl Service {
                                                                         self.expected_peers
                                                                             .clone(),
                                                                         self.mapping_context
-                                                                            .clone())));
+                                                                            .clone(),
+                                                                        self.version_hash)));
         Ok(())
     }
-
 
     /// Starts listening for beacon broadcasts.
     pub fn start_service_discovery(&mut self) {
@@ -321,7 +334,7 @@ impl Service {
         let connection_map = self.connection_map.clone();
         let our_public_key = self.our_keys.0.clone();
         let bootstrap_cache = self.bootstrap_cache.clone();
-
+        let version_hash = self.version_hash;
 
         let (result_tx, result_rx) = mpsc::channel();
 
@@ -339,7 +352,8 @@ impl Service {
                                                        event_tx,
                                                        connection_map,
                                                        Some(expected_peers),
-                                                       Some(their_id)) {
+                                                       Some(their_id),
+                                                       version_hash) {
                     Err(err) => {
                         let err_msg = format!("Tcp direct connect failed: {}", err);
                         let err = io::Error::new(err.kind(), err_msg);
@@ -506,18 +520,15 @@ mod test {
     use maidsafe_utilities::event_sender::{MaidSafeObserver, MaidSafeEventCategory};
 
 
-    fn get_event_sender()
-        -> (::CrustEventSender,
-            Receiver<MaidSafeEventCategory>,
-            Receiver<Event>)
+    fn get_event_sender
+        ()
+        -> (::CrustEventSender, Receiver<MaidSafeEventCategory>, Receiver<Event>)
     {
         let (category_tx, category_rx) = mpsc::channel();
         let event_category = MaidSafeEventCategory::Crust;
         let (event_tx, event_rx) = mpsc::channel();
 
-        (MaidSafeObserver::new(event_tx, event_category, category_tx),
-         category_rx,
-         event_rx)
+        (MaidSafeObserver::new(event_tx, event_category, category_tx), category_rx, event_rx)
     }
 
     fn timebomb<R, F>(dur: Duration, f: F) -> R

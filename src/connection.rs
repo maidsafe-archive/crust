@@ -136,7 +136,8 @@ pub fn connect(peer_contact: StaticContactInfo,
                event_tx: ::CrustEventSender,
                connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
                bootstrap_cache: Arc<Mutex<BootstrapHandler>>,
-               mc: &MappingContext)
+               mc: &MappingContext,
+               version_hash: u64)
                -> io::Result<()> {
     let static_contact_info = peer_contact.clone();
 
@@ -149,7 +150,8 @@ pub fn connect(peer_contact: StaticContactInfo,
                                    event_tx.clone(),
                                    connection_map.clone(),
                                    None,
-                                   None) {
+                                   None,
+                                   version_hash) {
             Ok(()) => return Ok(()),
             Err(e) => {
                 warn!("TCP direct connect failed: {}", e);
@@ -157,7 +159,6 @@ pub fn connect(peer_contact: StaticContactInfo,
             }
         }
     }
-
 
     match unwrap_result!(bootstrap_cache.lock())
               .update_contacts(vec![], vec![static_contact_info]) {
@@ -201,7 +202,8 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
                             event_tx: ::CrustEventSender,
                             connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
                             expected_peers: Option<Arc<Mutex<HashSet<PeerId>>>>,
-                            their_expected_id: Option<PeerId>)
+                            their_expected_id: Option<PeerId>,
+                            version_hash: u64)
                             -> io::Result<()> {
     let (network_input, writer) = try!(tcp_connections::connect_tcp(remote_addr.clone()));
     let our_addr = SocketAddr(try!(network_input.local_addr()));
@@ -210,7 +212,8 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
     let mut network_rx = Receiver::tcp(network_input);
     let (their_id, event) = match their_expected_id {
         None => {
-            match writer.send(WriteEvent::Write(CrustMsg::BootstrapRequest(our_public_key))) {
+            match writer.send(WriteEvent::Write(CrustMsg::BootstrapRequest(our_public_key,
+                                                                           version_hash))) {
                 Ok(()) => (),
                 Err(_) => {
                     error!("Receiver shut down");
@@ -236,7 +239,7 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
             }
         }
         Some(id) => {
-            match writer.send(WriteEvent::Write(CrustMsg::Connect(our_public_key))) {
+            match writer.send(WriteEvent::Write(CrustMsg::Connect(our_public_key, version_hash))) {
                 Ok(()) => (),
                 Err(_) => {
                     error!("Receiver shut down");
@@ -244,8 +247,12 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
                 }
             }
             match network_rx.receive() {
-                Ok(CrustMsg::Connect(key)) => {
+                Ok(CrustMsg::Connect(key, v)) => {
                     let their_id = peer_id::new_id(key);
+                    if v != version_hash {
+                        return Err(io::Error::new(io::ErrorKind::Other,
+                                                  "Incompatible protocol version.".to_owned()));
+                    }
                     if their_id != id {
                         return Err(io::Error::new(io::ErrorKind::Other,
                                                   format!("Connected to the wrong peer: {}.",
@@ -329,7 +336,8 @@ pub fn start_tcp_accept(port: u16,
                         // accepting a connection
                         _bootstrap_cache: Arc<Mutex<BootstrapHandler>>,
                         expected_peers: Arc<Mutex<HashSet<PeerId>>>,
-                        mapping_context: Arc<MappingContext>)
+                        mapping_context: Arc<MappingContext>,
+                        version_hash: u64)
                         -> io::Result<RaiiTcpAcceptor> {
     let addr = net::SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), port));
     let tcp_builder_listener = try!(nat_traversal::new_reusably_bound_tcp_socket(&addr));
@@ -390,7 +398,7 @@ pub fn start_tcp_accept(port: u16,
 
             let msg = network_rx.receive();
             let (their_id, event) = match msg {
-                Ok(CrustMsg::BootstrapRequest(k)) => {
+                Ok(CrustMsg::BootstrapRequest(k, v)) => {
                     match writer.send(WriteEvent::Write(CrustMsg::BootstrapResponse(our_public_key))) {
                         Ok(()) => (),
                         Err(_) => {
@@ -402,11 +410,19 @@ pub fn start_tcp_accept(port: u16,
                         error!("Connected to ourselves");
                         continue;
                     }
+                    if v != version_hash {
+                        error!("Incompatible protocol version.");
+                        continue;
+                    }
 
                     let peer_id = peer_id::new_id(k);
                     (peer_id, Event::BootstrapAccept(peer_id))
                 }
-                Ok(CrustMsg::Connect(k)) => {
+                Ok(CrustMsg::Connect(k, v)) => {
+                    if v != version_hash {
+                        error!("Incompatible protocol version.");
+                        continue;
+                    }
                     if our_public_key == k {
                         error!("Connected to ourselves");
                         continue;
@@ -414,7 +430,8 @@ pub fn start_tcp_accept(port: u16,
                     let peer_id = peer_id::new_id(k);
                     let mut expected_peers = expected_peers.lock().unwrap();
                     if expected_peers.remove(&peer_id) {
-                        match writer.send(WriteEvent::Write(CrustMsg::Connect(our_public_key))) {
+                        match writer.send(WriteEvent::Write(CrustMsg::Connect(our_public_key,
+                                                                              version_hash))) {
                             Ok(()) => (),
                             Err(_) => {
                                 error!("Receiver shutdown!");
@@ -462,7 +479,6 @@ pub fn start_tcp_accept(port: u16,
         _raii_joiner: joiner,
     })
 }
-
 
 fn start_rx(mut network_rx: Receiver,
             their_id: PeerId,
