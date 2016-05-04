@@ -78,7 +78,7 @@ fn upgrade_writer(mut stream: TcpStream) -> Sender<WriteEvent> {
                         let index = get_msg_priority(&data);
                         msgs[index].push_back(data);
                         if msgs[index].len() % 50 == 0 {
-                            warn!("{} messages with priority {}.", msgs[index].len(), index);
+                            debug!("{} messages with priority {}.", msgs[index].len(), index);
                         }
                     }
                     Err(TryRecvError::Disconnected) |
@@ -109,12 +109,12 @@ fn upgrade_writer(mut stream: TcpStream) -> Sender<WriteEvent> {
                         break;
                     }
                 }
-                None => thread::sleep(Duration::from_millis(10)),
+                None => thread::sleep(Duration::from_millis(1)),
             }
         }
         stream.shutdown(Shutdown::Both)
     };
-    let _ = unwrap_result!(thread::Builder::new().name("TCP writer".to_owned()).spawn(send_msgs));
+    let _ = thread!("TCP writer", send_msgs);
     tx
 }
 
