@@ -52,13 +52,13 @@ impl RecvUntil for UdpSocket {
                 Ok((bytes_len, addr)) => {
                     try!(self.set_read_timeout(old_timeout));
                     return Ok(Some((bytes_len, SocketAddr(addr))));
-                },
+                }
                 Err(e) => {
                     match e.kind() {
                         ErrorKind::TimedOut | ErrorKind::WouldBlock => {
                             try!(self.set_read_timeout(old_timeout));
                             return Ok(None);
-                        },
+                        }
                         ErrorKind::Interrupted => (),
                         // On Windows, when we send a packet to an endpoint
                         // which is not being listened on, the system responds
@@ -71,11 +71,10 @@ impl RecvUntil for UdpSocket {
                         _ => {
                             try!(self.set_read_timeout(old_timeout));
                             return Err(e);
-                        },
+                        }
                     }
                 }
             }
         }
     }
 }
-

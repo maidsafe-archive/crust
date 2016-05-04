@@ -61,8 +61,7 @@ use std::sync::{Arc, Mutex};
 use std::time::{Instant, Duration};
 use std::collections::{BTreeMap, HashMap};
 
-use crust::{Service, Protocol, Endpoint, ConnectionInfoResult,
-            SocketAddr, OurConnectionInfo,
+use crust::{Service, Protocol, Endpoint, ConnectionInfoResult, SocketAddr, OurConnectionInfo,
             PeerId};
 
 static USAGE: &'static str = "
@@ -175,40 +174,45 @@ impl Network {
     pub fn print_connected_nodes(&self, service: &Service) {
         println!("Node count: {}", self.nodes.len());
         for (id, node) in self.nodes.iter() {
-            /*
-             * TODO(canndrew): put this back
-            let status = if !node.is_closed() {
-                "Connected   "
-            } else {
-                "Disconnected"
-            };
-            */
+            // TODO(canndrew): put this back
+            // let status = if !node.is_closed() {
+            // "Connected   "
+            // } else {
+            // "Disconnected"
+            // };
+            //
 
             if let Some(conn_info) = service.connection_info(node) {
                 println!("    [{}] {}   {} <--> {} [{}][{}]",
-                         id, node, conn_info.our_addr, conn_info.their_addr, conn_info.protocol,
-                         if conn_info.closed { "closed" } else { "open" }
-                );
+                         id,
+                         node,
+                         conn_info.our_addr,
+                         conn_info.their_addr,
+                         conn_info.protocol,
+                         if conn_info.closed {
+                             "closed"
+                         } else {
+                             "open"
+                         });
             }
         }
 
         println!("");
     }
 
-    /*
-    pub fn remove_disconnected_nodes(&mut self) {
-        let to_remove = self.nodes.iter().filter_map(|(id, node)| {
-            if node.is_closed() {
-                Some(id.clone())
-            } else {
-                None
-            }
-        }).collect::<Vec<_>>();
-        for id in to_remove {
-            let _ = self.nodes.remove(&id);
-        }
-    }
-    */
+    // pub fn remove_disconnected_nodes(&mut self) {
+    // let to_remove = self.nodes.iter().filter_map(|(id, node)| {
+    // if node.is_closed() {
+    // Some(id.clone())
+    // } else {
+    // None
+    // }
+    // }).collect::<Vec<_>>();
+    // for id in to_remove {
+    // let _ = self.nodes.remove(&id);
+    // }
+    // }
+    //
 
     pub fn get_peer_id(&self, n: usize) -> Option<&PeerId> {
         self.nodes.get(&n)
@@ -297,7 +301,10 @@ fn on_time_out(timeout: Duration, flag_speed: bool) -> Sender<bool> {
     tx
 }
 
-fn handle_new_peer(service: &Service, protected_network: Arc<Mutex<Network>>, peer_id: PeerId) -> usize {
+fn handle_new_peer(service: &Service,
+                   protected_network: Arc<Mutex<Network>>,
+                   peer_id: PeerId)
+                   -> usize {
     let mut network = unwrap_result!(protected_network.lock());
     let peer_index = network.next_peer_index();
     let _ = network.nodes.insert(peer_index, peer_id);
@@ -320,8 +327,7 @@ fn main() {
     let (category_tx, category_rx) = channel();
 
     let (bs_sender, bs_receiver) = channel();
-    let crust_event_category =
-        ::maidsafe_utilities::event_sender::MaidSafeEventCategory::Crust;
+    let crust_event_category = ::maidsafe_utilities::event_sender::MaidSafeEventCategory::Crust;
     let event_sender =
         ::maidsafe_utilities::event_sender::MaidSafeObserver::new(channel_sender,
                                                                   crust_event_category,
@@ -342,9 +348,6 @@ fn main() {
     let mut service = unwrap_result!(Service::with_config(event_sender, &config));
     if !args.flag_disable_tcp {
         unwrap_result!(service.start_listening_tcp());
-    }
-    if !args.flag_disable_utp {
-        unwrap_result!(service.start_listening_utp());
     }
     service.start_service_discovery();
     let service = Arc::new(Mutex::new(service));
@@ -484,9 +487,11 @@ fn main() {
             let times = cmp::max(1, speed / length);
             let sleep_time = cmp::max(1, 1000 / times);
             for _ in 0..times {
-                unwrap_result!(unwrap_result!(service.lock()).send(peer_id, generate_random_vec_u8(length as usize)));
+                unwrap_result!(unwrap_result!(service.lock())
+                                   .send(peer_id, generate_random_vec_u8(length as usize)));
                 debug!("Sent a message with length of {} bytes to {:?}",
-                       length, peer_id);
+                       length,
+                       peer_id);
                 std::thread::sleep(Duration::from_millis(sleep_time));
             }
         }
@@ -520,14 +525,14 @@ fn main() {
                         Err(e) => {
                             println!("Invalid connection info index: {}", e);
                             continue;
-                        },
+                        }
                     };
                     let our_info = match network.our_connection_infos.remove(&our_info_index) {
                         Some(info) => info,
                         None => {
                             println!("Invalid connection info index");
                             continue;
-                        },
+                        }
                     };
                     let their_info = match json::decode(&their_info) {
                         Ok(info) => info,
@@ -535,7 +540,7 @@ fn main() {
                             println!("Error decoding their connection info");
                             println!("{}", e);
                             continue;
-                        },
+                        }
                     };
                     unwrap_result!(service.lock()).connect(our_info, their_info);
                 }
@@ -543,7 +548,8 @@ fn main() {
                     let network = unwrap_result!(network.lock());
                     match network.get_peer_id(peer_index) {
                         Some(ref mut peer_id) => {
-                            unwrap_result!(unwrap_result!(service.lock()).send(peer_id, message.into_bytes()));
+                            unwrap_result!(unwrap_result!(service.lock())
+                                               .send(peer_id, message.into_bytes()));
                         }
                         None => println!("Invalid connection #"),
                     }
@@ -559,13 +565,12 @@ fn main() {
                     let network = unwrap_result!(network.lock());
                     network.print_connected_nodes(&unwrap_result!(service.lock()));
                 }
-                /*
-                UserCommand::Clean => {
-                    let mut network = network.lock().unwrap();
-                    network.remove_disconnected_nodes();
-                    network.print_connected_nodes();
-                }
-                */
+                // UserCommand::Clean => {
+                // let mut network = network.lock().unwrap();
+                // network.remove_disconnected_nodes();
+                // network.print_connected_nodes();
+                // }
+                //
                 UserCommand::Stop => {
                     break;
                 }
@@ -622,7 +627,7 @@ struct CliArgs {
     cmd_send: bool,
     cmd_send_all: bool,
     cmd_list: bool,
-    //cmd_clean: bool,
+    // cmd_clean: bool,
     cmd_stop: bool,
     cmd_help: bool,
     arg_peer: Option<usize>,
@@ -638,8 +643,7 @@ enum UserCommand {
     Connect(String, String),
     Send(usize, String),
     SendAll(String),
-    List,
-    //Clean,
+    List, // Clean,
 }
 
 fn parse_user_command(cmd: String) -> Option<UserCommand> {
@@ -677,9 +681,11 @@ fn parse_user_command(cmd: String) -> Option<UserCommand> {
         Some(UserCommand::PrepareConnectionInfo)
     } else if args.cmd_list {
         Some(UserCommand::List)
-    } /* else if args.cmd_clean {
-        Some(UserCommand::Clean)
-    } */ else if args.cmd_stop {
+    }
+    // else if args.cmd_clean {
+    // Some(UserCommand::Clean)
+    // }
+    else if args.cmd_stop {
         Some(UserCommand::Stop)
     } else if args.cmd_help {
         print_usage();

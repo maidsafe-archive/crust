@@ -269,7 +269,7 @@ mod test {
         let en_nonce_clone = en_nonce.clone();
 
         let mut os_rng = unwrap_result!(::rand::OsRng::new());
-        let payload: Vec<u8> = (0..1024 * 1024 * 10).map(|_| os_rng.gen()).collect();
+        let payload: Vec<u8> = (0..1024 * 1024 * 1).map(|_| os_rng.gen()).collect();
         // let payload = vec![255u8; 1];
 
         let (finished_tx, finished_rx) = mpsc::channel();
@@ -320,59 +320,4 @@ mod test {
                  duration.subsec_nanos());
     }
 
-    // #[test]
-    // fn graceful_port_close() {
-    // use std::net::{TcpListener};
-    // use std::sync::mpsc;
-    // use std::thread::spawn;
-
-    // let tcp_listener = TcpListener::bind((("0.0.0.0"), 0)).unwrap();
-
-    // let tcp_listener2 = tcp_listener.try_clone().unwrap();
-    // let t = spawn(move || {
-    //    loop {
-    //        match tcp_listener2.accept() {
-    //            Ok(_) => { }
-    //            Err(e) => { break; }
-    //        }
-    //    }
-    // });
-
-    // drop(tcp_listener);
-    // assert!(t.join().is_ok());
-    // let first_binding;
-
-    // {
-    //     let (event_receiver, listener) = listen().unwrap();
-    //     first_binding = listener.local_addr().unwrap();
-    // }
-    // {
-    //     let (event_receiver, listener) = listen().unwrap();
-    //     let second_binding = listener.local_addr().unwrap();
-    //     assert_eq!(first_binding.port(), second_binding.port());
-    // }
-    // }
-
-    // #[test]
-    // fn test_stream_large_data() {
-    //     // Has to be sent over several packets
-    //     const LEN: usize = 1024 * 1024;
-    //     let data: Vec<u8> = (0..LEN).map(|idx| idx as u8).collect();
-    //     assert_eq!(LEN, data.len());
-    //
-    //     let d = data.clone(\;
-    //     let receiver_addr = next_test_ip4();
-    //     let mut receiver = UtpStream::bind(receiver_addr);
-    //
-    //     thread::spawn(move || {
-    //         let mut sender = iotry!(UtpStream::connect(receiver_addr));
-    //         iotry!(sender.write(&d[..]));
-    //         iotry!(sender.close());
-    //     });
-    //
-    //     let read = iotry!(receiver.read_to_end());
-    //     assert!(!read.is_empty());
-    //     assert_eq!(read.len(), data.len());
-    //     assert_eq!(read, data);
-    // }
 }

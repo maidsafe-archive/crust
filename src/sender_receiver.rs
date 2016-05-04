@@ -20,11 +20,8 @@ use event::WriteEvent;
 use std::io;
 use std::sync::mpsc;
 use std::io::BufReader;
-use bufstream::BufStream;
 use std::net::TcpStream;
 use rustc_serialize::Decodable;
-use utp_connections::UtpWrapper;
-use maidsafe_utilities::serialisation::deserialise_from;
 use socket_addr::SocketAddr;
 use sodiumoxide::crypto::box_::PublicKey;
 
@@ -48,20 +45,15 @@ impl Drop for RaiiSender {
     }
 }
 
-#[allow(variant_size_differences)]
-pub enum Receiver {
-    Tcp(BufStream<TcpStream>),
-    Utp(BufReader<UtpWrapper>),
+pub struct Receiver {
+    stream: BufReader<TcpStream>,
 }
 
 impl Receiver {
     pub fn tcp(stream: TcpStream) -> Self {
-        Receiver::Tcp(BufStream::new(stream))
+        Receiver { stream: BufReader::new(stream) }
     }
 
-    pub fn utp(stream: UtpWrapper) -> Self {
-        Receiver::Utp(BufReader::new(stream))
-    }
 
     #[allow(unsafe_code)]
     fn basic_receive<D: Decodable + ::std::fmt::Debug>(&mut self) -> io::Result<D> {
@@ -70,29 +62,25 @@ impl Receiver {
         use maidsafe_utilities::serialisation::deserialise_with_limit;
         use byteorder::{ReadBytesExt, LittleEndian};
 
-        let msg = match *self {
-            Receiver::Tcp(ref mut reader) => {
-                let mut payload_size_buffer = [0u8; 4];
-                try!(reader.read_exact(&mut payload_size_buffer));
-                let payload_size =
-                    try!(Cursor::new(&payload_size_buffer[..]).read_u32::<LittleEndian>()) as usize;
+        let mut payload_size_buffer = [0u8; 4];
+        try!(self.stream.read_exact(&mut payload_size_buffer));
+        let payload_size =
+            try!(Cursor::new(&payload_size_buffer[..]).read_u32::<LittleEndian>()) as usize;
 
-                if payload_size > MAX_ALLOWED_TCP_PAYLOAD_SIZE {
-                    return Err(io::Error::new(io::ErrorKind::Other,
-                                              format!("Payload size prohibitive at {} bytes",
-                                                      payload_size)));
-                }
+        if payload_size > MAX_ALLOWED_TCP_PAYLOAD_SIZE {
+            return Err(io::Error::new(io::ErrorKind::Other,
+                                      format!("Payload size prohibitive at {} bytes",
+                                              payload_size)));
+        }
 
-                let mut payload = Vec::with_capacity(payload_size);
-                unsafe {
-                    payload.set_len(payload_size);
-                }
-                try!(reader.read_exact(&mut payload));
+        let mut payload = Vec::with_capacity(payload_size);
+        unsafe {
+            payload.set_len(payload_size);
+        }
+        try!(self.stream.read_exact(&mut payload));
 
-                deserialise_with_limit(&payload, SizeLimit::Infinite)
-            }
-            Receiver::Utp(ref mut reader) => deserialise_from::<_, D>(reader),
-        };
+        let msg = deserialise_with_limit(&payload, SizeLimit::Infinite);
+
         match msg {
             Ok(a) => Ok(a),
             Err(err) => {

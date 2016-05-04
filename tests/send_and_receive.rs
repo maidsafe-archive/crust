@@ -53,7 +53,6 @@ fn spawn_receiving_node(expected_connections: usize) -> JoinHandle<usize> {
 
     service.start_service_discovery();
     let _ = unwrap_result!(service.start_listening_tcp());
-    let _ = unwrap_result!(service.start_listening_utp());
 
     // Wait for BootstrapFinished so we know this node is already listening when
     // this function returns.
@@ -117,7 +116,7 @@ fn spawn_sending_node() -> JoinHandle<usize> {
                     false
                 }
 
-                _ => true
+                _ => true,
             }
         });
 

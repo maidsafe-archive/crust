@@ -114,4 +114,3 @@ pub fn get_default_file_name() -> Result<OsString, Error> {
 mod test {
     // TODO(canndrew): Add some unit tests.
 }
-
