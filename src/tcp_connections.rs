@@ -269,7 +269,7 @@ mod test {
         let en_nonce_clone = en_nonce.clone();
 
         let mut os_rng = unwrap_result!(::rand::OsRng::new());
-        let payload: Vec<u8> = (0..1024 * 1024 * 10).map(|_| os_rng.gen()).collect();
+        let payload: Vec<u8> = (0..1024 * 1024 * 1).map(|_| os_rng.gen()).collect();
         // let payload = vec![255u8; 1];
 
         let (finished_tx, finished_rx) = mpsc::channel();
