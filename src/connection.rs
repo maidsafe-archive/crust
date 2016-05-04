@@ -551,24 +551,18 @@ fn notify_new_connection(connection_map: &HashMap<PeerId, Vec<Connection>>,
 pub fn print_connection_stats(connection_map: &HashMap<PeerId, Vec<Connection>>) {
     let mut punched = 0usize;
     let mut direct = 0usize;
-    for (peer_id, v) in connection_map {
+    for (_peer_id, v) in connection_map {
         if let Some(conn) = v.get(0) {
-            let s = if conn.hole_punched {
+            if conn.hole_punched {
                 punched += 1;
-                "punched"
             } else {
                 direct += 1;
-                "direct"
             };
-            trace!("{} [{}]", peer_id, s);
         };
     }
-    let total = direct + punched;
-    debug!("Stats - Connections direct ({}/{}), punched ({}/{})",
+    debug!("Stats - Connections direct {}, punched {}",
            direct,
-           total,
-           punched,
-           total);
+           punched);
 }
 
 #[cfg(test)]

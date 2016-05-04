@@ -67,10 +67,9 @@ fn upgrade_writer(mut stream: TcpStream) -> Sender<WriteEvent> {
 
     let (tx, rx) = mpsc::channel();
     let send_msgs = move || {
-        let mut closed = false;
         // Message queues, sorted by descending priority.
         let mut msgs = [VecDeque::new(), VecDeque::new()];
-        while !(closed && msgs.iter().all(VecDeque::is_empty)) {
+        'outer: loop {
             // Sort all messages from the channel by priority.
             loop {
                 match rx.try_recv() {
@@ -82,10 +81,7 @@ fn upgrade_writer(mut stream: TcpStream) -> Sender<WriteEvent> {
                         }
                     }
                     Err(TryRecvError::Disconnected) |
-                    Ok(WriteEvent::Shutdown) => {
-                        closed = true;
-                        break;
-                    }
+                    Ok(WriteEvent::Shutdown) => break 'outer,
                     Err(TryRecvError::Empty) => break,
                 }
             }
