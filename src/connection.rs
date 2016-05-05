@@ -24,7 +24,7 @@ use std::sync::atomic::{Ordering, AtomicBool};
 use std::net::{Shutdown, TcpStream, Ipv4Addr, SocketAddrV4};
 use std::net;
 use std::io;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 use maidsafe_utilities::event_sender::{EventSenderError, MaidSafeEventCategory};
 use maidsafe_utilities::thread::RaiiThreadJoiner;
@@ -182,9 +182,7 @@ pub fn tcp_rendezvous_connect(connection_map: Arc<Mutex<HashMap<PeerId, Vec<Conn
                               tcp_stream: TcpStream,
                               their_id: PeerId)
                               -> io::Result<()> {
-    let last_read_instant = Arc::new(Mutex::new(Instant::now()));
     let (network_input, writer) = try!(tcp_connections::upgrade_tcp(tcp_stream,
-                                                                    last_read_instant.clone(),
                                                                     heart_beat_timeout,
                                                                     inactivity_timeout));
     let our_addr = SocketAddr(try!(network_input.local_addr()));
@@ -196,7 +194,6 @@ pub fn tcp_rendezvous_connect(connection_map: Arc<Mutex<HashMap<PeerId, Vec<Conn
     let _ = notify_new_connection(&cm, &their_id, Event::NewPeer(Ok(()), their_id), &event_tx);
 
     let connection = register_tcp_connection(connection_map.clone(),
-                                             last_read_instant,
                                              their_id,
                                              network_rx,
                                              network_tx,
@@ -219,9 +216,7 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
                             their_expected_id: Option<PeerId>,
                             version_hash: u64)
                             -> io::Result<()> {
-    let last_read_instant = Arc::new(Mutex::new(Instant::now()));
     let (network_input, writer) = try!(tcp_connections::connect_tcp(remote_addr.clone(),
-                                                                    last_read_instant.clone(),
                                                                     heart_beat_timeout,
                                                                     inactivity_timeout));
     let our_addr = SocketAddr(try!(network_input.local_addr()));
@@ -306,7 +301,6 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
 
     let network_tx = RaiiSender(writer);
     let connection = register_tcp_connection(connection_map.clone(),
-                                             last_read_instant,
                                              their_id,
                                              network_rx,
                                              network_tx,
@@ -319,7 +313,6 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
 }
 
 fn register_tcp_connection(connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
-                           last_read_instant: Arc<Mutex<Instant>>,
                            their_id: PeerId,
                            network_rx: Receiver,
                            network_tx: RaiiSender,
@@ -332,12 +325,7 @@ fn register_tcp_connection(connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connect
     let closed_clone = closed.clone();
 
     let joiner = RaiiThreadJoiner::new(thread!("TcpNetworkReader", move || {
-        start_rx(network_rx,
-                 last_read_instant,
-                 their_id,
-                 event_tx,
-                 closed_clone,
-                 connection_map);
+        start_rx(network_rx, their_id, event_tx, closed_clone, connection_map);
     }));
 
     Connection {
@@ -416,19 +404,15 @@ pub fn start_tcp_accept(port: u16,
                 break;
             }
 
-            let last_read_instant = Arc::new(Mutex::new(Instant::now()));
-
-            let (network_input, writer) =
-                match tcp_connections::upgrade_tcp(stream,
-                                                   last_read_instant.clone(),
-                                                   heart_beat_timeout,
-                                                   inactivity_timeout) {
-                    Ok((stream, writer_tx)) => (stream, writer_tx),
-                    Err(e) => {
-                        debug!("TCP Acceptor failed to upgrade connected stream: {:?}", e);
-                        continue;
-                    }
-                };
+            let (network_input, writer) = match tcp_connections::upgrade_tcp(stream,
+                                                                             heart_beat_timeout,
+                                                                             inactivity_timeout) {
+                Ok((stream, writer_tx)) => (stream, writer_tx),
+                Err(e) => {
+                    debug!("TCP Acceptor failed to upgrade connected stream: {:?}", e);
+                    continue;
+                }
+            };
 
             let (our_addr, their_addr) = match (network_input.local_addr(),
                                                 network_input.peer_addr()) {
@@ -505,7 +489,6 @@ pub fn start_tcp_accept(port: u16,
                 break;
             }
             let connection = register_tcp_connection(connection_map.clone(),
-                                                     last_read_instant,
                                                      their_id,
                                                      network_rx,
                                                      RaiiSender(writer),
@@ -528,17 +511,13 @@ pub fn start_tcp_accept(port: u16,
 }
 
 fn start_rx(mut network_rx: Receiver,
-            last_read_instant: Arc<Mutex<Instant>>,
             their_id: PeerId,
             event_tx: ::CrustEventSender,
             closed: Arc<AtomicBool>,
             connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>) {
-    *unwrap_result!(last_read_instant.lock()) = Instant::now();
     loop {
         match network_rx.receive() {
             Ok(msg) => {
-                *unwrap_result!(last_read_instant.lock()) = Instant::now();
-
                 match msg {
                     CrustMsg::Message(msg) => {
                         if let Err(err) = event_tx.send(Event::NewMessage(their_id, msg)) {
@@ -556,6 +535,7 @@ fn start_rx(mut network_rx: Receiver,
             }
         }
     }
+
     closed.store(true, Ordering::Relaxed);
     // Drop the connection in a separate thread, because the destructor joins _this_ thread.
     let _ = thread!("ConnectionDropper", move || {

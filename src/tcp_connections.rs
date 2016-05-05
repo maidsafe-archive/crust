@@ -23,7 +23,6 @@ use std::io;
 use std::thread;
 use std::sync::mpsc::{self, TryRecvError, Sender};
 use std::io::Write;
-use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use event::WriteEvent;
@@ -33,7 +32,6 @@ const SIZE_THRESHOLD: usize = 10 * 1024;
 
 /// Connect to a peer and open a send-receive pair.  See `upgrade` for more details.
 pub fn connect_tcp(addr: SocketAddr,
-                   last_read_instant: Arc<Mutex<Instant>>,
                    heart_beat_timeout: Duration,
                    inactivity_timeout: Duration)
                    -> io::Result<(TcpStream, Sender<WriteEvent>)> {
@@ -42,17 +40,13 @@ pub fn connect_tcp(addr: SocketAddr,
         return Err(io::Error::new(io::ErrorKind::ConnectionRefused, "TCP simultaneous open"));
     }
 
-    Ok(try!(upgrade_tcp(stream,
-                        last_read_instant,
-                        heart_beat_timeout,
-                        inactivity_timeout)))
+    Ok(try!(upgrade_tcp(stream, heart_beat_timeout, inactivity_timeout)))
 }
 
 // Almost a straight copy of https://github.com/TyOverby/wire/blob/master/src/tcp.rs
 /// Upgrades a TcpStream to a Sender-Receiver pair that you can use to send and
 /// receive objects automatically.
 pub fn upgrade_tcp(stream: TcpStream,
-                   last_read_instant: Arc<Mutex<Instant>>,
                    heart_beat_timeout: Duration,
                    inactivity_timeout: Duration)
                    -> io::Result<(TcpStream, Sender<WriteEvent>)> {
@@ -61,13 +55,12 @@ pub fn upgrade_tcp(stream: TcpStream,
     if let Err(e) = stream.set_nodelay(true) {
         warn!("Unable to set no delay on tcp stream: {:?}", e);
     }
+
+    try!(stream.set_read_timeout(Some(inactivity_timeout)));
+
     let s1 = stream;
     let s2 = try!(s1.try_clone());
-    Ok((s1,
-        upgrade_writer(s2,
-                       last_read_instant,
-                       heart_beat_timeout,
-                       inactivity_timeout)))
+    Ok((s1, upgrade_writer(s2, heart_beat_timeout)))
 }
 
 fn get_msg_priority(msg: &CrustMsg) -> usize {
@@ -77,11 +70,7 @@ fn get_msg_priority(msg: &CrustMsg) -> usize {
     }
 }
 
-fn upgrade_writer(mut stream: TcpStream,
-                  last_read_instant: Arc<Mutex<Instant>>,
-                  heart_beat_timeout: Duration,
-                  inactivity_timeout: Duration)
-                  -> Sender<WriteEvent> {
+fn upgrade_writer(mut stream: TcpStream, heart_beat_timeout: Duration) -> Sender<WriteEvent> {
     use std::io::Write;
     use bincode::SizeLimit;
     use byteorder::{WriteBytesExt, LittleEndian};
@@ -102,10 +91,6 @@ fn upgrade_writer(mut stream: TcpStream,
         'outer: loop {
             // Sort all messages from the channel by priority.
             loop {
-                if Instant::now() > *unwrap_result!(last_read_instant.lock()) + inactivity_timeout {
-                    error!("Heartbeat time out - Dropping connection");
-                    break 'outer;
-                }
                 match rx.try_recv() {
                     Ok(WriteEvent::Write(data)) => {
                         let index = get_msg_priority(&data);
