@@ -67,10 +67,9 @@ fn upgrade_writer(mut stream: TcpStream) -> Sender<WriteEvent> {
 
     let (tx, rx) = mpsc::channel();
     let send_msgs = move || {
-        let mut closed = false;
         // Message queues, sorted by descending priority.
         let mut msgs = [VecDeque::new(), VecDeque::new()];
-        while !(closed && msgs.iter().all(VecDeque::is_empty)) {
+        'outer: loop {
             // Sort all messages from the channel by priority.
             loop {
                 match rx.try_recv() {
@@ -78,14 +77,11 @@ fn upgrade_writer(mut stream: TcpStream) -> Sender<WriteEvent> {
                         let index = get_msg_priority(&data);
                         msgs[index].push_back(data);
                         if msgs[index].len() % 50 == 0 {
-                            warn!("{} messages with priority {}.", msgs[index].len(), index);
+                            debug!("{} messages with priority {}.", msgs[index].len(), index);
                         }
                     }
                     Err(TryRecvError::Disconnected) |
-                    Ok(WriteEvent::Shutdown) => {
-                        closed = true;
-                        break;
-                    }
+                    Ok(WriteEvent::Shutdown) => break 'outer,
                     Err(TryRecvError::Empty) => break,
                 }
             }
@@ -109,12 +105,12 @@ fn upgrade_writer(mut stream: TcpStream) -> Sender<WriteEvent> {
                         break;
                     }
                 }
-                None => thread::sleep(Duration::from_millis(10)),
+                None => thread::sleep(Duration::from_millis(1)),
             }
         }
         stream.shutdown(Shutdown::Both)
     };
-    let _ = unwrap_result!(thread::Builder::new().name("TCP writer".to_owned()).spawn(send_msgs));
+    let _ = thread!("TCP writer", send_msgs);
     tx
 }
 
