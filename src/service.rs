@@ -108,7 +108,6 @@ fn version_hash() -> u64 {
     let mut hasher = SipHasher::new();
     cargo_version.hash(&mut hasher);
     network_version.hash(&mut hasher);
-    println!("network_version {:?}", network_version);
     hasher.finish()
 }
 
