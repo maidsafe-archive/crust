@@ -103,9 +103,12 @@ impl TheirConnectionInfo {
 
 /// Returns a hash of the crate version.
 fn version_hash() -> u64 {
-    let version = env!("CARGO_PKG_VERSION");
+    let cargo_version = env!("CARGO_PKG_VERSION");
+    let network_version = option_env!("NETWORK_VERSION");
     let mut hasher = SipHasher::new();
-    version.hash(&mut hasher);
+    cargo_version.hash(&mut hasher);
+    network_version.hash(&mut hasher);
+    println!("network_version {:?}", network_version);
     hasher.finish()
 }
 

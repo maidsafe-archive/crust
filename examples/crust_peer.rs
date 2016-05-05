@@ -101,8 +101,6 @@ will be chosen.
 \
                               Options:
   --discovery-port=PORT      Set the port for local network service discovery
-  --disable-tcp              Disable tcp
-  --disable-utp              Disable utp
   -s RATE, --speed=RATE      Keep sending random \
                               data at a maximum speed of RATE
                              \
@@ -115,8 +113,6 @@ will be chosen.
 struct Args {
     flag_discovery_port: Option<u16>,
     flag_speed: Option<u64>,
-    flag_disable_tcp: bool,
-    flag_disable_utp: bool,
     flag_help: bool,
 }
 
@@ -334,21 +330,10 @@ fn main() {
                                                                   category_tx);
     let mut config = unwrap_result!(::crust::read_config_file());
 
-    if args.flag_disable_tcp {
-        config.enable_tcp = false;
-        config.tcp_acceptor_port = None;
-    }
-    if args.flag_disable_utp {
-        config.enable_utp = false;
-        config.utp_acceptor_port = None;
-    }
-
     config.service_discovery_port = args.flag_discovery_port;
 
     let mut service = unwrap_result!(Service::with_config(event_sender, &config));
-    if !args.flag_disable_tcp {
-        unwrap_result!(service.start_listening_tcp());
-    }
+    unwrap_result!(service.start_listening_tcp());
     service.start_service_discovery();
     let service = Arc::new(Mutex::new(service));
     let service_cloned = service.clone();
