@@ -124,7 +124,7 @@ fn upgrade_writer(mut stream: TcpStream, heart_beat_timeout: Duration) -> Sender
                     last_write_instant = Instant::now();
                 }
                 None => {
-                    if Instant::now() > last_write_instant + heart_beat_timeout {
+                    if last_write_instant.elapsed() > heart_beat_timeout {
                         if let Err(e) = stream.write_all(&heart_beat_size_bytes) {
                             error!("Error writing heartbeat size: {:?}", e);
                             break;
