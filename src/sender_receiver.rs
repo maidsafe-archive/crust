@@ -104,7 +104,7 @@ impl Receiver {
                     let temp_buffer_view = buffer_view;
                     buffer_view = &mut temp_buffer_view[rxd_bytes..];
                 }
-                Err(ref e) if e.kind() == ::std::io::ErrorKind::Interrupted => (),
+                Err(ref e) if e.kind() == io::ErrorKind::Interrupted => (),
                 Err(e) => return Err(e),
             }
         }
