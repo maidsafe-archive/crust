@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/url-0.5.9/src/lib.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/url-0.2.38/src/lib.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>lib.rs.html -- source</title>
@@ -1184,28 +1184,6 @@
 <span id="1141">1141</span>
 <span id="1142">1142</span>
 <span id="1143">1143</span>
-<span id="1144">1144</span>
-<span id="1145">1145</span>
-<span id="1146">1146</span>
-<span id="1147">1147</span>
-<span id="1148">1148</span>
-<span id="1149">1149</span>
-<span id="1150">1150</span>
-<span id="1151">1151</span>
-<span id="1152">1152</span>
-<span id="1153">1153</span>
-<span id="1154">1154</span>
-<span id="1155">1155</span>
-<span id="1156">1156</span>
-<span id="1157">1157</span>
-<span id="1158">1158</span>
-<span id="1159">1159</span>
-<span id="1160">1160</span>
-<span id="1161">1161</span>
-<span id="1162">1162</span>
-<span id="1163">1163</span>
-<span id="1164">1164</span>
-<span id="1165">1165</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2013-2015 Simon Sapin.</span>
 <span class='comment'>//</span>
@@ -1325,14 +1303,6 @@ let css_url = UrlParser::new().base_url(&amp;this_document).parse(&quot;../main.
 assert!(css_url.serialize() == &quot;http://servo.github.io/rust-url/main.css&quot;.to_string());
 ```
 
-For convenience, the `join` method on `Url` is also provided to achieve the same result:
-
-```
-use url::Url;
-
-let this_document = Url::parse(&quot;http://servo.github.io/rust-url/url/index.html&quot;).unwrap();
-let css_url = this_document.join(&quot;../main.css&quot;).unwrap();
-assert!(&amp;*css_url.serialize() == &quot;http://servo.github.io/rust-url/main.css&quot;)
 */</span>
 
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>cfg_attr</span>(<span class='ident'>feature</span><span class='op'>=</span><span class='string'>&quot;heap_size&quot;</span>, <span class='ident'>feature</span>(<span class='ident'>plugin</span>, <span class='ident'>custom_derive</span>))]</span>
@@ -1350,9 +1320,6 @@ assert!(&amp;*css_url.serialize() == &quot;http://servo.github.io/rust-url/main.
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span><span class='op'>=</span><span class='string'>&quot;heap_size&quot;</span>)]</span>
 <span class='attribute'>#[<span class='ident'>macro_use</span>]</span> <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>heapsize</span>;
 
-<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>unicode_normalization</span>;
-<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>unicode_bidi</span>;
-
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fmt</span>::{<span class='self'>self</span>, <span class='ident'>Formatter</span>};
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>str</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>path</span>::{<span class='ident'>Path</span>, <span class='ident'>PathBuf</span>};
@@ -1363,7 +1330,7 @@ assert!(&amp;*css_url.serialize() == &quot;http://servo.github.io/rust-url/main.
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span><span class='op'>=</span><span class='string'>&quot;serde_serialization&quot;</span>)]</span>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>str</span>::<span class='ident'>FromStr</span>;
 
-<span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>host</span>::<span class='ident'>Host</span>;
+<span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>host</span>::{<span class='ident'>Host</span>, <span class='ident'>Ipv6Address</span>};
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>parser</span>::{<span class='ident'>ErrorHandler</span>, <span class='ident'>ParseResult</span>, <span class='ident'>ParseError</span>};
 
 <span class='kw'>use</span> <span class='ident'>percent_encoding</span>::{<span class='ident'>percent_encode</span>, <span class='ident'>lossy_utf8_percent_decode</span>, <span class='ident'>DEFAULT_ENCODE_SET</span>};
@@ -1381,7 +1348,10 @@ assert!(&amp;*css_url.serialize() == &quot;http://servo.github.io/rust-url/main.
 <span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>form_urlencoded</span>;
 <span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>punycode</span>;
 <span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>format</span>;
-<span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>idna</span>;
+
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
+<span class='kw'>mod</span> <span class='ident'>tests</span>;
+
 
 <span class='doccomment'>/// The parsed representation of an absolute URL.</span>
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>PartialEq</span>, <span class='ident'>Eq</span>, <span class='ident'>Clone</span>, <span class='ident'>Debug</span>, <span class='ident'>Hash</span>, <span class='ident'>PartialOrd</span>, <span class='ident'>Ord</span>)]</span>
@@ -1419,19 +1389,8 @@ assert!(&amp;*css_url.serialize() == &quot;http://servo.github.io/rust-url/main.
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>PartialEq</span>, <span class='ident'>Eq</span>, <span class='ident'>Clone</span>, <span class='ident'>Debug</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>OpaqueOrigin</span>(<span class='ident'>Uuid</span>);
 
-<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>feature</span><span class='op'>=</span><span class='string'>&quot;heap_size&quot;</span>)]</span>
-<span class='macro'>known_heap_size</span><span class='macro'>!</span>(<span class='number'>0</span>, <span class='ident'>OpaqueOrigin</span>);
-
-<span class='kw'>impl</span> <span class='ident'>OpaqueOrigin</span> {
-    <span class='doccomment'>/// Creates a new opaque origin with a random UUID.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>() <span class='op'>-&gt;</span> <span class='ident'>OpaqueOrigin</span> {
-        <span class='ident'>OpaqueOrigin</span>(<span class='ident'>Uuid</span>::<span class='ident'>new_v4</span>())
-    }
-}
-
 <span class='doccomment'>/// The origin of the URL</span>
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>PartialEq</span>, <span class='ident'>Eq</span>, <span class='ident'>Clone</span>, <span class='ident'>Debug</span>)]</span>
-<span class='attribute'>#[<span class='ident'>cfg_attr</span>(<span class='ident'>feature</span><span class='op'>=</span><span class='string'>&quot;heap_size&quot;</span>, <span class='ident'>derive</span>(<span class='ident'>HeapSizeOf</span>))]</span>
 <span class='kw'>pub</span> <span class='kw'>enum</span> <span class='ident'>Origin</span> {
     <span class='doccomment'>/// A globally unique identifier</span>
     <span class='ident'>UID</span>(<span class='ident'>OpaqueOrigin</span>),
@@ -1613,8 +1572,7 @@ assert!(&amp;*css_url.serialize() == &quot;http://servo.github.io/rust-url/main.
     <span class='doccomment'>///</span>
     <span class='doccomment'>/// The default scheme type mapper is as follows:</span>
     <span class='doccomment'>///</span>
-    <span class='doccomment'>/// ```</span>
-    <span class='doccomment'>/// # use url::SchemeType;</span>
+    <span class='doccomment'>/// ```ignore</span>
     <span class='doccomment'>/// fn whatwg_scheme_type_mapper(scheme: &amp;str) -&gt; SchemeType {</span>
     <span class='doccomment'>///     match scheme {</span>
     <span class='doccomment'>///         &quot;file&quot; =&gt; SchemeType::FileLike,</span>
@@ -1624,7 +1582,7 @@ assert!(&amp;*css_url.serialize() == &quot;http://servo.github.io/rust-url/main.
     <span class='doccomment'>///         &quot;https&quot; =&gt; SchemeType::Relative(443),</span>
     <span class='doccomment'>///         &quot;ws&quot; =&gt; SchemeType::Relative(80),</span>
     <span class='doccomment'>///         &quot;wss&quot; =&gt; SchemeType::Relative(443),</span>
-    <span class='doccomment'>///         _ =&gt; SchemeType::NonRelative,</span>
+    <span class='doccomment'>///         _ =&gt; NonRelative,</span>
     <span class='doccomment'>///     }</span>
     <span class='doccomment'>/// }</span>
     <span class='doccomment'>/// ```</span>
@@ -1735,8 +1693,8 @@ assert!(&amp;*css_url.serialize() == &quot;http://servo.github.io/rust-url/main.
 
 <span class='kw'>impl</span> <span class='ident'>SchemeType</span> {
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>default_port</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>u16</span><span class='op'>&gt;</span> {
-        <span class='kw'>match</span> <span class='op'>*</span><span class='self'>self</span> {
-            <span class='ident'>SchemeType</span>::<span class='ident'>Relative</span>(<span class='ident'>default_port</span>) <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>(<span class='ident'>default_port</span>),
+        <span class='kw'>match</span> <span class='self'>self</span> {
+            <span class='kw-2'>&amp;</span><span class='ident'>SchemeType</span>::<span class='ident'>Relative</span>(<span class='ident'>default_port</span>) <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>(<span class='ident'>default_port</span>),
             _ <span class='op'>=&gt;</span> <span class='prelude-val'>None</span>,
         }
     }
@@ -1750,7 +1708,7 @@ assert!(&amp;*css_url.serialize() == &quot;http://servo.github.io/rust-url/main.
     }
 }
 
-<span class='doccomment'>/// http://url.spec.whatwg.org/#special-scheme</span>
+<span class='doccomment'>/// http://url.spec.whatwg.org/#relative-scheme</span>
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>whatwg_scheme_type_mapper</span>(<span class='ident'>scheme</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>) <span class='op'>-&gt;</span> <span class='ident'>SchemeType</span> {
     <span class='kw'>match</span> <span class='ident'>scheme</span> {
         <span class='string'>&quot;file&quot;</span> <span class='op'>=&gt;</span> <span class='ident'>SchemeType</span>::<span class='ident'>FileLike</span>,
@@ -1804,19 +1762,19 @@ assert!(&amp;*css_url.serialize() == &quot;http://servo.github.io/rust-url/main.
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>path</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>path_to_file_url_path</span>(<span class='ident'>path</span>.<span class='ident'>as_ref</span>()));
         <span class='comment'>// Add an empty path component (i.e. a trailing slash in serialization)</span>
         <span class='comment'>// so that the entire path is used as a base URL.</span>
-        <span class='ident'>path</span>.<span class='ident'>push</span>(<span class='string'>&quot;&quot;</span>.<span class='ident'>to_owned</span>());
+        <span class='ident'>path</span>.<span class='ident'>push</span>(<span class='string'>&quot;&quot;</span>.<span class='ident'>to_string</span>());
         <span class='prelude-val'>Ok</span>(<span class='ident'>Url</span>::<span class='ident'>from_path_common</span>(<span class='ident'>path</span>))
     }
 
     <span class='kw'>fn</span> <span class='ident'>from_path_common</span>(<span class='ident'>path</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>String</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='ident'>Url</span> {
         <span class='ident'>Url</span> {
-            <span class='ident'>scheme</span>: <span class='string'>&quot;file&quot;</span>.<span class='ident'>to_owned</span>(),
+            <span class='ident'>scheme</span>: <span class='string'>&quot;file&quot;</span>.<span class='ident'>to_string</span>(),
             <span class='ident'>scheme_data</span>: <span class='ident'>SchemeData</span>::<span class='ident'>Relative</span>(<span class='ident'>RelativeSchemeData</span> {
-                <span class='ident'>username</span>: <span class='string'>&quot;&quot;</span>.<span class='ident'>to_owned</span>(),
+                <span class='ident'>username</span>: <span class='string'>&quot;&quot;</span>.<span class='ident'>to_string</span>(),
                 <span class='ident'>password</span>: <span class='prelude-val'>None</span>,
                 <span class='ident'>port</span>: <span class='prelude-val'>None</span>,
                 <span class='ident'>default_port</span>: <span class='prelude-val'>None</span>,
-                <span class='ident'>host</span>: <span class='ident'>Host</span>::<span class='ident'>Domain</span>(<span class='string'>&quot;&quot;</span>.<span class='ident'>to_owned</span>()),
+                <span class='ident'>host</span>: <span class='ident'>Host</span>::<span class='ident'>Domain</span>(<span class='string'>&quot;&quot;</span>.<span class='ident'>to_string</span>()),
                 <span class='ident'>path</span>: <span class='ident'>path</span>,
             }),
             <span class='ident'>query</span>: <span class='prelude-val'>None</span>,
@@ -1831,10 +1789,13 @@ assert!(&amp;*css_url.serialize() == &quot;http://servo.github.io/rust-url/main.
     <span class='doccomment'>/// and may give nonsensical results for other schemes.</span>
     <span class='doccomment'>/// It is the user’s responsibility to check the URL’s scheme before calling this.</span>
     <span class='doccomment'>///</span>
-    <span class='doccomment'>/// ```</span>
-    <span class='doccomment'>/// # use url::Url;</span>
-    <span class='doccomment'>/// # let url = Url::parse(&quot;file:///etc/passwd&quot;).unwrap();</span>
-    <span class='doccomment'>/// let path = url.to_file_path();</span>
+    <span class='doccomment'>/// The return type (when `Ok()`) is generic and can be either `std::path::posix::Path`</span>
+    <span class='doccomment'>/// or `std::path::windows::Path`.</span>
+    <span class='doccomment'>/// (Use `std::path::Path` to pick one of them depending on the local system.)</span>
+    <span class='doccomment'>/// If the compiler can not infer the desired type from context, you may have to specify it:</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// ```ignore</span>
+    <span class='doccomment'>/// let path = url.to_file_path::&lt;std::path::posix::Path&gt;();</span>
     <span class='doccomment'>/// ```</span>
     <span class='doccomment'>///</span>
     <span class='doccomment'>/// Returns `Err` if the host is neither empty nor `&quot;localhost&quot;`,</span>
@@ -1854,14 +1815,14 @@ assert!(&amp;*css_url.serialize() == &quot;http://servo.github.io/rust-url/main.
         <span class='self'>self</span>.<span class='ident'>to_string</span>()
     }
 
-    <span class='doccomment'>/// Return the origin of this URL (https://url.spec.whatwg.org/#origin)</span>
+    <span class='comment'>// Return the origin of this URL (https://url.spec.whatwg.org/#origin)</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>origin</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Origin</span> {
         <span class='kw'>match</span> <span class='kw-2'>&amp;</span><span class='op'>*</span><span class='self'>self</span>.<span class='ident'>scheme</span> {
             <span class='string'>&quot;blob&quot;</span> <span class='op'>=&gt;</span> {
                 <span class='kw'>let</span> <span class='ident'>result</span> <span class='op'>=</span> <span class='ident'>Url</span>::<span class='ident'>parse</span>(<span class='self'>self</span>.<span class='ident'>non_relative_scheme_data</span>().<span class='ident'>unwrap</span>());
                 <span class='kw'>match</span> <span class='ident'>result</span> {
                     <span class='prelude-val'>Ok</span>(<span class='kw-2'>ref</span> <span class='ident'>url</span>) <span class='op'>=&gt;</span> <span class='ident'>url</span>.<span class='ident'>origin</span>(),
-                    <span class='prelude-val'>Err</span>(_)  <span class='op'>=&gt;</span> <span class='ident'>Origin</span>::<span class='ident'>UID</span>(<span class='ident'>OpaqueOrigin</span>::<span class='ident'>new</span>())
+                    <span class='prelude-val'>Err</span>(_)  <span class='op'>=&gt;</span> <span class='ident'>Origin</span>::<span class='ident'>UID</span>(<span class='ident'>OpaqueOrigin</span>(<span class='ident'>Uuid</span>::<span class='ident'>new_v4</span>()))
                 }
             },
             <span class='string'>&quot;ftp&quot;</span> <span class='op'>|</span> <span class='string'>&quot;gopher&quot;</span> <span class='op'>|</span> <span class='string'>&quot;http&quot;</span> <span class='op'>|</span> <span class='string'>&quot;https&quot;</span> <span class='op'>|</span> <span class='string'>&quot;ws&quot;</span> <span class='op'>|</span> <span class='string'>&quot;wss&quot;</span> <span class='op'>=&gt;</span> {
@@ -1869,8 +1830,8 @@ assert!(&amp;*css_url.serialize() == &quot;http://servo.github.io/rust-url/main.
                     <span class='self'>self</span>.<span class='ident'>port_or_default</span>().<span class='ident'>unwrap</span>())
             },
             <span class='comment'>// TODO: Figure out what to do if the scheme is a file</span>
-            <span class='string'>&quot;file&quot;</span> <span class='op'>=&gt;</span> <span class='ident'>Origin</span>::<span class='ident'>UID</span>(<span class='ident'>OpaqueOrigin</span>::<span class='ident'>new</span>()),
-            _ <span class='op'>=&gt;</span> <span class='ident'>Origin</span>::<span class='ident'>UID</span>(<span class='ident'>OpaqueOrigin</span>::<span class='ident'>new</span>())
+            <span class='string'>&quot;file&quot;</span> <span class='op'>=&gt;</span> <span class='ident'>Origin</span>::<span class='ident'>UID</span>(<span class='ident'>OpaqueOrigin</span>(<span class='ident'>Uuid</span>::<span class='ident'>new_v4</span>())),
+            _ <span class='op'>=&gt;</span> <span class='ident'>Origin</span>::<span class='ident'>UID</span>(<span class='ident'>OpaqueOrigin</span>(<span class='ident'>Uuid</span>::<span class='ident'>new_v4</span>()))
         }
     }
 
@@ -1881,7 +1842,7 @@ assert!(&amp;*css_url.serialize() == &quot;http://servo.github.io/rust-url/main.
 
     <span class='doccomment'>/// If the URL is *non-relative*, return the string scheme data.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>non_relative_scheme_data</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='ident'>str</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>non_relative_scheme_data</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>str</span><span class='op'>&gt;</span> {
         <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>scheme_data</span> {
             <span class='ident'>SchemeData</span>::<span class='ident'>Relative</span>(..) <span class='op'>=&gt;</span> <span class='prelude-val'>None</span>,
             <span class='ident'>SchemeData</span>::<span class='ident'>NonRelative</span>(<span class='kw-2'>ref</span> <span class='ident'>scheme_data</span>) <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>(<span class='ident'>scheme_data</span>),
@@ -1890,7 +1851,7 @@ assert!(&amp;*css_url.serialize() == &quot;http://servo.github.io/rust-url/main.
 
     <span class='doccomment'>/// If the URL is *non-relative*, return a mutable reference to the string scheme data.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>non_relative_scheme_data_mut</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>String</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>non_relative_scheme_data_mut</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='kw-2'>mut</span> <span class='ident'>String</span><span class='op'>&gt;</span> {
         <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>scheme_data</span> {
             <span class='ident'>SchemeData</span>::<span class='ident'>Relative</span>(..) <span class='op'>=&gt;</span> <span class='prelude-val'>None</span>,
             <span class='ident'>SchemeData</span>::<span class='ident'>NonRelative</span>(<span class='kw-2'>ref</span> <span class='kw-2'>mut</span> <span class='ident'>scheme_data</span>) <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>(<span class='ident'>scheme_data</span>),
@@ -1899,7 +1860,7 @@ assert!(&amp;*css_url.serialize() == &quot;http://servo.github.io/rust-url/main.
 
     <span class='doccomment'>/// If the URL is in a *relative scheme*, return the structured scheme data.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>relative_scheme_data</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='ident'>RelativeSchemeData</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>relative_scheme_data</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>RelativeSchemeData</span><span class='op'>&gt;</span> {
         <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>scheme_data</span> {
             <span class='ident'>SchemeData</span>::<span class='ident'>Relative</span>(<span class='kw-2'>ref</span> <span class='ident'>scheme_data</span>) <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>(<span class='ident'>scheme_data</span>),
             <span class='ident'>SchemeData</span>::<span class='ident'>NonRelative</span>(..) <span class='op'>=&gt;</span> <span class='prelude-val'>None</span>,
@@ -1909,7 +1870,7 @@ assert!(&amp;*css_url.serialize() == &quot;http://servo.github.io/rust-url/main.
     <span class='doccomment'>/// If the URL is in a *relative scheme*,</span>
     <span class='doccomment'>/// return a mutable reference to the structured scheme data.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>relative_scheme_data_mut</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>RelativeSchemeData</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>relative_scheme_data_mut</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='kw-2'>mut</span> <span class='ident'>RelativeSchemeData</span><span class='op'>&gt;</span> {
         <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>scheme_data</span> {
             <span class='ident'>SchemeData</span>::<span class='ident'>Relative</span>(<span class='kw-2'>ref</span> <span class='kw-2'>mut</span> <span class='ident'>scheme_data</span>) <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>(<span class='ident'>scheme_data</span>),
             <span class='ident'>SchemeData</span>::<span class='ident'>NonRelative</span>(..) <span class='op'>=&gt;</span> <span class='prelude-val'>None</span>,
@@ -1918,13 +1879,13 @@ assert!(&amp;*css_url.serialize() == &quot;http://servo.github.io/rust-url/main.
 
     <span class='doccomment'>/// If the URL is in a *relative scheme*, return its username.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>username</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='ident'>str</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>username</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>str</span><span class='op'>&gt;</span> {
         <span class='self'>self</span>.<span class='ident'>relative_scheme_data</span>().<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>scheme_data</span><span class='op'>|</span> <span class='kw-2'>&amp;</span><span class='op'>*</span><span class='ident'>scheme_data</span>.<span class='ident'>username</span>)
     }
 
     <span class='doccomment'>/// If the URL is in a *relative scheme*, return a mutable reference to its username.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>username_mut</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>String</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>username_mut</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='kw-2'>mut</span> <span class='ident'>String</span><span class='op'>&gt;</span> {
         <span class='self'>self</span>.<span class='ident'>relative_scheme_data_mut</span>().<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>scheme_data</span><span class='op'>|</span> <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>scheme_data</span>.<span class='ident'>username</span>)
     }
 
@@ -1939,14 +1900,14 @@ assert!(&amp;*css_url.serialize() == &quot;http://servo.github.io/rust-url/main.
 
     <span class='doccomment'>/// If the URL is in a *relative scheme*, return its password, if any.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>password</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='ident'>str</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>password</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>str</span><span class='op'>&gt;</span> {
         <span class='self'>self</span>.<span class='ident'>relative_scheme_data</span>().<span class='ident'>and_then</span>(<span class='op'>|</span><span class='ident'>scheme_data</span><span class='op'>|</span>
             <span class='ident'>scheme_data</span>.<span class='ident'>password</span>.<span class='ident'>as_ref</span>().<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>password</span><span class='op'>|</span> <span class='ident'>password</span> <span class='kw'>as</span> <span class='kw-2'>&amp;</span><span class='ident'>str</span>))
     }
 
     <span class='doccomment'>/// If the URL is in a *relative scheme*, return a mutable reference to its password, if any.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>password_mut</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>String</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>password_mut</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='kw-2'>mut</span> <span class='ident'>String</span><span class='op'>&gt;</span> {
         <span class='self'>self</span>.<span class='ident'>relative_scheme_data_mut</span>().<span class='ident'>and_then</span>(<span class='op'>|</span><span class='ident'>scheme_data</span><span class='op'>|</span> <span class='ident'>scheme_data</span>.<span class='ident'>password</span>.<span class='ident'>as_mut</span>())
     }
 
@@ -1964,33 +1925,33 @@ assert!(&amp;*css_url.serialize() == &quot;http://servo.github.io/rust-url/main.
     <span class='doccomment'>///</span>
     <span class='doccomment'>/// Format: &quot;&lt;username&gt;:&lt;password&gt;@&quot;</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>serialize_userinfo</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>String</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>serialize_userinfo</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>String</span><span class='op'>&gt;</span> {
         <span class='self'>self</span>.<span class='ident'>relative_scheme_data</span>().<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>scheme_data</span><span class='op'>|</span> <span class='ident'>scheme_data</span>.<span class='ident'>serialize_userinfo</span>())
     }
 
     <span class='doccomment'>/// If the URL is in a *relative scheme*, return its structured host.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>host</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='ident'>Host</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>host</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>Host</span><span class='op'>&gt;</span> {
         <span class='self'>self</span>.<span class='ident'>relative_scheme_data</span>().<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>scheme_data</span><span class='op'>|</span> <span class='kw-2'>&amp;</span><span class='ident'>scheme_data</span>.<span class='ident'>host</span>)
     }
 
     <span class='doccomment'>/// If the URL is in a *relative scheme*, return a mutable reference to its structured host.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>host_mut</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Host</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>host_mut</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='kw-2'>mut</span> <span class='ident'>Host</span><span class='op'>&gt;</span> {
         <span class='self'>self</span>.<span class='ident'>relative_scheme_data_mut</span>().<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>scheme_data</span><span class='op'>|</span> <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>scheme_data</span>.<span class='ident'>host</span>)
     }
 
     <span class='doccomment'>/// If the URL is in a *relative scheme* and its host is a domain,</span>
     <span class='doccomment'>/// return the domain as a string.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>domain</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='ident'>str</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>domain</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>str</span><span class='op'>&gt;</span> {
         <span class='self'>self</span>.<span class='ident'>relative_scheme_data</span>().<span class='ident'>and_then</span>(<span class='op'>|</span><span class='ident'>scheme_data</span><span class='op'>|</span> <span class='ident'>scheme_data</span>.<span class='ident'>domain</span>())
     }
 
     <span class='doccomment'>/// If the URL is in a *relative scheme* and its host is a domain,</span>
     <span class='doccomment'>/// return a mutable reference to the domain string.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>domain_mut</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>String</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>domain_mut</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='kw-2'>mut</span> <span class='ident'>String</span><span class='op'>&gt;</span> {
         <span class='self'>self</span>.<span class='ident'>relative_scheme_data_mut</span>().<span class='ident'>and_then</span>(<span class='op'>|</span><span class='ident'>scheme_data</span><span class='op'>|</span> <span class='ident'>scheme_data</span>.<span class='ident'>domain_mut</span>())
     }
 
@@ -2004,13 +1965,13 @@ assert!(&amp;*css_url.serialize() == &quot;http://servo.github.io/rust-url/main.
 
     <span class='doccomment'>/// If the URL is in a *relative scheme* and has a port number, return it.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>port</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>u16</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>port</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>u16</span><span class='op'>&gt;</span> {
         <span class='self'>self</span>.<span class='ident'>relative_scheme_data</span>().<span class='ident'>and_then</span>(<span class='op'>|</span><span class='ident'>scheme_data</span><span class='op'>|</span> <span class='ident'>scheme_data</span>.<span class='ident'>port</span>)
     }
 
     <span class='doccomment'>/// If the URL is in a *relative scheme*, return a mutable reference to its port.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>port_mut</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>u16</span><span class='op'>&gt;&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>port_mut</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='kw-2'>mut</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>u16</span><span class='op'>&gt;&gt;</span> {
         <span class='self'>self</span>.<span class='ident'>relative_scheme_data_mut</span>().<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>scheme_data</span><span class='op'>|</span> <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>scheme_data</span>.<span class='ident'>port</span>)
     }
 
@@ -2023,13 +1984,13 @@ assert!(&amp;*css_url.serialize() == &quot;http://servo.github.io/rust-url/main.
 
     <span class='doccomment'>/// If the URL is in a *relative scheme*, return its path components.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>path</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span>[<span class='ident'>String</span>]<span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>path</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> [<span class='ident'>String</span>]<span class='op'>&gt;</span> {
         <span class='self'>self</span>.<span class='ident'>relative_scheme_data</span>().<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>scheme_data</span><span class='op'>|</span> <span class='kw-2'>&amp;</span><span class='op'>*</span><span class='ident'>scheme_data</span>.<span class='ident'>path</span>)
     }
 
     <span class='doccomment'>/// If the URL is in a *relative scheme*, return a mutable reference to its path components.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>path_mut</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>String</span><span class='op'>&gt;&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>path_mut</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='kw-2'>mut</span> <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>String</span><span class='op'>&gt;&gt;</span> {
         <span class='self'>self</span>.<span class='ident'>relative_scheme_data_mut</span>().<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>scheme_data</span><span class='op'>|</span> <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>scheme_data</span>.<span class='ident'>path</span>)
     }
 
@@ -2073,14 +2034,6 @@ assert!(&amp;*css_url.serialize() == &quot;http://servo.github.io/rust-url/main.
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>lossy_percent_decode_fragment</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>String</span><span class='op'>&gt;</span> {
         <span class='self'>self</span>.<span class='ident'>fragment</span>.<span class='ident'>as_ref</span>().<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>value</span><span class='op'>|</span> <span class='ident'>lossy_utf8_percent_decode</span>(<span class='ident'>value</span>.<span class='ident'>as_bytes</span>()))
-    }
-
-    <span class='doccomment'>/// Join a path with a base URL.</span>
-    <span class='doccomment'>///</span>
-    <span class='doccomment'>/// Corresponds to the basic URL parser where `self` is the given base URL.</span>
-    <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>join</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>input</span>: <span class='kw-2'>&amp;</span><span class='ident'>str</span>) <span class='op'>-&gt;</span> <span class='ident'>ParseResult</span><span class='op'>&lt;</span><span class='ident'>Url</span><span class='op'>&gt;</span> {
-        <span class='ident'>UrlParser</span>::<span class='ident'>new</span>().<span class='ident'>base_url</span>(<span class='self'>self</span>).<span class='ident'>parse</span>(<span class='ident'>input</span>)
     }
 }
 
@@ -2169,10 +2122,13 @@ assert!(&amp;*css_url.serialize() == &quot;http://servo.github.io/rust-url/main.
     <span class='doccomment'>/// and may give nonsensical results for other schemes.</span>
     <span class='doccomment'>/// It is the user’s responsibility to check the URL’s scheme before calling this.</span>
     <span class='doccomment'>///</span>
-    <span class='doccomment'>/// ```</span>
-    <span class='doccomment'>/// # use url::Url;</span>
-    <span class='doccomment'>/// # let url = Url::parse(&quot;file:///etc/passwd&quot;).unwrap();</span>
-    <span class='doccomment'>/// let path = url.to_file_path();</span>
+    <span class='doccomment'>/// The return type (when `Ok()`) is generic and can be either `std::path::posix::Path`</span>
+    <span class='doccomment'>/// or `std::path::windows::Path`.</span>
+    <span class='doccomment'>/// (Use `std::path::Path` to pick one of them depending on the local system.)</span>
+    <span class='doccomment'>/// If the compiler can not infer the desired type from context, you may have to specifiy it:</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// ```ignore</span>
+    <span class='doccomment'>/// let path = url.to_file_path::&lt;std::path::posix::Path&gt;();</span>
     <span class='doccomment'>/// ```</span>
     <span class='doccomment'>///</span>
     <span class='doccomment'>/// Returns `Err` if the host is neither empty nor `&quot;localhost&quot;`,</span>
@@ -2190,7 +2146,7 @@ assert!(&amp;*css_url.serialize() == &quot;http://servo.github.io/rust-url/main.
 
     <span class='doccomment'>/// If the host is a domain, return the domain as a string.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>domain</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='ident'>str</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>domain</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>str</span><span class='op'>&gt;</span> {
         <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>host</span> {
             <span class='ident'>Host</span>::<span class='ident'>Domain</span>(<span class='kw-2'>ref</span> <span class='ident'>domain</span>) <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>(<span class='ident'>domain</span>),
             _ <span class='op'>=&gt;</span> <span class='prelude-val'>None</span>,
@@ -2199,7 +2155,7 @@ assert!(&amp;*css_url.serialize() == &quot;http://servo.github.io/rust-url/main.
 
     <span class='doccomment'>/// If the host is a domain, return a mutable reference to the domain string.</span>
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>domain_mut</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>String</span><span class='op'>&gt;</span> {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>domain_mut</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='kw-2'>mut</span> <span class='ident'>String</span><span class='op'>&gt;</span> {
         <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>host</span> {
             <span class='ident'>Host</span>::<span class='ident'>Domain</span>(<span class='kw-2'>ref</span> <span class='kw-2'>mut</span> <span class='ident'>domain</span>) <span class='op'>=&gt;</span> <span class='prelude-val'>Some</span>(<span class='ident'>domain</span>),
             _ <span class='op'>=&gt;</span> <span class='prelude-val'>None</span>,
@@ -2293,7 +2249,6 @@ assert!(&amp;*css_url.serialize() == &quot;http://servo.github.io/rust-url/main.
     <span class='kw'>let</span> <span class='ident'>disk</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>components</span>.<span class='ident'>next</span>() {
         <span class='prelude-val'>Some</span>(<span class='ident'>Component</span>::<span class='ident'>Prefix</span>(<span class='kw-2'>ref</span> <span class='ident'>p</span>)) <span class='op'>=&gt;</span> <span class='kw'>match</span> <span class='ident'>p</span>.<span class='ident'>kind</span>() {
             <span class='ident'>Prefix</span>::<span class='ident'>Disk</span>(<span class='ident'>byte</span>) <span class='op'>=&gt;</span> <span class='ident'>byte</span>,
-            <span class='ident'>Prefix</span>::<span class='ident'>VerbatimDisk</span>(<span class='ident'>byte</span>) <span class='op'>=&gt;</span> <span class='ident'>byte</span>,
             _ <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-val'>Err</span>(()),
         },
 
@@ -2357,7 +2312,7 @@ assert!(&amp;*css_url.serialize() == &quot;http://servo.github.io/rust-url/main.
             <span class='op'>||</span> <span class='ident'>prefix</span>.<span class='ident'>as_bytes</span>()[<span class='number'>1</span>] <span class='op'>!=</span> <span class='string'>b&#39;:&#39;</span> {
         <span class='kw'>return</span> <span class='prelude-val'>Err</span>(())
     }
-    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>string</span> <span class='op'>=</span> <span class='ident'>prefix</span>.<span class='ident'>to_owned</span>();
+    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>string</span> <span class='op'>=</span> <span class='ident'>prefix</span>.<span class='ident'>to_string</span>();
     <span class='kw'>for</span> <span class='ident'>path_part</span> <span class='kw'>in</span> <span class='kw-2'>&amp;</span><span class='ident'>path</span>[<span class='number'>1</span>..] {
         <span class='ident'>string</span>.<span class='ident'>push</span>(<span class='string'>&#39;\\&#39;</span>);
 
@@ -2372,6 +2327,7 @@ assert!(&amp;*css_url.serialize() == &quot;http://servo.github.io/rust-url/main.
                   <span class='string'>&quot;to_file_path() failed to produce an absolute Path&quot;</span>);
     <span class='prelude-val'>Ok</span>(<span class='ident'>path</span>)
 }
+
 </pre>
 </section>
     <section id='search' class="content hidden"></section>

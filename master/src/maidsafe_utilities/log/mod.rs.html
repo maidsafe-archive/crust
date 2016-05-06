@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/maidsafe_utilities-0.5.3/src/log/mod.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/maidsafe_utilities-0.5.4/src/log/mod.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>mod.rs.html -- source</title>
@@ -683,12 +683,6 @@
 <span id="640">640</span>
 <span id="641">641</span>
 <span id="642">642</span>
-<span id="643">643</span>
-<span id="644">644</span>
-<span id="645">645</span>
-<span id="646">646</span>
-<span id="647">647</span>
-<span id="648">648</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -785,6 +779,7 @@
 <span class='kw'>use</span> <span class='ident'>rand</span>;
 
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>borrow</span>::<span class='ident'>Borrow</span>;
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>env</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fmt</span>::{<span class='self'>self</span>, <span class='ident'>Display</span>, <span class='ident'>Formatter</span>};
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>path</span>::<span class='ident'>Path</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>net</span>::<span class='ident'>ToSocketAddrs</span>;
@@ -806,7 +801,8 @@
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>result</span> <span class='op'>=</span> <span class='prelude-val'>Err</span>(<span class='string'>&quot;Logger already initialised&quot;</span>.<span class='ident'>to_owned</span>());
 
     <span class='ident'>INITIALISE_LOGGER</span>.<span class='ident'>call_once</span>(<span class='op'>||</span> {
-        <span class='kw'>let</span> <span class='ident'>config_path</span> <span class='op'>=</span> <span class='ident'>Path</span>::<span class='ident'>new</span>(<span class='ident'>CONFIG_FILE</span>);
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>config_path</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>env</span>::<span class='ident'>current_exe</span>());
+        <span class='ident'>config_path</span>.<span class='ident'>set_file_name</span>(<span class='ident'>CONFIG_FILE</span>);
 
         <span class='ident'>result</span> <span class='op'>=</span> <span class='kw'>if</span> <span class='ident'>config_path</span>.<span class='ident'>is_file</span>() {
             <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>creator</span> <span class='op'>=</span> <span class='ident'>Creator</span>::<span class='ident'>default</span>();
@@ -1013,7 +1009,7 @@
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>config</span> <span class='op'>=</span> <span class='ident'>Config</span>::<span class='ident'>builder</span>(<span class='ident'>root</span>).<span class='ident'>loggers</span>(<span class='ident'>loggers</span>);
 
         <span class='kw'>let</span> <span class='ident'>server_appender</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='ident'>AsyncWebSockAppender</span>::<span class='ident'>builder</span>(<span class='ident'>server_url</span>)
-                                        .<span class='ident'>pattern</span>(<span class='ident'>make_json_pattern</span>(<span class='ident'>rand</span>::<span class='ident'>random</span>()))
+                                        .<span class='ident'>pattern</span>(<span class='ident'>async_log</span>::<span class='ident'>make_json_pattern</span>(<span class='ident'>rand</span>::<span class='ident'>random</span>()))
                                         .<span class='ident'>build</span>()
                                         .<span class='ident'>map_err</span>(<span class='op'>|</span><span class='ident'>e</span><span class='op'>|</span> <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;{}&quot;</span>, <span class='ident'>e</span>)) {
             <span class='prelude-val'>Ok</span>(<span class='ident'>appender</span>) <span class='op'>=&gt;</span> <span class='ident'>appender</span>,
@@ -1059,14 +1055,6 @@
     };
 
     <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>PatternLayout</span>::<span class='ident'>new</span>(<span class='ident'>pattern</span>))
-}
-
-<span class='kw'>fn</span> <span class='ident'>make_json_pattern</span>(<span class='ident'>unique_id</span>: <span class='ident'>u64</span>) <span class='op'>-&gt;</span> <span class='ident'>PatternLayout</span> {
-    <span class='kw'>let</span> <span class='ident'>pattern</span> <span class='op'>=</span> <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;{{\&quot;id\&quot;:\&quot;{}\&quot;,\&quot;level\&quot;:\&quot;%l\&quot;,\&quot;time\&quot;:\&quot;%d\&quot;,\&quot;thread\&quot;:\&quot;%T\&quot;,\
-                           \&quot;module\&quot;:\&quot;%M\&quot;,\&quot;file\&quot;:\&quot;%f\&quot;,\&quot;line\&quot;:\&quot;%L\&quot;,\&quot;msg\&quot;:\&quot;%m\&quot;}}&quot;</span>,
-                          <span class='ident'>unique_id</span>);
-
-    <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>PatternLayout</span>::<span class='ident'>new</span>(<span class='kw-2'>&amp;</span><span class='ident'>pattern</span>))
 }
 
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Debug</span>)]</span>

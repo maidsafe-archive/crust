@@ -46,24 +46,8 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-925' class='srclink' href='../../src/url/percent_encoding.rs.html#160-167' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub fn from_hex(byte: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;</pre><div class='docblock'><p>Convert the given hex character into its numeric value.</p>
-
-<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
-<pre class='rust rust-example-rendered'>
-<span class='kw'>use</span> <span class='ident'>url</span>::<span class='ident'>percent_encoding</span>::<span class='ident'>from_hex</span>;
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>from_hex</span>(<span class='string'>&#39;0&#39;</span> <span class='kw'>as</span> <span class='ident'>u8</span>), <span class='prelude-val'>Some</span>(<span class='number'>0</span>));
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>from_hex</span>(<span class='string'>&#39;1&#39;</span> <span class='kw'>as</span> <span class='ident'>u8</span>), <span class='prelude-val'>Some</span>(<span class='number'>1</span>));
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>from_hex</span>(<span class='string'>&#39;9&#39;</span> <span class='kw'>as</span> <span class='ident'>u8</span>), <span class='prelude-val'>Some</span>(<span class='number'>9</span>));
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>from_hex</span>(<span class='string'>&#39;A&#39;</span> <span class='kw'>as</span> <span class='ident'>u8</span>), <span class='prelude-val'>Some</span>(<span class='number'>10</span>));
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>from_hex</span>(<span class='string'>&#39;a&#39;</span> <span class='kw'>as</span> <span class='ident'>u8</span>), <span class='prelude-val'>Some</span>(<span class='number'>10</span>));
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>from_hex</span>(<span class='string'>&#39;F&#39;</span> <span class='kw'>as</span> <span class='ident'>u8</span>), <span class='prelude-val'>Some</span>(<span class='number'>15</span>));
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>from_hex</span>(<span class='string'>&#39;f&#39;</span> <span class='kw'>as</span> <span class='ident'>u8</span>), <span class='prelude-val'>Some</span>(<span class='number'>15</span>));
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>from_hex</span>(<span class='string'>&#39;G&#39;</span> <span class='kw'>as</span> <span class='ident'>u8</span>), <span class='prelude-val'>None</span>);
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>from_hex</span>(<span class='string'>&#39;g&#39;</span> <span class='kw'>as</span> <span class='ident'>u8</span>), <span class='prelude-val'>None</span>);
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>from_hex</span>(<span class='string'>&#39;Z&#39;</span> <span class='kw'>as</span> <span class='ident'>u8</span>), <span class='prelude-val'>None</span>);
-<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>from_hex</span>(<span class='string'>&#39;z&#39;</span> <span class='kw'>as</span> <span class='ident'>u8</span>), <span class='prelude-val'>None</span>);</pre>
-</div></section>
+        </span><a id='src-941' class='srclink' href='../../src/url/percent_encoding.rs.html#142-149' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub fn from_hex(byte: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;</pre></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

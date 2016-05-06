@@ -46,11 +46,9 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-2433' class='srclink' href='../src/crust/src/static_contact_info.rs.html#23-40' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-2092' class='srclink' href='../src/crust/src/static_contact_info.rs.html#23-31' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct StaticContactInfo {
     pub tcp_acceptors: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../crust/struct.SocketAddr.html' title='crust::SocketAddr'>SocketAddr</a>&gt;,
-    pub utp_custom_listeners: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../crust/struct.SocketAddr.html' title='crust::SocketAddr'>SocketAddr</a>&gt;,
-    pub udp_mapper_servers: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../crust/struct.SocketAddr.html' title='crust::SocketAddr'>SocketAddr</a>&gt;,
     pub tcp_mapper_servers: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../crust/struct.SocketAddr.html' title='crust::SocketAddr'>SocketAddr</a>&gt;,
 }</pre><div class='docblock'><p>This struct contains information needed to Bootstrap and for echo-server services</p>
 </div><h2 class='fields'>Fields</h2>
@@ -59,15 +57,6 @@
 when someone wants to bootstrap off us and we haven&#39;t yet obtained our global address. In
 that case the list will contain only the local addresses that the process calling
 seek_peers() will get and use.</p>
-</div></td></tr><tr class='stab '>
-                                  <td id='structfield.utp_custom_listeners'><code>utp_custom_listeners</code></td><td><div class='docblock'><p>This will contain only global addresses. Local addresses will be useful on LAN
-when someone has these entries in bootstrap.cache file and crust was directed not to
-seek_peers() during start (seek_peers_on_port = None) and TCP was not allowed on that Lan.
-In this case the peer would ask for a new UDP socket address to connect to from one of the
-following listeners. Since this is a rare edge case we do not cater to it and have only
-global addresses populated for UDP.</p>
-</div></td></tr><tr class='stab '>
-                                  <td id='structfield.udp_mapper_servers'><code>udp_mapper_servers</code></td><td><div class='docblock'><p>UDP mapper server addresses</p>
 </div></td></tr><tr class='stab '>
                                   <td id='structfield.tcp_mapper_servers'><code>tcp_mapper_servers</code></td><td><div class='docblock'><p>TCP mapper server addresses</p>
 </div></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/hash/trait.Hash.html' title='core::hash::Hash'>Hash</a> for <a class='struct' href='../crust/struct.StaticContactInfo.html' title='crust::StaticContactInfo'>StaticContactInfo</a></code></h3><div class='impl-items'><h4 id='method.hash' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/hash/trait.Hash.html#method.hash' class='fnname'>hash</a>&lt;__H: <a class='trait' href='https://doc.rust-lang.org/nightly/core/hash/trait.Hasher.html' title='core::hash::Hasher'>Hasher</a>&gt;(&amp;self, __arg_0: &amp;mut __H)</code></h4>

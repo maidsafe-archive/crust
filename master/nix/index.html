@@ -46,12 +46,13 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-0' class='srclink' href='../src/nix/lib.rs.html#1-176' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-0' class='srclink' href='../src/nix/lib.rs.html#1-227' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>Rust friendly bindings to the various *nix system functions.</p>
 
 <p>Modules are structured according to the C header file that they would be
 defined in.</p>
-</div><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
+</div><h2 id='reexports' class='section-header'><a href="#reexports">Reexports</a></h2>
+<table><tr><td><code>pub extern crate libc;</code></td></tr></table><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
 <table>
                     <tr class=' module-item'>
                         <td><a class='mod' href='errno/index.html'
@@ -90,6 +91,22 @@ defined in.</p>
                                title='nix::mqueue'>mqueue</a></td>
                         <td class='docblock short'>
                              <p>Posix Message Queue functions</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='mod' href='net/index.html'
+                               title='nix::net'>net</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='mod' href='poll/index.html'
+                               title='nix::poll'>poll</a></td>
+                        <td class='docblock short'>
+                             
                         </td>
                     </tr>
                 
@@ -176,6 +193,14 @@ defined in.</p>
                 </table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
 <table>
                     <tr class=' module-item'>
+                        <td><a class='enum' href='enum.Errno.html'
+                               title='nix::Errno'>Errno</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
                         <td><a class='enum' href='enum.Error.html'
                                title='nix::Error'>Error</a></td>
                         <td class='docblock short'>
@@ -187,7 +212,7 @@ defined in.</p>
                         <td><a class='enum' href='enum.c_void.html'
                                title='nix::c_void'>c_void</a></td>
                         <td class='docblock short'>
-                             <p>Type used to construct void pointers for use with C.</p>
+                             
                         </td>
                     </tr>
                 </table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
@@ -195,15 +220,6 @@ defined in.</p>
                     <tr class=' module-item'>
                         <td><a class='trait' href='trait.NixPath.html'
                                title='nix::NixPath'>NixPath</a></td>
-                        <td class='docblock short'>
-                             
-                        </td>
-                    </tr>
-                </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
-<table>
-                    <tr class=' module-item'>
-                        <td><a class='fn' href='fn.from_ffi.html'
-                               title='nix::from_ffi'>from_ffi</a></td>
                         <td class='docblock short'>
                              
                         </td>

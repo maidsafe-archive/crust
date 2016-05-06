@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["close",""],["fork",""],["ftruncate",""],["getpid",""],["getppid",""],["pipe",""],["read",""],["setpgid",""],["unlink",""],["write",""]]});
+initSidebarItems({"fn":[["chown",""],["close",""],["fork",""],["ftruncate",""],["getegid",""],["geteuid",""],["getgid",""],["getpid",""],["getppid",""],["getuid",""],["pipe",""],["read",""],["setgid",""],["setpgid",""],["setuid",""],["unlink",""],["write",""]]});

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/nix-0.4.2/src/sys/socket/sockopt.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/nix-0.5.0/src/sys/socket/sockopt.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>sockopt.rs.html -- source</title>
@@ -343,10 +343,131 @@
 <span id="300">300</span>
 <span id="301">301</span>
 <span id="302">302</span>
+<span id="303">303</span>
+<span id="304">304</span>
+<span id="305">305</span>
+<span id="306">306</span>
+<span id="307">307</span>
+<span id="308">308</span>
+<span id="309">309</span>
+<span id="310">310</span>
+<span id="311">311</span>
+<span id="312">312</span>
+<span id="313">313</span>
+<span id="314">314</span>
+<span id="315">315</span>
+<span id="316">316</span>
+<span id="317">317</span>
+<span id="318">318</span>
+<span id="319">319</span>
+<span id="320">320</span>
+<span id="321">321</span>
+<span id="322">322</span>
+<span id="323">323</span>
+<span id="324">324</span>
+<span id="325">325</span>
+<span id="326">326</span>
+<span id="327">327</span>
+<span id="328">328</span>
+<span id="329">329</span>
+<span id="330">330</span>
+<span id="331">331</span>
+<span id="332">332</span>
+<span id="333">333</span>
+<span id="334">334</span>
+<span id="335">335</span>
+<span id="336">336</span>
+<span id="337">337</span>
+<span id="338">338</span>
+<span id="339">339</span>
+<span id="340">340</span>
+<span id="341">341</span>
+<span id="342">342</span>
+<span id="343">343</span>
+<span id="344">344</span>
+<span id="345">345</span>
+<span id="346">346</span>
+<span id="347">347</span>
+<span id="348">348</span>
+<span id="349">349</span>
+<span id="350">350</span>
+<span id="351">351</span>
+<span id="352">352</span>
+<span id="353">353</span>
+<span id="354">354</span>
+<span id="355">355</span>
+<span id="356">356</span>
+<span id="357">357</span>
+<span id="358">358</span>
+<span id="359">359</span>
+<span id="360">360</span>
+<span id="361">361</span>
+<span id="362">362</span>
+<span id="363">363</span>
+<span id="364">364</span>
+<span id="365">365</span>
+<span id="366">366</span>
+<span id="367">367</span>
+<span id="368">368</span>
+<span id="369">369</span>
+<span id="370">370</span>
+<span id="371">371</span>
+<span id="372">372</span>
+<span id="373">373</span>
+<span id="374">374</span>
+<span id="375">375</span>
+<span id="376">376</span>
+<span id="377">377</span>
+<span id="378">378</span>
+<span id="379">379</span>
+<span id="380">380</span>
+<span id="381">381</span>
+<span id="382">382</span>
+<span id="383">383</span>
+<span id="384">384</span>
+<span id="385">385</span>
+<span id="386">386</span>
+<span id="387">387</span>
+<span id="388">388</span>
+<span id="389">389</span>
+<span id="390">390</span>
+<span id="391">391</span>
+<span id="392">392</span>
+<span id="393">393</span>
+<span id="394">394</span>
+<span id="395">395</span>
+<span id="396">396</span>
+<span id="397">397</span>
+<span id="398">398</span>
+<span id="399">399</span>
+<span id="400">400</span>
+<span id="401">401</span>
+<span id="402">402</span>
+<span id="403">403</span>
+<span id="404">404</span>
+<span id="405">405</span>
+<span id="406">406</span>
+<span id="407">407</span>
+<span id="408">408</span>
+<span id="409">409</span>
+<span id="410">410</span>
+<span id="411">411</span>
+<span id="412">412</span>
+<span id="413">413</span>
+<span id="414">414</span>
+<span id="415">415</span>
+<span id="416">416</span>
+<span id="417">417</span>
+<span id="418">418</span>
+<span id="419">419</span>
+<span id="420">420</span>
+<span id="421">421</span>
+<span id="422">422</span>
+<span id="423">423</span>
+<span id="424">424</span>
 </pre><pre class='rust '>
-<span class='kw'>use</span> {<span class='prelude-ty'>Result</span>, <span class='ident'>Error</span>, <span class='ident'>from_ffi</span>};
 <span class='kw'>use</span> <span class='ident'>super</span>::{<span class='ident'>ffi</span>, <span class='ident'>consts</span>, <span class='ident'>GetSockOpt</span>, <span class='ident'>SetSockOpt</span>};
-<span class='kw'>use</span> <span class='ident'>errno</span>::<span class='ident'>Errno</span>;
+<span class='kw'>use</span> {<span class='ident'>Errno</span>, <span class='prelude-ty'>Result</span>};
 <span class='kw'>use</span> <span class='ident'>sys</span>::<span class='ident'>time</span>::<span class='ident'>TimeVal</span>;
 <span class='kw'>use</span> <span class='ident'>libc</span>::{<span class='ident'>c_int</span>, <span class='ident'>uint8_t</span>, <span class='ident'>c_void</span>, <span class='ident'>socklen_t</span>};
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>mem</span>;
@@ -364,7 +485,7 @@
                     <span class='kw'>let</span> <span class='ident'>res</span> <span class='op'>=</span> <span class='ident'>ffi</span>::<span class='ident'>setsockopt</span>(<span class='ident'>fd</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>level</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>flag</span>,
                                               <span class='ident'>setter</span>.<span class='ident'>ffi_ptr</span>(),
                                               <span class='ident'>setter</span>.<span class='ident'>ffi_len</span>());
-                    <span class='ident'>from_ffi</span>(<span class='ident'>res</span>)
+                    <span class='ident'>Errno</span>::<span class='ident'>result</span>(<span class='ident'>res</span>).<span class='ident'>map</span>(<span class='ident'>drop</span>)
                 }
             }
         }
@@ -383,9 +504,7 @@
                     <span class='kw'>let</span> <span class='ident'>res</span> <span class='op'>=</span> <span class='ident'>ffi</span>::<span class='ident'>getsockopt</span>(<span class='ident'>fd</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>level</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>flag</span>,
                                               <span class='ident'>getter</span>.<span class='ident'>ffi_ptr</span>(),
                                               <span class='ident'>getter</span>.<span class='ident'>ffi_len</span>());
-                    <span class='kw'>if</span> <span class='ident'>res</span> <span class='op'>&lt;</span> <span class='number'>0</span> {
-                        <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>Sys</span>(<span class='ident'>Errno</span>::<span class='ident'>last</span>()));
-                    }
+                    <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>Errno</span>::<span class='ident'>result</span>(<span class='ident'>res</span>));
 
                     <span class='prelude-val'>Ok</span>(<span class='ident'>getter</span>.<span class='ident'>unwrap</span>())
                 }
@@ -408,6 +527,10 @@
         <span class='macro'>sockopt_impl</span><span class='macro'>!</span>(<span class='ident'>GetOnly</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>level</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>flag</span>, <span class='ident'>u8</span>, <span class='ident'>GetU8</span>);
     };
 
+    (<span class='ident'>GetOnly</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>:<span class='ident'>ident</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>level</span>:<span class='ident'>path</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>flag</span>:<span class='ident'>path</span>, <span class='ident'>usize</span>) <span class='op'>=&gt;</span> {
+        <span class='macro'>sockopt_impl</span><span class='macro'>!</span>(<span class='ident'>GetOnly</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>level</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>flag</span>, <span class='ident'>usize</span>, <span class='ident'>GetUsize</span>);
+    };
+
     (<span class='ident'>GetOnly</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>:<span class='ident'>ident</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>level</span>:<span class='ident'>path</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>flag</span>:<span class='ident'>path</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>ty</span>:<span class='ident'>ty</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>getter</span>:<span class='ident'>ty</span>) <span class='op'>=&gt;</span> {
         <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Copy</span>, <span class='ident'>Clone</span>, <span class='ident'>Debug</span>)]</span>
         <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>;
@@ -425,6 +548,10 @@
 
     (<span class='ident'>SetOnly</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>:<span class='ident'>ident</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>level</span>:<span class='ident'>path</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>flag</span>:<span class='ident'>path</span>, <span class='ident'>u8</span>) <span class='op'>=&gt;</span> {
         <span class='macro'>sockopt_impl</span><span class='macro'>!</span>(<span class='ident'>SetOnly</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>level</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>flag</span>, <span class='ident'>u8</span>, <span class='ident'>SetU8</span>);
+    };
+
+    (<span class='ident'>SetOnly</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>:<span class='ident'>ident</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>level</span>:<span class='ident'>path</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>flag</span>:<span class='ident'>path</span>, <span class='ident'>usize</span>) <span class='op'>=&gt;</span> {
+        <span class='macro'>sockopt_impl</span><span class='macro'>!</span>(<span class='ident'>SetOnly</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>level</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>flag</span>, <span class='ident'>usize</span>, <span class='ident'>SetUsize</span>);
     };
 
     (<span class='ident'>SetOnly</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>:<span class='ident'>ident</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>level</span>:<span class='ident'>path</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>flag</span>:<span class='ident'>path</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>ty</span>:<span class='ident'>ty</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>setter</span>:<span class='ident'>ty</span>) <span class='op'>=&gt;</span> {
@@ -450,6 +577,10 @@
         <span class='macro'>sockopt_impl</span><span class='macro'>!</span>(<span class='ident'>Both</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>level</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>flag</span>, <span class='ident'>u8</span>, <span class='ident'>GetU8</span>, <span class='ident'>SetU8</span>);
     };
 
+    (<span class='ident'>Both</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>:<span class='ident'>ident</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>level</span>:<span class='ident'>path</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>flag</span>:<span class='ident'>path</span>, <span class='ident'>usize</span>) <span class='op'>=&gt;</span> {
+        <span class='macro'>sockopt_impl</span><span class='macro'>!</span>(<span class='ident'>Both</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>level</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>flag</span>, <span class='ident'>usize</span>, <span class='ident'>GetUsize</span>, <span class='ident'>SetUsize</span>);
+    };
+
     (<span class='ident'>Both</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>:<span class='ident'>ident</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>level</span>:<span class='ident'>path</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>flag</span>:<span class='ident'>path</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>ty</span>:<span class='ident'>ty</span>) <span class='op'>=&gt;</span> {
         <span class='macro'>sockopt_impl</span><span class='macro'>!</span>(<span class='ident'>Both</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>name</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>level</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>flag</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>ty</span>, <span class='ident'>GetStruct</span><span class='op'>&lt;</span><span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>ty</span><span class='op'>&gt;</span>, <span class='ident'>SetStruct</span><span class='op'>&lt;</span><span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>ty</span><span class='op'>&gt;</span>);
     };
@@ -467,13 +598,13 @@
 <span class='macro'>sockopt_impl</span><span class='macro'>!</span>(<span class='ident'>Both</span>, <span class='ident'>Linger</span>, <span class='ident'>consts</span>::<span class='ident'>SOL_SOCKET</span>, <span class='ident'>consts</span>::<span class='ident'>SO_LINGER</span>, <span class='ident'>super</span>::<span class='ident'>linger</span>);
 <span class='macro'>sockopt_impl</span><span class='macro'>!</span>(<span class='ident'>SetOnly</span>, <span class='ident'>IpAddMembership</span>, <span class='ident'>consts</span>::<span class='ident'>IPPROTO_IP</span>, <span class='ident'>consts</span>::<span class='ident'>IP_ADD_MEMBERSHIP</span>, <span class='ident'>super</span>::<span class='ident'>ip_mreq</span>);
 <span class='macro'>sockopt_impl</span><span class='macro'>!</span>(<span class='ident'>SetOnly</span>, <span class='ident'>IpDropMembership</span>, <span class='ident'>consts</span>::<span class='ident'>IPPROTO_IP</span>, <span class='ident'>consts</span>::<span class='ident'>IP_DROP_MEMBERSHIP</span>, <span class='ident'>super</span>::<span class='ident'>ip_mreq</span>);
-<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>not</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;netbsd&quot;</span>))]</span>
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>not</span>(<span class='ident'>any</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;dragonfly&quot;</span>, <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;freebsd&quot;</span>, <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;ios&quot;</span>, <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;macos&quot;</span>, <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;netbsd&quot;</span>, <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;openbsd&quot;</span>)))]</span>
 <span class='macro'>sockopt_impl</span><span class='macro'>!</span>(<span class='ident'>SetOnly</span>, <span class='ident'>Ipv6AddMembership</span>, <span class='ident'>consts</span>::<span class='ident'>IPPROTO_IPV6</span>, <span class='ident'>consts</span>::<span class='ident'>IPV6_ADD_MEMBERSHIP</span>, <span class='ident'>super</span>::<span class='ident'>ipv6_mreq</span>);
-<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>not</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;netbsd&quot;</span>))]</span>
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>not</span>(<span class='ident'>any</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;dragonfly&quot;</span>, <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;freebsd&quot;</span>, <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;ios&quot;</span>, <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;macos&quot;</span>, <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;netbsd&quot;</span>, <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;openbsd&quot;</span>)))]</span>
 <span class='macro'>sockopt_impl</span><span class='macro'>!</span>(<span class='ident'>SetOnly</span>, <span class='ident'>Ipv6DropMembership</span>, <span class='ident'>consts</span>::<span class='ident'>IPPROTO_IPV6</span>, <span class='ident'>consts</span>::<span class='ident'>IPV6_DROP_MEMBERSHIP</span>, <span class='ident'>super</span>::<span class='ident'>ipv6_mreq</span>);
-<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;netbsd&quot;</span>)]</span>
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>any</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;dragonfly&quot;</span>, <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;freebsd&quot;</span>, <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;ios&quot;</span>, <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;macos&quot;</span>, <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;netbsd&quot;</span>, <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;openbsd&quot;</span>))]</span>
 <span class='macro'>sockopt_impl</span><span class='macro'>!</span>(<span class='ident'>SetOnly</span>, <span class='ident'>Ipv6AddMembership</span>, <span class='ident'>consts</span>::<span class='ident'>IPPROTO_IPV6</span>, <span class='ident'>consts</span>::<span class='ident'>IPV6_JOIN_GROUP</span>, <span class='ident'>super</span>::<span class='ident'>ipv6_mreq</span>);
-<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;netbsd&quot;</span>)]</span>
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>any</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;dragonfly&quot;</span>, <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;freebsd&quot;</span>, <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;ios&quot;</span>, <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;macos&quot;</span>, <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;netbsd&quot;</span>, <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;openbsd&quot;</span>))]</span>
 <span class='macro'>sockopt_impl</span><span class='macro'>!</span>(<span class='ident'>SetOnly</span>, <span class='ident'>Ipv6DropMembership</span>, <span class='ident'>consts</span>::<span class='ident'>IPPROTO_IPV6</span>, <span class='ident'>consts</span>::<span class='ident'>IPV6_LEAVE_GROUP</span>, <span class='ident'>super</span>::<span class='ident'>ipv6_mreq</span>);
 <span class='macro'>sockopt_impl</span><span class='macro'>!</span>(<span class='ident'>Both</span>, <span class='ident'>IpMulticastTtl</span>, <span class='ident'>consts</span>::<span class='ident'>IPPROTO_IP</span>, <span class='ident'>consts</span>::<span class='ident'>IP_MULTICAST_TTL</span>, <span class='ident'>u8</span>);
 <span class='macro'>sockopt_impl</span><span class='macro'>!</span>(<span class='ident'>Both</span>, <span class='ident'>IpMulticastLoop</span>, <span class='ident'>consts</span>::<span class='ident'>IPPROTO_IP</span>, <span class='ident'>consts</span>::<span class='ident'>IP_MULTICAST_LOOP</span>, <span class='ident'>bool</span>);
@@ -483,6 +614,8 @@
 <span class='macro'>sockopt_impl</span><span class='macro'>!</span>(<span class='ident'>Both</span>, <span class='ident'>OobInline</span>, <span class='ident'>consts</span>::<span class='ident'>SOL_SOCKET</span>, <span class='ident'>consts</span>::<span class='ident'>SO_OOBINLINE</span>, <span class='ident'>bool</span>);
 <span class='macro'>sockopt_impl</span><span class='macro'>!</span>(<span class='ident'>GetOnly</span>, <span class='ident'>SocketError</span>, <span class='ident'>consts</span>::<span class='ident'>SOL_SOCKET</span>, <span class='ident'>consts</span>::<span class='ident'>SO_ERROR</span>, <span class='ident'>i32</span>);
 <span class='macro'>sockopt_impl</span><span class='macro'>!</span>(<span class='ident'>Both</span>, <span class='ident'>KeepAlive</span>, <span class='ident'>consts</span>::<span class='ident'>SOL_SOCKET</span>, <span class='ident'>consts</span>::<span class='ident'>SO_KEEPALIVE</span>, <span class='ident'>bool</span>);
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;linux&quot;</span>)]</span>
+<span class='macro'>sockopt_impl</span><span class='macro'>!</span>(<span class='ident'>GetOnly</span>, <span class='ident'>PeerCredentials</span>, <span class='ident'>consts</span>::<span class='ident'>SOL_SOCKET</span>, <span class='ident'>consts</span>::<span class='ident'>SO_PEERCRED</span>, <span class='ident'>super</span>::<span class='ident'>ucred</span>);
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>any</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;macos&quot;</span>,
           <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;ios&quot;</span>))]</span>
 <span class='macro'>sockopt_impl</span><span class='macro'>!</span>(<span class='ident'>Both</span>, <span class='ident'>TcpKeepAlive</span>, <span class='ident'>consts</span>::<span class='ident'>IPPROTO_TCP</span>, <span class='ident'>consts</span>::<span class='ident'>TCP_KEEPALIVE</span>, <span class='ident'>u32</span>);
@@ -492,6 +625,17 @@
           <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;android&quot;</span>,
           <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;nacl&quot;</span>))]</span>
 <span class='macro'>sockopt_impl</span><span class='macro'>!</span>(<span class='ident'>Both</span>, <span class='ident'>TcpKeepIdle</span>, <span class='ident'>consts</span>::<span class='ident'>IPPROTO_TCP</span>, <span class='ident'>consts</span>::<span class='ident'>TCP_KEEPIDLE</span>, <span class='ident'>u32</span>);
+<span class='macro'>sockopt_impl</span><span class='macro'>!</span>(<span class='ident'>Both</span>, <span class='ident'>RcvBuf</span>, <span class='ident'>consts</span>::<span class='ident'>SOL_SOCKET</span>, <span class='ident'>consts</span>::<span class='ident'>SO_RCVBUF</span>, <span class='ident'>usize</span>);
+<span class='macro'>sockopt_impl</span><span class='macro'>!</span>(<span class='ident'>Both</span>, <span class='ident'>SndBuf</span>, <span class='ident'>consts</span>::<span class='ident'>SOL_SOCKET</span>, <span class='ident'>consts</span>::<span class='ident'>SO_SNDBUF</span>, <span class='ident'>usize</span>);
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;linux&quot;</span>)]</span>
+<span class='macro'>sockopt_impl</span><span class='macro'>!</span>(<span class='ident'>SetOnly</span>, <span class='ident'>RcvBufForce</span>, <span class='ident'>consts</span>::<span class='ident'>SOL_SOCKET</span>, <span class='ident'>consts</span>::<span class='ident'>SO_RCVBUFFORCE</span>, <span class='ident'>usize</span>);
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;linux&quot;</span>)]</span>
+<span class='macro'>sockopt_impl</span><span class='macro'>!</span>(<span class='ident'>SetOnly</span>, <span class='ident'>SndBufForce</span>, <span class='ident'>consts</span>::<span class='ident'>SOL_SOCKET</span>, <span class='ident'>consts</span>::<span class='ident'>SO_SNDBUFFORCE</span>, <span class='ident'>usize</span>);
+<span class='macro'>sockopt_impl</span><span class='macro'>!</span>(<span class='ident'>GetOnly</span>, <span class='ident'>SockType</span>, <span class='ident'>consts</span>::<span class='ident'>SOL_SOCKET</span>, <span class='ident'>consts</span>::<span class='ident'>SO_TYPE</span>, <span class='ident'>super</span>::<span class='ident'>SockType</span>);
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>any</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;freebsd&quot;</span>,
+          <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;linux&quot;</span>,
+          <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;nacl&quot;</span>))]</span>
+<span class='macro'>sockopt_impl</span><span class='macro'>!</span>(<span class='ident'>GetOnly</span>, <span class='ident'>AcceptConn</span>, <span class='ident'>consts</span>::<span class='ident'>SOL_SOCKET</span>, <span class='ident'>consts</span>::<span class='ident'>SO_ACCEPTCONN</span>, <span class='ident'>bool</span>);
 
 <span class='comment'>/*
  *
@@ -644,6 +788,106 @@
 
     <span class='kw'>unsafe</span> <span class='kw'>fn</span> <span class='ident'>ffi_len</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>socklen_t</span> {
         <span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>c_int</span><span class='op'>&gt;</span>() <span class='kw'>as</span> <span class='ident'>socklen_t</span>
+    }
+}
+
+<span class='kw'>struct</span> <span class='ident'>GetUsize</span> {
+    <span class='ident'>len</span>: <span class='ident'>socklen_t</span>,
+    <span class='ident'>val</span>: <span class='ident'>c_int</span>,
+}
+
+<span class='kw'>impl</span> <span class='ident'>Get</span><span class='op'>&lt;</span><span class='ident'>usize</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>GetUsize</span> {
+    <span class='kw'>unsafe</span> <span class='kw'>fn</span> <span class='ident'>blank</span>() <span class='op'>-&gt;</span> <span class='kw'>Self</span> {
+        <span class='ident'>GetUsize</span> {
+            <span class='ident'>len</span>: <span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>c_int</span><span class='op'>&gt;</span>() <span class='kw'>as</span> <span class='ident'>socklen_t</span>,
+            <span class='ident'>val</span>: <span class='ident'>mem</span>::<span class='ident'>zeroed</span>(),
+        }
+    }
+
+    <span class='kw'>unsafe</span> <span class='kw'>fn</span> <span class='ident'>ffi_ptr</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='op'>*</span><span class='kw-2'>mut</span> <span class='ident'>c_void</span> {
+        <span class='ident'>mem</span>::<span class='ident'>transmute</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>.<span class='ident'>val</span>)
+    }
+
+    <span class='kw'>unsafe</span> <span class='kw'>fn</span> <span class='ident'>ffi_len</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='op'>*</span><span class='kw-2'>mut</span> <span class='ident'>socklen_t</span> {
+        <span class='ident'>mem</span>::<span class='ident'>transmute</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>.<span class='ident'>len</span>)
+    }
+
+    <span class='kw'>unsafe</span> <span class='kw'>fn</span> <span class='ident'>unwrap</span>(<span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>usize</span> {
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>len</span> <span class='kw'>as</span> <span class='ident'>usize</span> <span class='op'>==</span> <span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>c_int</span><span class='op'>&gt;</span>(), <span class='string'>&quot;invalid getsockopt implementation&quot;</span>);
+        <span class='self'>self</span>.<span class='ident'>val</span> <span class='kw'>as</span> <span class='ident'>usize</span>
+    }
+}
+
+<span class='kw'>struct</span> <span class='ident'>SetUsize</span> {
+    <span class='ident'>val</span>: <span class='ident'>c_int</span>,
+}
+
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span> <span class='ident'>Set</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>usize</span><span class='op'>&gt;</span> <span class='kw'>for</span> <span class='ident'>SetUsize</span> {
+    <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>val</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>SetUsize</span> {
+        <span class='ident'>SetUsize</span> { <span class='ident'>val</span>: <span class='op'>*</span><span class='ident'>val</span> <span class='kw'>as</span> <span class='ident'>c_int</span> }
+    }
+
+    <span class='kw'>unsafe</span> <span class='kw'>fn</span> <span class='ident'>ffi_ptr</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='op'>*</span><span class='kw'>const</span> <span class='ident'>c_void</span> {
+        <span class='ident'>mem</span>::<span class='ident'>transmute</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>val</span>)
+    }
+
+    <span class='kw'>unsafe</span> <span class='kw'>fn</span> <span class='ident'>ffi_len</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>socklen_t</span> {
+        <span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>c_int</span><span class='op'>&gt;</span>() <span class='kw'>as</span> <span class='ident'>socklen_t</span>
+    }
+}
+
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
+<span class='kw'>mod</span> <span class='ident'>test</span> {
+    <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;linux&quot;</span>)]</span>
+    <span class='attribute'>#[<span class='ident'>test</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>can_get_peercred_on_unix_socket</span>() {
+        <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>super</span>::<span class='op'>*</span>;
+
+        <span class='kw'>let</span> (<span class='ident'>a</span>, <span class='ident'>b</span>) <span class='op'>=</span> <span class='ident'>socketpair</span>(<span class='ident'>AddressFamily</span>::<span class='ident'>Unix</span>, <span class='ident'>SockType</span>::<span class='ident'>Stream</span>, <span class='number'>0</span>, <span class='ident'>SockFlag</span>::<span class='ident'>empty</span>()).<span class='ident'>unwrap</span>();
+        <span class='kw'>let</span> <span class='ident'>a_cred</span> <span class='op'>=</span> <span class='ident'>getsockopt</span>(<span class='ident'>a</span>, <span class='ident'>super</span>::<span class='ident'>PeerCredentials</span>).<span class='ident'>unwrap</span>();
+        <span class='kw'>let</span> <span class='ident'>b_cred</span> <span class='op'>=</span> <span class='ident'>getsockopt</span>(<span class='ident'>b</span>, <span class='ident'>super</span>::<span class='ident'>PeerCredentials</span>).<span class='ident'>unwrap</span>();
+        <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>a_cred</span>, <span class='ident'>b_cred</span>);
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>a_cred</span>.<span class='ident'>pid</span> <span class='op'>!=</span> <span class='number'>0</span>);
+    }
+
+    <span class='attribute'>#[<span class='ident'>test</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>is_socket_type_unix</span>() {
+        <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>super</span>::<span class='op'>*</span>;
+        <span class='kw'>use</span> ::<span class='ident'>unistd</span>::<span class='ident'>close</span>;
+
+        <span class='kw'>let</span> (<span class='ident'>a</span>, <span class='ident'>b</span>) <span class='op'>=</span> <span class='ident'>socketpair</span>(<span class='ident'>AddressFamily</span>::<span class='ident'>Unix</span>, <span class='ident'>SockType</span>::<span class='ident'>Stream</span>, <span class='number'>0</span>, <span class='ident'>SockFlag</span>::<span class='ident'>empty</span>()).<span class='ident'>unwrap</span>();
+        <span class='kw'>let</span> <span class='ident'>a_type</span> <span class='op'>=</span> <span class='ident'>getsockopt</span>(<span class='ident'>a</span>, <span class='ident'>super</span>::<span class='ident'>SockType</span>).<span class='ident'>unwrap</span>();
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>a_type</span> <span class='op'>==</span> <span class='ident'>SockType</span>::<span class='ident'>Stream</span>);
+        <span class='ident'>close</span>(<span class='ident'>a</span>).<span class='ident'>unwrap</span>();
+        <span class='ident'>close</span>(<span class='ident'>b</span>).<span class='ident'>unwrap</span>();
+    }
+
+    <span class='attribute'>#[<span class='ident'>test</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>is_socket_type_dgram</span>() {
+        <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>super</span>::<span class='op'>*</span>;
+        <span class='kw'>use</span> ::<span class='ident'>unistd</span>::<span class='ident'>close</span>;
+
+        <span class='kw'>let</span> <span class='ident'>s</span> <span class='op'>=</span> <span class='ident'>socket</span>(<span class='ident'>AddressFamily</span>::<span class='ident'>Inet</span>, <span class='ident'>SockType</span>::<span class='ident'>Datagram</span>, <span class='ident'>SockFlag</span>::<span class='ident'>empty</span>(), <span class='number'>0</span>).<span class='ident'>unwrap</span>();
+        <span class='kw'>let</span> <span class='ident'>s_type</span> <span class='op'>=</span> <span class='ident'>getsockopt</span>(<span class='ident'>s</span>, <span class='ident'>super</span>::<span class='ident'>SockType</span>).<span class='ident'>unwrap</span>();
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>s_type</span> <span class='op'>==</span> <span class='ident'>SockType</span>::<span class='ident'>Datagram</span>);
+        <span class='ident'>close</span>(<span class='ident'>s</span>).<span class='ident'>unwrap</span>();
+    }
+
+    <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>any</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;freebsd&quot;</span>,
+              <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;linux&quot;</span>,
+              <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;nacl&quot;</span>))]</span>
+    <span class='attribute'>#[<span class='ident'>test</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>can_get_listen_on_tcp_socket</span>() {
+        <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>super</span>::<span class='op'>*</span>;
+        <span class='kw'>use</span> ::<span class='ident'>unistd</span>::<span class='ident'>close</span>;
+
+        <span class='kw'>let</span> <span class='ident'>s</span> <span class='op'>=</span> <span class='ident'>socket</span>(<span class='ident'>AddressFamily</span>::<span class='ident'>Inet</span>, <span class='ident'>SockType</span>::<span class='ident'>Stream</span>, <span class='ident'>SockFlag</span>::<span class='ident'>empty</span>(), <span class='number'>0</span>).<span class='ident'>unwrap</span>();
+        <span class='kw'>let</span> <span class='ident'>s_listening</span> <span class='op'>=</span> <span class='ident'>getsockopt</span>(<span class='ident'>s</span>, <span class='ident'>super</span>::<span class='ident'>AcceptConn</span>).<span class='ident'>unwrap</span>();
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='op'>!</span><span class='ident'>s_listening</span>);
+        <span class='ident'>listen</span>(<span class='ident'>s</span>, <span class='number'>10</span>).<span class='ident'>unwrap</span>();
+        <span class='kw'>let</span> <span class='ident'>s_listening2</span> <span class='op'>=</span> <span class='ident'>getsockopt</span>(<span class='ident'>s</span>, <span class='ident'>super</span>::<span class='ident'>AcceptConn</span>).<span class='ident'>unwrap</span>();
+        <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>s_listening2</span>);
+        <span class='ident'>close</span>(<span class='ident'>s</span>).<span class='ident'>unwrap</span>();
     }
 }
 </pre>

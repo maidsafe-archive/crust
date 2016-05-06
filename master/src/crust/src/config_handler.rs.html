@@ -153,29 +153,6 @@
 <span id="110">110</span>
 <span id="111">111</span>
 <span id="112">112</span>
-<span id="113">113</span>
-<span id="114">114</span>
-<span id="115">115</span>
-<span id="116">116</span>
-<span id="117">117</span>
-<span id="118">118</span>
-<span id="119">119</span>
-<span id="120">120</span>
-<span id="121">121</span>
-<span id="122">122</span>
-<span id="123">123</span>
-<span id="124">124</span>
-<span id="125">125</span>
-<span id="126">126</span>
-<span id="127">127</span>
-<span id="128">128</span>
-<span id="129">129</span>
-<span id="130">130</span>
-<span id="131">131</span>
-<span id="132">132</span>
-<span id="133">133</span>
-<span id="134">134</span>
-<span id="135">135</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -198,47 +175,24 @@
 <span class='kw'>use</span> <span class='ident'>config_file_handler</span>::<span class='ident'>FileHandler</span>;
 <span class='kw'>use</span> <span class='ident'>config_file_handler</span>;
 <span class='kw'>use</span> <span class='ident'>socket_addr</span>::<span class='ident'>SocketAddr</span>;
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>time</span>::<span class='ident'>Duration</span>;
 
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>PartialEq</span>, <span class='ident'>Eq</span>, <span class='ident'>Debug</span>, <span class='ident'>RustcDecodable</span>, <span class='ident'>RustcEncodable</span>, <span class='ident'>Clone</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>Config</span> {
     <span class='kw'>pub</span> <span class='ident'>hard_coded_contacts</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>StaticContactInfo</span><span class='op'>&gt;</span>,
-    <span class='kw'>pub</span> <span class='ident'>enable_tcp</span>: <span class='ident'>bool</span>,
-    <span class='kw'>pub</span> <span class='ident'>enable_utp</span>: <span class='ident'>bool</span>,
     <span class='kw'>pub</span> <span class='ident'>tcp_acceptor_port</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>u16</span><span class='op'>&gt;</span>,
-    <span class='kw'>pub</span> <span class='ident'>utp_acceptor_port</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>u16</span><span class='op'>&gt;</span>,
-    <span class='kw'>pub</span> <span class='ident'>udp_mapper_servers</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>SocketAddr</span><span class='op'>&gt;</span>,
     <span class='kw'>pub</span> <span class='ident'>tcp_mapper_servers</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>SocketAddr</span><span class='op'>&gt;</span>,
     <span class='kw'>pub</span> <span class='ident'>service_discovery_port</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>u16</span><span class='op'>&gt;</span>,
     <span class='kw'>pub</span> <span class='ident'>bootstrap_cache_name</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>String</span><span class='op'>&gt;</span>,
-    <span class='kw'>pub</span> <span class='ident'>heartbeat_timeout_ms</span>: <span class='ident'>u64</span>,
-    <span class='kw'>pub</span> <span class='ident'>inactivity_timeout_ms</span>: <span class='ident'>u64</span>,
-}
-
-<span class='kw'>impl</span> <span class='ident'>Config</span> {
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>heartbeat_timeout</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Duration</span> {
-        <span class='ident'>Duration</span>::<span class='ident'>from_millis</span>(<span class='self'>self</span>.<span class='ident'>heartbeat_timeout_ms</span>)
-    }
-
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>inactivity_timeout</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>Duration</span> {
-        <span class='ident'>Duration</span>::<span class='ident'>from_millis</span>(<span class='self'>self</span>.<span class='ident'>inactivity_timeout_ms</span>)
-    }
 }
 
 <span class='kw'>impl</span> <span class='ident'>Default</span> <span class='kw'>for</span> <span class='ident'>Config</span> {
     <span class='kw'>fn</span> <span class='ident'>default</span>() <span class='op'>-&gt;</span> <span class='ident'>Config</span> {
         <span class='ident'>Config</span> {
             <span class='ident'>hard_coded_contacts</span>: <span class='macro'>vec</span><span class='macro'>!</span>[], <span class='comment'>// No hardcoded endpoints</span>
-            <span class='ident'>enable_tcp</span>: <span class='boolval'>true</span>,
-            <span class='ident'>enable_utp</span>: <span class='boolval'>true</span>,
             <span class='ident'>tcp_acceptor_port</span>: <span class='prelude-val'>None</span>,
-            <span class='ident'>utp_acceptor_port</span>: <span class='prelude-val'>None</span>,
-            <span class='ident'>udp_mapper_servers</span>: <span class='macro'>vec</span><span class='macro'>!</span>[],
             <span class='ident'>tcp_mapper_servers</span>: <span class='macro'>vec</span><span class='macro'>!</span>[],
             <span class='ident'>service_discovery_port</span>: <span class='prelude-val'>None</span>,
             <span class='ident'>bootstrap_cache_name</span>: <span class='prelude-val'>None</span>,
-            <span class='ident'>heartbeat_timeout_ms</span>: <span class='number'>1</span> <span class='op'>*</span> <span class='number'>60</span> <span class='op'>*</span> <span class='number'>1000</span>,
-            <span class='ident'>inactivity_timeout_ms</span>: <span class='number'>3</span> <span class='op'>*</span> <span class='number'>60</span> <span class='op'>*</span> <span class='number'>1000</span>,
         }
     }
 }

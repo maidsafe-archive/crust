@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/mio-0.5.0/src/sys/unix/net.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/mio-0.5.1/src/sys/unix/net.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>net.rs.html -- source</title>
@@ -147,7 +147,7 @@
         <span class='ident'>nix</span>::<span class='ident'>SOCK_CLOEXEC</span>
     };
 
-    <span class='ident'>nix</span>::<span class='ident'>socket</span>(<span class='ident'>family</span>, <span class='ident'>ty</span>, <span class='ident'>opts</span>)
+    <span class='ident'>nix</span>::<span class='ident'>socket</span>(<span class='ident'>family</span>, <span class='ident'>ty</span>, <span class='ident'>opts</span>, <span class='number'>0</span>)
         .<span class='ident'>map_err</span>(<span class='ident'>super</span>::<span class='ident'>from_nix_error</span>)
 }
 

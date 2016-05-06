@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/nix-0.4.2/src/sched.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/nix-0.5.0/src/sched.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>sched.rs.html -- source</title>
@@ -227,36 +227,65 @@
 <span id="184">184</span>
 <span id="185">185</span>
 <span id="186">186</span>
+<span id="187">187</span>
+<span id="188">188</span>
+<span id="189">189</span>
+<span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
+<span id="197">197</span>
+<span id="198">198</span>
+<span id="199">199</span>
+<span id="200">200</span>
+<span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
+<span id="204">204</span>
+<span id="205">205</span>
+<span id="206">206</span>
+<span id="207">207</span>
+<span id="208">208</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>mem</span>;
-<span class='kw'>use</span> <span class='ident'>libc</span>::{<span class='ident'>c_int</span>, <span class='ident'>c_uint</span>, <span class='ident'>c_void</span>, <span class='ident'>c_ulong</span>, <span class='ident'>pid_t</span>};
-<span class='kw'>use</span> <span class='ident'>errno</span>::<span class='ident'>Errno</span>;
-<span class='kw'>use</span> {<span class='prelude-ty'>Result</span>, <span class='ident'>Error</span>};
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>os</span>::<span class='ident'>unix</span>::<span class='ident'>io</span>::<span class='ident'>RawFd</span>;
+<span class='kw'>use</span> <span class='ident'>libc</span>::{<span class='self'>self</span>, <span class='ident'>c_int</span>, <span class='ident'>c_void</span>, <span class='ident'>c_ulong</span>, <span class='ident'>pid_t</span>};
+<span class='kw'>use</span> {<span class='ident'>Errno</span>, <span class='prelude-ty'>Result</span>};
 
-<span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>CloneFlags</span> <span class='op'>=</span> <span class='ident'>c_uint</span>;
-
-<span class='kw'>pub</span> <span class='kw'>static</span> <span class='ident'>CLONE_VM</span>:             <span class='ident'>CloneFlags</span> <span class='op'>=</span> <span class='number'>0x00000100</span>;
-<span class='kw'>pub</span> <span class='kw'>static</span> <span class='ident'>CLONE_FS</span>:             <span class='ident'>CloneFlags</span> <span class='op'>=</span> <span class='number'>0x00000200</span>;
-<span class='kw'>pub</span> <span class='kw'>static</span> <span class='ident'>CLONE_FILES</span>:          <span class='ident'>CloneFlags</span> <span class='op'>=</span> <span class='number'>0x00000400</span>;
-<span class='kw'>pub</span> <span class='kw'>static</span> <span class='ident'>CLONE_SIGHAND</span>:        <span class='ident'>CloneFlags</span> <span class='op'>=</span> <span class='number'>0x00000800</span>;
-<span class='kw'>pub</span> <span class='kw'>static</span> <span class='ident'>CLONE_PTRACE</span>:         <span class='ident'>CloneFlags</span> <span class='op'>=</span> <span class='number'>0x00002000</span>;
-<span class='kw'>pub</span> <span class='kw'>static</span> <span class='ident'>CLONE_VFORK</span>:          <span class='ident'>CloneFlags</span> <span class='op'>=</span> <span class='number'>0x00004000</span>;
-<span class='kw'>pub</span> <span class='kw'>static</span> <span class='ident'>CLONE_PARENT</span>:         <span class='ident'>CloneFlags</span> <span class='op'>=</span> <span class='number'>0x00008000</span>;
-<span class='kw'>pub</span> <span class='kw'>static</span> <span class='ident'>CLONE_THREAD</span>:         <span class='ident'>CloneFlags</span> <span class='op'>=</span> <span class='number'>0x00010000</span>;
-<span class='kw'>pub</span> <span class='kw'>static</span> <span class='ident'>CLONE_NEWNS</span>:          <span class='ident'>CloneFlags</span> <span class='op'>=</span> <span class='number'>0x00020000</span>;
-<span class='kw'>pub</span> <span class='kw'>static</span> <span class='ident'>CLONE_SYSVSEM</span>:        <span class='ident'>CloneFlags</span> <span class='op'>=</span> <span class='number'>0x00040000</span>;
-<span class='kw'>pub</span> <span class='kw'>static</span> <span class='ident'>CLONE_SETTLS</span>:         <span class='ident'>CloneFlags</span> <span class='op'>=</span> <span class='number'>0x00080000</span>;
-<span class='kw'>pub</span> <span class='kw'>static</span> <span class='ident'>CLONE_PARENT_SETTID</span>:  <span class='ident'>CloneFlags</span> <span class='op'>=</span> <span class='number'>0x00100000</span>;
-<span class='kw'>pub</span> <span class='kw'>static</span> <span class='ident'>CLONE_CHILD_CLEARTID</span>: <span class='ident'>CloneFlags</span> <span class='op'>=</span> <span class='number'>0x00200000</span>;
-<span class='kw'>pub</span> <span class='kw'>static</span> <span class='ident'>CLONE_DETACHED</span>:       <span class='ident'>CloneFlags</span> <span class='op'>=</span> <span class='number'>0x00400000</span>;
-<span class='kw'>pub</span> <span class='kw'>static</span> <span class='ident'>CLONE_UNTRACED</span>:       <span class='ident'>CloneFlags</span> <span class='op'>=</span> <span class='number'>0x00800000</span>;
-<span class='kw'>pub</span> <span class='kw'>static</span> <span class='ident'>CLONE_CHILD_SETTID</span>:   <span class='ident'>CloneFlags</span> <span class='op'>=</span> <span class='number'>0x01000000</span>;
-<span class='kw'>pub</span> <span class='kw'>static</span> <span class='ident'>CLONE_NEWUTS</span>:         <span class='ident'>CloneFlags</span> <span class='op'>=</span> <span class='number'>0x04000000</span>;
-<span class='kw'>pub</span> <span class='kw'>static</span> <span class='ident'>CLONE_NEWIPC</span>:         <span class='ident'>CloneFlags</span> <span class='op'>=</span> <span class='number'>0x08000000</span>;
-<span class='kw'>pub</span> <span class='kw'>static</span> <span class='ident'>CLONE_NEWUSER</span>:        <span class='ident'>CloneFlags</span> <span class='op'>=</span> <span class='number'>0x10000000</span>;
-<span class='kw'>pub</span> <span class='kw'>static</span> <span class='ident'>CLONE_NEWPID</span>:         <span class='ident'>CloneFlags</span> <span class='op'>=</span> <span class='number'>0x20000000</span>;
-<span class='kw'>pub</span> <span class='kw'>static</span> <span class='ident'>CLONE_NEWNET</span>:         <span class='ident'>CloneFlags</span> <span class='op'>=</span> <span class='number'>0x40000000</span>;
-<span class='kw'>pub</span> <span class='kw'>static</span> <span class='ident'>CLONE_IO</span>:             <span class='ident'>CloneFlags</span> <span class='op'>=</span> <span class='number'>0x80000000</span>;
+<span class='comment'>// For some functions taking with a parameter of type CloneFlags,</span>
+<span class='comment'>// only a subset of these flags have an effect.</span>
+<span class='macro'>bitflags</span><span class='macro'>!</span>{
+    <span class='ident'>flags</span> <span class='ident'>CloneFlags</span>: <span class='ident'>c_int</span> {
+        <span class='kw'>const</span> <span class='ident'>CLONE_VM</span>             <span class='op'>=</span> <span class='ident'>libc</span>::<span class='ident'>CLONE_VM</span>,
+        <span class='kw'>const</span> <span class='ident'>CLONE_FS</span>             <span class='op'>=</span> <span class='ident'>libc</span>::<span class='ident'>CLONE_FS</span>,
+        <span class='kw'>const</span> <span class='ident'>CLONE_FILES</span>          <span class='op'>=</span> <span class='ident'>libc</span>::<span class='ident'>CLONE_FILES</span>,
+        <span class='kw'>const</span> <span class='ident'>CLONE_SIGHAND</span>        <span class='op'>=</span> <span class='ident'>libc</span>::<span class='ident'>CLONE_SIGHAND</span>,
+        <span class='kw'>const</span> <span class='ident'>CLONE_PTRACE</span>         <span class='op'>=</span> <span class='ident'>libc</span>::<span class='ident'>CLONE_PTRACE</span>,
+        <span class='kw'>const</span> <span class='ident'>CLONE_VFORK</span>          <span class='op'>=</span> <span class='ident'>libc</span>::<span class='ident'>CLONE_VFORK</span>,
+        <span class='kw'>const</span> <span class='ident'>CLONE_PARENT</span>         <span class='op'>=</span> <span class='ident'>libc</span>::<span class='ident'>CLONE_PARENT</span>,
+        <span class='kw'>const</span> <span class='ident'>CLONE_THREAD</span>         <span class='op'>=</span> <span class='ident'>libc</span>::<span class='ident'>CLONE_THREAD</span>,
+        <span class='kw'>const</span> <span class='ident'>CLONE_NEWNS</span>          <span class='op'>=</span> <span class='ident'>libc</span>::<span class='ident'>CLONE_NEWNS</span>,
+        <span class='kw'>const</span> <span class='ident'>CLONE_SYSVSEM</span>        <span class='op'>=</span> <span class='ident'>libc</span>::<span class='ident'>CLONE_SYSVSEM</span>,
+        <span class='kw'>const</span> <span class='ident'>CLONE_SETTLS</span>         <span class='op'>=</span> <span class='ident'>libc</span>::<span class='ident'>CLONE_SETTLS</span>,
+        <span class='kw'>const</span> <span class='ident'>CLONE_PARENT_SETTID</span>  <span class='op'>=</span> <span class='ident'>libc</span>::<span class='ident'>CLONE_PARENT_SETTID</span>,
+        <span class='kw'>const</span> <span class='ident'>CLONE_CHILD_CLEARTID</span> <span class='op'>=</span> <span class='ident'>libc</span>::<span class='ident'>CLONE_CHILD_CLEARTID</span>,
+        <span class='kw'>const</span> <span class='ident'>CLONE_DETACHED</span>       <span class='op'>=</span> <span class='ident'>libc</span>::<span class='ident'>CLONE_DETACHED</span>,
+        <span class='kw'>const</span> <span class='ident'>CLONE_UNTRACED</span>       <span class='op'>=</span> <span class='ident'>libc</span>::<span class='ident'>CLONE_UNTRACED</span>,
+        <span class='kw'>const</span> <span class='ident'>CLONE_CHILD_SETTID</span>   <span class='op'>=</span> <span class='ident'>libc</span>::<span class='ident'>CLONE_CHILD_SETTID</span>,
+        <span class='comment'>// TODO: Once, we use a version containing</span>
+        <span class='comment'>// https://github.com/rust-lang-nursery/libc/pull/147</span>
+        <span class='comment'>// get rid of the casts.</span>
+        <span class='kw'>const</span> <span class='ident'>CLONE_NEWUTS</span>         <span class='op'>=</span> <span class='ident'>libc</span>::<span class='ident'>CLONE_NEWUTS</span> <span class='kw'>as</span> <span class='ident'>c_int</span>,
+        <span class='kw'>const</span> <span class='ident'>CLONE_NEWIPC</span>         <span class='op'>=</span> <span class='ident'>libc</span>::<span class='ident'>CLONE_NEWIPC</span> <span class='kw'>as</span> <span class='ident'>c_int</span>,
+        <span class='kw'>const</span> <span class='ident'>CLONE_NEWUSER</span>        <span class='op'>=</span> <span class='ident'>libc</span>::<span class='ident'>CLONE_NEWUSER</span> <span class='kw'>as</span> <span class='ident'>c_int</span>,
+        <span class='kw'>const</span> <span class='ident'>CLONE_NEWPID</span>         <span class='op'>=</span> <span class='ident'>libc</span>::<span class='ident'>CLONE_NEWPID</span> <span class='kw'>as</span> <span class='ident'>c_int</span>,
+        <span class='kw'>const</span> <span class='ident'>CLONE_NEWNET</span>         <span class='op'>=</span> <span class='ident'>libc</span>::<span class='ident'>CLONE_NEWNET</span> <span class='kw'>as</span> <span class='ident'>c_int</span>,
+        <span class='kw'>const</span> <span class='ident'>CLONE_IO</span>             <span class='op'>=</span> <span class='ident'>libc</span>::<span class='ident'>CLONE_IO</span> <span class='kw'>as</span> <span class='ident'>c_int</span>,
+    }
+}
 
 <span class='comment'>// Support a maximum CPU set of 1024 nodes</span>
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>all</span>(<span class='ident'>target_arch</span> <span class='op'>=</span> <span class='string'>&quot;x86_64&quot;</span>, <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;linux&quot;</span>))]</span>
@@ -290,6 +319,23 @@
     <span class='attribute'>#[<span class='ident'>inline</span>]</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>clear_cpu_mask_flag</span>(<span class='ident'>cur</span>: <span class='ident'>CpuMask</span>, <span class='ident'>bit</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>CpuMask</span> {
         <span class='ident'>cur</span> <span class='kw-2'>&amp;</span> <span class='op'>!</span>(<span class='number'>1u32</span> <span class='op'>&lt;&lt;</span> <span class='ident'>bit</span>)
+    }
+}
+
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>all</span>(<span class='ident'>target_arch</span> <span class='op'>=</span> <span class='string'>&quot;aarch64&quot;</span>, <span class='ident'>any</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;linux&quot;</span>, <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;android&quot;</span>)))]</span>
+<span class='kw'>mod</span> <span class='ident'>cpuset_attribs</span> {
+    <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>CpuMask</span>;
+    <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>CPU_SETSIZE</span>:           <span class='ident'>usize</span> <span class='op'>=</span> <span class='number'>1024</span>;
+    <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>CPU_MASK_BITS</span>:         <span class='ident'>usize</span> <span class='op'>=</span> <span class='number'>64</span>;
+
+    <span class='attribute'>#[<span class='ident'>inline</span>]</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>set_cpu_mask_flag</span>(<span class='ident'>cur</span>: <span class='ident'>CpuMask</span>, <span class='ident'>bit</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>CpuMask</span> {
+        <span class='ident'>cur</span> <span class='op'>|</span> (<span class='number'>1u64</span> <span class='op'>&lt;&lt;</span> <span class='ident'>bit</span>)
+    }
+
+    <span class='attribute'>#[<span class='ident'>inline</span>]</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>clear_cpu_mask_flag</span>(<span class='ident'>cur</span>: <span class='ident'>CpuMask</span>, <span class='ident'>bit</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>CpuMask</span> {
+        <span class='ident'>cur</span> <span class='kw-2'>&amp;</span> <span class='op'>!</span>(<span class='number'>1u64</span> <span class='op'>&lt;&lt;</span> <span class='ident'>bit</span>)
     }
 }
 
@@ -350,7 +396,7 @@
     <span class='kw'>use</span> <span class='ident'>libc</span>::{<span class='ident'>c_void</span>, <span class='ident'>c_int</span>, <span class='ident'>pid_t</span>, <span class='ident'>size_t</span>};
     <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>CpuSet</span>;
 
-    <span class='kw'>type</span> <span class='ident'>CloneCb</span> <span class='op'>=</span> <span class='kw'>extern</span> <span class='string'>&quot;C&quot;</span> <span class='kw'>fn</span> (<span class='ident'>data</span>: <span class='op'>*</span><span class='kw'>const</span> <span class='ident'>super</span>::<span class='ident'>CloneCb</span>) <span class='op'>-&gt;</span> <span class='ident'>c_int</span>;
+    <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>CloneCb</span> <span class='op'>=</span> <span class='kw'>extern</span> <span class='string'>&quot;C&quot;</span> <span class='kw'>fn</span> (<span class='ident'>data</span>: <span class='op'>*</span><span class='kw'>const</span> <span class='ident'>super</span>::<span class='ident'>CloneCb</span>) <span class='op'>-&gt;</span> <span class='ident'>c_int</span>;
 
     <span class='comment'>// We cannot give a proper #[repr(C)] to super::CloneCb</span>
     <span class='attribute'>#[<span class='ident'>allow</span>(<span class='ident'>improper_ctypes</span>)]</span>
@@ -360,13 +406,17 @@
         <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>clone</span>(
             <span class='ident'>cb</span>: <span class='op'>*</span><span class='kw'>const</span> <span class='ident'>CloneCb</span>,
             <span class='ident'>child_stack</span>: <span class='op'>*</span><span class='kw-2'>mut</span> <span class='ident'>c_void</span>,
-            <span class='ident'>flags</span>: <span class='ident'>super</span>::<span class='ident'>CloneFlags</span>,
+            <span class='ident'>flags</span>: <span class='ident'>c_int</span>,
             <span class='ident'>arg</span>: <span class='op'>*</span><span class='kw-2'>mut</span> <span class='ident'>super</span>::<span class='ident'>CloneCb</span>,
             ...) <span class='op'>-&gt;</span> <span class='ident'>c_int</span>;
 
         <span class='comment'>// disassociate parts of the process execution context</span>
         <span class='comment'>// doc: http://man7.org/linux/man-pages/man2/unshare.2.html</span>
-        <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>unshare</span>(<span class='ident'>flags</span>: <span class='ident'>super</span>::<span class='ident'>CloneFlags</span>) <span class='op'>-&gt;</span> <span class='ident'>c_int</span>;
+        <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>unshare</span>(<span class='ident'>flags</span>: <span class='ident'>c_int</span>) <span class='op'>-&gt;</span> <span class='ident'>c_int</span>;
+
+        <span class='comment'>// reassociate thread with a namespace</span>
+        <span class='comment'>// doc: http://man7.org/linux/man-pages/man2/setns.2.html</span>
+        <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>setns</span>(<span class='ident'>fd</span>: <span class='ident'>c_int</span>, <span class='ident'>nstype</span>: <span class='ident'>c_int</span>) <span class='op'>-&gt;</span> <span class='ident'>c_int</span>;
 
         <span class='comment'>// Set the current CPU set that a task is allowed to run on</span>
         <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>sched_setaffinity</span>(<span class='ident'>__pid</span>: <span class='ident'>pid_t</span>, <span class='ident'>__cpusetsize</span>: <span class='ident'>size_t</span>, <span class='ident'>__cpuset</span>: <span class='op'>*</span><span class='kw'>const</span> <span class='ident'>CpuSet</span>) <span class='op'>-&gt;</span> <span class='ident'>c_int</span>;
@@ -380,11 +430,7 @@
         <span class='ident'>ffi</span>::<span class='ident'>sched_setaffinity</span>(<span class='ident'>pid</span> <span class='kw'>as</span> <span class='ident'>pid_t</span>, <span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>CpuSet</span><span class='op'>&gt;</span>() <span class='kw'>as</span> <span class='ident'>size_t</span>, <span class='ident'>mem</span>::<span class='ident'>transmute</span>(<span class='ident'>cpuset</span>))
     };
 
-    <span class='kw'>if</span> <span class='ident'>res</span> <span class='op'>!=</span> <span class='number'>0</span> {
-        <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>Sys</span>(<span class='ident'>Errno</span>::<span class='ident'>last</span>()))
-    } <span class='kw'>else</span> {
-        <span class='prelude-val'>Ok</span>(())
-    }
+    <span class='ident'>Errno</span>::<span class='ident'>result</span>(<span class='ident'>res</span>).<span class='ident'>map</span>(<span class='ident'>drop</span>)
 }
 
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>clone</span>(<span class='kw-2'>mut</span> <span class='ident'>cb</span>: <span class='ident'>CloneCb</span>, <span class='ident'>stack</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> [<span class='ident'>u8</span>], <span class='ident'>flags</span>: <span class='ident'>CloneFlags</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>pid_t</span><span class='op'>&gt;</span> {
@@ -395,24 +441,22 @@
 
     <span class='kw'>let</span> <span class='ident'>res</span> <span class='op'>=</span> <span class='kw'>unsafe</span> {
         <span class='kw'>let</span> <span class='ident'>ptr</span> <span class='op'>=</span> <span class='ident'>stack</span>.<span class='ident'>as_mut_ptr</span>().<span class='ident'>offset</span>(<span class='ident'>stack</span>.<span class='ident'>len</span>() <span class='kw'>as</span> <span class='ident'>isize</span>);
-        <span class='ident'>ffi</span>::<span class='ident'>clone</span>(<span class='ident'>mem</span>::<span class='ident'>transmute</span>(<span class='ident'>callback</span>), <span class='ident'>ptr</span> <span class='kw'>as</span> <span class='op'>*</span><span class='kw-2'>mut</span> <span class='ident'>c_void</span>, <span class='ident'>flags</span>, <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>cb</span>)
+        <span class='ident'>ffi</span>::<span class='ident'>clone</span>(<span class='ident'>mem</span>::<span class='ident'>transmute</span>(<span class='ident'>callback</span>), <span class='ident'>ptr</span> <span class='kw'>as</span> <span class='op'>*</span><span class='kw-2'>mut</span> <span class='ident'>c_void</span>, <span class='ident'>flags</span>.<span class='ident'>bits</span>(), <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>cb</span>)
     };
 
-    <span class='kw'>if</span> <span class='ident'>res</span> <span class='op'>&lt;</span> <span class='number'>0</span> {
-        <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>Sys</span>(<span class='ident'>Errno</span>::<span class='ident'>last</span>()));
-    }
-
-    <span class='prelude-val'>Ok</span>(<span class='ident'>res</span>)
+    <span class='ident'>Errno</span>::<span class='ident'>result</span>(<span class='ident'>res</span>)
 }
 
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>unshare</span>(<span class='ident'>flags</span>: <span class='ident'>CloneFlags</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
-    <span class='kw'>let</span> <span class='ident'>res</span> <span class='op'>=</span> <span class='kw'>unsafe</span> { <span class='ident'>ffi</span>::<span class='ident'>unshare</span>(<span class='ident'>flags</span>) };
+    <span class='kw'>let</span> <span class='ident'>res</span> <span class='op'>=</span> <span class='kw'>unsafe</span> { <span class='ident'>ffi</span>::<span class='ident'>unshare</span>(<span class='ident'>flags</span>.<span class='ident'>bits</span>()) };
 
-    <span class='kw'>if</span> <span class='ident'>res</span> <span class='op'>!=</span> <span class='number'>0</span> {
-        <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>Sys</span>(<span class='ident'>Errno</span>::<span class='ident'>last</span>()));
-    }
+    <span class='ident'>Errno</span>::<span class='ident'>result</span>(<span class='ident'>res</span>).<span class='ident'>map</span>(<span class='ident'>drop</span>)
+}
 
-    <span class='prelude-val'>Ok</span>(())
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>setns</span>(<span class='ident'>fd</span>: <span class='ident'>RawFd</span>, <span class='ident'>nstype</span>: <span class='ident'>CloneFlags</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+    <span class='kw'>let</span> <span class='ident'>res</span> <span class='op'>=</span> <span class='kw'>unsafe</span> { <span class='ident'>ffi</span>::<span class='ident'>setns</span>(<span class='ident'>fd</span>, <span class='ident'>nstype</span>.<span class='ident'>bits</span>()) };
+
+    <span class='ident'>Errno</span>::<span class='ident'>result</span>(<span class='ident'>res</span>).<span class='ident'>map</span>(<span class='ident'>drop</span>)
 }
 </pre>
 </section>

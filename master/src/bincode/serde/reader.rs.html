@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/bincode-0.5.4/src/serde/reader.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/bincode-0.5.6/src/serde/reader.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>reader.rs.html -- source</title>
@@ -569,7 +569,7 @@
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>convert</span>::<span class='ident'>From</span>;
 
 <span class='kw'>use</span> <span class='ident'>byteorder</span>::{<span class='ident'>BigEndian</span>, <span class='ident'>ReadBytesExt</span>};
-<span class='kw'>use</span> <span class='ident'>num</span>;
+<span class='kw'>use</span> <span class='ident'>num_traits</span>;
 <span class='kw'>use</span> <span class='ident'>serde_crate</span> <span class='kw'>as</span> <span class='ident'>serde</span>;
 <span class='kw'>use</span> <span class='ident'>serde_crate</span>::<span class='ident'>de</span>::<span class='ident'>value</span>::<span class='ident'>ValueDeserializer</span>;
 <span class='kw'>use</span> <span class='ident'>serde_crate</span>::<span class='ident'>de</span>::<span class='ident'>Deserializer</span> <span class='kw'>as</span> <span class='ident'>SerdeDeserializer</span>;
@@ -786,7 +786,7 @@
     {
         <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>read_type</span>::<span class='op'>&lt;</span><span class='ident'>u64</span><span class='op'>&gt;</span>());
         <span class='kw'>let</span> <span class='ident'>value</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>reader</span>.<span class='ident'>read_u64</span>::<span class='op'>&lt;</span><span class='ident'>BigEndian</span><span class='op'>&gt;</span>());
-        <span class='kw'>match</span> <span class='ident'>num</span>::<span class='ident'>cast</span>(<span class='ident'>value</span>) {
+        <span class='kw'>match</span> <span class='ident'>num_traits</span>::<span class='ident'>cast</span>(<span class='ident'>value</span>) {
             <span class='prelude-val'>Some</span>(<span class='ident'>value</span>) <span class='op'>=&gt;</span> <span class='ident'>visitor</span>.<span class='ident'>visit_usize</span>(<span class='ident'>value</span>),
             <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='prelude-val'>Err</span>(<span class='ident'>DeserializeError</span>::<span class='ident'>Serde</span>(<span class='ident'>serde</span>::<span class='ident'>de</span>::<span class='ident'>value</span>::<span class='ident'>Error</span>::<span class='ident'>Custom</span>(<span class='string'>&quot;expected usize&quot;</span>.<span class='ident'>into</span>())))
         }
@@ -806,7 +806,7 @@
     {
         <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>read_type</span>::<span class='op'>&lt;</span><span class='ident'>i64</span><span class='op'>&gt;</span>());
         <span class='kw'>let</span> <span class='ident'>value</span> <span class='op'>=</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>reader</span>.<span class='ident'>read_i64</span>::<span class='op'>&lt;</span><span class='ident'>BigEndian</span><span class='op'>&gt;</span>());
-        <span class='kw'>match</span> <span class='ident'>num</span>::<span class='ident'>cast</span>(<span class='ident'>value</span>) {
+        <span class='kw'>match</span> <span class='ident'>num_traits</span>::<span class='ident'>cast</span>(<span class='ident'>value</span>) {
             <span class='prelude-val'>Some</span>(<span class='ident'>value</span>) <span class='op'>=&gt;</span> <span class='ident'>visitor</span>.<span class='ident'>visit_isize</span>(<span class='ident'>value</span>),
             <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='prelude-val'>Err</span>(<span class='ident'>DeserializeError</span>::<span class='ident'>Serde</span>(<span class='ident'>serde</span>::<span class='ident'>de</span>::<span class='ident'>value</span>::<span class='ident'>Error</span>::<span class='ident'>Custom</span>(<span class='string'>&quot;expected isize&quot;</span>.<span class='ident'>into</span>()))),
         }

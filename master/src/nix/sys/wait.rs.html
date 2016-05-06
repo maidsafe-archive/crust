@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/nix-0.4.2/src/sys/wait.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/nix-0.5.0/src/sys/wait.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>wait.rs.html -- source</title>
@@ -254,14 +254,9 @@
 <span id="211">211</span>
 <span id="212">212</span>
 <span id="213">213</span>
-<span id="214">214</span>
-<span id="215">215</span>
-<span id="216">216</span>
-<span id="217">217</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>libc</span>::{<span class='ident'>pid_t</span>, <span class='ident'>c_int</span>};
-<span class='kw'>use</span> <span class='ident'>errno</span>::<span class='ident'>Errno</span>;
-<span class='kw'>use</span> {<span class='ident'>Error</span>, <span class='prelude-ty'>Result</span>};
+<span class='kw'>use</span> {<span class='ident'>Errno</span>, <span class='prelude-ty'>Result</span>};
 
 <span class='kw'>use</span> <span class='ident'>sys</span>::<span class='ident'>signal</span>;
 
@@ -464,13 +459,10 @@
 
     <span class='kw'>let</span> <span class='ident'>res</span> <span class='op'>=</span> <span class='kw'>unsafe</span> { <span class='ident'>ffi</span>::<span class='ident'>waitpid</span>(<span class='ident'>pid</span> <span class='kw'>as</span> <span class='ident'>pid_t</span>, <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>status</span> <span class='kw'>as</span> <span class='op'>*</span><span class='kw-2'>mut</span> <span class='ident'>c_int</span>, <span class='ident'>option_bits</span>) };
 
-    <span class='kw'>if</span> <span class='ident'>res</span> <span class='op'>&lt;</span> <span class='number'>0</span> {
-        <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>Sys</span>(<span class='ident'>Errno</span>::<span class='ident'>last</span>()))
-    } <span class='kw'>else</span> <span class='kw'>if</span> <span class='ident'>res</span> <span class='op'>==</span> <span class='number'>0</span> {
-        <span class='prelude-val'>Ok</span>(<span class='ident'>StillAlive</span>)
-    } <span class='kw'>else</span> {
-        <span class='prelude-val'>Ok</span>(<span class='ident'>decode</span>(<span class='ident'>res</span>, <span class='ident'>status</span>))
-    }
+    <span class='prelude-val'>Ok</span>(<span class='kw'>match</span> <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>Errno</span>::<span class='ident'>result</span>(<span class='ident'>res</span>)) {
+        <span class='number'>0</span> <span class='op'>=&gt;</span> <span class='ident'>StillAlive</span>,
+        <span class='ident'>res</span> <span class='op'>=&gt;</span> <span class='ident'>decode</span>(<span class='ident'>res</span>, <span class='ident'>status</span>),
+    })
 }
 
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>wait</span>() <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>WaitStatus</span><span class='op'>&gt;</span> {

@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/nix-0.4.2/src/sys/stat.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/nix-0.5.0/src/sys/stat.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>stat.rs.html -- source</title>
@@ -149,18 +149,11 @@
 <span id="106">106</span>
 <span id="107">107</span>
 <span id="108">108</span>
-<span id="109">109</span>
-<span id="110">110</span>
-<span id="111">111</span>
-<span id="112">112</span>
-<span id="113">113</span>
-<span id="114">114</span>
 </pre><pre class='rust '>
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>libc</span>::<span class='ident'>dev_t</span>;
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>libc</span>::<span class='ident'>stat</span> <span class='kw'>as</span> <span class='ident'>FileStat</span>;
 
-<span class='kw'>use</span> {<span class='ident'>Error</span>, <span class='prelude-ty'>Result</span>, <span class='ident'>NixPath</span>, <span class='ident'>from_ffi</span>};
-<span class='kw'>use</span> <span class='ident'>errno</span>::<span class='ident'>Errno</span>;
+<span class='kw'>use</span> {<span class='ident'>Errno</span>, <span class='prelude-ty'>Result</span>, <span class='ident'>NixPath</span>};
 <span class='kw'>use</span> <span class='ident'>libc</span>::<span class='ident'>mode_t</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>mem</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>os</span>::<span class='ident'>unix</span>::<span class='ident'>io</span>::<span class='ident'>RawFd</span>;
@@ -214,7 +207,8 @@
             <span class='ident'>ffi</span>::<span class='ident'>mknod</span>(<span class='ident'>cstr</span>.<span class='ident'>as_ptr</span>(), <span class='ident'>kind</span>.<span class='ident'>bits</span> <span class='op'>|</span> <span class='ident'>perm</span>.<span class='ident'>bits</span>() <span class='kw'>as</span> <span class='ident'>mode_t</span>, <span class='ident'>dev</span>)
         }
     }));
-    <span class='ident'>from_ffi</span>(<span class='ident'>res</span>)
+
+    <span class='ident'>Errno</span>::<span class='ident'>result</span>(<span class='ident'>res</span>).<span class='ident'>map</span>(<span class='ident'>drop</span>)
 }
 
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;linux&quot;</span>)]</span>
@@ -238,9 +232,7 @@
         }
     }));
 
-    <span class='kw'>if</span> <span class='ident'>res</span> <span class='op'>&lt;</span> <span class='number'>0</span> {
-        <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>Sys</span>(<span class='ident'>Errno</span>::<span class='ident'>last</span>()));
-    }
+    <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>Errno</span>::<span class='ident'>result</span>(<span class='ident'>res</span>));
 
     <span class='prelude-val'>Ok</span>(<span class='ident'>dst</span>)
 }
@@ -253,9 +245,7 @@
         }
     }));
 
-    <span class='kw'>if</span> <span class='ident'>res</span> <span class='op'>&lt;</span> <span class='number'>0</span> {
-        <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>Sys</span>(<span class='ident'>Errno</span>::<span class='ident'>last</span>()));
-    }
+    <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>Errno</span>::<span class='ident'>result</span>(<span class='ident'>res</span>));
 
     <span class='prelude-val'>Ok</span>(<span class='ident'>dst</span>)
 }
@@ -264,9 +254,7 @@
     <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>dst</span> <span class='op'>=</span> <span class='kw'>unsafe</span> { <span class='ident'>mem</span>::<span class='ident'>uninitialized</span>() };
     <span class='kw'>let</span> <span class='ident'>res</span> <span class='op'>=</span> <span class='kw'>unsafe</span> { <span class='ident'>ffi</span>::<span class='ident'>fstat</span>(<span class='ident'>fd</span>, <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>dst</span> <span class='kw'>as</span> <span class='op'>*</span><span class='kw-2'>mut</span> <span class='ident'>FileStat</span>) };
 
-    <span class='kw'>if</span> <span class='ident'>res</span> <span class='op'>&lt;</span> <span class='number'>0</span> {
-        <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>Sys</span>(<span class='ident'>Errno</span>::<span class='ident'>last</span>()));
-    }
+    <span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>Errno</span>::<span class='ident'>result</span>(<span class='ident'>res</span>));
 
     <span class='prelude-val'>Ok</span>(<span class='ident'>dst</span>)
 }

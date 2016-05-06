@@ -46,13 +46,36 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-5353' class='srclink' href='https://doc.rust-lang.org/nightly/core/prelude/v1/index.html?gotosrc=5353' title='goto source code'>[src]</a></span></h1>
-<div class='docblock'><p>The core prelude</p>
+        </span><a id='src-187' class='srclink' href='https://doc.rust-lang.org/nightly/std/prelude/v1/index.html?gotosrc=187' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p>The first version of the prelude of The Rust Standard Library.</p>
 
-<p>This module is intended for users of libcore which do not link to libstd as
-well. This module is imported by default when <code>#![no_std]</code> is used in the
-same manner as the standard library&#39;s prelude.</p>
-</div><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+<p>See the <a href="../index.html">module-level documentation</a> for more.</p>
+</div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Box.html'
+                               title='bitflags::__core::prelude::v1::Box'>Box</a></td>
+                        <td class='docblock short'>
+                             <p>A pointer type for heap allocation.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.String.html'
+                               title='bitflags::__core::prelude::v1::String'>String</a></td>
+                        <td class='docblock short'>
+                             <p>A UTF-8 encoded, growable string.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Vec.html'
+                               title='bitflags::__core::prelude::v1::Vec'>Vec</a></td>
+                        <td class='docblock short'>
+                             <p>A contiguous growable array type, written <code>Vec&lt;T&gt;</code> but pronounced &#39;vector.&#39;</p>
+                        </td>
+                    </tr>
+                </table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
 <table>
                     <tr class=' module-item'>
                         <td><a class='enum' href='enum.Option.html'
@@ -257,11 +280,27 @@ relations</a>.</p>
                         </td>
                     </tr>
                 
-                    <tr class='unstable module-item'>
-                        <td><a class='trait' href='trait.SliceExt.html'
-                               title='bitflags::__core::prelude::v1::SliceExt'>SliceExt</a></td>
+                    <tr class=' module-item'>
+                        <td><a class='trait' href='trait.ToOwned.html'
+                               title='bitflags::__core::prelude::v1::ToOwned'>ToOwned</a></td>
                         <td class='docblock short'>
-                            [<em class='stab unstable'>Unstable</em>] <p>Extension methods for slices.</p>
+                             <p>A generalization of <code>Clone</code> to borrowed data.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='trait' href='trait.ToString.html'
+                               title='bitflags::__core::prelude::v1::ToString'>ToString</a></td>
+                        <td class='docblock short'>
+                             <p>A trait for converting a value to a <code>String</code>.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class='unstable module-item'>
+                        <td><a class='trait' href='trait.SliceConcatExt.html'
+                               title='bitflags::__core::prelude::v1::SliceConcatExt'>SliceConcatExt</a></td>
+                        <td class='docblock short'>
+                            [<em class='stab unstable'>Unstable</em>] <p>An extension trait for concatenating slices</p>
                         </td>
                     </tr>
                 </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
@@ -273,7 +312,8 @@ relations</a>.</p>
                              <p>Disposes of a value.</p>
                         </td>
                     </tr>
-                </table></section>
+                </table><h2 id='impls' class='section-header'><a href="#impls">Implementations</a></h2>
+<table></table></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

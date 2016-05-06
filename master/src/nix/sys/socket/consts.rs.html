@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/nix-0.4.2/src/sys/socket/consts.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/nix-0.5.0/src/sys/socket/consts.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>consts.rs.html -- source</title>
@@ -455,6 +455,25 @@
 <span id="412">412</span>
 <span id="413">413</span>
 <span id="414">414</span>
+<span id="415">415</span>
+<span id="416">416</span>
+<span id="417">417</span>
+<span id="418">418</span>
+<span id="419">419</span>
+<span id="420">420</span>
+<span id="421">421</span>
+<span id="422">422</span>
+<span id="423">423</span>
+<span id="424">424</span>
+<span id="425">425</span>
+<span id="426">426</span>
+<span id="427">427</span>
+<span id="428">428</span>
+<span id="429">429</span>
+<span id="430">430</span>
+<span id="431">431</span>
+<span id="432">432</span>
+<span id="433">433</span>
 </pre><pre class='rust '>
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='self'>self</span>::<span class='ident'>os</span>::<span class='op'>*</span>;
 
@@ -466,6 +485,8 @@
     <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>AF_LOCAL</span>: <span class='ident'>c_int</span> <span class='op'>=</span> <span class='ident'>AF_UNIX</span>;
     <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>AF_INET</span>: <span class='ident'>c_int</span>  <span class='op'>=</span> <span class='number'>2</span>;
     <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>AF_INET6</span>: <span class='ident'>c_int</span> <span class='op'>=</span> <span class='number'>10</span>;
+    <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>AF_NETLINK</span>: <span class='ident'>c_int</span> <span class='op'>=</span> <span class='number'>16</span>;
+    <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>AF_PACKET</span>: <span class='ident'>c_int</span> <span class='op'>=</span> <span class='number'>17</span>;
 
     <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>SOCK_STREAM</span>: <span class='ident'>c_int</span> <span class='op'>=</span> <span class='number'>1</span>;
     <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>SOCK_DGRAM</span>: <span class='ident'>c_int</span> <span class='op'>=</span> <span class='number'>2</span>;
@@ -478,6 +499,7 @@
     <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>SOL_TCP</span>: <span class='ident'>c_int</span>    <span class='op'>=</span> <span class='number'>6</span>;
     <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>SOL_UDP</span>: <span class='ident'>c_int</span>    <span class='op'>=</span> <span class='number'>17</span>;
     <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>SOL_IPV6</span>: <span class='ident'>c_int</span>   <span class='op'>=</span> <span class='number'>41</span>;
+    <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>SOL_NETLINK</span>: <span class='ident'>c_int</span> <span class='op'>=</span> <span class='number'>270</span>;
     <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>IPPROTO_IP</span>: <span class='ident'>c_int</span> <span class='op'>=</span> <span class='ident'>SOL_IP</span>;
     <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>IPPROTO_IPV6</span>: <span class='ident'>c_int</span> <span class='op'>=</span> <span class='ident'>SOL_IPV6</span>;
     <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>IPPROTO_TCP</span>: <span class='ident'>c_int</span> <span class='op'>=</span> <span class='ident'>SOL_TCP</span>;
@@ -541,15 +563,18 @@
     <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>INADDR_NONE</span>: <span class='ident'>InAddrT</span> <span class='op'>=</span> <span class='number'>0xffffffff</span>;
     <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>INADDR_BROADCAST</span>: <span class='ident'>InAddrT</span> <span class='op'>=</span> <span class='number'>0xffffffff</span>;
 
-    <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>SockMessageFlags</span> <span class='op'>=</span> <span class='ident'>c_int</span>;
     <span class='comment'>// Flags for send/recv and their relatives</span>
-    <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>MSG_OOB</span>: <span class='ident'>SockMessageFlags</span> <span class='op'>=</span> <span class='number'>0x1</span>;
-    <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>MSG_PEEK</span>: <span class='ident'>SockMessageFlags</span> <span class='op'>=</span> <span class='number'>0x2</span>;
-    <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>MSG_CTRUNC</span>: <span class='ident'>SockMessageFlags</span> <span class='op'>=</span> <span class='number'>0x08</span>;
-    <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>MSG_TRUNC</span>: <span class='ident'>SockMessageFlags</span> <span class='op'>=</span> <span class='number'>0x20</span>;
-    <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>MSG_DONTWAIT</span>: <span class='ident'>SockMessageFlags</span> <span class='op'>=</span> <span class='number'>0x40</span>;
-    <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>MSG_EOR</span>: <span class='ident'>SockMessageFlags</span> <span class='op'>=</span> <span class='number'>0x80</span>;
-    <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>MSG_ERRQUEUE</span>: <span class='ident'>SockMessageFlags</span> <span class='op'>=</span> <span class='number'>0x2000</span>;
+    <span class='macro'>bitflags</span><span class='macro'>!</span>{
+        <span class='ident'>flags</span> <span class='ident'>MsgFlags</span> : <span class='ident'>libc</span>::<span class='ident'>c_int</span> {
+            <span class='kw'>const</span> <span class='ident'>MSG_OOB</span>      <span class='op'>=</span> <span class='number'>0x0001</span>,
+            <span class='kw'>const</span> <span class='ident'>MSG_PEEK</span>     <span class='op'>=</span> <span class='number'>0x0002</span>,
+            <span class='kw'>const</span> <span class='ident'>MSG_CTRUNC</span>   <span class='op'>=</span> <span class='number'>0x0008</span>,
+            <span class='kw'>const</span> <span class='ident'>MSG_TRUNC</span>    <span class='op'>=</span> <span class='number'>0x0020</span>,
+            <span class='kw'>const</span> <span class='ident'>MSG_DONTWAIT</span> <span class='op'>=</span> <span class='number'>0x0040</span>,
+            <span class='kw'>const</span> <span class='ident'>MSG_EOR</span>      <span class='op'>=</span> <span class='number'>0x0080</span>,
+            <span class='kw'>const</span> <span class='ident'>MSG_ERRQUEUE</span> <span class='op'>=</span> <span class='number'>0x2000</span>,
+        }
+    }
 
     <span class='comment'>// shutdown flags</span>
     <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>SHUT_RD</span>: <span class='ident'>c_int</span>   <span class='op'>=</span> <span class='number'>0</span>;
@@ -568,7 +593,7 @@
               <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;freebsd&quot;</span>))]</span>
     <span class='kw'>use</span> <span class='ident'>libc</span>::{<span class='self'>self</span>, <span class='ident'>c_int</span>, <span class='ident'>uint8_t</span>};
     <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>any</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;openbsd&quot;</span>, <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;netbsd&quot;</span>))]</span>
-    <span class='kw'>use</span> <span class='ident'>libc</span>::{<span class='ident'>c_int</span>, <span class='ident'>uint8_t</span>};
+    <span class='kw'>use</span> <span class='ident'>libc</span>::{<span class='self'>self</span>, <span class='ident'>c_int</span>, <span class='ident'>uint8_t</span>};
 
     <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>AF_UNIX</span>: <span class='ident'>c_int</span>  <span class='op'>=</span> <span class='number'>1</span>;
     <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>AF_LOCAL</span>: <span class='ident'>c_int</span> <span class='op'>=</span> <span class='ident'>AF_UNIX</span>;
@@ -662,16 +687,8 @@
     <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>IP_ADD_MEMBERSHIP</span>: <span class='ident'>c_int</span> <span class='op'>=</span> <span class='number'>12</span>;
     <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>IP_DROP_MEMBERSHIP</span>: <span class='ident'>c_int</span> <span class='op'>=</span> <span class='number'>13</span>;
 
-    <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>not</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;netbsd&quot;</span>))]</span>
-    <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>IPV6_ADD_MEMBERSHIP</span>: <span class='ident'>c_int</span> <span class='op'>=</span> <span class='ident'>libc</span>::<span class='ident'>IPV6_ADD_MEMBERSHIP</span>;
-    <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>not</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;netbsd&quot;</span>))]</span>
-    <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>IPV6_DROP_MEMBERSHIP</span>: <span class='ident'>c_int</span> <span class='op'>=</span> <span class='ident'>libc</span>::<span class='ident'>IPV6_DROP_MEMBERSHIP</span>;
-
-    <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;netbsd&quot;</span>)]</span>
-    <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>IPV6_JOIN_GROUP</span>: <span class='ident'>c_int</span> <span class='op'>=</span> <span class='number'>12</span>;
-
-    <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;netbsd&quot;</span>)]</span>
-    <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>IPV6_LEAVE_GROUP</span>: <span class='ident'>c_int</span> <span class='op'>=</span> <span class='number'>13</span>;
+    <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>IPV6_JOIN_GROUP</span>: <span class='ident'>c_int</span> <span class='op'>=</span> <span class='ident'>libc</span>::<span class='ident'>IPV6_JOIN_GROUP</span>;
+    <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>IPV6_LEAVE_GROUP</span>: <span class='ident'>c_int</span> <span class='op'>=</span> <span class='ident'>libc</span>::<span class='ident'>IPV6_LEAVE_GROUP</span>;
 
     <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>InAddrT</span> <span class='op'>=</span> <span class='ident'>u32</span>;
 
@@ -680,14 +697,17 @@
     <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>INADDR_NONE</span>: <span class='ident'>InAddrT</span> <span class='op'>=</span> <span class='number'>0xffffffff</span>;
     <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>INADDR_BROADCAST</span>: <span class='ident'>InAddrT</span> <span class='op'>=</span> <span class='number'>0xffffffff</span>;
 
-    <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>SockMessageFlags</span> <span class='op'>=</span> <span class='ident'>i32</span>;
     <span class='comment'>// Flags for send/recv and their relatives</span>
-    <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>MSG_OOB</span>: <span class='ident'>SockMessageFlags</span> <span class='op'>=</span> <span class='number'>0x1</span>;
-    <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>MSG_PEEK</span>: <span class='ident'>SockMessageFlags</span> <span class='op'>=</span> <span class='number'>0x2</span>;
-    <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>MSG_EOR</span>: <span class='ident'>SockMessageFlags</span> <span class='op'>=</span> <span class='number'>0x8</span>;
-    <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>MSG_TRUNC</span>: <span class='ident'>SockMessageFlags</span> <span class='op'>=</span> <span class='number'>0x10</span>;
-    <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>MSG_CTRUNC</span>: <span class='ident'>SockMessageFlags</span> <span class='op'>=</span> <span class='number'>0x20</span>;
-    <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>MSG_DONTWAIT</span>: <span class='ident'>SockMessageFlags</span> <span class='op'>=</span> <span class='number'>0x80</span>;
+    <span class='macro'>bitflags</span><span class='macro'>!</span>{
+        <span class='ident'>flags</span> <span class='ident'>MsgFlags</span> : <span class='ident'>libc</span>::<span class='ident'>c_int</span> {
+            <span class='kw'>const</span> <span class='ident'>MSG_OOB</span>      <span class='op'>=</span> <span class='number'>0x01</span>,
+            <span class='kw'>const</span> <span class='ident'>MSG_PEEK</span>     <span class='op'>=</span> <span class='number'>0x02</span>,
+            <span class='kw'>const</span> <span class='ident'>MSG_EOR</span>      <span class='op'>=</span> <span class='number'>0x08</span>,
+            <span class='kw'>const</span> <span class='ident'>MSG_TRUNC</span>    <span class='op'>=</span> <span class='number'>0x10</span>,
+            <span class='kw'>const</span> <span class='ident'>MSG_CTRUNC</span>   <span class='op'>=</span> <span class='number'>0x20</span>,
+            <span class='kw'>const</span> <span class='ident'>MSG_DONTWAIT</span> <span class='op'>=</span> <span class='number'>0x80</span>,
+        }
+    }
 
     <span class='comment'>// shutdown flags</span>
     <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>SHUT_RD</span>: <span class='ident'>c_int</span>   <span class='op'>=</span> <span class='number'>0</span>;
@@ -753,6 +773,8 @@
     <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>IP_MULTICAST_LOOP</span>: <span class='ident'>c_int</span> <span class='op'>=</span> <span class='number'>11</span>;
     <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>IP_ADD_MEMBERSHIP</span>: <span class='ident'>c_int</span> <span class='op'>=</span> <span class='number'>12</span>;
     <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>IP_DROP_MEMBERSHIP</span>: <span class='ident'>c_int</span> <span class='op'>=</span> <span class='number'>13</span>;
+    <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>IPV6_JOIN_GROUP</span>: <span class='ident'>c_int</span> <span class='op'>=</span> <span class='ident'>libc</span>::<span class='ident'>IPV6_JOIN_GROUP</span>;
+    <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>IPV6_LEAVE_GROUP</span>: <span class='ident'>c_int</span> <span class='op'>=</span> <span class='ident'>libc</span>::<span class='ident'>IPV6_LEAVE_GROUP</span>;
 
     <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>InAddrT</span> <span class='op'>=</span> <span class='ident'>u32</span>;
 
@@ -761,11 +783,14 @@
     <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>INADDR_NONE</span>: <span class='ident'>InAddrT</span> <span class='op'>=</span> <span class='number'>0xffffffff</span>;
     <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>INADDR_BROADCAST</span>: <span class='ident'>InAddrT</span> <span class='op'>=</span> <span class='number'>0xffffffff</span>;
 
-    <span class='kw'>pub</span> <span class='kw'>type</span> <span class='ident'>SockMessageFlags</span> <span class='op'>=</span> <span class='ident'>i32</span>;
     <span class='comment'>// Flags for send/recv and their relatives</span>
-    <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>MSG_OOB</span>: <span class='ident'>SockMessageFlags</span> <span class='op'>=</span> <span class='number'>0x1</span>;
-    <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>MSG_PEEK</span>: <span class='ident'>SockMessageFlags</span> <span class='op'>=</span> <span class='number'>0x2</span>;
-    <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>MSG_DONTWAIT</span>: <span class='ident'>SockMessageFlags</span> <span class='op'>=</span> <span class='number'>0x80</span>;
+    <span class='macro'>bitflags</span><span class='macro'>!</span>{
+        <span class='ident'>flags</span> <span class='ident'>MsgFlags</span> : <span class='ident'>libc</span>::<span class='ident'>c_int</span> {
+            <span class='kw'>const</span> <span class='ident'>MSG_OOB</span>      <span class='op'>=</span> <span class='number'>0x01</span>,
+            <span class='kw'>const</span> <span class='ident'>MSG_PEEK</span>     <span class='op'>=</span> <span class='number'>0x02</span>,
+            <span class='kw'>const</span> <span class='ident'>MSG_DONTWAIT</span> <span class='op'>=</span> <span class='number'>0x80</span>,
+        }
+    }
 
     <span class='comment'>// shutdown flags</span>
     <span class='kw'>pub</span> <span class='kw'>const</span> <span class='ident'>SHUT_RD</span>: <span class='ident'>c_int</span>   <span class='op'>=</span> <span class='number'>0</span>;
@@ -776,12 +801,25 @@
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
 <span class='kw'>mod</span> <span class='ident'>test</span> {
     <span class='kw'>use</span> <span class='ident'>super</span>::<span class='op'>*</span>;
-    <span class='kw'>use</span> <span class='ident'>nixtest</span>::<span class='ident'>assert_const_eq</span>;
-    <span class='kw'>use</span> <span class='ident'>libc</span>::<span class='ident'>c_int</span>;
+    <span class='kw'>use</span> <span class='ident'>nixtest</span>::{<span class='ident'>assert_const_eq</span>,<span class='ident'>get_int_const</span>,<span class='ident'>GetConst</span>};
+    <span class='kw'>use</span> <span class='ident'>libc</span>::{<span class='ident'>c_char</span>};
+    <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fmt</span>;
+
+    <span class='kw'>impl</span> <span class='ident'>fmt</span>::<span class='ident'>Display</span> <span class='kw'>for</span> <span class='ident'>MsgFlags</span> {
+        <span class='kw'>fn</span> <span class='ident'>fmt</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>f</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>fmt</span>::<span class='ident'>Formatter</span>) <span class='op'>-&gt;</span> <span class='ident'>fmt</span>::<span class='prelude-ty'>Result</span> {
+            <span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>f</span>, <span class='string'>&quot;{}&quot;</span>, <span class='self'>self</span>.<span class='ident'>bits</span>())
+        }
+    }
+
+    <span class='kw'>impl</span> <span class='ident'>GetConst</span> <span class='kw'>for</span> <span class='ident'>MsgFlags</span> {
+        <span class='kw'>unsafe</span> <span class='kw'>fn</span> <span class='ident'>get_const</span>(<span class='ident'>name</span>: <span class='op'>*</span><span class='kw'>const</span> <span class='ident'>c_char</span>) <span class='op'>-&gt;</span> <span class='ident'>MsgFlags</span> {
+            <span class='ident'>MsgFlags</span>::<span class='ident'>from_bits_truncate</span>(<span class='ident'>get_int_const</span>(<span class='ident'>name</span>))
+        }
+    }
 
     <span class='macro'>macro_rules</span><span class='macro'>!</span> <span class='ident'>check_const</span> {
         ($(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>konst</span>:<span class='ident'>ident</span>),<span class='op'>+</span>) <span class='op'>=&gt;</span> {{
-            $(<span class='ident'>assert_const_eq</span>(<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>konst</span>), <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>konst</span> <span class='kw'>as</span> <span class='ident'>c_int</span>);)<span class='op'>+</span>
+            $(<span class='ident'>assert_const_eq</span>(<span class='macro'>stringify</span><span class='macro'>!</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>konst</span>), <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>konst</span>);)<span class='op'>+</span>
         }};
     }
 

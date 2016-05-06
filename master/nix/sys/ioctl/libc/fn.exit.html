@@ -46,25 +46,8 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-1065' class='srclink' href='../../../../libc/funcs/c95/stdlib/fn.exit.html?gotosrc=1065' title='goto source code'>[src]</a></span></h1>
-<pre class='rust fn'>pub unsafe extern fn exit(status: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.i32.html'>i32</a>) -&gt; !</pre><div class='docblock'><p>Exits the running program in a possibly dangerous manner.</p>
-
-<h1 id='safety' class='section-header'><a href='#safety'>Safety</a></h1>
-<p>While this forces your program to exit, it does so in a way that has
-consequences. This will skip all unwinding code, which means that anything
-relying on unwinding for cleanup (such as flushing and closing a buffer to a
-file) may act in an unexpected way.</p>
-
-<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
-<pre class='rust rust-example-rendered'>
-<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>libc</span>;
-
-<span class='kw'>fn</span> <span class='ident'>main</span>() {
-    <span class='kw'>unsafe</span> {
-        <span class='ident'>libc</span>::<span class='ident'>exit</span>(<span class='number'>1</span>);
-    }
-}</pre>
-</div></section>
+        </span><a id='src-169' class='srclink' href='../../../../libc/fn.exit.html?gotosrc=169' title='goto source code'>[src]</a></span></h1>
+<pre class='rust fn'>pub unsafe extern fn exit(status: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.i32.html'>i32</a>) -&gt; !</pre></section>
     <section id='search' class="content hidden"></section>
 
     <section class="footer"></section>

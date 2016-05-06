@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/regex-0.1.68/src/dfa.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/regex-0.1.69/src/dfa.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>dfa.rs.html -- source</title>
@@ -1780,14 +1780,6 @@
 <span id="1737">1737</span>
 <span id="1738">1738</span>
 <span id="1739">1739</span>
-<span id="1740">1740</span>
-<span id="1741">1741</span>
-<span id="1742">1742</span>
-<span id="1743">1743</span>
-<span id="1744">1744</span>
-<span id="1745">1745</span>
-<span id="1746">1746</span>
-<span id="1747">1747</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2014-2016 The Rust Project Developers. See the COPYRIGHT</span>
 <span class='comment'>// file at the top-level directory of this distribution and at</span>
@@ -1845,22 +1837,6 @@ implementation.)
 <span class='kw'>use</span> <span class='ident'>exec</span>::<span class='ident'>ProgramCache</span>;
 <span class='kw'>use</span> <span class='ident'>prog</span>::{<span class='ident'>Inst</span>, <span class='ident'>Program</span>};
 <span class='kw'>use</span> <span class='ident'>sparse</span>::<span class='ident'>SparseSet</span>;
-
-<span class='doccomment'>/// The cache limit specifies approximately how much space we&#39;re willing to</span>
-<span class='doccomment'>/// give to the state cache. Once the state cache exceeds the size, it is wiped</span>
-<span class='doccomment'>/// and all states must be re-computed.</span>
-<span class='doccomment'>///</span>
-<span class='doccomment'>/// Note that this value does not impact correctness. It can be set to 0 and</span>
-<span class='doccomment'>/// the DFA will run just fine. (It will only ever store exactly one state</span>
-<span class='doccomment'>/// in the cache, and will likely run very slowly, but it will work.)</span>
-<span class='doccomment'>///</span>
-<span class='doccomment'>/// Also note that this limit is *per thread of execution*. That is, if the</span>
-<span class='doccomment'>/// same regex is used to search text across multiple threads simultaneously,</span>
-<span class='doccomment'>/// then the DFA cache is not shared. Instead, copies are made.</span>
-<span class='doccomment'>///</span>
-<span class='doccomment'>/// TODO(burntsushi): This feels like a knob that a caller ought to be able to</span>
-<span class='doccomment'>/// configure.</span>
-<span class='kw'>const</span> <span class='ident'>CACHE_LIMIT</span>: <span class='ident'>usize</span> <span class='op'>=</span> <span class='number'>2</span> <span class='op'>*</span> (<span class='number'>1</span><span class='op'>&lt;&lt;</span><span class='number'>20</span>);
 
 <span class='doccomment'>/// Return true if and only if the given program can be executed by a DFA.</span>
 <span class='doccomment'>///</span>
@@ -2890,7 +2866,7 @@ implementation.)
             <span class='kw'>return</span> <span class='prelude-val'>Some</span>(<span class='ident'>si</span>);
         }
         <span class='comment'>// If the cache has gotten too big, wipe it.</span>
-        <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>approximate_size</span>() <span class='op'>&gt;</span> <span class='ident'>CACHE_LIMIT</span> {
+        <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>approximate_size</span>() <span class='op'>&gt;</span> <span class='self'>self</span>.<span class='ident'>prog</span>.<span class='ident'>dfa_size_limit</span> {
             <span class='kw'>if</span> <span class='op'>!</span><span class='self'>self</span>.<span class='ident'>clear_cache_and_save</span>(<span class='ident'>current_state</span>) {
                 <span class='comment'>// Ooops. DFA is giving up.</span>
                 <span class='kw'>return</span> <span class='prelude-val'>None</span>;
@@ -3039,16 +3015,24 @@ implementation.)
 
         <span class='comment'>// OK, actually flush the cache.</span>
         <span class='kw'>let</span> <span class='ident'>start</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>state</span>(<span class='self'>self</span>.<span class='ident'>start</span> <span class='kw-2'>&amp;</span> <span class='op'>!</span><span class='ident'>STATE_START</span>).<span class='ident'>clone</span>();
+        <span class='kw'>let</span> <span class='ident'>last_match</span> <span class='op'>=</span> <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>last_match_si</span> <span class='op'>&lt;=</span> <span class='ident'>STATE_MAX</span> {
+            <span class='prelude-val'>Some</span>(<span class='self'>self</span>.<span class='ident'>state</span>(<span class='self'>self</span>.<span class='ident'>last_match_si</span>).<span class='ident'>clone</span>())
+        } <span class='kw'>else</span> {
+            <span class='prelude-val'>None</span>
+        };
         <span class='self'>self</span>.<span class='ident'>cache</span>.<span class='ident'>trans</span>.<span class='ident'>clear</span>();
         <span class='self'>self</span>.<span class='ident'>cache</span>.<span class='ident'>states</span>.<span class='ident'>clear</span>();
         <span class='self'>self</span>.<span class='ident'>cache</span>.<span class='ident'>compiled</span>.<span class='ident'>clear</span>();
-        <span class='kw'>for</span> <span class='ident'>start</span> <span class='kw'>in</span> <span class='self'>self</span>.<span class='ident'>cache</span>.<span class='ident'>start_states</span>.<span class='ident'>iter_mut</span>() {
-            <span class='op'>*</span><span class='ident'>start</span> <span class='op'>=</span> <span class='ident'>STATE_UNKNOWN</span>;
+        <span class='kw'>for</span> <span class='ident'>s</span> <span class='kw'>in</span> <span class='self'>self</span>.<span class='ident'>cache</span>.<span class='ident'>start_states</span>.<span class='ident'>iter_mut</span>() {
+            <span class='op'>*</span><span class='ident'>s</span> <span class='op'>=</span> <span class='ident'>STATE_UNKNOWN</span>;
         }
-        <span class='comment'>// The unwrap is OK because we just cleared the cache and therefore</span>
+        <span class='comment'>// The unwraps are OK because we just cleared the cache and therefore</span>
         <span class='comment'>// know that the next state pointer won&#39;t exceed STATE_MAX.</span>
-        <span class='kw'>let</span> <span class='ident'>start</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>restore_state</span>(<span class='ident'>start</span>).<span class='ident'>unwrap</span>();
-        <span class='self'>self</span>.<span class='ident'>start</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>start_ptr</span>(<span class='ident'>start</span>);
+        <span class='kw'>let</span> <span class='ident'>start_ptr</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>restore_state</span>(<span class='ident'>start</span>).<span class='ident'>unwrap</span>();
+        <span class='self'>self</span>.<span class='ident'>start</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>start_ptr</span>(<span class='ident'>start_ptr</span>);
+        <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='ident'>last_match</span>) <span class='op'>=</span> <span class='ident'>last_match</span> {
+            <span class='self'>self</span>.<span class='ident'>last_match_si</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>restore_state</span>(<span class='ident'>last_match</span>).<span class='ident'>unwrap</span>();
+        }
         <span class='boolval'>true</span>
     }
 

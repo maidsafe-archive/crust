@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/nix-0.4.2/src/lib.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/nix-0.5.0/src/lib.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>lib.rs.html -- source</title>
@@ -217,6 +217,57 @@
 <span id="174">174</span>
 <span id="175">175</span>
 <span id="176">176</span>
+<span id="177">177</span>
+<span id="178">178</span>
+<span id="179">179</span>
+<span id="180">180</span>
+<span id="181">181</span>
+<span id="182">182</span>
+<span id="183">183</span>
+<span id="184">184</span>
+<span id="185">185</span>
+<span id="186">186</span>
+<span id="187">187</span>
+<span id="188">188</span>
+<span id="189">189</span>
+<span id="190">190</span>
+<span id="191">191</span>
+<span id="192">192</span>
+<span id="193">193</span>
+<span id="194">194</span>
+<span id="195">195</span>
+<span id="196">196</span>
+<span id="197">197</span>
+<span id="198">198</span>
+<span id="199">199</span>
+<span id="200">200</span>
+<span id="201">201</span>
+<span id="202">202</span>
+<span id="203">203</span>
+<span id="204">204</span>
+<span id="205">205</span>
+<span id="206">206</span>
+<span id="207">207</span>
+<span id="208">208</span>
+<span id="209">209</span>
+<span id="210">210</span>
+<span id="211">211</span>
+<span id="212">212</span>
+<span id="213">213</span>
+<span id="214">214</span>
+<span id="215">215</span>
+<span id="216">216</span>
+<span id="217">217</span>
+<span id="218">218</span>
+<span id="219">219</span>
+<span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
+<span id="226">226</span>
+<span id="227">227</span>
 </pre><pre class='rust '>
 <span class='doccomment'>//! Rust friendly bindings to the various *nix system functions.</span>
 <span class='doccomment'>//!</span>
@@ -233,13 +284,14 @@
 <span class='attribute'>#[<span class='ident'>macro_use</span>]</span>
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>bitflags</span>;
 
-<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>libc</span>;
+<span class='kw'>pub</span> <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>libc</span>;
 
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
 <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>nix_test</span> <span class='kw'>as</span> <span class='ident'>nixtest</span>;
 
-<span class='comment'>// Re-export some libc constants</span>
+<span class='comment'>// Re-exports</span>
 <span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>libc</span>::{<span class='ident'>c_int</span>, <span class='ident'>c_void</span>};
+<span class='kw'>pub</span> <span class='kw'>use</span> <span class='ident'>errno</span>::<span class='ident'>Errno</span>;
 
 <span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>errno</span>;
 <span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>features</span>;
@@ -250,6 +302,11 @@
 
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>any</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;linux&quot;</span>))]</span>
 <span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>mqueue</span>;
+
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>any</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;linux&quot;</span>, <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;macos&quot;</span>))]</span>
+<span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>poll</span>;
+
+<span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>net</span>;
 
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>any</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;linux&quot;</span>, <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;android&quot;</span>))]</span>
 <span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>sched</span>;
@@ -263,14 +320,15 @@
  *
  */</span>
 
-<span class='kw'>use</span> <span class='ident'>libc</span>::{<span class='ident'>c_char</span>, <span class='ident'>PATH_MAX</span>};
+<span class='kw'>use</span> <span class='ident'>libc</span>::<span class='ident'>c_char</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::{<span class='ident'>ptr</span>, <span class='ident'>result</span>};
-<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>ffi</span>::<span class='ident'>CStr</span>;
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>ffi</span>::{<span class='ident'>CStr</span>, <span class='ident'>OsStr</span>};
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>path</span>::{<span class='ident'>Path</span>, <span class='ident'>PathBuf</span>};
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>os</span>::<span class='ident'>unix</span>::<span class='ident'>ffi</span>::<span class='ident'>OsStrExt</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>io</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fmt</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>error</span>;
+<span class='kw'>use</span> <span class='ident'>libc</span>::<span class='ident'>PATH_MAX</span>;
 
 <span class='kw'>pub</span> <span class='kw'>type</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>result</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>T</span>, <span class='ident'>Error</span><span class='op'>&gt;</span>;
 
@@ -339,6 +397,44 @@
         <span class='kw'>where</span> <span class='ident'>F</span>: <span class='ident'>FnOnce</span>(<span class='kw-2'>&amp;</span><span class='ident'>CStr</span>) <span class='op'>-&gt;</span> <span class='ident'>T</span>;
 }
 
+<span class='kw'>impl</span> <span class='ident'>NixPath</span> <span class='kw'>for</span> <span class='ident'>str</span> {
+    <span class='kw'>fn</span> <span class='ident'>len</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>usize</span> {
+        <span class='ident'>NixPath</span>::<span class='ident'>len</span>(<span class='ident'>OsStr</span>::<span class='ident'>new</span>(<span class='self'>self</span>))
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>with_nix_path</span><span class='op'>&lt;</span><span class='ident'>T</span>, <span class='ident'>F</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>f</span>: <span class='ident'>F</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span>
+        <span class='kw'>where</span> <span class='ident'>F</span>: <span class='ident'>FnOnce</span>(<span class='kw-2'>&amp;</span><span class='ident'>CStr</span>) <span class='op'>-&gt;</span> <span class='ident'>T</span> {
+            <span class='ident'>OsStr</span>::<span class='ident'>new</span>(<span class='self'>self</span>).<span class='ident'>with_nix_path</span>(<span class='ident'>f</span>)
+        }
+}
+
+<span class='kw'>impl</span> <span class='ident'>NixPath</span> <span class='kw'>for</span> <span class='ident'>OsStr</span> {
+    <span class='kw'>fn</span> <span class='ident'>len</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>usize</span> {
+        <span class='self'>self</span>.<span class='ident'>as_bytes</span>().<span class='ident'>len</span>()
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>with_nix_path</span><span class='op'>&lt;</span><span class='ident'>T</span>, <span class='ident'>F</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>f</span>: <span class='ident'>F</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span>
+        <span class='kw'>where</span> <span class='ident'>F</span>: <span class='ident'>FnOnce</span>(<span class='kw-2'>&amp;</span><span class='ident'>CStr</span>) <span class='op'>-&gt;</span> <span class='ident'>T</span> {
+            <span class='self'>self</span>.<span class='ident'>as_bytes</span>().<span class='ident'>with_nix_path</span>(<span class='ident'>f</span>)
+        }
+}
+
+<span class='kw'>impl</span> <span class='ident'>NixPath</span> <span class='kw'>for</span> <span class='ident'>CStr</span> {
+    <span class='kw'>fn</span> <span class='ident'>len</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>usize</span> {
+        <span class='self'>self</span>.<span class='ident'>to_bytes</span>().<span class='ident'>len</span>()
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>with_nix_path</span><span class='op'>&lt;</span><span class='ident'>T</span>, <span class='ident'>F</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>f</span>: <span class='ident'>F</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span>
+            <span class='kw'>where</span> <span class='ident'>F</span>: <span class='ident'>FnOnce</span>(<span class='kw-2'>&amp;</span><span class='ident'>CStr</span>) <span class='op'>-&gt;</span> <span class='ident'>T</span> {
+        <span class='comment'>// Equivalence with the [u8] impl.</span>
+        <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>len</span>() <span class='op'>&gt;=</span> <span class='ident'>PATH_MAX</span> <span class='kw'>as</span> <span class='ident'>usize</span> {
+            <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>InvalidPath</span>);
+        }
+
+        <span class='prelude-val'>Ok</span>(<span class='ident'>f</span>(<span class='self'>self</span>))
+    }
+}
+
 <span class='kw'>impl</span> <span class='ident'>NixPath</span> <span class='kw'>for</span> [<span class='ident'>u8</span>] {
     <span class='kw'>fn</span> <span class='ident'>len</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>usize</span> {
         <span class='self'>self</span>.<span class='ident'>len</span>()
@@ -368,31 +464,37 @@
 
 <span class='kw'>impl</span> <span class='ident'>NixPath</span> <span class='kw'>for</span> <span class='ident'>Path</span> {
     <span class='kw'>fn</span> <span class='ident'>len</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>usize</span> {
-        <span class='self'>self</span>.<span class='ident'>as_os_str</span>().<span class='ident'>as_bytes</span>().<span class='ident'>len</span>()
+        <span class='ident'>NixPath</span>::<span class='ident'>len</span>(<span class='self'>self</span>.<span class='ident'>as_os_str</span>())
     }
 
     <span class='kw'>fn</span> <span class='ident'>with_nix_path</span><span class='op'>&lt;</span><span class='ident'>T</span>, <span class='ident'>F</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>f</span>: <span class='ident'>F</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> <span class='kw'>where</span> <span class='ident'>F</span>: <span class='ident'>FnOnce</span>(<span class='kw-2'>&amp;</span><span class='ident'>CStr</span>) <span class='op'>-&gt;</span> <span class='ident'>T</span> {
-        <span class='self'>self</span>.<span class='ident'>as_os_str</span>().<span class='ident'>as_bytes</span>().<span class='ident'>with_nix_path</span>(<span class='ident'>f</span>)
+        <span class='self'>self</span>.<span class='ident'>as_os_str</span>().<span class='ident'>with_nix_path</span>(<span class='ident'>f</span>)
     }
 }
 
 <span class='kw'>impl</span> <span class='ident'>NixPath</span> <span class='kw'>for</span> <span class='ident'>PathBuf</span> {
     <span class='kw'>fn</span> <span class='ident'>len</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>usize</span> {
-        <span class='self'>self</span>.<span class='ident'>as_os_str</span>().<span class='ident'>as_bytes</span>().<span class='ident'>len</span>()
+        <span class='ident'>NixPath</span>::<span class='ident'>len</span>(<span class='self'>self</span>.<span class='ident'>as_os_str</span>())
     }
 
     <span class='kw'>fn</span> <span class='ident'>with_nix_path</span><span class='op'>&lt;</span><span class='ident'>T</span>, <span class='ident'>F</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>f</span>: <span class='ident'>F</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> <span class='kw'>where</span> <span class='ident'>F</span>: <span class='ident'>FnOnce</span>(<span class='kw-2'>&amp;</span><span class='ident'>CStr</span>) <span class='op'>-&gt;</span> <span class='ident'>T</span> {
-        <span class='self'>self</span>.<span class='ident'>as_os_str</span>().<span class='ident'>as_bytes</span>().<span class='ident'>with_nix_path</span>(<span class='ident'>f</span>)
+        <span class='self'>self</span>.<span class='ident'>as_os_str</span>().<span class='ident'>with_nix_path</span>(<span class='ident'>f</span>)
     }
 }
 
-<span class='attribute'>#[<span class='ident'>inline</span>]</span>
-<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>from_ffi</span>(<span class='ident'>res</span>: <span class='ident'>libc</span>::<span class='ident'>c_int</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
-    <span class='kw'>if</span> <span class='ident'>res</span> <span class='op'>!=</span> <span class='number'>0</span> {
-        <span class='kw'>return</span> <span class='prelude-val'>Err</span>(<span class='ident'>Error</span>::<span class='ident'>Sys</span>(<span class='ident'>errno</span>::<span class='ident'>Errno</span>::<span class='ident'>last</span>()));
+<span class='doccomment'>/// Treats `None` as an empty string.</span>
+<span class='kw'>impl</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>NP</span>: ?<span class='ident'>Sized</span> <span class='op'>+</span> <span class='ident'>NixPath</span><span class='op'>&gt;</span>  <span class='ident'>NixPath</span> <span class='kw'>for</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>NP</span><span class='op'>&gt;</span> {
+    <span class='kw'>fn</span> <span class='ident'>len</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>usize</span> {
+        <span class='self'>self</span>.<span class='ident'>map_or</span>(<span class='number'>0</span>, <span class='ident'>NixPath</span>::<span class='ident'>len</span>)
     }
 
-    <span class='prelude-val'>Ok</span>(())
+    <span class='kw'>fn</span> <span class='ident'>with_nix_path</span><span class='op'>&lt;</span><span class='ident'>T</span>, <span class='ident'>F</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>f</span>: <span class='ident'>F</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> <span class='kw'>where</span> <span class='ident'>F</span>: <span class='ident'>FnOnce</span>(<span class='kw-2'>&amp;</span><span class='ident'>CStr</span>) <span class='op'>-&gt;</span> <span class='ident'>T</span> {
+        <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='ident'>nix_path</span>) <span class='op'>=</span> <span class='op'>*</span><span class='self'>self</span> {
+            <span class='ident'>nix_path</span>.<span class='ident'>with_nix_path</span>(<span class='ident'>f</span>)
+        } <span class='kw'>else</span> {
+            <span class='kw'>unsafe</span> { <span class='ident'>CStr</span>::<span class='ident'>from_ptr</span>(<span class='string'>&quot;\0&quot;</span>.<span class='ident'>as_ptr</span>() <span class='kw'>as</span> <span class='op'>*</span><span class='kw'>const</span> _).<span class='ident'>with_nix_path</span>(<span class='ident'>f</span>) }
+        }
+    }
 }
 </pre>
 </section>

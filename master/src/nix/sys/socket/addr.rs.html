@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/nix-0.4.2/src/sys/socket/addr.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/nix-0.5.0/src/sys/socket/addr.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>addr.rs.html -- source</title>
@@ -562,15 +562,95 @@
 <span id="519">519</span>
 <span id="520">520</span>
 <span id="521">521</span>
+<span id="522">522</span>
+<span id="523">523</span>
+<span id="524">524</span>
+<span id="525">525</span>
+<span id="526">526</span>
+<span id="527">527</span>
+<span id="528">528</span>
+<span id="529">529</span>
+<span id="530">530</span>
+<span id="531">531</span>
+<span id="532">532</span>
+<span id="533">533</span>
+<span id="534">534</span>
+<span id="535">535</span>
+<span id="536">536</span>
+<span id="537">537</span>
+<span id="538">538</span>
+<span id="539">539</span>
+<span id="540">540</span>
+<span id="541">541</span>
+<span id="542">542</span>
+<span id="543">543</span>
+<span id="544">544</span>
+<span id="545">545</span>
+<span id="546">546</span>
+<span id="547">547</span>
+<span id="548">548</span>
+<span id="549">549</span>
+<span id="550">550</span>
+<span id="551">551</span>
+<span id="552">552</span>
+<span id="553">553</span>
+<span id="554">554</span>
+<span id="555">555</span>
+<span id="556">556</span>
+<span id="557">557</span>
+<span id="558">558</span>
+<span id="559">559</span>
+<span id="560">560</span>
+<span id="561">561</span>
+<span id="562">562</span>
+<span id="563">563</span>
+<span id="564">564</span>
+<span id="565">565</span>
+<span id="566">566</span>
+<span id="567">567</span>
+<span id="568">568</span>
+<span id="569">569</span>
+<span id="570">570</span>
+<span id="571">571</span>
+<span id="572">572</span>
+<span id="573">573</span>
+<span id="574">574</span>
+<span id="575">575</span>
+<span id="576">576</span>
+<span id="577">577</span>
+<span id="578">578</span>
+<span id="579">579</span>
+<span id="580">580</span>
+<span id="581">581</span>
+<span id="582">582</span>
+<span id="583">583</span>
+<span id="584">584</span>
+<span id="585">585</span>
+<span id="586">586</span>
+<span id="587">587</span>
+<span id="588">588</span>
+<span id="589">589</span>
+<span id="590">590</span>
+<span id="591">591</span>
+<span id="592">592</span>
+<span id="593">593</span>
+<span id="594">594</span>
+<span id="595">595</span>
+<span id="596">596</span>
+<span id="597">597</span>
+<span id="598">598</span>
+<span id="599">599</span>
+<span id="600">600</span>
 </pre><pre class='rust '>
-<span class='kw'>use</span> {<span class='prelude-ty'>Result</span>, <span class='ident'>Error</span>, <span class='ident'>NixPath</span>};
 <span class='kw'>use</span> <span class='ident'>super</span>::{<span class='ident'>consts</span>, <span class='ident'>sa_family_t</span>};
-<span class='kw'>use</span> <span class='ident'>errno</span>::<span class='ident'>Errno</span>;
+<span class='kw'>use</span> {<span class='ident'>Errno</span>, <span class='ident'>Error</span>, <span class='prelude-ty'>Result</span>, <span class='ident'>NixPath</span>};
 <span class='kw'>use</span> <span class='ident'>libc</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::{<span class='ident'>fmt</span>, <span class='ident'>hash</span>, <span class='ident'>mem</span>, <span class='ident'>net</span>, <span class='ident'>ptr</span>};
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>ffi</span>::<span class='ident'>OsStr</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>path</span>::<span class='ident'>Path</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>os</span>::<span class='ident'>unix</span>::<span class='ident'>ffi</span>::<span class='ident'>OsStrExt</span>;
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>any</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;linux&quot;</span>, <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;android&quot;</span>))]</span>
+<span class='kw'>use</span> ::<span class='ident'>sys</span>::<span class='ident'>socket</span>::<span class='ident'>addr</span>::<span class='ident'>netlink</span>::<span class='ident'>NetlinkAddr</span>;
 
 <span class='comment'>// TODO: uncomment out IpAddr functions: rust-lang/rfcs#988</span>
 
@@ -586,6 +666,10 @@
     <span class='ident'>Unix</span> <span class='op'>=</span> <span class='ident'>consts</span>::<span class='ident'>AF_UNIX</span>,
     <span class='ident'>Inet</span> <span class='op'>=</span> <span class='ident'>consts</span>::<span class='ident'>AF_INET</span>,
     <span class='ident'>Inet6</span> <span class='op'>=</span> <span class='ident'>consts</span>::<span class='ident'>AF_INET6</span>,
+    <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>any</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;linux&quot;</span>, <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;android&quot;</span>))]</span>
+    <span class='ident'>Netlink</span> <span class='op'>=</span> <span class='ident'>consts</span>::<span class='ident'>AF_NETLINK</span>,
+    <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>any</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;linux&quot;</span>, <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;android&quot;</span>))]</span>
+    <span class='ident'>Packet</span> <span class='op'>=</span> <span class='ident'>consts</span>::<span class='ident'>AF_PACKET</span>,
 }
 
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Copy</span>)]</span>
@@ -843,20 +927,27 @@
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Clone</span>, <span class='ident'>Copy</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>Ipv6Addr</span>(<span class='kw'>pub</span> <span class='ident'>libc</span>::<span class='ident'>in6_addr</span>);
 
+<span class='comment'>// Note that IPv6 addresses are stored in big endian order on all architectures.</span>
+<span class='comment'>// See https://tools.ietf.org/html/rfc1700 or consult your favorite search</span>
+<span class='comment'>// engine.</span>
+
+<span class='macro'>macro_rules</span><span class='macro'>!</span> <span class='ident'>to_u8_array</span> {
+    ($(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>num</span>:<span class='ident'>ident</span>),<span class='op'>*</span>) <span class='op'>=&gt;</span> {
+        [ $((<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>num</span><span class='op'>&gt;&gt;</span><span class='number'>8</span>) <span class='kw'>as</span> <span class='ident'>u8</span>, (<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>num</span><span class='kw-2'>&amp;</span><span class='number'>0xff</span>) <span class='kw'>as</span> <span class='ident'>u8</span>,)<span class='op'>*</span> ]
+    }
+}
+
+<span class='macro'>macro_rules</span><span class='macro'>!</span> <span class='ident'>to_u16_array</span> {
+    (<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>slf</span>:<span class='ident'>ident</span>, $(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>first</span>:<span class='ident'>expr</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>second</span>:<span class='ident'>expr</span>),<span class='op'>*</span>) <span class='op'>=&gt;</span> {
+        [$( ((<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>slf</span>.<span class='number'>0</span>.<span class='ident'>s6_addr</span>[<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>first</span>] <span class='kw'>as</span> <span class='ident'>u16</span>) <span class='op'>&lt;&lt;</span> <span class='number'>8</span>) <span class='op'>+</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>slf</span>.<span class='number'>0</span>.<span class='ident'>s6_addr</span>[<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>second</span>] <span class='kw'>as</span> <span class='ident'>u16</span>,)<span class='op'>*</span>]
+    }
+}
+
 <span class='kw'>impl</span> <span class='ident'>Ipv6Addr</span> {
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>a</span>: <span class='ident'>u16</span>, <span class='ident'>b</span>: <span class='ident'>u16</span>, <span class='ident'>c</span>: <span class='ident'>u16</span>, <span class='ident'>d</span>: <span class='ident'>u16</span>, <span class='ident'>e</span>: <span class='ident'>u16</span>, <span class='ident'>f</span>: <span class='ident'>u16</span>, <span class='ident'>g</span>: <span class='ident'>u16</span>, <span class='ident'>h</span>: <span class='ident'>u16</span>) <span class='op'>-&gt;</span> <span class='ident'>Ipv6Addr</span> {
-        <span class='ident'>Ipv6Addr</span>(<span class='ident'>libc</span>::<span class='ident'>in6_addr</span> {
-            <span class='ident'>s6_addr</span>: [
-                <span class='ident'>a</span>.<span class='ident'>to_be</span>(),
-                <span class='ident'>b</span>.<span class='ident'>to_be</span>(),
-                <span class='ident'>c</span>.<span class='ident'>to_be</span>(),
-                <span class='ident'>d</span>.<span class='ident'>to_be</span>(),
-                <span class='ident'>e</span>.<span class='ident'>to_be</span>(),
-                <span class='ident'>f</span>.<span class='ident'>to_be</span>(),
-                <span class='ident'>g</span>.<span class='ident'>to_be</span>(),
-                <span class='ident'>h</span>.<span class='ident'>to_be</span>(),
-            ]
-        })
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>in6_addr_var</span>: <span class='ident'>libc</span>::<span class='ident'>in6_addr</span> <span class='op'>=</span> <span class='kw'>unsafe</span>{<span class='ident'>mem</span>::<span class='ident'>uninitialized</span>()};
+        <span class='ident'>in6_addr_var</span>.<span class='ident'>s6_addr</span> <span class='op'>=</span> <span class='macro'>to_u8_array</span><span class='macro'>!</span>(<span class='ident'>a</span>,<span class='ident'>b</span>,<span class='ident'>c</span>,<span class='ident'>d</span>,<span class='ident'>e</span>,<span class='ident'>f</span>,<span class='ident'>g</span>,<span class='ident'>h</span>);
+        <span class='ident'>Ipv6Addr</span>(<span class='ident'>in6_addr_var</span>)
     }
 
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>from_std</span>(<span class='ident'>std</span>: <span class='kw-2'>&amp;</span><span class='ident'>net</span>::<span class='ident'>Ipv6Addr</span>) <span class='op'>-&gt;</span> <span class='ident'>Ipv6Addr</span> {
@@ -866,14 +957,7 @@
 
     <span class='doccomment'>/// Return the eight 16-bit segments that make up this address</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>segments</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> [<span class='ident'>u16</span>; <span class='number'>8</span>] {
-        [<span class='ident'>u16</span>::<span class='ident'>from_be</span>(<span class='self'>self</span>.<span class='number'>0</span>.<span class='ident'>s6_addr</span>[<span class='number'>0</span>]),
-         <span class='ident'>u16</span>::<span class='ident'>from_be</span>(<span class='self'>self</span>.<span class='number'>0</span>.<span class='ident'>s6_addr</span>[<span class='number'>1</span>]),
-         <span class='ident'>u16</span>::<span class='ident'>from_be</span>(<span class='self'>self</span>.<span class='number'>0</span>.<span class='ident'>s6_addr</span>[<span class='number'>2</span>]),
-         <span class='ident'>u16</span>::<span class='ident'>from_be</span>(<span class='self'>self</span>.<span class='number'>0</span>.<span class='ident'>s6_addr</span>[<span class='number'>3</span>]),
-         <span class='ident'>u16</span>::<span class='ident'>from_be</span>(<span class='self'>self</span>.<span class='number'>0</span>.<span class='ident'>s6_addr</span>[<span class='number'>4</span>]),
-         <span class='ident'>u16</span>::<span class='ident'>from_be</span>(<span class='self'>self</span>.<span class='number'>0</span>.<span class='ident'>s6_addr</span>[<span class='number'>5</span>]),
-         <span class='ident'>u16</span>::<span class='ident'>from_be</span>(<span class='self'>self</span>.<span class='number'>0</span>.<span class='ident'>s6_addr</span>[<span class='number'>6</span>]),
-         <span class='ident'>u16</span>::<span class='ident'>from_be</span>(<span class='self'>self</span>.<span class='number'>0</span>.<span class='ident'>s6_addr</span>[<span class='number'>7</span>])]
+        <span class='macro'>to_u16_array</span><span class='macro'>!</span>(<span class='self'>self</span>, <span class='number'>0</span>,<span class='number'>1</span>,<span class='number'>2</span>,<span class='number'>3</span>,<span class='number'>4</span>,<span class='number'>5</span>,<span class='number'>6</span>,<span class='number'>7</span>,<span class='number'>8</span>,<span class='number'>9</span>,<span class='number'>10</span>,<span class='number'>11</span>,<span class='number'>12</span>,<span class='number'>13</span>,<span class='number'>14</span>,<span class='number'>15</span>)
     }
 
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>to_std</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>net</span>::<span class='ident'>Ipv6Addr</span> {
@@ -1011,7 +1095,9 @@
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Copy</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>enum</span> <span class='ident'>SockAddr</span> {
     <span class='ident'>Inet</span>(<span class='ident'>InetAddr</span>),
-    <span class='ident'>Unix</span>(<span class='ident'>UnixAddr</span>)
+    <span class='ident'>Unix</span>(<span class='ident'>UnixAddr</span>),
+    <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>any</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;linux&quot;</span>, <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;android&quot;</span>))]</span>
+    <span class='ident'>Netlink</span>(<span class='ident'>NetlinkAddr</span>)
 }
 
 <span class='kw'>impl</span> <span class='ident'>SockAddr</span> {
@@ -1023,11 +1109,18 @@
         <span class='prelude-val'>Ok</span>(<span class='ident'>SockAddr</span>::<span class='ident'>Unix</span>(<span class='macro'>try</span><span class='macro'>!</span>(<span class='ident'>UnixAddr</span>::<span class='ident'>new</span>(<span class='ident'>path</span>))))
     }
 
+    <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>any</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;linux&quot;</span>, <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;android&quot;</span>))]</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new_netlink</span>(<span class='ident'>pid</span>: <span class='ident'>u32</span>, <span class='ident'>groups</span>: <span class='ident'>u32</span>) <span class='op'>-&gt;</span> <span class='ident'>SockAddr</span> {
+        <span class='ident'>SockAddr</span>::<span class='ident'>Netlink</span>(<span class='ident'>NetlinkAddr</span>::<span class='ident'>new</span>(<span class='ident'>pid</span>, <span class='ident'>groups</span>))
+    }
+
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>family</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>AddressFamily</span> {
         <span class='kw'>match</span> <span class='op'>*</span><span class='self'>self</span> {
             <span class='ident'>SockAddr</span>::<span class='ident'>Inet</span>(<span class='ident'>InetAddr</span>::<span class='ident'>V4</span>(..)) <span class='op'>=&gt;</span> <span class='ident'>AddressFamily</span>::<span class='ident'>Inet</span>,
             <span class='ident'>SockAddr</span>::<span class='ident'>Inet</span>(<span class='ident'>InetAddr</span>::<span class='ident'>V6</span>(..)) <span class='op'>=&gt;</span> <span class='ident'>AddressFamily</span>::<span class='ident'>Inet6</span>,
             <span class='ident'>SockAddr</span>::<span class='ident'>Unix</span>(..) <span class='op'>=&gt;</span> <span class='ident'>AddressFamily</span>::<span class='ident'>Unix</span>,
+            <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>any</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;linux&quot;</span>, <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;android&quot;</span>))]</span>
+            <span class='ident'>SockAddr</span>::<span class='ident'>Netlink</span>(..) <span class='op'>=&gt;</span> <span class='ident'>AddressFamily</span>::<span class='ident'>Netlink</span>,
         }
     }
 
@@ -1040,6 +1133,8 @@
             <span class='ident'>SockAddr</span>::<span class='ident'>Inet</span>(<span class='ident'>InetAddr</span>::<span class='ident'>V4</span>(<span class='kw-2'>ref</span> <span class='ident'>addr</span>)) <span class='op'>=&gt;</span> (<span class='ident'>mem</span>::<span class='ident'>transmute</span>(<span class='ident'>addr</span>), <span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>libc</span>::<span class='ident'>sockaddr_in</span><span class='op'>&gt;</span>() <span class='kw'>as</span> <span class='ident'>libc</span>::<span class='ident'>socklen_t</span>),
             <span class='ident'>SockAddr</span>::<span class='ident'>Inet</span>(<span class='ident'>InetAddr</span>::<span class='ident'>V6</span>(<span class='kw-2'>ref</span> <span class='ident'>addr</span>)) <span class='op'>=&gt;</span> (<span class='ident'>mem</span>::<span class='ident'>transmute</span>(<span class='ident'>addr</span>), <span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>libc</span>::<span class='ident'>sockaddr_in6</span><span class='op'>&gt;</span>() <span class='kw'>as</span> <span class='ident'>libc</span>::<span class='ident'>socklen_t</span>),
             <span class='ident'>SockAddr</span>::<span class='ident'>Unix</span>(<span class='ident'>UnixAddr</span>(<span class='kw-2'>ref</span> <span class='ident'>addr</span>, <span class='ident'>len</span>)) <span class='op'>=&gt;</span> (<span class='ident'>mem</span>::<span class='ident'>transmute</span>(<span class='ident'>addr</span>), (<span class='ident'>len</span> <span class='op'>+</span> <span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>libc</span>::<span class='ident'>sa_family_t</span><span class='op'>&gt;</span>()) <span class='kw'>as</span> <span class='ident'>libc</span>::<span class='ident'>socklen_t</span>),
+            <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>any</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;linux&quot;</span>, <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;android&quot;</span>))]</span>
+            <span class='ident'>SockAddr</span>::<span class='ident'>Netlink</span>(<span class='ident'>NetlinkAddr</span>(<span class='kw-2'>ref</span> <span class='ident'>sa</span>)) <span class='op'>=&gt;</span> (<span class='ident'>mem</span>::<span class='ident'>transmute</span>(<span class='ident'>sa</span>), <span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>libc</span>::<span class='ident'>sockaddr_nl</span><span class='op'>&gt;</span>() <span class='kw'>as</span> <span class='ident'>libc</span>::<span class='ident'>socklen_t</span>),
         }
     }
 }
@@ -1051,6 +1146,10 @@
                 <span class='ident'>a</span> <span class='op'>==</span> <span class='ident'>b</span>
             }
             (<span class='ident'>SockAddr</span>::<span class='ident'>Unix</span>(<span class='kw-2'>ref</span> <span class='ident'>a</span>), <span class='ident'>SockAddr</span>::<span class='ident'>Unix</span>(<span class='kw-2'>ref</span> <span class='ident'>b</span>)) <span class='op'>=&gt;</span> {
+                <span class='ident'>a</span> <span class='op'>==</span> <span class='ident'>b</span>
+            }
+            <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>any</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;linux&quot;</span>, <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;android&quot;</span>))]</span>
+            (<span class='ident'>SockAddr</span>::<span class='ident'>Netlink</span>(<span class='kw-2'>ref</span> <span class='ident'>a</span>), <span class='ident'>SockAddr</span>::<span class='ident'>Netlink</span>(<span class='kw-2'>ref</span> <span class='ident'>b</span>)) <span class='op'>=&gt;</span> {
                 <span class='ident'>a</span> <span class='op'>==</span> <span class='ident'>b</span>
             }
             _ <span class='op'>=&gt;</span> <span class='boolval'>false</span>,
@@ -1066,6 +1165,8 @@
         <span class='kw'>match</span> <span class='op'>*</span><span class='self'>self</span> {
             <span class='ident'>SockAddr</span>::<span class='ident'>Inet</span>(<span class='kw-2'>ref</span> <span class='ident'>a</span>) <span class='op'>=&gt;</span> <span class='ident'>a</span>.<span class='ident'>hash</span>(<span class='ident'>s</span>),
             <span class='ident'>SockAddr</span>::<span class='ident'>Unix</span>(<span class='kw-2'>ref</span> <span class='ident'>a</span>) <span class='op'>=&gt;</span> <span class='ident'>a</span>.<span class='ident'>hash</span>(<span class='ident'>s</span>),
+            <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>any</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;linux&quot;</span>, <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;android&quot;</span>))]</span>
+            <span class='ident'>SockAddr</span>::<span class='ident'>Netlink</span>(<span class='kw-2'>ref</span> <span class='ident'>a</span>) <span class='op'>=&gt;</span> <span class='ident'>a</span>.<span class='ident'>hash</span>(<span class='ident'>s</span>),
         }
     }
 }
@@ -1081,6 +1182,63 @@
         <span class='kw'>match</span> <span class='op'>*</span><span class='self'>self</span> {
             <span class='ident'>SockAddr</span>::<span class='ident'>Inet</span>(<span class='kw-2'>ref</span> <span class='ident'>inet</span>) <span class='op'>=&gt;</span> <span class='ident'>inet</span>.<span class='ident'>fmt</span>(<span class='ident'>f</span>),
             <span class='ident'>SockAddr</span>::<span class='ident'>Unix</span>(<span class='kw-2'>ref</span> <span class='ident'>unix</span>) <span class='op'>=&gt;</span> <span class='ident'>unix</span>.<span class='ident'>fmt</span>(<span class='ident'>f</span>),
+            <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>any</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;linux&quot;</span>, <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;android&quot;</span>))]</span>
+            <span class='ident'>SockAddr</span>::<span class='ident'>Netlink</span>(<span class='kw-2'>ref</span> <span class='ident'>nl</span>) <span class='op'>=&gt;</span> <span class='ident'>nl</span>.<span class='ident'>fmt</span>(<span class='ident'>f</span>),
+        }
+    }
+}
+
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>any</span>(<span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;linux&quot;</span>, <span class='ident'>target_os</span> <span class='op'>=</span> <span class='string'>&quot;android&quot;</span>))]</span>
+<span class='kw'>pub</span> <span class='kw'>mod</span> <span class='ident'>netlink</span> {
+    <span class='kw'>use</span> ::<span class='ident'>sys</span>::<span class='ident'>socket</span>::<span class='ident'>addr</span>::{<span class='ident'>AddressFamily</span>};
+    <span class='kw'>use</span> <span class='ident'>libc</span>::{<span class='ident'>sa_family_t</span>, <span class='ident'>sockaddr_nl</span>};
+    <span class='kw'>use</span> <span class='ident'>std</span>::{<span class='ident'>fmt</span>, <span class='ident'>mem</span>};
+    <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>hash</span>::{<span class='ident'>Hash</span>, <span class='ident'>Hasher</span>};
+
+    <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Copy</span>, <span class='ident'>Clone</span>)]</span>
+    <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>NetlinkAddr</span>(<span class='kw'>pub</span> <span class='ident'>sockaddr_nl</span>);
+
+    <span class='comment'>// , PartialEq, Eq, Debug, Hash</span>
+    <span class='kw'>impl</span> <span class='ident'>PartialEq</span> <span class='kw'>for</span> <span class='ident'>NetlinkAddr</span> {
+        <span class='kw'>fn</span> <span class='ident'>eq</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>other</span>: <span class='kw-2'>&amp;</span><span class='kw'>Self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
+            <span class='kw'>let</span> (<span class='ident'>inner</span>, <span class='ident'>other</span>) <span class='op'>=</span> (<span class='self'>self</span>.<span class='number'>0</span>, <span class='ident'>other</span>.<span class='number'>0</span>);
+            (<span class='ident'>inner</span>.<span class='ident'>nl_family</span>, <span class='ident'>inner</span>.<span class='ident'>nl_pid</span>, <span class='ident'>inner</span>.<span class='ident'>nl_groups</span>) <span class='op'>==</span>
+            (<span class='ident'>other</span>.<span class='ident'>nl_family</span>, <span class='ident'>other</span>.<span class='ident'>nl_pid</span>, <span class='ident'>other</span>.<span class='ident'>nl_groups</span>)
+        }
+    }
+
+    <span class='kw'>impl</span> <span class='ident'>Eq</span> <span class='kw'>for</span> <span class='ident'>NetlinkAddr</span> {}
+
+    <span class='kw'>impl</span> <span class='ident'>Hash</span> <span class='kw'>for</span> <span class='ident'>NetlinkAddr</span> {
+        <span class='kw'>fn</span> <span class='ident'>hash</span><span class='op'>&lt;</span><span class='ident'>H</span>: <span class='ident'>Hasher</span><span class='op'>&gt;</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>s</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>H</span>) {
+            <span class='kw'>let</span> <span class='ident'>inner</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='number'>0</span>;
+            (<span class='ident'>inner</span>.<span class='ident'>nl_family</span>, <span class='ident'>inner</span>.<span class='ident'>nl_pid</span>, <span class='ident'>inner</span>.<span class='ident'>nl_groups</span>).<span class='ident'>hash</span>(<span class='ident'>s</span>);
+        }
+    }
+
+
+    <span class='kw'>impl</span> <span class='ident'>NetlinkAddr</span> {
+        <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>new</span>(<span class='ident'>pid</span>: <span class='ident'>u32</span>, <span class='ident'>groups</span>: <span class='ident'>u32</span>) <span class='op'>-&gt;</span> <span class='ident'>NetlinkAddr</span> {
+            <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>addr</span>: <span class='ident'>sockaddr_nl</span> <span class='op'>=</span> <span class='kw'>unsafe</span> { <span class='ident'>mem</span>::<span class='ident'>zeroed</span>() };
+            <span class='ident'>addr</span>.<span class='ident'>nl_family</span> <span class='op'>=</span> <span class='ident'>AddressFamily</span>::<span class='ident'>Netlink</span> <span class='kw'>as</span> <span class='ident'>sa_family_t</span>;
+            <span class='ident'>addr</span>.<span class='ident'>nl_pid</span> <span class='op'>=</span> <span class='ident'>pid</span>;
+            <span class='ident'>addr</span>.<span class='ident'>nl_groups</span> <span class='op'>=</span> <span class='ident'>groups</span>;
+
+            <span class='ident'>NetlinkAddr</span>(<span class='ident'>addr</span>)
+        }
+
+        <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>pid</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>u32</span> {
+            <span class='self'>self</span>.<span class='number'>0</span>.<span class='ident'>nl_pid</span>
+        }
+
+        <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>groups</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>u32</span> {
+            <span class='self'>self</span>.<span class='number'>0</span>.<span class='ident'>nl_groups</span>
+        }
+    }
+
+    <span class='kw'>impl</span> <span class='ident'>fmt</span>::<span class='ident'>Display</span> <span class='kw'>for</span> <span class='ident'>NetlinkAddr</span> {
+        <span class='kw'>fn</span> <span class='ident'>fmt</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>f</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>fmt</span>::<span class='ident'>Formatter</span>) <span class='op'>-&gt;</span> <span class='ident'>fmt</span>::<span class='prelude-ty'>Result</span> {
+            <span class='macro'>write</span><span class='macro'>!</span>(<span class='ident'>f</span>, <span class='string'>&quot;pid: {} groups: {}&quot;</span>, <span class='self'>self</span>.<span class='ident'>pid</span>(), <span class='self'>self</span>.<span class='ident'>groups</span>())
         }
     }
 }
