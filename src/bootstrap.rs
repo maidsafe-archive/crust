@@ -56,9 +56,7 @@ impl RaiiBootstrap {
                bootstrap_cache: Arc<Mutex<BootstrapHandler>>,
                mc: Arc<MappingContext>,
                tcp_enabled: bool,
-               utp_enabled: bool,
-               heartbeat_timeout: Duration,
-               inactivity_timeout: Duration)
+               utp_enabled: bool)
                -> RaiiBootstrap {
         let stop_flag = Arc::new(AtomicBool::new(false));
         let cloned_stop_flag = stop_flag.clone();
@@ -72,9 +70,7 @@ impl RaiiBootstrap {
                                      bootstrap_cache,
                                      &mc,
                                      tcp_enabled,
-                                     utp_enabled,
-                                     heartbeat_timeout,
-                                     inactivity_timeout)
+                                     utp_enabled)
         }));
 
         RaiiBootstrap {
@@ -95,9 +91,7 @@ impl RaiiBootstrap {
                  bootstrap_cache: Arc<Mutex<BootstrapHandler>>,
                  mapping_context: &MappingContext,
                  tcp_enabled: bool,
-                 utp_enabled: bool,
-                 heartbeat_timeout: Duration,
-                 inactivity_timeout: Duration) {
+                 utp_enabled: bool) {
         rand::thread_rng().shuffle(&mut bootstrap_contacts[..]);
         for contact in bootstrap_contacts {
             // Bootstrapping got cancelled.
@@ -116,9 +110,7 @@ impl RaiiBootstrap {
                                           bootstrap_cache.clone(),
                                           mapping_context,
                                           tcp_enabled,
-                                          utp_enabled,
-                                          heartbeat_timeout,
-                                          inactivity_timeout);
+                                          utp_enabled);
             match res {
                 Ok(()) => (),
                 Err(e) => {

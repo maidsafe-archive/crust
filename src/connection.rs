@@ -139,9 +139,7 @@ pub fn connect(peer_contact: StaticContactInfo,
                bootstrap_cache: Arc<Mutex<BootstrapHandler>>,
                mc: &MappingContext,
                tcp_enabled: bool,
-               utp_enabled: bool,
-               heartbeat_timeout: Duration,
-               inactivity_timeout: Duration)
+               utp_enabled: bool)
                -> io::Result<()> {
     let static_contact_info = peer_contact.clone();
 
@@ -152,8 +150,6 @@ pub fn connect(peer_contact: StaticContactInfo,
     if tcp_enabled {
         for tcp_addr in peer_contact.tcp_acceptors {
             match connect_tcp_endpoint(tcp_addr,
-                                       heartbeat_timeout,
-                                       inactivity_timeout,
                                        our_public_key,
                                        event_tx.clone(),
                                        connection_map.clone(),
@@ -231,9 +227,7 @@ pub fn connect(peer_contact: StaticContactInfo,
                                         UtpRendezvousConnectMode::BootstrapConnect,
                                         our_public_key.clone(),
                                         event_tx.clone(),
-                                        connection_map.clone(),
-                                        heartbeat_timeout,
-                                        inactivity_timeout) {
+                                        connection_map.clone()) {
                                         Ok(()) => return Ok(()),
                                         Err(_) => continue,
                                     }
@@ -261,14 +255,9 @@ pub fn connect(peer_contact: StaticContactInfo,
 pub fn tcp_rendezvous_connect(connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
                               event_tx: ::CrustEventSender,
                               tcp_stream: TcpStream,
-                              heartbeat_timeout: Duration,
-                              inactivity_timeout: Duration,
                               their_id: PeerId)
                               -> io::Result<()> {
-    let last_read_activity = Arc::new(Mutex::new(Instant::now()));
-    let (network_input, writer)
-        = try!(tcp_connections::upgrade_tcp(tcp_stream, last_read_activity.clone(),
-                                            heartbeat_timeout, inactivity_timeout));
+    let (network_input, writer) = try!(tcp_connections::upgrade_tcp(tcp_stream));
     let our_addr = SocketAddr(try!(network_input.local_addr()));
     let their_addr = SocketAddr(try!(network_input.peer_addr()));
     let network_rx = Receiver::tcp(network_input);
@@ -281,7 +270,6 @@ pub fn tcp_rendezvous_connect(connection_map: Arc<Mutex<HashMap<PeerId, Vec<Conn
                                              their_id,
                                              network_rx,
                                              network_tx,
-                                             last_read_activity,
                                              event_tx,
                                              our_addr,
                                              their_addr);
@@ -291,20 +279,13 @@ pub fn tcp_rendezvous_connect(connection_map: Arc<Mutex<HashMap<PeerId, Vec<Conn
 }
 
 pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
-                            heartbeat_timeout: Duration,
-                            inactivity_timeout: Duration,
                             our_public_key: PublicKey,
                             event_tx: ::CrustEventSender,
                             connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
                             expected_peers: Option<Arc<Mutex<HashSet<PeerId>>>>,
                             their_expected_id: Option<PeerId>)
                             -> io::Result<()> {
-    let last_read_activity = Arc::new(Mutex::new(Instant::now()));
-    let (network_input, writer)
-        = try!(tcp_connections::connect_tcp(remote_addr.clone(),
-                                            last_read_activity.clone(),
-                                            heartbeat_timeout,
-                                            inactivity_timeout));
+    let (network_input, writer) = try!(tcp_connections::connect_tcp(remote_addr.clone()));
     let our_addr = SocketAddr(try!(network_input.local_addr()));
     let their_addr = SocketAddr(try!(network_input.peer_addr()));
 
@@ -385,7 +366,6 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
                                              their_id,
                                              network_rx,
                                              network_tx,
-                                             last_read_activity,
                                              event_tx,
                                              our_addr,
                                              their_addr);
@@ -397,7 +377,6 @@ fn register_tcp_connection(connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connect
                            their_id: PeerId,
                            network_rx: Receiver,
                            network_tx: RaiiSender,
-                           last_read_activity: Arc<Mutex<Instant>>,
                            event_tx: ::CrustEventSender,
                            our_addr: SocketAddr,
                            their_addr: SocketAddr) -> Connection {
@@ -405,8 +384,7 @@ fn register_tcp_connection(connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connect
     let closed_clone = closed.clone();
 
     let joiner = RaiiThreadJoiner::new(thread!("TcpNetworkReader", move || {
-        start_rx(network_rx, their_id, event_tx, closed_clone, connection_map,
-                 Some(last_read_activity));
+        start_rx(network_rx, their_id, event_tx, closed_clone, connection_map);
     }));
 
     Connection {
@@ -459,9 +437,7 @@ pub fn start_tcp_accept(port: u16,
                         // accepting a connection
                         _bootstrap_cache: Arc<Mutex<BootstrapHandler>>,
                         expected_peers: Arc<Mutex<HashSet<PeerId>>>,
-                        mapping_context: Arc<MappingContext>,
-                        heartbeat_timeout: Duration,
-                        inactivity_timeout: Duration)
+                        mapping_context: Arc<MappingContext>)
                         -> io::Result<RaiiTcpAcceptor> {
     let addr = net::SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), port));
     let tcp_builder_listener = try!(nat_traversal::new_reusably_bound_tcp_socket(&addr));
@@ -513,12 +489,7 @@ pub fn start_tcp_accept(port: u16,
                 break;
             }
 
-            let last_read_activity = Arc::new(Mutex::new(Instant::now()));
-            let (network_input, writer)
-                = unwrap_result!(tcp_connections::upgrade_tcp(stream,
-                                                              last_read_activity.clone(),
-                                                              heartbeat_timeout,
-                                                              inactivity_timeout));
+            let (network_input, writer) = unwrap_result!(tcp_connections::upgrade_tcp(stream));
 
             let our_addr = SocketAddr(unwrap_result!(network_input.local_addr()));
             let their_addr = SocketAddr(unwrap_result!(network_input.peer_addr()));
@@ -582,7 +553,6 @@ pub fn start_tcp_accept(port: u16,
                                                      their_id,
                                                      network_rx,
                                                      RaiiSender(writer),
-                                                     last_read_activity,
                                                      event_tx.clone(),
                                                      our_addr,
                                                      their_addr);
@@ -613,14 +583,10 @@ pub fn utp_rendezvous_connect(udp_socket: UdpSocket,
                               mode: UtpRendezvousConnectMode,
                               our_public_key: PublicKey,
                               event_tx: ::CrustEventSender,
-                              connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
-                              heartbeat_timeout: Duration,
-                              inactivity_timeout: Duration)
+                              connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>)
                               -> io::Result<()> {
-    let (network_input, writer)
-        = try!(utp_connections::rendezvous_connect_utp(udp_socket, their_addr,
-                                                       heartbeat_timeout,
-                                                       inactivity_timeout));
+    let (network_input, writer) = try!(utp_connections::rendezvous_connect_utp(udp_socket,
+                                                                               their_addr));
     let our_addr = SocketAddr(network_input.local_addr());
     let their_new_addr = SocketAddr(network_input.peer_addr());
 
@@ -739,8 +705,7 @@ pub fn utp_rendezvous_connect(udp_socket: UdpSocket,
                  their_id,
                  event_tx,
                  closed_clone,
-                 connection_map_clone,
-                 None);
+                 connection_map_clone);
     }));
 
     let connection = Connection {
@@ -761,25 +726,18 @@ fn start_rx(mut network_rx: Receiver,
             their_id: PeerId,
             event_tx: ::CrustEventSender,
             closed: Arc<AtomicBool>,
-            connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
-            last_read_activity: Option<Arc<Mutex<Instant>>>) {
+            connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>) {
     loop {
         match network_rx.receive() {
-            Ok(msg) => {
-                if let Some(ref last_read_activity) = last_read_activity {
-                    let mut guard = last_read_activity.lock().unwrap();
-                    *guard = Instant::now();
-                }
-                match msg {
-                    CrustMsg::Message(msg) => {
-                        if let Err(err) = event_tx.send(Event::NewMessage(their_id, msg)) {
-                            error!("Error sending message to {:?}: {:?}", their_id, err);
-                            break;
-                        }
+            Ok(msg) => match msg {
+                CrustMsg::Message(msg) => {
+                    if let Err(err) = event_tx.send(Event::NewMessage(their_id, msg)) {
+                        error!("Error sending message to {:?}: {:?}", their_id, err);
+                        break;
                     }
-                    m => error!("Unexpected message in start_rx: {:?}", m),
                 }
-            }
+                m => error!("Unexpected message in start_rx: {:?}", m),
+            },
             Err(err) => {
                 error!("Error receiving from {:?}: {:?}", their_id, err);
                 break;

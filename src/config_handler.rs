@@ -19,7 +19,6 @@ use static_contact_info::StaticContactInfo;
 use config_file_handler::FileHandler;
 use config_file_handler;
 use socket_addr::SocketAddr;
-use std::time::Duration;
 
 #[derive(PartialEq, Eq, Debug, RustcDecodable, RustcEncodable, Clone)]
 pub struct Config {
@@ -32,18 +31,6 @@ pub struct Config {
     pub tcp_mapper_servers: Vec<SocketAddr>,
     pub service_discovery_port: Option<u16>,
     pub bootstrap_cache_name: Option<String>,
-    pub heartbeat_timeout_ms: u64,
-    pub inactivity_timeout_ms: u64,
-}
-
-impl Config {
-    pub fn heartbeat_timeout(&self) -> Duration {
-        Duration::from_millis(self.heartbeat_timeout_ms)
-    }
-
-    pub fn inactivity_timeout(&self) -> Duration {
-        Duration::from_millis(self.inactivity_timeout_ms)
-    }
 }
 
 impl Default for Config {
@@ -58,8 +45,6 @@ impl Default for Config {
             tcp_mapper_servers: vec![],
             service_discovery_port: None,
             bootstrap_cache_name: None,
-            heartbeat_timeout_ms: 1 * 60 * 1000,
-            inactivity_timeout_ms: 3 * 60 * 1000,
         }
     }
 }
