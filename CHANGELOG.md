@@ -1,5 +1,12 @@
 # CRUST - Change Log
 
+## [0.12.0]
+- Remove uTP support.
+- Implement heartbeat messages to detect lost connections more quickly.
+- Add a version number to the protocol to avoid connecting to incompatible
+  peers.
+- Re-implement TCP send/receive using payload size + data.
+
 ## [0.11.1]
 - Make deserialisation errors as debug instead of error.
 
