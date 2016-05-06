@@ -23,6 +23,7 @@ use crust::{CrustEventSender, Event, Service};
 use maidsafe_utilities::event_sender::{MaidSafeEventCategory, MaidSafeObserver};
 use std::sync::mpsc::{self, Receiver};
 use std::thread::{self, JoinHandle};
+use std::time::Duration;
 
 // Number of nodes that will be sending messages to the receiving node.
 const NUM_SENDERS: usize = 5;
@@ -124,18 +125,12 @@ fn spawn_sending_node() -> JoinHandle<usize> {
     })
 }
 
-fn create_event_sender()
-    -> (CrustEventSender,
-        Receiver<MaidSafeEventCategory>,
-        Receiver<Event>)
-{
+fn create_event_sender() -> (CrustEventSender, Receiver<MaidSafeEventCategory>, Receiver<Event>) {
     let (category_tx, category_rx) = mpsc::channel();
     let event_category = MaidSafeEventCategory::Crust;
     let (event_tx, event_rx) = mpsc::channel();
 
-    (MaidSafeObserver::new(event_tx, event_category, category_tx),
-     category_rx,
-     event_rx)
+    (MaidSafeObserver::new(event_tx, event_category, category_tx), category_rx, event_rx)
 }
 
 // Call the given lambda for each event received. If the lambda returns false,
@@ -158,4 +153,8 @@ fn handle_events<F>(category_rx: &Receiver<MaidSafeEventCategory>,
             _ => unreachable!("Unexpected event category {:?}", category),
         }
     }
+
+    // FIXME: Instead, the receivers should disconnect once they have the expected number of
+    // messages, and the senders should shutdown once they have lost all connections.
+    thread::sleep(Duration::from_secs(5));
 }

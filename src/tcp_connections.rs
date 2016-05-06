@@ -32,7 +32,7 @@ const SIZE_THRESHOLD: usize = 10 * 1024;
 
 /// Connect to a peer and open a send-receive pair.  See `upgrade` for more details.
 pub fn connect_tcp(addr: SocketAddr,
-                   heart_beat_timeout: Duration,
+                   heartbeat_period: Duration,
                    inactivity_timeout: Duration)
                    -> io::Result<(TcpStream, Sender<WriteEvent>)> {
     let stream = try!(TcpStream::connect(&*addr));
@@ -40,14 +40,14 @@ pub fn connect_tcp(addr: SocketAddr,
         return Err(io::Error::new(io::ErrorKind::ConnectionRefused, "TCP simultaneous open"));
     }
 
-    Ok(try!(upgrade_tcp(stream, heart_beat_timeout, inactivity_timeout)))
+    Ok(try!(upgrade_tcp(stream, heartbeat_period, inactivity_timeout)))
 }
 
 // Almost a straight copy of https://github.com/TyOverby/wire/blob/master/src/tcp.rs
 /// Upgrades a TcpStream to a Sender-Receiver pair that you can use to send and
 /// receive objects automatically.
 pub fn upgrade_tcp(stream: TcpStream,
-                   heart_beat_timeout: Duration,
+                   heartbeat_period: Duration,
                    inactivity_timeout: Duration)
                    -> io::Result<(TcpStream, Sender<WriteEvent>)> {
     use net2::TcpStreamExt;
@@ -60,7 +60,7 @@ pub fn upgrade_tcp(stream: TcpStream,
 
     let s1 = stream;
     let s2 = try!(s1.try_clone());
-    Ok((s1, upgrade_writer(s2, heart_beat_timeout)))
+    Ok((s1, upgrade_writer(s2, heartbeat_period)))
 }
 
 fn get_msg_priority(msg: &CrustMsg) -> usize {
@@ -70,7 +70,7 @@ fn get_msg_priority(msg: &CrustMsg) -> usize {
     }
 }
 
-fn upgrade_writer(mut stream: TcpStream, heart_beat_timeout: Duration) -> Sender<WriteEvent> {
+fn upgrade_writer(mut stream: TcpStream, heartbeat_period: Duration) -> Sender<WriteEvent> {
     use std::io::Write;
     use bincode::SizeLimit;
     use byteorder::{WriteBytesExt, LittleEndian};
@@ -124,7 +124,7 @@ fn upgrade_writer(mut stream: TcpStream, heart_beat_timeout: Duration) -> Sender
                     last_write_instant = Instant::now();
                 }
                 None => {
-                    if last_write_instant.elapsed() > heart_beat_timeout {
+                    if last_write_instant.elapsed() > heartbeat_period {
                         if let Err(e) = stream.write_all(&heart_beat_size_bytes) {
                             error!("Error writing heartbeat size: {:?}", e);
                             break;
@@ -159,6 +159,7 @@ mod test {
     use socket_addr::SocketAddr;
     use event::WriteEvent;
     use sender_receiver::CrustMsg;
+    use service::{HEARTBEAT_PERIOD_SECS, INACTIVITY_TIMEOUT_SECS};
 
     fn loopback(port: u16) -> SocketAddr {
         SocketAddr(net::SocketAddr::from_str(&format!("127.0.0.1:{}", port)).unwrap())
@@ -170,7 +171,11 @@ mod test {
 
         let listener = unwrap_result!(TcpListener::bind(("0.0.0.0", 0)));
         let port = unwrap_result!(listener.local_addr()).port();
-        let (i, o) = unwrap_result!(connect_tcp(loopback(port)));
+        let heartbeat_period = Duration::from_secs(HEARTBEAT_PERIOD_SECS);
+        let inactivity_timeout = Duration::from_secs(INACTIVITY_TIMEOUT_SECS);
+        let (i, o) = unwrap_result!(connect_tcp(loopback(port),
+                                                heartbeat_period,
+                                                inactivity_timeout));
 
         for x in 0..10 {
             let x = vec![x];
@@ -178,7 +183,9 @@ mod test {
         }
         let t = thread::spawn(move || {
             let connection = unwrap_result!(listener.accept()).0;
-            let (i, o) = unwrap_result!(upgrade_tcp(connection));
+            let (i, o) = unwrap_result!(upgrade_tcp(connection,
+                                                    heartbeat_period,
+                                                    inactivity_timeout));
             unwrap_result!(i.set_read_timeout(Some(Duration::new(5, 0))));
             let mut buf = Vec::new();
             let mut rx = Receiver::tcp(i);
@@ -194,6 +201,7 @@ mod test {
                 *item += 1;
             }
             unwrap_result!(o.send(WriteEvent::Write(CrustMsg::Message(buf))));
+            assert!(rx.receive().is_err()); // Wait for the receiver to close the connection.
         });
         // Collect everything that we get back.
         unwrap_result!(i.set_read_timeout(Some(Duration::new(5, 0))));
@@ -232,7 +240,9 @@ mod test {
 
         for _ in 0..node_count() {
             let tx2 = tx.clone();
-            let (i, o) = connect_tcp(loopback(port)).unwrap();
+            let heartbeat_period = Duration::from_secs(HEARTBEAT_PERIOD_SECS);
+            let inactivity_timeout = Duration::from_secs(INACTIVITY_TIMEOUT_SECS);
+            let (i, o) = connect_tcp(loopback(port), heartbeat_period, inactivity_timeout).unwrap();
             let send_thread = thread::spawn(move || {
                 let mut buf = Vec::with_capacity(MSG_COUNT);
                 for i in 0..MSG_COUNT as u8 {
@@ -249,7 +259,7 @@ mod test {
             });
             let (connection, _) = listener.accept().unwrap();
             let echo_thread = thread::spawn(move || {
-                let (i, o) = upgrade_tcp(connection).unwrap();
+                let (i, o) = upgrade_tcp(connection, heartbeat_period, inactivity_timeout).unwrap();
                 i.set_read_timeout(Some(Duration::new(5, 0))).unwrap();
 
                 let mut rx = Receiver::tcp(i);
@@ -262,6 +272,7 @@ mod test {
                     *item += 1
                 }
                 unwrap_result!(o.send(WriteEvent::Write(CrustMsg::Message(msg))));
+                assert!(rx.receive().is_err()); // Wait for the receiver to close the connection.
             });
             unwrap_result!(send_thread.join());
             unwrap_result!(echo_thread.join());
@@ -284,9 +295,11 @@ mod test {
         let listener = TcpListener::bind(("0.0.0.0", 0)).unwrap();
         let port = listener.local_addr().unwrap().port();
 
-        let (_i1, o1) = connect_tcp(loopback(port)).unwrap();
+        let heartbeat_period = Duration::from_secs(HEARTBEAT_PERIOD_SECS);
+        let inactivity_timeout = Duration::from_secs(INACTIVITY_TIMEOUT_SECS);
+        let (_i1, o1) = connect_tcp(loopback(port), heartbeat_period, inactivity_timeout).unwrap();
         let (connection, _) = listener.accept().unwrap();
-        let (i2, _o2) = upgrade_tcp(connection).unwrap();
+        let (i2, _o2) = upgrade_tcp(connection, heartbeat_period, inactivity_timeout).unwrap();
 
         fn read_messages(reader: TcpStream) {
             reader.set_read_timeout(Some(Duration::new(5, 0))).unwrap();
@@ -337,11 +350,15 @@ mod test {
         // let payload = vec![255u8; 1];
 
         let (finished_tx, finished_rx) = mpsc::channel();
+        let heartbeat_period = Duration::from_secs(HEARTBEAT_PERIOD_SECS);
+        let inactivity_timeout = Duration::from_secs(INACTIVITY_TIMEOUT_SECS);
 
         let _ = thread!("Client", move || {
             let listener = unwrap_result!(TcpListener::bind("127.0.0.1:55559"));
             let (server_strm, _peer_addr) = unwrap_result!(listener.accept());
-            let (strm, _writer) = unwrap_result!(upgrade_tcp(server_strm));
+            let (strm, _writer) = unwrap_result!(upgrade_tcp(server_strm,
+                                                             heartbeat_period,
+                                                             inactivity_timeout));
 
             let mut tcp_rx = Receiver::tcp(strm);
 
@@ -365,9 +382,13 @@ mod test {
 
         let now = Instant::now();
 
+        let heartbeat_period = Duration::from_secs(HEARTBEAT_PERIOD_SECS);
+        let inactivity_timeout = Duration::from_secs(INACTIVITY_TIMEOUT_SECS);
         let (_stream, writer) =
             unwrap_result!(connect_tcp(SocketAddr(unwrap_result!(FromStr::from_str("127.0.0.1\
-                                                                                    :55559")))));
+                                                                                    :55559"))),
+                                       heartbeat_period,
+                                       inactivity_timeout));
 
         for _ in 0..100 {
             let cipher_text = box_::seal(&payload, &en_nonce, &en_pk, &en_sk);

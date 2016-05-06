@@ -52,8 +52,8 @@ use peer_id::PeerId;
 /// Default beacon (service discovery) port.
 pub const DEFAULT_BEACON_PORT: u16 = 5484;
 
-const HEARTBEAT_TIMEOUT_SECS: u64 = 5;
-const INACTIVITY_TIMEOUT_SECS: u64 = 20;
+pub const HEARTBEAT_PERIOD_SECS: u64 = 20;
+pub const INACTIVITY_TIMEOUT_SECS: u64 = 60;
 
 /// The result of a `Service::prepare_contact_info` call.
 #[derive(Debug)]
@@ -188,7 +188,7 @@ impl Service {
         let mapping_context = Arc::new(mapping_context);
         let version_hash = version_hash();
 
-        let heart_beat_timeout = Duration::from_secs(HEARTBEAT_TIMEOUT_SECS);
+        let heart_beat_timeout = Duration::from_secs(HEARTBEAT_PERIOD_SECS);
         let inactivity_timeout = Duration::from_secs(INACTIVITY_TIMEOUT_SECS);
 
         let bootstrap = RaiiBootstrap::new(bootstrap_contacts,
