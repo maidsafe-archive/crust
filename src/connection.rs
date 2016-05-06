@@ -540,7 +540,6 @@ fn start_rx(mut network_rx: Receiver,
     // Drop the connection in a separate thread, because the destructor joins _this_ thread.
     let _ = thread!("ConnectionDropper", move || {
         let mut lock = unwrap_result!(connection_map.lock());
-        print_connection_stats(&lock);
         if let Entry::Occupied(mut entry) = lock.entry(their_id) {
             entry.get_mut().retain(|connection| !connection.is_closed());
             if entry.get().is_empty() {
@@ -551,6 +550,7 @@ fn start_rx(mut network_rx: Receiver,
                 }
             }
         }
+        print_connection_stats(&lock);
     });
 }
 
@@ -570,16 +570,20 @@ fn notify_new_connection(connection_map: &HashMap<PeerId, Vec<Connection>>,
 pub fn print_connection_stats(connection_map: &HashMap<PeerId, Vec<Connection>>) {
     let mut punched = 0usize;
     let mut direct = 0usize;
-    for (_peer_id, v) in connection_map {
-        if let Some(conn) = v.get(0) {
-            if conn.hole_punched {
-                punched += 1;
-            } else {
-                direct += 1;
-            };
+    let mut connection_count = 0usize;
+    for connection in connection_map.values().flat_map(|connections| connections.iter()) {
+        connection_count += 1;
+        if connection.hole_punched {
+            punched += 1;
+        } else {
+            direct += 1;
         };
     }
-    debug!("Stats - Connections direct {}, punched {}", direct, punched);
+    debug!("Stats - {} connections to {} peers - direct: {}, punched: {}",
+           connection_count,
+           connection_map.len(),
+           direct,
+           punched);
 }
 
 #[cfg(test)]
