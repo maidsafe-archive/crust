@@ -7,18 +7,18 @@ license = "GPL-3.0"
 name = "crust"
 readme = "README.md"
 repository = "https://github.com/maidsafe/crust"
-version = "0.11.1"
+version = "0.12.0"
 
 [dependencies]
 bincode = "~0.5.6"
-bufstream = "~0.1.1"
+bufstream = "~0.1.2"
 byteorder = "~0.5.1"
 config_file_handler = "~0.3.0"
 crossbeam = "~0.2.9"
 get_if_addrs = "~0.4.0"
-itertools = "~0.4.12"
+itertools = "~0.4.13"
 log = "~0.3.6"
-maidsafe_utilities = "~0.5.1"
+maidsafe_utilities = "~0.5.4"
 nat_traversal = "~0.3.3"
 net2 = "~0.2.23"
 quick-error = "1.0.0"
@@ -31,11 +31,11 @@ term = "~0.4.4"
 
 [dependencies.clippy]
 optional = true
-version = "~0.0.63"
+version = "~0.0.64"
 
 [dev-dependencies]
 docopt = "~0.6.80"
-void = "~1.0.1"
+void = "~1.0.2"
 
 [[example]]
 bench = false
