@@ -22,10 +22,10 @@ use std::sync::mpsc;
 use std::io::BufReader;
 use std::net::TcpStream;
 use rustc_serialize::Decodable;
-use utp_connections::UtpWrapper;
-use maidsafe_utilities::serialisation::deserialise_from;
 use socket_addr::SocketAddr;
 use sodiumoxide::crypto::box_::PublicKey;
+
+const MAX_ALLOWED_TCP_PAYLOAD_SIZE: usize = 1024 * 1024 * 2;
 
 pub struct RaiiSender(pub mpsc::Sender<WriteEvent>);
 
@@ -45,33 +45,71 @@ impl Drop for RaiiSender {
     }
 }
 
-#[allow(variant_size_differences)]
-pub enum Receiver {
-    Tcp(BufReader<TcpStream>),
-    Utp(BufReader<UtpWrapper>),
+pub struct Receiver {
+    stream: BufReader<TcpStream>,
 }
 
 impl Receiver {
     pub fn tcp(stream: TcpStream) -> Self {
-        Receiver::Tcp(BufReader::new(stream))
+        Receiver { stream: BufReader::new(stream) }
     }
 
-    pub fn utp(stream: UtpWrapper) -> Self {
-        Receiver::Utp(BufReader::new(stream))
-    }
 
+    #[allow(unsafe_code)]
     fn basic_receive<D: Decodable + ::std::fmt::Debug>(&mut self) -> io::Result<D> {
-        let msg = match *self {
-            Receiver::Tcp(ref mut reader) => deserialise_from::<_, D>(reader),
-            Receiver::Utp(ref mut reader) => deserialise_from::<_, D>(reader),
-        };
+        use std::io::Cursor;
+        use bincode::SizeLimit;
+        use maidsafe_utilities::serialisation::deserialise_with_limit;
+        use byteorder::{ReadBytesExt, LittleEndian};
+
+        let mut payload_size_buffer = [0u8; 4];
+        try!(self.fill_buffer(&mut payload_size_buffer[..]));
+        let payload_size =
+            try!(Cursor::new(&payload_size_buffer[..]).read_u32::<LittleEndian>()) as usize;
+
+        if payload_size > MAX_ALLOWED_TCP_PAYLOAD_SIZE {
+            return Err(io::Error::new(io::ErrorKind::Other,
+                                      format!("Payload size prohibitive at {} bytes",
+                                              payload_size)));
+        }
+
+        let mut payload = Vec::with_capacity(payload_size);
+        unsafe {
+            payload.set_len(payload_size);
+        }
+        try!(self.fill_buffer(&mut payload));
+
+        let msg = deserialise_with_limit(&mut payload, SizeLimit::Infinite);
+
         match msg {
             Ok(a) => Ok(a),
             Err(err) => {
-                error!("Deserialisation error: {:?}", err);
+                debug!("Deserialisation error: {:?}", err);
                 Err(io::Error::new(io::ErrorKind::InvalidData, "Deserialisation failure"))
             }
         }
+    }
+
+    fn fill_buffer(&mut self, mut buffer_view: &mut [u8]) -> io::Result<()> {
+        use std::io::Read;
+
+        while buffer_view.len() != 0 {
+            match self.stream.read(&mut buffer_view) {
+                Ok(rxd_bytes) => {
+                    if rxd_bytes == 0 {
+                        return Err(io::Error::new(io::ErrorKind::Other,
+                                                  "Zero byte read - EOF reached, graceful exit."));
+                    }
+
+                    let temp_buffer_view = buffer_view;
+                    buffer_view = &mut temp_buffer_view[rxd_bytes..];
+                }
+                Err(ref e) if e.kind() == io::ErrorKind::Interrupted => (),
+                Err(e) => return Err(e),
+            }
+        }
+
+        Ok(())
     }
 
     pub fn receive(&mut self) -> io::Result<CrustMsg> {
@@ -81,10 +119,11 @@ impl Receiver {
 
 #[derive(Clone, PartialEq, Eq, Debug, RustcEncodable, RustcDecodable)]
 pub enum CrustMsg {
-    BootstrapRequest(PublicKey),
+    Heartbeat,
+    BootstrapRequest(PublicKey, u64),
     BootstrapResponse(PublicKey),
     ExternalEndpointRequest,
     ExternalEndpointResponse(SocketAddr),
-    Connect(PublicKey),
+    Connect(PublicKey, u64),
     Message(Vec<u8>),
 }

@@ -50,27 +50,29 @@ pub struct RaiiBootstrap {
 
 impl RaiiBootstrap {
     pub fn new(bootstrap_contacts: Vec<StaticContactInfo>,
+               heart_beat_timeout: Duration,
+               inactivity_timeout: Duration,
                our_public_key: PublicKey,
                event_tx: ::CrustEventSender,
                connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
                bootstrap_cache: Arc<Mutex<BootstrapHandler>>,
                mc: Arc<MappingContext>,
-               tcp_enabled: bool,
-               utp_enabled: bool)
+               version_hash: u64)
                -> RaiiBootstrap {
         let stop_flag = Arc::new(AtomicBool::new(false));
         let cloned_stop_flag = stop_flag.clone();
 
         let raii_joiner = RaiiThreadJoiner::new(thread!("RaiiBootstrap", move || {
             RaiiBootstrap::bootstrap(bootstrap_contacts,
+                                     heart_beat_timeout,
+                                     inactivity_timeout,
                                      our_public_key,
                                      cloned_stop_flag,
                                      event_tx,
                                      connection_map,
                                      bootstrap_cache,
                                      &mc,
-                                     tcp_enabled,
-                                     utp_enabled)
+                                     version_hash)
         }));
 
         RaiiBootstrap {
@@ -84,14 +86,15 @@ impl RaiiBootstrap {
     }
 
     fn bootstrap(mut bootstrap_contacts: Vec<StaticContactInfo>,
+                 heart_beat_timeout: Duration,
+                 inactivity_timeout: Duration,
                  our_public_key: PublicKey,
                  stop_flag: Arc<AtomicBool>,
                  event_tx: ::CrustEventSender,
                  connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
                  bootstrap_cache: Arc<Mutex<BootstrapHandler>>,
                  mapping_context: &MappingContext,
-                 tcp_enabled: bool,
-                 utp_enabled: bool) {
+                 version_hash: u64) {
         rand::thread_rng().shuffle(&mut bootstrap_contacts[..]);
         for contact in bootstrap_contacts {
             // Bootstrapping got cancelled.
@@ -101,21 +104,20 @@ impl RaiiBootstrap {
                 break;
             }
 
-            // 1st try a TCP connect
-            // 2nd try a UDP connection (and upgrade to UTP)
             let res = connection::connect(contact,
+                                          heart_beat_timeout,
+                                          inactivity_timeout,
                                           our_public_key.clone(),
                                           event_tx.clone(),
                                           connection_map.clone(),
                                           bootstrap_cache.clone(),
                                           mapping_context,
-                                          tcp_enabled,
-                                          utp_enabled);
+                                          version_hash);
             match res {
                 Ok(()) => (),
                 Err(e) => {
                     warn!("Error connecting to bootstrap peer: {}", e);
-                },
+                }
             };
             if stop_flag.load(Ordering::SeqCst) {
                 break;

@@ -23,11 +23,7 @@ use socket_addr::SocketAddr;
 #[derive(PartialEq, Eq, Debug, RustcDecodable, RustcEncodable, Clone)]
 pub struct Config {
     pub hard_coded_contacts: Vec<StaticContactInfo>,
-    pub enable_tcp: bool,
-    pub enable_utp: bool,
     pub tcp_acceptor_port: Option<u16>,
-    pub utp_acceptor_port: Option<u16>,
-    pub udp_mapper_servers: Vec<SocketAddr>,
     pub tcp_mapper_servers: Vec<SocketAddr>,
     pub service_discovery_port: Option<u16>,
     pub bootstrap_cache_name: Option<String>,
@@ -37,11 +33,7 @@ impl Default for Config {
     fn default() -> Config {
         Config {
             hard_coded_contacts: vec![], // No hardcoded endpoints
-            enable_tcp: true,
-            enable_utp: true,
             tcp_acceptor_port: None,
-            utp_acceptor_port: None,
-            udp_mapper_servers: vec![],
             tcp_mapper_servers: vec![],
             service_discovery_port: None,
             bootstrap_cache_name: None,

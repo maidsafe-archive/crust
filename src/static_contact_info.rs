@@ -16,7 +16,7 @@
 // relating to use of the SAFE Network Software.
 
 use socket_addr::SocketAddr;
-use rustc_serialize::{Encodable, Encoder, Decoder};
+use rustc_serialize::{Encoder, Decoder};
 
 /// This struct contains information needed to Bootstrap and for echo-server services
 #[derive(RustcEncodable, RustcDecodable, Debug, Default, Clone, PartialEq, Eq, Hash)]
@@ -26,15 +26,6 @@ pub struct StaticContactInfo {
     /// that case the list will contain only the local addresses that the process calling
     /// seek_peers() will get and use.
     pub tcp_acceptors: Vec<SocketAddr>,
-    /// This will contain only global addresses. Local addresses will be useful on LAN
-    /// when someone has these entries in bootstrap.cache file and crust was directed not to
-    /// seek_peers() during start (seek_peers_on_port = None) and TCP was not allowed on that Lan.
-    /// In this case the peer would ask for a new UDP socket address to connect to from one of the
-    /// following listeners. Since this is a rare edge case we do not cater to it and have only
-    /// global addresses populated for UDP.
-    pub utp_custom_listeners: Vec<SocketAddr>,
-    /// UDP mapper server addresses
-    pub udp_mapper_servers: Vec<SocketAddr>,
     /// TCP mapper server addresses
     pub tcp_mapper_servers: Vec<SocketAddr>,
 }

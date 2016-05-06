@@ -38,4 +38,3 @@ pub mod v6 {
         (a.segments()[0] & 0xffc0) == 0xfe80
     }
 }
-

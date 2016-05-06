@@ -156,7 +156,6 @@ fn run(config: &Config) -> Report {
 
     if config.start_listening {
         unwrap_result!(service.start_listening_tcp());
-        unwrap_result!(service.start_listening_utp());
     }
 
     if config.start_service_discovery {
@@ -165,16 +164,21 @@ fn run(config: &Config) -> Report {
 
     let peers = Arc::new(Mutex::new(HashSet::new()));
 
-    let event_join_handle = handle_service_events(category_rx, event_rx, message_tx.clone(), peers.clone());
-    let message_join_handle = handle_messages(&config, service, message_rx, connect_tx, peers.clone());
+    let event_join_handle = handle_service_events(category_rx,
+                                                  event_rx,
+                                                  message_tx.clone(),
+                                                  peers.clone());
+    let message_join_handle = handle_messages(&config,
+                                              service,
+                                              message_rx,
+                                              connect_tx,
+                                              peers.clone());
 
     // Wait until we connect to someone
-    let _ = recv_with_timeout(connect_rx,
-                              Duration::from_millis(WAIT_FOR_CONNECT_TIMEOUT));
+    let _ = recv_with_timeout(connect_rx, Duration::from_millis(WAIT_FOR_CONNECT_TIMEOUT));
 
     // Keep it running for a (random) while.
-    thread::sleep(Duration::from_millis(thread_rng()
-                                               .gen_range(MIN_RUN_TIME_MS, MAX_RUN_TIME_MS)));
+    thread::sleep(Duration::from_millis(thread_rng().gen_range(MIN_RUN_TIME_MS, MAX_RUN_TIME_MS)));
 
     // Kill everything and return the report.
 
