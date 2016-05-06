@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `bytes` crate.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, bytes">
+
+    <title>bytes - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'></p><script>window.sidebarCurrent = {name: 'bytes', ty: 'mod', relpath: '../'};</script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content mod">
+<h1 class='fqn'><span class='in-band'>Crate <a class='mod' href=''>bytes</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-0' class='srclink' href='../src/bytes/lib.rs.html#1-54' title='goto source code'>[src]</a></span></h1>
+<h2 id='reexports' class='section-header'><a href="#reexports">Reexports</a></h2>
+<table><tr><td><code>pub use buf::{<a class='trait' href='../bytes/buf/trait.Buf.html' title='bytes::buf::Buf'>Buf</a>, <a class='trait' href='../bytes/buf/trait.BufExt.html' title='bytes::buf::BufExt'>BufExt</a>, <a class='trait' href='../bytes/buf/trait.MutBuf.html' title='bytes::buf::MutBuf'>MutBuf</a>, <a class='trait' href='../bytes/buf/trait.MutBufExt.html' title='bytes::buf::MutBufExt'>MutBufExt</a>, <a class='trait' href='../bytes/buf/trait.Source.html' title='bytes::buf::Source'>Source</a>, <a class='trait' href='../bytes/buf/trait.Sink.html' title='bytes::buf::Sink'>Sink</a>};</code></td></tr><tr><td><code>pub use str::{<a class='trait' href='../bytes/str/trait.ByteStr.html' title='bytes::str::ByteStr'>ByteStr</a>, <a class='trait' href='../bytes/str/trait.ToBytes.html' title='bytes::str::ToBytes'>ToBytes</a>};</code></td></tr></table><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='mod' href='alloc/index.html'
+                               title='bytes::alloc'>alloc</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='mod' href='buf/index.html'
+                               title='bytes::buf'>buf</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='mod' href='str/index.html'
+                               title='bytes::str'>str</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='mod' href='traits/index.html'
+                               title='bytes::traits'>traits</a></td>
+                        <td class='docblock short'>
+                             <p>All traits are re-exported here to allow glob imports.</p>
+                        </td>
+                    </tr>
+                </table><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.ByteBuf.html'
+                               title='bytes::ByteBuf'>ByteBuf</a></td>
+                        <td class='docblock short'>
+                             <p>A <code>Buf</code> backed by a contiguous region of memory.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Bytes.html'
+                               title='bytes::Bytes'>Bytes</a></td>
+                        <td class='docblock short'>
+                             <p>A specialized <code>ByteStr</code> box.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.MutByteBuf.html'
+                               title='bytes::MutByteBuf'>MutByteBuf</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.MutSliceBuf.html'
+                               title='bytes::MutSliceBuf'>MutSliceBuf</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.ROByteBuf.html'
+                               title='bytes::ROByteBuf'>ROByteBuf</a></td>
+                        <td class='docblock short'>
+                             <p>Same as <code>ByteBuf</code> but cannot be flipped to a <code>MutByteBuf</code>.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.RingBuf.html'
+                               title='bytes::RingBuf'>RingBuf</a></td>
+                        <td class='docblock short'>
+                             <p>Buf backed by a continous chunk of memory. Maintains a read cursor and a
+write cursor. When reads and writes reach the end of the allocated buffer,
+wraps around to the start.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Rope.html'
+                               title='bytes::Rope'>Rope</a></td>
+                        <td class='docblock short'>
+                             <p>An immutable sequence of bytes formed by concatenation of other <code>ByteStr</code>
+values, without copying the data in the pieces. The concatenation is
+represented as a tree whose leaf nodes are each a <code>Bytes</code> value.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.RopeBuf.html'
+                               title='bytes::RopeBuf'>RopeBuf</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.SeqByteStr.html'
+                               title='bytes::SeqByteStr'>SeqByteStr</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.SliceBuf.html'
+                               title='bytes::SliceBuf'>SliceBuf</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.SmallByteStr.html'
+                               title='bytes::SmallByteStr'>SmallByteStr</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.SmallByteStrBuf.html'
+                               title='bytes::SmallByteStrBuf'>SmallByteStrBuf</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Take.html'
+                               title='bytes::Take'>Take</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                </table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='enum' href='enum.BufError.html'
+                               title='bytes::BufError'>BufError</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                </table></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "bytes";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script defer src="../search-index.js"></script>
+</body>
+</html>

@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `UdpSocketExt` trait in crate `net2`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, UdpSocketExt">
+
+    <title>net2::UdpSocketExt - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+
+    <link rel="shortcut icon" href="https://doc.rust-lang.org/favicon.ico">
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        <a href='../net2/index.html'><img src='https://www.rust-lang.org/logos/rust-logo-128x128-blk-v2.png' alt='logo' width='100'></a>
+        <p class='location'><a href='index.html'>net2</a></p><script>window.sidebarCurrent = {name: 'UdpSocketExt', ty: 'trait', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content trait">
+<h1 class='fqn'><span class='in-band'>Trait <a href='index.html'>net2</a>::<wbr><a class='trait' href=''>UdpSocketExt</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-293' class='srclink' href='../src/net2/ext.rs.html#317-540' title='goto source code'>[src]</a></span></h1>
+<pre class='rust trait'>pub trait UdpSocketExt {
+    fn <a href='#tymethod.set_broadcast' class='fnname'>set_broadcast</a>(&amp;self, broadcast: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;;
+    fn <a href='#tymethod.broadcast' class='fnname'>broadcast</a>(&amp;self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>&gt;;
+    fn <a href='#tymethod.set_multicast_loop_v4' class='fnname'>set_multicast_loop_v4</a>(&amp;self, multicast_loop_v4: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;;
+    fn <a href='#tymethod.multicast_loop_v4' class='fnname'>multicast_loop_v4</a>(&amp;self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>&gt;;
+    fn <a href='#tymethod.set_multicast_ttl_v4' class='fnname'>set_multicast_ttl_v4</a>(&amp;self, multicast_ttl_v4: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;;
+    fn <a href='#tymethod.multicast_ttl_v4' class='fnname'>multicast_ttl_v4</a>(&amp;self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>&gt;;
+    fn <a href='#tymethod.set_multicast_loop_v6' class='fnname'>set_multicast_loop_v6</a>(&amp;self, multicast_loop_v6: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;;
+    fn <a href='#tymethod.multicast_loop_v6' class='fnname'>multicast_loop_v6</a>(&amp;self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>&gt;;
+    fn <a href='#tymethod.set_ttl' class='fnname'>set_ttl</a>(&amp;self, ttl: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;;
+    fn <a href='#tymethod.ttl' class='fnname'>ttl</a>(&amp;self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>&gt;;
+    fn <a href='#tymethod.set_only_v6' class='fnname'>set_only_v6</a>(&amp;self, only_v6: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;;
+    fn <a href='#tymethod.only_v6' class='fnname'>only_v6</a>(&amp;self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>&gt;;
+    fn <a href='#tymethod.join_multicast_v4' class='fnname'>join_multicast_v4</a>(&amp;self, multiaddr: &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/std/net/ip/struct.Ipv4Addr.html' title='std::net::ip::Ipv4Addr'>Ipv4Addr</a>, interface: &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/std/net/ip/struct.Ipv4Addr.html' title='std::net::ip::Ipv4Addr'>Ipv4Addr</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;;
+    fn <a href='#tymethod.join_multicast_v6' class='fnname'>join_multicast_v6</a>(&amp;self, multiaddr: &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/std/net/ip/struct.Ipv6Addr.html' title='std::net::ip::Ipv6Addr'>Ipv6Addr</a>, interface: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;;
+    fn <a href='#tymethod.leave_multicast_v4' class='fnname'>leave_multicast_v4</a>(&amp;self, multiaddr: &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/std/net/ip/struct.Ipv4Addr.html' title='std::net::ip::Ipv4Addr'>Ipv4Addr</a>, interface: &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/std/net/ip/struct.Ipv4Addr.html' title='std::net::ip::Ipv4Addr'>Ipv4Addr</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;;
+    fn <a href='#tymethod.leave_multicast_v6' class='fnname'>leave_multicast_v6</a>(&amp;self, multiaddr: &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/std/net/ip/struct.Ipv6Addr.html' title='std::net::ip::Ipv6Addr'>Ipv6Addr</a>, interface: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;;
+    fn <a href='#tymethod.set_read_timeout_ms' class='fnname'>set_read_timeout_ms</a>(&amp;self, val: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>&gt;) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;;
+    fn <a href='#tymethod.set_read_timeout' class='fnname'>set_read_timeout</a>(&amp;self, val: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/std/time/duration/struct.Duration.html' title='std::time::duration::Duration'>Duration</a>&gt;) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;;
+    fn <a href='#tymethod.read_timeout_ms' class='fnname'>read_timeout_ms</a>(&amp;self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>&gt;&gt;;
+    fn <a href='#tymethod.read_timeout' class='fnname'>read_timeout</a>(&amp;self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/std/time/duration/struct.Duration.html' title='std::time::duration::Duration'>Duration</a>&gt;&gt;;
+    fn <a href='#tymethod.set_write_timeout_ms' class='fnname'>set_write_timeout_ms</a>(&amp;self, val: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>&gt;) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;;
+    fn <a href='#tymethod.set_write_timeout' class='fnname'>set_write_timeout</a>(&amp;self, val: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/std/time/duration/struct.Duration.html' title='std::time::duration::Duration'>Duration</a>&gt;) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;;
+    fn <a href='#tymethod.write_timeout_ms' class='fnname'>write_timeout_ms</a>(&amp;self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>&gt;&gt;;
+    fn <a href='#tymethod.write_timeout' class='fnname'>write_timeout</a>(&amp;self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/std/time/duration/struct.Duration.html' title='std::time::duration::Duration'>Duration</a>&gt;&gt;;
+    fn <a href='#tymethod.take_error' class='fnname'>take_error</a>(&amp;self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/std/io/error/struct.Error.html' title='std::io::error::Error'>Error</a>&gt;&gt;;
+    fn <a href='#tymethod.connect' class='fnname'>connect</a>&lt;A: <a class='trait' href='https://doc.rust-lang.org/nightly/std/net/addr/trait.ToSocketAddrs.html' title='std::net::addr::ToSocketAddrs'>ToSocketAddrs</a>&gt;(&amp;self, addr: A) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;;
+    fn <a href='#tymethod.send' class='fnname'>send</a>(&amp;self, buf: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>&gt;;
+    fn <a href='#tymethod.recv' class='fnname'>recv</a>(&amp;self, buf: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;mut [</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>&gt;;
+    fn <a href='#tymethod.set_nonblocking' class='fnname'>set_nonblocking</a>(&amp;self, nonblocking: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;;
+}</pre><div class='docblock'><p>Extension methods for the standard <a href="https://doc.rust-lang.org/std/net/struct.UdpSocket.html"><code>UdpSocket</code> type</a> in <code>std::net</code>.</p>
+</div>
+            <h2 id='required-methods'>Required Methods</h2>
+            <div class='methods'>
+        <h3 id='tymethod.set_broadcast' class='method stab '><code>fn <a href='#tymethod.set_broadcast' class='fnname'>set_broadcast</a>(&amp;self, broadcast: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h3><div class='docblock'><p>Sets the value of the <code>SO_BROADCAST</code> option for this socket.</p>
+
+<p>When enabled, this socket is allowed to send packets to a broadcast
+address.</p>
+</div><h3 id='tymethod.broadcast' class='method stab '><code>fn <a href='#tymethod.broadcast' class='fnname'>broadcast</a>(&amp;self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>&gt;</code></h3><div class='docblock'><p>Gets the value of the <code>SO_BROADCAST</code> option for this socket.</p>
+
+<p>For more information about this option, see
+<a href="#tymethod.set_broadcast"><code>set_broadcast</code></a>.</p>
+</div><h3 id='tymethod.set_multicast_loop_v4' class='method stab '><code>fn <a href='#tymethod.set_multicast_loop_v4' class='fnname'>set_multicast_loop_v4</a>(&amp;self, multicast_loop_v4: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h3><div class='docblock'><p>Sets the value of the <code>IP_MULTICAST_LOOP</code> option for this socket.</p>
+
+<p>If enabled, multicast packets will be looped back to the local socket.
+Note that this may not have any affect on IPv6 sockets.</p>
+</div><h3 id='tymethod.multicast_loop_v4' class='method stab '><code>fn <a href='#tymethod.multicast_loop_v4' class='fnname'>multicast_loop_v4</a>(&amp;self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>&gt;</code></h3><div class='docblock'><p>Gets the value of the <code>IP_MULTICAST_LOOP</code> option for this socket.</p>
+
+<p>For more information about this option, see
+<a href="#tymethod.set_multicast_loop_v4"><code>set_multicast_loop_v4</code></a>.</p>
+</div><h3 id='tymethod.set_multicast_ttl_v4' class='method stab '><code>fn <a href='#tymethod.set_multicast_ttl_v4' class='fnname'>set_multicast_ttl_v4</a>(&amp;self, multicast_ttl_v4: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h3><div class='docblock'><p>Sets the value of the <code>IP_MULTICAST_TTL</code> option for this socket.</p>
+
+<p>Indicates the time-to-live value of outgoing multicast packets for
+this socket. The default value is 1 which means that multicast packets
+don&#39;t leave the local network unless explicitly requested.</p>
+
+<p>Note that this may not have any affect on IPv6 sockets.</p>
+</div><h3 id='tymethod.multicast_ttl_v4' class='method stab '><code>fn <a href='#tymethod.multicast_ttl_v4' class='fnname'>multicast_ttl_v4</a>(&amp;self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>&gt;</code></h3><div class='docblock'><p>Gets the value of the <code>IP_MULTICAST_TTL</code> option for this socket.</p>
+
+<p>For more information about this option, see
+<a href="#tymethod.set_multicast_ttl_v4"><code>set_multicast_ttl_v4</code></a>.</p>
+</div><h3 id='tymethod.set_multicast_loop_v6' class='method stab '><code>fn <a href='#tymethod.set_multicast_loop_v6' class='fnname'>set_multicast_loop_v6</a>(&amp;self, multicast_loop_v6: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h3><div class='docblock'><p>Sets the value of the <code>IPV6_MULTICAST_LOOP</code> option for this socket.</p>
+
+<p>Controls whether this socket sees the multicast packets it sends itself.
+Note that this may not have any affect on IPv4 sockets.</p>
+</div><h3 id='tymethod.multicast_loop_v6' class='method stab '><code>fn <a href='#tymethod.multicast_loop_v6' class='fnname'>multicast_loop_v6</a>(&amp;self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>&gt;</code></h3><div class='docblock'><p>Gets the value of the <code>IPV6_MULTICAST_LOOP</code> option for this socket.</p>
+
+<p>For more information about this option, see
+<a href="#tymethod.set_multicast_loop_v6"><code>set_multicast_loop_v6</code></a>.</p>
+</div><h3 id='tymethod.set_ttl' class='method stab '><code>fn <a href='#tymethod.set_ttl' class='fnname'>set_ttl</a>(&amp;self, ttl: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h3><div class='docblock'><p>Sets the value for the <code>IP_TTL</code> option on this socket.</p>
+
+<p>This is the same as <a href="trait.TcpStreamExt.html#tymethod.set_ttl"><code>TcpStreamExt::set_ttl</code></a>.</p>
+</div><h3 id='tymethod.ttl' class='method stab '><code>fn <a href='#tymethod.ttl' class='fnname'>ttl</a>(&amp;self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>&gt;</code></h3><div class='docblock'><p>Gets the value of the <code>IP_TTL</code> option for this socket.</p>
+
+<p>For more information about this option, see
+<a href="trait.TcpStreamExt.html#tymethod.set_ttl"><code>TcpStreamExt::set_ttl</code></a>.</p>
+</div><h3 id='tymethod.set_only_v6' class='method stab '><code>fn <a href='#tymethod.set_only_v6' class='fnname'>set_only_v6</a>(&amp;self, only_v6: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h3><div class='docblock'><p>Sets the value for the <code>IPV6_V6ONLY</code> option on this socket.</p>
+
+<p>For more information about this option, see
+<a href="trait.TcpStreamExt.html#tymethod.set_only_v6"><code>TcpStreamExt::set_only_v6</code></a>.</p>
+</div><h3 id='tymethod.only_v6' class='method stab '><code>fn <a href='#tymethod.only_v6' class='fnname'>only_v6</a>(&amp;self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>&gt;</code></h3><div class='docblock'><p>Gets the value of the <code>IPV6_V6ONLY</code> option for this socket.</p>
+
+<p>For more information about this option, see
+<a href="trait.TcpStreamExt.html#tymethod.set_only_v6"><code>TcpStreamExt::set_only_v6</code></a>.</p>
+</div><h3 id='tymethod.join_multicast_v4' class='method stab '><code>fn <a href='#tymethod.join_multicast_v4' class='fnname'>join_multicast_v4</a>(&amp;self, multiaddr: &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/std/net/ip/struct.Ipv4Addr.html' title='std::net::ip::Ipv4Addr'>Ipv4Addr</a>, interface: &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/std/net/ip/struct.Ipv4Addr.html' title='std::net::ip::Ipv4Addr'>Ipv4Addr</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h3><div class='docblock'><p>Executes an operation of the <code>IP_ADD_MEMBERSHIP</code> type.</p>
+
+<p>This function specifies a new multicast group for this socket to join.
+The address must be a valid multicast address, and <code>interface</code> is the
+address of the local interface with which the system should join the
+multicast group. If it&#39;s equal to <code>INADDR_ANY</code> then an appropriate
+interface is chosen by the system.</p>
+</div><h3 id='tymethod.join_multicast_v6' class='method stab '><code>fn <a href='#tymethod.join_multicast_v6' class='fnname'>join_multicast_v6</a>(&amp;self, multiaddr: &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/std/net/ip/struct.Ipv6Addr.html' title='std::net::ip::Ipv6Addr'>Ipv6Addr</a>, interface: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h3><div class='docblock'><p>Executes an operation of the <code>IPV6_ADD_MEMBERSHIP</code> type.</p>
+
+<p>This function specifies a new multicast group for this socket to join.
+The address must be a valid multicast address, and <code>interface</code> is the
+index of the interface to join/leave (or 0 to indicate any interface).</p>
+</div><h3 id='tymethod.leave_multicast_v4' class='method stab '><code>fn <a href='#tymethod.leave_multicast_v4' class='fnname'>leave_multicast_v4</a>(&amp;self, multiaddr: &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/std/net/ip/struct.Ipv4Addr.html' title='std::net::ip::Ipv4Addr'>Ipv4Addr</a>, interface: &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/std/net/ip/struct.Ipv4Addr.html' title='std::net::ip::Ipv4Addr'>Ipv4Addr</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h3><div class='docblock'><p>Executes an operation of the <code>IP_DROP_MEMBERSHIP</code> type.</p>
+
+<p>For more information about this option, see
+<a href="#tymethod.join_multicast_v4"><code>join_multicast_v4</code></a>.</p>
+</div><h3 id='tymethod.leave_multicast_v6' class='method stab '><code>fn <a href='#tymethod.leave_multicast_v6' class='fnname'>leave_multicast_v6</a>(&amp;self, multiaddr: &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/std/net/ip/struct.Ipv6Addr.html' title='std::net::ip::Ipv6Addr'>Ipv6Addr</a>, interface: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h3><div class='docblock'><p>Executes an operation of the <code>IPV6_DROP_MEMBERSHIP</code> type.</p>
+
+<p>For more information about this option, see
+<a href="#tymethod.join_multicast_v6"><code>join_multicast_v6</code></a>.</p>
+</div><h3 id='tymethod.set_read_timeout_ms' class='method stab '><code>fn <a href='#tymethod.set_read_timeout_ms' class='fnname'>set_read_timeout_ms</a>(&amp;self, val: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>&gt;) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h3><div class='docblock'><p>Sets the <code>SO_RCVTIMEO</code> option for this socket.</p>
+
+<p>This option specifies the timeout, in milliseconds, of how long calls to
+this socket&#39;s <code>read</code> function will wait before returning a timeout. A
+value of <code>None</code> means that no read timeout should be specified and
+otherwise <code>Some</code> indicates the number of milliseconds for the timeout.</p>
+</div><h3 id='tymethod.set_read_timeout' class='method stab '><code>fn <a href='#tymethod.set_read_timeout' class='fnname'>set_read_timeout</a>(&amp;self, val: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/std/time/duration/struct.Duration.html' title='std::time::duration::Duration'>Duration</a>&gt;) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h3><div class='docblock'><p>Sets the <code>SO_RCVTIMEO</code> option for this socket.</p>
+
+<p>This option specifies the timeout of how long calls to this socket&#39;s
+<code>read</code> function will wait before returning a timeout. A value of <code>None</code>
+means that no read timeout should be specified and otherwise <code>Some</code>
+indicates the number of duration of the timeout.</p>
+</div><h3 id='tymethod.read_timeout_ms' class='method stab '><code>fn <a href='#tymethod.read_timeout_ms' class='fnname'>read_timeout_ms</a>(&amp;self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>&gt;&gt;</code></h3><div class='docblock'><p>Gets the value of the <code>SO_RCVTIMEO</code> option for this socket.</p>
+
+<p>For more information about this option, see <a href="#tymethod.set_read_timeout_ms"><code>set_read_timeout_ms</code></a>.</p>
+</div><h3 id='tymethod.read_timeout' class='method stab '><code>fn <a href='#tymethod.read_timeout' class='fnname'>read_timeout</a>(&amp;self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/std/time/duration/struct.Duration.html' title='std::time::duration::Duration'>Duration</a>&gt;&gt;</code></h3><div class='docblock'><p>Gets the value of the <code>SO_RCVTIMEO</code> option for this socket.</p>
+
+<p>For more information about this option, see <a href="#tymethod.set_read_timeout"><code>set_read_timeout</code></a>.</p>
+</div><h3 id='tymethod.set_write_timeout_ms' class='method stab '><code>fn <a href='#tymethod.set_write_timeout_ms' class='fnname'>set_write_timeout_ms</a>(&amp;self, val: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>&gt;) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h3><div class='docblock'><p>Sets the <code>SO_SNDTIMEO</code> option for this socket.</p>
+
+<p>This option specifies the timeout, in milliseconds, of how long calls to
+this socket&#39;s <code>write</code> function will wait before returning a timeout. A
+value of <code>None</code> means that no read timeout should be specified and
+otherwise <code>Some</code> indicates the number of milliseconds for the timeout.</p>
+</div><h3 id='tymethod.set_write_timeout' class='method stab '><code>fn <a href='#tymethod.set_write_timeout' class='fnname'>set_write_timeout</a>(&amp;self, val: <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/std/time/duration/struct.Duration.html' title='std::time::duration::Duration'>Duration</a>&gt;) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h3><div class='docblock'><p>Sets the <code>SO_SNDTIMEO</code> option for this socket.</p>
+
+<p>This option specifies the timeout of how long calls to this socket&#39;s
+<code>write</code> function will wait before returning a timeout. A value of <code>None</code>
+means that no read timeout should be specified and otherwise <code>Some</code>
+indicates the duration of the timeout.</p>
+</div><h3 id='tymethod.write_timeout_ms' class='method stab '><code>fn <a href='#tymethod.write_timeout_ms' class='fnname'>write_timeout_ms</a>(&amp;self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>&gt;&gt;</code></h3><div class='docblock'><p>Gets the value of the <code>SO_SNDTIMEO</code> option for this socket.</p>
+
+<p>For more information about this option, see <a href="#tymethod.set_write_timeout_ms"><code>set_write_timeout_ms</code></a>.</p>
+</div><h3 id='tymethod.write_timeout' class='method stab '><code>fn <a href='#tymethod.write_timeout' class='fnname'>write_timeout</a>(&amp;self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/std/time/duration/struct.Duration.html' title='std::time::duration::Duration'>Duration</a>&gt;&gt;</code></h3><div class='docblock'><p>Gets the value of the <code>SO_SNDTIMEO</code> option for this socket.</p>
+
+<p>For more information about this option, see <a href="#tymethod.set_write_timeout"><code>set_write_timeout</code></a>.</p>
+</div><h3 id='tymethod.take_error' class='method stab '><code>fn <a href='#tymethod.take_error' class='fnname'>take_error</a>(&amp;self) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/std/io/error/struct.Error.html' title='std::io::error::Error'>Error</a>&gt;&gt;</code></h3><div class='docblock'><p>Get the value of the <code>SO_ERROR</code> option on this socket.</p>
+
+<p>This will retrieve the stored error in the underlying socket, clearing
+the field in the process. This can be useful for checking errors between
+calls.</p>
+</div><h3 id='tymethod.connect' class='method stab '><code>fn <a href='#tymethod.connect' class='fnname'>connect</a>&lt;A: <a class='trait' href='https://doc.rust-lang.org/nightly/std/net/addr/trait.ToSocketAddrs.html' title='std::net::addr::ToSocketAddrs'>ToSocketAddrs</a>&gt;(&amp;self, addr: A) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h3><div class='docblock'><p>Connects this UDP socket to a remote address, allowing the <code>send</code> and
+<code>recv</code> syscalls to be used to send data and also applies filters to only
+receive data from the specified address.</p>
+</div><h3 id='tymethod.send' class='method stab '><code>fn <a href='#tymethod.send' class='fnname'>send</a>(&amp;self, buf: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>&gt;</code></h3><div class='docblock'><p>Sends data on the socket to the remote address to which it is connected.</p>
+
+<p>The <code>connect</code> method will connect this socket to a remote address. This
+method will fail if the socket is not connected.</p>
+</div><h3 id='tymethod.recv' class='method stab '><code>fn <a href='#tymethod.recv' class='fnname'>recv</a>(&amp;self, buf: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;mut [</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>&gt;</code></h3><div class='docblock'><p>Receives data on the socket from the remote address to which it is
+connected.</p>
+
+<p>The <code>connect</code> method will connect this socket to a remote address. This
+method will fail if the socket is not connected.</p>
+</div><h3 id='tymethod.set_nonblocking' class='method stab '><code>fn <a href='#tymethod.set_nonblocking' class='fnname'>set_nonblocking</a>(&amp;self, nonblocking: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h3><div class='docblock'><p>Moves this UDP socket into or out of nonblocking mode.</p>
+
+<p>For more information about this option, see
+<a href="trait.TcpStreamExt.html#tymethod.set_nonblocking"><code>TcpStreamExt::set_nonblocking</code></a>.</p>
+</div></div>
+        <h2 id='implementors'>Implementors</h2>
+        <ul class='item-list' id='implementors-list'>
+    <li><code>impl <a class='trait' href='../net2/trait.UdpSocketExt.html' title='net2::UdpSocketExt'>UdpSocketExt</a> for <a class='struct' href='https://doc.rust-lang.org/nightly/std/net/udp/struct.UdpSocket.html' title='std::net::udp::UdpSocket'>UdpSocket</a></code></li>
+</ul><script type="text/javascript" async
+                              src="../implementors/net2/trait.UdpSocketExt.js">
+                      </script></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "net2";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script defer src="../search-index.js"></script>
+</body>
+</html>
