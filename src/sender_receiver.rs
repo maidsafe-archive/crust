@@ -57,13 +57,13 @@ impl Receiver {
 
     #[allow(unsafe_code)]
     fn basic_receive<D: Decodable + ::std::fmt::Debug>(&mut self) -> io::Result<D> {
-        use std::io::{Cursor, Read};
+        use std::io::Cursor;
         use bincode::SizeLimit;
         use maidsafe_utilities::serialisation::deserialise_with_limit;
         use byteorder::{ReadBytesExt, LittleEndian};
 
         let mut payload_size_buffer = [0u8; 4];
-        try!(self.stream.read_exact(&mut payload_size_buffer));
+        try!(self.fill_buffer(&mut payload_size_buffer[..]));
         let payload_size =
             try!(Cursor::new(&payload_size_buffer[..]).read_u32::<LittleEndian>()) as usize;
 
@@ -77,9 +77,9 @@ impl Receiver {
         unsafe {
             payload.set_len(payload_size);
         }
-        try!(self.stream.read_exact(&mut payload));
+        try!(self.fill_buffer(&mut payload));
 
-        let msg = deserialise_with_limit(&payload, SizeLimit::Infinite);
+        let msg = deserialise_with_limit(&mut payload, SizeLimit::Infinite);
 
         match msg {
             Ok(a) => Ok(a),
@@ -90,6 +90,28 @@ impl Receiver {
         }
     }
 
+    fn fill_buffer(&mut self, mut buffer_view: &mut [u8]) -> io::Result<()> {
+        use std::io::Read;
+
+        while buffer_view.len() != 0 {
+            match self.stream.read(&mut buffer_view) {
+                Ok(rxd_bytes) => {
+                    if rxd_bytes == 0 {
+                        return Err(io::Error::new(io::ErrorKind::Other,
+                                                  "Zero byte read - EOF reached, graceful exit."));
+                    }
+
+                    let temp_buffer_view = buffer_view;
+                    buffer_view = &mut temp_buffer_view[rxd_bytes..];
+                }
+                Err(ref e) if e.kind() == io::ErrorKind::Interrupted => (),
+                Err(e) => return Err(e),
+            }
+        }
+
+        Ok(())
+    }
+
     pub fn receive(&mut self) -> io::Result<CrustMsg> {
         self.basic_receive::<CrustMsg>()
     }
@@ -97,6 +119,7 @@ impl Receiver {
 
 #[derive(Clone, PartialEq, Eq, Debug, RustcEncodable, RustcDecodable)]
 pub enum CrustMsg {
+    Heartbeat,
     BootstrapRequest(PublicKey, u64),
     BootstrapResponse(PublicKey),
     ExternalEndpointRequest,

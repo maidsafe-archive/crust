@@ -42,6 +42,7 @@ use connection;
 use bootstrap;
 use bootstrap::RaiiBootstrap;
 use bootstrap_handler::BootstrapHandler;
+use std::time::Duration;
 
 use event::Event;
 use socket_addr::SocketAddr;
@@ -50,6 +51,9 @@ use peer_id::PeerId;
 
 /// Default beacon (service discovery) port.
 pub const DEFAULT_BEACON_PORT: u16 = 5484;
+
+const HEARTBEAT_TIMEOUT_SECS: u64 = 5;
+const INACTIVITY_TIMEOUT_SECS: u64 = 20;
 
 /// The result of a `Service::prepare_contact_info` call.
 #[derive(Debug)]
@@ -104,7 +108,6 @@ fn version_hash() -> u64 {
     let mut hasher = SipHasher::new();
     cargo_version.hash(&mut hasher);
     network_version.hash(&mut hasher);
-    println!("network_version {:?}", network_version);
     hasher.finish()
 }
 
@@ -115,6 +118,8 @@ fn version_hash() -> u64 {
 /// (https://github.com/maidsafe/crust/blob/master/docs/vault_config_file_flowchart.pdf) for more
 /// information.
 pub struct Service {
+    heart_beat_timeout: Duration,
+    inactivity_timeout: Duration,
     static_contact_info: Arc<Mutex<StaticContactInfo>>,
     bootstrap_cache: Arc<Mutex<BootstrapHandler>>,
     expected_peers: Arc<Mutex<HashSet<PeerId>>>,
@@ -183,7 +188,12 @@ impl Service {
         let mapping_context = Arc::new(mapping_context);
         let version_hash = version_hash();
 
+        let heart_beat_timeout = Duration::from_secs(HEARTBEAT_TIMEOUT_SECS);
+        let inactivity_timeout = Duration::from_secs(INACTIVITY_TIMEOUT_SECS);
+
         let bootstrap = RaiiBootstrap::new(bootstrap_contacts,
+                                           heart_beat_timeout,
+                                           inactivity_timeout,
                                            our_keys.0.clone(),
                                            event_tx.clone(),
                                            connection_map.clone(),
@@ -206,6 +216,8 @@ impl Service {
         }
 
         let service = Service {
+            heart_beat_timeout: heart_beat_timeout,
+            inactivity_timeout: inactivity_timeout,
             static_contact_info: static_contact_info,
             bootstrap_cache: bootstrap_cache,
             service_discovery: service_discovery,
@@ -235,6 +247,8 @@ impl Service {
         // Start the TCP Acceptor
         self.raii_tcp_acceptor = Some(try!(connection::start_tcp_accept(self.tcp_acceptor_port
                                                                             .unwrap_or(0),
+                                                                        self.heart_beat_timeout,
+                                                                        self.inactivity_timeout,
                                                                         self.static_contact_info
                                                                             .clone(),
                                                                         self.our_keys.0.clone(),
@@ -349,8 +363,13 @@ impl Service {
             let result_tx = result_tx.clone();
             let bootstrap_cache = bootstrap_cache.clone();
             let static_contact_info = static_contact_info.clone();
+            let heart_beat_timeout = self.heart_beat_timeout.clone();
+            let inactivity_timeout = self.inactivity_timeout.clone();
+
             let _ = thread!("Service::connect tcp direct", move || {
                 match connection::connect_tcp_endpoint(tcp_addr,
+                                                       heart_beat_timeout,
+                                                       inactivity_timeout,
                                                        our_public_key,
                                                        event_tx,
                                                        connection_map,
@@ -383,6 +402,8 @@ impl Service {
             let result_tx = result_tx.clone();
             let priv_tcp_info = our_connection_info.priv_tcp_info;
             let is_alive = self.is_alive.clone();
+            let heart_beat_timeout = self.heart_beat_timeout.clone();
+            let inactivity_timeout = self.inactivity_timeout.clone();
 
             let _ = thread!("Service::connect tcp rendezvous", move || {
                 let res = tcp_punch_hole(tcp_socket, priv_tcp_info, tcp_info).result_log();
@@ -394,6 +415,8 @@ impl Service {
                 match res {
                     Ok(tcp_stream) => {
                         match connection::tcp_rendezvous_connect(connection_map,
+                                                                 heart_beat_timeout,
+                                                                 inactivity_timeout,
                                                                  event_tx,
                                                                  tcp_stream,
                                                                  their_id) {

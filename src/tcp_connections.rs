@@ -23,7 +23,7 @@ use std::io;
 use std::thread;
 use std::sync::mpsc::{self, TryRecvError, Sender};
 use std::io::Write;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use event::WriteEvent;
 
@@ -31,27 +31,36 @@ use event::WriteEvent;
 const SIZE_THRESHOLD: usize = 10 * 1024;
 
 /// Connect to a peer and open a send-receive pair.  See `upgrade` for more details.
-pub fn connect_tcp(addr: SocketAddr) -> io::Result<(TcpStream, Sender<WriteEvent>)> {
+pub fn connect_tcp(addr: SocketAddr,
+                   heart_beat_timeout: Duration,
+                   inactivity_timeout: Duration)
+                   -> io::Result<(TcpStream, Sender<WriteEvent>)> {
     let stream = try!(TcpStream::connect(&*addr));
     if try!(stream.peer_addr()).port() == try!(stream.local_addr()).port() {
         return Err(io::Error::new(io::ErrorKind::ConnectionRefused, "TCP simultaneous open"));
     }
 
-    Ok(try!(upgrade_tcp(stream)))
+    Ok(try!(upgrade_tcp(stream, heart_beat_timeout, inactivity_timeout)))
 }
 
 // Almost a straight copy of https://github.com/TyOverby/wire/blob/master/src/tcp.rs
 /// Upgrades a TcpStream to a Sender-Receiver pair that you can use to send and
 /// receive objects automatically.
-pub fn upgrade_tcp(stream: TcpStream) -> io::Result<(TcpStream, Sender<WriteEvent>)> {
+pub fn upgrade_tcp(stream: TcpStream,
+                   heart_beat_timeout: Duration,
+                   inactivity_timeout: Duration)
+                   -> io::Result<(TcpStream, Sender<WriteEvent>)> {
     use net2::TcpStreamExt;
 
     if let Err(e) = stream.set_nodelay(true) {
         warn!("Unable to set no delay on tcp stream: {:?}", e);
     }
+
+    try!(stream.set_read_timeout(Some(inactivity_timeout)));
+
     let s1 = stream;
     let s2 = try!(s1.try_clone());
-    Ok((s1, upgrade_writer(s2)))
+    Ok((s1, upgrade_writer(s2, heart_beat_timeout)))
 }
 
 fn get_msg_priority(msg: &CrustMsg) -> usize {
@@ -61,14 +70,24 @@ fn get_msg_priority(msg: &CrustMsg) -> usize {
     }
 }
 
-fn upgrade_writer(mut stream: TcpStream) -> Sender<WriteEvent> {
+fn upgrade_writer(mut stream: TcpStream, heart_beat_timeout: Duration) -> Sender<WriteEvent> {
+    use std::io::Write;
     use bincode::SizeLimit;
+    use byteorder::{WriteBytesExt, LittleEndian};
     use maidsafe_utilities::serialisation::serialise_with_limit;
 
     let (tx, rx) = mpsc::channel();
     let send_msgs = move || {
         // Message queues, sorted by descending priority.
         let mut msgs = [VecDeque::new(), VecDeque::new()];
+        let mut last_write_instant = Instant::now();
+
+        let heart_beat_payload = unwrap_result!(serialise_with_limit(&CrustMsg::Heartbeat,
+                                                                     SizeLimit::Infinite));
+        let size = heart_beat_payload.len() as u32;
+        let mut heart_beat_size_bytes = Vec::with_capacity(4);
+        unwrap_result!(heart_beat_size_bytes.write_u32::<LittleEndian>(size));
+
         'outer: loop {
             // Sort all messages from the channel by priority.
             loop {
@@ -88,9 +107,6 @@ fn upgrade_writer(mut stream: TcpStream) -> Sender<WriteEvent> {
             // Send the highest-priority message.
             match msgs.iter_mut().filter_map(VecDeque::pop_front).next() {
                 Some(data) => {
-                    use std::io::Write;
-                    use byteorder::{WriteBytesExt, LittleEndian};
-
                     let payload = unwrap_result!(serialise_with_limit(&data, SizeLimit::Infinite));
                     let size = payload.len() as u32;
                     let mut little_endian_size_bytes = Vec::with_capacity(4);
@@ -104,8 +120,24 @@ fn upgrade_writer(mut stream: TcpStream) -> Sender<WriteEvent> {
                         debug!("TCP - Failed writing payload: {:?}", e);
                         break;
                     }
+
+                    last_write_instant = Instant::now();
                 }
-                None => thread::sleep(Duration::from_millis(1)),
+                None => {
+                    if last_write_instant.elapsed() > heart_beat_timeout {
+                        if let Err(e) = stream.write_all(&heart_beat_size_bytes) {
+                            error!("Error writing heartbeat size: {:?}", e);
+                            break;
+                        }
+                        if let Err(e) = stream.write_all(&heart_beat_payload) {
+                            error!("Error writing heartbeat payload: {:?}", e);
+                            break;
+                        }
+
+                        last_write_instant = Instant::now();
+                    }
+                    thread::sleep(Duration::from_millis(1));
+                }
             }
         }
         stream.shutdown(Shutdown::Both)

@@ -50,6 +50,8 @@ pub struct RaiiBootstrap {
 
 impl RaiiBootstrap {
     pub fn new(bootstrap_contacts: Vec<StaticContactInfo>,
+               heart_beat_timeout: Duration,
+               inactivity_timeout: Duration,
                our_public_key: PublicKey,
                event_tx: ::CrustEventSender,
                connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
@@ -62,6 +64,8 @@ impl RaiiBootstrap {
 
         let raii_joiner = RaiiThreadJoiner::new(thread!("RaiiBootstrap", move || {
             RaiiBootstrap::bootstrap(bootstrap_contacts,
+                                     heart_beat_timeout,
+                                     inactivity_timeout,
                                      our_public_key,
                                      cloned_stop_flag,
                                      event_tx,
@@ -82,6 +86,8 @@ impl RaiiBootstrap {
     }
 
     fn bootstrap(mut bootstrap_contacts: Vec<StaticContactInfo>,
+                 heart_beat_timeout: Duration,
+                 inactivity_timeout: Duration,
                  our_public_key: PublicKey,
                  stop_flag: Arc<AtomicBool>,
                  event_tx: ::CrustEventSender,
@@ -99,6 +105,8 @@ impl RaiiBootstrap {
             }
 
             let res = connection::connect(contact,
+                                          heart_beat_timeout,
+                                          inactivity_timeout,
                                           our_public_key.clone(),
                                           event_tx.clone(),
                                           connection_map.clone(),

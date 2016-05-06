@@ -24,6 +24,7 @@ use std::sync::atomic::{Ordering, AtomicBool};
 use std::net::{Shutdown, TcpStream, Ipv4Addr, SocketAddrV4};
 use std::net;
 use std::io;
+use std::time::Duration;
 
 use maidsafe_utilities::event_sender::{EventSenderError, MaidSafeEventCategory};
 use maidsafe_utilities::thread::RaiiThreadJoiner;
@@ -132,6 +133,8 @@ impl Debug for RaiiTcpAcceptor {
 }
 
 pub fn connect(peer_contact: StaticContactInfo,
+               heart_beat_timeout: Duration,
+               inactivity_timeout: Duration,
                our_public_key: PublicKey,
                event_tx: ::CrustEventSender,
                connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
@@ -146,6 +149,8 @@ pub fn connect(peer_contact: StaticContactInfo,
     let mut last_err = io::Error::new(io::ErrorKind::NotFound, "No TCP acceptors found.");
     for tcp_addr in peer_contact.tcp_acceptors {
         match connect_tcp_endpoint(tcp_addr,
+                                   heart_beat_timeout,
+                                   inactivity_timeout,
                                    our_public_key,
                                    event_tx.clone(),
                                    connection_map.clone(),
@@ -171,11 +176,15 @@ pub fn connect(peer_contact: StaticContactInfo,
 }
 
 pub fn tcp_rendezvous_connect(connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
+                              heart_beat_timeout: Duration,
+                              inactivity_timeout: Duration,
                               event_tx: ::CrustEventSender,
                               tcp_stream: TcpStream,
                               their_id: PeerId)
                               -> io::Result<()> {
-    let (network_input, writer) = try!(tcp_connections::upgrade_tcp(tcp_stream));
+    let (network_input, writer) = try!(tcp_connections::upgrade_tcp(tcp_stream,
+                                                                    heart_beat_timeout,
+                                                                    inactivity_timeout));
     let our_addr = SocketAddr(try!(network_input.local_addr()));
     let their_addr = SocketAddr(try!(network_input.peer_addr()));
     let network_rx = Receiver::tcp(network_input);
@@ -198,6 +207,8 @@ pub fn tcp_rendezvous_connect(connection_map: Arc<Mutex<HashMap<PeerId, Vec<Conn
 }
 
 pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
+                            heart_beat_timeout: Duration,
+                            inactivity_timeout: Duration,
                             our_public_key: PublicKey,
                             event_tx: ::CrustEventSender,
                             connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
@@ -205,7 +216,9 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
                             their_expected_id: Option<PeerId>,
                             version_hash: u64)
                             -> io::Result<()> {
-    let (network_input, writer) = try!(tcp_connections::connect_tcp(remote_addr.clone()));
+    let (network_input, writer) = try!(tcp_connections::connect_tcp(remote_addr.clone(),
+                                                                    heart_beat_timeout,
+                                                                    inactivity_timeout));
     let our_addr = SocketAddr(try!(network_input.local_addr()));
     let their_addr = SocketAddr(try!(network_input.peer_addr()));
 
@@ -328,6 +341,8 @@ fn register_tcp_connection(connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connect
 
 
 pub fn start_tcp_accept(port: u16,
+                        heart_beat_timeout: Duration,
+                        inactivity_timeout: Duration,
                         our_contact_info: Arc<Mutex<StaticContactInfo>>,
                         our_public_key: PublicKey,
                         event_tx: ::CrustEventSender,
@@ -389,7 +404,9 @@ pub fn start_tcp_accept(port: u16,
                 break;
             }
 
-            let (network_input, writer) = match tcp_connections::upgrade_tcp(stream) {
+            let (network_input, writer) = match tcp_connections::upgrade_tcp(stream,
+                                                                             heart_beat_timeout,
+                                                                             inactivity_timeout) {
                 Ok((stream, writer_tx)) => (stream, writer_tx),
                 Err(e) => {
                     debug!("TCP Acceptor failed to upgrade connected stream: {:?}", e);
@@ -508,6 +525,7 @@ fn start_rx(mut network_rx: Receiver,
                             break;
                         }
                     }
+                    CrustMsg::Heartbeat => (),
                     m => error!("Unexpected message in start_rx: {:?}", m),
                 }
             }
@@ -517,6 +535,7 @@ fn start_rx(mut network_rx: Receiver,
             }
         }
     }
+
     closed.store(true, Ordering::Relaxed);
     // Drop the connection in a separate thread, because the destructor joins _this_ thread.
     let _ = thread!("ConnectionDropper", move || {
@@ -560,9 +579,7 @@ pub fn print_connection_stats(connection_map: &HashMap<PeerId, Vec<Connection>>)
             };
         };
     }
-    debug!("Stats - Connections direct {}, punched {}",
-           direct,
-           punched);
+    debug!("Stats - Connections direct {}, punched {}", direct, punched);
 }
 
 #[cfg(test)]
@@ -599,8 +616,8 @@ mod test {
                 protocol: Protocol::Tcp,
                 our_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("10.199.254.200:\
                                                                                30000"))),
-                their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.200:\
-                                                                                 30000"))),
+                their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.\
+                                                                                 200:30000"))),
                 hole_punched: false,
                 network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
@@ -617,8 +634,8 @@ mod test {
                 protocol: Protocol::Tcp,
                 our_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("10.199.254.200:\
                                                                                30000"))),
-                their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.200:\
-                                                                                 30000"))),
+                their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.\
+                                                                                 200:30000"))),
                 hole_punched: false,
                 network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
@@ -639,8 +656,8 @@ mod test {
                 protocol: Protocol::Tcp,
                 our_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("10.199.254.201:\
                                                                                30000"))),
-                their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.200:\
-                                                                                 30000"))),
+                their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.\
+                                                                                 200:30000"))),
                 hole_punched: false,
                 network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
@@ -660,8 +677,8 @@ mod test {
                 protocol: Protocol::Tcp,
                 our_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("10.199.254.200:\
                                                                                30000"))),
-                their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.253.200:\
-                                                                                 30000"))),
+                their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.253.\
+                                                                                 200:30000"))),
                 hole_punched: false,
                 network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
@@ -681,8 +698,8 @@ mod test {
                 protocol: Protocol::Tcp,
                 our_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("10.199.254.200:\
                                                                                30000"))),
-                their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.200:\
-                                                                                 30000"))),
+                their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.\
+                                                                                 200:30000"))),
                 hole_punched: false,
                 network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
