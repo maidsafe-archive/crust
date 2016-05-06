@@ -598,9 +598,10 @@ fn print_usage() {
     help                                          - Print this help
 
 # Where
-    <our-file>      - The file where we'll read/write our connection info
-    <their-file>    - The file where we'll read their connection info.
-    <connection-id> - ID of a connection as listed using the `list` command
+    <our-info-id> - The ID of the connection info we gave to the peer
+    <their-info>  - The connection info received from the peer
+    <peer>        - ID of a connection as listed using the `list` command
+    <message>     - The text to send to the peer(s)
 "#;
     println!("{}", USAGE);
 }
