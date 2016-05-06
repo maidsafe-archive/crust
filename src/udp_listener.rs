@@ -51,9 +51,7 @@ impl RaiiUdpListener {
                event_tx: ::CrustEventSender,
                connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
                _bootstrap_cache: Arc<Mutex<BootstrapHandler>>,
-               mc: Arc<MappingContext>,
-               heartbeat_timeout: Duration,
-               inactivity_timeout: Duration)
+               mc: Arc<MappingContext>)
                -> io::Result<RaiiUdpListener> {
 
         // TODO(canndrew): Listen on both ipv4 and ipv6
@@ -82,9 +80,7 @@ impl RaiiUdpListener {
                       event_tx,
                       cloned_stop_flag,
                       connection_map,
-                      mc,
-                      heartbeat_timeout,
-                      inactivity_timeout);
+                      mc);
         }));
 
         Ok(RaiiUdpListener {
@@ -98,9 +94,7 @@ impl RaiiUdpListener {
            event_tx: ::CrustEventSender,
            stop_flag: Arc<AtomicBool>,
            connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
-           mc: Arc<MappingContext>,
-           heartbeat_timeout: Duration,
-           inactivity_timeout: Duration) {
+           mc: Arc<MappingContext>) {
 
         let udp_socket = &udp_socket;
         crossbeam::scope(move |scope| {
@@ -119,9 +113,7 @@ impl RaiiUdpListener {
                                                             event_tx,
                                                             connection_map,
                                                             mc,
-                                                            udp_socket,
-                                                            heartbeat_timeout,
-                                                            inactivity_timeout);
+                                                            udp_socket);
                         });
                     }
                 }
@@ -135,9 +127,7 @@ impl RaiiUdpListener {
                       event_tx: ::CrustEventSender,
                       connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
                       mc: Arc<MappingContext>,
-                      udp_listener: &UdpSocket,
-                      heartbeat_timeout: Duration,
-                      inactivity_timeout: Duration) {
+                      udp_listener: &UdpSocket) {
         match msg {
             ListenerRequest::Connect { our_info, .. } => {
                 let their_info = our_info;
@@ -185,9 +175,7 @@ impl RaiiUdpListener {
                                              UtpRendezvousConnectMode::BootstrapAccept,
                                              our_public_key,
                                              event_tx,
-                                             connection_map,
-                                             heartbeat_timeout,
-                                             inactivity_timeout) {
+                                             connection_map) {
                     Ok(()) => (),
                     Err(e) => {
                         warn!("Failed to receive utp connection: {}", e);
