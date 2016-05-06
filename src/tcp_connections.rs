@@ -88,7 +88,12 @@ fn upgrade_writer(mut stream: TcpStream,
                                                info!("Stale connection. Dropping...");
                                                break;
                                            }
-                                           let heartbeat_deadline = last_write_activity + heartbeat_timeout;
+                                           let last_activity = if last_write_activity > last_read_activity {
+                                               last_write_activity
+                                           } else {
+                                               last_read_activity
+                                           };
+                                           let heartbeat_deadline = last_activity + heartbeat_timeout;
                                            if now > heartbeat_deadline {
                                                if let Err(e) = stream.write_all(&heartbeat_msg) {
                                                    error!("Error sending: {:?}", e);
