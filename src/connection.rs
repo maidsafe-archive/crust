@@ -26,6 +26,7 @@ use std::net;
 use std::io;
 use std::time::Duration;
 
+use itertools::Itertools;
 use maidsafe_utilities::event_sender::{EventSenderError, MaidSafeEventCategory};
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 use static_contact_info::StaticContactInfo;
@@ -357,17 +358,11 @@ pub fn start_tcp_accept(port: u16,
     let addr = net::SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), port));
     let tcp_builder_listener = try!(nat_traversal::new_reusably_bound_tcp_socket(&addr));
 
-    let mapped_tcp_socket = match nat_traversal::MappedTcpSocket::map(tcp_builder_listener,
-                                                                      mapping_context.as_ref())
-                                      .result_log() {
-        Ok(mapped_tcp_socket) => mapped_tcp_socket,
-        Err(err) => return Err(From::from(err)),
-    };
+    let mapped_tcp_socket = try!(nat_traversal::MappedTcpSocket::map(tcp_builder_listener,
+                                                                     mapping_context.as_ref())
+                                     .result_log());
     let tcp_builder_listener = mapped_tcp_socket.socket;
-    let mut addrs: Vec<SocketAddr> = mapped_tcp_socket.endpoints
-                                                      .into_iter()
-                                                      .map(|m| m.addr)
-                                                      .collect();
+    let mut addrs = mapped_tcp_socket.endpoints.into_iter().map(|m| m.addr).collect_vec();
 
     let listener = try!(tcp_builder_listener.listen(1));
     let new_port = try!(listener.local_addr()).port(); // Useful if supplied port was 0
@@ -390,9 +385,9 @@ pub fn start_tcp_accept(port: u16,
     let cloned_stop_flag = stop_flag.clone();
 
     let joiner = RaiiThreadJoiner::new(thread!("TcpAcceptorThread", move || {
-        loop {
-            let (stream, _) = match listener.accept() {
-                Ok(tuple) => tuple,
+        for result in listener.incoming() {
+            let stream = match result {
+                Ok(stream) => stream,
                 Err(err) => {
                     error!("Error in TcpListener's accept: {}", err);
                     break;
@@ -414,92 +409,72 @@ pub fn start_tcp_accept(port: u16,
                 }
             };
 
-            let (our_addr, their_addr) = match (network_input.local_addr(),
-                                                network_input.peer_addr()) {
-                (Ok(our_addr), Ok(their_addr)) => (SocketAddr(our_addr), SocketAddr(their_addr)),
-                (_, Err(e)) | (Err(e), _) => {
-                    debug!("TCP Acceptor failed to get endpoints for connected stream: {:?}",
-                           e);
+            let our_addr = match network_input.local_addr() {
+                Ok(our_addr) => SocketAddr(our_addr),
+                Err(err) => {
+                    debug!("TCP Acceptor failed to get our endpoint for connected stream: {:?}",
+                           err);
+                    continue;
+                }
+            };
+            let their_addr = match network_input.peer_addr() {
+                Ok(their_addr) => SocketAddr(their_addr),
+                Err(err) => {
+                    debug!("TCP Acceptor failed to get peer endpoint for connected stream: {:?}",
+                           err);
                     continue;
                 }
             };
 
             let mut network_rx = Receiver::tcp(network_input);
 
-            let msg = network_rx.receive();
-            let (their_id, event) = match msg {
-                Ok(CrustMsg::BootstrapRequest(k, v)) => {
-                    match writer.send(WriteEvent::Write(CrustMsg::BootstrapResponse(our_public_key))) {
-                        Ok(()) => (),
-                        Err(_) => {
-                            error!("Reciever shutdown!");
-                            continue;
-                        },
-                    }
-                    if our_public_key == k {
-                        error!("Connected to ourselves");
-                        continue;
-                    }
-                    if v != version_hash {
-                        error!("Incompatible protocol version.");
-                        continue;
-                    }
-
-                    let peer_id = peer_id::new_id(k);
-                    (peer_id, Event::BootstrapAccept(peer_id))
+            let (key, version, response, event) = match network_rx.receive() {
+                Ok(CrustMsg::BootstrapRequest(key, version)) => {
+                    let peer_id = peer_id::new_id(key);
+                    let bootstrap_response = CrustMsg::BootstrapResponse(our_public_key);
+                    (key, version, bootstrap_response, Event::BootstrapAccept(peer_id))
                 }
-                Ok(CrustMsg::Connect(k, v)) => {
-                    if v != version_hash {
-                        error!("Incompatible protocol version.");
+                Ok(CrustMsg::Connect(key, version)) => {
+                    let peer_id = peer_id::new_id(key);
+                    if !expected_peers.lock().unwrap().remove(&peer_id) {
                         continue;
                     }
-                    if our_public_key == k {
-                        error!("Connected to ourselves");
-                        continue;
-                    }
-                    let peer_id = peer_id::new_id(k);
-                    let mut expected_peers = expected_peers.lock().unwrap();
-                    if expected_peers.remove(&peer_id) {
-                        match writer.send(WriteEvent::Write(CrustMsg::Connect(our_public_key,
-                                                                              version_hash))) {
-                            Ok(()) => (),
-                            Err(_) => {
-                                error!("Receiver shutdown!");
-                                continue;
-                            }
-                        }
-                    } else {
-                        continue;
-                    }
-
-                    (peer_id, Event::NewPeer(Ok(()), peer_id))
+                    let connect_msg = CrustMsg::Connect(our_public_key, version_hash);
+                    (key, version, connect_msg, Event::NewPeer(Ok(()), peer_id))
                 }
-                Ok(m) => {
-                    error!("Unexpected crust msg on tcp accept: {:?}", m);
+                Ok(msg) => {
+                    error!("Unexpected crust msg on TCP accept: {:?}", msg);
                     continue;
                 }
-                Err(e) => {
-                    error!("Invalid crust msg on tcp accept: {}", e);
+                Err(err) => {
+                    error!("Invalid crust msg on TCP accept: {}", err);
                     continue;
                 }
             };
+            if our_public_key == key {
+                error!("Connected to ourselves");
+            } else if version != version_hash {
+                error!("Incompatible protocol version.");
+            } else if writer.send(WriteEvent::Write(response)).is_err() {
+                error!("Receiver shutdown!");
+            } else {
+                let peer_id = peer_id::new_id(key);
 
-            let mut cm = unwrap_result!(connection_map.lock());
-            if notify_new_connection(&cm, &their_id, event, &event_tx).is_err() {
-                break;
+                let mut cm = unwrap_result!(connection_map.lock());
+                if notify_new_connection(&cm, &peer_id, event, &event_tx).is_err() {
+                    break;
+                }
+                let connection = register_tcp_connection(connection_map.clone(),
+                                                         peer_id,
+                                                         network_rx,
+                                                         RaiiSender(writer),
+                                                         event_tx.clone(),
+                                                         our_addr,
+                                                         their_addr,
+                                                         false);
+
+                cm.entry(peer_id).or_insert_with(Vec::new).push(connection);
             }
-            let connection = register_tcp_connection(connection_map.clone(),
-                                                     their_id,
-                                                     network_rx,
-                                                     RaiiSender(writer),
-                                                     event_tx.clone(),
-                                                     our_addr,
-                                                     their_addr,
-                                                     false);
-
-            cm.entry(their_id)
-              .or_insert_with(Vec::new)
-              .push(connection);
         }
     }));
 
@@ -517,18 +492,14 @@ fn start_rx(mut network_rx: Receiver,
             connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>) {
     loop {
         match network_rx.receive() {
-            Ok(msg) => {
-                match msg {
-                    CrustMsg::Message(msg) => {
-                        if let Err(err) = event_tx.send(Event::NewMessage(their_id, msg)) {
-                            error!("Error sending message to {:?}: {:?}", their_id, err);
-                            break;
-                        }
-                    }
-                    CrustMsg::Heartbeat => (),
-                    m => error!("Unexpected message in start_rx: {:?}", m),
+            Ok(CrustMsg::Message(msg)) => {
+                if let Err(err) = event_tx.send(Event::NewMessage(their_id, msg)) {
+                    error!("Error sending message to {:?}: {:?}", their_id, err);
+                    break;
                 }
             }
+            Ok(CrustMsg::Heartbeat) => (),
+            Ok(m) => error!("Unexpected message in start_rx: {:?}", m),
             Err(err) => {
                 debug!("Error receiving from {:?}: {:?}", their_id, err);
                 break;

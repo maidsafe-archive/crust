@@ -245,23 +245,18 @@ impl Service {
     /// Starts accepting TCP connections.
     pub fn start_listening_tcp(&mut self) -> io::Result<()> {
         // Start the TCP Acceptor
-        self.raii_tcp_acceptor = Some(try!(connection::start_tcp_accept(self.tcp_acceptor_port
-                                                                            .unwrap_or(0),
-                                                                        self.heart_beat_timeout,
-                                                                        self.inactivity_timeout,
-                                                                        self.static_contact_info
-                                                                            .clone(),
-                                                                        self.our_keys.0.clone(),
-                                                                        self.event_tx.clone(),
-                                                                        self.connection_map
-                                                                            .clone(),
-                                                                        self.bootstrap_cache
-                                                                            .clone(),
-                                                                        self.expected_peers
-                                                                            .clone(),
-                                                                        self.mapping_context
-                                                                            .clone(),
-                                                                        self.version_hash)));
+        let result = connection::start_tcp_accept(self.tcp_acceptor_port.unwrap_or(0),
+                                                  self.heart_beat_timeout,
+                                                  self.inactivity_timeout,
+                                                  self.static_contact_info.clone(),
+                                                  self.our_keys.0.clone(),
+                                                  self.event_tx.clone(),
+                                                  self.connection_map.clone(),
+                                                  self.bootstrap_cache.clone(),
+                                                  self.expected_peers.clone(),
+                                                  self.mapping_context.clone(),
+                                                  self.version_hash);
+        self.raii_tcp_acceptor = Some(try!(result));
         Ok(())
     }
 
@@ -386,9 +381,7 @@ impl Service {
                         match unwrap_result!(bootstrap_cache.lock())
                                   .update_contacts(vec![static_contact_info], vec![]) {
                             Ok(()) => (),
-                            Err(e) => {
-                                warn!("Failed to update bootstrap cache: {}", e);
-                            }
+                            Err(e) => warn!("Failed to update bootstrap cache: {}", e),
                         };
                     }
                 }
@@ -448,9 +441,7 @@ impl Service {
                     // Don't need to send a message here. Stupidly, the connect functions will have
                     // raised the event from deep within them.
                     Ok(Ok(())) => break,
-                    Ok(Err(err)) => {
-                        errors.push(err);
-                    }
+                    Ok(Err(err)) => errors.push(err),
                     Err(mpsc::RecvError) => {
                         // All of the senders have hung up without sending us an Ok(()). They all
                         // must have failed to connect.
@@ -479,24 +470,23 @@ impl Service {
 
         let mapping_context = self.mapping_context.clone();
         let our_pub_key = self.our_keys.0.clone();
-        let _joiner = thread!("PrepareContactInfo", move || {
-
+        let _joiner = thread!("PrepareConnectionInfo", move || {
             let (tcp_socket, (our_priv_tcp_info, our_pub_tcp_info)) =
                 match MappedTcpSocket::new(&mapping_context).result_log() {
                     Ok(MappedTcpSocket { socket, endpoints }) => {
                         (Some(socket), gen_rendezvous_info(endpoints))
                     }
-                    Err(e) => {
+                    Err(err) => {
                         let _ =
                             event_tx.send(Event::ConnectionInfoPrepared(ConnectionInfoResult {
                                 result_token: result_token,
-                                result: Err(From::from(e)),
+                                result: Err(From::from(err)),
                             }));
                         return;
                     }
                 };
 
-            let send = Event::ConnectionInfoPrepared(ConnectionInfoResult {
+            let event = Event::ConnectionInfoPrepared(ConnectionInfoResult {
                 result_token: result_token,
                 result: Ok(OurConnectionInfo {
                     id: peer_id::new_id(our_pub_key),
@@ -506,7 +496,7 @@ impl Service {
                     static_contact_info: unwrap_result!(our_static_contact_info.lock()).clone(),
                 }),
             });
-            let _ = event_tx.send(send);
+            let _ = event_tx.send(event);
         });
     }
 
