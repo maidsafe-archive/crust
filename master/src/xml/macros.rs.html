@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/xml-rs-0.3.2/src/macros.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/xml-rs-0.1.26/src/macros.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>macros.rs.html -- source</title>
@@ -67,26 +67,24 @@
 <span id="24">24</span>
 <span id="25">25</span>
 <span id="26">26</span>
-<span id="27">27</span>
-<span id="28">28</span>
-<span id="29">29</span>
-<span id="30">30</span>
 </pre><pre class='rust '>
 <span class='attribute'>#<span class='op'>!</span>[<span class='ident'>macro_use</span>]</span>
 
 <span class='doccomment'>//! Contains several macros used in this crate.</span>
 
-<span class='macro'>macro_rules</span><span class='macro'>!</span> <span class='ident'>gen_setter</span> {
-    (<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>target</span>:<span class='ident'>ty</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>field</span>:<span class='ident'>ident</span> : <span class='ident'>into</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>t</span>:<span class='ident'>ty</span>) <span class='op'>=&gt;</span> {
-        <span class='kw'>impl</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>target</span> {
-            <span class='doccomment'>/// Sets the field to the provided value and returns updated config object.</span>
-            <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>field</span><span class='op'>&lt;</span><span class='ident'>T</span>: <span class='ident'>Into</span><span class='op'>&lt;</span><span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>t</span><span class='op'>&gt;&gt;</span>(<span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>value</span>: <span class='ident'>T</span>) <span class='op'>-&gt;</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>target</span> {
-                <span class='self'>self</span>.<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>field</span> <span class='op'>=</span> <span class='ident'>value</span>.<span class='ident'>into</span>();
-                <span class='self'>self</span>
+<span class='macro'>macro_rules</span><span class='macro'>!</span> <span class='ident'>for_each</span>(
+    (<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>e</span>:<span class='ident'>ident</span> <span class='kw'>in</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>it</span>:<span class='ident'>expr</span> ; <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>body</span>:<span class='ident'>expr</span>) <span class='op'>=&gt;</span> (
+        <span class='kw'>loop</span> {
+            <span class='kw'>match</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>it</span> {
+                <span class='prelude-val'>Some</span>(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>e</span>) <span class='op'>=&gt;</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>body</span>,
+                <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='kw'>break</span>
             }
         }
-    };
-    (<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>target</span>:<span class='ident'>ty</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>field</span>:<span class='ident'>ident</span> : <span class='ident'>val</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>t</span>:<span class='ident'>ty</span>) <span class='op'>=&gt;</span> {
+    )
+);
+
+<span class='macro'>macro_rules</span><span class='macro'>!</span> <span class='ident'>gen_setters</span>(
+    (<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>target</span>:<span class='ident'>ty</span>, $(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>field</span>:<span class='ident'>ident</span> : <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>t</span>:<span class='ident'>ty</span>),<span class='op'>+</span>) <span class='op'>=&gt;</span> ($(
         <span class='kw'>impl</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>target</span> {
             <span class='doccomment'>/// Sets the field to the provided value and returns updated config object.</span>
             <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>field</span>(<span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>value</span>: <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>t</span>) <span class='op'>-&gt;</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>target</span> {
@@ -94,14 +92,8 @@
                 <span class='self'>self</span>
             }
         }
-    }
-}
-
-<span class='macro'>macro_rules</span><span class='macro'>!</span> <span class='ident'>gen_setters</span> {
-    (<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>target</span>:<span class='ident'>ty</span>, $(<span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>field</span>:<span class='ident'>ident</span> : <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>k</span>:<span class='ident'>tt</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>tpe</span>:<span class='ident'>ty</span>),<span class='op'>+</span>) <span class='op'>=&gt;</span> ($(
-        <span class='macro'>gen_setter</span><span class='macro'>!</span> { <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>target</span>, <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>field</span> : <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>k</span> <span class='macro-nonterminal'>$</span><span class='macro-nonterminal'>tpe</span> }
     )<span class='op'>+</span>)
-}
+);
 </pre>
 </section>
     <section id='search' class="content hidden"></section>
