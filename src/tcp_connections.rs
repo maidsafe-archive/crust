@@ -15,6 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use itertools::Itertools;
 use sender_receiver::CrustMsg;
 use std::net::{TcpStream, Shutdown};
 use socket_addr::SocketAddr;
@@ -28,7 +29,9 @@ use std::time::{Duration, Instant};
 use event::WriteEvent;
 
 /// Threshold in bytes below which messages are prioritised.
-const SIZE_THRESHOLD: usize = 10 * 1024;
+const SIZE_THRESHOLD: usize = 2 * 1024;
+/// Maximum age of a message waiting to be sent. If a message is older, the queue is dropped.
+const MAX_MSG_AGE_SECS: u64 = 60;
 
 /// Connect to a peer and open a send-receive pair.  See `upgrade` for more details.
 pub fn connect_tcp(addr: SocketAddr,
@@ -94,19 +97,30 @@ fn upgrade_writer(mut stream: TcpStream, heartbeat_period: Duration) -> Sender<W
                 match rx.try_recv() {
                     Ok(WriteEvent::Write(data)) => {
                         let index = get_msg_priority(&data);
-                        msgs[index].push_back(data);
-                        if msgs[index].len() % 50 == 0 {
-                            debug!("{} messages with priority {}.", msgs[index].len(), index);
-                        }
+                        msgs[index].push_back((data, Instant::now()));
                     }
                     Err(TryRecvError::Disconnected) |
                     Ok(WriteEvent::Shutdown) => break 'outer,
                     Err(TryRecvError::Empty) => break,
                 }
             }
+            // Empty all queues with a message older than `MAX_MSG_AGE_SECS`.
+            msgs.iter_mut().enumerate().foreach(|(priority, queue)| {
+                if let Some(&(_, ref timestamp)) = queue.front() {
+                    if timestamp.elapsed().as_secs() <= MAX_MSG_AGE_SECS {
+                        return; // The first message in the queue has not expired.
+                    }
+                } else {
+                    return; // The queue is empty.
+                }
+                debug!("Insufficient upstream bandwidth. Dropping {} messages with priority {}.",
+                       queue.len(),
+                       priority);
+                queue.clear();
+            });
             // Send the highest-priority message.
             match msgs.iter_mut().filter_map(VecDeque::pop_front).next() {
-                Some(data) => {
+                Some((data, _)) => {
                     let payload = unwrap_result!(serialise_with_limit(&data, SizeLimit::Infinite));
                     let size = payload.len() as u32;
                     let mut little_endian_size_bytes = Vec::with_capacity(4);
