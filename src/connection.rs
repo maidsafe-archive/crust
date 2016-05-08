@@ -56,7 +56,6 @@ pub struct Connection {
     their_addr: SocketAddr,
     hole_punched: bool,
     network_tx: RaiiSender,
-    _network_read_joiner: RaiiThreadJoiner,
     closed: Arc<AtomicBool>,
 }
 
@@ -325,9 +324,9 @@ fn register_tcp_connection(connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connect
     let closed = Arc::new(AtomicBool::new(false));
     let closed_clone = closed.clone();
 
-    let joiner = RaiiThreadJoiner::new(thread!("TcpNetworkReader", move || {
+    let _ = thread!("TcpNetworkReader", move || {
         start_rx(network_rx, their_id, event_tx, closed_clone, connection_map);
-    }));
+    });
 
     Connection {
         protocol: Protocol::Tcp,
@@ -335,7 +334,6 @@ fn register_tcp_connection(connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connect
         their_addr: their_addr,
         hole_punched: hole_punched,
         network_tx: network_tx,
-        _network_read_joiner: joiner,
         closed: closed,
     }
 }
@@ -493,6 +491,9 @@ fn start_rx(mut network_rx: Receiver,
     loop {
         match network_rx.receive() {
             Ok(CrustMsg::Message(msg)) => {
+                if closed.load(Ordering::Relaxed) {
+                    break;
+                }
                 if let Err(err) = event_tx.send(Event::NewMessage(their_id, msg)) {
                     error!("Error sending message to {:?}: {:?}", their_id, err);
                     break;
@@ -508,21 +509,18 @@ fn start_rx(mut network_rx: Receiver,
     }
 
     closed.store(true, Ordering::Relaxed);
-    // Drop the connection in a separate thread, because the destructor joins _this_ thread.
-    let _ = thread!("ConnectionDropper", move || {
-        let mut lock = unwrap_result!(connection_map.lock());
-        if let Entry::Occupied(mut entry) = lock.entry(their_id) {
-            entry.get_mut().retain(|connection| !connection.is_closed());
-            if entry.get().is_empty() {
-                let _ = entry.remove();
-                trace!("Sending LostPeer({}) event.", their_id);
-                if let Err(err) = event_tx.send(Event::LostPeer(their_id)) {
-                    error!("Failed to send LostPeer({}) event: {:?}", their_id, err);
-                }
+    let mut lock = unwrap_result!(connection_map.lock());
+    if let Entry::Occupied(mut entry) = lock.entry(their_id) {
+        entry.get_mut().retain(|connection| !connection.is_closed());
+        if entry.get().is_empty() {
+            let _ = entry.remove();
+            trace!("Sending LostPeer({}) event.", their_id);
+            if let Err(err) = event_tx.send(Event::LostPeer(their_id)) {
+                error!("Failed to send LostPeer({}) event: {:?}", their_id, err);
             }
         }
-        print_connection_stats(&lock);
-    });
+    }
+    print_connection_stats(&lock);
 }
 
 fn notify_new_connection(connection_map: &HashMap<PeerId, Vec<Connection>>,
@@ -569,7 +567,6 @@ mod test {
     use std::net;
 
     use sender_receiver::RaiiSender;
-    use maidsafe_utilities::thread::RaiiThreadJoiner;
 
     use endpoint::Protocol;
     use socket_addr::SocketAddr;
@@ -585,7 +582,6 @@ mod test {
     fn connection_hash() {
         let connection_0 = {
             let (tx, _) = mpsc::channel();
-            let raii_joiner = RaiiThreadJoiner::new(thread!("DummyThread", move || ()));
 
             Connection {
                 protocol: Protocol::Tcp,
@@ -595,7 +591,6 @@ mod test {
                                                                                  200:30000"))),
                 hole_punched: false,
                 network_tx: RaiiSender(tx),
-                _network_read_joiner: raii_joiner,
                 closed: Arc::new(AtomicBool::new(false)),
             }
         };
@@ -603,7 +598,6 @@ mod test {
         // Same as connection_0
         let connection_1 = {
             let (tx, _) = mpsc::channel();
-            let raii_joiner = RaiiThreadJoiner::new(thread!("DummyThread", move || ()));
 
             Connection {
                 protocol: Protocol::Tcp,
@@ -613,7 +607,6 @@ mod test {
                                                                                  200:30000"))),
                 hole_punched: false,
                 network_tx: RaiiSender(tx),
-                _network_read_joiner: raii_joiner,
                 closed: Arc::new(AtomicBool::new(false)),
             }
         };
@@ -625,7 +618,6 @@ mod test {
         // our_addr different
         let connection_3 = {
             let (tx, _) = mpsc::channel();
-            let raii_joiner = RaiiThreadJoiner::new(thread!("DummyThread", move || ()));
 
             Connection {
                 protocol: Protocol::Tcp,
@@ -635,7 +627,6 @@ mod test {
                                                                                  200:30000"))),
                 hole_punched: false,
                 network_tx: RaiiSender(tx),
-                _network_read_joiner: raii_joiner,
                 closed: Arc::new(AtomicBool::new(false)),
             }
         };
@@ -646,7 +637,6 @@ mod test {
         // their_addr different
         let connection_4 = {
             let (tx, _) = mpsc::channel();
-            let raii_joiner = RaiiThreadJoiner::new(thread!("DummyThread", move || ()));
 
             Connection {
                 protocol: Protocol::Tcp,
@@ -656,7 +646,6 @@ mod test {
                                                                                  200:30000"))),
                 hole_punched: false,
                 network_tx: RaiiSender(tx),
-                _network_read_joiner: raii_joiner,
                 closed: Arc::new(AtomicBool::new(false)),
             }
         };
@@ -667,7 +656,6 @@ mod test {
         // closed different
         let connection_5 = {
             let (tx, _) = mpsc::channel();
-            let raii_joiner = RaiiThreadJoiner::new(thread!("DummyThread", move || ()));
 
             Connection {
                 protocol: Protocol::Tcp,
@@ -677,7 +665,6 @@ mod test {
                                                                                  200:30000"))),
                 hole_punched: false,
                 network_tx: RaiiSender(tx),
-                _network_read_joiner: raii_joiner,
                 closed: Arc::new(AtomicBool::new(true)),
             }
         };
