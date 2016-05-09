@@ -24,7 +24,8 @@ use std::sync::atomic::{Ordering, AtomicBool};
 use std::net::{Shutdown, TcpStream, Ipv4Addr, SocketAddrV4};
 use std::net;
 use std::io;
-use std::time::Duration;
+use std::time::{Duration, Instant};
+use std::u8;
 
 use itertools::Itertools;
 use maidsafe_utilities::event_sender::{EventSenderError, MaidSafeEventCategory};
@@ -102,8 +103,8 @@ impl Connection {
     }
 
     /// Send the `data` to a peer via this connection.
-    pub fn send(&mut self, msg: CrustMsg) -> io::Result<()> {
-        self.network_tx.send(msg)
+    pub fn send(&mut self, msg: CrustMsg, priority: u8) -> io::Result<()> {
+        self.network_tx.send(msg, priority)
     }
 
     /// Returns whether this connection has been closed.
@@ -226,8 +227,8 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
     let mut network_rx = Receiver::tcp(network_input);
     let (their_id, event) = match their_expected_id {
         None => {
-            match writer.send(WriteEvent::Write(CrustMsg::BootstrapRequest(our_public_key,
-                                                                           version_hash))) {
+            let msg = CrustMsg::BootstrapRequest(our_public_key, version_hash);
+            match writer.send(WriteEvent::Write(msg, Instant::now(), u8::MAX)) {
                 Ok(()) => (),
                 Err(_) => {
                     error!("Receiver shut down");
@@ -253,7 +254,8 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
             }
         }
         Some(id) => {
-            match writer.send(WriteEvent::Write(CrustMsg::Connect(our_public_key, version_hash))) {
+            let msg = CrustMsg::Connect(our_public_key, version_hash);
+            match writer.send(WriteEvent::Write(msg, Instant::now(), u8::MAX)) {
                 Ok(()) => (),
                 Err(_) => {
                     error!("Receiver shut down");
@@ -455,7 +457,7 @@ pub fn start_tcp_accept(port: u16,
                 error!("Connected to ourselves");
             } else if version != version_hash {
                 error!("Incompatible protocol version.");
-            } else if writer.send(WriteEvent::Write(response)).is_err() {
+            } else if writer.send(WriteEvent::Write(response, Instant::now(), u8::MAX)).is_err() {
                 error!("Receiver shutdown!");
             } else {
                 let peer_id = peer_id::new_id(key);

@@ -19,17 +19,16 @@ use itertools::Itertools;
 use sender_receiver::CrustMsg;
 use std::net::{TcpStream, Shutdown};
 use socket_addr::SocketAddr;
-use std::collections::VecDeque;
+use std::collections::{BTreeMap, VecDeque};
 use std::io;
 use std::thread;
 use std::sync::mpsc::{self, TryRecvError, Sender};
 use std::io::Write;
 use std::time::{Duration, Instant};
+use std::u8;
 
 use event::WriteEvent;
 
-/// Threshold in bytes below which messages are prioritised.
-const SIZE_THRESHOLD: usize = 2 * 1024;
 /// Maximum age of a message waiting to be sent. If a message is older, the queue is dropped.
 const MAX_MSG_AGE_SECS: u64 = 60;
 
@@ -66,13 +65,6 @@ pub fn upgrade_tcp(stream: TcpStream,
     Ok((s1, upgrade_writer(s2, heartbeat_period)))
 }
 
-fn get_msg_priority(msg: &CrustMsg) -> usize {
-    match *msg {
-        CrustMsg::Message(ref data) if data.len() > SIZE_THRESHOLD => 1,
-        _ => 0,
-    }
-}
-
 fn upgrade_writer(mut stream: TcpStream, heartbeat_period: Duration) -> Sender<WriteEvent> {
     use std::io::Write;
     use bincode::SizeLimit;
@@ -82,7 +74,7 @@ fn upgrade_writer(mut stream: TcpStream, heartbeat_period: Duration) -> Sender<W
     let (tx, rx) = mpsc::channel();
     let send_msgs = move || {
         // Message queues, sorted by descending priority.
-        let mut msgs = [VecDeque::new(), VecDeque::new()];
+        let mut msgs = BTreeMap::new();
         let mut last_write_instant = Instant::now();
 
         let heart_beat_payload = unwrap_result!(serialise_with_limit(&CrustMsg::Heartbeat,
@@ -95,20 +87,21 @@ fn upgrade_writer(mut stream: TcpStream, heartbeat_period: Duration) -> Sender<W
             // Sort all messages from the channel by priority.
             loop {
                 match rx.try_recv() {
-                    Ok(WriteEvent::Write(data)) => {
-                        let index = get_msg_priority(&data);
-                        msgs[index].push_back((data, Instant::now()));
+                    Ok(WriteEvent::Write(data, timestamp, priority)) => {
+                        msgs.entry(priority)
+                            .or_insert_with(VecDeque::new)
+                            .push_back((data, timestamp));
                     }
                     Err(TryRecvError::Disconnected) |
                     Ok(WriteEvent::Shutdown) => break 'outer,
                     Err(TryRecvError::Empty) => break,
                 }
             }
-            // Empty all queues with a message older than `MAX_MSG_AGE_SECS`.
-            msgs.iter_mut().enumerate().foreach(|(priority, queue)| {
+            // Empty all queues except number 255, with a message older than `MAX_MSG_AGE_SECS`.
+            msgs.iter_mut().foreach(|(priority, queue)| {
                 if let Some(&(_, ref timestamp)) = queue.front() {
-                    if timestamp.elapsed().as_secs() <= MAX_MSG_AGE_SECS {
-                        return; // The first message in the queue has not expired.
+                    if *priority == u8::MAX || timestamp.elapsed().as_secs() <= MAX_MSG_AGE_SECS {
+                        return; // The first message in the queue has not expired or priority is 0.
                     }
                 } else {
                     return; // The queue is empty.
@@ -119,7 +112,7 @@ fn upgrade_writer(mut stream: TcpStream, heartbeat_period: Duration) -> Sender<W
                 queue.clear();
             });
             // Send the highest-priority message.
-            match msgs.iter_mut().filter_map(VecDeque::pop_front).next() {
+            match msgs.iter_mut().rev().filter_map(|(_, deque)| deque.pop_front()).next() {
                 Some((data, _)) => {
                     let payload = unwrap_result!(serialise_with_limit(&data, SizeLimit::Infinite));
                     let size = payload.len() as u32;
@@ -168,7 +161,7 @@ mod test {
     use std::net;
     use std::net::TcpListener;
     use std::str::FromStr;
-    use std::time::Duration;
+    use std::time::{Duration, Instant};
     use std::sync::mpsc;
     use socket_addr::SocketAddr;
     use event::WriteEvent;
@@ -193,7 +186,7 @@ mod test {
 
         for x in 0..10 {
             let x = vec![x];
-            o.send(WriteEvent::Write(CrustMsg::Message(x))).unwrap()
+            o.send(WriteEvent::Write(CrustMsg::Message(x), Instant::now(), 0)).unwrap()
         }
         let t = thread::spawn(move || {
             let connection = unwrap_result!(listener.accept()).0;
@@ -214,7 +207,7 @@ mod test {
             for item in &mut buf {
                 *item += 1;
             }
-            unwrap_result!(o.send(WriteEvent::Write(CrustMsg::Message(buf))));
+            unwrap_result!(o.send(WriteEvent::Write(CrustMsg::Message(buf), Instant::now(), 0)));
             assert!(rx.receive().is_err()); // Wait for the receiver to close the connection.
         });
         // Collect everything that we get back.
@@ -262,7 +255,8 @@ mod test {
                 for i in 0..MSG_COUNT as u8 {
                     buf.push(i)
                 }
-                o.send(WriteEvent::Write(CrustMsg::Message(buf.clone()))).unwrap();
+                o.send(WriteEvent::Write(CrustMsg::Message(buf.clone()), Instant::now(), 0))
+                 .unwrap();
 
                 let mut rx = Receiver::tcp(i);
                 let msg = match unwrap_result!(rx.receive()) {
@@ -285,7 +279,9 @@ mod test {
                 for item in &mut msg {
                     *item += 1
                 }
-                unwrap_result!(o.send(WriteEvent::Write(CrustMsg::Message(msg))));
+                unwrap_result!(o.send(WriteEvent::Write(CrustMsg::Message(msg),
+                                                        Instant::now(),
+                                                        0)));
                 assert!(rx.receive().is_err()); // Wait for the receiver to close the connection.
             });
             unwrap_result!(send_thread.join());
@@ -334,7 +330,8 @@ mod test {
 
         for i in 0..MSG_COUNT {
             let msg = unwrap_result!(serialise(&format!("MSG{}", i)));
-            assert!(o1.send(WriteEvent::Write(CrustMsg::Message(msg.clone()))).is_ok());
+            assert!(o1.send(WriteEvent::Write(CrustMsg::Message(msg.clone()), Instant::now(), 0))
+                      .is_ok());
         }
 
         assert!(t.join().is_ok());
@@ -407,7 +404,9 @@ mod test {
         for _ in 0..100 {
             let cipher_text = box_::seal(&payload, &en_nonce, &en_pk, &en_sk);
             let signed_payload = sign::sign(&cipher_text, &sk);
-            unwrap_result!(writer.send(WriteEvent::Write(CrustMsg::Message(signed_payload))));
+            unwrap_result!(writer.send(WriteEvent::Write(CrustMsg::Message(signed_payload),
+                                                         Instant::now(),
+                                                         0)));
         }
 
         unwrap_result!(finished_rx.recv());
