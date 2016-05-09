@@ -27,6 +27,7 @@ use std::io;
 use std::time::Duration;
 
 use itertools::Itertools;
+use rand;
 use maidsafe_utilities::event_sender::{EventSenderError, MaidSafeEventCategory};
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 use static_contact_info::StaticContactInfo;
@@ -47,8 +48,7 @@ type CrustEventSenderError = EventSenderError<MaidSafeEventCategory, Event>;
 
 #[derive(Debug, Clone, Copy)]
 pub enum EstablishmentMethod {
-    DirectInitiated,
-    DirectAccepted,
+    Direct(u32),
     Rendezvous,
 }
 
@@ -230,12 +230,14 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
                                                                     inactivity_timeout));
     let our_addr = SocketAddr(try!(network_input.local_addr()));
     let their_addr = SocketAddr(try!(network_input.peer_addr()));
+    let conn_id: u32 = rand::random();
 
     let mut network_rx = Receiver::tcp(network_input);
     let (their_id, event) = match their_expected_id {
         None => {
             match writer.send(WriteEvent::Write(CrustMsg::BootstrapRequest(our_public_key,
-                                                                           version_hash))) {
+                                                                           version_hash,
+                                                                           conn_id))) {
                 Ok(()) => (),
                 Err(_) => {
                     error!("Receiver shut down");
@@ -261,7 +263,7 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
             }
         }
         Some(id) => {
-            match writer.send(WriteEvent::Write(CrustMsg::Connect(our_public_key, version_hash))) {
+            match writer.send(WriteEvent::Write(CrustMsg::Connect(our_public_key, version_hash, conn_id))) {
                 Ok(()) => (),
                 Err(_) => {
                     error!("Receiver shut down");
@@ -269,7 +271,7 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
                 }
             }
             match network_rx.receive() {
-                Ok(CrustMsg::Connect(key, v)) => {
+                Ok(CrustMsg::Connect(key, v, _)) => {
                     let their_id = peer_id::new_id(key);
                     if v != version_hash {
                         return Err(io::Error::new(io::ErrorKind::Other,
@@ -316,19 +318,16 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
                                              event_tx,
                                              our_addr,
                                              their_addr,
-                                             EstablishmentMethod::DirectInitiated);
+                                             EstablishmentMethod::Direct(conn_id));
     match cm.entry(their_id) {
         Entry::Occupied(ref mut oe) => match oe.get().establishment_method {
 
             // Rendezvous connects take precedence over direct connects
             EstablishmentMethod::Rendezvous => (),
 
-            // This shouldn't be possible, but whatevs
-            EstablishmentMethod::DirectInitiated => (),
-
-            // If we have the higher id then we keep the initiated side.
-            EstablishmentMethod::DirectAccepted => {
-                if peer_id::new_id(our_public_key) > their_id {
+            // Go with the higher conn_id
+            EstablishmentMethod::Direct(old_conn_id) => {
+                if conn_id > old_conn_id {
                     let _ = oe.insert(connection);
                 }
             },
@@ -456,19 +455,19 @@ pub fn start_tcp_accept(port: u16,
 
             let mut network_rx = Receiver::tcp(network_input);
 
-            let (key, version, response, event) = match network_rx.receive() {
-                Ok(CrustMsg::BootstrapRequest(key, version)) => {
+            let (key, version, response, event, conn_id) = match network_rx.receive() {
+                Ok(CrustMsg::BootstrapRequest(key, version, conn_id)) => {
                     let peer_id = peer_id::new_id(key);
                     let bootstrap_response = CrustMsg::BootstrapResponse(our_public_key);
-                    (key, version, bootstrap_response, Event::BootstrapAccept(peer_id))
+                    (key, version, bootstrap_response, Event::BootstrapAccept(peer_id), conn_id)
                 }
-                Ok(CrustMsg::Connect(key, version)) => {
+                Ok(CrustMsg::Connect(key, version, conn_id)) => {
                     let peer_id = peer_id::new_id(key);
                     if !expected_peers.lock().unwrap().remove(&peer_id) {
                         continue;
                     }
-                    let connect_msg = CrustMsg::Connect(our_public_key, version_hash);
-                    (key, version, connect_msg, Event::NewPeer(Ok(()), peer_id))
+                    let connect_msg = CrustMsg::Connect(our_public_key, version_hash, conn_id);
+                    (key, version, connect_msg, Event::NewPeer(Ok(()), peer_id), conn_id)
                 }
                 Ok(msg) => {
                     error!("Unexpected crust msg on TCP accept: {:?}", msg);
@@ -499,16 +498,14 @@ pub fn start_tcp_accept(port: u16,
                                                          event_tx.clone(),
                                                          our_addr,
                                                          their_addr,
-                                                         EstablishmentMethod::DirectAccepted);
+                                                         EstablishmentMethod::Direct(conn_id));
 
                 match cm.entry(their_id) {
                     Entry::Occupied(ref mut oe) => match oe.get().establishment_method {
                         // Rendezvous connects take precedence over direct connects
                         EstablishmentMethod::Rendezvous => (),
-                        EstablishmentMethod::DirectAccepted => (),
-                        // If we have the lower id then we use the accepted side.
-                        EstablishmentMethod::DirectInitiated => {
-                            if their_id > peer_id::new_id(our_public_key) {
+                        EstablishmentMethod::Direct(old_conn_id) => {
+                            if conn_id > old_conn_id {
                                 let _ = oe.insert(connection);
                             }
                         },
