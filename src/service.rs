@@ -108,7 +108,9 @@ fn version_hash() -> u64 {
     let mut hasher = SipHasher::new();
     cargo_version.hash(&mut hasher);
     network_version.hash(&mut hasher);
-    hasher.finish()
+    let version_hash = hasher.finish();
+    debug!("Crust version hash: {}", version_hash);
+    version_hash
 }
 
 /// A structure representing a connection manager.
