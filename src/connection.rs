@@ -44,6 +44,13 @@ use sodiumoxide::crypto::box_::PublicKey;
 
 type CrustEventSenderError = EventSenderError<MaidSafeEventCategory, Event>;
 
+#[derive(Debug, Clone, Copy)]
+pub enum EstablishmentMethod {
+    DirectInitiated,
+    DirectAccepted,
+    Rendezvous,
+}
+
 /// An open connection that can be used to send messages to a peer.
 ///
 /// Messages *from* the peer are received as Crust events, together with the peer's public key.
@@ -53,7 +60,7 @@ pub struct Connection {
     protocol: Protocol,
     our_addr: SocketAddr,
     their_addr: SocketAddr,
-    hole_punched: bool,
+    establishment_method: EstablishmentMethod,
     network_tx: RaiiSender,
     _network_read_joiner: RaiiThreadJoiner,
     closed: Arc<AtomicBool>,
@@ -64,7 +71,7 @@ pub struct ConnectionInfo {
     pub protocol: Protocol,
     pub our_addr: SocketAddr,
     pub their_addr: SocketAddr,
-    pub hole_punched: bool,
+    pub establishment_method: EstablishmentMethod,
     pub closed: bool,
 }
 
@@ -82,7 +89,7 @@ impl Debug for Connection {
         f.debug_struct("Connection")
          .field("our_addr", &self.our_addr)
          .field("their_addr", &self.their_addr)
-         .field("hole_punched", &self.hole_punched)
+         .field("establishment_method", &self.establishment_method)
          .field("closed", &self.closed.load(Ordering::Relaxed))
          .finish()
     }
@@ -95,7 +102,7 @@ impl Connection {
             protocol: self.protocol,
             our_addr: self.our_addr,
             their_addr: self.their_addr,
-            hole_punched: self.hole_punched,
+            establishment_method: self.establishment_method,
             closed: self.closed.load(Ordering::Relaxed),
         }
     }
@@ -137,7 +144,7 @@ pub fn connect(peer_contact: StaticContactInfo,
                inactivity_timeout: Duration,
                our_public_key: PublicKey,
                event_tx: ::CrustEventSender,
-               connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
+               connection_map: Arc<Mutex<HashMap<PeerId, Connection>>>,
                bootstrap_cache: Arc<Mutex<BootstrapHandler>>,
                mc: &MappingContext,
                version_hash: u64)
@@ -175,7 +182,7 @@ pub fn connect(peer_contact: StaticContactInfo,
     Err(last_err)
 }
 
-pub fn tcp_rendezvous_connect(connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
+pub fn tcp_rendezvous_connect(connection_map: Arc<Mutex<HashMap<PeerId, Connection>>>,
                               heart_beat_timeout: Duration,
                               inactivity_timeout: Duration,
                               event_tx: ::CrustEventSender,
@@ -200,9 +207,10 @@ pub fn tcp_rendezvous_connect(connection_map: Arc<Mutex<HashMap<PeerId, Vec<Conn
                                              event_tx,
                                              our_addr,
                                              their_addr,
-                                             true);
+                                             EstablishmentMethod::Rendezvous);
 
-    cm.entry(their_id).or_insert_with(Vec::new).push(connection);
+    // Hole-punched connections take priority over any other kind of connection.
+    let _ = cm.insert(their_id, connection);
     Ok(())
 }
 
@@ -211,7 +219,7 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
                             inactivity_timeout: Duration,
                             our_public_key: PublicKey,
                             event_tx: ::CrustEventSender,
-                            connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
+                            connection_map: Arc<Mutex<HashMap<PeerId, Connection>>>,
                             expected_peers: Option<Arc<Mutex<HashSet<PeerId>>>>,
                             their_expected_id: Option<PeerId>,
                             version_hash: u64)
@@ -307,19 +315,39 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
                                              event_tx,
                                              our_addr,
                                              their_addr,
-                                             false);
-    cm.entry(their_id).or_insert_with(|| vec![]).push(connection);
+                                             EstablishmentMethod::DirectInitiated);
+    match cm.entry(their_id) {
+        Entry::Occupied(ref mut oe) => match oe.get().establishment_method {
+
+            // Rendezvous connects take precedence over direct connects
+            EstablishmentMethod::Rendezvous => (),
+
+            // This shouldn't be possible, but whatevs
+            EstablishmentMethod::DirectInitiated => (),
+
+            // If we have the higher id then we keep the initiated side.
+            EstablishmentMethod::DirectAccepted => {
+                if peer_id::new_id(our_public_key) > their_id {
+                    let _ = oe.insert(connection);
+                }
+            },
+        },
+        Entry::Vacant(ve) => {
+            let _ = ve.insert(connection);
+        },
+    };
+
     Ok(())
 }
 
-fn register_tcp_connection(connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
+fn register_tcp_connection(connection_map: Arc<Mutex<HashMap<PeerId, Connection>>>,
                            their_id: PeerId,
                            network_rx: Receiver,
                            network_tx: RaiiSender,
                            event_tx: ::CrustEventSender,
                            our_addr: SocketAddr,
                            their_addr: SocketAddr,
-                           hole_punched: bool)
+                           establishment_method: EstablishmentMethod)
                            -> Connection {
     let closed = Arc::new(AtomicBool::new(false));
     let closed_clone = closed.clone();
@@ -332,7 +360,7 @@ fn register_tcp_connection(connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connect
         protocol: Protocol::Tcp,
         our_addr: our_addr,
         their_addr: their_addr,
-        hole_punched: hole_punched,
+        establishment_method: establishment_method,
         network_tx: network_tx,
         _network_read_joiner: joiner,
         closed: closed,
@@ -346,7 +374,7 @@ pub fn start_tcp_accept(port: u16,
                         our_contact_info: Arc<Mutex<StaticContactInfo>>,
                         our_public_key: PublicKey,
                         event_tx: ::CrustEventSender,
-                        connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
+                        connection_map: Arc<Mutex<HashMap<PeerId, Connection>>>,
                         // TODO(canndrew): We currently don't share static contact infos on
                         // accepting a connection
                         _bootstrap_cache: Arc<Mutex<BootstrapHandler>>,
@@ -495,11 +523,23 @@ pub fn start_tcp_accept(port: u16,
                                                      event_tx.clone(),
                                                      our_addr,
                                                      their_addr,
-                                                     false);
-
-            cm.entry(their_id)
-              .or_insert_with(Vec::new)
-              .push(connection);
+                                                     EstablishmentMethod::DirectAccepted);
+            match cm.entry(their_id) {
+                Entry::Occupied(ref mut oe) => match oe.get().establishment_method {
+                    // Rendezvous connects take precedence over direct connects
+                    EstablishmentMethod::Rendezvous => (),
+                    EstablishmentMethod::DirectAccepted => (),
+                    // If we have the lower id then we use the accepted side.
+                    EstablishmentMethod::DirectInitiated => {
+                        if their_id > peer_id::new_id(our_public_key) {
+                            let _ = oe.insert(connection);
+                        }
+                    },
+                },
+                Entry::Vacant(ve) => {
+                    let _ = ve.insert(connection);
+                },
+            }
         }
     }));
 
@@ -514,7 +554,7 @@ fn start_rx(mut network_rx: Receiver,
             their_id: PeerId,
             event_tx: ::CrustEventSender,
             closed: Arc<AtomicBool>,
-            connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>) {
+            connection_map: Arc<Mutex<HashMap<PeerId, Connection>>>) {
     loop {
         match network_rx.receive() {
             Ok(msg) => {
@@ -540,9 +580,8 @@ fn start_rx(mut network_rx: Receiver,
     // Drop the connection in a separate thread, because the destructor joins _this_ thread.
     let _ = thread!("ConnectionDropper", move || {
         let mut lock = unwrap_result!(connection_map.lock());
-        if let Entry::Occupied(mut entry) = lock.entry(their_id) {
-            entry.get_mut().retain(|connection| !connection.is_closed());
-            if entry.get().is_empty() {
+        if let Entry::Occupied(entry) = lock.entry(their_id) {
+            if entry.get().is_closed() {
                 let _ = entry.remove();
                 trace!("Sending LostPeer({}) event.", their_id);
                 if let Err(err) = event_tx.send(Event::LostPeer(their_id)) {
@@ -554,34 +593,31 @@ fn start_rx(mut network_rx: Receiver,
     });
 }
 
-fn notify_new_connection(connection_map: &HashMap<PeerId, Vec<Connection>>,
+fn notify_new_connection(connection_map: &HashMap<PeerId, Connection>,
                          peer_id: &PeerId,
                          event: Event,
                          event_tx: &::CrustEventSender)
                          -> Result<(), CrustEventSenderError> {
     print_connection_stats(connection_map);
-    if connection_map.get(peer_id).into_iter().all(Vec::is_empty) {
+    if !connection_map.contains_key(peer_id) {
         event_tx.send(event)
     } else {
         Ok(())
     }
 }
 
-pub fn print_connection_stats(connection_map: &HashMap<PeerId, Vec<Connection>>) {
+pub fn print_connection_stats(connection_map: &HashMap<PeerId, Connection>) {
     let mut punched = 0usize;
     let mut direct = 0usize;
-    let mut connection_count = 0usize;
-    for connection in connection_map.values().flat_map(|connections| connections.iter()) {
-        connection_count += 1;
-        if connection.hole_punched {
+    for (_peer_id, conn) in connection_map {
+        if let EstablishmentMethod::Rendezvous = conn.establishment_method {
             punched += 1;
         } else {
             direct += 1;
         };
     }
-    debug!("Stats - {} connections to {} peers - direct: {}, punched: {}",
-           connection_count,
-           connection_map.len(),
+    debug!("Stats - {} connections - direct: {}, punched: {}",
+           direct + punched,
            direct,
            punched);
 }
@@ -622,7 +658,7 @@ mod test {
                                                                                30000"))),
                 their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.\
                                                                                  200:30000"))),
-                hole_punched: false,
+                establishment_method: EstablishmentMethod::Rendezvous,
                 network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
                 closed: Arc::new(AtomicBool::new(false)),
@@ -640,7 +676,7 @@ mod test {
                                                                                30000"))),
                 their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.\
                                                                                  200:30000"))),
-                hole_punched: false,
+                establishment_method: EstablishmentMethod::Rendezvous,
                 network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
                 closed: Arc::new(AtomicBool::new(false)),
@@ -662,7 +698,7 @@ mod test {
                                                                                30000"))),
                 their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.\
                                                                                  200:30000"))),
-                hole_punched: false,
+                establishment_method: EstablishmentMethod::Rendezvous,
                 network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
                 closed: Arc::new(AtomicBool::new(false)),
@@ -683,7 +719,7 @@ mod test {
                                                                                30000"))),
                 their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.253.\
                                                                                  200:30000"))),
-                hole_punched: false,
+                establishment_method: EstablishmentMethod::Rendezvous,
                 network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
                 closed: Arc::new(AtomicBool::new(false)),
@@ -704,7 +740,7 @@ mod test {
                                                                                30000"))),
                 their_addr: SocketAddr(unwrap_result!(net::SocketAddr::from_str("11.199.254.\
                                                                                  200:30000"))),
-                hole_punched: false,
+                establishment_method: EstablishmentMethod::Rendezvous,
                 network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
                 closed: Arc::new(AtomicBool::new(true)),
