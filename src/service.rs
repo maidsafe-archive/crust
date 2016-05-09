@@ -330,7 +330,7 @@ impl Service {
             return;
         }
 
-        if !unwrap_result!(self.connection_map.lock()).contains_key(&their_id) {
+        if unwrap_result!(self.connection_map.lock()).contains_key(&their_id) {
             return;
         }
 
