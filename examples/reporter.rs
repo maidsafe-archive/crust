@@ -292,7 +292,7 @@ fn handle_messages(config: &Config,
                     }
 
                     if peers.lock().unwrap().contains(&peer_id) {
-                        unwrap_result!(service.send(&peer_id, message_bytes.clone()));
+                        unwrap_result!(service.send(&peer_id, message_bytes.clone(), 0));
                         sent_at = Instant::now();
 
                         *stats.entry(format!("{:?}", peer_id)).or_insert(0) += 1;

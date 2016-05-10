@@ -25,7 +25,6 @@ use std::thread;
 use std::sync::mpsc::{self, TryRecvError, Sender};
 use std::io::Write;
 use std::time::{Duration, Instant};
-use std::u8;
 
 use event::WriteEvent;
 
@@ -100,7 +99,7 @@ fn upgrade_writer(mut stream: TcpStream, heartbeat_period: Duration) -> Sender<W
             // Empty all queues except number 255, with a message older than `MAX_MSG_AGE_SECS`.
             msgs.iter_mut().foreach(|(priority, queue)| {
                 if let Some(&(_, ref timestamp)) = queue.front() {
-                    if *priority == u8::MAX || timestamp.elapsed().as_secs() <= MAX_MSG_AGE_SECS {
+                    if *priority == 0 || timestamp.elapsed().as_secs() <= MAX_MSG_AGE_SECS {
                         return; // The first message in the queue has not expired or priority is 0.
                     }
                 } else {
@@ -112,7 +111,7 @@ fn upgrade_writer(mut stream: TcpStream, heartbeat_period: Duration) -> Sender<W
                 queue.clear();
             });
             // Send the highest-priority message.
-            match msgs.iter_mut().rev().filter_map(|(_, deque)| deque.pop_front()).next() {
+            match msgs.iter_mut().filter_map(|(_, deque)| deque.pop_front()).next() {
                 Some((data, _)) => {
                     let payload = unwrap_result!(serialise_with_limit(&data, SizeLimit::Infinite));
                     let size = payload.len() as u32;

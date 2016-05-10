@@ -25,7 +25,6 @@ use std::net::{Shutdown, TcpStream, Ipv4Addr, SocketAddrV4};
 use std::net;
 use std::io;
 use std::time::{Duration, Instant};
-use std::u8;
 
 use itertools::Itertools;
 use maidsafe_utilities::event_sender::{EventSenderError, MaidSafeEventCategory};
@@ -228,7 +227,7 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
     let (their_id, event) = match their_expected_id {
         None => {
             let msg = CrustMsg::BootstrapRequest(our_public_key, version_hash);
-            match writer.send(WriteEvent::Write(msg, Instant::now(), u8::MAX)) {
+            match writer.send(WriteEvent::Write(msg, Instant::now(), 0)) {
                 Ok(()) => (),
                 Err(_) => {
                     error!("Receiver shut down");
@@ -255,7 +254,7 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
         }
         Some(id) => {
             let msg = CrustMsg::Connect(our_public_key, version_hash);
-            match writer.send(WriteEvent::Write(msg, Instant::now(), u8::MAX)) {
+            match writer.send(WriteEvent::Write(msg, Instant::now(), 0)) {
                 Ok(()) => (),
                 Err(_) => {
                     error!("Receiver shut down");
@@ -457,7 +456,7 @@ pub fn start_tcp_accept(port: u16,
                 error!("Connected to ourselves");
             } else if version != version_hash {
                 error!("Incompatible protocol version.");
-            } else if writer.send(WriteEvent::Write(response, Instant::now(), u8::MAX)).is_err() {
+            } else if writer.send(WriteEvent::Write(response, Instant::now(), 0)).is_err() {
                 error!("Receiver shutdown!");
             } else {
                 let peer_id = peer_id::new_id(key);

@@ -473,7 +473,7 @@ fn main() {
             let sleep_time = cmp::max(1, 1000 / times);
             for _ in 0..times {
                 unwrap_result!(unwrap_result!(service.lock())
-                                   .send(peer_id, generate_random_vec_u8(length as usize)));
+                                   .send(peer_id, generate_random_vec_u8(length as usize), 0));
                 debug!("Sent a message with length of {} bytes to {:?}",
                        length,
                        peer_id);
@@ -534,7 +534,7 @@ fn main() {
                     match network.get_peer_id(peer_index) {
                         Some(ref mut peer_id) => {
                             unwrap_result!(unwrap_result!(service.lock())
-                                               .send(peer_id, message.into_bytes()));
+                                               .send(peer_id, message.into_bytes(), 0));
                         }
                         None => println!("Invalid connection #"),
                     }
@@ -543,7 +543,8 @@ fn main() {
                     let mut network = unwrap_result!(network.lock());
                     let msg = message.into_bytes();
                     for (_, peer_id) in network.nodes.iter_mut() {
-                        unwrap_result!(unwrap_result!(service.lock()).send(peer_id, msg.clone()));
+                        unwrap_result!(unwrap_result!(service.lock())
+                                           .send(peer_id, msg.clone(), 0));
                     }
                 }
                 UserCommand::List => {
