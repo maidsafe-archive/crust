@@ -18,6 +18,7 @@
 use peer_id::PeerId;
 use service::ConnectionInfoResult;
 use std::io;
+use std::time::Instant;
 use sender_receiver::CrustMsg;
 
 // This is necessary to gracefully exit the threads. In current design, there is no control over
@@ -26,7 +27,7 @@ use sender_receiver::CrustMsg;
 // the future.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum WriteEvent {
-    Write(CrustMsg),
+    Write(CrustMsg, Instant, u8),
     Shutdown,
 }
 

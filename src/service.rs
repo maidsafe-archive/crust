@@ -108,7 +108,9 @@ fn version_hash() -> u64 {
     let mut hasher = SipHasher::new();
     cargo_version.hash(&mut hasher);
     network_version.hash(&mut hasher);
-    hasher.finish()
+    let version_hash = hasher.finish();
+    debug!("Crust version hash: {}", version_hash);
+    version_hash
 }
 
 /// A structure representing a connection manager.
@@ -275,6 +277,14 @@ impl Service {
 
     /// Send the given `data` to the peer with the given `PeerId`.
     pub fn send(&self, id: &PeerId, data: Vec<u8>) -> io::Result<()> {
+        self.send_with_priority(id, data, 0)
+    }
+
+    /// Send the given `data` to the peer with the given `PeerId`.
+    ///
+    /// Messages with a higher `priority` number will be sent before other messages even if `send`
+    /// was called for them first, and they are less likely to be dropped due to timeout.
+    pub fn send_with_priority(&self, id: &PeerId, data: Vec<u8>, priority: u8) -> io::Result<()> {
         match unwrap_result!(self.connection_map.lock())
                   .get_mut(&id)
                   .and_then(|conns| conns.get_mut(0)) {
@@ -282,7 +292,7 @@ impl Service {
                 let msg = format!("No connection to peer {}", id);
                 Err(io::Error::new(io::ErrorKind::Other, msg))
             }
-            Some(connection) => connection.send(CrustMsg::Message(data)),
+            Some(connection) => connection.send(CrustMsg::Message(data), priority),
         }
     }
 

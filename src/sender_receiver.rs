@@ -21,6 +21,7 @@ use std::io;
 use std::sync::mpsc;
 use std::io::BufReader;
 use std::net::TcpStream;
+use std::time::Instant;
 use rustc_serialize::Decodable;
 use socket_addr::SocketAddr;
 use sodiumoxide::crypto::box_::PublicKey;
@@ -30,9 +31,9 @@ const MAX_ALLOWED_TCP_PAYLOAD_SIZE: usize = 1024 * 1024 * 2;
 pub struct RaiiSender(pub mpsc::Sender<WriteEvent>);
 
 impl RaiiSender {
-    pub fn send(&self, msg: CrustMsg) -> io::Result<()> {
+    pub fn send(&self, msg: CrustMsg, priority: u8) -> io::Result<()> {
         self.0
-            .send(WriteEvent::Write(msg))
+            .send(WriteEvent::Write(msg, Instant::now(), priority))
             .map_err(|_| io::Error::new(io::ErrorKind::NotConnected, "can't send"))
     }
 }
