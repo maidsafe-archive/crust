@@ -500,7 +500,7 @@ pub fn start_tcp_accept(port: u16,
                                                          their_addr,
                                                          EstablishmentMethod::Direct(conn_id));
 
-                match cm.entry(their_id) {
+                match cm.entry(peer_id) {
                     Entry::Occupied(ref mut oe) => match oe.get().establishment_method {
                         // Rendezvous connects take precedence over direct connects
                         EstablishmentMethod::Rendezvous => (),
