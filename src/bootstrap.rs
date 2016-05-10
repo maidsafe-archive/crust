@@ -54,7 +54,7 @@ impl RaiiBootstrap {
                inactivity_timeout: Duration,
                our_public_key: PublicKey,
                event_tx: ::CrustEventSender,
-               connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
+               connection_map: Arc<Mutex<HashMap<PeerId, Connection>>>,
                bootstrap_cache: Arc<Mutex<BootstrapHandler>>,
                mc: Arc<MappingContext>,
                version_hash: u64)
@@ -91,7 +91,7 @@ impl RaiiBootstrap {
                  our_public_key: PublicKey,
                  stop_flag: Arc<AtomicBool>,
                  event_tx: ::CrustEventSender,
-                 connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
+                 connection_map: Arc<Mutex<HashMap<PeerId, Connection>>>,
                  bootstrap_cache: Arc<Mutex<BootstrapHandler>>,
                  mapping_context: &MappingContext,
                  version_hash: u64) {

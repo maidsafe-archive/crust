@@ -127,7 +127,7 @@ pub struct Service {
     event_tx: ::CrustEventSender,
     bootstrap: RaiiBootstrap,
     our_keys: (PublicKey, SecretKey),
-    connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
+    connection_map: Arc<Mutex<HashMap<PeerId, Connection>>>,
     mapping_context: Arc<MappingContext>,
     tcp_acceptor_port: Option<u16>,
     raii_tcp_acceptor: Option<RaiiTcpAcceptor>,
@@ -275,9 +275,7 @@ impl Service {
 
     /// Send the given `data` to the peer with the given `PeerId`.
     pub fn send(&self, id: &PeerId, data: Vec<u8>) -> io::Result<()> {
-        match unwrap_result!(self.connection_map.lock())
-                  .get_mut(&id)
-                  .and_then(|conns| conns.get_mut(0)) {
+        match unwrap_result!(self.connection_map.lock()).get_mut(&id) {
             None => {
                 let msg = format!("No connection to peer {}", id);
                 Err(io::Error::new(io::ErrorKind::Other, msg))
@@ -290,7 +288,6 @@ impl Service {
     pub fn connection_info(&self, id: &PeerId) -> Option<ConnectionInfo> {
         unwrap_result!(self.connection_map.lock())
             .get(&id)
-            .and_then(|conns| conns.get(0))
             .and_then(|conn| Some(conn.get_info()))
     }
 
@@ -328,10 +325,7 @@ impl Service {
             return;
         }
 
-        if !unwrap_result!(self.connection_map.lock())
-                .get(&their_id)
-                .into_iter()
-                .all(Vec::is_empty) {
+        if unwrap_result!(self.connection_map.lock()).contains_key(&their_id) {
             return;
         }
 
