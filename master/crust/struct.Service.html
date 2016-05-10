@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-275' class='srclink' href='../src/crust/src/service.rs.html#120-137' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-280' class='srclink' href='../src/crust/src/service.rs.html#122-139' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct Service {
     // some fields omitted
 }</pre><div class='docblock'><p>A structure representing a connection manager.</p>
@@ -71,6 +71,11 @@ library.</p>
 they are to be on a seperate network.</p>
 </div><h4 id='method.send' class='method'><code>fn <a href='#method.send' class='fnname'>send</a>(&amp;self, id: &amp;<a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a>, data: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
 <div class='docblock'><p>Send the given <code>data</code> to the peer with the given <code>PeerId</code>.</p>
+</div><h4 id='method.send_with_priority' class='method'><code>fn <a href='#method.send_with_priority' class='fnname'>send_with_priority</a>(&amp;self, id: &amp;<a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a>, data: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;, priority: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/std/io/error/type.Result.html' title='std::io::error::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt;</code></h4>
+<div class='docblock'><p>Send the given <code>data</code> to the peer with the given <code>PeerId</code>.</p>
+
+<p>Messages with a higher <code>priority</code> number will be sent before other messages even if <code>send</code>
+was called for them first, and they are less likely to be dropped due to timeout.</p>
 </div><h4 id='method.connection_info' class='method'><code>fn <a href='#method.connection_info' class='fnname'>connection_info</a>(&amp;self, id: &amp;<a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;ConnectionInfo&gt;</code></h4>
 <div class='docblock'><p>Get information about our connection to a peer.</p>
 </div><h4 id='method.disconnect' class='method'><code>fn <a href='#method.disconnect' class='fnname'>disconnect</a>(&amp;self, id: &amp;<a class='struct' href='../crust/struct.PeerId.html' title='crust::PeerId'>PeerId</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>

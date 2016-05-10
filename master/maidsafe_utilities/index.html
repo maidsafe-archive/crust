@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-0' class='srclink' href='../src/maidsafe_utilities/lib.rs.html#18-67' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-0' class='srclink' href='../src/maidsafe_utilities/lib.rs.html#18-74' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'>
 <h1 id='maidsafe-utilities' class='section-header'><a href='#maidsafe-utilities'>MaidSafe Utilities</a></h1>
 <p>Rust utility functions provided by MaidSafe.</p>
@@ -64,7 +64,11 @@
                         <td><a class='mod' href='log/index.html'
                                title='maidsafe_utilities::log'>log</a></td>
                         <td class='docblock short'>
-                             <p>Allows initialising the env_logger with a standard message format.</p>
+                             <p>Allows initialising the <code>env_logger</code> with a standard message format.
+These functions can initialise logging for output to stdout only, or to a file and stdout.  For
+more fine-grained control, create a file called <code>log.toml</code> in the root directory of the project,
+or in the same directory where the executable is.  See <a href="http://sfackler.github.io/log4rs/doc/v0.3.3/log4rs/index.html">log4rs docs</a> for details about the format and
+structure of this file.</p>
                         </td>
                     </tr>
                 

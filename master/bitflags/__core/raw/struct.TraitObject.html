@@ -48,8 +48,8 @@
             </a>
         </span><a id='src-30378' class='srclink' href='https://doc.rust-lang.org/nightly/core/raw/struct.TraitObject.html?gotosrc=30378' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct TraitObject {
-    pub data: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut </a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>,
-    pub vtable: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.pointer.html'>*mut </a><a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.tuple.html'>()</a>,
+    pub data: *mut (),
+    pub vtable: *mut (),
 }</pre><div class='stability'><em class='stab unstable'>Unstable (<code>raw</code>)</em></div><div class='docblock'><p>The representation of a trait object like <code>&amp;SomeTrait</code>.</p>
 
 <p>This struct has the same layout as types like <code>&amp;SomeTrait</code> and
