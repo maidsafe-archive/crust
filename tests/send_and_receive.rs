@@ -109,7 +109,7 @@ fn spawn_sending_node() -> JoinHandle<usize> {
             match event {
                 Event::BootstrapConnect(peer_id) => {
                     for _ in 0..NUM_MESSAGES_PER_SENDER {
-                        let _ = unwrap_result!(service.send(&peer_id, message.clone()));
+                        let _ = unwrap_result!(service.send(&peer_id, message.clone(), 0));
                         num_messages += 1;
                         thread::yield_now();
                     }

@@ -276,15 +276,10 @@ impl Service {
     }
 
     /// Send the given `data` to the peer with the given `PeerId`.
-    pub fn send(&self, id: &PeerId, data: Vec<u8>) -> io::Result<()> {
-        self.send_with_priority(id, data, 0)
-    }
-
-    /// Send the given `data` to the peer with the given `PeerId`.
     ///
-    /// Messages with a higher `priority` number will be sent before other messages even if `send`
-    /// was called for them first, and they are less likely to be dropped due to timeout.
-    pub fn send_with_priority(&self, id: &PeerId, data: Vec<u8>, priority: u8) -> io::Result<()> {
+    /// Messages with a _lower_ value for `priority` will be sent _before_ messages with a higher
+    /// number, and they are _less_ likely to be dropped if the upstream bandwidth is insufficient.
+    pub fn send(&self, id: &PeerId, data: Vec<u8>, priority: u8) -> io::Result<()> {
         match unwrap_result!(self.connection_map.lock())
                   .get_mut(&id)
                   .and_then(|conns| conns.get_mut(0)) {
@@ -687,7 +682,7 @@ mod test {
         // send data from 0 to 1
         {
             let data_txd = vec![0, 1, 255, 254, 222, 1];
-            unwrap_result!(service_0.send(&id_1, data_txd.clone()));
+            unwrap_result!(service_0.send(&id_1, data_txd.clone(), 0));
 
             // 1 should rx data
             let (data_rxd, peer_id) = {
@@ -705,7 +700,7 @@ mod test {
         // send data from 1 to 0
         {
             let data_txd = vec![10, 11, 155, 214, 202];
-            unwrap_result!(service_1.send(&id_0, data_txd.clone()));
+            unwrap_result!(service_1.send(&id_0, data_txd.clone(), 0));
 
             // 0 should rx data
             let (data_rxd, peer_id) = {
@@ -808,7 +803,7 @@ mod test {
         // send data from 0 to 1
         {
             let data_txd = vec![0, 1, 255, 254, 222, 1];
-            unwrap_result!(service_0.send(&id_1, data_txd.clone()));
+            unwrap_result!(service_0.send(&id_1, data_txd.clone(), 0));
 
             // 1 should rx data
             let (data_rxd, peer_id) = {
@@ -826,7 +821,7 @@ mod test {
         // send data from 1 to 0
         {
             let data_txd = vec![10, 11, 155, 214, 202];
-            unwrap_result!(service_1.send(&id_0, data_txd.clone()));
+            unwrap_result!(service_1.send(&id_0, data_txd.clone(), 0));
 
             // 0 should rx data
             let (data_rxd, peer_id) = {
@@ -929,7 +924,7 @@ mod test {
                             for _ in 0..MSG_SIZE {
                                 msg.push(n as u8);
                             }
-                            let _ = self.service.send(their_id, msg);
+                            let _ = self.service.send(their_id, msg, 0);
                         }
                     }
 
