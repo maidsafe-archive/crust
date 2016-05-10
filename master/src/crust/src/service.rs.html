@@ -1164,11 +1164,6 @@
 <span id="1121">1121</span>
 <span id="1122">1122</span>
 <span id="1123">1123</span>
-<span id="1124">1124</span>
-<span id="1125">1125</span>
-<span id="1126">1126</span>
-<span id="1127">1127</span>
-<span id="1128">1128</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -1448,15 +1443,10 @@
     }
 
     <span class='doccomment'>/// Send the given `data` to the peer with the given `PeerId`.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>send</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>id</span>: <span class='kw-2'>&amp;</span><span class='ident'>PeerId</span>, <span class='ident'>data</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
-        <span class='self'>self</span>.<span class='ident'>send_with_priority</span>(<span class='ident'>id</span>, <span class='ident'>data</span>, <span class='number'>0</span>)
-    }
-
-    <span class='doccomment'>/// Send the given `data` to the peer with the given `PeerId`.</span>
     <span class='doccomment'>///</span>
-    <span class='doccomment'>/// Messages with a higher `priority` number will be sent before other messages even if `send`</span>
-    <span class='doccomment'>/// was called for them first, and they are less likely to be dropped due to timeout.</span>
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>send_with_priority</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>id</span>: <span class='kw-2'>&amp;</span><span class='ident'>PeerId</span>, <span class='ident'>data</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span>, <span class='ident'>priority</span>: <span class='ident'>u8</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
+    <span class='doccomment'>/// Messages with a _lower_ value for `priority` will be sent _before_ messages with a higher</span>
+    <span class='doccomment'>/// number, and they are _less_ likely to be dropped if the upstream bandwidth is insufficient.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>send</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>id</span>: <span class='kw-2'>&amp;</span><span class='ident'>PeerId</span>, <span class='ident'>data</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span>, <span class='ident'>priority</span>: <span class='ident'>u8</span>) <span class='op'>-&gt;</span> <span class='ident'>io</span>::<span class='prelude-ty'>Result</span><span class='op'>&lt;</span>()<span class='op'>&gt;</span> {
         <span class='kw'>match</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>connection_map</span>.<span class='ident'>lock</span>())
                   .<span class='ident'>get_mut</span>(<span class='kw-2'>&amp;</span><span class='ident'>id</span>)
                   .<span class='ident'>and_then</span>(<span class='op'>|</span><span class='ident'>conns</span><span class='op'>|</span> <span class='ident'>conns</span>.<span class='ident'>get_mut</span>(<span class='number'>0</span>)) {
@@ -1859,7 +1849,7 @@
         <span class='comment'>// send data from 0 to 1</span>
         {
             <span class='kw'>let</span> <span class='ident'>data_txd</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[<span class='number'>0</span>, <span class='number'>1</span>, <span class='number'>255</span>, <span class='number'>254</span>, <span class='number'>222</span>, <span class='number'>1</span>];
-            <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>service_0</span>.<span class='ident'>send</span>(<span class='kw-2'>&amp;</span><span class='ident'>id_1</span>, <span class='ident'>data_txd</span>.<span class='ident'>clone</span>()));
+            <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>service_0</span>.<span class='ident'>send</span>(<span class='kw-2'>&amp;</span><span class='ident'>id_1</span>, <span class='ident'>data_txd</span>.<span class='ident'>clone</span>(), <span class='number'>0</span>));
 
             <span class='comment'>// 1 should rx data</span>
             <span class='kw'>let</span> (<span class='ident'>data_rxd</span>, <span class='ident'>peer_id</span>) <span class='op'>=</span> {
@@ -1877,7 +1867,7 @@
         <span class='comment'>// send data from 1 to 0</span>
         {
             <span class='kw'>let</span> <span class='ident'>data_txd</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[<span class='number'>10</span>, <span class='number'>11</span>, <span class='number'>155</span>, <span class='number'>214</span>, <span class='number'>202</span>];
-            <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>service_1</span>.<span class='ident'>send</span>(<span class='kw-2'>&amp;</span><span class='ident'>id_0</span>, <span class='ident'>data_txd</span>.<span class='ident'>clone</span>()));
+            <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>service_1</span>.<span class='ident'>send</span>(<span class='kw-2'>&amp;</span><span class='ident'>id_0</span>, <span class='ident'>data_txd</span>.<span class='ident'>clone</span>(), <span class='number'>0</span>));
 
             <span class='comment'>// 0 should rx data</span>
             <span class='kw'>let</span> (<span class='ident'>data_rxd</span>, <span class='ident'>peer_id</span>) <span class='op'>=</span> {
@@ -1980,7 +1970,7 @@
         <span class='comment'>// send data from 0 to 1</span>
         {
             <span class='kw'>let</span> <span class='ident'>data_txd</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[<span class='number'>0</span>, <span class='number'>1</span>, <span class='number'>255</span>, <span class='number'>254</span>, <span class='number'>222</span>, <span class='number'>1</span>];
-            <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>service_0</span>.<span class='ident'>send</span>(<span class='kw-2'>&amp;</span><span class='ident'>id_1</span>, <span class='ident'>data_txd</span>.<span class='ident'>clone</span>()));
+            <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>service_0</span>.<span class='ident'>send</span>(<span class='kw-2'>&amp;</span><span class='ident'>id_1</span>, <span class='ident'>data_txd</span>.<span class='ident'>clone</span>(), <span class='number'>0</span>));
 
             <span class='comment'>// 1 should rx data</span>
             <span class='kw'>let</span> (<span class='ident'>data_rxd</span>, <span class='ident'>peer_id</span>) <span class='op'>=</span> {
@@ -1998,7 +1988,7 @@
         <span class='comment'>// send data from 1 to 0</span>
         {
             <span class='kw'>let</span> <span class='ident'>data_txd</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[<span class='number'>10</span>, <span class='number'>11</span>, <span class='number'>155</span>, <span class='number'>214</span>, <span class='number'>202</span>];
-            <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>service_1</span>.<span class='ident'>send</span>(<span class='kw-2'>&amp;</span><span class='ident'>id_0</span>, <span class='ident'>data_txd</span>.<span class='ident'>clone</span>()));
+            <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>service_1</span>.<span class='ident'>send</span>(<span class='kw-2'>&amp;</span><span class='ident'>id_0</span>, <span class='ident'>data_txd</span>.<span class='ident'>clone</span>(), <span class='number'>0</span>));
 
             <span class='comment'>// 0 should rx data</span>
             <span class='kw'>let</span> (<span class='ident'>data_rxd</span>, <span class='ident'>peer_id</span>) <span class='op'>=</span> {
@@ -2101,7 +2091,7 @@
                             <span class='kw'>for</span> _ <span class='kw'>in</span> <span class='number'>0</span>..<span class='ident'>MSG_SIZE</span> {
                                 <span class='ident'>msg</span>.<span class='ident'>push</span>(<span class='ident'>n</span> <span class='kw'>as</span> <span class='ident'>u8</span>);
                             }
-                            <span class='kw'>let</span> _ <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>service</span>.<span class='ident'>send</span>(<span class='ident'>their_id</span>, <span class='ident'>msg</span>);
+                            <span class='kw'>let</span> _ <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>service</span>.<span class='ident'>send</span>(<span class='ident'>their_id</span>, <span class='ident'>msg</span>, <span class='number'>0</span>);
                         }
                     }
 
