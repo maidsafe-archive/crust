@@ -1,4 +1,4 @@
-// Copyright 2015 MaidSafe.net limited.
+// Copyright 2016 MaidSafe.net limited.
 //
 // This SAFE Network Software is licensed to you under (1) the MaidSafe.net Commercial License,
 // version 1.0 or later, or (2) The General Public License (GPL), version 3, depending on which
@@ -15,17 +15,38 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use socket_addr::SocketAddr;
-use rustc_serialize::{Encoder, Decoder};
+use std::rc::Rc;
+use state::State;
+use std::cell::RefCell;
+use std::collections::HashMap;
+use mio::{Handler, EventLoop, Token};
 
-/// This struct contains information needed to Bootstrap and for echo-server services
-#[derive(RustcEncodable, RustcDecodable, Debug, Default, Clone, PartialEq, Eq, Hash)]
-pub struct StaticContactInfo {
-    /// This will contain both local and global addresses. Local addresses will be useful on LAN
-    /// when someone wants to bootstrap off us and we haven't yet obtained our global address. In
-    /// that case the list will contain only the local addresses that the process calling
-    /// seek_peers() will get and use.
-    pub tcp_acceptors: Vec<SocketAddr>,
-    /// TCP mapper server addresses
-    pub tcp_mapper_servers: Vec<SocketAddr>,
+pub struct Core {
+    _state_map: HashMap<Token, Rc<RefCell<State>>>,
+}
+
+impl Core {
+    pub fn new() -> Core {
+        Core { _state_map: HashMap::new() }
+    }
+}
+
+
+impl Handler for Core {
+    type Timeout = Token;
+    type Message = Box<FnOnce(&mut EventLoop<Self>, &mut Self) + Send>;
+
+    // fn ready(&mut self, event_loop: &mut EventLoop<Self>,
+    //                     token: Token,
+    //                     events: EventSet) {
+
+    // }
+
+    // fn notify(&mut self, event_loop: &mut EventLoop<Self>, message: Self::Message) {
+
+    // }
+
+    // fn timeout(&mut self, event_loop: &mut EventLoop<Self>, timeout: Self::Timeout) {
+
+    // }
 }
