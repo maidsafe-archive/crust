@@ -15,36 +15,6 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use rand::{Rand, Rng};
-use std::fmt;
-use sodiumoxide::crypto::box_;
-use sodiumoxide::crypto::box_::PublicKey;
-
-/// An identifier of a peer node.
-#[derive(PartialEq, Eq, Clone, Copy, Ord, PartialOrd, Hash, RustcEncodable, RustcDecodable)]
-pub struct PeerId(PublicKey);
-
-impl fmt::Debug for PeerId {
-    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        write!(formatter,
-               "PeerId({:02x}{:02x}..)",
-               (self.0).0[0],
-               (self.0).0[1])
-    }
-}
-
-impl fmt::Display for PeerId {
-    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        write!(formatter, "{:02x}{:02x}..", (self.0).0[0], (self.0).0[1])
-    }
-}
-
-pub fn new_id(pub_key: PublicKey) -> PeerId {
-    PeerId(pub_key)
-}
-
-impl Rand for PeerId {
-    fn rand<R: Rng>(_rng: &mut R) -> PeerId {
-        PeerId(box_::gen_keypair().0)
-    }
+pub enum Message {
+  Shutdown,
 }
