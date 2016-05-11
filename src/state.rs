@@ -15,18 +15,20 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use mio::{EventLoop, EventSet, Token};
-use service::{Handler, Service};
+use core::Core;
+use mio::{Handler, EventLoop, EventSet, Token};
 
 pub trait State {
-    type Timeout;
+    fn ready(&mut self,
+             _core: &mut Core,
+             _event_loop: &mut EventLoop<Core>,
+             _token: Token,
+             _event_set: EventSet) {
+    }
 
-    fn ready(&mut self, _service: &mut Service,
-                        _event_loop: &mut EventLoop<Handler>,
-                        _token: Token,
-                        _event_set: EventSet) {}
-
-    fn timeout(&mut self, _service: &mut Service,
-                          _event_loop: &mut EventLoop<Handler>,
-                          _timeout: Self::Timeout) {}
+    fn timeout(&mut self,
+               _core: &mut Core,
+               _event_loop: &mut EventLoop<Core>,
+               _timeout: <Core as Handler>::Timeout) {
+    }
 }

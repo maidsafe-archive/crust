@@ -15,6 +15,38 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-pub enum Message {
-  Shutdown,
+use std::rc::Rc;
+use state::State;
+use std::cell::RefCell;
+use std::collections::HashMap;
+use mio::{Handler, EventLoop, Token};
+
+pub struct Core {
+    _state_map: HashMap<Token, Rc<RefCell<State>>>,
+}
+
+impl Core {
+    pub fn new() -> Core {
+        Core { _state_map: HashMap::new() }
+    }
+}
+
+
+impl Handler for Core {
+    type Timeout = Token;
+    type Message = Box<FnOnce(&mut EventLoop<Self>, &mut Self) + Send>;
+
+    // fn ready(&mut self, event_loop: &mut EventLoop<Self>,
+    //                     token: Token,
+    //                     events: EventSet) {
+
+    // }
+
+    // fn notify(&mut self, event_loop: &mut EventLoop<Self>, message: Self::Message) {
+
+    // }
+
+    // fn timeout(&mut self, event_loop: &mut EventLoop<Self>, timeout: Self::Timeout) {
+
+    // }
 }

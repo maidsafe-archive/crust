@@ -15,15 +15,14 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use maidsafe_utilities::thread::RaiiThreadJoiner;
-use mio::{self, EventLoop, /*EventSet,*/ Sender, Token};
-
+use core::Core;
 use error::Error;
-use message::Message;
+use mio::{EventLoop, Sender, Handler};
+use maidsafe_utilities::thread::RaiiThreadJoiner;
 
 /// A structure representing a connection manager.
 pub struct Service {
-    sender: Sender<Message>,
+    sender: Sender<<Core as Handler>::Message>,
     _thread_joiner: RaiiThreadJoiner,
 }
 
@@ -34,13 +33,11 @@ impl Service {
         let sender = event_loop.channel();
 
         let joiner = RaiiThreadJoiner::new(thread!("Crust event loop", move || {
-            let mut handler = Handler::new();
-
-            // TODO: how to handle Err here?
-            event_loop.run(&mut handler).unwrap();
+            let mut core = Core::new();
+            event_loop.run(&mut core).unwrap();
         }));
 
-        Ok(Service{
+        Ok(Service {
             sender: sender,
             _thread_joiner: joiner,
         })
@@ -51,38 +48,6 @@ impl Service {
 
 impl Drop for Service {
     fn drop(&mut self) {
-        // TODO: should we somehow handle Err here?
-        let _ = self.sender.send(Message::Shutdown);
+        let _ = self.sender.send(Box::new(|el: &mut EventLoop<Core>, _: &mut Core| el.shutdown()));
     }
-}
-
-pub struct Handler {
-
-}
-
-impl Handler {
-    fn new() -> Self {
-        Handler {
-
-        }
-    }
-}
-
-impl mio::Handler for Handler {
-    type Timeout = Token;
-    type Message = Message;
-
-    // fn ready(&mut self, event_loop: &mut EventLoop<Self>,
-    //                     token: Token,
-    //                     events: EventSet) {
-
-    // }
-
-    // fn notify(&mut self, event_loop: &mut EventLoop<Self>, message: Self::Message) {
-
-    // }
-
-    // fn timeout(&mut self, event_loop: &mut EventLoop<Self>, timeout: Self::Timeout) {
-
-    // }
 }

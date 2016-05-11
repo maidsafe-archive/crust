@@ -51,10 +51,10 @@ extern crate mio;
 #[macro_use]
 extern crate quick_error;
 
+mod core;
 mod error;
-mod message;
-mod service;
 mod state;
+mod service;
 
 pub use error::Error;
 pub use service::Service;
