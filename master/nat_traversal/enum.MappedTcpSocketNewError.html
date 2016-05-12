@@ -48,19 +48,32 @@
             </a>
         </span></span></h1>
 <pre class='rust enum'>pub enum MappedTcpSocketNewError {
-    NewReusablyBoundTcpSocket {
-        err: <a class='enum' href='../nat_traversal/enum.NewReusablyBoundTcpSocketError.html' title='nat_traversal::NewReusablyBoundTcpSocketError'>NewReusablyBoundTcpSocketError</a>,
+    CreateSocket {
+        err: <a class='struct' href='https://doc.rust-lang.org/nightly/std/io/error/struct.Error.html' title='std::io::error::Error'>Error</a>,
+    },
+    EnableReuseAddr {
+        err: <a class='struct' href='https://doc.rust-lang.org/nightly/std/io/error/struct.Error.html' title='std::io::error::Error'>Error</a>,
+    },
+    EnableReusePort {
+        err: <a class='struct' href='https://doc.rust-lang.org/nightly/std/io/error/struct.Error.html' title='std::io::error::Error'>Error</a>,
+    },
+    Bind {
+        err: <a class='struct' href='https://doc.rust-lang.org/nightly/std/io/error/struct.Error.html' title='std::io::error::Error'>Error</a>,
     },
     Map {
         err: <a class='enum' href='../nat_traversal/enum.MappedTcpSocketMapError.html' title='nat_traversal::MappedTcpSocketMapError'>MappedTcpSocketMapError</a>,
     },
 }</pre><div class='docblock'><p>Errors returned by MappedTcpSocket::new</p>
 </div><h2 class='variants'>Variants</h2>
-<table class='variants_table'><tr><td id='variant.NewReusablyBoundTcpSocket'><code>NewReusablyBoundTcpSocket</code></td><td><div class='docblock'><p>Error creating a reusably bound tcp socket.</p>
-</div><h3 class='fields'>Fields</h3>
+<table class='variants_table'><tr><td id='variant.CreateSocket'><code>CreateSocket</code></td><td><h3 class='fields'>Fields</h3>
 
-                                              <table><tr><td id='variant.NewReusablyBoundTcpSocket.field.err'><code>err</code></td><td></td></tr></table></td><td></td></tr><tr><td id='variant.Map'><code>Map</code></td><td><div class='docblock'><p>Error mapping new socket.</p>
-</div><h3 class='fields'>Fields</h3>
+                                              <table><tr><td id='variant.CreateSocket.field.err'><code>err</code></td><td></td></tr></table></td><td></td></tr><tr><td id='variant.EnableReuseAddr'><code>EnableReuseAddr</code></td><td><h3 class='fields'>Fields</h3>
+
+                                              <table><tr><td id='variant.EnableReuseAddr.field.err'><code>err</code></td><td></td></tr></table></td><td></td></tr><tr><td id='variant.EnableReusePort'><code>EnableReusePort</code></td><td><h3 class='fields'>Fields</h3>
+
+                                              <table><tr><td id='variant.EnableReusePort.field.err'><code>err</code></td><td></td></tr></table></td><td></td></tr><tr><td id='variant.Bind'><code>Bind</code></td><td><h3 class='fields'>Fields</h3>
+
+                                              <table><tr><td id='variant.Bind.field.err'><code>err</code></td><td></td></tr></table></td><td></td></tr><tr><td id='variant.Map'><code>Map</code></td><td><h3 class='fields'>Fields</h3>
 
                                               <table><tr><td id='variant.Map.field.err'><code>err</code></td><td></td></tr></table></td><td></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html' title='core::fmt::Display'>Display</a> for <a class='enum' href='../nat_traversal/enum.MappedTcpSocketNewError.html' title='nat_traversal::MappedTcpSocketNewError'>MappedTcpSocketNewError</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html#method.fmt' class='fnname'>fmt</a>(&amp;self, fmt: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
 </div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/std/error/trait.Error.html' title='std::error::Error'>Error</a> for <a class='enum' href='../nat_traversal/enum.MappedTcpSocketNewError.html' title='nat_traversal::MappedTcpSocketNewError'>MappedTcpSocketNewError</a></code></h3><div class='impl-items'><h4 id='method.description' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/std/error/trait.Error.html#method.description' class='fnname'>description</a>(&amp;self) -&gt; &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a></code></h4>

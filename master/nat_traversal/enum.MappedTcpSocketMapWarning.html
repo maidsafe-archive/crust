@@ -75,26 +75,19 @@
     },
 }</pre><div class='docblock'><p>Warnings raised by MappedTcpSocket::map</p>
 </div><h2 class='variants'>Variants</h2>
-<table class='variants_table'><tr><td id='variant.FindGateway'><code>FindGateway</code></td><td><div class='docblock'><p>Error searching for an IGD gateway.</p>
-</div><h3 class='fields'>Fields</h3>
+<table class='variants_table'><tr><td id='variant.FindGateway'><code>FindGateway</code></td><td><h3 class='fields'>Fields</h3>
 
-                                              <table><tr><td id='variant.FindGateway.field.err'><code>err</code></td><td></td></tr></table></td><td></td></tr><tr><td id='variant.GetExternalPort'><code>GetExternalPort</code></td><td><div class='docblock'><p>Error mapping external address and port through IGD gateway.</p>
-</div><h3 class='fields'>Fields</h3>
+                                              <table><tr><td id='variant.FindGateway.field.err'><code>err</code></td><td></td></tr></table></td><td></td></tr><tr><td id='variant.GetExternalPort'><code>GetExternalPort</code></td><td><h3 class='fields'>Fields</h3>
 
-                                              <table><tr><td id='variant.GetExternalPort.field.gateway_addr'><code>gateway_addr</code></td><td></td></tr><tr><td id='variant.GetExternalPort.field.err'><code>err</code></td><td></td></tr></table></td><td></td></tr><tr><td id='variant.NewReusablyBoundTcpSocket'><code>NewReusablyBoundTcpSocket</code></td><td><div class='docblock'><p>Error creating a reusably bound temporary socket for mapping.</p>
-</div><h3 class='fields'>Fields</h3>
+                                              <table><tr><td id='variant.GetExternalPort.field.gateway_addr'><code>gateway_addr</code></td><td></td></tr><tr><td id='variant.GetExternalPort.field.err'><code>err</code></td><td></td></tr></table></td><td></td></tr><tr><td id='variant.NewReusablyBoundTcpSocket'><code>NewReusablyBoundTcpSocket</code></td><td><h3 class='fields'>Fields</h3>
 
-                                              <table><tr><td id='variant.NewReusablyBoundTcpSocket.field.err'><code>err</code></td><td></td></tr></table></td><td></td></tr><tr><td id='variant.MappingSocketConnect'><code>MappingSocketConnect</code></td><td><div class='docblock'><p>Error connecting to a mapping server.</p>
-</div><h3 class='fields'>Fields</h3>
+                                              <table><tr><td id='variant.NewReusablyBoundTcpSocket.field.err'><code>err</code></td><td></td></tr></table></td><td></td></tr><tr><td id='variant.MappingSocketConnect'><code>MappingSocketConnect</code></td><td><h3 class='fields'>Fields</h3>
 
-                                              <table><tr><td id='variant.MappingSocketConnect.field.addr'><code>addr</code></td><td></td></tr><tr><td id='variant.MappingSocketConnect.field.err'><code>err</code></td><td></td></tr></table></td><td></td></tr><tr><td id='variant.MappingSocketWrite'><code>MappingSocketWrite</code></td><td><div class='docblock'><p>Error writing to temporary socket.</p>
-</div><h3 class='fields'>Fields</h3>
+                                              <table><tr><td id='variant.MappingSocketConnect.field.addr'><code>addr</code></td><td></td></tr><tr><td id='variant.MappingSocketConnect.field.err'><code>err</code></td><td></td></tr></table></td><td></td></tr><tr><td id='variant.MappingSocketWrite'><code>MappingSocketWrite</code></td><td><h3 class='fields'>Fields</h3>
 
-                                              <table><tr><td id='variant.MappingSocketWrite.field.err'><code>err</code></td><td></td></tr></table></td><td></td></tr><tr><td id='variant.MappingSocketRead'><code>MappingSocketRead</code></td><td><div class='docblock'><p>Error reading from temporary socket.</p>
-</div><h3 class='fields'>Fields</h3>
+                                              <table><tr><td id='variant.MappingSocketWrite.field.err'><code>err</code></td><td></td></tr></table></td><td></td></tr><tr><td id='variant.MappingSocketRead'><code>MappingSocketRead</code></td><td><h3 class='fields'>Fields</h3>
 
-                                              <table><tr><td id='variant.MappingSocketRead.field.err'><code>err</code></td><td></td></tr></table></td><td></td></tr><tr><td id='variant.Deserialise'><code>Deserialise</code></td><td><div class='docblock'><p>Error deserialising a response from a mapping server.</p>
-</div><h3 class='fields'>Fields</h3>
+                                              <table><tr><td id='variant.MappingSocketRead.field.err'><code>err</code></td><td></td></tr></table></td><td></td></tr><tr><td id='variant.Deserialise'><code>Deserialise</code></td><td><h3 class='fields'>Fields</h3>
 
                                               <table><tr><td id='variant.Deserialise.field.addr'><code>addr</code></td><td></td></tr><tr><td id='variant.Deserialise.field.err'><code>err</code></td><td></td></tr><tr><td id='variant.Deserialise.field.response'><code>response</code></td><td></td></tr></table></td><td></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html' title='core::fmt::Display'>Display</a> for <a class='enum' href='../nat_traversal/enum.MappedTcpSocketMapWarning.html' title='nat_traversal::MappedTcpSocketMapWarning'>MappedTcpSocketMapWarning</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html#method.fmt' class='fnname'>fmt</a>(&amp;self, fmt: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
 </div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/std/error/trait.Error.html' title='std::error::Error'>Error</a> for <a class='enum' href='../nat_traversal/enum.MappedTcpSocketMapWarning.html' title='nat_traversal::MappedTcpSocketMapWarning'>MappedTcpSocketMapWarning</a></code></h3><div class='impl-items'><h4 id='method.description' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/std/error/trait.Error.html#method.description' class='fnname'>description</a>(&amp;self) -&gt; &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a></code></h4>
