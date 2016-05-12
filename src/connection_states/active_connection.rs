@@ -128,6 +128,7 @@ impl State for ActiveConnection {
 
     fn write(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, data: Vec<u8>) {
         self.write_queue.push_back(data);
-        self.write(core, event_loop, self.token);
+        let token = self.token;
+        self.write(core, event_loop, token);
     }
 }

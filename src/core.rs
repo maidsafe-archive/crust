@@ -85,10 +85,10 @@ impl Handler for Core {
             None => return,
         };
 
-        state.borrow_mut().execute(&mut self, &mut event_loop, token, events);
+        state.borrow_mut().execute(self, event_loop, token, events);
     }
 
     fn notify(&mut self, event_loop: &mut EventLoop<Self>, msg: Self::Message) {
-        msg(&mut self, &mut event_loop);
+        msg(self, event_loop);
     }
 }

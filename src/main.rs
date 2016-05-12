@@ -17,7 +17,7 @@ mod connection_states;
 
 fn spawn_test_server() {
     let ls = TcpListener::bind("127.0.0.1:33333").expect("Could not bind listener.");
-    let (strm, _) = ls.accept().expect("Error in accepting");
+    let (mut strm, _) = ls.accept().expect("Error in accepting");
     loop {
         let mut buf = [0; 10];
         if let Err(e) = strm.read_exact(&mut buf) {
@@ -34,7 +34,7 @@ fn main() {
 
     let (tx, rx) = mpsc::channel();
 
-    let service = Service::new(tx);
+    let mut service = Service::new(tx);
 
     for it in rx.iter() {
         match it {

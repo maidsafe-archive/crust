@@ -18,13 +18,13 @@ pub struct Service {
     tx: Sender<CrustMsg>,
     context_counter: usize,
     mio_tx: mio::Sender<CoreMessage>,
-    cm: Arc<Mutex<HashMap<u64, Context>>>,
+    cm: Arc<Mutex<HashMap<u64, Context>>>, // This is the connection map -> PeerId <-> Context
     _raii_joiner: RaiiThreadJoiner,
 }
 
 impl Service {
     pub fn new(tx: Sender<CrustMsg>) -> Self {
-        let event_loop = EventLoop::new().expect("Unable to create event loop");
+        let mut event_loop = EventLoop::new().expect("Unable to create event loop");
         let mio_tx = event_loop.channel();
 
         let raii_joiner = RaiiThreadJoiner::new(thread!("CoreEventLoop", move || {
@@ -57,7 +57,7 @@ impl Service {
 
     pub fn drop_peer(&mut self, peer_id: u64) {
         let context = self.cm.lock().unwrap().remove(&peer_id).expect("Context not found");
-        let _ = self.mio_tx.send(Box::new(move |core, event_loop| {
+        let _ = self.mio_tx.send(Box::new(move |mut core, mut event_loop| {
             let state = core.get_state(&context).expect("State not found").clone();
             state.borrow_mut().terminate(&mut core, &mut event_loop);
         }));
@@ -65,7 +65,7 @@ impl Service {
 
     pub fn send(&mut self, peer_id: u64, data: Vec<u8>) {
         let context = self.cm.lock().unwrap().get(&peer_id).expect("Context not found").clone();
-        let _ = self.mio_tx.send(Box::new(move |core, event_loop| {
+        let _ = self.mio_tx.send(Box::new(move |mut core, mut event_loop| {
             let state = core.get_state(&context).expect("State not found").clone();
             state.borrow_mut().write(&mut core, &mut event_loop, data);
         }));
