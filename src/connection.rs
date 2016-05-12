@@ -141,7 +141,7 @@ pub fn connect(peer_contact: StaticContactInfo,
                connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
                bootstrap_cache: Arc<Mutex<BootstrapHandler>>,
                mc: &MappingContext,
-               version_hash: u64)
+               name_hash: u64)
                -> io::Result<()> {
     let static_contact_info = peer_contact.clone();
 
@@ -157,7 +157,7 @@ pub fn connect(peer_contact: StaticContactInfo,
                                    connection_map.clone(),
                                    None,
                                    None,
-                                   version_hash) {
+                                   name_hash) {
             Ok(()) => return Ok(()),
             Err(e) => {
                 warn!("TCP direct connect failed: {}", e);
@@ -215,7 +215,7 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
                             connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>,
                             expected_peers: Option<Arc<Mutex<HashSet<PeerId>>>>,
                             their_expected_id: Option<PeerId>,
-                            version_hash: u64)
+                            name_hash: u64)
                             -> io::Result<()> {
     let (network_input, writer) = try!(tcp_connections::connect_tcp(remote_addr.clone(),
                                                                     heart_beat_timeout,
@@ -226,7 +226,7 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
     let mut network_rx = Receiver::tcp(network_input);
     let (their_id, event) = match their_expected_id {
         None => {
-            let msg = CrustMsg::BootstrapRequest(our_public_key, version_hash);
+            let msg = CrustMsg::BootstrapRequest(our_public_key, name_hash);
             match writer.send(WriteEvent::Write(msg, Instant::now(), 0)) {
                 Ok(()) => (),
                 Err(_) => {
@@ -253,7 +253,7 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
             }
         }
         Some(id) => {
-            let msg = CrustMsg::Connect(our_public_key, version_hash);
+            let msg = CrustMsg::Connect(our_public_key, name_hash);
             match writer.send(WriteEvent::Write(msg, Instant::now(), 0)) {
                 Ok(()) => (),
                 Err(_) => {
@@ -264,7 +264,7 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
             match network_rx.receive() {
                 Ok(CrustMsg::Connect(key, v)) => {
                     let their_id = peer_id::new_id(key);
-                    if v != version_hash {
+                    if v != name_hash {
                         return Err(io::Error::new(io::ErrorKind::Other,
                                                   "Incompatible protocol version.".to_owned()));
                     }
@@ -354,7 +354,7 @@ pub fn start_tcp_accept(port: u16,
                         _bootstrap_cache: Arc<Mutex<BootstrapHandler>>,
                         expected_peers: Arc<Mutex<HashSet<PeerId>>>,
                         mapping_context: Arc<MappingContext>,
-                        version_hash: u64)
+                        name_hash: u64)
                         -> io::Result<RaiiTcpAcceptor> {
     let addr = net::SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), port));
     let tcp_builder_listener = try!(nat_traversal::new_reusably_bound_tcp_socket(&addr));
@@ -440,7 +440,7 @@ pub fn start_tcp_accept(port: u16,
                     if !expected_peers.lock().unwrap().remove(&peer_id) {
                         continue;
                     }
-                    let connect_msg = CrustMsg::Connect(our_public_key, version_hash);
+                    let connect_msg = CrustMsg::Connect(our_public_key, name_hash);
                     (key, version, connect_msg, Event::NewPeer(Ok(()), peer_id))
                 }
                 Ok(msg) => {
@@ -454,7 +454,7 @@ pub fn start_tcp_accept(port: u16,
             };
             if our_public_key == key {
                 error!("Connected to ourselves");
-            } else if version != version_hash {
+            } else if version != name_hash {
                 error!("Incompatible protocol version.");
             } else if writer.send(WriteEvent::Write(response, Instant::now(), 0)).is_err() {
                 error!("Receiver shutdown!");

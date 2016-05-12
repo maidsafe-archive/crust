@@ -101,16 +101,12 @@ impl TheirConnectionInfo {
     }
 }
 
-/// Returns a hash of the crate version.
-fn version_hash() -> u64 {
-    let cargo_version = env!("CARGO_PKG_VERSION");
-    let network_version = option_env!("NETWORK_VERSION");
+/// Returns a hash of the network name.
+fn name_hash(network_name: &Option<String>) -> u64 {
     let mut hasher = SipHasher::new();
-    cargo_version.hash(&mut hasher);
-    network_version.hash(&mut hasher);
-    let version_hash = hasher.finish();
-    debug!("Crust version hash: {}", version_hash);
-    version_hash
+    debug!("Network name: {:?}", network_name);
+    network_name.hash(&mut hasher);
+    hasher.finish()
 }
 
 /// A structure representing a connection manager.
@@ -135,7 +131,7 @@ pub struct Service {
     raii_tcp_acceptor: Option<RaiiTcpAcceptor>,
     _tcp_hole_punch_server: SimpleTcpHolePunchServer<Arc<MappingContext>>,
     is_alive: Arc<AtomicBool>,
-    version_hash: u64,
+    name_hash: u64,
 }
 
 impl Service {
@@ -188,7 +184,7 @@ impl Service {
 
         mapping_context.add_simple_tcp_servers(config.tcp_mapper_servers.clone());
         let mapping_context = Arc::new(mapping_context);
-        let version_hash = version_hash();
+        let name_hash = name_hash(&config.network_name);
 
         let heart_beat_timeout = Duration::from_secs(HEARTBEAT_PERIOD_SECS);
         let inactivity_timeout = Duration::from_secs(INACTIVITY_TIMEOUT_SECS);
@@ -201,7 +197,7 @@ impl Service {
                                            connection_map.clone(),
                                            bootstrap_cache.clone(),
                                            mapping_context.clone(),
-                                           version_hash);
+                                           name_hash);
 
         let tcp_hole_punch_server = try!(SimpleTcpHolePunchServer::new(mapping_context.clone())
                                              .result_log()
@@ -233,7 +229,7 @@ impl Service {
             raii_tcp_acceptor: None,
             _tcp_hole_punch_server: tcp_hole_punch_server,
             is_alive: Arc::new(AtomicBool::new(true)),
-            version_hash: version_hash,
+            name_hash: name_hash,
         };
 
         Ok(service)
@@ -257,7 +253,7 @@ impl Service {
                                                   self.bootstrap_cache.clone(),
                                                   self.expected_peers.clone(),
                                                   self.mapping_context.clone(),
-                                                  self.version_hash);
+                                                  self.name_hash);
         self.raii_tcp_acceptor = Some(try!(result));
         Ok(())
     }
@@ -351,7 +347,7 @@ impl Service {
         let connection_map = self.connection_map.clone();
         let our_public_key = self.our_keys.0.clone();
         let bootstrap_cache = self.bootstrap_cache.clone();
-        let version_hash = self.version_hash;
+        let name_hash = self.name_hash;
 
         let (result_tx, result_rx) = mpsc::channel();
 
@@ -375,7 +371,7 @@ impl Service {
                                                        connection_map,
                                                        Some(expected_peers),
                                                        Some(their_id),
-                                                       version_hash) {
+                                                       name_hash) {
                     Err(err) => {
                         let err_msg = format!("Tcp direct connect failed: {}", err);
                         let err = io::Error::new(err.kind(), err_msg);

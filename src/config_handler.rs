@@ -27,6 +27,7 @@ pub struct Config {
     pub tcp_mapper_servers: Vec<SocketAddr>,
     pub service_discovery_port: Option<u16>,
     pub bootstrap_cache_name: Option<String>,
+    pub network_name: Option<String>,
 }
 
 impl Default for Config {
@@ -37,6 +38,7 @@ impl Default for Config {
             tcp_mapper_servers: vec![],
             service_discovery_port: None,
             bootstrap_cache_name: None,
+            network_name: None,
         }
     }
 }
