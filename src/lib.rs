@@ -34,7 +34,7 @@
         unused_attributes, unused_comparisons, unused_features, unused_parens, while_true)]
 #![warn(trivial_casts, trivial_numeric_casts, unused_extern_crates, unused_import_braces,
         unused_qualifications, unused_results)]
-#![allow(box_pointers, fat_ptr_transmutes, missing_copy_implementations,
+#![allow(unused, box_pointers, fat_ptr_transmutes, missing_copy_implementations,
          missing_debug_implementations, variant_size_differences)]
 
 #![cfg_attr(feature="clippy", feature(plugin))]
@@ -45,6 +45,12 @@
 #[macro_use]
 extern crate maidsafe_utilities;
 extern crate mio;
+extern crate nat_traversal;
+extern crate net2;
+extern crate rand;
+extern crate rustc_serialize;
+extern crate sodiumoxide;
+extern crate socket_addr;
 
 // Needed because the crate is only used for macros
 #[allow(unused_extern_crates)]
@@ -52,9 +58,18 @@ extern crate mio;
 extern crate quick_error;
 
 mod core;
+mod event;
 mod error;
+mod peer_id;
 mod state;
 mod service;
+mod static_contact_info;
 
+/// Crust Observers will be informed of crust events on this
+pub type CrustEventSender = ::maidsafe_utilities::event_sender::MaidSafeObserver<Event>;
+
+pub use event::Event;
 pub use error::Error;
+pub use peer_id::PeerId;
 pub use service::Service;
+pub use socket_addr::SocketAddr;
