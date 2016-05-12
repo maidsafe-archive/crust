@@ -19,7 +19,7 @@ get_if_addrs = "~0.4.0"
 itertools = "~0.4.13"
 log = "~0.3.6"
 maidsafe_utilities = "~0.5.4"
-nat_traversal = "~0.4.1"
+nat_traversal = "~0.3.4"
 net2 = "~0.2.23"
 quick-error = "1.0.0"
 rand = "~0.3.14"
@@ -31,7 +31,7 @@ term = "~0.4.4"
 
 [dependencies.clippy]
 optional = true
-version = "~0.0.64"
+version = "~0.0.66"
 
 [dev-dependencies]
 docopt = "~0.6.80"
