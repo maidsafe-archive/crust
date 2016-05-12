@@ -31,6 +31,8 @@ impl ActiveConnection {
                context: Context,
                socket: TcpStream,
                routing_tx: Sender<CrustMsg>) {
+        println!("Entered state ActiveConnection");
+
         let token = core.get_new_token();
         let peer_id = ::rand::random();
 
@@ -111,18 +113,19 @@ impl State for ActiveConnection {
                token: Token,
                event_set: EventSet) {
         assert_eq!(token, self.token);
-        if event_set.is_readable() {
-            self.read(core, event_loop, token);
-        } else if event_set.is_writable() {
-            self.write(core, event_loop, token);
+
+        if event_set.is_error() {
+            panic!("connection error");
+            // let _ = routing_tx.send(Error - Could not connect);
         } else if event_set.is_hup() {
             let context = core.remove_context(&token).expect("Context not found");
             let _ = core.remove_state(&context).expect("State not found");
 
             println!("Graceful Exit");
-        } else if event_set.is_error() {
-            panic!("connection error");
-            // let _ = routing_tx.send(Error - Could not connect);
+        } else if event_set.is_readable() {
+            self.read(core, event_loop, token);
+        } else if event_set.is_writable() {
+            self.write(core, event_loop, token);
         }
     }
 

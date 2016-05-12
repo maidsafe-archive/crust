@@ -42,15 +42,15 @@ impl Service {
     }
 
     pub fn connect(&mut self, peer_contact_info: SocketAddr) {
-        let routing_tx = self.tx.clone();
-        let cm = self.cm.clone();
+        let mut routing_tx = Some(self.tx.clone());
+        let mut cm = Some(self.cm.clone());
 
         let _ = self.mio_tx
                     .send(Box::new(move |core: &mut Core, event_loop: &mut EventLoop<Core>| {
                         EstablishConnection::new(core,
                                                  event_loop,
-                                                 cm,
-                                                 routing_tx,
+                                                 cm.take().expect("Logic Error"),
+                                                 routing_tx.take().expect("Logic Error"),
                                                  peer_contact_info);
                     }));
     }
@@ -65,9 +65,12 @@ impl Service {
 
     pub fn send(&mut self, peer_id: u64, data: Vec<u8>) {
         let context = self.cm.lock().unwrap().get(&peer_id).expect("Context not found").clone();
+        let mut data = Some(data);
         let _ = self.mio_tx.send(Box::new(move |mut core, mut event_loop| {
             let state = core.get_state(&context).expect("State not found").clone();
-            state.borrow_mut().write(&mut core, &mut event_loop, data);
+            state.borrow_mut().write(&mut core,
+                                     &mut event_loop,
+                                     data.take().expect("Logic Error"));
         }));
     }
 }

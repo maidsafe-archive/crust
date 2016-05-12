@@ -26,6 +26,8 @@ impl EstablishConnection {
                cm: Arc<Mutex<HashMap<u64, Context>>>,
                routing_tx: Sender<CrustMsg>,
                peer_contact_info: SocketAddr) {
+        println!("Entered state EstablishConnection");
+
         let context = core.get_new_context();
         let socket = TcpStream::connect(&peer_contact_info).expect("Could not connect to peer");
         let connection = EstablishConnection {
@@ -38,7 +40,7 @@ impl EstablishConnection {
         let token = core.get_new_token();
         event_loop.register(connection.socket.as_ref().expect("Logic Error"),
                             token,
-                            EventSet::readable() | EventSet::error(),
+                            EventSet::error() | EventSet::writable(),
                             PollOpt::edge())
                   .expect("Could not register socket with EventLoop<Core>");
 
@@ -53,19 +55,20 @@ impl State for EstablishConnection {
                event_loop: &mut EventLoop<Core>,
                token: Token,
                event_set: EventSet) {
-        if event_set.is_readable() {
+        if event_set.is_error() {
+            panic!("connection error");
+            // let _ = routing_tx.send(Error - Could not connect);
+        } else {
             let context = core.remove_context(&token).expect("Context not found");
             let _ = core.remove_state(&context).expect("State not found");
 
+            println!("EstablishConnection successful -> Moving to next state ...");
             ActiveConnection::new(core,
                                   event_loop,
                                   self.cm.clone(),
                                   self.context.clone(),
                                   self.socket.take().expect("Logic Error"),
                                   self.routing_tx.clone());
-        } else if event_set.is_error() {
-            panic!("connection error");
-            // let _ = routing_tx.send(Error - Could not connect);
         }
     }
 }

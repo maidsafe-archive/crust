@@ -5,7 +5,8 @@ use std::collections::HashMap;
 use state::State;
 use mio::{Token, EventLoop, Handler, EventSet};
 
-pub type CoreMessage = Box<FnOnce(&mut Core, &mut EventLoop<Core>) + Send>;
+// TODO make this FnOnce
+pub type CoreMessage = Box<FnMut(&mut Core, &mut EventLoop<Core>) + Send>;
 pub type CoreTimeout = ();
 
 #[derive(Hash, Eq, PartialEq, Ord, PartialOrd, Clone, Debug)]
@@ -88,7 +89,7 @@ impl Handler for Core {
         state.borrow_mut().execute(self, event_loop, token, events);
     }
 
-    fn notify(&mut self, event_loop: &mut EventLoop<Self>, msg: Self::Message) {
+    fn notify(&mut self, event_loop: &mut EventLoop<Self>, mut msg: Self::Message) {
         msg(self, event_loop);
     }
 }
