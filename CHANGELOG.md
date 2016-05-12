@@ -1,5 +1,12 @@
 # CRUST - Change Log
 
+## [0.13.0]
+- Add message priority to send high-priority messages first and if bandwidth is
+  insufficient, drop the low-priority ones.
+- Add the `network_name` option to prevent unwanted connections and facilitate
+  starting separate test networks.
+- Avoid duplicate connections to the same peer.
+
 ## [0.12.0]
 - Remove uTP support.
 - Implement heartbeat messages to detect lost connections more quickly.
