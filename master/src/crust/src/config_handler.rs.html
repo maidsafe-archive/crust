@@ -153,6 +153,8 @@
 <span id="110">110</span>
 <span id="111">111</span>
 <span id="112">112</span>
+<span id="113">113</span>
+<span id="114">114</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -183,6 +185,7 @@
     <span class='kw'>pub</span> <span class='ident'>tcp_mapper_servers</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>SocketAddr</span><span class='op'>&gt;</span>,
     <span class='kw'>pub</span> <span class='ident'>service_discovery_port</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>u16</span><span class='op'>&gt;</span>,
     <span class='kw'>pub</span> <span class='ident'>bootstrap_cache_name</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>String</span><span class='op'>&gt;</span>,
+    <span class='kw'>pub</span> <span class='ident'>network_name</span>: <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>String</span><span class='op'>&gt;</span>,
 }
 
 <span class='kw'>impl</span> <span class='ident'>Default</span> <span class='kw'>for</span> <span class='ident'>Config</span> {
@@ -193,6 +196,7 @@
             <span class='ident'>tcp_mapper_servers</span>: <span class='macro'>vec</span><span class='macro'>!</span>[],
             <span class='ident'>service_discovery_port</span>: <span class='prelude-val'>None</span>,
             <span class='ident'>bootstrap_cache_name</span>: <span class='prelude-val'>None</span>,
+            <span class='ident'>network_name</span>: <span class='prelude-val'>None</span>,
         }
     }
 }
