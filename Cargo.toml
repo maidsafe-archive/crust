@@ -1,0 +1,52 @@
+[package]
+authors = ["MaidSafe Developers <dev@maidsafe.net>"]
+description = "Peer-to-peer networking library. Automatically reconnect and manage connections."
+documentation = "http://maidsafe.net/crust/latest"
+homepage = "http://maidsafe.net"
+license = "GPL-3.0"
+name = "crust"
+readme = "README.md"
+repository = "https://github.com/maidsafe/crust"
+version = "0.12.0"
+
+[dependencies]
+maidsafe_utilities = "~0.5.4"
+mio = "~0.5.1"
+quick-error = "~1.0.0"
+
+[dependencies.clippy]
+optional = true
+version = "~0.0.64"
+
+# [dev-dependencies]
+# docopt = "~0.6.80"
+# void = "~1.0.2"
+
+# [[example]]
+# bench = false
+# name = "simple_sender"
+# path = "examples/simple_sender.rs"
+# test = false
+
+# [[example]]
+# bench = false
+# name = "simple_receiver"
+# path = "examples/simple_receiver.rs"
+# test = false
+
+# [[example]]
+# bench = false
+# name = "crust_peer"
+# path = "examples/crust_peer.rs"
+
+# [[example]]
+# bench = false
+# name = "reporter"
+# path = "examples/reporter.rs"
+# test = true
+
+# [[example]]
+# bench = false
+# name = "simple_benchmark"
+# path = "examples/simple_benchmark.rs"
+# test = false
