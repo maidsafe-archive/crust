@@ -64,15 +64,20 @@
         errors: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;TcpPunchHoleBrokenStream&gt;,
     },
 }</pre><h2 class='variants'>Variants</h2>
-<table class='variants_table'><tr><td id='variant.SocketLocalAddr'><code>SocketLocalAddr</code></td><td><h3 class='fields'>Fields</h3>
+<table class='variants_table'><tr><td id='variant.SocketLocalAddr'><code>SocketLocalAddr</code></td><td><div class='docblock'><p>Error getting the local address of the provided socket.</p>
+</div><h3 class='fields'>Fields</h3>
 
-                                              <table><tr><td id='variant.SocketLocalAddr.field.err'><code>err</code></td><td></td></tr></table></td><td></td></tr><tr><td id='variant.NewReusablyBoundTcpSocket'><code>NewReusablyBoundTcpSocket</code></td><td><h3 class='fields'>Fields</h3>
+                                              <table><tr><td id='variant.SocketLocalAddr.field.err'><code>err</code></td><td></td></tr></table></td><td></td></tr><tr><td id='variant.NewReusablyBoundTcpSocket'><code>NewReusablyBoundTcpSocket</code></td><td><div class='docblock'><p>Error binding another socket to the same local address as the provided socket.</p>
+</div><h3 class='fields'>Fields</h3>
 
-                                              <table><tr><td id='variant.NewReusablyBoundTcpSocket.field.err'><code>err</code></td><td></td></tr></table></td><td></td></tr><tr><td id='variant.Listen'><code>Listen</code></td><td><h3 class='fields'>Fields</h3>
+                                              <table><tr><td id='variant.NewReusablyBoundTcpSocket.field.err'><code>err</code></td><td></td></tr></table></td><td></td></tr><tr><td id='variant.Listen'><code>Listen</code></td><td><div class='docblock'><p>Error listening on the provided socket.</p>
+</div><h3 class='fields'>Fields</h3>
 
-                                              <table><tr><td id='variant.Listen.field.err'><code>err</code></td><td></td></tr></table></td><td></td></tr><tr><td id='variant.TimedOut'><code>TimedOut</code></td><td><h3 class='fields'>Fields</h3>
+                                              <table><tr><td id='variant.Listen.field.err'><code>err</code></td><td></td></tr></table></td><td></td></tr><tr><td id='variant.TimedOut'><code>TimedOut</code></td><td><div class='docblock'><p>Tcp hole punching timed out without making a successful connection.</p>
+</div><h3 class='fields'>Fields</h3>
 
-                                              <table><tr><td id='variant.TimedOut.field.warnings'><code>warnings</code></td><td></td></tr></table></td><td></td></tr><tr><td id='variant.DecideStream'><code>DecideStream</code></td><td><h3 class='fields'>Fields</h3>
+                                              <table><tr><td id='variant.TimedOut.field.warnings'><code>warnings</code></td><td></td></tr></table></td><td></td></tr><tr><td id='variant.DecideStream'><code>DecideStream</code></td><td><div class='docblock'><p>Multiple streams were successfully punched to the peer but all of them died.</p>
+</div><h3 class='fields'>Fields</h3>
 
                                               <table><tr><td id='variant.DecideStream.field.errors'><code>errors</code></td><td></td></tr></table></td><td></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html' title='core::fmt::Display'>Display</a> for <a class='enum' href='../nat_traversal/enum.TcpPunchHoleError.html' title='nat_traversal::TcpPunchHoleError'>TcpPunchHoleError</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html#method.fmt' class='fnname'>fmt</a>(&amp;self, fmt: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
 </div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/std/error/trait.Error.html' title='std::error::Error'>Error</a> for <a class='enum' href='../nat_traversal/enum.TcpPunchHoleError.html' title='nat_traversal::TcpPunchHoleError'>TcpPunchHoleError</a></code></h3><div class='impl-items'><h4 id='method.description' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/std/error/trait.Error.html#method.description' class='fnname'>description</a>(&amp;self) -&gt; &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a></code></h4>

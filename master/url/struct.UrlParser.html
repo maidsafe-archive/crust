@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-1523' class='srclink' href='../src/url/lib.rs.html#320-325' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-1675' class='srclink' href='../src/url/lib.rs.html#339-344' title='goto source code'>[src]</a></span></h1>
 <pre class='rust struct'>pub struct UrlParser&lt;'a&gt; {
     // some fields omitted
 }</pre><div class='docblock'><p>A set of optional parameters for URL parsing.</p>
@@ -86,7 +86,7 @@ as found in the <code>scheme</code> field of an <code>Url</code> struct.</p>
         <span class='string'>&quot;https&quot;</span> <span class='op'>=&gt;</span> <span class='ident'>SchemeType</span>::<span class='ident'>Relative</span>(<span class='number'>443</span>),
         <span class='string'>&quot;ws&quot;</span> <span class='op'>=&gt;</span> <span class='ident'>SchemeType</span>::<span class='ident'>Relative</span>(<span class='number'>80</span>),
         <span class='string'>&quot;wss&quot;</span> <span class='op'>=&gt;</span> <span class='ident'>SchemeType</span>::<span class='ident'>Relative</span>(<span class='number'>443</span>),
-        _ <span class='op'>=&gt;</span> <span class='ident'>NonRelative</span>,
+        _ <span class='op'>=&gt;</span> <span class='ident'>SchemeType</span>::<span class='ident'>NonRelative</span>,
     }
 }</pre>
 
