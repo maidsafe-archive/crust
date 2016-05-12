@@ -14,8 +14,8 @@ pub struct Context(usize);
 pub struct Core {
     token_counter: usize,
     context_counter: usize,
-    token_map: HashMap<Token, Context>,
-    state_map: HashMap<Context, Rc<RefCell<State>>>,
+    contexts: HashMap<Token, Context>,
+    states: HashMap<Context, Rc<RefCell<State>>>,
 }
 
 impl Core {
@@ -23,8 +23,8 @@ impl Core {
         Core {
             token_counter: 0,
             context_counter: 0,
-            token_map: HashMap::new(),
-            state_map: HashMap::new(),
+            contexts: HashMap::new(),
+            states: HashMap::new(),
         }
     }
 
@@ -43,30 +43,30 @@ impl Core {
     }
 
     pub fn insert_context(&mut self, key: Token, val: Context) -> Option<Context> {
-        self.token_map.insert(key, val)
+        self.contexts.insert(key, val)
     }
 
     pub fn insert_state(&mut self,
                         key: Context,
                         val: Rc<RefCell<State>>)
                         -> Option<Rc<RefCell<State>>> {
-        self.state_map.insert(key, val)
+        self.states.insert(key, val)
     }
 
     pub fn remove_context(&mut self, key: &Token) -> Option<Context> {
-        self.token_map.remove(key)
+        self.contexts.remove(key)
     }
 
     pub fn remove_state(&mut self, key: &Context) -> Option<Rc<RefCell<State>>> {
-        self.state_map.remove(key)
+        self.states.remove(key)
     }
 
     pub fn get_context(&self, key: &Token) -> Option<&Context> {
-        self.token_map.get(key)
+        self.contexts.get(key)
     }
 
     pub fn get_state(&self, key: &Context) -> Option<&Rc<RefCell<State>>> {
-        self.state_map.get(key)
+        self.states.get(key)
     }
 }
 
@@ -75,9 +75,9 @@ impl Handler for Core {
     type Message = CoreMessage;
 
     fn ready(&mut self, event_loop: &mut EventLoop<Self>, token: Token, events: EventSet) {
-        let state = match self.token_map.get(&token) {
+        let state = match self.contexts.get(&token) {
             Some(context) => {
-                match self.state_map.get(context) {
+                match self.states.get(context) {
                     Some(state) => state.clone(),
                     None => return,
                 }
