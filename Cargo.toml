@@ -12,7 +12,13 @@ version = "0.12.0"
 [dependencies]
 maidsafe_utilities = "~0.5.4"
 mio = "~0.5.1"
+nat_traversal = "~0.3.3"
+net2 = "~0.2.23"
 quick-error = "~1.0.0"
+rand = "~0.3.14"
+rustc-serialize = "~0.3.19"
+sodiumoxide = "~0.0.10"
+socket_addr = "~0.1.0"
 
 [dependencies.clippy]
 optional = true
