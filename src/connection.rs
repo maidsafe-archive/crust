@@ -203,7 +203,13 @@ pub fn tcp_rendezvous_connect(connection_map: Arc<Mutex<HashMap<PeerId, Vec<Conn
                                              their_addr,
                                              true);
 
-    cm.entry(their_id).or_insert_with(Vec::new).push(connection);
+    let entry = cm.entry(their_id).or_insert_with(Vec::new);
+    for old_connection in entry.iter_mut() {
+        if !old_connection.hole_punched {
+            let _ = old_connection.send(CrustMsg::DuplicateConnection, 0);
+        }
+    }
+    entry.insert(0, connection);
     Ok(())
 }
 
@@ -302,15 +308,19 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
     }
 
     let network_tx = RaiiSender(writer);
-    let connection = register_tcp_connection(connection_map.clone(),
-                                             their_id,
-                                             network_rx,
-                                             network_tx,
-                                             event_tx,
-                                             our_addr,
-                                             their_addr,
-                                             false);
-    cm.entry(their_id).or_insert_with(|| vec![]).push(connection);
+    let mut connection = register_tcp_connection(connection_map.clone(),
+                                                 their_id,
+                                                 network_rx,
+                                                 network_tx,
+                                                 event_tx,
+                                                 our_addr,
+                                                 their_addr,
+                                                 false);
+    let entry = cm.entry(their_id).or_insert_with(Vec::new);
+    if entry.iter().any(|connection| !connection.is_closed() && connection.hole_punched) {
+        let _ = connection.send(CrustMsg::DuplicateConnection, 0);
+    }
+    entry.push(connection);
     Ok(())
 }
 
@@ -467,16 +477,21 @@ pub fn start_tcp_accept(port: u16,
                 if notify_new_connection(&cm, &peer_id, event, &event_tx).is_err() {
                     break;
                 }
-                let connection = register_tcp_connection(connection_map.clone(),
-                                                         peer_id,
-                                                         network_rx,
-                                                         RaiiSender(writer),
-                                                         event_tx.clone(),
-                                                         our_addr,
-                                                         their_addr,
-                                                         false);
+                let mut connection = register_tcp_connection(connection_map.clone(),
+                                                             peer_id,
+                                                             network_rx,
+                                                             RaiiSender(writer),
+                                                             event_tx.clone(),
+                                                             our_addr,
+                                                             their_addr,
+                                                             false);
 
-                cm.entry(peer_id).or_insert_with(Vec::new).push(connection);
+                let entry = cm.entry(peer_id).or_insert_with(Vec::new);
+                if entry.iter()
+                        .any(|connection| !connection.is_closed() && connection.hole_punched) {
+                    let _ = connection.send(CrustMsg::DuplicateConnection, 0);
+                }
+                entry.push(connection);
             }
         }
     }));
@@ -499,6 +514,21 @@ fn start_rx(mut network_rx: Receiver,
                 if let Err(err) = event_tx.send(Event::NewMessage(their_id, msg)) {
                     error!("Error sending message to {:?}: {:?}", their_id, err);
                     break;
+                }
+            }
+            Ok(CrustMsg::DuplicateConnection) => {
+                let mut lock = unwrap_result!(connection_map.lock());
+                if let Entry::Occupied(entry) = lock.entry(their_id) {
+                    let connections = entry.get();
+                    if connections.len() > 2 {
+                        warn!("{} connections to {:?}.", connections.len(), their_id);
+                    }
+                    if connections.iter()
+                                  .any(|connection| {
+                                      !connection.is_closed() && connection.hole_punched
+                                  }) {
+                        break;
+                    }
                 }
             }
             Ok(CrustMsg::Heartbeat) => (),
