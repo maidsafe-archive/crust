@@ -20,8 +20,8 @@ fn spawn_test_server() {
     let (strm, _) = ls.accept().expect("Error in accepting");
     loop {
         let mut buf = [0; 10];
-        let size = strm.read_exact(&mut buf).expect("Error in reading");
-        if size == 0 {
+        if let Err(e) = strm.read_exact(&mut buf) {
+            println!("{:?}", e);
             break;
         }
         println!("Test peer received {:?}", buf);
@@ -43,8 +43,8 @@ fn main() {
                 thread::sleep(Duration::from_secs(1));
                 service.send(peer_id, vec![243; 10]);
             }
-            CrustMsg::NewMessage((peer_id, msg)) => {
-                println!("Routing received from peer {}: {:?}", msg, peer_id);
+            CrustMsg::NewMessage(peer_id, msg) => {
+                println!("Routing received from peer {}: {:?}", peer_id, msg);
                 break;
             }
         }

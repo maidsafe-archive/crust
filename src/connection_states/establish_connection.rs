@@ -3,7 +3,7 @@ use std::sync::mpsc::Sender;
 
 use state::State;
 use std::collections::HashMap;
-use connection_states::ActiveConnection;
+use connection_states::active_connection::ActiveConnection;
 use std::sync::{Arc, Mutex};
 use std::rc::Rc;
 use std::cell::RefCell;
@@ -27,7 +27,7 @@ impl EstablishConnection {
                routing_tx: Sender<CrustMsg>,
                peer_contact_info: SocketAddr) {
         let context = core.get_new_context();
-        let socket = TcpStream::connect(peer_contact_info).expect("Could not connect to peer");
+        let socket = TcpStream::connect(&peer_contact_info).expect("Could not connect to peer");
         let connection = EstablishConnection {
             cm: cm,
             context: context.clone(),
@@ -54,11 +54,12 @@ impl State for EstablishConnection {
                token: Token,
                event_set: EventSet) {
         if event_set.is_readable() {
-            let context = core.remove_context(token).expect("Context not found");
-            let _ = core.remove_state(context).expect("State not found");
+            let context = core.remove_context(&token).expect("Context not found");
+            let _ = core.remove_state(&context).expect("State not found");
 
             ActiveConnection::new(core,
                                   event_loop,
+                                  self.cm.clone(),
                                   self.context.clone(),
                                   self.socket.take().expect("Logic Error"),
                                   self.routing_tx.clone());

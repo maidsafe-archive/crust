@@ -1,5 +1,5 @@
 use std::sync::mpsc::Sender;
-use std::io::BufReader;
+use std::io::{Read, Write, BufReader};
 use std::collections::{HashMap, VecDeque};
 
 use service::CrustMsg;
@@ -19,7 +19,7 @@ pub struct ActiveConnection {
     context: Context,
     read_buf: Vec<u8>,
     reader: BufReader<TcpStream>,
-    writer: TcpStream,
+    socket: TcpStream,
     write_queue: VecDeque<Vec<u8>>,
     routing_tx: Sender<CrustMsg>,
 }
@@ -41,12 +41,12 @@ impl ActiveConnection {
             context: context.clone(),
             read_buf: Vec::new(),
             reader: BufReader::new(socket.try_clone().expect("Could not clone TcpStream")),
-            writer: socket,
+            socket: socket,
             write_queue: VecDeque::new(),
             routing_tx: routing_tx,
         };
 
-        event_loop.reregister(connection.socket.as_ref().expect("Logic Error"),
+        event_loop.reregister(&connection.socket,
                               token,
                               EventSet::readable() | EventSet::error() | EventSet::hup(),
                               PollOpt::edge())
@@ -75,7 +75,7 @@ impl ActiveConnection {
 
     fn write(&mut self, _core: &mut Core, event_loop: &mut EventLoop<Core>, token: Token) {
         if let Some(mut data) = self.write_queue.pop_front() {
-            match self.writer.write(&data) {
+            match self.socket.write(&data) {
                 Ok(bytes_txd) => {
                     if bytes_txd < data.len() {
                         data = data[bytes_txd..].to_owned();
@@ -112,12 +112,12 @@ impl State for ActiveConnection {
                event_set: EventSet) {
         assert_eq!(token, self.token);
         if event_set.is_readable() {
-            self.read(event_loop, token);
+            self.read(core, event_loop, token);
         } else if event_set.is_writable() {
-            self.write(event_loop, token);
+            self.write(core, event_loop, token);
         } else if event_set.is_hup() {
-            let context = core.remove_context(token).expect("Context not found");
-            let _ = core.remove_state(context).expect("State not found");
+            let context = core.remove_context(&token).expect("Context not found");
+            let _ = core.remove_state(&context).expect("State not found");
 
             println!("Graceful Exit");
         } else if event_set.is_error() {
@@ -128,6 +128,6 @@ impl State for ActiveConnection {
 
     fn write(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, data: Vec<u8>) {
         self.write_queue.push_back(data);
-        self.write(core, event_loop);
+        self.write(core, event_loop, self.token);
     }
 }

@@ -41,6 +41,33 @@ impl Core {
 
         Context(context_counter)
     }
+
+    pub fn insert_context(&mut self, key: Token, val: Context) -> Option<Context> {
+        self.token_map.insert(key, val)
+    }
+
+    pub fn insert_state(&mut self,
+                        key: Context,
+                        val: Rc<RefCell<State>>)
+                        -> Option<Rc<RefCell<State>>> {
+        self.state_map.insert(key, val)
+    }
+
+    pub fn remove_context(&mut self, key: &Token) -> Option<Context> {
+        self.token_map.remove(key)
+    }
+
+    pub fn remove_state(&mut self, key: &Context) -> Option<Rc<RefCell<State>>> {
+        self.state_map.remove(key)
+    }
+
+    pub fn get_context(&self, key: &Token) -> Option<&Context> {
+        self.token_map.get(key)
+    }
+
+    pub fn get_state(&self, key: &Context) -> Option<&Rc<RefCell<State>>> {
+        self.state_map.get(key)
+    }
 }
 
 impl Handler for Core {
