@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["UdpBuilder","An \"in progress\" UDP socket which has not yet been connected."]]});

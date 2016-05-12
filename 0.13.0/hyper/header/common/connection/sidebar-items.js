@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["ConnectionOption","Values that can be in the `Connection` header."]],"struct":[["Connection","`Connection` header, defined in RFC7230"]]});
