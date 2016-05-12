@@ -42,7 +42,7 @@ use connection;
 use bootstrap;
 use bootstrap::RaiiBootstrap;
 use bootstrap_handler::BootstrapHandler;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use event::Event;
 use socket_addr::SocketAddr;
@@ -54,6 +54,7 @@ pub const DEFAULT_BEACON_PORT: u16 = 5484;
 
 pub const HEARTBEAT_PERIOD_SECS: u64 = 20;
 pub const INACTIVITY_TIMEOUT_SECS: u64 = 60;
+const HOLE_PUNCH_TIMEOUT_SECS: u64 = 60;
 
 /// The result of a `Service::prepare_contact_info` call.
 #[derive(Debug)]
@@ -199,7 +200,9 @@ impl Service {
                                            mapping_context.clone(),
                                            name_hash);
 
-        let tcp_hole_punch_server = try!(SimpleTcpHolePunchServer::new(mapping_context.clone())
+        let deadline = Instant::now() + Duration::from_secs(10);
+        let tcp_hole_punch_server = try!(SimpleTcpHolePunchServer::new(mapping_context.clone(),
+                                                                       deadline)
                                              .result_log()
                                              .or_else(|err| {
                                                  let err_str = format!("Failed to create TCP \
@@ -400,7 +403,9 @@ impl Service {
             let inactivity_timeout = self.inactivity_timeout.clone();
 
             let _ = thread!("Service::connect tcp rendezvous", move || {
-                let res = tcp_punch_hole(tcp_socket, priv_tcp_info, tcp_info).result_log();
+                let deadline = Instant::now() + Duration::from_secs(HOLE_PUNCH_TIMEOUT_SECS);
+                let res = tcp_punch_hole(tcp_socket, priv_tcp_info, tcp_info, deadline)
+                              .result_log();
 
                 if !is_alive.load(Ordering::Relaxed) {
                     return;
@@ -472,8 +477,9 @@ impl Service {
         let mapping_context = self.mapping_context.clone();
         let our_pub_key = self.our_keys.0.clone();
         let _joiner = thread!("PrepareConnectionInfo", move || {
+            let deadline = Instant::now() + Duration::from_secs(10);
             let (tcp_socket, (our_priv_tcp_info, our_pub_tcp_info)) =
-                match MappedTcpSocket::new(&mapping_context).result_log() {
+                match MappedTcpSocket::new(&mapping_context, deadline).result_log() {
                     Ok(MappedTcpSocket { socket, endpoints }) => {
                         (Some(socket), gen_rendezvous_info(endpoints))
                     }

@@ -359,8 +359,10 @@ pub fn start_tcp_accept(port: u16,
     let addr = net::SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), port));
     let tcp_builder_listener = try!(nat_traversal::new_reusably_bound_tcp_socket(&addr));
 
+    let deadline = Instant::now() + Duration::from_secs(10);
     let mapped_tcp_socket = try!(nat_traversal::MappedTcpSocket::map(tcp_builder_listener,
-                                                                     mapping_context.as_ref())
+                                                                     mapping_context.as_ref(),
+                                                                     deadline)
                                      .result_log());
     let tcp_builder_listener = mapped_tcp_socket.socket;
     let mut addrs = mapped_tcp_socket.endpoints.into_iter().map(|m| m.addr).collect_vec();
