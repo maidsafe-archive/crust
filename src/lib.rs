@@ -45,6 +45,12 @@
 #[macro_use]
 extern crate maidsafe_utilities;
 extern crate mio;
+extern crate nat_traversal;
+extern crate net2;
+extern crate rand;
+extern crate rustc_serialize;
+extern crate sodiumoxide;
+extern crate socket_addr;
 
 // Needed because the crate is only used for macros
 #[allow(unused_extern_crates)]
@@ -52,9 +58,18 @@ extern crate mio;
 extern crate quick_error;
 
 mod core;
+mod event;
 mod error;
+mod peer_id;
 mod state;
 mod service;
+mod static_contact_info;
 
+/// Crust Observers will be informed of crust events on this
+pub type CrustEventSender = ::maidsafe_utilities::event_sender::MaidSafeObserver<Event>;
+
+pub use event::Event;
 pub use error::Error;
+pub use peer_id::PeerId;
 pub use service::Service;
+pub use socket_addr::SocketAddr;
