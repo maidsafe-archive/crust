@@ -12,7 +12,7 @@ rust:
 sudo: false
 branches:
   only:
-    - master
+    - async
 cache:
   cargo: true
   directories:
