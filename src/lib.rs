@@ -57,12 +57,13 @@ extern crate socket_addr;
 #[macro_use]
 extern crate quick_error;
 
+mod connection_states;
 mod core;
-mod event;
 mod error;
+mod event;
 mod peer_id;
-mod state;
 mod service;
+mod state;
 mod static_contact_info;
 
 /// Crust Observers will be informed of crust events on this
