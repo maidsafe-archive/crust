@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["MappingContextNewError",""],["MappingContextNewWarning",""]],"struct":[["MappingContext","You need to create a `MappingContext` before doing any socket mapping. This `MappingContext` should ideally be kept throughout the lifetime of the program. Internally it caches a addresses of UPnP servers and hole punching servers."]]});

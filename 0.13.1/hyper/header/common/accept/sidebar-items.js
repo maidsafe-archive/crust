@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Accept","`Accept` header, defined in RFC7231"]]});

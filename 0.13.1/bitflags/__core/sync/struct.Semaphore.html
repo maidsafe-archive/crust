@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `Semaphore` struct in crate `bitflags`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, Semaphore">
+
+    <title>bitflags::__core::sync::Semaphore - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>sync</a></p><script>window.sidebarCurrent = {name: 'Semaphore', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content struct">
+<h1 class='fqn'><span class='in-band'>Struct <a href='../../index.html'>bitflags</a>::<wbr><a href='../index.html'>__core</a>::<wbr><a href='index.html'>sync</a>::<wbr><a class='struct' href=''>Semaphore</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-10547' class='srclink' href='https://doc.rust-lang.org/nightly/std/sync/semaphore/struct.Semaphore.html?gotosrc=10547' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct Semaphore {
+    // some fields omitted
+}</pre><div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.7.0<p>: easily confused with system semaphores and not used enough to pull its weight</p>
+</em></div><div class='docblock'><p>A counting, blocking, semaphore.</p>
+
+<p>Semaphores are a form of atomic counter where access is only granted if the
+counter is a positive value. Each acquisition will block the calling thread
+until the counter is positive, and each release will increment the counter
+and unblock any threads if necessary.</p>
+
+<h1 id='examples' class='section-header'><a href='#examples'>Examples</a></h1>
+<pre class='rust rust-example-rendered'>
+<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>feature</span>(<span class='ident'>semaphore</span>)]</span>
+
+<span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>sync</span>::<span class='ident'>Semaphore</span>;
+
+<span class='comment'>// Create a semaphore that represents 5 resources</span>
+<span class='kw'>let</span> <span class='ident'>sem</span> <span class='op'>=</span> <span class='ident'>Semaphore</span>::<span class='ident'>new</span>(<span class='number'>5</span>);
+
+<span class='comment'>// Acquire one of the resources</span>
+<span class='ident'>sem</span>.<span class='ident'>acquire</span>();
+
+<span class='comment'>// Acquire one of the resources for a limited period of time</span>
+{
+    <span class='kw'>let</span> <span class='ident'>_guard</span> <span class='op'>=</span> <span class='ident'>sem</span>.<span class='ident'>access</span>();
+    <span class='comment'>// ...</span>
+} <span class='comment'>// resources is released here</span>
+
+<span class='comment'>// Release our initially acquired resource</span>
+<span class='ident'>sem</span>.<span class='ident'>release</span>();</pre>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../../bitflags/__core/sync/struct.Semaphore.html' title='bitflags::__core::sync::Semaphore'>Semaphore</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(count: <a class='primitive' href='https://doc.rust-lang.org/nightly/bitflags/primitive.isize.html'>isize</a>) -&gt; <a class='struct' href='../../../bitflags/__core/sync/struct.Semaphore.html' title='bitflags::__core::sync::Semaphore'>Semaphore</a></code></h4>
+<div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.7.0<p>: easily confused with system semaphores and not used enough to pull its weight</p>
+</em></div><div class='docblock'><p>Creates a new semaphore with the initial count specified.</p>
+
+<p>The count specified can be thought of as a number of resources, and a
+call to <code>acquire</code> or <code>access</code> will block until at least one resource is
+available. It is valid to initialize a semaphore with a negative count.</p>
+</div><h4 id='method.acquire' class='method'><code>fn <a href='#method.acquire' class='fnname'>acquire</a>(&amp;self)</code></h4>
+<div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.7.0<p>: easily confused with system semaphores and not used enough to pull its weight</p>
+</em></div><div class='docblock'><p>Acquires a resource of this semaphore, blocking the current thread until
+it can do so.</p>
+
+<p>This method will block until the internal count of the semaphore is at
+least 1.</p>
+</div><h4 id='method.release' class='method'><code>fn <a href='#method.release' class='fnname'>release</a>(&amp;self)</code></h4>
+<div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.7.0<p>: easily confused with system semaphores and not used enough to pull its weight</p>
+</em></div><div class='docblock'><p>Release a resource from this semaphore.</p>
+
+<p>This will increment the number of resources in this semaphore by 1 and
+will notify any pending waiters in <code>acquire</code> or <code>access</code> if necessary.</p>
+</div><h4 id='method.access' class='method'><code>fn <a href='#method.access' class='fnname'>access</a>(&amp;self) -&gt; <a class='struct' href='../../../bitflags/__core/sync/struct.SemaphoreGuard.html' title='bitflags::__core::sync::SemaphoreGuard'>SemaphoreGuard</a></code></h4>
+<div class='stability'><em class='stab unstable deprecated'>Deprecated since 1.7.0<p>: easily confused with system semaphores and not used enough to pull its weight</p>
+</em></div><div class='docblock'><p>Acquires a resource of this semaphore, returning an RAII guard to
+release the semaphore when dropped.</p>
+
+<p>This function is semantically equivalent to an <code>acquire</code> followed by a
+<code>release</code> when the guard returned is dropped.</p>
+</div></div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../../";
+        window.currentCrate = "bitflags";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../../../jquery.js"></script>
+    <script src="../../../main.js"></script>
+    
+    <script defer src="../../../search-index.js"></script>
+</body>
+</html>
