@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/itertools-0.4.13/src/free.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/itertools-0.4.15/src/free.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>free.rs.html -- source</title>
@@ -326,10 +326,10 @@
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>fmt</span>::<span class='ident'>Display</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>iter</span>::{<span class='self'>self</span>, <span class='ident'>Zip</span>};
 <span class='kw'>use</span> {
-    <span class='ident'>Itertools</span>,
-    <span class='ident'>Merge</span>,
-    <span class='ident'>KMerge</span>,
     <span class='ident'>Interleave</span>,
+    <span class='ident'>Itertools</span>,
+    <span class='ident'>KMerge</span>,
+    <span class='ident'>Merge</span>,
     <span class='ident'>ZipEq</span>,
 };
 
@@ -419,7 +419,7 @@
 <span class='doccomment'>///     /* loop body */</span>
 <span class='doccomment'>/// }</span>
 <span class='doccomment'>/// ```</span>
-<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>chain</span><span class='op'>&lt;</span><span class='ident'>I</span>, <span class='ident'>J</span><span class='op'>&gt;</span>(<span class='ident'>i</span>: <span class='ident'>I</span>, <span class='ident'>j</span>: <span class='ident'>J</span>) <span class='op'>-&gt;</span> <span class='ident'>iter</span>::<span class='ident'>Chain</span><span class='op'>&lt;</span><span class='ident'>I</span>::<span class='ident'>IntoIter</span>, <span class='ident'>J</span>::<span class='ident'>IntoIter</span><span class='op'>&gt;</span>
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>chain</span><span class='op'>&lt;</span><span class='ident'>I</span>, <span class='ident'>J</span><span class='op'>&gt;</span>(<span class='ident'>i</span>: <span class='ident'>I</span>, <span class='ident'>j</span>: <span class='ident'>J</span>) <span class='op'>-&gt;</span> <span class='ident'>iter</span>::<span class='ident'>Chain</span><span class='op'>&lt;&lt;</span><span class='ident'>I</span> <span class='kw'>as</span> <span class='ident'>IntoIterator</span><span class='op'>&gt;</span>::<span class='ident'>IntoIter</span>, <span class='op'>&lt;</span><span class='ident'>J</span> <span class='kw'>as</span> <span class='ident'>IntoIterator</span><span class='op'>&gt;</span>::<span class='ident'>IntoIter</span><span class='op'>&gt;</span>
     <span class='kw'>where</span> <span class='ident'>I</span>: <span class='ident'>IntoIterator</span>,
           <span class='ident'>J</span>: <span class='ident'>IntoIterator</span><span class='op'>&lt;</span><span class='ident'>Item</span> <span class='op'>=</span> <span class='ident'>I</span>::<span class='ident'>Item</span><span class='op'>&gt;</span>
 {
@@ -517,7 +517,7 @@
 <span class='doccomment'>///     /* loop body */</span>
 <span class='doccomment'>/// }</span>
 <span class='doccomment'>/// ```</span>
-<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>interleave</span><span class='op'>&lt;</span><span class='ident'>I</span>, <span class='ident'>J</span><span class='op'>&gt;</span>(<span class='ident'>i</span>: <span class='ident'>I</span>, <span class='ident'>j</span>: <span class='ident'>J</span>) <span class='op'>-&gt;</span> <span class='ident'>Interleave</span><span class='op'>&lt;</span><span class='ident'>I</span>::<span class='ident'>IntoIter</span>, <span class='ident'>J</span>::<span class='ident'>IntoIter</span><span class='op'>&gt;</span>
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>interleave</span><span class='op'>&lt;</span><span class='ident'>I</span>, <span class='ident'>J</span><span class='op'>&gt;</span>(<span class='ident'>i</span>: <span class='ident'>I</span>, <span class='ident'>j</span>: <span class='ident'>J</span>) <span class='op'>-&gt;</span> <span class='ident'>Interleave</span><span class='op'>&lt;&lt;</span><span class='ident'>I</span> <span class='kw'>as</span> <span class='ident'>IntoIterator</span><span class='op'>&gt;</span>::<span class='ident'>IntoIter</span>, <span class='op'>&lt;</span><span class='ident'>J</span> <span class='kw'>as</span> <span class='ident'>IntoIterator</span><span class='op'>&gt;</span>::<span class='ident'>IntoIter</span><span class='op'>&gt;</span>
     <span class='kw'>where</span> <span class='ident'>I</span>: <span class='ident'>IntoIterator</span>,
           <span class='ident'>J</span>: <span class='ident'>IntoIterator</span><span class='op'>&lt;</span><span class='ident'>Item</span> <span class='op'>=</span> <span class='ident'>I</span>::<span class='ident'>Item</span><span class='op'>&gt;</span>
 {
@@ -535,7 +535,7 @@
 <span class='doccomment'>///     /* loop body */</span>
 <span class='doccomment'>/// }</span>
 <span class='doccomment'>/// ```</span>
-<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>merge</span><span class='op'>&lt;</span><span class='ident'>I</span>, <span class='ident'>J</span><span class='op'>&gt;</span>(<span class='ident'>i</span>: <span class='ident'>I</span>, <span class='ident'>j</span>: <span class='ident'>J</span>) <span class='op'>-&gt;</span> <span class='ident'>Merge</span><span class='op'>&lt;</span><span class='ident'>I</span>::<span class='ident'>IntoIter</span>, <span class='ident'>J</span>::<span class='ident'>IntoIter</span><span class='op'>&gt;</span>
+<span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>merge</span><span class='op'>&lt;</span><span class='ident'>I</span>, <span class='ident'>J</span><span class='op'>&gt;</span>(<span class='ident'>i</span>: <span class='ident'>I</span>, <span class='ident'>j</span>: <span class='ident'>J</span>) <span class='op'>-&gt;</span> <span class='ident'>Merge</span><span class='op'>&lt;&lt;</span><span class='ident'>I</span> <span class='kw'>as</span> <span class='ident'>IntoIterator</span><span class='op'>&gt;</span>::<span class='ident'>IntoIter</span>, <span class='op'>&lt;</span><span class='ident'>J</span> <span class='kw'>as</span> <span class='ident'>IntoIterator</span><span class='op'>&gt;</span>::<span class='ident'>IntoIter</span><span class='op'>&gt;</span>
     <span class='kw'>where</span> <span class='ident'>I</span>: <span class='ident'>IntoIterator</span>,
           <span class='ident'>J</span>: <span class='ident'>IntoIterator</span><span class='op'>&lt;</span><span class='ident'>Item</span> <span class='op'>=</span> <span class='ident'>I</span>::<span class='ident'>Item</span><span class='op'>&gt;</span>,
           <span class='ident'>I</span>::<span class='ident'>Item</span>: <span class='ident'>PartialOrd</span>

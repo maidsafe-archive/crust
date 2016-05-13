@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-1385' class='srclink' href='../src/toml/lib.rs.html#65-73' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-1398' class='srclink' href='../src/toml/lib.rs.html#65-73' title='goto source code'>[src]</a></span></h1>
 <pre class='rust enum'>pub enum Value {
     String(<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>),
     Integer(<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.i64.html'>i64</a>),
@@ -111,6 +111,34 @@ example date is:</p>
 
 <span class='kw'>let</span> <span class='ident'>no_bar</span> <span class='op'>=</span> <span class='ident'>value</span>.<span class='ident'>lookup</span>(<span class='string'>&quot;test.bar&quot;</span>);
 <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>no_bar</span>.<span class='ident'>is_none</span>(), <span class='boolval'>true</span>);</pre>
+</div><h4 id='method.lookup_mut' class='method'><code>fn <a href='#method.lookup_mut' class='fnname'>lookup_mut</a>(&amp;mut self, path: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;&amp;mut <a class='enum' href='../toml/enum.Value.html' title='toml::Value'>Value</a>&gt;</code></h4>
+<div class='docblock'><p>Lookups for mutable value at specified path.</p>
+
+<p>Uses &#39;.&#39; as a path separator.</p>
+
+<p>Note: arrays have zero-based indexes.</p>
+
+<p>Note: empty path returns self.</p>
+
+<pre class='rust rust-example-rendered'>
+<span class='kw'>let</span> <span class='ident'>toml</span> <span class='op'>=</span> <span class='string'>r#&quot;
+     [test]
+     foo = &quot;bar&quot;
+
+     [[values]]
+     foo = &quot;baz&quot;
+
+     [[values]]
+     foo = &quot;qux&quot;
+&quot;#</span>;
+<span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>value</span>: <span class='ident'>toml</span>::<span class='ident'>Value</span> <span class='op'>=</span> <span class='ident'>toml</span>.<span class='ident'>parse</span>().<span class='ident'>unwrap</span>();
+{
+   <span class='kw'>let</span> <span class='ident'>string</span> <span class='op'>=</span> <span class='ident'>value</span>.<span class='ident'>lookup_mut</span>(<span class='string'>&quot;test.foo&quot;</span>).<span class='ident'>unwrap</span>();
+   <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>string</span>, <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>toml</span>::<span class='ident'>Value</span>::<span class='ident'>String</span>(<span class='ident'>String</span>::<span class='ident'>from</span>(<span class='string'>&quot;bar&quot;</span>)));
+   <span class='op'>*</span><span class='ident'>string</span> <span class='op'>=</span> <span class='ident'>toml</span>::<span class='ident'>Value</span>::<span class='ident'>String</span>(<span class='ident'>String</span>::<span class='ident'>from</span>(<span class='string'>&quot;foo&quot;</span>));
+}
+<span class='kw'>let</span> <span class='ident'>result</span> <span class='op'>=</span> <span class='ident'>value</span>.<span class='ident'>lookup_mut</span>(<span class='string'>&quot;test.foo&quot;</span>).<span class='ident'>unwrap</span>();
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>result</span>.<span class='ident'>as_str</span>().<span class='ident'>unwrap</span>(), <span class='string'>&quot;foo&quot;</span>);</pre>
 </div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html' title='core::fmt::Display'>Display</a> for <a class='enum' href='../toml/enum.Value.html' title='toml::Value'>Value</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html#method.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
 </div><h3 class='impl'><code>impl <a class='trait' href='../rustc_serialize/serialize/trait.Encodable.html' title='rustc_serialize::serialize::Encodable'>Encodable</a> for <a class='enum' href='../toml/enum.Value.html' title='toml::Value'>Value</a></code></h3><div class='impl-items'><h4 id='method.encode' class='method'><code>fn <a href='../rustc_serialize/serialize/trait.Encodable.html#method.encode' class='fnname'>encode</a>&lt;E&gt;(&amp;self, e: &amp;mut E) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, E::Error&gt; <span class='where'>where E: <a class='trait' href='../rustc_serialize/serialize/trait.Encoder.html' title='rustc_serialize::serialize::Encoder'>Encoder</a></span></code></h4>
 </div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/str/trait.FromStr.html' title='core::str::FromStr'>FromStr</a> for <a class='enum' href='../toml/enum.Value.html' title='toml::Value'>Value</a></code></h3><div class='impl-items'><h4 id='associatedtype.Err' class='type'><code>type Err = <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../toml/struct.ParserError.html' title='toml::ParserError'>ParserError</a>&gt;</code></h4>

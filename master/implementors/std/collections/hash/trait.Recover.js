@@ -1,5 +1,5 @@
 (function() {var implementors = {};
-implementors['bitflags'] = [];implementors['socket_addr'] = [];implementors['mio'] = [];implementors['crust'] = [];
+implementors['bitflags'] = [];implementors['mio'] = [];implementors['socket_addr'] = [];implementors['crust'] = [];
 
             if (window.register_implementors) {
                 window.register_implementors(implementors);

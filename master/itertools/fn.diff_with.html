@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-1285' class='srclink' href='../src/itertools/diff.rs.html#39-60' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-1284' class='srclink' href='../src/itertools/diff.rs.html#39-60' title='goto source code'>[src]</a></span></h1>
 <pre class='rust fn'>pub fn diff_with&lt;I, J, F&gt;(i: I, j: J, is_equal: F) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='enum' href='../itertools/enum.Diff.html' title='itertools::Diff'>Diff</a>&lt;I::IntoIter, J::IntoIter&gt;&gt; <span class='where'>where I: <a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/trait.IntoIterator.html' title='core::iter::IntoIterator'>IntoIterator</a>, J: <a class='trait' href='https://doc.rust-lang.org/nightly/core/iter/trait.IntoIterator.html' title='core::iter::IntoIterator'>IntoIterator</a>, F: <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Fn.html' title='core::ops::Fn'>Fn</a>(&amp;I::Item, &amp;J::Item) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></span></pre><div class='docblock'><p>Compares every element yielded by both <code>i</code> and <code>j</code> with the given function in lock-step and
 returns a <code>Diff</code> which describes how <code>j</code> differs from <code>i</code>.</p>
 
