@@ -1,5 +1,8 @@
 # CRUST - Change Log
 
+## [0.13.1]
+- Ensure dropped duplicate connections dont have messages in transit
+
 ## [0.13.0]
 - Add message priority to send high-priority messages first and if bandwidth is
   insufficient, drop the low-priority ones.
