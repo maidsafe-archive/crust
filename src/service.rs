@@ -83,7 +83,7 @@ impl TheirConnectionInfo {
 
 /// A structure representing a connection manager.
 pub struct Service {
-    cm: Arc<Mutex<HashMap<u64, Context>>>, // This is the connection map -> PeerId <-> Context
+    cm: Arc<Mutex<HashMap<PeerId, Context>>>, // This is the connection map -> PeerId <-> Context
     event_tx: ::CrustEventSender,
     mapping_context: Arc<MappingContext>,
     mio_tx: Sender<CoreMessage>,
@@ -147,7 +147,7 @@ impl Service {
     }
 
     /// dropping a peer
-    pub fn drop_peer(&mut self, peer_id: u64) {
+    pub fn drop_peer(&mut self, peer_id: PeerId) {
         let context = self.cm.lock().unwrap().remove(&peer_id).expect("Context not found");
         let _ = self.mio_tx.send(Box::new(move |mut core, mut event_loop| {
             let state = core.get_state(&context).expect("State not found").clone();
@@ -156,7 +156,7 @@ impl Service {
     }
 
     /// sending data to a peer(according to it's u64 peer_id)
-    pub fn send(&mut self, peer_id: u64, data: Vec<u8>) {
+    pub fn send(&mut self, peer_id: PeerId, data: Vec<u8>) {
         let context = self.cm.lock().unwrap().get(&peer_id).expect("Context not found").clone();
         let mut data = Some(data);
         let _ = self.mio_tx.send(Box::new(move |mut core, mut event_loop| {

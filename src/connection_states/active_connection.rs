@@ -1,19 +1,36 @@
-use std::io::{Read, Write, BufReader};
-use std::collections::{HashMap, VecDeque};
+// Copyright 2016 MaidSafe.net limited.
+//
+// This SAFE Network Software is licensed to you under (1) the MaidSafe.net Commercial License,
+// version 1.0 or later, or (2) The General Public License (GPL), version 3, depending on which
+// licence you accepted on initial access to the Software (the "Licences").
+//
+// By contributing code to the SAFE Network Software, or to this project generally, you agree to be
+// bound by the terms of the MaidSafe Contributor Agreement, version 1.0.  This, along with the
+// Licenses can be found in the root directory of this project at LICENSE, COPYING and CONTRIBUTOR.
+//
+// Unless required by applicable law or agreed to in writing, the SAFE Network Software distributed
+// under the GPL Licence is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.
+//
+// Please review the Licences for the specific language governing permissions and limitations
+// relating to use of the SAFE Network Software.
 
-use state::State;
-use std::sync::{Arc, Mutex};
-use std::rc::Rc;
 use std::cell::RefCell;
+use std::collections::{HashMap, VecDeque};
+use std::io::{BufReader, ErrorKind, Read, Write};
+use std::rc::Rc;
+use std::sync::{Arc, Mutex};
+
 use core::{Core, Context};
+use event::Event;
 use mio::{Token, EventLoop, EventSet, PollOpt};
 use mio::tcp::TcpStream;
-use std::io::ErrorKind;
-use event::Event;
+use peer_id::PeerId;
+use state::State;
 
 pub struct ActiveConnection {
-    peer_id: u64,
-    cm: Arc<Mutex<HashMap<u64, Context>>>,
+    peer_id: PeerId,
+    cm: Arc<Mutex<HashMap<PeerId, Context>>>,
     token: Token,
     _context: Context,
     _read_buf: Vec<u8>,
@@ -26,7 +43,7 @@ pub struct ActiveConnection {
 impl ActiveConnection {
     pub fn new(core: &mut Core,
                event_loop: &mut EventLoop<Core>,
-               cm: Arc<Mutex<HashMap<u64, Context>>>,
+               cm: Arc<Mutex<HashMap<PeerId, Context>>>,
                context: Context,
                socket: TcpStream,
                routing_tx: ::CrustEventSender) {

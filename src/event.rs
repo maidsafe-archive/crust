@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-// use peer_id::PeerId;
+use peer_id::PeerId;
 use service::ConnectionInfoResult;
 // use std::io;
 // use std::time::Instant;
@@ -46,9 +46,9 @@ pub enum Event {
     // /// Invoked when a peer is lost.
     // LostPeer(PeerId),
     /// Invoked when a new connection get established.
-    NewConnection(u64),
+    NewConnection(PeerId),
     /// Invoked when a new message is received.  Passes the message.
-    NewMessage(u64, Vec<u8>),
+    NewMessage(PeerId, Vec<u8>),
     // /// Invoked when a connection to a new peer is established.
     // NewPeer(io::Result<()>, PeerId),
 }
