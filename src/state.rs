@@ -19,6 +19,13 @@ use core::Core;
 use mio::{Handler, EventLoop, EventSet, Token};
 
 pub trait State {
+    fn execute(&mut self,
+               _core: &mut Core,
+               _event_loop: &mut EventLoop<Core>,
+               _token: Token,
+               _event_set: EventSet) {
+    }
+
     fn ready(&mut self,
              _core: &mut Core,
              _event_loop: &mut EventLoop<Core>,
@@ -26,9 +33,13 @@ pub trait State {
              _event_set: EventSet) {
     }
 
+    fn terminate(&mut self, _core: &mut Core, _event_loop: &mut EventLoop<Core>) {}
+
     fn timeout(&mut self,
                _core: &mut Core,
                _event_loop: &mut EventLoop<Core>,
                _timeout: <Core as Handler>::Timeout) {
     }
+
+    fn write(&mut self, _core: &mut Core, _event_loop: &mut EventLoop<Core>, _data: Vec<u8>) {}
 }

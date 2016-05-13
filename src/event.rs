@@ -35,18 +35,20 @@ use service::ConnectionInfoResult;
 /// of this module.
 #[derive(Debug)]
 pub enum Event {
-    // /// Invoked when a new message is received.  Passes the message.
-    // NewMessage(PeerId, Vec<u8>),
-    // /// Invoked when we get a bootstrap connection to a new peer.
-    // BootstrapConnect(PeerId),
     // /// Invoked when a bootstrap peer connects to us
     // BootstrapAccept(PeerId),
-    // /// Invoked when a connection to a new peer is established.
-    // NewPeer(io::Result<()>, PeerId),
-    // /// Invoked when a peer is lost.
-    // LostPeer(PeerId),
+    // /// Invoked when we get a bootstrap connection to a new peer.
+    // BootstrapConnect(PeerId),
     // /// Raised once the list of bootstrap contacts is exhausted.
     // BootstrapFinished,
     /// Invoked as a result to the call of `Service::prepare_contact_info`.
     ConnectionInfoPrepared(ConnectionInfoResult),
+    // /// Invoked when a peer is lost.
+    // LostPeer(PeerId),
+    /// Invoked when a new connection get established.
+    NewConnection(u64),
+    /// Invoked when a new message is received.  Passes the message.
+    NewMessage(u64, Vec<u8>),
+    // /// Invoked when a connection to a new peer is established.
+    // NewPeer(io::Result<()>, PeerId),
 }
