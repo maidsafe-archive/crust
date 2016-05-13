@@ -58,6 +58,7 @@ pub struct Connection {
     network_tx: RaiiSender,
     _network_read_joiner: RaiiThreadJoiner,
     closed: Arc<AtomicBool>,
+    duplicated: Arc<AtomicBool>,
 }
 
 /// Information about a `Connection`
@@ -67,6 +68,7 @@ pub struct ConnectionInfo {
     pub their_addr: SocketAddr,
     pub hole_punched: bool,
     pub closed: bool,
+    pub duplicated: bool,
 }
 
 impl Hash for Connection {
@@ -75,6 +77,7 @@ impl Hash for Connection {
         self.our_addr.hash(state);
         self.their_addr.hash(state);
         self.closed.load(Ordering::Relaxed).hash(state);
+        self.duplicated.load(Ordering::Relaxed).hash(state);
     }
 }
 
@@ -85,6 +88,7 @@ impl Debug for Connection {
          .field("their_addr", &self.their_addr)
          .field("hole_punched", &self.hole_punched)
          .field("closed", &self.closed.load(Ordering::Relaxed))
+         .field("duplicated", &self.duplicated.load(Ordering::Relaxed))
          .finish()
     }
 }
@@ -98,6 +102,7 @@ impl Connection {
             their_addr: self.their_addr,
             hole_punched: self.hole_punched,
             closed: self.closed.load(Ordering::Relaxed),
+            duplicated: self.duplicated.load(Ordering::Relaxed),
         }
     }
 
@@ -109,6 +114,11 @@ impl Connection {
     /// Returns whether this connection has been closed.
     pub fn is_closed(&self) -> bool {
         self.closed.load(Ordering::Relaxed)
+    }
+
+    /// Returns whether this connection has received a `DuplicateConnectionRequest`.
+    pub fn is_duplicated(&self) -> bool {
+        self.duplicated.load(Ordering::Relaxed)
     }
 }
 
@@ -206,7 +216,7 @@ pub fn tcp_rendezvous_connect(connection_map: Arc<Mutex<HashMap<PeerId, Vec<Conn
     let entry = cm.entry(their_id).or_insert_with(Vec::new);
     for old_connection in entry.iter_mut() {
         if !old_connection.hole_punched {
-            let _ = old_connection.send(CrustMsg::DuplicateConnection, 0);
+            let _ = old_connection.send(CrustMsg::DuplicateConnectionRequest, 0);
         }
     }
     entry.insert(0, connection);
@@ -318,7 +328,7 @@ pub fn connect_tcp_endpoint(remote_addr: SocketAddr,
                                                  false);
     let entry = cm.entry(their_id).or_insert_with(Vec::new);
     if entry.iter().any(|connection| !connection.is_closed() && connection.hole_punched) {
-        let _ = connection.send(CrustMsg::DuplicateConnection, 0);
+        let _ = connection.send(CrustMsg::DuplicateConnectionRequest, 0);
     }
     entry.push(connection);
     Ok(())
@@ -334,10 +344,17 @@ fn register_tcp_connection(connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connect
                            hole_punched: bool)
                            -> Connection {
     let closed = Arc::new(AtomicBool::new(false));
+    let duplicated = Arc::new(AtomicBool::new(false));
     let closed_clone = closed.clone();
+    let duplicated_clone = duplicated.clone();
 
     let joiner = RaiiThreadJoiner::new(thread!("TcpNetworkReader", move || {
-        start_rx(network_rx, their_id, event_tx, closed_clone, connection_map);
+        start_rx(network_rx,
+                 their_id,
+                 event_tx,
+                 closed_clone,
+                 duplicated_clone,
+                 connection_map);
     }));
 
     Connection {
@@ -348,6 +365,7 @@ fn register_tcp_connection(connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connect
         network_tx: network_tx,
         _network_read_joiner: joiner,
         closed: closed,
+        duplicated: duplicated,
     }
 }
 
@@ -487,7 +505,7 @@ pub fn start_tcp_accept(port: u16,
                 let entry = cm.entry(peer_id).or_insert_with(Vec::new);
                 if entry.iter()
                         .any(|connection| !connection.is_closed() && connection.hole_punched) {
-                    let _ = connection.send(CrustMsg::DuplicateConnection, 0);
+                    let _ = connection.send(CrustMsg::DuplicateConnectionRequest, 0);
                 }
                 entry.push(connection);
             }
@@ -505,6 +523,7 @@ fn start_rx(mut network_rx: Receiver,
             their_id: PeerId,
             event_tx: ::CrustEventSender,
             closed: Arc<AtomicBool>,
+            duplicated: Arc<AtomicBool>,
             connection_map: Arc<Mutex<HashMap<PeerId, Vec<Connection>>>>) {
     loop {
         match network_rx.receive() {
@@ -514,10 +533,10 @@ fn start_rx(mut network_rx: Receiver,
                     break;
                 }
             }
-            Ok(CrustMsg::DuplicateConnection) => {
+            Ok(CrustMsg::DuplicateConnectionRequest) => {
                 let mut lock = unwrap_result!(connection_map.lock());
-                if let Entry::Occupied(entry) = lock.entry(their_id) {
-                    let connections = entry.get();
+                if let Entry::Occupied(mut entry) = lock.entry(their_id) {
+                    let mut connections = entry.get_mut();
                     if connections.len() > 2 {
                         warn!("{} connections to {:?}.", connections.len(), their_id);
                     }
@@ -525,10 +544,17 @@ fn start_rx(mut network_rx: Receiver,
                                   .any(|connection| {
                                       !connection.is_closed() && connection.hole_punched
                                   }) {
+                        duplicated.store(true, Ordering::Relaxed);
                         break;
+                    }
+                    for connection in connections.iter_mut() {
+                        if connection.is_duplicated() {
+                            let _ = connection.send(CrustMsg::DuplicateConnectionResponse, 0);
+                        }
                     }
                 }
             }
+            Ok(CrustMsg::DuplicateConnectionResponse) => break,
             Ok(CrustMsg::Heartbeat) => (),
             Ok(m) => error!("Unexpected message in start_rx: {:?}", m),
             Err(err) => {
@@ -628,6 +654,7 @@ mod test {
                 network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
                 closed: Arc::new(AtomicBool::new(false)),
+                duplicated: Arc::new(AtomicBool::new(false)),
             }
         };
 
@@ -646,6 +673,7 @@ mod test {
                 network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
                 closed: Arc::new(AtomicBool::new(false)),
+                duplicated: Arc::new(AtomicBool::new(false)),
             }
         };
 
@@ -668,6 +696,7 @@ mod test {
                 network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
                 closed: Arc::new(AtomicBool::new(false)),
+                duplicated: Arc::new(AtomicBool::new(false)),
             }
         };
 
@@ -689,6 +718,7 @@ mod test {
                 network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
                 closed: Arc::new(AtomicBool::new(false)),
+                duplicated: Arc::new(AtomicBool::new(false)),
             }
         };
 
@@ -710,6 +740,7 @@ mod test {
                 network_tx: RaiiSender(tx),
                 _network_read_joiner: raii_joiner,
                 closed: Arc::new(AtomicBool::new(true)),
+                duplicated: Arc::new(AtomicBool::new(true)),
             }
         };
 

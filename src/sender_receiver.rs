@@ -126,6 +126,7 @@ pub enum CrustMsg {
     ExternalEndpointRequest,
     ExternalEndpointResponse(SocketAddr),
     Connect(PublicKey, u64),
-    DuplicateConnection,
+    DuplicateConnectionRequest,
+    DuplicateConnectionResponse,
     Message(Vec<u8>),
 }
