@@ -28,6 +28,12 @@ version = "~0.0.64"
 docopt = "~0.6.80"
 void = "~1.0.2"
 
+[[example]]
+bench = false
+name = "simple_demo"
+path = "examples/simple_demo.rs"
+test = true
+
 [[test]]
 name = "send_and_receive"
 path = "tests/send_and_receive.rs"

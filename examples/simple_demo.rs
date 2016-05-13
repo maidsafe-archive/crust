@@ -1,25 +1,38 @@
-#![allow(unused)]
+// Copyright 2016 MaidSafe.net limited.
+//
+// This SAFE Network Software is licensed to you under (1) the MaidSafe.net Commercial License,
+// version 1.0 or later, or (2) The General Public License (GPL), version 3, depending on which
+// licence you accepted on initial access to the Software (the "Licences").
+//
+// By contributing code to the SAFE Network Software, or to this project generally, you agree to be
+// bound by the terms of the MaidSafe Contributor Agreement, version 1.0.  This, along with the
+// Licenses can be found in the root directory of this project at LICENSE, COPYING and CONTRIBUTOR.
+//
+// Unless required by applicable law or agreed to in writing, the SAFE Network Software distributed
+// under the GPL Licence is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.
+//
+// Please review the Licences for the specific language governing permissions and limitations
+// relating to use of the SAFE Network Software.
 
+//! Simple receiver example.
+
+// For explanation of lint checks, run `rustc -W help` or see
+// https://github.com/maidsafe/QA/blob/master/Documentation/Rust%20Lint%20Checks.md
+#![forbid(bad_style, exceeding_bitshifts, mutable_transmutes, no_mangle_const_items,
+          unknown_crate_types, warnings)]
+#![deny(deprecated, drop_with_repr_extern, improper_ctypes, missing_docs,
+        non_shorthand_field_patterns, overflowing_literals, plugin_as_library,
+        private_no_mangle_fns, private_no_mangle_statics, stable_features,
+        unconditional_recursion, unknown_lints, unsafe_code, unused, unused_allocation,
+        unused_attributes, unused_comparisons, unused_features, unused_parens, while_true)]
+#![warn(trivial_casts, trivial_numeric_casts, unused_extern_crates, unused_import_braces,
+        unused_qualifications, unused_results)]
+
+extern crate crust;
 #[macro_use]
 extern crate maidsafe_utilities;
-extern crate mio;
-extern crate nat_traversal;
-extern crate net2;
-#[macro_use]
-extern crate quick_error;
 extern crate rand;
-extern crate rustc_serialize;
-extern crate sodiumoxide;
-extern crate socket_addr;
-
-mod connection_states;
-mod core;
-mod error;
-mod event;
-mod peer_id;
-mod service;
-mod state;
-mod static_contact_info;
 
 use std::io::{Read, Write};
 use std::net::{SocketAddr, TcpListener};
@@ -28,13 +41,9 @@ use std::str::FromStr;
 use std::thread;
 use std::time::Duration;
 
-use event::Event;
+use crust::{CrustEventSender, Event, Service};
 use maidsafe_utilities::event_sender::MaidSafeEventCategory;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
-use service::Service;
-
-/// Crust Observers will be informed of crust events on this
-pub type CrustEventSender = ::maidsafe_utilities::event_sender::MaidSafeObserver<Event>;
 
 fn spawn_test_server() {
     let ls = TcpListener::bind("127.0.0.1:33333").expect("Could not bind listener.");
@@ -59,7 +68,7 @@ fn main() {
     thread::sleep(Duration::from_millis(300));
 
     let (crust_tx, crust_rx) = mpsc::channel();
-    let (category_tx, category_rx) = mpsc::channel();
+    let (category_tx, _) = mpsc::channel();
     let crust_event_category = MaidSafeEventCategory::Crust;
     let crust_sender = CrustEventSender::new(crust_tx,
                                              crust_event_category,
