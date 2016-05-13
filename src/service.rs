@@ -83,12 +83,12 @@ impl TheirConnectionInfo {
 
 /// A structure representing a connection manager.
 pub struct Service {
-    cm: Arc<Mutex<HashMap<u64, Context>>>, // This is the connection map -> PeerId <-> Context
+    // This is the connection map -> PeerId <-> Context
+    connection_map: Arc<Mutex<HashMap<PeerId, Context>>>,
     event_tx: ::CrustEventSender,
     mapping_context: Arc<MappingContext>,
     mio_tx: Sender<CoreMessage>,
     our_keys: (PublicKey, SecretKey),
-    // sender: Sender<<Core as Handler>::Message>,
     static_contact_info: Arc<Mutex<StaticContactInfo>>,
     _thread_joiner: RaiiThreadJoiner,
 }
@@ -98,7 +98,6 @@ impl Service {
     pub fn new(event_tx: ::CrustEventSender) -> Result<Self, Error> {
         let mut event_loop = try!(EventLoop::new());
         let mio_tx = event_loop.channel();
-        // let sender = event_loop.channel();
         let our_keys = box_::gen_keypair();
         // Form our initial contact info
         let static_contact_info = Arc::new(Mutex::new(StaticContactInfo {
@@ -120,7 +119,7 @@ impl Service {
         }));
 
         Ok(Service {
-            cm: Arc::new(Mutex::new(HashMap::new())),
+            connection_map: Arc::new(Mutex::new(HashMap::new())),
             event_tx: event_tx,
             mapping_context: Arc::new(mapping_context),
             mio_tx: mio_tx,
@@ -134,21 +133,22 @@ impl Service {
     /// connect to peer
     pub fn connect(&mut self, peer_contact_info: SocketAddr) {
         let mut routing_tx = Some(self.event_tx.clone());
-        let mut cm = Some(self.cm.clone());
+        let mut connection_map = Some(self.connection_map.clone());
 
         let _ = self.mio_tx
                     .send(Box::new(move |core: &mut Core, event_loop: &mut EventLoop<Core>| {
                         EstablishConnection::new(core,
                                                  event_loop,
-                                                 cm.take().expect("Logic Error"),
+                                                 connection_map.take().expect("Logic Error"),
                                                  routing_tx.take().expect("Logic Error"),
                                                  peer_contact_info);
                     }));
     }
 
     /// dropping a peer
-    pub fn drop_peer(&mut self, peer_id: u64) {
-        let context = self.cm.lock().unwrap().remove(&peer_id).expect("Context not found");
+    pub fn drop_peer(&mut self, peer_id: PeerId) {
+        let context = self.connection_map.lock().unwrap().remove(&peer_id)
+                                                         .expect("Context not found");
         let _ = self.mio_tx.send(Box::new(move |mut core, mut event_loop| {
             let state = core.get_state(&context).expect("State not found").clone();
             state.borrow_mut().terminate(&mut core, &mut event_loop);
@@ -156,8 +156,9 @@ impl Service {
     }
 
     /// sending data to a peer(according to it's u64 peer_id)
-    pub fn send(&mut self, peer_id: u64, data: Vec<u8>) {
-        let context = self.cm.lock().unwrap().get(&peer_id).expect("Context not found").clone();
+    pub fn send(&mut self, peer_id: PeerId, data: Vec<u8>) {
+        let context = self.connection_map.lock().unwrap().get(&peer_id).expect("Context not found")
+                                                                       .clone();
         let mut data = Some(data);
         let _ = self.mio_tx.send(Box::new(move |mut core, mut event_loop| {
             let state = core.get_state(&context).expect("State not found").clone();
@@ -218,7 +219,6 @@ impl Service {
 
 impl Drop for Service {
     fn drop(&mut self) {
-        // let _ = self.sender.send(Box::new(|el: &mut EventLoop<Core>, _: &mut Core| el.shutdown()));
         let _ = self.mio_tx.send(Box::new(|_, el| el.shutdown()));
     }
 }
