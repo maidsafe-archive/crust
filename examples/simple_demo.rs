@@ -44,6 +44,7 @@ use std::time::Duration;
 use crust::{CrustEventSender, Event, Service};
 use maidsafe_utilities::event_sender::MaidSafeEventCategory;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
+use rand::Rng;
 
 fn spawn_test_server() {
     let ls = TcpListener::bind("127.0.0.1:33333").expect("Could not bind listener.");
@@ -55,8 +56,16 @@ fn spawn_test_server() {
             break;
         }
         println!("Test peer received {:?}", buf);
+        let mut len_buf : Vec<u8> = vec![0xFF, 0x00, 0x00, 0x00, 0x00,
+                                         0x00, 0x00, 0x00, 0x0A, 0xFF];
+        strm.write_all(&mut len_buf).expect("Error in writing");
         strm.write_all(&mut buf).expect("Error in writing");
     }
+}
+
+/// utility to create random vec u8 of a given size
+pub fn generate_random_vec_u8(size: usize) -> Vec<u8> {
+    rand::thread_rng().gen_iter().take(size).collect()
 }
 
 fn main() {
@@ -82,17 +91,7 @@ fn main() {
         match it {
             Event::NewConnection(peer_id) => {
                 println!("Routing received new connection with peer id {}", peer_id);
-                service.send(peer_id,
-                             vec![rand::random(),
-                                  rand::random(),
-                                  rand::random(),
-                                  rand::random(),
-                                  rand::random(),
-                                  rand::random(),
-                                  rand::random(),
-                                  rand::random(),
-                                  rand::random(),
-                                  rand::random()]);
+                service.send(peer_id, generate_random_vec_u8(10));
             }
             Event::NewMessage(peer_id, msg) => {
                 println!("Routing received from peer id {}: {:?}", peer_id, msg);

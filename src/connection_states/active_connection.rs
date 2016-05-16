@@ -33,7 +33,8 @@ pub struct ActiveConnection {
     cm: Arc<Mutex<HashMap<PeerId, Context>>>,
     token: Token,
     _context: Context,
-    _read_buf: Vec<u8>,
+    read_buf: Vec<u8>,
+    read_len: u64,
     socket: TcpStream,
     write_queue: VecDeque<Vec<u8>>,
     routing_tx: ::CrustEventSender,
@@ -56,7 +57,8 @@ impl ActiveConnection {
             cm: cm,
             token: token,
             _context: context.clone(),
-            _read_buf: Vec::new(),
+            read_buf: Vec::new(),
+            read_len: 0,
             socket: socket,
             write_queue: VecDeque::new(),
             routing_tx: routing_tx,
@@ -75,10 +77,27 @@ impl ActiveConnection {
     }
 
     fn read(&mut self, _core: &mut Core, _event_loop: &mut EventLoop<Core>, _token: Token) {
-        let mut buf = vec![0; 10];
+        // the mio reading window is max at 64k (64 * 1024)
+        let mut buf = vec![0; 65536];
         match self.socket.read(&mut buf) {
-            Ok(_bytes_rxd) => {
-                let _ = self.routing_tx.send(Event::NewMessage(self.peer_id, buf));
+            Ok(bytes_rxd) => {
+                if bytes_rxd == 10 && buf[0] == 0xFF && buf[9] == 0xFF {
+                    self.read_len = 0;
+                    for i in 1..8 {
+                        self.read_len += buf[i] as u64;
+                        self.read_len = self.read_len << 8;
+                    }
+                    self.read_len += buf[8] as u64;
+                    println!("expecting data len {}", self.read_len);
+                } else {
+                    buf.resize(bytes_rxd, 0);
+                    self.read_buf.append(&mut buf);
+                    if self.read_buf.len() as u64 >= self.read_len {
+                        let _ = self.routing_tx.send(Event::NewMessage(self.peer_id, self.read_buf.clone()));
+                        self.read_len = 0;
+                        self.read_buf.clear();
+                    }
+                }
             }
             Err(e) => {
                 if !(e.kind() == ErrorKind::WouldBlock || e.kind() == ErrorKind::Interrupted) {
@@ -144,6 +163,22 @@ impl State for ActiveConnection {
     }
 
     fn write(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, data: Vec<u8>) {
+        let mut len = data.len() as u64;
+        let mut vec_len : Vec<u8> = vec![0xFF, 0x00, 0x00, 0x00, 0x00,
+                                         0x00, 0x00, 0x00, 0x00, 0xFF];
+        for i in 1..9 {
+            if len <= 0xFF {
+                vec_len[9 - i] = len as u8;
+                break;
+            }
+            let mut remain = len >> 8;
+            remain = remain << 8;
+            let value : u64 = len - remain;
+            vec_len[9 - i] = value as u8;
+            len = len >> 8;
+        }
+
+        self.write_queue.push_back(vec_len);
         self.write_queue.push_back(data);
         let token = self.token;
         self.write(core, event_loop, token);
