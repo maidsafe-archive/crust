@@ -82,10 +82,16 @@ impl TheirConnectionInfo {
     }
 }
 
+pub type SharedConnectionMap = Arc<Mutex<HashMap<PeerId, StateHandle>>>;
+
+fn new_shared_connection_map() -> SharedConnectionMap {
+    Arc::new(Mutex::new(HashMap::new()))
+}
+
 /// A structure representing a connection manager.
 pub struct Service {
-    // This is the connection map -> PeerId <-> Context
-    connection_map: Arc<Mutex<HashMap<PeerId, Context>>>,
+    // This is the connection map -> PeerId -> StateHandle
+    connection_map: SharedConnectionMap,
     event_tx: ::CrustEventSender,
     mapping_context: Arc<MappingContext>,
     mio_tx: Sender<CoreMessage>,
@@ -101,11 +107,13 @@ impl Service {
         let mut event_loop = try!(EventLoop::new());
         let mio_tx = event_loop.channel();
         let our_keys = box_::gen_keypair();
+
         // Form our initial contact info
         let static_contact_info = Arc::new(Mutex::new(StaticContactInfo {
             tcp_acceptors: Vec::new(),
             tcp_mapper_servers: Vec::new(),
         }));
+
         let mapping_context = try!(MappingContext::new()
                                        .result_log()
                                        .or_else(|e| {
@@ -121,7 +129,7 @@ impl Service {
         }));
 
         Ok(Service {
-            connection_map: Arc::new(Mutex::new(HashMap::new())),
+            connection_map: new_shared_connection_map(),
             event_tx: event_tx,
             mapping_context: Arc::new(mapping_context),
             mio_tx: mio_tx,
@@ -271,10 +279,11 @@ impl Service {
             let _ = event_tx.send(event);
         }) {
             let _ = self.event_tx.send(Event::ConnectionInfoPrepared(ConnectionInfoResult {
-                result_token: result_token,
-                result: Err(io::Error::new(io::ErrorKind::Other,
-                                           format!("Failed to register task with mio eventloop"))),
-            }));
+                                result_token: result_token,
+                                result: Err(io::Error::new(io::ErrorKind::Other,
+                                                              format!("Failed to register task \
+                                                                       with mio eventloop"))),
+                            }));
         }
     }
 
