@@ -15,9 +15,11 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-pub use self::establish_connection::EstablishConnection;
-pub use self::forward_connection_events::ForwardConnectionEvents;
+use config_handler::Config;
+use service::Service;
 
-mod active_connection;
-mod establish_connection;
-mod forward_connection_events;
+#[test]
+fn bootstrap_two_services() {
+    // let mut config0 = Config::default();
+    // config0.tcp_acceptor_port = 0
+}

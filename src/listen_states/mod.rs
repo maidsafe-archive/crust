@@ -15,9 +15,20 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-pub use self::establish_connection::EstablishConnection;
-pub use self::forward_connection_events::ForwardConnectionEvents;
+use mio::EventLoop;
 
-mod active_connection;
-mod establish_connection;
-mod forward_connection_events;
+use core::Core;
+use error::Error;
+use service::SharedConnectionMap;
+
+pub struct Listen {
+
+}
+
+impl Listen {
+    pub fn start(_core: &mut Core,
+                 _event_loop: &mut EventLoop<Core>,
+                 _connection_map: SharedConnectionMap) -> Result<(), Error> {
+        Ok(())
+    }
+}

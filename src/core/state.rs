@@ -15,9 +15,29 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-pub use self::establish_connection::EstablishConnection;
-pub use self::forward_connection_events::ForwardConnectionEvents;
+use core::Core;
+use mio::{Handler, EventLoop, EventSet, Token};
 
-mod active_connection;
-mod establish_connection;
-mod forward_connection_events;
+pub trait State {
+    fn notify(&mut self,
+              _core: &mut Core,
+              _event_loop: &mut EventLoop<Core>) {}
+
+    fn ready(&mut self,
+             _core: &mut Core,
+             _event_loop: &mut EventLoop<Core>,
+             _token: Token,
+             _event_set: EventSet) {}
+
+    fn terminate(&mut self, _core: &mut Core, _event_loop: &mut EventLoop<Core>) {}
+
+    fn timeout(&mut self,
+               _core: &mut Core,
+               _event_loop: &mut EventLoop<Core>,
+               _timeout: <Core as Handler>::Timeout) {}
+
+    fn write(&mut self,
+             _core: &mut Core,
+             _event_loop: &mut EventLoop<Core>,
+             _data: Vec<u8>) {}
+}

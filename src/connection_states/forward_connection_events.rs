@@ -15,31 +15,23 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use core::Core;
-use mio::{Handler, EventLoop, EventSet, Token};
+use core::{Core, StateHandle};
+use core::channel::Receiver;
+use error::Error;
+use peer_id::PeerId;
+use service::SharedConnectionMap;
 
-pub trait State {
-    fn execute(&mut self,
-               _core: &mut Core,
-               _event_loop: &mut EventLoop<Core>,
-               _token: Token,
-               _event_set: EventSet) {
-    }
+pub struct ForwardConnectionEvents {
 
-    fn ready(&mut self,
-             _core: &mut Core,
-             _event_loop: &mut EventLoop<Core>,
-             _token: Token,
-             _event_set: EventSet) {
-    }
+}
 
-    fn terminate(&mut self, _core: &mut Core, _event_loop: &mut EventLoop<Core>) {}
+impl ForwardConnectionEvents {
+  pub fn start(_core: &mut Core,
+               _handle: StateHandle,
+               _connection_map: SharedConnectionMap,
+               _connection_rx: Receiver<(StateHandle, Option<PeerId>)>,
+               _event_tx: ::CrustEventSender) -> Result<(), Error> {
 
-    fn timeout(&mut self,
-               _core: &mut Core,
-               _event_loop: &mut EventLoop<Core>,
-               _timeout: <Core as Handler>::Timeout) {
-    }
-
-    fn write(&mut self, _core: &mut Core, _event_loop: &mut EventLoop<Core>, _data: Vec<u8>) {}
+    Ok(())
+  }
 }

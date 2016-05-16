@@ -16,22 +16,25 @@
 // relating to use of the SAFE Network Software.
 
 use maidsafe_utilities::thread::RaiiThreadJoiner;
-use mio::{EventLoop, NotifyError, Sender};
+use mio::{self, EventLoop, NotifyError};
 use net2;
 use sodiumoxide::crypto::box_::{self, PublicKey, SecretKey};
 use std::collections::HashMap;
 use std::io;
-use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
+use std::sync::mpsc;
 
-use core::{Core, CoreMessage, StateHandle};
-use connection_states::EstablishConnection;
+use bootstrap_states::GetBootstrapContacts;
+use config_handler::{self, Config};
+use connection_states::{EstablishConnection, ForwardConnectionEvents};
+use core::{Core, CoreMessage, State, StateHandle};
+use core::channel::{self, Sender};
 use event::Event;
 use error::Error;
+use listen_states::Listen;
 use nat_traversal::{MappedTcpSocket, MappingContext, PrivRendezvousInfo, PubRendezvousInfo,
                     gen_rendezvous_info};
 use peer_id::{self, PeerId};
-use state::State;
 use static_contact_info::StaticContactInfo;
 
 /// The result of a `Service::prepare_contact_info` call.
@@ -90,10 +93,13 @@ fn new_shared_connection_map() -> SharedConnectionMap {
 /// A structure representing a connection manager.
 pub struct Service {
     // This is the connection map -> PeerId -> StateHandle
+    bootstrap_handle: StateHandle,
     connection_map: SharedConnectionMap,
+    connect_tx: Sender<(StateHandle, Option<PeerId>)>,
     event_tx: ::CrustEventSender,
+    is_listening: bool,
     mapping_context: Arc<MappingContext>,
-    mio_tx: Sender<CoreMessage>,
+    mio_tx: mio::Sender<CoreMessage>,
     our_keys: (PublicKey, SecretKey),
     static_contact_info: Arc<Mutex<StaticContactInfo>>,
     _thread_joiner: RaiiThreadJoiner,
@@ -102,7 +108,14 @@ pub struct Service {
 impl Service {
     /// Constructs a service.
     pub fn new(event_tx: ::CrustEventSender) -> Result<Self, Error> {
-        let mut event_loop = try!(EventLoop::new());
+        Service::with_config(event_tx, &try!(config_handler::read_config_file()))
+    }
+
+    /// Constructs a service with the given config. User needs to create an asynchronous channel,
+    /// and provide the sender half to this method. Receiver will receive all `Event`s from this
+    /// library.
+    pub fn with_config(event_tx: ::CrustEventSender, config: &Config) -> Result<Service, Error> {
+        let event_loop = try!(EventLoop::new());
         let mio_tx = event_loop.channel();
         let our_keys = box_::gen_keypair();
 
@@ -122,15 +135,27 @@ impl Service {
                                        }));
 
 
-
         let joiner = RaiiThreadJoiner::new(thread!("Crust event loop", move || {
-            let mut core = Core::new();
-            event_loop.run(&mut core).expect("EventLoop failed to run");
+            Core::run(event_loop).expect("Core failed to run");
         }));
 
+        let connection_map = new_shared_connection_map();
+
+        let bootstrap_handle = try!(start_bootstrap(&mio_tx,
+                                                    config.clone(),
+                                                    connection_map.clone(),
+                                                    event_tx.clone()));
+
+        let connect_tx = try!(start_forward_connection_events(&mio_tx,
+                                                              connection_map.clone(),
+                                                              event_tx.clone()));
+
         Ok(Service {
-            connection_map: new_shared_connection_map(),
+            bootstrap_handle: bootstrap_handle,
+            connection_map: connection_map,
+            connect_tx: connect_tx,
             event_tx: event_tx,
+            is_listening: false,
             mapping_context: Arc::new(mapping_context),
             mio_tx: mio_tx,
             our_keys: our_keys,
@@ -140,29 +165,62 @@ impl Service {
         })
     }
 
-    /// connect to peer
-    pub fn connect(&mut self, peer_contact_info: SocketAddr) {
-        let routing_tx = self.event_tx.clone();
+    /// Stop the bootstraping procedure
+    pub fn stop_bootstrap(&mut self) -> Result<(), Error> {
+        let handle = self.bootstrap_handle;
+
+        try!(self.post(move |mut core, mut event_loop| {
+            let state = core.get_state(&handle).expect("Bootstrap state not found");
+            state.borrow_mut().terminate(&mut core, &mut event_loop);
+        }));
+
+        Ok(())
+    }
+
+    /// Starts accepting TCP connections.
+    pub fn start_listening_tcp(&mut self) -> Result<(), Error> {
+        // Prevent creating more than one listener.
+        if self.is_listening {
+            return Ok(());
+        } else {
+            self.is_listening = true;
+        }
+
         let connection_map = self.connection_map.clone();
 
-        let _ = self.post(move |core, event_loop| {
-            EstablishConnection::new(core,
-                                     event_loop,
-                                     connection_map,
-                                     routing_tx,
-                                     peer_contact_info);
-        });
+        try!(self.post(move |core, event_loop| {
+            let _ = Listen::start(core, event_loop, connection_map);
+        }));
+
+        Ok(())
+    }
+
+    /// connect to peer
+    pub fn connect(&mut self, peer_contact_info: StaticContactInfo) -> Result<(), Error> {
+        let connect_tx = self.connect_tx.clone();
+        let event_tx = self.event_tx.clone();
+
+        try!(self.post(move |core, event_loop| {
+            // TODO: raise NewPeer(Err, ..) if this fails
+            let _ = EstablishConnection::start(core,
+                                               event_loop,
+                                               peer_contact_info,
+                                               connect_tx,
+                                               event_tx);
+        }));
+
+        Ok(())
     }
 
     /// Disconnect from the given peer and returns whether there was a connection at all.
     pub fn disconnect(&mut self, peer_id: PeerId) -> bool {
-        let context = match self.connection_map.lock().unwrap().remove(&peer_id) {
-            Some(context) => context,
+        let handle = match self.connection_map.lock().unwrap().remove(&peer_id) {
+            Some(handle) => handle,
             None => return false,
         };
 
         let _ = self.post(move |mut core, mut event_loop| {
-            if let Some(state) = core.get_state(&context) {
+            if let Some(state) = core.get_state(&handle) {
                 state.borrow_mut().terminate(&mut core, &mut event_loop);
             }
         });
@@ -171,20 +229,23 @@ impl Service {
     }
 
     /// sending data to a peer(according to it's u64 peer_id)
-    pub fn send(&mut self, peer_id: PeerId, data: Vec<u8>) {
+    pub fn send(&mut self, peer_id: PeerId, data: Vec<u8>) -> Result<(), Error> {
         if data.len() > ::MAX_DATA_LEN as usize {
-            let _ = self.event_tx.send(Event::WriteMsgSizeProhibitive(peer_id, data));
-            return;
+            return Err(Error::MessageTooLarge);
         }
-        let context = self.connection_map.lock().unwrap().get(&peer_id).expect("Context not found")
-                                                                       .clone();
-        let mut data = Some(data);
-        let _ = self.post(move |mut core, mut event_loop| {
-            let state = core.get_state(&context).expect("State not found");
-            state.borrow_mut().write(&mut core,
-                                     &mut event_loop,
-                                     data.take().expect("Logic Error"));
-        });
+
+        // TODO: return Err instead of panicking
+        let handle = self.connection_map.lock().unwrap()
+                                               .get(&peer_id)
+                                               .map(|h| *h)
+                                               .expect("Connection not found");
+
+        try!(self.post(move |mut core, mut event_loop| {
+            let state = core.get_state(&handle).expect("State not found");
+            state.borrow_mut().write(&mut core, &mut event_loop, data);
+        }));
+
+        Ok(())
     }
 
     /// Lookup a mapped udp socket based on result_token
@@ -235,19 +296,62 @@ impl Service {
         }
     }
 
-    fn get_connection(&self, peer_id: &PeerId) -> Option<StateHandle> {
-        self.connection_map.lock().unwrap().get(peer_id).map(|h| *h)
-    }
-
     fn post<F>(&self, f: F) -> Result<(), NotifyError<CoreMessage>>
         where F: FnOnce(&mut Core, &mut EventLoop<Core>) + Send + 'static
     {
-        self.mio_tx.send(CoreMessage::new(f))
+        self.mio_tx.send(CoreMessage::post(f))
     }
 }
 
 impl Drop for Service {
     fn drop(&mut self) {
         let _ = self.post(|_, el| el.shutdown());
+    }
+}
+
+fn start_bootstrap(mio_tx: &mio::Sender<CoreMessage>,
+                   config: Config,
+                   connection_map: SharedConnectionMap,
+                   event_tx: ::CrustEventSender) -> Result<StateHandle, Error> {
+    sync(mio_tx, move |mut core, mut event_loop| {
+        GetBootstrapContacts::start(core,
+                                    event_loop,
+                                    &config,
+                                    connection_map,
+                                    event_tx)
+    })
+}
+
+fn start_forward_connection_events(mio_tx: &mio::Sender<CoreMessage>,
+                                   connection_map: SharedConnectionMap,
+                                   event_tx: ::CrustEventSender)
+    -> Result<Sender<(StateHandle, Option<PeerId>)>, Error> {
+    sync(mio_tx, move |mut core, event_loop| {
+        let handle = core.get_new_state_handle();
+        let (tx, rx) = channel::new(event_loop, handle);
+
+        try!(ForwardConnectionEvents::start(core,
+                                            handle,
+                                            connection_map,
+                                            rx,
+                                            event_tx));
+        Ok(tx)
+    })
+}
+
+// Run the given closure on the event loop thread and wait for its result.
+fn sync<F, R>(mio_tx: &mio::Sender<CoreMessage>, f: F) -> Result<R, Error>
+    where F: FnOnce(&mut Core, &mut EventLoop<Core>) -> Result<R, Error> + Send + 'static,
+          R: Send + 'static
+{
+    let (tx, rx) = mpsc::channel();
+
+    try!(mio_tx.send(CoreMessage::post(move |mut core, mut event_loop| {
+        let _ = tx.send(f(core, event_loop));
+    })));
+
+    match rx.recv() {
+        Err(err) => Err(From::from(err)),
+        Ok(ok) => ok,
     }
 }

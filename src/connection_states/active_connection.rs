@@ -15,56 +15,48 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::cell::RefCell;
-use std::collections::{HashMap, VecDeque};
-use std::io::{Cursor, ErrorKind, Read, Write};
-use std::rc::Rc;
-use std::sync::{Arc, Mutex};
-
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
-use core::{Core, Context};
-use event::Event;
 use mio::{Token, EventLoop, EventSet, PollOpt};
 use mio::tcp::{Shutdown, TcpStream};
-use peer_id::PeerId;
-use state::State;
+use std::collections::VecDeque;
+use std::io::{Cursor, ErrorKind, Read, Write};
+use std::mem;
 
-const U32_BYTE_LENGTH: usize = 4;
+use core::{Core, State, StateHandle};
+use event::Event;
+use peer_id::PeerId;
 
 pub struct ActiveConnection {
+    _handle: StateHandle,
     peer_id: PeerId,
-    cm: Arc<Mutex<HashMap<PeerId, Context>>>,
     token: Token,
-    _context: Context,
     read_buf: Vec<u8>,
     read_len: u32,
     socket: TcpStream,
     write_queue: VecDeque<Vec<u8>>,
-    routing_tx: ::CrustEventSender,
+    event_tx: ::CrustEventSender,
 }
 
 impl ActiveConnection {
     pub fn new(core: &mut Core,
                event_loop: &mut EventLoop<Core>,
-               cm: Arc<Mutex<HashMap<PeerId, Context>>>,
-               context: Context,
+               handle: StateHandle,
                socket: TcpStream,
-               routing_tx: ::CrustEventSender,
-               token: Token) {
+               token: Token,
+               event_tx: ::CrustEventSender) {
         println!("Entered state ActiveConnection");
 
         let peer_id = ::rand::random();
 
         let connection = ActiveConnection {
+            _handle: handle,
             peer_id: peer_id,
-            cm: cm,
             token: token,
-            _context: context.clone(),
             read_buf: Vec::new(),
             read_len: 0,
             socket: socket,
             write_queue: VecDeque::new(),
-            routing_tx: routing_tx,
+            event_tx: event_tx,
         };
 
         event_loop.reregister(&connection.socket,
@@ -73,10 +65,9 @@ impl ActiveConnection {
                               PollOpt::edge())
                   .expect("Could not re-register socket with EventLoop<Core>");
 
-        let _ = connection.cm.lock().unwrap().insert(peer_id, context.clone());
-        let _ = connection.routing_tx.send(Event::NewConnection(peer_id));
-        let _ = core.insert_context(token, context.clone());
-        let _ = core.insert_state(context, Rc::new(RefCell::new(connection)));
+        let _ = connection.event_tx.send(Event::NewConnection(peer_id));
+        let _ = core.insert_state_handle(token, handle);
+        let _ = core.insert_state(handle, connection);
     }
 
     fn read(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, token: Token) {
@@ -102,19 +93,19 @@ impl ActiveConnection {
     }
 
     fn read_data(&mut self) -> bool {
-        if self.read_len == 0 && self.read_buf.len() >= U32_BYTE_LENGTH {
-            self.read_len = Cursor::new(&self.read_buf[..U32_BYTE_LENGTH])
+        if self.read_len == 0 && self.read_buf.len() >= mem::size_of::<u32>() {
+            self.read_len = Cursor::new(&self.read_buf[..mem::size_of::<u32>()])
                     .read_u32::<LittleEndian>().expect("Failed in parsing data_len.");
             if self.read_len > ::MAX_DATA_LEN {
                 return false;
             }
-            self.read_buf = self.read_buf.split_off(U32_BYTE_LENGTH);
+            self.read_buf = self.read_buf.split_off(mem::size_of::<u32>());
         }
         // TODO: if data_len has been incorrectly parsed, the execution hangs.
         //       A time_out may need to be introduced to prevent it.
         if self.read_len > 0 && self.read_buf.len() as u32 >= self.read_len {
             let tail = self.read_buf.split_off(self.read_len as usize);
-            let _ = self.routing_tx.send(Event::NewMessage(self.peer_id, self.read_buf.clone()));
+            let _ = self.event_tx.send(Event::NewMessage(self.peer_id, self.read_buf.clone()));
             self.read_buf = tail;
             self.read_len = 0;
             return true;
@@ -155,19 +146,18 @@ impl ActiveConnection {
         println!("Graceful Exit");
         event_loop.deregister(&self.socket).expect("Could not dereregister socket");
         let _ = self.socket.shutdown(Shutdown::Both);
-        let context = core.remove_context(&token).expect("Context not found");
-        let _ = core.remove_state(&context).expect("State not found");
-        let _ = self.routing_tx.send(Event::LostPeer(self.peer_id));
+        let _ = core.remove_state_by_token(&token);
+        let _ = self.event_tx.send(Event::LostPeer(self.peer_id));
     }
 
 }
 
 impl State for ActiveConnection {
-    fn execute(&mut self,
-               core: &mut Core,
-               event_loop: &mut EventLoop<Core>,
-               token: Token,
-               event_set: EventSet) {
+    fn ready(&mut self,
+             core: &mut Core,
+             event_loop: &mut EventLoop<Core>,
+             token: Token,
+             event_set: EventSet) {
         assert_eq!(token, self.token);
 
         if event_set.is_error() {
@@ -183,7 +173,7 @@ impl State for ActiveConnection {
     }
 
     fn write(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, data: Vec<u8>) {
-        let mut vec_len = Vec::with_capacity(U32_BYTE_LENGTH);
+        let mut vec_len = Vec::with_capacity(mem::size_of::<u32>());
         let _ = vec_len.write_u32::<LittleEndian>(data.len() as u32);
         self.write_queue.push_back(vec_len);
         self.write_queue.push_back(data);

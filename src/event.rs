@@ -37,10 +37,10 @@ use service::ConnectionInfoResult;
 pub enum Event {
     // /// Invoked when a bootstrap peer connects to us
     // BootstrapAccept(PeerId),
-    // /// Invoked when we get a bootstrap connection to a new peer.
-    // BootstrapConnect(PeerId),
-    // /// Raised once the list of bootstrap contacts is exhausted.
-    // BootstrapFinished,
+    /// Invoked when we get a bootstrap connection to a new peer.
+    BootstrapConnect(PeerId),
+    /// Raised once the list of bootstrap contacts is exhausted.
+    BootstrapFinished,
     /// Invoked as a result to the call of `Service::prepare_contact_info`.
     ConnectionInfoPrepared(ConnectionInfoResult),
     /// Invoked when a peer is lost or having read/write error.
@@ -51,6 +51,4 @@ pub enum Event {
     NewMessage(PeerId, Vec<u8>),
     // /// Invoked when a connection to a new peer is established.
     // NewPeer(io::Result<()>, PeerId),
-    /// Invoked when trying to sending a too large data.
-    WriteMsgSizeProhibitive(PeerId, Vec<u8>),
 }

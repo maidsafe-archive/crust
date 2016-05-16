@@ -15,9 +15,8 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-pub use self::establish_connection::EstablishConnection;
-pub use self::forward_connection_events::ForwardConnectionEvents;
+pub use self::get_contacts::GetBootstrapContacts;
 
-mod active_connection;
-mod establish_connection;
-mod forward_connection_events;
+mod cache;
+mod establish_connections;
+mod get_contacts;

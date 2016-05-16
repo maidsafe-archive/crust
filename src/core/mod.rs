@@ -15,12 +15,31 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::rc::Rc;
+use mio::{Token, EventLoop, EventSet, Handler, NotifyError, Sender};
 use std::cell::RefCell;
 use std::collections::HashMap;
+use std::io;
+use std::rc::Rc;
 
-use state::State;
-use mio::{Token, EventLoop, Handler, EventSet};
+pub use self::state::State;
+
+pub mod state;
+pub mod channel;
+
+pub enum CoreMessage {
+    // Execute the given closure on the event loop.
+    Post(Closure),
+    // Wake the state identified by the handle up.
+    WakeUp(StateHandle),
+}
+
+impl CoreMessage {
+    pub fn post<F>(f: F) -> Self
+        where F: FnOnce(&mut Core, &mut EventLoop<Core>) + Send + 'static
+    {
+        CoreMessage::Post(Closure::new(f))
+    }
+}
 
 pub type CoreTimeout = ();
 
@@ -32,16 +51,20 @@ pub struct Core {
     state_handle_gen: IndexGenerator,
     state_handles: HashMap<Token, StateHandle>,
     states: HashMap<StateHandle, Rc<RefCell<State>>>,
+    mio_tx: Sender<CoreMessage>,
 }
 
 impl Core {
-    pub fn new() -> Self {
-        Core {
+    pub fn run(mut event_loop: EventLoop<Core>) -> io::Result<()> {
+        let mut core = Core {
             token_gen: IndexGenerator::new(),
             state_handle_gen: IndexGenerator::new(),
             state_handles: HashMap::new(),
             states: HashMap::new(),
-        }
+            mio_tx: event_loop.channel(),
+        };
+
+        event_loop.run(&mut core)
     }
 
     pub fn get_new_token(&mut self) -> Token {
@@ -85,6 +108,10 @@ impl Core {
     pub fn remove_state_by_token(&mut self, token: &Token) -> Option<Rc<RefCell<State>>> {
         self.remove_state_handle(token).and_then(|h| self.remove_state(&h))
     }
+
+    pub fn wake_up(&self, handle: StateHandle) -> Result<(), NotifyError<CoreMessage>> {
+        self.mio_tx.send(CoreMessage::WakeUp(handle))
+    }
 }
 
 impl Handler for Core {
@@ -97,29 +124,18 @@ impl Handler for Core {
             None => return,
         };
 
-        state.borrow_mut().execute(self, event_loop, token, events);
+        state.borrow_mut().ready(self, event_loop, token, events);
     }
 
     fn notify(&mut self, event_loop: &mut EventLoop<Self>, msg: Self::Message) {
-        msg.invoke(self, event_loop);
-    }
-}
-
-// Workaround for Box<FnOnce>.
-pub struct CoreMessage(Box<FnMut(&mut Core, &mut EventLoop<Core>) + Send>);
-
-impl CoreMessage {
-    pub fn new<F : FnOnce(&mut Core, &mut EventLoop<Core>) + Send + 'static>(f: F) -> Self {
-        let mut f = Some(f);
-        CoreMessage(Box::new(move |core: &mut Core, el: &mut EventLoop<Core>| {
-            if let Some(f) = f.take() {
-                f(core, el)
+        match msg {
+            CoreMessage::Post(closure) => closure.invoke(self, event_loop),
+            CoreMessage::WakeUp(handle) => {
+                if let Some(state) = self.get_state(&handle) {
+                    state.borrow_mut().notify(self, event_loop);
+                }
             }
-        }))
-    }
-
-    fn invoke(mut self, core: &mut Core, el: &mut EventLoop<Core>) {
-        (self.0)(core, el)
+        }
     }
 }
 
@@ -137,4 +153,22 @@ impl IndexGenerator {
     self.0 = self.0.wrapping_add(1);
     next
   }
+}
+
+// Workaround for Box<FnOnce>
+pub struct Closure(Box<FnMut(&mut Core, &mut EventLoop<Core>) + Send>);
+
+impl Closure {
+    fn new<F : FnOnce(&mut Core, &mut EventLoop<Core>) + Send + 'static>(f: F) -> Self {
+        let mut f = Some(f);
+        Closure(Box::new(move |a0: &mut Core, a1: &mut EventLoop<Core>| {
+            if let Some(f) = f.take() {
+                f(a0, a1)
+            }
+        }))
+    }
+
+    fn invoke(mut self, a0: &mut Core, a1: &mut EventLoop<Core>) {
+        (self.0)(a0, a1)
+    }
 }

@@ -17,71 +17,79 @@
 
 use mio::{PollOpt, Token, EventLoop, EventSet};
 use mio::tcp::TcpStream;
-use std::net::SocketAddr;
 
-use connection_states::active_connection::ActiveConnection;
-use core::{Core, StateHandle};
-use service::SharedConnectionMap;
-use state::State;
+use super::active_connection::ActiveConnection;
+use core::{Core, State, StateHandle};
+use core::channel::Sender;
+use error::Error;
+use peer_id::PeerId;
+use static_contact_info::StaticContactInfo;
 
 pub struct EstablishConnection {
-    self_handle: StateHandle,
-    connection_map: SharedConnectionMap,
-    routing_tx: ::CrustEventSender,
+    handle: StateHandle,
     socket: Option<TcpStream>, // Allows moving out without needing to clone the stream
     token: Token,
+    connect_tx: Sender<(StateHandle, Option<PeerId>)>,
+    event_tx: ::CrustEventSender,
 }
 
 impl EstablishConnection {
-    pub fn new(core: &mut Core,
-               event_loop: &mut EventLoop<Core>,
-               connection_map: SharedConnectionMap,
-               routing_tx: ::CrustEventSender,
-               peer_contact_info: SocketAddr) {
-        println!("Entered state EstablishConnection");
+    pub fn start(core: &mut Core,
+                 event_loop: &mut EventLoop<Core>,
+                 peer_contact_info: StaticContactInfo,
+                 connect_tx: Sender<(StateHandle, Option<PeerId>)>,
+                 event_tx: ::CrustEventSender)
+        -> Result<StateHandle, Error>
+    {
+        info!("Entered state EstablishConnection");
 
         let handle = core.get_new_state_handle();
-        let socket = TcpStream::connect(&peer_contact_info).expect("Could not connect to peer");
+
+        // TODO: spin up one socket per each tcp_acceptor
+        let socket = try!(TcpStream::connect(&peer_contact_info.tcp_acceptors[0]));
         let token = core.get_new_token();
         let connection = EstablishConnection {
-            self_handle: handle,
-            connection_map: connection_map,
-            routing_tx: routing_tx,
+            handle: handle,
             socket: Some(socket),
             token: token,
+            connect_tx: connect_tx,
+            event_tx: event_tx,
         };
 
-        event_loop.register(connection.socket.as_ref().expect("Logic Error"),
-                            token,
-                            EventSet::error() | EventSet::writable(),
-                            PollOpt::edge())
-                  .expect("Could not register socket with EventLoop<Core>");
+        try!(event_loop.register(connection.socket.as_ref().expect("Logic Error"),
+                                 token,
+                                 EventSet::error() | EventSet::writable(),
+                                 PollOpt::edge()));
 
         let _ = core.insert_state_handle(token, handle);
         let _ = core.insert_state(handle, connection);
+
+        Ok(handle)
     }
 }
 
 impl State for EstablishConnection {
-    fn execute(&mut self,
-               core: &mut Core,
-               event_loop: &mut EventLoop<Core>,
-               token: Token,
-               event_set: EventSet) {
+    fn ready(&mut self,
+             core: &mut Core,
+             event_loop: &mut EventLoop<Core>,
+             token: Token,
+             event_set: EventSet) {
         if event_set.is_error() {
-            panic!("connection error");
-            // let _ = routing_tx.send(Error - Could not connect);
+            let _ = self.connect_tx.send((self.handle, None));
         } else {
             let _ = core.remove_state_by_token(&token).expect("State not found");
 
-            println!("EstablishConnection successful -> Moving to next state ...");
+            info!("EstablishConnection successful -> Moving to next state ...");
             ActiveConnection::new(core,
                                   event_loop,
-                                  self.self_handle,
-                                  self.connection_map.clone(),
+                                  self.handle,
                                   self.socket.take().expect("Logic Error"),
-                                  self.routing_tx.clone(),
-                                  self.token);
+                                  self.token,
+                                  self.event_tx.clone());
         }
+    }
+
+    fn terminate(&mut self, core: &mut Core, _: &mut EventLoop<Core>) {
+        let _ = core.remove_state_by_token(&self.token);
     }
 }
