@@ -21,19 +21,16 @@ mod errors;
 
 use rand;
 use std::u16;
-use std::rc::Rc;
 use std::any::Any;
 use std::str::FromStr;
 use std::io::ErrorKind;
-use std::cell::RefCell;
 use std::net::SocketAddr;
 use std::io::{Read, Write};
 use std::sync::{Arc, Mutex};
 use std::sync::mpsc::Sender;
 use std::collections::VecDeque;
 
-use state::State;
-use core::{Core, Context};
+use core::{Core, Context, State};
 use static_contact_info::StaticContactInfo;
 use maidsafe_utilities::serialisation::{serialise, deserialise};
 
@@ -65,12 +62,10 @@ impl ServiceDiscovery {
     pub fn new(core: &mut Core,
                event_loop: &mut EventLoop<Core>,
                static_contact_info: Arc<Mutex<StaticContactInfo>>,
-               service_discovery_handle: Arc<Mutex<Option<Context>>>,
+               context: Context,
                port: u16)
                -> Result<(), ServiceDiscoveryError> {
-        let context = core.get_new_context();
         let token = core.get_new_token();
-        *service_discovery_handle.lock().unwrap() = Some(context);
 
         let udp_socket = try!(get_socket(port));
         try!(udp_socket.set_broadcast(true));
@@ -97,7 +92,7 @@ impl ServiceDiscovery {
                                  PollOpt::edge()));
 
         let _ = core.insert_context(token, context);
-        let _ = core.insert_state(context, Rc::new(RefCell::new(service_discovery)));
+        let _ = core.insert_state(context, service_discovery);
 
         Ok(())
     }
@@ -191,11 +186,11 @@ impl ServiceDiscovery {
 }
 
 impl State for ServiceDiscovery {
-    fn execute(&mut self,
-               core: &mut Core,
-               event_loop: &mut EventLoop<Core>,
-               _: Token,
-               event_set: EventSet) {
+    fn ready(&mut self,
+             core: &mut Core,
+             event_loop: &mut EventLoop<Core>,
+             _: Token,
+             event_set: EventSet) {
         if event_set.is_error() {
             self.terminate(core, event_loop);
         } else if event_set.is_hup() {
@@ -215,8 +210,8 @@ impl State for ServiceDiscovery {
         if let Err(e) = event_loop.deregister(&self.socket) {
             println!("Error deregistering ServiceDiscovery: {:?}", e);
         }
-        if let Some(context) = core.remove_context(&self.token) {
-            let _ = core.remove_state(&context);
+        if let Some(context) = core.remove_context(self.token) {
+            let _ = core.remove_state(context);
         }
     }
 
@@ -287,16 +282,17 @@ mod test {
             let sd0 = Arc::new(Mutex::new(None));
             let sd0_clone = sd0.clone();
             tx0.send(CoreMessage::new(move |core, el| {
-                   ServiceDiscovery::new(core, el, static_info_0_clone, sd0_clone, 65530)
-                       .expect("Could not spawn ServiceDiscovery_0");
-               }))
-               .expect("Could not send to tx0");
+                let context = core.get_new_context();
+                *sd0_clone.lock().unwrap() = Some(context);
+
+                ServiceDiscovery::new(core, el, static_info_0_clone, context, 65530)
+                                 .expect("Could not spawn ServiceDiscovery_0");
+            })).expect("Could not send to tx0");
 
             // Start listening for peers
             tx0.send(CoreMessage::new(move |core, _| {
                    let state = core.get_state(sd0.lock()
                                                  .unwrap()
-                                                 .as_ref()
                                                  .expect("ServiceDiscovery_0 hasn't registered \
                                                           a handle yet"))
                                    .expect("State for SD0 hasn't been registered yet");
@@ -329,17 +325,18 @@ mod test {
             let sd1 = Arc::new(Mutex::new(None));
             let sd1_clone = sd1.clone();
             tx1.send(CoreMessage::new(move |core, el| {
-                   ServiceDiscovery::new(core, el, static_info_1, sd1_clone, 65530)
-                       .expect("Could not spawn ServiceDiscovery_1");
-               }))
-               .expect("Could not send to tx1");
+                let context = core.get_new_context();
+                *sd1_clone.lock().unwrap() = Some(context);
+
+                ServiceDiscovery::new(core, el, static_info_1, context, 65530)
+                                 .expect("Could not spawn ServiceDiscovery_1");
+            })).expect("Could not send to tx1");
 
             // Register observer
             let sd1_clone = sd1.clone();
             tx1.send(CoreMessage::new(move |core, _| {
                    let state = core.get_state(sd1_clone.lock()
                                                        .unwrap()
-                                                       .as_ref()
                                                        .expect("ServiceDiscovery_1 hasn't \
                                                                 registered a handle yet"))
                                    .expect("State for SD1 hasn't been registered yet");
@@ -355,7 +352,6 @@ mod test {
             tx1.send(CoreMessage::new(move |core, _| {
                    let state = core.get_state(sd1.lock()
                                                  .unwrap()
-                                                 .as_ref()
                                                  .expect("ServiceDiscovery_1 hasn't registered \
                                                           a handle yet"))
                                    .expect("State for SD1 hasn't been registered yet");

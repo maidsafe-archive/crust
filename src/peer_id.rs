@@ -39,7 +39,7 @@ impl fmt::Display for PeerId {
     }
 }
 
-pub fn new_id(pub_key: PublicKey) -> PeerId {
+pub fn new(pub_key: PublicKey) -> PeerId {
     PeerId(pub_key)
 }
 

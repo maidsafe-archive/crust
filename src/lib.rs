@@ -43,6 +43,7 @@
 #![cfg_attr(feature="clippy", allow(use_debug))]
 
 extern crate byteorder;
+extern crate config_file_handler;
 #[macro_use]
 extern crate log;
 #[macro_use]
@@ -60,13 +61,21 @@ extern crate socket_addr;
 #[macro_use]
 extern crate quick_error;
 
+mod bootstrap_states;
+mod config_handler;
 mod connection_states;
 mod core;
 mod error;
 mod event;
+mod message;
 mod peer_id;
 mod service;
+mod service_discovery;
+mod socket;
 mod static_contact_info;
+
+#[cfg(test)]
+mod tests;
 
 /// Crust Observers will be informed of crust events on this
 pub type CrustEventSender = ::maidsafe_utilities::event_sender::MaidSafeObserver<Event>;
@@ -79,3 +88,4 @@ pub use error::Error;
 pub use peer_id::PeerId;
 pub use service::Service;
 pub use socket_addr::SocketAddr;
+pub use static_contact_info::StaticContactInfo;

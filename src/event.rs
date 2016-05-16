@@ -15,6 +15,8 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use std::io;
+
 use peer_id::PeerId;
 use service::ConnectionInfoResult;
 
@@ -22,24 +24,25 @@ use service::ConnectionInfoResult;
 /// of this module.
 #[derive(Debug)]
 pub enum Event {
-    // /// Invoked when a bootstrap peer connects to us
-    // BootstrapAccept(PeerId),
-    // /// Invoked when we get a bootstrap connection to a new peer.
-    // BootstrapConnect(PeerId),
-    // /// Raised once the list of bootstrap contacts is exhausted.
-    // BootstrapFinished,
+    /// Invoked when a bootstrap peer connects to us
+    BootstrapAccept(PeerId),
+    /// Invoked when we get a bootstrap connection to a new peer.
+    BootstrapConnect(PeerId),
+    /// Invoked when we failed to connect to all bootstrap contacts.
+    BootstrapFailed,
+    /// Invoked when we are ready to listen for incomming connection. Contains
+    /// the listening port.
+    ListenerStarted(u16),
+    /// Invoked when listener failed to start.
+    ListenerFailed,
     /// Invoked as a result to the call of `Service::prepare_contact_info`.
     ConnectionInfoPrepared(ConnectionInfoResult),
+    /// Invoked when a connection to a new peer is established.
+    NewPeer(io::Result<()>, PeerId),
     /// Invoked when a peer is lost or having read/write error.
     LostPeer(PeerId),
-    /// Invoked when a new connection get established.
-    NewConnection(PeerId),
     /// Invoked when a new message is received.  Passes the message.
     NewMessage(PeerId, Vec<u8>),
-    /// Invoked when discovered a new peer through service discovery
-    NewPeer(PeerId),
     /// Invoked when trying to sending a too large data.
     WriteMsgSizeProhibitive(PeerId, Vec<u8>),
-    /// Invoked when there is error on the service_discovery listening socket
-    ServiceDiscoveryTerminated,
 }
