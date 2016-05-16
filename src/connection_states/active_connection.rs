@@ -17,10 +17,11 @@
 
 use std::cell::RefCell;
 use std::collections::{HashMap, VecDeque};
-use std::io::{ErrorKind, Read, Write};
+use std::io::{Cursor, ErrorKind, Read, Write};
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
+use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use core::{Core, Context};
 use event::Event;
 use mio::{Token, EventLoop, EventSet, PollOpt};
@@ -28,12 +29,15 @@ use mio::tcp::TcpStream;
 use peer_id::PeerId;
 use state::State;
 
+const U32_BYTE_LENGTH: usize = 4;
+
 pub struct ActiveConnection {
     peer_id: PeerId,
     cm: Arc<Mutex<HashMap<PeerId, Context>>>,
     token: Token,
     _context: Context,
-    _read_buf: Vec<u8>,
+    read_buf: Vec<u8>,
+    read_len: u32,
     socket: TcpStream,
     write_queue: VecDeque<Vec<u8>>,
     routing_tx: ::CrustEventSender,
@@ -56,7 +60,8 @@ impl ActiveConnection {
             cm: cm,
             token: token,
             _context: context.clone(),
-            _read_buf: Vec::new(),
+            read_buf: Vec::new(),
+            read_len: 0,
             socket: socket,
             write_queue: VecDeque::new(),
             routing_tx: routing_tx,
@@ -75,10 +80,13 @@ impl ActiveConnection {
     }
 
     fn read(&mut self, _core: &mut Core, _event_loop: &mut EventLoop<Core>, _token: Token) {
-        let mut buf = vec![0; 10];
+        // the mio reading window is max at 64k (64 * 1024)
+        let mut buf = vec![0; 65536];
         match self.socket.read(&mut buf) {
-            Ok(_bytes_rxd) => {
-                let _ = self.routing_tx.send(Event::NewMessage(self.peer_id, buf));
+            Ok(bytes_rxd) => {
+                buf.resize(bytes_rxd, 0);
+                self.read_buf.append(&mut buf);
+                self.read_data();
             }
             Err(e) => {
                 if !(e.kind() == ErrorKind::WouldBlock || e.kind() == ErrorKind::Interrupted) {
@@ -86,6 +94,22 @@ impl ActiveConnection {
                     // let _ = self.routing_tx.send(CrustMsg::LostPeer);
                 }
             }
+        }
+    }
+
+    fn read_data(&mut self) {
+        if self.read_len == 0 && self.read_buf.len() >= U32_BYTE_LENGTH {
+            if let Ok(size) = Cursor::new(&self.read_buf[..]).read_u32::<LittleEndian>() {
+                self.read_len = size
+            }
+            self.read_buf = self.read_buf.split_off(U32_BYTE_LENGTH);
+        }
+        if self.read_len > 0 && self.read_buf.len() as u32 >= self.read_len {
+            let tail = self.read_buf.split_off(self.read_len as usize);
+            let _ = self.routing_tx.send(Event::NewMessage(self.peer_id, self.read_buf.clone()));
+            self.read_buf = tail;
+            self.read_len = 0;
+            self.read_data();
         }
     }
 
@@ -144,6 +168,9 @@ impl State for ActiveConnection {
     }
 
     fn write(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, data: Vec<u8>) {
+        let mut vec_len = Vec::with_capacity(U32_BYTE_LENGTH);
+        let _ = vec_len.write_u32::<LittleEndian>(data.len() as u32);
+        self.write_queue.push_back(vec_len);
         self.write_queue.push_back(data);
         let token = self.token;
         self.write(core, event_loop, token);

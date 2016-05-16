@@ -10,6 +10,7 @@ repository = "https://github.com/maidsafe/crust"
 version = "0.12.0"
 
 [dependencies]
+byteorder = "~0.5.1"
 maidsafe_utilities = "~0.5.4"
 mio = "~0.5.1"
 nat_traversal = "~0.3.3"
