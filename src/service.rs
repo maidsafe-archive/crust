@@ -24,7 +24,7 @@ use std::io;
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
 
-use core::{Core, CoreMessage, Context};
+use core::{Core, CoreMessage, StateHandle};
 use connection_states::EstablishConnection;
 use event::Event;
 use error::Error;
@@ -81,10 +81,16 @@ impl TheirConnectionInfo {
     }
 }
 
+pub type SharedConnectionMap = Arc<Mutex<HashMap<PeerId, StateHandle>>>;
+
+fn new_shared_connection_map() -> SharedConnectionMap {
+    Arc::new(Mutex::new(HashMap::new()))
+}
+
 /// A structure representing a connection manager.
 pub struct Service {
-    // This is the connection map -> PeerId <-> Context
-    connection_map: Arc<Mutex<HashMap<PeerId, Context>>>,
+    // This is the connection map -> PeerId -> StateHandle
+    connection_map: SharedConnectionMap,
     event_tx: ::CrustEventSender,
     mapping_context: Arc<MappingContext>,
     mio_tx: Sender<CoreMessage>,
@@ -99,11 +105,13 @@ impl Service {
         let mut event_loop = try!(EventLoop::new());
         let mio_tx = event_loop.channel();
         let our_keys = box_::gen_keypair();
+
         // Form our initial contact info
         let static_contact_info = Arc::new(Mutex::new(StaticContactInfo {
             tcp_acceptors: Vec::new(),
             tcp_mapper_servers: Vec::new(),
         }));
+
         let mapping_context = try!(MappingContext::new()
                                        .result_log()
                                        .or_else(|e| {
@@ -113,13 +121,15 @@ impl Service {
                                                                       e)))
                                        }));
 
+
+
         let joiner = RaiiThreadJoiner::new(thread!("Crust event loop", move || {
             let mut core = Core::new();
             event_loop.run(&mut core).expect("EventLoop failed to run");
         }));
 
         Ok(Service {
-            connection_map: Arc::new(Mutex::new(HashMap::new())),
+            connection_map: new_shared_connection_map(),
             event_tx: event_tx,
             mapping_context: Arc::new(mapping_context),
             mio_tx: mio_tx,
@@ -225,8 +235,8 @@ impl Service {
         }
     }
 
-    fn get_connection(&self, peer_id: &PeerId) -> Option<Context> {
-        self.connection_map.lock().unwrap().get(peer_id).map(|c| *c)
+    fn get_connection(&self, peer_id: &PeerId) -> Option<StateHandle> {
+        self.connection_map.lock().unwrap().get(peer_id).map(|h| *h)
     }
 
     fn post<F>(&self, f: F) -> Result<(), NotifyError<CoreMessage>>

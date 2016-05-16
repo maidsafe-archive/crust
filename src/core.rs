@@ -25,64 +25,65 @@ use mio::{Token, EventLoop, Handler, EventSet};
 pub type CoreTimeout = ();
 
 #[derive(Hash, Eq, PartialEq, Ord, PartialOrd, Copy, Clone, Debug)]
-pub struct Context(usize);
+pub struct StateHandle(usize);
 
 pub struct Core {
-    token_counter: usize,
-    context_counter: usize,
-    contexts: HashMap<Token, Context>,
-    states: HashMap<Context, Rc<RefCell<State>>>,
+    token_gen: IndexGenerator,
+    state_handle_gen: IndexGenerator,
+    state_handles: HashMap<Token, StateHandle>,
+    states: HashMap<StateHandle, Rc<RefCell<State>>>,
 }
 
 impl Core {
     pub fn new() -> Self {
         Core {
-            token_counter: 0,
-            context_counter: 0,
-            contexts: HashMap::new(),
+            token_gen: IndexGenerator::new(),
+            state_handle_gen: IndexGenerator::new(),
+            state_handles: HashMap::new(),
             states: HashMap::new(),
         }
     }
 
     pub fn get_new_token(&mut self) -> Token {
-        let token_counter = self.token_counter;
-        self.token_counter = token_counter.wrapping_add(1);
-
-        Token(token_counter)
+        Token(self.token_gen.next())
     }
 
-    pub fn get_new_context(&mut self) -> Context {
-        let context_counter = self.context_counter;
-        self.context_counter = context_counter.wrapping_add(1);
-
-        Context(context_counter)
+    pub fn get_new_state_handle(&mut self) -> StateHandle {
+        StateHandle(self.state_handle_gen.next())
     }
 
-    pub fn insert_context(&mut self, key: Token, val: Context) -> Option<Context> {
-        self.contexts.insert(key, val)
+    pub fn insert_state_handle(&mut self, key: Token, val: StateHandle) -> Option<StateHandle> {
+        self.state_handles.insert(key, val)
     }
 
-    pub fn insert_state(&mut self,
-                        key: Context,
-                        val: Rc<RefCell<State>>)
-                        -> Option<Rc<RefCell<State>>> {
-        self.states.insert(key, val)
+    pub fn insert_state<T>(&mut self, key: StateHandle, val: T) -> Option<Rc<RefCell<State>>>
+        where T: State + 'static
+    {
+        self.states.insert(key, Rc::new(RefCell::new(val)))
     }
 
-    pub fn remove_context(&mut self, key: &Token) -> Option<Context> {
-        self.contexts.remove(key)
+    pub fn remove_state_handle(&mut self, key: &Token) -> Option<StateHandle> {
+        self.state_handles.remove(key)
     }
 
-    pub fn remove_state(&mut self, key: &Context) -> Option<Rc<RefCell<State>>> {
+    pub fn remove_state(&mut self, key: &StateHandle) -> Option<Rc<RefCell<State>>> {
         self.states.remove(key)
     }
 
-    pub fn get_context(&self, key: &Token) -> Option<&Context> {
-        self.contexts.get(key)
+    pub fn get_state_handle(&self, key: &Token) -> Option<StateHandle> {
+        self.state_handles.get(key).map(|h| *h)
     }
 
-    pub fn get_state(&self, key: &Context) -> Option<Rc<RefCell<State>>> {
+    pub fn get_state(&self, key: &StateHandle) -> Option<Rc<RefCell<State>>> {
         self.states.get(key).map(|s| s.clone())
+    }
+
+    pub fn get_state_by_token(&self, token: &Token) -> Option<Rc<RefCell<State>>> {
+        self.get_state_handle(token).and_then(|h| self.get_state(&h))
+    }
+
+    pub fn remove_state_by_token(&mut self, token: &Token) -> Option<Rc<RefCell<State>>> {
+        self.remove_state_handle(token).and_then(|h| self.remove_state(&h))
     }
 }
 
@@ -91,7 +92,7 @@ impl Handler for Core {
     type Message = CoreMessage;
 
     fn ready(&mut self, event_loop: &mut EventLoop<Self>, token: Token, events: EventSet) {
-        let state = match self.get_context(&token).and_then(|c| self.get_state(c)) {
+        let state = match self.get_state_by_token(&token) {
             Some(state) => state,
             None => return,
         };
@@ -120,4 +121,20 @@ impl CoreMessage {
     fn invoke(mut self, core: &mut Core, el: &mut EventLoop<Core>) {
         (self.0)(core, el)
     }
+}
+
+// Helper struct to generate sequence of unique indices. Call `next` to
+// generate new index.
+struct IndexGenerator(usize);
+
+impl IndexGenerator {
+  fn new() -> Self {
+    IndexGenerator(0)
+  }
+
+  fn next(&mut self) -> usize {
+    let next = self.0;
+    self.0 = self.0.wrapping_add(1);
+    next
+  }
 }

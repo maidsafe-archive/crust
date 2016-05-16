@@ -44,6 +44,8 @@
 
 extern crate byteorder;
 #[macro_use]
+extern crate log;
+#[macro_use]
 extern crate maidsafe_utilities;
 extern crate mio;
 extern crate nat_traversal;
