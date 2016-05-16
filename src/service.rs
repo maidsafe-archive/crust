@@ -15,24 +15,25 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use maidsafe_utilities::thread::RaiiThreadJoiner;
+use mio::{EventLoop, NotifyError, Sender};
 use net2;
+use sodiumoxide::crypto::box_::{self, PublicKey, SecretKey};
+use std::collections::HashMap;
 use std::io;
-use state::State;
+use std::net::SocketAddr;
+use std::sync::{Arc, Mutex};
+
+use core::{Core, CoreMessage, Context};
+use connection_states::EstablishConnection;
 use event::Event;
 use error::Error;
-use std::net::SocketAddr;
-use peer_id::{self, PeerId};
-use std::sync::{Arc, Mutex};
-use std::collections::HashMap;
-use core::{Core, CoreMessage, Context};
-use service_discovery::ServiceDiscovery;
-use mio::{EventLoop, NotifyError, Sender};
-use static_contact_info::StaticContactInfo;
-use connection_states::EstablishConnection;
-use maidsafe_utilities::thread::RaiiThreadJoiner;
-use sodiumoxide::crypto::box_::{self, PublicKey, SecretKey};
 use nat_traversal::{MappedTcpSocket, MappingContext, PrivRendezvousInfo, PubRendezvousInfo,
                     gen_rendezvous_info};
+use peer_id::{self, PeerId};
+use service_discovery::ServiceDiscovery;
+use state::State;
+use static_contact_info::StaticContactInfo;
 
 /// The result of a `Service::prepare_contact_info` call.
 #[derive(Debug)]
@@ -164,17 +165,20 @@ impl Service {
         });
     }
 
-    /// dropping a peer
-    pub fn drop_peer(&mut self, peer_id: PeerId) {
-        let context = self.connection_map
-                          .lock()
-                          .unwrap()
-                          .remove(&peer_id)
-                          .expect("Context not found");
+    /// Disconnect from the given peer and returns whether there was a connection at all.
+    pub fn disconnect(&mut self, peer_id: PeerId) -> bool {
+        let context = match self.connection_map.lock().unwrap().remove(&peer_id) {
+            Some(context) => context,
+            None => return false,
+        };
+
         let _ = self.post(move |mut core, mut event_loop| {
-            let state = core.get_state(&context).expect("State not found").clone();
-            state.borrow_mut().terminate(&mut core, &mut event_loop);
+            if let Some(state) = core.get_state(&context) {
+                state.borrow_mut().terminate(&mut core, &mut event_loop);
+            }
         });
+
+        true
     }
 
     /// sending data to a peer(according to it's u64 peer_id)
@@ -183,15 +187,11 @@ impl Service {
             let _ = self.event_tx.send(Event::WriteMsgSizeProhibitive(peer_id, data));
             return;
         }
-        let context = self.connection_map
-                          .lock()
-                          .unwrap()
-                          .get(&peer_id)
-                          .expect("Context not found")
-                          .clone();
+        let context = self.connection_map.lock().unwrap().get(&peer_id).expect("Context not found")
+                                                                       .clone();
         let mut data = Some(data);
         let _ = self.post(move |mut core, mut event_loop| {
-            let state = core.get_state(&context).expect("State not found").clone();
+            let state = core.get_state(&context).expect("State not found");
             state.borrow_mut().write(&mut core,
                                      &mut event_loop,
                                      data.take().expect("Logic Error"));
