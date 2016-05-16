@@ -15,6 +15,10 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use maidsafe_utilities::thread::RaiiThreadJoiner;
+use mio::{EventLoop, NotifyError, Sender};
+use net2;
+use sodiumoxide::crypto::box_::{self, PublicKey, SecretKey};
 use std::collections::HashMap;
 use std::io;
 use std::net::SocketAddr;
@@ -24,13 +28,9 @@ use core::{Core, CoreMessage, Context};
 use connection_states::EstablishConnection;
 use event::Event;
 use error::Error;
-use mio::{EventLoop, Sender};
-use maidsafe_utilities::thread::RaiiThreadJoiner;
 use nat_traversal::{MappedTcpSocket, MappingContext, PrivRendezvousInfo, PubRendezvousInfo,
                     gen_rendezvous_info};
-use net2;
 use peer_id::{self, PeerId};
-use sodiumoxide::crypto::box_::{self, PublicKey, SecretKey};
 use state::State;
 use static_contact_info::StaticContactInfo;
 
@@ -132,27 +132,26 @@ impl Service {
 
     /// connect to peer
     pub fn connect(&mut self, peer_contact_info: SocketAddr) {
-        let mut routing_tx = Some(self.event_tx.clone());
-        let mut connection_map = Some(self.connection_map.clone());
+        let routing_tx = self.event_tx.clone();
+        let connection_map = self.connection_map.clone();
 
-        let _ = self.mio_tx
-                    .send(Box::new(move |core: &mut Core, event_loop: &mut EventLoop<Core>| {
-                        EstablishConnection::new(core,
-                                                 event_loop,
-                                                 connection_map.take().expect("Logic Error"),
-                                                 routing_tx.take().expect("Logic Error"),
-                                                 peer_contact_info);
-                    }));
+        let _ = self.post(move |core, event_loop| {
+            EstablishConnection::new(core,
+                                     event_loop,
+                                     connection_map,
+                                     routing_tx,
+                                     peer_contact_info);
+        });
     }
 
     /// dropping a peer
     pub fn drop_peer(&mut self, peer_id: PeerId) {
         let context = self.connection_map.lock().unwrap().remove(&peer_id)
                                                          .expect("Context not found");
-        let _ = self.mio_tx.send(Box::new(move |mut core, mut event_loop| {
+        let _ = self.post(move |mut core, mut event_loop| {
             let state = core.get_state(&context).expect("State not found").clone();
             state.borrow_mut().terminate(&mut core, &mut event_loop);
-        }));
+        });
     }
 
     /// sending data to a peer(according to it's u64 peer_id)
@@ -160,12 +159,12 @@ impl Service {
         let context = self.connection_map.lock().unwrap().get(&peer_id).expect("Context not found")
                                                                        .clone();
         let mut data = Some(data);
-        let _ = self.mio_tx.send(Box::new(move |mut core, mut event_loop| {
+        let _ = self.post(move |mut core, mut event_loop| {
             let state = core.get_state(&context).expect("State not found").clone();
             state.borrow_mut().write(&mut core,
                                      &mut event_loop,
                                      data.take().expect("Logic Error"));
-        }));
+        });
     }
 
     /// Lookup a mapped udp socket based on result_token
@@ -179,7 +178,7 @@ impl Service {
         let event_tx = self.event_tx.clone();
         let mapping_context = self.mapping_context.clone();
         let our_pub_key = self.our_keys.0.clone();
-        if let Err(_) = self.mio_tx.send(Box::new(move |_, _| {
+        if let Err(_) = self.post(move |_, _| {
             let (tcp_socket, (our_priv_tcp_info, our_pub_tcp_info)) =
                 match MappedTcpSocket::new(&mapping_context).result_log() {
                     Ok(MappedTcpSocket { socket, endpoints }) => {
@@ -206,7 +205,7 @@ impl Service {
                 }),
             });
             let _ = event_tx.send(event);
-        })) {
+        }) {
             let _ = self.event_tx.send(Event::ConnectionInfoPrepared(ConnectionInfoResult {
                                 result_token: result_token,
                                 result: Err(io::Error::new(io::ErrorKind::Other,
@@ -215,10 +214,16 @@ impl Service {
                             }));
         }
     }
+
+    fn post<F>(&self, f: F) -> Result<(), NotifyError<CoreMessage>>
+        where F: FnOnce(&mut Core, &mut EventLoop<Core>) + Send + 'static
+    {
+        self.mio_tx.send(CoreMessage::new(f))
+    }
 }
 
 impl Drop for Service {
     fn drop(&mut self) {
-        let _ = self.mio_tx.send(Box::new(|_, el| el.shutdown()));
+        let _ = self.post(|_, el| el.shutdown());
     }
 }
