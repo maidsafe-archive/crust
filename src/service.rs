@@ -144,14 +144,20 @@ impl Service {
         });
     }
 
-    /// dropping a peer
-    pub fn drop_peer(&mut self, peer_id: PeerId) {
-        let context = self.connection_map.lock().unwrap().remove(&peer_id)
-                                                         .expect("Context not found");
+    /// Disconnect from the given peer and returns whether there was a connection at all.
+    pub fn disconnect(&mut self, peer_id: PeerId) -> bool {
+        let context = match self.connection_map.lock().unwrap().remove(&peer_id) {
+            Some(context) => context,
+            None => return false,
+        };
+
         let _ = self.post(move |mut core, mut event_loop| {
-            let state = core.get_state(&context).expect("State not found").clone();
-            state.borrow_mut().terminate(&mut core, &mut event_loop);
+            if let Some(state) = core.get_state(&context) {
+                state.borrow_mut().terminate(&mut core, &mut event_loop);
+            }
         });
+
+        true
     }
 
     /// sending data to a peer(according to it's u64 peer_id)
@@ -164,7 +170,7 @@ impl Service {
                                                                        .clone();
         let mut data = Some(data);
         let _ = self.post(move |mut core, mut event_loop| {
-            let state = core.get_state(&context).expect("State not found").clone();
+            let state = core.get_state(&context).expect("State not found");
             state.borrow_mut().write(&mut core,
                                      &mut event_loop,
                                      data.take().expect("Logic Error"));
@@ -217,6 +223,10 @@ impl Service {
                                                                        with mio eventloop"))),
                             }));
         }
+    }
+
+    fn get_connection(&self, peer_id: &PeerId) -> Option<Context> {
+        self.connection_map.lock().unwrap().get(peer_id).map(|c| *c)
     }
 
     fn post<F>(&self, f: F) -> Result<(), NotifyError<CoreMessage>>

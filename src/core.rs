@@ -24,7 +24,7 @@ use mio::{Token, EventLoop, Handler, EventSet};
 
 pub type CoreTimeout = ();
 
-#[derive(Hash, Eq, PartialEq, Ord, PartialOrd, Clone, Debug)]
+#[derive(Hash, Eq, PartialEq, Ord, PartialOrd, Copy, Clone, Debug)]
 pub struct Context(usize);
 
 pub struct Core {
@@ -77,12 +77,12 @@ impl Core {
         self.states.remove(key)
     }
 
-    pub fn _get_context(&self, key: &Token) -> Option<&Context> {
+    pub fn get_context(&self, key: &Token) -> Option<&Context> {
         self.contexts.get(key)
     }
 
-    pub fn get_state(&self, key: &Context) -> Option<&Rc<RefCell<State>>> {
-        self.states.get(key)
+    pub fn get_state(&self, key: &Context) -> Option<Rc<RefCell<State>>> {
+        self.states.get(key).map(|s| s.clone())
     }
 }
 
@@ -91,13 +91,8 @@ impl Handler for Core {
     type Message = CoreMessage;
 
     fn ready(&mut self, event_loop: &mut EventLoop<Self>, token: Token, events: EventSet) {
-        let state = match self.contexts.get(&token) {
-            Some(context) => {
-                match self.states.get(context) {
-                    Some(state) => state.clone(),
-                    None => return,
-                }
-            }
+        let state = match self.get_context(&token).and_then(|c| self.get_state(c)) {
+            Some(state) => state,
             None => return,
         };
 
