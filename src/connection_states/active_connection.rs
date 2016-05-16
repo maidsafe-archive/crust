@@ -17,7 +17,7 @@
 
 use std::cell::RefCell;
 use std::collections::{HashMap, VecDeque};
-use std::io::{BufReader, ErrorKind, Read, Write};
+use std::io::{ErrorKind, Read, Write};
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
@@ -34,7 +34,6 @@ pub struct ActiveConnection {
     token: Token,
     _context: Context,
     _read_buf: Vec<u8>,
-    reader: BufReader<TcpStream>,
     socket: TcpStream,
     write_queue: VecDeque<Vec<u8>>,
     routing_tx: ::CrustEventSender,
@@ -46,10 +45,10 @@ impl ActiveConnection {
                cm: Arc<Mutex<HashMap<PeerId, Context>>>,
                context: Context,
                socket: TcpStream,
-               routing_tx: ::CrustEventSender) {
+               routing_tx: ::CrustEventSender,
+               token: Token) {
         println!("Entered state ActiveConnection");
 
-        let token = core.get_new_token();
         let peer_id = ::rand::random();
 
         let connection = ActiveConnection {
@@ -58,7 +57,6 @@ impl ActiveConnection {
             token: token,
             _context: context.clone(),
             _read_buf: Vec::new(),
-            reader: BufReader::new(socket.try_clone().expect("Could not clone TcpStream")),
             socket: socket,
             write_queue: VecDeque::new(),
             routing_tx: routing_tx,
@@ -78,7 +76,7 @@ impl ActiveConnection {
 
     fn read(&mut self, _core: &mut Core, _event_loop: &mut EventLoop<Core>, _token: Token) {
         let mut buf = vec![0; 10];
-        match self.reader.read(&mut buf) {
+        match self.socket.read(&mut buf) {
             Ok(_bytes_rxd) => {
                 let _ = self.routing_tx.send(Event::NewMessage(self.peer_id, buf));
             }

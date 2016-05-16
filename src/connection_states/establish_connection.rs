@@ -33,6 +33,7 @@ pub struct EstablishConnection {
     context: Context,
     routing_tx: ::CrustEventSender,
     socket: Option<TcpStream>, // Allows moving out without needing to clone the stream
+    token: Token,
 }
 
 impl EstablishConnection {
@@ -45,14 +46,15 @@ impl EstablishConnection {
 
         let context = core.get_new_context();
         let socket = TcpStream::connect(&peer_contact_info).expect("Could not connect to peer");
+        let token = core.get_new_token();
         let connection = EstablishConnection {
             cm: cm,
             context: context.clone(),
             routing_tx: routing_tx,
             socket: Some(socket),
+            token: token,
         };
 
-        let token = core.get_new_token();
         event_loop.register(connection.socket.as_ref().expect("Logic Error"),
                             token,
                             EventSet::error() | EventSet::writable(),
@@ -83,7 +85,8 @@ impl State for EstablishConnection {
                                   self.cm.clone(),
                                   self.context.clone(),
                                   self.socket.take().expect("Logic Error"),
-                                  self.routing_tx.clone());
+                                  self.routing_tx.clone(),
+                                  self.token);
         }
     }
 }
