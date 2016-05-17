@@ -25,7 +25,7 @@ use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use core::{Core, Context};
 use event::Event;
 use mio::{Token, EventLoop, EventSet, PollOpt};
-use mio::tcp::TcpStream;
+use mio::tcp::{Shutdown, TcpStream};
 use peer_id::PeerId;
 use state::State;
 
@@ -79,7 +79,7 @@ impl ActiveConnection {
         let _ = core.insert_state(context, Rc::new(RefCell::new(connection)));
     }
 
-    fn read(&mut self, _core: &mut Core, _event_loop: &mut EventLoop<Core>, _token: Token) {
+    fn read(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, token: Token) {
         // the mio reading window is max at 64k (64 * 1024)
         let mut buf = vec![0; 65536];
         match self.socket.read(&mut buf) {
@@ -87,6 +87,9 @@ impl ActiveConnection {
                 buf.resize(bytes_rxd, 0);
                 self.read_buf.append(&mut buf);
                 while self.read_data() {}
+                if self.read_len <= ::MAX_DATA_LEN {
+                    return;
+                }
             }
             Err(e) => {
                 if !(e.kind() == ErrorKind::WouldBlock || e.kind() == ErrorKind::Interrupted) {
@@ -95,18 +98,17 @@ impl ActiveConnection {
                 }
             }
         }
+        self.close(core, event_loop, token);
     }
 
     fn read_data(&mut self) -> bool {
         if self.read_len == 0 && self.read_buf.len() >= U32_BYTE_LENGTH {
-            // TODO: Gracefully exit in case of failed to parse the data_len
             self.read_len = Cursor::new(&self.read_buf[..U32_BYTE_LENGTH])
                     .read_u32::<LittleEndian>().expect("Failed in parsing data_len.");
+            if self.read_len > ::MAX_DATA_LEN {
+                return false;
+            }
             self.read_buf = self.read_buf.split_off(U32_BYTE_LENGTH);
-        }
-        if self.read_len > ::MAX_DATA_LEN {
-            let _ = self.routing_tx.send(Event::IncorrectDataLenPattern(self.peer_id));
-            return false;
         }
         // TODO: if data_len has been incorrectly parsed, the execution hangs.
         //       A time_out may need to be introduced to prevent it.
@@ -120,7 +122,7 @@ impl ActiveConnection {
         false
     }
 
-    fn write(&mut self, _core: &mut Core, event_loop: &mut EventLoop<Core>, _token: Token) {
+    fn write(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, token: Token) {
         if let Some(mut data) = self.write_queue.pop_front() {
             match self.socket.write(&data) {
                 Ok(bytes_txd) => {
@@ -133,8 +135,7 @@ impl ActiveConnection {
                     if e.kind() == ErrorKind::WouldBlock || e.kind() == ErrorKind::Interrupted {
                         self.write_queue.push_front(data);
                     } else {
-                        // remove self from core etc
-                        // let _ = self.routing_tx.send(CrustMsg::LostPeer);
+                        self.close(core, event_loop, token);
                     }
                 }
             }
@@ -149,6 +150,16 @@ impl ActiveConnection {
         event_loop.reregister(&self.socket, self.token, event_set, PollOpt::edge())
                   .expect("Could not reregister socket");
     }
+
+    fn close(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, token: Token) {
+        println!("Graceful Exit");
+        event_loop.deregister(&self.socket).expect("Could not dereregister socket");
+        let _ = self.socket.shutdown(Shutdown::Both);
+        let context = core.remove_context(&token).expect("Context not found");
+        let _ = core.remove_state(&context).expect("State not found");
+        let _ = self.routing_tx.send(Event::LostPeer(self.peer_id));
+    }
+
 }
 
 impl State for ActiveConnection {
@@ -163,10 +174,7 @@ impl State for ActiveConnection {
             panic!("connection error");
             // let _ = routing_tx.send(Error - Could not connect);
         } else if event_set.is_hup() {
-            let context = core.remove_context(&token).expect("Context not found");
-            let _ = core.remove_state(&context).expect("State not found");
-
-            println!("Graceful Exit");
+            self.close(core, event_loop, token);
         } else if event_set.is_readable() {
             self.read(core, event_loop, token);
         } else if event_set.is_writable() {

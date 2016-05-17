@@ -43,10 +43,8 @@ pub enum Event {
     // BootstrapFinished,
     /// Invoked as a result to the call of `Service::prepare_contact_info`.
     ConnectionInfoPrepared(ConnectionInfoResult),
-    /// Invoked when parsed incorrect data length during read
-    IncorrectDataLenPattern(PeerId),
-    // /// Invoked when a peer is lost.
-    // LostPeer(PeerId),
+    /// Invoked when a peer is lost or having read/write error.
+    LostPeer(PeerId),
     /// Invoked when a new connection get established.
     NewConnection(PeerId),
     /// Invoked when a new message is received.  Passes the message.
@@ -54,5 +52,5 @@ pub enum Event {
     // /// Invoked when a connection to a new peer is established.
     // NewPeer(io::Result<()>, PeerId),
     /// Invoked when trying to sending a too large data.
-    MessageTooLarge(PeerId, Vec<u8>),
+    WriteMsgSizeProhibitive(PeerId, Vec<u8>),
 }
