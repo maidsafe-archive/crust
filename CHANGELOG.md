@@ -1,5 +1,8 @@
 # CRUST - Change Log
 
+## [0.13.2]
+- Tweak the algorithm for dropping messages when the bandwitdh is insufficient.
+
 ## [0.13.1]
 - Ensure dropped duplicate connections dont have messages in transit
 
