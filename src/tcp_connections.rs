@@ -23,7 +23,6 @@ use std::collections::{BTreeMap, VecDeque};
 use std::io;
 use std::thread;
 use std::sync::mpsc::{self, TryRecvError, Sender};
-use std::io::Write;
 use std::time::{Duration, Instant};
 
 use event::WriteEvent;
@@ -47,6 +46,7 @@ pub fn connect_tcp(addr: SocketAddr,
 // Almost a straight copy of https://github.com/TyOverby/wire/blob/master/src/tcp.rs
 /// Upgrades a TcpStream to a Sender-Receiver pair that you can use to send and
 /// receive objects automatically.
+#[allow(unused)] // set_nodelay has been added to the standard library in nightly.
 pub fn upgrade_tcp(stream: TcpStream,
                    heartbeat_period: Duration,
                    inactivity_timeout: Duration)
