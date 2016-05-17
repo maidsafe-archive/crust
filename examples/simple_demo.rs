@@ -44,19 +44,29 @@ use std::time::Duration;
 use crust::{CrustEventSender, Event, Service};
 use maidsafe_utilities::event_sender::MaidSafeEventCategory;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
+use rand::Rng;
 
 fn spawn_test_server() {
     let ls = TcpListener::bind("127.0.0.1:33333").expect("Could not bind listener.");
     let (mut strm, _) = ls.accept().expect("Error in accepting");
     loop {
-        let mut buf = [0; 10];
+        let mut buf = [0; 14];
         if strm.read_exact(&mut buf).is_err() {
             // Graceful exit in this case
             break;
         }
         println!("Test peer received {:?}", buf);
-        strm.write_all(&mut buf).expect("Error in writing");
+        let mut reply : Vec<u8> = vec![0x04, 0x00, 0x00, 0x00,
+                                       0x11, 0x22, 0x33, 0x44,
+                                       0x04, 0x00, 0x00, 0x00,
+                                       0xAA, 0xBB, 0xCC, 0xDD];
+        strm.write_all(&mut reply).expect("Error in writing");
     }
+}
+
+/// utility to create random vec u8 of a given size
+pub fn generate_random_vec_u8(size: usize) -> Vec<u8> {
+    rand::thread_rng().gen_iter().take(size).collect()
 }
 
 fn main() {
@@ -78,25 +88,19 @@ fn main() {
     println!("Connecting ...");
     service.connect(SocketAddr::from_str("127.0.0.1:33333").expect("Require proper address"));
 
+    let mut received_reply = 0;
     for it in crust_rx.iter() {
         match it {
             Event::NewConnection(peer_id) => {
                 println!("Routing received new connection with peer id {}", peer_id);
-                service.send(peer_id,
-                             vec![rand::random(),
-                                  rand::random(),
-                                  rand::random(),
-                                  rand::random(),
-                                  rand::random(),
-                                  rand::random(),
-                                  rand::random(),
-                                  rand::random(),
-                                  rand::random(),
-                                  rand::random()]);
+                service.send(peer_id, generate_random_vec_u8(10));
             }
             Event::NewMessage(peer_id, msg) => {
                 println!("Routing received from peer id {}: {:?}", peer_id, msg);
-                break;
+                received_reply += 1;
+                if received_reply == 2 {
+                    break;
+                }
             }
             _ => {
                 println!("Unexpected event notification");
