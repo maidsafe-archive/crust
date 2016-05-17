@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["UserAgent","`User-Agent` header, defined in RFC7231"]]});

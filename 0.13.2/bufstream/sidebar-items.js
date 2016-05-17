@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["BufStream","Wraps a Stream and buffers input and output to and from it."],["IntoInnerError","An error returned by `into_inner` which combines an error that happened while writing out the buffer, and the buffered writer object which may be used to recover from the condition."]]});

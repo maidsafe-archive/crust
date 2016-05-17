@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["ContentRangeSpec","Content-Range, described in RFC7233"]],"struct":[["ContentRange","`Content-Range` header, defined in RFC7233"]]});

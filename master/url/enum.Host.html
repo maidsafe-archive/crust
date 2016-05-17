@@ -46,16 +46,15 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-48' class='srclink' href='../src/url/host.rs.html#19-30' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-52' class='srclink' href='../src/url/host.rs.html#21-30' title='goto source code'>[src]</a></span></h1>
 <pre class='rust enum'>pub enum Host {
     Domain(<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>),
-    Ipv6(<a class='struct' href='../url/struct.Ipv6Address.html' title='url::Ipv6Address'>Ipv6Address</a>),
+    Ipv4(<a class='struct' href='https://doc.rust-lang.org/nightly/std/net/ip/struct.Ipv4Addr.html' title='std::net::ip::Ipv4Addr'>Ipv4Addr</a>),
+    Ipv6(<a class='struct' href='https://doc.rust-lang.org/nightly/std/net/ip/struct.Ipv6Addr.html' title='std::net::ip::Ipv6Addr'>Ipv6Addr</a>),
 }</pre><div class='docblock'><p>The host name of an URL.</p>
 </div><h2 class='variants'>Variants</h2>
-<table class='variants_table'><tr><td id='variant.Domain'><code>Domain</code></td><td><div class='docblock'><p>A (DNS) domain name or an IPv4 address.</p>
-
-<p>FIXME: IPv4 probably should be a separate variant.
-See <a href="https://www.w3.org/Bugs/Public/show_bug.cgi?id=26431">https://www.w3.org/Bugs/Public/show_bug.cgi?id=26431</a></p>
+<table class='variants_table'><tr><td id='variant.Domain'><code>Domain</code></td><td><div class='docblock'><p>A (DNS) domain name.</p>
+</div></td><td></td></tr><tr><td id='variant.Ipv4'><code>Ipv4</code></td><td><div class='docblock'><p>A IPv4 address, represented by four sequences of up to three ASCII digits.</p>
 </div></td><td></td></tr><tr><td id='variant.Ipv6'><code>Ipv6</code></td><td><div class='docblock'><p>An IPv6 address, represented inside <code>[...]</code> square brackets
 so that <code>:</code> colon characters in the address are not ambiguous
 with the port number delimiter.</p>
@@ -64,13 +63,11 @@ with the port number delimiter.</p>
 
 <p>Returns <code>Err</code> for an empty host, an invalid IPv6 address,
 or a or invalid non-ASCII domain.</p>
-
-<p>FIXME: Add IDNA support for non-ASCII domains.</p>
 </div><h4 id='method.serialize' class='method'><code>fn <a href='#method.serialize' class='fnname'>serialize</a>(&amp;self) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a></code></h4>
 <div class='docblock'><p>Serialize the host as a string.</p>
 
 <p>A domain a returned as-is, an IPv6 address between [] square brackets.</p>
-</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html' title='core::fmt::Display'>Display</a> for <a class='enum' href='../url/enum.Host.html' title='url::Host'>Host</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html#method.fmt' class='fnname'>fmt</a>(&amp;self, formatter: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html' title='core::fmt::Display'>Display</a> for <a class='enum' href='../url/enum.Host.html' title='url::Host'>Host</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html#method.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
 </div><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.Ord.html' title='core::cmp::Ord'>Ord</a> for <a class='enum' href='../url/enum.Host.html' title='url::Host'>Host</a></code></h3><div class='impl-items'><h4 id='method.cmp' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.Ord.html#method.cmp' class='fnname'>cmp</a>(&amp;self, __arg_0: &amp;<a class='enum' href='../url/enum.Host.html' title='url::Host'>Host</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/cmp/enum.Ordering.html' title='core::cmp::Ordering'>Ordering</a></code></h4>
 </div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialOrd.html' title='core::cmp::PartialOrd'>PartialOrd</a> for <a class='enum' href='../url/enum.Host.html' title='url::Host'>Host</a></code></h3><div class='impl-items'><h4 id='method.partial_cmp' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialOrd.html#method.partial_cmp' class='fnname'>partial_cmp</a>(&amp;self, __arg_0: &amp;<a class='enum' href='../url/enum.Host.html' title='url::Host'>Host</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/core/cmp/enum.Ordering.html' title='core::cmp::Ordering'>Ordering</a>&gt;</code></h4>
 <h4 id='method.lt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialOrd.html#method.lt' class='fnname'>lt</a>(&amp;self, __arg_0: &amp;<a class='enum' href='../url/enum.Host.html' title='url::Host'>Host</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
