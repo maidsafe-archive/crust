@@ -70,6 +70,9 @@ mod static_contact_info;
 /// Crust Observers will be informed of crust events on this
 pub type CrustEventSender = ::maidsafe_utilities::event_sender::MaidSafeObserver<Event>;
 
+/// Allowed max data_len for read/write is 2MB
+pub const MAX_DATA_LEN: u32 = 2 * 1024 * 1024;
+
 pub use event::Event;
 pub use error::Error;
 pub use peer_id::PeerId;

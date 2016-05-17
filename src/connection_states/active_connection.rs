@@ -104,6 +104,10 @@ impl ActiveConnection {
                     .read_u32::<LittleEndian>().expect("Failed in parsing data_len.");
             self.read_buf = self.read_buf.split_off(U32_BYTE_LENGTH);
         }
+        if self.read_len > ::MAX_DATA_LEN {
+            let _ = self.routing_tx.send(Event::IncorrectDataLenPattern(self.peer_id));
+            return false;
+        }
         // TODO: if data_len has been incorrectly parsed, the execution hangs.
         //       A time_out may need to be introduced to prevent it.
         if self.read_len > 0 && self.read_buf.len() as u32 >= self.read_len {
