@@ -98,12 +98,12 @@ fn main() {
             Event::NewMessage(peer_id, msg) => {
                 println!("Routing received from peer id {}: {:?}", peer_id, msg);
             }
-            Event::MessageTooLarge(peer_id, data) => {
-                println!("Routing received MessageTooLarge for data len {}", data.len());
+            Event::WriteMsgSizeProhibitive(peer_id, data) => {
+                println!("Routing received WriteMsgSizeProhibitive for data len {}", data.len());
                 service.send(peer_id, generate_random_vec_u8(10));
             }
-            Event::IncorrectDataLenPattern(peer_id) => {
-                println!("Parsed incorrect data_len during read, shut down connection {}", peer_id);
+            Event::LostPeer(peer_id) => {
+                println!("Lost Peer {}", peer_id);
                 break;
             }
             _ => {
