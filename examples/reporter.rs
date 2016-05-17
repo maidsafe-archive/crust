@@ -57,7 +57,7 @@ use std::fs::File;
 use std::io::Write;
 use std::time::{SystemTime, Instant, Duration};
 
-use rustc_serialize::{json, Decodable, Decoder, Encodable, Encoder};
+use rustc_serialize::{json, Encodable, Encoder};
 use docopt::Docopt;
 use maidsafe_utilities::event_sender::{MaidSafeEventCategory, MaidSafeObserver};
 use rand::{thread_rng, Rng};
@@ -121,8 +121,8 @@ fn main() {
     unwrap_result!(maidsafe_utilities::log::init(true));
 
     let args: Args = Docopt::new(USAGE)
-                         .and_then(|d| d.decode())
-                         .unwrap_or_else(|e| e.exit());
+        .and_then(|d| d.decode())
+        .unwrap_or_else(|e| e.exit());
 
     let file_handler = unwrap_result!(FileHandler::open(&args.arg_config));
     let config: Config = unwrap_result!(file_handler.read_file());
@@ -135,8 +135,8 @@ fn main() {
         report.update(run(&config));
         debug!("Service stopped ({} of {})", i + 1, config.service_runs);
 
-        thread::sleep(Duration::from_millis(thread_rng().gen_range(
-            0, config.max_wait_before_restart_service_secs * 1000)));
+        thread::sleep(Duration::from_millis(thread_rng()
+            .gen_range(0, config.max_wait_before_restart_service_secs * 1000)));
     }
 
     let mut file = unwrap_result!(File::open(&config.output_report_path));
@@ -164,15 +164,10 @@ fn run(config: &Config) -> Report {
 
     let peers = Arc::new(Mutex::new(HashSet::new()));
 
-    let event_join_handle = handle_service_events(category_rx,
-                                                  event_rx,
-                                                  message_tx.clone(),
-                                                  peers.clone());
-    let message_join_handle = handle_messages(&config,
-                                              service,
-                                              message_rx,
-                                              connect_tx,
-                                              peers.clone());
+    let event_join_handle =
+        handle_service_events(category_rx, event_rx, message_tx.clone(), peers.clone());
+    let message_join_handle =
+        handle_messages(&config, service, message_rx, connect_tx, peers.clone());
 
     // Wait until we connect to someone
     let _ = recv_with_timeout(connect_rx, Duration::from_millis(WAIT_FOR_CONNECT_TIMEOUT));
