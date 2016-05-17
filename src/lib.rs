@@ -52,6 +52,8 @@ extern crate nat_traversal;
 extern crate rustc_serialize;
 #[macro_use]
 extern crate maidsafe_utilities;
+#[macro_use]
+extern crate log;
 
 // Needed because the crate is only used for macros
 #[allow(unused_extern_crates)]
@@ -67,6 +69,7 @@ mod service;
 mod service_discovery;
 mod connection_states;
 mod static_contact_info;
+pub mod nat;
 
 /// Crust Observers will be informed of crust events on this
 pub type CrustEventSender = ::maidsafe_utilities::event_sender::MaidSafeObserver<Event>;
