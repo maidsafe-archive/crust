@@ -156,6 +156,10 @@ impl Service {
 
     /// sending data to a peer(according to it's u64 peer_id)
     pub fn send(&mut self, peer_id: PeerId, data: Vec<u8>) {
+        if data.len() > ::MAX_DATA_LEN as usize {
+            let _ = self.event_tx.send(Event::MessageTooLarge(peer_id, data));
+            return;
+        }
         let context = self.connection_map.lock().unwrap().get(&peer_id).expect("Context not found")
                                                                        .clone();
         let mut data = Some(data);

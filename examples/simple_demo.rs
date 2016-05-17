@@ -41,7 +41,7 @@ use std::str::FromStr;
 use std::thread;
 use std::time::Duration;
 
-use crust::{CrustEventSender, Event, Service};
+use crust::{CrustEventSender, Event, MAX_DATA_LEN, Service};
 use maidsafe_utilities::event_sender::MaidSafeEventCategory;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 use rand::Rng;
@@ -59,7 +59,8 @@ fn spawn_test_server() {
         let mut reply : Vec<u8> = vec![0x04, 0x00, 0x00, 0x00,
                                        0x11, 0x22, 0x33, 0x44,
                                        0x04, 0x00, 0x00, 0x00,
-                                       0xAA, 0xBB, 0xCC, 0xDD];
+                                       0xAA, 0xBB, 0xCC, 0xDD,
+                                       0x01, 0x00, 0x20, 0x00];
         strm.write_all(&mut reply).expect("Error in writing");
     }
 }
@@ -88,19 +89,22 @@ fn main() {
     println!("Connecting ...");
     service.connect(SocketAddr::from_str("127.0.0.1:33333").expect("Require proper address"));
 
-    let mut received_reply = 0;
     for it in crust_rx.iter() {
         match it {
             Event::NewConnection(peer_id) => {
                 println!("Routing received new connection with peer id {}", peer_id);
-                service.send(peer_id, generate_random_vec_u8(10));
+                service.send(peer_id, generate_random_vec_u8(MAX_DATA_LEN as usize + 1));
             }
             Event::NewMessage(peer_id, msg) => {
                 println!("Routing received from peer id {}: {:?}", peer_id, msg);
-                received_reply += 1;
-                if received_reply == 2 {
-                    break;
-                }
+            }
+            Event::MessageTooLarge(peer_id, data) => {
+                println!("Routing received MessageTooLarge for data len {}", data.len());
+                service.send(peer_id, generate_random_vec_u8(10));
+            }
+            Event::IncorrectDataLenPattern(peer_id) => {
+                println!("Parsed incorrect data_len during read, shut down connection {}", peer_id);
+                break;
             }
             _ => {
                 println!("Unexpected event notification");
