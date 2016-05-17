@@ -73,6 +73,7 @@ mod service;
 mod service_discovery;
 mod socket;
 mod static_contact_info;
+pub mod nat;
 
 #[cfg(test)]
 mod tests;

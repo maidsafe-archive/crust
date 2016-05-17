@@ -22,6 +22,7 @@ rand = "~0.3.14"
 rustc-serialize = "~0.3.19"
 sodiumoxide = "~0.0.10"
 socket_addr = "~0.1.0"
+log = "~0.3.6"
 
 [dependencies.clippy]
 optional = true
