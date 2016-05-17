@@ -96,20 +96,26 @@ fn upgrade_writer(mut stream: TcpStream, heartbeat_period: Duration) -> Sender<W
                     Err(TryRecvError::Empty) => break,
                 }
             }
-            // Empty all queues except number 255, with a message older than `MAX_MSG_AGE_SECS`.
-            msgs.iter_mut().foreach(|(priority, queue)| {
-                if let Some(&(_, ref timestamp)) = queue.front() {
-                    if *priority == 0 || timestamp.elapsed().as_secs() <= MAX_MSG_AGE_SECS {
-                        return; // The first message in the queue has not expired or priority is 0.
-                    }
-                } else {
-                    return; // The queue is empty.
-                }
-                debug!("Insufficient upstream bandwidth. Dropping {} messages with priority {}.",
-                       queue.len(),
-                       priority);
-                queue.clear();
-            });
+            let mut dropped_priority = 0;
+            let mut dropped_count = 0;
+            // Empty all queues except number 0, with a message older than `MAX_MSG_AGE_SECS`.
+            msgs.iter_mut()
+                .skip_while(|&(&priority, ref queue)| {
+                    dropped_priority = priority;
+                    priority == 0 || // Don't drop messages with priority 0.
+                    queue.front().map_or(true, |&(_, ref timestamp)| {
+                        timestamp.elapsed().as_secs() <= MAX_MSG_AGE_SECS
+                    })
+                })
+                .foreach(|(_, queue)| {
+                    dropped_count += queue.len();
+                    queue.clear();
+                });
+            if dropped_count > 0 {
+                debug!("Insufficient upstream bandwidth. Dropped {} messages with priority >= {}.",
+                       dropped_count,
+                       dropped_priority);
+            }
             // Send the highest-priority message.
             match msgs.iter_mut().filter_map(|(_, deque)| deque.pop_front()).next() {
                 Some((data, _)) => {
@@ -179,9 +185,8 @@ mod test {
         let port = unwrap_result!(listener.local_addr()).port();
         let heartbeat_period = Duration::from_secs(HEARTBEAT_PERIOD_SECS);
         let inactivity_timeout = Duration::from_secs(INACTIVITY_TIMEOUT_SECS);
-        let (i, o) = unwrap_result!(connect_tcp(loopback(port),
-                                                heartbeat_period,
-                                                inactivity_timeout));
+        let (i, o) =
+            unwrap_result!(connect_tcp(loopback(port), heartbeat_period, inactivity_timeout));
 
         for x in 0..10 {
             let x = vec![x];
@@ -189,9 +194,8 @@ mod test {
         }
         let t = thread::spawn(move || {
             let connection = unwrap_result!(listener.accept()).0;
-            let (i, o) = unwrap_result!(upgrade_tcp(connection,
-                                                    heartbeat_period,
-                                                    inactivity_timeout));
+            let (i, o) =
+                unwrap_result!(upgrade_tcp(connection, heartbeat_period, inactivity_timeout));
             unwrap_result!(i.set_read_timeout(Some(Duration::new(5, 0))));
             let mut buf = Vec::new();
             let mut rx = Receiver::tcp(i);
@@ -255,7 +259,7 @@ mod test {
                     buf.push(i)
                 }
                 o.send(WriteEvent::Write(CrustMsg::Message(buf.clone()), Instant::now(), 0))
-                 .unwrap();
+                    .unwrap();
 
                 let mut rx = Receiver::tcp(i);
                 let msg = match unwrap_result!(rx.receive()) {
@@ -330,7 +334,7 @@ mod test {
         for i in 0..MSG_COUNT {
             let msg = unwrap_result!(serialise(&format!("MSG{}", i)));
             assert!(o1.send(WriteEvent::Write(CrustMsg::Message(msg.clone()), Instant::now(), 0))
-                      .is_ok());
+                .is_ok());
         }
 
         assert!(t.join().is_ok());
@@ -366,9 +370,8 @@ mod test {
         let _ = thread!("Client", move || {
             let listener = unwrap_result!(TcpListener::bind("127.0.0.1:55559"));
             let (server_strm, _peer_addr) = unwrap_result!(listener.accept());
-            let (strm, _writer) = unwrap_result!(upgrade_tcp(server_strm,
-                                                             heartbeat_period,
-                                                             inactivity_timeout));
+            let (strm, _writer) =
+                unwrap_result!(upgrade_tcp(server_strm, heartbeat_period, inactivity_timeout));
 
             let mut tcp_rx = Receiver::tcp(strm);
 
