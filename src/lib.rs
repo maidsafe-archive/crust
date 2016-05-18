@@ -64,7 +64,7 @@ extern crate quick_error;
 mod bootstrap_states;
 mod config_handler;
 mod connection_states;
-mod core;
+pub mod core;
 mod error;
 mod event;
 mod message;
