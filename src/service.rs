@@ -15,8 +15,6 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use maidsafe_utilities::thread::RaiiThreadJoiner;
-use mio::{EventLoop, NotifyError, Sender};
 use net2;
 use sodiumoxide::crypto::box_::{self, PublicKey, SecretKey};
 use std::collections::HashMap;
@@ -25,14 +23,18 @@ use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
 
 use core::{Core, CoreMessage, Context};
-use connection_states::EstablishConnection;
+use connection_states::{EstablishConnection, ServiceDiscovery};
 use event::Event;
 use error::Error;
+use maidsafe_utilities::thread::RaiiThreadJoiner;
+use mio::{EventLoop, NotifyError, Sender, Token};
 use nat_traversal::{MappedTcpSocket, MappingContext, PrivRendezvousInfo, PubRendezvousInfo,
                     gen_rendezvous_info};
 use peer_id::{self, PeerId};
 use state::State;
 use static_contact_info::StaticContactInfo;
+
+const SERVICE_DISCOVERY: Token = Token(0);
 
 /// The result of a `Service::prepare_contact_info` call.
 #[derive(Debug)]
@@ -89,6 +91,7 @@ pub struct Service {
     mapping_context: Arc<MappingContext>,
     mio_tx: Sender<CoreMessage>,
     our_keys: (PublicKey, SecretKey),
+    service_discovery_started: bool,
     static_contact_info: Arc<Mutex<StaticContactInfo>>,
     _thread_joiner: RaiiThreadJoiner,
 }
@@ -124,11 +127,25 @@ impl Service {
             mapping_context: Arc::new(mapping_context),
             mio_tx: mio_tx,
             our_keys: our_keys,
-            // sender: sender,
+            service_discovery_started: false,
             static_contact_info: static_contact_info,
             _thread_joiner: joiner,
         })
     }
+
+    /// Starts listening for beacon broadcasts.
+    pub fn start_service_discovery(&mut self) {
+        if self.service_discovery_started {
+            return;
+        }
+        let routing_tx = self.event_tx.clone();
+        let cloned_contact_info = self.static_contact_info.clone();
+        let _ = self.post(move |core, event_loop| {
+            ServiceDiscovery::new(core, event_loop, routing_tx, cloned_contact_info, 5483);
+        });
+        self.service_discovery_started = true;
+    }
+
 
     /// connect to peer
     pub fn connect(&mut self, peer_contact_info: SocketAddr) {
@@ -168,6 +185,56 @@ impl Service {
             state.borrow_mut().write(&mut core,
                                      &mut event_loop,
                                      data.take().expect("Logic Error"));
+        });
+    }
+
+    /// Enable listening and responding to peers searching for us. This will allow others finding us
+    /// by interrogating the network.
+    pub fn enable_listen_for_peers(&self) {
+        let _ = self.post(move |mut core, mut event_loop| {
+            let context = core.get_context(&SERVICE_DISCOVERY)
+                              .expect("ServiceDiscovery not found")
+                              .clone();
+            let state = core.get_state(&context).expect("State not found").clone();
+            let mut temp = state.borrow_mut();
+            let service_discovery = match temp.as_any().downcast_mut::<ServiceDiscovery>() {
+                Some(b) => b,
+                None => panic!("&ServiceDiscovery isn't a ServiceDiscovery!")
+            };
+            service_discovery.enable_listen_for_peers(&mut core, &mut event_loop);
+        });
+    }
+
+    /// Disable listening and responding to peers searching for us. This will disallow others from
+    /// finding us by interrogating the network.
+    pub fn disable_listen_for_peers(&self) {
+        let _ = self.post(move |mut core, mut event_loop| {
+            let context = core.get_context(&SERVICE_DISCOVERY)
+                              .expect("ServiceDiscovery not found")
+                              .clone();
+            let state = core.get_state(&context).expect("State not found").clone();
+            let mut temp = state.borrow_mut();
+            let service_discovery = match temp.as_any().downcast_mut::<ServiceDiscovery>() {
+                Some(b) => b,
+                None => panic!("&ServiceDiscovery isn't a ServiceDiscovery!")
+            };
+            service_discovery.disable_listen_for_peers(&mut core, &mut event_loop);
+        });
+    }
+
+    /// Interrogate the network to find peers.
+    pub fn seek_peers(&self) {
+        let _ = self.post(move |mut core, mut event_loop| {
+            let context = core.get_context(&SERVICE_DISCOVERY)
+                              .expect("ServiceDiscovery not found")
+                              .clone();
+            let state = core.get_state(&context).expect("State not found").clone();
+            let mut temp = state.borrow_mut();
+            let service_discovery = match temp.as_any().downcast_mut::<ServiceDiscovery>() {
+                Some(b) => b,
+                None => panic!("&ServiceDiscovery isn't a ServiceDiscovery!")
+            };
+            service_discovery.seek_peers(&mut core, &mut event_loop);
         });
     }
 
@@ -230,4 +297,45 @@ impl Drop for Service {
     fn drop(&mut self) {
         let _ = self.post(|_, el| el.shutdown());
     }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use event::Event;
+
+    use std::sync::mpsc;
+    use std::sync::mpsc::Receiver;
+
+    use maidsafe_utilities::event_sender::{MaidSafeObserver, MaidSafeEventCategory};
+
+    fn get_event_sender() -> (::CrustEventSender, Receiver<Event>) {
+        let (category_tx, _) = mpsc::channel();
+        let event_category = MaidSafeEventCategory::Crust;
+        let (event_tx, event_rx) = mpsc::channel();
+
+        (MaidSafeObserver::new(event_tx, event_category, category_tx), event_rx)
+    }
+
+    #[test]
+    fn bootstrap_connection_two_services() {
+        let (event_sender_0, _event_rx_0) = get_event_sender();
+        let (event_sender_1, event_rx_1) = get_event_sender();
+
+        let mut service_0 = unwrap_result!(Service::new(event_sender_0));
+        service_0.start_service_discovery();
+        service_0.enable_listen_for_peers();
+
+        let mut service_1 = unwrap_result!(Service::new(event_sender_1));
+        service_1.start_service_discovery();
+        service_1.seek_peers();
+
+        // service_1 should have received service_0's bootstrap connection by now
+        let contact_info_0 = match unwrap_result!(event_rx_1.recv()) {
+            Event::NewPeer(their_contact_info) => their_contact_info,
+            _ => panic!("1 Should have got a new connection from 0."),
+        };
+        println!("contact_info_0 {:?}", contact_info_0);
+    }
+
 }

@@ -15,6 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use std::any::Any;
 use std::cell::RefCell;
 use std::collections::{HashMap, VecDeque};
 use std::io::{Cursor, ErrorKind, Read, Write};
@@ -79,7 +80,7 @@ impl ActiveConnection {
         let _ = core.insert_state(context, Rc::new(RefCell::new(connection)));
     }
 
-    fn read(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, token: Token) {
+    fn read(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, _token: Token) {
         // the mio reading window is max at 64k (64 * 1024)
         let mut buf = vec![0; 65536];
         match self.socket.read(&mut buf) {
@@ -98,7 +99,7 @@ impl ActiveConnection {
                 }
             }
         }
-        self.close(core, event_loop, token);
+        self.terminate(core, event_loop);
     }
 
     fn read_data(&mut self) -> bool {
@@ -122,7 +123,7 @@ impl ActiveConnection {
         false
     }
 
-    fn write(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, token: Token) {
+    fn write(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, _token: Token) {
         if let Some(mut data) = self.write_queue.pop_front() {
             match self.socket.write(&data) {
                 Ok(bytes_txd) => {
@@ -135,7 +136,7 @@ impl ActiveConnection {
                     if e.kind() == ErrorKind::WouldBlock || e.kind() == ErrorKind::Interrupted {
                         self.write_queue.push_front(data);
                     } else {
-                        self.close(core, event_loop, token);
+                        self.terminate(core, event_loop);
                     }
                 }
             }
@@ -149,15 +150,6 @@ impl ActiveConnection {
 
         event_loop.reregister(&self.socket, self.token, event_set, PollOpt::edge())
                   .expect("Could not reregister socket");
-    }
-
-    fn close(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, token: Token) {
-        println!("Graceful Exit");
-        event_loop.deregister(&self.socket).expect("Could not dereregister socket");
-        let _ = self.socket.shutdown(Shutdown::Both);
-        let context = core.remove_context(&token).expect("Context not found");
-        let _ = core.remove_state(&context).expect("State not found");
-        let _ = self.routing_tx.send(Event::LostPeer(self.peer_id));
     }
 
 }
@@ -174,7 +166,7 @@ impl State for ActiveConnection {
             panic!("connection error");
             // let _ = routing_tx.send(Error - Could not connect);
         } else if event_set.is_hup() {
-            self.close(core, event_loop, token);
+            self.terminate(core, event_loop);
         } else if event_set.is_readable() {
             self.read(core, event_loop, token);
         } else if event_set.is_writable() {
@@ -189,5 +181,18 @@ impl State for ActiveConnection {
         self.write_queue.push_back(data);
         let token = self.token;
         self.write(core, event_loop, token);
+    }
+
+    fn terminate(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
+        println!("Graceful Exit");
+        event_loop.deregister(&self.socket).expect("Could not dereregister socket");
+        let _ = self.socket.shutdown(Shutdown::Both);
+        let context = core.remove_context(&self.token).expect("Context not found");
+        let _ = core.remove_state(&context).expect("State not found");
+        let _ = self.routing_tx.send(Event::LostPeer(self.peer_id));
+    }
+
+    fn as_any(&mut self) -> &mut Any {
+        self
     }
 }

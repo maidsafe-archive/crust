@@ -77,7 +77,7 @@ impl Core {
         self.states.remove(key)
     }
 
-    pub fn _get_context(&self, key: &Token) -> Option<&Context> {
+    pub fn get_context(&self, key: &Token) -> Option<&Context> {
         self.contexts.get(key)
     }
 
