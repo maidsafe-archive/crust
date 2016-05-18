@@ -60,7 +60,7 @@ extern crate log;
 #[macro_use]
 extern crate quick_error;
 
-mod core;
+pub mod core;
 mod error;
 mod event;
 mod state;
