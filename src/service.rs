@@ -15,8 +15,6 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use maidsafe_utilities::thread::RaiiThreadJoiner;
-use mio::{EventLoop, NotifyError, Sender};
 use net2;
 use sodiumoxide::crypto::box_::{self, PublicKey, SecretKey};
 use std::collections::HashMap;
@@ -25,14 +23,19 @@ use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
 
 use core::{Core, CoreMessage, Context};
-use connection_states::EstablishConnection;
+use connection_states::{EstablishConnection, ServiceDiscovery, ServiceDiscoveryConfig};
 use event::Event;
 use error::Error;
+use maidsafe_utilities::serialisation::serialise;
+use maidsafe_utilities::thread::RaiiThreadJoiner;
+use mio::{EventLoop, NotifyError, Sender, Token};
 use nat_traversal::{MappedTcpSocket, MappingContext, PrivRendezvousInfo, PubRendezvousInfo,
                     gen_rendezvous_info};
 use peer_id::{self, PeerId};
 use state::State;
 use static_contact_info::StaticContactInfo;
+
+const SERVICE_DISCOVERY: Token = Token(0);
 
 /// The result of a `Service::prepare_contact_info` call.
 #[derive(Debug)]
@@ -89,6 +92,7 @@ pub struct Service {
     mapping_context: Arc<MappingContext>,
     mio_tx: Sender<CoreMessage>,
     our_keys: (PublicKey, SecretKey),
+    service_discovery_started: bool,
     static_contact_info: Arc<Mutex<StaticContactInfo>>,
     _thread_joiner: RaiiThreadJoiner,
 }
@@ -124,11 +128,25 @@ impl Service {
             mapping_context: Arc::new(mapping_context),
             mio_tx: mio_tx,
             our_keys: our_keys,
-            // sender: sender,
+            service_discovery_started: false,
             static_contact_info: static_contact_info,
             _thread_joiner: joiner,
         })
     }
+
+    /// Starts listening for beacon broadcasts.
+    pub fn start_service_discovery(&mut self) {
+        if self.service_discovery_started {
+            return;
+        }
+        let routing_tx = self.event_tx.clone();
+        let cloned_contact_info = self.static_contact_info.clone();
+        let _ = self.post(move |core, event_loop| {
+            ServiceDiscovery::new(core, event_loop, routing_tx, cloned_contact_info, 0);
+        });
+        self.service_discovery_started = true;
+    }
+
 
     /// connect to peer
     pub fn connect(&mut self, peer_contact_info: SocketAddr) {
@@ -168,6 +186,47 @@ impl Service {
             state.borrow_mut().write(&mut core,
                                      &mut event_loop,
                                      data.take().expect("Logic Error"));
+        });
+    }
+
+    /// Enable listening and responding to peers searching for us. This will allow others finding us
+    /// by interrogating the network.
+    pub fn enable_listen_for_peers(&self) {
+        let _ = self.post(move |mut core, mut event_loop| {
+            let context = core.get_context(&SERVICE_DISCOVERY)
+                              .expect("ServiceDiscovery not found")
+                              .clone();
+            let state = core.get_state(&context).expect("State not found").clone();
+            let config = serialise(&ServiceDiscoveryConfig::EnableServiceDiscovery)
+                            .expect("Serialisation Error. TODO: Improve this");
+            state.borrow_mut().write(&mut core, &mut event_loop, config);
+        });
+    }
+
+    /// Disable listening and responding to peers searching for us. This will disallow others from
+    /// finding us by interrogating the network.
+    pub fn disable_listen_for_peers(&self) {
+        let _ = self.post(move |mut core, mut event_loop| {
+            let context = core.get_context(&SERVICE_DISCOVERY)
+                              .expect("ServiceDiscovery not found")
+                              .clone();
+            let state = core.get_state(&context).expect("State not found").clone();
+            let config = serialise(&ServiceDiscoveryConfig::DisableServiceDiscovery)
+                            .expect("Serialisation Error. TODO: Improve this");
+            state.borrow_mut().write(&mut core, &mut event_loop, config);
+        });
+    }
+
+    /// Interrogate the network to find peers.
+    pub fn seek_peers(&self) {
+        let _ = self.post(move |mut core, mut event_loop| {
+            let context = core.get_context(&SERVICE_DISCOVERY)
+                              .expect("ServiceDiscovery not found")
+                              .clone();
+            let state = core.get_state(&context).expect("State not found").clone();
+            let config = serialise(&ServiceDiscoveryConfig::SeekPeers)
+                            .expect("Serialisation Error. TODO: Improve this");
+            state.borrow_mut().write(&mut core, &mut event_loop, config);
         });
     }
 
