@@ -15,6 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use std::any::Any;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::net::SocketAddr;
@@ -88,5 +89,9 @@ impl State for EstablishConnection {
                                   self.routing_tx.clone(),
                                   self.token);
         }
+    }
+
+    fn as_any(&mut self) -> &mut Any {
+        self
     }
 }

@@ -15,6 +15,8 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use std::any::Any;
+
 use core::Core;
 use mio::{Handler, EventLoop, EventSet, Token};
 
@@ -42,4 +44,6 @@ pub trait State {
     }
 
     fn write(&mut self, _core: &mut Core, _event_loop: &mut EventLoop<Core>, _data: Vec<u8>) {}
+
+    fn as_any(&mut self) -> &mut Any;
 }
