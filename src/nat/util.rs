@@ -91,3 +91,27 @@ pub fn enable_so_reuseport(_sock: &net2::TcpBuilder) -> io::Result<()> {
     Ok(())
 }
 
+// TODO(canndrew): This function should be deprecated once this issue
+// (https://github.com/rust-lang-nursery/net2-rs/issues/26) is resolved.
+#[cfg(target_family = "unix")]
+#[allow(unsafe_code)]
+pub fn tcp_builder_local_addr(sock: &net2::TcpBuilder) -> io::Result<net::SocketAddr> {
+    use std::os::unix::io::{AsRawFd, FromRawFd, IntoRawFd};
+    let fd = sock.as_raw_fd();
+    let stream = unsafe { net::TcpStream::from_raw_fd(fd) };
+    let ret = stream.local_addr();
+    let _ = stream.into_raw_fd();
+    ret
+}
+
+#[cfg(target_family = "windows")]
+#[allow(unsafe_code)]
+pub fn tcp_builder_local_addr(sock: &net2::TcpBuilder) -> io::Result<net::SocketAddr> {
+    use std::os::windows::io::{AsRawSocket, FromRawSocket};
+    let fd = sock.as_raw_socket();
+    let stream = unsafe { net::TcpStream::from_raw_socket(fd) };
+    let ret = stream.local_addr();
+    mem::forget(stream); // TODO(canndrew): Is this completely safe?
+    ret
+}
+
