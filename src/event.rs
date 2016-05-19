@@ -17,6 +17,7 @@
 
 use peer_id::PeerId;
 use service::ConnectionInfoResult;
+use static_contact_info::StaticContactInfo;
 // use std::io;
 // use std::time::Instant;
 // use sender_receiver::CrustMsg;
@@ -49,8 +50,10 @@ pub enum Event {
     NewConnection(PeerId),
     /// Invoked when a new message is received.  Passes the message.
     NewMessage(PeerId, Vec<u8>),
-    // /// Invoked when a connection to a new peer is established.
-    // NewPeer(io::Result<()>, PeerId),
+    /// Invoked when discovered a new peer through service discovery
+    NewPeer(StaticContactInfo),
     /// Invoked when trying to sending a too large data.
     WriteMsgSizeProhibitive(PeerId, Vec<u8>),
+    /// Invoked when there is error on the service_discovery listening socket
+    ServiceDiscoveryTerminated,
 }

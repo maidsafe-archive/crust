@@ -16,6 +16,8 @@
 // relating to use of the SAFE Network Software.
 
 pub use self::establish_connection::EstablishConnection;
+pub use self::service_discovery::ServiceDiscovery;
 
-mod establish_connection;
 mod active_connection;
+mod establish_connection;
+mod service_discovery;
