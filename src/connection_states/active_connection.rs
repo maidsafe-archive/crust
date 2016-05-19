@@ -18,7 +18,7 @@
 use std::any::Any;
 use std::cell::RefCell;
 use std::collections::{HashMap, VecDeque};
-use std::io::{Cursor, ErrorKind, Read, Write};
+use std::io::{BufReader, Cursor, ErrorKind, Read, Write};
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
@@ -38,6 +38,7 @@ pub struct ActiveConnection {
     token: Token,
     _context: Context,
     read_buf: Vec<u8>,
+    reader: BufReader<TcpStream>,
     read_len: u32,
     socket: TcpStream,
     write_queue: VecDeque<Vec<u8>>,
@@ -62,6 +63,7 @@ impl ActiveConnection {
             token: token,
             _context: context.clone(),
             read_buf: Vec::new(),
+            reader: BufReader::new(socket.try_clone().expect("Could not clone TcpStream")),
             read_len: 0,
             socket: socket,
             write_queue: VecDeque::new(),
@@ -83,7 +85,7 @@ impl ActiveConnection {
     fn read(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, _token: Token) {
         // the mio reading window is max at 64k (64 * 1024)
         let mut buf = vec![0; 65536];
-        match self.socket.read(&mut buf) {
+        match self.reader.read(&mut buf) {
             Ok(bytes_rxd) => {
                 buf.resize(bytes_rxd, 0);
                 self.read_buf.append(&mut buf);
