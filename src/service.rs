@@ -32,8 +32,9 @@ use connection_states::EstablishConnection;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 use sodiumoxide::crypto::box_::{self, PublicKey, SecretKey};
 use nat::mapped_tcp_socket::MappingTcpSocket;
-use nat::rendezvous_info::{PubRendezvousInfo, PrivRendezvousInfo, gen_rendezvous_info};
 use nat::mapping_context::MappingContext;
+use nat::mapping_server::TcpMappingServer;
+use nat::rendezvous_info::{PubRendezvousInfo, PrivRendezvousInfo, gen_rendezvous_info};
 
 /// The result of a `Service::prepare_contact_info` call.
 #[derive(Debug)]
@@ -225,6 +226,32 @@ impl Service {
         }
     }
 
+    /// Starts accepting TCP connections.
+    pub fn start_listening_tcp(&mut self) {
+        let our_static_contact_info = self.static_contact_info.clone();
+        let event_tx = self.event_tx.clone();
+        let mapping_context = self.mapping_context.clone();
+        let _ = self.post(move |mut core, mut event_loop| {
+            match TcpMappingServer::new(core,
+                                        event_loop,
+                                        &mapping_context,
+                                        move |_, _, result|
+                {
+                    our_static_contact_info.lock()
+                                           .expect("Failed in locking static_contact_info")
+                                           .tcp_acceptors
+                                           .extend(result.expect("Failed getting addrs"));
+                },
+            ) {
+                Ok(()) => {}
+                Err(e) => {
+                    debug!("Error mapping tcp server: {}", e);
+                    let _ = event_tx.send(Event::FailedCreatingPublicTcpServer);
+                },
+            }
+        });
+    }
+
     /// Lookup a mapped udp socket based on result_token
     // TODO: immediate return in case of sender.send() returned with NotificationError
     pub fn prepare_connection_info(&mut self, result_token: u32) {
@@ -293,18 +320,70 @@ mod test {
     // use super::*;
     // use event::Event;
 
-    // use std::thread;
     // use std::sync::mpsc;
-    // use std::time::Duration;
     // use std::sync::mpsc::Receiver;
+    // use std::thread;
+    // use std::time::Duration;
 
     // use maidsafe_utilities::event_sender::{MaidSafeObserver, MaidSafeEventCategory};
+    // use rand::{self, Rng};
 
-    // fn _get_event_sender() -> (::CrustEventSender, Receiver<Event>) {
+    // /// utility to create random vec u8 of a given size
+    // fn generate_random_vec_u8(size: usize) -> Vec<u8> {
+    //     rand::thread_rng().gen_iter().take(size).collect()
+    // }
+
+    // fn get_event_sender() -> (::CrustEventSender, Receiver<Event>) {
     //     let (category_tx, _) = mpsc::channel();
     //     let event_category = MaidSafeEventCategory::Crust;
     //     let (event_tx, event_rx) = mpsc::channel();
-
     //     (MaidSafeObserver::new(event_tx, event_category, category_tx), event_rx)
     // }
+
+    // #[test]
+    // fn bootstrap_connection_two_services() {
+    //     let (event_sender_0, event_rx_0) = get_event_sender();
+    //     let (event_sender_1, event_rx_1) = get_event_sender();
+
+    //     let mut service_0 = unwrap_result!(Service::new(event_sender_0));
+    //     service_0.start_service_discovery();
+    //     thread::sleep(Duration::from_secs(1));
+    //     service_0.enable_listen_for_peers();
+    //     thread::sleep(Duration::from_secs(1));
+    //     service_0.start_listening_tcp();
+
+    //     let mut service_1 = unwrap_result!(Service::new(event_sender_1));
+    //     service_1.start_service_discovery();
+    //     thread::sleep(Duration::from_secs(1));
+    //     service_1.seek_peers();
+
+    //     // service_1 should have received service_0's bootstrap connection by now
+    //     let contact_info_0 = match unwrap_result!(event_rx_1.recv()) {
+    //         Event::NewPeer(their_contact_info) => their_contact_info,
+    //         _ => panic!("1 Should have got a new peer from 0."),
+    //     };
+    //     println!("contact_info_0 {:?}", contact_info_0);
+    //     service_1.connect(contact_info_0.tcp_acceptors[0].0);
+    //     let connection_id_1 = match unwrap_result!(event_rx_1.recv()) {
+    //         Event::NewConnection(peer_id) => peer_id,
+    //         _ => panic!("1 Should have got a new peer_id for the connection to 0."),
+    //     };
+    //     println!("connection_id_1 {:?}", connection_id_1);
+    //     let connection_id_0 = match unwrap_result!(event_rx_0.recv()) {
+    //         Event::NewConnection(peer_id) => peer_id,
+    //         _ => panic!("0 Should have got a new peer_id for the connection to 1."),
+    //     };
+    //     println!("connection_id_0 {:?}", connection_id_0);
+    //     let data = generate_random_vec_u8(::MAX_DATA_LEN as usize + 1);
+    //     service_1.send(connection_id_1, data.clone());
+    //     // service_0 should have received service_1's msg
+    //     match unwrap_result!(event_rx_0.recv()) {
+    //         Event::NewMessage(peer_id, msg) => {
+    //             assert!(connection_id_1 != peer_id);
+    //             assert!(data == msg);
+    //         }
+    //         _ => panic!("0 Should have received a msg from 1."),
+    //     }
+    // }
+
 }

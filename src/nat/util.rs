@@ -114,7 +114,7 @@ pub fn tcp_builder_local_addr(sock: &net2::TcpBuilder) -> io::Result<net::Socket
     let fd = sock.as_raw_socket();
     let stream = unsafe { net::TcpStream::from_raw_socket(fd) };
     let ret = stream.local_addr();
-    mem::forget(stream); // TODO(canndrew): Is this completely safe?
+    ::std::mem::forget(stream); // TODO(canndrew): Is this completely safe?
     ret
 }
 
