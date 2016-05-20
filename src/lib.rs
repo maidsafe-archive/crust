@@ -42,29 +42,30 @@
 #![cfg_attr(feature="clippy", deny(clippy, clippy_pedantic))]
 #![cfg_attr(feature="clippy", allow(use_debug))]
 
-extern crate byteorder;
-#[macro_use]
-extern crate maidsafe_utilities;
 extern crate mio;
-extern crate nat_traversal;
 extern crate net2;
 extern crate rand;
-extern crate rustc_serialize;
+extern crate byteorder;
 extern crate sodiumoxide;
 extern crate socket_addr;
+extern crate nat_traversal;
+extern crate rustc_serialize;
+#[macro_use]
+extern crate maidsafe_utilities;
 
 // Needed because the crate is only used for macros
 #[allow(unused_extern_crates)]
 #[macro_use]
 extern crate quick_error;
 
-mod connection_states;
 mod core;
 mod error;
 mod event;
+mod state;
 mod peer_id;
 mod service;
-mod state;
+mod service_discovery;
+mod connection_states;
 mod static_contact_info;
 
 /// Crust Observers will be informed of crust events on this
