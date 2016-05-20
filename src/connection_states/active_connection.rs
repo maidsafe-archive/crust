@@ -107,7 +107,8 @@ impl ActiveConnection {
     fn read_data(&mut self) -> bool {
         if self.read_len == 0 && self.read_buf.len() >= U32_BYTE_LENGTH {
             self.read_len = Cursor::new(&self.read_buf[..U32_BYTE_LENGTH])
-                    .read_u32::<LittleEndian>().expect("Failed in parsing data_len.");
+                                .read_u32::<LittleEndian>()
+                                .expect("Failed in parsing data_len.");
             if self.read_len > ::MAX_DATA_LEN {
                 return false;
             }
@@ -153,7 +154,6 @@ impl ActiveConnection {
         event_loop.reregister(&self.socket, self.token, event_set, PollOpt::edge())
                   .expect("Could not reregister socket");
     }
-
 }
 
 impl State for ActiveConnection {

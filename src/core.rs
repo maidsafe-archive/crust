@@ -24,7 +24,7 @@ use mio::{Token, EventLoop, Handler, EventSet};
 
 pub type CoreTimeout = ();
 
-#[derive(Hash, Eq, PartialEq, Ord, PartialOrd, Clone, Debug)]
+#[derive(Hash, Eq, PartialEq, Ord, PartialOrd, Clone, Debug, Copy)]
 pub struct Context(usize);
 
 pub struct Core {
@@ -77,7 +77,7 @@ impl Core {
         self.states.remove(key)
     }
 
-    pub fn get_context(&self, key: &Token) -> Option<&Context> {
+    pub fn _get_context(&self, key: &Token) -> Option<&Context> {
         self.contexts.get(key)
     }
 
@@ -113,7 +113,7 @@ impl Handler for Core {
 pub struct CoreMessage(Box<FnMut(&mut Core, &mut EventLoop<Core>) + Send>);
 
 impl CoreMessage {
-    pub fn new<F : FnOnce(&mut Core, &mut EventLoop<Core>) + Send + 'static>(f: F) -> Self {
+    pub fn new<F: FnOnce(&mut Core, &mut EventLoop<Core>) + Send + 'static>(f: F) -> Self {
         let mut f = Some(f);
         CoreMessage(Box::new(move |core: &mut Core, el: &mut EventLoop<Core>| {
             if let Some(f) = f.take() {

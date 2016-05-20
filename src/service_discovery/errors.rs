@@ -15,7 +15,31 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-pub use self::establish_connection::EstablishConnection;
+use std::io;
+use std::net::AddrParseError;
+use maidsafe_utilities::serialisation::SerialisationError;
 
-mod active_connection;
-mod establish_connection;
+#[derive(Debug)]
+pub enum ServiceDiscoveryError {
+    Io(io::Error),
+    AddrParse(AddrParseError),
+    Serialisation(SerialisationError),
+}
+
+impl From<io::Error> for ServiceDiscoveryError {
+    fn from(e: io::Error) -> Self {
+        ServiceDiscoveryError::Io(e)
+    }
+}
+
+impl From<AddrParseError> for ServiceDiscoveryError {
+    fn from(e: AddrParseError) -> Self {
+        ServiceDiscoveryError::AddrParse(e)
+    }
+}
+
+impl From<SerialisationError> for ServiceDiscoveryError {
+    fn from(e: SerialisationError) -> Self {
+        ServiceDiscoveryError::Serialisation(e)
+    }
+}
