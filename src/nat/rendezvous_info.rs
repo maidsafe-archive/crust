@@ -25,15 +25,16 @@ use rand;
 #[derive(Debug, Clone, PartialEq, Eq, RustcEncodable, RustcDecodable)]
 pub struct PubRendezvousInfo {
     /// A vector of all the mapped addresses that the peer can try connecting to.
-    endpoints: Vec<SocketAddr>,
+    pub endpoints: Vec<SocketAddr>,
     /// Used to identify the peer.
-    secret: [u8; 4],
+    pub secret: [u8; 4],
 }
 
 /// The local half of a `PubRendezvousInfo`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PrivRendezvousInfo {
-    secret: [u8; 4],
+    /// Used to identify the peer.
+    pub secret: [u8; 4],
 }
 
 /// Create a `(PrivRendezvousInfo, PubRendezvousInfo)` pair from a list of
