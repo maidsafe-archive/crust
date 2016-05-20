@@ -6,6 +6,7 @@ use std::collections::{HashMap, hash_map};
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::mem;
+use std::any::Any;
 
 use net2;
 use mio::tcp::TcpStream;
@@ -42,7 +43,7 @@ pub struct MappingTcpSocket<F> {
 }
 
 impl<F> MappingTcpSocket<F>
-        where F: FnOnce(&mut Core, &mut EventLoop<Core>, net2::TcpBuilder, Vec<socket_addr::SocketAddr>) + 'static
+        where F: FnOnce(&mut Core, &mut EventLoop<Core>, net2::TcpBuilder, Vec<socket_addr::SocketAddr>) + Any
 {
     /// Start mapping a tcp socket
     pub fn new(core: &mut Core,
@@ -242,7 +243,7 @@ impl<F> MappingTcpSocket<F>
 }
 
 impl<F> State for MappingTcpSocket<F>
-        where F: FnOnce(&mut Core, &mut EventLoop<Core>, net2::TcpBuilder, Vec<socket_addr::SocketAddr>) + 'static
+        where F: FnOnce(&mut Core, &mut EventLoop<Core>, net2::TcpBuilder, Vec<socket_addr::SocketAddr>) + Any
 {
     fn execute(&mut self,
                core: &mut Core,
@@ -266,6 +267,10 @@ impl<F> State for MappingTcpSocket<F>
                  event_loop: &mut EventLoop<Core>)
     {
         let _ = self.stop(core, event_loop);
+    }
+
+    fn as_any(&mut self) -> &mut Any {
+        self
     }
 }
 
