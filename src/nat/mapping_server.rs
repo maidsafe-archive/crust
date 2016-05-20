@@ -5,6 +5,7 @@ use std::collections::{HashMap, hash_map};
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::io;
+use std::any::Any;
 
 use mio::tcp::{TcpListener, TcpStream};
 use mio::{PollOpt, EventSet, Token, EventLoop};
@@ -45,7 +46,7 @@ impl TcpMappingServer {
                   event_loop: &mut EventLoop<Core>,
                   mapping_context: &MappingContext,
                   report_addresses: F) -> io::Result<()>
-        where F: FnOnce(&mut Core, &mut EventLoop<Core>, io::Result<Vec<socket_addr::SocketAddr>>) + 'static
+        where F: FnOnce(&mut Core, &mut EventLoop<Core>, io::Result<Vec<socket_addr::SocketAddr>>) + Any
     {
         let addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 0));
         MappingTcpSocket::new(core, event_loop, &addr, mapping_context, |core, event_loop, socket, addrs| {
@@ -228,6 +229,10 @@ impl State for TcpMappingServer {
         }
 
         let _ = core.remove_state(&self.context);
+    }
+
+    fn as_any(&mut self) -> &mut Any {
+        self
     }
 }
 
