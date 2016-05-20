@@ -52,5 +52,6 @@ pub trait State {
     /// TODO
     fn write(&mut self, _core: &mut Core, _event_loop: &mut EventLoop<Core>, _data: Vec<u8>) {}
 
+    /// Convert the `&mut State` to a `&mut Any`
     fn as_any(&mut self) -> &mut Any;
 }

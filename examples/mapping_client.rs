@@ -8,6 +8,7 @@ use std::net;
 use std::net::{ToSocketAddrs, SocketAddrV4, Ipv4Addr};
 use std::rc::Rc;
 use std::cell::RefCell;
+use std::any::Any;
 
 use crust::core::Core;
 use crust::state::State;
@@ -202,6 +203,10 @@ impl State for MessageReader {
                 println!("Error receiving message from peer: {}", e);
             },
         }
+    }
+
+    fn as_any(&mut self) -> &mut Any {
+        self
     }
 }
 
