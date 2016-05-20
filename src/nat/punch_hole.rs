@@ -5,6 +5,7 @@ use std::io::Cursor;
 use std::collections::{HashMap, hash_map};
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::any::Any;
 
 use rand;
 use net2;
@@ -48,7 +49,7 @@ struct ReadingStream {
 }
 
 impl<F> PunchHole<F>
-        where F: FnOnce(&mut Core, &mut EventLoop<Core>, Option<TcpStream>) + 'static
+        where F: FnOnce(&mut Core, &mut EventLoop<Core>, Option<TcpStream>) + Any
 {
     /// Start tcp hole punching
     pub fn start(core: &mut Core,
@@ -111,7 +112,7 @@ impl<F> PunchHole<F>
 }
 
 impl<F> State for PunchHole<F>
-        where F: FnOnce(&mut Core, &mut EventLoop<Core>, Option<TcpStream>) + 'static
+        where F: FnOnce(&mut Core, &mut EventLoop<Core>, Option<TcpStream>) + Any
 {
     fn execute(&mut self,
                core: &mut Core,
@@ -291,6 +292,10 @@ impl<F> State for PunchHole<F>
         let _ = core.remove_context(&self.listener_token);
 
         let _ = core.remove_state(&self.context);
+    }
+
+    fn as_any(&mut self) -> &mut Any {
+        self
     }
 }
 
