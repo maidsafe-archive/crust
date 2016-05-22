@@ -19,6 +19,7 @@ pub use self::errors::ServiceDiscoveryError;
 
 mod errors;
 
+use rand;
 use std::u16;
 use std::rc::Rc;
 use std::any::Any;
@@ -28,10 +29,10 @@ use std::cell::RefCell;
 use std::net::SocketAddr;
 use std::io::{Read, Write};
 use std::sync::{Arc, Mutex};
+use std::sync::mpsc::Sender;
 use std::collections::VecDeque;
 
 use state::State;
-use event::Event;
 use core::{Core, Context};
 use static_contact_info::StaticContactInfo;
 use maidsafe_utilities::serialisation::{serialise, deserialise};
@@ -41,26 +42,28 @@ use mio::{Token, EventLoop, EventSet, PollOpt};
 
 #[derive(RustcEncodable, RustcDecodable)]
 enum DiscoveryMsg {
-    Request,
+    Request {
+        guid: u64,
+    },
     Response(StaticContactInfo),
 }
 
 pub struct ServiceDiscovery {
     token: Token,
     socket: UdpSocket,
-    routing_tx: ::CrustEventSender,
     remote_addr: SocketAddr,
     listen: bool,
     read_buf: [u8; 1024],
     static_contact_info: Arc<Mutex<StaticContactInfo>>,
     seek_peers_req: Vec<u8>,
     reply_to: VecDeque<SocketAddr>,
+    observers: Vec<Sender<StaticContactInfo>>,
+    guid: u64,
 }
 
 impl ServiceDiscovery {
     pub fn new(core: &mut Core,
                event_loop: &mut EventLoop<Core>,
-               routing_tx: ::CrustEventSender,
                static_contact_info: Arc<Mutex<StaticContactInfo>>,
                service_discovery_handle: Arc<Mutex<Option<Context>>>,
                port: u16)
@@ -72,18 +75,20 @@ impl ServiceDiscovery {
         let udp_socket = try!(get_socket(port));
         try!(udp_socket.set_broadcast(true));
 
+        let guid = rand::random();
         let remote_addr = try!(SocketAddr::from_str(&format!("255.255.255.255:{}", port)));
 
         let service_discovery = ServiceDiscovery {
             token: token,
             socket: udp_socket,
-            routing_tx: routing_tx,
             remote_addr: remote_addr,
             listen: false,
             read_buf: [0; 1024],
             static_contact_info: static_contact_info,
-            seek_peers_req: try!(serialise(&DiscoveryMsg::Request)),
+            seek_peers_req: try!(serialise(&DiscoveryMsg::Request { guid: guid })),
             reply_to: VecDeque::new(),
+            observers: Vec::new(),
+            guid: guid,
         };
 
         try!(event_loop.register(&service_discovery.socket,
@@ -109,6 +114,11 @@ impl ServiceDiscovery {
         Ok(())
     }
 
+    /// Register service discovery observer
+    pub fn _register_observer(&mut self, obs: Sender<StaticContactInfo>) {
+        self.observers.push(obs);
+    }
+
     fn read(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
         let (bytes_rxd, peer_addr) = match self.socket.recv_from(&mut self.read_buf) {
             Ok(Some((bytes_rxd, peer_addr))) => (bytes_rxd, peer_addr),
@@ -130,14 +140,14 @@ impl ServiceDiscovery {
         };
 
         match msg {
-            DiscoveryMsg::Request => {
-                if self.listen {
+            DiscoveryMsg::Request { guid } => {
+                if self.listen && self.guid != guid {
                     self.reply_to.push_back(peer_addr);
                     self.write(core, event_loop)
                 }
             }
-            DiscoveryMsg::Response(content) => {
-                let _ = self.routing_tx.send(Event::NewPeer(content));
+            DiscoveryMsg::Response(peer_static_contact_info) => {
+                self.observers.retain(|obs| obs.send(peer_static_contact_info.clone()).is_ok());
             }
         }
     }
@@ -208,7 +218,6 @@ impl State for ServiceDiscovery {
         if let Some(context) = core.remove_context(&self.token) {
             let _ = core.remove_state(&context);
         }
-        let _ = self.routing_tx.send(Event::ServiceDiscoveryTerminated);
     }
 
     fn as_any(&mut self) -> &mut Any {
@@ -227,10 +236,6 @@ fn get_socket(mut port: u16) -> Result<UdpSocket, ServiceDiscoveryError> {
                 break;
             }
             Err(e) => {
-                // println!("ServiceDiscovery failed binding to port {} with error {:?} ; trying \
-                //           next port...",
-                //          port,
-                //          e);
                 res = Err(From::from(e));
             }
         }
@@ -241,4 +246,133 @@ fn get_socket(mut port: u16) -> Result<UdpSocket, ServiceDiscoveryError> {
     }
 
     res
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use std::net;
+    use socket_addr;
+    use std::thread;
+    use mio::EventLoop;
+    use std::sync::mpsc;
+    use std::str::FromStr;
+    use std::time::Duration;
+    use std::sync::{Arc, Mutex};
+    use core::{CoreMessage, Core};
+    use static_contact_info::StaticContactInfo;
+    use maidsafe_utilities::thread::RaiiThreadJoiner;
+
+    #[test]
+    fn service_discovery() {
+        // EventLoop-0
+        let mut el0 = EventLoop::new().expect("Could not spawn el0");
+        let tx0 = el0.channel();
+        let _raii_joiner_0 = RaiiThreadJoiner::new(thread!("EL0", move || {
+            el0.run(&mut Core::new()).expect("Could not run el0");
+        }));
+
+        let static_info_0 = Arc::new(Mutex::new(StaticContactInfo {
+            tcp_acceptors: vec![socket_addr::SocketAddr(net::SocketAddr::from_str("138.139.140.\
+                                                                                   150:54321")
+                                                            .expect("Could not parse address \
+                                                                     from string."))],
+            tcp_mapper_servers: Vec::new(),
+        }));
+        let static_info_0_clone = static_info_0.clone();
+
+        // ServiceDiscovery-0
+        {
+            let sd0 = Arc::new(Mutex::new(None));
+            let sd0_clone = sd0.clone();
+            tx0.send(CoreMessage::new(move |core, el| {
+                   ServiceDiscovery::new(core, el, static_info_0_clone, sd0_clone, 65530)
+                       .expect("Could not spawn ServiceDiscovery_0");
+               }))
+               .expect("Could not send to tx0");
+
+            // Start listening for peers
+            tx0.send(CoreMessage::new(move |core, _| {
+                   let state = core.get_state(sd0.lock()
+                                                 .unwrap()
+                                                 .as_ref()
+                                                 .expect("ServiceDiscovery_0 hasn't registered \
+                                                          a handle yet"))
+                                   .expect("State for SD0 hasn't been registered yet");
+                   let mut inner = state.borrow_mut();
+                   inner.as_any()
+                        .downcast_mut::<ServiceDiscovery>()
+                        .expect("Cast Failure")
+                        .set_listen(true);
+               }))
+               .expect("Could not send to tx0");
+        }
+
+        thread::sleep(Duration::from_millis(100));
+
+        // EventLoop-1
+        let mut el1 = EventLoop::new().expect("Could not spawn el1");
+        let tx1 = el1.channel();
+        let _raii_joiner_1 = RaiiThreadJoiner::new(thread!("EL1", move || {
+            el1.run(&mut Core::new()).expect("Could not run el1");
+        }));
+
+        let (tx, rx) = mpsc::channel();
+
+        // ServiceDiscovery-1
+        {
+            let static_info_1 = Arc::new(Mutex::new(StaticContactInfo {
+                tcp_acceptors: Vec::new(),
+                tcp_mapper_servers: Vec::new(),
+            }));
+            let sd1 = Arc::new(Mutex::new(None));
+            let sd1_clone = sd1.clone();
+            tx1.send(CoreMessage::new(move |core, el| {
+                   ServiceDiscovery::new(core, el, static_info_1, sd1_clone, 65530)
+                       .expect("Could not spawn ServiceDiscovery_1");
+               }))
+               .expect("Could not send to tx1");
+
+            // Register observer
+            let sd1_clone = sd1.clone();
+            tx1.send(CoreMessage::new(move |core, _| {
+                   let state = core.get_state(sd1_clone.lock()
+                                                       .unwrap()
+                                                       .as_ref()
+                                                       .expect("ServiceDiscovery_1 hasn't \
+                                                                registered a handle yet"))
+                                   .expect("State for SD1 hasn't been registered yet");
+                   let mut inner = state.borrow_mut();
+                   inner.as_any()
+                        .downcast_mut::<ServiceDiscovery>()
+                        .expect("Cast Failure")
+                        ._register_observer(tx);
+               }))
+               .expect("Could not send to tx1");
+
+            // Seek peers
+            tx1.send(CoreMessage::new(move |core, _| {
+                   let state = core.get_state(sd1.lock()
+                                                 .unwrap()
+                                                 .as_ref()
+                                                 .expect("ServiceDiscovery_1 hasn't registered \
+                                                          a handle yet"))
+                                   .expect("State for SD1 hasn't been registered yet");
+                   let mut inner = state.borrow_mut();
+                   inner.as_any()
+                        .downcast_mut::<ServiceDiscovery>()
+                        .expect("Cast Failure")
+                        .seek_peers()
+                        .expect("Failed setting seek_peers");
+               }))
+               .expect("Could not send to tx1");
+        }
+
+        let peer_static_info = rx.recv().unwrap();
+        assert_eq!(peer_static_info, *static_info_0.lock().unwrap());
+
+        tx0.send(CoreMessage::new(move |_, el| el.shutdown())).expect("Could not shutdown el0");
+        tx1.send(CoreMessage::new(move |_, el| el.shutdown())).expect("Could not shutdown el1");
+    }
 }

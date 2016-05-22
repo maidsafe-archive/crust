@@ -136,13 +136,11 @@ impl Service {
         if self.service_discovery.lock().unwrap().is_some() {
             return;
         }
-        let routing_tx = self.event_tx.clone();
         let service_discovery = self.service_discovery.clone();
         let cloned_contact_info = self.static_contact_info.clone();
         let _ = self.post(move |core, event_loop| {
             if let Err(e) = ServiceDiscovery::new(core,
                                                   event_loop,
-                                                  routing_tx,
                                                   cloned_contact_info,
                                                   service_discovery,
                                                   5483) {
@@ -295,44 +293,21 @@ impl Drop for Service {
 
 #[cfg(test)]
 mod test {
-    use super::*;
-    use event::Event;
+    // use super::*;
+    // use event::Event;
 
-    use std::thread;
-    use std::sync::mpsc;
-    use std::time::Duration;
-    use std::sync::mpsc::Receiver;
+    // use std::thread;
+    // use std::sync::mpsc;
+    // use std::time::Duration;
+    // use std::sync::mpsc::Receiver;
 
-    use maidsafe_utilities::event_sender::{MaidSafeObserver, MaidSafeEventCategory};
+    // use maidsafe_utilities::event_sender::{MaidSafeObserver, MaidSafeEventCategory};
 
-    fn get_event_sender() -> (::CrustEventSender, Receiver<Event>) {
-        let (category_tx, _) = mpsc::channel();
-        let event_category = MaidSafeEventCategory::Crust;
-        let (event_tx, event_rx) = mpsc::channel();
+    // fn _get_event_sender() -> (::CrustEventSender, Receiver<Event>) {
+    //     let (category_tx, _) = mpsc::channel();
+    //     let event_category = MaidSafeEventCategory::Crust;
+    //     let (event_tx, event_rx) = mpsc::channel();
 
-        (MaidSafeObserver::new(event_tx, event_category, category_tx), event_rx)
-    }
-
-    #[test]
-    fn bootstrap_connection_two_services() {
-        let (event_sender_0, _event_rx_0) = get_event_sender();
-        let (event_sender_1, event_rx_1) = get_event_sender();
-
-        let mut service_0 = unwrap_result!(Service::new(event_sender_0));
-        service_0.start_service_discovery();
-        thread::sleep(Duration::from_millis(100));
-        service_0.set_service_discovery_listen(true);
-
-        let mut service_1 = unwrap_result!(Service::new(event_sender_1));
-        service_1.start_service_discovery();
-        thread::sleep(Duration::from_millis(100));
-        service_1.seek_peers();
-
-        // service_1 should have received service_0's bootstrap connection by now
-        let contact_info_0 = match unwrap_result!(event_rx_1.recv()) {
-            Event::NewPeer(their_contact_info) => their_contact_info,
-            _ => panic!("1 Should have got a new connection from 0."),
-        };
-        println!("contact_info_0 {:?}", contact_info_0);
-    }
+    //     (MaidSafeObserver::new(event_tx, event_category, category_tx), event_rx)
+    // }
 }
