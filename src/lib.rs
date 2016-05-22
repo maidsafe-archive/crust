@@ -58,6 +58,7 @@ extern crate rustc_serialize;
 extern crate maidsafe_utilities;
 #[macro_use]
 extern crate log;
+extern crate get_if_addrs;
 
 // Needed because the crate is only used for macros
 #[allow(unused_extern_crates)]
