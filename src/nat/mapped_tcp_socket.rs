@@ -17,7 +17,7 @@ use maidsafe_utilities::serialisation::deserialise;
 
 use core::{Core, Context};
 use state::State;
-use nat::util::{new_reusably_bound_tcp_socket, tcp_builder_local_addr};
+use nat::util::{new_reusably_bound_tcp_socket, tcp_builder_local_addr, expand_unspecified_addr};
 use nat::mapping_context::MappingContext;
 
 const REQUEST_MAGIC_CONSTANT: [u8; 4] = ['E' as u8, 'C' as u8, 'H' as u8, 'O' as u8];
@@ -58,6 +58,8 @@ impl<F> MappingTcpSocket<F>
 
         let socket = try!(new_reusably_bound_tcp_socket(local_addr));
         let local_addr = try!(tcp_builder_local_addr(&socket));
+        let mapped_addrs = try!(expand_unspecified_addr(local_addr));
+        let mapped_addrs = mapped_addrs.into_iter().map(|sa| socket_addr::SocketAddr(sa)).collect();
         
         let external_servers: Vec<SocketAddr> = mapping_context.tcp_mapping_servers()
                                                                .cloned()
@@ -86,13 +88,13 @@ impl<F> MappingTcpSocket<F>
                 socket: Some(socket),
                 writing_sockets: writing_sockets,
                 reading_sockets: HashMap::new(),
-                mapped_addrs: vec![socket_addr::SocketAddr(local_addr)],
+                mapped_addrs: mapped_addrs,
                 finished: Some(finished),
                 context: context,
             })));
         }
         else {
-            finished(core, event_loop, socket, vec![socket_addr::SocketAddr(local_addr)]);
+            finished(core, event_loop, socket, mapped_addrs);
         }
         Ok(())
     }

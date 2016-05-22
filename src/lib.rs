@@ -54,6 +54,7 @@ extern crate rand;
 extern crate rustc_serialize;
 extern crate sodiumoxide;
 extern crate socket_addr;
+extern crate get_if_addrs;
 
 // Needed because the crate is only used for macros
 #[allow(unused_extern_crates)]

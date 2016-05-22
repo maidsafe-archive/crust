@@ -24,6 +24,7 @@ sodiumoxide = "~0.0.10"
 socket_addr = "~0.1.0"
 log = "~0.3.6"
 env_logger = "~0.3.3"
+get_if_addrs = "~0.4.0"
 
 [dependencies.clippy]
 optional = true
