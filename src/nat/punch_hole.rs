@@ -85,7 +85,7 @@ impl<F> PunchHole<F>
             try!(event_loop.register(&stream,
                                      token,
                                      EventSet::writable() | EventSet::error() | EventSet::hup(),
-                                     PollOpt::edge()));
+                                     PollOpt::level()));
             let _ = core.insert_context(token, context.clone());
             let writing_stream = WritingStream {
                 stream: stream,
@@ -130,10 +130,10 @@ impl<F> State for PunchHole<F>
                 },
                 Ok(None) => return,
                 Ok(Some((stream, _))) => {
-                    match event_loop.reregister(&stream,
-                                                token,
-                                                EventSet::writable() | EventSet::error() | EventSet::hup(),
-                                                PollOpt::level())
+                    match event_loop.register(&stream,
+                                              token,
+                                              EventSet::writable() | EventSet::error() | EventSet::hup(),
+                                              PollOpt::level())
                     {
                         Ok(()) => (),
                         Err(e) => debug!("Error reregistering stream: {}", e),
@@ -195,6 +195,33 @@ impl<F> State for PunchHole<F>
                         };
                         let _ = self.reading_streams.insert(token, reading_stream);
                     }
+                    else if n > 0 {
+                        match event_loop.reregister(&oe.get_mut().stream,
+                                                    token,
+                                                    EventSet::writable() | EventSet::error() | EventSet::hup(),
+                                                    PollOpt::level())
+                        {
+                            Ok(()) => (),
+                            Err(e) => {
+                                debug!("Error reregistering stream: {}", e);
+                                let _ = oe.remove();
+                                let _ = core.remove_context(&token);
+                                return;
+                            },
+                        };
+                    }
+                    else {
+                        let writing_stream = oe.remove();
+                        let _ = core.remove_context(&token);
+                        match event_loop.deregister(&writing_stream.stream)
+                        {
+                            Ok(()) => (),
+                            Err(e) => {
+                                debug!("Error deregistering stream: {}", e);
+                                return;
+                            },
+                        };
+                    }
                 },
             }
         }
@@ -247,6 +274,33 @@ impl<F> State for PunchHole<F>
                             self.best_stream = Some((new_score, reading_stream.stream));
                         }
                         done_read = true;
+                    }
+                    else if n > 0 {
+                        match event_loop.reregister(&oe.get_mut().stream,
+                                                    token,
+                                                    EventSet::readable() | EventSet::error() | EventSet::hup(),
+                                                    PollOpt::edge())
+                        {
+                            Ok(()) => (),
+                            Err(e) => {
+                                debug!("Error reregistering socket: {}", e);
+                                let _ = oe.remove();
+                                let _ = core.remove_context(&token);
+                                return;
+                            },
+                        };
+                    }
+                    else {
+                        let reading_stream = oe.remove();
+                        let _ = core.remove_context(&token);
+                        match event_loop.deregister(&reading_stream.stream)
+                        {
+                            Ok(()) => (),
+                            Err(e) => {
+                                debug!("Error deregistering stream: {}", e);
+                                return;
+                            },
+                        };
                     }
                 },
             }
