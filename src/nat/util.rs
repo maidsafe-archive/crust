@@ -108,13 +108,13 @@ pub fn tcp_builder_local_addr(sock: &net2::TcpBuilder) -> io::Result<SocketAddr>
 
 #[cfg(target_family = "windows")]
 #[allow(unsafe_code)]
-pub fn tcp_builder_local_addr(sock: &net2::TcpBuilder) -> io::Result<net::SocketAddr> {
+pub fn tcp_builder_local_addr(sock: &net2::TcpBuilder) -> io::Result<SocketAddr> {
     use std::mem;
     use std::os::windows::io::{AsRawSocket, FromRawSocket};
     let fd = sock.as_raw_socket();
     let stream = unsafe { net::TcpStream::from_raw_socket(fd) };
     let ret = stream.local_addr();
-    ::std::mem::forget(stream); // TODO(canndrew): Is this completely safe?
+    mem::forget(stream); // TODO(canndrew): Is this completely safe?
     ret
 }
 
