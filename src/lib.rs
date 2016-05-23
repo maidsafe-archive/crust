@@ -49,7 +49,6 @@ extern crate log;
 #[macro_use]
 extern crate maidsafe_utilities;
 extern crate mio;
-extern crate nat_traversal;
 extern crate net2;
 extern crate rand;
 extern crate rustc_serialize;

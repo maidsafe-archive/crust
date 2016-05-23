@@ -365,7 +365,7 @@ impl Service {
                                 result_token: result_token,
                                 result: Err(io::Error::new(io::ErrorKind::Other,
                                                               format!("Failed to register task \
-                                                                       with mio eventloop"))),
+                                                                       with mio eventloop: {}", e))),
                             }));
         }
     }
