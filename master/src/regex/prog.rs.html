@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/regex-0.1.69/src/prog.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/regex-0.1.71/src/prog.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>prog.rs.html -- source</title>
@@ -487,6 +487,16 @@
 <span id="444">444</span>
 <span id="445">445</span>
 <span id="446">446</span>
+<span id="447">447</span>
+<span id="448">448</span>
+<span id="449">449</span>
+<span id="450">450</span>
+<span id="451">451</span>
+<span id="452">452</span>
+<span id="453">453</span>
+<span id="454">454</span>
+<span id="455">455</span>
+<span id="456">456</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>collections</span>::<span class='ident'>HashMap</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>cmp</span>::<span class='ident'>Ordering</span>;
@@ -622,7 +632,7 @@
     <span class='doccomment'>/// Returns true if this program uses Byte instructions instead of</span>
     <span class='doccomment'>/// Char/Range instructions.</span>
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>uses_bytes</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
-        <span class='self'>self</span>.<span class='ident'>is_bytes</span> <span class='op'>||</span> <span class='self'>self</span>.<span class='ident'>is_dfa</span> <span class='op'>||</span> <span class='op'>!</span><span class='self'>self</span>.<span class='ident'>only_utf8</span>
+        <span class='self'>self</span>.<span class='ident'>is_bytes</span> <span class='op'>||</span> <span class='self'>self</span>.<span class='ident'>is_dfa</span>
     }
 
     <span class='doccomment'>/// Returns true if this program exclusively matches valid UTF-8 bytes.</span>
@@ -777,6 +787,16 @@
     <span class='doccomment'>/// used in conjunction with Split instructions to implement multi-byte</span>
     <span class='doccomment'>/// character classes.</span>
     <span class='ident'>Bytes</span>(<span class='ident'>InstBytes</span>),
+}
+
+<span class='kw'>impl</span> <span class='ident'>Inst</span> {
+    <span class='doccomment'>/// Returns true if and only if this is a match instruction.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>is_match</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
+        <span class='kw'>match</span> <span class='op'>*</span><span class='self'>self</span> {
+            <span class='ident'>Inst</span>::<span class='ident'>Match</span>(_) <span class='op'>=&gt;</span> <span class='boolval'>true</span>,
+            _ <span class='op'>=&gt;</span> <span class='boolval'>false</span>,
+        }
+    }
 }
 
 <span class='doccomment'>/// Representation of the Save instruction.</span>

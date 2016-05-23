@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/maidsafe_utilities-0.5.4/src/serialisation.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/maidsafe_utilities-0.6.0/src/serialisation.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>serialisation.rs.html -- source</title>
@@ -237,10 +237,6 @@
 <span id="194">194</span>
 <span id="195">195</span>
 <span id="196">196</span>
-<span id="197">197</span>
-<span id="198">198</span>
-<span id="199">199</span>
-<span id="200">200</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2015 MaidSafe.net limited.</span>
 <span class='comment'>//</span>
@@ -358,9 +354,7 @@
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>serialise_deserialise</span>() {
-        <span class='kw'>let</span> <span class='ident'>original_data</span> <span class='op'>=</span> (<span class='macro'>vec</span><span class='macro'>!</span>[<span class='number'>0u8</span>, <span class='number'>1</span>, <span class='number'>3</span>, <span class='number'>9</span>],
-                             <span class='macro'>vec</span><span class='macro'>!</span>[<span class='op'>-</span><span class='number'>1i64</span>, <span class='number'>888</span>, <span class='op'>-</span><span class='number'>8765</span>],
-                             <span class='string'>&quot;Some-String&quot;</span>.<span class='ident'>to_owned</span>());
+        <span class='kw'>let</span> <span class='ident'>original_data</span> <span class='op'>=</span> (<span class='macro'>vec</span><span class='macro'>!</span>[<span class='number'>0u8</span>, <span class='number'>1</span>, <span class='number'>3</span>, <span class='number'>9</span>], <span class='macro'>vec</span><span class='macro'>!</span>[<span class='op'>-</span><span class='number'>1i64</span>, <span class='number'>888</span>, <span class='op'>-</span><span class='number'>8765</span>], <span class='string'>&quot;Some-String&quot;</span>.<span class='ident'>to_owned</span>());
 
         <span class='kw'>let</span> <span class='ident'>serialised_data</span> <span class='op'>=</span> <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>serialise</span>(<span class='kw-2'>&amp;</span><span class='ident'>original_data</span>));
         <span class='kw'>let</span> <span class='ident'>deserialised_data</span>: (<span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span>, <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>i64</span><span class='op'>&gt;</span>, <span class='ident'>String</span>) <span class='op'>=</span>
@@ -370,9 +364,7 @@
 
     <span class='attribute'>#[<span class='ident'>test</span>]</span>
     <span class='kw'>fn</span> <span class='ident'>serialise_into_deserialise_from</span>() {
-        <span class='kw'>let</span> <span class='ident'>original_data</span> <span class='op'>=</span> (<span class='macro'>vec</span><span class='macro'>!</span>[<span class='number'>0u8</span>, <span class='number'>1</span>, <span class='number'>3</span>, <span class='number'>9</span>],
-                             <span class='macro'>vec</span><span class='macro'>!</span>[<span class='op'>-</span><span class='number'>1i64</span>, <span class='number'>888</span>, <span class='op'>-</span><span class='number'>8765</span>],
-                             <span class='string'>&quot;Some-String&quot;</span>.<span class='ident'>to_owned</span>());
+        <span class='kw'>let</span> <span class='ident'>original_data</span> <span class='op'>=</span> (<span class='macro'>vec</span><span class='macro'>!</span>[<span class='number'>0u8</span>, <span class='number'>1</span>, <span class='number'>3</span>, <span class='number'>9</span>], <span class='macro'>vec</span><span class='macro'>!</span>[<span class='op'>-</span><span class='number'>1i64</span>, <span class='number'>888</span>, <span class='op'>-</span><span class='number'>8765</span>], <span class='string'>&quot;Some-String&quot;</span>.<span class='ident'>to_owned</span>());
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>serialised_data</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[];
         <span class='macro'>unwrap_result</span><span class='macro'>!</span>(<span class='ident'>serialise_into</span>(<span class='kw-2'>&amp;</span><span class='ident'>original_data</span>, <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>serialised_data</span>));
 

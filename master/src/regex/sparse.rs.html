@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/regex-0.1.69/src/sparse.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/regex-0.1.71/src/sparse.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>sparse.rs.html -- source</title>
@@ -119,10 +119,6 @@
 <span id="76">76</span>
 <span id="77">77</span>
 <span id="78">78</span>
-<span id="79">79</span>
-<span id="80">80</span>
-<span id="81">81</span>
-<span id="82">82</span>
 </pre><pre class='rust '>
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>ops</span>::<span class='ident'>Deref</span>;
 <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>slice</span>;
@@ -137,10 +133,6 @@
 <span class='doccomment'>/// Note though that we don&#39;t actually use unitialized memory. We generally</span>
 <span class='doccomment'>/// reuse allocations, so the initial allocation cost is bareable. However,</span>
 <span class='doccomment'>/// its other properties listed above are extremely useful.</span>
-<span class='doccomment'>///</span>
-<span class='doccomment'>/// N.B. The type parameter is misleading. For the most part, this is only</span>
-<span class='doccomment'>/// meant to work on instruction pointers. We use a touch of generics to</span>
-<span class='doccomment'>/// support 32 bit instruction pointers.</span>
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Clone</span>, <span class='ident'>Debug</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>SparseSet</span> {
     <span class='doccomment'>/// Dense contains the instruction pointers in the order in which they</span>
@@ -176,16 +168,16 @@
         <span class='self'>self</span>.<span class='ident'>dense</span>.<span class='ident'>len</span>()
     }
 
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>add</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>ip</span>: <span class='ident'>usize</span>) {
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>insert</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>value</span>: <span class='ident'>usize</span>) {
         <span class='kw'>let</span> <span class='ident'>i</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>size</span>;
-        <span class='self'>self</span>.<span class='ident'>dense</span>[<span class='ident'>i</span>] <span class='op'>=</span> <span class='ident'>ip</span>;
-        <span class='self'>self</span>.<span class='ident'>sparse</span>[<span class='ident'>ip</span>] <span class='op'>=</span> <span class='ident'>i</span>;
+        <span class='self'>self</span>.<span class='ident'>dense</span>[<span class='ident'>i</span>] <span class='op'>=</span> <span class='ident'>value</span>;
+        <span class='self'>self</span>.<span class='ident'>sparse</span>[<span class='ident'>value</span>] <span class='op'>=</span> <span class='ident'>i</span>;
         <span class='self'>self</span>.<span class='ident'>size</span> <span class='op'>+=</span> <span class='number'>1</span>;
     }
 
-    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>contains_ip</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>ip</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
-        <span class='kw'>let</span> <span class='ident'>i</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>sparse</span>[<span class='ident'>ip</span>];
-        <span class='ident'>i</span> <span class='op'>&lt;</span> <span class='self'>self</span>.<span class='ident'>size</span> <span class='op'>&amp;&amp;</span> <span class='self'>self</span>.<span class='ident'>dense</span>[<span class='ident'>i</span>] <span class='op'>==</span> <span class='ident'>ip</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>contains</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>value</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
+        <span class='kw'>let</span> <span class='ident'>i</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>sparse</span>[<span class='ident'>value</span>];
+        <span class='ident'>i</span> <span class='op'>&lt;</span> <span class='self'>self</span>.<span class='ident'>size</span> <span class='op'>&amp;&amp;</span> <span class='self'>self</span>.<span class='ident'>dense</span>[<span class='ident'>i</span>] <span class='op'>==</span> <span class='ident'>value</span>
     }
 
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>clear</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) {

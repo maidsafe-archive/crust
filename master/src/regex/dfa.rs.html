@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="rustdoc">
-    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/regex-0.1.69/src/dfa.rs`.">
+    <meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-88ac128001ac3a9a/regex-0.1.71/src/dfa.rs`.">
     <meta name="keywords" content="rust, rustlang, rust-lang">
 
     <title>dfa.rs.html -- source</title>
@@ -1780,6 +1780,142 @@
 <span id="1737">1737</span>
 <span id="1738">1738</span>
 <span id="1739">1739</span>
+<span id="1740">1740</span>
+<span id="1741">1741</span>
+<span id="1742">1742</span>
+<span id="1743">1743</span>
+<span id="1744">1744</span>
+<span id="1745">1745</span>
+<span id="1746">1746</span>
+<span id="1747">1747</span>
+<span id="1748">1748</span>
+<span id="1749">1749</span>
+<span id="1750">1750</span>
+<span id="1751">1751</span>
+<span id="1752">1752</span>
+<span id="1753">1753</span>
+<span id="1754">1754</span>
+<span id="1755">1755</span>
+<span id="1756">1756</span>
+<span id="1757">1757</span>
+<span id="1758">1758</span>
+<span id="1759">1759</span>
+<span id="1760">1760</span>
+<span id="1761">1761</span>
+<span id="1762">1762</span>
+<span id="1763">1763</span>
+<span id="1764">1764</span>
+<span id="1765">1765</span>
+<span id="1766">1766</span>
+<span id="1767">1767</span>
+<span id="1768">1768</span>
+<span id="1769">1769</span>
+<span id="1770">1770</span>
+<span id="1771">1771</span>
+<span id="1772">1772</span>
+<span id="1773">1773</span>
+<span id="1774">1774</span>
+<span id="1775">1775</span>
+<span id="1776">1776</span>
+<span id="1777">1777</span>
+<span id="1778">1778</span>
+<span id="1779">1779</span>
+<span id="1780">1780</span>
+<span id="1781">1781</span>
+<span id="1782">1782</span>
+<span id="1783">1783</span>
+<span id="1784">1784</span>
+<span id="1785">1785</span>
+<span id="1786">1786</span>
+<span id="1787">1787</span>
+<span id="1788">1788</span>
+<span id="1789">1789</span>
+<span id="1790">1790</span>
+<span id="1791">1791</span>
+<span id="1792">1792</span>
+<span id="1793">1793</span>
+<span id="1794">1794</span>
+<span id="1795">1795</span>
+<span id="1796">1796</span>
+<span id="1797">1797</span>
+<span id="1798">1798</span>
+<span id="1799">1799</span>
+<span id="1800">1800</span>
+<span id="1801">1801</span>
+<span id="1802">1802</span>
+<span id="1803">1803</span>
+<span id="1804">1804</span>
+<span id="1805">1805</span>
+<span id="1806">1806</span>
+<span id="1807">1807</span>
+<span id="1808">1808</span>
+<span id="1809">1809</span>
+<span id="1810">1810</span>
+<span id="1811">1811</span>
+<span id="1812">1812</span>
+<span id="1813">1813</span>
+<span id="1814">1814</span>
+<span id="1815">1815</span>
+<span id="1816">1816</span>
+<span id="1817">1817</span>
+<span id="1818">1818</span>
+<span id="1819">1819</span>
+<span id="1820">1820</span>
+<span id="1821">1821</span>
+<span id="1822">1822</span>
+<span id="1823">1823</span>
+<span id="1824">1824</span>
+<span id="1825">1825</span>
+<span id="1826">1826</span>
+<span id="1827">1827</span>
+<span id="1828">1828</span>
+<span id="1829">1829</span>
+<span id="1830">1830</span>
+<span id="1831">1831</span>
+<span id="1832">1832</span>
+<span id="1833">1833</span>
+<span id="1834">1834</span>
+<span id="1835">1835</span>
+<span id="1836">1836</span>
+<span id="1837">1837</span>
+<span id="1838">1838</span>
+<span id="1839">1839</span>
+<span id="1840">1840</span>
+<span id="1841">1841</span>
+<span id="1842">1842</span>
+<span id="1843">1843</span>
+<span id="1844">1844</span>
+<span id="1845">1845</span>
+<span id="1846">1846</span>
+<span id="1847">1847</span>
+<span id="1848">1848</span>
+<span id="1849">1849</span>
+<span id="1850">1850</span>
+<span id="1851">1851</span>
+<span id="1852">1852</span>
+<span id="1853">1853</span>
+<span id="1854">1854</span>
+<span id="1855">1855</span>
+<span id="1856">1856</span>
+<span id="1857">1857</span>
+<span id="1858">1858</span>
+<span id="1859">1859</span>
+<span id="1860">1860</span>
+<span id="1861">1861</span>
+<span id="1862">1862</span>
+<span id="1863">1863</span>
+<span id="1864">1864</span>
+<span id="1865">1865</span>
+<span id="1866">1866</span>
+<span id="1867">1867</span>
+<span id="1868">1868</span>
+<span id="1869">1869</span>
+<span id="1870">1870</span>
+<span id="1871">1871</span>
+<span id="1872">1872</span>
+<span id="1873">1873</span>
+<span id="1874">1874</span>
+<span id="1875">1875</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2014-2016 The Rust Project Developers. See the COPYRIGHT</span>
 <span class='comment'>// file at the top-level directory of this distribution and at</span>
@@ -1849,9 +1985,12 @@ implementation.)
 <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>can_exec</span>(<span class='ident'>insts</span>: <span class='kw-2'>&amp;</span><span class='ident'>Program</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
     <span class='kw'>use</span> <span class='ident'>prog</span>::<span class='ident'>Inst</span>::<span class='op'>*</span>;
     <span class='comment'>// If for some reason we manage to allocate a regex program with more</span>
-    <span class='comment'>// than u32::MAX instructions, then we can&#39;t execute the DFA because we</span>
-    <span class='comment'>// use 32 bit instruction pointers for memory savings.</span>
-    <span class='kw'>if</span> <span class='ident'>insts</span>.<span class='ident'>len</span>() <span class='op'>&gt;</span> ::<span class='ident'>std</span>::<span class='ident'>u32</span>::<span class='ident'>MAX</span> <span class='kw'>as</span> <span class='ident'>usize</span> {
+    <span class='comment'>// than i32::MAX instructions, then we can&#39;t execute the DFA because we</span>
+    <span class='comment'>// use 32 bit instruction pointer deltas for memory savings.</span>
+    <span class='comment'>// If i32::MAX is the largest positive delta,</span>
+    <span class='comment'>// then -i32::MAX == i32::MIN + 1 is the largest negative delta,</span>
+    <span class='comment'>// and we are OK to use 32 bits.</span>
+    <span class='kw'>if</span> <span class='ident'>insts</span>.<span class='ident'>len</span>() <span class='op'>&gt;</span> ::<span class='ident'>std</span>::<span class='ident'>i32</span>::<span class='ident'>MAX</span> <span class='kw'>as</span> <span class='ident'>usize</span> {
         <span class='kw'>return</span> <span class='boolval'>false</span>;
     }
     <span class='kw'>for</span> <span class='ident'>inst</span> <span class='kw'>in</span> <span class='ident'>insts</span> {
@@ -1884,10 +2023,10 @@ implementation.)
     <span class='ident'>qnext</span>: <span class='ident'>SparseSet</span>,
 }
 
-<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Clone</span>, <span class='ident'>Debug</span>)]</span>
 <span class='doccomment'>/// CacheInner is logically just a part of Cache, but groups together fields</span>
 <span class='doccomment'>/// that aren&#39;t passed as function parameters throughout search. (This split</span>
 <span class='doccomment'>/// is mostly an artifact of the borrow checker. It is happily paid.)</span>
+<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Clone</span>, <span class='ident'>Debug</span>)]</span>
 <span class='kw'>struct</span> <span class='ident'>CacheInner</span> {
     <span class='doccomment'>/// A cache of pre-compiled DFA states, keyed by the set of NFA states</span>
     <span class='doccomment'>/// and the set of empty-width flags set at the byte in the input when the</span>
@@ -1897,7 +2036,7 @@ implementation.)
     <span class='doccomment'>/// things, we just pass indexes around manually. The performance impact of</span>
     <span class='doccomment'>/// this is probably an instruction or two in the inner loop. However, on</span>
     <span class='doccomment'>/// 64 bit, each StatePtr is half the size of a *State.</span>
-    <span class='ident'>compiled</span>: <span class='ident'>HashMap</span><span class='op'>&lt;</span><span class='ident'>StateKey</span>, <span class='ident'>StatePtr</span><span class='op'>&gt;</span>,
+    <span class='ident'>compiled</span>: <span class='ident'>HashMap</span><span class='op'>&lt;</span><span class='ident'>State</span>, <span class='ident'>StatePtr</span><span class='op'>&gt;</span>,
     <span class='doccomment'>/// The transition table.</span>
     <span class='doccomment'>///</span>
     <span class='doccomment'>/// The transition table is laid out in row-major order, where states are</span>
@@ -1994,7 +2133,7 @@ implementation.)
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Clone</span>, <span class='ident'>Debug</span>)]</span>
 <span class='kw'>pub</span> <span class='kw'>enum</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> {
     <span class='ident'>Match</span>(<span class='ident'>T</span>),
-    <span class='ident'>NoMatch</span>,
+    <span class='ident'>NoMatch</span>(<span class='ident'>usize</span>),
     <span class='ident'>Quit</span>,
 }
 
@@ -2003,7 +2142,28 @@ implementation.)
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>is_match</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
         <span class='kw'>match</span> <span class='op'>*</span><span class='self'>self</span> {
             <span class='prelude-ty'>Result</span>::<span class='ident'>Match</span>(_) <span class='op'>=&gt;</span> <span class='boolval'>true</span>,
-            <span class='prelude-ty'>Result</span>::<span class='ident'>NoMatch</span> <span class='op'>|</span> <span class='prelude-ty'>Result</span>::<span class='ident'>Quit</span> <span class='op'>=&gt;</span> <span class='boolval'>false</span>,
+            <span class='prelude-ty'>Result</span>::<span class='ident'>NoMatch</span>(_) <span class='op'>|</span> <span class='prelude-ty'>Result</span>::<span class='ident'>Quit</span> <span class='op'>=&gt;</span> <span class='boolval'>false</span>,
+        }
+    }
+
+    <span class='doccomment'>/// Maps the given function onto T and returns the result.</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// If this isn&#39;t a match, then this is a no-op.</span>
+    <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>map</span><span class='op'>&lt;</span><span class='ident'>U</span>, <span class='ident'>F</span>: <span class='ident'>FnMut</span>(<span class='ident'>T</span>) <span class='op'>-&gt;</span> <span class='ident'>U</span><span class='op'>&gt;</span>(<span class='self'>self</span>, <span class='kw-2'>mut</span> <span class='ident'>f</span>: <span class='ident'>F</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>U</span><span class='op'>&gt;</span> {
+        <span class='kw'>match</span> <span class='self'>self</span> {
+            <span class='prelude-ty'>Result</span>::<span class='ident'>Match</span>(<span class='ident'>t</span>) <span class='op'>=&gt;</span> <span class='prelude-ty'>Result</span>::<span class='ident'>Match</span>(<span class='ident'>f</span>(<span class='ident'>t</span>)),
+            <span class='prelude-ty'>Result</span>::<span class='ident'>NoMatch</span>(<span class='ident'>x</span>) <span class='op'>=&gt;</span> <span class='prelude-ty'>Result</span>::<span class='ident'>NoMatch</span>(<span class='ident'>x</span>),
+            <span class='prelude-ty'>Result</span>::<span class='ident'>Quit</span> <span class='op'>=&gt;</span> <span class='prelude-ty'>Result</span>::<span class='ident'>Quit</span>,
+        }
+    }
+
+    <span class='doccomment'>/// Sets the non-match position.</span>
+    <span class='doccomment'>///</span>
+    <span class='doccomment'>/// If this isn&#39;t a non-match, then this is a no-op.</span>
+    <span class='kw'>fn</span> <span class='ident'>set_non_match</span>(<span class='self'>self</span>, <span class='ident'>at</span>: <span class='ident'>usize</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Result</span><span class='op'>&lt;</span><span class='ident'>T</span><span class='op'>&gt;</span> {
+        <span class='kw'>match</span> <span class='self'>self</span> {
+            <span class='prelude-ty'>Result</span>::<span class='ident'>NoMatch</span>(_) <span class='op'>=&gt;</span> <span class='prelude-ty'>Result</span>::<span class='ident'>NoMatch</span>(<span class='ident'>at</span>),
+            <span class='ident'>r</span> <span class='op'>=&gt;</span> <span class='ident'>r</span>,
         }
     }
 }
@@ -2011,34 +2171,20 @@ implementation.)
 <span class='doccomment'>/// State is a DFA state. It contains an ordered set of NFA states (not</span>
 <span class='doccomment'>/// necessarily complete) and a smattering of flags.</span>
 <span class='doccomment'>///</span>
+<span class='doccomment'>/// The flags are packed into the first byte of data.</span>
+<span class='doccomment'>///</span>
 <span class='doccomment'>/// States don&#39;t carry their transitions. Instead, transitions are stored in</span>
 <span class='doccomment'>/// a single row-major table.</span>
-<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Clone</span>)]</span>
-<span class='kw'>struct</span> <span class='ident'>State</span> {
-    <span class='doccomment'>/// The set of NFA states in this DFA state, which are computed by</span>
-    <span class='doccomment'>/// following epsilon transitions from `insts[0]`. Note that not all</span>
-    <span class='doccomment'>/// epsilon transitions are necessarily followed! Namely, epsilon</span>
-    <span class='doccomment'>/// transitions that correspond to empty assertions are only followed if</span>
-    <span class='doccomment'>/// the flags set at the current byte satisfy the assertion.</span>
-    <span class='ident'>insts</span>: <span class='ident'>Box</span><span class='op'>&lt;</span>[<span class='ident'>InstPtr</span>]<span class='op'>&gt;</span>,
-    <span class='doccomment'>/// Flags for this state, which indicate whether it is a match state,</span>
-    <span class='doccomment'>/// observed an ASCII word byte and whether any instruction in `insts`</span>
-    <span class='doccomment'>/// is a zero-width assertion.</span>
-    <span class='ident'>flags</span>: <span class='ident'>StateFlags</span>,
-}
-
-<span class='doccomment'>/// A state&#39;s key for identifying it in the cache. In particular, if two</span>
-<span class='doccomment'>/// state&#39;s cache keys are equivalent, then they cannot be discriminatory in</span>
-<span class='doccomment'>/// a match.</span>
 <span class='doccomment'>///</span>
-<span class='doccomment'>/// We capture two bits of information: an ordered set of NFA states for the</span>
-<span class='doccomment'>/// DFA state and its flags.</span>
-<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Clone</span>, <span class='ident'>Debug</span>, <span class='ident'>Eq</span>, <span class='ident'>Hash</span>, <span class='ident'>PartialEq</span>)]</span>
-<span class='kw'>struct</span> <span class='ident'>StateKey</span> {
-    <span class='doccomment'>/// An ordered set of NFA states.</span>
-    <span class='ident'>insts</span>: <span class='ident'>Box</span><span class='op'>&lt;</span>[<span class='ident'>InstPtr</span>]<span class='op'>&gt;</span>,
-    <span class='doccomment'>/// The state&#39;s flags. (Match, word, empty assertions.)</span>
-    <span class='ident'>flags</span>: <span class='ident'>StateFlags</span>,
+<span class='doccomment'>/// Delta encoding is used to store the instruction pointers.</span>
+<span class='doccomment'>/// The first instruction pointer is stored directly starting</span>
+<span class='doccomment'>/// at data[1], and each following pointer is stored as an offset</span>
+<span class='doccomment'>/// to the previous one. If a delta is in the range -127..127,</span>
+<span class='doccomment'>/// it is packed into a single byte; Otherwise the byte 128 (-128 as an i8)</span>
+<span class='doccomment'>/// is coded as a flag, followed by 4 bytes encoding the delta.</span>
+<span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Clone</span>, <span class='ident'>Eq</span>, <span class='ident'>Hash</span>, <span class='ident'>PartialEq</span>)]</span>
+<span class='kw'>struct</span> <span class='ident'>State</span>{
+    <span class='ident'>data</span>: <span class='ident'>Box</span><span class='op'>&lt;</span>[<span class='ident'>u8</span>]<span class='op'>&gt;</span>,
 }
 
 <span class='doccomment'>/// InstPtr is a 32 bit pointer into a sequence of opcodes (i.e., it indexes</span>
@@ -2047,6 +2193,50 @@ implementation.)
 <span class='doccomment'>/// Throughout this library, this is usually set to `usize`, but we force a</span>
 <span class='doccomment'>/// `u32` here for the DFA to save on space.</span>
 <span class='kw'>type</span> <span class='ident'>InstPtr</span> <span class='op'>=</span> <span class='ident'>u32</span>;
+
+<span class='doccomment'>/// Adds ip to data using delta encoding with respect to prev.</span>
+<span class='doccomment'>///</span>
+<span class='doccomment'>/// After completion, `data` will contain `ip` and `prev` will be set to `ip`.</span>
+<span class='kw'>fn</span> <span class='ident'>push_inst_ptr</span>(<span class='ident'>data</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span>, <span class='ident'>prev</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>InstPtr</span>, <span class='ident'>ip</span>: <span class='ident'>InstPtr</span>) {
+    <span class='kw'>let</span> <span class='ident'>delta</span> <span class='op'>=</span> (<span class='ident'>ip</span> <span class='kw'>as</span> <span class='ident'>i32</span>) <span class='op'>-</span> (<span class='op'>*</span><span class='ident'>prev</span> <span class='kw'>as</span> <span class='ident'>i32</span>);
+    <span class='ident'>write_vari32</span>(<span class='ident'>data</span>, <span class='ident'>delta</span>);
+    <span class='op'>*</span><span class='ident'>prev</span> <span class='op'>=</span> <span class='ident'>ip</span>;
+}
+
+<span class='kw'>struct</span> <span class='ident'>InstPtrs</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span> {
+    <span class='ident'>base</span>: <span class='ident'>usize</span>,
+    <span class='ident'>data</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> [<span class='ident'>u8</span>],
+}
+
+<span class='kw'>impl</span> <span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span><span class='ident'>Iterator</span> <span class='kw'>for</span> <span class='ident'>InstPtrs</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span><span class='op'>&gt;</span> {
+    <span class='kw'>type</span> <span class='ident'>Item</span> <span class='op'>=</span> <span class='ident'>usize</span>;
+
+    <span class='kw'>fn</span> <span class='ident'>next</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>usize</span><span class='op'>&gt;</span> {
+        <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>data</span>.<span class='ident'>is_empty</span>() {
+            <span class='kw'>return</span> <span class='prelude-val'>None</span>;
+        }
+        <span class='kw'>let</span> (<span class='ident'>delta</span>, <span class='ident'>nread</span>) <span class='op'>=</span> <span class='ident'>read_vari32</span>(<span class='self'>self</span>.<span class='ident'>data</span>);
+        <span class='kw'>let</span> <span class='ident'>base</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>base</span> <span class='kw'>as</span> <span class='ident'>i32</span> <span class='op'>+</span> <span class='ident'>delta</span>;
+        <span class='macro'>debug_assert</span><span class='macro'>!</span>(<span class='ident'>base</span> <span class='op'>&gt;=</span> <span class='number'>0</span>);
+        <span class='macro'>debug_assert</span><span class='macro'>!</span>(<span class='ident'>nread</span> <span class='op'>&gt;</span> <span class='number'>0</span>);
+        <span class='self'>self</span>.<span class='ident'>data</span> <span class='op'>=</span> <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>data</span>[<span class='ident'>nread</span>..];
+        <span class='self'>self</span>.<span class='ident'>base</span> <span class='op'>=</span> <span class='ident'>base</span> <span class='kw'>as</span> <span class='ident'>usize</span>;
+        <span class='prelude-val'>Some</span>(<span class='self'>self</span>.<span class='ident'>base</span>)
+    }
+}
+
+<span class='kw'>impl</span> <span class='ident'>State</span> {
+    <span class='kw'>fn</span> <span class='ident'>flags</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>StateFlags</span> {
+        <span class='ident'>StateFlags</span>(<span class='self'>self</span>.<span class='ident'>data</span>[<span class='number'>0</span>])
+    }
+
+    <span class='kw'>fn</span> <span class='ident'>inst_ptrs</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>InstPtrs</span> {
+        <span class='ident'>InstPtrs</span> {
+            <span class='ident'>base</span>: <span class='number'>0</span>,
+            <span class='ident'>data</span>: <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>data</span>[<span class='number'>1</span>..],
+        }
+    }
+}
 
 <span class='doccomment'>/// StatePtr is a 32 bit pointer to the start of a row in the transition table.</span>
 <span class='doccomment'>///</span>
@@ -2191,7 +2381,7 @@ implementation.)
             <span class='ident'>state_flags</span>,
         ) {
             <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-ty'>Result</span>::<span class='ident'>Quit</span>,
-            <span class='prelude-val'>Some</span>(<span class='ident'>STATE_DEAD</span>) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-ty'>Result</span>::<span class='ident'>NoMatch</span>,
+            <span class='prelude-val'>Some</span>(<span class='ident'>STATE_DEAD</span>) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-ty'>Result</span>::<span class='ident'>NoMatch</span>(<span class='ident'>at</span>),
             <span class='prelude-val'>Some</span>(<span class='ident'>si</span>) <span class='op'>=&gt;</span> <span class='ident'>si</span>,
         };
         <span class='macro'>debug_assert</span><span class='macro'>!</span>(<span class='ident'>dfa</span>.<span class='ident'>start</span> <span class='op'>!=</span> <span class='ident'>STATE_UNKNOWN</span>);
@@ -2224,7 +2414,7 @@ implementation.)
             <span class='ident'>state_flags</span>,
         ) {
             <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-ty'>Result</span>::<span class='ident'>Quit</span>,
-            <span class='prelude-val'>Some</span>(<span class='ident'>STATE_DEAD</span>) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-ty'>Result</span>::<span class='ident'>NoMatch</span>,
+            <span class='prelude-val'>Some</span>(<span class='ident'>STATE_DEAD</span>) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-ty'>Result</span>::<span class='ident'>NoMatch</span>(<span class='ident'>at</span>),
             <span class='prelude-val'>Some</span>(<span class='ident'>si</span>) <span class='op'>=&gt;</span> <span class='ident'>si</span>,
         };
         <span class='macro'>debug_assert</span><span class='macro'>!</span>(<span class='ident'>dfa</span>.<span class='ident'>start</span> <span class='op'>!=</span> <span class='ident'>STATE_UNKNOWN</span>);
@@ -2258,7 +2448,7 @@ implementation.)
             <span class='ident'>state_flags</span>,
         ) {
             <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-ty'>Result</span>::<span class='ident'>Quit</span>,
-            <span class='prelude-val'>Some</span>(<span class='ident'>STATE_DEAD</span>) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-ty'>Result</span>::<span class='ident'>NoMatch</span>,
+            <span class='prelude-val'>Some</span>(<span class='ident'>STATE_DEAD</span>) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-ty'>Result</span>::<span class='ident'>NoMatch</span>(<span class='ident'>at</span>),
             <span class='prelude-val'>Some</span>(<span class='ident'>si</span>) <span class='op'>=&gt;</span> <span class='ident'>si</span>,
         };
         <span class='macro'>debug_assert</span><span class='macro'>!</span>(<span class='ident'>dfa</span>.<span class='ident'>start</span> <span class='op'>!=</span> <span class='ident'>STATE_UNKNOWN</span>);
@@ -2269,8 +2459,8 @@ implementation.)
             } <span class='kw'>else</span> {
                 <span class='macro'>debug_assert</span><span class='macro'>!</span>(<span class='ident'>dfa</span>.<span class='ident'>last_match_si</span> <span class='op'>!=</span> <span class='ident'>STATE_UNKNOWN</span>);
                 <span class='macro'>debug_assert</span><span class='macro'>!</span>(<span class='ident'>dfa</span>.<span class='ident'>last_match_si</span> <span class='op'>!=</span> <span class='ident'>STATE_DEAD</span>);
-                <span class='kw'>for</span> <span class='kw-2'>&amp;</span><span class='ident'>ip</span> <span class='kw'>in</span> <span class='ident'>dfa</span>.<span class='ident'>state</span>(<span class='ident'>dfa</span>.<span class='ident'>last_match_si</span>).<span class='ident'>insts</span>.<span class='ident'>iter</span>() {
-                    <span class='kw'>if</span> <span class='kw'>let</span> <span class='ident'>Inst</span>::<span class='ident'>Match</span>(<span class='ident'>slot</span>) <span class='op'>=</span> <span class='ident'>dfa</span>.<span class='ident'>prog</span>[<span class='ident'>ip</span> <span class='kw'>as</span> <span class='ident'>usize</span>] {
+                <span class='kw'>for</span> <span class='ident'>ip</span> <span class='kw'>in</span> <span class='ident'>dfa</span>.<span class='ident'>state</span>(<span class='ident'>dfa</span>.<span class='ident'>last_match_si</span>).<span class='ident'>inst_ptrs</span>() {
+                    <span class='kw'>if</span> <span class='kw'>let</span> <span class='ident'>Inst</span>::<span class='ident'>Match</span>(<span class='ident'>slot</span>) <span class='op'>=</span> <span class='ident'>dfa</span>.<span class='ident'>prog</span>[<span class='ident'>ip</span>] {
                         <span class='ident'>matches</span>[<span class='ident'>slot</span>] <span class='op'>=</span> <span class='boolval'>true</span>;
                     }
                 }
@@ -2327,7 +2517,7 @@ implementation.)
         <span class='comment'>// reported as an index to the most recent byte that resulted in a</span>
         <span class='comment'>// transition to a match state and is always stored in capture slot `1`</span>
         <span class='comment'>// when searching forwards. Its maximum value is `text.len()`.</span>
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>result</span> <span class='op'>=</span> <span class='prelude-ty'>Result</span>::<span class='ident'>NoMatch</span>;
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>result</span> <span class='op'>=</span> <span class='prelude-ty'>Result</span>::<span class='ident'>NoMatch</span>(<span class='self'>self</span>.<span class='ident'>at</span>);
         <span class='kw'>let</span> (<span class='kw-2'>mut</span> <span class='ident'>prev_si</span>, <span class='kw-2'>mut</span> <span class='ident'>next_si</span>) <span class='op'>=</span> (<span class='self'>self</span>.<span class='ident'>start</span>, <span class='self'>self</span>.<span class='ident'>start</span>);
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>at</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>at</span>;
         <span class='kw'>while</span> <span class='ident'>at</span> <span class='op'>&lt;</span> <span class='ident'>text</span>.<span class='ident'>len</span>() {
@@ -2378,6 +2568,19 @@ implementation.)
                 <span class='self'>self</span>.<span class='ident'>last_match_si</span> <span class='op'>=</span> <span class='ident'>next_si</span>;
                 <span class='ident'>prev_si</span> <span class='op'>=</span> <span class='ident'>next_si</span>;
 
+                <span class='comment'>// This permits short-circuiting when matching a regex set.</span>
+                <span class='comment'>// In particular, if this DFA state contains only match states,</span>
+                <span class='comment'>// then it&#39;s impossible to extend the set of matches since</span>
+                <span class='comment'>// match states are final. Therefore, we can quit.</span>
+                <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>prog</span>.<span class='ident'>matches</span>.<span class='ident'>len</span>() <span class='op'>&gt;</span> <span class='number'>1</span> {
+                    <span class='kw'>let</span> <span class='ident'>state</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>state</span>(<span class='ident'>next_si</span>);
+                    <span class='kw'>let</span> <span class='ident'>just_matches</span> <span class='op'>=</span> <span class='ident'>state</span>.<span class='ident'>inst_ptrs</span>()
+                         .<span class='ident'>all</span>(<span class='op'>|</span><span class='ident'>ip</span><span class='op'>|</span> <span class='self'>self</span>.<span class='ident'>prog</span>[<span class='ident'>ip</span>].<span class='ident'>is_match</span>());
+                    <span class='kw'>if</span> <span class='ident'>just_matches</span> {
+                        <span class='kw'>return</span> <span class='ident'>result</span>;
+                    }
+                }
+
                 <span class='comment'>// Another inner loop! If the DFA stays in this particular</span>
                 <span class='comment'>// match state, then we can rip through all of the input</span>
                 <span class='comment'>// very quickly, and only recording the match location once</span>
@@ -2403,7 +2606,7 @@ implementation.)
                 <span class='ident'>next_si</span> <span class='op'>&amp;=</span> <span class='op'>!</span><span class='ident'>STATE_START</span>;
                 <span class='ident'>prev_si</span> <span class='op'>=</span> <span class='ident'>next_si</span>;
                 <span class='ident'>at</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>prefix_at</span>(<span class='ident'>text</span>, <span class='ident'>at</span>) {
-                    <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-ty'>Result</span>::<span class='ident'>NoMatch</span>,
+                    <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-ty'>Result</span>::<span class='ident'>NoMatch</span>(<span class='ident'>text</span>.<span class='ident'>len</span>()),
                     <span class='prelude-val'>Some</span>(<span class='ident'>i</span>) <span class='op'>=&gt;</span> <span class='ident'>i</span>,
                 };
             } <span class='kw'>else</span> <span class='kw'>if</span> <span class='ident'>next_si</span> <span class='op'>&gt;=</span> <span class='ident'>STATE_UNKNOWN</span> {
@@ -2424,7 +2627,7 @@ implementation.)
                 <span class='self'>self</span>.<span class='ident'>at</span> <span class='op'>=</span> <span class='ident'>at</span>;
                 <span class='ident'>next_si</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>next_state</span>(<span class='ident'>qcur</span>, <span class='ident'>qnext</span>, <span class='ident'>prev_si</span>, <span class='ident'>byte</span>) {
                     <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-ty'>Result</span>::<span class='ident'>Quit</span>,
-                    <span class='prelude-val'>Some</span>(<span class='ident'>STATE_DEAD</span>) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='ident'>result</span>,
+                    <span class='prelude-val'>Some</span>(<span class='ident'>STATE_DEAD</span>) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='ident'>result</span>.<span class='ident'>set_non_match</span>(<span class='ident'>at</span>),
                     <span class='prelude-val'>Some</span>(<span class='ident'>si</span>) <span class='op'>=&gt;</span> <span class='ident'>si</span>,
                 };
                 <span class='macro'>debug_assert</span><span class='macro'>!</span>(<span class='ident'>next_si</span> <span class='op'>!=</span> <span class='ident'>STATE_UNKNOWN</span>);
@@ -2448,7 +2651,7 @@ implementation.)
         <span class='ident'>prev_si</span> <span class='op'>&amp;=</span> <span class='ident'>STATE_MAX</span>;
         <span class='ident'>prev_si</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>next_state</span>(<span class='ident'>qcur</span>, <span class='ident'>qnext</span>, <span class='ident'>prev_si</span>, <span class='ident'>Byte</span>::<span class='ident'>eof</span>()) {
             <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-ty'>Result</span>::<span class='ident'>Quit</span>,
-            <span class='prelude-val'>Some</span>(<span class='ident'>STATE_DEAD</span>) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='ident'>result</span>,
+            <span class='prelude-val'>Some</span>(<span class='ident'>STATE_DEAD</span>) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='ident'>result</span>.<span class='ident'>set_non_match</span>(<span class='ident'>text</span>.<span class='ident'>len</span>()),
             <span class='prelude-val'>Some</span>(<span class='ident'>si</span>) <span class='op'>=&gt;</span> <span class='ident'>si</span> <span class='kw-2'>&amp;</span> <span class='op'>!</span><span class='ident'>STATE_START</span>,
         };
         <span class='macro'>debug_assert</span><span class='macro'>!</span>(<span class='ident'>prev_si</span> <span class='op'>!=</span> <span class='ident'>STATE_UNKNOWN</span>);
@@ -2475,7 +2678,7 @@ implementation.)
         <span class='comment'>// N.B. The code duplication here is regrettable. Efforts to improve</span>
         <span class='comment'>// it without sacrificing performance are welcome. ---AG</span>
         <span class='macro'>debug_assert</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>prog</span>.<span class='ident'>is_reverse</span>);
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>result</span> <span class='op'>=</span> <span class='prelude-ty'>Result</span>::<span class='ident'>NoMatch</span>;
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>result</span> <span class='op'>=</span> <span class='prelude-ty'>Result</span>::<span class='ident'>NoMatch</span>(<span class='self'>self</span>.<span class='ident'>at</span>);
         <span class='kw'>let</span> (<span class='kw-2'>mut</span> <span class='ident'>prev_si</span>, <span class='kw-2'>mut</span> <span class='ident'>next_si</span>) <span class='op'>=</span> (<span class='self'>self</span>.<span class='ident'>start</span>, <span class='self'>self</span>.<span class='ident'>start</span>);
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>at</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>at</span>;
         <span class='kw'>while</span> <span class='ident'>at</span> <span class='op'>&gt;</span> <span class='number'>0</span> {
@@ -2529,7 +2732,7 @@ implementation.)
                 <span class='self'>self</span>.<span class='ident'>at</span> <span class='op'>=</span> <span class='ident'>at</span>;
                 <span class='ident'>next_si</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>next_state</span>(<span class='ident'>qcur</span>, <span class='ident'>qnext</span>, <span class='ident'>prev_si</span>, <span class='ident'>byte</span>) {
                     <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-ty'>Result</span>::<span class='ident'>Quit</span>,
-                    <span class='prelude-val'>Some</span>(<span class='ident'>STATE_DEAD</span>) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='ident'>result</span>,
+                    <span class='prelude-val'>Some</span>(<span class='ident'>STATE_DEAD</span>) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='ident'>result</span>.<span class='ident'>set_non_match</span>(<span class='ident'>at</span>),
                     <span class='prelude-val'>Some</span>(<span class='ident'>si</span>) <span class='op'>=&gt;</span> <span class='ident'>si</span>,
                 };
                 <span class='macro'>debug_assert</span><span class='macro'>!</span>(<span class='ident'>next_si</span> <span class='op'>!=</span> <span class='ident'>STATE_UNKNOWN</span>);
@@ -2550,7 +2753,7 @@ implementation.)
         <span class='comment'>// Run the DFA once more on the special EOF senitnel value.</span>
         <span class='ident'>prev_si</span> <span class='op'>=</span> <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>next_state</span>(<span class='ident'>qcur</span>, <span class='ident'>qnext</span>, <span class='ident'>prev_si</span>, <span class='ident'>Byte</span>::<span class='ident'>eof</span>()) {
             <span class='prelude-val'>None</span> <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='prelude-ty'>Result</span>::<span class='ident'>Quit</span>,
-            <span class='prelude-val'>Some</span>(<span class='ident'>STATE_DEAD</span>) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='ident'>result</span>,
+            <span class='prelude-val'>Some</span>(<span class='ident'>STATE_DEAD</span>) <span class='op'>=&gt;</span> <span class='kw'>return</span> <span class='ident'>result</span>.<span class='ident'>set_non_match</span>(<span class='number'>0</span>),
             <span class='prelude-val'>Some</span>(<span class='ident'>si</span>) <span class='op'>=&gt;</span> <span class='ident'>si</span>,
         };
         <span class='macro'>debug_assert</span><span class='macro'>!</span>(<span class='ident'>prev_si</span> <span class='op'>!=</span> <span class='ident'>STATE_UNKNOWN</span>);
@@ -2615,8 +2818,8 @@ implementation.)
 
         <span class='comment'>// Initialize a queue with the current DFA state&#39;s NFA states.</span>
         <span class='ident'>qcur</span>.<span class='ident'>clear</span>();
-        <span class='kw'>for</span> <span class='kw-2'>&amp;</span><span class='ident'>ip</span> <span class='kw'>in</span> <span class='self'>self</span>.<span class='ident'>state</span>(<span class='ident'>si</span>).<span class='ident'>insts</span>.<span class='ident'>iter</span>() {
-            <span class='ident'>qcur</span>.<span class='ident'>add</span>(<span class='ident'>ip</span> <span class='kw'>as</span> <span class='ident'>usize</span>);
+        <span class='kw'>for</span> <span class='ident'>ip</span> <span class='kw'>in</span> <span class='self'>self</span>.<span class='ident'>state</span>(<span class='ident'>si</span>).<span class='ident'>inst_ptrs</span>() {
+            <span class='ident'>qcur</span>.<span class='ident'>insert</span>(<span class='ident'>ip</span>);
         }
 
         <span class='comment'>// Before inspecting the current byte, we may need to also inspect</span>
@@ -2625,9 +2828,9 @@ implementation.)
         <span class='comment'>//</span>
         <span class='comment'>// We only need to do this step if there are any empty assertions in</span>
         <span class='comment'>// the current state.</span>
-        <span class='kw'>let</span> <span class='ident'>is_word_last</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>state</span>(<span class='ident'>si</span>).<span class='ident'>flags</span>.<span class='ident'>is_word</span>();
+        <span class='kw'>let</span> <span class='ident'>is_word_last</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>state</span>(<span class='ident'>si</span>).<span class='ident'>flags</span>().<span class='ident'>is_word</span>();
         <span class='kw'>let</span> <span class='ident'>is_word</span> <span class='op'>=</span> <span class='ident'>b</span>.<span class='ident'>is_ascii_word</span>();
-        <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>state</span>(<span class='ident'>si</span>).<span class='ident'>flags</span>.<span class='ident'>has_empty</span>() {
+        <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>state</span>(<span class='ident'>si</span>).<span class='ident'>flags</span>().<span class='ident'>has_empty</span>() {
             <span class='comment'>// Compute the flags immediately preceding the current byte.</span>
             <span class='comment'>// This means we only care about the &quot;end&quot; or &quot;end line&quot; flags.</span>
             <span class='comment'>// (The &quot;start&quot; flags are computed immediately proceding the</span>
@@ -2683,10 +2886,10 @@ implementation.)
                     <span class='kw'>if</span> <span class='op'>!</span><span class='self'>self</span>.<span class='ident'>continue_past_first_match</span>() {
                         <span class='kw'>break</span>;
                     } <span class='kw'>else</span> <span class='kw'>if</span> <span class='self'>self</span>.<span class='ident'>prog</span>.<span class='ident'>matches</span>.<span class='ident'>len</span>() <span class='op'>&gt;</span> <span class='number'>1</span>
-                            <span class='op'>&amp;&amp;</span> <span class='op'>!</span><span class='ident'>qnext</span>.<span class='ident'>contains_ip</span>(<span class='ident'>ip</span> <span class='kw'>as</span> <span class='ident'>usize</span>) {
+                            <span class='op'>&amp;&amp;</span> <span class='op'>!</span><span class='ident'>qnext</span>.<span class='ident'>contains</span>(<span class='ident'>ip</span> <span class='kw'>as</span> <span class='ident'>usize</span>) {
                         <span class='comment'>// If we are continuing on to find other matches,</span>
                         <span class='comment'>// then keep a record of the match states we&#39;ve seen.</span>
-                        <span class='ident'>qnext</span>.<span class='ident'>add</span>(<span class='ident'>ip</span>);
+                        <span class='ident'>qnext</span>.<span class='ident'>insert</span>(<span class='ident'>ip</span>);
                     }
                 }
                 <span class='ident'>Bytes</span>(<span class='kw-2'>ref</span> <span class='ident'>inst</span>) <span class='op'>=&gt;</span> {
@@ -2725,10 +2928,10 @@ implementation.)
         <span class='kw'>if</span> (<span class='self'>self</span>.<span class='ident'>start</span> <span class='kw-2'>&amp;</span> <span class='op'>!</span><span class='ident'>STATE_START</span>) <span class='op'>==</span> <span class='ident'>next</span> {
             <span class='comment'>// Start states can never be match states since all matches are</span>
             <span class='comment'>// delayed by one byte.</span>
-            <span class='macro'>debug_assert</span><span class='macro'>!</span>(<span class='op'>!</span><span class='self'>self</span>.<span class='ident'>state</span>(<span class='ident'>next</span>).<span class='ident'>flags</span>.<span class='ident'>is_match</span>());
+            <span class='macro'>debug_assert</span><span class='macro'>!</span>(<span class='op'>!</span><span class='self'>self</span>.<span class='ident'>state</span>(<span class='ident'>next</span>).<span class='ident'>flags</span>().<span class='ident'>is_match</span>());
             <span class='ident'>next</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>start_ptr</span>(<span class='ident'>next</span>);
         }
-        <span class='kw'>if</span> <span class='ident'>next</span> <span class='op'>&lt;=</span> <span class='ident'>STATE_MAX</span> <span class='op'>&amp;&amp;</span> <span class='self'>self</span>.<span class='ident'>state</span>(<span class='ident'>next</span>).<span class='ident'>flags</span>.<span class='ident'>is_match</span>() {
+        <span class='kw'>if</span> <span class='ident'>next</span> <span class='op'>&lt;=</span> <span class='ident'>STATE_MAX</span> <span class='op'>&amp;&amp;</span> <span class='self'>self</span>.<span class='ident'>state</span>(<span class='ident'>next</span>).<span class='ident'>flags</span>().<span class='ident'>is_match</span>() {
             <span class='ident'>next</span> <span class='op'>=</span> <span class='ident'>STATE_MATCH</span> <span class='op'>|</span> <span class='ident'>next</span>;
         }
         <span class='macro'>debug_assert</span><span class='macro'>!</span>(<span class='ident'>next</span> <span class='op'>!=</span> <span class='ident'>STATE_UNKNOWN</span>);
@@ -2777,10 +2980,10 @@ implementation.)
         <span class='self'>self</span>.<span class='ident'>cache</span>.<span class='ident'>stack</span>.<span class='ident'>push</span>(<span class='ident'>ip</span>);
         <span class='kw'>while</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='ident'>ip</span>) <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>cache</span>.<span class='ident'>stack</span>.<span class='ident'>pop</span>() {
             <span class='comment'>// Don&#39;t visit states we&#39;ve already added.</span>
-            <span class='kw'>if</span> <span class='ident'>q</span>.<span class='ident'>contains_ip</span>(<span class='ident'>ip</span> <span class='kw'>as</span> <span class='ident'>usize</span>) {
+            <span class='kw'>if</span> <span class='ident'>q</span>.<span class='ident'>contains</span>(<span class='ident'>ip</span> <span class='kw'>as</span> <span class='ident'>usize</span>) {
                 <span class='kw'>continue</span>;
             }
-            <span class='ident'>q</span>.<span class='ident'>add</span>(<span class='ident'>ip</span> <span class='kw'>as</span> <span class='ident'>usize</span>);
+            <span class='ident'>q</span>.<span class='ident'>insert</span>(<span class='ident'>ip</span> <span class='kw'>as</span> <span class='ident'>usize</span>);
             <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>prog</span>[<span class='ident'>ip</span> <span class='kw'>as</span> <span class='ident'>usize</span>] {
                 <span class='ident'>Char</span>(_) <span class='op'>|</span> <span class='ident'>Ranges</span>(_) <span class='op'>=&gt;</span> <span class='macro'>unreachable</span><span class='macro'>!</span>(),
                 <span class='ident'>Match</span>(_) <span class='op'>|</span> <span class='ident'>Bytes</span>(_) <span class='op'>=&gt;</span> {}
@@ -2873,8 +3076,7 @@ implementation.)
             }
         }
         <span class='comment'>// Allocate room for our state and add it.</span>
-        <span class='kw'>let</span> <span class='ident'>state</span> <span class='op'>=</span> <span class='ident'>State</span> { <span class='ident'>insts</span>: <span class='ident'>key</span>.<span class='ident'>insts</span>.<span class='ident'>clone</span>(), <span class='ident'>flags</span>: <span class='ident'>state_flags</span> };
-        <span class='self'>self</span>.<span class='ident'>add_state</span>(<span class='ident'>key</span>, <span class='ident'>state</span>)
+        <span class='self'>self</span>.<span class='ident'>add_state</span>(<span class='ident'>key</span>)
     }
 
     <span class='doccomment'>/// Produces a key suitable for describing a state in the DFA cache.</span>
@@ -2891,9 +3093,8 @@ implementation.)
         <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>,
         <span class='ident'>q</span>: <span class='kw-2'>&amp;</span><span class='ident'>SparseSet</span>,
         <span class='ident'>state_flags</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>StateFlags</span>,
-    ) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>StateKey</span><span class='op'>&gt;</span> {
+    ) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>State</span><span class='op'>&gt;</span> {
         <span class='kw'>use</span> <span class='ident'>prog</span>::<span class='ident'>Inst</span>::<span class='op'>*</span>;
-        <span class='kw'>use</span> <span class='ident'>prog</span>::<span class='ident'>EmptyLook</span>::<span class='op'>*</span>;
 
         <span class='comment'>// We need to build up enough information to recognize pre-built states</span>
         <span class='comment'>// in the DFA. Generally speaking, this includes every instruction</span>
@@ -2903,44 +3104,23 @@ implementation.)
         <span class='comment'>// Empty width assertions are also epsilon transitions, but since they</span>
         <span class='comment'>// are conditional, we need to make them part of a state&#39;s key in the</span>
         <span class='comment'>// cache.</span>
-        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>insts</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[];
+
+        <span class='comment'>// Reserve 1 byte for flags.</span>
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>insts</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[<span class='number'>0</span>];
+        <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>prev</span> <span class='op'>=</span> <span class='number'>0</span>;
         <span class='kw'>for</span> <span class='kw-2'>&amp;</span><span class='ident'>ip</span> <span class='kw'>in</span> <span class='ident'>q</span> {
             <span class='kw'>let</span> <span class='ident'>ip</span> <span class='op'>=</span> <span class='ident'>usize_to_u32</span>(<span class='ident'>ip</span>);
             <span class='kw'>match</span> <span class='self'>self</span>.<span class='ident'>prog</span>[<span class='ident'>ip</span> <span class='kw'>as</span> <span class='ident'>usize</span>] {
                 <span class='ident'>Char</span>(_) <span class='op'>|</span> <span class='ident'>Ranges</span>(_) <span class='op'>=&gt;</span> <span class='macro'>unreachable</span><span class='macro'>!</span>(),
                 <span class='ident'>Save</span>(_) <span class='op'>=&gt;</span> {}
                 <span class='ident'>Split</span>(_) <span class='op'>=&gt;</span> {}
-                <span class='ident'>Bytes</span>(_) <span class='op'>=&gt;</span> <span class='ident'>insts</span>.<span class='ident'>push</span>(<span class='ident'>ip</span>),
-                <span class='ident'>EmptyLook</span>(<span class='kw-2'>ref</span> <span class='ident'>inst</span>) <span class='op'>=&gt;</span> {
-                    <span class='kw'>match</span> <span class='ident'>inst</span>.<span class='ident'>look</span> {
-                        <span class='ident'>StartLine</span> <span class='op'>=&gt;</span> {
-                            <span class='ident'>state_flags</span>.<span class='ident'>set_empty</span>();
-                            <span class='ident'>insts</span>.<span class='ident'>push</span>(<span class='ident'>ip</span>);
-                        }
-                        <span class='ident'>EndLine</span> <span class='op'>=&gt;</span> {
-                            <span class='ident'>state_flags</span>.<span class='ident'>set_empty</span>();
-                            <span class='ident'>insts</span>.<span class='ident'>push</span>(<span class='ident'>ip</span>);
-                        }
-                        <span class='ident'>StartText</span> <span class='op'>=&gt;</span> {
-                            <span class='ident'>state_flags</span>.<span class='ident'>set_empty</span>();
-                            <span class='ident'>insts</span>.<span class='ident'>push</span>(<span class='ident'>ip</span>);
-                        }
-                        <span class='ident'>EndText</span> <span class='op'>=&gt;</span> {
-                            <span class='ident'>state_flags</span>.<span class='ident'>set_empty</span>();
-                            <span class='ident'>insts</span>.<span class='ident'>push</span>(<span class='ident'>ip</span>);
-                        }
-                        <span class='ident'>WordBoundary</span> <span class='op'>|</span> <span class='ident'>WordBoundaryAscii</span> <span class='op'>=&gt;</span> {
-                            <span class='ident'>state_flags</span>.<span class='ident'>set_empty</span>();
-                            <span class='ident'>insts</span>.<span class='ident'>push</span>(<span class='ident'>ip</span>);
-                        }
-                        <span class='ident'>NotWordBoundary</span> <span class='op'>|</span> <span class='ident'>NotWordBoundaryAscii</span> <span class='op'>=&gt;</span> {
-                            <span class='ident'>state_flags</span>.<span class='ident'>set_empty</span>();
-                            <span class='ident'>insts</span>.<span class='ident'>push</span>(<span class='ident'>ip</span>);
-                        }
-                    }
+                <span class='ident'>Bytes</span>(_) <span class='op'>=&gt;</span> <span class='ident'>push_inst_ptr</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>insts</span>, <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>prev</span>, <span class='ident'>ip</span>),
+                <span class='ident'>EmptyLook</span>(_) <span class='op'>=&gt;</span> {
+                    <span class='ident'>state_flags</span>.<span class='ident'>set_empty</span>();
+                    <span class='ident'>push_inst_ptr</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>insts</span>, <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>prev</span>, <span class='ident'>ip</span>)
                 }
                 <span class='ident'>Match</span>(_) <span class='op'>=&gt;</span> {
-                    <span class='ident'>insts</span>.<span class='ident'>push</span>(<span class='ident'>ip</span>);
+                    <span class='ident'>push_inst_ptr</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>insts</span>, <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>prev</span>, <span class='ident'>ip</span>);
                     <span class='kw'>if</span> <span class='op'>!</span><span class='self'>self</span>.<span class='ident'>continue_past_first_match</span>() {
                         <span class='kw'>break</span>;
                     }
@@ -2951,13 +3131,12 @@ implementation.)
         <span class='comment'>// see a match when expanding NFA states previously, then this is a</span>
         <span class='comment'>// dead state and no amount of additional input can transition out</span>
         <span class='comment'>// of this state.</span>
-        <span class='kw'>if</span> <span class='ident'>insts</span>.<span class='ident'>len</span>() <span class='op'>==</span> <span class='number'>0</span> <span class='op'>&amp;&amp;</span> <span class='op'>!</span><span class='ident'>state_flags</span>.<span class='ident'>is_match</span>() {
+        <span class='kw'>if</span> <span class='ident'>insts</span>.<span class='ident'>len</span>() <span class='op'>==</span> <span class='number'>1</span> <span class='op'>&amp;&amp;</span> <span class='op'>!</span><span class='ident'>state_flags</span>.<span class='ident'>is_match</span>() {
             <span class='prelude-val'>None</span>
         } <span class='kw'>else</span> {
-            <span class='prelude-val'>Some</span>(<span class='ident'>StateKey</span> {
-                <span class='ident'>insts</span>: <span class='ident'>insts</span>.<span class='ident'>into_boxed_slice</span>(),
-                <span class='ident'>flags</span>: <span class='op'>*</span><span class='ident'>state_flags</span>,
-            })
+            <span class='kw'>let</span> <span class='ident'>StateFlags</span>(<span class='ident'>f</span>) <span class='op'>=</span> <span class='op'>*</span><span class='ident'>state_flags</span>;
+            <span class='ident'>insts</span>[<span class='number'>0</span>] <span class='op'>=</span> <span class='ident'>f</span>;
+            <span class='prelude-val'>Some</span>(<span class='ident'>State</span> { <span class='ident'>data</span>: <span class='ident'>insts</span>.<span class='ident'>into_boxed_slice</span>() })
         }
     }
 
@@ -3039,16 +3218,12 @@ implementation.)
     <span class='doccomment'>/// Restores the given state back into the cache, and returns a pointer</span>
     <span class='doccomment'>/// to it.</span>
     <span class='kw'>fn</span> <span class='ident'>restore_state</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>state</span>: <span class='ident'>State</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>StatePtr</span><span class='op'>&gt;</span> {
-        <span class='kw'>let</span> <span class='ident'>key</span> <span class='op'>=</span> <span class='ident'>StateKey</span> {
-            <span class='ident'>insts</span>: <span class='ident'>state</span>.<span class='ident'>insts</span>.<span class='ident'>clone</span>(),
-            <span class='ident'>flags</span>: <span class='ident'>state</span>.<span class='ident'>flags</span>,
-        };
         <span class='comment'>// If we&#39;ve already stored this state, just return a pointer to it.</span>
         <span class='comment'>// None will be the wiser.</span>
-        <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='kw-2'>&amp;</span><span class='ident'>si</span>) <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>cache</span>.<span class='ident'>compiled</span>.<span class='ident'>get</span>(<span class='kw-2'>&amp;</span><span class='ident'>key</span>) {
+        <span class='kw'>if</span> <span class='kw'>let</span> <span class='prelude-val'>Some</span>(<span class='kw-2'>&amp;</span><span class='ident'>si</span>) <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>cache</span>.<span class='ident'>compiled</span>.<span class='ident'>get</span>(<span class='kw-2'>&amp;</span><span class='ident'>state</span>) {
             <span class='kw'>return</span> <span class='prelude-val'>Some</span>(<span class='ident'>si</span>);
         }
-        <span class='self'>self</span>.<span class='ident'>add_state</span>(<span class='ident'>key</span>, <span class='ident'>state</span>)
+        <span class='self'>self</span>.<span class='ident'>add_state</span>(<span class='ident'>state</span>)
     }
 
     <span class='doccomment'>/// Returns the next state given the current state si and current byte</span>
@@ -3178,7 +3353,7 @@ implementation.)
     <span class='doccomment'>///</span>
     <span class='doccomment'>/// If None is returned, then the state limit was reached and the DFA</span>
     <span class='doccomment'>/// should quit.</span>
-    <span class='kw'>fn</span> <span class='ident'>add_state</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>key</span>: <span class='ident'>StateKey</span>, <span class='ident'>state</span>: <span class='ident'>State</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>StatePtr</span><span class='op'>&gt;</span> {
+    <span class='kw'>fn</span> <span class='ident'>add_state</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='self'>self</span>, <span class='ident'>state</span>: <span class='ident'>State</span>) <span class='op'>-&gt;</span> <span class='prelude-ty'>Option</span><span class='op'>&lt;</span><span class='ident'>StatePtr</span><span class='op'>&gt;</span> {
         <span class='comment'>// This will fail if the next state pointer exceeds STATE_PTR. In</span>
         <span class='comment'>// practice, the cache limit will prevent us from ever getting here,</span>
         <span class='comment'>// but maybe callers will set the cache size to something ridiculous...</span>
@@ -3198,8 +3373,8 @@ implementation.)
         }
         <span class='comment'>// Finally, put our actual state on to our heap of states and index it</span>
         <span class='comment'>// so we can find it later.</span>
-        <span class='self'>self</span>.<span class='ident'>cache</span>.<span class='ident'>states</span>.<span class='ident'>push</span>(<span class='ident'>state</span>);
-        <span class='self'>self</span>.<span class='ident'>cache</span>.<span class='ident'>compiled</span>.<span class='ident'>insert</span>(<span class='ident'>key</span>, <span class='ident'>si</span>);
+        <span class='self'>self</span>.<span class='ident'>cache</span>.<span class='ident'>states</span>.<span class='ident'>push</span>(<span class='ident'>state</span>.<span class='ident'>clone</span>());
+        <span class='self'>self</span>.<span class='ident'>cache</span>.<span class='ident'>compiled</span>.<span class='ident'>insert</span>(<span class='ident'>state</span>, <span class='ident'>si</span>);
         <span class='comment'>// Transition table and set of states and map should all be in sync.</span>
         <span class='macro'>debug_assert</span><span class='macro'>!</span>(<span class='self'>self</span>.<span class='ident'>cache</span>.<span class='ident'>states</span>.<span class='ident'>len</span>()
                       <span class='op'>==</span> <span class='self'>self</span>.<span class='ident'>cache</span>.<span class='ident'>trans</span>.<span class='ident'>num_states</span>());
@@ -3286,14 +3461,15 @@ implementation.)
     <span class='kw'>fn</span> <span class='ident'>approximate_size</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>usize</span> {
         <span class='kw'>use</span> <span class='ident'>std</span>::<span class='ident'>mem</span>::<span class='ident'>size_of</span> <span class='kw'>as</span> <span class='ident'>size</span>;
         <span class='comment'>// Estimate that there are about 16 instructions per state consuming</span>
-        <span class='comment'>// 64 = 16 * 4 bytes of space.</span>
+        <span class='comment'>// 20 = 4 + (15 * 1) bytes of space (1 byte because of delta encoding).</span>
+        <span class='kw'>const</span> <span class='ident'>STATE_HEAP</span>: <span class='ident'>usize</span> <span class='op'>=</span> <span class='number'>20</span> <span class='op'>+</span> <span class='number'>1</span>; <span class='comment'>// one extra byte for flags</span>
         <span class='kw'>let</span> <span class='ident'>compiled</span> <span class='op'>=</span>
-            (<span class='self'>self</span>.<span class='ident'>cache</span>.<span class='ident'>compiled</span>.<span class='ident'>len</span>() <span class='op'>*</span> (<span class='ident'>size</span>::<span class='op'>&lt;</span><span class='ident'>StateKey</span><span class='op'>&gt;</span>() <span class='op'>+</span> <span class='number'>64</span>))
+            (<span class='self'>self</span>.<span class='ident'>cache</span>.<span class='ident'>compiled</span>.<span class='ident'>len</span>() <span class='op'>*</span> (<span class='ident'>size</span>::<span class='op'>&lt;</span><span class='ident'>State</span><span class='op'>&gt;</span>() <span class='op'>+</span> <span class='ident'>STATE_HEAP</span>))
             <span class='op'>+</span> (<span class='self'>self</span>.<span class='ident'>cache</span>.<span class='ident'>compiled</span>.<span class='ident'>len</span>() <span class='op'>*</span> <span class='ident'>size</span>::<span class='op'>&lt;</span><span class='ident'>StatePtr</span><span class='op'>&gt;</span>());
         <span class='kw'>let</span> <span class='ident'>states</span> <span class='op'>=</span>
             <span class='self'>self</span>.<span class='ident'>cache</span>.<span class='ident'>states</span>.<span class='ident'>len</span>()
             <span class='op'>*</span> (<span class='ident'>size</span>::<span class='op'>&lt;</span><span class='ident'>State</span><span class='op'>&gt;</span>()
-               <span class='op'>+</span> <span class='number'>64</span>
+               <span class='op'>+</span> <span class='ident'>STATE_HEAP</span>
                <span class='op'>+</span> (<span class='self'>self</span>.<span class='ident'>num_byte_classes</span>() <span class='op'>*</span> <span class='ident'>size</span>::<span class='op'>&lt;</span><span class='ident'>StatePtr</span><span class='op'>&gt;</span>()));
         <span class='kw'>let</span> <span class='ident'>start_states</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>cache</span>.<span class='ident'>start_states</span>.<span class='ident'>len</span>() <span class='op'>*</span> <span class='ident'>size</span>::<span class='op'>&lt;</span><span class='ident'>StatePtr</span><span class='op'>&gt;</span>();
         <span class='self'>self</span>.<span class='ident'>prog</span>.<span class='ident'>approximate_size</span>() <span class='op'>+</span> <span class='ident'>compiled</span> <span class='op'>+</span> <span class='ident'>states</span> <span class='op'>+</span> <span class='ident'>start_states</span>
@@ -3305,14 +3481,14 @@ implementation.)
     <span class='kw'>fn</span> <span class='ident'>actual_size</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>) <span class='op'>-&gt;</span> <span class='ident'>usize</span> {
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>compiled</span> <span class='op'>=</span> <span class='number'>0</span>;
         <span class='kw'>for</span> <span class='ident'>k</span> <span class='kw'>in</span> <span class='self'>self</span>.<span class='ident'>cache</span>.<span class='ident'>compiled</span>.<span class='ident'>keys</span>() {
-            <span class='ident'>compiled</span> <span class='op'>+=</span> <span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>StateKey</span><span class='op'>&gt;</span>();
+            <span class='ident'>compiled</span> <span class='op'>+=</span> <span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>State</span><span class='op'>&gt;</span>();
             <span class='ident'>compiled</span> <span class='op'>+=</span> <span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>StatePtr</span><span class='op'>&gt;</span>();
-            <span class='ident'>compiled</span> <span class='op'>+=</span> <span class='ident'>k</span>.<span class='ident'>insts</span>.<span class='ident'>len</span>() <span class='op'>*</span> <span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>InstPtr</span><span class='op'>&gt;</span>();
+            <span class='ident'>compiled</span> <span class='op'>+=</span> <span class='ident'>k</span>.<span class='ident'>data</span>.<span class='ident'>len</span>() <span class='op'>*</span> <span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span>();
         }
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>states</span> <span class='op'>=</span> <span class='number'>0</span>;
         <span class='kw'>for</span> <span class='ident'>s</span> <span class='kw'>in</span> <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>cache</span>.<span class='ident'>states</span> {
             <span class='ident'>states</span> <span class='op'>+=</span> <span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>State</span><span class='op'>&gt;</span>();
-            <span class='ident'>states</span> <span class='op'>+=</span> <span class='ident'>s</span>.<span class='ident'>insts</span>.<span class='ident'>len</span>() <span class='op'>*</span> <span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>InstPtr</span><span class='op'>&gt;</span>();
+            <span class='ident'>states</span> <span class='op'>+=</span> <span class='ident'>s</span>.<span class='ident'>data</span>.<span class='ident'>len</span>() <span class='op'>*</span> <span class='ident'>mem</span>::<span class='ident'>size_of</span>::<span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span>();
         }
         <span class='ident'>compiled</span>
         <span class='op'>+</span> <span class='ident'>states</span>
@@ -3432,9 +3608,10 @@ implementation.)
 
 <span class='kw'>impl</span> <span class='ident'>fmt</span>::<span class='ident'>Debug</span> <span class='kw'>for</span> <span class='ident'>State</span> {
     <span class='kw'>fn</span> <span class='ident'>fmt</span>(<span class='kw-2'>&amp;</span><span class='self'>self</span>, <span class='ident'>f</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>fmt</span>::<span class='ident'>Formatter</span>) <span class='op'>-&gt;</span> <span class='ident'>fmt</span>::<span class='prelude-ty'>Result</span> {
+        <span class='kw'>let</span> <span class='ident'>ips</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>usize</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='self'>self</span>.<span class='ident'>inst_ptrs</span>().<span class='ident'>collect</span>();
         <span class='ident'>f</span>.<span class='ident'>debug_struct</span>(<span class='string'>&quot;State&quot;</span>)
-         .<span class='ident'>field</span>(<span class='string'>&quot;flags&quot;</span>, <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>flags</span>)
-         .<span class='ident'>field</span>(<span class='string'>&quot;insts&quot;</span>, <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>insts</span>)
+         .<span class='ident'>field</span>(<span class='string'>&quot;flags&quot;</span>, <span class='kw-2'>&amp;</span><span class='self'>self</span>.<span class='ident'>flags</span>())
+         .<span class='ident'>field</span>(<span class='string'>&quot;insts&quot;</span>, <span class='kw-2'>&amp;</span><span class='ident'>ips</span>)
          .<span class='ident'>finish</span>()
     }
 }
@@ -3519,6 +3696,101 @@ implementation.)
         <span class='ident'>s</span> <span class='op'>=</span> <span class='macro'>format</span><span class='macro'>!</span>(<span class='string'>&quot;{} (match)&quot;</span>, <span class='ident'>s</span>);
     }
     <span class='ident'>s</span>
+}
+
+<span class='doccomment'>/// https://developers.google.com/protocol-buffers/docs/encoding#varints</span>
+<span class='kw'>fn</span> <span class='ident'>write_vari32</span>(<span class='ident'>data</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span>, <span class='ident'>n</span>: <span class='ident'>i32</span>) {
+    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>un</span> <span class='op'>=</span> (<span class='ident'>n</span> <span class='kw'>as</span> <span class='ident'>u32</span>) <span class='op'>&lt;&lt;</span> <span class='number'>1</span>;
+    <span class='kw'>if</span> <span class='ident'>n</span> <span class='op'>&lt;</span> <span class='number'>0</span> {
+        <span class='ident'>un</span> <span class='op'>=</span> <span class='op'>!</span><span class='ident'>un</span>;
+    }
+    <span class='ident'>write_varu32</span>(<span class='ident'>data</span>, <span class='ident'>un</span>)
+}
+
+<span class='doccomment'>/// https://developers.google.com/protocol-buffers/docs/encoding#varints</span>
+<span class='kw'>fn</span> <span class='ident'>read_vari32</span>(<span class='ident'>data</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>]) <span class='op'>-&gt;</span> (<span class='ident'>i32</span>, <span class='ident'>usize</span>) {
+    <span class='kw'>let</span> (<span class='ident'>un</span>, <span class='ident'>i</span>) <span class='op'>=</span> <span class='ident'>read_varu32</span>(<span class='ident'>data</span>);
+    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>n</span> <span class='op'>=</span> (<span class='ident'>un</span> <span class='op'>&gt;&gt;</span> <span class='number'>1</span>) <span class='kw'>as</span> <span class='ident'>i32</span>;
+    <span class='kw'>if</span> <span class='ident'>un</span> <span class='kw-2'>&amp;</span> <span class='number'>1</span> <span class='op'>!=</span> <span class='number'>0</span> {
+        <span class='ident'>n</span> <span class='op'>=</span> <span class='op'>!</span><span class='ident'>n</span>;
+    }
+    (<span class='ident'>n</span>, <span class='ident'>i</span>)
+}
+
+<span class='doccomment'>/// https://developers.google.com/protocol-buffers/docs/encoding#varints</span>
+<span class='kw'>fn</span> <span class='ident'>write_varu32</span>(<span class='ident'>data</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u8</span><span class='op'>&gt;</span>, <span class='kw-2'>mut</span> <span class='ident'>n</span>: <span class='ident'>u32</span>) {
+    <span class='kw'>while</span> <span class='ident'>n</span> <span class='op'>&gt;=</span> <span class='number'>0b1000_0000</span> {
+        <span class='ident'>data</span>.<span class='ident'>push</span>((<span class='ident'>n</span> <span class='kw'>as</span> <span class='ident'>u8</span>) <span class='op'>|</span> <span class='number'>0b1000_0000</span>);
+        <span class='ident'>n</span> <span class='op'>&gt;&gt;=</span> <span class='number'>7</span>;
+    }
+    <span class='ident'>data</span>.<span class='ident'>push</span>(<span class='ident'>n</span> <span class='kw'>as</span> <span class='ident'>u8</span>);
+}
+
+<span class='doccomment'>/// https://developers.google.com/protocol-buffers/docs/encoding#varints</span>
+<span class='kw'>fn</span> <span class='ident'>read_varu32</span>(<span class='ident'>data</span>: <span class='kw-2'>&amp;</span>[<span class='ident'>u8</span>]) <span class='op'>-&gt;</span> (<span class='ident'>u32</span>, <span class='ident'>usize</span>) {
+    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>n</span>: <span class='ident'>u32</span> <span class='op'>=</span> <span class='number'>0</span>;
+    <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>shift</span>: <span class='ident'>u32</span> <span class='op'>=</span> <span class='number'>0</span>;
+    <span class='kw'>for</span> (<span class='ident'>i</span>, <span class='kw-2'>&amp;</span><span class='ident'>b</span>) <span class='kw'>in</span> <span class='ident'>data</span>.<span class='ident'>iter</span>().<span class='ident'>enumerate</span>() {
+        <span class='kw'>if</span> <span class='ident'>b</span> <span class='op'>&lt;</span> <span class='number'>0b1000_0000</span> {
+            <span class='kw'>return</span> (<span class='ident'>n</span> <span class='op'>|</span> ((<span class='ident'>b</span> <span class='kw'>as</span> <span class='ident'>u32</span>) <span class='op'>&lt;&lt;</span> <span class='ident'>shift</span>), <span class='ident'>i</span> <span class='op'>+</span> <span class='number'>1</span>);
+        }
+        <span class='ident'>n</span> <span class='op'>|=</span> ((<span class='ident'>b</span> <span class='kw'>as</span> <span class='ident'>u32</span>) <span class='kw-2'>&amp;</span> <span class='number'>0b0111_1111</span>) <span class='op'>&lt;&lt;</span> <span class='ident'>shift</span>;
+        <span class='ident'>shift</span> <span class='op'>+=</span> <span class='number'>7</span>;
+    }
+    (<span class='number'>0</span>, <span class='number'>0</span>)
+}
+
+<span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
+<span class='kw'>mod</span> <span class='ident'>tests</span> {
+    <span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>rand</span>;
+
+    <span class='kw'>use</span> <span class='ident'>quickcheck</span>::{<span class='ident'>QuickCheck</span>, <span class='ident'>StdGen</span>, <span class='ident'>quickcheck</span>};
+    <span class='kw'>use</span> <span class='ident'>super</span>::{
+        <span class='ident'>StateFlags</span>, <span class='ident'>State</span>, <span class='ident'>push_inst_ptr</span>,
+        <span class='ident'>write_varu32</span>, <span class='ident'>read_varu32</span>, <span class='ident'>write_vari32</span>, <span class='ident'>read_vari32</span>,
+    };
+
+    <span class='attribute'>#[<span class='ident'>test</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>prop_state_encode_decode</span>() {
+        <span class='kw'>fn</span> <span class='ident'>p</span>(<span class='ident'>ips</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u32</span><span class='op'>&gt;</span>, <span class='ident'>flags</span>: <span class='ident'>u8</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
+            <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>data</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[<span class='ident'>flags</span>];
+            <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>prev</span> <span class='op'>=</span> <span class='number'>0</span>;
+            <span class='kw'>for</span> <span class='kw-2'>&amp;</span><span class='ident'>ip</span> <span class='kw'>in</span> <span class='ident'>ips</span>.<span class='ident'>iter</span>() {
+                <span class='ident'>push_inst_ptr</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>data</span>, <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>prev</span>, <span class='ident'>ip</span>);
+            }
+            <span class='kw'>let</span> <span class='ident'>state</span> <span class='op'>=</span> <span class='ident'>State</span> { <span class='ident'>data</span>: <span class='ident'>data</span>.<span class='ident'>into_boxed_slice</span>() };
+
+            <span class='kw'>let</span> <span class='ident'>expected</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>usize</span><span class='op'>&gt;</span> <span class='op'>=</span>
+                <span class='ident'>ips</span>.<span class='ident'>into_iter</span>().<span class='ident'>map</span>(<span class='op'>|</span><span class='ident'>ip</span><span class='op'>|</span> <span class='ident'>ip</span> <span class='kw'>as</span> <span class='ident'>usize</span>).<span class='ident'>collect</span>();
+            <span class='kw'>let</span> <span class='ident'>got</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>usize</span><span class='op'>&gt;</span> <span class='op'>=</span> <span class='ident'>state</span>.<span class='ident'>inst_ptrs</span>().<span class='ident'>collect</span>();
+            <span class='ident'>expected</span> <span class='op'>==</span> <span class='ident'>got</span> <span class='op'>&amp;&amp;</span> <span class='ident'>state</span>.<span class='ident'>flags</span>() <span class='op'>==</span> <span class='ident'>StateFlags</span>(<span class='ident'>flags</span>)
+        }
+        <span class='ident'>QuickCheck</span>::<span class='ident'>new</span>()
+            .<span class='ident'>gen</span>(<span class='ident'>StdGen</span>::<span class='ident'>new</span>(<span class='self'>self</span>::<span class='ident'>rand</span>::<span class='ident'>thread_rng</span>(), <span class='number'>70_000</span>))
+            .<span class='ident'>quickcheck</span>(<span class='ident'>p</span> <span class='kw'>as</span> <span class='kw'>fn</span>(<span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>u32</span><span class='op'>&gt;</span>, <span class='ident'>u8</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span>);
+    }
+
+    <span class='attribute'>#[<span class='ident'>test</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>prop_read_write_u32</span>() {
+        <span class='kw'>fn</span> <span class='ident'>p</span>(<span class='ident'>n</span>: <span class='ident'>u32</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
+            <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>buf</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[];
+            <span class='ident'>write_varu32</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>buf</span>, <span class='ident'>n</span>);
+            <span class='kw'>let</span> (<span class='ident'>got</span>, <span class='ident'>nread</span>) <span class='op'>=</span> <span class='ident'>read_varu32</span>(<span class='kw-2'>&amp;</span><span class='ident'>buf</span>);
+            <span class='ident'>nread</span> <span class='op'>==</span> <span class='ident'>buf</span>.<span class='ident'>len</span>() <span class='op'>&amp;&amp;</span> <span class='ident'>got</span> <span class='op'>==</span> <span class='ident'>n</span>
+        }
+        <span class='ident'>quickcheck</span>(<span class='ident'>p</span> <span class='kw'>as</span> <span class='kw'>fn</span>(<span class='ident'>u32</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span>);
+    }
+
+    <span class='attribute'>#[<span class='ident'>test</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>prop_read_write_i32</span>() {
+        <span class='kw'>fn</span> <span class='ident'>p</span>(<span class='ident'>n</span>: <span class='ident'>i32</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span> {
+            <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>buf</span> <span class='op'>=</span> <span class='macro'>vec</span><span class='macro'>!</span>[];
+            <span class='ident'>write_vari32</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>buf</span>, <span class='ident'>n</span>);
+            <span class='kw'>let</span> (<span class='ident'>got</span>, <span class='ident'>nread</span>) <span class='op'>=</span> <span class='ident'>read_vari32</span>(<span class='kw-2'>&amp;</span><span class='ident'>buf</span>);
+            <span class='ident'>nread</span> <span class='op'>==</span> <span class='ident'>buf</span>.<span class='ident'>len</span>() <span class='op'>&amp;&amp;</span> <span class='ident'>got</span> <span class='op'>==</span> <span class='ident'>n</span>
+        }
+        <span class='ident'>quickcheck</span>(<span class='ident'>p</span> <span class='kw'>as</span> <span class='kw'>fn</span>(<span class='ident'>i32</span>) <span class='op'>-&gt;</span> <span class='ident'>bool</span>);
+    }
 }
 </pre>
 </section>

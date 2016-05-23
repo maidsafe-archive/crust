@@ -46,7 +46,7 @@
             <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
                 [<span class='inner'>&#x2212;</span>]
             </a>
-        </span><a id='src-0' class='srclink' href='../src/regex/lib.rs.html#11-649' title='goto source code'>[src]</a></span></h1>
+        </span><a id='src-0' class='srclink' href='../src/regex/lib.rs.html#11-606' title='goto source code'>[src]</a></span></h1>
 <div class='docblock'><p>This crate provides a native implementation of regular expressions that is
 heavily based on RE2 both in syntax and in implementation. Notably,
 backreferences and arbitrary lookahead/lookbehind assertions are not
@@ -125,53 +125,6 @@ regular expressions are compiled exactly once.</p>
 
 <p>Specifically, in this example, the regex will be compiled when it is used for
 the first time. On subsequent uses, it will reuse the previous compilation.</p>
-
-<h1 id='the-regex-macro' class='section-header'><a href='#the-regex-macro'>The <code>regex!</code> macro</a></h1>
-<p>Rust&#39;s compile-time meta-programming facilities provide a way to write a
-<code>regex!</code> macro which compiles regular expressions <em>when your program
-compiles</em>. Said differently, if you only use <code>regex!</code> to build regular
-expressions in your program, then your program cannot compile with an
-invalid regular expression. Moreover, the <code>regex!</code> macro compiles the
-given expression to native Rust code, which ideally makes it faster.
-Unfortunately (or fortunately), the dynamic implementation has had a lot
-more optimization work put into it currently, so it is faster than
-the <code>regex!</code> macro in almost every case.</p>
-
-<p>To use the <code>regex!</code> macro, you must add <code>regex_macros</code> to your dependencies
-in your project&#39;s <code>Cargo.toml</code>:</p>
-
-<pre><code class="language-toml">[dependencies]
-regex = &quot;0.1&quot;
-regex_macros = &quot;0.1&quot;
-</code></pre>
-
-<p>and then enable the <code>plugin</code> feature and import the <code>regex_macros</code> crate as
-a syntax extension:</p>
-
-<pre class='rust rust-example-rendered'>
-<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>feature</span>(<span class='ident'>plugin</span>)]</span>
-<span class='attribute'>#<span class='op'>!</span>[<span class='ident'>plugin</span>(<span class='ident'>regex_macros</span>)]</span>
-<span class='kw'>extern</span> <span class='kw'>crate</span> <span class='ident'>regex</span>;
-
-<span class='kw'>fn</span> <span class='ident'>main</span>() {
-    <span class='kw'>let</span> <span class='ident'>re</span> <span class='op'>=</span> <span class='macro'>regex</span><span class='macro'>!</span>(<span class='string'>r&quot;^\d{4}-\d{2}-\d{2}$&quot;</span>);
-    <span class='macro'>assert</span><span class='macro'>!</span>(<span class='ident'>re</span>.<span class='ident'>is_match</span>(<span class='string'>&quot;2014-01-01&quot;</span>));
-}</pre>
-
-<p>There are a few things worth mentioning about using the <code>regex!</code> macro.
-Firstly, the <code>regex!</code> macro <em>only</em> accepts string <em>literals</em>.
-Secondly, the <code>regex</code> crate <em>must</em> be linked with the name <code>regex</code> since
-the generated code depends on finding symbols in the <code>regex</code> crate.</p>
-
-<p>One downside of using the <code>regex!</code> macro is that it can increase the
-size of your program&#39;s binary since it generates specialized Rust code.
-The extra size probably won&#39;t be significant for a small number of
-expressions, but 100+ calls to <code>regex!</code> will probably result in a
-noticeably bigger binary.</p>
-
-<p><strong>NOTE</strong>: This is implemented using a compiler plugin, which is not
-available on the Rust 1.0 beta/stable channels. Therefore, you&#39;ll only
-be able to use <code>regex!</code> on the nightly Rust releases.</p>
 
 <h1 id='example-iterating-over-capture-groups' class='section-header'><a href='#example-iterating-over-capture-groups'>Example: iterating over capture groups</a></h1>
 <p>This crate provides convenient iterators for matching an expression
