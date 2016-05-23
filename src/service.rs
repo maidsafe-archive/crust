@@ -439,7 +439,10 @@ impl Service {
                     Err(mpsc::RecvError) => {
                         // All of the senders have hung up without sending us an Ok(()). They all
                         // must have failed to connect.
-                        let err = io::Error::new(io::ErrorKind::TimedOut, "");
+                        trace!("Failed to establish connection to {:?}: {:?}",
+                               their_id,
+                               errors);
+                        let err = io::Error::new(io::ErrorKind::TimedOut, "Failed to connect");
                         let _ = event_tx.send(Event::NewPeer(Err(err), their_id));
                         return;
                     }
