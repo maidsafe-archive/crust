@@ -269,7 +269,8 @@ impl Service {
             let _ = self.event_tx.send(Event::ConnectionInfoPrepared(ConnectionInfoResult {
                 result_token: result_token,
                 result: Err(io::Error::new(io::ErrorKind::Other,
-                                           format!("Failed to register task with mio eventloop"))),
+                                           format!("Failed to register task with mio eventloop: 
+                                                    {}", e))),
             }));
         }
     }

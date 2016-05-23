@@ -48,7 +48,6 @@ extern crate rand;
 extern crate byteorder;
 extern crate sodiumoxide;
 extern crate socket_addr;
-extern crate nat_traversal;
 extern crate rustc_serialize;
 #[macro_use]
 extern crate maidsafe_utilities;
