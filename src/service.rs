@@ -18,11 +18,9 @@
 #![deny(unused)]
 
 use std::collections::{HashMap, HashSet};
-use std::hash::{Hash, Hasher, SipHasher};
 use std::io;
 use std::sync::{mpsc, Arc, Mutex};
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::fmt::Write;
 use service_discovery::ServiceDiscovery;
 use sodiumoxide;
 use sodiumoxide::crypto::box_;
@@ -43,6 +41,7 @@ use bootstrap;
 use bootstrap::RaiiBootstrap;
 use bootstrap_handler::BootstrapHandler;
 use std::time::Duration;
+use maidsafe_utilities;
 
 use event::Event;
 use socket_addr::SocketAddr;
@@ -103,10 +102,8 @@ impl TheirConnectionInfo {
 
 /// Returns a hash of the network name.
 fn name_hash(network_name: &Option<String>) -> u64 {
-    let mut hasher = SipHasher::new();
     debug!("Network name: {:?}", network_name);
-    network_name.hash(&mut hasher);
-    hasher.finish()
+    maidsafe_utilities::big_endian_sip_hash(&network_name)
 }
 
 /// A structure representing a connection manager.
@@ -159,17 +156,15 @@ impl Service {
         let generator = move || unwrap_result!(cloned_contact_info.lock()).clone();
         let service_discovery =
             try!(ServiceDiscovery::new_with_generator(config.service_discovery_port
-                                                            .unwrap_or(DEFAULT_BEACON_PORT),
+                                                          .unwrap_or(DEFAULT_BEACON_PORT),
                                                       generator));
 
         let mapping_context = try!(MappingContext::new()
-                                       .result_log()
-                                       .or_else(|e| {
-                                           Err(io::Error::new(io::ErrorKind::Other,
-                                                              format!("Failed to create \
-                                                                       MappingContext: {}",
-                                                                      e)))
-                                       }));
+            .result_log()
+            .or_else(|e| {
+                Err(io::Error::new(io::ErrorKind::Other,
+                                   format!("Failed to create MappingContext: {}", e)))
+            }));
         // Form initial peer contact infos - these will also contain echo-service addrs.
         let bootstrap_cache =
             Arc::new(Mutex::new(try!(BootstrapHandler::new(&config.bootstrap_cache_name))));
@@ -200,13 +195,11 @@ impl Service {
                                            name_hash);
 
         let tcp_hole_punch_server = try!(SimpleTcpHolePunchServer::new(mapping_context.clone())
-                                             .result_log()
-                                             .or_else(|err| {
-                                                 let err_str = format!("Failed to create TCP \
-                                                                        hole punch server: {}",
-                                                                       err);
-                                                 Err(io::Error::new(io::ErrorKind::Other, err_str))
-                                             }));
+            .result_log()
+            .or_else(|err| {
+                let err_str = format!("Failed to create TCP hole punch server: {}", err);
+                Err(io::Error::new(io::ErrorKind::Other, err_str))
+            }));
 
         {
             let mut static_contact_info = static_contact_info.lock().unwrap();
@@ -277,8 +270,8 @@ impl Service {
     /// number, and they are _less_ likely to be dropped if the upstream bandwidth is insufficient.
     pub fn send(&self, id: &PeerId, data: Vec<u8>, priority: u8) -> io::Result<()> {
         match unwrap_result!(self.connection_map.lock())
-                  .get_mut(&id)
-                  .and_then(|conns| conns.get_mut(0)) {
+            .get_mut(&id)
+            .and_then(|conns| conns.get_mut(0)) {
             None => {
                 let msg = format!("No connection to peer {}", id);
                 Err(io::Error::new(io::ErrorKind::Other, msg))
@@ -330,9 +323,9 @@ impl Service {
         }
 
         if !unwrap_result!(self.connection_map.lock())
-                .get(&their_id)
-                .into_iter()
-                .all(Vec::is_empty) {
+            .get(&their_id)
+            .into_iter()
+            .all(Vec::is_empty) {
             return;
         }
 
@@ -380,7 +373,7 @@ impl Service {
                     Ok(()) => {
                         let _ = result_tx.send(Ok(()));
                         match unwrap_result!(bootstrap_cache.lock())
-                                  .update_contacts(vec![static_contact_info], vec![]) {
+                            .update_contacts(vec![static_contact_info], vec![]) {
                             Ok(()) => (),
                             Err(e) => warn!("Failed to update bootstrap cache: {}", e),
                         };
@@ -446,12 +439,7 @@ impl Service {
                     Err(mpsc::RecvError) => {
                         // All of the senders have hung up without sending us an Ok(()). They all
                         // must have failed to connect.
-                        let len = errors.len();
-                        let mut err_str: String = From::from("Connect failed. errors:");
-                        for (i, e) in errors.into_iter().enumerate() {
-                            let _ = write!(err_str, " ({} of {}) {}", i + 1, len, e);
-                        }
-                        let err = io::Error::new(io::ErrorKind::TimedOut, err_str);
+                        let err = io::Error::new(io::ErrorKind::TimedOut, "");
                         let _ = event_tx.send(Event::NewPeer(Err(err), their_id));
                         return;
                     }
@@ -478,8 +466,7 @@ impl Service {
                         (Some(socket), gen_rendezvous_info(endpoints))
                     }
                     Err(err) => {
-                        let _ =
-                            event_tx.send(Event::ConnectionInfoPrepared(ConnectionInfoResult {
+                        let _ = event_tx.send(Event::ConnectionInfoPrepared(ConnectionInfoResult {
                                 result_token: result_token,
                                 result: Err(From::from(err)),
                             }));
@@ -894,8 +881,8 @@ mod test {
             fn run(self, send_barrier: Arc<Barrier>, drop_barrier: Arc<Barrier>) -> JoinHandle<()> {
                 thread!("run!", move || {
                     for (our_ci, their_ci) in self.our_cis
-                                                  .into_iter()
-                                                  .zip(self.connection_id_rx.into_iter()) {
+                        .into_iter()
+                        .zip(self.connection_id_rx.into_iter()) {
                         self.service.connect(our_ci, their_ci);
                     }
                     let mut their_ids = HashMap::new();
