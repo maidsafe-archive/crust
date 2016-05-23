@@ -107,6 +107,7 @@ pub fn tcp_builder_local_addr(sock: &net2::TcpBuilder) -> io::Result<net::Socket
 #[cfg(target_family = "windows")]
 #[allow(unsafe_code)]
 pub fn tcp_builder_local_addr(sock: &net2::TcpBuilder) -> io::Result<net::SocketAddr> {
+    use std::mem;
     use std::os::windows::io::{AsRawSocket, FromRawSocket};
     let fd = sock.as_raw_socket();
     let stream = unsafe { net::TcpStream::from_raw_socket(fd) };
