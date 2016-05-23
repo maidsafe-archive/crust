@@ -15,12 +15,35 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use mio;
 use std::io;
+use std::sync::mpsc;
+use config_file_handler;
+
+use core::CoreMessage;
+use peer_id::PeerId;
+use socket::SocketError;
 
 quick_error! {
     /// Crust's universal error type.
     #[derive(Debug)]
     pub enum Error {
+        /// Failed receiving from a channel
+        ChannelRecv(err: mpsc::RecvError) {
+            description("Channel receive error")
+            display("Channel receive error: {}", err)
+            cause(err)
+            from()
+        }
+
+        /// Config file handling errors
+        ConfigFileHandler(err: config_file_handler::Error) {
+            description("Config file handling error")
+            display("Config file handling error: {}", err)
+            cause(err)
+            from()
+        }
+
         /// Wrapper for a `std::io::Error`
         Io(err: io::Error) {
             description("IO error")
@@ -28,5 +51,33 @@ quick_error! {
             cause(err)
             from()
         }
+
+        /// Size of a message to send is too large
+        MessageTooLarge {
+            description("Message too large")
+        }
+
+        /// Mio notify errors
+        MioNotify(err: mio::NotifyError<CoreMessage>) {
+            description("Mio notify error")
+            display("Mio notify error: {}", err)
+            cause(err)
+            from()
+        }
+
+        /// Peer not found
+        PeerNotFound(peer_id: PeerId) {
+            description("Peer not found")
+            display("Peer {:?} not found", peer_id)
+        }
+
+        /// Socket error
+        Socket(err: SocketError) {
+            description("Socket error")
+            display("Socket error: {}", err)
+            cause(err)
+            from()
+        }
+
     }
 }

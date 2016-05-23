@@ -15,183 +15,168 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use std::any::Any;
-use std::cell::RefCell;
-use std::collections::{HashMap, VecDeque};
-use std::io::{BufReader, Cursor, ErrorKind, Read, Write};
-use std::rc::Rc;
-use std::sync::{Arc, Mutex};
-
-use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
-use core::{Core, Context};
-use event::Event;
 use mio::{Token, EventLoop, EventSet, PollOpt};
-use mio::tcp::{Shutdown, TcpStream};
-use peer_id::PeerId;
-use state::State;
+use std::any::Any;
+use std::io::{Read, Write};
 
-const U32_BYTE_LENGTH: usize = 4;
+use core::{Core, Context, State};
+use event::Event;
+use message::Message;
+use peer_id::PeerId;
+use service::SharedConnectionMap;
+use socket::Socket;
 
 pub struct ActiveConnection {
+    connection_map: SharedConnectionMap,
+    context: Context,
+    event_tx: ::CrustEventSender,
     peer_id: PeerId,
-    cm: Arc<Mutex<HashMap<PeerId, Context>>>,
+    socket: Socket,
     token: Token,
-    _context: Context,
-    read_buf: Vec<u8>,
-    reader: BufReader<TcpStream>,
-    read_len: u32,
-    socket: TcpStream,
-    write_queue: VecDeque<Vec<u8>>,
-    routing_tx: ::CrustEventSender,
+    event_set: EventSet,
 }
 
 impl ActiveConnection {
-    pub fn new(core: &mut Core,
-               event_loop: &mut EventLoop<Core>,
-               cm: Arc<Mutex<HashMap<PeerId, Context>>>,
-               context: Context,
-               socket: TcpStream,
-               routing_tx: ::CrustEventSender,
-               token: Token) {
-        println!("Entered state ActiveConnection");
+    pub fn start(core: &mut Core,
+                 event_loop: &mut EventLoop<Core>,
+                 context: Context,
+                 connection_map: SharedConnectionMap,
+                 peer_id: PeerId,
+                 socket: Socket,
+                 token: Token,
+                 event_tx: ::CrustEventSender) {
+        debug!("Entered state ActiveConnection");
 
-        let peer_id = ::rand::random();
+        let event_set = EventSet::error() | EventSet::hup() | EventSet::readable();
 
-        let connection = ActiveConnection {
+        if let Err(error) = event_loop.reregister(&socket,
+                                                  token,
+                                                  event_set,
+                                                  PollOpt::edge())
+        {
+            error!("Failed to reregister socker: {:?}", error);
+            let _ = event_loop.deregister(&socket);
+            let _ = core.remove_state(context);
+            let _ = core.remove_context(token);
+
+            let _ = event_tx.send(Event::LostPeer(peer_id));
+
+            return;
+        }
+
+        let _ = connection_map.lock().unwrap().insert(peer_id, context);
+
+        let state = ActiveConnection {
+            connection_map: connection_map,
+            context: context.clone(),
+            event_tx: event_tx,
             peer_id: peer_id,
-            cm: cm,
-            token: token,
-            _context: context.clone(),
-            read_buf: Vec::new(),
-            reader: BufReader::new(socket.try_clone().expect("Could not clone TcpStream")),
-            read_len: 0,
             socket: socket,
-            write_queue: VecDeque::new(),
-            routing_tx: routing_tx,
+            token: token,
+            event_set: event_set,
         };
 
-        event_loop.reregister(&connection.socket,
-                              token,
-                              EventSet::readable() | EventSet::error() | EventSet::hup(),
-                              PollOpt::edge())
-                  .expect("Could not re-register socket with EventLoop<Core>");
-
-        let _ = connection.cm.lock().unwrap().insert(peer_id, context.clone());
-        let _ = connection.routing_tx.send(Event::NewConnection(peer_id));
-        let _ = core.insert_context(token, context.clone());
-        let _ = core.insert_state(context, Rc::new(RefCell::new(connection)));
+        let _ = core.insert_state(context, state);
     }
 
-    fn read(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, _token: Token) {
-        // the mio reading window is max at 64k (64 * 1024)
-        let mut buf = vec![0; 65536];
-        match self.reader.read(&mut buf) {
-            Ok(bytes_rxd) => {
-                buf.resize(bytes_rxd, 0);
-                self.read_buf.append(&mut buf);
-                while self.read_data() {}
-                if self.read_len <= ::MAX_DATA_LEN {
-                    return;
-                }
+    fn read(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
+        match self.socket.read::<Message>() {
+            Ok(Some(Message::Data(data))) => {
+                let _ = self.event_tx.send(Event::NewMessage(self.peer_id, data));
             }
-            Err(e) => {
-                if !(e.kind() == ErrorKind::WouldBlock || e.kind() == ErrorKind::Interrupted) {
-                    // remove self from core etc
-                    // let _ = self.routing_tx.send(CrustMsg::LostPeer);
-                }
+
+            Ok(Some(message)) => warn!("Unexpected message: {:?}", message),
+            Ok(None) => (),
+            Err(error) => {
+                error!("Failed to read from socket: {:?}", error);
+                self.stop(core, event_loop);
+                return;
             }
         }
-        self.terminate(core, event_loop);
+
+        self.reregister(core, event_loop);
     }
 
-    fn read_data(&mut self) -> bool {
-        if self.read_len == 0 && self.read_buf.len() >= U32_BYTE_LENGTH {
-            self.read_len = Cursor::new(&self.read_buf[..U32_BYTE_LENGTH])
-                                .read_u32::<LittleEndian>()
-                                .expect("Failed in parsing data_len.");
-            if self.read_len > ::MAX_DATA_LEN {
-                return false;
+    fn write(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
+        match self.socket.flush() {
+            Ok(true) => self.event_set.remove(EventSet::writable()),
+            Ok(false) => (),
+            Err(error) => {
+                error!("Failed to flush socket: {:?}", error);
+                self.stop(core, event_loop);
+                return;
             }
-            self.read_buf = self.read_buf.split_off(U32_BYTE_LENGTH);
         }
-        // TODO: if data_len has been incorrectly parsed, the execution hangs.
-        //       A time_out may need to be introduced to prevent it.
-        if self.read_len > 0 && self.read_buf.len() as u32 >= self.read_len {
-            let tail = self.read_buf.split_off(self.read_len as usize);
-            let _ = self.routing_tx.send(Event::NewMessage(self.peer_id, self.read_buf.clone()));
-            self.read_buf = tail;
-            self.read_len = 0;
-            return true;
-        }
-        false
+
+        self.reregister(core, event_loop);
     }
 
-    fn write(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, _token: Token) {
-        if let Some(mut data) = self.write_queue.pop_front() {
-            match self.socket.write(&data) {
-                Ok(bytes_txd) => {
-                    if bytes_txd < data.len() {
-                        data = data[bytes_txd..].to_owned();
-                        self.write_queue.push_front(data);
-                    }
-                }
-                Err(e) => {
-                    if e.kind() == ErrorKind::WouldBlock || e.kind() == ErrorKind::Interrupted {
-                        self.write_queue.push_front(data);
-                    } else {
-                        self.terminate(core, event_loop);
-                    }
-                }
-            }
+    fn stop(&self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
+        if let Err(error) = self.socket.shutdown() {
+            error!("Failed to shutdown socket: {:?}", error);
         }
 
-        let event_set = if self.write_queue.is_empty() {
-            EventSet::readable() | EventSet::error() | EventSet::hup()
-        } else {
-            EventSet::readable() | EventSet::writable() | EventSet::error() | EventSet::hup()
-        };
+        if let Err(error) = event_loop.deregister(&self.socket) {
+            error!("Failed to deregister socket: {:?}", error);
+        }
 
-        event_loop.reregister(&self.socket, self.token, event_set, PollOpt::edge())
-                  .expect("Could not reregister socket");
+        let _ = core.remove_context(self.token);
+        let _ = core.remove_state(self.context);
+        let _ = self.connection_map.lock().unwrap().remove(&self.peer_id);
+
+        let _ = self.event_tx.send(Event::LostPeer(self.peer_id));
+    }
+
+    fn reregister(&self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
+        if let Err(error) = event_loop.reregister(&self.socket,
+                                                  self.token,
+                                                  self.event_set,
+                                                  PollOpt::edge()) {
+            error!("Failed to reregister socket: {:?}", error);
+            self.stop(core, event_loop);
+        }
     }
 }
 
 impl State for ActiveConnection {
-    fn execute(&mut self,
-               core: &mut Core,
-               event_loop: &mut EventLoop<Core>,
-               token: Token,
-               event_set: EventSet) {
+    fn ready(&mut self,
+             core: &mut Core,
+             event_loop: &mut EventLoop<Core>,
+             token: Token,
+             event_set: EventSet) {
         assert_eq!(token, self.token);
 
         if event_set.is_error() {
-            panic!("connection error");
-            // let _ = routing_tx.send(Error - Could not connect);
-        } else if event_set.is_hup() {
-            self.terminate(core, event_loop);
-        } else if event_set.is_readable() {
-            self.read(core, event_loop, token);
-        } else if event_set.is_writable() {
-            self.write(core, event_loop, token);
+            self.stop(core, event_loop);
+            return;
+        }
+
+        if event_set.is_writable() {
+            self.write(core, event_loop);
+        }
+
+        if event_set.is_readable() {
+            self.read(core, event_loop);
+        }
+
+        if event_set.is_hup() {
+            self.stop(core, event_loop);
         }
     }
 
     fn write(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, data: Vec<u8>) {
-        let mut vec_len = Vec::with_capacity(U32_BYTE_LENGTH);
-        let _ = vec_len.write_u32::<LittleEndian>(data.len() as u32);
-        self.write_queue.push_back(vec_len);
-        self.write_queue.push_back(data);
-        let token = self.token;
-        self.write(core, event_loop, token);
+        if let Err(error) = self.socket.write(Message::Data(data)) {
+            error!("Failed to write to socket: {:?}", error);
+            self.stop(core, event_loop);
+            return;
+        }
+
+        self.event_set.insert(EventSet::writable());
+        self.reregister(core, event_loop);
     }
 
     fn terminate(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
-        println!("Graceful Exit");
-        event_loop.deregister(&self.socket).expect("Could not dereregister socket");
-        let _ = self.socket.shutdown(Shutdown::Both);
-        let context = core.remove_context(&self.token).expect("Context not found");
-        let _ = core.remove_state(&context).expect("State not found");
-        let _ = self.routing_tx.send(Event::LostPeer(self.peer_id));
+        self.stop(core, event_loop);
     }
 
     fn as_any(&mut self) -> &mut Any {

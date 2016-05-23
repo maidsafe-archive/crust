@@ -33,18 +33,22 @@ extern crate crust;
 #[macro_use]
 extern crate maidsafe_utilities;
 extern crate rand;
+extern crate socket_addr;
 
+use socket_addr::SocketAddr;
 use std::io::{Read, Write};
-use std::net::{SocketAddr, TcpListener};
+use std::net::TcpListener;
 use std::sync::mpsc;
 use std::str::FromStr;
 use std::thread;
 use std::time::Duration;
 
-use crust::{CrustEventSender, Event, MAX_DATA_LEN, Service};
+use crust::{CrustEventSender, Event, MAX_DATA_LEN, Service, StaticContactInfo};
 use maidsafe_utilities::event_sender::MaidSafeEventCategory;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 use rand::Rng;
+
+type StdSocketAddr = std::net::SocketAddr;
 
 fn spawn_test_server() {
     let ls = TcpListener::bind("127.0.0.1:33333").expect("Could not bind listener.");
@@ -87,20 +91,22 @@ fn main() {
     let mut service = Service::new(crust_sender).expect("Failed constructing crust service");
 
     println!("Connecting ...");
-    service.connect(SocketAddr::from_str("127.0.0.1:33333").expect("Require proper address"));
+    let contact_info = StaticContactInfo {
+        tcp_acceptors: vec![SocketAddr(StdSocketAddr::from_str("127.0.0.1:33333").expect("Require proper address"))],
+        tcp_mapper_servers: vec![],
+    };
+
+    let _ = service.connect(contact_info).expect("Failed to connect");
 
     for it in crust_rx.iter() {
         match it {
-            Event::NewConnection(peer_id) => {
+            Event::NewPeer(Ok(()), peer_id) => {
                 println!("Routing received new connection with peer id {}", peer_id);
-                service.send(peer_id, generate_random_vec_u8(MAX_DATA_LEN as usize + 1));
+                service.send(peer_id, generate_random_vec_u8(MAX_DATA_LEN as usize + 1))
+                       .expect("Failed to send data");
             }
             Event::NewMessage(peer_id, msg) => {
                 println!("Routing received from peer id {}: {:?}", peer_id, msg);
-            }
-            Event::WriteMsgSizeProhibitive(peer_id, data) => {
-                println!("Routing received WriteMsgSizeProhibitive for data len {}", data.len());
-                service.send(peer_id, generate_random_vec_u8(10));
             }
             Event::LostPeer(peer_id) => {
                 println!("Lost Peer {}", peer_id);

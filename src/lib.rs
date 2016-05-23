@@ -42,31 +42,40 @@
 #![cfg_attr(feature="clippy", deny(clippy, clippy_pedantic))]
 #![cfg_attr(feature="clippy", allow(use_debug))]
 
-extern crate mio;
-extern crate net2;
-extern crate rand;
 extern crate byteorder;
-extern crate sodiumoxide;
-extern crate socket_addr;
-extern crate nat_traversal;
-extern crate rustc_serialize;
+extern crate config_file_handler;
+#[macro_use]
+extern crate log;
 #[macro_use]
 extern crate maidsafe_utilities;
+extern crate mio;
+extern crate nat_traversal;
+extern crate net2;
+extern crate rand;
+extern crate rustc_serialize;
+extern crate sodiumoxide;
+extern crate socket_addr;
 
 // Needed because the crate is only used for macros
 #[allow(unused_extern_crates)]
 #[macro_use]
 extern crate quick_error;
 
+mod bootstrap_states;
+mod config_handler;
+mod connection_states;
 mod core;
 mod error;
 mod event;
-mod state;
+mod message;
 mod peer_id;
 mod service;
 mod service_discovery;
-mod connection_states;
+mod socket;
 mod static_contact_info;
+
+#[cfg(test)]
+mod tests;
 
 /// Crust Observers will be informed of crust events on this
 pub type CrustEventSender = ::maidsafe_utilities::event_sender::MaidSafeObserver<Event>;
@@ -79,3 +88,4 @@ pub use error::Error;
 pub use peer_id::PeerId;
 pub use service::Service;
 pub use socket_addr::SocketAddr;
+pub use static_contact_info::StaticContactInfo;

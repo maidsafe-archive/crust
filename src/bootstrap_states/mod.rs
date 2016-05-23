@@ -15,11 +15,9 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-pub use self::active_connection::ActiveConnection;
-pub use self::establish_connection::EstablishConnection;
-pub use self::listen::Listen;
+pub use self::get_contacts::GetBootstrapContacts;
 
-mod accept_connection;
-mod active_connection;
+mod bootstrap;
+mod cache;
 mod establish_connection;
-mod listen;
+mod get_contacts;

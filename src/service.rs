@@ -15,24 +15,32 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+use maidsafe_utilities::thread::RaiiThreadJoiner;
+use mio::{self, EventLoop};
 use net2;
+use sodiumoxide;
+use sodiumoxide::crypto::box_::{self, PublicKey, SecretKey};
+use std::collections::HashMap;
+use std::hash::{Hash, Hasher, SipHasher};
 use std::io;
-use state::State;
+use std::sync::{Arc, Mutex};
+
+use bootstrap_states::GetBootstrapContacts;
+use config_handler::{self, Config};
+use connection_states::{EstablishConnection, Listen};
+use core::{Context, Core, CoreMessage, State};
 use event::Event;
 use error::Error;
-use std::net::SocketAddr;
-use peer_id::{self, PeerId};
-use std::sync::{Arc, Mutex};
-use std::collections::HashMap;
-use core::{Core, CoreMessage, Context};
-use service_discovery::ServiceDiscovery;
-use mio::{EventLoop, NotifyError, Sender};
-use static_contact_info::StaticContactInfo;
-use connection_states::EstablishConnection;
-use maidsafe_utilities::thread::RaiiThreadJoiner;
-use sodiumoxide::crypto::box_::{self, PublicKey, SecretKey};
 use nat_traversal::{MappedTcpSocket, MappingContext, PrivRendezvousInfo, PubRendezvousInfo,
                     gen_rendezvous_info};
+use peer_id::{self, PeerId};
+use service_discovery::ServiceDiscovery;
+use static_contact_info::StaticContactInfo;
+
+const BOOTSTRAP_CONTEXT: Context = Context(0);
+const SERVICE_DISCOVERY_CONTEXT: Context = Context(1);
+
+const SERVICE_DISCOVERY_DEFAULT_PORT: u16 = 5483;
 
 /// The result of a `Service::prepare_contact_info` call.
 #[derive(Debug)]
@@ -81,15 +89,23 @@ impl TheirConnectionInfo {
     }
 }
 
+pub type SharedConnectionMap = Arc<Mutex<HashMap<PeerId, Context>>>;
+
+fn new_shared_connection_map() -> SharedConnectionMap {
+    Arc::new(Mutex::new(HashMap::new()))
+}
+
 /// A structure representing a connection manager.
 pub struct Service {
-    // This is the connection map -> PeerId <-> Context
-    connection_map: Arc<Mutex<HashMap<PeerId, Context>>>,
+    config: Config,
+    connection_map: SharedConnectionMap,
     event_tx: ::CrustEventSender,
+    is_listenner_running: bool,
+    is_service_discovery_running: bool,
     mapping_context: Arc<MappingContext>,
-    mio_tx: Sender<CoreMessage>,
+    mio_tx: mio::Sender<CoreMessage>,
+    name_hash: u64,
     our_keys: (PublicKey, SecretKey),
-    service_discovery: Arc<Mutex<Option<Context>>>,
     static_contact_info: Arc<Mutex<StaticContactInfo>>,
     _thread_joiner: RaiiThreadJoiner,
 }
@@ -97,14 +113,26 @@ pub struct Service {
 impl Service {
     /// Constructs a service.
     pub fn new(event_tx: ::CrustEventSender) -> Result<Self, Error> {
+        Service::with_config(event_tx, try!(config_handler::read_config_file()))
+    }
+
+    /// Constructs a service with the given config. User needs to create an asynchronous channel,
+    /// and provide the sender half to this method. Receiver will receive all `Event`s from this
+    /// library.
+    pub fn with_config(event_tx: ::CrustEventSender, config: Config) -> Result<Service, Error> {
+        sodiumoxide::init();
+
         let mut event_loop = try!(EventLoop::new());
         let mio_tx = event_loop.channel();
         let our_keys = box_::gen_keypair();
+        let name_hash = name_hash(&config.network_name);
+
         // Form our initial contact info
         let static_contact_info = Arc::new(Mutex::new(StaticContactInfo {
             tcp_acceptors: Vec::new(),
             tcp_mapper_servers: Vec::new(),
         }));
+
         let mapping_context = try!(MappingContext::new()
                                        .result_log()
                                        .or_else(|e| {
@@ -115,17 +143,20 @@ impl Service {
                                        }));
 
         let joiner = RaiiThreadJoiner::new(thread!("Crust event loop", move || {
-            let mut core = Core::new();
+            let mut core = Core::with_context_counter(2);
             event_loop.run(&mut core).expect("EventLoop failed to run");
         }));
 
         Ok(Service {
-            connection_map: Arc::new(Mutex::new(HashMap::new())),
+            connection_map: new_shared_connection_map(),
+            config: config,
             event_tx: event_tx,
+            is_listenner_running: false,
+            is_service_discovery_running: false,
             mapping_context: Arc::new(mapping_context),
             mio_tx: mio_tx,
+            name_hash: name_hash,
             our_keys: our_keys,
-            service_discovery: Arc::new(Mutex::new(None)),
             static_contact_info: static_contact_info,
             _thread_joiner: joiner,
         })
@@ -133,84 +164,145 @@ impl Service {
 
     /// Starts listening for beacon broadcasts.
     pub fn start_service_discovery(&mut self) {
-        if self.service_discovery.lock().unwrap().is_some() {
+        if self.is_service_discovery_running {
             return;
+        } else {
+            self.is_service_discovery_running = true;
         }
-        let service_discovery = self.service_discovery.clone();
+
         let cloned_contact_info = self.static_contact_info.clone();
+        let port = self.config.service_discovery_port
+                              .unwrap_or(SERVICE_DISCOVERY_DEFAULT_PORT);
+
         let _ = self.post(move |core, event_loop| {
             if let Err(e) = ServiceDiscovery::new(core,
                                                   event_loop,
                                                   cloned_contact_info,
-                                                  service_discovery,
-                                                  5483) {
-                println!("Could not start ServiceDiscovery: {:?}", e);
+                                                  SERVICE_DISCOVERY_CONTEXT,
+                                                  port) {
+                error!("Could not start ServiceDiscovery: {:?}", e);
             }
         });
     }
 
-
-    /// connect to peer
-    pub fn connect(&mut self, peer_contact_info: SocketAddr) {
-        let routing_tx = self.event_tx.clone();
+    /// Start the bootstraping procedure.
+    // TODO: accept a blacklist parameter.
+    pub fn start_bootstrap(&mut self) -> Result<(), Error> {
+        let config = self.config.clone();
+        let our_public_key = self.our_keys.0.clone();
+        let name_hash = self.name_hash;
         let connection_map = self.connection_map.clone();
+        let event_tx = self.event_tx.clone();
 
-        let _ = self.post(move |core, event_loop| {
-            EstablishConnection::new(core,
-                                     event_loop,
-                                     connection_map,
-                                     routing_tx,
-                                     peer_contact_info);
-        });
+        self.post(move |core, event_loop| {
+            GetBootstrapContacts::start(core,
+                                        event_loop,
+                                        BOOTSTRAP_CONTEXT,
+                                        &config,
+                                        our_public_key,
+                                        name_hash,
+                                        connection_map,
+                                        event_tx);
+        })
     }
 
-    /// dropping a peer
-    pub fn drop_peer(&mut self, peer_id: PeerId) {
-        let context = self.connection_map
-                          .lock()
-                          .unwrap()
-                          .remove(&peer_id)
-                          .expect("Context not found");
+    /// Stop the bootstraping procedure
+    pub fn stop_bootstrap(&mut self) -> Result<(), Error> {
+        self.post(move |mut core, mut event_loop| {
+            let _ = core.terminate_state(event_loop, BOOTSTRAP_CONTEXT);
+        })
+    }
+
+    /// Starts accepting TCP connections.
+    pub fn start_listening_tcp(&mut self) -> Result<(), Error> {
+        // Do not create more than one listener.
+        if self.is_listenner_running {
+            return Ok(());
+        } else {
+            self.is_listenner_running = true;
+        }
+
+        let connection_map = self.connection_map.clone();
+        let port = self.config.tcp_acceptor_port.unwrap_or(0);
+        let our_public_key = self.our_keys.0.clone();
+        let name_hash = self.name_hash;
+        let event_tx = self.event_tx.clone();
+
+        self.post(move |core, event_loop| {
+            Listen::start(core,
+                          event_loop,
+                          port,
+                          our_public_key,
+                          name_hash,
+                          connection_map,
+                          event_tx);
+        })
+    }
+
+    /// connect to peer
+    pub fn connect(&mut self, peer_contact_info: StaticContactInfo) -> Result<(), Error> {
+        let event_tx = self.event_tx.clone();
+        let connection_map = self.connection_map.clone();
+
+        self.post(move |core, event_loop| {
+            EstablishConnection::start(core,
+                                       event_loop,
+                                       peer_contact_info,
+                                       connection_map,
+                                       event_tx);
+        })
+    }
+
+    /// Disconnect from the given peer and returns whether there was a connection at all.
+    pub fn disconnect(&mut self, peer_id: PeerId) -> bool {
+        let context = match self.connection_map.lock().unwrap().remove(&peer_id) {
+            Some(context) => context,
+            None => return false,
+        };
+
         let _ = self.post(move |mut core, mut event_loop| {
-            let state = core.get_state(&context).expect("State not found").clone();
-            state.borrow_mut().terminate(&mut core, &mut event_loop);
+            if let Some(state) = core.get_state(context) {
+                state.borrow_mut().terminate(&mut core, &mut event_loop);
+            }
         });
+
+        true
     }
 
     /// sending data to a peer(according to it's u64 peer_id)
-    pub fn send(&mut self, peer_id: PeerId, data: Vec<u8>) {
+    pub fn send(&mut self, peer_id: PeerId, data: Vec<u8>) -> Result<(), Error> {
         if data.len() > ::MAX_DATA_LEN as usize {
-            let _ = self.event_tx.send(Event::WriteMsgSizeProhibitive(peer_id, data));
-            return;
+            return Err(Error::MessageTooLarge);
         }
-        let context = self.connection_map
-                          .lock()
-                          .unwrap()
-                          .get(&peer_id)
-                          .expect("Context not found")
-                          .clone();
-        let mut data = Some(data);
-        let _ = self.post(move |mut core, mut event_loop| {
-            let state = core.get_state(&context).expect("State not found").clone();
-            state.borrow_mut().write(&mut core,
-                                     &mut event_loop,
-                                     data.take().expect("Logic Error"));
-        });
+
+        let context = match self.connection_map.lock().unwrap()
+                                                      .get(&peer_id)
+                                                      .map(|h| *h) {
+            Some(context) => context,
+            None => return Err(Error::PeerNotFound(peer_id)),
+        };
+
+        self.post(move |mut core, mut event_loop| {
+            if let Some(state) = core.get_state(context) {
+                state.borrow_mut().write(&mut core, &mut event_loop, data);
+            }
+        })
     }
 
     /// Enable listening and responding to peers searching for us. This will allow others finding us
     /// by interrogating the network.
     pub fn set_service_discovery_listen(&self, listen: bool) {
-        if let Some(handle) = *self.service_discovery.lock().unwrap() {
+        if self.is_service_discovery_running {
             let _ = self.post(move |core, _| {
-                let state = core.get_state(&handle)
-                                .expect("ServiceDiscovery not found")
-                                .clone();
-                let mut temp = state.borrow_mut();
-                let service_discovery = match temp.as_any().downcast_mut::<ServiceDiscovery>() {
+                let state = core.get_state(SERVICE_DISCOVERY_CONTEXT)
+                                .expect("ServiceDiscovery not found");
+                let mut state = state.borrow_mut();
+
+                let service_discovery = match state.as_any().downcast_mut::<ServiceDiscovery>() {
                     Some(b) => b,
                     None => panic!("&ServiceDiscovery isn't a ServiceDiscovery!"),
                 };
+
                 service_discovery.set_listen(listen);
             });
         }
@@ -218,14 +310,17 @@ impl Service {
 
     /// Interrogate the network to find peers.
     pub fn seek_peers(&self) {
-        if let Some(handle) = *self.service_discovery.lock().unwrap() {
+        if self.is_service_discovery_running {
             let _ = self.post(move |core, _| {
-                let state = core.get_state(&handle).expect("State not found").clone();
-                let mut temp = state.borrow_mut();
-                let service_discovery = match temp.as_any().downcast_mut::<ServiceDiscovery>() {
+                let state = core.get_state(SERVICE_DISCOVERY_CONTEXT)
+                                .expect("State not found");
+                let mut state = state.borrow_mut();
+
+                let service_discovery = match state.as_any().downcast_mut::<ServiceDiscovery>() {
                     Some(b) => b,
                     None => panic!("&ServiceDiscovery isn't a ServiceDiscovery!"),
                 };
+
                 service_discovery.seek_peers().unwrap();
             });
         }
@@ -261,7 +356,7 @@ impl Service {
             let event = Event::ConnectionInfoPrepared(ConnectionInfoResult {
                 result_token: result_token,
                 result: Ok(OurConnectionInfo {
-                    id: peer_id::new_id(our_pub_key),
+                    id: peer_id::new(our_pub_key),
                     tcp_info: our_pub_tcp_info,
                     priv_tcp_info: our_priv_tcp_info,
                     tcp_socket: tcp_socket,
@@ -271,17 +366,23 @@ impl Service {
             let _ = event_tx.send(event);
         }) {
             let _ = self.event_tx.send(Event::ConnectionInfoPrepared(ConnectionInfoResult {
-                result_token: result_token,
-                result: Err(io::Error::new(io::ErrorKind::Other,
-                                           format!("Failed to register task with mio eventloop"))),
-            }));
+                                result_token: result_token,
+                                result: Err(io::Error::new(io::ErrorKind::Other,
+                                                              format!("Failed to register task \
+                                                                       with mio eventloop"))),
+                            }));
         }
     }
 
-    fn post<F>(&self, f: F) -> Result<(), NotifyError<CoreMessage>>
+    /// Returns our ID.
+    pub fn id(&self) -> PeerId {
+        peer_id::new(self.our_keys.0)
+    }
+
+    fn post<F>(&self, f: F) -> Result<(), Error>
         where F: FnOnce(&mut Core, &mut EventLoop<Core>) + Send + 'static
     {
-        self.mio_tx.send(CoreMessage::new(f))
+        Ok(try!(self.mio_tx.send(CoreMessage::new(f))))
     }
 }
 
@@ -291,23 +392,10 @@ impl Drop for Service {
     }
 }
 
-#[cfg(test)]
-mod test {
-    // use super::*;
-    // use event::Event;
-
-    // use std::thread;
-    // use std::sync::mpsc;
-    // use std::time::Duration;
-    // use std::sync::mpsc::Receiver;
-
-    // use maidsafe_utilities::event_sender::{MaidSafeObserver, MaidSafeEventCategory};
-
-    // fn _get_event_sender() -> (::CrustEventSender, Receiver<Event>) {
-    //     let (category_tx, _) = mpsc::channel();
-    //     let event_category = MaidSafeEventCategory::Crust;
-    //     let (event_tx, event_rx) = mpsc::channel();
-
-    //     (MaidSafeObserver::new(event_tx, event_category, category_tx), event_rx)
-    // }
+/// Returns a hash of the network name.
+fn name_hash(network_name: &Option<String>) -> u64 {
+    let mut hasher = SipHasher::new();
+    debug!("Network name: {:?}", network_name);
+    network_name.hash(&mut hasher);
+    hasher.finish()
 }
