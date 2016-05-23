@@ -42,11 +42,6 @@
 #![cfg_attr(feature="clippy", deny(clippy, clippy_pedantic))]
 #![cfg_attr(feature="clippy", allow(use_debug))]
 
-extern crate byteorder;
-#[macro_use]
-extern crate maidsafe_utilities;
-#[macro_use]
-extern crate log;
 extern crate mio;
 extern crate net2;
 extern crate rand;
@@ -68,7 +63,7 @@ extern crate quick_error;
 pub mod core;
 mod error;
 mod event;
-mod state;
+pub mod state;
 mod peer_id;
 mod service;
 mod service_discovery;
