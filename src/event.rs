@@ -30,6 +30,8 @@ pub enum Event {
     // BootstrapFinished,
     /// Invoked as a result to the call of `Service::prepare_contact_info`.
     ConnectionInfoPrepared(ConnectionInfoResult),
+    /// Invoked when failed to create a pulbic TCP server
+    FailedCreatingPublicTcpServer,
     /// Invoked when a peer is lost or having read/write error.
     LostPeer(PeerId),
     /// Invoked when a new connection get established.
