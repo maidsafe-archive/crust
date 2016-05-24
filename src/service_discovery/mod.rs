@@ -59,12 +59,12 @@ pub struct ServiceDiscovery {
 }
 
 impl ServiceDiscovery {
-    pub fn new(core: &mut Core,
-               event_loop: &mut EventLoop<Core>,
-               static_contact_info: Arc<Mutex<StaticContactInfo>>,
-               context: Context,
-               port: u16)
-               -> Result<(), ServiceDiscoveryError> {
+    pub fn start(core: &mut Core,
+                 event_loop: &mut EventLoop<Core>,
+                 static_contact_info: Arc<Mutex<StaticContactInfo>>,
+                 context: Context,
+                 port: u16)
+                 -> Result<(), ServiceDiscoveryError> {
         let token = core.get_new_token();
 
         let udp_socket = try!(get_socket(port));
@@ -110,7 +110,7 @@ impl ServiceDiscovery {
     }
 
     /// Register service discovery observer
-    pub fn _register_observer(&mut self, obs: Sender<StaticContactInfo>) {
+    pub fn register_observer(&mut self, obs: Sender<StaticContactInfo>) {
         self.observers.push(obs);
     }
 
@@ -284,7 +284,7 @@ mod test {
                 let context = core.get_new_context();
                 *sd0_clone.lock().unwrap() = Some(context);
 
-                ServiceDiscovery::new(core, el, static_info_0_clone, context, 65530)
+                ServiceDiscovery::start(core, el, static_info_0_clone, context, 65530)
                                  .expect("Could not spawn ServiceDiscovery_0");
             })).expect("Could not send to tx0");
 
@@ -327,7 +327,7 @@ mod test {
                 let context = core.get_new_context();
                 *sd1_clone.lock().unwrap() = Some(context);
 
-                ServiceDiscovery::new(core, el, static_info_1, context, 65530)
+                ServiceDiscovery::start(core, el, static_info_1, context, 65530)
                                  .expect("Could not spawn ServiceDiscovery_1");
             })).expect("Could not send to tx1");
 
@@ -343,7 +343,7 @@ mod test {
                    inner.as_any()
                         .downcast_mut::<ServiceDiscovery>()
                         .expect("Cast Failure")
-                        ._register_observer(tx);
+                        .register_observer(tx);
                }))
                .expect("Could not send to tx1");
 
