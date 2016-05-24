@@ -61,8 +61,10 @@ extern crate get_if_addrs;
 #[macro_use]
 extern crate quick_error;
 
+mod active_connection;
 mod bootstrap_states;
 mod config_handler;
+mod connection_listener;
 mod connection_states;
 pub mod core;
 mod error;

@@ -27,7 +27,8 @@ use std::sync::{Arc, Mutex};
 
 use bootstrap_states::GetBootstrapContacts;
 use config_handler::{self, Config};
-use connection_states::{EstablishConnection, Listen};
+use connection_listener::ConnectionListener;
+use connection_states::EstablishConnection;
 use core::{Context, Core, CoreMessage, State};
 use event::Event;
 use error::Error;
@@ -217,19 +218,23 @@ impl Service {
         }
 
         let connection_map = self.connection_map.clone();
+        let mapping_context = self.mapping_context.clone();
         let port = self.config.tcp_acceptor_port.unwrap_or(0);
         let our_public_key = self.our_keys.0.clone();
         let name_hash = self.name_hash;
+        let our_static_contact_info = self.static_contact_info.clone();
         let event_tx = self.event_tx.clone();
 
         self.post(move |core, event_loop| {
-            Listen::start(core,
-                          event_loop,
-                          port,
-                          our_public_key,
-                          name_hash,
-                          connection_map,
-                          event_tx);
+            ConnectionListener::start(core,
+                                      event_loop,
+                                      port,
+                                      our_public_key,
+                                      name_hash,
+                                      connection_map,
+                                      mapping_context,
+                                      our_static_contact_info,
+                                      event_tx);
         })
     }
 

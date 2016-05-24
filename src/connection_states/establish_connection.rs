@@ -20,7 +20,7 @@ use std::any::Any;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-use connection_states::active_connection::ActiveConnection;
+use active_connection::ActiveConnection;
 use core::{Core, Context, State};
 use mio::{PollOpt, Token, EventLoop, EventSet};
 use peer_id::PeerId;
