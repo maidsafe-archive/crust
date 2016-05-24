@@ -165,13 +165,16 @@ impl State for ActiveConnection {
     }
 
     fn write(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, data: Vec<u8>) {
-        if let Err(error) = self.socket.write(Message::Data(data)) {
-            error!("Failed to write to socket: {:?}", error);
-            self.stop(core, event_loop);
-            return;
+        match self.socket.write(Message::Data(data)) {
+            Ok(true) => self.event_set.remove(EventSet::writable()),
+            Ok(false) => self.event_set.insert(EventSet::writable()),
+            Err(error) => {
+                error!("Failed to write to socket: {:?}", error);
+                self.stop(core, event_loop);
+                return;
+            }
         }
 
-        self.event_set.insert(EventSet::writable());
         self.reregister(core, event_loop);
     }
 

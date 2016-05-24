@@ -93,22 +93,23 @@ impl AcceptConnection {
             return;
         }
 
-        if let Err(error) = self.socket
-                                .as_mut()
-                                .unwrap()
-                                .write(Message::BootstrapResponse(self.our_public_key)) {
-            error!("Failed writing to socket: {:?}", error);
-            self.stop(core, event_loop);
-            return;
-        }
-
         self.their_peer_id = Some(peer_id::new(their_public_key));
-        self.set_writable(core, event_loop, token);
+
+        match self.socket.as_mut()
+                         .unwrap()
+                         .write(Message::BootstrapResponse(self.our_public_key)) {
+            Ok(true) => self.transition_to_active(core, event_loop),
+            Ok(false) => self.set_writable(core, event_loop, token),
+            Err(error) => {
+                error!("Failed writing to socket: {:?}", error);
+                self.stop(core, event_loop);
+            }
+        }
     }
 
-    fn handle_bootstrap_response_sent(&mut self,
-                                      core: &mut Core,
-                                      event_loop: &mut EventLoop<Core>)
+    fn transition_to_active(&mut self,
+                            core: &mut Core,
+                            event_loop: &mut EventLoop<Core>)
     {
         let their_peer_id = self.their_peer_id.take().unwrap();
         let _ = self.event_tx.send(Event::BootstrapAccept(their_peer_id));
@@ -198,7 +199,7 @@ impl State for AcceptConnection {
 
         if event_set.is_writable() {
             match self.socket.as_mut().unwrap().flush() {
-                Ok(true) => self.handle_bootstrap_response_sent(core, event_loop),
+                Ok(true) => self.transition_to_active(core, event_loop),
                 Ok(false) => self.set_writable(core, event_loop, token),
                 Err(error) => {
                     error!("Failed to flush socket: {:?}", error);

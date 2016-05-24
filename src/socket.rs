@@ -110,7 +110,14 @@ impl Socket {
     }
 
     // Write a message to the socket.
-    pub fn write<T: Encodable>(&mut self, message: T) -> Result<(), SocketError> {
+    //
+    // Returns:
+    //   - Ok(true):   the message has been successfuly written.
+    //   - Ok(false):  the message (or part of it) has been queued. Schedule a
+    //                 write event and call `flush` to finish the write in the
+    //                 next ready handler.
+    //   - Err(error): there was an error while writing to the socket.
+    pub fn write<T: Encodable>(&mut self, message: T) -> Result<bool, SocketError> {
         let mut data = Cursor::new(Vec::with_capacity(mem::size_of::<u32>()));
 
         // Preallocate space for the message length at the beginning of the
@@ -126,8 +133,7 @@ impl Socket {
         try!(data.write_u32::<LittleEndian>(len as u32));
 
         self.write_queue.push_back(data.into_inner());
-
-        Ok(())
+        self.flush()
     }
 
     // Flush previous writes. Call this from inside the `ready` handler.
@@ -138,30 +144,28 @@ impl Socket {
     //                 the next invocation of the ready handler.
     //   - Err(error): there was an error while writing to the socket.
     pub fn flush(&mut self) -> Result<bool, SocketError> {
-        if let Some(mut data) = self.write_queue.pop_front() {
+        while let Some(mut data) = self.write_queue.pop_front() {
             match self.stream.write(&data) {
                 Ok(bytes_written) => {
                     if bytes_written < data.len() {
                         data = data[bytes_written..].to_owned();
                         self.write_queue.push_front(data);
-                        Ok(false)
-                    } else {
-                        Ok(true)
+                        return Ok(false);
                     }
                 }
 
                 Err(error) => {
                     if error.kind() == ErrorKind::WouldBlock || error.kind() == ErrorKind::Interrupted {
                         self.write_queue.push_front(data);
-                        Ok(false)
+                        return Ok(false)
                     } else {
-                        Err(From::from(error))
+                        return Err(From::from(error))
                     }
                 }
             }
-        } else {
-            Ok(true)
         }
+
+        Ok(true)
     }
 
     /// Shut down the socket (both reading and writing).
