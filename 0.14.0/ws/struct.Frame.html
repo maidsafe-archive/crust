@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `Frame` struct in crate `ws`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, Frame">
+
+    <title>ws::Frame - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='index.html'>ws</a></p><script>window.sidebarCurrent = {name: 'Frame', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content struct">
+<h1 class='fqn'><span class='in-band'>Struct <a href='index.html'>ws</a>::<wbr><a class='struct' href=''>Frame</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-962' class='srclink' href='../src/ws/frame.rs.html#27-37' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct Frame {
+    // some fields omitted
+}</pre><div class='docblock'><p>A struct representing a WebSocket frame.</p>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../ws/struct.Frame.html' title='ws::Frame'>Frame</a></code></h3><div class='impl-items'><h4 id='method.len' class='method'><code>fn <a href='#method.len' class='fnname'>len</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a></code></h4>
+<div class='docblock'><p>Get the length of the frame.
+This is the length of the header + the length of the payload.</p>
+</div><h4 id='method.is_final' class='method'><code>fn <a href='#method.is_final' class='fnname'>is_final</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+<div class='docblock'><p>Test whether the frame is a final frame.</p>
+</div><h4 id='method.has_rsv1' class='method'><code>fn <a href='#method.has_rsv1' class='fnname'>has_rsv1</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+<div class='docblock'><p>Test whether the first reserved bit is set.</p>
+</div><h4 id='method.has_rsv2' class='method'><code>fn <a href='#method.has_rsv2' class='fnname'>has_rsv2</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+<div class='docblock'><p>Test whether the second reserved bit is set.</p>
+</div><h4 id='method.has_rsv3' class='method'><code>fn <a href='#method.has_rsv3' class='fnname'>has_rsv3</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+<div class='docblock'><p>Test whether the third reserved bit is set.</p>
+</div><h4 id='method.opcode' class='method'><code>fn <a href='#method.opcode' class='fnname'>opcode</a>(&amp;self) -&gt; <a class='enum' href='../ws/enum.OpCode.html' title='ws::OpCode'>OpCode</a></code></h4>
+<div class='docblock'><p>Get the OpCode of the frame.</p>
+</div><h4 id='method.payload' class='method'><code>fn <a href='#method.payload' class='fnname'>payload</a>(&amp;self) -&gt; &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;</code></h4>
+<div class='docblock'><p>Get a reference to the frame&#39;s payload.</p>
+</div><h4 id='method.set_final' class='method'><code>fn <a href='#method.set_final' class='fnname'>set_final</a>(&amp;mut self, is_final: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>) -&gt; &amp;mut <a class='struct' href='../ws/struct.Frame.html' title='ws::Frame'>Frame</a></code></h4>
+<div class='docblock'><p>Make this frame a final frame.</p>
+</div><h4 id='method.set_rsv1' class='method'><code>fn <a href='#method.set_rsv1' class='fnname'>set_rsv1</a>(&amp;mut self, has_rsv1: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>) -&gt; &amp;mut <a class='struct' href='../ws/struct.Frame.html' title='ws::Frame'>Frame</a></code></h4>
+<div class='docblock'><p>Set the first reserved bit.</p>
+</div><h4 id='method.set_rsv2' class='method'><code>fn <a href='#method.set_rsv2' class='fnname'>set_rsv2</a>(&amp;mut self, has_rsv2: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>) -&gt; &amp;mut <a class='struct' href='../ws/struct.Frame.html' title='ws::Frame'>Frame</a></code></h4>
+<div class='docblock'><p>Set the second reserved bit.</p>
+</div><h4 id='method.set_rsv3' class='method'><code>fn <a href='#method.set_rsv3' class='fnname'>set_rsv3</a>(&amp;mut self, has_rsv3: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>) -&gt; &amp;mut <a class='struct' href='../ws/struct.Frame.html' title='ws::Frame'>Frame</a></code></h4>
+<div class='docblock'><p>Set the third reserved bit.</p>
+</div><h4 id='method.set_opcode' class='method'><code>fn <a href='#method.set_opcode' class='fnname'>set_opcode</a>(&amp;mut self, opcode: <a class='enum' href='../ws/enum.OpCode.html' title='ws::OpCode'>OpCode</a>) -&gt; &amp;mut <a class='struct' href='../ws/struct.Frame.html' title='ws::Frame'>Frame</a></code></h4>
+<div class='docblock'><p>Set the OpCode.</p>
+</div><h4 id='method.payload_mut' class='method'><code>fn <a href='#method.payload_mut' class='fnname'>payload_mut</a>(&amp;mut self) -&gt; &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;</code></h4>
+<div class='docblock'><p>Edit the frame&#39;s payload.</p>
+</div><h4 id='method.into_data' class='method'><code>fn <a href='#method.into_data' class='fnname'>into_data</a>(self) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;</code></h4>
+<div class='docblock'><p>Consume the frame into its payload.</p>
+</div><h4 id='method.message' class='method'><code>fn <a href='#method.message' class='fnname'>message</a>(data: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;, code: <a class='enum' href='../ws/enum.OpCode.html' title='ws::OpCode'>OpCode</a>, finished: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a>) -&gt; <a class='struct' href='../ws/struct.Frame.html' title='ws::Frame'>Frame</a></code></h4>
+<div class='docblock'><p>Create a new data frame.</p>
+</div><h4 id='method.pong' class='method'><code>fn <a href='#method.pong' class='fnname'>pong</a>(data: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;) -&gt; <a class='struct' href='../ws/struct.Frame.html' title='ws::Frame'>Frame</a></code></h4>
+<div class='docblock'><p>Create a new Pong control frame.</p>
+</div><h4 id='method.ping' class='method'><code>fn <a href='#method.ping' class='fnname'>ping</a>(data: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;) -&gt; <a class='struct' href='../ws/struct.Frame.html' title='ws::Frame'>Frame</a></code></h4>
+<div class='docblock'><p>Create a new Ping control frame.</p>
+</div><h4 id='method.close' class='method'><code>fn <a href='#method.close' class='fnname'>close</a>(code: <a class='enum' href='../ws/enum.CloseCode.html' title='ws::CloseCode'>CloseCode</a>, reason: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='struct' href='../ws/struct.Frame.html' title='ws::Frame'>Frame</a></code></h4>
+<div class='docblock'><p>Create a new Close control frame.</p>
+</div><h4 id='method.parse' class='method'><code>fn <a href='#method.parse' class='fnname'>parse</a>(cursor: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/std/io/cursor/struct.Cursor.html' title='std::io::cursor::Cursor'>Cursor</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a>&gt;&gt;) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='struct' href='../ws/struct.Frame.html' title='ws::Frame'>Frame</a>&gt;&gt;</code></h4>
+<div class='docblock'><p>Parse the input stream into a frame.</p>
+</div><h4 id='method.format' class='method'><code>fn <a href='#method.format' class='fnname'>format</a>&lt;W&gt;(&amp;mut self, w: &amp;mut W) -&gt; <a class='type' href='../ws/type.Result.html' title='ws::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>&gt; <span class='where'>where W: <a class='trait' href='https://doc.rust-lang.org/nightly/std/io/trait.Write.html' title='std::io::Write'>Write</a></span></code></h4>
+<div class='docblock'><p>Write a frame out to a buffer</p>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/default/trait.Default.html' title='core::default::Default'>Default</a> for <a class='struct' href='../ws/struct.Frame.html' title='ws::Frame'>Frame</a></code></h3><div class='impl-items'><h4 id='method.default' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/default/trait.Default.html#method.default' class='fnname'>default</a>() -&gt; <a class='struct' href='../ws/struct.Frame.html' title='ws::Frame'>Frame</a></code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html' title='core::fmt::Display'>Display</a> for <a class='struct' href='../ws/struct.Frame.html' title='ws::Frame'>Frame</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html#method.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+</div><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='struct' href='../ws/struct.Frame.html' title='ws::Frame'>Frame</a></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='struct' href='../ws/struct.Frame.html' title='ws::Frame'>Frame</a></code></h4>
+<h4 id='method.clone_from' class='method'><span class="since">1.0.0</span><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='struct' href='../ws/struct.Frame.html' title='ws::Frame'>Frame</a></code></h3><div class='impl-items'><h4 id='method.fmt-1' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#method.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+</div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../";
+        window.currentCrate = "ws";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../jquery.js"></script>
+    <script src="../main.js"></script>
+    
+    <script defer src="../search-index.js"></script>
+</body>
+</html>

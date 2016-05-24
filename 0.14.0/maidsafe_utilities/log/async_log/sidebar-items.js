@@ -1,0 +1,1 @@
+initSidebarItems({"constant":[["MSG_TERMINATOR","Message terminator for streaming to Log Servers. Servers must look out for this sequence which demarcates the end of a particular log message."]]});

@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Kind","The type of an error, which may indicate other kinds of errors as the underlying cause."]],"struct":[["Error","A struct indicating the kind of error that has occured and any precise details of that error."]],"type":[["Result",""]]});

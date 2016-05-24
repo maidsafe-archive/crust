@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `SeqByteStr` struct in crate `bytes`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, SeqByteStr">
+
+    <title>bytes::str::SeqByteStr - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='../index.html'>bytes</a>::<wbr><a href='index.html'>str</a></p><script>window.sidebarCurrent = {name: 'SeqByteStr', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content struct">
+<h1 class='fqn'><span class='in-band'>Struct <a href='../index.html'>bytes</a>::<wbr><a href='index.html'>str</a>::<wbr><a class='struct' href=''>SeqByteStr</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-982' class='srclink' href='../../src/bytes/str/seq.rs.html#4-8' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct SeqByteStr {
+    // some fields omitted
+}</pre><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../bytes/struct.SeqByteStr.html' title='bytes::SeqByteStr'>SeqByteStr</a></code></h3><div class='impl-items'><h4 id='method.from_slice' class='method'><code>fn <a href='#method.from_slice' class='fnname'>from_slice</a>(bytes: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>&amp;[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.slice.html'>]</a>) -&gt; <a class='struct' href='../../bytes/struct.SeqByteStr.html' title='bytes::SeqByteStr'>SeqByteStr</a></code></h4>
+<div class='docblock'><p>Create a new <code>SeqByteStr</code> from a byte slice.</p>
+
+<p>The contents of the byte slice will be copied.</p>
+</div><h4 id='method.from_mem_ref' class='method'><code>unsafe fn <a href='#method.from_mem_ref' class='fnname'>from_mem_ref</a>(mem: <a class='struct' href='../../bytes/alloc/struct.MemRef.html' title='bytes::alloc::MemRef'>MemRef</a>, pos: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>, len: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a>) -&gt; <a class='struct' href='../../bytes/struct.SeqByteStr.html' title='bytes::SeqByteStr'>SeqByteStr</a></code></h4>
+<div class='docblock'><p>Creates a new <code>SeqByteStr</code> from a <code>MemRef</code>, an offset, and a length.</p>
+
+<p>This function is unsafe as there are no guarantees that the given
+arguments are valid.</p>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='../../bytes/str/trait.ByteStr.html' title='bytes::str::ByteStr'>ByteStr</a> for <a class='struct' href='../../bytes/struct.SeqByteStr.html' title='bytes::SeqByteStr'>SeqByteStr</a></code></h3><div class='impl-items'><h4 id='associatedtype.Buf' class='type'><code>type Buf = <a class='struct' href='../../bytes/struct.ROByteBuf.html' title='bytes::ROByteBuf'>ROByteBuf</a></code></h4>
+<h4 id='method.buf' class='method'><code>fn <a href='../../bytes/str/trait.ByteStr.html#method.buf' class='fnname'>buf</a>(&amp;self) -&gt; <a class='struct' href='../../bytes/struct.ROByteBuf.html' title='bytes::ROByteBuf'>ROByteBuf</a></code></h4>
+<h4 id='method.concat' class='method'><code>fn <a href='../../bytes/str/trait.ByteStr.html#method.concat' class='fnname'>concat</a>&lt;B: <a class='trait' href='../../bytes/str/trait.ByteStr.html' title='bytes::str::ByteStr'>ByteStr</a> + 'static&gt;(&amp;self, other: &amp;B) -&gt; <a class='struct' href='../../bytes/struct.Bytes.html' title='bytes::Bytes'>Bytes</a></code></h4>
+<h4 id='method.len' class='method'><code>fn <a href='../../bytes/str/trait.ByteStr.html#method.len' class='fnname'>len</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a></code></h4>
+<h4 id='method.slice' class='method'><code>fn <a href='../../bytes/str/trait.ByteStr.html#method.slice' class='fnname'>slice</a>(&amp;self, begin: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>, end: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>) -&gt; <a class='struct' href='../../bytes/struct.Bytes.html' title='bytes::Bytes'>Bytes</a></code></h4>
+<h4 id='method.is_empty' class='method'><code>fn <a href='../../bytes/str/trait.ByteStr.html#method.is_empty' class='fnname'>is_empty</a>(&amp;self) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+<h4 id='method.slice_from' class='method'><code>fn <a href='../../bytes/str/trait.ByteStr.html#method.slice_from' class='fnname'>slice_from</a>(&amp;self, begin: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>) -&gt; <a class='struct' href='../../bytes/struct.Bytes.html' title='bytes::Bytes'>Bytes</a></code></h4>
+<h4 id='method.slice_to' class='method'><code>fn <a href='../../bytes/str/trait.ByteStr.html#method.slice_to' class='fnname'>slice_to</a>(&amp;self, end: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>) -&gt; <a class='struct' href='../../bytes/struct.Bytes.html' title='bytes::Bytes'>Bytes</a></code></h4>
+<h4 id='method.split_at' class='method'><code>fn <a href='../../bytes/str/trait.ByteStr.html#method.split_at' class='fnname'>split_at</a>(&amp;self, mid: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='struct' href='../../bytes/struct.Bytes.html' title='bytes::Bytes'>Bytes</a>, <a class='struct' href='../../bytes/struct.Bytes.html' title='bytes::Bytes'>Bytes</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a></code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='../../bytes/str/trait.ToBytes.html' title='bytes::str::ToBytes'>ToBytes</a> for <a class='struct' href='../../bytes/struct.SeqByteStr.html' title='bytes::SeqByteStr'>SeqByteStr</a></code></h3><div class='impl-items'><h4 id='method.to_bytes' class='method'><code>fn <a href='../../bytes/str/trait.ToBytes.html#method.to_bytes' class='fnname'>to_bytes</a>(self) -&gt; <a class='struct' href='../../bytes/struct.Bytes.html' title='bytes::Bytes'>Bytes</a></code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Index.html' title='core::ops::Index'>Index</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>&gt; for <a class='struct' href='../../bytes/struct.SeqByteStr.html' title='bytes::SeqByteStr'>SeqByteStr</a></code></h3><div class='impl-items'><h4 id='associatedtype.Output' class='type'><code>type Output = <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a></code></h4>
+<h4 id='method.index' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/ops/trait.Index.html#method.index' class='fnname'>index</a>(&amp;self, index: <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>) -&gt; &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u8.html'>u8</a></code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='struct' href='../../bytes/struct.SeqByteStr.html' title='bytes::SeqByteStr'>SeqByteStr</a></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='struct' href='../../bytes/struct.SeqByteStr.html' title='bytes::SeqByteStr'>SeqByteStr</a></code></h4>
+<h4 id='method.clone_from' class='method'><span class="since">1.0.0</span><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
+</div><h3 class='impl'><code>impl&lt;B: <a class='trait' href='../../bytes/str/trait.ByteStr.html' title='bytes::str::ByteStr'>ByteStr</a>&gt; <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a>&lt;B&gt; for <a class='struct' href='../../bytes/struct.SeqByteStr.html' title='bytes::SeqByteStr'>SeqByteStr</a></code></h3><div class='impl-items'><h4 id='method.eq' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.eq' class='fnname'>eq</a>(&amp;self, other: &amp;B) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+<h4 id='method.ne' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.ne' class='fnname'>ne</a>(&amp;self, other: &amp;B) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+</div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "bytes";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../../jquery.js"></script>
+    <script src="../../main.js"></script>
+    
+    <script defer src="../../search-index.js"></script>
+</body>
+</html>
