@@ -37,6 +37,7 @@ pub struct EstablishConnection {
     event_tx: ::CrustEventSender,
     parent_handle: Context,
     pending_connections: Rc<RefCell<HashSet<Context>>>,
+    request_message: Option<Message>,
     socket: Option<Socket>,
     token: Token,
 }
@@ -57,7 +58,7 @@ impl EstablishConnection {
         let _ = core.insert_context(token, context);
 
         // TODO: try to connect to all the endpoints in the contact info.
-        let mut socket = match Socket::connect(&contact_info.tcp_acceptors[0]) {
+        let socket = match Socket::connect(&contact_info.tcp_acceptors[0]) {
             Ok(socket) => socket,
             Err(error) => {
                 error!("Failed to connect socket: {:?}", error);
@@ -75,12 +76,6 @@ impl EstablishConnection {
             return;
         }
 
-        if let Err(error) = socket.write(Message::BootstrapRequest(our_public_key, name_hash)) {
-            error!("Failed to write to socket: {:?}", error);
-            let _ = core.remove_context(token);
-            let _ = event_loop.deregister(&socket);
-        }
-
         pending_connections.borrow_mut().insert(context);
 
         let state = EstablishConnection {
@@ -89,6 +84,7 @@ impl EstablishConnection {
             event_tx: event_tx,
             parent_handle: parent_handle,
             pending_connections: pending_connections,
+            request_message: Some(Message::BootstrapRequest(our_public_key, name_hash)),
             socket: Some(socket),
             token: token,
         };
@@ -96,13 +92,66 @@ impl EstablishConnection {
         let _ = core.insert_state(context, state);
     }
 
-    fn handle_error(&self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
-        self.stop(core, event_loop);
+    fn handle_error(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
+        self.terminate(core, event_loop);
 
-        // There are no pending connections left. Terminate the whole bootstrap.
+        // If there are no pending connections left, terminate the whole bootstrap.
         if self.pending_connections.borrow().is_empty() {
             let _ = self.event_tx.send(Event::BootstrapFailed);
             let _ = core.terminate_state(event_loop, self.parent_handle);
+        }
+    }
+
+    fn send_bootstrap_request(&mut self,
+                              core: &mut Core,
+                              event_loop: &mut EventLoop<Core>,
+                              token: Token) {
+        let result = if let Some(message) = self.request_message.take() {
+            self.socket.as_mut().unwrap().write(message)
+        } else {
+            self.socket.as_mut().unwrap().flush()
+        };
+
+        match result {
+            Ok(true) => {
+                // BootstrapRequest sent, start awaiting response.
+                self.set_readable(core, event_loop, token);
+            }
+            Ok(false) => {
+                // More data remain to be sent, stay in the writing mode.
+                self.set_writable(core, event_loop, token);
+            }
+            Err(error) => {
+                error!("Failed to flush socket: {:?}", error);
+                self.handle_error(core, event_loop);
+            }
+        }
+    }
+
+    fn receive_bootstrap_response(&mut self,
+                                  core: &mut Core,
+                                  event_loop: &mut EventLoop<Core>,
+                                  token: Token)
+    {
+        match self.socket.as_mut().unwrap().read::<Message>() {
+            Ok(Some(Message::BootstrapResponse(public_key))) => {
+                self.handle_bootstrap_response(core, event_loop, public_key);
+            }
+
+            Ok(Some(message)) => {
+                warn!("Unexpected message: {:?}", message);
+                // TODO: maybe resend the handshake again here?
+                self.set_readable(core, event_loop, token);
+            }
+
+            Ok(None) => {
+                self.set_readable(core, event_loop, token);
+            },
+
+            Err(error) => {
+                error!("Failed to read from socket: {:?}", error);
+                self.handle_error(core, event_loop);
+            }
         }
     }
 
@@ -127,15 +176,15 @@ impl EstablishConnection {
                                 self.event_tx.clone())
     }
 
-    fn set_readable(&self, core: &mut Core, event_loop: &mut EventLoop<Core>, token: Token) {
+    fn set_readable(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, token: Token) {
         self.reregister(core, event_loop, token, EventSet::error() | EventSet::readable())
     }
 
-    fn set_writable(&self, core: &mut Core, event_loop: &mut EventLoop<Core>, token: Token) {
+    fn set_writable(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, token: Token) {
         self.reregister(core, event_loop, token, EventSet::error() | EventSet::writable())
     }
 
-    fn reregister(&self,
+    fn reregister(&mut self,
                   core: &mut Core,
                   event_loop: &mut EventLoop<Core>,
                   token: Token,
@@ -146,17 +195,6 @@ impl EstablishConnection {
                                                   PollOpt::edge()) {
             error!("Failed to reregister socket: {:?}", error);
             self.handle_error(core, event_loop);
-        }
-    }
-
-    fn stop(&self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
-        let _ = self.pending_connections.borrow_mut().remove(&self.context);
-
-        let _ = core.remove_context(self.token);
-        let _ = core.remove_state(self.context);
-
-        if let Some(socket) = self.socket.as_ref() {
-            event_loop.deregister(socket).expect("Failed to deregister socket");
         }
     }
 }
@@ -174,49 +212,23 @@ impl State for EstablishConnection {
         }
 
         if event_set.is_writable() {
-            match self.socket.as_mut().unwrap().flush() {
-                Ok(true) => {
-                    // BootstrapRequest sent, start awaiting response.
-                    self.set_readable(core, event_loop, token);
-                }
-                Ok(false) => {
-                    // More data remain to be sent, stay in the writing mode.
-                    self.set_writable(core, event_loop, token);
-                }
-                Err(error) => {
-                    error!("Failed to flush socket: {:?}", error);
-                    self.handle_error(core, event_loop);
-                }
-            }
+            self.send_bootstrap_request(core, event_loop, token)
         }
 
         if event_set.is_readable() {
-            match self.socket.as_mut().unwrap().read::<Message>() {
-                Ok(Some(Message::BootstrapResponse(public_key))) => {
-                    self.handle_bootstrap_response(core, event_loop, public_key);
-                }
-
-                Ok(Some(message)) => {
-                    warn!("Unexpected message: {:?}", message);
-                    // TODO: maybe resend the handshake again here?
-                    self.set_readable(core, event_loop, token);
-                }
-
-                Ok(None) => {
-                    debug!("Partial read from socket.");
-                    self.set_readable(core, event_loop, token);
-                },
-
-                Err(error) => {
-                    error!("Failed to read from socket: {:?}", error);
-                    self.handle_error(core, event_loop);
-                }
-            }
+            self.receive_bootstrap_response(core, event_loop, token)
         }
     }
 
     fn terminate(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
-        self.stop(core, event_loop);
+        let _ = self.pending_connections.borrow_mut().remove(&self.context);
+
+        let _ = core.remove_context(self.token);
+        let _ = core.remove_state(self.context);
+
+        if let Some(socket) = self.socket.as_ref() {
+            event_loop.deregister(socket).expect("Failed to deregister socket");
+        }
     }
 
     fn as_any(&mut self) -> &mut Any {
