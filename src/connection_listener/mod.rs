@@ -141,3 +141,106 @@ impl State for ConnectionListener {
         self
     }
 }
+
+
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use std::collections::HashMap;
+    use std::io::Write;
+    use std::net::SocketAddr as StdSocketAddr;
+    use std::sync::mpsc;
+    use std::thread;
+    use std::time::Duration;
+    use std::sync::{Arc, Mutex};
+
+    use core::{CoreMessage, Core};
+    use event::Event;
+    use maidsafe_utilities::event_sender::MaidSafeEventCategory;
+    use maidsafe_utilities::thread::RaiiThreadJoiner;
+    use message::Message;
+    use mio::EventLoop;
+    use nat::mapping_context::MappingContext;
+    use socket::Socket;
+    use sodiumoxide::crypto::box_;
+    use static_contact_info::StaticContactInfo;
+
+    #[test]
+    fn connection_listener() {
+        let mut el = EventLoop::new().expect("Could not spawn el0");
+        let tx = el.channel();
+        let _raii_joiner = RaiiThreadJoiner::new(thread!("EL", move || {
+            el.run(&mut Core::new()).expect("Could not run el");
+        }));
+
+        let (event_tx, event_rx) = mpsc::channel();
+        let crust_sender_0 = ::CrustEventSender::new(event_tx,
+                                                     MaidSafeEventCategory::Crust,
+                                                     mpsc::channel().0);
+
+        let connection_map = Arc::new(Mutex::new(HashMap::new()));
+        let mapping_context = Arc::new(MappingContext::new());
+        let static_contact_info = Arc::new(Mutex::new(StaticContactInfo {
+            tcp_acceptors: Vec::new(),
+            tcp_mapper_servers: Vec::new(),
+        }));
+        let our_static_contact_info = static_contact_info.clone();
+
+        tx.send(CoreMessage::new(move |core, el| {
+            ConnectionListener::start(core,
+                                      el,
+                                      0,
+                                      box_::gen_keypair().0,
+                                      64,
+                                      connection_map,
+                                      mapping_context,
+                                      our_static_contact_info,
+                                      crust_sender_0);
+        })).expect("Could not send to tx");
+
+        thread::sleep(Duration::from_millis(100));
+
+        for it in event_rx.iter() {
+            match it {
+                Event::ListenerStarted(port) => {
+                    println!("listener started on port {}", port);
+                    break;
+                }
+                _ => panic!("Unexpected event notification"),
+            }
+        }
+        let acceptor = static_contact_info.lock()
+                                          .expect("Failed in locking static_contact_info")
+                                          .tcp_acceptors[0];
+
+        let mut stream = Socket::connect(&StdSocketAddr::new(acceptor.ip(), acceptor.port()))
+                                .expect("Error in tcp connection");
+        let message = Message::BootstrapRequest(box_::gen_keypair().0, 64);
+        stream.write(message).expect("Error in writing");
+        loop {
+            match stream.flush() {
+                Ok(result) => {
+                    if result {
+                        break;
+                    }
+                }
+                Err(e) => println!("err {:?}", e),
+            }
+        }
+        // assert!(stream.flush().expect("Error in flushing"));
+
+        for it in event_rx.iter() {
+            match it {
+                Event::BootstrapAccept(peer_id) => {
+                    println!("received peer connection {}", peer_id);
+                    break;
+                }
+                _ => panic!("Unexpected event notification"),
+            }
+        }
+
+        tx.send(CoreMessage::new(move |_, el| el.shutdown())).expect("Could not shutdown el");
+    }
+}
