@@ -22,6 +22,8 @@ rand = "~0.3.14"
 rustc-serialize = "~0.3.19"
 sodiumoxide = "~0.0.10"
 socket_addr = "~0.1.0"
+env_logger = "~0.3.3"
+get_if_addrs = "~0.4.0"
 
 [dependencies.clippy]
 optional = true
@@ -35,6 +37,18 @@ void = "~1.0.2"
 bench = false
 name = "simple_demo"
 path = "examples/simple_demo.rs"
+test = true
+
+[[example]]
+bench = false
+name = "mapping_server"
+path = "examples/mapping_server.rs"
+test = true
+
+[[example]]
+bench = false
+name = "mapping_client"
+path = "examples/mapping_client.rs"
 test = true
 
 [[test]]

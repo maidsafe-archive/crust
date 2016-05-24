@@ -49,12 +49,12 @@ extern crate log;
 #[macro_use]
 extern crate maidsafe_utilities;
 extern crate mio;
-extern crate nat_traversal;
 extern crate net2;
 extern crate rand;
 extern crate rustc_serialize;
 extern crate sodiumoxide;
 extern crate socket_addr;
+extern crate get_if_addrs;
 
 // Needed because the crate is only used for macros
 #[allow(unused_extern_crates)]
@@ -64,7 +64,7 @@ extern crate quick_error;
 mod bootstrap_states;
 mod config_handler;
 mod connection_states;
-mod core;
+pub mod core;
 mod error;
 mod event;
 mod message;
@@ -73,6 +73,7 @@ mod service;
 mod service_discovery;
 mod socket;
 mod static_contact_info;
+pub mod nat;
 
 #[cfg(test)]
 mod tests;

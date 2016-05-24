@@ -14,30 +14,37 @@
 //
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
+//! Defines the `State` trait
 
 use std::any::Any;
 
 use core::Core;
 use mio::{Handler, EventLoop, EventSet, Token};
 
+/// A trait for state machines
 pub trait State {
+    /// Return the state as an `Any`
     fn as_any(&mut self) -> &mut Any;
 
+    /// Run when the machine is ready to execute.
     fn ready(&mut self,
              _core: &mut Core,
              _event_loop: &mut EventLoop<Core>,
              _token: Token,
              _event_set: EventSet) {}
 
+    /// Terminate the state machine
     fn terminate(&mut self,
                  _core: &mut Core,
                  _event_loop: &mut EventLoop<Core>) {}
 
+    /// Timeout
     fn timeout(&mut self,
                _core: &mut Core,
                _event_loop: &mut EventLoop<Core>,
                _timeout: <Core as Handler>::Timeout) {}
 
+    /// Write some data
     fn write(&mut self,
              _core: &mut Core,
              _event_loop: &mut EventLoop<Core>,
