@@ -38,6 +38,7 @@ pub struct MappingTcpSocket<F> {
     writing_sockets: HashMap<Token, WritingSocket>,
     reading_sockets: HashMap<Token, ReadingSocket>,
     mapped_addrs: Vec<socket_addr::SocketAddr>,
+    external_addrs: u32,
     finished: Option<F>,
     context: Context,
 }
@@ -89,6 +90,7 @@ impl<F> MappingTcpSocket<F>
                 writing_sockets: writing_sockets,
                 reading_sockets: HashMap::new(),
                 mapped_addrs: mapped_addrs,
+                external_addrs: 0,
                 finished: Some(finished),
                 context: context,
             })));
@@ -222,7 +224,10 @@ impl<F> MappingTcpSocket<F>
                                     return;
                                 },
                             };
-                            self.mapped_addrs.push(response);
+                            if !self.mapped_addrs.contains(&response) {
+                                self.mapped_addrs.push(response);
+                                self.external_addrs += 1;
+                            }
                         }
                         else {
                             oe.get_mut().read_data.extend(&buf[..n]);
@@ -256,8 +261,8 @@ impl<F> State for MappingTcpSocket<F>
         println!("MappingTcpSocket::execute()");
         self.process(core, event_loop, token, event_set);
 
-        if self.mapped_addrs.len() >= 2 || (self.writing_sockets.is_empty() &&
-                                            self.reading_sockets.is_empty()) {
+        if self.external_addrs >= 2 || (self.writing_sockets.is_empty() &&
+                                        self.reading_sockets.is_empty()) {
             let (socket, addrs) = self.stop(core, event_loop);
             let finished = self.finished.take().unwrap();
             finished(core, event_loop, socket, addrs);
