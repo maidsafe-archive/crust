@@ -18,6 +18,7 @@
 use mio::{EventLoop, EventSet, PollOpt, Token};
 use std::any::Any;
 
+use active_connection::ActiveConnection;
 use core::{Context, Core, State};
 use event::Event;
 use message::Message;
@@ -25,7 +26,6 @@ use peer_id::{self, PeerId};
 use service::SharedConnectionMap;
 use socket::Socket;
 use sodiumoxide::crypto::box_::PublicKey;
-use super::active_connection::ActiveConnection;
 
 pub struct AcceptConnection {
     connection_map: SharedConnectionMap,
