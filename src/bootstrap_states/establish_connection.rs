@@ -67,9 +67,19 @@ impl EstablishConnection {
             }
         };
 
+        let event_set = match socket.write(Message::BootstrapRequest(our_public_key, name_hash)) {
+            Ok(true) => EventSet::error() | EventSet::readable(),
+            Ok(false) => EventSet::error() | EventSet::writable(),
+            Err(error) => {
+                error!("Failed to write to socket: {:?}", error);
+                let _ = core.remove_context(token);
+                return;
+            }
+        };
+
         if let Err(error) = event_loop.register(&socket,
                                                 token,
-                                                EventSet::error() | EventSet::writable(),
+                                                event_set,
                                                 PollOpt::edge()) {
             error!("Failed to register socket: {:?}", error);
             let _ = core.remove_context(token);

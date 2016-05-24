@@ -182,6 +182,7 @@ impl AcceptConnection {
                   event_loop: &mut EventLoop<Core>,
                   token: Token,
                   event_set: EventSet) {
+        let socket = self.socket.as_ref().unwrap();
 
         if let Err(error) = event_loop.reregister(self.socket.as_ref().unwrap(),
                                                   token,
