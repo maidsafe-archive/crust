@@ -169,14 +169,33 @@ impl Service {
                               .unwrap_or(SERVICE_DISCOVERY_DEFAULT_PORT);
 
         let _ = self.post(move |core, event_loop| {
-            if let Err(e) = ServiceDiscovery::new(core,
-                                                  event_loop,
-                                                  cloned_contact_info,
-                                                  SERVICE_DISCOVERY_CONTEXT,
-                                                  port) {
+            if let Err(e) = ServiceDiscovery::start(core,
+                                                    event_loop,
+                                                    cloned_contact_info,
+                                                    SERVICE_DISCOVERY_CONTEXT,
+                                                    port) {
                 error!("Could not start ServiceDiscovery: {:?}", e);
             }
         });
+    }
+
+    /// Enable listening and responding to peers searching for us. This will allow others finding us
+    /// by interrogating the network.
+    pub fn set_service_discovery_listen(&self, listen: bool) {
+        if self.is_service_discovery_running {
+            let _ = self.post(move |core, _| {
+                let state = core.get_state(SERVICE_DISCOVERY_CONTEXT)
+                                .expect("ServiceDiscovery not found");
+                let mut state = state.borrow_mut();
+
+                let service_discovery = match state.as_any().downcast_mut::<ServiceDiscovery>() {
+                    Some(b) => b,
+                    None => panic!("&ServiceDiscovery isn't a ServiceDiscovery!"),
+                };
+
+                service_discovery.set_listen(listen);
+            });
+        }
     }
 
     /// Start the bootstraping procedure.
@@ -193,6 +212,7 @@ impl Service {
                                         event_loop,
                                         BOOTSTRAP_CONTEXT,
                                         &config,
+                                        SERVICE_DISCOVERY_CONTEXT,
                                         our_public_key,
                                         name_hash,
                                         connection_map,
@@ -281,43 +301,6 @@ impl Service {
                 state.borrow_mut().write(&mut core, &mut event_loop, data);
             }
         })
-    }
-
-    /// Enable listening and responding to peers searching for us. This will allow others finding us
-    /// by interrogating the network.
-    pub fn set_service_discovery_listen(&self, listen: bool) {
-        if self.is_service_discovery_running {
-            let _ = self.post(move |core, _| {
-                let state = core.get_state(SERVICE_DISCOVERY_CONTEXT)
-                                .expect("ServiceDiscovery not found");
-                let mut state = state.borrow_mut();
-
-                let service_discovery = match state.as_any().downcast_mut::<ServiceDiscovery>() {
-                    Some(b) => b,
-                    None => panic!("&ServiceDiscovery isn't a ServiceDiscovery!"),
-                };
-
-                service_discovery.set_listen(listen);
-            });
-        }
-    }
-
-    /// Interrogate the network to find peers.
-    pub fn seek_peers(&self) {
-        if self.is_service_discovery_running {
-            let _ = self.post(move |core, _| {
-                let state = core.get_state(SERVICE_DISCOVERY_CONTEXT)
-                                .expect("State not found");
-                let mut state = state.borrow_mut();
-
-                let service_discovery = match state.as_any().downcast_mut::<ServiceDiscovery>() {
-                    Some(b) => b,
-                    None => panic!("&ServiceDiscovery isn't a ServiceDiscovery!"),
-                };
-
-                service_discovery.seek_peers().unwrap();
-            });
-        }
     }
 
     /// Lookup a mapped udp socket based on result_token
