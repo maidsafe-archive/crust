@@ -17,6 +17,8 @@
 
 use maidsafe_utilities::event_sender::{MaidSafeObserver, MaidSafeEventCategory};
 use maidsafe_utilities::log;
+use std::net::SocketAddr as StdSocketAddr;
+use std::str::FromStr;
 use std::sync::mpsc::{self, Receiver};
 
 use config_handler::Config;
@@ -36,9 +38,6 @@ fn get_event_sender()
 
 fn localhost(port: u16) -> SocketAddr {
     use std::net::IpAddr;
-    use std::net::SocketAddr as StdSocketAddr;
-    use std::str::FromStr;
-
     SocketAddr(StdSocketAddr::new(unwrap_result!(IpAddr::from_str("127.0.0.1")), port))
 }
 
@@ -111,8 +110,6 @@ fn bootstrap_two_services_and_exchange_messages() {
 
 #[test]
 fn bootstrap_two_services_using_service_discovery() {
-    unwrap_result!(log::init(true));
-
     let service_discovery_port = 30000;
 
     let mut config = Config::default();
@@ -143,6 +140,33 @@ fn bootstrap_two_services_using_service_discovery() {
 #[test]
 fn bootstrap_fails_if_there_are_no_contacts() {
     let config = Config::default();
+    let (event_tx, event_rx) = get_event_sender();
+    let mut service = unwrap_result!(Service::with_config(event_tx, config));
+
+    unwrap_result!(service.start_bootstrap());
+    expect_event!(event_rx, Event::BootstrapFailed);
+}
+
+// This test is ignored by default, because it takes too long (it needs to trigger
+// the bootstrap timeout to succeed.
+#[test]
+#[ignore]
+fn bootstrap_timeouts_if_there_are_only_invalid_contacts() {
+    use std::net::TcpListener;
+
+    unwrap_result!(log::init(true));
+
+    let deaf_listener = unwrap_result!(TcpListener::bind("0.0.0.0:0"));
+    let address = SocketAddr(unwrap_result!(deaf_listener.local_addr()));
+
+    let mut config = Config::default();
+    config.hard_coded_contacts = vec![
+        StaticContactInfo {
+            tcp_acceptors: vec![address],
+            tcp_mapper_servers: vec![],
+        }
+    ];
+
     let (event_tx, event_rx) = get_event_sender();
     let mut service = unwrap_result!(Service::with_config(event_tx, config));
 
