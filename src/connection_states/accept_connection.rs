@@ -74,6 +74,36 @@ impl AcceptConnection {
         let _ = core.insert_state(context, state);
     }
 
+    fn receive_bootstrap_request(&mut self,
+                                 core: &mut Core,
+                                 event_loop: &mut EventLoop<Core>,
+                                 token: Token) {
+        match self.socket.as_mut().unwrap().read::<Message>() {
+            Ok(Some(Message::BootstrapRequest(public_key, name_hash))) => {
+                self.handle_bootstrap_request(core,
+                                              event_loop,
+                                              token,
+                                              public_key,
+                                              name_hash);
+            }
+
+            Ok(Some(message)) => {
+                warn!("Unexpected message: {:?}", message);
+                self.set_readable(core, event_loop, token);
+            }
+
+            Ok(None) => {
+                debug!("Partial read from socket.");
+                self.set_readable(core, event_loop, token);
+            },
+
+            Err(error) => {
+                error!("Failed to read from socket: {:?}", error);
+                self.terminate(core, event_loop);
+            }
+        }
+    }
+
     fn handle_bootstrap_request(&mut self,
                                 core: &mut Core,
                                 event_loop: &mut EventLoop<Core>,
@@ -83,32 +113,48 @@ impl AcceptConnection {
     {
         if self.our_public_key == their_public_key {
             error!("Accepted connection from ourselves");
-            self.stop(core, event_loop);
+            self.terminate(core, event_loop);
             return;
         }
 
         if self.name_hash != name_hash {
             error!("Incompatible protocol version");
-            self.stop(core, event_loop);
-            return;
-        }
-
-        if let Err(error) = self.socket
-                                .as_mut()
-                                .unwrap()
-                                .write(Message::BootstrapResponse(self.our_public_key)) {
-            error!("Failed writing to socket: {:?}", error);
-            self.stop(core, event_loop);
+            self.terminate(core, event_loop);
             return;
         }
 
         self.their_peer_id = Some(peer_id::new(their_public_key));
-        self.set_writable(core, event_loop, token);
+
+        match self.socket.as_mut()
+                         .unwrap()
+                         .write(Message::BootstrapResponse(self.our_public_key)) {
+            Ok(true) => self.transition_to_active(core, event_loop),
+            Ok(false) => self.set_writable(core, event_loop, token),
+            Err(error) => {
+                error!("Failed writing to socket: {:?}", error);
+                self.terminate(core, event_loop);
+            }
+        }
     }
 
-    fn handle_bootstrap_response_sent(&mut self,
-                                      core: &mut Core,
-                                      event_loop: &mut EventLoop<Core>)
+    fn send_bootstrap_response(&mut self,
+                               core: &mut Core,
+                               event_loop: &mut EventLoop<Core>,
+                               token: Token)
+    {
+        match self.socket.as_mut().unwrap().flush() {
+            Ok(true) => self.transition_to_active(core, event_loop),
+            Ok(false) => self.set_writable(core, event_loop, token),
+            Err(error) => {
+                error!("Failed to flush socket: {:?}", error);
+                self.terminate(core, event_loop);
+            }
+        }
+    }
+
+    fn transition_to_active(&mut self,
+                            core: &mut Core,
+                            event_loop: &mut EventLoop<Core>)
     {
         let their_peer_id = self.their_peer_id.take().unwrap();
         let _ = self.event_tx.send(Event::BootstrapAccept(their_peer_id));
@@ -123,36 +169,26 @@ impl AcceptConnection {
                                 self.event_tx.clone())
     }
 
-    fn set_readable(&self, core: &mut Core, event_loop: &mut EventLoop<Core>, token: Token) {
+    fn set_readable(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, token: Token) {
         self.reregister(core, event_loop, token, EventSet::error() | EventSet::readable())
     }
 
-    fn set_writable(&self, core: &mut Core, event_loop: &mut EventLoop<Core>, token: Token) {
+    fn set_writable(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, token: Token) {
         self.reregister(core, event_loop, token, EventSet::error() | EventSet::writable())
     }
 
-    fn reregister(&self,
+    fn reregister(&mut self,
                   core: &mut Core,
                   event_loop: &mut EventLoop<Core>,
                   token: Token,
                   event_set: EventSet) {
-        let socket = self.socket.as_ref().unwrap();
 
-        if let Err(error) = event_loop.reregister(socket,
+        if let Err(error) = event_loop.reregister(self.socket.as_ref().unwrap(),
                                                   token,
                                                   event_set,
                                                   PollOpt::edge()) {
             error!("Failed to reregister socket: {:?}", error);
-            self.stop(core, event_loop);
-        }
-    }
-
-    fn stop(&self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
-        let _ = core.remove_state(self.context);
-        let _ = core.remove_context(self.token);
-
-        if let Some(socket) = self.socket.as_ref() {
-            event_loop.deregister(socket).expect("Failed to deregister socket");
+            self.terminate(core, event_loop);
         }
     }
 }
@@ -165,46 +201,25 @@ impl State for AcceptConnection {
              event_set: EventSet)
     {
         if event_set.is_error() {
-            self.stop(core, event_loop);
+            self.terminate(core, event_loop);
             return;
         }
 
         if event_set.is_readable() {
-            match self.socket.as_mut().unwrap().read::<Message>() {
-                Ok(Some(Message::BootstrapRequest(public_key, name_hash))) => {
-                    self.handle_bootstrap_request(core,
-                                                  event_loop,
-                                                  token,
-                                                  public_key,
-                                                  name_hash);
-                }
-
-                Ok(Some(message)) => {
-                    warn!("Unexpected message: {:?}", message);
-                    self.set_readable(core, event_loop, token);
-                }
-
-                Ok(None) => {
-                    debug!("Partial read from socket.");
-                    self.set_readable(core, event_loop, token);
-                },
-
-                Err(error) => {
-                    error!("Failed to read from socket: {:?}", error);
-                    self.stop(core, event_loop);
-                }
-            }
+            self.receive_bootstrap_request(core, event_loop, token)
         }
 
         if event_set.is_writable() {
-            match self.socket.as_mut().unwrap().flush() {
-                Ok(true) => self.handle_bootstrap_response_sent(core, event_loop),
-                Ok(false) => self.set_writable(core, event_loop, token),
-                Err(error) => {
-                    error!("Failed to flush socket: {:?}", error);
-                    self.stop(core, event_loop);
-                }
-            }
+            self.send_bootstrap_response(core, event_loop, token)
+        }
+    }
+
+    fn terminate(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
+        let _ = core.remove_state(self.context);
+        let _ = core.remove_context(self.token);
+
+        if let Some(socket) = self.socket.as_ref() {
+            event_loop.deregister(socket).expect("Failed to deregister socket");
         }
     }
 
