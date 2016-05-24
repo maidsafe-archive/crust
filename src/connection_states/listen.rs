@@ -17,14 +17,18 @@
 
 use mio::{EventLoop, EventSet, PollOpt, Token};
 use mio::tcp::TcpListener;
+use socket_addr::SocketAddr;
 use sodiumoxide::crypto::box_::PublicKey;
 use std::any::Any;
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::net::{IpAddr, Ipv4Addr};
+use std::net::SocketAddr as StdSocketAddr;
+use std::sync::{Arc, Mutex};
 
 use core::{Core, State};
 use event::Event;
 use service::SharedConnectionMap;
 use socket::Socket;
+use static_contact_info::StaticContactInfo;
 use super::accept_connection::AcceptConnection;
 
 pub struct Listen {
@@ -43,9 +47,10 @@ impl Listen {
                  our_public_key: PublicKey,
                  name_hash: u64,
                  connection_map: SharedConnectionMap,
+                 our_contact_info: Arc<Mutex<StaticContactInfo>>,
                  event_tx: ::CrustEventSender) {
 
-        let address = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), port);
+        let address = StdSocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), port);
         let listener = match TcpListener::bind(&address) {
             Ok(listener) => listener,
             Err(error) => {
@@ -64,6 +69,10 @@ impl Listen {
                 return;
             }
         };
+
+        // Update our conact info.
+        let address = SocketAddr(StdSocketAddr::new(address.ip(), port));
+        our_contact_info.lock().unwrap().tcp_acceptors.push(address);
 
         let context = core.get_new_context();
         let token = core.get_new_token();
