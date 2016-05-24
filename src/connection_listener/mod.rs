@@ -55,54 +55,66 @@ impl ConnectionListener {
         let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), port);
         let event_tx_clone = event_tx.clone();
         // let mapping_context_clone = mapping_context.clone();
-        match MappingTcpSocket::new(core, event_loop, &addr, &mapping_context,
+        match MappingTcpSocket::new(core,
+                                    event_loop,
+                                    &addr,
+                                    &mapping_context,
                                     move |core, event_loop, socket, addrs| {
-            let context = core.get_new_context();
-            let token = core.get_new_token();
-            let listener = match socket.listen(1) {
-                Ok(listener) => listener,
-                Err(error) => {
-                    error!("Failed to bind TCP listener: {:?}", error);
-                    let _ = event_tx.send(Event::ListenerFailed);
-                    return;
-                }
-            };
-            let local_addr = match listener.local_addr() {
-                Ok(address) => address,
-                Err(error) => {
-                    error!("Failed to retrieve local address from the TCP listener: {:?}", error);
-                    let _ = event_tx.send(Event::ListenerFailed);
-                    return;
-                }
-            };
-            let _ = event_tx.send(Event::ListenerStarted(local_addr.port()));
+                                        let context = core.get_new_context();
+                                        let token = core.get_new_token();
+                                        let listener = match socket.listen(1) {
+                                            Ok(listener) => listener,
+                                            Err(error) => {
+                                                error!("Failed to bind TCP listener: {:?}", error);
+                                                let _ = event_tx.send(Event::ListenerFailed);
+                                                return;
+                                            }
+                                        };
+                                        let local_addr = match listener.local_addr() {
+                                            Ok(address) => address,
+                                            Err(error) => {
+                                                error!("Failed to retrieve local address from \
+                                                        the TCP listener: {:?}",
+                                                       error);
+                                                let _ = event_tx.send(Event::ListenerFailed);
+                                                return;
+                                            }
+                                        };
+                                        let _ = event_tx.send(Event::ListenerStarted(local_addr.port()));
 
-            let listener = TcpListener::from_listener(listener, &addr).expect("start listener error");
-            event_loop.register(&listener,
-                                token,
-                                EventSet::readable() | EventSet::error() | EventSet::hup(),
-                                PollOpt::edge())
-                      .expect("register to event loop error");
-            let _ = core.insert_context(token, context.clone());
-            let _ = core.insert_state(context.clone(), ConnectionListener {
-                connection_map: connection_map,
-                event_tx: event_tx,
-                listener: listener,
-                name_hash: name_hash,
-                our_public_key: our_public_key,
-                token: token,
-            });
+                                        let listener = TcpListener::from_listener(listener, &addr)
+                                                           .expect("start listener error");
+                                        event_loop.register(&listener,
+                                                            token,
+                                                            EventSet::readable() |
+                                                            EventSet::error() |
+                                                            EventSet::hup(),
+                                                            PollOpt::edge())
+                                                  .expect("register to event loop error");
+                                        let _ = core.insert_context(token, context.clone());
+                                        let _ = core.insert_state(context.clone(),
+                                                                  ConnectionListener {
+                                                                      connection_map:
+                                                                          connection_map,
+                                                                      event_tx: event_tx,
+                                                                      listener: listener,
+                                                                      name_hash: name_hash,
+                                                                      our_public_key:
+                                                                          our_public_key,
+                                                                      token: token,
+                                                                  });
 
-            static_contact_info.lock()
-                               .expect("Failed in locking static_contact_info")
-                               .tcp_acceptors
-                               .extend(addrs);
-        }) {
+                                        static_contact_info.lock()
+                                                           .expect("Failed in locking \
+                                                                    static_contact_info")
+                                                           .tcp_acceptors
+                                                           .extend(addrs);
+                                    }) {
             Ok(()) => {}
             Err(e) => {
                 debug!("Error start tcp_listening_socket: {}", e);
                 let _ = event_tx_clone.send(Event::ListenerFailed);
-            },
+            }
         }
     }
 
@@ -125,8 +137,7 @@ impl State for ConnectionListener {
              core: &mut Core,
              event_loop: &mut EventLoop<Core>,
              token: Token,
-             event_set: EventSet)
-    {
+             event_set: EventSet) {
         assert_eq!(token, self.token);
         assert!(event_set.is_readable());
 
@@ -142,14 +153,11 @@ impl State for ConnectionListener {
     }
 }
 
-
-
 #[cfg(test)]
 mod test {
     use super::*;
 
     use std::collections::HashMap;
-    use std::io::Write;
     use std::net::SocketAddr as StdSocketAddr;
     use std::sync::mpsc;
     use std::thread;
@@ -163,9 +171,12 @@ mod test {
     use message::Message;
     use mio::EventLoop;
     use nat::mapping_context::MappingContext;
-    use socket::Socket;
     use sodiumoxide::crypto::box_;
     use static_contact_info::StaticContactInfo;
+    use std::net::TcpStream;
+    use std::io::Write;
+    use byteorder::{WriteBytesExt, LittleEndian};
+    use maidsafe_utilities::serialisation::serialise;
 
     #[test]
     fn connection_listener() {
@@ -189,16 +200,17 @@ mod test {
         let our_static_contact_info = static_contact_info.clone();
 
         tx.send(CoreMessage::new(move |core, el| {
-            ConnectionListener::start(core,
-                                      el,
-                                      0,
-                                      box_::gen_keypair().0,
-                                      64,
-                                      connection_map,
-                                      mapping_context,
-                                      our_static_contact_info,
-                                      crust_sender_0);
-        })).expect("Could not send to tx");
+              ConnectionListener::start(core,
+                                        el,
+                                        0,
+                                        box_::gen_keypair().0,
+                                        64,
+                                        connection_map,
+                                        mapping_context,
+                                        our_static_contact_info,
+                                        crust_sender_0);
+          }))
+          .expect("Could not send to tx");
 
         thread::sleep(Duration::from_millis(100));
 
@@ -215,21 +227,16 @@ mod test {
                                           .expect("Failed in locking static_contact_info")
                                           .tcp_acceptors[0];
 
-        let mut stream = Socket::connect(&StdSocketAddr::new(acceptor.ip(), acceptor.port()))
-                                .expect("Error in tcp connection");
-        let message = Message::BootstrapRequest(box_::gen_keypair().0, 64);
-        stream.write(message).expect("Error in writing");
-        loop {
-            match stream.flush() {
-                Ok(result) => {
-                    if result {
-                        break;
-                    }
-                }
-                Err(e) => println!("err {:?}", e),
-            }
-        }
-        // assert!(stream.flush().expect("Error in flushing"));
+        println!("======================0");
+        let mut stream = TcpStream::connect(StdSocketAddr::new(acceptor.ip(), acceptor.port()))
+                             .unwrap();
+
+        let message = serialise(&Message::BootstrapRequest(box_::gen_keypair().0, 64)).unwrap();
+        let mut size_vec = Vec::with_capacity(4);
+        unwrap_result!(size_vec.write_u32::<LittleEndian>(message.len() as u32));
+
+        stream.write_all(&size_vec).expect("Error in writing");
+        stream.write_all(&message).expect("Error in writing");
 
         for it in event_rx.iter() {
             match it {

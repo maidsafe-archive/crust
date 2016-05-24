@@ -80,11 +80,7 @@ impl AcceptConnection {
                                  token: Token) {
         match self.socket.as_mut().unwrap().read::<Message>() {
             Ok(Some(Message::BootstrapRequest(public_key, name_hash))) => {
-                self.handle_bootstrap_request(core,
-                                              event_loop,
-                                              token,
-                                              public_key,
-                                              name_hash);
+                self.handle_bootstrap_request(core, event_loop, token, public_key, name_hash);
             }
 
             Ok(Some(message)) => {
@@ -95,7 +91,7 @@ impl AcceptConnection {
             Ok(None) => {
                 debug!("Partial read from socket.");
                 self.set_readable(core, event_loop, token);
-            },
+            }
 
             Err(error) => {
                 error!("Failed to read from socket: {:?}", error);
@@ -109,8 +105,7 @@ impl AcceptConnection {
                                 event_loop: &mut EventLoop<Core>,
                                 token: Token,
                                 their_public_key: PublicKey,
-                                name_hash: u64)
-    {
+                                name_hash: u64) {
         if self.our_public_key == their_public_key {
             error!("Accepted connection from ourselves");
             self.terminate(core, event_loop);
@@ -125,9 +120,10 @@ impl AcceptConnection {
 
         self.their_peer_id = Some(peer_id::new(their_public_key));
 
-        match self.socket.as_mut()
-                         .unwrap()
-                         .write(Message::BootstrapResponse(self.our_public_key)) {
+        match self.socket
+                  .as_mut()
+                  .unwrap()
+                  .write(Message::BootstrapResponse(self.our_public_key)) {
             Ok(true) => self.transition_to_active(core, event_loop),
             Ok(false) => self.set_writable(core, event_loop, token),
             Err(error) => {
@@ -140,8 +136,7 @@ impl AcceptConnection {
     fn send_bootstrap_response(&mut self,
                                core: &mut Core,
                                event_loop: &mut EventLoop<Core>,
-                               token: Token)
-    {
+                               token: Token) {
         match self.socket.as_mut().unwrap().flush() {
             Ok(true) => self.transition_to_active(core, event_loop),
             Ok(false) => self.set_writable(core, event_loop, token),
@@ -152,10 +147,7 @@ impl AcceptConnection {
         }
     }
 
-    fn transition_to_active(&mut self,
-                            core: &mut Core,
-                            event_loop: &mut EventLoop<Core>)
-    {
+    fn transition_to_active(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
         let their_peer_id = self.their_peer_id.take().unwrap();
         let _ = self.event_tx.send(Event::BootstrapAccept(their_peer_id));
 
@@ -170,11 +162,17 @@ impl AcceptConnection {
     }
 
     fn set_readable(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, token: Token) {
-        self.reregister(core, event_loop, token, EventSet::error() | EventSet::readable())
+        self.reregister(core,
+                        event_loop,
+                        token,
+                        EventSet::error() | EventSet::readable())
     }
 
     fn set_writable(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, token: Token) {
-        self.reregister(core, event_loop, token, EventSet::error() | EventSet::writable())
+        self.reregister(core,
+                        event_loop,
+                        token,
+                        EventSet::error() | EventSet::writable())
     }
 
     fn reregister(&mut self,
@@ -198,8 +196,7 @@ impl State for AcceptConnection {
              core: &mut Core,
              event_loop: &mut EventLoop<Core>,
              token: Token,
-             event_set: EventSet)
-    {
+             event_set: EventSet) {
         if event_set.is_error() {
             self.terminate(core, event_loop);
             return;
