@@ -71,7 +71,7 @@ impl Listen {
         };
 
         // Update our conact info.
-        let address = SocketAddr(StdSocketAddr::new(address.ip(), port));
+        let address = SocketAddr::new(address.ip(), port);
         our_contact_info.lock().unwrap().tcp_acceptors.push(address);
 
         let context = core.get_new_context();
