@@ -110,7 +110,14 @@ impl Socket {
     }
 
     // Write a message to the socket.
-    pub fn write<T: Encodable>(&mut self, message: T) -> Result<(), SocketError> {
+    //
+    // Returns:
+    //   - Ok(true):   the message has been successfuly written.
+    //   - Ok(false):  the message (or part of it) has been queued. Schedule a
+    //                 write event and call `flush` to finish the write in the
+    //                 next ready handler.
+    //   - Err(error): there was an error while writing to the socket.
+    pub fn write<T: Encodable>(&mut self, message: T) -> Result<bool, SocketError> {
         let mut data = Cursor::new(Vec::with_capacity(mem::size_of::<u32>()));
 
         // Preallocate space for the message length at the beginning of the
@@ -126,8 +133,7 @@ impl Socket {
         try!(data.write_u32::<LittleEndian>(len as u32));
 
         self.write_queue.push_back(data.into_inner());
-
-        Ok(())
+        self.flush()
     }
 
     // Flush previous writes. Call this from inside the `ready` handler.

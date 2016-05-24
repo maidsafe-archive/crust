@@ -146,32 +146,30 @@ impl State for ActiveConnection {
              event_set: EventSet) {
         assert_eq!(token, self.token);
 
-        if event_set.is_error() {
+        if event_set.is_error() || event_set.is_hup() {
             self.stop(core, event_loop);
-            return;
-        }
+        } else {
+            if event_set.is_writable() {
+                self.write(core, event_loop);
+            }
 
-        if event_set.is_writable() {
-            self.write(core, event_loop);
-        }
-
-        if event_set.is_readable() {
-            self.read(core, event_loop);
-        }
-
-        if event_set.is_hup() {
-            self.stop(core, event_loop);
+            if event_set.is_readable() {
+                self.read(core, event_loop);
+            }
         }
     }
 
     fn write(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, data: Vec<u8>) {
-        if let Err(error) = self.socket.write(Message::Data(data)) {
-            error!("Failed to write to socket: {:?}", error);
-            self.stop(core, event_loop);
-            return;
+        match self.socket.write(Message::Data(data)) {
+            Ok(true) => self.event_set.remove(EventSet::writable()),
+            Ok(false) => self.event_set.insert(EventSet::writable()),
+            Err(error) => {
+                error!("Failed to write to socket: {:?}", error);
+                self.stop(core, event_loop);
+                return;
+            }
         }
 
-        self.event_set.insert(EventSet::writable());
         self.reregister(core, event_loop);
     }
 
