@@ -18,7 +18,6 @@
 use mio::{EventLoop, EventSet, PollOpt, Token};
 use std::any::Any;
 
-use active_connection::ActiveConnection;
 use core::{Context, Core, State};
 use event::Event;
 use message::Message;
@@ -26,6 +25,7 @@ use peer_id::{self, PeerId};
 use service::SharedConnectionMap;
 use socket::Socket;
 use sodiumoxide::crypto::box_::PublicKey;
+use super::active_connection::ActiveConnection;
 
 pub struct AcceptConnection {
     connection_map: SharedConnectionMap,
@@ -103,7 +103,8 @@ impl AcceptConnection {
                                 event_loop: &mut EventLoop<Core>,
                                 token: Token,
                                 their_public_key: PublicKey,
-                                name_hash: u64) {
+                                name_hash: u64)
+    {
         if self.our_public_key == their_public_key {
             error!("Accepted connection from ourselves");
             self.terminate(core, event_loop);
@@ -118,10 +119,9 @@ impl AcceptConnection {
 
         self.their_peer_id = Some(peer_id::new(their_public_key));
 
-        match self.socket
-                  .as_mut()
-                  .unwrap()
-                  .write(Message::BootstrapResponse(self.our_public_key)) {
+        match self.socket.as_mut()
+                         .unwrap()
+                         .write(Message::BootstrapResponse(self.our_public_key)) {
             Ok(true) => self.transition_to_active(core, event_loop),
             Ok(false) => self.reregister(core, event_loop, token, true),
 
@@ -135,7 +135,8 @@ impl AcceptConnection {
     fn send_bootstrap_response(&mut self,
                                core: &mut Core,
                                event_loop: &mut EventLoop<Core>,
-                               token: Token) {
+                               token: Token)
+    {
         match self.socket.as_mut().unwrap().flush() {
             Ok(true) => self.transition_to_active(core, event_loop),
             Ok(false) => self.reregister(core, event_loop, token, true),

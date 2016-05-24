@@ -29,7 +29,7 @@ use peer_id;
 use service::SharedConnectionMap;
 use socket::Socket;
 use static_contact_info::StaticContactInfo;
-use active_connection::ActiveConnection;
+use connection_states::ActiveConnection;
 
 pub struct EstablishConnection {
     connection_map: SharedConnectionMap,
