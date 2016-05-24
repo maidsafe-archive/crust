@@ -1,5 +1,9 @@
 # CRUST - Change Log
 
+## [0.14.0]
+- Depend on maidsafe_utilities 0.6.0.
+- Fix endianness issue.
+
 ## [0.13.2]
 - Tweak the algorithm for dropping messages when the bandwitdh is insufficient.
 
