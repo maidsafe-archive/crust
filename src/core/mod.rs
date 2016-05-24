@@ -14,6 +14,7 @@
 //
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
+//! Defines `Core`, the mio handler and the core of the event loop.
 
 use mio::{Token, EventLoop, EventSet, Handler};
 use std::cell::RefCell;
@@ -23,12 +24,16 @@ use std::rc::Rc;
 pub use self::state::State;
 pub mod state;
 
+/// The type of messages passed to core.
 pub type CoreMessage = Closure;
+/// Type for registering timeouts with the event loop.
 pub type CoreTimeout = ();
 
+/// A context for registering states with the event loop.
 #[derive(Hash, Eq, PartialEq, Ord, PartialOrd, Copy, Clone, Debug)]
 pub struct Context(pub usize);
 
+/// The core of the event loop
 pub struct Core {
     token_counter: usize,
     context_counter: usize,
@@ -37,6 +42,7 @@ pub struct Core {
 }
 
 impl Core {
+    /// Create a new `Core`
     pub fn new() -> Self {
         Self::with_context_counter(0)
     }
@@ -61,16 +67,19 @@ impl Core {
         next
     }
 
+    /// Get a new `Context`.
     pub fn get_new_context(&mut self) -> Context {
         let next = Context(self.context_counter);
         self.context_counter = self.context_counter.wrapping_add(1);
         next
     }
 
+    /// Register a context with a token in the event loop.
     pub fn insert_context(&mut self, token: Token, context: Context) -> Option<Context> {
         self.contexts.insert(token, context)
     }
 
+    /// Register a state with a context in the event loop.
     pub fn insert_state<T>(&mut self,
                            context: Context,
                            state: T) -> Option<Rc<RefCell<State>>>
@@ -79,19 +88,22 @@ impl Core {
         self.states.insert(context, Rc::new(RefCell::new(state)))
     }
 
-
+    /// Deregister a context from the event loop.
     pub fn remove_context(&mut self, token: Token) -> Option<Context> {
         self.contexts.remove(&token)
     }
 
+    /// Deregister a state from the event loop.
     pub fn remove_state(&mut self, context: Context) -> Option<Rc<RefCell<State>>> {
         self.states.remove(&context)
     }
 
+    /// Get the context registered with a particular token (if any).
     pub fn get_context(&self, token: Token) -> Option<Context> {
         self.contexts.get(&token).map(|h| *h)
     }
 
+    /// Get the state registered with a particular context (if any).
     pub fn get_state(&self, token: Context) -> Option<Rc<RefCell<State>>> {
         self.states.get(&token).map(|s| s.clone())
     }
@@ -126,10 +138,11 @@ impl Handler for Core {
     }
 }
 
-// Workaround for Box<FnOnce>
+/// Workaround for instability of `Box<FnOnce>`
 pub struct Closure(Box<FnMut(&mut Core, &mut EventLoop<Core>) + Send>);
 
 impl Closure {
+    /// Create a new `Closure`
     pub fn new<F : FnOnce(&mut Core, &mut EventLoop<Core>) + Send + 'static>(f: F) -> Self {
         let mut f = Some(f);
         Closure(Box::new(move |a0: &mut Core, a1: &mut EventLoop<Core>| {

@@ -68,7 +68,6 @@ pub mod core;
 mod error;
 mod event;
 mod message;
-pub mod state;
 mod peer_id;
 mod service;
 mod service_discovery;

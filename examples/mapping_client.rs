@@ -6,12 +6,10 @@ extern crate rustc_serialize;
 
 use std::net;
 use std::net::{ToSocketAddrs, SocketAddrV4, Ipv4Addr};
-use std::rc::Rc;
-use std::cell::RefCell;
 use std::any::Any;
 
 use crust::core::Core;
-use crust::state::State;
+use crust::core::state::State;
 use crust::nat::mapped_tcp_socket::MappingTcpSocket;
 use crust::nat::mapping_context::MappingContext;
 use crust::nat::punch_hole::PunchHole;
@@ -173,18 +171,18 @@ impl MessageReader {
             },
         }
         let _ = core.insert_context(token, context.clone());
-        let _ = core.insert_state(context, Rc::new(RefCell::new(MessageReader {
+        let _ = core.insert_state(context, MessageReader {
             stream: stream,
-        })));
+        });
     }
 }
 
 impl State for MessageReader {
-    fn execute(&mut self,
-               _core: &mut Core,
-               _event_loop: &mut EventLoop<Core>,
-               _token: Token,
-               _event_set: EventSet)
+    fn ready(&mut self,
+             _core: &mut Core,
+             _event_loop: &mut EventLoop<Core>,
+             _token: Token,
+             _event_set: EventSet)
     {
         let mut buf = [0u8; 256];
         match self.stream.try_read(&mut buf[..]) {

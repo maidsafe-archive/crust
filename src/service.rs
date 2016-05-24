@@ -341,7 +341,7 @@ impl Service {
                     let event = Event::ConnectionInfoPrepared(ConnectionInfoResult {
                         result_token: result_token,
                         result: Ok(OurConnectionInfo {
-                            id: peer_id::new_id(our_pub_key),
+                            id: peer_id::new(our_pub_key),
                             tcp_info: our_pub_tcp_info,
                             priv_tcp_info: our_priv_tcp_info,
                             tcp_socket: Some(socket),

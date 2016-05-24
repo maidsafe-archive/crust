@@ -3,8 +3,6 @@
 use std::net::SocketAddr;
 use std::io;
 use std::collections::{HashMap, hash_map};
-use std::cell::RefCell;
-use std::rc::Rc;
 use std::mem;
 use std::any::Any;
 
@@ -16,7 +14,7 @@ use socket_addr;
 use maidsafe_utilities::serialisation::deserialise;
 
 use core::{Core, Context};
-use state::State;
+use core::state::State;
 use nat::util::{new_reusably_bound_tcp_socket, tcp_builder_local_addr, expand_unspecified_addr};
 use nat::mapping_context::MappingContext;
 
@@ -85,7 +83,7 @@ impl<F> MappingTcpSocket<F>
                 };
                 let _ = writing_sockets.insert(token, writing_socket);
             }
-            let _ = core.insert_state(context.clone(), Rc::new(RefCell::new(MappingTcpSocket {
+            let _ = core.insert_state(context.clone(), MappingTcpSocket {
                 socket: Some(socket),
                 writing_sockets: writing_sockets,
                 reading_sockets: HashMap::new(),
@@ -93,7 +91,7 @@ impl<F> MappingTcpSocket<F>
                 external_addrs: 0,
                 finished: Some(finished),
                 context: context,
-            })));
+            });
         }
         else {
             finished(core, event_loop, socket, mapped_addrs);
@@ -107,7 +105,7 @@ impl<F> MappingTcpSocket<F>
                 Ok(()) => (),
                 Err(e) => debug!("Error deregistering socket: {}", e),
             };
-            let _ = core.remove_context(token);
+            let _ = core.remove_context(*token);
         }
 
         for (token, reading_socket) in self.reading_sockets.iter() {
@@ -115,10 +113,10 @@ impl<F> MappingTcpSocket<F>
                 Ok(()) => (),
                 Err(e) => debug!("Error deregistering socket: {}", e),
             };
-            let _ = core.remove_context(token);
+            let _ = core.remove_context(*token);
         }
 
-        let _ = core.remove_state(&self.context);
+        let _ = core.remove_state(self.context);
 
         let socket = self.socket.take().unwrap();
         let mapped_addrs = mem::replace(&mut self.mapped_addrs, Vec::new());
@@ -136,7 +134,7 @@ impl<F> MappingTcpSocket<F>
                 if let Err(e) = writing_socket.socket.take_socket_error() {
                     debug!("Error sending request to mapping server: {}", e);
                 }
-                let _ = core.remove_context(&token);
+                let _ = core.remove_context(token);
                 match event_loop.deregister(&writing_socket.socket) {
                     Ok(()) => (),
                     Err(e) => debug!("Error deregistering socket: {}", e),
@@ -148,7 +146,7 @@ impl<F> MappingTcpSocket<F>
                 if let Err(e) = reading_socket.socket.take_socket_error() {
                     debug!("Error receiving request from mapping server: {}", e);
                 }
-                let _ = core.remove_context(&token);
+                let _ = core.remove_context(token);
                 match event_loop.deregister(&reading_socket.socket) {
                     Ok(()) => (),
                     Err(e) => debug!("Error deregistering socket: {}", e),
@@ -212,7 +210,7 @@ impl<F> MappingTcpSocket<F>
                     Ok(Some(n)) => {
                         if n == 0 {
                             let reading_socket = oe.remove();
-                            let _ = core.remove_context(&token);
+                            let _ = core.remove_context(token);
                             match event_loop.deregister(&reading_socket.socket) {
                                 Ok(()) => (),
                                 Err(e) => debug!("Error deregistering with event loop: {}", e),
@@ -235,7 +233,7 @@ impl<F> MappingTcpSocket<F>
                             if len > MAX_RECV_MSG_SIZE {
                                 debug!("Overly long response from mapping server: {} bytes", len);
                                 let reading_socket = oe.remove();
-                                let _ = core.remove_context(&token);
+                                let _ = core.remove_context(token);
                                 match event_loop.deregister(&reading_socket.socket) {
                                     Ok(()) => (),
                                     Err(e) => debug!("Error deregistering socket: {}", e),
@@ -252,11 +250,11 @@ impl<F> MappingTcpSocket<F>
 impl<F> State for MappingTcpSocket<F>
         where F: FnOnce(&mut Core, &mut EventLoop<Core>, net2::TcpBuilder, Vec<socket_addr::SocketAddr>) + Any
 {
-    fn execute(&mut self,
-               core: &mut Core,
-               event_loop: &mut EventLoop<Core>,
-               token: Token,
-               event_set: EventSet)
+    fn ready(&mut self,
+             core: &mut Core,
+             event_loop: &mut EventLoop<Core>,
+             token: Token,
+             event_set: EventSet)
     {
         println!("MappingTcpSocket::execute()");
         self.process(core, event_loop, token, event_set);

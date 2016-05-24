@@ -3,8 +3,6 @@
 use std::io;
 use std::io::Cursor;
 use std::collections::{HashMap, hash_map};
-use std::cell::RefCell;
-use std::rc::Rc;
 use std::any::Any;
 
 use rand;
@@ -15,7 +13,7 @@ use mio::{TryAccept, TryRead, TryWrite};
 use byteorder::{ReadBytesExt, BigEndian};
 
 use core::{Core, Context};
-use state::State;
+use core::state::State;
 use nat::util::{new_reusably_bound_tcp_socket, tcp_builder_local_addr};
 use nat::rendezvous_info::{PubRendezvousInfo, PrivRendezvousInfo};
 
@@ -106,7 +104,7 @@ impl<F> PunchHole<F>
             their_secret: their_pub_info.secret,
             best_stream: None,
         };
-        let _ = core.insert_state(context, Rc::new(RefCell::new(state)));
+        let _ = core.insert_state(context, state);
         Ok(())
     }
 }
@@ -114,11 +112,11 @@ impl<F> PunchHole<F>
 impl<F> State for PunchHole<F>
         where F: FnOnce(&mut Core, &mut EventLoop<Core>, Option<TcpStream>) + Any
 {
-    fn execute(&mut self,
-               core: &mut Core,
-               event_loop: &mut EventLoop<Core>,
-               token: Token,
-               _event_set: EventSet)
+    fn ready(&mut self,
+             core: &mut Core,
+             event_loop: &mut EventLoop<Core>,
+             token: Token,
+             _event_set: EventSet)
     {
         if token == self.listener_token && self.writing_streams.is_empty()
                                         && self.reading_streams.is_empty()
@@ -167,12 +165,12 @@ impl<F> State for PunchHole<F>
                         Ok(()) => (),
                         Err(e) => debug!("Error deregistering socket: {}", e),
                     };
-                    let _ = core.remove_context(&token);
+                    let _ = core.remove_context(token);
                 },
                 Ok(None) => return,
                 Ok(Some(0)) => {
                     let writing_stream = oe.remove();
-                    let _ = core.remove_context(&token);
+                    let _ = core.remove_context(token);
                     match event_loop.deregister(&writing_stream.stream)
                     {
                         Ok(()) => (),
@@ -195,7 +193,7 @@ impl<F> State for PunchHole<F>
                             Ok(()) => (),
                             Err(e) => {
                                 debug!("Error reregistering stream: {}", e);
-                                let _ = core.remove_context(&token);
+                                let _ = core.remove_context(token);
                                 return;
                             },
                         };
@@ -226,13 +224,13 @@ impl<F> State for PunchHole<F>
                         Ok(()) => (),
                         Err(e) => debug!("Error deregistering socket: {}", e),
                     };
-                    let _ = core.remove_context(&token);
+                    let _ = core.remove_context(token);
                     return;
                 },
                 Ok(None) => (),
                 Ok(Some(0)) => {
                     let reading_stream = oe.remove();
-                    let _ = core.remove_context(&token);
+                    let _ = core.remove_context(token);
                     match event_loop.deregister(&reading_stream.stream)
                     {
                         Ok(()) => (),
@@ -247,7 +245,7 @@ impl<F> State for PunchHole<F>
                     let read = oe.get_mut().bytes_read;
                     if read >= SECRET_LEN + NONCE_LEN {
                         let reading_stream = oe.remove();
-                        let _ = core.remove_context(&token);
+                        let _ = core.remove_context(token);
                         match event_loop.deregister(&reading_stream.stream) {
                             Ok(()) => (),
                             Err(e) => {
@@ -298,7 +296,7 @@ impl<F> State for PunchHole<F>
                 Ok(()) => (),
                 Err(e) => debug!("Error deregistering stream: {}", e),
             };
-            let _ = core.remove_context(&token);
+            let _ = core.remove_context(*token);
         }
 
         for (token, reading_stream) in self.reading_streams.iter() {
@@ -306,16 +304,16 @@ impl<F> State for PunchHole<F>
                 Ok(()) => (),
                 Err(e) => debug!("Error deregistering stream: {}", e),
             };
-            let _ = core.remove_context(&token);
+            let _ = core.remove_context(*token);
         }
 
         match event_loop.deregister(&self.listener) {
             Ok(()) => (),
             Err(e) => debug!("Error deregistering stream: {}", e),
         };
-        let _ = core.remove_context(&self.listener_token);
+        let _ = core.remove_context(self.listener_token);
 
-        let _ = core.remove_state(&self.context);
+        let _ = core.remove_state(self.context);
     }
 
     fn as_any(&mut self) -> &mut Any {

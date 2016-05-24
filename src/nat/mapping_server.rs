@@ -2,8 +2,6 @@
 
 use std::net::{SocketAddr, SocketAddrV4, Ipv4Addr};
 use std::collections::{HashMap, hash_map};
-use std::cell::RefCell;
-use std::rc::Rc;
 use std::io;
 use std::any::Any;
 
@@ -14,7 +12,7 @@ use socket_addr;
 use maidsafe_utilities::serialisation::serialise;
 
 use core::{Core, Context};
-use state::State;
+use core::state::State;
 use nat::mapping_context::MappingContext;
 use nat::mapped_tcp_socket::MappingTcpSocket;
 
@@ -63,13 +61,13 @@ impl TcpMappingServer {
                                              PollOpt::edge(),
                     ));
                     let _ = core.insert_context(token, context.clone());
-                    let _ = core.insert_state(context.clone(), Rc::new(RefCell::new(TcpMappingServer {
+                    let _ = core.insert_state(context.clone(), TcpMappingServer {
                         server_socket: listener,
                         reading_clients: HashMap::new(),
                         writing_clients: HashMap::new(),
                         server_token: token,
                         context: context,
-                    })));
+                    });
                     Ok(addrs)
                 };
                 try()
@@ -80,11 +78,11 @@ impl TcpMappingServer {
 }
 
 impl State for TcpMappingServer {
-    fn execute(&mut self,
-               core: &mut Core,
-               event_loop: &mut EventLoop<Core>,
-               token: Token,
-               _event_set: EventSet)
+    fn ready(&mut self,
+             core: &mut Core,
+             event_loop: &mut EventLoop<Core>,
+             token: Token,
+             _event_set: EventSet)
     {
         if token == self.server_token {
             let (client, their_addr) = match self.server_socket.accept() {
@@ -132,7 +130,7 @@ impl State for TcpMappingServer {
                         Ok(()) => (),
                         Err(e) => debug!("Error deregistering socket: {}", e),
                     };
-                    let _ = core.remove_context(&token);
+                    let _ = core.remove_context(token);
                 },
                 Ok(None) => return,
                 Ok(Some(n)) => {
@@ -146,7 +144,7 @@ impl State for TcpMappingServer {
                                 Ok(()) => (),
                                 Err(e) => debug!("Error deregistering socket: {}", e),
                             };
-                            let _ = core.remove_context(&token);
+                            let _ = core.remove_context(token);
                         }
                         match event_loop.reregister(&reading_client.stream,
                                               token,
@@ -156,7 +154,7 @@ impl State for TcpMappingServer {
                             Ok(()) => (),
                             Err(e) => {
                                 debug!("Error registering socket: {}", e);
-                                let _ = core.remove_context(&token);
+                                let _ = core.remove_context(token);
                             },
                         }
                         let their_addr = serialise(&socket_addr::SocketAddr(reading_client.their_addr)).unwrap();
@@ -185,7 +183,7 @@ impl State for TcpMappingServer {
                         Ok(()) => (),
                         Err(e) => debug!("Error deregistering socket: {}", e),
                     };
-                    let _ = core.remove_context(&token);
+                    let _ = core.remove_context(token);
                 },
                 Ok(None) => return,
                 Ok(Some(n)) => {
@@ -197,7 +195,7 @@ impl State for TcpMappingServer {
                             Ok(()) => (),
                             Err(e) => debug!("Error deregistering socket: {}", e),
                         };
-                        let _ = core.remove_context(&token);
+                        let _ = core.remove_context(token);
                     }
                 },
             }
@@ -210,14 +208,14 @@ impl State for TcpMappingServer {
             Ok(()) => (),
             Err(e) => debug!("Error deregistering socket: {}", e),
         };
-        let _ = core.remove_context(&self.server_token);
+        let _ = core.remove_context(self.server_token);
 
         for (token, reading_client) in self.reading_clients.iter() {
             match event_loop.deregister(&reading_client.stream) {
                 Ok(()) => (),
                 Err(e) => debug!("Error deregistering socket: {}", e),
             };
-            let _ = core.remove_context(&token);
+            let _ = core.remove_context(*token);
         }
 
         for (token, writing_client) in self.writing_clients.iter() {
@@ -225,10 +223,10 @@ impl State for TcpMappingServer {
                 Ok(()) => (),
                 Err(e) => debug!("Error deregistering socket: {}", e),
             };
-            let _ = core.remove_context(&token);
+            let _ = core.remove_context(*token);
         }
 
-        let _ = core.remove_state(&self.context);
+        let _ = core.remove_state(self.context);
     }
 
     fn as_any(&mut self) -> &mut Any {
