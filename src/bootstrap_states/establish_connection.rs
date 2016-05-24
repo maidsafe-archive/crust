@@ -22,6 +22,7 @@ use std::cell::RefCell;
 use std::collections::HashSet;
 use std::rc::Rc;
 
+use active_connection::ActiveConnection;
 use event::Event;
 use core::{Context, Core, State};
 use message::Message;
@@ -29,7 +30,6 @@ use peer_id;
 use service::SharedConnectionMap;
 use socket::Socket;
 use static_contact_info::StaticContactInfo;
-use connection_states::ActiveConnection;
 
 pub struct EstablishConnection {
     connection_map: SharedConnectionMap,

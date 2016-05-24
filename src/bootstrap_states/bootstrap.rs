@@ -15,11 +15,12 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use mio::EventLoop;
-use sodiumoxide::crypto::sign::PublicKey;
+use mio::{EventLoop, Timeout, Token};
+use sodiumoxide::crypto::box_::PublicKey;
 use std::any::Any;
 use std::cell::RefCell;
 use std::collections::HashSet;
+use std::mem;
 use std::rc::Rc;
 
 use core::{Context, Core, State};
@@ -28,9 +29,14 @@ use service::SharedConnectionMap;
 use static_contact_info::StaticContactInfo;
 use super::establish_connection::EstablishConnection;
 
+const BOOTSTRAP_TIMEOUT_MS: u64 = 60_000;
+
 pub struct Bootstrap {
     context: Context,
+    event_tx: ::CrustEventSender,
     pending_connections: Rc<RefCell<HashSet<Context>>>,
+    timeout: Timeout,
+    token: Token,
 }
 
 impl Bootstrap {
@@ -42,6 +48,16 @@ impl Bootstrap {
                  contacts: Vec<StaticContactInfo>,
                  our_public_key: PublicKey,
                  name_hash: u64) {
+        let token = core.get_new_token();
+        let timeout = match event_loop.timeout_ms(token, BOOTSTRAP_TIMEOUT_MS) {
+            Ok(timeout) => timeout,
+            Err(error) => {
+                error!("Failed to schedule bootstrap timeout: {:?}", error);
+                let _ = event_tx.send(Event::BootstrapFailed);
+                return;
+            }
+        };
+
         let pending_connections = Rc::new(RefCell::new(HashSet::with_capacity(contacts.len())));
 
         for contact in contacts {
@@ -61,12 +77,17 @@ impl Bootstrap {
             return;
         }
 
+
         let state = Bootstrap {
             context: context,
+            event_tx: event_tx,
             pending_connections: pending_connections,
+            timeout: timeout,
+            token: token,
         };
 
         let _ = core.insert_state(context, state);
+        let _ = core.insert_context(token, context);
     }
 
 }
@@ -77,12 +98,19 @@ impl State for Bootstrap {
     }
 
     fn terminate(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
-        let mut connections = self.pending_connections.borrow_mut();
+        let connections = mem::replace(&mut *self.pending_connections.borrow_mut(), HashSet::new());
 
-        for context in connections.drain() {
+        for context in connections {
             let _ = core.terminate_state(event_loop, context);
         }
 
+        let _ = event_loop.clear_timeout(self.timeout);
+        let _ = core.remove_context(self.token);
         let _ = core.remove_state(self.context);
+    }
+
+    fn timeout(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, _: Token) {
+        let _ = self.event_tx.send(Event::BootstrapFailed);
+        self.terminate(core, event_loop);
     }
 }
