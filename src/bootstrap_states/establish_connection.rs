@@ -53,6 +53,11 @@ impl EstablishConnection {
                  parent_handle: Context,
                  event_tx: ::CrustEventSender) {
 
+        if contact_info.tcp_acceptors.is_empty() {
+            warn!("List of TCP acceptors in contact info is empty");
+            return;
+        }
+
         let context = core.get_new_context();
         let token = core.get_new_token();
         let _ = core.insert_context(token, context);
@@ -67,19 +72,9 @@ impl EstablishConnection {
             }
         };
 
-        let event_set = match socket.write(Message::BootstrapRequest(our_public_key, name_hash)) {
-            Ok(true) => EventSet::error() | EventSet::readable(),
-            Ok(false) => EventSet::error() | EventSet::writable(),
-            Err(error) => {
-                error!("Failed to write to socket: {:?}", error);
-                let _ = core.remove_context(token);
-                return;
-            }
-        };
-
         if let Err(error) = event_loop.register(&socket,
                                                 token,
-                                                event_set,
+                                                EventSet::error() | EventSet::writable(),
                                                 PollOpt::edge()) {
             error!("Failed to register socket: {:?}", error);
             let _ = core.remove_context(token);

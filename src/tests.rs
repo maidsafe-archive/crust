@@ -49,20 +49,34 @@ fn localhost_contact_info(port: u16) -> StaticContactInfo {
     }
 }
 
+// Receive an event from the given receiver and asserts that it matches the
+// given pattern.
+macro_rules! expect_event {
+    ($rx:expr, $pattern:pat) => {
+        match unwrap_result!($rx.recv()) {
+            $pattern => (),
+            e => panic!("unexpected event {:?}", e),
+        }
+    };
+
+    ($rx:expr, $pattern:pat => $arm:expr) => {
+        match unwrap_result!($rx.recv()) {
+            $pattern => $arm,
+            e => panic!("unexpected event {:?}", e),
+        }
+    }
+}
+
+
 #[test]
 fn bootstrap_two_services_and_exchange_messages() {
-    let _ = log::init(true);
-
     let config0 = Config::default();
     let (event_tx0, event_rx0) = get_event_sender();
     let mut service0 = unwrap_result!(Service::with_config(event_tx0, config0));
 
     let _ = unwrap_result!(service0.start_listening_tcp());
 
-    let port0 = match unwrap_result!(event_rx0.recv()) {
-        Event::ListenerStarted(port) => port,
-        e => panic!("unexpected event {:?}", e),
-    };
+    let port0 = expect_event!(event_rx0, Event::ListenerStarted(port) => port);
 
     let mut config1 = Config::default();
     config1.hard_coded_contacts = vec![localhost_contact_info(port0)];
@@ -72,41 +86,66 @@ fn bootstrap_two_services_and_exchange_messages() {
 
     let _ = unwrap_result!(service1.start_bootstrap());
 
-    let peer_id0 = match unwrap_result!(event_rx1.recv()) {
-        Event::BootstrapConnect(peer_id) => {
-            assert_eq!(peer_id, service0.id());
-            peer_id
-        }
-        e => panic!("unexpected event {:?}", e),
-    };
+    let peer_id0 = expect_event!(event_rx1, Event::BootstrapConnect(peer_id) => peer_id);
+    assert_eq!(peer_id0, service0.id());
 
-    let peer_id1 = match unwrap_result!(event_rx0.recv()) {
-        Event::BootstrapAccept(peer_id) => {
-            assert_eq!(peer_id, service1.id());
-            peer_id
-        }
-        e => panic!("unexpected event {:?}", e),
-    };
+    let peer_id1 = expect_event!(event_rx0, Event::BootstrapAccept(peer_id) => peer_id);
+    assert_eq!(peer_id1, service1.id());
 
     let message0 = "hello from 0".as_bytes().to_owned();
     unwrap_result!(service0.send(peer_id1, message0.clone()));
 
-    match unwrap_result!(event_rx1.recv()) {
-        Event::NewMessage(peer_id, data) => {
-            assert_eq!(peer_id, peer_id0);
-            assert_eq!(data, message0);
-        }
-        e => panic!("unexpected event {:?}", e),
-    }
+    expect_event!(event_rx1, Event::NewMessage(peer_id, data) => {
+        assert_eq!(peer_id, peer_id0);
+        assert_eq!(data, message0);
+    });
 
     let message1 = "hello from 1".as_bytes().to_owned();
     unwrap_result!(service1.send(peer_id0, message1.clone()));
 
-    match unwrap_result!(event_rx0.recv()) {
-        Event::NewMessage(peer_id, data) => {
-            assert_eq!(peer_id, peer_id1);
-            assert_eq!(data, message1);
-        }
-        e => panic!("unexpected event {:?}", e),
-    }
+    expect_event!(event_rx0, Event::NewMessage(peer_id, data) => {
+        assert_eq!(peer_id, peer_id1);
+        assert_eq!(data, message1);
+    });
+}
+
+#[test]
+fn bootstrap_two_services_using_service_discovery() {
+    unwrap_result!(log::init(true));
+
+    let service_discovery_port = 30000;
+
+    let mut config = Config::default();
+    config.service_discovery_port = Some(service_discovery_port);
+
+    let (event_tx0, event_rx0) = get_event_sender();
+    let mut service0 = unwrap_result!(Service::with_config(event_tx0, config.clone()));
+
+    let (event_tx1, event_rx1) = get_event_sender();
+    let mut service1 = unwrap_result!(Service::with_config(event_tx1, config));
+
+    service0.start_service_discovery();
+    service0.set_service_discovery_listen(true);
+    unwrap_result!(service0.start_listening_tcp());
+
+    expect_event!(event_rx0, Event::ListenerStarted(_));
+
+    service1.start_service_discovery();
+    unwrap_result!(service1.start_bootstrap());
+
+    let peer_id0 = expect_event!(event_rx1, Event::BootstrapConnect(peer_id) => peer_id);
+    assert_eq!(peer_id0, service0.id());
+
+    let peer_id1 = expect_event!(event_rx0, Event::BootstrapAccept(peer_id) => peer_id);
+    assert_eq!(peer_id1, service1.id());
+}
+
+#[test]
+fn bootstrap_fails_if_there_are_no_contacts() {
+    let config = Config::default();
+    let (event_tx, event_rx) = get_event_sender();
+    let mut service = unwrap_result!(Service::with_config(event_tx, config));
+
+    unwrap_result!(service.start_bootstrap());
+    expect_event!(event_rx, Event::BootstrapFailed);
 }
