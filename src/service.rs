@@ -24,11 +24,13 @@ use std::collections::HashMap;
 use std::hash::{Hash, Hasher, SipHasher};
 use std::io;
 use std::sync::{Arc, Mutex};
+use std::rc::Rc;
+use std::sync::atomic::{AtomicBool, Ordering};
+use socket_addr;
 
 use bootstrap_states::GetBootstrapContacts;
 use config_handler::{self, Config};
 use connection_listener::ConnectionListener;
-use connection_states::EstablishConnection;
 use core::{Context, Core, CoreMessage, State};
 use event::Event;
 use error::Error;
@@ -39,6 +41,10 @@ use static_contact_info::StaticContactInfo;
 use nat::mapped_tcp_socket::MappingTcpSocket;
 use nat::rendezvous_info::{PubRendezvousInfo, PrivRendezvousInfo, gen_rendezvous_info};
 use nat::mapping_context::MappingContext;
+use socket::Socket;
+use active_connection::ActiveConnection;
+use connect::establish_direct_connection::EstablishDirectConnection;
+use nat::punch_hole::PunchHole;
 
 const BOOTSTRAP_CONTEXT: Context = Context(0);
 const SERVICE_DISCOVERY_CONTEXT: Context = Context(1);
@@ -75,7 +81,6 @@ impl OurConnectionInfo {
         }
     }
 }
-
 
 /// Contact info used to connect to another peer.
 #[derive(Debug, RustcEncodable, RustcDecodable)]
@@ -256,7 +261,93 @@ impl Service {
     }
 
     /// connect to peer
-    pub fn connect(&mut self, peer_contact_info: StaticContactInfo) -> Result<(), Error> {
+    pub fn connect(&mut self,
+                   our_connection_info: OurConnectionInfo,
+                   their_connection_info: TheirConnectionInfo)
+                        -> Result<(), Error>
+    {
+        let event_tx = self.event_tx.clone();
+        let connection_map = self.connection_map.clone();
+        // FIXME: check this error
+        let _ = self.post(move |core, event_loop| {
+            let event_tx_rc = Rc::new(event_tx);
+            let response_sent_rc = Rc::new(AtomicBool::new(false));
+
+            let static_contact_info = their_connection_info.static_contact_info;
+            let their_id = their_connection_info.id;
+            for socket_addr::SocketAddr(addr) in static_contact_info.tcp_acceptors {
+                let event_tx_rc = event_tx_rc.clone();
+                let response_sent_rc = response_sent_rc.clone();
+                let connection_map = connection_map.clone();
+                // FIXME: check this error
+                let _ = EstablishDirectConnection::start(core, event_loop, addr, their_id,
+                                                 move |core, event_loop, res, peer_id|
+                {
+                    if !response_sent_rc.load(Ordering::Relaxed) {
+                        match res {
+                            Ok((token, context, stream)) => {
+                                let socket = Socket::wrap(stream);
+                                let event_tx = (&*event_tx_rc).clone();
+                                let _ = event_tx.send(Event::NewPeer(Ok(()), peer_id));
+                                response_sent_rc.store(true, Ordering::Relaxed);
+                                ActiveConnection::start(core,
+                                                        event_loop,
+                                                        context,
+                                                        connection_map,
+                                                        their_id,
+                                                        socket,
+                                                        token,
+                                                        event_tx);
+                            },
+                            Err(e) => {
+                                if let Ok(event_tx) = Rc::try_unwrap(event_tx_rc) {
+                                    let _ = event_tx.send(Event::NewPeer(Err(e), their_id));
+                                }
+                            },
+                        }
+                    }
+                });
+            }
+
+            if let Some(tcp_socket) = our_connection_info.tcp_socket {
+                // FIXME: check this error
+                let _ = PunchHole::start(core,
+                                         event_loop,
+                                         tcp_socket,
+                                         our_connection_info.priv_tcp_info,
+                                         their_connection_info.tcp_info,
+                                         move |core, event_loop, stream_opt|
+                {
+                    match stream_opt {
+                        Some(stream) => {
+                            let token = core.get_new_token();
+                            let context = core.get_new_context();
+                            let socket = Socket::wrap(stream);
+                            let event_tx = (&*event_tx_rc).clone();
+                            let _ = event_tx.send(Event::NewPeer(Ok(()), their_id));
+                            response_sent_rc.store(true, Ordering::Relaxed);
+                            ActiveConnection::start(core,
+                                                    event_loop,
+                                                    context,
+                                                    connection_map,
+                                                    their_id,
+                                                    socket,
+                                                    token,
+                                                    event_tx);
+                        },
+                        None => {
+                            if let Ok(event_tx) = Rc::try_unwrap(event_tx_rc) {
+                                let error = io::Error::new(io::ErrorKind::Other, "Failed to punch hole");
+                                let _ = event_tx.send(Event::NewPeer(Err(error), their_id));
+                            }
+                        },
+                    }
+                });
+            }
+        });
+
+        Ok(())
+        /*
         let event_tx = self.event_tx.clone();
         let connection_map = self.connection_map.clone();
 
@@ -267,6 +358,7 @@ impl Service {
                                        connection_map,
                                        event_tx);
         })
+        */
     }
 
     /// Disconnect from the given peer and returns whether there was a connection at all.
