@@ -82,8 +82,6 @@ impl ConnectionListener {
                                                 return;
                                             }
                                         };
-                                        let _ = event_tx.send(Event::ListenerStarted(local_addr.port()));
-
                                         let listener = TcpListener::from_listener(listener, &addr)
                                                            .expect("start listener error");
                                         event_loop.register(&listener,
@@ -93,6 +91,12 @@ impl ConnectionListener {
                                                             EventSet::hup(),
                                                             PollOpt::edge())
                                                   .expect("register to event loop error");
+                                        static_contact_info.lock()
+                                                           .expect("Failed in locking \
+                                                                    static_contact_info")
+                                                           .tcp_acceptors
+                                                           .extend(addrs);
+                                        let _ = event_tx.send(Event::ListenerStarted(local_addr.port()));
                                         let _ = core.insert_context(token, context.clone());
                                         let _ = core.insert_state(context.clone(),
                                                                   ConnectionListener {
@@ -105,12 +109,6 @@ impl ConnectionListener {
                                                                           our_public_key,
                                                                       token: token,
                                                                   });
-
-                                        static_contact_info.lock()
-                                                           .expect("Failed in locking \
-                                                                    static_contact_info")
-                                                           .tcp_acceptors
-                                                           .extend(addrs);
                                     }) {
             Ok(()) => {}
             Err(e) => {
@@ -221,8 +219,6 @@ mod test {
           }))
           .expect("Could not send to tx");
 
-        thread::sleep(Duration::from_millis(100));
-
         for it in event_rx.iter() {
             match it {
                 Event::ListenerStarted(_port) => break,
@@ -268,10 +264,8 @@ mod test {
                 _ => panic!("Unexpected event notification"),
             }
         }
-        thread::sleep(Duration::from_millis(100));
         listener.tx.send(CoreMessage::new(move |_, el| el.shutdown()))
                    .expect("Could not shutdown el");
-        thread::sleep(Duration::from_millis(100));
     }
 
     #[test]
@@ -284,9 +278,7 @@ mod test {
             Ok(_) => panic!("Unexpected success"),
             Err(_) => (),
         }
-        thread::sleep(Duration::from_millis(100));
         listener.tx.send(CoreMessage::new(move |_, el| el.shutdown()))
                    .expect("Could not shutdown el");
-        thread::sleep(Duration::from_millis(100));
     }
 }
