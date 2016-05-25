@@ -52,11 +52,9 @@ impl AcceptConnection {
 
         let context = core.get_new_context();
         let token = core.get_new_token();
+        let event_set = EventSet::error() | EventSet::hup() | EventSet::readable();
 
-        if let Err(error) = event_loop.register(&socket,
-                                                token,
-                                                EventSet::error() | EventSet::readable(),
-                                                PollOpt::edge()) {
+        if let Err(error) = event_loop.register(&socket, token, event_set, PollOpt::edge()) {
             error!("Failed to register socket: {:?}", error);
             return;
         }
@@ -97,12 +95,12 @@ impl AcceptConnection {
 
             Ok(Some(message)) => {
                 warn!("Unexpected message: {:?}", message);
-                self.set_readable(core, event_loop, token);
+                self.reregister(core, event_loop, token, false);
             }
 
             Ok(None) => {
                 debug!("Partial read from socket.");
-                self.set_readable(core, event_loop, token);
+                self.reregister(core, event_loop, token, false);
             }
 
             Err(error) => {
@@ -117,7 +115,8 @@ impl AcceptConnection {
                                 event_loop: &mut EventLoop<Core>,
                                 token: Token,
                                 their_public_key: PublicKey,
-                                name_hash: u64) {
+                                name_hash: u64)
+    {
         if self.our_public_key == their_public_key {
             error!("Accepted connection from ourselves");
             self.terminate(core, event_loop);
@@ -132,12 +131,12 @@ impl AcceptConnection {
 
         self.their_peer_id = Some(peer_id::new(their_public_key));
 
-        match self.socket
-                  .as_mut()
-                  .unwrap()
-                  .write(Message::BootstrapResponse(self.our_public_key)) {
+        match self.socket.as_mut()
+                         .unwrap()
+                         .write(Message::BootstrapResponse(self.our_public_key)) {
             Ok(true) => self.transition_to_active(core, event_loop),
-            Ok(false) => self.set_writable(core, event_loop, token),
+            Ok(false) => self.reregister(core, event_loop, token, true),
+
             Err(error) => {
                 error!("Failed writing to socket: {:?}", error);
                 self.terminate(core, event_loop);
@@ -148,10 +147,11 @@ impl AcceptConnection {
     fn send_bootstrap_response(&mut self,
                                core: &mut Core,
                                event_loop: &mut EventLoop<Core>,
-                               token: Token) {
+                               token: Token)
+    {
         match self.socket.as_mut().unwrap().flush() {
             Ok(true) => self.transition_to_active(core, event_loop),
-            Ok(false) => self.set_writable(core, event_loop, token),
+            Ok(false) => self.reregister(core, event_loop, token, true),
             Err(error) => {
                 error!("Failed to flush socket: {:?}", error);
                 self.terminate(core, event_loop);
@@ -173,25 +173,13 @@ impl AcceptConnection {
                                 self.event_tx.clone())
     }
 
-    fn set_readable(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, token: Token) {
-        self.reregister(core,
-                        event_loop,
-                        token,
-                        EventSet::error() | EventSet::readable())
-    }
-
-    fn set_writable(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, token: Token) {
-        self.reregister(core,
-                        event_loop,
-                        token,
-                        EventSet::error() | EventSet::writable())
-    }
-
     fn reregister(&mut self,
                   core: &mut Core,
                   event_loop: &mut EventLoop<Core>,
                   token: Token,
-                  event_set: EventSet) {
+                  writable: bool) {
+        let mut event_set = EventSet::error() | EventSet::hup() | EventSet::readable();
+        if writable { event_set.insert(EventSet::writable()) }
 
         if let Err(error) = event_loop.reregister(self.socket.as_ref().unwrap(),
                                                   token,
@@ -209,7 +197,8 @@ impl State for AcceptConnection {
              event_loop: &mut EventLoop<Core>,
              token: Token,
              event_set: EventSet) {
-        if event_set.is_error() {
+
+        if event_set.is_error() | event_set.is_hup() {
             self.terminate(core, event_loop);
             return;
         }
@@ -229,7 +218,7 @@ impl State for AcceptConnection {
         let _ = event_loop.clear_timeout(self.timeout);
     }
 
-    fn timeout(&mut self, core: &mut Core, _event_loop: &mut EventLoop<Core>) {
+    fn timeout(&mut self, core: &mut Core, _event_loop: &mut EventLoop<Core>, _token: Token) {
         // TODO: does need to notify routing or just silently drop?
         let _ = core.remove_state(self.context);
         let _ = core.remove_context(self.token);

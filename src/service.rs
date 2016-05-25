@@ -109,7 +109,7 @@ pub struct Service {
     mio_tx: mio::Sender<CoreMessage>,
     name_hash: u64,
     our_keys: (PublicKey, SecretKey),
-    static_contact_info: Arc<Mutex<StaticContactInfo>>,
+    our_contact_info: Arc<Mutex<StaticContactInfo>>,
     _thread_joiner: RaiiThreadJoiner,
 }
 
@@ -131,10 +131,7 @@ impl Service {
         let name_hash = name_hash(&config.network_name);
 
         // Form our initial contact info
-        let static_contact_info = Arc::new(Mutex::new(StaticContactInfo {
-            tcp_acceptors: Vec::new(),
-            tcp_mapper_servers: Vec::new(),
-        }));
+        let our_contact_info = Arc::new(Mutex::new(StaticContactInfo::default()));
         let mapping_context = MappingContext::new();
 
         let joiner = RaiiThreadJoiner::new(thread!("Crust event loop", move || {
@@ -152,7 +149,7 @@ impl Service {
             mio_tx: mio_tx,
             name_hash: name_hash,
             our_keys: our_keys,
-            static_contact_info: static_contact_info,
+            our_contact_info: our_contact_info,
             _thread_joiner: joiner,
         })
     }
@@ -165,19 +162,38 @@ impl Service {
             self.is_service_discovery_running = true;
         }
 
-        let cloned_contact_info = self.static_contact_info.clone();
+        let our_contact_info = self.our_contact_info.clone();
         let port = self.config.service_discovery_port
                               .unwrap_or(SERVICE_DISCOVERY_DEFAULT_PORT);
 
         let _ = self.post(move |core, event_loop| {
-            if let Err(e) = ServiceDiscovery::new(core,
-                                                  event_loop,
-                                                  cloned_contact_info,
-                                                  SERVICE_DISCOVERY_CONTEXT,
-                                                  port) {
+            if let Err(e) = ServiceDiscovery::start(core,
+                                                    event_loop,
+                                                    our_contact_info,
+                                                    SERVICE_DISCOVERY_CONTEXT,
+                                                    port) {
                 error!("Could not start ServiceDiscovery: {:?}", e);
             }
         });
+    }
+
+    /// Enable listening and responding to peers searching for us. This will allow others finding us
+    /// by interrogating the network.
+    pub fn set_service_discovery_listen(&self, listen: bool) {
+        if self.is_service_discovery_running {
+            let _ = self.post(move |core, _| {
+                let state = core.get_state(SERVICE_DISCOVERY_CONTEXT)
+                                .expect("ServiceDiscovery not found");
+                let mut state = state.borrow_mut();
+
+                let service_discovery = match state.as_any().downcast_mut::<ServiceDiscovery>() {
+                    Some(b) => b,
+                    None => panic!("&ServiceDiscovery isn't a ServiceDiscovery!"),
+                };
+
+                service_discovery.set_listen(listen);
+            });
+        }
     }
 
     /// Start the bootstraping procedure.
@@ -194,6 +210,7 @@ impl Service {
                                         event_loop,
                                         BOOTSTRAP_CONTEXT,
                                         &config,
+                                        SERVICE_DISCOVERY_CONTEXT,
                                         our_public_key,
                                         name_hash,
                                         connection_map,
@@ -222,7 +239,7 @@ impl Service {
         let port = self.config.tcp_acceptor_port.unwrap_or(0);
         let our_public_key = self.our_keys.0.clone();
         let name_hash = self.name_hash;
-        let our_static_contact_info = self.static_contact_info.clone();
+        let our_contact_info = self.our_contact_info.clone();
         let event_tx = self.event_tx.clone();
 
         self.post(move |core, event_loop| {
@@ -233,7 +250,7 @@ impl Service {
                                       name_hash,
                                       connection_map,
                                       mapping_context,
-                                      our_static_contact_info,
+                                      our_contact_info,
                                       event_tx);
         })
     }
@@ -288,49 +305,12 @@ impl Service {
         })
     }
 
-    /// Enable listening and responding to peers searching for us. This will allow others finding us
-    /// by interrogating the network.
-    pub fn set_service_discovery_listen(&self, listen: bool) {
-        if self.is_service_discovery_running {
-            let _ = self.post(move |core, _| {
-                let state = core.get_state(SERVICE_DISCOVERY_CONTEXT)
-                                .expect("ServiceDiscovery not found");
-                let mut state = state.borrow_mut();
-
-                let service_discovery = match state.as_any().downcast_mut::<ServiceDiscovery>() {
-                    Some(b) => b,
-                    None => panic!("&ServiceDiscovery isn't a ServiceDiscovery!"),
-                };
-
-                service_discovery.set_listen(listen);
-            });
-        }
-    }
-
-    /// Interrogate the network to find peers.
-    pub fn seek_peers(&self) {
-        if self.is_service_discovery_running {
-            let _ = self.post(move |core, _| {
-                let state = core.get_state(SERVICE_DISCOVERY_CONTEXT)
-                                .expect("State not found");
-                let mut state = state.borrow_mut();
-
-                let service_discovery = match state.as_any().downcast_mut::<ServiceDiscovery>() {
-                    Some(b) => b,
-                    None => panic!("&ServiceDiscovery isn't a ServiceDiscovery!"),
-                };
-
-                service_discovery.seek_peers().unwrap();
-            });
-        }
-    }
-
     /// Lookup a mapped udp socket based on result_token
     // TODO: immediate return in case of sender.send() returned with NotificationError
     pub fn prepare_connection_info(&mut self, result_token: u32) {
         let event_tx = self.event_tx.clone();
         let our_pub_key = self.our_keys.0.clone();
-        let static_contact_info = self.static_contact_info.lock().unwrap().clone();
+        let static_contact_info = self.our_contact_info.lock().unwrap().clone();
         let mapping_context = self.mapping_context.clone();
         if let Err(e) = self.post(move |mut core, mut event_loop| {
             let event_tx_clone = event_tx.clone();

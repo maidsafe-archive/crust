@@ -41,7 +41,8 @@ pub trait State {
     /// Timeout
     fn timeout(&mut self,
                _core: &mut Core,
-               _event_loop: &mut EventLoop<Core>) {}
+               _event_loop: &mut EventLoop<Core>,
+               _token: Token) {}
 
     /// Write some data
     fn write(&mut self,
