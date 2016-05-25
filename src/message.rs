@@ -19,7 +19,7 @@ use sodiumoxide::crypto::box_::PublicKey;
 
 #[derive(Clone, PartialEq, Eq, Debug, RustcEncodable, RustcDecodable)]
 pub enum Message {
-    // Heartbeat,
+    Heartbeat,
     BootstrapRequest(PublicKey, u64),
     BootstrapResponse(PublicKey),
     // ExternalEndpointRequest,

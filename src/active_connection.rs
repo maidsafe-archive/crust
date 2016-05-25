@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use mio::{Token, EventLoop, EventSet, PollOpt};
+use mio::{EventLoop, EventSet, PollOpt, Timeout, TimerError, Token};
 use std::any::Any;
 use std::io::{Read, Write};
 
@@ -26,10 +26,13 @@ use peer_id::PeerId;
 use service::SharedConnectionMap;
 use socket::Socket;
 
+const HEARTBEAT_PERIOD_MS: u64 = 20_000;
+
 pub struct ActiveConnection {
     connection_map: SharedConnectionMap,
     context: Context,
     event_tx: ::CrustEventSender,
+    heartbeat: Heartbeat,
     peer_id: PeerId,
     socket: Socket,
     token: Token,
@@ -55,14 +58,28 @@ impl ActiveConnection {
                                                   PollOpt::edge())
         {
             error!("Failed to reregister socker: {:?}", error);
+
             let _ = event_loop.deregister(&socket);
             let _ = core.remove_state(context);
             let _ = core.remove_context(token);
-
             let _ = event_tx.send(Event::LostPeer(peer_id));
 
             return;
         }
+
+        let heartbeat = match Heartbeat::new(core, event_loop, context) {
+            Ok(heartbeat) => heartbeat,
+            Err(error) => {
+                error!("Failed to initialize heartbeat: {:?}", error);
+
+                let _ = event_loop.deregister(&socket);
+                let _ = core.remove_state(context);
+                let _ = core.remove_context(token);
+                let _ = event_tx.send(Event::LostPeer(peer_id));
+
+                return;
+            }
+        };
 
         let _ = connection_map.lock().unwrap().insert(peer_id, context);
 
@@ -70,6 +87,7 @@ impl ActiveConnection {
             connection_map: connection_map,
             context: context.clone(),
             event_tx: event_tx,
+            heartbeat: heartbeat,
             peer_id: peer_id,
             socket: socket,
             token: token,
@@ -83,13 +101,22 @@ impl ActiveConnection {
         match self.socket.read::<Message>() {
             Ok(Some(Message::Data(data))) => {
                 let _ = self.event_tx.send(Event::NewMessage(self.peer_id, data));
+                self.receive_heartbeat(core, event_loop);
             }
 
-            Ok(Some(message)) => warn!("Unexpected message: {:?}", message),
+            Ok(Some(Message::Heartbeat)) => {
+                self.receive_heartbeat(core, event_loop);
+            }
+
+            Ok(Some(message)) => {
+                warn!("Unexpected message: {:?}", message);
+                self.receive_heartbeat(core, event_loop);
+            }
+
             Ok(None) => (),
             Err(error) => {
                 error!("Failed to read from socket: {:?}", error);
-                self.stop(core, event_loop);
+                self.terminate(core, event_loop);
                 return;
             }
         }
@@ -103,7 +130,7 @@ impl ActiveConnection {
             Ok(false) => (),
             Err(error) => {
                 error!("Failed to flush socket: {:?}", error);
-                self.stop(core, event_loop);
+                self.terminate(core, event_loop);
                 return;
             }
         }
@@ -111,7 +138,69 @@ impl ActiveConnection {
         self.reregister(core, event_loop);
     }
 
-    fn stop(&self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
+    fn reregister(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
+        if let Err(error) = event_loop.reregister(&self.socket,
+                                                  self.token,
+                                                  self.event_set,
+                                                  PollOpt::edge()) {
+            error!("Failed to reregister socket: {:?}", error);
+            self.terminate(core, event_loop);
+        }
+    }
+
+    fn write_message(&mut self,
+                     core: &mut Core,
+                     event_loop: &mut EventLoop<Core>,
+                     message: Message) {
+        match self.socket.write(message) {
+            Ok(true) => self.event_set.remove(EventSet::writable()),
+            Ok(false) => self.event_set.insert(EventSet::writable()),
+            Err(error) => {
+                error!("Failed to write to socket: {:?}", error);
+                self.terminate(core, event_loop);
+                return;
+            }
+        }
+
+        self.reregister(core, event_loop);
+    }
+
+    fn receive_heartbeat(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
+        if let Err(error) = self.heartbeat.receive(event_loop) {
+            error!("Failed to process received heartbeat: {:?}", error);
+            self.terminate(core, event_loop);
+        }
+    }
+}
+
+impl State for ActiveConnection {
+    fn ready(&mut self,
+             core: &mut Core,
+             event_loop: &mut EventLoop<Core>,
+             token: Token,
+             event_set: EventSet) {
+        assert_eq!(token, self.token);
+
+        if event_set.is_error() || event_set.is_hup() {
+            self.terminate(core, event_loop);
+        } else {
+            if event_set.is_writable() {
+                self.write(core, event_loop);
+            }
+
+            if event_set.is_readable() {
+                self.read(core, event_loop);
+            }
+        }
+    }
+
+    fn write(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, data: Vec<u8>) {
+        self.write_message(core, event_loop, Message::Data(data))
+    }
+
+    fn terminate(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
+        self.heartbeat.terminate(core, event_loop);
+
         if let Err(error) = self.socket.shutdown() {
             error!("Failed to shutdown socket: {:?}", error);
         }
@@ -127,57 +216,78 @@ impl ActiveConnection {
         let _ = self.event_tx.send(Event::LostPeer(self.peer_id));
     }
 
-    fn reregister(&self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
-        if let Err(error) = event_loop.reregister(&self.socket,
-                                                  self.token,
-                                                  self.event_set,
-                                                  PollOpt::edge()) {
-            error!("Failed to reregister socket: {:?}", error);
-            self.stop(core, event_loop);
+    fn timeout(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, token: Token) {
+        match self.heartbeat.timeout(event_loop, token) {
+            HeartbeatAction::None => (),
+            HeartbeatAction::Send => self.write_message(core, event_loop, Message::Heartbeat),
+            HeartbeatAction::Terminate => self.terminate(core, event_loop),
         }
-    }
-}
-
-impl State for ActiveConnection {
-    fn ready(&mut self,
-             core: &mut Core,
-             event_loop: &mut EventLoop<Core>,
-             token: Token,
-             event_set: EventSet) {
-        assert_eq!(token, self.token);
-
-        if event_set.is_error() || event_set.is_hup() {
-            self.stop(core, event_loop);
-        } else {
-            if event_set.is_writable() {
-                self.write(core, event_loop);
-            }
-
-            if event_set.is_readable() {
-                self.read(core, event_loop);
-            }
-        }
-    }
-
-    fn write(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, data: Vec<u8>) {
-        match self.socket.write(Message::Data(data)) {
-            Ok(true) => self.event_set.remove(EventSet::writable()),
-            Ok(false) => self.event_set.insert(EventSet::writable()),
-            Err(error) => {
-                error!("Failed to write to socket: {:?}", error);
-                self.stop(core, event_loop);
-                return;
-            }
-        }
-
-        self.reregister(core, event_loop);
-    }
-
-    fn terminate(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
-        self.stop(core, event_loop);
     }
 
     fn as_any(&mut self) -> &mut Any {
         self
     }
+}
+
+struct Heartbeat {
+    recv_timeout: Timeout,
+    recv_token: Token,
+    send_timeout: Timeout,
+    send_token: Token,
+}
+
+impl Heartbeat {
+    fn new(core: &mut Core, event_loop: &mut EventLoop<Core>, context: Context) -> Result<Self, TimerError> {
+        let recv_token = core.get_new_token();
+        let recv_timeout = try!(event_loop.timeout_ms(recv_token, HEARTBEAT_PERIOD_MS));
+        let _ = core.insert_context(recv_token, context);
+
+        let send_token = core.get_new_token();
+        let send_timeout = try!(event_loop.timeout_ms(send_token, HEARTBEAT_PERIOD_MS));
+        let _ = core.insert_context(send_token, context);
+
+        Ok(Heartbeat {
+            recv_timeout: recv_timeout,
+            recv_token: recv_token,
+            send_timeout: send_timeout,
+            send_token: send_token,
+        })
+    }
+
+    fn timeout(&self, event_loop: &mut EventLoop<Core>, token: Token) -> HeartbeatAction {
+        if token == self.recv_token { return HeartbeatAction::Terminate; }
+        if token == self.send_token {
+            return if let Err(error) = event_loop.timeout_ms(self.send_token, HEARTBEAT_PERIOD_MS) {
+                error!("Failed to reschedule heartbeat send timer: {:?}", error);
+                HeartbeatAction::Terminate
+            } else {
+                HeartbeatAction::Send
+            };
+        }
+
+        HeartbeatAction::None
+    }
+
+    fn receive(&mut self, event_loop: &mut EventLoop<Core>) -> Result<(), TimerError> {
+        let _ = event_loop.clear_timeout(self.recv_timeout);
+        self.recv_timeout = try!(event_loop.timeout_ms(self.recv_token, HEARTBEAT_PERIOD_MS));
+        Ok(())
+    }
+
+    fn terminate(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
+        let _ = event_loop.clear_timeout(self.recv_timeout);
+        let _ = core.remove_context(self.recv_token);
+
+        let _ = event_loop.clear_timeout(self.send_timeout);
+        let _ = core.remove_context(self.send_token);
+    }
+}
+
+enum HeartbeatAction {
+    // Do nothing
+    None,
+    // Send heartbeat message to the peer
+    Send,
+    // Terminate the connection
+    Terminate,
 }
