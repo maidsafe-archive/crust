@@ -72,10 +72,12 @@ impl EstablishConnection {
             }
         };
 
-        if let Err(error) = event_loop.register(&socket,
-                                                token,
-                                                EventSet::error() | EventSet::writable(),
-                                                PollOpt::edge()) {
+        let event_set = EventSet::error() |
+                        EventSet::hup() |
+                        EventSet::readable() |
+                        EventSet::writable();
+
+        if let Err(error) = event_loop.register(&socket, token, event_set, PollOpt::edge()) {
             error!("Failed to register socket: {:?}", error);
             let _ = core.remove_context(token);
             return;
@@ -120,11 +122,11 @@ impl EstablishConnection {
         match result {
             Ok(true) => {
                 // BootstrapRequest sent, start awaiting response.
-                self.set_readable(core, event_loop, token);
+                self.reregister(core, event_loop, token, false);
             }
             Ok(false) => {
                 // More data remain to be sent, stay in the writing mode.
-                self.set_writable(core, event_loop, token);
+                self.reregister(core, event_loop, token, true);
             }
             Err(error) => {
                 error!("Failed to flush socket: {:?}", error);
@@ -146,11 +148,11 @@ impl EstablishConnection {
             Ok(Some(message)) => {
                 warn!("Unexpected message: {:?}", message);
                 // TODO: maybe resend the handshake again here?
-                self.set_readable(core, event_loop, token);
+                self.reregister(core, event_loop, token, false);
             }
 
             Ok(None) => {
-                self.set_readable(core, event_loop, token);
+                self.reregister(core, event_loop, token, false);
             },
 
             Err(error) => {
@@ -181,19 +183,14 @@ impl EstablishConnection {
                                 self.event_tx.clone())
     }
 
-    fn set_readable(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, token: Token) {
-        self.reregister(core, event_loop, token, EventSet::error() | EventSet::readable())
-    }
-
-    fn set_writable(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, token: Token) {
-        self.reregister(core, event_loop, token, EventSet::error() | EventSet::writable())
-    }
-
     fn reregister(&mut self,
                   core: &mut Core,
                   event_loop: &mut EventLoop<Core>,
                   token: Token,
-                  event_set: EventSet) {
+                  writable: bool) {
+        let mut event_set = EventSet::error() | EventSet::hup() | EventSet::readable();
+        if writable { event_set.insert(EventSet::writable()) }
+
         if let Err(error) = event_loop.reregister(self.socket.as_ref().unwrap(),
                                                   token,
                                                   event_set,
@@ -211,7 +208,7 @@ impl State for EstablishConnection {
              token: Token,
              event_set: EventSet)
     {
-        if event_set.is_error() {
+        if event_set.is_error() || event_set.is_hup() {
             self.handle_error(core, event_loop);
             return;
         }
