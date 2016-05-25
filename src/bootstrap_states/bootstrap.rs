@@ -23,12 +23,13 @@ use std::collections::HashSet;
 use std::mem;
 use std::rc::Rc;
 
-use connection_listener::BOOTSTRAP_TIMEOUT_MS;
 use core::{Context, Core, State};
 use event::Event;
 use service::SharedConnectionMap;
 use static_contact_info::StaticContactInfo;
 use super::establish_connection::EstablishConnection;
+
+const BOOTSTRAP_TIMEOUT_MS: u64 = 60_000;
 
 pub struct Bootstrap {
     context: Context,

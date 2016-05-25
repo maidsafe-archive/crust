@@ -17,7 +17,7 @@
 
 mod accept_connection;
 
-pub const BOOTSTRAP_TIMEOUT_MS: u64 = 60_000;
+pub use self::accept_connection::BOOTSTRAP_TIMEOUT_MS;
 
 use mio::{EventLoop, EventSet, PollOpt, Token};
 use mio::tcp::TcpListener;
