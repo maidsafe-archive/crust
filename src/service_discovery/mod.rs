@@ -120,7 +120,7 @@ impl ServiceDiscovery {
             Ok(None) => return,
             Err(ref e) if e.kind() == ErrorKind::Interrupted => return,
             Err(e) => {
-                println!("ServiceDiscovery error in read: {:?}", e);
+                warn!("ServiceDiscovery error in read: {:?}", e);
                 self.terminate(core, event_loop);
                 return;
             }
@@ -129,7 +129,7 @@ impl ServiceDiscovery {
         let msg: DiscoveryMsg = match deserialise(&self.read_buf[..bytes_rxd]) {
             Ok(msg) => msg,
             Err(e) => {
-                println!("Bogus message serialisation error: {:?}", e);
+                warn!("Bogus message serialisation error: {:?}", e);
                 return;
             }
         };
@@ -149,7 +149,7 @@ impl ServiceDiscovery {
 
     fn write(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
         if let Err(e) = self.write_impl(event_loop) {
-            println!("Error in ServiceDiscovery write: {:?}", e);
+            warn!("Error in ServiceDiscovery write: {:?}", e);
             self.terminate(core, event_loop);
         }
     }
@@ -206,9 +206,8 @@ impl State for ServiceDiscovery {
     }
 
     fn terminate(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
-        println!("Exiting service discovery");
         if let Err(e) = event_loop.deregister(&self.socket) {
-            println!("Error deregistering ServiceDiscovery: {:?}", e);
+            warn!("Error deregistering ServiceDiscovery: {:?}", e);
         }
         if let Some(context) = core.remove_context(self.token) {
             let _ = core.remove_state(context);

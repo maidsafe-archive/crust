@@ -19,7 +19,7 @@ mod accept_connection;
 
 use mio::{EventLoop, EventSet, PollOpt, Token};
 use mio::tcp::TcpListener;
-use sodiumoxide::crypto::box_::PublicKey;
+use sodiumoxide::crypto::sign::PublicKey;
 use std::any::Any;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::sync::{Arc, Mutex};
@@ -171,7 +171,7 @@ mod test {
     use message::Message;
     use mio::EventLoop;
     use nat::mapping_context::MappingContext;
-    use sodiumoxide::crypto::box_;
+    use sodiumoxide::crypto::sign;
     use static_contact_info::StaticContactInfo;
     use std::net::TcpStream;
     use std::io::Write;
@@ -203,7 +203,7 @@ mod test {
               ConnectionListener::start(core,
                                         el,
                                         0,
-                                        box_::gen_keypair().0,
+                                        sign::gen_keypair().0,
                                         64,
                                         connection_map,
                                         mapping_context,
@@ -216,22 +216,17 @@ mod test {
 
         for it in event_rx.iter() {
             match it {
-                Event::ListenerStarted(port) => {
-                    println!("listener started on port {}", port);
-                    break;
-                }
+                Event::ListenerStarted(_port) => break,
                 _ => panic!("Unexpected event notification"),
             }
         }
         let acceptor = static_contact_info.lock()
                                           .expect("Failed in locking static_contact_info")
                                           .tcp_acceptors[0];
-
-        println!("======================0");
         let mut stream = TcpStream::connect(StdSocketAddr::new(acceptor.ip(), acceptor.port()))
                              .unwrap();
 
-        let message = serialise(&Message::BootstrapRequest(box_::gen_keypair().0, 64)).unwrap();
+        let message = serialise(&Message::BootstrapRequest(sign::gen_keypair().0, 64)).unwrap();
         let mut size_vec = Vec::with_capacity(4);
         unwrap_result!(size_vec.write_u32::<LittleEndian>(message.len() as u32));
 
@@ -240,10 +235,7 @@ mod test {
 
         for it in event_rx.iter() {
             match it {
-                Event::BootstrapAccept(peer_id) => {
-                    println!("received peer connection {}", peer_id);
-                    break;
-                }
+                Event::BootstrapAccept(_peer_id) => break,
                 _ => panic!("Unexpected event notification"),
             }
         }

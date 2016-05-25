@@ -25,7 +25,7 @@ use message::Message;
 use peer_id::{self, PeerId};
 use service::SharedConnectionMap;
 use socket::Socket;
-use sodiumoxide::crypto::box_::PublicKey;
+use sodiumoxide::crypto::sign::PublicKey;
 
 pub struct AcceptConnection {
     connection_map: SharedConnectionMap,

@@ -32,4 +32,3 @@ build_script:
 
 test_script:
   - ps: . ".\Run Tests.ps1"
-  - cargo run --release --example simple_demo

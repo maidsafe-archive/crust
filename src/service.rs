@@ -19,7 +19,7 @@ use maidsafe_utilities::thread::RaiiThreadJoiner;
 use mio::{self, EventLoop};
 use net2;
 use sodiumoxide;
-use sodiumoxide::crypto::box_::{self, PublicKey, SecretKey};
+use sodiumoxide::crypto::sign::{self, PublicKey, SecretKey};
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher, SipHasher};
 use std::io;
@@ -127,7 +127,7 @@ impl Service {
 
         let mut event_loop = try!(EventLoop::new());
         let mio_tx = event_loop.channel();
-        let our_keys = box_::gen_keypair();
+        let our_keys = sign::gen_keypair();
         let name_hash = name_hash(&config.network_name);
 
         // Form our initial contact info
