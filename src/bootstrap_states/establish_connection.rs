@@ -16,10 +16,10 @@
 // relating to use of the SAFE Network Software.
 
 use mio::{EventLoop, EventSet, PollOpt, Token};
-use sodiumoxide::crypto::sign::PublicKey;
+use sodiumoxide::crypto::box_::PublicKey;
 use std::any::Any;
 use std::cell::RefCell;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 
 use active_connection::ActiveConnection;
@@ -35,11 +35,12 @@ pub struct EstablishConnection {
     connection_map: SharedConnectionMap,
     context: Context,
     event_tx: ::CrustEventSender,
+    name_hash: u64,
+    our_public_key: PublicKey,
     parent_handle: Context,
     pending_connections: Rc<RefCell<HashSet<Context>>>,
-    request_message: Option<Message>,
-    socket: Option<Socket>,
-    token: Token,
+    pending_requests: HashSet<Token>,
+    sockets: HashMap<Token, Socket>,
 }
 
 impl EstablishConnection {
@@ -53,33 +54,38 @@ impl EstablishConnection {
                  parent_handle: Context,
                  event_tx: ::CrustEventSender) {
 
-        if contact_info.tcp_acceptors.is_empty() {
-            warn!("List of TCP acceptors in contact info is empty");
-            return;
-        }
-
         let context = core.get_new_context();
-        let token = core.get_new_token();
-        let _ = core.insert_context(token, context);
-
-        // TODO: try to connect to all the endpoints in the contact info.
-        let socket = match Socket::connect(&contact_info.tcp_acceptors[0]) {
-            Ok(socket) => socket,
-            Err(error) => {
-                error!("Failed to connect socket: {:?}", error);
-                let _ = core.remove_context(token);
-                return;
-            }
-        };
-
         let event_set = EventSet::error() |
                         EventSet::hup() |
                         EventSet::readable() |
                         EventSet::writable();
 
-        if let Err(error) = event_loop.register(&socket, token, event_set, PollOpt::edge()) {
-            error!("Failed to register socket: {:?}", error);
-            let _ = core.remove_context(token);
+        let mut sockets = HashMap::new();
+        let mut pending_requests = HashSet::new();
+
+        for address in contact_info.tcp_acceptors {
+            let socket = match Socket::connect(&address) {
+                Ok(socket) => socket,
+                Err(error) => {
+                    error!("Failed to connect socket: {:?}", error);
+                    continue;
+                }
+            };
+
+            let token = core.get_new_token();
+
+            if let Err(error) = event_loop.register(&socket, token, event_set, PollOpt::edge()) {
+                error!("Failed to register socket: {:?}", error);
+                let _ = socket.shutdown();
+            }
+
+            let _ = core.insert_context(token, context);
+            let _ = sockets.insert(token, socket);
+            let _ = pending_requests.insert(token);
+        }
+
+        if sockets.is_empty() {
+            warn!("Failed to connect to any endpoint in this contact");
             return;
         }
 
@@ -89,23 +95,30 @@ impl EstablishConnection {
             connection_map: connection_map,
             context: context,
             event_tx: event_tx,
+            name_hash: name_hash,
+            our_public_key: our_public_key,
             parent_handle: parent_handle,
             pending_connections: pending_connections,
-            request_message: Some(Message::BootstrapRequest(our_public_key, name_hash)),
-            socket: Some(socket),
-            token: token,
+            pending_requests: pending_requests,
+            sockets: sockets,
         };
 
         let _ = core.insert_state(context, state);
     }
 
-    fn handle_error(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
-        self.terminate(core, event_loop);
+    fn handle_error(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, token: Token) {
+        if let Some(socket) = self.sockets.remove(&token) {
+            Self::shutdown_socket(core, event_loop, token, socket);
+        }
 
-        // If there are no pending connections left, terminate the whole bootstrap.
-        if self.pending_connections.borrow().is_empty() {
-            let _ = self.event_tx.send(Event::BootstrapFailed);
-            let _ = core.terminate_state(event_loop, self.parent_handle);
+        if self.sockets.is_empty() {
+            self.terminate(core, event_loop);
+
+            // If there are no pending connections left, terminate the whole bootstrap.
+            if self.pending_connections.borrow().is_empty() {
+                let _ = self.event_tx.send(Event::BootstrapFailed);
+                let _ = core.terminate_state(event_loop, self.parent_handle);
+            }
         }
     }
 
@@ -113,10 +126,18 @@ impl EstablishConnection {
                               core: &mut Core,
                               event_loop: &mut EventLoop<Core>,
                               token: Token) {
-        let result = if let Some(message) = self.request_message.take() {
-            self.socket.as_mut().unwrap().write(message)
-        } else {
-            self.socket.as_mut().unwrap().flush()
+        let result = {
+            let socket = match self.sockets.get_mut(&token) {
+                Some(socket) => socket,
+                None => return,
+            };
+
+            if self.pending_requests.remove(&token) {
+                socket.write(Message::BootstrapRequest(self.our_public_key,
+                                                       self.name_hash))
+            } else {
+                socket.flush()
+            }
         };
 
         match result {
@@ -129,8 +150,8 @@ impl EstablishConnection {
                 self.reregister(core, event_loop, token, true);
             }
             Err(error) => {
-                error!("Failed to flush socket: {:?}", error);
-                self.handle_error(core, event_loop);
+                error!("Failed to write to socket: {:?}", error);
+                self.handle_error(core, event_loop, token);
             }
         }
     }
@@ -140,9 +161,9 @@ impl EstablishConnection {
                                   event_loop: &mut EventLoop<Core>,
                                   token: Token)
     {
-        match self.socket.as_mut().unwrap().read::<Message>() {
+        match self.sockets.get_mut(&token).unwrap().read::<Message>() {
             Ok(Some(Message::BootstrapResponse(public_key))) => {
-                self.handle_bootstrap_response(core, event_loop, public_key);
+                self.handle_bootstrap_response(core, event_loop, token, public_key);
             }
 
             Ok(Some(message)) => {
@@ -157,7 +178,7 @@ impl EstablishConnection {
 
             Err(error) => {
                 error!("Failed to read from socket: {:?}", error);
-                self.handle_error(core, event_loop);
+                self.handle_error(core, event_loop, token);
             }
         }
     }
@@ -165,7 +186,16 @@ impl EstablishConnection {
     fn handle_bootstrap_response(&mut self,
                                  core: &mut Core,
                                  event_loop: &mut EventLoop<Core>,
+                                 token: Token,
                                  their_public_key: PublicKey) {
+        // Get the first socket we received bootstrap response on, and shut the
+        // others down.
+        let socket = self.sockets.remove(&token).unwrap();
+
+        for (token, socket) in self.sockets.drain() {
+            Self::shutdown_socket(core, event_loop, token, socket);
+        }
+
         let peer_id = peer_id::new(their_public_key);
         let _ = self.pending_connections.borrow_mut().remove(&self.context);
 
@@ -178,8 +208,8 @@ impl EstablishConnection {
                                 self.context,
                                 self.connection_map.clone(),
                                 peer_id,
-                                self.socket.take().unwrap(),
-                                self.token,
+                                socket,
+                                token,
                                 self.event_tx.clone())
     }
 
@@ -191,12 +221,29 @@ impl EstablishConnection {
         let mut event_set = EventSet::error() | EventSet::hup() | EventSet::readable();
         if writable { event_set.insert(EventSet::writable()) }
 
-        if let Err(error) = event_loop.reregister(self.socket.as_ref().unwrap(),
-                                                  token,
-                                                  event_set,
-                                                  PollOpt::edge()) {
+        let result = {
+            let socket = self.sockets.get(&token).unwrap();
+            event_loop.reregister(socket, token, event_set, PollOpt::edge())
+        };
+
+        if let Err(error) = result {
             error!("Failed to reregister socket: {:?}", error);
-            self.handle_error(core, event_loop);
+            self.handle_error(core, event_loop, token);
+        }
+    }
+
+    fn shutdown_socket(core: &mut Core,
+                       event_loop: &mut EventLoop<Core>,
+                       token: Token,
+                       socket: Socket) {
+        let _ = core.remove_context(token);
+
+        if let Err(error) = event_loop.deregister(&socket) {
+            error!("Failed to deregister socket: {:?}", error);
+        }
+
+        if let Err(error) = socket.shutdown() {
+            error!("Failed to shutdown socket: {:?}", error);
         }
     }
 }
@@ -209,7 +256,7 @@ impl State for EstablishConnection {
              event_set: EventSet)
     {
         if event_set.is_error() || event_set.is_hup() {
-            self.handle_error(core, event_loop);
+            self.handle_error(core, event_loop, token);
             return;
         }
 
@@ -225,12 +272,11 @@ impl State for EstablishConnection {
     fn terminate(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
         let _ = self.pending_connections.borrow_mut().remove(&self.context);
 
-        let _ = core.remove_context(self.token);
-        let _ = core.remove_state(self.context);
-
-        if let Some(socket) = self.socket.as_ref() {
-            event_loop.deregister(socket).expect("Failed to deregister socket");
+        for (token, socket) in self.sockets.drain() {
+            Self::shutdown_socket(core, event_loop, token, socket);
         }
+
+        let _ = core.remove_state(self.context);
     }
 
     fn as_any(&mut self) -> &mut Any {

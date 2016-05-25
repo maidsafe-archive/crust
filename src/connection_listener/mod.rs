@@ -19,7 +19,7 @@ mod accept_connection;
 
 use mio::{EventLoop, EventSet, PollOpt, Token};
 use mio::tcp::TcpListener;
-use sodiumoxide::crypto::sign::PublicKey;
+use sodiumoxide::crypto::box_::PublicKey;
 use std::any::Any;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::sync::{Arc, Mutex};
@@ -171,7 +171,7 @@ mod test {
     use message::Message;
     use mio::EventLoop;
     use nat::mapping_context::MappingContext;
-    use sodiumoxide::crypto::sign;
+    use sodiumoxide::crypto::box_;
     use static_contact_info::StaticContactInfo;
     use std::net::TcpStream;
     use std::io::Write;
@@ -203,7 +203,7 @@ mod test {
               ConnectionListener::start(core,
                                         el,
                                         0,
-                                        sign::gen_keypair().0,
+                                        box_::gen_keypair().0,
                                         64,
                                         connection_map,
                                         mapping_context,
@@ -226,7 +226,7 @@ mod test {
         let mut stream = TcpStream::connect(StdSocketAddr::new(acceptor.ip(), acceptor.port()))
                              .unwrap();
 
-        let message = serialise(&Message::BootstrapRequest(sign::gen_keypair().0, 64)).unwrap();
+        let message = serialise(&Message::BootstrapRequest(box_::gen_keypair().0, 64)).unwrap();
         let mut size_vec = Vec::with_capacity(4);
         unwrap_result!(size_vec.write_u32::<LittleEndian>(message.len() as u32));
 

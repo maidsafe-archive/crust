@@ -138,6 +138,38 @@ fn bootstrap_two_services_using_service_discovery() {
 }
 
 #[test]
+fn bootstrap_with_multiple_contact_endpoints() {
+    use std::net::TcpListener;
+
+    unwrap_result!(log::init(false));
+
+    let (event_tx0, event_rx0) = get_event_sender();
+    let mut service0 = unwrap_result!(Service::with_config(event_tx0, Config::default()));
+    let _ = unwrap_result!(service0.start_listening_tcp());
+    let port = expect_event!(event_rx0, Event::ListenerStarted(port) => port);
+    let valid_address = localhost(port);
+
+    let deaf_listener = unwrap_result!(TcpListener::bind("0.0.0.0:0"));
+    let invalid_address = SocketAddr(unwrap_result!(deaf_listener.local_addr()));
+
+    let mut config1 = Config::default();
+    config1.hard_coded_contacts = vec![StaticContactInfo {
+        tcp_acceptors: vec![invalid_address, valid_address],
+        tcp_mapper_servers: vec![],
+    }];
+
+    let (event_tx1, event_rx1) = get_event_sender();
+    let mut service1 = unwrap_result!(Service::with_config(event_tx1, config1));
+    unwrap_result!(service1.start_bootstrap());
+
+    let peer_id0 = expect_event!(event_rx1, Event::BootstrapConnect(peer_id) => peer_id);
+    assert_eq!(peer_id0, service0.id());
+
+    let peer_id1 = expect_event!(event_rx0, Event::BootstrapAccept(peer_id) => peer_id);
+    assert_eq!(peer_id1, service1.id());
+}
+
+#[test]
 fn bootstrap_fails_if_there_are_no_contacts() {
     let config = Config::default();
     let (event_tx, event_rx) = get_event_sender();
@@ -153,8 +185,6 @@ fn bootstrap_fails_if_there_are_no_contacts() {
 #[ignore]
 fn bootstrap_timeouts_if_there_are_only_invalid_contacts() {
     use std::net::TcpListener;
-
-    unwrap_result!(log::init(true));
 
     let deaf_listener = unwrap_result!(TcpListener::bind("0.0.0.0:0"));
     let address = SocketAddr(unwrap_result!(deaf_listener.local_addr()));
