@@ -26,8 +26,6 @@ pub mod state;
 
 /// The type of messages passed to core.
 pub type CoreMessage = Closure;
-/// Type for registering timeouts with the event loop.
-pub type CoreTimeout = ();
 
 /// A context for registering states with the event loop.
 #[derive(Hash, Eq, PartialEq, Ord, PartialOrd, Copy, Clone, Debug)]
@@ -120,21 +118,25 @@ impl Core {
 }
 
 impl Handler for Core {
-    type Timeout = CoreTimeout;
+    type Timeout = Token;
     type Message = CoreMessage;
 
     fn ready(&mut self, event_loop: &mut EventLoop<Self>, token: Token, events: EventSet) {
-        let state = match self.get_context(token)
-                              .and_then(|c| self.get_state(c)) {
-            Some(state) => state,
-            None => return,
-        };
-
-        state.borrow_mut().ready(self, event_loop, token, events);
+        match self.get_context(token).and_then(|c| self.get_state(c)) {
+            Some(state) => state.borrow_mut().ready(self, event_loop, token, events),
+            None => (),
+        }
     }
 
     fn notify(&mut self, event_loop: &mut EventLoop<Self>, msg: Self::Message) {
         msg.invoke(self, event_loop)
+    }
+
+    fn timeout(&mut self, event_loop: &mut EventLoop<Self>, token: Token) {
+        match self.get_context(token).and_then(|c| self.get_state(c)) {
+            Some(state) => state.borrow_mut().timeout(self, event_loop, token),
+            None => (),
+        }
     }
 }
 
