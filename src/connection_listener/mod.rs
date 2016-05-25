@@ -17,6 +17,8 @@
 
 mod accept_connection;
 
+pub use self::accept_connection::BOOTSTRAP_TIMEOUT_MS;
+
 use mio::{EventLoop, EventSet, PollOpt, Token};
 use mio::tcp::TcpListener;
 use sodiumoxide::crypto::box_::PublicKey;
@@ -80,8 +82,6 @@ impl ConnectionListener {
                                                 return;
                                             }
                                         };
-                                        let _ = event_tx.send(Event::ListenerStarted(local_addr.port()));
-
                                         let listener = TcpListener::from_listener(listener, &addr)
                                                            .expect("start listener error");
                                         event_loop.register(&listener,
@@ -91,6 +91,12 @@ impl ConnectionListener {
                                                             EventSet::hup(),
                                                             PollOpt::edge())
                                                   .expect("register to event loop error");
+                                        static_contact_info.lock()
+                                                           .expect("Failed in locking \
+                                                                    static_contact_info")
+                                                           .tcp_acceptors
+                                                           .extend(addrs);
+                                        let _ = event_tx.send(Event::ListenerStarted(local_addr.port()));
                                         let _ = core.insert_context(token, context.clone());
                                         let _ = core.insert_state(context.clone(),
                                                                   ConnectionListener {
@@ -103,12 +109,6 @@ impl ConnectionListener {
                                                                           our_public_key,
                                                                       token: token,
                                                                   });
-
-                                        static_contact_info.lock()
-                                                           .expect("Failed in locking \
-                                                                    static_contact_info")
-                                                           .tcp_acceptors
-                                                           .extend(addrs);
                                     }) {
             Ok(()) => {}
             Err(e) => {
@@ -158,38 +158,45 @@ mod test {
     use super::*;
 
     use std::collections::HashMap;
+    use std::io::{self, Write};
     use std::net::SocketAddr as StdSocketAddr;
+    use std::net::TcpStream;
     use std::sync::mpsc;
     use std::thread;
     use std::time::Duration;
     use std::sync::{Arc, Mutex};
 
+    use byteorder::{WriteBytesExt, LittleEndian};
     use core::{CoreMessage, Core};
     use event::Event;
     use maidsafe_utilities::event_sender::MaidSafeEventCategory;
+    use maidsafe_utilities::serialisation::serialise;
     use maidsafe_utilities::thread::RaiiThreadJoiner;
     use message::Message;
-    use mio::EventLoop;
+    use mio::{EventLoop, Sender};
     use nat::mapping_context::MappingContext;
+    use socket_addr::SocketAddr;
     use sodiumoxide::crypto::box_;
     use static_contact_info::StaticContactInfo;
-    use std::net::TcpStream;
-    use std::io::Write;
-    use byteorder::{WriteBytesExt, LittleEndian};
-    use maidsafe_utilities::serialisation::serialise;
 
-    #[test]
-    fn connection_listener() {
-        let mut el = EventLoop::new().expect("Could not spawn el0");
+    struct Listener {
+        tx: Sender<CoreMessage>,
+        _joiner: RaiiThreadJoiner,
+        acceptor: SocketAddr,
+        event_rx: mpsc::Receiver<Event>,
+    }
+
+    fn start_listener() -> Listener {
+        let mut el = EventLoop::new().expect("Could not spawn el");
         let tx = el.channel();
-        let _raii_joiner = RaiiThreadJoiner::new(thread!("EL", move || {
+        let raii_joiner = RaiiThreadJoiner::new(thread!("EL", move || {
             el.run(&mut Core::new()).expect("Could not run el");
         }));
 
         let (event_tx, event_rx) = mpsc::channel();
-        let crust_sender_0 = ::CrustEventSender::new(event_tx,
-                                                     MaidSafeEventCategory::Crust,
-                                                     mpsc::channel().0);
+        let crust_sender = ::CrustEventSender::new(event_tx,
+                                                   MaidSafeEventCategory::Crust,
+                                                   mpsc::channel().0);
 
         let connection_map = Arc::new(Mutex::new(HashMap::new()));
         let mapping_context = Arc::new(MappingContext::new());
@@ -208,11 +215,9 @@ mod test {
                                         connection_map,
                                         mapping_context,
                                         our_static_contact_info,
-                                        crust_sender_0);
+                                        crust_sender);
           }))
           .expect("Could not send to tx");
-
-        thread::sleep(Duration::from_millis(100));
 
         for it in event_rx.iter() {
             match it {
@@ -223,23 +228,59 @@ mod test {
         let acceptor = static_contact_info.lock()
                                           .expect("Failed in locking static_contact_info")
                                           .tcp_acceptors[0];
-        let mut stream = TcpStream::connect(StdSocketAddr::new(acceptor.ip(), acceptor.port()))
-                             .unwrap();
+        Listener {
+            tx: tx,
+            _joiner: raii_joiner,
+            acceptor: acceptor,
+            event_rx: event_rx,
+        }
+    }
 
+    fn client_connect(listener: &Listener) -> TcpStream {
+        TcpStream::connect(StdSocketAddr::new(listener.acceptor.ip(),
+                                              listener.acceptor.port()))
+                             .unwrap()
+    }
+
+    fn client_send_request(stream: &mut TcpStream) -> io::Result<()> {
         let message = serialise(&Message::BootstrapRequest(box_::gen_keypair().0, 64)).unwrap();
         let mut size_vec = Vec::with_capacity(4);
         unwrap_result!(size_vec.write_u32::<LittleEndian>(message.len() as u32));
 
-        stream.write_all(&size_vec).expect("Error in writing");
-        stream.write_all(&message).expect("Error in writing");
+        try!(stream.write_all(&size_vec));
+        try!(stream.write_all(&message));
+        Ok(())
+    }
 
-        for it in event_rx.iter() {
+    #[test]
+    fn connection_listener_connect() {
+        let listener = start_listener();
+        let mut client = client_connect(&listener);
+        let _ = client_send_request(&mut client);
+
+        for it in listener.event_rx.iter() {
             match it {
                 Event::BootstrapAccept(_peer_id) => break,
                 _ => panic!("Unexpected event notification"),
             }
         }
+        listener.tx.send(CoreMessage::new(move |_, el| el.shutdown()))
+                   .expect("Could not shutdown el");
+    }
 
-        tx.send(CoreMessage::new(move |_, el| el.shutdown())).expect("Could not shutdown el");
+    #[test]
+    // TODO: figure out why this test hangs in the OSX CI build
+    #[cfg(not(target_family = "mac_os"))]
+    fn connection_listener_timeout() {
+        let listener = start_listener();
+        let mut client = client_connect(&listener);
+        thread::sleep(Duration::from_millis(BOOTSTRAP_TIMEOUT_MS + 1000));
+
+        match client_send_request(&mut client) {
+            Ok(_) => panic!("Unexpected success"),
+            Err(_) => (),
+        }
+        listener.tx.send(CoreMessage::new(move |_, el| el.shutdown()))
+                   .expect("Could not shutdown el");
     }
 }

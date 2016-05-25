@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use mio::{EventLoop, EventSet, PollOpt, Token};
+use mio::{EventLoop, EventSet, PollOpt, Timeout, Token};
 use std::any::Any;
 
 use active_connection::ActiveConnection;
@@ -27,6 +27,8 @@ use service::SharedConnectionMap;
 use socket::Socket;
 use sodiumoxide::crypto::box_::PublicKey;
 
+pub const BOOTSTRAP_TIMEOUT_MS: u64 = 5_000;
+
 pub struct AcceptConnection {
     connection_map: SharedConnectionMap,
     event_tx: ::CrustEventSender,
@@ -36,6 +38,7 @@ pub struct AcceptConnection {
     socket: Option<Socket>,
     their_peer_id: Option<PeerId>,
     token: Token,
+    timeout: Timeout,
 }
 
 impl AcceptConnection {
@@ -55,6 +58,14 @@ impl AcceptConnection {
             error!("Failed to register socket: {:?}", error);
             return;
         }
+        let timeout = match event_loop.timeout_ms(token, BOOTSTRAP_TIMEOUT_MS) {
+            Ok(timeout) => timeout,
+            Err(error) => {
+                error!("Failed to schedule bootstrap timeout: {:?}", error);
+                let _ = event_loop.deregister(&socket);
+                return;
+            }
+        };
 
         let _ = core.insert_context(token, context);
 
@@ -67,6 +78,7 @@ impl AcceptConnection {
             socket: Some(socket),
             their_peer_id: None,
             token: token,
+            timeout: timeout,
         };
 
         let _ = core.insert_state(context, state);
@@ -203,10 +215,13 @@ impl State for AcceptConnection {
     fn terminate(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
         let _ = core.remove_state(self.context);
         let _ = core.remove_context(self.token);
+        let _ = event_loop.clear_timeout(self.timeout);
+    }
 
-        if let Some(socket) = self.socket.as_ref() {
-            event_loop.deregister(socket).expect("Failed to deregister socket");
-        }
+    fn timeout(&mut self, core: &mut Core, _event_loop: &mut EventLoop<Core>, _token: Token) {
+        // TODO: does need to notify routing or just silently drop?
+        let _ = core.remove_state(self.context);
+        let _ = core.remove_context(self.token);
     }
 
     fn as_any(&mut self) -> &mut Any {
