@@ -216,18 +216,13 @@ mod test {
 
         for it in event_rx.iter() {
             match it {
-                Event::ListenerStarted(port) => {
-                    println!("listener started on port {}", port);
-                    break;
-                }
+                Event::ListenerStarted(port) => break,
                 _ => panic!("Unexpected event notification"),
             }
         }
         let acceptor = static_contact_info.lock()
                                           .expect("Failed in locking static_contact_info")
                                           .tcp_acceptors[0];
-
-        println!("======================0");
         let mut stream = TcpStream::connect(StdSocketAddr::new(acceptor.ip(), acceptor.port()))
                              .unwrap();
 
@@ -240,10 +235,7 @@ mod test {
 
         for it in event_rx.iter() {
             match it {
-                Event::BootstrapAccept(peer_id) => {
-                    println!("received peer connection {}", peer_id);
-                    break;
-                }
+                Event::BootstrapAccept(peer_id) => break,
                 _ => panic!("Unexpected event notification"),
             }
         }

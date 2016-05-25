@@ -256,7 +256,6 @@ impl<F> State for MappingTcpSocket<F>
              token: Token,
              event_set: EventSet)
     {
-        println!("MappingTcpSocket::execute()");
         self.process(core, event_loop, token, event_set);
 
         if self.external_addrs >= 2 || (self.writing_sockets.is_empty() &&

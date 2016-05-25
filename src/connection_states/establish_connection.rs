@@ -81,7 +81,6 @@ impl State for EstablishConnection {
             // TODO: retrieve the peer_id properly.
             let peer_id = rand::random();
 
-            println!("EstablishConnection successful -> Moving to next state ...");
             ActiveConnection::start(core,
                                     event_loop,
                                     self.context.clone(),
