@@ -16,7 +16,7 @@
 // relating to use of the SAFE Network Software.
 
 use mio::EventLoop;
-use sodiumoxide::crypto::box_::PublicKey;
+use sodiumoxide::crypto::sign::PublicKey;
 
 use config_handler::Config;
 use core::{Context, Core};
