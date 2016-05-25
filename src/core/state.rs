@@ -19,7 +19,7 @@
 use std::any::Any;
 
 use core::Core;
-use mio::{Handler, EventLoop, EventSet, Token};
+use mio::{EventLoop, EventSet, Token};
 
 /// A trait for state machines
 pub trait State {
@@ -41,8 +41,7 @@ pub trait State {
     /// Timeout
     fn timeout(&mut self,
                _core: &mut Core,
-               _event_loop: &mut EventLoop<Core>,
-               _timeout: <Core as Handler>::Timeout) {}
+               _event_loop: &mut EventLoop<Core>) {}
 
     /// Write some data
     fn write(&mut self,

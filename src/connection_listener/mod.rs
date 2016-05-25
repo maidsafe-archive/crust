@@ -17,6 +17,8 @@
 
 mod accept_connection;
 
+pub use self::accept_connection::BOOTSTRAP_TIMEOUT_MS;
+
 use mio::{EventLoop, EventSet, PollOpt, Token};
 use mio::tcp::TcpListener;
 use sodiumoxide::crypto::sign::PublicKey;
@@ -179,8 +181,8 @@ mod test {
     use maidsafe_utilities::serialisation::serialise;
 
     #[test]
-    fn connection_listener() {
-        let mut el = EventLoop::new().expect("Could not spawn el0");
+    fn connection_listener_connect() {
+        let mut el = EventLoop::new().expect("Could not spawn el");
         let tx = el.channel();
         let _raii_joiner = RaiiThreadJoiner::new(thread!("EL", move || {
             el.run(&mut Core::new()).expect("Could not run el");
@@ -238,6 +240,67 @@ mod test {
                 Event::BootstrapAccept(_peer_id) => break,
                 _ => panic!("Unexpected event notification"),
             }
+        }
+
+        tx.send(CoreMessage::new(move |_, el| el.shutdown())).expect("Could not shutdown el");
+    }
+
+    #[test]
+    fn connection_listener_timeout() {
+        let mut el = EventLoop::new().expect("Could not spawn el");
+        let tx = el.channel();
+        let _raii_joiner = RaiiThreadJoiner::new(thread!("EL", move || {
+            el.run(&mut Core::new()).expect("Could not run el");
+        }));
+
+        let (event_tx, event_rx) = mpsc::channel();
+        let crust_sender_0 = ::CrustEventSender::new(event_tx,
+                                                     MaidSafeEventCategory::Crust,
+                                                     mpsc::channel().0);
+
+        let connection_map = Arc::new(Mutex::new(HashMap::new()));
+        let mapping_context = Arc::new(MappingContext::new());
+        let static_contact_info = Arc::new(Mutex::new(StaticContactInfo {
+            tcp_acceptors: Vec::new(),
+            tcp_mapper_servers: Vec::new(),
+        }));
+        let our_static_contact_info = static_contact_info.clone();
+
+        tx.send(CoreMessage::new(move |core, el| {
+              ConnectionListener::start(core,
+                                        el,
+                                        0,
+                                        sign::gen_keypair().0,
+                                        64,
+                                        connection_map,
+                                        mapping_context,
+                                        our_static_contact_info,
+                                        crust_sender_0);
+          }))
+          .expect("Could not send to tx");
+
+        thread::sleep(Duration::from_millis(100));
+
+        for it in event_rx.iter() {
+            match it {
+                Event::ListenerStarted(_port) => break,
+                _ => panic!("Unexpected event notification"),
+            }
+        }
+        let acceptor = static_contact_info.lock()
+                                          .expect("Failed in locking static_contact_info")
+                                          .tcp_acceptors[0];
+        let mut stream = TcpStream::connect(StdSocketAddr::new(acceptor.ip(), acceptor.port()))
+                             .unwrap();
+
+        thread::sleep(Duration::from_millis(BOOTSTRAP_TIMEOUT_MS + 1000));
+
+        let mut size_vec = Vec::with_capacity(4);
+        unwrap_result!(size_vec.write_u32::<LittleEndian>(64));
+
+        match stream.write_all(&size_vec) {
+            Ok(_) => panic!("Unexpected success"),
+            Err(_) => (),
         }
 
         tx.send(CoreMessage::new(move |_, el| el.shutdown())).expect("Could not shutdown el");
