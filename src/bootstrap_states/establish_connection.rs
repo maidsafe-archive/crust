@@ -16,7 +16,7 @@
 // relating to use of the SAFE Network Software.
 
 use mio::{EventLoop, EventSet, PollOpt, Token};
-use sodiumoxide::crypto::sign::PublicKey;
+use sodiumoxide::crypto::box_::PublicKey;
 use std::any::Any;
 use std::cell::RefCell;
 use std::collections::HashSet;

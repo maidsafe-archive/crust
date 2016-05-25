@@ -17,7 +17,7 @@
 
 use rand::{Rand, Rng};
 use std::fmt;
-use sodiumoxide::crypto::sign::{self, PublicKey};
+use sodiumoxide::crypto::box_::{self, PublicKey};
 
 /// An identifier of a peer node.
 #[derive(PartialEq, Eq, Clone, Copy, Ord, PartialOrd, Hash, RustcEncodable, RustcDecodable)]
@@ -44,6 +44,6 @@ pub fn new(pub_key: PublicKey) -> PeerId {
 
 impl Rand for PeerId {
     fn rand<R: Rng>(_rng: &mut R) -> PeerId {
-        PeerId(sign::gen_keypair().0)
+        PeerId(box_::gen_keypair().0)
     }
 }

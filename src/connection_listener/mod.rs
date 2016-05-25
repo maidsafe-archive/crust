@@ -21,7 +21,7 @@ pub use self::accept_connection::BOOTSTRAP_TIMEOUT_MS;
 
 use mio::{EventLoop, EventSet, PollOpt, Token};
 use mio::tcp::TcpListener;
-use sodiumoxide::crypto::sign::PublicKey;
+use sodiumoxide::crypto::box_::PublicKey;
 use std::any::Any;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::sync::{Arc, Mutex};
@@ -178,7 +178,7 @@ mod test {
     use mio::{EventLoop, Sender};
     use nat::mapping_context::MappingContext;
     use socket_addr::SocketAddr;
-    use sodiumoxide::crypto::sign;
+    use sodiumoxide::crypto::box_;
     use static_contact_info::StaticContactInfo;
 
     struct Listener {
@@ -212,7 +212,7 @@ mod test {
               ConnectionListener::start(core,
                                         el,
                                         0,
-                                        sign::gen_keypair().0,
+                                        box_::gen_keypair().0,
                                         64,
                                         connection_map,
                                         mapping_context,
@@ -247,7 +247,7 @@ mod test {
     }
 
     fn client_send_request(stream: &mut TcpStream) -> io::Result<()> {
-        let message = serialise(&Message::BootstrapRequest(sign::gen_keypair().0, 64)).unwrap();
+        let message = serialise(&Message::BootstrapRequest(box_::gen_keypair().0, 64)).unwrap();
         let mut size_vec = Vec::with_capacity(4);
         unwrap_result!(size_vec.write_u32::<LittleEndian>(message.len() as u32));
 

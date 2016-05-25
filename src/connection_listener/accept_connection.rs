@@ -25,7 +25,7 @@ use message::Message;
 use peer_id::{self, PeerId};
 use service::SharedConnectionMap;
 use socket::Socket;
-use sodiumoxide::crypto::sign::PublicKey;
+use sodiumoxide::crypto::box_::PublicKey;
 
 pub const BOOTSTRAP_TIMEOUT_MS: u64 = 5_000;
 
