@@ -26,8 +26,7 @@ use peer_id::{self, PeerId};
 use service::SharedConnectionMap;
 use socket::Socket;
 use sodiumoxide::crypto::box_::PublicKey;
-
-pub const BOOTSTRAP_TIMEOUT_MS: u64 = 5_000;
+use super::BOOTSTRAP_TIMEOUT_MS;
 
 pub struct AcceptConnection {
     connection_map: SharedConnectionMap,
