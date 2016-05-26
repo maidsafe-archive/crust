@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use mio::{EventLoop, Timeout, Token};
+use mio::{EventLoop, Handler, Timeout, Token};
 use sodiumoxide::crypto::box_::PublicKey;
 use std::any::Any;
 use std::cell::RefCell;
@@ -109,7 +109,7 @@ impl State for Bootstrap {
         let _ = core.remove_state(self.context);
     }
 
-    fn timeout(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, _: Token) {
+    fn timeout(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, _: <Core as Handler>::Timeout) {
         let _ = self.event_tx.send(Event::BootstrapFailed);
         self.terminate(core, event_loop);
     }

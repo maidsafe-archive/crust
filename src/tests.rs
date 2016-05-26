@@ -203,3 +203,35 @@ fn bootstrap_timeouts_if_there_are_only_invalid_contacts() {
     unwrap_result!(service.start_bootstrap());
     expect_event!(event_rx, Event::BootstrapFailed);
 }
+
+#[test]
+fn direct_connect_using_service_discovery_and_listener() {
+    let service_discovery_port = 30100;
+
+    let mut config = Config::default();
+    config.service_discovery_port = Some(service_discovery_port);
+
+    let (event_tx0, event_rx0) = get_event_sender();
+    let mut service0 = unwrap_result!(Service::with_config(event_tx0, config.clone()));
+
+    let (event_tx1, event_rx1) = get_event_sender();
+    let mut service1 = unwrap_result!(Service::with_config(event_tx1, config));
+
+    service0.start_service_discovery();
+    service0.set_service_discovery_listen(true);
+    unwrap_result!(service0.start_listening_tcp());
+
+    let port = expect_event!(event_rx0, Event::ListenerStarted(port) => port);
+    let static_info = StaticContactInfo {
+        tcp_acceptors: vec![SocketAddr(StdSocketAddr::from_str(&format!("127.0.0.1:{}", port))
+                                            .expect("Require proper address"))],
+        tcp_mapper_servers: vec![],
+    };
+    unwrap_result!(service1.direct_connect(static_info));
+
+    let peer_id1 = expect_event!(event_rx0, Event::BootstrapAccept(peer_id) => peer_id);
+    assert_eq!(peer_id1, service1.id());
+
+    let peer_id0 = expect_event!(event_rx1, Event::BootstrapConnect(peer_id) => peer_id);
+    assert_eq!(peer_id0, service0.id());
+}

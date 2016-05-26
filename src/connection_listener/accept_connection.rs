@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use mio::{EventLoop, EventSet, PollOpt, Timeout, Token};
+use mio::{EventLoop, EventSet, Handler, PollOpt, Timeout, Token};
 use std::any::Any;
 
 use active_connection::ActiveConnection;
@@ -218,7 +218,7 @@ impl State for AcceptConnection {
         let _ = event_loop.clear_timeout(self.timeout);
     }
 
-    fn timeout(&mut self, core: &mut Core, _event_loop: &mut EventLoop<Core>, _token: Token) {
+    fn timeout(&mut self, core: &mut Core, _event_loop: &mut EventLoop<Core>, _token: <Core as Handler>::Timeout) {
         // TODO: does need to notify routing or just silently drop?
         let _ = core.remove_state(self.context);
         let _ = core.remove_context(self.token);
