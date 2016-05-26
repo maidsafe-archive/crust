@@ -32,12 +32,13 @@ version = "~0.0.64"
 [dev-dependencies]
 docopt = "~0.6.80"
 void = "~1.0.2"
+crossbeam = "~0.2.9"
 
 [[example]]
 bench = false
 name = "simple_demo"
 path = "examples/simple_demo.rs"
-test = true
+test = false
 
 [[example]]
 bench = false
