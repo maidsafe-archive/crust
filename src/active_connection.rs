@@ -220,7 +220,10 @@ impl State for ActiveConnection {
         match self.heartbeat.timeout(event_loop, token) {
             HeartbeatAction::None => (),
             HeartbeatAction::Send => self.write_message(core, event_loop, Message::Heartbeat),
-            HeartbeatAction::Terminate => self.terminate(core, event_loop),
+            HeartbeatAction::Terminate => {
+                debug!("Dropping connection to {:?} due to peer inactivity", self.peer_id);
+                self.terminate(core, event_loop);
+            }
         }
     }
 
