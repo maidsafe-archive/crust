@@ -84,13 +84,17 @@ impl AcceptConnection {
         let _ = core.insert_state(context, state);
     }
 
-    fn receive_bootstrap_request(&mut self,
-                                 core: &mut Core,
-                                 event_loop: &mut EventLoop<Core>,
-                                 token: Token) {
+    fn receive_request(&mut self,
+                       core: &mut Core,
+                       event_loop: &mut EventLoop<Core>,
+                       token: Token) {
         match self.socket.as_mut().unwrap().read::<Message>() {
             Ok(Some(Message::BootstrapRequest(public_key, name_hash))) => {
                 self.handle_bootstrap_request(core, event_loop, token, public_key, name_hash);
+            }
+
+            Ok(Some(Message::Connect(public_key, name_hash))) => {
+                self.handle_connect_request(core, event_loop, token, public_key, name_hash);
             }
 
             Ok(Some(message)) => {
@@ -110,6 +114,43 @@ impl AcceptConnection {
         }
     }
 
+    fn validity_check(&mut self,
+                      core: &mut Core,
+                      event_loop: &mut EventLoop<Core>,
+                      their_public_key: &PublicKey,
+                      name_hash: u64)
+                      -> bool {
+        if self.our_public_key == *their_public_key {
+            error!("Accepted connection from ourselves");
+            self.terminate(core, event_loop);
+            return false;
+        }
+
+        if self.name_hash != name_hash {
+            error!("Incompatible protocol version");
+            self.terminate(core, event_loop);
+            return false;
+        }
+
+        true
+    }
+
+    fn handle_connect_request(&mut self,
+                              core: &mut Core,
+                              event_loop: &mut EventLoop<Core>,
+                              _token: Token,
+                              their_public_key: PublicKey,
+                              name_hash: u64)
+    {
+        if !self.validity_check(core, event_loop, &their_public_key, name_hash) {
+            return;
+        }
+        let their_peer_id = peer_id::new(their_public_key.clone());
+        self.their_peer_id = Some(their_peer_id.clone());
+        self.transition_to_active(core, event_loop);
+        let _ = self.event_tx.send(Event::NewPeer(Ok(()), their_peer_id));
+    }
+
     fn handle_bootstrap_request(&mut self,
                                 core: &mut Core,
                                 event_loop: &mut EventLoop<Core>,
@@ -117,15 +158,7 @@ impl AcceptConnection {
                                 their_public_key: PublicKey,
                                 name_hash: u64)
     {
-        if self.our_public_key == their_public_key {
-            error!("Accepted connection from ourselves");
-            self.terminate(core, event_loop);
-            return;
-        }
-
-        if self.name_hash != name_hash {
-            error!("Incompatible protocol version");
-            self.terminate(core, event_loop);
+        if !self.validity_check(core, event_loop, &their_public_key, name_hash) {
             return;
         }
 
@@ -150,7 +183,11 @@ impl AcceptConnection {
                                token: Token)
     {
         match self.socket.as_mut().unwrap().flush() {
-            Ok(true) => self.transition_to_active(core, event_loop),
+            Ok(true) => {
+                let their_peer_id = self.their_peer_id.clone().take().unwrap();
+                self.transition_to_active(core, event_loop);
+                let _ = self.event_tx.send(Event::BootstrapAccept(their_peer_id));
+            }
             Ok(false) => self.reregister(core, event_loop, token, true),
             Err(error) => {
                 error!("Failed to flush socket: {:?}", error);
@@ -161,8 +198,6 @@ impl AcceptConnection {
 
     fn transition_to_active(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
         let their_peer_id = self.their_peer_id.take().unwrap();
-        let _ = self.event_tx.send(Event::BootstrapAccept(their_peer_id));
-
         ActiveConnection::start(core,
                                 event_loop,
                                 self.context,
@@ -204,7 +239,7 @@ impl State for AcceptConnection {
         }
 
         if event_set.is_readable() {
-            self.receive_bootstrap_request(core, event_loop, token)
+            self.receive_request(core, event_loop, token)
         }
 
         if event_set.is_writable() {
