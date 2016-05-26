@@ -256,16 +256,20 @@ impl Service {
     }
 
     /// connect to peer
-    pub fn connect(&mut self, peer_contact_info: StaticContactInfo) -> Result<(), Error> {
+    pub fn direct_connect(&mut self, peer_contact_info: StaticContactInfo) -> Result<(), Error> {
         let event_tx = self.event_tx.clone();
         let connection_map = self.connection_map.clone();
+        let our_public_key = self.our_keys.0.clone();
+        let name_hash = self.name_hash;
 
         self.post(move |core, event_loop| {
             EstablishConnection::start(core,
                                        event_loop,
                                        peer_contact_info,
                                        connection_map,
-                                       event_tx);
+                                       event_tx,
+                                       our_public_key,
+                                       name_hash);
         })
     }
 

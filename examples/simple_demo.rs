@@ -96,7 +96,7 @@ fn main() {
         tcp_mapper_servers: vec![],
     };
 
-    let _ = service.connect(contact_info).expect("Failed to connect");
+    let _ = service.direct_connect(contact_info).expect("Failed to connect");
 
     for it in crust_rx.iter() {
         match it {
