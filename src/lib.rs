@@ -60,6 +60,10 @@ extern crate get_if_addrs;
 #[allow(unused_extern_crates)]
 #[macro_use]
 extern crate quick_error;
+#[cfg(test)]
+extern crate crossbeam;
+#[cfg(test)]
+extern crate void;
 
 mod connect;
 mod active_connection;

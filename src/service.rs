@@ -472,3 +472,130 @@ fn name_hash(network_name: &Option<String>) -> u64 {
     network_name.hash(&mut hasher);
     hasher.finish()
 }
+
+#[cfg(test)]
+mod tests {
+    use std::sync::mpsc::Receiver;
+    use std::sync::mpsc;
+    use std::time::Duration;
+    use std::thread;
+    use std::iter;
+
+    use maidsafe_utilities::event_sender::{MaidSafeObserver, MaidSafeEventCategory};
+    use void::Void;
+    use crossbeam;
+    use rand;
+
+    use event::Event;
+    use service::Service;
+
+    fn get_event_sender()
+        -> (::CrustEventSender, Receiver<MaidSafeEventCategory>, Receiver<Event>)
+    {
+        let (category_tx, category_rx) = mpsc::channel();
+        let event_category = MaidSafeEventCategory::Crust;
+        let (event_tx, event_rx) = mpsc::channel();
+
+        (MaidSafeObserver::new(event_tx, event_category, category_tx), category_rx, event_rx)
+    }
+
+    fn timebomb<R, F>(dur: Duration, f: F) -> R
+        where R: Send,
+              F: Send + FnOnce() -> R
+    {
+        crossbeam::scope(|scope| {
+            let thread_handle = thread::current();
+            let (done_tx, done_rx) = mpsc::channel::<Void>();
+            let jh = scope.spawn(move || {
+                let ret = f();
+                drop(done_tx);
+                thread_handle.unpark();
+                ret
+            });
+            thread::park_timeout(dur);
+            match done_rx.try_recv() {
+                Ok(x) => match x {},
+                Err(mpsc::TryRecvError::Empty) => panic!("Timed out!"),
+                Err(mpsc::TryRecvError::Disconnected) => jh.join(),
+            }
+        })
+    }
+
+    #[test]
+    fn connect_two_peers() {
+        println!("Running test");
+        timebomb(Duration::from_secs(5), || {
+            let (event_tx_0, _category_rx_0, event_rx_0) = get_event_sender();
+            let mut service_0 = unwrap_result!(Service::new(event_tx_0));
+
+            let (event_tx_1, _category_rx_1, event_rx_1) = get_event_sender();
+            let mut service_1 = unwrap_result!(Service::new(event_tx_1));
+
+            service_0.prepare_connection_info(0);
+            service_1.prepare_connection_info(0);
+
+            let conn_info_result_0 = match unwrap_result!(event_rx_0.recv()) {
+                Event::ConnectionInfoPrepared(conn_info_result) => conn_info_result,
+                e => panic!("Unexpected message type: {:?}", e),
+            };
+
+            let conn_info_result_1 = match unwrap_result!(event_rx_1.recv()) {
+                Event::ConnectionInfoPrepared(conn_info_result) => conn_info_result,
+                e => panic!("Unexpected message type: {:?}", e),
+            };
+
+            let pub_info_0 = unwrap_result!(conn_info_result_0.result);
+            let pub_info_1 = unwrap_result!(conn_info_result_1.result);
+            let priv_info_0 = pub_info_0.to_their_connection_info();
+            let priv_info_1 = pub_info_1.to_their_connection_info();
+
+            unwrap_result!(service_0.connect(pub_info_0, priv_info_1));
+            unwrap_result!(service_1.connect(pub_info_1, priv_info_0));
+
+            println!("Did connect");
+
+            let id_1 = match unwrap_result!(event_rx_0.recv()) {
+                Event::NewPeer(res, id) => {
+                    unwrap_result!(res);
+                    id
+                },
+                e => panic!("Unexpected event when waiting for NewPeer: {:?}", e),
+            };
+            let id_0 = match unwrap_result!(event_rx_1.recv()) {
+                Event::NewPeer(res, id) => {
+                    unwrap_result!(res);
+                    id
+                },
+                e => panic!("Unexpected event when waiting for NewPeer: {:?}", e),
+            };
+
+            println!("Connect successful");
+
+            let data_0: Vec<u8> = iter::repeat(()).take(32).map(|()| rand::random()).collect();
+            let send_0 = data_0.clone();
+            let data_1: Vec<u8> = iter::repeat(()).take(32).map(|()| rand::random()).collect();
+            let send_1 = data_1.clone();
+            unwrap_result!(service_0.send(id_1, data_0));
+            unwrap_result!(service_1.send(id_0, data_1));
+
+            let recv_1 = match unwrap_result!(event_rx_0.recv()) {
+                Event::NewMessage(id, recv) => {
+                    assert_eq!(id, id_1);
+                    recv
+                },
+                e => panic!("Unexpected event when waiting for NewMessage: {:?}", e),
+            };
+            let recv_0 = match unwrap_result!(event_rx_1.recv()) {
+                Event::NewMessage(id, recv) => {
+                    assert_eq!(id, id_0);
+                    recv
+                },
+                e => panic!("Unexpected event when waiting for NewMessage: {:?}", e),
+            };
+
+            assert_eq!(recv_0, send_0);
+            assert_eq!(recv_1, send_1);
+        });
+    }
+}
+
