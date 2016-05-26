@@ -285,18 +285,17 @@ impl Service {
                 {
                     if !response_sent_rc.load(Ordering::Relaxed) {
                         match res {
-                            Ok((token, context, stream)) => {
+                            Ok((token, stream)) => {
                                 let socket = Socket::wrap(stream);
                                 let event_tx = (&*event_tx_rc).clone();
                                 let _ = event_tx.send(Event::NewPeer(Ok(()), peer_id));
                                 response_sent_rc.store(true, Ordering::Relaxed);
                                 ActiveConnection::start(core,
                                                         event_loop,
-                                                        context,
+                                                        token,
+                                                        socket,
                                                         connection_map,
                                                         their_id,
-                                                        socket,
-                                                        token,
                                                         event_tx);
                             },
                             Err(e) => {
@@ -333,11 +332,10 @@ impl Service {
                             response_sent_rc.store(true, Ordering::Relaxed);
                             ActiveConnection::start(core,
                                                     event_loop,
-                                                    context,
+                                                    token,
+                                                    socket,
                                                     connection_map,
                                                     their_id,
-                                                    socket,
-                                                    token,
                                                     event_tx);
                         },
                         None => {

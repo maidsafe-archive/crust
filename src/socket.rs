@@ -17,13 +17,14 @@
 
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use maidsafe_utilities::serialisation::{deserialise_from, serialise_into, SerialisationError};
-use mio::{Evented, EventSet, PollOpt, Selector, Token};
+use mio::{Evented, EventSet, PollOpt, Selector, Token, EventLoop};
 use mio::tcp::{Shutdown, TcpStream};
 use rustc_serialize::{Decodable, Encodable};
 use std::collections::VecDeque;
 use std::io::{self, Cursor, ErrorKind, Read, Write};
 use std::mem;
 use std::net::SocketAddr;
+use core::Core;
 
 // Wrapper over raw TcpStream, which automatically handles buffering and
 // (de)serialization.
@@ -110,6 +111,65 @@ impl Socket {
         self.read_len = 0;
 
         Ok(Some(result))
+    }
+
+    // Write a message to the socket.
+    //
+    // Returns:
+    //   - Ok(true):   the message has been successfuly written.
+    //   - Ok(false):  the message (or part of it) has been queued. Write event is already
+    //                 scheduled for next time
+    //   - Err(error): there was an error while writing to the socket.
+    pub fn write_2<T: Encodable>(&mut self,
+                                 el: &mut EventLoop<Core>,
+                                 token: Token,
+                                 msg: Option<T>)
+                                 -> Result<bool, SocketError> {
+        if let Some(msg) = msg {
+            let mut data = Cursor::new(Vec::with_capacity(mem::size_of::<u32>()));
+
+            // Preallocate space for the message length at the beginning of the
+            // data buffer.
+            let _ = data.write_u32::<LittleEndian>(0);
+
+            // Serialize the message into the rest of the data buffer.
+            try!(serialise_into(&msg, &mut data));
+
+            // Rewind the cursor to write the actual length to the beginning.
+            let len = data.position() - mem::size_of::<u32>() as u64;
+            data.set_position(0);
+            try!(data.write_u32::<LittleEndian>(len as u32));
+
+            self.write_queue.push_back(data.into_inner());
+        }
+
+        if let Some(mut data) = self.write_queue.pop_front() {
+            match self.stream.write(&data) {
+                Ok(bytes_written) => {
+                    if bytes_written < data.len() {
+                        data = data[bytes_written..].to_owned();
+                        self.write_queue.push_front(data);
+                    }
+                }
+                Err(error) => {
+                    if error.kind() == ErrorKind::WouldBlock ||
+                       error.kind() == ErrorKind::Interrupted {
+                        self.write_queue.push_front(data);
+                    } else {
+                        return Err(From::from(error));
+                    }
+                }
+            }
+        }
+
+        let event_set = if self.write_queue.is_empty() {
+            EventSet::readable() | EventSet::error() | EventSet::hup()
+        } else {
+            EventSet::readable() | EventSet::writable() | EventSet::error() | EventSet::hup()
+        };
+        try!(el.reregister(self, token, event_set, PollOpt::edge()));
+
+        Ok(self.write_queue.is_empty())
     }
 
     // Write a message to the socket.

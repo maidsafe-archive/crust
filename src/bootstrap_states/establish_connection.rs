@@ -201,11 +201,10 @@ impl EstablishConnection {
 
         ActiveConnection::start(core,
                                 event_loop,
-                                self.context,
+                                token,
+                                socket,
                                 self.connection_map.clone(),
                                 peer_id,
-                                socket,
-                                token,
                                 self.event_tx.clone())
     }
 

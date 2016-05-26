@@ -21,7 +21,7 @@ pub struct EstablishDirectConnection<F> {
 impl<F> EstablishDirectConnection<F>
     where F: FnOnce(&mut Core,
                     &mut EventLoop<Core>,
-                    io::Result<(Token, Context, TcpStream)>,
+                    io::Result<(Token, TcpStream)>,
                     PeerId) + Any
 {
     pub fn start(core: &mut Core,
@@ -55,7 +55,7 @@ impl<F> EstablishDirectConnection<F>
 impl<F> State for EstablishDirectConnection<F>
     where F: FnOnce(&mut Core,
                     &mut EventLoop<Core>,
-                    io::Result<(Token, Context, TcpStream)>,
+                    io::Result<(Token, TcpStream)>,
                     PeerId) + Any
 {
     fn ready(&mut self,
@@ -81,10 +81,7 @@ impl<F> State for EstablishDirectConnection<F>
             let _ = core.remove_state(self.context);
             let finish = self.finish.take().unwrap();
             let stream = self.stream.take().unwrap();
-            finish(core,
-                   event_loop,
-                   Ok((self.token, self.context, stream)),
-                   self.peer_id);
+            finish(core, event_loop, Ok((self.token, stream)), self.peer_id);
         }
     }
 
