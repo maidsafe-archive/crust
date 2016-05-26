@@ -7,6 +7,8 @@ extern crate rustc_serialize;
 use std::net;
 use std::net::{ToSocketAddrs, SocketAddrV4, Ipv4Addr};
 use std::any::Any;
+use std::rc::Rc;
+use std::cell::RefCell;
 
 use crust::core::Core;
 use crust::core::state::State;
@@ -22,15 +24,17 @@ use socket_addr::SocketAddr;
 fn main() {
     env_logger::init().unwrap();
 
-    println!("This example allows you to connect to two hosts over TCP through NATs and firewalls.");
+    println!("This example allows you to connect to two hosts over TCP through NATs and \
+              firewalls.");
 
     let mut mapping_context = MappingContext::new();
-    
+
     // Now we can register a set of external hole punching servers that may be needed to complete
     // the hole punching.
     loop {
         println!("");
-        println!("Enter the socket addresses of a simple hole punching server or hit return for none.");
+        println!("Enter the socket addresses of a simple hole punching server or hit return for \
+                  none.");
         println!("");
         let mut addr_str = String::new();
         match std::io::stdin().read_line(&mut addr_str) {
@@ -42,7 +46,7 @@ fn main() {
                 }
                 println!("IO error reading stdin: {}", e);
                 return;
-            },
+            }
         };
         let addr_str = addr_str.trim();
         if addr_str == "" {
@@ -53,7 +57,7 @@ fn main() {
             Err(e) => {
                 println!("Error parsing socket address: {}", e);
                 continue;
-            },
+            }
         };
         let addr = match addrs.next() {
             Some(addr) => SocketAddr(addr),
@@ -159,21 +163,16 @@ impl MessageReader {
     pub fn start(core: &mut Core, event_loop: &mut EventLoop<Core>, stream: TcpStream) {
         let token = core.get_new_token();
         let context = core.get_new_context();
-        match event_loop.register(&stream,
-                                  token,
-                                  EventSet::readable(),
-                                  PollOpt::edge())
-        {
+        match event_loop.register(&stream, token, EventSet::readable(), PollOpt::edge()) {
             Ok(()) => (),
             Err(e) => {
                 println!("Error registering socket: {}", e);
                 return;
-            },
+            }
         }
         let _ = core.insert_context(token, context.clone());
-        let _ = core.insert_state(context, MessageReader {
-            stream: stream,
-        });
+        let _ = core.insert_state(context,
+                                  Rc::new(RefCell::new(MessageReader { stream: stream })));
     }
 }
 
@@ -182,24 +181,25 @@ impl State for MessageReader {
              _core: &mut Core,
              _event_loop: &mut EventLoop<Core>,
              _token: Token,
-             _event_set: EventSet)
-    {
+             _event_set: EventSet) {
         let mut buf = [0u8; 256];
         match self.stream.try_read(&mut buf[..]) {
             Ok(Some(n)) => {
                 match std::str::from_utf8(&buf[..n]) {
                     Ok(s) => {
                         println!("Got message from peer: {:?}", s);
-                    },
+                    }
                     Err(e) => {
-                        println!("Got some invalid utf-8 from the peer: {:?} ({})", &buf[..n], e);
-                    },
+                        println!("Got some invalid utf-8 from the peer: {:?} ({})",
+                                 &buf[..n],
+                                 e);
+                    }
                 }
-            },
+            }
             Ok(None) => (),
             Err(e) => {
                 println!("Error receiving message from peer: {}", e);
-            },
+            }
         }
     }
 
@@ -207,4 +207,3 @@ impl State for MessageReader {
         self
     }
 }
-

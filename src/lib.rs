@@ -70,6 +70,7 @@ mod active_connection;
 mod bootstrap_states;
 mod config_handler;
 mod connection_listener;
+/// Core Event Loop
 pub mod core;
 mod error;
 mod event;

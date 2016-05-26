@@ -4,6 +4,8 @@ use std::net::{SocketAddr, SocketAddrV4, Ipv4Addr};
 use std::collections::{HashMap, hash_map};
 use std::io;
 use std::any::Any;
+use std::rc::Rc;
+use std::cell::RefCell;
 
 use mio::tcp::{TcpListener, TcpStream};
 use mio::{PollOpt, EventSet, Token, EventLoop};
@@ -43,37 +45,46 @@ impl TcpMappingServer {
     pub fn new<F>(core: &mut Core,
                   event_loop: &mut EventLoop<Core>,
                   mapping_context: &MappingContext,
-                  report_addresses: F) -> io::Result<()>
-        where F: FnOnce(&mut Core, &mut EventLoop<Core>, io::Result<Vec<socket_addr::SocketAddr>>) + Any
+                  report_addresses: F)
+                  -> io::Result<()>
+        where F: FnOnce(&mut Core,
+                        &mut EventLoop<Core>,
+                        io::Result<Vec<socket_addr::SocketAddr>>) + Any
     {
         let addr = SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 0));
-        MappingTcpSocket::new(core, event_loop, &addr, mapping_context, |core, event_loop, socket, addrs| {
-            let res = {
-                let try = || {
-                    let context = core.get_new_context();
-                    let token = core.get_new_token();
-                    let listener = try!(socket.listen(1));
-                    let addr = try!(listener.local_addr());
-                    let listener = try!(TcpListener::from_listener(listener, &addr));
-                    try!(event_loop.register(&listener,
-                                             token,
-                                             EventSet::readable() | EventSet::error() | EventSet::hup(),
-                                             PollOpt::edge(),
-                    ));
-                    let _ = core.insert_context(token, context.clone());
-                    let _ = core.insert_state(context.clone(), TcpMappingServer {
+        MappingTcpSocket::new(core,
+                              event_loop,
+                              &addr,
+                              mapping_context,
+                              |core, event_loop, socket, addrs| {
+                                  let res = {
+                                      let try = || {
+                                          let context = core.get_new_context();
+                                          let token = core.get_new_token();
+                                          let listener = try!(socket.listen(1));
+                                          let addr = try!(listener.local_addr());
+                                          let listener = try!(TcpListener::from_listener(listener,
+                                                                                         &addr));
+                                          try!(event_loop.register(&listener,
+                                                                   token,
+                                                                   EventSet::readable() |
+                                                                   EventSet::error() |
+                                                                   EventSet::hup(),
+                                                                   PollOpt::edge()));
+                                          let _ = core.insert_context(token, context.clone());
+                                          let _ = core.insert_state(context.clone(), Rc::new(RefCell::new(TcpMappingServer {
                         server_socket: listener,
                         reading_clients: HashMap::new(),
                         writing_clients: HashMap::new(),
                         server_token: token,
                         context: context,
-                    });
-                    Ok(addrs)
-                };
-                try()
-            };
-            report_addresses(core, event_loop, res);
-        })
+                    })));
+                                          Ok(addrs)
+                                      };
+                                      try()
+                                  };
+                                  report_addresses(core, event_loop, res);
+                              })
     }
 }
 
@@ -82,15 +93,14 @@ impl State for TcpMappingServer {
              core: &mut Core,
              event_loop: &mut EventLoop<Core>,
              token: Token,
-             _event_set: EventSet)
-    {
+             _event_set: EventSet) {
         if token == self.server_token {
             let (client, their_addr) = match self.server_socket.accept() {
                 Err(e) => {
                     debug!("Error accepting tcp mapper client: {}", e);
-                    //self.stop(core, event_loop);
+                    // self.stop(core, event_loop);
                     return;
-                },
+                }
                 Ok(None) => return,
                 Ok(Some(client)) => client,
             };
@@ -100,13 +110,12 @@ impl State for TcpMappingServer {
             match event_loop.register(&client,
                                       token,
                                       EventSet::readable() | EventSet::error() | EventSet::hup(),
-                                      PollOpt::edge())
-            {
+                                      PollOpt::edge()) {
                 Ok(()) => (),
                 Err(e) => {
                     debug!("Error registering socket: {}", e);
                     return;
-                },
+                }
             }
             let client = ReadingClient {
                 stream: client,
@@ -120,7 +129,8 @@ impl State for TcpMappingServer {
         if let hash_map::Entry::Occupied(mut oe) = self.reading_clients.entry(token) {
             let res = {
                 let reading_client = oe.get_mut();
-                reading_client.stream.try_read(&mut reading_client.in_buffer[reading_client.bytes_read..])
+                reading_client.stream
+                              .try_read(&mut reading_client.in_buffer[reading_client.bytes_read..])
             };
             match res {
                 Err(e) => {
@@ -131,7 +141,7 @@ impl State for TcpMappingServer {
                         Err(e) => debug!("Error deregistering socket: {}", e),
                     };
                     let _ = core.remove_context(token);
-                },
+                }
                 Ok(None) => return,
                 Ok(Some(n)) => {
                     oe.get_mut().bytes_read += n;
@@ -139,7 +149,8 @@ impl State for TcpMappingServer {
                     if total >= oe.get_mut().in_buffer.len() {
                         let reading_client = oe.remove();
                         if &reading_client.in_buffer[..] != b"ECHO" {
-                            debug!("Invalid request from mapping client: {:?}", &reading_client.in_buffer[..]);
+                            debug!("Invalid request from mapping client: {:?}",
+                                   &reading_client.in_buffer[..]);
                             match event_loop.deregister(&reading_client.stream) {
                                 Ok(()) => (),
                                 Err(e) => debug!("Error deregistering socket: {}", e),
@@ -147,17 +158,18 @@ impl State for TcpMappingServer {
                             let _ = core.remove_context(token);
                         }
                         match event_loop.reregister(&reading_client.stream,
-                                              token,
-                                              EventSet::writable() | EventSet::writable() | EventSet::hup(),
-                                              PollOpt::edge())
-                        {
+                                                    token,
+                                                    EventSet::writable() | EventSet::writable() |
+                                                    EventSet::hup(),
+                                                    PollOpt::edge()) {
                             Ok(()) => (),
                             Err(e) => {
                                 debug!("Error registering socket: {}", e);
                                 let _ = core.remove_context(token);
-                            },
+                            }
                         }
-                        let their_addr = serialise(&socket_addr::SocketAddr(reading_client.their_addr)).unwrap();
+                        let their_addr =
+                            serialise(&socket_addr::SocketAddr(reading_client.their_addr)).unwrap();
                         let writing_client = WritingClient {
                             stream: reading_client.stream,
                             out_buffer: their_addr,
@@ -165,7 +177,7 @@ impl State for TcpMappingServer {
                         };
                         let _ = self.writing_clients.insert(token, writing_client);
                     }
-                },
+                }
             }
             return;
         }
@@ -173,7 +185,8 @@ impl State for TcpMappingServer {
         if let hash_map::Entry::Occupied(mut oe) = self.writing_clients.entry(token) {
             let res = {
                 let writing_client = oe.get_mut();
-                writing_client.stream.try_write(&writing_client.out_buffer[writing_client.bytes_written..])
+                writing_client.stream
+                              .try_write(&writing_client.out_buffer[writing_client.bytes_written..])
             };
             match res {
                 Err(e) => {
@@ -184,7 +197,7 @@ impl State for TcpMappingServer {
                         Err(e) => debug!("Error deregistering socket: {}", e),
                     };
                     let _ = core.remove_context(token);
-                },
+                }
                 Ok(None) => return,
                 Ok(Some(n)) => {
                     oe.get_mut().bytes_written += n;
@@ -197,7 +210,7 @@ impl State for TcpMappingServer {
                         };
                         let _ = core.remove_context(token);
                     }
-                },
+                }
             }
             return;
         }
@@ -233,4 +246,3 @@ impl State for TcpMappingServer {
         self
     }
 }
-

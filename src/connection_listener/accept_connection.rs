@@ -17,6 +17,8 @@
 
 use mio::{EventLoop, EventSet, PollOpt, Timeout, Token};
 use std::any::Any;
+use std::rc::Rc;
+use std::cell::RefCell;
 
 use active_connection::ActiveConnection;
 use core::{Context, Core, State};
@@ -81,7 +83,7 @@ impl AcceptConnection {
             timeout: timeout,
         };
 
-        let _ = core.insert_state(context, state);
+        let _ = core.insert_state(context, Rc::new(RefCell::new(state)));
     }
 
     fn receive_bootstrap_request(&mut self,
@@ -115,8 +117,7 @@ impl AcceptConnection {
                                 event_loop: &mut EventLoop<Core>,
                                 token: Token,
                                 their_public_key: PublicKey,
-                                name_hash: u64)
-    {
+                                name_hash: u64) {
         if self.our_public_key == their_public_key {
             error!("Accepted connection from ourselves");
             self.terminate(core, event_loop);
@@ -131,9 +132,10 @@ impl AcceptConnection {
 
         self.their_peer_id = Some(peer_id::new(their_public_key));
 
-        match self.socket.as_mut()
-                         .unwrap()
-                         .write(Message::BootstrapResponse(self.our_public_key)) {
+        match self.socket
+                  .as_mut()
+                  .unwrap()
+                  .write(Message::BootstrapResponse(self.our_public_key)) {
             Ok(true) => self.transition_to_active(core, event_loop),
             Ok(false) => self.reregister(core, event_loop, token, true),
 
@@ -147,8 +149,7 @@ impl AcceptConnection {
     fn send_bootstrap_response(&mut self,
                                core: &mut Core,
                                event_loop: &mut EventLoop<Core>,
-                               token: Token)
-    {
+                               token: Token) {
         match self.socket.as_mut().unwrap().flush() {
             Ok(true) => self.transition_to_active(core, event_loop),
             Ok(false) => self.reregister(core, event_loop, token, true),
@@ -179,7 +180,9 @@ impl AcceptConnection {
                   token: Token,
                   writable: bool) {
         let mut event_set = EventSet::error() | EventSet::hup() | EventSet::readable();
-        if writable { event_set.insert(EventSet::writable()) }
+        if writable {
+            event_set.insert(EventSet::writable())
+        }
 
         if let Err(error) = event_loop.reregister(self.socket.as_ref().unwrap(),
                                                   token,

@@ -20,6 +20,8 @@ use sodiumoxide::crypto::box_::PublicKey;
 use std::any::Any;
 use std::mem;
 use std::sync::mpsc::{self, Receiver};
+use std::rc::Rc;
+use std::cell::RefCell;
 
 use config_handler::Config;
 use core::{Context, Core, State};
@@ -88,10 +90,7 @@ impl GetBootstrapContacts {
         // state, wait for the service discovery to retrieve some contacts and
         // only then transition to the Bootstrap state. Otherwise, we spin up
         // the Bootstrap state right away.
-        match seek_peers(core,
-                         event_loop,
-                         service_discovery_context,
-                         token) {
+        match seek_peers(core, event_loop, service_discovery_context, token) {
             Ok((rx, timeout)) => {
                 let state = GetBootstrapContacts {
                     connection_map: connection_map,
@@ -106,7 +105,7 @@ impl GetBootstrapContacts {
                 };
 
                 let _ = core.insert_context(token, bootstrap_context);
-                let _ = core.insert_state(bootstrap_context, state);
+                let _ = core.insert_state(bootstrap_context, Rc::new(RefCell::new(state)));
                 return;
             }
 
@@ -163,8 +162,7 @@ fn seek_peers(core: &mut Core,
               event_loop: &mut EventLoop<Core>,
               service_discovery_context: Context,
               token: Token)
-    -> Result<(Receiver<StaticContactInfo>, Timeout), SeekPeersError>
-{
+              -> Result<(Receiver<StaticContactInfo>, Timeout), SeekPeersError> {
     if let Some(state) = core.get_state(service_discovery_context) {
         let mut state = state.borrow_mut();
         let mut state = state.as_any()

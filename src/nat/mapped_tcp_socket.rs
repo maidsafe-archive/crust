@@ -5,6 +5,8 @@ use std::io;
 use std::collections::{HashMap, hash_map};
 use std::mem;
 use std::any::Any;
+use std::rc::Rc;
+use std::cell::RefCell;
 
 use net2;
 use mio::tcp::TcpStream;
@@ -42,16 +44,18 @@ pub struct MappingTcpSocket<F> {
 }
 
 impl<F> MappingTcpSocket<F>
-        where F: FnOnce(&mut Core, &mut EventLoop<Core>, net2::TcpBuilder, Vec<socket_addr::SocketAddr>) + Any
+    where F: FnOnce(&mut Core,
+                    &mut EventLoop<Core>,
+                    net2::TcpBuilder,
+                    Vec<socket_addr::SocketAddr>) + Any
 {
     /// Start mapping a tcp socket
     pub fn new(core: &mut Core,
                event_loop: &mut EventLoop<Core>,
                local_addr: &SocketAddr,
                mapping_context: &MappingContext,
-               finished: F,
-            ) -> io::Result<()>
-    {
+               finished: F)
+               -> io::Result<()> {
         debug!("MappingTcpSocket::new()");
         let context = core.get_new_context();
 
@@ -59,7 +63,7 @@ impl<F> MappingTcpSocket<F>
         let local_addr = try!(tcp_builder_local_addr(&socket));
         let mapped_addrs = try!(expand_unspecified_addr(local_addr));
         let mapped_addrs = mapped_addrs.into_iter().map(|sa| socket_addr::SocketAddr(sa)).collect();
-        
+
         let external_servers: Vec<SocketAddr> = mapping_context.tcp_mapping_servers()
                                                                .cloned()
                                                                .collect();
@@ -73,9 +77,9 @@ impl<F> MappingTcpSocket<F>
                 let token = core.get_new_token();
                 try!(event_loop.register(&query_socket,
                                          token,
-                                         EventSet::writable() | EventSet::error() | EventSet::hup(),
-                                         PollOpt::edge()
-                ));
+                                         EventSet::writable() | EventSet::error() |
+                                         EventSet::hup(),
+                                         PollOpt::edge()));
                 let _ = core.insert_context(token, context.clone());
                 let writing_socket = WritingSocket {
                     socket: query_socket,
@@ -83,23 +87,26 @@ impl<F> MappingTcpSocket<F>
                 };
                 let _ = writing_sockets.insert(token, writing_socket);
             }
-            let _ = core.insert_state(context.clone(), MappingTcpSocket {
-                socket: Some(socket),
-                writing_sockets: writing_sockets,
-                reading_sockets: HashMap::new(),
-                mapped_addrs: mapped_addrs,
-                external_addrs: 0,
-                finished: Some(finished),
-                context: context,
-            });
-        }
-        else {
+            let _ = core.insert_state(context.clone(),
+                                      Rc::new(RefCell::new(MappingTcpSocket {
+                                          socket: Some(socket),
+                                          writing_sockets: writing_sockets,
+                                          reading_sockets: HashMap::new(),
+                                          mapped_addrs: mapped_addrs,
+                                          external_addrs: 0,
+                                          finished: Some(finished),
+                                          context: context,
+                                      })));
+        } else {
             finished(core, event_loop, socket, mapped_addrs);
         }
         Ok(())
     }
 
-    fn stop(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) -> (net2::TcpBuilder, Vec<socket_addr::SocketAddr>) {
+    fn stop(&mut self,
+            core: &mut Core,
+            event_loop: &mut EventLoop<Core>)
+            -> (net2::TcpBuilder, Vec<socket_addr::SocketAddr>) {
         for (token, writing_socket) in self.writing_sockets.iter() {
             match event_loop.deregister(&writing_socket.socket) {
                 Ok(()) => (),
@@ -122,12 +129,12 @@ impl<F> MappingTcpSocket<F>
         let mapped_addrs = mem::replace(&mut self.mapped_addrs, Vec::new());
         (socket, mapped_addrs)
     }
-    
-    fn process(&mut self, core: &mut Core,
-                          event_loop: &mut EventLoop<Core>,
-                          token: Token,
-                          event_set: EventSet)
-    {
+
+    fn process(&mut self,
+               core: &mut Core,
+               event_loop: &mut EventLoop<Core>,
+               token: Token,
+               event_set: EventSet) {
         if event_set.is_error() {
             if let hash_map::Entry::Occupied(oe) = self.writing_sockets.entry(token) {
                 let writing_socket = oe.remove();
@@ -153,33 +160,34 @@ impl<F> MappingTcpSocket<F>
                 };
             }
         }
-        
+
         if event_set.is_writable() {
             if let hash_map::Entry::Occupied(mut oe) = self.writing_sockets.entry(token) {
                 let res = {
                     let writing_socket = oe.get_mut();
-                    writing_socket.socket.try_write(&REQUEST_MAGIC_CONSTANT[writing_socket.written..])
+                    writing_socket.socket
+                                  .try_write(&REQUEST_MAGIC_CONSTANT[writing_socket.written..])
                 };
                 match res {
                     Err(e) => {
                         debug!("Error writing to socket: {}", e);
                         let _ = oe.remove();
-                    },
+                    }
                     Ok(None) => (),
                     Ok(Some(n)) => {
                         oe.get_mut().written += n;
                         if oe.get_mut().written >= REQUEST_MAGIC_CONSTANT.len() {
                             let writing_socket = oe.remove();
                             match event_loop.reregister(&writing_socket.socket,
-                                                  token,
-                                                  EventSet::readable() | EventSet::error() | EventSet::hup(),
-                                                  PollOpt::edge()
-                            ) {
+                                                        token,
+                                                        EventSet::readable() | EventSet::error() |
+                                                        EventSet::hup(),
+                                                        PollOpt::edge()) {
                                 Ok(()) => (),
                                 Err(e) => {
                                     debug!("Error registering with event loop: {}", e);
                                     return;
-                                },
+                                }
                             };
                             let reading_socket = ReadingSocket {
                                 socket: writing_socket.socket,
@@ -187,7 +195,7 @@ impl<F> MappingTcpSocket<F>
                             };
                             let _ = self.reading_sockets.insert(token, reading_socket);
                         }
-                    },
+                    }
                 }
             }
         }
@@ -205,7 +213,7 @@ impl<F> MappingTcpSocket<F>
                     Err(e) => {
                         debug!("Error writing to socket: {}", e);
                         let _ = oe.remove();
-                    },
+                    }
                     Ok(None) => (),
                     Ok(Some(n)) => {
                         if n == 0 {
@@ -215,19 +223,21 @@ impl<F> MappingTcpSocket<F>
                                 Ok(()) => (),
                                 Err(e) => debug!("Error deregistering with event loop: {}", e),
                             };
-                            let response: socket_addr::SocketAddr = match deserialise(&reading_socket.read_data[..]) {
-                                Ok(response) => response,
-                                Err(e) => {
-                                    debug!("Error deserialising response from mapping server: {}", e);
-                                    return;
-                                },
-                            };
+                            let response: socket_addr::SocketAddr =
+                                match deserialise(&reading_socket.read_data[..]) {
+                                    Ok(response) => response,
+                                    Err(e) => {
+                                        debug!("Error deserialising response from mapping \
+                                                server: {}",
+                                               e);
+                                        return;
+                                    }
+                                };
                             if !self.mapped_addrs.contains(&response) {
                                 self.mapped_addrs.push(response);
                                 self.external_addrs += 1;
                             }
-                        }
-                        else {
+                        } else {
                             oe.get_mut().read_data.extend(&buf[..n]);
                             let len = oe.get_mut().read_data.len();
                             if len > MAX_RECV_MSG_SIZE {
@@ -240,7 +250,7 @@ impl<F> MappingTcpSocket<F>
                                 }
                             }
                         }
-                    },
+                    }
                 }
             }
         }
@@ -248,28 +258,27 @@ impl<F> MappingTcpSocket<F>
 }
 
 impl<F> State for MappingTcpSocket<F>
-        where F: FnOnce(&mut Core, &mut EventLoop<Core>, net2::TcpBuilder, Vec<socket_addr::SocketAddr>) + Any
+    where F: FnOnce(&mut Core,
+                    &mut EventLoop<Core>,
+                    net2::TcpBuilder,
+                    Vec<socket_addr::SocketAddr>) + Any
 {
     fn ready(&mut self,
              core: &mut Core,
              event_loop: &mut EventLoop<Core>,
              token: Token,
-             event_set: EventSet)
-    {
+             event_set: EventSet) {
         self.process(core, event_loop, token, event_set);
 
-        if self.external_addrs >= 2 || (self.writing_sockets.is_empty() &&
-                                        self.reading_sockets.is_empty()) {
+        if self.external_addrs >= 2 ||
+           (self.writing_sockets.is_empty() && self.reading_sockets.is_empty()) {
             let (socket, addrs) = self.stop(core, event_loop);
             let finished = self.finished.take().unwrap();
             finished(core, event_loop, socket, addrs);
         }
     }
 
-    fn terminate(&mut self,
-                 core: &mut Core,
-                 event_loop: &mut EventLoop<Core>)
-    {
+    fn terminate(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
         let _ = self.stop(core, event_loop);
     }
 
@@ -277,4 +286,3 @@ impl<F> State for MappingTcpSocket<F>
         self
     }
 }
-

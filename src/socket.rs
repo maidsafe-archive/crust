@@ -16,9 +16,7 @@
 // relating to use of the SAFE Network Software.
 
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
-use maidsafe_utilities::serialisation::{deserialise_from,
-                                        serialise_into,
-                                        SerialisationError};
+use maidsafe_utilities::serialisation::{deserialise_from, serialise_into, SerialisationError};
 use mio::{Evented, EventSet, PollOpt, Selector, Token};
 use mio::tcp::{Shutdown, TcpStream};
 use rustc_serialize::{Decodable, Encodable};
@@ -62,7 +60,7 @@ impl Socket {
         // If there is something in the read buffer already, retrieve it without
         // hitting the socket at all.
         if let Some(message) = try!(self.read_from_buffer()) {
-            return Ok(Some(message))
+            return Ok(Some(message));
         }
 
         // the mio reading window is max at 64k (64 * 1024)
@@ -90,15 +88,20 @@ impl Socket {
 
         // The length of the message is encoded in the first 4 bytes:
         if self.read_len == 0 {
-            if self.read_buffer.len() < u32_size { return Ok(None); }
+            if self.read_buffer.len() < u32_size {
+                return Ok(None);
+            }
 
-            self.read_len = try!(Cursor::new(&self.read_buffer).read_u32::<LittleEndian>()) as usize;
+            self.read_len =
+                try!(Cursor::new(&self.read_buffer).read_u32::<LittleEndian>()) as usize;
             self.read_buffer = self.read_buffer[u32_size..].to_owned();
         }
 
         // There is not enough data in the read buffer, signal the caller to
         // call `read` again in the next ready handler.
-        if self.read_len > self.read_buffer.len() { return Ok(None); }
+        if self.read_len > self.read_buffer.len() {
+            return Ok(None);
+        }
 
         // TODO: enforce size limit
         let result = try!(deserialise_from(&mut Cursor::new(&self.read_buffer)));
@@ -155,11 +158,12 @@ impl Socket {
                 }
 
                 Err(error) => {
-                    if error.kind() == ErrorKind::WouldBlock || error.kind() == ErrorKind::Interrupted {
+                    if error.kind() == ErrorKind::WouldBlock ||
+                       error.kind() == ErrorKind::Interrupted {
                         self.write_queue.push_front(data);
-                        return Ok(false)
+                        return Ok(false);
                     } else {
-                        return Err(From::from(error))
+                        return Err(From::from(error));
                     }
                 }
             }
@@ -175,11 +179,21 @@ impl Socket {
 }
 
 impl Evented for Socket {
-    fn register(&self, selector: &mut Selector, token: Token, interest: EventSet, opts: PollOpt) -> io::Result<()> {
+    fn register(&self,
+                selector: &mut Selector,
+                token: Token,
+                interest: EventSet,
+                opts: PollOpt)
+                -> io::Result<()> {
         self.stream.register(selector, token, interest, opts)
     }
 
-    fn reregister(&self, selector: &mut Selector, token: Token, interest: EventSet, opts: PollOpt) -> io::Result<()> {
+    fn reregister(&self,
+                  selector: &mut Selector,
+                  token: Token,
+                  interest: EventSet,
+                  opts: PollOpt)
+                  -> io::Result<()> {
         self.stream.reregister(selector, token, interest, opts)
     }
 

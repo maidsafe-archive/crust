@@ -21,8 +21,10 @@ mod errors;
 
 use rand;
 use std::u16;
+use std::rc::Rc;
 use std::any::Any;
 use std::str::FromStr;
+use std::cell::RefCell;
 use std::io::ErrorKind;
 use std::net::SocketAddr;
 use std::io::{Read, Write};
@@ -92,7 +94,7 @@ impl ServiceDiscovery {
                                  PollOpt::edge()));
 
         let _ = core.insert_context(token, context);
-        let _ = core.insert_state(context, service_discovery);
+        let _ = core.insert_state(context, Rc::new(RefCell::new(service_discovery)));
 
         Ok(())
     }
@@ -281,12 +283,13 @@ mod test {
             let sd0 = Arc::new(Mutex::new(None));
             let sd0_clone = sd0.clone();
             tx0.send(CoreMessage::new(move |core, el| {
-                let context = core.get_new_context();
-                *sd0_clone.lock().unwrap() = Some(context);
+                   let context = core.get_new_context();
+                   *sd0_clone.lock().unwrap() = Some(context);
 
-                ServiceDiscovery::start(core, el, static_info_0_clone, context, 65530)
-                                 .expect("Could not spawn ServiceDiscovery_0");
-            })).expect("Could not send to tx0");
+                   ServiceDiscovery::start(core, el, static_info_0_clone, context, 65530)
+                       .expect("Could not spawn ServiceDiscovery_0");
+               }))
+               .expect("Could not send to tx0");
 
             // Start listening for peers
             tx0.send(CoreMessage::new(move |core, _| {
@@ -324,12 +327,13 @@ mod test {
             let sd1 = Arc::new(Mutex::new(None));
             let sd1_clone = sd1.clone();
             tx1.send(CoreMessage::new(move |core, el| {
-                let context = core.get_new_context();
-                *sd1_clone.lock().unwrap() = Some(context);
+                   let context = core.get_new_context();
+                   *sd1_clone.lock().unwrap() = Some(context);
 
-                ServiceDiscovery::start(core, el, static_info_1, context, 65530)
-                                 .expect("Could not spawn ServiceDiscovery_1");
-            })).expect("Could not send to tx1");
+                   ServiceDiscovery::start(core, el, static_info_1, context, 65530)
+                       .expect("Could not spawn ServiceDiscovery_1");
+               }))
+               .expect("Could not send to tx1");
 
             // Register observer
             let sd1_clone = sd1.clone();
