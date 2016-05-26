@@ -15,12 +15,13 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use maidsafe_utilities::event_sender::{MaidSafeObserver, MaidSafeEventCategory};
+#[macro_use]
+pub mod utils;
+
 // use maidsafe_utilities::log;
 use std::net::SocketAddr as StdSocketAddr;
 use std::str::FromStr;
 use std::sync::atomic::{AtomicUsize, Ordering, ATOMIC_USIZE_INIT};
-use std::sync::mpsc::{self, Receiver};
 
 use config_handler::Config;
 use event::Event;
@@ -28,12 +29,7 @@ use service::Service;
 use socket_addr::SocketAddr;
 use static_contact_info::StaticContactInfo;
 
-fn get_event_sender() -> (::CrustEventSender, Receiver<Event>) {
-    let (category_tx, _) = mpsc::channel();
-    let (event_tx, event_rx) = mpsc::channel();
-
-    (MaidSafeObserver::new(event_tx, MaidSafeEventCategory::Crust, category_tx), event_rx)
-}
+pub use self::utils::{get_event_sender, timebomb};
 
 fn localhost(port: u16) -> SocketAddr {
     use std::net::IpAddr;
@@ -67,25 +63,6 @@ fn gen_config() -> Config {
     config.bootstrap_cache_name = Some(gen_bootstrap_cache_name());
     config
 }
-
-// Receive an event from the given receiver and asserts that it matches the
-// given pattern.
-macro_rules! expect_event {
-    ($rx:expr, $pattern:pat) => {
-        match unwrap_result!($rx.recv()) {
-            $pattern => (),
-            e => panic!("unexpected event {:?}", e),
-        }
-    };
-
-    ($rx:expr, $pattern:pat => $arm:expr) => {
-        match unwrap_result!($rx.recv()) {
-            $pattern => $arm,
-            e => panic!("unexpected event {:?}", e),
-        }
-    }
-}
-
 
 #[test]
 fn bootstrap_two_services_and_exchange_messages() {
