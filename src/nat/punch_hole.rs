@@ -118,9 +118,7 @@ impl<F> State for PunchHole<F>
              token: Token,
              _event_set: EventSet)
     {
-        if token == self.listener_token && self.writing_streams.is_empty()
-                                        && self.reading_streams.is_empty()
-        {
+        if token == self.listener_token {
             match self.listener.accept() {
                 Err(e) => {
                     debug!("Error accepting connection during hole punching: {}", e);
@@ -128,6 +126,7 @@ impl<F> State for PunchHole<F>
                 },
                 Ok(None) => return,
                 Ok(Some((stream, _))) => {
+                    let token = core.get_new_token();
                     match event_loop.register(&stream,
                                               token,
                                               EventSet::writable() | EventSet::error() | EventSet::hup(),
@@ -141,9 +140,11 @@ impl<F> State for PunchHole<F>
                         nonce: rand::random(),
                         bytes_written: 0,
                     };
+                    let _ = core.insert_context(token, self.context);
                     let _ = self.writing_streams.insert(token, writing_stream);
                 },
             }
+            return;
         }
 
         if let hash_map::Entry::Occupied(mut oe) = self.writing_streams.entry(token) {
@@ -151,7 +152,16 @@ impl<F> State for PunchHole<F>
                 let writing_stream = oe.get_mut();
                 let written = writing_stream.bytes_written;
                 if written < SECRET_LEN {
-                    writing_stream.stream.try_write(&self.our_secret[written..])
+                    match writing_stream.stream.try_write(&self.our_secret[written..]) {
+                        Ok(Some(n)) => {
+                            match writing_stream.stream.try_write(&writing_stream.nonce[..]) {
+                                Ok(Some(m)) => Ok(Some(n + m)),
+                                Ok(None) => Ok(Some(n)),
+                                Err(e) => Err(e),
+                            }
+                        },
+                        x => x,
+                    }
                 }
                 else {
                     writing_stream.stream.try_write(&writing_stream.nonce[(written - SECRET_LEN)..])
@@ -167,7 +177,9 @@ impl<F> State for PunchHole<F>
                     };
                     let _ = core.remove_context(token);
                 },
-                Ok(None) => return,
+                Ok(None) => {
+                    return;
+                }
                 Ok(Some(0)) => {
                     let writing_stream = oe.remove();
                     let _ = core.remove_context(token);
@@ -207,6 +219,7 @@ impl<F> State for PunchHole<F>
                     }
                 },
             }
+            return;
         }
 
         let mut done_read = false;
@@ -289,6 +302,7 @@ impl<F> State for PunchHole<F>
     {
         let stream_opt = self.best_stream.take().map(|(_, s)| s);
         let finished = self.finished.take().unwrap();
+
         finished(core, event_loop, stream_opt);
 
         for (token, writing_stream) in self.writing_streams.iter() {

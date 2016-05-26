@@ -16,7 +16,7 @@
 // relating to use of the SAFE Network Software.
 
 use maidsafe_utilities::thread::RaiiThreadJoiner;
-use mio::{self, EventLoop};
+use mio::{self, EventLoop, EventSet, PollOpt};
 use net2;
 use sodiumoxide;
 use sodiumoxide::crypto::box_::{self, PublicKey, SecretKey};
@@ -322,6 +322,11 @@ impl Service {
                         Some(stream) => {
                             let token = core.get_new_token();
                             let context = core.get_new_context();
+
+                            // FIXME: more ignored errors
+                            let _ = core.insert_context(token, context);
+                            let _ = event_loop.register(&stream, token, EventSet::all(), PollOpt::edge());
+
                             let socket = Socket::wrap(stream);
                             let event_tx = (&*event_tx_rc).clone();
                             let _ = event_tx.send(Event::NewPeer(Ok(()), their_id));
@@ -523,7 +528,6 @@ mod tests {
 
     #[test]
     fn connect_two_peers() {
-        println!("Running test");
         timebomb(Duration::from_secs(5), || {
             let (event_tx_0, _category_rx_0, event_rx_0) = get_event_sender();
             let mut service_0 = unwrap_result!(Service::new(event_tx_0));
@@ -552,8 +556,6 @@ mod tests {
             unwrap_result!(service_0.connect(pub_info_0, priv_info_1));
             unwrap_result!(service_1.connect(pub_info_1, priv_info_0));
 
-            println!("Did connect");
-
             let id_1 = match unwrap_result!(event_rx_0.recv()) {
                 Event::NewPeer(res, id) => {
                     unwrap_result!(res);
@@ -568,8 +570,6 @@ mod tests {
                 },
                 e => panic!("Unexpected event when waiting for NewPeer: {:?}", e),
             };
-
-            println!("Connect successful");
 
             let data_0: Vec<u8> = iter::repeat(()).take(32).map(|()| rand::random()).collect();
             let send_0 = data_0.clone();
