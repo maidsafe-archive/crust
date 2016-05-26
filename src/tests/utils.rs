@@ -17,11 +17,13 @@
 
 use crossbeam;
 use maidsafe_utilities::event_sender::{MaidSafeObserver, MaidSafeEventCategory};
+use std::sync::atomic::{AtomicUsize, Ordering, ATOMIC_USIZE_INIT};
 use std::sync::mpsc::{self, Receiver};
 use std::thread;
 use std::time::Duration;
 use void::Void;
 
+use config_handler::Config;
 use event::Event;
 
 // Receive an event from the given receiver and asserts that it matches the
@@ -49,6 +51,14 @@ pub fn get_event_sender() -> (::CrustEventSender, Receiver<Event>) {
     (MaidSafeObserver::new(event_tx, MaidSafeEventCategory::Crust, category_tx), event_rx)
 }
 
+// Generate config with unique bootstrap cache name.
+pub fn gen_config() -> Config {
+    let mut config = Config::default();
+    config.bootstrap_cache_name = Some(gen_bootstrap_cache_name());
+    config
+}
+
+#[allow(unused)]
 pub fn timebomb<R, F>(dur: Duration, f: F) -> R
     where R: Send,
           F: Send + FnOnce() -> R
@@ -69,4 +79,11 @@ pub fn timebomb<R, F>(dur: Duration, f: F) -> R
             Err(mpsc::TryRecvError::Disconnected) => jh.join(),
         }
     })
+}
+
+// Generate unique name for the bootstrap cache.
+fn gen_bootstrap_cache_name() -> String {
+    static COUNTER: AtomicUsize = ATOMIC_USIZE_INIT;
+    format!("test{}.bootstrap.cache",
+            COUNTER.fetch_add(1, Ordering::Relaxed))
 }

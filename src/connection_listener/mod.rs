@@ -19,32 +19,33 @@ mod exchange_msg;
 
 use mio::{EventLoop, EventSet, PollOpt, Token};
 use mio::tcp::TcpListener;
+use net2::TcpBuilder;
+use socket_addr;
 use sodiumoxide::crypto::box_::PublicKey;
 use std::any::Any;
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
-use std::sync::{Arc, Mutex};
-use std::rc::Rc;
 use std::cell::RefCell;
+use std::io;
+use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::rc::Rc;
+use std::sync::{Arc, Mutex};
 
-use socket_addr;
-use net2::TcpBuilder;
 use self::exchange_msg::ExchangeMsg;
+use connect::SharedConnectionMap;
 use core::{Core, State, Context};
 use event::Event;
 use nat::mapped_tcp_socket::MappingTcpSocket;
 use nat::mapping_context::MappingContext;
-use service::SharedConnectionMap;
 use socket::Socket;
 use static_contact_info::StaticContactInfo;
 
 pub struct ConnectionListener {
-    token: Token,
-    context: Context,
-    listener: TcpListener,
     cm: SharedConnectionMap,
+    context: Context,
     event_tx: ::CrustEventSender,
+    listener: TcpListener,
     name_hash: u64,
     our_pk: PublicKey,
+    token: Token,
 }
 
 impl ConnectionListener {
@@ -111,13 +112,13 @@ impl ConnectionListener {
             .extend(mapped_addrs);
 
         let state = ConnectionListener {
-            token: token,
-            context: context,
-            listener: listener,
             cm: cm,
+            context: context,
             event_tx: event_tx.clone(),
+            listener: listener,
             name_hash: name_hash,
             our_pk: our_pk,
+            token: token,
         };
 
         let _ = core.insert_context(token, context);
@@ -178,7 +179,7 @@ mod test {
     use std::time::Duration;
     use std::sync::{Arc, Mutex};
     use std::collections::HashMap;
-    use std::io::{Cursor, Write, Read};
+    use std::io::{self, Cursor, Write, Read};
     use std::net::SocketAddr as StdSocketAddr;
 
     use event::Event;

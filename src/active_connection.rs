@@ -19,10 +19,10 @@ use mio::{EventLoop, EventSet, PollOpt, Timeout, TimerError, Token};
 use std::any::Any;
 
 use core::{Core, Context, State};
+use connect::SharedConnectionMap;
 use event::Event;
 use message::Message;
 use peer_id::PeerId;
-use service::SharedConnectionMap;
 use socket::Socket;
 use std::rc::Rc;
 use std::cell::RefCell;

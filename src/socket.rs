@@ -181,6 +181,10 @@ impl Socket {
     pub fn shutdown(&self) -> ::Res<()> {
         Ok(try!(self.stream.shutdown(Shutdown::Both)))
     }
+
+    pub fn take_socket_error(&self) -> io::Result<()> {
+        self.stream.take_socket_error()
+    }
 }
 
 impl Evented for Socket {

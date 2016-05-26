@@ -29,7 +29,7 @@ use service::Service;
 use socket_addr::SocketAddr;
 use static_contact_info::StaticContactInfo;
 
-pub use self::utils::{get_event_sender, timebomb};
+pub use self::utils::{gen_config, get_event_sender, timebomb};
 
 fn localhost(port: u16) -> SocketAddr {
     use std::net::IpAddr;
@@ -43,25 +43,11 @@ fn localhost_contact_info(port: u16) -> StaticContactInfo {
     }
 }
 
-// Generate unique name for the bootstrap cache.
-fn gen_bootstrap_cache_name() -> String {
-    static COUNTER: AtomicUsize = ATOMIC_USIZE_INIT;
-    format!("test{}.bootstrap.cache",
-            COUNTER.fetch_add(1, Ordering::Relaxed))
-}
-
 fn gen_service_discovery_port() -> u16 {
     const BASE: u16 = 40000;
     static COUNTER: AtomicUsize = ATOMIC_USIZE_INIT;
 
     BASE + COUNTER.fetch_add(1, Ordering::Relaxed) as u16
-}
-
-// Generate config with unique bootstrap cache name.
-fn gen_config() -> Config {
-    let mut config = Config::default();
-    config.bootstrap_cache_name = Some(gen_bootstrap_cache_name());
-    config
 }
 
 #[test]

@@ -17,8 +17,9 @@
 
 use mio::{EventLoop, EventSet, PollOpt, Timeout, Token};
 use std::any::Any;
-use std::rc::Rc;
 use std::cell::RefCell;
+use std::io::{self, ErrorKind};
+use std::rc::Rc;
 
 use active_connection::ActiveConnection;
 use core::{Context, Core, State};
@@ -32,23 +33,23 @@ use sodiumoxide::crypto::box_::PublicKey;
 pub const EXCHANGE_MSG_TIMEOUT_MS: u64 = 5_000;
 
 pub struct ExchangeMsg {
-    token: Token,
+    cm: SharedConnectionMap,
+    connect_sent: bool,
     context: Context,
+    event: Option<Event>,
+    event_tx: ::CrustEventSender,
     name_hash: u64,
     our_pk: PublicKey,
-    cm: SharedConnectionMap,
-    event_tx: ::CrustEventSender,
-    timeout: Timeout,
-    socket: Option<Socket>,
     peer_id: Option<PeerId>,
-    event: Option<Event>,
+    socket: Option<Socket>,
+    timeout: Timeout,
 }
 
 impl ExchangeMsg {
     pub fn start(core: &mut Core,
                  event_loop: &mut EventLoop<Core>,
                  socket: Socket,
-                 our_pk: PublicKey,
+                 our_public_key: PublicKey,
                  name_hash: u64,
                  cm: SharedConnectionMap,
                  event_tx: ::CrustEventSender)
@@ -64,16 +65,17 @@ impl ExchangeMsg {
         let _ = core.insert_context(token, context);
 
         let state = ExchangeMsg {
-            token: token,
-            context: context,
-            name_hash: name_hash,
-            our_pk: our_pk,
             cm: cm,
-            event_tx: event_tx,
-            timeout: timeout,
-            socket: Some(socket),
-            peer_id: None,
+            connect_sent: false,
+            context: context,
             event: None,
+            event_tx: event_tx,
+            name_hash: name_hash,
+            our_public_key: our_public_key,
+            socket: Some(socket),
+            their_id: None,
+            timeout: timeout,
+            token: token,
         };
 
         let _ = core.insert_state(context, Rc::new(RefCell::new(state)));
@@ -81,28 +83,92 @@ impl ExchangeMsg {
         Ok(())
     }
 
-    fn receive_request(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
+    fn readable(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
         match self.socket.as_mut().unwrap().read::<Message>() {
-            Ok(Some(Message::BootstrapRequest(peer_pk, name_hash))) => {
-                self.handle_bootstrap_request(core, event_loop, peer_pk, name_hash)
+            Ok(Some(Message::BootstrapRequest(their_public_key, name_hash))) => {
+                self.handle_bootstrap_request(core, event_loop, their_public_key, name_hash)
             }
-            Ok(Some(Message::Connect(peer_pk, name_hash))) => {
-                self.handle_connect_request(core, event_loop, peer_pk, name_hash)
+
+            Ok(Some(Message::Connect(their_public_key, name_hash))) => {
+                self.handle_connect(core, event_loop, their_public_key, name_hash)
             }
+
             Ok(Some(message)) => {
                 warn!("Unexpected message in direct connect: {:?}", message);
                 self.terminate(core, event_loop)
             }
-            Ok(None) => (),
-            Err(e) => {
-                warn!("Error in read: {:?}", e);
-                self.terminate(core, event_loop)
+
+            Ok(None) => {
+                self.reregister(core, event_loop, false)
+            }
+
+            Err(error) => {
+                error!("Failed to read from socket: {:?}", error);
+                self.terminate(core, event_loop);
             }
         }
     }
 
-    fn get_peer_id(&mut self, peer_pk: PublicKey, name_hash: u64) -> Result<PeerId, ()> {
-        if self.our_pk == peer_pk {
+    fn writable(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
+        let _ = self.write(core, event_loop, None);
+    }
+
+    fn handle_bootstrap_request(&mut self,
+                                core: &mut Core,
+                                event_loop: &mut EventLoop<Core>,
+                                their_public_key: PublicKey,
+                                name_hash: u64) {
+        let their_id = match self.get_peer_id(their_public_key, name_hash) {
+            Ok(their_id) => their_id,
+            Err(()) => return self.terminate(core, event_loop),
+        };
+
+        self.their_id = Some(their_id);
+        self.event = Some(Event::BootstrapAccept(their_id));
+
+        let our_public_key = self.our_public_key;
+        self.write(core, event_loop, Some(Message::BootstrapResponse(our_public_key)))
+    }
+
+    fn handle_connect(&mut self,
+                      core: &mut Core,
+                      event_loop: &mut EventLoop<Core>,
+                      their_public_key: PublicKey,
+                      name_hash: u64)
+    {
+        let their_id = match self.get_peer_id(their_public_key, name_hash) {
+            Ok(their_id) => their_id,
+            Err(()) => return self.terminate(core, event_loop),
+        };
+
+        let our_id = peer_id::new(self.our_public_key);
+
+        if our_id < their_id {
+            if self.connect_sent {
+                self.their_id = Some(their_id);
+                self.event = Some(Event::NewPeer(Ok(()), their_id));
+                self.success(core, event_loop)
+            } else {
+                self.send_connect(core, event_loop)
+            }
+        } else {
+            self.their_id = Some(their_id);
+            self.event = Some(Event::NewPeer(Ok(()), their_id));
+            self.send_connect(core, event_loop)
+        }
+    }
+
+    fn send_connect(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
+        self.connect_sent = true;
+
+        let our_public_key = self.our_public_key;
+        let name_hash = self.name_hash;
+        self.write(core, event_loop, Some(Message::Connect(our_public_key, name_hash)))
+    }
+
+    // TODO use crust error
+    fn get_peer_id(&self, their_public_key: PublicKey, name_hash: u64) -> Result<PeerId, ()> {
+        if self.our_public_key == their_public_key {
             warn!("Accepted connection from ourselves");
             return Err(());
         }
@@ -112,65 +178,71 @@ impl ExchangeMsg {
             return Err(());
         }
 
-        Ok(peer_id::new(peer_pk))
-    }
+        let peer_id = peer_id::new(their_public_key);
 
-    fn handle_connect_request(&mut self,
-                              core: &mut Core,
-                              event_loop: &mut EventLoop<Core>,
-                              peer_pk: PublicKey,
-                              name_hash: u64) {
-        match self.get_peer_id(peer_pk, name_hash) {
-            Ok(peer_id) => self.peer_id = Some(peer_id),
-            Err(()) => return self.terminate(core, event_loop),
+        if self.cm.lock().unwrap().contains_key(&peer_id) {
+            warn!("Already connected to {:?}", peer_id);
+            return Err(());
         }
-        self.event = Some(Event::NewPeer(Ok(()), self.peer_id.expect("Logic Error")));
-        let our_pk = self.our_pk;
-        let name_hash = self.name_hash;
-        self.write(core, event_loop, Some(Message::Connect(our_pk, name_hash)));
     }
 
-    fn handle_bootstrap_request(&mut self,
-                                core: &mut Core,
-                                event_loop: &mut EventLoop<Core>,
-                                peer_pk: PublicKey,
-                                name_hash: u64) {
-        match self.get_peer_id(peer_pk, name_hash) {
-            Ok(peer_id) => self.peer_id = Some(peer_id),
-            Err(()) => return self.terminate(core, event_loop),
-        }
-        self.event = Some(Event::BootstrapAccept(self.peer_id.expect("Logic Error")));
-        let our_pk = self.our_pk;
-        self.write(core, event_loop, Some(Message::BootstrapResponse(our_pk)));
+        Ok(peer_id)
     }
 
-    fn write(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, msg: Option<Message>) {
-        match self.socket.as_mut().unwrap().write(event_loop, self.token, msg) {
-            Ok(true) => self.transition_to_active(core, event_loop),
+    fn write(&mut self,
+             core: &mut Core,
+             event_loop: &mut EventLoop<Core>,
+             msg: Option<Message>) {
+        match self.socket.as_mut().unwrap().write_2(event_loop, self.token, msg) {
+            Ok(true) => {
+                if self.event.is_some() {
+                    self.success(core, event_loop)
+                }
+            },
             Ok(false) => (),
             Err(e) => {
                 warn!("Error in writting: {:?}", e);
-                self.terminate(core, event_loop);
+                self.terminate(core, event_loop)
             }
         }
     }
 
-    fn transition_to_active(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
+    fn reregister(&mut self,
+                  core: &mut Core,
+                  event_loop: &mut EventLoop<Core>,
+                  writable: bool) {
+        let mut event_set = EventSet::error() | EventSet::hup() | EventSet::readable();
+        if writable {
+            event_set.insert(EventSet::writable())
+        }
+
+        let result = event_loop.reregister(self.socket.as_ref().unwrap(),
+                                           self.token,
+                                           event_set,
+                                           PollOpt::edge());
+
+        if let Err(error) = result {
+            error!("Failed to reregister socket: {:?}", error);
+            self.terminate(core, event_loop);
+        }
+    }
+
+    fn success(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
         let _ = core.remove_state(self.context);
         let _ = core.remove_context(self.token);
         let _ = event_loop.clear_timeout(self.timeout);
 
-        let peer_id = self.peer_id.take().expect("Logic Error");
+        let their_id = self.their_id.take().expect("Logic Error");
+        let event = self.event.take().expect("Logic Error");
 
         ActiveConnection::start(core,
                                 event_loop,
                                 self.token,
                                 self.socket.take().expect("Logic Error"),
                                 self.cm.clone(),
-                                peer_id,
+                                their_id,
                                 self.event_tx.clone());
 
-        let event = self.event.take().expect("Logic Error");
         let _ = self.event_tx.send(event);
     }
 }
@@ -185,10 +257,10 @@ impl State for ExchangeMsg {
             self.terminate(core, event_loop);
         } else {
             if event_set.is_readable() {
-                self.receive_request(core, event_loop)
+                self.readable(core, event_loop)
             }
             if event_set.is_writable() {
-                self.write(core, event_loop, None)
+                self.writable(core, event_loop)
             }
         }
     }
