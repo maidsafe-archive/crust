@@ -28,33 +28,37 @@ use socket::Socket;
 use std::rc::Rc;
 use std::cell::RefCell;
 
-#[cfg(not(test))] pub const INACTIVITY_TIMEOUT_MS: u64 = 60_000;
-#[cfg(not(test))] const HEARTBEAT_PERIOD_MS: u64 = 20_000;
+#[cfg(not(test))]
+pub const INACTIVITY_TIMEOUT_MS: u64 = 60_000;
+#[cfg(not(test))]
+const HEARTBEAT_PERIOD_MS: u64 = 20_000;
 
-#[cfg(test)] pub const INACTIVITY_TIMEOUT_MS: u64 = 900;
-#[cfg(test)] const HEARTBEAT_PERIOD_MS: u64 = 300;
+#[cfg(test)]
+pub const INACTIVITY_TIMEOUT_MS: u64 = 900;
+#[cfg(test)]
+const HEARTBEAT_PERIOD_MS: u64 = 300;
 
 pub struct ActiveConnection {
-    connection_map: SharedConnectionMap,
+    token: Token,
     context: Context,
+    socket: Socket,
+    connection_map: SharedConnectionMap,
+    peer_id: PeerId,
     event_tx: ::CrustEventSender,
     heartbeat: Heartbeat,
-    peer_id: PeerId,
-    socket: Socket,
-    token: Token,
     event_set: EventSet,
 }
 
 impl ActiveConnection {
     pub fn start(core: &mut Core,
                  event_loop: &mut EventLoop<Core>,
-                 context: Context,
+                 token: Token,
+                 socket: Socket,
                  connection_map: SharedConnectionMap,
                  peer_id: PeerId,
-                 socket: Socket,
-                 token: Token,
                  event_tx: ::CrustEventSender) {
         debug!("Entered state ActiveConnection");
+        let context = core.get_new_context();
 
         let event_set = EventSet::error() | EventSet::hup() | EventSet::readable();
 
@@ -86,16 +90,17 @@ impl ActiveConnection {
         let _ = connection_map.lock().unwrap().insert(peer_id, context);
 
         let state = ActiveConnection {
+            token: token,
+            context: context,
+            socket: socket,
             connection_map: connection_map,
-            context: context.clone(),
+            peer_id: peer_id,
             event_tx: event_tx,
             heartbeat: heartbeat,
-            peer_id: peer_id,
-            socket: socket,
-            token: token,
             event_set: event_set,
         };
 
+        let _ = core.insert_context(token, context);
         let _ = core.insert_state(context, Rc::new(RefCell::new(state)));
     }
 
@@ -231,7 +236,8 @@ impl State for ActiveConnection {
             HeartbeatAction::None => (),
             HeartbeatAction::Send => self.write_message(core, event_loop, Message::Heartbeat),
             HeartbeatAction::Terminate => {
-                debug!("Dropping connection to {:?} due to peer inactivity", self.peer_id);
+                debug!("Dropping connection to {:?} due to peer inactivity",
+                       self.peer_id);
                 self.terminate(core, event_loop);
             }
         }
