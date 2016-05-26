@@ -28,7 +28,12 @@ use socket::Socket;
 use std::rc::Rc;
 use std::cell::RefCell;
 
+// TODO: make the heartbeat period an option in the config, then remove this
+//       conditional compilation
+#[cfg(not(test))]
 const HEARTBEAT_PERIOD_MS: u64 = 20_000;
+#[cfg(test)]
+const HEARTBEAT_PERIOD_MS: u64 = 1000;
 
 pub struct ActiveConnection {
     connection_map: SharedConnectionMap,
