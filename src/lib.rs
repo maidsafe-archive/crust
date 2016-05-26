@@ -65,6 +65,10 @@ extern crate crossbeam;
 #[cfg(test)]
 extern crate void;
 
+#[cfg(test)]
+#[macro_use]
+mod tests;
+
 mod connect;
 mod active_connection;
 mod bootstrap_states;
@@ -82,8 +86,6 @@ mod socket;
 mod static_contact_info;
 pub mod nat;
 
-#[cfg(test)]
-mod tests;
 
 /// Crust Observers will be informed of crust events on this
 pub type CrustEventSender = ::maidsafe_utilities::event_sender::MaidSafeObserver<Event>;
