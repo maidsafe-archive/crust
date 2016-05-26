@@ -381,7 +381,7 @@ mod broken_peer {
 }
 
 #[test]
-fn connection_drops_when_no_message_received_within_heartbeat_period() {
+fn drop_peer_when_no_message_received_within_inactivity_period() {
     use maidsafe_utilities::thread::RaiiThreadJoiner;
     use mio::EventLoop;
     use mio::tcp::TcpListener;
@@ -430,4 +430,40 @@ fn connection_drops_when_no_message_received_within_heartbeat_period() {
     unwrap_result!(mio_tx.send(CoreMessage::new(|_, event_loop| {
         event_loop.shutdown()
     })));
+}
+
+#[test]
+fn do_not_drop_peer_even_when_no_data_messages_are_exchanged_within_inactivity_period() {
+    use std::thread;
+    use std::time::Duration;
+    use active_connection::INACTIVITY_TIMEOUT_MS;
+
+    let config0 = gen_config();
+    let (event_tx0, event_rx0) = get_event_sender();
+    let mut service0 = unwrap_result!(Service::with_config(event_tx0, config0));
+
+    let _ = unwrap_result!(service0.start_listening_tcp());
+    let port0 = expect_event!(event_rx0, Event::ListenerStarted(port) => port);
+
+    let mut config1 = gen_config();
+    config1.hard_coded_contacts = vec![localhost_contact_info(port0)];
+
+    let (event_tx1, event_rx1) = get_event_sender();
+    let mut service1 = unwrap_result!(Service::with_config(event_tx1, config1));
+
+    let _ = unwrap_result!(service1.start_bootstrap());
+    expect_event!(event_rx1, Event::BootstrapConnect(_));
+    expect_event!(event_rx0, Event::BootstrapAccept(_));
+
+    thread::sleep(Duration::from_millis(2 * INACTIVITY_TIMEOUT_MS));
+
+    match event_rx0.try_recv() {
+        Ok(Event::LostPeer(..)) => panic!("peer lost unexpectedly"),
+        _ => (),
+    }
+
+    match event_rx1.try_recv() {
+        Ok(Event::LostPeer(..)) => panic!("peer lost unexpectedly"),
+        _ => (),
+    }
 }

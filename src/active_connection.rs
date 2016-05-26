@@ -28,7 +28,11 @@ use socket::Socket;
 use std::rc::Rc;
 use std::cell::RefCell;
 
-const HEARTBEAT_PERIOD_MS: u64 = 20_000;
+#[cfg(not(test))] pub const INACTIVITY_TIMEOUT_MS: u64 = 60_000;
+#[cfg(not(test))] const HEARTBEAT_PERIOD_MS: u64 = 20_000;
+
+#[cfg(test)] pub const INACTIVITY_TIMEOUT_MS: u64 = 900;
+#[cfg(test)] const HEARTBEAT_PERIOD_MS: u64 = 300;
 
 pub struct ActiveConnection {
     connection_map: SharedConnectionMap,
@@ -99,16 +103,16 @@ impl ActiveConnection {
         match self.socket.read::<Message>() {
             Ok(Some(Message::Data(data))) => {
                 let _ = self.event_tx.send(Event::NewMessage(self.peer_id, data));
-                self.receive_heartbeat(core, event_loop);
+                self.reset_receive_heartbeat(core, event_loop);
             }
 
             Ok(Some(Message::Heartbeat)) => {
-                self.receive_heartbeat(core, event_loop);
+                self.reset_receive_heartbeat(core, event_loop);
             }
 
             Ok(Some(message)) => {
                 warn!("Unexpected message: {:?}", message);
-                self.receive_heartbeat(core, event_loop);
+                self.reset_receive_heartbeat(core, event_loop);
             }
 
             Ok(None) => (),
@@ -163,9 +167,16 @@ impl ActiveConnection {
         self.reregister(core, event_loop);
     }
 
-    fn receive_heartbeat(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
-        if let Err(error) = self.heartbeat.receive(event_loop) {
-            error!("Failed to process received heartbeat: {:?}", error);
+    fn reset_receive_heartbeat(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
+        if let Err(error) = self.heartbeat.reset_receive(event_loop) {
+            error!("Failed to reset heartbeat: {:?}", error);
+            self.terminate(core, event_loop);
+        }
+    }
+
+    fn reset_send_heartbeat(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
+        if let Err(error) = self.heartbeat.reset_send(event_loop) {
+            error!("Failed to reset heartbeat: {:?}", error);
             self.terminate(core, event_loop);
         }
     }
@@ -193,7 +204,8 @@ impl State for ActiveConnection {
     }
 
     fn write(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, data: Vec<u8>) {
-        self.write_message(core, event_loop, Message::Data(data))
+        self.write_message(core, event_loop, Message::Data(data));
+        self.reset_send_heartbeat(core, event_loop);
     }
 
     fn terminate(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
@@ -243,7 +255,7 @@ impl Heartbeat {
            context: Context)
            -> Result<Self, TimerError> {
         let recv_token = core.get_new_token();
-        let recv_timeout = try!(event_loop.timeout_ms(recv_token, HEARTBEAT_PERIOD_MS));
+        let recv_timeout = try!(event_loop.timeout_ms(recv_token, INACTIVITY_TIMEOUT_MS));
         let _ = core.insert_context(recv_token, context);
 
         let send_token = core.get_new_token();
@@ -275,9 +287,15 @@ impl Heartbeat {
         HeartbeatAction::None
     }
 
-    fn receive(&mut self, event_loop: &mut EventLoop<Core>) -> Result<(), TimerError> {
+    fn reset_receive(&mut self, event_loop: &mut EventLoop<Core>) -> Result<(), TimerError> {
         let _ = event_loop.clear_timeout(self.recv_timeout);
-        self.recv_timeout = try!(event_loop.timeout_ms(self.recv_token, HEARTBEAT_PERIOD_MS));
+        self.recv_timeout = try!(event_loop.timeout_ms(self.recv_token, INACTIVITY_TIMEOUT_MS));
+        Ok(())
+    }
+
+    fn reset_send(&mut self, event_loop: &mut EventLoop<Core>) -> Result<(), TimerError> {
+        let _ = event_loop.clear_timeout(self.send_timeout);
+        self.send_timeout = try!(event_loop.timeout_ms(self.send_token, HEARTBEAT_PERIOD_MS));
         Ok(())
     }
 
