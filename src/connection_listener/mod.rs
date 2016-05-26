@@ -243,8 +243,7 @@ mod test {
             .unwrap()
     }
 
-    fn client_send_request(stream: &mut TcpStream) -> io::Result<()> {
-        let message = serialise(&Message::BootstrapRequest(box_::gen_keypair().0, 64)).unwrap();
+    fn client_send_request(stream: &mut TcpStream, message: Vec<u8>) -> io::Result<()> {
         let mut size_vec = Vec::with_capacity(4);
         unwrap_result!(size_vec.write_u32::<LittleEndian>(message.len() as u32));
 
@@ -254,14 +253,33 @@ mod test {
     }
 
     #[test]
-    fn connection_listener_connect() {
+    fn connection_listener_bootstrap() {
         let listener = start_listener();
         let mut client = client_connect(&listener);
-        let _ = client_send_request(&mut client);
+        let message = serialise(&Message::BootstrapRequest(box_::gen_keypair().0, 64)).unwrap();
+        let _ = client_send_request(&mut client, message);
 
         for it in listener.event_rx.iter() {
             match it {
                 Event::BootstrapAccept(_peer_id) => break,
+                _ => panic!("Unexpected event notification"),
+            }
+        }
+        listener.tx
+                .send(CoreMessage::new(move |_, el| el.shutdown()))
+                .expect("Could not shutdown el");
+    }
+
+    #[test]
+    fn connection_listener_connect() {
+        let listener = start_listener();
+        let mut client = client_connect(&listener);
+        let message = serialise(&Message::Connect(box_::gen_keypair().0, 64)).unwrap();
+        let _ = client_send_request(&mut client, message);
+
+        for it in listener.event_rx.iter() {
+            match it {
+                Event::NewPeer(_, _peer_id) => break,
                 _ => panic!("Unexpected event notification"),
             }
         }
@@ -278,7 +296,8 @@ mod test {
         let mut client = client_connect(&listener);
         thread::sleep(Duration::from_millis(BOOTSTRAP_TIMEOUT_MS + 1000));
 
-        match client_send_request(&mut client) {
+        let message = serialise(&Message::BootstrapRequest(box_::gen_keypair().0, 64)).unwrap();
+        match client_send_request(&mut client, message) {
             Ok(_) => panic!("Unexpected success"),
             Err(_) => (),
         }
