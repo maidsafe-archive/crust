@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use mio::{EventLoop, Timeout, TimerError, Token};
+use mio::{EventLoop, Handler, Timeout, TimerError, Token};
 use sodiumoxide::crypto::box_::PublicKey;
 use std::any::Any;
 use std::mem;
@@ -128,7 +128,7 @@ impl GetBootstrapContacts {
 }
 
 impl State for GetBootstrapContacts {
-    fn timeout(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, _: Token) {
+    fn timeout(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, _: <Core as Handler>::Timeout) {
         let mut contacts = mem::replace(&mut self.contacts, Vec::new());
 
         // Get contacts from service discovery.

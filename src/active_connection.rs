@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use mio::{EventLoop, EventSet, PollOpt, Timeout, TimerError, Token};
+use mio::{EventLoop, EventSet, Handler, PollOpt, Timeout, TimerError, Token};
 use std::any::Any;
 use std::io::{Read, Write};
 
@@ -216,7 +216,7 @@ impl State for ActiveConnection {
         let _ = self.event_tx.send(Event::LostPeer(self.peer_id));
     }
 
-    fn timeout(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, token: Token) {
+    fn timeout(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, token: <Core as Handler>::Timeout) {
         match self.heartbeat.timeout(event_loop, token) {
             HeartbeatAction::None => (),
             HeartbeatAction::Send => self.write_message(core, event_loop, Message::Heartbeat),

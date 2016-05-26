@@ -132,7 +132,7 @@ impl Handler for Core {
         msg.invoke(self, event_loop)
     }
 
-    fn timeout(&mut self, event_loop: &mut EventLoop<Self>, token: Token) {
+    fn timeout(&mut self, event_loop: &mut EventLoop<Self>, token: Self::Timeout) {
         match self.get_context(token).and_then(|c| self.get_state(c)) {
             Some(state) => state.borrow_mut().timeout(self, event_loop, token),
             None => (),
