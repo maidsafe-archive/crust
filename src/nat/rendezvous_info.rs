@@ -39,12 +39,9 @@ pub struct PrivRendezvousInfo {
 
 /// Create a `(PrivRendezvousInfo, PubRendezvousInfo)` pair from a list of
 /// mapped socket addresses.
-pub fn gen_rendezvous_info(endpoints: Vec<SocketAddr>)
-                           -> (PrivRendezvousInfo, PubRendezvousInfo) {
+pub fn gen_rendezvous_info(endpoints: Vec<SocketAddr>) -> (PrivRendezvousInfo, PubRendezvousInfo) {
     let secret = rand::random();
-    let priv_info = PrivRendezvousInfo {
-        secret: secret,
-    };
+    let priv_info = PrivRendezvousInfo { secret: secret };
     let pub_info = PubRendezvousInfo {
         endpoints: endpoints,
         secret: secret,

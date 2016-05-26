@@ -57,7 +57,9 @@ impl From<NewReusablyBoundTcpSocketError> for io::Error {
     }
 }
 
-pub fn new_reusably_bound_tcp_socket(local_addr: &SocketAddr) -> Result<net2::TcpBuilder, NewReusablyBoundTcpSocketError> {
+pub fn new_reusably_bound_tcp_socket
+    (local_addr: &SocketAddr)
+     -> Result<net2::TcpBuilder, NewReusablyBoundTcpSocketError> {
     let socket_res = match local_addr.ip() {
         IpAddr::V4(..) => net2::TcpBuilder::new_v4(),
         IpAddr::V6(..) => net2::TcpBuilder::new_v6(),
@@ -127,12 +129,18 @@ pub fn expand_unspecified_addr(addr: SocketAddr) -> io::Result<Vec<SocketAddr>> 
 
 pub fn expand_unspecified_ip(ip: IpAddr) -> io::Result<Vec<IpAddr>> {
     Ok(match ip {
-        IpAddr::V4(ipv4) => try!(expand_unspecified_ipv4(ipv4)).into_iter().map(|ipv4| {
-            IpAddr::V4(ipv4)
-        }).collect(),
-        IpAddr::V6(ipv6) => try!(expand_unspecified_ipv6(ipv6)).into_iter().map(|ipv6| {
-            IpAddr::V6(ipv6)
-        }).collect(),
+        IpAddr::V4(ipv4) => {
+            try!(expand_unspecified_ipv4(ipv4))
+                .into_iter()
+                .map(|ipv4| IpAddr::V4(ipv4))
+                .collect()
+        }
+        IpAddr::V6(ipv6) => {
+            try!(expand_unspecified_ipv6(ipv6))
+                .into_iter()
+                .map(|ipv6| IpAddr::V6(ipv6))
+                .collect()
+        }
     })
 }
 
@@ -146,8 +154,7 @@ pub fn expand_unspecified_ipv4(ipv4: Ipv4Addr) -> io::Result<Vec<Ipv4Addr>> {
             }
         }
         ret
-    }
-    else {
+    } else {
         vec![ipv4]
     })
 }
@@ -162,8 +169,7 @@ pub fn expand_unspecified_ipv6(ipv6: Ipv6Addr) -> io::Result<Vec<Ipv6Addr>> {
             }
         }
         ret
-    }
-    else {
+    } else {
         vec![ipv6]
     })
 }
@@ -171,4 +177,3 @@ pub fn expand_unspecified_ipv6(ipv6: Ipv6Addr) -> io::Result<Vec<Ipv6Addr>> {
 pub fn ipv4_is_unspecified(ip: &Ipv4Addr) -> bool {
     ip.octets() == [0, 0, 0, 0]
 }
-

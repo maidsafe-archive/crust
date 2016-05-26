@@ -17,6 +17,8 @@
 
 use mio::{EventLoop, EventSet, PollOpt, Timeout, Token};
 use std::any::Any;
+use std::rc::Rc;
+use std::cell::RefCell;
 
 use active_connection::ActiveConnection;
 use core::{Context, Core, State};
@@ -83,7 +85,7 @@ impl AcceptConnection {
             is_connecting: None,
         };
 
-        let _ = core.insert_state(context, state);
+        let _ = core.insert_state(context, Rc::new(RefCell::new(state)));
     }
 
     fn receive_request(&mut self,
@@ -171,9 +173,10 @@ impl AcceptConnection {
             return;
         }
         self.is_connecting = Some(false);
-        match self.socket.as_mut()
-                         .unwrap()
-                         .write(Message::BootstrapResponse(self.our_public_key)) {
+        match self.socket
+                  .as_mut()
+                  .unwrap()
+                  .write(Message::BootstrapResponse(self.our_public_key)) {
             Ok(true) => self.transition_to_active(core, event_loop),
             Ok(false) => self.reregister(core, event_loop, token, true),
             Err(error) => {
@@ -183,7 +186,10 @@ impl AcceptConnection {
         }
     }
 
-    fn send_response(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, token: Token) {
+    fn send_response(&mut self,
+                     core: &mut Core,
+                     event_loop: &mut EventLoop<Core>,
+                     token: Token) {
         match self.socket.as_mut().unwrap().flush() {
             Ok(true) => self.transition_to_active(core, event_loop),
             Ok(false) => self.reregister(core, event_loop, token, true),
@@ -224,7 +230,9 @@ impl AcceptConnection {
                   token: Token,
                   writable: bool) {
         let mut event_set = EventSet::error() | EventSet::hup() | EventSet::readable();
-        if writable { event_set.insert(EventSet::writable()) }
+        if writable {
+            event_set.insert(EventSet::writable())
+        }
 
         if let Err(error) = event_loop.reregister(self.socket.as_ref().unwrap(),
                                                   token,

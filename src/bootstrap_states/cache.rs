@@ -21,12 +21,13 @@ use error::Error;
 use static_contact_info::StaticContactInfo;
 use config_file_handler::{self, FileHandler};
 
-#[allow(unused)] const ENABLE_BOOTSTRAP_CACHE: bool = false;
-#[allow(unused)] const MAX_BOOTSTRAP_CACHE_CONTACTS: usize = 1500;
+#[allow(unused)]
+const ENABLE_BOOTSTRAP_CACHE: bool = false;
+#[allow(unused)]
+const MAX_BOOTSTRAP_CACHE_CONTACTS: usize = 1500;
 
 pub struct Cache {
-    file_handler: FileHandler<Vec<StaticContactInfo>>,
-    // last_updated: Instant,
+    file_handler: FileHandler<Vec<StaticContactInfo>>, // last_updated: Instant,
 }
 
 impl Cache {

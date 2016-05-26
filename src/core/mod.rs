@@ -14,7 +14,7 @@
 //
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
-//! Defines `Core`, the mio handler and the core of the event loop.
+// Defines `Core`, the mio handler and the core of the event loop.
 
 use mio::{Token, EventLoop, EventSet, Handler};
 use std::cell::RefCell;
@@ -22,6 +22,7 @@ use std::collections::HashMap;
 use std::rc::Rc;
 
 pub use self::state::State;
+/// State Trait
 pub mod state;
 
 /// The type of messages passed to core.
@@ -78,12 +79,11 @@ impl Core {
     }
 
     /// Register a state with a context in the event loop.
-    pub fn insert_state<T>(&mut self,
-                           context: Context,
-                           state: T) -> Option<Rc<RefCell<State>>>
-        where T: State + 'static
-    {
-        self.states.insert(context, Rc::new(RefCell::new(state)))
+    pub fn insert_state(&mut self,
+                        context: Context,
+                        state: Rc<RefCell<State>>)
+                        -> Option<Rc<RefCell<State>>> {
+        self.states.insert(context, state)
     }
 
     /// Deregister a context from the event loop.
@@ -107,10 +107,7 @@ impl Core {
     }
 
     /// Call `terminate` on the state associated with the given context.
-    pub fn terminate_state(&mut self,
-                           event_loop: &mut EventLoop<Core>,
-                           context: Context)
-    {
+    pub fn terminate_state(&mut self, event_loop: &mut EventLoop<Core>, context: Context) {
         if let Some(state) = self.get_state(context) {
             state.borrow_mut().terminate(self, event_loop);
         }
@@ -145,7 +142,7 @@ pub struct Closure(Box<FnMut(&mut Core, &mut EventLoop<Core>) + Send>);
 
 impl Closure {
     /// Create a new `Closure`
-    pub fn new<F : FnOnce(&mut Core, &mut EventLoop<Core>) + Send + 'static>(f: F) -> Self {
+    pub fn new<F: FnOnce(&mut Core, &mut EventLoop<Core>) + Send + 'static>(f: F) -> Self {
         let mut f = Some(f);
         Closure(Box::new(move |a0: &mut Core, a1: &mut EventLoop<Core>| {
             if let Some(f) = f.take() {

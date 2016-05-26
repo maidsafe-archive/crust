@@ -27,9 +27,7 @@ use service::Service;
 use socket_addr::SocketAddr;
 use static_contact_info::StaticContactInfo;
 
-fn get_event_sender()
-    -> (::CrustEventSender, Receiver<Event>)
-{
+fn get_event_sender() -> (::CrustEventSender, Receiver<Event>) {
     let (category_tx, _) = mpsc::channel();
     let (event_tx, event_rx) = mpsc::channel();
 
@@ -125,7 +123,7 @@ fn bootstrap_two_services_using_service_discovery() {
     service0.set_service_discovery_listen(true);
     unwrap_result!(service0.start_listening_tcp());
 
-    expect_event!(event_rx0, Event::ListenerStarted(_));
+    expect_event!(event_rx0, Event::ListenerStarted(_port));
 
     service1.start_service_discovery();
     unwrap_result!(service1.start_bootstrap());
@@ -154,9 +152,9 @@ fn bootstrap_with_multiple_contact_endpoints() {
 
     let mut config1 = Config::default();
     config1.hard_coded_contacts = vec![StaticContactInfo {
-        tcp_acceptors: vec![invalid_address, valid_address],
-        tcp_mapper_servers: vec![],
-    }];
+                                           tcp_acceptors: vec![invalid_address, valid_address],
+                                           tcp_mapper_servers: vec![],
+                                       }];
 
     let (event_tx1, event_rx1) = get_event_sender();
     let mut service1 = unwrap_result!(Service::with_config(event_tx1, config1));
@@ -190,12 +188,10 @@ fn bootstrap_timeouts_if_there_are_only_invalid_contacts() {
     let address = SocketAddr(unwrap_result!(deaf_listener.local_addr()));
 
     let mut config = Config::default();
-    config.hard_coded_contacts = vec![
-        StaticContactInfo {
-            tcp_acceptors: vec![address],
-            tcp_mapper_servers: vec![],
-        }
-    ];
+    config.hard_coded_contacts = vec![StaticContactInfo {
+                                          tcp_acceptors: vec![address],
+                                          tcp_mapper_servers: vec![],
+                                      }];
 
     let (event_tx, event_rx) = get_event_sender();
     let mut service = unwrap_result!(Service::with_config(event_tx, config));
