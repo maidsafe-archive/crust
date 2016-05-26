@@ -55,9 +55,7 @@ impl EstablishConnection {
                  event_tx: ::CrustEventSender) {
 
         let context = core.get_new_context();
-        let event_set = EventSet::error() |
-                        EventSet::hup() |
-                        EventSet::readable() |
+        let event_set = EventSet::error() | EventSet::hup() | EventSet::readable() |
                         EventSet::writable();
 
         let mut sockets = HashMap::new();
@@ -103,7 +101,7 @@ impl EstablishConnection {
             sockets: sockets,
         };
 
-        let _ = core.insert_state(context, state);
+        let _ = core.insert_state(context, Rc::new(RefCell::new(state)));
     }
 
     fn handle_error(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, token: Token) {
@@ -133,8 +131,7 @@ impl EstablishConnection {
             };
 
             if self.pending_requests.remove(&token) {
-                socket.write(Message::BootstrapRequest(self.our_public_key,
-                                                       self.name_hash))
+                socket.write(Message::BootstrapRequest(self.our_public_key, self.name_hash))
             } else {
                 socket.flush()
             }
@@ -159,8 +156,7 @@ impl EstablishConnection {
     fn receive_bootstrap_response(&mut self,
                                   core: &mut Core,
                                   event_loop: &mut EventLoop<Core>,
-                                  token: Token)
-    {
+                                  token: Token) {
         match self.sockets.get_mut(&token).unwrap().read::<Message>() {
             Ok(Some(Message::BootstrapResponse(public_key))) => {
                 self.handle_bootstrap_response(core, event_loop, token, public_key);
@@ -174,7 +170,7 @@ impl EstablishConnection {
 
             Ok(None) => {
                 self.reregister(core, event_loop, token, false);
-            },
+            }
 
             Err(error) => {
                 error!("Failed to read from socket: {:?}", error);
@@ -219,7 +215,9 @@ impl EstablishConnection {
                   token: Token,
                   writable: bool) {
         let mut event_set = EventSet::error() | EventSet::hup() | EventSet::readable();
-        if writable { event_set.insert(EventSet::writable()) }
+        if writable {
+            event_set.insert(EventSet::writable())
+        }
 
         let result = {
             let socket = self.sockets.get(&token).unwrap();
@@ -253,8 +251,7 @@ impl State for EstablishConnection {
              core: &mut Core,
              event_loop: &mut EventLoop<Core>,
              token: Token,
-             event_set: EventSet)
-    {
+             event_set: EventSet) {
         if event_set.is_error() || event_set.is_hup() {
             self.handle_error(core, event_loop, token);
             return;

@@ -168,8 +168,9 @@ impl Service {
         }
 
         let our_contact_info = self.our_contact_info.clone();
-        let port = self.config.service_discovery_port
-                              .unwrap_or(SERVICE_DISCOVERY_DEFAULT_PORT);
+        let port = self.config
+                       .service_discovery_port
+                       .unwrap_or(SERVICE_DISCOVERY_DEFAULT_PORT);
 
         let _ = self.post(move |core, event_loop| {
             if let Err(e) = ServiceDiscovery::start(core,
@@ -264,8 +265,7 @@ impl Service {
     pub fn connect(&mut self,
                    our_connection_info: OurConnectionInfo,
                    their_connection_info: TheirConnectionInfo)
-                        -> Result<(), Error>
-    {
+                   -> Result<(), Error> {
         let event_tx = self.event_tx.clone();
         let connection_map = self.connection_map.clone();
         // FIXME: check this error
@@ -352,18 +352,17 @@ impl Service {
         });
 
         Ok(())
-        /*
-        let event_tx = self.event_tx.clone();
-        let connection_map = self.connection_map.clone();
-
-        self.post(move |core, event_loop| {
-            EstablishConnection::start(core,
-                                       event_loop,
-                                       peer_contact_info,
-                                       connection_map,
-                                       event_tx);
-        })
-        */
+        // let event_tx = self.event_tx.clone();
+        // let connection_map = self.connection_map.clone();
+        //
+        // self.post(move |core, event_loop| {
+        // EstablishConnection::start(core,
+        // event_loop,
+        // peer_contact_info,
+        // connection_map,
+        // event_tx);
+        // })
+        //
     }
 
     /// Disconnect from the given peer and returns whether there was a connection at all.
@@ -388,9 +387,11 @@ impl Service {
             return Err(Error::MessageTooLarge);
         }
 
-        let context = match self.connection_map.lock().unwrap()
-                                                      .get(&peer_id)
-                                                      .map(|h| *h) {
+        let context = match self.connection_map
+                                .lock()
+                                .unwrap()
+                                .get(&peer_id)
+                                .map(|h| *h) {
             Some(context) => context,
             None => return Err(Error::PeerNotFound(peer_id)),
         };
@@ -494,7 +495,8 @@ mod tests {
     use event::Event;
     use service::Service;
 
-    fn get_event_sender()
+    fn get_event_sender
+        ()
         -> (::CrustEventSender, Receiver<MaidSafeEventCategory>, Receiver<Event>)
     {
         let (category_tx, category_rx) = mpsc::channel();
@@ -560,14 +562,14 @@ mod tests {
                 Event::NewPeer(res, id) => {
                     unwrap_result!(res);
                     id
-                },
+                }
                 e => panic!("Unexpected event when waiting for NewPeer: {:?}", e),
             };
             let id_0 = match unwrap_result!(event_rx_1.recv()) {
                 Event::NewPeer(res, id) => {
                     unwrap_result!(res);
                     id
-                },
+                }
                 e => panic!("Unexpected event when waiting for NewPeer: {:?}", e),
             };
 
@@ -582,14 +584,14 @@ mod tests {
                 Event::NewMessage(id, recv) => {
                     assert_eq!(id, id_1);
                     recv
-                },
+                }
                 e => panic!("Unexpected event when waiting for NewMessage: {:?}", e),
             };
             let recv_0 = match unwrap_result!(event_rx_1.recv()) {
                 Event::NewMessage(id, recv) => {
                     assert_eq!(id, id_0);
                     recv
-                },
+                }
                 e => panic!("Unexpected event when waiting for NewMessage: {:?}", e),
             };
 
@@ -598,4 +600,3 @@ mod tests {
         });
     }
 }
-

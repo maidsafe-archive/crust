@@ -25,6 +25,8 @@ use sodiumoxide::crypto::box_::PublicKey;
 use std::any::Any;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::sync::{Arc, Mutex};
+use std::rc::Rc;
+use std::cell::RefCell;
 
 use self::accept_connection::AcceptConnection;
 use core::{Core, State};
@@ -99,7 +101,7 @@ impl ConnectionListener {
                                         let _ = event_tx.send(Event::ListenerStarted(local_addr.port()));
                                         let _ = core.insert_context(token, context.clone());
                                         let _ = core.insert_state(context.clone(),
-                                                                  ConnectionListener {
+                                                                  Rc::new(RefCell::new(ConnectionListener {
                                                                       connection_map:
                                                                           connection_map,
                                                                       event_tx: event_tx,
@@ -108,7 +110,7 @@ impl ConnectionListener {
                                                                       our_public_key:
                                                                           our_public_key,
                                                                       token: token,
-                                                                  });
+                                                                  })));
                                     }) {
             Ok(()) => {}
             Err(e) => {
@@ -237,9 +239,8 @@ mod test {
     }
 
     fn client_connect(listener: &Listener) -> TcpStream {
-        TcpStream::connect(StdSocketAddr::new(listener.acceptor.ip(),
-                                              listener.acceptor.port()))
-                             .unwrap()
+        TcpStream::connect(StdSocketAddr::new(listener.acceptor.ip(), listener.acceptor.port()))
+            .unwrap()
     }
 
     fn client_send_request(stream: &mut TcpStream) -> io::Result<()> {
@@ -264,8 +265,9 @@ mod test {
                 _ => panic!("Unexpected event notification"),
             }
         }
-        listener.tx.send(CoreMessage::new(move |_, el| el.shutdown()))
-                   .expect("Could not shutdown el");
+        listener.tx
+                .send(CoreMessage::new(move |_, el| el.shutdown()))
+                .expect("Could not shutdown el");
     }
 
     #[test]
@@ -280,7 +282,8 @@ mod test {
             Ok(_) => panic!("Unexpected success"),
             Err(_) => (),
         }
-        listener.tx.send(CoreMessage::new(move |_, el| el.shutdown()))
-                   .expect("Could not shutdown el");
+        listener.tx
+                .send(CoreMessage::new(move |_, el| el.shutdown()))
+                .expect("Could not shutdown el");
     }
 }

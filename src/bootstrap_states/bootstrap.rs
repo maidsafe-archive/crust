@@ -86,10 +86,9 @@ impl Bootstrap {
             token: token,
         };
 
-        let _ = core.insert_state(context, state);
+        let _ = core.insert_state(context, Rc::new(RefCell::new(state)));
         let _ = core.insert_context(token, context);
     }
-
 }
 
 impl State for Bootstrap {

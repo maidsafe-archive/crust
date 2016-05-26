@@ -25,6 +25,8 @@ use message::Message;
 use peer_id::PeerId;
 use service::SharedConnectionMap;
 use socket::Socket;
+use std::rc::Rc;
+use std::cell::RefCell;
 
 const HEARTBEAT_PERIOD_MS: u64 = 20_000;
 
@@ -52,11 +54,7 @@ impl ActiveConnection {
 
         let event_set = EventSet::error() | EventSet::hup() | EventSet::readable();
 
-        if let Err(error) = event_loop.reregister(&socket,
-                                                  token,
-                                                  event_set,
-                                                  PollOpt::edge())
-        {
+        if let Err(error) = event_loop.reregister(&socket, token, event_set, PollOpt::edge()) {
             error!("Failed to reregister socker: {:?}", error);
 
             let _ = event_loop.deregister(&socket);
@@ -94,7 +92,7 @@ impl ActiveConnection {
             event_set: event_set,
         };
 
-        let _ = core.insert_state(context, state);
+        let _ = core.insert_state(context, Rc::new(RefCell::new(state)));
     }
 
     fn read(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
@@ -202,11 +200,11 @@ impl State for ActiveConnection {
         self.heartbeat.terminate(core, event_loop);
 
         if let Err(error) = self.socket.shutdown() {
-            error!("Failed to shutdown socket: {:?}", error);
+            debug!("Failed to shutdown socket: {:?}", error);
         }
 
         if let Err(error) = event_loop.deregister(&self.socket) {
-            error!("Failed to deregister socket: {:?}", error);
+            debug!("Failed to deregister socket: {:?}", error);
         }
 
         let _ = core.remove_context(self.token);
@@ -237,7 +235,10 @@ struct Heartbeat {
 }
 
 impl Heartbeat {
-    fn new(core: &mut Core, event_loop: &mut EventLoop<Core>, context: Context) -> Result<Self, TimerError> {
+    fn new(core: &mut Core,
+           event_loop: &mut EventLoop<Core>,
+           context: Context)
+           -> Result<Self, TimerError> {
         let recv_token = core.get_new_token();
         let recv_timeout = try!(event_loop.timeout_ms(recv_token, HEARTBEAT_PERIOD_MS));
         let _ = core.insert_context(recv_token, context);
@@ -255,9 +256,12 @@ impl Heartbeat {
     }
 
     fn timeout(&self, event_loop: &mut EventLoop<Core>, token: Token) -> HeartbeatAction {
-        if token == self.recv_token { return HeartbeatAction::Terminate; }
+        if token == self.recv_token {
+            return HeartbeatAction::Terminate;
+        }
         if token == self.send_token {
-            return if let Err(error) = event_loop.timeout_ms(self.send_token, HEARTBEAT_PERIOD_MS) {
+            return if let Err(error) = event_loop.timeout_ms(self.send_token,
+                                                             HEARTBEAT_PERIOD_MS) {
                 error!("Failed to reschedule heartbeat send timer: {:?}", error);
                 HeartbeatAction::Terminate
             } else {

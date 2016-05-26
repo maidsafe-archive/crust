@@ -11,14 +11,12 @@ pub struct MappingContext {
 impl MappingContext {
     /// Create a new MappingContext
     pub fn new() -> MappingContext {
-        MappingContext {
-            tcp_mapping_servers: Vec::new(),
-        }
+        MappingContext { tcp_mapping_servers: Vec::new() }
     }
 
     /// Inform the context about external servers
     pub fn add_tcp_mapping_servers<S>(&mut self, servers: S)
-            where S: IntoIterator<Item=SocketAddr>
+        where S: IntoIterator<Item = SocketAddr>
     {
         self.tcp_mapping_servers.extend(servers)
     }
@@ -31,4 +29,3 @@ impl MappingContext {
 
 /// Iterator returned by MappingContext::tcp_mapping_servers
 pub type IterTcpMappingServers<'m> = slice::Iter<'m, SocketAddr>;
-

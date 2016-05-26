@@ -14,7 +14,7 @@
 //
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
-//! Defines the `State` trait
+// Defines the `State` trait
 
 use std::any::Any;
 
@@ -31,22 +31,19 @@ pub trait State {
              _core: &mut Core,
              _event_loop: &mut EventLoop<Core>,
              _token: Token,
-             _event_set: EventSet) {}
+             _event_set: EventSet) {
+    }
 
     /// Terminate the state machine
-    fn terminate(&mut self,
-                 _core: &mut Core,
-                 _event_loop: &mut EventLoop<Core>) {}
+    fn terminate(&mut self, _core: &mut Core, _event_loop: &mut EventLoop<Core>) {}
 
     /// Timeout
     fn timeout(&mut self,
                _core: &mut Core,
                _event_loop: &mut EventLoop<Core>,
-               _token: <Core as Handler>::Timeout) {}
+               _token: <Core as Handler>::Timeout) {
+    }
 
     /// Write some data
-    fn write(&mut self,
-             _core: &mut Core,
-             _event_loop: &mut EventLoop<Core>,
-             _data: Vec<u8>) {}
+    fn write(&mut self, _core: &mut Core, _event_loop: &mut EventLoop<Core>, _data: Vec<u8>) {}
 }
