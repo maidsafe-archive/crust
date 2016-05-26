@@ -41,6 +41,7 @@ pub struct AcceptConnection {
     their_peer_id: Option<PeerId>,
     token: Token,
     timeout: Timeout,
+    is_connecting: Option<bool>,
 }
 
 impl AcceptConnection {
@@ -81,18 +82,23 @@ impl AcceptConnection {
             their_peer_id: None,
             token: token,
             timeout: timeout,
+            is_connecting: None,
         };
 
         let _ = core.insert_state(context, Rc::new(RefCell::new(state)));
     }
 
-    fn receive_bootstrap_request(&mut self,
-                                 core: &mut Core,
-                                 event_loop: &mut EventLoop<Core>,
-                                 token: Token) {
+    fn receive_request(&mut self,
+                       core: &mut Core,
+                       event_loop: &mut EventLoop<Core>,
+                       token: Token) {
         match self.socket.as_mut().unwrap().read::<Message>() {
             Ok(Some(Message::BootstrapRequest(public_key, name_hash))) => {
                 self.handle_bootstrap_request(core, event_loop, token, public_key, name_hash);
+            }
+
+            Ok(Some(Message::Connect(public_key, name_hash))) => {
+                self.handle_connect_request(core, event_loop, token, public_key, name_hash);
             }
 
             Ok(Some(message)) => {
@@ -112,33 +118,43 @@ impl AcceptConnection {
         }
     }
 
-    fn handle_bootstrap_request(&mut self,
-                                core: &mut Core,
-                                event_loop: &mut EventLoop<Core>,
-                                token: Token,
-                                their_public_key: PublicKey,
-                                name_hash: u64) {
-        if self.our_public_key == their_public_key {
+    fn validity_check(&mut self,
+                      core: &mut Core,
+                      event_loop: &mut EventLoop<Core>,
+                      their_public_key: &PublicKey,
+                      name_hash: u64)
+                      -> bool {
+        if self.our_public_key == *their_public_key {
             error!("Accepted connection from ourselves");
             self.terminate(core, event_loop);
-            return;
+            return false;
         }
 
         if self.name_hash != name_hash {
             error!("Incompatible protocol version");
             self.terminate(core, event_loop);
+            return false;
+        }
+        self.their_peer_id = Some(peer_id::new(their_public_key.clone()));
+        true
+    }
+
+    fn handle_connect_request(&mut self,
+                              core: &mut Core,
+                              event_loop: &mut EventLoop<Core>,
+                              token: Token,
+                              their_public_key: PublicKey,
+                              name_hash: u64)
+    {
+        if !self.validity_check(core, event_loop, &their_public_key, name_hash) {
             return;
         }
-
-        self.their_peer_id = Some(peer_id::new(their_public_key));
-
-        match self.socket
-                  .as_mut()
-                  .unwrap()
-                  .write(Message::BootstrapResponse(self.our_public_key)) {
+        self.is_connecting = Some(true);
+        match self.socket.as_mut()
+                         .unwrap()
+                         .write(Message::Connect(self.our_public_key, self.name_hash)) {
             Ok(true) => self.transition_to_active(core, event_loop),
             Ok(false) => self.reregister(core, event_loop, token, true),
-
             Err(error) => {
                 error!("Failed writing to socket: {:?}", error);
                 self.terminate(core, event_loop);
@@ -146,10 +162,34 @@ impl AcceptConnection {
         }
     }
 
-    fn send_bootstrap_response(&mut self,
-                               core: &mut Core,
-                               event_loop: &mut EventLoop<Core>,
-                               token: Token) {
+    fn handle_bootstrap_request(&mut self,
+                                core: &mut Core,
+                                event_loop: &mut EventLoop<Core>,
+                                token: Token,
+                                their_public_key: PublicKey,
+                                name_hash: u64)
+    {
+        if !self.validity_check(core, event_loop, &their_public_key, name_hash) {
+            return;
+        }
+        self.is_connecting = Some(false);
+        match self.socket
+                  .as_mut()
+                  .unwrap()
+                  .write(Message::BootstrapResponse(self.our_public_key)) {
+            Ok(true) => self.transition_to_active(core, event_loop),
+            Ok(false) => self.reregister(core, event_loop, token, true),
+            Err(error) => {
+                error!("Failed writing to socket: {:?}", error);
+                self.terminate(core, event_loop);
+            }
+        }
+    }
+
+    fn send_response(&mut self,
+                     core: &mut Core,
+                     event_loop: &mut EventLoop<Core>,
+                     token: Token) {
         match self.socket.as_mut().unwrap().flush() {
             Ok(true) => self.transition_to_active(core, event_loop),
             Ok(false) => self.reregister(core, event_loop, token, true),
@@ -162,8 +202,18 @@ impl AcceptConnection {
 
     fn transition_to_active(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
         let their_peer_id = self.their_peer_id.take().unwrap();
-        let _ = self.event_tx.send(Event::BootstrapAccept(their_peer_id));
-
+        match self.is_connecting {
+            Some(true) => {
+                let _ = self.event_tx.send(Event::NewPeer(Ok(()), their_peer_id.clone()));
+            }
+            Some(false) => {
+                let _ = self.event_tx.send(Event::BootstrapAccept(their_peer_id.clone()));
+            }
+            None => {
+                error!("incorrect accepting status");
+                self.terminate(core, event_loop);
+            }
+        }
         ActiveConnection::start(core,
                                 event_loop,
                                 self.context,
@@ -171,7 +221,7 @@ impl AcceptConnection {
                                 their_peer_id,
                                 self.socket.take().unwrap(),
                                 self.token,
-                                self.event_tx.clone())
+                                self.event_tx.clone());
     }
 
     fn reregister(&mut self,
@@ -207,11 +257,11 @@ impl State for AcceptConnection {
         }
 
         if event_set.is_readable() {
-            self.receive_bootstrap_request(core, event_loop, token)
+            self.receive_request(core, event_loop, token)
         }
 
         if event_set.is_writable() {
-            self.send_bootstrap_response(core, event_loop, token)
+            self.send_response(core, event_loop, token)
         }
     }
 
