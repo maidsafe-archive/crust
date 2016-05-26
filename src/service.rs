@@ -279,8 +279,8 @@ impl Service {
                 let event_tx_rc = event_tx_rc.clone();
                 let response_sent_rc = response_sent_rc.clone();
                 let connection_map = connection_map.clone();
-                // FIXME: check this error
-                let _ = EstablishDirectConnection::start(core, event_loop, addr, their_id,
+
+                EstablishDirectConnection::start(core, event_loop, addr, their_id,
                                                  move |core, event_loop, res, peer_id|
                 {
                     if !response_sent_rc.load(Ordering::Relaxed) {
