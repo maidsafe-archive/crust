@@ -16,9 +16,10 @@
 // relating to use of the SAFE Network Software.
 
 use maidsafe_utilities::event_sender::{MaidSafeObserver, MaidSafeEventCategory};
-use maidsafe_utilities::log;
+// use maidsafe_utilities::log;
 use std::net::SocketAddr as StdSocketAddr;
 use std::str::FromStr;
+use std::sync::atomic::{AtomicUsize, Ordering, ATOMIC_USIZE_INIT};
 use std::sync::mpsc::{self, Receiver};
 
 use config_handler::Config;
@@ -46,6 +47,27 @@ fn localhost_contact_info(port: u16) -> StaticContactInfo {
     }
 }
 
+// Generate unique name for the bootstrap cache.
+fn gen_bootstrap_cache_name() -> String {
+    static COUNTER: AtomicUsize = ATOMIC_USIZE_INIT;
+    format!("test{}.bootstrap.cache",
+            COUNTER.fetch_add(1, Ordering::Relaxed))
+}
+
+fn gen_service_discovery_port() -> u16 {
+    const BASE: u16 = 40000;
+    static COUNTER: AtomicUsize = ATOMIC_USIZE_INIT;
+
+    BASE + COUNTER.fetch_add(1, Ordering::Relaxed) as u16
+}
+
+// Generate config with unique bootstrap cache name.
+fn gen_config() -> Config {
+    let mut config = Config::default();
+    config.bootstrap_cache_name = Some(gen_bootstrap_cache_name());
+    config
+}
+
 // Receive an event from the given receiver and asserts that it matches the
 // given pattern.
 macro_rules! expect_event {
@@ -67,7 +89,7 @@ macro_rules! expect_event {
 
 #[test]
 fn bootstrap_two_services_and_exchange_messages() {
-    let config0 = Config::default();
+    let config0 = gen_config();
     let (event_tx0, event_rx0) = get_event_sender();
     let mut service0 = unwrap_result!(Service::with_config(event_tx0, config0));
 
@@ -75,7 +97,7 @@ fn bootstrap_two_services_and_exchange_messages() {
 
     let port0 = expect_event!(event_rx0, Event::ListenerStarted(port) => port);
 
-    let mut config1 = Config::default();
+    let mut config1 = gen_config();
     config1.hard_coded_contacts = vec![localhost_contact_info(port0)];
 
     let (event_tx1, event_rx1) = get_event_sender();
@@ -108,9 +130,9 @@ fn bootstrap_two_services_and_exchange_messages() {
 
 #[test]
 fn bootstrap_two_services_using_service_discovery() {
-    let service_discovery_port = 30000;
+    let service_discovery_port = gen_service_discovery_port();
 
-    let mut config = Config::default();
+    let mut config = gen_config();
     config.service_discovery_port = Some(service_discovery_port);
 
     let (event_tx0, event_rx0) = get_event_sender();
@@ -139,8 +161,6 @@ fn bootstrap_two_services_using_service_discovery() {
 fn bootstrap_with_multiple_contact_endpoints() {
     use std::net::TcpListener;
 
-    unwrap_result!(log::init(false));
-
     let (event_tx0, event_rx0) = get_event_sender();
     let mut service0 = unwrap_result!(Service::with_config(event_tx0, Config::default()));
     let _ = unwrap_result!(service0.start_listening_tcp());
@@ -150,7 +170,7 @@ fn bootstrap_with_multiple_contact_endpoints() {
     let deaf_listener = unwrap_result!(TcpListener::bind("0.0.0.0:0"));
     let invalid_address = SocketAddr(unwrap_result!(deaf_listener.local_addr()));
 
-    let mut config1 = Config::default();
+    let mut config1 = gen_config();
     config1.hard_coded_contacts = vec![StaticContactInfo {
                                            tcp_acceptors: vec![invalid_address, valid_address],
                                            tcp_mapper_servers: vec![],
@@ -169,7 +189,7 @@ fn bootstrap_with_multiple_contact_endpoints() {
 
 #[test]
 fn bootstrap_fails_if_there_are_no_contacts() {
-    let config = Config::default();
+    let config = gen_config();
     let (event_tx, event_rx) = get_event_sender();
     let mut service = unwrap_result!(Service::with_config(event_tx, config));
 
@@ -187,7 +207,7 @@ fn bootstrap_timeouts_if_there_are_only_invalid_contacts() {
     let deaf_listener = unwrap_result!(TcpListener::bind("0.0.0.0:0"));
     let address = SocketAddr(unwrap_result!(deaf_listener.local_addr()));
 
-    let mut config = Config::default();
+    let mut config = gen_config();
     config.hard_coded_contacts = vec![StaticContactInfo {
                                           tcp_acceptors: vec![address],
                                           tcp_mapper_servers: vec![],
@@ -198,4 +218,216 @@ fn bootstrap_timeouts_if_there_are_only_invalid_contacts() {
 
     unwrap_result!(service.start_bootstrap());
     expect_event!(event_rx, Event::BootstrapFailed);
+}
+
+#[test]
+fn drop_disconnects() {
+    let config_0 = gen_config();
+    let (event_tx_0, event_rx_0) = get_event_sender();
+    let mut service_0 = unwrap_result!(Service::with_config(event_tx_0, config_0));
+
+    unwrap_result!(service_0.start_listening_tcp());
+    let port = expect_event!(event_rx_0, Event::ListenerStarted(port) => port);
+
+    let mut config_1 = gen_config();
+    config_1.hard_coded_contacts = vec![localhost_contact_info(port)];
+
+    let (event_tx_1, event_rx_1) = get_event_sender();
+    let mut service_1 = unwrap_result!(Service::with_config(event_tx_1, config_1));
+    unwrap_result!(service_1.start_bootstrap());
+
+    let peer_id_0 = expect_event!(event_rx_1, Event::BootstrapConnect(peer_id) => peer_id);
+    expect_event!(event_rx_0, Event::BootstrapAccept(_));
+
+    // Dropping service_0 should make service_1 receive a LostPeer event.
+    drop(service_0);
+    expect_event!(event_rx_1, Event::LostPeer(peer_id) => {
+        assert_eq!(peer_id, peer_id_0)
+    });
+}
+
+// This module implements a simulated crust peer which accepts incomming
+// connections but then does nothing. It's purpose is to test that we detect
+// and handle non-responsive peers correctly.
+mod broken_peer {
+    use mio::{EventLoop, EventSet, PollOpt, Token};
+    use mio::tcp::TcpListener;
+    use sodiumoxide::crypto::box_;
+    use std::any::Any;
+    use std::cell::RefCell;
+    use std::rc::Rc;
+
+    use core::{Context, Core, State};
+    use message::Message;
+    use socket::Socket;
+
+    pub struct Listen(TcpListener);
+
+    impl Listen {
+        pub fn start(core: &mut Core,
+                     event_loop: &mut EventLoop<Core>,
+                     listener: TcpListener)
+        {
+            let context = core.get_new_context();
+            let token = core.get_new_token();
+            let _ = core.insert_context(token, context);
+
+            unwrap_result!(event_loop.register(&listener,
+                                               token,
+                                               EventSet::readable(),
+                                               PollOpt::edge()));
+
+            let state = Listen(listener);
+            let _ = core.insert_state(context, Rc::new(RefCell::new(state)));
+        }
+    }
+
+    impl State for Listen {
+        fn ready(&mut self,
+                 core: &mut Core,
+                 event_loop: &mut EventLoop<Core>,
+                 token: Token,
+                 _: EventSet)
+        {
+            match unwrap_result!(self.0.accept()) {
+                Some((socket, _)) => {
+                    unwrap_result!(event_loop.deregister(&self.0));
+
+                    let socket = Socket::wrap(socket);
+                    let context = core.get_context(token).unwrap();
+
+                    Connection::start(core,
+                                      event_loop,
+                                      context,
+                                      token,
+                                      socket);
+                }
+
+                None => {
+                    unwrap_result!(event_loop.register(&self.0,
+                                                       token,
+                                                       EventSet::readable(),
+                                                       PollOpt::edge()));
+                }
+            }
+        }
+
+        fn as_any(&mut self) -> &mut Any {
+            self
+        }
+    }
+
+    struct Connection(Socket);
+
+    impl Connection {
+        fn start(core: &mut Core,
+                 event_loop: &mut EventLoop<Core>,
+                 context: Context,
+                 token: Token,
+                 socket: Socket)
+        {
+            unwrap_result!(event_loop.register(&socket,
+                                               token,
+                                               EventSet::readable(),
+                                               PollOpt::edge()));
+
+            let state = Connection(socket);
+            let _ = core.insert_state(context, Rc::new(RefCell::new(state)));
+        }
+    }
+
+    impl State for Connection {
+        fn ready(&mut self,
+                 _: &mut Core,
+                 event_loop: &mut EventLoop<Core>,
+                 token: Token,
+                 event_set: EventSet)
+        {
+            let mut writable = false;
+
+            if event_set.is_readable() {
+                match unwrap_result!(self.0.read::<Message>()) {
+                    Some(Message::BootstrapRequest(..)) => {
+                        let public_key = box_::gen_keypair().0;
+
+                        if !unwrap_result!(self.0.write(Message::BootstrapResponse(public_key))) {
+                            writable = true;
+                        }
+                    }
+                    Some(_) => (),
+                    None => (),
+                }
+            }
+
+            if event_set.is_writable() {
+                if !unwrap_result!(self.0.flush()) {
+                    writable = true;
+                }
+            }
+
+            let mut event_set = EventSet::readable();
+            if writable { event_set.insert(EventSet::writable()); }
+
+            unwrap_result!(event_loop.reregister(&self.0,
+                                                 token,
+                                                 event_set,
+                                                 PollOpt::edge()));
+        }
+
+        fn as_any(&mut self) -> &mut Any {
+            self
+        }
+    }
+}
+
+#[test]
+fn connection_drops_when_no_message_received_within_heartbeat_period() {
+    use maidsafe_utilities::thread::RaiiThreadJoiner;
+    use mio::EventLoop;
+    use mio::tcp::TcpListener;
+    use sodiumoxide;
+    use std::thread;
+
+    use core::{Core, CoreMessage};
+    use self::broken_peer;
+
+    sodiumoxide::init();
+
+    // Spin up the non-responsive peer.
+    let mut event_loop = unwrap_result!(EventLoop::new());
+    let mio_tx = event_loop.channel();
+
+    let _joiner = RaiiThreadJoiner::new(thread::spawn(move || {
+        let mut core = Core::new();
+        unwrap_result!(event_loop.run(&mut core));
+    }));
+
+    let listener = unwrap_result!(TcpListener::bind(&unwrap_result!(StdSocketAddr::from_str("0.0.0.0:0"))));
+    let address = SocketAddr(unwrap_result!(listener.local_addr()));
+
+    unwrap_result!(mio_tx.send(CoreMessage::new(|core, event_loop| {
+        broken_peer::Listen::start(core, event_loop, listener)
+    })));
+
+    // Spin up normal service that will connect to the above guy.
+    let mut config = gen_config();
+    config.hard_coded_contacts = vec![StaticContactInfo {
+        tcp_acceptors: vec![address],
+        tcp_mapper_servers: vec![],
+    }];
+
+    let (event_tx, event_rx) = get_event_sender();
+    let mut service = unwrap_result!(Service::with_config(event_tx, config));
+
+    unwrap_result!(service.start_bootstrap());
+    let peer_id = expect_event!(event_rx, Event::BootstrapConnect(peer_id) => peer_id);
+
+    // The peer should drop after inactivity.
+    expect_event!(event_rx, Event::LostPeer(lost_peer_id) => {
+        assert_eq!(lost_peer_id, peer_id)
+    });
+
+    unwrap_result!(mio_tx.send(CoreMessage::new(|_, event_loop| {
+        event_loop.shutdown()
+    })));
 }
