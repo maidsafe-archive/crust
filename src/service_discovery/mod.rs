@@ -224,7 +224,7 @@ impl State for ServiceDiscovery {
 fn get_socket(mut port: u16) -> Result<UdpSocket, ServiceDiscoveryError> {
     let mut res;
     loop {
-        let bind_addr = try!(SocketAddr::from_str(&format!("0.0.0.0:{}", port)));
+        let bind_addr = try!(SocketAddr::from_str(&format!("127.0.0.1:{}", port)));
         let udp_socket = try!(UdpSocket::v4());
         match udp_socket.bind(&bind_addr) {
             Ok(()) => {
