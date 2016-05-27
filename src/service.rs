@@ -317,8 +317,10 @@ impl Service {
                                          their_connection_info.tcp_info,
                                          move |core, event_loop, stream_opt|
                 {
+                    debug!("PunchHole finished");
                     match stream_opt {
                         Some(stream) => {
+                            debug!("PunchHole succeeded. Creating ActiveConnection");
                             let token = core.get_new_token();
                             let context = core.get_new_context();
 
@@ -339,7 +341,9 @@ impl Service {
                                                     event_tx);
                         },
                         None => {
+                            debug!("PunchHole failed");
                             if let Ok(event_tx) = Rc::try_unwrap(event_tx_rc) {
+                                debug!("Sending NewPeer error event");
                                 let error = io::Error::new(io::ErrorKind::Other, "Failed to punch hole");
                                 let _ = event_tx.send(Event::NewPeer(Err(error), their_id));
                             }
@@ -486,6 +490,7 @@ mod tests {
     use std::iter;
 
     use maidsafe_utilities::event_sender::{MaidSafeObserver, MaidSafeEventCategory};
+    use maidsafe_utilities;
     use void::Void;
     use crossbeam;
     use rand;
@@ -529,7 +534,9 @@ mod tests {
     #[test]
     #[ignore]
     fn connect_two_peers() {
-        timebomb(Duration::from_secs(5), || {
+        timebomb(Duration::from_secs(10), || {
+            unwrap_result!(maidsafe_utilities::log::init(true));
+
             let (event_tx_0, _category_rx_0, event_rx_0) = get_event_sender();
             let mut service_0 = unwrap_result!(Service::new(event_tx_0));
 
