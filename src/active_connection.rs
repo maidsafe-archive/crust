@@ -17,7 +17,6 @@
 
 use mio::{EventLoop, EventSet, PollOpt, Timeout, TimerError, Token};
 use std::any::Any;
-use std::io::{Read, Write};
 
 use core::{Core, Context, State};
 use event::Event;
@@ -146,10 +145,8 @@ impl ActiveConnection {
     }
 
     fn reregister(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
-        if let Err(error) = event_loop.reregister(&self.socket,
-                                                  self.token,
-                                                  self.event_set,
-                                                  PollOpt::edge()) {
+        if let Err(error) =
+               event_loop.reregister(&self.socket, self.token, self.event_set, PollOpt::edge()) {
             error!("Failed to reregister socket: {:?}", error);
             self.terminate(core, event_loop);
         }
@@ -281,8 +278,8 @@ impl Heartbeat {
             return HeartbeatAction::Terminate;
         }
         if token == self.send_token {
-            return if let Err(error) = event_loop.timeout_ms(self.send_token,
-                                                             HEARTBEAT_PERIOD_MS) {
+            return if let Err(error) =
+                          event_loop.timeout_ms(self.send_token, HEARTBEAT_PERIOD_MS) {
                 error!("Failed to reschedule heartbeat send timer: {:?}", error);
                 HeartbeatAction::Terminate
             } else {

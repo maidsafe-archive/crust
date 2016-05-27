@@ -27,7 +27,6 @@ use std::str::FromStr;
 use std::cell::RefCell;
 use std::io::ErrorKind;
 use std::net::SocketAddr;
-use std::io::{Read, Write};
 use std::sync::{Arc, Mutex};
 use std::sync::mpsc::Sender;
 use std::collections::VecDeque;
@@ -272,8 +271,7 @@ mod test {
         let static_info_0 = Arc::new(Mutex::new(StaticContactInfo {
             tcp_acceptors: vec![socket_addr::SocketAddr(net::SocketAddr::from_str("138.139.140.\
                                                                                    150:54321")
-                                                            .expect("Could not parse address \
-                                                                     from string."))],
+                                    .expect("Could not parse address from string."))],
             tcp_mapper_servers: Vec::new(),
         }));
         let static_info_0_clone = static_info_0.clone();
@@ -283,28 +281,27 @@ mod test {
             let sd0 = Arc::new(Mutex::new(None));
             let sd0_clone = sd0.clone();
             tx0.send(CoreMessage::new(move |core, el| {
-                   let context = core.get_new_context();
-                   *sd0_clone.lock().unwrap() = Some(context);
+                    let context = core.get_new_context();
+                    *sd0_clone.lock().unwrap() = Some(context);
 
-                   ServiceDiscovery::start(core, el, static_info_0_clone, context, 65530)
-                       .expect("Could not spawn ServiceDiscovery_0");
-               }))
-               .expect("Could not send to tx0");
+                    ServiceDiscovery::start(core, el, static_info_0_clone, context, 65530)
+                        .expect("Could not spawn ServiceDiscovery_0");
+                }))
+                .expect("Could not send to tx0");
 
             // Start listening for peers
             tx0.send(CoreMessage::new(move |core, _| {
-                   let state = core.get_state(sd0.lock()
-                                                 .unwrap()
-                                                 .expect("ServiceDiscovery_0 hasn't registered \
-                                                          a handle yet"))
-                                   .expect("State for SD0 hasn't been registered yet");
-                   let mut inner = state.borrow_mut();
-                   inner.as_any()
+                    let state = core.get_state(sd0.lock()
+                            .unwrap()
+                            .expect("ServiceDiscovery_0 hasn't registered a handle yet"))
+                        .expect("State for SD0 hasn't been registered yet");
+                    let mut inner = state.borrow_mut();
+                    inner.as_any()
                         .downcast_mut::<ServiceDiscovery>()
                         .expect("Cast Failure")
                         .set_listen(true);
-               }))
-               .expect("Could not send to tx0");
+                }))
+                .expect("Could not send to tx0");
         }
 
         thread::sleep(Duration::from_millis(100));
@@ -327,45 +324,43 @@ mod test {
             let sd1 = Arc::new(Mutex::new(None));
             let sd1_clone = sd1.clone();
             tx1.send(CoreMessage::new(move |core, el| {
-                   let context = core.get_new_context();
-                   *sd1_clone.lock().unwrap() = Some(context);
+                    let context = core.get_new_context();
+                    *sd1_clone.lock().unwrap() = Some(context);
 
-                   ServiceDiscovery::start(core, el, static_info_1, context, 65530)
-                       .expect("Could not spawn ServiceDiscovery_1");
-               }))
-               .expect("Could not send to tx1");
+                    ServiceDiscovery::start(core, el, static_info_1, context, 65530)
+                        .expect("Could not spawn ServiceDiscovery_1");
+                }))
+                .expect("Could not send to tx1");
 
             // Register observer
             let sd1_clone = sd1.clone();
             tx1.send(CoreMessage::new(move |core, _| {
-                   let state = core.get_state(sd1_clone.lock()
-                                                       .unwrap()
-                                                       .expect("ServiceDiscovery_1 hasn't \
-                                                                registered a handle yet"))
-                                   .expect("State for SD1 hasn't been registered yet");
-                   let mut inner = state.borrow_mut();
-                   inner.as_any()
+                    let state = core.get_state(sd1_clone.lock()
+                            .unwrap()
+                            .expect("ServiceDiscovery_1 hasn't registered a handle yet"))
+                        .expect("State for SD1 hasn't been registered yet");
+                    let mut inner = state.borrow_mut();
+                    inner.as_any()
                         .downcast_mut::<ServiceDiscovery>()
                         .expect("Cast Failure")
                         .register_observer(tx);
-               }))
-               .expect("Could not send to tx1");
+                }))
+                .expect("Could not send to tx1");
 
             // Seek peers
             tx1.send(CoreMessage::new(move |core, _| {
-                   let state = core.get_state(sd1.lock()
-                                                 .unwrap()
-                                                 .expect("ServiceDiscovery_1 hasn't registered \
-                                                          a handle yet"))
-                                   .expect("State for SD1 hasn't been registered yet");
-                   let mut inner = state.borrow_mut();
-                   inner.as_any()
+                    let state = core.get_state(sd1.lock()
+                            .unwrap()
+                            .expect("ServiceDiscovery_1 hasn't registered a handle yet"))
+                        .expect("State for SD1 hasn't been registered yet");
+                    let mut inner = state.borrow_mut();
+                    inner.as_any()
                         .downcast_mut::<ServiceDiscovery>()
                         .expect("Cast Failure")
                         .seek_peers()
                         .expect("Failed setting seek_peers");
-               }))
-               .expect("Could not send to tx1");
+                }))
+                .expect("Could not send to tx1");
         }
 
         let peer_static_info = rx.recv().unwrap();
