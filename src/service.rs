@@ -31,7 +31,7 @@ use socket_addr;
 use bootstrap_states::GetBootstrapContacts;
 use config_handler::{self, Config};
 use connection_listener::ConnectionListener;
-use core::{Context, Core, CoreMessage, State};
+use core::{Context, Core, CoreMessage};
 use event::Event;
 use error::Error;
 use std::net::{SocketAddr, SocketAddrV4, Ipv4Addr};
