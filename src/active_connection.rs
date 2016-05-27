@@ -62,7 +62,7 @@ impl ActiveConnection {
         let event_set = EventSet::error() | EventSet::hup() | EventSet::readable();
 
         if let Err(error) = event_loop.reregister(&socket, token, event_set, PollOpt::edge()) {
-            error!("Failed to reregister socker: {:?}", error);
+            error!("Failed to reregister socket: {:?}", error);
 
             let _ = event_loop.deregister(&socket);
             let _ = core.remove_state(context);

@@ -62,9 +62,7 @@ impl ExchangeMsg {
 
         // TODO Use crust error throughout
         let timeout = try!(event_loop.timeout_ms(token, EXCHANGE_MSG_TIMEOUT_MS)
-                                     .map_err(|e| {
-                                         io::Error::new(ErrorKind::Other, format!("{:?}", e))
-                                     }));
+            .map_err(|e| io::Error::new(ErrorKind::Other, format!("{:?}", e))));
 
         let _ = core.insert_context(token, context);
 

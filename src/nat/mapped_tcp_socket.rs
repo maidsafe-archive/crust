@@ -65,8 +65,8 @@ impl<F> MappingTcpSocket<F>
         let mapped_addrs = mapped_addrs.into_iter().map(|sa| socket_addr::SocketAddr(sa)).collect();
 
         let external_servers: Vec<SocketAddr> = mapping_context.tcp_mapping_servers()
-                                                               .cloned()
-                                                               .collect();
+            .cloned()
+            .collect();
         debug!("external_servers == {:?}", external_servers);
         if external_servers.len() > 0 {
             let mut writing_sockets = HashMap::new();
@@ -166,7 +166,7 @@ impl<F> MappingTcpSocket<F>
                 let res = {
                     let writing_socket = oe.get_mut();
                     writing_socket.socket
-                                  .try_write(&REQUEST_MAGIC_CONSTANT[writing_socket.written..])
+                        .try_write(&REQUEST_MAGIC_CONSTANT[writing_socket.written..])
                 };
                 match res {
                     Err(e) => {

@@ -93,8 +93,8 @@ impl Socket {
                 return Ok(None);
             }
 
-            self.read_len =
-                try!(Cursor::new(&self.read_buffer).read_u32::<LittleEndian>()) as usize;
+            self.read_len = try!(Cursor::new(&self.read_buffer)
+                .read_u32::<LittleEndian>()) as usize;
             self.read_buffer = self.read_buffer[u32_size..].to_owned();
         }
 

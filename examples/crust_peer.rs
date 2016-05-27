@@ -61,7 +61,7 @@ use std::sync::{Arc, Mutex};
 use std::time::{Instant, Duration};
 use std::collections::{BTreeMap, HashMap};
 
-use crust::{Service, Protocol, Endpoint, ConnectionInfoResult, SocketAddr, OurConnectionInfo,
+use crust::{Service, Protocol, Endpoint, ConnectionInfoResult, SocketAddr, PrivConnectionInfo,
             PeerId};
 
 static USAGE: &'static str = "
@@ -131,7 +131,7 @@ fn generate_random_vec_u8(size: usize) -> Vec<u8> {
 /// /////////////////////////////////////////////////////////////////////////////
 struct Network {
     nodes: HashMap<usize, PeerId>,
-    our_connection_infos: BTreeMap<u32, OurConnectionInfo>,
+    our_connection_infos: BTreeMap<u32, PrivConnectionInfo>,
     performance_start: Instant,
     performance_interval: Duration,
     received_msgs: u32,

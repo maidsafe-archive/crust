@@ -66,7 +66,7 @@ impl ConnectionListener {
                                     &addr,
                                     &mapping_context,
                                     move |core, event_loop, socket, mapped_addrs| {
-                                        match ConnectionListener::handle_mapped_socket(core,
+            match ConnectionListener::handle_mapped_socket(core,
                                                            event_loop,
                                                            socket,
                                                            mapped_addrs,
@@ -82,7 +82,7 @@ impl ConnectionListener {
                     let _ = event_tx.send(Event::ListenerFailed);
                 }
             }
-                                    }) {
+        }) {
             Ok(()) => {}
             Err(e) => {
                 error!("Error starting tcp_listening_socket: {}", e);
@@ -115,9 +115,9 @@ impl ConnectionListener {
                                  PollOpt::edge()));
 
         static_contact_info.lock()
-                           .unwrap()
-                           .tcp_acceptors
-                           .extend(mapped_addrs);
+            .unwrap()
+            .tcp_acceptors
+            .extend(mapped_addrs);
 
         let state = ConnectionListener {
             token: token,
@@ -230,9 +230,8 @@ mod test {
         }));
 
         let (event_tx, event_rx) = mpsc::channel();
-        let crust_sender = ::CrustEventSender::new(event_tx,
-                                                   MaidSafeEventCategory::Crust,
-                                                   mpsc::channel().0);
+        let crust_sender =
+            ::CrustEventSender::new(event_tx, MaidSafeEventCategory::Crust, mpsc::channel().0);
 
         let cm = Arc::new(Mutex::new(HashMap::new()));
         let mapping_context = Arc::new(MappingContext::new());
@@ -245,17 +244,17 @@ mod test {
         let (pk, _) = box_::gen_keypair();
         let pk_clone = pk.clone();
         tx.send(CoreMessage::new(move |core, el| {
-              ConnectionListener::start(core,
-                                        el,
-                                        0,
-                                        pk_clone,
-                                        NAME_HASH,
-                                        cm,
-                                        mapping_context,
-                                        our_static_contact_info,
-                                        crust_sender);
-          }))
-          .expect("Could not send to tx");
+                ConnectionListener::start(core,
+                                          el,
+                                          0,
+                                          pk_clone,
+                                          NAME_HASH,
+                                          cm,
+                                          mapping_context,
+                                          our_static_contact_info,
+                                          crust_sender);
+            }))
+            .expect("Could not send to tx");
 
         for it in event_rx.iter() {
             match it {
@@ -265,8 +264,8 @@ mod test {
         }
 
         let acceptor = static_contact_info.lock()
-                                          .expect("Failed in locking static_contact_info")
-                                          .tcp_acceptors[0];
+            .expect("Failed to lock static_contact_info")
+            .tcp_acceptors[0];
         Listener {
             tx: tx,
             pk: pk,
@@ -280,7 +279,7 @@ mod test {
         let listener_addr = StdSocketAddr::new(listener.acceptor.ip(), listener.acceptor.port());
         let stream = TcpStream::connect(listener_addr).expect("Could not connect to listener");
         stream.set_read_timeout(Some(Duration::from_millis(EXCHANGE_MSG_TIMEOUT_MS + 1000)))
-              .expect("Could not set read timeout.");
+            .expect("Could not set read timeout.");
 
         stream
     }
@@ -300,8 +299,8 @@ mod test {
         let mut payload_size_buffer = [0; 4];
         try!(stream.read_exact(&mut payload_size_buffer));
 
-        let payload_size =
-            try!(Cursor::new(&payload_size_buffer[..]).read_u32::<LittleEndian>()) as usize;
+        let payload_size = try!(Cursor::new(&payload_size_buffer[..])
+            .read_u32::<LittleEndian>()) as usize;
 
         let mut payload = Vec::with_capacity(payload_size);
         unsafe {

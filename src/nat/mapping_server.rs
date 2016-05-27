@@ -57,34 +57,33 @@ impl TcpMappingServer {
                               &addr,
                               mapping_context,
                               |core, event_loop, socket, addrs| {
-                                  let res = {
-                                      let try = || {
-                                          let context = core.get_new_context();
-                                          let token = core.get_new_token();
-                                          let listener = try!(socket.listen(1));
-                                          let addr = try!(listener.local_addr());
-                                          let listener = try!(TcpListener::from_listener(listener,
-                                                                                         &addr));
-                                          try!(event_loop.register(&listener,
-                                                                   token,
-                                                                   EventSet::readable() |
-                                                                   EventSet::error() |
-                                                                   EventSet::hup(),
-                                                                   PollOpt::edge()));
-                                          let _ = core.insert_context(token, context.clone());
-                                          let _ = core.insert_state(context.clone(), Rc::new(RefCell::new(TcpMappingServer {
-                        server_socket: listener,
-                        reading_clients: HashMap::new(),
-                        writing_clients: HashMap::new(),
-                        server_token: token,
-                        context: context,
-                    })));
-                                          Ok(addrs)
-                                      };
-                                      try()
-                                  };
-                                  report_addresses(core, event_loop, res);
-                              })
+            let res = {
+                let try = || {
+                    let context = core.get_new_context();
+                    let token = core.get_new_token();
+                    let listener = try!(socket.listen(1));
+                    let addr = try!(listener.local_addr());
+                    let listener = try!(TcpListener::from_listener(listener, &addr));
+                    try!(event_loop.register(&listener,
+                                             token,
+                                             EventSet::readable() | EventSet::error() |
+                                             EventSet::hup(),
+                                             PollOpt::edge()));
+                    let _ = core.insert_context(token, context.clone());
+                    let _ = core.insert_state(context.clone(),
+                                              Rc::new(RefCell::new(TcpMappingServer {
+                                                  server_socket: listener,
+                                                  reading_clients: HashMap::new(),
+                                                  writing_clients: HashMap::new(),
+                                                  server_token: token,
+                                                  context: context,
+                                              })));
+                    Ok(addrs)
+                };
+                try()
+            };
+            report_addresses(core, event_loop, res);
+        })
     }
 }
 
@@ -130,7 +129,7 @@ impl State for TcpMappingServer {
             let res = {
                 let reading_client = oe.get_mut();
                 reading_client.stream
-                              .try_read(&mut reading_client.in_buffer[reading_client.bytes_read..])
+                    .try_read(&mut reading_client.in_buffer[reading_client.bytes_read..])
             };
             match res {
                 Err(e) => {
@@ -186,7 +185,7 @@ impl State for TcpMappingServer {
             let res = {
                 let writing_client = oe.get_mut();
                 writing_client.stream
-                              .try_write(&writing_client.out_buffer[writing_client.bytes_written..])
+                    .try_write(&writing_client.out_buffer[writing_client.bytes_written..])
             };
             match res {
                 Err(e) => {

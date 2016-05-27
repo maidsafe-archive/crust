@@ -94,6 +94,6 @@ pub const MAX_DATA_LEN: u32 = 2 * 1024 * 1024;
 pub use event::Event;
 pub use error::Error;
 pub use peer_id::PeerId;
-pub use service::Service;
+pub use service::{Service, ConnectionInfoResult, PrivConnectionInfo, PubConnectionInfo};
 pub use socket_addr::SocketAddr;
 pub use static_contact_info::StaticContactInfo;
