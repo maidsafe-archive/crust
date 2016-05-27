@@ -527,6 +527,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn connect_two_peers() {
         timebomb(Duration::from_secs(5), || {
             let (event_tx_0, _category_rx_0, event_rx_0) = get_event_sender();
