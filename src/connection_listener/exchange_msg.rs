@@ -186,7 +186,7 @@ impl State for ExchangeMsg {
              event_loop: &mut EventLoop<Core>,
              _token: Token,
              event_set: EventSet) {
-        if event_set.is_error() | event_set.is_hup() {
+        if event_set.is_error() || event_set.is_hup() {
             self.terminate(core, event_loop);
         } else {
             if event_set.is_readable() {
@@ -206,6 +206,7 @@ impl State for ExchangeMsg {
     }
 
     fn timeout(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, _token: Token) {
+        debug!("Exchange message timed out. Terminating direct connection request.");
         self.terminate(core, event_loop)
     }
 

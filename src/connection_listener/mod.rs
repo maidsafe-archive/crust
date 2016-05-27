@@ -181,33 +181,45 @@ mod test {
     use super::*;
     use super::exchange_msg::EXCHANGE_MSG_TIMEOUT_MS;
 
-    use std::collections::HashMap;
-    use std::io::{self, Write};
-    use std::net::SocketAddr as StdSocketAddr;
-    use std::net::TcpStream;
+    use std::mem;
     use std::sync::mpsc;
-    use std::thread;
+    use std::net::TcpStream;
     use std::time::Duration;
     use std::sync::{Arc, Mutex};
+    use std::collections::HashMap;
+    use std::io::{self, Cursor, Write, Read};
+    use std::net::SocketAddr as StdSocketAddr;
 
-    use byteorder::{WriteBytesExt, LittleEndian};
-    use core::{CoreMessage, Core};
     use event::Event;
-    use maidsafe_utilities::event_sender::MaidSafeEventCategory;
-    use maidsafe_utilities::serialisation::serialise;
-    use maidsafe_utilities::thread::RaiiThreadJoiner;
     use message::Message;
-    use mio::{EventLoop, Sender};
-    use nat::mapping_context::MappingContext;
     use socket_addr::SocketAddr;
-    use sodiumoxide::crypto::box_;
+    use mio::{EventLoop, Sender};
+    use core::{CoreMessage, Core};
+    use rustc_serialize::Decodable;
+    use nat::mapping_context::MappingContext;
     use static_contact_info::StaticContactInfo;
+    use sodiumoxide::crypto::box_::{self, PublicKey};
+    use maidsafe_utilities::thread::RaiiThreadJoiner;
+    use byteorder::{WriteBytesExt, LittleEndian, ReadBytesExt};
+    use maidsafe_utilities::event_sender::MaidSafeEventCategory;
+    use maidsafe_utilities::serialisation::{deserialise, serialise};
+
+    const NAME_HASH: u64 = 9876543210;
 
     struct Listener {
         tx: Sender<CoreMessage>,
-        _joiner: RaiiThreadJoiner,
+        pk: PublicKey,
         acceptor: SocketAddr,
         event_rx: mpsc::Receiver<Event>,
+        _raii_joiner: RaiiThreadJoiner,
+    }
+
+    impl Drop for Listener {
+        fn drop(&mut self) {
+            self.tx
+                .send(CoreMessage::new(|_, el| el.shutdown()))
+                .expect("Could not send shutdown to event_loop");
+        }
     }
 
     fn start_listener() -> Listener {
@@ -230,13 +242,14 @@ mod test {
         }));
 
         let our_static_contact_info = static_contact_info.clone();
-
+        let (pk, _) = box_::gen_keypair();
+        let pk_clone = pk.clone();
         tx.send(CoreMessage::new(move |core, el| {
               ConnectionListener::start(core,
                                         el,
                                         0,
-                                        box_::gen_keypair().0,
-                                        64,
+                                        pk_clone,
+                                        NAME_HASH,
                                         cm,
                                         mapping_context,
                                         our_static_contact_info,
@@ -256,75 +269,153 @@ mod test {
                                           .tcp_acceptors[0];
         Listener {
             tx: tx,
-            _joiner: raii_joiner,
+            pk: pk,
             acceptor: acceptor,
             event_rx: event_rx,
+            _raii_joiner: raii_joiner,
         }
     }
 
-    fn client_connect(listener: &Listener) -> TcpStream {
+    fn connect_to_listener(listener: &Listener) -> TcpStream {
         let listener_addr = StdSocketAddr::new(listener.acceptor.ip(), listener.acceptor.port());
-        TcpStream::connect(listener_addr).expect("Could not connect to listener")
+        let stream = TcpStream::connect(listener_addr).expect("Could not connect to listener");
+        stream.set_read_timeout(Some(Duration::from_millis(EXCHANGE_MSG_TIMEOUT_MS + 1000)))
+              .expect("Could not set read timeout.");
+
+        stream
     }
 
-    fn client_send_request(stream: &mut TcpStream, message: Vec<u8>) -> io::Result<()> {
-        let mut size_vec = Vec::with_capacity(4);
+    fn write(stream: &mut TcpStream, message: Vec<u8>) -> io::Result<()> {
+        let mut size_vec = Vec::with_capacity(mem::size_of::<u32>());
         unwrap_result!(size_vec.write_u32::<LittleEndian>(message.len() as u32));
 
         try!(stream.write_all(&size_vec));
         try!(stream.write_all(&message));
+
         Ok(())
     }
 
-    #[test]
-    fn connection_listener_bootstrap() {
-        let listener = start_listener();
-        let mut client = client_connect(&listener);
-        let message = serialise(&Message::BootstrapRequest(box_::gen_keypair().0, 64)).unwrap();
-        let _ = client_send_request(&mut client, message);
+    #[allow(unsafe_code)]
+    fn read<T: Decodable>(stream: &mut TcpStream) -> io::Result<T> {
+        let mut payload_size_buffer = [0; 4];
+        try!(stream.read_exact(&mut payload_size_buffer));
 
-        for it in listener.event_rx.iter() {
-            match it {
-                Event::BootstrapAccept(_peer_id) => break,
-                _ => panic!("Unexpected event notification"),
-            }
+        let payload_size =
+            try!(Cursor::new(&payload_size_buffer[..]).read_u32::<LittleEndian>()) as usize;
+
+        let mut payload = Vec::with_capacity(payload_size);
+        unsafe {
+            payload.set_len(payload_size);
         }
-        listener.tx
-                .send(CoreMessage::new(move |_, el| el.shutdown()))
-                .expect("Could not shutdown el");
+        try!(stream.read_exact(&mut payload));
+
+        Ok(deserialise(&mut payload).expect("Could not deserialise."))
+    }
+
+    fn bootstrap(name_hash: u64, pk: PublicKey, listener: Listener) {
+        let mut peer = connect_to_listener(&listener);
+
+        let message = serialise(&Message::BootstrapRequest(pk.clone(), name_hash)).unwrap();
+        write(&mut peer, message).expect("Could not write.");
+
+        match read(&mut peer).expect("Could not read.") {
+            Message::BootstrapResponse(peer_pk) => assert_eq!(peer_pk, listener.pk),
+            msg => panic!("Unexpected message: {:?}", msg),
+        }
+
+        match listener.event_rx.recv().expect("Could not read event channel") {
+            Event::BootstrapAccept(peer_id) => assert_eq!(peer_id, ::peer_id::new(pk)),
+            event => panic!("Unexpected event notification: {:?}", event),
+        }
+    }
+
+    fn connect(name_hash: u64, pk: PublicKey, listener: Listener) {
+        let mut peer = connect_to_listener(&listener);
+
+        let message = serialise(&Message::Connect(pk.clone(), name_hash)).unwrap();
+        write(&mut peer, message).expect("Could not write.");
+
+        match read(&mut peer).expect("Could not read.") {
+            Message::Connect(peer_pk, peer_hash) => {
+                assert_eq!(peer_pk, listener.pk);
+                assert_eq!(peer_hash, NAME_HASH);
+            }
+            msg => panic!("Unexpected message: {:?}", msg),
+        }
+
+        match listener.event_rx.recv().expect("Could not read event channel") {
+            Event::NewPeer(res, peer_id) => {
+                assert_eq!(peer_id, ::peer_id::new(pk));
+                assert!(res.is_ok());
+            }
+            event => panic!("Unexpected event notification: {:?}", event),
+        }
     }
 
     #[test]
-    fn connection_listener_connect() {
+    fn bootstrap_with_correct_parameters() {
         let listener = start_listener();
-        let mut client = client_connect(&listener);
-        let message = serialise(&Message::Connect(box_::gen_keypair().0, 64)).unwrap();
-        let _ = client_send_request(&mut client, message);
-
-        for it in listener.event_rx.iter() {
-            match it {
-                Event::NewPeer(_, _peer_id) => break,
-                _ => panic!("Unexpected event notification - {:?}", it),
-            }
-        }
-        listener.tx
-                .send(CoreMessage::new(move |_, el| el.shutdown()))
-                .expect("Could not shutdown el");
+        let (pk, _) = box_::gen_keypair();
+        bootstrap(NAME_HASH, pk, listener);
     }
 
     #[test]
-    fn connection_listener_timeout() {
+    fn connect_with_correct_parameters() {
         let listener = start_listener();
-        let mut client = client_connect(&listener);
-        thread::sleep(Duration::from_millis(EXCHANGE_MSG_TIMEOUT_MS + 1000));
+        let (pk, _) = box_::gen_keypair();
+        connect(NAME_HASH, pk, listener);
+    }
 
-        let message = serialise(&Message::BootstrapRequest(box_::gen_keypair().0, 64)).unwrap();
-        match client_send_request(&mut client, message) {
-            Ok(_) => panic!("Unexpected success"),
-            Err(_) => (),
-        }
-        listener.tx
-                .send(CoreMessage::new(move |_, el| el.shutdown()))
-                .expect("Could not shutdown el");
+    #[test]
+    #[should_panic]
+    fn bootstrap_with_invalid_version_hash() {
+        let listener = start_listener();
+        let (pk, _) = box_::gen_keypair();
+        bootstrap(NAME_HASH - 1, pk, listener);
+    }
+
+    #[test]
+    #[should_panic]
+    fn connect_with_invalid_version_hash() {
+        let listener = start_listener();
+        let (pk, _) = box_::gen_keypair();
+        connect(NAME_HASH - 1, pk, listener);
+    }
+
+    #[test]
+    #[should_panic]
+    fn bootstrap_with_invalid_pub_key() {
+        let listener = start_listener();
+        bootstrap(NAME_HASH, listener.pk.clone(), listener);
+    }
+
+    #[test]
+    #[should_panic]
+    fn connect_with_invalid_pub_key() {
+        let listener = start_listener();
+        connect(NAME_HASH, listener.pk.clone(), listener);
+    }
+
+    #[test]
+    fn invalid_msg_exchange() {
+        let listener = start_listener();
+
+        let mut peer = connect_to_listener(&listener);
+
+        let message = serialise(&Message::Heartbeat).unwrap();
+        write(&mut peer, message).expect("Could not write.");
+
+        let mut buf = [0; 512];
+        assert_eq!(0,
+                   peer.read(&mut buf).expect("read should have returned EOF (0)"));
+    }
+
+    #[test]
+    fn listener_timeout() {
+        let listener = start_listener();
+        let mut peer = connect_to_listener(&listener);
+        let mut buf = [0; 512];
+        assert_eq!(0,
+                   peer.read(&mut buf).expect("read should have returned EOF (0)"));
     }
 }
