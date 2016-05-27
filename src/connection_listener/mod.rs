@@ -406,8 +406,12 @@ mod test {
         write(&mut peer, message).expect("Could not write.");
 
         let mut buf = [0; 512];
-        assert_eq!(0,
-                   peer.read(&mut buf).expect("read should have returned EOF (0)"));
+        if cfg!(windows) {
+            assert!(peer.read(&mut buf).is_err());
+        } else {
+            assert_eq!(0,
+                       peer.read(&mut buf).expect("read should have returned EOF (0)"));
+        }
     }
 
     #[test]
@@ -415,7 +419,11 @@ mod test {
         let listener = start_listener();
         let mut peer = connect_to_listener(&listener);
         let mut buf = [0; 512];
-        assert_eq!(0,
-                   peer.read(&mut buf).expect("read should have returned EOF (0)"));
+        if cfg!(windows) {
+            assert!(peer.read(&mut buf).is_err());
+        } else {
+            assert_eq!(0,
+                       peer.read(&mut buf).expect("read should have returned EOF (0)"));
+        }
     }
 }
