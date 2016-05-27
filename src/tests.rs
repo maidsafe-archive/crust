@@ -402,7 +402,7 @@ fn drop_peer_when_no_message_received_within_inactivity_period() {
         unwrap_result!(event_loop.run(&mut core));
     }));
 
-    let listener = unwrap_result!(TcpListener::bind(&unwrap_result!(StdSocketAddr::from_str("0.0.0.0:0"))));
+    let listener = unwrap_result!(TcpListener::bind(&unwrap_result!(StdSocketAddr::from_str("127.0.0.1:0"))));
     let address = SocketAddr(unwrap_result!(listener.local_addr()));
 
     unwrap_result!(mio_tx.send(CoreMessage::new(|core, event_loop| {
