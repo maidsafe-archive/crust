@@ -322,8 +322,10 @@ impl Service {
                                          their_connection_info.tcp_info,
                                          move |core, event_loop, stream_opt|
                 {
+                    debug!("PunchHole finished");
                     match stream_opt {
                         Some(stream) => {
+                            debug!("PunchHole succeeded. Creating ActiveConnection");
                             let token = core.get_new_token();
                             let socket = Socket::wrap(stream);
                             let event_tx = (&*event_tx_rc).clone();
