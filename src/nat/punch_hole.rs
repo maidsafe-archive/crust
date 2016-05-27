@@ -118,6 +118,13 @@ impl<F> State for PunchHole<F>
              event_loop: &mut EventLoop<Core>,
              token: Token,
              event_set: EventSet) {
+        debug!("PunchHole ready: Listener == {:?}", self.listener_token);
+        for (i, (token, writing_stream)) in self.writing_streams.iter().enumerate() {
+            debug!("PunchHole ready: WritingStream[{}] {:?} ({} bytes)", i, token, writing_stream.bytes_written);
+        }
+        for (i, (token, reading_stream)) in self.reading_streams.iter().enumerate() {
+            debug!("PunchHole ready: ReadingStream[{}] {:?} ({} bytes)", i, token, reading_stream.bytes_read);
+        }
         debug!("PunchHole ready: {:?} {:?}", token, event_set);
 
         if token == self.listener_token {
