@@ -3,6 +3,8 @@ extern crate mio;
 extern crate env_logger;
 extern crate socket_addr;
 extern crate rustc_serialize;
+#[macro_use]
+extern crate log;
 
 use std::net;
 use std::net::{ToSocketAddrs, SocketAddrV4, Ipv4Addr};
@@ -180,8 +182,9 @@ impl State for MessageReader {
     fn ready(&mut self,
              _core: &mut Core,
              _event_loop: &mut EventLoop<Core>,
-             _token: Token,
-             _event_set: EventSet) {
+             token: Token,
+             event_set: EventSet) {
+        debug!("MessageReader ready: {:?} {:?}", token, event_set);
         let mut buf = [0u8; 256];
         match self.stream.try_read(&mut buf[..]) {
             Ok(Some(n)) => {
@@ -196,7 +199,7 @@ impl State for MessageReader {
                     }
                 }
             }
-            Ok(None) => (),
+            Ok(None) => debug!("Stream wasn't ready"),
             Err(e) => {
                 println!("Error receiving message from peer: {}", e);
             }

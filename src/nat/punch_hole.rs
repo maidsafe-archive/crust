@@ -117,8 +117,11 @@ impl<F> State for PunchHole<F>
              core: &mut Core,
              event_loop: &mut EventLoop<Core>,
              token: Token,
-             _event_set: EventSet) {
+             event_set: EventSet) {
+        debug!("PunchHole ready: {:?} {:?}", token, event_set);
+
         if token == self.listener_token {
+            debug!("PunchHole listener ready");
             match self.listener.accept() {
                 Err(e) => {
                     debug!("Error accepting connection during hole punching: {}", e);
@@ -140,6 +143,7 @@ impl<F> State for PunchHole<F>
                         nonce: rand::random(),
                         bytes_written: 0,
                     };
+                    debug!("Accepted new incoming stream with {:?}", token);
                     let _ = core.insert_context(token, self.context);
                     let _ = self.writing_streams.insert(token, writing_stream);
                 }
@@ -148,6 +152,7 @@ impl<F> State for PunchHole<F>
         }
 
         if let hash_map::Entry::Occupied(mut oe) = self.writing_streams.entry(token) {
+            debug!("PunchHole writer ready");
             let res = {
                 let writing_stream = oe.get_mut();
                 let written = writing_stream.bytes_written;
@@ -180,6 +185,7 @@ impl<F> State for PunchHole<F>
                     return;
                 }
                 Ok(Some(0)) => {
+                    debug!("Writer disconnected");
                     let writing_stream = oe.remove();
                     let _ = core.remove_context(token);
                     match event_loop.deregister(&writing_stream.stream) {
@@ -192,6 +198,7 @@ impl<F> State for PunchHole<F>
                 }
                 Ok(Some(n)) => {
                     oe.get_mut().bytes_written += n;
+                    debug!("Wrote {} bytes. {} written total", n, oe.get_mut().bytes_written);
                     let written = oe.get_mut().bytes_written;
                     if written >= SECRET_LEN + NONCE_LEN {
                         let writing_stream = oe.remove();
@@ -213,6 +220,7 @@ impl<F> State for PunchHole<F>
                             in_buff: [0u8; SECRET_LEN + NONCE_LEN],
                             bytes_read: 0,
                         };
+                        debug!("Finished writing. Stream entering reading mode.");
                         let _ = self.reading_streams.insert(token, reading_stream);
                     }
                 }
@@ -222,6 +230,7 @@ impl<F> State for PunchHole<F>
 
         let mut done_read = false;
         if let hash_map::Entry::Occupied(mut oe) = self.reading_streams.entry(token) {
+            debug!("PunchHole reader ready");
             let res = {
                 let reading_stream = oe.get_mut();
                 let read = reading_stream.bytes_read;
@@ -240,6 +249,7 @@ impl<F> State for PunchHole<F>
                 }
                 Ok(None) => (),
                 Ok(Some(0)) => {
+                    debug!("Reader disconnected");
                     let reading_stream = oe.remove();
                     let _ = core.remove_context(token);
                     match event_loop.deregister(&reading_stream.stream) {
@@ -252,6 +262,7 @@ impl<F> State for PunchHole<F>
                 }
                 Ok(Some(n)) => {
                     oe.get_mut().bytes_read += n;
+                    debug!("Read {} bytes. {} read in total", n, oe.get_mut().bytes_read);
                     let read = oe.get_mut().bytes_read;
                     if read >= SECRET_LEN + NONCE_LEN {
                         let reading_stream = oe.remove();
@@ -278,7 +289,9 @@ impl<F> State for PunchHole<F>
                             .unwrap();
                         let new_score = recv_nonce.wrapping_add(sent_nonce);
                         let old_score = self.best_stream.as_ref().map_or(0, |&(i, _)| i);
+                        debug!("Finshed reading. Stream score == {}, old score == {}", new_score, old_score);
                         if new_score >= old_score {
+                            debug!("Highest scoring stream so far");
                             self.best_stream = Some((new_score, reading_stream.stream));
                         }
                         done_read = true;
@@ -294,6 +307,7 @@ impl<F> State for PunchHole<F>
     }
 
     fn terminate(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
+        debug!("PunchHole terminating");
         let stream_opt = self.best_stream.take().map(|(_, s)| s);
         let finished = self.finished.take().unwrap();
 
