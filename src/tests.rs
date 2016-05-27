@@ -167,7 +167,7 @@ fn bootstrap_with_multiple_contact_endpoints() {
     let port = expect_event!(event_rx0, Event::ListenerStarted(port) => port);
     let valid_address = localhost(port);
 
-    let deaf_listener = unwrap_result!(TcpListener::bind("0.0.0.0:0"));
+    let deaf_listener = unwrap_result!(TcpListener::bind("127.0.0.1:0"));
     let invalid_address = SocketAddr(unwrap_result!(deaf_listener.local_addr()));
 
     let mut config1 = gen_config();
@@ -204,7 +204,7 @@ fn bootstrap_fails_if_there_are_no_contacts() {
 fn bootstrap_timeouts_if_there_are_only_invalid_contacts() {
     use std::net::TcpListener;
 
-    let deaf_listener = unwrap_result!(TcpListener::bind("0.0.0.0:0"));
+    let deaf_listener = unwrap_result!(TcpListener::bind("127.0.0.1:0"));
     let address = SocketAddr(unwrap_result!(deaf_listener.local_addr()));
 
     let mut config = gen_config();
@@ -402,7 +402,7 @@ fn drop_peer_when_no_message_received_within_inactivity_period() {
         unwrap_result!(event_loop.run(&mut core));
     }));
 
-    let listener = unwrap_result!(TcpListener::bind(&unwrap_result!(StdSocketAddr::from_str("0.0.0.0:0"))));
+    let listener = unwrap_result!(TcpListener::bind(&unwrap_result!(StdSocketAddr::from_str("127.0.0.1:0"))));
     let address = SocketAddr(unwrap_result!(listener.local_addr()));
 
     unwrap_result!(mio_tx.send(CoreMessage::new(|core, event_loop| {
