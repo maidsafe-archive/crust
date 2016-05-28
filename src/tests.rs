@@ -237,7 +237,7 @@ fn drop_disconnects() {
     unwrap_result!(service_1.start_bootstrap());
 
     let peer_id_0 = expect_event!(event_rx_1, Event::BootstrapConnect(peer_id) => peer_id);
-    expect_event!(event_rx_0, Event::BootstrapAccept(_));
+    expect_event!(event_rx_0, Event::BootstrapAccept(_peer_id));
 
     // Dropping service_0 should make service_1 receive a LostPeer event.
     drop(service_0);
@@ -264,10 +264,7 @@ mod broken_peer {
     pub struct Listen(TcpListener);
 
     impl Listen {
-        pub fn start(core: &mut Core,
-                     event_loop: &mut EventLoop<Core>,
-                     listener: TcpListener)
-        {
+        pub fn start(core: &mut Core, event_loop: &mut EventLoop<Core>, listener: TcpListener) {
             let context = core.get_new_context();
             let token = core.get_new_token();
             let _ = core.insert_context(token, context);
@@ -287,8 +284,7 @@ mod broken_peer {
                  core: &mut Core,
                  event_loop: &mut EventLoop<Core>,
                  token: Token,
-                 _: EventSet)
-        {
+                 _: EventSet) {
             match unwrap_result!(self.0.accept()) {
                 Some((socket, _)) => {
                     unwrap_result!(event_loop.deregister(&self.0));
@@ -296,11 +292,7 @@ mod broken_peer {
                     let socket = Socket::wrap(socket);
                     let context = core.get_context(token).unwrap();
 
-                    Connection::start(core,
-                                      event_loop,
-                                      context,
-                                      token,
-                                      socket);
+                    Connection::start(core, event_loop, context, token, socket);
                 }
 
                 None => {
@@ -324,8 +316,7 @@ mod broken_peer {
                  event_loop: &mut EventLoop<Core>,
                  context: Context,
                  token: Token,
-                 socket: Socket)
-        {
+                 socket: Socket) {
             unwrap_result!(event_loop.register(&socket,
                                                token,
                                                EventSet::readable(),
@@ -341,8 +332,7 @@ mod broken_peer {
                  _: &mut Core,
                  event_loop: &mut EventLoop<Core>,
                  token: Token,
-                 event_set: EventSet)
-        {
+                 event_set: EventSet) {
             let mut writable = false;
 
             if event_set.is_readable() {
@@ -366,12 +356,11 @@ mod broken_peer {
             }
 
             let mut event_set = EventSet::readable();
-            if writable { event_set.insert(EventSet::writable()); }
+            if writable {
+                event_set.insert(EventSet::writable());
+            }
 
-            unwrap_result!(event_loop.reregister(&self.0,
-                                                 token,
-                                                 event_set,
-                                                 PollOpt::edge()));
+            unwrap_result!(event_loop.reregister(&self.0, token, event_set, PollOpt::edge()));
         }
 
         fn as_any(&mut self) -> &mut Any {
@@ -402,7 +391,11 @@ fn drop_peer_when_no_message_received_within_inactivity_period() {
         unwrap_result!(event_loop.run(&mut core));
     }));
 
-    let listener = unwrap_result!(TcpListener::bind(&unwrap_result!(StdSocketAddr::from_str("127.0.0.1:0"))));
+    let listener = unwrap_result!(TcpListener::bind(&unwrap_result!(StdSocketAddr::from_str("127.\
+                                                                                             0.\
+                                                                                             0.\
+                                                                                             1:\
+                                                                                             0"))));
     let address = SocketAddr(unwrap_result!(listener.local_addr()));
 
     unwrap_result!(mio_tx.send(CoreMessage::new(|core, event_loop| {
@@ -412,9 +405,9 @@ fn drop_peer_when_no_message_received_within_inactivity_period() {
     // Spin up normal service that will connect to the above guy.
     let mut config = gen_config();
     config.hard_coded_contacts = vec![StaticContactInfo {
-        tcp_acceptors: vec![address],
-        tcp_mapper_servers: vec![],
-    }];
+                                          tcp_acceptors: vec![address],
+                                          tcp_mapper_servers: vec![],
+                                      }];
 
     let (event_tx, event_rx) = get_event_sender();
     let mut service = unwrap_result!(Service::with_config(event_tx, config));
@@ -427,9 +420,7 @@ fn drop_peer_when_no_message_received_within_inactivity_period() {
         assert_eq!(lost_peer_id, peer_id)
     });
 
-    unwrap_result!(mio_tx.send(CoreMessage::new(|_, event_loop| {
-        event_loop.shutdown()
-    })));
+    unwrap_result!(mio_tx.send(CoreMessage::new(|_, event_loop| event_loop.shutdown())));
 }
 
 #[test]
@@ -452,8 +443,8 @@ fn do_not_drop_peer_even_when_no_data_messages_are_exchanged_within_inactivity_p
     let mut service1 = unwrap_result!(Service::with_config(event_tx1, config1));
 
     let _ = unwrap_result!(service1.start_bootstrap());
-    expect_event!(event_rx1, Event::BootstrapConnect(_));
-    expect_event!(event_rx0, Event::BootstrapAccept(_));
+    expect_event!(event_rx1, Event::BootstrapConnect(_peer_id));
+    expect_event!(event_rx0, Event::BootstrapAccept(_peer_id));
 
     thread::sleep(Duration::from_millis(2 * INACTIVITY_TIMEOUT_MS));
 

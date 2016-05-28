@@ -15,7 +15,7 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use mio::{EventLoop, Timeout, TimerError, Token};
+use mio::{EventLoop, Timeout, Token};
 use sodiumoxide::crypto::box_::PublicKey;
 use std::any::Any;
 use std::mem;
@@ -23,11 +23,12 @@ use std::sync::mpsc::{self, Receiver};
 use std::rc::Rc;
 use std::cell::RefCell;
 
+use error::CrustError;
 use config_handler::Config;
 use core::{Context, Core, State};
 use event::Event;
 use service::SharedConnectionMap;
-use service_discovery::{ServiceDiscovery, ServiceDiscoveryError};
+use service_discovery::ServiceDiscovery;
 use static_contact_info::StaticContactInfo;
 use super::cache::Cache;
 use super::bootstrap::Bootstrap;
@@ -72,13 +73,24 @@ impl GetBootstrapContacts {
         let cached_contacts = match cache.read_file() {
             Ok(contacts) => contacts,
             Err(error) => {
-                error!("Failed to load bootstrap cache: {:?}", error);
-                let _ = event_tx.send(Event::BootstrapFailed);
-                return;
+                panic!("======= {:?}", error);
+                // error!("Failed to load bootstrap cache: {:?}", error);
+                // let _ = event_tx.send(Event::BootstrapFailed);
+                // return;
             }
         };
 
-        contacts.extend(cached_contacts);
+        let cached_contacts_info = if cached_contacts.peer_acceptors.is_empty() &&
+                                      cached_contacts.peer_stuns.is_empty() {
+            Vec::new()
+        } else {
+            vec![StaticContactInfo {
+                     tcp_acceptors: cached_contacts.peer_acceptors,
+                     tcp_mapper_servers: cached_contacts.peer_stuns,
+                 }]
+        };
+
+        contacts.extend(cached_contacts_info);
 
         // Get further contacts from config file - contains seed nodes
         contacts.extend(config.hard_coded_contacts.iter().cloned());
@@ -109,7 +121,7 @@ impl GetBootstrapContacts {
                 return;
             }
 
-            Err(SeekPeersError::NotEnabled) => (),
+            Err(CrustError::ServiceDiscNotEnabled) => (),
             Err(error) => {
                 error!("Failed to seek peers using service discovery: {:?}", error);
             }
@@ -162,7 +174,7 @@ fn seek_peers(core: &mut Core,
               event_loop: &mut EventLoop<Core>,
               service_discovery_context: Context,
               token: Token)
-              -> Result<(Receiver<StaticContactInfo>, Timeout), SeekPeersError> {
+              -> ::Res<(Receiver<StaticContactInfo>, Timeout)> {
     if let Some(state) = core.get_state(service_discovery_context) {
         let mut state = state.borrow_mut();
         let mut state = state.as_any()
@@ -176,25 +188,6 @@ fn seek_peers(core: &mut Core,
 
         Ok((rx, timeout))
     } else {
-        Err(SeekPeersError::NotEnabled)
-    }
-}
-
-quick_error! {
-    #[derive(Debug)]
-    enum SeekPeersError {
-        NotEnabled {
-            description("Service discovery is not enabled")
-        }
-
-        ServiceDiscovery(err: ServiceDiscoveryError) {
-            description("Service discovery error")
-            from()
-        }
-
-        Timer(err: TimerError) {
-            description("Timer error")
-            from()
-        }
+        Err(CrustError::ServiceDiscNotEnabled)
     }
 }

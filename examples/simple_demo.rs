@@ -43,7 +43,7 @@ use std::str::FromStr;
 use std::thread;
 use std::time::Duration;
 
-use crust::{CrustEventSender, Event, MAX_DATA_LEN, Service, StaticContactInfo};
+use crust::{CrustEventSender, Event, MAX_PAYLOAD_SIZE, Service, StaticContactInfo};
 use maidsafe_utilities::event_sender::MaidSafeEventCategory;
 use maidsafe_utilities::thread::RaiiThreadJoiner;
 use rand::Rng;
@@ -102,7 +102,7 @@ fn main() {
         match it {
             Event::NewPeer(Ok(()), peer_id) => {
                 println!("Routing received new connection with peer id {}", peer_id);
-                service.send(peer_id, generate_random_vec_u8(MAX_DATA_LEN as usize + 1))
+                service.send(peer_id, generate_random_vec_u8(MAX_PAYLOAD_SIZE as usize + 1))
                        .expect("Failed to send data");
             }
             Event::NewMessage(peer_id, msg) => {

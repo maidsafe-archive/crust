@@ -17,31 +17,34 @@
 
 use std::ffi::OsString;
 
-use error::Error;
-use static_contact_info::StaticContactInfo;
+use socket_addr;
 use config_file_handler::{self, FileHandler};
 
-#[allow(unused)]
-const ENABLE_BOOTSTRAP_CACHE: bool = false;
-#[allow(unused)]
-const MAX_BOOTSTRAP_CACHE_CONTACTS: usize = 1500;
+const _ENABLE_BOOTSTRAP_CACHE: bool = false;
+const _MAX_BOOTSTRAP_CACHE_CONTACTS: usize = 1500;
+
+#[derive(RustcEncodable, RustcDecodable, Debug, Clone, Default, Eq, PartialEq)]
+pub struct Storage {
+    pub peer_stuns: Vec<socket_addr::SocketAddr>,
+    pub peer_acceptors: Vec<socket_addr::SocketAddr>,
+}
 
 pub struct Cache {
-    file_handler: FileHandler<Vec<StaticContactInfo>>, // last_updated: Instant,
+    // file_handler: FileHandler<Vec<socket_addr::SocketAddr>>,
+    file_handler: FileHandler<Vec<Storage>>,
 }
 
 impl Cache {
-    #[allow(dead_code)]
-    pub fn cleanup() -> Result<(), Error> {
-        try!(config_file_handler::cleanup(&try!(get_default_file_name())));
+    pub fn _cleanup() -> ::Res<()> {
+        try!(config_file_handler::cleanup(&try!(Self::get_default_file_name())));
         Ok(())
     }
 
-    pub fn new(name: &Option<String>) -> Result<Self, Error> {
+    pub fn new(name: &Option<String>) -> ::Res<Self> {
         let name = if let Some(name) = name.clone() {
             OsString::from(name)
         } else {
-            try!(get_default_file_name())
+            try!(Self::get_default_file_name())
         };
 
         Ok(Cache {
@@ -50,10 +53,16 @@ impl Cache {
         })
     }
 
+    pub fn get_default_file_name() -> ::Res<OsString> {
+        let mut name = try!(config_file_handler::exe_file_stem());
+        name.push(".bootstrap.cache");
+        Ok(name)
+    }
+
     // pub fn update_contacts(&mut self,
     //                        contacts: Vec<StaticContactInfo>,
     //                        prune: Vec<StaticContactInfo>)
-    //                        -> Result<(), Error> {
+    //                        -> ::Res<()> {
     //     if ENABLE_BOOTSTRAP_CACHE {
     //         try!(self.insert_contacts(contacts, prune));
     //         // TODO(Team) this implementation is missing and should be considered in next planning
@@ -65,8 +74,8 @@ impl Cache {
     //     Ok(())
     // }
 
-    pub fn read_file(&mut self) -> Result<Vec<StaticContactInfo>, Error> {
-        Ok(try!(self.file_handler.read_file()))
+    pub fn read_file(&mut self) -> ::Res<Storage> {
+        Ok(try!(self.file_handler.read_file()).pop().unwrap_or(Storage::default()))
     }
 
     // fn duration_between_updates() -> Duration {
@@ -80,9 +89,9 @@ impl Cache {
     // fn insert_contacts(&mut self,
     //                    mut contacts: Vec<StaticContactInfo>,
     //                    prune: Vec<StaticContactInfo>)
-    //                    -> Result<(), Error> {
+    //                    -> ::Res<()> {
     //     let mut bootstrap_contacts = self.read_file().unwrap_or_else(|e| {
-    //         debug!("Error reading bootstrap cache file: {}.", e);
+    //         debug!("CrustError reading bootstrap cache file: {}.", e);
     //         Vec::new()
     //     });
 
@@ -103,12 +112,6 @@ impl Cache {
 
     //     Ok(try!(self.file_handler.write_file(&bootstrap_contacts)))
     // }
-}
-
-pub fn get_default_file_name() -> Result<OsString, Error> {
-    let mut name = try!(config_file_handler::exe_file_stem());
-    name.push(".bootstrap.cache");
-    Ok(name)
 }
 
 #[cfg(test)]

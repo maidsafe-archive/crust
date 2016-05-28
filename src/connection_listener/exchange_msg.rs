@@ -19,7 +19,6 @@ use mio::{EventLoop, EventSet, PollOpt, Timeout, Token};
 use std::any::Any;
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::io::{self, ErrorKind};
 
 use active_connection::ActiveConnection;
 use core::{Context, Core, State};
@@ -53,18 +52,14 @@ impl ExchangeMsg {
                  name_hash: u64,
                  cm: SharedConnectionMap,
                  event_tx: ::CrustEventSender)
-                 -> io::Result<()> {
+                 -> ::Res<()> {
         let token = core.get_new_token();
         let context = core.get_new_context();
 
         let event_set = EventSet::error() | EventSet::hup() | EventSet::readable();
         try!(event_loop.register(&socket, token, event_set, PollOpt::edge()));
 
-        // TODO Use crust error throughout
-        let timeout = try!(event_loop.timeout_ms(token, EXCHANGE_MSG_TIMEOUT_MS)
-                                     .map_err(|e| {
-                                         io::Error::new(ErrorKind::Other, format!("{:?}", e))
-                                     }));
+        let timeout = try!(event_loop.timeout_ms(token, EXCHANGE_MSG_TIMEOUT_MS));
 
         let _ = core.insert_context(token, context);
 

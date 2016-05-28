@@ -25,7 +25,6 @@ use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::sync::{Arc, Mutex};
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::io;
 
 use socket_addr;
 use net2::TcpBuilder;
@@ -101,7 +100,7 @@ impl ConnectionListener {
                             cm: SharedConnectionMap,
                             static_contact_info: Arc<Mutex<StaticContactInfo>>,
                             event_tx: ::CrustEventSender)
-                            -> io::Result<()> {
+                            -> ::Res<()> {
         let token = core.get_new_token();
         let context = core.get_new_context();
 
@@ -187,7 +186,7 @@ mod test {
     use std::time::Duration;
     use std::sync::{Arc, Mutex};
     use std::collections::HashMap;
-    use std::io::{self, Cursor, Write, Read};
+    use std::io::{Cursor, Write, Read};
     use std::net::SocketAddr as StdSocketAddr;
 
     use event::Event;
@@ -285,7 +284,7 @@ mod test {
         stream
     }
 
-    fn write(stream: &mut TcpStream, message: Vec<u8>) -> io::Result<()> {
+    fn write(stream: &mut TcpStream, message: Vec<u8>) -> ::Res<()> {
         let mut size_vec = Vec::with_capacity(mem::size_of::<u32>());
         unwrap_result!(size_vec.write_u32::<LittleEndian>(message.len() as u32));
 
@@ -296,7 +295,7 @@ mod test {
     }
 
     #[allow(unsafe_code)]
-    fn read<T: Decodable>(stream: &mut TcpStream) -> io::Result<T> {
+    fn read<T: Decodable>(stream: &mut TcpStream) -> ::Res<T> {
         let mut payload_size_buffer = [0; 4];
         try!(stream.read_exact(&mut payload_size_buffer));
 

@@ -28,12 +28,12 @@ use std::rc::Rc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use socket_addr;
 
-use bootstrap_states::GetBootstrapContacts;
+use bootstrap::GetBootstrapContacts;
 use config_handler::{self, Config};
 use connection_listener::ConnectionListener;
 use core::{Context, Core, CoreMessage, State};
 use event::Event;
-use error::Error;
+use error::CrustError;
 use std::net::{SocketAddr, SocketAddrV4, Ipv4Addr};
 use peer_id::{self, PeerId};
 use service_discovery::ServiceDiscovery;
@@ -120,14 +120,14 @@ pub struct Service {
 
 impl Service {
     /// Constructs a service.
-    pub fn new(event_tx: ::CrustEventSender) -> Result<Self, Error> {
+    pub fn new(event_tx: ::CrustEventSender) -> ::Res<Self> {
         Service::with_config(event_tx, try!(config_handler::read_config_file()))
     }
 
     /// Constructs a service with the given config. User needs to create an asynchronous channel,
     /// and provide the sender half to this method. Receiver will receive all `Event`s from this
     /// library.
-    pub fn with_config(event_tx: ::CrustEventSender, config: Config) -> Result<Service, Error> {
+    pub fn with_config(event_tx: ::CrustEventSender, config: Config) -> ::Res<Service> {
         sodiumoxide::init();
 
         let mut event_loop = try!(EventLoop::new());
@@ -204,7 +204,7 @@ impl Service {
 
     /// Start the bootstraping procedure.
     // TODO: accept a blacklist parameter.
-    pub fn start_bootstrap(&mut self) -> Result<(), Error> {
+    pub fn start_bootstrap(&mut self) -> ::Res<()> {
         let config = self.config.clone();
         let our_public_key = self.our_keys.0.clone();
         let name_hash = self.name_hash;
@@ -225,14 +225,14 @@ impl Service {
     }
 
     /// Stop the bootstraping procedure
-    pub fn stop_bootstrap(&mut self) -> Result<(), Error> {
+    pub fn stop_bootstrap(&mut self) -> ::Res<()> {
         self.post(move |mut core, mut event_loop| {
             let _ = core.terminate_state(event_loop, BOOTSTRAP_CONTEXT);
         })
     }
 
     /// Starts accepting TCP connections.
-    pub fn start_listening_tcp(&mut self) -> Result<(), Error> {
+    pub fn start_listening_tcp(&mut self) -> ::Res<()> {
         // Do not create more than one listener.
         if self.is_listenner_running {
             return Ok(());
@@ -265,7 +265,7 @@ impl Service {
     pub fn connect(&mut self,
                    our_connection_info: OurConnectionInfo,
                    their_connection_info: TheirConnectionInfo)
-                   -> Result<(), Error> {
+                   -> ::Res<()> {
         let event_tx = self.event_tx.clone();
         let connection_map = self.connection_map.clone();
         // FIXME: check this error
@@ -380,9 +380,11 @@ impl Service {
     }
 
     /// sending data to a peer(according to it's u64 peer_id)
-    pub fn send(&mut self, peer_id: PeerId, data: Vec<u8>) -> Result<(), Error> {
-        if data.len() > ::MAX_DATA_LEN as usize {
-            return Err(Error::MessageTooLarge);
+    pub fn send(&mut self, peer_id: PeerId, data: Vec<u8>) -> ::Res<()> {
+        // TODO(Spandan) This is wrong. Correct size can only be obtained post serialisation of
+        // enum in which this will be put
+        if data.len() > ::MAX_PAYLOAD_SIZE {
+            return Err(CrustError::PayloadSizeProhibitive);
         }
 
         let context = match self.connection_map
@@ -391,7 +393,7 @@ impl Service {
                                 .get(&peer_id)
                                 .map(|h| *h) {
             Some(context) => context,
-            None => return Err(Error::PeerNotFound(peer_id)),
+            None => return Err(CrustError::PeerNotFound(peer_id)),
         };
 
         self.post(move |mut core, mut event_loop| {
@@ -434,7 +436,7 @@ impl Service {
             ) {
                 Ok(()) => (),
                 Err(e) => {
-                    debug!("Error mapping tcp socket: {}", e);
+                    debug!("CrustError mapping tcp socket: {}", e);
                     let _ = event_tx.send(Event::ConnectionInfoPrepared(ConnectionInfoResult {
                         result_token: result_token,
                         result: Err(From::from(e)),
@@ -456,7 +458,7 @@ impl Service {
         peer_id::new(self.our_keys.0)
     }
 
-    fn post<F>(&self, f: F) -> Result<(), Error>
+    fn post<F>(&self, f: F) -> ::Res<()>
         where F: FnOnce(&mut Core, &mut EventLoop<Core>) + Send + 'static
     {
         Ok(try!(self.mio_tx.send(CoreMessage::new(f))))

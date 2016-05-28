@@ -18,24 +18,24 @@
 use mio;
 use std::io;
 use std::sync::mpsc;
-use config_file_handler;
 
-use core::CoreMessage;
 use peer_id::PeerId;
-use socket::SocketError;
+use core::CoreMessage;
+use service_discovery;
+use config_file_handler;
+use maidsafe_utilities::serialisation::SerialisationError;
 
 quick_error! {
     /// Crust's universal error type.
     #[derive(Debug)]
-    pub enum Error {
-        /// Failed receiving from a channel
+    pub enum CrustError {
+        /// Failed receiving from an mpsc::channel
         ChannelRecv(err: mpsc::RecvError) {
             description("Channel receive error")
             display("Channel receive error: {}", err)
             cause(err)
             from()
         }
-
         /// Config file handling errors
         ConfigFileHandler(err: config_file_handler::Error) {
             description("Config file handling error")
@@ -43,7 +43,6 @@ quick_error! {
             cause(err)
             from()
         }
-
         /// Wrapper for a `std::io::Error`
         Io(err: io::Error) {
             description("IO error")
@@ -51,12 +50,24 @@ quick_error! {
             cause(err)
             from()
         }
-
-        /// Size of a message to send is too large
-        MessageTooLarge {
-            description("Message too large")
+        /// ServiceDiscovery not enabled yet
+        ServiceDiscNotEnabled {
+            description("ServiceDiscovery is not yet enabled or registered")
         }
-
+        /// ServiceDiscovery Errors
+        ServiceDisc(err: service_discovery::ServiceDiscoveryError) {
+            description("ServiceDiscovery error")
+            from()
+        }
+        /// Mio Timer errors
+        MioTimer(err: mio::TimerError) {
+            description("Mio timer error")
+            from()
+        }
+        /// Size of a message to send is too large
+        PayloadSizeProhibitive {
+            description("Payload is too large")
+        }
         /// Mio notify errors
         MioNotify(err: mio::NotifyError<CoreMessage>) {
             description("Mio notify error")
@@ -64,20 +75,17 @@ quick_error! {
             cause(err)
             from()
         }
-
         /// Peer not found
         PeerNotFound(peer_id: PeerId) {
             description("Peer not found")
             display("Peer {:?} not found", peer_id)
         }
-
-        /// Socket error
-        Socket(err: SocketError) {
-            description("Socket error")
-            display("Socket error: {}", err)
+        /// Serialisation error
+        Serialisation(err: SerialisationError) {
+            description("Serialisation error")
+            display("Serialisation error: {}", err)
             cause(err)
             from()
         }
-
     }
 }
