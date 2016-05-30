@@ -11,7 +11,7 @@ use rand;
 use net2;
 use mio::tcp::{TcpStream, TcpListener};
 use mio::{PollOpt, EventSet, Token, EventLoop};
-use mio::{TryAccept, TryRead, TryWrite};
+use mio::{TryRead, TryWrite};
 use byteorder::{ReadBytesExt, BigEndian};
 
 use core::{Core, Context};
@@ -271,11 +271,11 @@ impl<F> State for PunchHole<F>
                             return;
                         }
                         let recv_nonce = Cursor::new(&reading_stream.in_buff[SECRET_LEN..])
-                                             .read_u64::<BigEndian>()
-                                             .unwrap();
+                            .read_u64::<BigEndian>()
+                            .unwrap();
                         let sent_nonce = Cursor::new(&reading_stream.nonce[..])
-                                             .read_u64::<BigEndian>()
-                                             .unwrap();
+                            .read_u64::<BigEndian>()
+                            .unwrap();
                         let new_score = recv_nonce.wrapping_add(sent_nonce);
                         let old_score = self.best_stream.as_ref().map(|&(i, _)| i).unwrap_or(0);
                         if new_score >= old_score {

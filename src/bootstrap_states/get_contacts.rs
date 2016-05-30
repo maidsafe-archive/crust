@@ -166,8 +166,8 @@ fn seek_peers(core: &mut Core,
     if let Some(state) = core.get_state(service_discovery_context) {
         let mut state = state.borrow_mut();
         let mut state = state.as_any()
-                             .downcast_mut::<ServiceDiscovery>()
-                             .expect("Cast failure");
+            .downcast_mut::<ServiceDiscovery>()
+            .expect("Cast failure");
 
         let (tx, rx) = mpsc::channel();
         state.register_observer(tx);

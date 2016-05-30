@@ -112,7 +112,7 @@ fn bootstrap_two_services_and_exchange_messages() {
     assert_eq!(peer_id1, service1.id());
 
     let message0 = "hello from 0".as_bytes().to_owned();
-    unwrap_result!(service0.send(peer_id1, message0.clone()));
+    unwrap_result!(service0.send(peer_id1, message0.clone(), 0));
 
     expect_event!(event_rx1, Event::NewMessage(peer_id, data) => {
         assert_eq!(peer_id, peer_id0);
@@ -120,7 +120,7 @@ fn bootstrap_two_services_and_exchange_messages() {
     });
 
     let message1 = "hello from 1".as_bytes().to_owned();
-    unwrap_result!(service1.send(peer_id0, message1.clone()));
+    unwrap_result!(service1.send(peer_id0, message1.clone(), 0));
 
     expect_event!(event_rx0, Event::NewMessage(peer_id, data) => {
         assert_eq!(peer_id, peer_id1);
@@ -264,10 +264,7 @@ mod broken_peer {
     pub struct Listen(TcpListener);
 
     impl Listen {
-        pub fn start(core: &mut Core,
-                     event_loop: &mut EventLoop<Core>,
-                     listener: TcpListener)
-        {
+        pub fn start(core: &mut Core, event_loop: &mut EventLoop<Core>, listener: TcpListener) {
             let context = core.get_new_context();
             let token = core.get_new_token();
             let _ = core.insert_context(token, context);
@@ -287,8 +284,7 @@ mod broken_peer {
                  core: &mut Core,
                  event_loop: &mut EventLoop<Core>,
                  token: Token,
-                 _: EventSet)
-        {
+                 _: EventSet) {
             match unwrap_result!(self.0.accept()) {
                 Some((socket, _)) => {
                     unwrap_result!(event_loop.deregister(&self.0));
@@ -296,11 +292,7 @@ mod broken_peer {
                     let socket = Socket::wrap(socket);
                     let context = core.get_context(token).unwrap();
 
-                    Connection::start(core,
-                                      event_loop,
-                                      context,
-                                      token,
-                                      socket);
+                    Connection::start(core, event_loop, context, token, socket);
                 }
 
                 None => {
@@ -324,8 +316,7 @@ mod broken_peer {
                  event_loop: &mut EventLoop<Core>,
                  context: Context,
                  token: Token,
-                 socket: Socket)
-        {
+                 socket: Socket) {
             unwrap_result!(event_loop.register(&socket,
                                                token,
                                                EventSet::readable(),
@@ -341,8 +332,7 @@ mod broken_peer {
                  _: &mut Core,
                  event_loop: &mut EventLoop<Core>,
                  token: Token,
-                 event_set: EventSet)
-        {
+                 event_set: EventSet) {
             let mut writable = false;
 
             if event_set.is_readable() {
@@ -366,7 +356,9 @@ mod broken_peer {
             }
 
             let mut event_set = EventSet::readable();
-            if writable { event_set.insert(EventSet::writable()); }
+            if writable {
+                event_set.insert(EventSet::writable());
+            }
 
             unwrap_result!(event_loop.reregister(&self.0,
                                                  token,
@@ -402,7 +394,8 @@ fn drop_peer_when_no_message_received_within_inactivity_period() {
         unwrap_result!(event_loop.run(&mut core));
     }));
 
-    let listener = unwrap_result!(TcpListener::bind(&unwrap_result!(StdSocketAddr::from_str("127.0.0.1:0"))));
+    let listener =
+        unwrap_result!(TcpListener::bind(&unwrap_result!(StdSocketAddr::from_str("127.0.0.1:0"))));
     let address = SocketAddr(unwrap_result!(listener.local_addr()));
 
     unwrap_result!(mio_tx.send(CoreMessage::new(|core, event_loop| {
