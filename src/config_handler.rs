@@ -19,7 +19,6 @@ use config_file_handler::{self, FileHandler};
 use std::ffi::OsString;
 use std::path::PathBuf;
 
-use error::Error;
 use socket_addr::SocketAddr;
 use static_contact_info::StaticContactInfo;
 
@@ -47,7 +46,7 @@ impl Default for Config {
 }
 
 /// Reads the default crust config file.
-pub fn read_config_file() -> Result<Config, Error> {
+pub fn read_config_file() -> ::Res<Config> {
     let file_handler = try!(FileHandler::new(&try!(get_file_name())));
     let cfg = try!(file_handler.read_file());
     Ok(cfg)
@@ -61,8 +60,7 @@ pub fn read_config_file() -> Result<Config, Error> {
 /// N.B. This method should only be used as a utility for test and examples.  In normal use cases,
 /// this file should be created by the installer for the dependent application.
 #[allow(unused)]
-pub fn write_config_file(hard_coded_contacts: Option<Vec<StaticContactInfo>>)
-                         -> Result<PathBuf, Error> {
+pub fn write_config_file(hard_coded_contacts: Option<Vec<StaticContactInfo>>) -> ::Res<PathBuf> {
     use std::io::Write;
 
     let mut config = Config::default();
@@ -81,7 +79,7 @@ pub fn write_config_file(hard_coded_contacts: Option<Vec<StaticContactInfo>>)
     Ok(config_path)
 }
 
-fn get_file_name() -> Result<OsString, Error> {
+fn get_file_name() -> ::Res<OsString> {
     let mut name = try!(config_file_handler::exe_file_stem());
     name.push(".crust.config");
     Ok(name)
@@ -101,18 +99,18 @@ mod test {
         let mut file = match ::std::fs::File::open(path) {
             Ok(file) => file,
             Err(what) => {
-                panic!(format!("Error opening sample.config: {:?}", what));
+                panic!(format!("CrustError opening sample.config: {:?}", what));
             }
         };
 
         let mut encoded_contents = String::new();
 
         if let Err(what) = file.read_to_string(&mut encoded_contents) {
-            panic!(format!("Error reading sample.config: {:?}", what));
+            panic!(format!("CrustError reading sample.config: {:?}", what));
         }
 
         if let Err(what) = json::decode::<Config>(&encoded_contents) {
-            panic!(format!("Error parsing sample.config: {:?}", what));
+            panic!(format!("CrustError parsing sample.config: {:?}", what));
         }
     }
 }

@@ -19,7 +19,6 @@ use mio::{EventLoop, EventSet, PollOpt, Timeout, Token};
 use std::any::Any;
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::io::{self, ErrorKind};
 
 use active_connection::ActiveConnection;
 use core::{Context, Core, State};
@@ -53,16 +52,14 @@ impl ExchangeMsg {
                  name_hash: u64,
                  cm: SharedConnectionMap,
                  event_tx: ::CrustEventSender)
-                 -> io::Result<()> {
+                 -> ::Res<()> {
         let token = core.get_new_token();
         let context = core.get_new_context();
 
         let event_set = EventSet::error() | EventSet::hup() | EventSet::readable();
         try!(event_loop.register(&socket, token, event_set, PollOpt::edge()));
 
-        // TODO Use crust error throughout
-        let timeout = try!(event_loop.timeout_ms(token, EXCHANGE_MSG_TIMEOUT_MS)
-            .map_err(|e| io::Error::new(ErrorKind::Other, format!("{:?}", e))));
+        let timeout = try!(event_loop.timeout_ms(token, EXCHANGE_MSG_TIMEOUT_MS));
 
         let _ = core.insert_context(token, context);
 
@@ -104,7 +101,6 @@ impl ExchangeMsg {
         }
     }
 
-    // TODO use crust error
     fn get_peer_id(&mut self, peer_pk: PublicKey, name_hash: u64) -> Result<PeerId, ()> {
         if self.our_pk == peer_pk {
             warn!("Accepted connection from ourselves");
@@ -165,8 +161,6 @@ impl ExchangeMsg {
         let _ = event_loop.clear_timeout(self.timeout);
 
         let peer_id = self.peer_id.take().expect("Logic Error");
-        let event = self.event.take().expect("Logic Error");
-        let _ = self.event_tx.send(event);
 
         ActiveConnection::start(core,
                                 event_loop,
@@ -175,6 +169,9 @@ impl ExchangeMsg {
                                 self.cm.clone(),
                                 peer_id,
                                 self.event_tx.clone());
+
+        let event = self.event.take().expect("Logic Error");
+        let _ = self.event_tx.send(event);
     }
 }
 

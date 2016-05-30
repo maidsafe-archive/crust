@@ -67,7 +67,7 @@ extern crate void;
 
 mod connect;
 mod active_connection;
-mod bootstrap_states;
+mod bootstrap;
 mod config_handler;
 mod connection_listener;
 /// Core Event Loop
@@ -89,10 +89,12 @@ mod tests;
 pub type CrustEventSender = ::maidsafe_utilities::event_sender::MaidSafeObserver<Event>;
 
 /// Allowed max data_len for read/write is 2MB
-pub const MAX_DATA_LEN: u32 = 2 * 1024 * 1024;
+pub const MAX_PAYLOAD_SIZE: usize = 2 * 1024 * 1024;
+/// Crust result type
+pub type Res<T> = Result<T, CrustError>;
 
 pub use event::Event;
-pub use error::Error;
+pub use error::CrustError;
 pub use peer_id::PeerId;
 pub use service::{Service, ConnectionInfoResult, PrivConnectionInfo, PubConnectionInfo};
 pub use socket_addr::SocketAddr;

@@ -15,16 +15,17 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
-use maidsafe_utilities::serialisation::{deserialise_from, serialise_into, SerialisationError};
-use mio::{Evented, EventSet, PollOpt, Selector, Token, EventLoop};
+use std::mem;
+use core::Core;
+use error::CrustError;
+use std::net::SocketAddr;
+use std::collections::VecDeque;
 use mio::tcp::{Shutdown, TcpStream};
 use rustc_serialize::{Decodable, Encodable};
-use std::collections::VecDeque;
 use std::io::{self, Cursor, ErrorKind, Read, Write};
-use std::mem;
-use std::net::SocketAddr;
-use core::Core;
+use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
+use mio::{Evented, EventSet, PollOpt, Selector, Token, EventLoop};
+use maidsafe_utilities::serialisation::{deserialise_from, serialise_into};
 
 // Wrapper over raw TcpStream, which automatically handles buffering and
 // (de)serialization.
@@ -36,7 +37,7 @@ pub struct Socket {
 }
 
 impl Socket {
-    pub fn connect(addr: &SocketAddr) -> Result<Self, SocketError> {
+    pub fn connect(addr: &SocketAddr) -> ::Res<Self> {
         let stream = try!(TcpStream::connect(addr));
         Ok(Self::wrap(stream))
     }
@@ -57,7 +58,7 @@ impl Socket {
     //   - Ok(None):       there is not enough data in the socket. Call `read`
     //                     again in the next invocation of the `ready` handler.
     //   - Err(error):     there was an error reading from the socket.
-    pub fn read<T: Decodable>(&mut self) -> Result<Option<T>, SocketError> {
+    pub fn read<T: Decodable>(&mut self) -> ::Res<Option<T>> {
         // If there is something in the read buffer already, retrieve it without
         // hitting the socket at all.
         if let Some(message) = try!(self.read_from_buffer()) {
@@ -83,7 +84,7 @@ impl Socket {
         }
     }
 
-    fn read_from_buffer<T: Decodable>(&mut self) -> Result<Option<T>, SocketError> {
+    fn read_from_buffer<T: Decodable>(&mut self) -> ::Res<Option<T>> {
         // TODO: use some kind of ring buffer here.
         let u32_size = mem::size_of::<u32>();
 
@@ -95,6 +96,11 @@ impl Socket {
 
             self.read_len = try!(Cursor::new(&self.read_buffer)
                 .read_u32::<LittleEndian>()) as usize;
+
+            if self.read_len > ::MAX_PAYLOAD_SIZE {
+                return Err(CrustError::PayloadSizeProhibitive);
+            }
+
             self.read_buffer = self.read_buffer[u32_size..].to_owned();
         }
 
@@ -104,7 +110,6 @@ impl Socket {
             return Ok(None);
         }
 
-        // TODO: enforce size limit
         let result = try!(deserialise_from(&mut Cursor::new(&self.read_buffer)));
 
         self.read_buffer = self.read_buffer[self.read_len..].to_owned();
@@ -124,7 +129,7 @@ impl Socket {
                                  el: &mut EventLoop<Core>,
                                  token: Token,
                                  msg: Option<T>)
-                                 -> Result<bool, SocketError> {
+                                 -> ::Res<bool> {
         if let Some(msg) = msg {
             let mut data = Cursor::new(Vec::with_capacity(mem::size_of::<u32>()));
 
@@ -180,7 +185,7 @@ impl Socket {
     //                 write event and call `flush` to finish the write in the
     //                 next ready handler.
     //   - Err(error): there was an error while writing to the socket.
-    pub fn write<T: Encodable>(&mut self, message: T) -> Result<bool, SocketError> {
+    pub fn write<T: Encodable>(&mut self, message: T) -> ::Res<bool> {
         let mut data = Cursor::new(Vec::with_capacity(mem::size_of::<u32>()));
 
         // Preallocate space for the message length at the beginning of the
@@ -206,7 +211,7 @@ impl Socket {
     //   - Ok(false):  more stuff remains to be written. Call `flush` again in
     //                 the next invocation of the ready handler.
     //   - Err(error): there was an error while writing to the socket.
-    pub fn flush(&mut self) -> Result<bool, SocketError> {
+    pub fn flush(&mut self) -> ::Res<bool> {
         while let Some(mut data) = self.write_queue.pop_front() {
             match self.stream.write(&data) {
                 Ok(bytes_written) => {
@@ -233,7 +238,7 @@ impl Socket {
     }
 
     /// Shut down the socket (both reading and writing).
-    pub fn shutdown(&self) -> Result<(), SocketError> {
+    pub fn shutdown(&self) -> ::Res<()> {
         Ok(try!(self.stream.shutdown(Shutdown::Both)))
     }
 }
@@ -259,25 +264,6 @@ impl Evented for Socket {
 
     fn deregister(&self, selector: &mut Selector) -> io::Result<()> {
         self.stream.deregister(selector)
-    }
-}
-
-quick_error! {
-    #[derive(Debug)]
-    pub enum SocketError {
-        Io(err: io::Error) {
-            description("IO error")
-            display("IO error: {}", err)
-            cause(err)
-            from()
-        }
-
-        Serialisation(err: SerialisationError) {
-            description("Serialisation error")
-            display("Serialisation error: {}", err)
-            cause(err)
-            from()
-        }
     }
 }
 

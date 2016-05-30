@@ -25,7 +25,6 @@ use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::sync::{Arc, Mutex};
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::io;
 
 use socket_addr;
 use net2::TcpBuilder;
@@ -61,33 +60,25 @@ impl ConnectionListener {
         let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), port);
         let event_tx_0 = event_tx.clone();
 
-        match MappingTcpSocket::new(core,
-                                    event_loop,
-                                    &addr,
-                                    &mapping_context,
-                                    move |core, event_loop, socket, mapped_addrs| {
-            match ConnectionListener::handle_mapped_socket(core,
-                                                           event_loop,
-                                                           socket,
-                                                           mapped_addrs,
-                                                           addr,
-                                                           our_pk,
-                                                           name_hash,
-                                                           cm,
-                                                           static_contact_info,
-                                                           event_tx.clone()) {
-                Ok(()) => (),
-                Err(e) => {
-                    error!("TCP Listener failed: {:?}", e);
-                    let _ = event_tx.send(Event::ListenerFailed);
-                }
+        let finish = move |core: &mut Core, el: &mut EventLoop<Core>, socket, mapped_addrs| {
+            if let Err(e) = ConnectionListener::handle_mapped_socket(core,
+                                                                     el,
+                                                                     socket,
+                                                                     mapped_addrs,
+                                                                     addr,
+                                                                     our_pk,
+                                                                     name_hash,
+                                                                     cm,
+                                                                     static_contact_info,
+                                                                     event_tx.clone()) {
+                error!("TCP Listener failed to handle mapped socket: {:?}", e);
+                let _ = event_tx.send(Event::ListenerFailed);
             }
-        }) {
-            Ok(()) => {}
-            Err(e) => {
-                error!("Error starting tcp_listening_socket: {}", e);
-                let _ = event_tx_0.send(Event::ListenerFailed);
-            }
+        };
+
+        if let Err(e) = MappingTcpSocket::new(core, event_loop, &addr, &mapping_context, finish) {
+            error!("Error starting tcp_listening_socket: {:?}", e);
+            let _ = event_tx_0.send(Event::ListenerFailed);
         }
     }
 
@@ -101,7 +92,7 @@ impl ConnectionListener {
                             cm: SharedConnectionMap,
                             static_contact_info: Arc<Mutex<StaticContactInfo>>,
                             event_tx: ::CrustEventSender)
-                            -> io::Result<()> {
+                            -> ::Res<()> {
         let token = core.get_new_token();
         let context = core.get_new_context();
 
@@ -187,7 +178,7 @@ mod test {
     use std::time::Duration;
     use std::sync::{Arc, Mutex};
     use std::collections::HashMap;
-    use std::io::{self, Cursor, Write, Read};
+    use std::io::{Cursor, Write, Read};
     use std::net::SocketAddr as StdSocketAddr;
 
     use event::Event;
@@ -284,7 +275,7 @@ mod test {
         stream
     }
 
-    fn write(stream: &mut TcpStream, message: Vec<u8>) -> io::Result<()> {
+    fn write(stream: &mut TcpStream, message: Vec<u8>) -> ::Res<()> {
         let mut size_vec = Vec::with_capacity(mem::size_of::<u32>());
         unwrap_result!(size_vec.write_u32::<LittleEndian>(message.len() as u32));
 
@@ -295,7 +286,7 @@ mod test {
     }
 
     #[allow(unsafe_code)]
-    fn read<T: Decodable>(stream: &mut TcpStream) -> io::Result<T> {
+    fn read<T: Decodable>(stream: &mut TcpStream) -> ::Res<T> {
         let mut payload_size_buffer = [0; 4];
         try!(stream.read_exact(&mut payload_size_buffer));
 
