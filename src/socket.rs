@@ -94,8 +94,8 @@ impl Socket {
                 return Ok(None);
             }
 
-            self.read_len =
-                try!(Cursor::new(&self.read_buffer).read_u32::<LittleEndian>()) as usize;
+            self.read_len = try!(Cursor::new(&self.read_buffer)
+                .read_u32::<LittleEndian>()) as usize;
 
             if self.read_len > ::MAX_PAYLOAD_SIZE {
                 return Err(CrustError::PayloadSizeProhibitive);

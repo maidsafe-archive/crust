@@ -96,6 +96,6 @@ pub type Res<T> = Result<T, CrustError>;
 pub use event::Event;
 pub use error::CrustError;
 pub use peer_id::PeerId;
-pub use service::Service;
+pub use service::{Service, ConnectionInfoResult, PrivConnectionInfo, PubConnectionInfo};
 pub use socket_addr::SocketAddr;
 pub use static_contact_info::StaticContactInfo;

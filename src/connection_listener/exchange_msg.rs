@@ -101,7 +101,6 @@ impl ExchangeMsg {
         }
     }
 
-    // TODO use crust error
     fn get_peer_id(&mut self, peer_pk: PublicKey, name_hash: u64) -> Result<PeerId, ()> {
         if self.our_pk == peer_pk {
             warn!("Accepted connection from ourselves");
@@ -162,8 +161,6 @@ impl ExchangeMsg {
         let _ = event_loop.clear_timeout(self.timeout);
 
         let peer_id = self.peer_id.take().expect("Logic Error");
-        let event = self.event.take().expect("Logic Error");
-        let _ = self.event_tx.send(event);
 
         ActiveConnection::start(core,
                                 event_loop,
@@ -172,6 +169,9 @@ impl ExchangeMsg {
                                 self.cm.clone(),
                                 peer_id,
                                 self.event_tx.clone());
+
+        let event = self.event.take().expect("Logic Error");
+        let _ = self.event_tx.send(event);
     }
 }
 

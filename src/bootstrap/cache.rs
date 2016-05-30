@@ -30,8 +30,7 @@ pub struct Storage {
 }
 
 pub struct Cache {
-    // file_handler: FileHandler<Vec<socket_addr::SocketAddr>>,
-    file_handler: FileHandler<Vec<Storage>>,
+    file_handler: FileHandler<Storage>,
 }
 
 impl Cache {
@@ -74,9 +73,11 @@ impl Cache {
     //     Ok(())
     // }
 
-    pub fn read_file(&mut self) -> ::Res<Storage> {
-        Ok(try!(self.file_handler.read_file()).pop().unwrap_or(Storage::default()))
+    pub fn read_file(&mut self) -> Storage {
+        self.file_handler.read_file().unwrap_or(Storage::default())
     }
+
+    pub fn remove_peer_acceptor(&mut self, _peer: socket_addr::SocketAddr) {}
 
     // fn duration_between_updates() -> Duration {
     //     Duration::from_secs(4 * 60 * 60)

@@ -112,7 +112,7 @@ fn bootstrap_two_services_and_exchange_messages() {
     assert_eq!(peer_id1, service1.id());
 
     let message0 = "hello from 0".as_bytes().to_owned();
-    unwrap_result!(service0.send(peer_id1, message0.clone()));
+    unwrap_result!(service0.send(peer_id1, message0.clone(), 0));
 
     expect_event!(event_rx1, Event::NewMessage(peer_id, data) => {
         assert_eq!(peer_id, peer_id0);
@@ -120,7 +120,7 @@ fn bootstrap_two_services_and_exchange_messages() {
     });
 
     let message1 = "hello from 1".as_bytes().to_owned();
-    unwrap_result!(service1.send(peer_id0, message1.clone()));
+    unwrap_result!(service1.send(peer_id0, message1.clone(), 0));
 
     expect_event!(event_rx0, Event::NewMessage(peer_id, data) => {
         assert_eq!(peer_id, peer_id1);
@@ -197,10 +197,7 @@ fn bootstrap_fails_if_there_are_no_contacts() {
     expect_event!(event_rx, Event::BootstrapFailed);
 }
 
-// This test is ignored by default, because it takes too long (it needs to trigger
-// the bootstrap timeout to succeed.
 #[test]
-#[ignore]
 fn bootstrap_timeouts_if_there_are_only_invalid_contacts() {
     use std::net::TcpListener;
 
@@ -391,11 +388,8 @@ fn drop_peer_when_no_message_received_within_inactivity_period() {
         unwrap_result!(event_loop.run(&mut core));
     }));
 
-    let listener = unwrap_result!(TcpListener::bind(&unwrap_result!(StdSocketAddr::from_str("127.\
-                                                                                             0.\
-                                                                                             0.\
-                                                                                             1:\
-                                                                                             0"))));
+    let bind_addr = StdSocketAddr::from_str("127.0.0.1:0").expect("Could not parse addr");
+    let listener = TcpListener::bind(&bind_addr).expect("Could not bind listener");
     let address = SocketAddr(unwrap_result!(listener.local_addr()));
 
     unwrap_result!(mio_tx.send(CoreMessage::new(|core, event_loop| {
