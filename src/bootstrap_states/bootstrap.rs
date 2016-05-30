@@ -64,7 +64,7 @@ impl Bootstrap {
             EstablishConnection::start(core,
                                        event_loop,
                                        contact,
-                                       our_public_key.clone(),
+                                       our_public_key,
                                        name_hash,
                                        pending_connections.clone(),
                                        connection_map.clone(),
@@ -100,7 +100,7 @@ impl State for Bootstrap {
         let connections = mem::replace(&mut *self.pending_connections.borrow_mut(), HashSet::new());
 
         for context in connections {
-            let _ = core.terminate_state(event_loop, context);
+            core.terminate_state(event_loop, context);
         }
 
         let _ = event_loop.clear_timeout(self.timeout);

@@ -98,12 +98,12 @@ impl Core {
 
     /// Get the context registered with a particular token (if any).
     pub fn get_context(&self, token: Token) -> Option<Context> {
-        self.contexts.get(&token).map(|h| *h)
+        self.contexts.get(&token).cloned()
     }
 
     /// Get the state registered with a particular context (if any).
     pub fn get_state(&self, token: Context) -> Option<Rc<RefCell<State>>> {
-        self.states.get(&token).map(|s| s.clone())
+        self.states.get(&token).cloned()
     }
 
     /// Call `terminate` on the state associated with the given context.
@@ -134,6 +134,12 @@ impl Handler for Core {
             Some(state) => state.borrow_mut().timeout(self, event_loop, token),
             None => (),
         }
+    }
+}
+
+impl Default for Core {
+    fn default() -> Core {
+        Core::new()
     }
 }
 

@@ -152,7 +152,7 @@ impl State for ConnectionListener {
                     if let Err(e) = ExchangeMsg::start(core,
                                                        event_loop,
                                                        Socket::wrap(socket),
-                                                       self.our_pk.clone(),
+                                                       self.our_pk,
                                                        self.name_hash,
                                                        self.cm.clone(),
                                                        self.event_tx.clone()) {
@@ -242,12 +242,11 @@ mod test {
 
         let our_static_contact_info = static_contact_info.clone();
         let (pk, _) = box_::gen_keypair();
-        let pk_clone = pk.clone();
         tx.send(CoreMessage::new(move |core, el| {
                 ConnectionListener::start(core,
                                           el,
                                           0,
-                                          pk_clone,
+                                          pk,
                                           NAME_HASH,
                                           cm,
                                           mapping_context,
@@ -308,13 +307,13 @@ mod test {
         }
         try!(stream.read_exact(&mut payload));
 
-        Ok(deserialise(&mut payload).expect("Could not deserialise."))
+        Ok(deserialise(&payload).expect("Could not deserialise."))
     }
 
     fn bootstrap(name_hash: u64, pk: PublicKey, listener: Listener) {
         let mut peer = connect_to_listener(&listener);
 
-        let message = serialise(&Message::BootstrapRequest(pk.clone(), name_hash)).unwrap();
+        let message = serialise(&Message::BootstrapRequest(pk, name_hash)).unwrap();
         write(&mut peer, message).expect("Could not write.");
 
         match read(&mut peer).expect("Could not read.") {
@@ -331,7 +330,7 @@ mod test {
     fn connect(name_hash: u64, pk: PublicKey, listener: Listener) {
         let mut peer = connect_to_listener(&listener);
 
-        let message = serialise(&Message::Connect(pk.clone(), name_hash)).unwrap();
+        let message = serialise(&Message::Connect(pk, name_hash)).unwrap();
         write(&mut peer, message).expect("Could not write.");
 
         match read(&mut peer).expect("Could not read.") {
@@ -385,14 +384,14 @@ mod test {
     #[should_panic]
     fn bootstrap_with_invalid_pub_key() {
         let listener = start_listener();
-        bootstrap(NAME_HASH, listener.pk.clone(), listener);
+        bootstrap(NAME_HASH, listener.pk, listener);
     }
 
     #[test]
     #[should_panic]
     fn connect_with_invalid_pub_key() {
         let listener = start_listener();
-        connect(NAME_HASH, listener.pk.clone(), listener);
+        connect(NAME_HASH, listener.pk, listener);
     }
 
     #[test]

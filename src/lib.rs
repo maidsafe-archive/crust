@@ -39,8 +39,10 @@
 
 #![cfg_attr(feature="clippy", feature(plugin))]
 #![cfg_attr(feature="clippy", plugin(clippy))]
-#![cfg_attr(feature="clippy", deny(clippy, clippy_pedantic))]
+#![cfg_attr(feature="clippy", deny(clippy))]
 #![cfg_attr(feature="clippy", allow(use_debug))]
+// TODO: Fix these lints and remove these exceptions.
+#![cfg_attr(feature="clippy", allow(cyclomatic_complexity, single_match, too_many_arguments))]
 
 extern crate byteorder;
 extern crate config_file_handler;
@@ -88,7 +90,7 @@ mod tests;
 /// Crust Observers will be informed of crust events on this
 pub type CrustEventSender = ::maidsafe_utilities::event_sender::MaidSafeObserver<Event>;
 
-/// Allowed max data_len for read/write is 2MB
+/// Allowed max `data_len` for read/write is 2MB
 pub const MAX_DATA_LEN: u32 = 2 * 1024 * 1024;
 
 pub use event::Event;

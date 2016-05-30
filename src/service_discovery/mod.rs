@@ -192,9 +192,7 @@ impl State for ServiceDiscovery {
              event_loop: &mut EventLoop<Core>,
              _: Token,
              event_set: EventSet) {
-        if event_set.is_error() {
-            self.terminate(core, event_loop);
-        } else if event_set.is_hup() {
+        if event_set.is_error() || event_set.is_hup() {
             self.terminate(core, event_loop);
         } else {
             if event_set.is_readable() {

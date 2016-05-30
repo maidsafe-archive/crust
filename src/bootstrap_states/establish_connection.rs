@@ -115,7 +115,7 @@ impl EstablishConnection {
             // If there are no pending connections left, terminate the whole bootstrap.
             if self.pending_connections.borrow().is_empty() {
                 let _ = self.event_tx.send(Event::BootstrapFailed);
-                let _ = core.terminate_state(event_loop, self.parent_handle);
+                core.terminate_state(event_loop, self.parent_handle);
             }
         }
     }
@@ -196,7 +196,7 @@ impl EstablishConnection {
         let _ = self.pending_connections.borrow_mut().remove(&self.context);
 
         // We have a connection, we can terminate the bootstrap now.
-        let _ = core.terminate_state(event_loop, self.parent_handle);
+        core.terminate_state(event_loop, self.parent_handle);
         let _ = self.event_tx.send(Event::BootstrapConnect(peer_id));
 
         ActiveConnection::start(core,
