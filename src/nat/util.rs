@@ -48,9 +48,9 @@ impl From<NewReusablyBoundTcpSocketError> for io::Error {
     fn from(e: NewReusablyBoundTcpSocketError) -> io::Error {
         let err_str = format!("{}", e);
         let kind = match e {
-            NewReusablyBoundTcpSocketError::Create { err } => err.kind(),
-            NewReusablyBoundTcpSocketError::EnableReuseAddr { err } => err.kind(),
-            NewReusablyBoundTcpSocketError::EnableReusePort { err } => err.kind(),
+            NewReusablyBoundTcpSocketError::Create { err } |
+            NewReusablyBoundTcpSocketError::EnableReuseAddr { err } |
+            NewReusablyBoundTcpSocketError::EnableReusePort { err } |
             NewReusablyBoundTcpSocketError::Bind { err } => err.kind(),
         };
         io::Error::new(kind, err_str)
@@ -132,13 +132,13 @@ pub fn expand_unspecified_ip(ip: IpAddr) -> io::Result<Vec<IpAddr>> {
         IpAddr::V4(ipv4) => {
             try!(expand_unspecified_ipv4(ipv4))
                 .into_iter()
-                .map(|ipv4| IpAddr::V4(ipv4))
+                .map(IpAddr::V4)
                 .collect()
         }
         IpAddr::V6(ipv6) => {
             try!(expand_unspecified_ipv6(ipv6))
                 .into_iter()
-                .map(|ipv6| IpAddr::V6(ipv6))
+                .map(IpAddr::V6)
                 .collect()
         }
     })

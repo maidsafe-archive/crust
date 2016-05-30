@@ -151,7 +151,7 @@ impl Bootstrap {
             if let Ok(child) = TryPeer::start(core,
                                               event_loop,
                                               *peer,
-                                              self.our_pk.clone(),
+                                              self.our_pk,
                                               self.name_hash,
                                               Box::new(finish)) {
                 let _ = self.children.insert(child);
@@ -174,11 +174,11 @@ impl Bootstrap {
                                         self.cm.clone(),
                                         peer_id,
                                         self.event_tx.clone());
-                let _ = self.event_tx.send(Event::BootstrapConnect(peer_id.clone()));
+                let _ = self.event_tx.send(Event::BootstrapConnect(peer_id));
                 return self.terminate(core, event_loop);
             }
             Err(bad_peer) => {
-                let _ = self.cache.remove_peer_acceptor(socket_addr::SocketAddr(bad_peer));
+                self.cache.remove_peer_acceptor(socket_addr::SocketAddr(bad_peer));
             }
         }
 

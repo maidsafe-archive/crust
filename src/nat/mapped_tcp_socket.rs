@@ -20,7 +20,7 @@ use core::state::State;
 use nat::util::{new_reusably_bound_tcp_socket, tcp_builder_local_addr, expand_unspecified_addr};
 use nat::mapping_context::MappingContext;
 
-const REQUEST_MAGIC_CONSTANT: [u8; 4] = ['E' as u8, 'C' as u8, 'H' as u8, 'O' as u8];
+const REQUEST_MAGIC_CONSTANT: [u8; 4] = [b'E', b'C', b'H', b'O'];
 
 struct WritingSocket {
     socket: TcpStream,
@@ -62,13 +62,13 @@ impl<F> MappingTcpSocket<F>
         let socket = try!(new_reusably_bound_tcp_socket(local_addr));
         let local_addr = try!(tcp_builder_local_addr(&socket));
         let mapped_addrs = try!(expand_unspecified_addr(local_addr));
-        let mapped_addrs = mapped_addrs.into_iter().map(|sa| socket_addr::SocketAddr(sa)).collect();
+        let mapped_addrs = mapped_addrs.into_iter().map(socket_addr::SocketAddr).collect();
 
         let external_servers: Vec<SocketAddr> = mapping_context.tcp_mapping_servers()
             .cloned()
             .collect();
         debug!("external_servers == {:?}", external_servers);
-        if external_servers.len() > 0 {
+        if !external_servers.is_empty() {
             let mut writing_sockets = HashMap::new();
             for server_addr in mapping_context.tcp_mapping_servers() {
                 let query_socket = try!(new_reusably_bound_tcp_socket(&local_addr));
@@ -80,14 +80,14 @@ impl<F> MappingTcpSocket<F>
                                          EventSet::writable() | EventSet::error() |
                                          EventSet::hup(),
                                          PollOpt::edge()));
-                let _ = core.insert_context(token, context.clone());
+                let _ = core.insert_context(token, context);
                 let writing_socket = WritingSocket {
                     socket: query_socket,
                     written: 0usize,
                 };
                 let _ = writing_sockets.insert(token, writing_socket);
             }
-            let _ = core.insert_state(context.clone(),
+            let _ = core.insert_state(context,
                                       Rc::new(RefCell::new(MappingTcpSocket {
                                           socket: Some(socket),
                                           writing_sockets: writing_sockets,
@@ -107,7 +107,7 @@ impl<F> MappingTcpSocket<F>
             core: &mut Core,
             event_loop: &mut EventLoop<Core>)
             -> (net2::TcpBuilder, Vec<socket_addr::SocketAddr>) {
-        for (token, writing_socket) in self.writing_sockets.iter() {
+        for (token, writing_socket) in &self.writing_sockets {
             match event_loop.deregister(&writing_socket.socket) {
                 Ok(()) => (),
                 Err(e) => debug!("Error deregistering socket: {}", e),
@@ -115,7 +115,7 @@ impl<F> MappingTcpSocket<F>
             let _ = core.remove_context(*token);
         }
 
-        for (token, reading_socket) in self.reading_sockets.iter() {
+        for (token, reading_socket) in &self.reading_sockets {
             match event_loop.deregister(&reading_socket.socket) {
                 Ok(()) => (),
                 Err(e) => debug!("Error deregistering socket: {}", e),
@@ -238,7 +238,7 @@ impl<F> MappingTcpSocket<F>
                                 self.external_addrs += 1;
                             }
                         } else {
-                            oe.get_mut().read_data.extend(&buf[..n]);
+                            oe.get_mut().read_data.extend_from_slice(&buf[..n]);
                             let len = oe.get_mut().read_data.len();
                             if len > MAX_RECV_MSG_SIZE {
                                 debug!("Overly long response from mapping server: {} bytes", len);

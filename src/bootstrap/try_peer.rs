@@ -79,7 +79,7 @@ impl TryPeer {
     }
 
     fn send_bootstrap_request(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
-        let our_pk = self.our_pk.clone();
+        let our_pk = self.our_pk;
         let name_hash = self.name_hash;
         self.write(core,
                    event_loop,
@@ -103,16 +103,15 @@ impl TryPeer {
                     (self.socket.take().expect("Logic Error"), self.token, peer_id::new(peer_pk));
                 (*self.finish)(core, event_loop, context, Ok(data));
             }
-            Ok(Some(_)) => self.handle_error(core, event_loop), // Wrong Handshake Message
             Ok(None) => (),
-            Err(_) => self.handle_error(core, event_loop),
+            Ok(Some(_)) | Err(_) => self.handle_error(core, event_loop), // Wrong Handshake Message
         }
     }
 
     fn handle_error(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
         self.terminate(core, event_loop);
         let context = self.context;
-        let peer = self.peer.clone();
+        let peer = self.peer;
         (*self.finish)(core, event_loop, context, Err(peer));
     }
 }
@@ -127,9 +126,10 @@ impl State for TryPeer {
             self.handle_error(core, event_loop);
         } else {
             if event_set.is_writable() {
-                match self.request_sent {
-                    true => self.write(core, event_loop, None),
-                    false => self.send_bootstrap_request(core, event_loop),
+                if self.request_sent {
+                    self.write(core, event_loop, None);
+                } else {
+                    self.send_bootstrap_request(core, event_loop);
                 }
             }
             if event_set.is_readable() {

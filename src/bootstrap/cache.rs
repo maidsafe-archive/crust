@@ -74,7 +74,7 @@ impl Cache {
     // }
 
     pub fn read_file(&mut self) -> Storage {
-        self.file_handler.read_file().unwrap_or(Storage::default())
+        self.file_handler.read_file().ok().unwrap_or_else(Storage::default)
     }
 
     pub fn remove_peer_acceptor(&mut self, _peer: socket_addr::SocketAddr) {}

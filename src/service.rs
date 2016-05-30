@@ -206,7 +206,7 @@ impl Service {
     // TODO: accept a blacklist parameter.
     pub fn start_bootstrap(&mut self) -> ::Res<()> {
         let config = self.config.clone();
-        let our_public_key = self.our_keys.0.clone();
+        let our_public_key = self.our_keys.0;
         let name_hash = self.name_hash;
         let connection_map = self.connection_map.clone();
         let event_tx = self.event_tx.clone();
@@ -230,7 +230,7 @@ impl Service {
     /// Stop the bootstraping procedure
     pub fn stop_bootstrap(&mut self) -> ::Res<()> {
         self.post(move |mut core, mut event_loop| {
-            let _ = core.terminate_state(event_loop, BOOTSTRAP_CONTEXT);
+            core.terminate_state(event_loop, BOOTSTRAP_CONTEXT);
         })
     }
 
@@ -246,7 +246,7 @@ impl Service {
         let connection_map = self.connection_map.clone();
         let mapping_context = self.mapping_context.clone();
         let port = self.config.tcp_acceptor_port.unwrap_or(0);
-        let our_public_key = self.our_keys.0.clone();
+        let our_public_key = self.our_keys.0;
         let name_hash = self.name_hash;
         let our_contact_info = self.our_contact_info.clone();
         let event_tx = self.event_tx.clone();
@@ -400,7 +400,7 @@ impl Service {
             .lock()
             .unwrap()
             .get(&peer_id)
-            .map(|h| *h) {
+            .cloned() {
             Some(context) => context,
             None => return Err(CrustError::PeerNotFound(peer_id)),
         };
@@ -416,7 +416,7 @@ impl Service {
     // TODO: immediate return in case of sender.send() returned with NotificationError
     pub fn prepare_connection_info(&mut self, result_token: u32) {
         let event_tx = self.event_tx.clone();
-        let our_pub_key = self.our_keys.0.clone();
+        let our_pub_key = self.our_keys.0;
         let static_contact_info = self.our_contact_info.lock().unwrap().clone();
         let mapping_context = self.mapping_context.clone();
         if let Err(e) = self.post(move |mut core, mut event_loop| {
