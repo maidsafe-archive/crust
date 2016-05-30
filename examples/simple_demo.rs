@@ -60,11 +60,8 @@ fn spawn_test_server() {
             break;
         }
         println!("Test peer received {:?}", buf);
-        let mut reply : Vec<u8> = vec![0x04, 0x00, 0x00, 0x00,
-                                       0x11, 0x22, 0x33, 0x44,
-                                       0x04, 0x00, 0x00, 0x00,
-                                       0xAA, 0xBB, 0xCC, 0xDD,
-                                       0x01, 0x00, 0x20, 0x00];
+        let mut reply: Vec<u8> = vec![0x04, 0x00, 0x00, 0x00, 0x11, 0x22, 0x33, 0x44, 0x04, 0x00,
+                                      0x00, 0x00, 0xAA, 0xBB, 0xCC, 0xDD, 0x01, 0x00, 0x20, 0x00];
         strm.write_all(&mut reply).expect("Error in writing");
     }
 }
@@ -85,14 +82,13 @@ fn main() {
     let (crust_tx, crust_rx) = mpsc::channel();
     let (category_tx, _) = mpsc::channel();
     let crust_event_category = MaidSafeEventCategory::Crust;
-    let crust_sender = CrustEventSender::new(crust_tx,
-                                             crust_event_category,
-                                             category_tx);
+    let crust_sender = CrustEventSender::new(crust_tx, crust_event_category, category_tx);
     let mut service = Service::new(crust_sender).expect("Failed constructing crust service");
 
     println!("Connecting ...");
     let contact_info = StaticContactInfo {
-        tcp_acceptors: vec![SocketAddr(StdSocketAddr::from_str("127.0.0.1:33333").expect("Require proper address"))],
+        tcp_acceptors: vec![SocketAddr(StdSocketAddr::from_str("127.0.0.1:33333")
+                                           .expect("Require proper address"))],
         tcp_mapper_servers: vec![],
     };
 
@@ -102,7 +98,7 @@ fn main() {
         match it {
             Event::NewPeer(Ok(()), peer_id) => {
                 println!("Routing received new connection with peer id {}", peer_id);
-                service.send(peer_id, generate_random_vec_u8(MAX_PAYLOAD_SIZE as usize + 1))
+                service.send(peer_id, generate_random_vec_u8(MAX_PAYLOAD_SIZE + 1))
                        .expect("Failed to send data");
             }
             Event::NewMessage(peer_id, msg) => {

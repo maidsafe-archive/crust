@@ -15,49 +15,50 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use mio::{EventLoop, Timeout, Token};
-use sodiumoxide::crypto::box_::PublicKey;
-use std::any::Any;
 use std::mem;
-use std::sync::mpsc::{self, Receiver};
 use std::rc::Rc;
+use std::any::Any;
 use std::cell::RefCell;
+use std::net::SocketAddr;
+use std::sync::mpsc::{self, Receiver};
 
-use error::CrustError;
-use config_handler::Config;
-use core::{Context, Core, State};
 use event::Event;
-use service::SharedConnectionMap;
-use service_discovery::ServiceDiscovery;
-use static_contact_info::StaticContactInfo;
+use error::CrustError;
 use super::cache::Cache;
+use config_handler::Config;
 use super::bootstrap::Bootstrap;
+use core::{Context, Core, State};
+use service::SharedConnectionMap;
+use mio::{EventLoop, Timeout, Token};
+use service_discovery::ServiceDiscovery;
+use sodiumoxide::crypto::box_::PublicKey;
+use static_contact_info::StaticContactInfo;
 
 const MAX_CONTACTS_EXPECTED: usize = 1500;
 const SERVICE_DISCOVERY_TIMEOUT_MS: u64 = 1000;
 
 // Returns the peers from service discovery, cache and config for bootstrapping (not to be held)
-pub struct GetBootstrapContacts {
-    connection_map: SharedConnectionMap,
-    contacts: Vec<StaticContactInfo>,
+pub struct Bootstrap {
+    token: Token,
     context: Context,
-    event_tx: ::CrustEventSender,
+    cm: SharedConnectionMap,
+    peer_candidates: Vec<SocketAddr>,
     name_hash: u64,
-    our_public_key: PublicKey,
-    service_discovery_rx: Receiver<StaticContactInfo>,
-    service_discovery_timeout: Timeout,
-    service_discovery_token: Token,
+    our_pk: PublicKey,
+    event_tx: ::CrustEventSender,
+    sd_meta: Option<ServiceDiscMeta>,
+    child_contexts: HashSet<Context>,
 }
 
-impl GetBootstrapContacts {
+impl Bootstrap {
     pub fn start(core: &mut Core,
                  event_loop: &mut EventLoop<Core>,
-                 bootstrap_context: Context,
-                 config: &Config,
-                 service_discovery_context: Context,
-                 our_public_key: PublicKey,
                  name_hash: u64,
-                 connection_map: SharedConnectionMap,
+                 our_pk: PublicKey,
+                 cm: SharedConnectionMap,
+                 config: &Config,
+                 bootstrap_context: Context,
+                 service_discovery_context: Context,
                  event_tx: ::CrustEventSender) {
         let mut contacts = Vec::with_capacity(MAX_CONTACTS_EXPECTED);
         let mut cache = match Cache::new(&config.bootstrap_cache_name) {
@@ -73,95 +74,73 @@ impl GetBootstrapContacts {
         let cached_contacts = match cache.read_file() {
             Ok(contacts) => contacts,
             Err(error) => {
-                panic!("======= {:?}", error);
-                // error!("Failed to load bootstrap cache: {:?}", error);
-                // let _ = event_tx.send(Event::BootstrapFailed);
-                // return;
+                error!("Failed to load bootstrap cache: {:?}", error);
+                let _ = event_tx.send(Event::BootstrapFailed);
+                return;
             }
-        };
-
-        let cached_contacts_info = if cached_contacts.peer_acceptors.is_empty() &&
-                                      cached_contacts.peer_stuns.is_empty() {
-            Vec::new()
-        } else {
-            vec![StaticContactInfo {
-                     tcp_acceptors: cached_contacts.peer_acceptors,
-                     tcp_mapper_servers: cached_contacts.peer_stuns,
-                 }]
         };
 
         contacts.extend(cached_contacts_info);
 
-        // Get further contacts from config file - contains seed nodes
-        contacts.extend(config.hard_coded_contacts.iter().cloned());
+        for it in config.hard_coded_contacts.iter().cloned() {
+            contacts.extend(it.tcp_acceptors);
+        }
 
         let token = core.get_new_token();
+        let (tx, rx) = mpsc::channel();
 
-        // Get contacts from service discovery.
-        // If service discovery is enabled, we stay in the GetBootstrapContacts
-        // state, wait for the service discovery to retrieve some contacts and
-        // only then transition to the Bootstrap state. Otherwise, we spin up
-        // the Bootstrap state right away.
-        match seek_peers(core, event_loop, service_discovery_context, token) {
+        let sd_meta = match seek_peers(core, event_loop, service_discovery_context, token) {
             Ok((rx, timeout)) => {
-                let state = GetBootstrapContacts {
-                    connection_map: connection_map,
-                    contacts: contacts,
-                    context: bootstrap_context,
-                    event_tx: event_tx,
-                    name_hash: name_hash,
-                    our_public_key: our_public_key,
-                    service_discovery_rx: rx,
-                    service_discovery_timeout: timeout,
-                    service_discovery_token: token,
-                };
-
-                let _ = core.insert_context(token, bootstrap_context);
-                let _ = core.insert_state(bootstrap_context, Rc::new(RefCell::new(state)));
-                return;
+                Some(ServiceDiscMeta {
+                    rx: rx,
+                    timeout: timeout,
+                })
             }
-
-            Err(CrustError::ServiceDiscNotEnabled) => (),
+            Err(CrustError::ServiceDiscNotEnabled) => None,
             Err(error) => {
                 error!("Failed to seek peers using service discovery: {:?}", error);
+                return;
             }
-        }
+        };
+        let state = Rc::new(RefCell::new(Bootstrap {
+            token: token,
+            context: bootstrap_context,
+            cm: cm,
+            peers: contacts,
+            name_hash: name_hash,
+            our_pk: our_pk,
+            event_tx: event_tx,
+            sd_meta: sd_meta,
+            child_contexts: HashSet::with_capacity(MAX_CONTACTS_EXPECTED),
+        }));
 
-        Bootstrap::start(core,
-                         event_loop,
-                         bootstrap_context,
-                         connection_map,
-                         event_tx,
-                         contacts,
-                         our_public_key,
-                         name_hash);
+        let _ = core.insert_context(token, context);
+        let _ = core.insert_state(context, state.clone());
+
+        if state.borrow().sd_meta.is_none() {
+            state.borrow_mut().begin_bootstrap(core, event_loop);
+        }
     }
+
+    fn begin_bootstrap(&mut self, core: &mut Core, &event_loop: &mut EventLoop<Core>) {}
 }
 
-impl State for GetBootstrapContacts {
+impl State for Bootstrap {
     fn timeout(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, _: Token) {
-        let mut contacts = mem::replace(&mut self.contacts, Vec::new());
-
+        let rx = self.sd_meta().take().expect("Logic Error").rx;
         // Get contacts from service discovery.
-        while let Ok(contact) = self.service_discovery_rx.try_recv() {
-            contacts.push(contact);
+        while let Ok(contact) = rx.try_recv() {
+            self.contacts.extend(contact.tcp_acceptors);
         }
 
-        Bootstrap::start(core,
-                         event_loop,
-                         self.context,
-                         self.connection_map.clone(),
-                         self.event_tx.clone(),
-                         contacts,
-                         self.our_public_key,
-                         self.name_hash);
-
-        let _ = core.remove_context(self.service_discovery_token);
+        self.begin_bootstrap(core, event_loop);
     }
 
     fn terminate(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
-        let _ = event_loop.clear_timeout(self.service_discovery_timeout);
-        let _ = core.remove_context(self.service_discovery_token);
+        if let Some(sd_meta) = self.sd_meta.take() {
+            let _ = event_loop.clear_timeout(sd_meta.timeout);
+        }
+        let _ = core.remove_context(self.token);
         let _ = core.remove_state(self.context);
     }
 
@@ -170,23 +149,28 @@ impl State for GetBootstrapContacts {
     }
 }
 
+struct ServiceDiscMeta {
+    rx: Receiver<StaticContactInfo>,
+    timeout: Timeout,
+}
+
 fn seek_peers(core: &mut Core,
               event_loop: &mut EventLoop<Core>,
               service_discovery_context: Context,
+              obs: Sender<StaticContactInfo>,
               token: Token)
-              -> ::Res<(Receiver<StaticContactInfo>, Timeout)> {
+              -> ::Res<Timeout> {
     if let Some(state) = core.get_state(service_discovery_context) {
         let mut state = state.borrow_mut();
         let mut state = state.as_any()
                              .downcast_mut::<ServiceDiscovery>()
                              .expect("Cast failure");
 
-        let (tx, rx) = mpsc::channel();
-        state.register_observer(tx);
+        state.register_observer(obs);
         try!(state.seek_peers());
         let timeout = try!(event_loop.timeout_ms(token, SERVICE_DISCOVERY_TIMEOUT_MS));
 
-        Ok((rx, timeout))
+        Ok(timeout)
     } else {
         Err(CrustError::ServiceDiscNotEnabled)
     }
