@@ -61,6 +61,7 @@ extern crate http_pull_parser;
 extern crate xml;
 extern crate xmltree;
 extern crate regex;
+extern crate url;
 
 // Needed because the crate is only used for macros
 #[allow(unused_extern_crates)]

@@ -112,14 +112,6 @@ impl State for HttpRequest {
                         new_state = Some(MyState::Receiving);
                     }
                 }
-
-                if let Err(e) = event_loop.reregister(&self.socket, token,
-                                                      self.event_set,
-                                                      PollOpt::edge()) {
-                    error!("Could not register socket with EventLoop<Code>: {:?}", e);
-                    // TODO(?): call callback?
-                    return;
-                }
             }
             MyState::Receiving => {
                 loop {
@@ -167,15 +159,13 @@ impl State for HttpRequest {
         if let Some(state) = new_state {
             self.state = state;
         }
-        //if let Err(e) = event_loop.reregister(&self.socket, token,
-        //                                      EventSet::error()
-        //                                      | EventSet::readable()
-        //                                      | EventSet::hup(),
-        //                                      PollOpt::edge()) {
-        //    error!("Could not register socket with EventLoop<Code>: {:?}", e);
-        //    // TODO(?): call callback?
-        //    return;
-        //}
+        if let Err(e) = event_loop.reregister(&self.socket, token,
+                                              self.event_set,
+                                              PollOpt::edge()) {
+            error!("Could not register socket with EventLoop<Code>: {:?}", e);
+            // TODO(?): call callback?
+            return;
+        }
     }
 
     fn as_any(&mut self) -> &mut Any {
@@ -188,5 +178,13 @@ pub fn get<F>(address: &SocketAddrV4, path: &String, core: &mut Core,
     where F: FnOnce(Result<Vec<HttpToken>, HttpError>, &mut Core,
                     &mut EventLoop<Core>) + 'static {
     let req = format!("GET {} HTTP/1.0\r\n\r\n", path).into_bytes();
+    HttpRequest::start(core, event_loop, address, req, f);
+}
+
+#[allow(unused)]
+pub fn raw<F>(address: &SocketAddrV4, req: Vec<u8>, core: &mut Core,
+               event_loop: &mut EventLoop<Core>, f: F)
+    where F: FnOnce(Result<Vec<HttpToken>, HttpError>, &mut Core,
+                    &mut EventLoop<Core>) + 'static {
     HttpRequest::start(core, event_loop, address, req, f);
 }
