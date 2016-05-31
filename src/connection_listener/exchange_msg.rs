@@ -145,7 +145,7 @@ impl ExchangeMsg {
     }
 
     fn write(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, msg: Option<Message>) {
-        match self.socket.as_mut().unwrap().write_2(event_loop, self.token, msg) {
+        match self.socket.as_mut().unwrap().write(event_loop, self.token, msg) {
             Ok(true) => self.transition_to_active(core, event_loop),
             Ok(false) => (),
             Err(e) => {

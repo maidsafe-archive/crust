@@ -122,14 +122,13 @@ impl Socket {
     //
     // Returns:
     //   - Ok(true):   the message has been successfuly written.
-    //   - Ok(false):  the message (or part of it) has been queued. Write event is already
-    //                 scheduled for next time
+    //   - Ok(false):  the message has been queued, but not yet fully written.
+    //                 Write event is already scheduled for next time.
     //   - Err(error): there was an error while writing to the socket.
-    pub fn write_2<T: Encodable>(&mut self,
-                                 el: &mut EventLoop<Core>,
-                                 token: Token,
-                                 msg: Option<T>)
-                                 -> ::Res<bool> {
+    pub fn write<T: Encodable>(&mut self,
+                               el: &mut EventLoop<Core>,
+                               token: Token,
+                               msg: Option<T>) -> ::Res<bool> {
         if let Some(msg) = msg {
             let mut data = Cursor::new(Vec::with_capacity(mem::size_of::<u32>()));
 
@@ -168,73 +167,14 @@ impl Socket {
         }
 
         let event_set = if self.write_queue.is_empty() {
-            EventSet::readable() | EventSet::error() | EventSet::hup()
+            EventSet::error() | EventSet::hup() | EventSet::readable()
         } else {
-            EventSet::readable() | EventSet::writable() | EventSet::error() | EventSet::hup()
+            EventSet::error() | EventSet::hup() | EventSet::readable() | EventSet::writable()
         };
+
         try!(el.reregister(self, token, event_set, PollOpt::edge()));
 
         Ok(self.write_queue.is_empty())
-    }
-
-    // Write a message to the socket.
-    //
-    // Returns:
-    //   - Ok(true):   the message has been successfuly written.
-    //   - Ok(false):  the message (or part of it) has been queued. Schedule a
-    //                 write event and call `flush` to finish the write in the
-    //                 next ready handler.
-    //   - Err(error): there was an error while writing to the socket.
-    pub fn write<T: Encodable>(&mut self, message: T) -> ::Res<bool> {
-        let mut data = Cursor::new(Vec::with_capacity(mem::size_of::<u32>()));
-
-        // Preallocate space for the message length at the beginning of the
-        // data buffer.
-        let _ = data.write_u32::<LittleEndian>(0);
-
-        // Serialize the message into the rest of the data buffer.
-        try!(serialise_into(&message, &mut data));
-
-        // Rewind the cursor to write the actual length to the beginning.
-        let len = data.position() - mem::size_of::<u32>() as u64;
-        data.set_position(0);
-        try!(data.write_u32::<LittleEndian>(len as u32));
-
-        self.write_queue.push_back(data.into_inner());
-        self.flush()
-    }
-
-    // Flush previous writes. Call this from inside the `ready` handler.
-    //
-    // Returns:
-    //   - Ok(true):   all queued data has been written.
-    //   - Ok(false):  more stuff remains to be written. Call `flush` again in
-    //                 the next invocation of the ready handler.
-    //   - Err(error): there was an error while writing to the socket.
-    pub fn flush(&mut self) -> ::Res<bool> {
-        while let Some(mut data) = self.write_queue.pop_front() {
-            match self.stream.write(&data) {
-                Ok(bytes_written) => {
-                    if bytes_written < data.len() {
-                        data = data[bytes_written..].to_owned();
-                        self.write_queue.push_front(data);
-                        return Ok(false);
-                    }
-                }
-
-                Err(error) => {
-                    if error.kind() == ErrorKind::WouldBlock ||
-                       error.kind() == ErrorKind::Interrupted {
-                        self.write_queue.push_front(data);
-                        return Ok(false);
-                    } else {
-                        return Err(From::from(error));
-                    }
-                }
-            }
-        }
-
-        Ok(true)
     }
 
     /// Shut down the socket (both reading and writing).
