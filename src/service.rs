@@ -16,7 +16,7 @@
 // relating to use of the SAFE Network Software.
 
 use maidsafe_utilities::thread::RaiiThreadJoiner;
-use mio::{self, EventLoop, EventSet, PollOpt};
+use mio::{self, EventLoop};
 use net2;
 use socket_addr;
 use sodiumoxide;
@@ -28,10 +28,9 @@ use std::net::{SocketAddr, SocketAddrV4, Ipv4Addr};
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
-use active_connection::ActiveConnection;
 use bootstrap::Bootstrap;
 use config_handler::{self, Config};
-use connect::{EstablishDirectConnection, SharedConnectionMap};
+use connect::{ConnectionCandidate, EstablishDirectConnection, SharedConnectionMap};
 use connection_listener::ConnectionListener;
 use core::{Context, Core, CoreMessage};
 use error::CrustError;
@@ -265,6 +264,7 @@ impl Service {
         let event_tx = self.event_tx.clone();
         let connection_map = self.connection_map.clone();
         let our_public_key = self.our_keys.0.clone();
+        let our_id = peer_id::new(our_public_key);
         let name_hash = self.name_hash;
 
         // FIXME: check this error
@@ -280,33 +280,31 @@ impl Service {
 
             let static_contact_info = their_connection_info.static_contact_info;
             for socket_addr::SocketAddr(addr) in static_contact_info.tcp_acceptors {
-                let event_tx_rc = event_tx_rc.clone();
                 let connection_map = connection_map.clone();
+                let event_tx_rc = event_tx_rc.clone();
 
-                EstablishDirectConnection::start(core, event_loop, addr, their_id, our_public_key, name_hash,
+                EstablishDirectConnection::start(core, event_loop, addr, our_public_key, name_hash,
                                                  move |core, event_loop, res|
                 {
-                    // Already connected to this peer.
-                    if connection_map.lock().unwrap().contains_key(&their_id) {
-                        return;
-                    }
-
                     match res {
                         Ok((token, socket)) => {
                             let event_tx = (&*event_tx_rc).clone();
-
-                            println!("DIRECT {:?}", their_id);
-                            ActiveConnection::start(core,
-                                                    event_loop,
-                                                    token,
-                                                    socket,
-                                                    connection_map,
-                                                    their_id,
-                                                    event_tx.clone());
-
-                            let _ = event_tx.send(Event::NewPeer(Ok(()), their_id));
+                            ConnectionCandidate::start(core,
+                                                       event_loop,
+                                                       token,
+                                                       socket,
+                                                       connection_map,
+                                                       our_id,
+                                                       their_id,
+                                                       event_tx);
                         },
                         Err(e) => {
+                            // Do not raise error if we aready established connection
+                            // to this peer elsewhere.
+                            if connection_map.lock().unwrap().contains_key(&their_id) {
+                                return;
+                            }
+
                             if let Ok(event_tx) = Rc::try_unwrap(event_tx_rc) {
                                 let _ = event_tx.send(Event::NewPeer(Err(e), their_id));
                             }
@@ -324,38 +322,28 @@ impl Service {
                                          their_connection_info.tcp_info,
                                          move |core, event_loop, stream_opt|
                 {
-                    // Already connected to this peer.
-                    if connection_map.lock().unwrap().contains_key(&their_id) {
-                        return;
-                    }
-
                     match stream_opt {
                         Some(stream) => {
                             let token = core.get_new_token();
-                            let context = core.get_new_context();
-
-                            // FIXME: more ignored errors
-                            let _ = core.insert_context(token, context);
-                            let _ = event_loop.register(&stream,
-                                                        token,
-                                                        EventSet::all(),
-                                                        PollOpt::edge());
-
                             let socket = Socket::wrap(stream);
                             let event_tx = (&*event_tx_rc).clone();
 
-                            println!("HOLE PUNCH {:?}", their_id);
-                            ActiveConnection::start(core,
-                                                    event_loop,
-                                                    token,
-                                                    socket,
-                                                    connection_map,
-                                                    their_id,
-                                                    event_tx.clone());
-
-                            let _ = event_tx.send(Event::NewPeer(Ok(()), their_id));
+                            ConnectionCandidate::start(core,
+                                                       event_loop,
+                                                       token,
+                                                       socket,
+                                                       connection_map,
+                                                       our_id,
+                                                       their_id,
+                                                       event_tx);
                         }
                         None => {
+                            // Do not raise error if we aready established connection
+                            // to this peer elsewhere.
+                            if connection_map.lock().unwrap().contains_key(&their_id) {
+                                return;
+                            }
+
                             if let Ok(event_tx) = Rc::try_unwrap(event_tx_rc) {
                                 let error = io::Error::new(io::ErrorKind::Other,
                                                            "Failed to punch hole");
@@ -516,7 +504,7 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // TODO: fix this test
+    #[ignore]
     fn rendezvous_connect_two_peers() {
         timebomb(Duration::from_secs(5), || {
             let (event_tx_0, event_rx_0) = get_event_sender();

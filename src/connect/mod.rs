@@ -15,8 +15,8 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
+mod connection_candidate;
 mod establish_direct_connection;
-// mod send_direct_info;
 
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
@@ -24,8 +24,8 @@ use std::sync::{Arc, Mutex};
 use core::Context;
 use peer_id::PeerId;
 
+pub use self::connection_candidate::ConnectionCandidate;
 pub use self::establish_direct_connection::EstablishDirectConnection;
 
 pub type ConnectionMap = HashMap<PeerId, Context>;
 pub type SharedConnectionMap = Arc<Mutex<ConnectionMap>>;
-

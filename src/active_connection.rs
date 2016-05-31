@@ -179,10 +179,6 @@ impl State for ActiveConnection {
     fn terminate(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
         self.heartbeat.terminate(core, event_loop);
 
-        if let Err(error) = self.socket.shutdown() {
-            debug!("Failed to shutdown socket: {:?}", error);
-        }
-
         if let Err(error) = event_loop.deregister(&self.socket) {
             debug!("Failed to deregister socket: {:?}", error);
         }

@@ -319,17 +319,26 @@ mod test {
     }
 
     fn connect(name_hash: u64, pk: PublicKey, listener: Listener) {
+        use peer_id;
+
         let mut peer = connect_to_listener(&listener);
 
         let message = serialise(&Message::Connect(pk, name_hash)).unwrap();
         write(&mut peer, message).expect("Could not write.");
 
-        match read(&mut peer).expect("Could not read.") {
+        let our_id = peer_id::new(pk);
+        let their_id = match read(&mut peer).expect("Could not read.") {
             Message::Connect(peer_pk, peer_hash) => {
                 assert_eq!(peer_pk, listener.pk);
                 assert_eq!(peer_hash, NAME_HASH);
+                peer_id::new(peer_pk)
             }
             msg => panic!("Unexpected message: {:?}", msg),
+        };
+
+        if our_id > their_id {
+            let message = serialise(&Message::ChooseConnection).unwrap();
+            write(&mut peer, message).expect("Could not write.");
         }
 
         match listener.event_rx.recv().expect("Could not read event channel") {

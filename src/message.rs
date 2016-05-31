@@ -24,8 +24,7 @@ pub enum Message {
     BootstrapResponse(PublicKey),
     // ExternalEndpointRequest,
     // ExternalEndpointResponse(SocketAddr),
+    ChooseConnection,
     Connect(PublicKey, u64),
-    // DuplicateConnectionRequest,
-    // DuplicateConnectionResponse,
     Data(Vec<u8>),
 }
