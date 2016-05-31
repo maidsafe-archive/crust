@@ -45,7 +45,6 @@ pub struct ActiveConnection {
     peer_id: PeerId,
     event_tx: ::CrustEventSender,
     heartbeat: Heartbeat,
-    event_set: EventSet,
 }
 
 impl ActiveConnection {
@@ -63,12 +62,8 @@ impl ActiveConnection {
 
         if let Err(error) = event_loop.reregister(&socket, token, event_set, PollOpt::edge()) {
             error!("Failed to reregister socket: {:?}", error);
-
             let _ = event_loop.deregister(&socket);
-            let _ = core.remove_state(context);
-            let _ = core.remove_context(token);
             let _ = event_tx.send(Event::LostPeer(peer_id));
-
             return;
         }
 
@@ -76,12 +71,8 @@ impl ActiveConnection {
             Ok(heartbeat) => heartbeat,
             Err(error) => {
                 error!("Failed to initialize heartbeat: {:?}", error);
-
                 let _ = event_loop.deregister(&socket);
-                let _ = core.remove_state(context);
-                let _ = core.remove_context(token);
                 let _ = event_tx.send(Event::LostPeer(peer_id));
-
                 return;
             }
         };
@@ -96,14 +87,13 @@ impl ActiveConnection {
             peer_id: peer_id,
             event_tx: event_tx,
             heartbeat: heartbeat,
-            event_set: event_set,
         };
 
         let _ = core.insert_context(token, context);
         let _ = core.insert_state(context, Rc::new(RefCell::new(state)));
     }
 
-    fn read(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
+    fn readable(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
         match self.socket.read::<Message>() {
             Ok(Some(Message::Data(data))) => {
                 let _ = self.event_tx.send(Event::NewMessage(self.peer_id, data));
@@ -126,28 +116,11 @@ impl ActiveConnection {
                 return;
             }
         }
-
-        self.reregister(core, event_loop);
     }
 
-    fn write(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
-        match self.socket.flush() {
-            Ok(true) => self.event_set.remove(EventSet::writable()),
-            Ok(false) => (),
-            Err(error) => {
-                error!("Failed to flush socket: {:?}", error);
-                self.terminate(core, event_loop);
-                return;
-            }
-        }
-
-        self.reregister(core, event_loop);
-    }
-
-    fn reregister(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
-        if let Err(error) =
-               event_loop.reregister(&self.socket, self.token, self.event_set, PollOpt::edge()) {
-            error!("Failed to reregister socket: {:?}", error);
+    fn writable(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
+        if let Err(error) = self.socket.write::<Message>(event_loop, self.token, None) {
+            error!("Failed to flush socket: {:?}", error);
             self.terminate(core, event_loop);
         }
     }
@@ -156,17 +129,10 @@ impl ActiveConnection {
                      core: &mut Core,
                      event_loop: &mut EventLoop<Core>,
                      message: Message) {
-        match self.socket.write(message) {
-            Ok(true) => self.event_set.remove(EventSet::writable()),
-            Ok(false) => self.event_set.insert(EventSet::writable()),
-            Err(error) => {
-                error!("Failed to write to socket: {:?}", error);
-                self.terminate(core, event_loop);
-                return;
-            }
+        if let Err(error) = self.socket.write(event_loop, self.token, Some(message)) {
+            error!("Failed to write to socket: {:?}", error);
+            self.terminate(core, event_loop);
         }
-
-        self.reregister(core, event_loop);
     }
 
     fn reset_receive_heartbeat(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
@@ -196,11 +162,11 @@ impl State for ActiveConnection {
             self.terminate(core, event_loop);
         } else {
             if event_set.is_writable() {
-                self.write(core, event_loop);
+                self.writable(core, event_loop);
             }
 
             if event_set.is_readable() {
-                self.read(core, event_loop);
+                self.readable(core, event_loop);
             }
         }
     }
