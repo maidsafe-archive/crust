@@ -15,7 +15,6 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use mio::{EventLoop, EventSet, PollOpt, Token};
 use std::any::Any;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -25,13 +24,13 @@ use connect::SharedConnectionMap;
 use core::{Core, State};
 use event::Event;
 use message::Message;
+use mio::{EventLoop, EventSet, Token};
 use peer_id::PeerId;
 use socket::Socket;
 
 pub struct ConnectionCandidate {
     connection_map: SharedConnectionMap,
     event_tx: ::CrustEventSender,
-    sent: bool,
     socket: Option<Socket>,
     their_id: PeerId,
     token: Token,
@@ -45,48 +44,31 @@ impl ConnectionCandidate {
                  connection_map: SharedConnectionMap,
                  our_id: PeerId,
                  their_id: PeerId,
-                 event_tx: ::CrustEventSender)
-    {
-        let event_set = EventSet::error() |
-                        EventSet::hup() |
-                        EventSet::readable();
-
-        let result = if our_id > their_id {
-            event_loop.reregister(&socket, token, event_set | EventSet::writable(), PollOpt::edge())
-        } else {
-            event_loop.reregister(&socket, token, event_set, PollOpt::edge())
-        };
-
-        if let Err(error) = result {
-            error!("Failed to reregister socket: {:?}", error);
-            return;
-        }
-
-        let state = ConnectionCandidate {
+                 event_tx: ::CrustEventSender) {
+        let state = Rc::new(RefCell::new(ConnectionCandidate {
             connection_map: connection_map,
             event_tx: event_tx,
-            sent: false,
             socket: Some(socket),
             their_id: their_id,
             token: token,
-        };
+        }));
 
         let context = core.get_new_context();
         let _ = core.insert_context(token, context);
-        let _ = core.insert_state(context, Rc::new(RefCell::new(state)));
+        let _ = core.insert_state(context, state.clone());
+
+        if our_id > their_id {
+            state.borrow_mut().write(core, event_loop, Some(Message::ChooseConnection));
+        }
     }
 
-    fn readable(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
+    fn read(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
         match self.socket.as_mut().unwrap().read::<Message>() {
-            Ok(Some(Message::ChooseConnection)) => {
-                self.done(core, event_loop)
-            }
-
+            Ok(Some(Message::ChooseConnection)) => self.finish(core, event_loop),
             Ok(Some(message)) => {
                 warn!("Unexpected message: {:?}", message);
                 self.terminate(core, event_loop)
             }
-
             Ok(None) => (),
             Err(error) => {
                 error!("Failed to read from socket: {:?}", error);
@@ -95,21 +77,13 @@ impl ConnectionCandidate {
         }
     }
 
-    fn writable(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
+    fn write(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, msg: Option<Message>) {
         if self.connection_exists() {
-            self.terminate(core, event_loop);
-            return;
+            return self.terminate(core, event_loop);
         }
 
-        let message = if self.sent {
-            None
-        } else {
-            self.sent = true;
-            Some(Message::ChooseConnection)
-        };
-
-        match self.socket.as_mut().unwrap().write(event_loop, self.token, message) {
-            Ok(true) => self.done(core, event_loop),
+        match self.socket.as_mut().unwrap().write(event_loop, self.token, msg) {
+            Ok(true) => self.finish(core, event_loop),
             Ok(false) => (),
             Err(error) => {
                 error!("Failed to write to socket: {:?}", error);
@@ -118,10 +92,9 @@ impl ConnectionCandidate {
         }
     }
 
-    fn done(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
+    fn finish(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
         if self.connection_exists() {
-            self.terminate(core, event_loop);
-            return;
+            return self.terminate(core, event_loop);
         }
 
         if let Some(context) = core.remove_context(self.token) {
@@ -151,19 +124,15 @@ impl State for ConnectionCandidate {
              core: &mut Core,
              event_loop: &mut EventLoop<Core>,
              _token: Token,
-             event_set: EventSet)
-    {
+             event_set: EventSet) {
         if event_set.is_error() || event_set.is_hup() {
-            self.terminate(core, event_loop);
-            return;
+            return self.terminate(core, event_loop);
         }
-
         if event_set.is_readable() {
-            self.readable(core, event_loop);
+            self.read(core, event_loop);
         }
-
         if event_set.is_writable() {
-            self.writable(core, event_loop);
+            self.write(core, event_loop, None);
         }
     }
 
@@ -183,4 +152,3 @@ impl State for ConnectionCandidate {
         self
     }
 }
-

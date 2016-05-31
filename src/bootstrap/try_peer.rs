@@ -104,7 +104,7 @@ impl TryPeer {
                 (*self.finish)(core, event_loop, context, Ok(data));
             }
             Ok(None) => (),
-            Ok(Some(_)) | Err(_) => self.handle_error(core, event_loop), // Wrong Handshake Message
+            Ok(Some(_)) | Err(_) => self.handle_error(core, event_loop),
         }
     }
 

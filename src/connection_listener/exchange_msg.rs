@@ -15,7 +15,6 @@
 // Please review the Licences for the specific language governing permissions and limitations
 // relating to use of the SAFE Network Software.
 
-use mio::{EventLoop, EventSet, PollOpt, Timeout, Token};
 use std::any::Any;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -25,6 +24,7 @@ use connect::{ConnectionCandidate, SharedConnectionMap};
 use core::{Core, State};
 use event::Event;
 use message::Message;
+use mio::{EventLoop, EventSet, PollOpt, Timeout, Token};
 use peer_id::{self, PeerId};
 use socket::Socket;
 use sodiumoxide::crypto::box_::PublicKey;
@@ -108,15 +108,16 @@ impl ExchangeMsg {
 
         let our_public_key = self.our_public_key;
         self.next_state = NextState::ActiveConnection(their_id);
-        self.write(core, event_loop, Some(Message::BootstrapResponse(our_public_key)))
+        self.write(core,
+                   event_loop,
+                   Some(Message::BootstrapResponse(our_public_key)))
     }
 
     fn handle_connect(&mut self,
                       core: &mut Core,
                       event_loop: &mut EventLoop<Core>,
                       their_public_key: PublicKey,
-                      name_hash: u64)
-    {
+                      name_hash: u64) {
         let their_id = match self.get_peer_id(their_public_key, name_hash) {
             Ok(their_id) => their_id,
             Err(()) => return self.terminate(core, event_loop),
@@ -126,10 +127,11 @@ impl ExchangeMsg {
         let name_hash = self.name_hash;
 
         self.next_state = NextState::ConnectionCandidate(their_id);
-        self.write(core, event_loop, Some(Message::Connect(our_public_key, name_hash)));
+        self.write(core,
+                   event_loop,
+                   Some(Message::Connect(our_public_key, name_hash)));
     }
 
-    // TODO use crust error
     fn get_peer_id(&self, their_public_key: PublicKey, name_hash: u64) -> Result<PeerId, ()> {
         if self.our_public_key == their_public_key {
             warn!("Accepted connection from ourselves");
@@ -146,12 +148,9 @@ impl ExchangeMsg {
         Ok(peer_id)
     }
 
-    fn write(&mut self,
-             core: &mut Core,
-             event_loop: &mut EventLoop<Core>,
-             msg: Option<Message>) {
+    fn write(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, msg: Option<Message>) {
         match self.socket.as_mut().unwrap().write(event_loop, self.token, msg) {
-            Ok(true) => self.done(core, event_loop),
+            Ok(true) => self.finish(core, event_loop),
             Ok(false) => (),
             Err(e) => {
                 warn!("Error in writting: {:?}", e);
@@ -160,7 +159,7 @@ impl ExchangeMsg {
         }
     }
 
-    fn done(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
+    fn finish(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
         if let Some(context) = core.remove_context(self.token) {
             let _ = core.remove_state(context);
         }
@@ -190,7 +189,7 @@ impl ExchangeMsg {
                                            their_id,
                                            self.event_tx.clone());
             }
-            NextState::None => unreachable!(),
+            NextState::None => self.terminate(core, event_loop),
         }
     }
 }
