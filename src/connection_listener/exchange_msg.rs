@@ -76,7 +76,7 @@ impl ExchangeMsg {
         Ok(())
     }
 
-    fn readable(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
+    fn read(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
         match self.socket.as_mut().unwrap().read::<Message>() {
             Ok(Some(Message::BootstrapRequest(their_public_key, name_hash))) => {
                 self.handle_bootstrap_request(core, event_loop, their_public_key, name_hash)
@@ -94,10 +94,6 @@ impl ExchangeMsg {
                 self.terminate(core, event_loop);
             }
         }
-    }
-
-    fn writable(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
-        let _ = self.write(core, event_loop, None);
     }
 
     fn handle_bootstrap_request(&mut self,
@@ -209,10 +205,10 @@ impl State for ExchangeMsg {
             self.terminate(core, event_loop);
         } else {
             if event_set.is_readable() {
-                self.readable(core, event_loop)
+                self.read(core, event_loop)
             }
             if event_set.is_writable() {
-                self.writable(core, event_loop)
+                self.write(core, event_loop, None)
             }
         }
     }

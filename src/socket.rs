@@ -128,7 +128,8 @@ impl Socket {
     pub fn write<T: Encodable>(&mut self,
                                el: &mut EventLoop<Core>,
                                token: Token,
-                               msg: Option<T>) -> ::Res<bool> {
+                               msg: Option<T>)
+                               -> ::Res<bool> {
         if let Some(msg) = msg {
             let mut data = Cursor::new(Vec::with_capacity(mem::size_of::<u32>()));
 
