@@ -91,12 +91,12 @@ impl ExchangeMsg {
             }
             Ok(Some(message)) => {
                 warn!("Unexpected message in direct connect: {:?}", message);
-                return self.terminate(core, event_loop);
+                self.terminate(core, event_loop)
             }
             Ok(None) => (),
             Err(e) => {
                 warn!("Error in read: {:?}", e);
-                return self.terminate(core, event_loop);
+                self.terminate(core, event_loop)
             }
         }
     }
@@ -124,8 +124,8 @@ impl ExchangeMsg {
             Ok(peer_id) => self.peer_id = Some(peer_id),
             Err(()) => return self.terminate(core, event_loop),
         }
-        self.event = Some(Event::NewPeer(Ok(()), self.peer_id.clone().expect("Logic Error")));
-        let our_pk = self.our_pk.clone();
+        self.event = Some(Event::NewPeer(Ok(()), self.peer_id.expect("Logic Error")));
+        let our_pk = self.our_pk;
         let name_hash = self.name_hash;
         self.write(core, event_loop, Some(Message::Connect(our_pk, name_hash)));
     }
@@ -139,8 +139,8 @@ impl ExchangeMsg {
             Ok(peer_id) => self.peer_id = Some(peer_id),
             Err(()) => return self.terminate(core, event_loop),
         }
-        self.event = Some(Event::BootstrapAccept(self.peer_id.clone().expect("Logic Error")));
-        let our_pk = self.our_pk.clone();
+        self.event = Some(Event::BootstrapAccept(self.peer_id.expect("Logic Error")));
+        let our_pk = self.our_pk;
         self.write(core, event_loop, Some(Message::BootstrapResponse(our_pk)));
     }
 
@@ -150,7 +150,7 @@ impl ExchangeMsg {
             Ok(false) => (),
             Err(e) => {
                 warn!("Error in writting: {:?}", e);
-                return self.terminate(core, event_loop);
+                self.terminate(core, event_loop);
             }
         }
     }

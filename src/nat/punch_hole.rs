@@ -75,7 +75,7 @@ impl<F> PunchHole<F>
                                  token,
                                  EventSet::readable() | EventSet::error() | EventSet::hup(),
                                  PollOpt::level()));
-        let _ = core.insert_context(token, context.clone());
+        let _ = core.insert_context(token, context);
 
         let mut streams = HashMap::new();
         for (socket, addr) in sockets.into_iter().zip(their_pub_info.endpoints) {
@@ -85,7 +85,7 @@ impl<F> PunchHole<F>
                                      token,
                                      EventSet::writable() | EventSet::error() | EventSet::hup(),
                                      PollOpt::level()));
-            let _ = core.insert_context(token, context.clone());
+            let _ = core.insert_context(token, context);
             let writing_stream = WritingStream {
                 stream: stream,
                 nonce: rand::random(),
@@ -99,7 +99,7 @@ impl<F> PunchHole<F>
             reading_streams: HashMap::new(),
             listener_token: token,
             listener: listener,
-            context: context.clone(),
+            context: context,
             finished: Some(finished),
             our_secret: our_priv_info.secret,
             their_secret: their_pub_info.secret,
@@ -277,7 +277,7 @@ impl<F> State for PunchHole<F>
                             .read_u64::<BigEndian>()
                             .unwrap();
                         let new_score = recv_nonce.wrapping_add(sent_nonce);
-                        let old_score = self.best_stream.as_ref().map(|&(i, _)| i).unwrap_or(0);
+                        let old_score = self.best_stream.as_ref().map_or(0, |&(i, _)| i);
                         if new_score >= old_score {
                             self.best_stream = Some((new_score, reading_stream.stream));
                         }
@@ -299,7 +299,7 @@ impl<F> State for PunchHole<F>
 
         finished(core, event_loop, stream_opt);
 
-        for (token, writing_stream) in self.writing_streams.iter() {
+        for (token, writing_stream) in &self.writing_streams {
             match event_loop.deregister(&writing_stream.stream) {
                 Ok(()) => (),
                 Err(e) => debug!("Error deregistering stream: {}", e),
@@ -307,7 +307,7 @@ impl<F> State for PunchHole<F>
             let _ = core.remove_context(*token);
         }
 
-        for (token, reading_stream) in self.reading_streams.iter() {
+        for (token, reading_stream) in &self.reading_streams {
             match event_loop.deregister(&reading_stream.stream) {
                 Ok(()) => (),
                 Err(e) => debug!("Error deregistering stream: {}", e),

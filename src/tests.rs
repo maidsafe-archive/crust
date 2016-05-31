@@ -93,7 +93,7 @@ fn bootstrap_two_services_and_exchange_messages() {
     let (event_tx0, event_rx0) = get_event_sender();
     let mut service0 = unwrap_result!(Service::with_config(event_tx0, config0));
 
-    let _ = unwrap_result!(service0.start_listening_tcp());
+    unwrap_result!(service0.start_listening_tcp());
 
     let port0 = expect_event!(event_rx0, Event::ListenerStarted(port) => port);
 
@@ -103,7 +103,7 @@ fn bootstrap_two_services_and_exchange_messages() {
     let (event_tx1, event_rx1) = get_event_sender();
     let mut service1 = unwrap_result!(Service::with_config(event_tx1, config1));
 
-    let _ = unwrap_result!(service1.start_bootstrap());
+    unwrap_result!(service1.start_bootstrap());
 
     let peer_id0 = expect_event!(event_rx1, Event::BootstrapConnect(peer_id) => peer_id);
     assert_eq!(peer_id0, service0.id());
@@ -111,7 +111,7 @@ fn bootstrap_two_services_and_exchange_messages() {
     let peer_id1 = expect_event!(event_rx0, Event::BootstrapAccept(peer_id) => peer_id);
     assert_eq!(peer_id1, service1.id());
 
-    let message0 = "hello from 0".as_bytes().to_owned();
+    let message0 = b"hello from 0".to_vec();
     unwrap_result!(service0.send(peer_id1, message0.clone(), 0));
 
     expect_event!(event_rx1, Event::NewMessage(peer_id, data) => {
@@ -119,7 +119,7 @@ fn bootstrap_two_services_and_exchange_messages() {
         assert_eq!(data, message0);
     });
 
-    let message1 = "hello from 1".as_bytes().to_owned();
+    let message1 = b"hello from 1".to_vec();
     unwrap_result!(service1.send(peer_id0, message1.clone(), 0));
 
     expect_event!(event_rx0, Event::NewMessage(peer_id, data) => {
@@ -163,7 +163,7 @@ fn bootstrap_with_multiple_contact_endpoints() {
 
     let (event_tx0, event_rx0) = get_event_sender();
     let mut service0 = unwrap_result!(Service::with_config(event_tx0, Config::default()));
-    let _ = unwrap_result!(service0.start_listening_tcp());
+    unwrap_result!(service0.start_listening_tcp());
     let port = expect_event!(event_rx0, Event::ListenerStarted(port) => port);
     let valid_address = localhost(port);
 
@@ -337,7 +337,9 @@ mod broken_peer {
                     Some(Message::BootstrapRequest(..)) => {
                         let public_key = box_::gen_keypair().0;
 
-                        if !unwrap_result!(self.0.write(Message::BootstrapResponse(public_key))) {
+                        let written = unwrap_result!(self.0
+                            .write(Message::BootstrapResponse(public_key)));
+                        if !written {
                             writable = true;
                         }
                     }
@@ -346,10 +348,9 @@ mod broken_peer {
                 }
             }
 
-            if event_set.is_writable() {
-                if !unwrap_result!(self.0.flush()) {
-                    writable = true;
-                }
+            let flushed = unwrap_result!(self.0.flush());
+            if event_set.is_writable() && !flushed {
+                writable = true;
             }
 
             let mut event_set = EventSet::readable();
@@ -427,7 +428,7 @@ fn do_not_drop_peer_even_when_no_data_messages_are_exchanged_within_inactivity_p
     let (event_tx0, event_rx0) = get_event_sender();
     let mut service0 = unwrap_result!(Service::with_config(event_tx0, config0));
 
-    let _ = unwrap_result!(service0.start_listening_tcp());
+    unwrap_result!(service0.start_listening_tcp());
     let port0 = expect_event!(event_rx0, Event::ListenerStarted(port) => port);
 
     let mut config1 = gen_config();
@@ -436,7 +437,7 @@ fn do_not_drop_peer_even_when_no_data_messages_are_exchanged_within_inactivity_p
     let (event_tx1, event_rx1) = get_event_sender();
     let mut service1 = unwrap_result!(Service::with_config(event_tx1, config1));
 
-    let _ = unwrap_result!(service1.start_bootstrap());
+    unwrap_result!(service1.start_bootstrap());
     expect_event!(event_rx1, Event::BootstrapConnect(_peer_id));
     expect_event!(event_rx0, Event::BootstrapAccept(_peer_id));
 

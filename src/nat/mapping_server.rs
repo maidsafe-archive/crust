@@ -69,8 +69,8 @@ impl TcpMappingServer {
                                              EventSet::readable() | EventSet::error() |
                                              EventSet::hup(),
                                              PollOpt::edge()));
-                    let _ = core.insert_context(token, context.clone());
-                    let _ = core.insert_state(context.clone(),
+                    let _ = core.insert_context(token, context);
+                    let _ = core.insert_state(context,
                                               Rc::new(RefCell::new(TcpMappingServer {
                                                   server_socket: listener,
                                                   reading_clients: HashMap::new(),
@@ -105,7 +105,7 @@ impl State for TcpMappingServer {
             };
 
             let token = core.get_new_token();
-            let _ = core.insert_context(token, self.context.clone());
+            let _ = core.insert_context(token, self.context);
             match event_loop.register(&client,
                                       token,
                                       EventSet::readable() | EventSet::error() | EventSet::hup(),
@@ -222,7 +222,7 @@ impl State for TcpMappingServer {
         };
         let _ = core.remove_context(self.server_token);
 
-        for (token, reading_client) in self.reading_clients.iter() {
+        for (token, reading_client) in &self.reading_clients {
             match event_loop.deregister(&reading_client.stream) {
                 Ok(()) => (),
                 Err(e) => debug!("Error deregistering socket: {}", e),
@@ -230,7 +230,7 @@ impl State for TcpMappingServer {
             let _ = core.remove_context(*token);
         }
 
-        for (token, writing_client) in self.writing_clients.iter() {
+        for (token, writing_client) in &self.writing_clients {
             match event_loop.deregister(&writing_client.stream) {
                 Ok(()) => (),
                 Err(e) => debug!("Error deregistering socket: {}", e),
