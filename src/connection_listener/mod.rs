@@ -24,7 +24,6 @@ use socket_addr;
 use sodiumoxide::crypto::box_::PublicKey;
 use std::any::Any;
 use std::cell::RefCell;
-use std::io;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
@@ -179,7 +178,7 @@ mod test {
     use std::time::Duration;
     use std::sync::{Arc, Mutex};
     use std::collections::HashMap;
-    use std::io::{self, Cursor, Write, Read};
+    use std::io::{Cursor, Write, Read};
     use std::net::SocketAddr as StdSocketAddr;
 
     use event::Event;

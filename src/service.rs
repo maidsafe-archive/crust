@@ -34,17 +34,16 @@ use config_handler::{self, Config};
 use connect::{EstablishDirectConnection, SharedConnectionMap};
 use connection_listener::ConnectionListener;
 use core::{Context, Core, CoreMessage};
-use event::Event;
 use error::CrustError;
-use std::net::{SocketAddr, SocketAddrV4, Ipv4Addr};
-use peer_id::{self, PeerId};
-use service_discovery::ServiceDiscovery;
-use static_contact_info::StaticContactInfo;
+use event::Event;
 use nat::mapped_tcp_socket::MappingTcpSocket;
 use nat::mapping_context::MappingContext;
 use nat::punch_hole::PunchHole;
 use nat::rendezvous_info::{PubRendezvousInfo, PrivRendezvousInfo, gen_rendezvous_info};
+use peer_id::{self, PeerId};
+use service_discovery::ServiceDiscovery;
 use socket::Socket;
+use static_contact_info::StaticContactInfo;
 
 const BOOTSTRAP_CONTEXT: Context = Context(0);
 const SERVICE_DISCOVERY_CONTEXT: Context = Context(1);
@@ -343,7 +342,6 @@ impl Service {
 
                             let socket = Socket::wrap(stream);
                             let event_tx = (&*event_tx_rc).clone();
-                            let _ = event_tx.send(Event::NewPeer(Ok(()), their_id));
 
                             ActiveConnection::start(core,
                                                     event_loop,
@@ -351,7 +349,9 @@ impl Service {
                                                     socket,
                                                     connection_map,
                                                     their_id,
-                                                    event_tx);
+                                                    event_tx.clone());
+
+                            let _ = event_tx.send(Event::NewPeer(Ok(()), their_id));
                         }
                         None => {
                             if let Ok(event_tx) = Rc::try_unwrap(event_tx_rc) {
@@ -396,7 +396,7 @@ impl Service {
     }
 
     /// sending data to a peer(according to it's u64 peer_id)
-    pub fn send(&mut self, peer_id: PeerId, data: Vec<u8>, _priority: u8) -> ::Res<()> {
+    pub fn send(&self, peer_id: PeerId, data: Vec<u8>, _priority: u8) -> ::Res<()> {
         // TODO(Spandan) This is wrong. Correct size can only be obtained post serialisation of
         // enum in which this will be put
         if data.len() > ::MAX_PAYLOAD_SIZE {

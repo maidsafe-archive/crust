@@ -25,9 +25,10 @@ use std::rc::Rc;
 use mio::{EventSet, PollOpt, Token, EventLoop};
 
 use core::{Core, Context, State};
+use error::CrustError;
 use message::Message;
 use peer_id::{self, PeerId};
-use socket::{Socket, SocketError};
+use socket::Socket;
 
 pub struct EstablishDirectConnection<F> {
     context: Context,
@@ -58,12 +59,12 @@ impl<F> EstablishDirectConnection<F>
 
         let socket = match Socket::connect(&addr) {
             Ok(socket) => socket,
-            Err(SocketError::Io(error)) => {
+            Err(CrustError::Io(error)) => {
                 error!("Failed to connect socket: {:?}", error);
                 finish(core, event_loop, Err(error));
                 return;
             }
-            Err(SocketError::Serialisation(_)) => unreachable!(),
+            Err(_) => unreachable!(),
         };
 
         let event_set = EventSet::error() | EventSet::hup() | EventSet::writable();
@@ -273,11 +274,10 @@ impl<F> State for EstablishDirectConnection<F>
     }
 }
 
-fn make_io_error(error: SocketError) -> io::Error {
+fn make_io_error(error: CrustError) -> io::Error {
     match error {
-        SocketError::Io(error) => error,
-        SocketError::Serialisation(error) => {
-            io::Error::new(io::ErrorKind::Other, error)
-        }
+        CrustError::Io(error) => error,
+        CrustError::Serialisation(error) => io::Error::new(io::ErrorKind::Other, error),
+        _ => unreachable!(),
     }
 }

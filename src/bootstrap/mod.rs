@@ -18,28 +18,28 @@
 mod cache;
 mod try_peer;
 
-use std::net;
-use std::mem;
+use mio::{EventLoop, Timeout, Token};
+use socket_addr;
+use sodiumoxide::crypto::box_::PublicKey;
 use std::any::Any;
 use std::cell::RefCell;
+use std::collections::HashSet;
+use std::mem;
+use std::net;
 use std::rc::{Rc, Weak};
 use std::sync::mpsc::{self, Receiver};
 
-use socket_addr;
-use event::Event;
-use socket::Socket;
-use peer_id::PeerId;
-use error::CrustError;
-use self::cache::Cache;
-use config_handler::Config;
-use self::try_peer::TryPeer;
-use std::collections::HashSet;
-use core::{Context, Core, State};
-use service::SharedConnectionMap;
-use mio::{EventLoop, Timeout, Token};
-use service_discovery::ServiceDiscovery;
 use active_connection::ActiveConnection;
-use sodiumoxide::crypto::box_::PublicKey;
+use config_handler::Config;
+use connect::SharedConnectionMap;
+use core::{Context, Core, State};
+use error::CrustError;
+use event::Event;
+use peer_id::PeerId;
+use socket::Socket;
+use self::cache::Cache;
+use self::try_peer::TryPeer;
+use service_discovery::ServiceDiscovery;
 use static_contact_info::StaticContactInfo;
 
 const BOOTSTRAP_TIMEOUT_MS: u64 = 10000;

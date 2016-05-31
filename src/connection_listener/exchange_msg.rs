@@ -22,11 +22,11 @@ use std::io::{self, ErrorKind};
 use std::rc::Rc;
 
 use active_connection::ActiveConnection;
+use connect::SharedConnectionMap;
 use core::{Context, Core, State};
 use event::Event;
 use message::Message;
 use peer_id::{self, PeerId};
-use service::SharedConnectionMap;
 use socket::Socket;
 use sodiumoxide::crypto::box_::PublicKey;
 
@@ -39,10 +39,11 @@ pub struct ExchangeMsg {
     event: Option<Event>,
     event_tx: ::CrustEventSender,
     name_hash: u64,
-    our_pk: PublicKey,
-    peer_id: Option<PeerId>,
+    our_public_key: PublicKey,
     socket: Option<Socket>,
+    their_id: Option<PeerId>,
     timeout: Timeout,
+    token: Token,
 }
 
 impl ExchangeMsg {
@@ -184,7 +185,6 @@ impl ExchangeMsg {
             warn!("Already connected to {:?}", peer_id);
             return Err(());
         }
-    }
 
         Ok(peer_id)
     }
