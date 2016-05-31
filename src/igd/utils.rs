@@ -2,8 +2,6 @@ use std::net::{Ipv4Addr, SocketAddrV4};
 use std::io;
 use xml::EventReader;
 use xml::reader::events::XmlEvent;
-#[allow(unused)]
-use xmltree;
 use regex::Regex;
 use core::Core;
 use mio::EventLoop;

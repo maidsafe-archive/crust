@@ -28,6 +28,7 @@ http-pull-parser = "~0.1.0"
 regex = "~0.1.71"
 xml-rs = "~0.1.25"
 xmltree = "~0.3"
+url = "1.1.1"
 
 [dependencies.clippy]
 optional = true
