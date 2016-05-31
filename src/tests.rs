@@ -330,16 +330,14 @@ mod broken_peer {
                  event_loop: &mut EventLoop<Core>,
                  token: Token,
                  event_set: EventSet) {
-            let mut writable = false;
 
             if event_set.is_readable() {
                 match unwrap_result!(self.0.read::<Message>()) {
                     Some(Message::BootstrapRequest(..)) => {
                         let public_key = box_::gen_keypair().0;
-
-                        if !unwrap_result!(self.0.write(Message::BootstrapResponse(public_key))) {
-                            writable = true;
-                        }
+                        unwrap_result!(self.0.write(event_loop,
+                                                    token,
+                                                    Some(Message::BootstrapResponse(public_key))));
                     }
                     Some(_) => (),
                     None => (),
@@ -347,17 +345,8 @@ mod broken_peer {
             }
 
             if event_set.is_writable() {
-                if !unwrap_result!(self.0.flush()) {
-                    writable = true;
-                }
+                unwrap_result!(self.0.write::<Message>(event_loop, token, None));
             }
-
-            let mut event_set = EventSet::readable();
-            if writable {
-                event_set.insert(EventSet::writable());
-            }
-
-            unwrap_result!(event_loop.reregister(&self.0, token, event_set, PollOpt::edge()));
         }
 
         fn as_any(&mut self) -> &mut Any {

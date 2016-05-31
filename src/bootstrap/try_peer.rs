@@ -88,7 +88,7 @@ impl TryPeer {
     }
 
     fn write(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, msg: Option<Message>) {
-        if self.socket.as_mut().unwrap().write_2(event_loop, self.token, msg).is_err() {
+        if self.socket.as_mut().unwrap().write(event_loop, self.token, msg).is_err() {
             self.handle_error(core, event_loop);
         }
     }
