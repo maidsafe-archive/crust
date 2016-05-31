@@ -295,6 +295,7 @@ impl Service {
                         Ok((token, socket)) => {
                             let event_tx = (&*event_tx_rc).clone();
 
+                            println!("DIRECT {:?}", their_id);
                             ActiveConnection::start(core,
                                                     event_loop,
                                                     token,
@@ -343,6 +344,7 @@ impl Service {
                             let socket = Socket::wrap(stream);
                             let event_tx = (&*event_tx_rc).clone();
 
+                            println!("HOLE PUNCH {:?}", their_id);
                             ActiveConnection::start(core,
                                                     event_loop,
                                                     token,
@@ -366,21 +368,10 @@ impl Service {
         });
 
         Ok(())
-        // let event_tx = self.event_tx.clone();
-        // let connection_map = self.connection_map.clone();
-        //
-        // self.post(move |core, event_loop| {
-        // EstablishConnection::start(core,
-        // event_loop,
-        // peer_contact_info,
-        // connection_map,
-        // event_tx);
-        // })
-        //
     }
 
     /// Disconnect from the given peer and returns whether there was a connection at all.
-    pub fn disconnect(&mut self, peer_id: PeerId) -> bool {
+    pub fn disconnect(&self, peer_id: PeerId) -> bool {
         let context = match self.connection_map.lock().unwrap().remove(&peer_id) {
             Some(context) => context,
             None => return false,
