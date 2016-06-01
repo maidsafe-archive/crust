@@ -322,9 +322,10 @@ impl Service {
                                          their_connection_info.tcp_info,
                                          move |core, event_loop, stream_opt|
                 {
+                    debug!("PunchHole finished");
                     match stream_opt {
-                        Some(stream) => {
-                            let token = core.get_new_token();
+                        Some((stream, token)) => {
+                            debug!("PunchHole succeeded. Creating ActiveConnection");
                             let socket = Socket::wrap(stream);
                             let event_tx = (&*event_tx_rc).clone();
 
@@ -478,6 +479,7 @@ mod tests {
     // use maidsafe_utilities::log;
     use std::sync::mpsc::Receiver;
     use std::time::Duration;
+    use maidsafe_utilities;
 
     use event::Event;
     use service::Service;
@@ -504,9 +506,9 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn rendezvous_connect_two_peers() {
-        timebomb(Duration::from_secs(5), || {
+        maidsafe_utilities::log::init(true).unwrap();
+        timebomb(Duration::from_secs(10), || {
             let (event_tx_0, event_rx_0) = get_event_sender();
             let service_0 = unwrap_result!(Service::new(event_tx_0));
 
