@@ -81,8 +81,12 @@ impl From<soap::Error> for RequestError {
         match err {
             soap::Error::HttpError(e) => RequestError::HttpError(e),
             soap::Error::IoError(e) => RequestError::IoError(e),
-            soap::Error::InvalidResponse => {
-                RequestError::InvalidResponse("invalid response".to_string())
+            soap::Error::InvalidInput => {
+                RequestError::IoError(io::Error::new(io::ErrorKind::InvalidInput,
+                                                     "Invalid input"))
+            }
+            soap::Error::ErrorCode(code, reason) => {
+                RequestError::ErrorCode(code, reason)
             }
         }
     }

@@ -6,7 +6,7 @@ use regex::Regex;
 use core::Core;
 use mio::EventLoop;
 use http_pull_parser::HttpToken;
-use igd::errors::{HttpError, SearchError};
+use igd::errors::SearchError;
 use igd::http_request;
 
 pub fn get_control_url<F>(location: &(SocketAddrV4, String), core: &mut Core,
@@ -19,7 +19,7 @@ pub fn get_control_url<F>(location: &(SocketAddrV4, String), core: &mut Core,
                 match tokens.first() {
                     Some(&HttpToken::Status(200, _)) => (),
                     _ => {
-                        f(Err(SearchError::HttpError(HttpError::Unsupported)),
+                        f(Err(SearchError::InvalidResponse),
                           core, event_loop);
                         return;
                     }

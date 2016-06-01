@@ -11,7 +11,8 @@ use igd::errors::HttpError;
 pub enum Error {
     HttpError(HttpError),
     IoError(io::Error),
-    InvalidResponse
+    InvalidInput,
+    ErrorCode(u16, String),
 }
 
 impl From<HttpError> for Error {
@@ -39,7 +40,7 @@ pub fn send<F>(addr: &SocketAddrV4, control_url: &str, action: &str,
              .unwrap_or(format!("{}", addr)))
         }
         Err(_) => {
-            callback(Err(Error::InvalidResponse), core, event_loop);
+            callback(Err(Error::InvalidInput), core, event_loop);
             return;
         }
     };
@@ -53,6 +54,11 @@ pub fn send<F>(addr: &SocketAddrV4, control_url: &str, action: &str,
             Ok(tokens) => {
                 match tokens.first() {
                     Some(&HttpToken::Status(200, _)) => (),
+                    Some(&HttpToken::Status(code, ref reason)) => {
+                        callback(Err(Error::ErrorCode(code, reason.clone())),
+                                 core, event_loop);
+                        return;
+                    }
                     _ => {
                         callback(Err(Error::HttpError(HttpError::Unsupported)),
                                  core, event_loop);
@@ -76,8 +82,10 @@ pub fn send<F>(addr: &SocketAddrV4, control_url: &str, action: &str,
         let mut text = String::new();
         let _ = match resp.read_to_string(&mut text) {
             Ok(_) => callback(Ok(text), core, event_loop),
-            Err(_) => {
-                callback(Err(Error::InvalidResponse), core, event_loop);
+            Err(e) => {
+                let e = Error::IoError(io::Error::new(io::ErrorKind::InvalidData,
+                                                      e));
+                callback(Err(e), core, event_loop);
             }
         };
     });
