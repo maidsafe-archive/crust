@@ -508,7 +508,7 @@ mod tests {
     #[test]
     fn rendezvous_connect_two_peers() {
         maidsafe_utilities::log::init(true).unwrap();
-        timebomb(Duration::from_secs(5), || {
+        timebomb(Duration::from_secs(10), || {
             let (event_tx_0, event_rx_0) = get_event_sender();
             let service_0 = unwrap_result!(Service::new(event_tx_0));
 
