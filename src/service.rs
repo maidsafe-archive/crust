@@ -323,8 +323,7 @@ impl Service {
                                          move |core, event_loop, stream_opt|
                 {
                     match stream_opt {
-                        Some(stream) => {
-                            let token = core.get_new_token();
+                        Some((stream, token)) => {
                             let socket = Socket::wrap(stream);
                             let event_tx = (&*event_tx_rc).clone();
 
@@ -504,7 +503,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn rendezvous_connect_two_peers() {
         timebomb(Duration::from_secs(5), || {
             let (event_tx_0, event_rx_0) = get_event_sender();

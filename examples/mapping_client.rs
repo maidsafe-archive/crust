@@ -16,7 +16,7 @@ use crust::nat::mapped_tcp_socket::MappingTcpSocket;
 use crust::nat::mapping_context::MappingContext;
 use crust::nat::punch_hole::PunchHole;
 use crust::nat::rendezvous_info::gen_rendezvous_info;
-use mio::{EventLoop, EventSet, Token, PollOpt};
+use mio::{EventLoop, EventSet, Token};
 use mio::{TryRead, TryWrite};
 use mio::tcp::TcpStream;
 use socket_addr::SocketAddr;
@@ -116,8 +116,8 @@ fn main() {
 
         let res = PunchHole::start(core, event_loop, socket, our_priv_info, their_pub_info,
                                   |core, event_loop, stream_opt| {
-            let mut stream = match stream_opt {
-                Some(stream) => stream,
+            let (mut stream, token) = match stream_opt {
+                Some(x) => x,
                 None => {
                     println!("Failed to punch hole");
                     return;
@@ -134,7 +134,7 @@ fn main() {
                 },
             };
 
-            MessageReader::start(core, event_loop, stream);
+            MessageReader::start(core, event_loop, stream, token);
             
             /*
             let token = core.get_new_token();
@@ -160,16 +160,8 @@ struct MessageReader {
 }
 
 impl MessageReader {
-    pub fn start(core: &mut Core, event_loop: &mut EventLoop<Core>, stream: TcpStream) {
-        let token = core.get_new_token();
+    pub fn start(core: &mut Core, _event_loop: &mut EventLoop<Core>, stream: TcpStream, token: Token) {
         let context = core.get_new_context();
-        match event_loop.register(&stream, token, EventSet::readable(), PollOpt::edge()) {
-            Ok(()) => (),
-            Err(e) => {
-                println!("Error registering socket: {}", e);
-                return;
-            }
-        }
         let _ = core.insert_context(token, context.clone());
         let _ = core.insert_state(context,
                                   Rc::new(RefCell::new(MessageReader { stream: stream })));
@@ -207,3 +199,4 @@ impl State for MessageReader {
         self
     }
 }
+
