@@ -94,26 +94,27 @@ impl ActiveConnection {
     }
 
     fn readable(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
-        match self.socket.read::<Message>() {
-            Ok(Some(Message::Data(data))) => {
-                let _ = self.event_tx.send(Event::NewMessage(self.peer_id, data));
-                self.reset_receive_heartbeat(core, event_loop);
-            }
+        loop {
+            match self.socket.read::<Message>() {
+                Ok(Some(Message::Data(data))) => {
+                    let _ = self.event_tx.send(Event::NewMessage(self.peer_id, data));
+                    self.reset_receive_heartbeat(core, event_loop);
+                }
 
-            Ok(Some(Message::Heartbeat)) => {
-                self.reset_receive_heartbeat(core, event_loop);
-            }
+                Ok(Some(Message::Heartbeat)) => {
+                    self.reset_receive_heartbeat(core, event_loop);
+                }
 
-            Ok(Some(message)) => {
-                warn!("Unexpected message: {:?}", message);
-                self.reset_receive_heartbeat(core, event_loop);
-            }
+                Ok(Some(message)) => {
+                    warn!("Unexpected message: {:?}", message);
+                    self.reset_receive_heartbeat(core, event_loop);
+                }
 
-            Ok(None) => (),
-            Err(error) => {
-                error!("Failed to read from socket: {:?}", error);
-                self.terminate(core, event_loop);
-                return;
+                Ok(None) => return,
+                Err(error) => {
+                    error!("Failed to read from socket: {:?}", error);
+                    return self.terminate(core, event_loop);
+                }
             }
         }
     }
@@ -236,9 +237,9 @@ impl Heartbeat {
     }
 
     fn timeout(&self, event_loop: &mut EventLoop<Core>, token: Token) -> HeartbeatAction {
-        if token == self.recv_token {
-            return HeartbeatAction::Terminate;
-        }
+        // if token == self.recv_token {
+        //     return HeartbeatAction::Terminate;
+        // }
         if token == self.send_token {
             return if let Err(error) =
                           event_loop.timeout_ms(self.send_token, HEARTBEAT_PERIOD_MS) {
