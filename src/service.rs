@@ -70,7 +70,7 @@ pub struct PrivConnectionInfo {
 
 impl PrivConnectionInfo {
     /// Convert our connection info to theirs so that we can give it to peer.
-    pub fn to_their_connection_info(&self) -> PubConnectionInfo {
+    pub fn to_pub_connection_info(&self) -> PubConnectionInfo {
         PubConnectionInfo {
             tcp_info: self.tcp_info.clone(),
             static_contact_info: self.static_contact_info.clone(),
@@ -538,8 +538,8 @@ mod tests {
 
         let pub_info_0 = unwrap_result!(conn_info_result_0.result);
         let pub_info_1 = unwrap_result!(conn_info_result_1.result);
-        let priv_info_0 = pub_info_0.to_their_connection_info();
-        let priv_info_1 = pub_info_1.to_their_connection_info();
+        let priv_info_0 = pub_info_0.to_pub_connection_info();
+        let priv_info_1 = pub_info_1.to_pub_connection_info();
 
         unwrap_result!(service_0.connect(pub_info_0, priv_info_1));
         unwrap_result!(service_1.connect(pub_info_1, priv_info_0));
@@ -648,7 +648,7 @@ mod tests {
                     }
 
                     let our_ci = prepare_connection_info(&mut self.service, &self.event_rx);
-                    let their_ci = our_ci.to_their_connection_info();
+                    let their_ci = our_ci.to_pub_connection_info();
                     let _ = ci_tx.send(their_ci);
                     self.our_cis.push(our_ci);
                 }
