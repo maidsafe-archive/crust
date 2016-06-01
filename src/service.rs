@@ -16,35 +16,33 @@
 // relating to use of the SAFE Network Software.
 
 use maidsafe_utilities::thread::RaiiThreadJoiner;
-use mio::{self, EventLoop, EventSet, PollOpt};
+use mio::{self, EventLoop};
 use net2;
+use socket_addr;
 use sodiumoxide;
 use sodiumoxide::crypto::box_::{self, PublicKey, SecretKey};
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher, SipHasher};
 use std::io;
-use std::sync::{Arc, Mutex};
+use std::net::{SocketAddr, SocketAddrV4, Ipv4Addr};
 use std::rc::Rc;
-use std::sync::atomic::{AtomicBool, Ordering};
-use socket_addr;
+use std::sync::{Arc, Mutex};
 
 use bootstrap::Bootstrap;
 use config_handler::{self, Config};
+use connect::{ConnectionCandidate, EstablishDirectConnection, SharedConnectionMap};
 use connection_listener::ConnectionListener;
 use core::{Context, Core, CoreMessage};
-use event::Event;
 use error::CrustError;
-use std::net::{SocketAddr, SocketAddrV4, Ipv4Addr};
+use event::Event;
+use nat::mapped_tcp_socket::MappingTcpSocket;
+use nat::mapping_context::MappingContext;
+use nat::punch_hole::PunchHole;
+use nat::rendezvous_info::{PubRendezvousInfo, PrivRendezvousInfo, gen_rendezvous_info};
 use peer_id::{self, PeerId};
 use service_discovery::ServiceDiscovery;
-use static_contact_info::StaticContactInfo;
-use nat::mapped_tcp_socket::MappingTcpSocket;
-use nat::rendezvous_info::{PubRendezvousInfo, PrivRendezvousInfo, gen_rendezvous_info};
-use nat::mapping_context::MappingContext;
 use socket::Socket;
-use active_connection::ActiveConnection;
-use connect::establish_direct_connection::EstablishDirectConnection;
-use nat::punch_hole::PunchHole;
+use static_contact_info::StaticContactInfo;
 
 const BOOTSTRAP_CONTEXT: Context = Context(0);
 const SERVICE_DISCOVERY_CONTEXT: Context = Context(1);
@@ -97,12 +95,6 @@ impl PubConnectionInfo {
     }
 }
 
-pub type SharedConnectionMap = Arc<Mutex<HashMap<PeerId, Context>>>;
-
-fn new_shared_connection_map() -> SharedConnectionMap {
-    Arc::new(Mutex::new(HashMap::new()))
-}
-
 /// A structure representing a connection manager.
 pub struct Service {
     config: Config,
@@ -145,7 +137,7 @@ impl Service {
         }));
 
         Ok(Service {
-            connection_map: new_shared_connection_map(),
+            connection_map: Arc::new(Mutex::new(HashMap::new())),
             config: config,
             event_tx: event_tx,
             is_listenner_running: false,
@@ -265,53 +257,60 @@ impl Service {
     }
 
     /// connect to peer
-    pub fn connect(&mut self,
+    pub fn connect(&self,
                    our_connection_info: PrivConnectionInfo,
                    their_connection_info: PubConnectionInfo)
                    -> ::Res<()> {
         let event_tx = self.event_tx.clone();
         let connection_map = self.connection_map.clone();
+        let our_public_key = self.our_keys.0.clone();
+        let our_id = peer_id::new(our_public_key);
+        let name_hash = self.name_hash;
+
         // FIXME: check this error
         let _ = self.post(move |core, event_loop| {
+            let their_id = their_connection_info.id;
+
+            if connection_map.lock().unwrap().contains_key(&their_id) {
+                warn!("Already connected to {:?}", their_id);
+                return;
+            }
+
             let event_tx_rc = Rc::new(event_tx);
-            let response_sent_rc = Rc::new(AtomicBool::new(false));
 
             let static_contact_info = their_connection_info.static_contact_info;
-            let their_id = their_connection_info.id;
             for socket_addr::SocketAddr(addr) in static_contact_info.tcp_acceptors {
-                let event_tx_rc = event_tx_rc.clone();
-                let response_sent_rc = response_sent_rc.clone();
                 let connection_map = connection_map.clone();
-                // FIXME: check this error
-                let _ =
-                    EstablishDirectConnection::start(core,
-                                                     event_loop,
-                                                     addr,
-                                                     their_id,
-                                                     move |core, event_loop, res, peer_id| {
-                        if !response_sent_rc.load(Ordering::Relaxed) {
-                            match res {
-                                Ok((token, stream)) => {
-                                    let socket = Socket::wrap(stream);
-                                    let event_tx = (&*event_tx_rc).clone();
-                                    let _ = event_tx.send(Event::NewPeer(Ok(()), peer_id));
-                                    response_sent_rc.store(true, Ordering::Relaxed);
-                                    ActiveConnection::start(core,
-                                                            event_loop,
-                                                            token,
-                                                            socket,
-                                                            connection_map,
-                                                            their_id,
-                                                            event_tx);
-                                }
-                                Err(e) => {
-                                    if let Ok(event_tx) = Rc::try_unwrap(event_tx_rc) {
-                                        let _ = event_tx.send(Event::NewPeer(Err(e), their_id));
-                                    }
-                                }
+                let event_tx_rc = event_tx_rc.clone();
+
+                EstablishDirectConnection::start(core, event_loop, addr, our_public_key, name_hash,
+                                                 move |core, event_loop, res|
+                {
+                    match res {
+                        Ok((token, socket)) => {
+                            let event_tx = (&*event_tx_rc).clone();
+                            ConnectionCandidate::start(core,
+                                                       event_loop,
+                                                       token,
+                                                       socket,
+                                                       connection_map,
+                                                       our_id,
+                                                       their_id,
+                                                       event_tx);
+                        },
+                        Err(e) => {
+                            // Do not raise error if we aready established connection
+                            // to this peer elsewhere.
+                            if connection_map.lock().unwrap().contains_key(&their_id) {
+                                return;
                             }
-                        }
-                    });
+
+                            if let Ok(event_tx) = Rc::try_unwrap(event_tx_rc) {
+                                let _ = event_tx.send(Event::NewPeer(Err(e), their_id));
+                            }
+                        },
+                    }
+                });
             }
 
             if let Some(tcp_socket) = our_connection_info.tcp_socket {
@@ -321,32 +320,30 @@ impl Service {
                                          tcp_socket,
                                          our_connection_info.priv_tcp_info,
                                          their_connection_info.tcp_info,
-                                         move |core, event_loop, stream_opt| {
+                                         move |core, event_loop, stream_opt|
+                {
                     match stream_opt {
                         Some(stream) => {
                             let token = core.get_new_token();
-                            let context = core.get_new_context();
-
-                            // FIXME: more ignored errors
-                            let _ = core.insert_context(token, context);
-                            let _ = event_loop.register(&stream,
-                                                        token,
-                                                        EventSet::all(),
-                                                        PollOpt::edge());
-
                             let socket = Socket::wrap(stream);
                             let event_tx = (&*event_tx_rc).clone();
-                            let _ = event_tx.send(Event::NewPeer(Ok(()), their_id));
-                            response_sent_rc.store(true, Ordering::Relaxed);
-                            ActiveConnection::start(core,
-                                                    event_loop,
-                                                    token,
-                                                    socket,
-                                                    connection_map,
-                                                    their_id,
-                                                    event_tx);
+
+                            ConnectionCandidate::start(core,
+                                                       event_loop,
+                                                       token,
+                                                       socket,
+                                                       connection_map,
+                                                       our_id,
+                                                       their_id,
+                                                       event_tx);
                         }
                         None => {
+                            // Do not raise error if we aready established connection
+                            // to this peer elsewhere.
+                            if connection_map.lock().unwrap().contains_key(&their_id) {
+                                return;
+                            }
+
                             if let Ok(event_tx) = Rc::try_unwrap(event_tx_rc) {
                                 let error = io::Error::new(io::ErrorKind::Other,
                                                            "Failed to punch hole");
@@ -359,21 +356,10 @@ impl Service {
         });
 
         Ok(())
-        // let event_tx = self.event_tx.clone();
-        // let connection_map = self.connection_map.clone();
-        //
-        // self.post(move |core, event_loop| {
-        // EstablishConnection::start(core,
-        // event_loop,
-        // peer_contact_info,
-        // connection_map,
-        // event_tx);
-        // })
-        //
     }
 
     /// Disconnect from the given peer and returns whether there was a connection at all.
-    pub fn disconnect(&mut self, peer_id: PeerId) -> bool {
+    pub fn disconnect(&self, peer_id: PeerId) -> bool {
         let context = match self.connection_map.lock().unwrap().remove(&peer_id) {
             Some(context) => context,
             None => return false,
@@ -389,7 +375,7 @@ impl Service {
     }
 
     /// sending data to a peer(according to it's u64 peer_id)
-    pub fn send(&mut self, peer_id: PeerId, data: Vec<u8>, _priority: u8) -> ::Res<()> {
+    pub fn send(&self, peer_id: PeerId, data: Vec<u8>, _priority: u8) -> ::Res<()> {
         // TODO(Spandan) This is wrong. Correct size can only be obtained post serialisation of
         // enum in which this will be put
         if data.len() > ::MAX_PAYLOAD_SIZE {
@@ -414,7 +400,7 @@ impl Service {
 
     /// Lookup a mapped udp socket based on result_token
     // TODO: immediate return in case of sender.send() returned with NotificationError
-    pub fn prepare_connection_info(&mut self, result_token: u32) {
+    pub fn prepare_connection_info(&self, result_token: u32) {
         let event_tx = self.event_tx.clone();
         let our_pub_key = self.our_keys.0;
         let static_contact_info = self.our_contact_info.lock().unwrap().clone();
@@ -443,7 +429,7 @@ impl Service {
             }) {
                 Ok(()) => (),
                 Err(e) => {
-                    debug!("CrustError mapping tcp socket: {}", e);
+                    debug!("Error mapping tcp socket: {}", e);
                     let _ = event_tx.send(Event::ConnectionInfoPrepared(ConnectionInfoResult {
                         result_token: result_token,
                         result: Err(From::from(e)),
@@ -489,123 +475,103 @@ fn name_hash(network_name: &Option<String>) -> u64 {
 
 #[cfg(test)]
 mod tests {
+    // use maidsafe_utilities::log;
     use std::sync::mpsc::Receiver;
-    use std::sync::mpsc;
     use std::time::Duration;
-    use std::thread;
-    use std::iter;
-
-    use maidsafe_utilities::event_sender::{MaidSafeObserver, MaidSafeEventCategory};
-    use void::Void;
-    use crossbeam;
-    use rand;
 
     use event::Event;
     use service::Service;
+    use tests::{get_event_sender, timebomb};
 
-    fn get_event_sender
-        ()
-        -> (::CrustEventSender, Receiver<MaidSafeEventCategory>, Receiver<Event>)
-    {
-        let (category_tx, category_rx) = mpsc::channel();
-        let event_category = MaidSafeEventCategory::Crust;
-        let (event_tx, event_rx) = mpsc::channel();
+    #[test]
+    fn direct_connect_two_peers() {
+        timebomb(Duration::from_secs(5), || {
+            let (event_tx_0, event_rx_0) = get_event_sender();
+            let mut service_0 = unwrap_result!(Service::new(event_tx_0));
 
-        (MaidSafeObserver::new(event_tx, event_category, category_tx), category_rx, event_rx)
-    }
+            unwrap_result!(service_0.start_listening_tcp());
+            expect_event!(event_rx_0, Event::ListenerStarted(_));
 
-    fn timebomb<R, F>(dur: Duration, f: F) -> R
-        where R: Send,
-              F: Send + FnOnce() -> R
-    {
-        crossbeam::scope(|scope| {
-            let thread_handle = thread::current();
-            let (done_tx, done_rx) = mpsc::channel::<Void>();
-            let jh = scope.spawn(move || {
-                let ret = f();
-                drop(done_tx);
-                thread_handle.unpark();
-                ret
-            });
-            thread::park_timeout(dur);
-            match done_rx.try_recv() {
-                Ok(x) => match x {},
-                Err(mpsc::TryRecvError::Empty) => panic!("Timed out!"),
-                Err(mpsc::TryRecvError::Disconnected) => jh.join(),
-            }
+            let (event_tx_1, event_rx_1) = get_event_sender();
+            let mut service_1 = unwrap_result!(Service::new(event_tx_1));
+
+            unwrap_result!(service_1.start_listening_tcp());
+            expect_event!(event_rx_1, Event::ListenerStarted(_));
+
+            connect(&service_0, &event_rx_0, &service_1, &event_rx_1);
+            exchange_messages(&service_0, &event_rx_0, &service_1, &event_rx_1);
         })
     }
 
     #[test]
     #[ignore]
-    fn connect_two_peers() {
+    fn rendezvous_connect_two_peers() {
         timebomb(Duration::from_secs(5), || {
-            let (event_tx_0, _category_rx_0, event_rx_0) = get_event_sender();
-            let mut service_0 = unwrap_result!(Service::new(event_tx_0));
+            let (event_tx_0, event_rx_0) = get_event_sender();
+            let service_0 = unwrap_result!(Service::new(event_tx_0));
 
-            let (event_tx_1, _category_rx_1, event_rx_1) = get_event_sender();
-            let mut service_1 = unwrap_result!(Service::new(event_tx_1));
+            let (event_tx_1, event_rx_1) = get_event_sender();
+            let service_1 = unwrap_result!(Service::new(event_tx_1));
 
-            service_0.prepare_connection_info(0);
-            service_1.prepare_connection_info(0);
-
-            let conn_info_result_0 = match unwrap_result!(event_rx_0.recv()) {
-                Event::ConnectionInfoPrepared(conn_info_result) => conn_info_result,
-                e => panic!("Unexpected message type: {:?}", e),
-            };
-
-            let conn_info_result_1 = match unwrap_result!(event_rx_1.recv()) {
-                Event::ConnectionInfoPrepared(conn_info_result) => conn_info_result,
-                e => panic!("Unexpected message type: {:?}", e),
-            };
-
-            let pub_info_0 = unwrap_result!(conn_info_result_0.result);
-            let pub_info_1 = unwrap_result!(conn_info_result_1.result);
-            let priv_info_0 = pub_info_0.to_their_connection_info();
-            let priv_info_1 = pub_info_1.to_their_connection_info();
-
-            unwrap_result!(service_0.connect(pub_info_0, priv_info_1));
-            unwrap_result!(service_1.connect(pub_info_1, priv_info_0));
-
-            let id_1 = match unwrap_result!(event_rx_0.recv()) {
-                Event::NewPeer(res, id) => {
-                    unwrap_result!(res);
-                    id
-                }
-                e => panic!("Unexpected event when waiting for NewPeer: {:?}", e),
-            };
-            let id_0 = match unwrap_result!(event_rx_1.recv()) {
-                Event::NewPeer(res, id) => {
-                    unwrap_result!(res);
-                    id
-                }
-                e => panic!("Unexpected event when waiting for NewPeer: {:?}", e),
-            };
-
-            let data_0: Vec<u8> = iter::repeat(()).take(32).map(|()| rand::random()).collect();
-            let send_0 = data_0.clone();
-            let data_1: Vec<u8> = iter::repeat(()).take(32).map(|()| rand::random()).collect();
-            let send_1 = data_1.clone();
-            unwrap_result!(service_0.send(id_1, data_0, 0));
-            unwrap_result!(service_1.send(id_0, data_1, 0));
-
-            let recv_1 = match unwrap_result!(event_rx_0.recv()) {
-                Event::NewMessage(id, recv) => {
-                    assert_eq!(id, id_1);
-                    recv
-                }
-                e => panic!("Unexpected event when waiting for NewMessage: {:?}", e),
-            };
-            let recv_0 = match unwrap_result!(event_rx_1.recv()) {
-                Event::NewMessage(id, recv) => {
-                    assert_eq!(id, id_0);
-                    recv
-                }
-                e => panic!("Unexpected event when waiting for NewMessage: {:?}", e),
-            };
-
-            assert_eq!(recv_0, send_0);
-            assert_eq!(recv_1, send_1);
+            connect(&service_0, &event_rx_0, &service_1, &event_rx_1);
+            exchange_messages(&service_0, &event_rx_0, &service_1, &event_rx_1);
         });
+    }
+
+    fn connect(service_0: &Service, event_rx_0: &Receiver<Event>,
+               service_1: &Service, event_rx_1: &Receiver<Event>) {
+        service_0.prepare_connection_info(0);
+        service_1.prepare_connection_info(0);
+
+        let conn_info_result_0 = expect_event!(event_rx_0, Event::ConnectionInfoPrepared(result) => result);
+        let conn_info_result_1 = expect_event!(event_rx_1, Event::ConnectionInfoPrepared(result) => result);
+
+        let pub_info_0 = unwrap_result!(conn_info_result_0.result);
+        let pub_info_1 = unwrap_result!(conn_info_result_1.result);
+        let priv_info_0 = pub_info_0.to_their_connection_info();
+        let priv_info_1 = pub_info_1.to_their_connection_info();
+
+        unwrap_result!(service_0.connect(pub_info_0, priv_info_1));
+        unwrap_result!(service_1.connect(pub_info_1, priv_info_0));
+
+        expect_event!(event_rx_0, Event::NewPeer(res, id) => {
+            unwrap_result!(res);
+            assert_eq!(id, service_1.id());
+        });
+
+        expect_event!(event_rx_1, Event::NewPeer(res, id) => {
+            unwrap_result!(res);
+            assert_eq!(id, service_0.id());
+        });
+    }
+
+    fn exchange_messages(service_0: &Service, event_rx_0: &Receiver<Event>,
+                         service_1: &Service, event_rx_1: &Receiver<Event>) {
+        use rand;
+        use std::iter;
+
+        let id_0 = service_0.id();
+        let id_1 = service_1.id();
+
+        let data_0: Vec<u8> = iter::repeat(()).take(32).map(|()| rand::random()).collect();
+        let send_0 = data_0.clone();
+        let data_1: Vec<u8> = iter::repeat(()).take(32).map(|()| rand::random()).collect();
+        let send_1 = data_1.clone();
+
+        unwrap_result!(service_0.send(id_1, data_0, 0));
+        unwrap_result!(service_1.send(id_0, data_1, 0));
+
+        let recv_1 = expect_event!(event_rx_0, Event::NewMessage(id, recv) => {
+            assert_eq!(id, id_1);
+            recv
+        });
+
+        let recv_0 = expect_event!(event_rx_1, Event::NewMessage(id, recv) => {
+            assert_eq!(id, id_0);
+            recv
+        });
+
+        assert_eq!(recv_0, send_0);
+        assert_eq!(recv_1, send_1);
     }
 }

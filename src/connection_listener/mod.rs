@@ -19,32 +19,32 @@ mod exchange_msg;
 
 use mio::{EventLoop, EventSet, PollOpt, Token};
 use mio::tcp::TcpListener;
+use net2::TcpBuilder;
+use socket_addr;
 use sodiumoxide::crypto::box_::PublicKey;
 use std::any::Any;
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
-use std::sync::{Arc, Mutex};
-use std::rc::Rc;
 use std::cell::RefCell;
+use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::rc::Rc;
+use std::sync::{Arc, Mutex};
 
-use socket_addr;
-use net2::TcpBuilder;
 use self::exchange_msg::ExchangeMsg;
+use connect::SharedConnectionMap;
 use core::{Core, State, Context};
 use event::Event;
 use nat::mapped_tcp_socket::MappingTcpSocket;
 use nat::mapping_context::MappingContext;
-use service::SharedConnectionMap;
 use socket::Socket;
 use static_contact_info::StaticContactInfo;
 
 pub struct ConnectionListener {
-    token: Token,
-    context: Context,
-    listener: TcpListener,
     cm: SharedConnectionMap,
+    context: Context,
     event_tx: ::CrustEventSender,
+    listener: TcpListener,
     name_hash: u64,
     our_pk: PublicKey,
+    token: Token,
 }
 
 impl ConnectionListener {
@@ -111,13 +111,13 @@ impl ConnectionListener {
             .extend(mapped_addrs);
 
         let state = ConnectionListener {
-            token: token,
-            context: context,
-            listener: listener,
             cm: cm,
+            context: context,
             event_tx: event_tx.clone(),
+            listener: listener,
             name_hash: name_hash,
             our_pk: our_pk,
+            token: token,
         };
 
         let _ = core.insert_context(token, context);
@@ -319,17 +319,26 @@ mod test {
     }
 
     fn connect(name_hash: u64, pk: PublicKey, listener: Listener) {
+        use peer_id;
+
         let mut peer = connect_to_listener(&listener);
 
         let message = serialise(&Message::Connect(pk, name_hash)).unwrap();
         write(&mut peer, message).expect("Could not write.");
 
-        match read(&mut peer).expect("Could not read.") {
+        let our_id = peer_id::new(pk);
+        let their_id = match read(&mut peer).expect("Could not read.") {
             Message::Connect(peer_pk, peer_hash) => {
                 assert_eq!(peer_pk, listener.pk);
                 assert_eq!(peer_hash, NAME_HASH);
+                peer_id::new(peer_pk)
             }
             msg => panic!("Unexpected message: {:?}", msg),
+        };
+
+        if our_id > their_id {
+            let message = serialise(&Message::ChooseConnection).unwrap();
+            write(&mut peer, message).expect("Could not write.");
         }
 
         match listener.event_rx.recv().expect("Could not read event channel") {

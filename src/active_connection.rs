@@ -19,10 +19,10 @@ use mio::{EventLoop, EventSet, PollOpt, Timeout, TimerError, Token};
 use std::any::Any;
 
 use core::{Core, Context, State};
+use connect::SharedConnectionMap;
 use event::Event;
 use message::Message;
 use peer_id::PeerId;
-use service::SharedConnectionMap;
 use socket::Socket;
 use std::rc::Rc;
 use std::cell::RefCell;
@@ -178,10 +178,6 @@ impl State for ActiveConnection {
 
     fn terminate(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
         self.heartbeat.terminate(core, event_loop);
-
-        if let Err(error) = self.socket.shutdown() {
-            debug!("Failed to shutdown socket: {:?}", error);
-        }
 
         if let Err(error) = event_loop.deregister(&self.socket) {
             debug!("Failed to deregister socket: {:?}", error);
