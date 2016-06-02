@@ -20,7 +20,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use active_connection::ActiveConnection;
-use connect::SharedConnectionMap;
+use service::ConnectionMap;
 use core::{Core, State};
 use event::Event;
 use message::Message;
@@ -29,10 +29,11 @@ use peer_id::PeerId;
 use socket::Socket;
 
 pub struct ConnectionCandidate {
-    connection_map: SharedConnectionMap,
+    cm: ConnectionMap,
     event_tx: ::CrustEventSender,
     socket: Option<Socket>,
     their_id: PeerId,
+    our_id: PeerId,
     token: Token,
 }
 
@@ -41,15 +42,16 @@ impl ConnectionCandidate {
                  event_loop: &mut EventLoop<Core>,
                  token: Token,
                  socket: Socket,
-                 connection_map: SharedConnectionMap,
+                 cm: ConnectionMap,
                  our_id: PeerId,
                  their_id: PeerId,
                  event_tx: ::CrustEventSender) {
         let state = Rc::new(RefCell::new(ConnectionCandidate {
-            connection_map: connection_map,
+            cm: cm,
             event_tx: event_tx,
             socket: Some(socket),
             their_id: their_id,
+            our_id: our_id,
             token: token,
         }));
 
@@ -78,7 +80,7 @@ impl ConnectionCandidate {
     }
 
     fn write(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, msg: Option<Message>) {
-        if self.connection_exists() {
+        if self.cm.lock().unwrap().contains_key(&self.their_id) {
             return self.terminate(core, event_loop);
         }
 
@@ -93,10 +95,6 @@ impl ConnectionCandidate {
     }
 
     fn finish(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
-        if self.connection_exists() {
-            return self.terminate(core, event_loop);
-        }
-
         if let Some(context) = core.remove_context(self.token) {
             let _ = core.remove_state(context);
         }
@@ -107,15 +105,11 @@ impl ConnectionCandidate {
                                 event_loop,
                                 self.token,
                                 socket,
-                                self.connection_map.clone(),
+                                self.cm.clone(),
                                 self.their_id,
+                                self.our_id,
+                                Event::NewPeer(Ok(()), self.their_id),
                                 self.event_tx.clone());
-
-        let _ = self.event_tx.send(Event::NewPeer(Ok(()), self.their_id));
-    }
-
-    fn connection_exists(&self) -> bool {
-        self.connection_map.lock().unwrap().contains_key(&self.their_id)
     }
 }
 

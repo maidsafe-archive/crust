@@ -30,7 +30,7 @@ use std::sync::{Arc, Mutex};
 
 use bootstrap::Bootstrap;
 use config_handler::{self, Config};
-use connect::{ConnectionCandidate, EstablishDirectConnection, SharedConnectionMap};
+use connect::{ConnectionCandidate, EstablishDirectConnection};
 use connection_listener::ConnectionListener;
 use core::{Context, Core, CoreMessage};
 use error::CrustError;
@@ -43,6 +43,8 @@ use peer_id::{self, PeerId};
 use service_discovery::ServiceDiscovery;
 use socket::Socket;
 use static_contact_info::StaticContactInfo;
+
+pub type ConnectionMap = Arc<Mutex<HashMap<PeerId, Context>>>;
 
 const BOOTSTRAP_CONTEXT: Context = Context(0);
 const SERVICE_DISCOVERY_CONTEXT: Context = Context(1);
@@ -98,7 +100,7 @@ impl PubConnectionInfo {
 /// A structure representing a connection manager.
 pub struct Service {
     config: Config,
-    connection_map: SharedConnectionMap,
+    cm: ConnectionMap,
     event_tx: ::CrustEventSender,
     is_listenner_running: bool,
     is_service_discovery_running: bool,
@@ -137,7 +139,7 @@ impl Service {
         }));
 
         Ok(Service {
-            connection_map: Arc::new(Mutex::new(HashMap::new())),
+            cm: Arc::new(Mutex::new(HashMap::new())),
             config: config,
             event_tx: event_tx,
             is_listenner_running: false,
@@ -200,7 +202,7 @@ impl Service {
         let config = self.config.clone();
         let our_public_key = self.our_keys.0;
         let name_hash = self.name_hash;
-        let connection_map = self.connection_map.clone();
+        let cm = self.cm.clone();
         let event_tx = self.event_tx.clone();
 
         self.post(move |core, event_loop| {
@@ -208,7 +210,7 @@ impl Service {
                                              event_loop,
                                              name_hash,
                                              our_public_key,
-                                             connection_map,
+                                             cm,
                                              &config,
                                              BOOTSTRAP_CONTEXT,
                                              SERVICE_DISCOVERY_CONTEXT,
@@ -235,7 +237,7 @@ impl Service {
             self.is_listenner_running = true;
         }
 
-        let connection_map = self.connection_map.clone();
+        let cm = self.cm.clone();
         let mapping_context = self.mapping_context.clone();
         let port = self.config.tcp_acceptor_port.unwrap_or(0);
         let our_public_key = self.our_keys.0;
@@ -246,10 +248,11 @@ impl Service {
         self.post(move |core, event_loop| {
             ConnectionListener::start(core,
                                       event_loop,
+                                      None,
                                       port,
                                       our_public_key,
                                       name_hash,
-                                      connection_map,
+                                      cm,
                                       mapping_context,
                                       our_contact_info,
                                       event_tx);
@@ -262,7 +265,7 @@ impl Service {
                    their_connection_info: PubConnectionInfo)
                    -> ::Res<()> {
         let event_tx = self.event_tx.clone();
-        let connection_map = self.connection_map.clone();
+        let cm = self.cm.clone();
         let our_public_key = self.our_keys.0;
         let our_id = peer_id::new(our_public_key);
         let name_hash = self.name_hash;
@@ -271,7 +274,7 @@ impl Service {
         let _ = self.post(move |core, event_loop| {
             let their_id = their_connection_info.id;
 
-            if connection_map.lock().unwrap().contains_key(&their_id) {
+            if cm.lock().unwrap().contains_key(&their_id) {
                 warn!("Already connected to {:?}", their_id);
                 return;
             }
@@ -280,7 +283,7 @@ impl Service {
 
             let static_contact_info = their_connection_info.static_contact_info;
             for socket_addr::SocketAddr(addr) in static_contact_info.tcp_acceptors {
-                let connection_map = connection_map.clone();
+                let cm = cm.clone();
                 let event_tx_rc = event_tx_rc.clone();
 
                 EstablishDirectConnection::start(core,
@@ -296,21 +299,21 @@ impl Service {
                                                        event_loop,
                                                        token,
                                                        socket,
-                                                       connection_map,
+                                                       cm,
                                                        our_id,
                                                        their_id,
                                                        event_tx);
                         }
-                        Err(_e) => {
+                        Err(e) => {
                             // Do not raise error if we aready established connection
                             // to this peer elsewhere.
-                            if connection_map.lock().unwrap().contains_key(&their_id) {
+                            if cm.lock().unwrap().contains_key(&their_id) {
                                 return;
                             }
 
-                            // if let Ok(event_tx) = Rc::try_unwrap(event_tx_rc) {
-                            //     let _ = event_tx.send(Event::NewPeer(Err(e), their_id));
-                            // }
+                            if let Ok(event_tx) = Rc::try_unwrap(event_tx_rc) {
+                                let _ = event_tx.send(Event::NewPeer(Err(e), their_id));
+                            }
                         }
                     }
                 });
@@ -334,7 +337,7 @@ impl Service {
                                                        event_loop,
                                                        token,
                                                        socket,
-                                                       connection_map,
+                                                       cm,
                                                        our_id,
                                                        their_id,
                                                        event_tx);
@@ -342,7 +345,7 @@ impl Service {
                         None => {
                             // Do not raise error if we aready established connection
                             // to this peer elsewhere.
-                            if connection_map.lock().unwrap().contains_key(&their_id) {
+                            if cm.lock().unwrap().contains_key(&their_id) {
                                 return;
                             }
 
@@ -362,7 +365,7 @@ impl Service {
 
     /// Disconnect from the given peer and returns whether there was a connection at all.
     pub fn disconnect(&self, peer_id: PeerId) -> bool {
-        let context = match self.connection_map.lock().unwrap().remove(&peer_id) {
+        let context = match self.cm.lock().unwrap().remove(&peer_id) {
             Some(context) => context,
             None => return false,
         };
@@ -384,7 +387,7 @@ impl Service {
             return Err(CrustError::PayloadSizeProhibitive);
         }
 
-        let context = match self.connection_map
+        let context = match self.cm
             .lock()
             .unwrap()
             .get(&peer_id)
@@ -606,7 +609,7 @@ mod tests {
 
     #[test]
     fn sending_receiving_multiple_services() {
-        const NUM_SERVICES: usize = 15;
+        const NUM_SERVICES: usize = 30;
         const MSG_SIZE: usize = 1024;
         const NUM_MSGS: usize = 257;
 
@@ -661,15 +664,18 @@ mod tests {
                         let _ = self.service.connect(our_ci, their_ci);
                     }
                     let mut their_ids = HashMap::new();
-                    for _ in 0..(NUM_SERVICES - 1) {
+                    let mut i = 0;
+                    while i < NUM_SERVICES - 1 {
                         let their_id = match unwrap_result!(self.event_rx.recv()) {
                             Event::NewPeer(Ok(()), their_id) => their_id,
+                            Event::NewPeer(Err(_), _) => continue,
                             m => panic!("Expected NewPeer message. Got message {:?}", m),
                         };
                         match their_ids.insert(their_id, 0u32) {
                             Some(_) => panic!("Received two NewPeer events for same peer!"),
                             None => (),
                         };
+                        i += 1;
                     }
 
                     // Wait until all nodes have connected to each other before we start

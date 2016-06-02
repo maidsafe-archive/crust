@@ -20,23 +20,24 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use active_connection::ActiveConnection;
-use connect::{ConnectionCandidate, SharedConnectionMap};
+use connect::ConnectionCandidate;
 use core::{Core, State};
 use event::Event;
 use message::Message;
 use mio::{EventLoop, EventSet, PollOpt, Timeout, Token};
 use peer_id::{self, PeerId};
 use socket::Socket;
+use service::ConnectionMap;
 use sodiumoxide::crypto::box_::PublicKey;
 
-pub const EXCHANGE_MSG_TIMEOUT_MS: u64 = 5_000;
+pub const EXCHANGE_MSG_TIMEOUT_MS: u64 = 10 * 60 * 1000;
 
 pub struct ExchangeMsg {
-    cm: SharedConnectionMap,
+    cm: ConnectionMap,
     event_tx: ::CrustEventSender,
     name_hash: u64,
     next_state: NextState,
-    our_public_key: PublicKey,
+    our_pk: PublicKey,
     socket: Option<Socket>,
     timeout: Timeout,
     token: Token,
@@ -45,10 +46,11 @@ pub struct ExchangeMsg {
 impl ExchangeMsg {
     pub fn start(core: &mut Core,
                  event_loop: &mut EventLoop<Core>,
+                 timeout_ms: Option<u64>,
                  socket: Socket,
-                 our_public_key: PublicKey,
+                 our_pk: PublicKey,
                  name_hash: u64,
-                 cm: SharedConnectionMap,
+                 cm: ConnectionMap,
                  event_tx: ::CrustEventSender)
                  -> ::Res<()> {
         let token = core.get_new_token();
@@ -56,14 +58,15 @@ impl ExchangeMsg {
         let event_set = EventSet::error() | EventSet::hup() | EventSet::readable();
         try!(event_loop.register(&socket, token, event_set, PollOpt::edge()));
 
-        let timeout = try!(event_loop.timeout_ms(token, EXCHANGE_MSG_TIMEOUT_MS));
+        let timeout =
+            try!(event_loop.timeout_ms(token, timeout_ms.unwrap_or(EXCHANGE_MSG_TIMEOUT_MS)));
 
         let state = ExchangeMsg {
             cm: cm,
             event_tx: event_tx,
             name_hash: name_hash,
             next_state: NextState::None,
-            our_public_key: our_public_key,
+            our_pk: our_pk,
             socket: Some(socket),
             timeout: timeout,
             token: token,
@@ -106,11 +109,9 @@ impl ExchangeMsg {
             Err(()) => return self.terminate(core, event_loop),
         };
 
-        let our_public_key = self.our_public_key;
+        let our_pk = self.our_pk;
         self.next_state = NextState::ActiveConnection(their_id);
-        self.write(core,
-                   event_loop,
-                   Some(Message::BootstrapResponse(our_public_key)))
+        self.write(core, event_loop, Some(Message::BootstrapResponse(our_pk)))
     }
 
     fn handle_connect(&mut self,
@@ -123,17 +124,15 @@ impl ExchangeMsg {
             Err(()) => return self.terminate(core, event_loop),
         };
 
-        let our_public_key = self.our_public_key;
+        let our_pk = self.our_pk;
         let name_hash = self.name_hash;
 
         self.next_state = NextState::ConnectionCandidate(their_id);
-        self.write(core,
-                   event_loop,
-                   Some(Message::Connect(our_public_key, name_hash)));
+        self.write(core, event_loop, Some(Message::Connect(our_pk, name_hash)));
     }
 
     fn get_peer_id(&self, their_public_key: PublicKey, name_hash: u64) -> Result<PeerId, ()> {
-        if self.our_public_key == their_public_key {
+        if self.our_pk == their_public_key {
             warn!("Accepted connection from ourselves");
             return Err(());
         }
@@ -149,6 +148,13 @@ impl ExchangeMsg {
     }
 
     fn write(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, msg: Option<Message>) {
+        // Do not accept multiple bootstraps from same peer
+        if let NextState::ActiveConnection(their_id) = self.next_state {
+            if self.cm.lock().unwrap().get(&their_id).is_some() {
+                return self.terminate(core, event_loop);
+            }
+        }
+
         match self.socket.as_mut().unwrap().write(event_loop, self.token, msg) {
             Ok(true) => self.finish(core, event_loop),
             Ok(false) => (),
@@ -163,8 +169,9 @@ impl ExchangeMsg {
         if let Some(context) = core.remove_context(self.token) {
             let _ = core.remove_state(context);
         }
-
         let _ = event_loop.clear_timeout(self.timeout);
+
+        let our_id = peer_id::new(self.our_pk);
 
         match self.next_state {
             NextState::ActiveConnection(their_id) => {
@@ -174,12 +181,11 @@ impl ExchangeMsg {
                                         self.socket.take().unwrap(),
                                         self.cm.clone(),
                                         their_id,
+                                        our_id,
+                                        Event::BootstrapAccept(their_id),
                                         self.event_tx.clone());
-
-                let _ = self.event_tx.send(Event::BootstrapAccept(their_id));
             }
             NextState::ConnectionCandidate(their_id) => {
-                let our_id = peer_id::new(self.our_public_key);
                 ConnectionCandidate::start(core,
                                            event_loop,
                                            self.token,

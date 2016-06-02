@@ -39,9 +39,7 @@ pub struct EstablishDirectConnection<F> {
 }
 
 impl<F> EstablishDirectConnection<F>
-    where F: FnOnce(&mut Core,
-                    &mut EventLoop<Core>,
-                    io::Result<(Token, Socket)>) + Any
+    where F: FnOnce(&mut Core, &mut EventLoop<Core>, io::Result<(Token, Socket)>) + Any
 {
     pub fn start(core: &mut Core,
                  event_loop: &mut EventLoop<Core>,
@@ -83,10 +81,7 @@ impl<F> EstablishDirectConnection<F>
         let _ = core.insert_state(context, Rc::new(RefCell::new(state)));
     }
 
-    fn writable(&mut self,
-                core: &mut Core,
-                event_loop: &mut EventLoop<Core>)
-    {
+    fn writable(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
         let message = if self.sent {
             None
         } else {
@@ -94,9 +89,10 @@ impl<F> EstablishDirectConnection<F>
             Some(Message::Connect(self.our_public_key, self.name_hash))
         };
 
-        match self.socket.as_mut()
-                         .unwrap()
-                         .write(event_loop, self.token, message) {
+        match self.socket
+            .as_mut()
+            .unwrap()
+            .write(event_loop, self.token, message) {
             Ok(_) => (),
             Err(error) => {
                 error!("Failed to write to socket: {:?}", error);
@@ -105,16 +101,10 @@ impl<F> EstablishDirectConnection<F>
         }
     }
 
-    fn readable(&mut self,
-                core: &mut Core,
-                event_loop: &mut EventLoop<Core>)
-    {
+    fn readable(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
         match self.socket.as_mut().unwrap().read::<Message>() {
             Ok(Some(Message::Connect(public_key, name_hash))) => {
-                self.handle_connect(core,
-                                    event_loop,
-                                    public_key,
-                                    name_hash);
+                self.handle_connect(core, event_loop, public_key, name_hash);
             }
 
             Ok(Some(message)) => {
@@ -135,8 +125,7 @@ impl<F> EstablishDirectConnection<F>
                       core: &mut Core,
                       event_loop: &mut EventLoop<Core>,
                       their_public_key: PublicKey,
-                      name_hash: u64)
-    {
+                      name_hash: u64) {
         if name_hash != self.name_hash {
             let error = io::Error::new(io::ErrorKind::Other, "Incompatible protocol version");
             self.done(core, event_loop, Err(error));
@@ -157,8 +146,7 @@ impl<F> EstablishDirectConnection<F>
     fn done(&mut self,
             core: &mut Core,
             event_loop: &mut EventLoop<Core>,
-            result: io::Result<(Token, Socket)>)
-    {
+            result: io::Result<(Token, Socket)>) {
         if let Some(context) = core.remove_context(self.token) {
             let _ = core.remove_state(context);
         }
@@ -175,9 +163,7 @@ impl<F> EstablishDirectConnection<F>
 }
 
 impl<F> State for EstablishDirectConnection<F>
-    where F: FnOnce(&mut Core,
-                    &mut EventLoop<Core>,
-                    io::Result<(Token, Socket)>) + Any
+    where F: FnOnce(&mut Core, &mut EventLoop<Core>, io::Result<(Token, Socket)>) + Any
 {
     fn ready(&mut self,
              core: &mut Core,
@@ -185,9 +171,10 @@ impl<F> State for EstablishDirectConnection<F>
              _token: Token,
              event_set: EventSet) {
         if event_set.is_error() {
-            let error = match self.socket.as_ref()
-                                         .unwrap()
-                                         .take_socket_error() {
+            let error = match self.socket
+                .as_ref()
+                .unwrap()
+                .take_socket_error() {
                 Ok(()) => io::Error::new(io::ErrorKind::Other, "Unknown error"),
                 Err(e) => e,
             };
