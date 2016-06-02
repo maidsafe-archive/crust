@@ -29,7 +29,7 @@ use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
 use self::exchange_msg::ExchangeMsg;
-use connect::SharedConnectionMap;
+use service::ConnectionMap;
 use core::{Core, State, Context};
 use event::Event;
 use nat::mapped_tcp_socket::MappingTcpSocket;
@@ -38,22 +38,24 @@ use socket::Socket;
 use static_contact_info::StaticContactInfo;
 
 pub struct ConnectionListener {
-    cm: SharedConnectionMap,
+    cm: ConnectionMap,
     context: Context,
     event_tx: ::CrustEventSender,
     listener: TcpListener,
     name_hash: u64,
     our_pk: PublicKey,
     token: Token,
+    timeout_ms: Option<u64>,
 }
 
 impl ConnectionListener {
     pub fn start(core: &mut Core,
                  event_loop: &mut EventLoop<Core>,
+                 handshake_timeout_ms: Option<u64>,
                  port: u16,
                  our_pk: PublicKey,
                  name_hash: u64,
-                 cm: SharedConnectionMap,
+                 cm: ConnectionMap,
                  mapping_context: Arc<MappingContext>,
                  static_contact_info: Arc<Mutex<StaticContactInfo>>,
                  event_tx: ::CrustEventSender) {
@@ -63,6 +65,7 @@ impl ConnectionListener {
         let finish = move |core: &mut Core, el: &mut EventLoop<Core>, socket, mapped_addrs| {
             if let Err(e) = ConnectionListener::handle_mapped_socket(core,
                                                                      el,
+                                                                     handshake_timeout_ms,
                                                                      socket,
                                                                      mapped_addrs,
                                                                      addr,
@@ -84,12 +87,13 @@ impl ConnectionListener {
 
     fn handle_mapped_socket(core: &mut Core,
                             event_loop: &mut EventLoop<Core>,
+                            timeout_ms: Option<u64>,
                             socket: TcpBuilder,
                             mapped_addrs: Vec<socket_addr::SocketAddr>,
                             addr: SocketAddr,
                             our_pk: PublicKey,
                             name_hash: u64,
-                            cm: SharedConnectionMap,
+                            cm: ConnectionMap,
                             static_contact_info: Arc<Mutex<StaticContactInfo>>,
                             event_tx: ::CrustEventSender)
                             -> ::Res<()> {
@@ -118,6 +122,7 @@ impl ConnectionListener {
             name_hash: name_hash,
             our_pk: our_pk,
             token: token,
+            timeout_ms: timeout_ms,
         };
 
         let _ = core.insert_context(token, context);
@@ -142,6 +147,7 @@ impl State for ConnectionListener {
                 Ok(Some((socket, _))) => {
                     if let Err(e) = ExchangeMsg::start(core,
                                                        event_loop,
+                                                       self.timeout_ms.clone(),
                                                        Socket::wrap(socket),
                                                        self.our_pk,
                                                        self.name_hash,
@@ -236,6 +242,7 @@ mod test {
         tx.send(CoreMessage::new(move |core, el| {
                 ConnectionListener::start(core,
                                           el,
+                                          Some(5000),
                                           0,
                                           pk,
                                           NAME_HASH,
@@ -256,6 +263,7 @@ mod test {
         let acceptor = static_contact_info.lock()
             .expect("Failed to lock static_contact_info")
             .tcp_acceptors[0];
+
         Listener {
             tx: tx,
             pk: pk,
@@ -319,19 +327,17 @@ mod test {
     }
 
     fn connect(name_hash: u64, pk: PublicKey, listener: Listener) {
-        use peer_id;
-
         let mut peer = connect_to_listener(&listener);
 
         let message = serialise(&Message::Connect(pk, name_hash)).unwrap();
         write(&mut peer, message).expect("Could not write.");
 
-        let our_id = peer_id::new(pk);
+        let our_id = ::peer_id::new(pk);
         let their_id = match read(&mut peer).expect("Could not read.") {
             Message::Connect(peer_pk, peer_hash) => {
                 assert_eq!(peer_pk, listener.pk);
                 assert_eq!(peer_hash, NAME_HASH);
-                peer_id::new(peer_pk)
+                ::peer_id::new(peer_pk)
             }
             msg => panic!("Unexpected message: {:?}", msg),
         };

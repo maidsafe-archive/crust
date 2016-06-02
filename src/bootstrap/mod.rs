@@ -31,11 +31,11 @@ use std::sync::mpsc::{self, Receiver};
 
 use active_connection::ActiveConnection;
 use config_handler::Config;
-use connect::SharedConnectionMap;
+use service::ConnectionMap;
 use core::{Context, Core, State};
 use error::CrustError;
 use event::Event;
-use peer_id::PeerId;
+use peer_id::{self, PeerId};
 use socket::Socket;
 use self::cache::Cache;
 use self::try_peer::TryPeer;
@@ -49,7 +49,7 @@ const SERVICE_DISCOVERY_TIMEOUT_MS: u64 = 1000;
 pub struct Bootstrap {
     token: Token,
     context: Context,
-    cm: SharedConnectionMap,
+    cm: ConnectionMap,
     peers: Vec<socket_addr::SocketAddr>,
     name_hash: u64,
     our_pk: PublicKey,
@@ -67,7 +67,7 @@ impl Bootstrap {
                  event_loop: &mut EventLoop<Core>,
                  name_hash: u64,
                  our_pk: PublicKey,
-                 cm: SharedConnectionMap,
+                 cm: ConnectionMap,
                  config: &Config,
                  bootstrap_context: Context,
                  service_discovery_context: Context,
@@ -76,12 +76,9 @@ impl Bootstrap {
         let mut peers = Vec::with_capacity(MAX_CONTACTS_EXPECTED);
         let mut cache = try!(Cache::new(&config.bootstrap_cache_name));
 
-        // peers from bootstrap cache
         let cached_peers = cache.read_file().peer_acceptors;
-
         peers.extend(cached_peers);
 
-        // peers from hard coded contacts
         for it in config.hard_coded_contacts.iter().cloned() {
             peers.extend(it.tcp_acceptors);
         }
@@ -173,8 +170,9 @@ impl Bootstrap {
                                         socket,
                                         self.cm.clone(),
                                         peer_id,
+                                        peer_id::new(self.our_pk),
+                                        Event::BootstrapConnect(peer_id),
                                         self.event_tx.clone());
-                let _ = self.event_tx.send(Event::BootstrapConnect(peer_id));
                 return self.terminate(core, event_loop);
             }
             Err(bad_peer) => {

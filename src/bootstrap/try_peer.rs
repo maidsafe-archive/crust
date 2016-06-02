@@ -36,10 +36,8 @@ pub struct TryPeer {
     token: Token,
     context: Context,
     peer: SocketAddr,
-    our_pk: PublicKey,
-    name_hash: u64,
     socket: Option<Socket>,
-    request_sent: bool,
+    request: Option<Message>,
     finish: Finish,
 }
 
@@ -60,10 +58,8 @@ impl TryPeer {
             token: token,
             context: context,
             peer: peer,
-            our_pk: our_pk,
-            name_hash: name_hash,
             socket: Some(socket),
-            request_sent: false,
+            request: Some(Message::BootstrapRequest(our_pk, name_hash)),
             finish: finish,
         };
 
@@ -76,15 +72,6 @@ impl TryPeer {
         let _ = core.insert_state(context, Rc::new(RefCell::new(state)));
 
         Ok(context)
-    }
-
-    fn send_bootstrap_request(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
-        let our_pk = self.our_pk;
-        let name_hash = self.name_hash;
-        self.write(core,
-                   event_loop,
-                   Some(Message::BootstrapRequest(our_pk, name_hash)));
-        self.request_sent = true;
     }
 
     fn write(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, msg: Option<Message>) {
@@ -126,11 +113,8 @@ impl State for TryPeer {
             self.handle_error(core, event_loop);
         } else {
             if event_set.is_writable() {
-                if self.request_sent {
-                    self.write(core, event_loop, None);
-                } else {
-                    self.send_bootstrap_request(core, event_loop);
-                }
+                let req = self.request.take();
+                self.write(core, event_loop, req);
             }
             if event_set.is_readable() {
                 self.receive_response(core, event_loop)
