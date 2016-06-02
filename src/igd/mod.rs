@@ -6,7 +6,7 @@ mod http_request;
 mod utils;
 mod soap;
 
-pub use igd::gateway::Gateway;
+pub use igd::gateway::{Gateway, PortMappingProtocol};
 pub use igd::errors::{SearchError, GetExternalIpError, AddAnyPortError};
 pub use igd::search::{search_gateway_from, search_gateway};
 
@@ -26,6 +26,12 @@ mod tests {
                 gateway.get_external_ip(core, event_loop, |res, _, _| {
                     println!("Goodbye world {:?}", res);
                 });
+                gateway.add_any_port(core, event_loop, PortMappingProtocol::TCP,
+                                     "127.0.0.1:8080".parse().unwrap(), 30,
+                                     "Vini legal", |res, _, _| {
+                                         println!("Por mapping success {:?}",
+                                                  res);
+                                     })
             }
         });
         event_loop.run(&mut core).expect("EventLoop failed to run");
