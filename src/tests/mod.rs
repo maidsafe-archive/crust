@@ -302,8 +302,7 @@ mod broken_peer {
                                                     token,
                                                     Some(Message::BootstrapResponse(public_key))));
                     }
-                    Some(_) => (),
-                    None => (),
+                    Some(_) | None => (),
                 }
             }
 

@@ -374,7 +374,7 @@ fn main() {
                                     }
                                 };
                                 println!("Prepared connection info with id {}", result_token);
-                                let their_info = info.to_their_connection_info();
+                                let their_info = info.to_pub_connection_info();
                                 let info_json = unwrap_result!(json::encode(&their_info));
                                 println!("Share this info with the peer you want to connect to:");
                                 println!("{}", info_json);
