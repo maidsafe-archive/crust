@@ -608,8 +608,9 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn sending_receiving_multiple_services() {
-        const NUM_SERVICES: usize = 30;
+        const NUM_SERVICES: usize = 10;
         const MSG_SIZE: usize = 1024;
         const NUM_MSGS: usize = 257;
 
