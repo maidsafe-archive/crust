@@ -133,5 +133,67 @@ pub enum GetExternalIpError {
 }
 
 #[derive(Debug)]
+/// Errors returned by `Gateway::add_any_port` and `Gateway::get_any_address`
 pub enum AddAnyPortError {
+    /// The client is not authorized to perform the operation.
+    ActionNotAuthorized,
+    /// Can not add a mapping for local port 0.
+    InternalPortZeroInvalid,
+    /// The gateway does not have any free ports.
+    NoPortsAvailable,
+    /// The gateway can only map internal ports to same-numbered external ports
+    /// and this external port is in use.
+    ExternalPortInUse,
+    /// The gateway only supports permanent leases (ie. a `lease_duration` of 0).
+    OnlyPermanentLeasesSupported,
+    /// The description was too long for the gateway to handle.
+    DescriptionTooLong,
+    /// Some other error occured performing the request.
+    RequestError(RequestError),
+}
+
+impl fmt::Display for AddAnyPortError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            AddAnyPortError::ActionNotAuthorized
+                => write!(f, "The client is not authorized to remove the port"),
+            AddAnyPortError::InternalPortZeroInvalid
+                => write!(f, "Can not add a mapping for local port 0"),
+            AddAnyPortError::NoPortsAvailable
+                => write!(f, "The gateway does not have any free ports"),
+            AddAnyPortError::OnlyPermanentLeasesSupported
+                => write!(f, "The gateway only supports permanent leases (ie. a `lease_duration` of 0),"),
+            AddAnyPortError::ExternalPortInUse
+                => write!(f, "The gateway can only map internal ports to same-numbered external ports and this external port is in use."),
+            AddAnyPortError::DescriptionTooLong
+                => write!(f, "The description was too long for the gateway to handle."),
+            AddAnyPortError::RequestError(ref e)
+                => write!(f, "Request error. {}", e),
+        }
+    }
+}
+
+impl std::error::Error for AddAnyPortError {
+    fn cause(&self) -> Option<&std::error::Error> {
+        None
+    }
+
+    fn description(&self) -> &str {
+        match *self {
+            AddAnyPortError::ActionNotAuthorized
+                => "The client is not authorized to remove the port",
+            AddAnyPortError::InternalPortZeroInvalid
+                => "Can not add a mapping for local port 0.",
+            AddAnyPortError::NoPortsAvailable
+                => "The gateway does not have any free ports",
+            AddAnyPortError::OnlyPermanentLeasesSupported
+                => "The gateway only supports permanent leases (ie. a `lease_duration` of 0),",
+            AddAnyPortError::ExternalPortInUse
+                => "The gateway can only map internal ports to same-numbered external ports and this external port is in use.",
+            AddAnyPortError::DescriptionTooLong
+                => "The description was too long for the gateway to handle.",
+            AddAnyPortError::RequestError(..)
+                => "Request error",
+        }
+    }
 }
