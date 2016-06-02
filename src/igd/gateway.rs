@@ -102,8 +102,8 @@ impl Gateway {
     pub fn add_any_port<F>(&self, core: &mut Core,
                            event_loop: &mut EventLoop<Core>,
                            protocol: PortMappingProtocol,
-                           local_addr: SocketAddrV4,
-                           lease_duration: u32, description: &str, callback: F)
+                           local_addr: SocketAddrV4, lease_duration: u32,
+                           description: String, callback: F)
         where F: FnOnce(Result<u16, AddAnyPortError>, &mut Core,
                         &mut EventLoop<Core>) + 'static {
         // This function first attempts to call AddAnyPortMapping on the IGD with a random port
@@ -118,6 +118,7 @@ impl Gateway {
             return;
         }
 
+        let gateway = self.clone();
         let port_range = rand::distributions::Range::new(32768u16, 65535u16);
         let mut rng = rand::thread_rng();
         let external_port = port_range.ind_sample(&mut rng);
@@ -162,34 +163,162 @@ impl Gateway {
                 }
                 // The router doesn't know the AddAnyPortMapping method. Try using AddPortMapping
                 // instead.
-                /*Err(RequestError::ErrorCode(401, _)) => {
+                Err(RequestError::ErrorCode(401, _)) | Err(RequestError::ErrorCode(500, _)) => {
                     // Try a bunch of random ports.
-                    for _attempt in 0..20 {
-                        let external_port = port_range.ind_sample(&mut rng);
-                        match self.add_port_mapping(protocol, external_port, local_addr, lease_duration, description) {
-                            Ok(()) => return Ok(external_port),
-                            Err(RequestError::ErrorCode(605, _)) => return Err(AddAnyPortError::DescriptionTooLong),
-                            Err(RequestError::ErrorCode(606, _)) => return Err(AddAnyPortError::ActionNotAuthorized),
-                            // That port is in use. Try another.
-                            Err(RequestError::ErrorCode(718, _)) => continue,
-                            // The router requires that internal and external ports are the same.
-                            Err(RequestError::ErrorCode(724, _)) => {
-                                return match self.add_port_mapping(protocol, local_addr.port(), local_addr, lease_duration, description) {
-                                    Ok(()) => Ok(local_addr.port()),
-                                    Err(RequestError::ErrorCode(606, _)) => Err(AddAnyPortError::ActionNotAuthorized),
-                                    Err(RequestError::ErrorCode(718, _)) => Err(AddAnyPortError::ExternalPortInUse),
-                                    Err(RequestError::ErrorCode(725, _)) => Err(AddAnyPortError::OnlyPermanentLeasesSupported),
-                                    Err(e) => Err(AddAnyPortError::RequestError(e)),
+                    struct Callback<F2: FnOnce(Result<u16, AddAnyPortError>,
+                                               &mut Core, &mut EventLoop<Core>)
+                                    + 'static> {
+                        gateway: Gateway,
+                        port_range: rand::distributions::Range<u16>,
+                        rng: rand::ThreadRng,
+                        external_port: u16,
+                        protocol: PortMappingProtocol,
+                        local_addr: SocketAddrV4,
+                        lease_duration: u32,
+                        description: String,
+                        callback: Option<F2>,
+                        idx: u8,
+                    };
+
+                    impl<F2: FnOnce(Result<u16, AddAnyPortError>, &mut Core,
+                                    &mut EventLoop<Core>) + 'static>
+                        Callback<F2> {
+                        fn on_port_mapping(mut self, res: Result<(), RequestError>,
+                                           core: &mut Core,
+                                           event_loop: &mut EventLoop<Core>) {
+                            match res {
+                                Ok(_) => {
+                                    let res = Ok(self.external_port);
+                                    self.notify(res, core, event_loop);
+                                    return;
                                 }
-                            },
-                            Err(RequestError::ErrorCode(725, _)) => return Err(AddAnyPortError::OnlyPermanentLeasesSupported),
-                            Err(e) => return Err(AddAnyPortError::RequestError(e)),
+                                Err(RequestError::ErrorCode(605, _)) => {
+                                    let e = AddAnyPortError::DescriptionTooLong;
+                                    self.notify(Err(e), core, event_loop);
+                                    return;
+                                }
+                                Err(RequestError::ErrorCode(606, _)) => {
+                                    let e = AddAnyPortError::ActionNotAuthorized;
+                                    self.notify(Err(e), core, event_loop);
+                                    return;
+                                }
+                                // That port is in use. Try another.
+                                Err(RequestError::ErrorCode(718, _)) => {
+                                    self.schedule_port_mapping(core,
+                                                               event_loop);
+                                    return;
+                                }
+                                // The router requires that internal and
+                                // external ports are the same.
+                                Err(RequestError::ErrorCode(724, _)) => {
+                                    let gateway = self.gateway.clone();
+                                    let description = self.description.clone();
+                                    gateway.add_port_mapping(core, event_loop, self.protocol, self.local_addr.port(), self.local_addr, self.lease_duration, &description, move |res, core, event_loop| {
+                                        match res {
+                                            Ok(()) => {
+                                                let port = self.local_addr.port();
+                                                self.notify(Ok(port), core,
+                                                            event_loop);
+                                            }
+                                            Err(RequestError::ErrorCode(606, _)) => {
+                                                let e = AddAnyPortError::ActionNotAuthorized;
+                                                self.notify(Err(e), core, event_loop);
+                                            }
+                                            Err(RequestError::ErrorCode(718, _)) => {
+                                                let e = AddAnyPortError::ExternalPortInUse;
+                                                self.notify(Err(e), core, event_loop);
+                                            }
+                                            Err(RequestError::ErrorCode(725, _)) => {
+                                                let e = AddAnyPortError::OnlyPermanentLeasesSupported;
+                                                self.notify(Err(e), core, event_loop);
+                                            }
+                                            Err(e) => {
+                                                let e = AddAnyPortError::RequestError(e);
+                                                self.notify(Err(e), core, event_loop);
+                                            }
+                                        }
+                                    });
+                                    return;
+                                },
+                                Err(RequestError::ErrorCode(725, _)) => {
+                                    let e = AddAnyPortError::OnlyPermanentLeasesSupported;
+                                    self.notify(Err(e), core, event_loop);
+                                    return;
+                                }
+                                Err(e) => {
+                                    let e = AddAnyPortError::RequestError(e);
+                                    self.notify(Err(e), core, event_loop);
+                                    return;
+                                }
+                            }
+                            // The only way we can get here is if the router kept returning 718 (port in use)
+                            // for all the ports we tried.
+                            self.notify(Err(AddAnyPortError::NoPortsAvailable),
+                                        core, event_loop);
+                            return;
+                        }
+
+                        fn notify(&mut self, res: Result<u16, AddAnyPortError>,
+                                  core: &mut Core,
+                                  event_loop: &mut EventLoop<Core>) {
+                            if let Some(callback) = self.callback.take() {
+                                callback(res, core, event_loop);
+                            }
+                        }
+
+                        pub fn schedule_port_mapping(mut self, core: &mut Core,
+                                                     event_loop: &mut EventLoop<Core>) {
+                            if self.idx == 20 {
+                                return;
+                            }
+
+                            self.external_port = self.port_range.ind_sample(&mut self.rng);
+                            self.idx += 1;
+                            let gateway = self.gateway.clone();
+                            let description = self.description.clone();
+                            gateway
+                                .add_port_mapping(core, event_loop,
+                                                  self.protocol,
+                                                  self.external_port,
+                                                  self.local_addr,
+                                                  self.lease_duration,
+                                                  &description,
+                                                  move |res, core, event_loop| {
+                                                      self.on_port_mapping(res, core,
+                                                                           event_loop);
+                                                  });
+                        }
+
+                        pub fn new(gateway: Gateway,
+                                   port_range: rand::distributions::Range<u16>,
+                                   mut rng: rand::ThreadRng,
+                                   protocol: PortMappingProtocol,
+                                   local_addr: SocketAddrV4,
+                                   lease_duration: u32, description: String,
+                                   callback: F2)
+                                   -> Callback<F2> {
+                            let external_port = port_range.ind_sample(&mut rng);
+                            Callback {
+                                gateway: gateway,
+                                port_range: port_range,
+                                rng: rng,
+                                external_port: external_port,
+                                protocol: protocol,
+                                local_addr: local_addr,
+                                lease_duration: lease_duration,
+                                description: description,
+                                callback: Some(callback),
+                                idx: 0,
+                            }
                         }
                     }
-                    // The only way we can get here is if the router kept returning 718 (port in use)
-                    // for all the ports we tried.
-                    Err(AddAnyPortError::NoPortsAvailable)
-                },*/
+
+                    Callback::new(gateway, port_range, rng, protocol,
+                                  local_addr, lease_duration, description,
+                                  callback)
+                        .schedule_port_mapping(core, event_loop);
+                    return;
+                }
                 Err(RequestError::ErrorCode(605, _)) => {
                     callback(Err(AddAnyPortError::DescriptionTooLong), core,
                              event_loop);
@@ -272,5 +401,38 @@ impl Gateway {
             };
             callback(res, core, event_loop);
         });
+    }
+
+    #[allow(unused)]
+    fn add_port_mapping<F>(&self, core: &mut Core,
+                           event_loop: &mut EventLoop<Core>,
+                           protocol: PortMappingProtocol, external_port: u16,
+                           local_addr: SocketAddrV4, lease_duration: u32,
+                           description: &str, callback: F)
+        where F: FnOnce(Result<(), RequestError>, &mut Core,
+                        &mut EventLoop<Core>) + 'static {
+        let header = "\"urn:schemas-upnp-org:service:WANIPConnection:1#AddPortMapping\"";
+        let body = format!("<?xml version=\"1.0\"?>
+        <s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\" s:encodingStyle=\"http://schemas.xmlsoap.org/soap/encoding/\">
+        <s:Body>
+            <u:AddPortMapping xmlns:u=\"urn:schemas-upnp-org:service:WANIPConnection:1\">
+                <NewProtocol>{}</NewProtocol>
+                <NewExternalPort>{}</NewExternalPort>
+                <NewInternalClient>{}</NewInternalClient>
+                <NewInternalPort>{}</NewInternalPort>
+                <NewLeaseDuration>{}</NewLeaseDuration>
+                <NewPortMappingDescription>{}</NewPortMappingDescription>
+                <NewEnabled>1</NewEnabled>
+                <NewRemoteHost></NewRemoteHost>
+            </u:AddPortMapping>
+        </s:Body>
+        </s:Envelope>
+        ", protocol, external_port, local_addr.ip(),
+           local_addr.port(), lease_duration, description);
+        self.perform_request(header, &*body,
+                             "AddPortMappingResponse".to_string(), core,
+                             event_loop, move |res, core, event_loop| {
+                                 callback(res.map(|_| ()), core, event_loop);
+                             });
     }
 }
