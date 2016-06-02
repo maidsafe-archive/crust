@@ -100,7 +100,7 @@ impl<F> EstablishDirectConnection<F>
             Ok(_) => (),
             Err(error) => {
                 error!("Failed to write to socket: {:?}", error);
-                self.done(core, event_loop, Err(make_io_error(error)));
+                self.done(core, event_loop, Err(From::from(error)));
             }
         }
     }
@@ -126,7 +126,7 @@ impl<F> EstablishDirectConnection<F>
             Ok(None) => (),
             Err(error) => {
                 error!("Failed to read from socket: {:?}", error);
-                self.done(core, event_loop, Err(make_io_error(error)));
+                self.done(core, event_loop, Err(From::from(error)));
             }
         }
     }
@@ -217,10 +217,3 @@ impl<F> State for EstablishDirectConnection<F>
     }
 }
 
-fn make_io_error(error: CrustError) -> io::Error {
-    match error {
-        CrustError::Io(error) => error,
-        CrustError::Serialisation(error) => io::Error::new(io::ErrorKind::Other, error),
-        _ => unreachable!(),
-    }
-}
