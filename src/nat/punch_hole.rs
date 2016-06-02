@@ -90,7 +90,13 @@ impl<F> PunchHole<F>
         let mut streams = HashMap::new();
         for (socket, addr) in sockets.into_iter().zip(their_pub_info.endpoints) {
             let token = core.get_new_token();
-            let stream = try!(TcpStream::connect_stream(socket, &addr));
+            let stream = match TcpStream::connect_stream(socket, &addr) {
+                Ok(stream) => stream,
+                Err(e) => {
+                    debug!("{:x} TcpStream::connect_stream failed: {}", us, e);
+                    continue;
+                },
+            };
             try!(event_loop.register(&stream,
                                      token,
                                      EventSet::writable() | EventSet::error() | EventSet::hup(),

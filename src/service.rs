@@ -70,7 +70,7 @@ pub struct PrivConnectionInfo {
 
 impl PrivConnectionInfo {
     /// Convert our connection info to theirs so that we can give it to peer.
-    pub fn to_their_connection_info(&self) -> PubConnectionInfo {
+    pub fn to_pub_connection_info(&self) -> PubConnectionInfo {
         PubConnectionInfo {
             tcp_info: self.tcp_info.clone(),
             static_contact_info: self.static_contact_info.clone(),
@@ -314,18 +314,21 @@ impl Service {
             }
 
             if let Some(tcp_socket) = our_connection_info.tcp_socket {
-                // FIXME: check this error
-                let _ = PunchHole::start(core,
+                let connection_map_cloned = connection_map.clone();
+                let event_tx_rc_cloned = event_tx_rc.clone();
+                let res = PunchHole::start(core,
                                          event_loop,
                                          tcp_socket,
                                          our_connection_info.priv_tcp_info,
                                          their_connection_info.tcp_info,
                                          move |core, event_loop, stream_opt|
                 {
+                    let connection_map = connection_map_cloned;
+                    let event_tx_rc = event_tx_rc_cloned;
                     debug!("PunchHole finished");
                     match stream_opt {
                         Some((stream, token)) => {
-                            debug!("PunchHole succeeded. Creating ActiveConnection");
+                            debug!("PunchHole succeeded. Creating ConnectionCandidate");
                             let socket = Socket::wrap(stream);
                             let event_tx = (&*event_tx_rc).clone();
 
@@ -353,6 +356,19 @@ impl Service {
                         }
                     }
                 });
+                if let Err(e) = res {
+                    // Do not raise error if we aready established connection
+                    // to this peer elsewhere.
+                    if connection_map.lock().unwrap().contains_key(&their_id) {
+                        return;
+                    }
+
+                    if let Ok(event_tx) = Rc::try_unwrap(event_tx_rc) {
+                        let msg = format!("Io error starting hole-punching: {}", e);
+                        let error = io::Error::new(io::ErrorKind::Other, msg);
+                        let _ = event_tx.send(Event::NewPeer(Err(error), their_id));
+                    }
+                }
             }
         });
 
@@ -516,26 +532,32 @@ mod tests {
             let service_1 = unwrap_result!(Service::new(event_tx_1));
 
             connect(&service_0, &event_rx_0, &service_1, &event_rx_1);
+            debug!("Exchanging messages ...");
             exchange_messages(&service_0, &event_rx_0, &service_1, &event_rx_1);
         });
+        ::std::thread::sleep(Duration::from_secs(1));
     }
 
     fn connect(service_0: &Service, event_rx_0: &Receiver<Event>,
                service_1: &Service, event_rx_1: &Receiver<Event>) {
+        debug!("Preparing infos ...");
         service_0.prepare_connection_info(0);
         service_1.prepare_connection_info(0);
 
+        debug!("Receiving infos ...");
         let conn_info_result_0 = expect_event!(event_rx_0, Event::ConnectionInfoPrepared(result) => result);
         let conn_info_result_1 = expect_event!(event_rx_1, Event::ConnectionInfoPrepared(result) => result);
 
-        let pub_info_0 = unwrap_result!(conn_info_result_0.result);
-        let pub_info_1 = unwrap_result!(conn_info_result_1.result);
-        let priv_info_0 = pub_info_0.to_their_connection_info();
-        let priv_info_1 = pub_info_1.to_their_connection_info();
+        let priv_info_0 = unwrap_result!(conn_info_result_0.result);
+        let priv_info_1 = unwrap_result!(conn_info_result_1.result);
+        let pub_info_0 = priv_info_0.to_pub_connection_info();
+        let pub_info_1 = priv_info_1.to_pub_connection_info();
 
-        unwrap_result!(service_0.connect(pub_info_0, priv_info_1));
-        unwrap_result!(service_1.connect(pub_info_1, priv_info_0));
+        debug!("Connecting ...");
+        unwrap_result!(service_0.connect(priv_info_0, pub_info_1));
+        unwrap_result!(service_1.connect(priv_info_1, pub_info_0));
 
+        debug!("Receiving NewPeers ...");
         expect_event!(event_rx_0, Event::NewPeer(res, id) => {
             unwrap_result!(res);
             assert_eq!(id, service_1.id());
@@ -545,6 +567,8 @@ mod tests {
             unwrap_result!(res);
             assert_eq!(id, service_0.id());
         });
+
+        debug!("Finished connecting");
     }
 
     fn exchange_messages(service_0: &Service, event_rx_0: &Receiver<Event>,
