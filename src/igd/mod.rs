@@ -28,7 +28,7 @@ mod tests {
                 });
                 gateway.add_any_port(core, event_loop, PortMappingProtocol::TCP,
                                      "127.0.0.1:8080".parse().unwrap(), 30,
-                                     "Vini legal", |res, _, _| {
+                                     "Vini legal".to_string(), |res, _, _| {
                                          println!("Por mapping success {:?}",
                                                   res);
                                      })
