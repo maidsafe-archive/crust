@@ -266,7 +266,7 @@ impl Service {
                    -> ::Res<()> {
         let event_tx = self.event_tx.clone();
         let cm = self.cm.clone();
-        let our_public_key = self.our_keys.0;
+        let our_public_key = self.our_keys.0.clone();
         let our_id = peer_id::new(our_public_key);
         let name_hash = self.name_hash;
 
@@ -283,8 +283,8 @@ impl Service {
 
             let static_contact_info = their_connection_info.static_contact_info;
             for socket_addr::SocketAddr(addr) in static_contact_info.tcp_acceptors {
-                let cm = cm.clone();
-                let event_tx_rc = event_tx_rc.clone();
+                let cm_cloned = cm.clone();
+                let event_tx_rc_cloned = event_tx_rc.clone();
 
                 EstablishDirectConnection::start(core,
                                                  event_loop,
@@ -294,12 +294,12 @@ impl Service {
                                                  move |core, event_loop, res| {
                     match res {
                         Ok((token, socket)) => {
-                            let event_tx = (&*event_tx_rc).clone();
+                            let event_tx = (&*event_tx_rc_cloned).clone();
                             ConnectionCandidate::start(core,
                                                        event_loop,
                                                        token,
                                                        socket,
-                                                       cm,
+                                                       cm_cloned,
                                                        our_id,
                                                        their_id,
                                                        event_tx);
@@ -307,11 +307,11 @@ impl Service {
                         Err(e) => {
                             // Do not raise error if we aready established connection
                             // to this peer elsewhere.
-                            if cm.lock().unwrap().contains_key(&their_id) {
+                            if cm_cloned.lock().unwrap().contains_key(&their_id) {
                                 return;
                             }
 
-                            if let Ok(event_tx) = Rc::try_unwrap(event_tx_rc) {
+                            if let Ok(event_tx) = Rc::try_unwrap(event_tx_rc_cloned) {
                                 let _ = event_tx.send(Event::NewPeer(Err(e), their_id));
                             }
                         }
@@ -320,24 +320,27 @@ impl Service {
             }
 
             if let Some(tcp_socket) = our_connection_info.tcp_socket {
-                // FIXME: check this error
-                let _ = PunchHole::start(core,
+                let event_tx_rc_cloned = event_tx_rc.clone();
+                let cm_cloned = cm.clone();
+                let res = PunchHole::start(core,
                                          event_loop,
                                          tcp_socket,
                                          our_connection_info.priv_tcp_info,
                                          their_connection_info.tcp_info,
-                                         move |core, event_loop, stream_opt| {
+                                         move |core, event_loop, stream_opt|
+                {
+                    debug!("PunchHole finished");
                     match stream_opt {
-                        Some(stream) => {
-                            let token = core.get_new_token();
+                        Some((stream, token)) => {
+                            debug!("PunchHole succeeded. Creating ConnectionCandidate");
                             let socket = Socket::wrap(stream);
-                            let event_tx = (&*event_tx_rc).clone();
+                            let event_tx = (&*event_tx_rc_cloned).clone();
 
                             ConnectionCandidate::start(core,
                                                        event_loop,
                                                        token,
                                                        socket,
-                                                       cm,
+                                                       cm_cloned,
                                                        our_id,
                                                        their_id,
                                                        event_tx);
@@ -345,11 +348,11 @@ impl Service {
                         None => {
                             // Do not raise error if we aready established connection
                             // to this peer elsewhere.
-                            if cm.lock().unwrap().contains_key(&their_id) {
+                            if cm_cloned.lock().unwrap().contains_key(&their_id) {
                                 return;
                             }
 
-                            if let Ok(event_tx) = Rc::try_unwrap(event_tx_rc) {
+                            if let Ok(event_tx) = Rc::try_unwrap(event_tx_rc_cloned) {
                                 let error = io::Error::new(io::ErrorKind::Other,
                                                            "Failed to punch hole");
                                 let _ = event_tx.send(Event::NewPeer(Err(error), their_id));
@@ -357,6 +360,18 @@ impl Service {
                         }
                     }
                 });
+                if let Err(e) = res {
+                    // Do not raise error if we aready established connection
+                    // to this peer elsewhere.
+                    if cm.lock().unwrap().contains_key(&their_id) {
+                        return;
+                    }
+                    if let Ok(event_tx) = Rc::try_unwrap(event_tx_rc) {
+                        let msg = format!("Io error starting hole-punching: {}", e);
+                        let error = io::Error::new(io::ErrorKind::Other, msg);
+                        let _ = event_tx.send(Event::NewPeer(Err(error), their_id));
+                    }
+                }
             }
         });
 
@@ -488,6 +503,7 @@ mod tests {
     use std::sync::mpsc::Receiver;
     use std::thread::JoinHandle;
     use std::time::Duration;
+    use maidsafe_utilities;
 
     use event::Event;
     use tests::{get_event_sender, timebomb};
@@ -513,9 +529,9 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn rendezvous_connect_two_peers() {
-        timebomb(Duration::from_secs(5), || {
+        maidsafe_utilities::log::init(true).unwrap();
+        timebomb(Duration::from_secs(10), || {
             let (event_tx_0, event_rx_0) = get_event_sender();
             let service_0 = unwrap_result!(Service::new(event_tx_0));
 
@@ -523,8 +539,10 @@ mod tests {
             let service_1 = unwrap_result!(Service::new(event_tx_1));
 
             connect(&service_0, &event_rx_0, &service_1, &event_rx_1);
+            debug!("Exchanging messages ...");
             exchange_messages(&service_0, &event_rx_0, &service_1, &event_rx_1);
         });
+        ::std::thread::sleep(Duration::from_secs(1));
     }
 
     fn connect(service_0: &Service,
@@ -539,14 +557,16 @@ mod tests {
         let conn_info_result_1 =
             expect_event!(event_rx_1, Event::ConnectionInfoPrepared(result) => result);
 
-        let pub_info_0 = unwrap_result!(conn_info_result_0.result);
-        let pub_info_1 = unwrap_result!(conn_info_result_1.result);
-        let priv_info_0 = pub_info_0.to_pub_connection_info();
-        let priv_info_1 = pub_info_1.to_pub_connection_info();
+        let priv_info_0 = unwrap_result!(conn_info_result_0.result);
+        let priv_info_1 = unwrap_result!(conn_info_result_1.result);
+        let pub_info_0 = priv_info_0.to_pub_connection_info();
+        let pub_info_1 = priv_info_1.to_pub_connection_info();
 
-        unwrap_result!(service_0.connect(pub_info_0, priv_info_1));
-        unwrap_result!(service_1.connect(pub_info_1, priv_info_0));
+        debug!("Connecting ...");
+        unwrap_result!(service_0.connect(priv_info_0, pub_info_1));
+        unwrap_result!(service_1.connect(priv_info_1, pub_info_0));
 
+        debug!("Receiving NewPeers ...");
         expect_event!(event_rx_0, Event::NewPeer(res, id) => {
             unwrap_result!(res);
             assert_eq!(id, service_1.id());
@@ -556,6 +576,8 @@ mod tests {
             unwrap_result!(res);
             assert_eq!(id, service_0.id());
         });
+
+        debug!("Finished connecting");
     }
 
     fn exchange_messages(service_0: &Service,
