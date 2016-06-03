@@ -310,12 +310,12 @@ mod test {
     }
 
     fn bootstrap(name_hash: u64, pk: PublicKey, listener: Listener) {
-        let mut peer = connect_to_listener(&listener);
+        let mut us = connect_to_listener(&listener);
 
         let message = serialise(&Message::BootstrapRequest(pk, name_hash)).unwrap();
-        write(&mut peer, message).expect("Could not write.");
+        write(&mut us, message).expect("Could not write.");
 
-        match read(&mut peer).expect("Could not read.") {
+        match read(&mut us).expect("Could not read.") {
             Message::BootstrapResponse(peer_pk) => assert_eq!(peer_pk, listener.pk),
             msg => panic!("Unexpected message: {:?}", msg),
         }
@@ -327,13 +327,13 @@ mod test {
     }
 
     fn connect(name_hash: u64, pk: PublicKey, listener: Listener) {
-        let mut peer = connect_to_listener(&listener);
+        let mut us = connect_to_listener(&listener);
 
         let message = serialise(&Message::Connect(pk, name_hash)).unwrap();
-        write(&mut peer, message).expect("Could not write.");
+        write(&mut us, message).expect("Could not write.");
 
         let our_id = ::peer_id::new(pk);
-        let their_id = match read(&mut peer).expect("Could not read.") {
+        let their_id = match read(&mut us).expect("Could not read.") {
             Message::Connect(peer_pk, peer_hash) => {
                 assert_eq!(peer_pk, listener.pk);
                 assert_eq!(peer_hash, NAME_HASH);
@@ -344,7 +344,7 @@ mod test {
 
         if our_id > their_id {
             let message = serialise(&Message::ChooseConnection).unwrap();
-            write(&mut peer, message).expect("Could not write.");
+            write(&mut us, message).expect("Could not write.");
         }
 
         match listener.event_rx.recv().expect("Could not read event channel") {
@@ -404,30 +404,30 @@ mod test {
     fn invalid_msg_exchange() {
         let listener = start_listener();
 
-        let mut peer = connect_to_listener(&listener);
+        let mut us = connect_to_listener(&listener);
 
         let message = serialise(&Message::Heartbeat).unwrap();
-        write(&mut peer, message).expect("Could not write.");
+        write(&mut us, message).expect("Could not write.");
 
         let mut buf = [0; 512];
         if cfg!(windows) {
-            assert!(peer.read(&mut buf).is_err());
+            assert!(us.read(&mut buf).is_err());
         } else {
             assert_eq!(0,
-                       peer.read(&mut buf).expect("read should have returned EOF (0)"));
+                       us.read(&mut buf).expect("read should have returned EOF (0)"));
         }
     }
 
     #[test]
     fn listener_timeout() {
         let listener = start_listener();
-        let mut peer = connect_to_listener(&listener);
+        let mut us = connect_to_listener(&listener);
         let mut buf = [0; 512];
         if cfg!(windows) {
-            assert!(peer.read(&mut buf).is_err());
+            assert!(us.read(&mut buf).is_err());
         } else {
             assert_eq!(0,
-                       peer.read(&mut buf).expect("read should have returned EOF (0)"));
+                       us.read(&mut buf).expect("read should have returned EOF (0)"));
         }
     }
 }
