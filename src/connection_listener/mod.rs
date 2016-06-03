@@ -37,6 +37,8 @@ use nat::mapping_context::MappingContext;
 use socket::Socket;
 use static_contact_info::StaticContactInfo;
 
+const LISTENER_BACKLOG: i32 = 100;
+
 pub struct ConnectionListener {
     cm: ConnectionMap,
     context: Context,
@@ -100,7 +102,7 @@ impl ConnectionListener {
         let token = core.get_new_token();
         let context = core.get_new_context();
 
-        let listener = try!(socket.listen(1));
+        let listener = try!(socket.listen(LISTENER_BACKLOG));
         let local_addr = try!(listener.local_addr());
 
         let listener = try!(TcpListener::from_listener(listener, &addr));
@@ -132,17 +134,9 @@ impl ConnectionListener {
 
         Ok(())
     }
-}
 
-impl State for ConnectionListener {
-    fn ready(&mut self,
-             core: &mut Core,
-             event_loop: &mut EventLoop<Core>,
-             _token: Token,
-             event_set: EventSet) {
-        if event_set.is_error() || event_set.is_hup() {
-            self.terminate(core, event_loop);
-        } else if event_set.is_readable() {
+    fn accept(&self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
+        loop {
             match self.listener.accept() {
                 Ok(Some((socket, _))) => {
                     if let Err(e) = ExchangeMsg::start(core,
@@ -156,9 +150,27 @@ impl State for ConnectionListener {
                         warn!("Error accepting direct connection: {:?}", e);
                     }
                 }
-                Ok(None) => (),
-                Err(err) => error!("Failed to accept new socket: {:?}", err),
+                Ok(None) => return,
+                Err(err) => {
+                    warn!("Failed to accept new socket: {:?}", err);
+                    return;
+                }
             }
+        }
+    }
+}
+
+impl State for ConnectionListener {
+    fn ready(&mut self,
+             core: &mut Core,
+             event_loop: &mut EventLoop<Core>,
+             _token: Token,
+             event_set: EventSet) {
+        if event_set.is_error() || event_set.is_hup() {
+            self.terminate(core, event_loop);
+            let _ = self.event_tx.send(Event::ListenerFailed);
+        } else if event_set.is_readable() {
+            self.accept(core, event_loop);
         }
     }
 

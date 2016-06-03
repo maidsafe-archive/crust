@@ -390,8 +390,8 @@ impl Service {
 
     /// Disconnect from the given peer and returns whether there was a connection at all.
     pub fn disconnect(&self, peer_id: PeerId) -> bool {
-        let context = match self.cm.lock().unwrap().remove(&peer_id) {
-            Some(ConnectionId { active_connection: Some(context), .. }) => context,
+        let context = match self.cm.lock().unwrap().get(&peer_id) {
+            Some(&ConnectionId { active_connection: Some(context), .. }) => context,
             _ => return false,
         };
 
