@@ -27,7 +27,7 @@ use message::Message;
 use mio::{EventLoop, EventSet, PollOpt, Timeout, Token};
 use peer_id::{self, PeerId};
 use socket::Socket;
-use service::ConnectionMap;
+use service::{ConnectionId, ConnectionMap};
 use sodiumoxide::crypto::box_::PublicKey;
 
 pub const EXCHANGE_MSG_TIMEOUT_MS: u64 = 10 * 60 * 1000;
@@ -126,7 +126,6 @@ impl ExchangeMsg {
 
         let our_pk = self.our_pk;
         let name_hash = self.name_hash;
-
         self.next_state = NextState::ConnectionCandidate(their_id);
         self.write(core, event_loop, Some(Message::Connect(our_pk, name_hash)));
     }
@@ -142,15 +141,29 @@ impl ExchangeMsg {
             return Err(());
         }
 
-        let peer_id = peer_id::new(their_public_key);
+        let their_id = peer_id::new(their_public_key);
 
-        Ok(peer_id)
+        {
+            let mut guard = self.cm.lock().unwrap();
+            guard.entry(their_id)
+                .or_insert(ConnectionId {
+                    active_connection: None,
+                    currently_handshaking: 0,
+                })
+                .currently_handshaking += 1;
+        }
+
+        Ok(their_id)
     }
 
     fn write(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, msg: Option<Message>) {
         // Do not accept multiple bootstraps from same peer
         if let NextState::ActiveConnection(their_id) = self.next_state {
-            if self.cm.lock().unwrap().get(&their_id).is_some() {
+            let terminate = match self.cm.lock().unwrap().get(&their_id).map(|elt| *elt) {
+                Some(ConnectionId { active_connection: Some(_), .. }) => true,
+                _ => false,
+            };
+            if terminate {
                 return self.terminate(core, event_loop);
             }
         }
@@ -221,6 +234,23 @@ impl State for ExchangeMsg {
     fn terminate(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>) {
         if let Some(context) = core.remove_context(self.token) {
             let _ = core.remove_state(context);
+        }
+
+        match self.next_state {
+            NextState::ConnectionCandidate(their_id) |
+            NextState::ActiveConnection(their_id) => {
+                let mut guard = self.cm.lock().unwrap();
+                let remove = {
+                    let conn_id = guard.get_mut(&their_id)
+                        .expect("ExchangeMsg terminate Logic Error");
+                    conn_id.currently_handshaking -= 1;
+                    conn_id.currently_handshaking == 0 && conn_id.active_connection.is_none()
+                };
+                if remove {
+                    let _ = guard.remove(&their_id);
+                }
+            }
+            _ => (),
         }
 
         let _ = event_loop.clear_timeout(self.timeout);

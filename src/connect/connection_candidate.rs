@@ -20,7 +20,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use active_connection::ActiveConnection;
-use service::ConnectionMap;
+use service::{ConnectionId, ConnectionMap};
 use core::{Core, State};
 use event::Event;
 use message::Message;
@@ -80,7 +80,11 @@ impl ConnectionCandidate {
     }
 
     fn write(&mut self, core: &mut Core, event_loop: &mut EventLoop<Core>, msg: Option<Message>) {
-        if self.cm.lock().unwrap().contains_key(&self.their_id) {
+        let terminate = match self.cm.lock().unwrap().get(&self.their_id) {
+            Some(&ConnectionId { active_connection: Some(_), .. }) => true,
+            _ => false,
+        };
+        if terminate {
             return self.terminate(core, event_loop);
         }
 
@@ -139,6 +143,18 @@ impl State for ConnectionCandidate {
 
         if let Some(context) = core.remove_context(self.token) {
             let _ = core.remove_state(context);
+        }
+
+        {
+            let mut guard = self.cm.lock().unwrap();
+            let remove = {
+                let conn_id = guard.get_mut(&self.their_id).expect("Logic Error");
+                conn_id.currently_handshaking -= 1;
+                conn_id.currently_handshaking == 0 && conn_id.active_connection.is_none()
+            };
+            if remove {
+                let _ = guard.remove(&self.their_id);
+            }
         }
     }
 

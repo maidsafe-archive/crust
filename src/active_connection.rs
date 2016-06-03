@@ -18,7 +18,7 @@
 use std::any::Any;
 
 use core::{Core, Context, State};
-use service::ConnectionMap;
+use service::{ConnectionId, ConnectionMap};
 use event::Event;
 use message::Message;
 use mio::{EventLoop, EventSet, Timeout, TimerError, Token};
@@ -89,7 +89,15 @@ impl ActiveConnection {
         let _ = core.insert_state(context, state.clone());
 
         let mut state_mut = state.borrow_mut();
-        let _ = state_mut.cm.lock().unwrap().insert(their_id, context);
+        {
+            let mut guard = state_mut.cm.lock().unwrap();
+            let conn_id = guard.entry(their_id).or_insert(ConnectionId {
+                active_connection: None,
+                currently_handshaking: 1,
+            });
+            conn_id.currently_handshaking -= 1;
+            conn_id.active_connection = Some(context);
+        }
         let _ = state_mut.event_tx.send(event);
         state_mut.read(core, event_loop);
     }
@@ -177,7 +185,18 @@ impl State for ActiveConnection {
         let _ = core.remove_context(self.token);
         let _ = core.remove_state(self.context);
 
-        let _ = self.cm.lock().unwrap().remove(&self.their_id);
+        {
+            let mut guard = self.cm.lock().unwrap();
+            let remove = {
+                let conn_id = guard.get_mut(&self.their_id).expect("Logic Error");
+                conn_id.active_connection = None;
+                conn_id.currently_handshaking == 0
+            };
+            if remove {
+                let _ = guard.remove(&self.their_id);
+            }
+        }
+
         let _ = self.event_tx.send(Event::LostPeer(self.their_id));
     }
 
